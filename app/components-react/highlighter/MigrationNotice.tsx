@@ -6,6 +6,8 @@ import Utils from 'services/utils';
 import InstallationFlow from './InstallationFlow';
 import { useVuex } from 'components-react/hooks';
 import { EAvailableFeatures } from 'services/incremental-rollout';
+import { REPLAY_APP_NAME } from 'services/highlighter/constants';
+import { $t } from 'services/i18n';
 
 interface IMigrationNoticeProps {
   variant?: 'page' | 'modal';
@@ -18,7 +20,7 @@ interface IMigrationNoticeProps {
 export default function MigrationNotice(props: IMigrationNoticeProps) {
   const { HighlighterService, IncrementalRolloutService } = Services;
   const [isReplayInstalled, setIsReplayInstalled] = useState<boolean | null>(null);
-  const isDevMode = Utils.isDevMode();
+  const [isRecorderRunning, setIsRecorderRunning] = useState<boolean>(false);
   const variant = props.variant || 'page';
   const isModal = variant === 'modal';
 
@@ -26,9 +28,9 @@ export default function MigrationNotice(props: IMigrationNoticeProps) {
   const isInstalling = installStep !== 'idle' && installStep !== 'done';
 
   // Check if migration notice feature is enabled
-  const isMigrationEnabled = IncrementalRolloutService.views.featureIsEnabled(
-    EAvailableFeatures.replayMigration,
-  );
+  const isMigrationEnabled =
+    true ||
+    IncrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.highlighterMigration);
 
   useEffect(() => {
     checkReplayInstallation();
@@ -45,22 +47,18 @@ export default function MigrationNotice(props: IMigrationNoticeProps) {
 
   async function checkReplayInstallation() {
     const installed = await HighlighterService.isStreamlabsReplayInstalled();
-    console.log('Streamlabs Replay installation check result:', installed);
     setIsReplayInstalled(installed);
-  }
 
-  async function handleDeleteRegistry() {
-    const success = await HighlighterService.deleteStreamlabsReplayRegistry();
-    if (success) {
-      console.log('Registry deleted, rechecking installation status...');
-      await checkReplayInstallation();
+    // If Replay is installed, check if the recorder is running
+    if (installed) {
+      const recorderRunning = await HighlighterService.isStreamlabsRecorderRunning();
+      setIsRecorderRunning(recorderRunning);
     }
   }
 
   async function handleOpenReplay() {
     // Use the service method to handle opening/installing Replay
     const isReplayInstalled = await HighlighterService.openReplay(variant);
-    console.log('Opening Streamlabs Replay, isInstalled:', isReplayInstalled);
 
     if (props.onOpenReplay) {
       props.onOpenReplay();
@@ -83,38 +81,47 @@ export default function MigrationNotice(props: IMigrationNoticeProps) {
     return <InstallationFlow onCancel={handleInstallCancel} />;
   }
 
+  // If Replay is installed and the recorder is running, show a simple message
+  if (isReplayInstalled && isRecorderRunning) {
+    return (
+      <div className={cx(styles.migrationNotice, isModal && styles.migrationNoticeModal)}>
+        <div className={styles.content}>
+          <h1 className={cx(styles.title, isModal && styles.titleModal)}>
+            {$t(`${REPLAY_APP_NAME} is active`)}
+          </h1>
+          <p className={styles.subtitle}>
+            {$t(`The ${REPLAY_APP_NAME} recorder is currently running and capturing your gameplay.`)}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={cx(styles.migrationNotice, isModal && styles.migrationNoticeModal)}>
       <div className={styles.content}>
         <h1 className={cx(styles.title, isModal && styles.titleModal)}>
-          {isModal ? 'Streamlabs Replay is required' : 'AI Highlighter is now Streamlabs Replay'}
+          {isModal
+            ? $t(`${REPLAY_APP_NAME} is required`)
+            : $t(`AI Highlighter is now ${REPLAY_APP_NAME}`)}
         </h1>
         <p className={styles.subtitle}>
           {isModal
-            ? 'Install Streamlabs Replay to import and detect game highlights.'
-            : 'Your recent AI highlights are now living in Streamlabs Replay.'}
+            ? $t(`Install ${REPLAY_APP_NAME} to import and detect game highlights.`)
+            : $t(`Your recent AI highlights are now living in ${REPLAY_APP_NAME}.`)}
         </p>
         <div className={styles.actions}>
           <button className={styles.primaryButton} onClick={handleOpenReplay}>
-            {isReplayInstalled ? 'Open Streamlabs Replay' : 'Install Streamlabs Replay'}
+            {isReplayInstalled ? $t(`Open ${REPLAY_APP_NAME}`) : $t(`Install ${REPLAY_APP_NAME}`)}
           </button>
           {props.onShowAllClips && (
             <button className={styles.secondaryButton} onClick={props.onShowAllClips}>
-              Show all clips
+              {$t('Show all clips')}
             </button>
           )}
           {props.onCancel && !isReplayInstalled && (
             <button className={styles.secondaryButton} onClick={props.onCancel}>
-              Cancel
-            </button>
-          )}
-          {isDevMode && (
-            <button
-              className={styles.secondaryButton}
-              onClick={handleDeleteRegistry}
-              style={{ marginLeft: '16px', opacity: 0.6 }}
-            >
-              🗑️ Delete Registry (Dev)
+              {$t('Cancel')}
             </button>
           )}
         </div>

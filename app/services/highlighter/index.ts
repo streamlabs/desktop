@@ -15,8 +15,9 @@ import os from 'os';
 import {
   SCRUB_SPRITE_DIRECTORY,
   SUPPORTED_FILE_TYPES,
-  REPLAY_SETUP_URL_STAGING,
-  REPLAY_SETUP_URL_PRODUCTION,
+  HIGHLIGHTER_SETUP_URL_STAGING,
+  HIGHLIGHTER_SETUP_URL_PRODUCTION,
+  REPLAY_PROTOCOL,
 } from './constants';
 import { pmap } from 'util/pmap';
 import { RenderingClip } from './rendering/rendering-clip';
@@ -338,7 +339,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     try {
       // Query the Windows Registry for the protocol handler command
       const { stdout, stderr } = await execAsync(
-        'reg query "HKEY_CLASSES_ROOT\\ghub-replay\\shell\\open\\command" /ve',
+        `reg query "HKEY_CLASSES_ROOT\\${REPLAY_PROTOCOL}\\shell\\open\\command" /ve`,
         {
           timeout: 5000,
         },
@@ -346,53 +347,39 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
       // Check if stderr is empty and stdout contains meaningful data
       if (stderr) {
-        console.log('Registry query returned error:', stderr);
         return false;
       }
 
       // Check if the output contains an actual executable path, not just "URL:ghub-replay"
-      const hasValidCommand = stdout.includes('.exe') && !stdout.includes('URL:ghub-replay');
-
-      console.log(
-        'Streamlabs Replay protocol check:',
-        hasValidCommand ? 'found with valid executable' : 'not found or invalid',
-      );
-
-      if (!hasValidCommand) {
-        console.log('Registry entry exists but points to invalid path:', stdout);
-      }
+      const hasValidCommand = stdout.includes('.exe') && !stdout.includes(`URL:${REPLAY_PROTOCOL}`);
 
       return hasValidCommand;
     } catch (error: unknown) {
       // If the registry key doesn't exist, reg query will throw an error
-      console.log('Streamlabs Replay deeplink not found in registry');
       return false;
     }
   }
 
   /**
-   * Deletes the Streamlabs Replay registry entry (dev only)
-   * @returns Promise<boolean> - true if deletion was successful, false otherwise
+   * Checks if the StreamlabsRecorder.exe process is currently running
+   * @returns Promise<boolean> - true if process is running, false otherwise
    */
-  async deleteStreamlabsReplayRegistry(): Promise<boolean> {
-    // Only works on Windows
+  async isStreamlabsRecorderRunning(): Promise<boolean> {
+    // Only check on Windows
     if (getOS() !== OS.Windows) {
-      console.warn('Registry deletion only available on Windows');
-      return false;
-    }
-
-    // Only allow in dev mode
-    if (!Utils.isDevMode()) {
-      console.warn('Registry deletion only available in dev mode');
       return false;
     }
 
     try {
-      await execAsync('reg delete "HKEY_CLASSES_ROOT\\ghub-replay" /f', { timeout: 5000 });
-      console.log('Successfully deleted Streamlabs Replay registry entry');
-      return true;
+      const { stdout } = await execAsync('tasklist /FI "IMAGENAME eq StreamlabsRecorder.exe"', {
+        timeout: 5000,
+      });
+
+      // Check if the process name appears in the output
+      const isRunning = stdout.includes('StreamlabsRecorder.exe');
+
+      return isRunning;
     } catch (error: unknown) {
-      console.error('Failed to delete registry entry:', error);
       return false;
     }
   }
@@ -405,7 +392,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     // if (Utils.isProduction) {
     //   return REPLAY_SETUP_URL_PRODUCTION;
     // }
-    return REPLAY_SETUP_URL_STAGING;
+    return HIGHLIGHTER_SETUP_URL_STAGING;
   }
 
   /**
@@ -541,7 +528,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
       // Auto-launch Streamlabs Replay
       try {
-        remote.shell.openExternal('ghub-replay://open');
+        remote.shell.openExternal(`${REPLAY_PROTOCOL}://open`);
       } catch (launchError: unknown) {
         console.error('Failed to auto-launch Streamlabs Replay:', launchError);
       }
@@ -623,13 +610,12 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
       // Open Streamlabs Replay via deeplink
       try {
-        console.log('Attempting to open ghub-replay:// protocol');
-        remote.shell.openExternal('ghub-replay://open');
+        remote.shell.openExternal(`${REPLAY_PROTOCOL}://open`);
         return true;
       } catch (error: unknown) {
         console.error('Failed to open Streamlabs Replay:', error);
         try {
-          remote.shell.openExternal('ghub-replay:');
+          remote.shell.openExternal(`${REPLAY_PROTOCOL}:`);
           return true;
         } catch (fallbackError: unknown) {
           console.error('Failed to open Streamlabs Replay with fallback:', fallbackError);
@@ -664,7 +650,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     streamId?: string,
     title?: string,
   ): void {
-    let deeplink = `ghub-replay://import?path=${encodeURIComponent(
+    let deeplink = `${REPLAY_PROTOCOL}://import?path=${encodeURIComponent(
       videoPath,
     )}&game=${encodeURIComponent(game)}`;
 

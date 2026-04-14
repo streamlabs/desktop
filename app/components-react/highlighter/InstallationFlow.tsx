@@ -3,6 +3,8 @@ import styles from './MigrationNotice.m.less';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
 import { EReplayInstallStep } from 'services/highlighter/models/highlighter.models';
+import { REPLAY_APP_NAME } from 'services/highlighter/constants';
+import { $t } from 'services/i18n';
 
 interface IInstallationFlowProps {
   onCancel: () => void;
@@ -29,11 +31,11 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
   if (step === 'done') {
     return (
       <div className={styles.installationFlow}>
-        <h2 className={styles.installTitle}>Installing Replay</h2>
+        <h2 className={styles.installTitle}>{$t('Installing Highlighter')}</h2>
         <div className={styles.installContent}>
-          <div className={styles.successTitle}>Installation finished</div>
+          <div className={styles.successTitle}>{$t('Installation finished')}</div>
           <p className={styles.installSubtext}>
-            Streamlabs Replay has been installed and is now running.
+            {$t(`${REPLAY_APP_NAME} has been installed and is now running.`)}
           </p>
         </div>
       </div>
@@ -43,13 +45,13 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
   if (step === 'error') {
     return (
       <div className={styles.installationFlow}>
-        <h2 className={styles.installTitle}>Installing Replay</h2>
+        <h2 className={styles.installTitle}>{$t('Installing Highlighter')}</h2>
         <div className={styles.installContent}>
-          <div className={styles.errorTitle}>Installation interrupted</div>
+          <div className={styles.errorTitle}>{$t('Installation interrupted')}</div>
           <p className={styles.installSubtext}>
-            It seems the installation didn't finish.
+            {$t("It seems the installation didn't finish.")}
             <br />
-            Let's figure this out together and{' '}
+            {$t('Let\'s figure this out together and')}{' '}
             <a
               className={styles.supportLink}
               href="https://support.streamlabs.com"
@@ -60,13 +62,13 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
                 require('@electron/remote').shell.openExternal('https://support.streamlabs.com');
               }}
             >
-              contact support
+              {$t('contact support')}
             </a>
           </p>
         </div>
         <div className={styles.installActions}>
           <button className={styles.retryButton} onClick={handleRetry}>
-            Re-try installation
+            {$t('Re-try installation')}
           </button>
         </div>
       </div>
@@ -74,16 +76,16 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
   }
 
   const displayProgress = Math.round(progress);
-  let statusText = 'Downloading Streamlabs Replay...';
+  let statusText = $t(`Downloading ${REPLAY_APP_NAME}...`);
   if (step === 'installing') {
-    statusText = 'Installing Streamlabs Replay...';
+    statusText = $t(`Installing ${REPLAY_APP_NAME}...`);
   } else if (step === 'verifying') {
-    statusText = 'Verifying installation...';
+    statusText = $t('Verifying installation...');
   }
 
   return (
     <div className={styles.installationFlow}>
-      <h2 className={styles.installTitle}>Installing Replay</h2>
+      <h2 className={styles.installTitle}>{$t('Installing Highlighter')}</h2>
       <div className={styles.installContent}>
         <div className={styles.progressPercent}>{displayProgress}%</div>
         <p className={styles.installSubtext}>
@@ -91,7 +93,7 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
           {step === 'downloading' && (
             <>
               <br />
-              The installation will start automatically
+              {$t('The installation will start automatically')}
             </>
           )}
         </p>
@@ -99,7 +101,7 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
       {step === 'downloading' && (
         <div className={styles.installActions}>
           <button className={styles.cancelInstallButton} onClick={handleCancel}>
-            Cancel installation
+            {$t('Cancel installation')}
           </button>
         </div>
       )}
