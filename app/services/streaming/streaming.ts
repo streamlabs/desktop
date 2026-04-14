@@ -1833,11 +1833,13 @@ export class StreamingService
       this.views.isTwitchDualStreaming ||
       (contextName === 'enhancedBroadcasting' && this.views.isTwitchDualStreamEnabled)
     ) {
+      console.log('IN IF Setting streaming video context for', contextName, 'to', display);
       this.contexts[contextName].streaming.video = this.videoSettingsService.contexts.horizontal;
       (this.contexts[contextName].streaming as
         | IEnhancedBroadcastingSimpleStreaming
         | IEnhancedBroadcastingAdvancedStreaming).additionalVideo = this.videoSettingsService.contexts.vertical;
     } else {
+      console.log('IN ELSE Setting streaming video context for', contextName, 'to', display);
       this.contexts[contextName].streaming.video = this.videoSettingsService.contexts[display];
     }
 
@@ -1852,11 +1854,16 @@ export class StreamingService
 
     // Create a designated service instance for enhanced broadcasting with the default service settings.
     if (contextName === 'enhancedBroadcasting') {
+      // Note: stream type must be `rtmp_common` to prevent a crash from a possible undefined server value
+      const streamType = 'rtmp_common';
+
       this.contexts[contextName].streaming.service = ServiceFactory.create(
-        ServiceFactory.legacySettings.settings.streamType,
+        streamType,
         'enhanced-broadcasting-service',
         ServiceFactory.legacySettings.settings,
       );
+
+      this.contexts[contextName].streaming.service.update(streamSettings);
     } else if (!this.views.protectedModeEnabled) {
       this.contexts[display].streaming.service = ServiceFactory.legacySettings;
       this.contexts[display].streaming.service.update(streamSettings);

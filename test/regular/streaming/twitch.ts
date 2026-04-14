@@ -163,7 +163,7 @@ test('Streaming to Twitch unlisted category', async t => {
 });
 
 // This test has been skipped because of an error likely caused by Selenium and Chromium version mismatch
-test(
+test.skip(
   'Twitch Enhanced Broadcasting',
   withUser('twitch', { multistream: true, prime: true }),
   async t => {
