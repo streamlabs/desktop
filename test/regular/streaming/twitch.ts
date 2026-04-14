@@ -20,6 +20,7 @@ import { assertFormContains, fillForm } from '../../helpers/modules/forms';
 import { setInputValue } from '../../helpers/modules/forms/base';
 import { logIn } from '../../helpers/modules/user';
 import { dismissModal } from '../../helpers/webdriver/modals';
+import { sleep } from '../../helpers/sleep';
 
 async function enableTwitchVOD(status: boolean = true) {
   await showSettingsWindow('Output', async () => {
@@ -202,6 +203,8 @@ test(
     await submit();
     await waitForStreamStart();
     await stopStream();
+
+    await sleep(4000);
 
     t.pass();
   },
