@@ -1422,7 +1422,7 @@ export class StreamingService
    * stream and in dual output mode this will be called after starting the vertical stream.
    * @param code - EOBSOutputSignal - for logging the signal for debugging purposes
    */
-  private async handleStartStreaming(code: EOBSOutputSignal) {
+  private async handleStartStreaming(code: EOBSOutputSignal, display: TDisplayType) {
     // Handle start recording when start streaming
     if (this.streamSettingsService.settings.recordWhenStreaming && !this.isRecording) {
       await this.toggleRecording();
@@ -1436,13 +1436,6 @@ export class StreamingService
     ) {
       this.startReplayBuffer();
     }
-
-    // Resolve the promise for starting the stream
-    // Only use the vertical context if the horizontal context does not exist
-    const display =
-      this.views.isDualOutputMode && this.contexts.horizontal.streaming === null
-        ? 'vertical'
-        : 'horizontal';
 
     this.SET_STREAMING_STATUS(EStreamingState.Live, display, new Date().toISOString());
     this.resolveStartStreaming();
@@ -1521,7 +1514,7 @@ export class StreamingService
         });
       } else {
         // Resolve the start streaming promise after the non-enhanced-broadcasting stream starts
-        await this.handleStartStreaming(code);
+        await this.handleStartStreaming(code, context as TDisplayType);
       }
     } else {
       // In dual output mode without enhanced broadcasting, create the horizontal streaming instance after the vertical stream
@@ -1541,7 +1534,7 @@ export class StreamingService
         // Finally, all conditions should be met to resolve the start streaming promise in dual output mode without enhanced broadcasting.
         // Only resolve the start streaming promise after the horizontal stream has started to prevent unintended side effects of duplicate
         // actions taken after starting the stream
-        await this.handleStartStreaming(code);
+        await this.handleStartStreaming(code, context);
       }
     }
   }
@@ -1563,12 +1556,12 @@ export class StreamingService
           isEnhancedBroadcasting: false,
         });
       } else {
-        await this.handleStartStreaming(code);
+        await this.handleStartStreaming(code, context as TDisplayType);
       }
     }
 
     if (context === 'horizontal') {
-      await this.handleStartStreaming(code);
+      await this.handleStartStreaming(code, context as TDisplayType);
     }
 
     if (context === 'vertical') {
@@ -1622,7 +1615,10 @@ export class StreamingService
 
     // Stop the horizontal stream. On the `Stop` signal in `handleStreamingSignal`, all other streaming
     // instances will be stopped and destroyed. Otherwise, just cleanup all of the streaming instances.
-    if (this.contexts.horizontal.streaming) {
+    if (
+      this.contexts.horizontal.streaming &&
+      this.state.status.horizontal.streaming !== EStreamingState.Offline
+    ) {
       this.contexts.horizontal.streaming.stop(force);
 
       // Return because in dual output mode, the vertical stream will be stopped in the `handleStreamingSignal`
@@ -1631,7 +1627,10 @@ export class StreamingService
 
     // Stop the vertical stream first because in dual output mode, the horizontal stream will always be
     // stopped in the `handleStreamingSignal`
-    if (this.contexts.vertical.streaming) {
+    if (
+      this.contexts.vertical.streaming &&
+      this.state.status.vertical.streaming !== EStreamingState.Offline
+    ) {
       this.contexts.vertical.streaming.stop(force);
     }
 
@@ -1833,13 +1832,11 @@ export class StreamingService
       this.views.isTwitchDualStreaming ||
       (contextName === 'enhancedBroadcasting' && this.views.isTwitchDualStreamEnabled)
     ) {
-      console.log('IN IF Setting streaming video context for', contextName, 'to', display);
       this.contexts[contextName].streaming.video = this.videoSettingsService.contexts.horizontal;
       (this.contexts[contextName].streaming as
         | IEnhancedBroadcastingSimpleStreaming
         | IEnhancedBroadcastingAdvancedStreaming).additionalVideo = this.videoSettingsService.contexts.vertical;
     } else {
-      console.log('IN ELSE Setting streaming video context for', contextName, 'to', display);
       this.contexts[contextName].streaming.video = this.videoSettingsService.contexts[display];
     }
 
