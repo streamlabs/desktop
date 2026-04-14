@@ -2264,6 +2264,7 @@ export class StreamingService
    * @param display - The context to handle the signal for
    */
   private async handleSignal(info: EOutputSignal, context: TOutputContext) {
+    const type = info.type as EOBSOutputType;
     try {
       if (info.code !== EOutputCode.Success) {
         // handle errors before attempting anything else
@@ -2271,23 +2272,23 @@ export class StreamingService
 
         if (!info.error || info.error === '') {
           info.error = $t('An unknown %{type} error occurred.', {
-            type: outputType(info.type as EOBSOutputType),
+            type: outputType(type),
           });
         }
 
-        await this.handleFactoryOutputError(info, context);
-      } else if (info.type === EOBSOutputType.Streaming) {
+        await this.handleFactoryOutputError(info, context, type);
+      } else if (type === EOBSOutputType.Streaming) {
         await this.handleStreamingSignal(info, context);
-      } else if (info.type === EOBSOutputType.Recording && this.isDisplayContext(context)) {
+      } else if (type === EOBSOutputType.Recording && this.isDisplayContext(context)) {
         await this.handleRecordingSignal(info, context);
-      } else if (info.type === EOBSOutputType.ReplayBuffer && this.isDisplayContext(context)) {
+      } else if (type === EOBSOutputType.ReplayBuffer && this.isDisplayContext(context)) {
         await this.handleReplayBufferSignal(info, context);
       } else {
         console.log('Unknown Output Signal or Error:', context, info);
       }
     } catch (e: unknown) {
       console.error('Error handling output signal:', e);
-      await this.handleFactoryOutputError(info, context);
+      await this.handleFactoryOutputError(info, context, type);
       this.RESET_STREAM_INFO();
       this.rejectStartStreaming();
     }
@@ -2310,7 +2311,7 @@ export class StreamingService
 
     // We received a signal we didn't recognize
     if (!nextState) {
-      await this.handleFactoryOutputError(info, context);
+      await this.handleFactoryOutputError(info, context, EOBSOutputType.Streaming);
       return;
     }
 
@@ -2389,7 +2390,7 @@ export class StreamingService
 
     // We received a signal we didn't recognize
     if (!nextState) {
-      await this.handleFactoryOutputError(info, display);
+      await this.handleFactoryOutputError(info, display, EOBSOutputType.Recording);
       return;
     }
 
@@ -2472,7 +2473,7 @@ export class StreamingService
 
     // We received a signal we didn't recognize
     if (!nextState) {
-      await this.handleFactoryOutputError(info, display);
+      await this.handleFactoryOutputError(info, display, EOBSOutputType.ReplayBuffer);
       return;
     }
 
@@ -2867,21 +2868,19 @@ export class StreamingService
     return !('mixer' in instance);
   }
 
-  private async handleFactoryOutputError(info: EOutputSignal, context: TOutputContext) {
-    this.createOBSError(
-      EOBSOutputType.Streaming,
-      context,
-      info.signal as EOBSOutputSignal,
-      info.code,
-      info.error,
-    );
+  private async handleFactoryOutputError(
+    info: EOutputSignal,
+    context: TOutputContext,
+    type: EOBSOutputType,
+  ) {
+    this.createOBSError(type, context, info.signal as EOBSOutputSignal, info.code, info.error);
 
     if (this.isDisplayContext(context)) {
       await this.destroyOutputContextIfExists(context, 'replayBuffer');
       await this.destroyOutputContextIfExists(context, 'recording');
     }
 
-    await this.handleCleanupStreamingInstances({ skipHorizontal: false });
+    this.handleCleanupStreamingInstances({ skipHorizontal: false });
 
     await this.resetInfo();
     this.rejectStartStreaming();
