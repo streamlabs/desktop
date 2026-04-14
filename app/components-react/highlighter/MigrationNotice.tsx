@@ -46,19 +46,19 @@ export default function MigrationNotice(props: IMigrationNoticeProps) {
   }, [installStep]);
 
   async function checkReplayInstallation() {
-    const installed = await HighlighterService.isStreamlabsReplayInstalled();
+    const installed = await HighlighterService.actions.return.isStreamlabsReplayInstalled();
     setIsReplayInstalled(installed);
 
     // If Replay is installed, check if the recorder is running
     if (installed) {
-      const recorderRunning = await HighlighterService.isStreamlabsRecorderRunning();
+      const recorderRunning = await HighlighterService.actions.return.isStreamlabsRecorderRunning();
       setIsRecorderRunning(recorderRunning);
     }
   }
 
   async function handleOpenReplay() {
     // Use the service method to handle opening/installing Replay
-    const isReplayInstalled = await HighlighterService.openReplay(variant);
+    const isReplayInstalled = await HighlighterService.actions.return.openReplay(variant);
 
     if (props.onOpenReplay) {
       props.onOpenReplay();
@@ -90,7 +90,9 @@ export default function MigrationNotice(props: IMigrationNoticeProps) {
             {$t(`${REPLAY_APP_NAME} is active`)}
           </h1>
           <p className={styles.subtitle}>
-            {$t(`The ${REPLAY_APP_NAME} recorder is currently running and capturing your gameplay.`)}
+            {$t(
+              `The ${REPLAY_APP_NAME} recorder is currently running and capturing your gameplay.`,
+            )}
           </p>
         </div>
       </div>

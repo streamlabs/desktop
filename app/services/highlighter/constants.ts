@@ -37,5 +37,5 @@ export const HIGHLIGHTER_SETUP_URL_STAGING =
 export const HIGHLIGHTER_SETUP_URL_PRODUCTION =
   'https://cdn-highlighter-desktop.streamlabs.com/production/win32/x64/G%20HUB%20Replay-Setup.exe';
 
-export const REPLAY_PROTOCOL = 'ghub-replay';
+export const REPLAY_PROTOCOL = 'streamlabs-highlighter';
 export const REPLAY_APP_NAME = 'Streamlabs Highlighter';

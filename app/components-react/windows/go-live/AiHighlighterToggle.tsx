@@ -2,6 +2,7 @@ import { SwitchInput } from 'components-react/shared/inputs/SwitchInput';
 import React, { useEffect, useState } from 'react';
 import styles from './AiHighlighterToggle.m.less';
 import { Services } from 'components-react/service-provider';
+import * as remote from '@electron/remote';
 import { useDebounce, useVuex } from 'components-react/hooks';
 import EducationCarousel from 'components-react/highlighter/EducationCarousel';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
@@ -14,6 +15,7 @@ import {
   TikTokLogo,
   InstagramLogo,
 } from 'components-react/highlighter/HypeWrapper';
+import { REPLAY_PROTOCOL, REPLAY_APP_NAME } from 'services/highlighter/constants';
 
 export default function AiHighlighterToggle({
   game,
@@ -33,6 +35,7 @@ export default function AiHighlighterToggle({
 
   const [gameIsSupported, setGameIsSupported] = useState(false);
   const [gameConfig, setGameConfig] = useState<any>(null);
+  const [showReplayRecordingAlert, setShowReplayRecordingAlert] = useState(false);
 
   useEffect(() => {
     const supportedGame = isGameSupported(game);
@@ -44,6 +47,28 @@ export default function AiHighlighterToggle({
       setGameConfig(null);
     }
   }, [game]);
+
+  useEffect(() => {
+    checkRecorderStatus();
+  }, []);
+
+  async function checkRecorderStatus() {
+    const running = await HighlighterService.actions.return.isStreamlabsRecorderRunning();
+    setShowReplayRecordingAlert(running);
+  }
+
+  async function handleStopRecording() {
+    try {
+      remote.shell.openExternal(`${REPLAY_PROTOCOL}://stop-recording`);
+      // Hide the warning alert
+      setShowReplayRecordingAlert(false);
+      // Recheck recorder status after a short delay
+      // Maybe we want to add that back later
+      // setTimeout(checkRecorderStatus, 5000);
+    } catch (error: unknown) {
+      console.error('Failed to send stop recording command:', error);
+    }
+  }
 
   function getInitialExpandedState() {
     if (gameIsSupported) {
@@ -79,6 +104,43 @@ export default function AiHighlighterToggle({
           <div style={{ flexGrow: 0, backgroundColor: 'red' }}></div>
 
           <div className={styles.aiHighlighterBox}>
+            {showReplayRecordingAlert && (
+              <div
+                style={{
+                  zIndex: 10,
+                  marginBottom: '16px',
+                  padding: '16px',
+                  backgroundColor: 'transparent',
+                  border: '2px solid var(--red)',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '20px' }}>⚠️</span>
+                  <div>
+                    <div style={{ fontWeight: 600, marginBottom: '4px' }}>
+                      {$t('External Streamlabs Recorder is Running')}
+                    </div>
+                    <div style={{ fontSize: '12px', opacity: 0.8 }}>
+                      {$t(
+                        `The ${REPLAY_APP_NAME} recorder is currently active and capturing gameplay.`,
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
+                  <Button type="default" onClick={() => setShowReplayRecordingAlert(false)}>
+                    {$t('Record on Both')}
+                  </Button>
+                  <Button type="primary" danger onClick={handleStopRecording}>
+                    {$t('Stop Highlighter Recording')}
+                  </Button>
+                </div>
+              </div>
+            )}
             <div
               className={styles.coloredBlob}
               style={{
@@ -107,7 +169,11 @@ export default function AiHighlighterToggle({
                       size="small"
                       type="primary"
                       onClick={() => {
-                        HighlighterService.installAiHighlighter(false, 'Go-live-flow', game);
+                        HighlighterService.actions.installAiHighlighter(
+                          false,
+                          'Go-live-flow',
+                          game,
+                        );
                       }}
                     >
                       {$t('Install AI Highlighter')}
@@ -138,33 +204,35 @@ export default function AiHighlighterToggle({
               <>
                 <div className={styles.expandedWrapper}>
                   {!useHighlighter ? (
-                    <div style={{ paddingTop: '88px', width: '100%', display: 'flex' }}>
+                    <div
+                      style={{ top: '12px', width: '100%', display: 'flex', position: 'relative' }}
+                    >
                       {gameConfig?.importModalConfig?.horizontalExampleVideo &&
                       gameConfig?.importModalConfig?.verticalExampleVideo ? (
                         <>
                           <div
                             className={styles.plattformIcon}
-                            style={{ top: '84px', left: '120px' }}
+                            style={{ top: '0px', left: '120px' }}
                           >
                             <YouTubeLogo />
                           </div>
                           <div
                             className={styles.plattformIcon}
-                            style={{ top: '181px', left: '32px' }}
+                            style={{ top: '97px', left: '32px' }}
                           >
                             <DiscordLogo />
                           </div>
 
                           <div
                             className={styles.plattformIcon}
-                            style={{ top: '85px', left: '283px' }}
+                            style={{ top: '1px', left: '283px' }}
                           >
                             <TikTokLogo />
                           </div>
 
                           <div
                             className={styles.plattformIcon}
-                            style={{ top: '177px', left: '187px' }}
+                            style={{ top: '93px', left: '187px' }}
                           >
                             <InstagramLogo />
                           </div>

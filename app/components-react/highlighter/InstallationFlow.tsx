@@ -20,11 +20,11 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
   }));
 
   function handleRetry() {
-    HighlighterService.installStreamlabsReplay();
+    HighlighterService.actions.installStreamlabsReplay();
   }
 
   function handleCancel() {
-    HighlighterService.cancelReplayInstall();
+    HighlighterService.actions.cancelReplayInstall();
     props.onCancel();
   }
 
@@ -51,7 +51,7 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
           <p className={styles.installSubtext}>
             {$t("It seems the installation didn't finish.")}
             <br />
-            {$t('Let\'s figure this out together and')}{' '}
+            {$t("Let's figure this out together and")}{' '}
             <a
               className={styles.supportLink}
               href="https://support.streamlabs.com"

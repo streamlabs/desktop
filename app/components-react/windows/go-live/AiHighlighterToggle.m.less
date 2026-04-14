@@ -20,7 +20,7 @@
 }
 .colored-blob {
   width: 90%;
-  position: absolute;
+
   height: 30%;
   bottom: -22%;
   left: 5%;
@@ -50,8 +50,7 @@
   flex-direction: column;
   width: 100%;
   gap: 2px;
-  position: absolute;
-  top: 17px;
+  padding-top: 16px;
 }
 
 .headline-wrapper {
@@ -86,6 +85,7 @@
 .artwork-image {
   flex-shrink: 0;
   min-height: 100%;
+  // max-width: 190px;
 }
 .toggle-text-wrapper {
   display: flex;
@@ -122,7 +122,7 @@
   position: absolute;
   width: calc(@width / 12);
   height: calc(@height / 12);
-  top: 105px;
+  top: 21px;
   transform: rotate(-5deg);
   overflow: hidden;
   border-radius: 5px;
@@ -134,7 +134,7 @@
   position: absolute;
   height: calc(@width / 12);
   width: calc(@height / 12);
-  top: 85px;
+  top: 1px;
   left: 200px;
   transform: rotate(2deg);
   overflow: hidden;
@@ -150,9 +150,10 @@
 }
 
 .education-section {
-  padding-top: 92px;
+  padding-top: 24px;
   gap: 5px;
   width: 100%;
+  min-width: 260px;
   display: flex;
   flex-direction: column;
   font-size: 16px;

@@ -328,7 +328,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
   /**
    * Checks if Streamlabs Replay is installed by verifying the Windows deeplink protocol registration
-   * @returns Promise<boolean> - true if the ghub-replay:// protocol is registered, false otherwise
+   * @returns Promise<boolean> - true if the ${REPLAY_PROTOCOL} protocol is registered, false otherwise
    */
   async isStreamlabsReplayInstalled(): Promise<boolean> {
     // Only check on Windows
@@ -350,8 +350,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         return false;
       }
 
-      // Check if the output contains an actual executable path, not just "URL:ghub-replay"
-      const hasValidCommand = stdout.includes('.exe') && !stdout.includes(`URL:${REPLAY_PROTOCOL}`);
+      // Check if the output contains an actual executable path
+      const hasValidCommand = stdout.includes('.exe');
 
       return hasValidCommand;
     } catch (error: unknown) {

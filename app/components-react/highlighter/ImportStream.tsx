@@ -109,14 +109,14 @@ export function ImportStreamModal({
       }
 
       if (game && filePath && filePath.length > 0) {
-        HighlighterService.openReplayImport(filePath[0], game, openedFrom, id, inputValue);
+        HighlighterService.actions.openReplayImport(filePath[0], game, openedFrom, id, inputValue);
         closeModal(false);
         return;
       }
 
       filePath = await importStreamFromDevice();
       if (filePath && filePath.length > 0) {
-        HighlighterService.openReplayImport(filePath[0], game, openedFrom, id, inputValue);
+        HighlighterService.actions.openReplayImport(filePath[0], game, openedFrom, id, inputValue);
         closeModal(false);
       }
     } catch (error: unknown) {
@@ -151,7 +151,7 @@ export function ImportStreamModal({
 
           // If there's a pending import, execute it now
           if (pendingImport) {
-            HighlighterService.openReplayImport(
+            HighlighterService.actions.openReplayImport(
               pendingImport.filePath,
               pendingImport.game,
               openedFrom,
