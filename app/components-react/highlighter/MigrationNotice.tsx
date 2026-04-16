@@ -28,9 +28,9 @@ export default function MigrationNotice(props: IMigrationNoticeProps) {
   const isInstalling = installStep !== 'idle' && installStep !== 'done';
 
   // Check if migration notice feature is enabled
-  const isMigrationEnabled =
-    true ||
-    IncrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.highlighterMigration);
+  const isMigrationEnabled = IncrementalRolloutService.views.featureIsEnabled(
+    EAvailableFeatures.highlighterMigration,
+  );
 
   useEffect(() => {
     checkReplayInstallation();
