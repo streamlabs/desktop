@@ -569,10 +569,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       this.state.replayInstall.step !== 'done' &&
       this.state.replayInstall.step !== 'error';
 
-    this.replayInstallAbortController?.abort();
-    this.replayInstallAbortController = null;
-    this.SET_REPLAY_INSTALL({ step: 'idle', progress: 0, error: null });
-
     // Track cancellation if an installation was in progress
     if (wasInstalling) {
       this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
@@ -580,6 +576,10 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         phase: this.state.replayInstall.step,
       });
     }
+
+    this.replayInstallAbortController?.abort();
+    this.replayInstallAbortController = null;
+    this.SET_REPLAY_INSTALL({ step: 'idle', progress: 0, error: null });
   }
 
   /**
