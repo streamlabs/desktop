@@ -18,6 +18,7 @@ import {
   HIGHLIGHTER_SETUP_URL_STAGING,
   HIGHLIGHTER_SETUP_URL_PRODUCTION,
   REPLAY_PROTOCOL,
+  REPLAY_SETUP_EXE_NAME,
 } from './constants';
 import { pmap } from 'util/pmap';
 import { RenderingClip } from './rendering/rendering-clip';
@@ -389,9 +390,9 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   // =================================================================================================
 
   private getReplaySetupUrl(): string {
-    // if (Utils.isProduction) {
-    //   return REPLAY_SETUP_URL_PRODUCTION;
-    // }
+    if (Utils.isProduction) {
+      return HIGHLIGHTER_SETUP_URL_PRODUCTION;
+    }
     return HIGHLIGHTER_SETUP_URL_STAGING;
   }
 
@@ -434,21 +435,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       // --- Downloading phase ---
       this.SET_REPLAY_INSTALL({ step: 'downloading', progress: 0, error: null });
 
-      // Fake progress that increments during download
-      // progressInterval = setInterval(() => {
-      //   const current = this.state.replayInstall.progress;
-      //   if (current < 75) {
-      //     // Slow down as we approach 75%
-      //     const increment = Math.max(0.5, (75 - current) * 0.04);
-      //     this.SET_REPLAY_INSTALL({ progress: Math.min(75, current + increment) });
-      //   }
-      // }, 300);
-
       const setupUrl = this.getReplaySetupUrl();
 
       // Download the setup exe to temp directory
       const tempDir = os.tmpdir();
-      const setupPath = path.join(tempDir, 'G HUB Replay-Setup.exe');
+      const setupPath = path.join(tempDir, REPLAY_SETUP_EXE_NAME);
 
       await downloadFile(
         setupUrl,
@@ -562,7 +553,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       // Track installation failed
       this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
         type: 'ReplayInstallationFailed',
-        error: errorMessage,
       });
 
       return false;
@@ -665,6 +655,13 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       openedFrom,
       streamId,
       game,
+    });
+  }
+  requestStopRecordingReplay() {
+    remote.shell.openExternal(`${REPLAY_PROTOCOL}://stop-recording`);
+
+    this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+      type: 'ReplayRequestStopRecording',
     });
   }
 

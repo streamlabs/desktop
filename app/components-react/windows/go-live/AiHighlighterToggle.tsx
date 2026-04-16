@@ -15,7 +15,8 @@ import {
   TikTokLogo,
   InstagramLogo,
 } from 'components-react/highlighter/HypeWrapper';
-import { REPLAY_PROTOCOL, REPLAY_APP_NAME } from 'services/highlighter/constants';
+import { REPLAY_APP_NAME } from 'services/highlighter/constants';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function AiHighlighterToggle({
   game,
@@ -25,7 +26,7 @@ export default function AiHighlighterToggle({
   cardIsExpanded: boolean;
 }) {
   //TODO M: Probably good way to integrate the highlighter in to GoLiveSettings
-  const { HighlighterService } = Services;
+  const { HighlighterService, IncrementalRolloutService } = Services;
   const { useHighlighter, highlighterVersion } = useVuex(() => {
     return {
       useHighlighter: HighlighterService.views.useAiHighlighter,
@@ -53,13 +54,19 @@ export default function AiHighlighterToggle({
   }, []);
 
   async function checkRecorderStatus() {
+    // Check migration feature flag first
+    const migrationEnabled = IncrementalRolloutService.views.featureIsEnabled(
+      EAvailableFeatures.highlighterMigration,
+    );
+    if (!migrationEnabled) return;
+
     const running = await HighlighterService.actions.return.isStreamlabsRecorderRunning();
     setShowReplayRecordingAlert(running);
   }
 
   async function handleStopRecording() {
     try {
-      remote.shell.openExternal(`${REPLAY_PROTOCOL}://stop-recording`);
+      HighlighterService.actions.requestStopRecordingReplay();
       // Hide the warning alert
       setShowReplayRecordingAlert(false);
       // Recheck recorder status after a short delay

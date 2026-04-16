@@ -16,6 +16,7 @@ import { getConfigByGame, supportedGames } from 'services/highlighter/models/gam
 import path from 'path';
 import MigrationNotice from './MigrationNotice';
 import { HypeWrapper } from './HypeWrapper';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 type GameConfig = ReturnType<typeof getConfigByGame>;
 
@@ -32,7 +33,7 @@ export function ImportStreamModal({
   selectedGame?: EGame;
   streamInfo?: IStreamInfoForAiHighlighter;
 }) {
-  const { HighlighterService, UsageStatisticsService } = Services;
+  const { HighlighterService, UsageStatisticsService, IncrementalRolloutService } = Services;
   const [replayInstalled, setReplayInstalled] = useState<boolean | null>(null);
   const [showingInstallFlow, setShowingInstallFlow] = useState(false);
   const [pendingImport, setPendingImport] = useState<{
@@ -57,6 +58,9 @@ export function ImportStreamModal({
   );
   const gameOptions = supportedGames;
   const gameConfig = getConfigByGame(game);
+  const migrationEnabled = IncrementalRolloutService.views.featureIsEnabled(
+    EAvailableFeatures.highlighterMigration,
+  );
 
   function handleInputChange(value: string) {
     setInputValue(value);
@@ -169,7 +173,11 @@ export function ImportStreamModal({
   // Show MigrationNotice if Replay is not installed
   // For non-after-stream flows (Highlighter component), show install UI immediately
   // For after-stream flow, only show when user triggers installation
-  if (replayInstalled === false && (openedFrom !== 'after-stream' || showingInstallFlow)) {
+  if (
+    migrationEnabled &&
+    replayInstalled === false &&
+    (openedFrom !== 'after-stream' || showingInstallFlow)
+  ) {
     // For after-stream flow, wrap in hypeWrapper
     if (openedFrom === 'after-stream') {
       return (

@@ -27,6 +27,7 @@ import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import { ImportStreamModal } from './ImportStream';
 import SupportedGames from './supportedGames/SupportedGames';
 import MigrationNotice from './MigrationNotice';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 type TModalStreamView = {
   type: 'upload';
@@ -37,13 +38,22 @@ type TModalStreamView = {
 } | null;
 
 export default function StreamView({ emitSetView }: { emitSetView: (data: IViewState) => void }) {
-  const { HighlighterService, HotkeysService, UsageStatisticsService } = Services;
+  const {
+    HighlighterService,
+    HotkeysService,
+    UsageStatisticsService,
+    IncrementalRolloutService,
+  } = Services;
   const v = useVuex(() => ({
     error: HighlighterService.views.error,
     uploadInfo: HighlighterService.views.uploadInfo,
     highlighterVersion: HighlighterService.views.highlighterVersion,
     tempRecordingInfoPath: HighlighterService.views.tempRecordingInfo.recordingPath,
   }));
+
+  const migrationEnabled = IncrementalRolloutService.views.featureIsEnabled(
+    EAvailableFeatures.highlighterMigration,
+  );
 
   useEffect(() => {
     const recordingInfo = { ...HighlighterService.views.tempRecordingInfo };
@@ -170,11 +180,13 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
       </div>
 
       <Scrollable style={{ flexGrow: 1, padding: '20px 0 20px 20px' }}>
-        <MigrationNotice
-          onShowAllClips={() => {
-            emitSetView({ view: EHighlighterView.CLIPS, id: undefined });
-          }}
-        />
+        {migrationEnabled && (
+          <MigrationNotice
+            onShowAllClips={() => {
+              emitSetView({ view: EHighlighterView.CLIPS, id: undefined });
+            }}
+          />
+        )}
         {highlightedStreams.length === 0 ? (
           <>No highlight clips created from streams</> // TODO: Add empty state
         ) : (
