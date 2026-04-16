@@ -585,7 +585,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   /**
    * Opens Streamlabs Replay or starts installation if not installed
    * @param source - Where the action was initiated from ('page' or 'modal')
-   * @param onInstallationStatusChange - Callback when installation status changes (e.g., after failed deeplink)
    * @returns Promise<boolean> - true if Replay was opened, false if installation was started
    */
   async openReplay(source: 'page' | 'modal'): Promise<boolean> {
