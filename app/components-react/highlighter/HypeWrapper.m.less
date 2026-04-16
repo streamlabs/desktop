@@ -3,11 +3,12 @@
 @sectionWidth: 424px;
 @sectionHeight: @sectionWidth;
 @padding: 16px;
+@gap: 16px;
 @width: 1920px;
 @height: 1080px;
 
 .hype-wrapper {
-  --fixed-height: 504px;
+  --fixed-height: calc(504px + 22px + 14px + @gap);
   --fixed-width: 441px;
   position: relative;
   width: 80vw;

@@ -345,6 +345,13 @@ export function ImportStreamModal({
           {filePath ? $t('Find game highlights') : $t('Select video and start import')}
         </Button>
       </div>
+      <div className={styles.explainerTextWrapper}>
+        {replayInstalled ? (
+          <p className={styles.explainerText}> Continuing will open Streamlabs Highlighter</p>
+        ) : (
+          <p className={styles.explainerText}> Continuing will install Streamlabs Highlighter</p>
+        )}
+      </div>
     </HypeWrapper>
   );
 }
