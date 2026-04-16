@@ -441,19 +441,14 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       const tempDir = os.tmpdir();
       const setupPath = path.join(tempDir, REPLAY_SETUP_EXE_NAME);
 
-      await downloadFile(
-        setupUrl,
-        setupPath,
-        (progress: IDownloadProgress) => {
-          // Map download progress to 0-75%
-          const downloadPercent = progress.percent * 75;
-          const current = this.state.replayInstall.progress;
-          if (downloadPercent > current) {
-            this.SET_REPLAY_INSTALL({ progress: downloadPercent });
-          }
-        },
-        signal,
-      );
+      await downloadFile(setupUrl, setupPath, (progress: IDownloadProgress) => {
+        // Map download progress to 0-75%
+        const downloadPercent = progress.percent * 75;
+        const current = this.state.replayInstall.progress;
+        if (downloadPercent > current) {
+          this.SET_REPLAY_INSTALL({ progress: downloadPercent });
+        }
+      });
 
       clearProgress();
 
