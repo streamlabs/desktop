@@ -738,7 +738,17 @@ export class StreamingService
       await this.runCheck('startVideoTransmission', () => this.finishStartStreaming());
     } catch (e: unknown) {
       console.error('Error starting video transmission: ', e);
-      return;
+
+      const failureType =
+        typeof e === 'string' && e.includes('encoder') ? 'INVALID_ENCODER' : 'UNKNOWN_ERROR';
+
+      const errorType = this.handleTypedStreamError(
+        e,
+        failureType,
+        $t('Failed to start video transmission'),
+      );
+
+      throwStreamError(errorType);
     }
 
     // check if we should show the waring about the disabled Auto-start
@@ -1878,7 +1888,23 @@ export class StreamingService
     this.contexts[contextName].streaming.network = NetworkFactory.create();
 
     if (start) {
-      this.contexts[contextName].streaming.start();
+      try {
+        this.contexts[contextName].streaming.start();
+      } catch (e: unknown) {
+        console.error('Error starting streaming:', e);
+
+        this.createOBSError(
+          EOBSOutputType.Streaming,
+          contextName,
+          EOBSOutputSignal.Start,
+          EOutputCode.Error,
+          e instanceof StreamError
+            ? e.message
+            : $t('An unknown Streaming error occurred. Please try again.'),
+        );
+
+        this.handleDestroyOutputContexts(contextName);
+      }
     }
 
     return Promise.resolve(this.contexts[contextName].streaming);
@@ -2184,7 +2210,21 @@ export class StreamingService
     };
 
     if (start) {
-      this.contexts[display].recording.start();
+      try {
+        this.contexts[display].recording.start();
+      } catch (e: unknown) {
+        console.error('Error starting recording:', e);
+
+        this.createOBSError(
+          EOBSOutputType.Recording,
+          display,
+          EOBSOutputSignal.Start,
+          EOutputCode.Error,
+          typeof e === 'string' ? e : $t('An unknown Recording error occurred. Please try again.'),
+        );
+
+        this.handleDestroyOutputContexts(display);
+      }
     }
 
     return this.contexts[display].recording;
@@ -2633,7 +2673,24 @@ export class StreamingService
       await this.handleSignal(signal, display);
     };
 
-    this.contexts[display].replayBuffer.start();
+    try {
+      this.contexts[display].replayBuffer.start();
+    } catch (e: unknown) {
+      console.error('Error starting replay buffer:', e);
+
+      this.createOBSError(
+        EOBSOutputType.ReplayBuffer,
+        display,
+        EOBSOutputSignal.Start,
+        EOutputCode.Error,
+        typeof e === 'string'
+          ? e
+          : $t('An unknown Replay Buffer error occurred. Please try again.'),
+      );
+
+      this.handleDestroyOutputContexts(display);
+    }
+
     this.usageStatisticsService.recordFeatureUsage('ReplayBuffer');
   }
 
