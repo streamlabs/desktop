@@ -1,21 +1,21 @@
-.migrationNotice {
-  height: 60vh;
-  padding: 40px 40px;
+@sectionWidth: 424px;
+@sectionHeight: @sectionWidth;
+@gap: 16px;
+
+.migration-notice {
   text-align: center;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  height: 50vh;
 }
 
-.migrationNoticeModal {
-  padding: 64px;
-  background-color: var(--background);
-  border-radius: 24px;
-}
-
-.content {
-  max-width: 600px;
-  margin: 0 auto;
+.migration-notice-modal {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .title {
@@ -25,7 +25,7 @@
   line-height: 1.2;
 }
 
-.titleModal {
+.title-modal {
   font-size: 24px;
 }
 
@@ -43,66 +43,33 @@
   align-items: center;
 }
 
-.primaryButton {
-  background: #ffffff;
-  color: #111827;
-  border: none;
-  padding: 12px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background: #f3f4f6;
-  }
-
-  &:active {
-    background: #e5e7eb;
-  }
-}
-
-.secondaryButton {
-  background: transparent;
-  color: inherit;
-  border: none;
-  padding: 12px 24px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-
-  &:hover {
-    opacity: 0.8;
-  }
-
-  &:active {
-    opacity: 0.6;
-  }
-}
-
 // =================================================================================================
 // Installation Flow
 // =================================================================================================
 
-.installationFlow {
-  height: 60vh;
-  padding: 40px 40px;
+.installation-flow {
   display: flex;
+  height: 100%;
   flex-direction: column;
-  align-items: center;
   justify-content: space-between;
 }
 
-.installTitle {
+.installation-flow-page {
+  max-height: 50vh;
+}
+
+.installation-flow-modal {
+  max-height: 100%;
+}
+
+.install-title {
   font-size: 16px;
   font-weight: 600;
   align-self: flex-start;
   margin: 0;
 }
 
-.installContent {
+.install-content {
   text-align: center;
   flex: 1;
   display: flex;
@@ -111,13 +78,13 @@
   justify-content: center;
 }
 
-.progressPercent {
+.progress-percent {
   font-size: 48px;
   font-weight: 700;
   margin-bottom: 16px;
 }
 
-.installSubtext {
+.install-subtext {
   font-size: 14px;
   opacity: 0.7;
   line-height: 1.6;
@@ -125,21 +92,21 @@
   text-align: center;
 }
 
-.errorTitle {
+.error-title {
   font-size: 28px;
   font-weight: 700;
   color: #ef4444;
   margin-bottom: 16px;
 }
 
-.successTitle {
+.success-title {
   font-size: 28px;
   font-weight: 700;
   color: #34d399;
   margin-bottom: 16px;
 }
 
-.supportLink {
+.support-link {
   color: inherit;
   text-decoration: underline;
   cursor: pointer;
@@ -150,12 +117,12 @@
   }
 }
 
-.installActions {
+.install-actions {
   width: 100%;
   max-width: 400px;
 }
 
-.cancelInstallButton {
+.cancel-install-button {
   width: 100%;
   background: #374151;
   color: #fff;
@@ -176,7 +143,7 @@
   }
 }
 
-.retryButton {
+.retry-button {
   width: 100%;
   background: #ffffff;
   color: #111827;

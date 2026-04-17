@@ -94,8 +94,9 @@
   --fixed-height: 504px;
   --fixed-width: 441px;
   position: relative;
-  width: 80vw;
   height: 80vh;
+  width: 80vw;
+  max-width: 1500px;
   display: grid;
   border-radius: 24px;
   overflow: hidden;
@@ -266,6 +267,7 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+  height: 556px; // needs to be hardcoded. to match hypewrapper
 
   :global {
     /* Hide labels */

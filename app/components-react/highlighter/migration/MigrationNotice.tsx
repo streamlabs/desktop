@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import styles from './MigrationNotice.m.less';
+import { Button } from 'antd';
+import styles from '../MigrationNotice.m.less';
 import cx from 'classnames';
 import { Services } from 'components-react/service-provider';
 import Utils from 'services/utils';
 import InstallationFlow from './InstallationFlow';
+import SectionHeader from './SectionHeader';
 import { useVuex } from 'components-react/hooks';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 import { REPLAY_APP_NAME } from 'services/highlighter/constants';
@@ -78,7 +80,7 @@ export default function MigrationNotice(props: IMigrationNoticeProps) {
 
   // Show installation flow when installing
   if (isInstalling) {
-    return <InstallationFlow onCancel={handleInstallCancel} />;
+    return <InstallationFlow variant={variant} onCancel={handleInstallCancel} />;
   }
 
   // If Replay is installed and the recorder is running, show a simple message
@@ -86,9 +88,7 @@ export default function MigrationNotice(props: IMigrationNoticeProps) {
     return (
       <div className={cx(styles.migrationNotice, isModal && styles.migrationNoticeModal)}>
         <div className={styles.content}>
-          <h1 className={cx(styles.title, isModal && styles.titleModal)}>
-            {$t(`${REPLAY_APP_NAME} is active`)}
-          </h1>
+          <SectionHeader title={$t(`${REPLAY_APP_NAME} is active`)} onClose={props.onCancel} />
           <p className={styles.subtitle}>
             {$t(
               `The ${REPLAY_APP_NAME} recorder is currently running and capturing your gameplay.`,
@@ -99,34 +99,40 @@ export default function MigrationNotice(props: IMigrationNoticeProps) {
     );
   }
 
-  return (
-    <div className={cx(styles.migrationNotice, isModal && styles.migrationNoticeModal)}>
-      <div className={styles.content}>
-        <h1 className={cx(styles.title, isModal && styles.titleModal)}>
-          {isModal
-            ? $t(`${REPLAY_APP_NAME} is required`)
-            : $t(`AI Highlighter is now ${REPLAY_APP_NAME}`)}
-        </h1>
+  if (isModal) {
+    return (
+      <div className={styles.migrationNoticeModal}>
+        <SectionHeader title={$t(`${REPLAY_APP_NAME} is required`)} onClose={props.onCancel} />
         <p className={styles.subtitle}>
-          {isModal
-            ? $t(`Install ${REPLAY_APP_NAME} to import and detect game highlights.`)
-            : $t(`Your recent AI highlights are now living in ${REPLAY_APP_NAME}.`)}
+          {$t(`Install ${REPLAY_APP_NAME} to import and detect game highlights.`)}
         </p>
         <div className={styles.actions}>
-          <button className={styles.primaryButton} onClick={handleOpenReplay}>
+          <Button size="large" onClick={handleOpenReplay} style={{ width: '100%' }}>
             {isReplayInstalled ? $t(`Open ${REPLAY_APP_NAME}`) : $t(`Install ${REPLAY_APP_NAME}`)}
-          </button>
-          {props.onShowAllClips && (
-            <button className={styles.secondaryButton} onClick={props.onShowAllClips}>
-              {$t('Show all clips')}
-            </button>
-          )}
-          {props.onCancel && !isReplayInstalled && (
-            <button className={styles.secondaryButton} onClick={props.onCancel}>
-              {$t('Cancel')}
-            </button>
-          )}
+          </Button>
         </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cx(styles.migrationNotice)}>
+      <SectionHeader
+        title={$t(`AI Highlighter is now ${REPLAY_APP_NAME}`)}
+        onClose={props.onCancel}
+      />
+      <p className={styles.subtitle}>
+        {$t(`Your recent AI highlights are now living in ${REPLAY_APP_NAME}.`)}
+      </p>
+      <div className={styles.actions}>
+        <Button size="large" onClick={handleOpenReplay} style={{ width: '100%' }}>
+          {isReplayInstalled ? $t(`Open ${REPLAY_APP_NAME}`) : $t(`Install ${REPLAY_APP_NAME}`)}
+        </Button>
+        {props.onShowAllClips && (
+          <Button size="large" onClick={props.onShowAllClips}>
+            {$t('Show all clips')}
+          </Button>
+        )}
       </div>
     </div>
   );

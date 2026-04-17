@@ -1,13 +1,17 @@
 import React from 'react';
-import styles from './MigrationNotice.m.less';
+import { Button } from 'antd';
+import cx from 'classnames';
+import styles from '../MigrationNotice.m.less';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
 import { EReplayInstallStep } from 'services/highlighter/models/highlighter.models';
 import { REPLAY_APP_NAME } from 'services/highlighter/constants';
 import { $t } from 'services/i18n';
+import SectionHeader from './SectionHeader';
 
 interface IInstallationFlowProps {
   onCancel: () => void;
+  variant: 'modal' | 'page';
 }
 
 export default function InstallationFlow(props: IInstallationFlowProps) {
@@ -30,8 +34,13 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
 
   if (step === 'done') {
     return (
-      <div className={styles.installationFlow}>
-        <h2 className={styles.installTitle}>{$t('Installing Highlighter')}</h2>
+      <div
+        className={cx(
+          styles.installationFlow,
+          props.variant === 'modal' ? styles.installationFlowModal : styles.installationFlowPage,
+        )}
+      >
+        <SectionHeader title={$t('Installing Highlighter')} onClose={props.onCancel} />
         <div className={styles.installContent}>
           <div className={styles.successTitle}>{$t('Installation finished')}</div>
           <p className={styles.installSubtext}>
@@ -44,8 +53,13 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
 
   if (step === 'error') {
     return (
-      <div className={styles.installationFlow}>
-        <h2 className={styles.installTitle}>{$t('Installing Highlighter')}</h2>
+      <div
+        className={cx(
+          styles.installationFlow,
+          props.variant === 'modal' ? styles.installationFlowModal : styles.installationFlowPage,
+        )}
+      >
+        <SectionHeader title={$t('Installing Highlighter')} onClose={handleCancel} />
         <div className={styles.installContent}>
           <div className={styles.errorTitle}>{$t('Installation interrupted')}</div>
           <p className={styles.installSubtext}>
@@ -67,9 +81,9 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
           </p>
         </div>
         <div className={styles.installActions}>
-          <button className={styles.retryButton} onClick={handleRetry}>
+          <Button size="large" className={styles.retryButton} onClick={handleRetry}>
             {$t('Re-try installation')}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -84,8 +98,17 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
   }
 
   return (
-    <div className={styles.installationFlow}>
-      <h2 className={styles.installTitle}>{$t('Installing Highlighter')}</h2>
+    <div
+      className={cx(
+        styles.installationFlow,
+        props.variant === 'modal' ? styles.installationFlowModal : styles.installationFlowPage,
+      )}
+    >
+      <SectionHeader
+        title={$t('Installing Highlighter')}
+        onClose={handleCancel}
+        closeDisabled={step !== 'downloading'}
+      />
       <div className={styles.installContent}>
         <div className={styles.progressPercent}>{displayProgress}%</div>
         <p className={styles.installSubtext}>
@@ -98,13 +121,16 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
           )}
         </p>
       </div>
-      {step === 'downloading' && (
-        <div className={styles.installActions}>
-          <button className={styles.cancelInstallButton} onClick={handleCancel}>
-            {$t('Cancel installation')}
-          </button>
-        </div>
-      )}
+      <div className={styles.installActions}>
+        <Button
+          size="large"
+          className={styles.cancelInstallButton}
+          onClick={handleCancel}
+          disabled={step !== 'downloading'}
+        >
+          {$t('Cancel installation')}
+        </Button>
+      </div>
     </div>
   );
 }

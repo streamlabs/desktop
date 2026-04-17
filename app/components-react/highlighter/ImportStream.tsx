@@ -1,5 +1,4 @@
 import { Button, Form, Select } from 'antd';
-import cx from 'classnames';
 import { Services } from 'components-react/service-provider';
 import { ListInput, TextInput } from 'components-react/shared/inputs';
 import * as remote from '@electron/remote';
@@ -14,7 +13,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import styles from './StreamView.m.less';
 import { getConfigByGame, supportedGames } from 'services/highlighter/models/game-config.models';
 import path from 'path';
-import MigrationNotice from './MigrationNotice';
+import MigrationNotice from './migration/MigrationNotice';
 import { HypeWrapper } from './HypeWrapper';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 
@@ -178,25 +177,10 @@ export function ImportStreamModal({
     replayInstalled === false &&
     (openedFrom !== 'after-stream' || showingInstallFlow)
   ) {
-    // For after-stream flow, wrap in hypeWrapper
-    if (openedFrom === 'after-stream') {
-      return (
-        <HypeWrapper gameConfig={gameConfig} isAnimating={isAnimating} artwork={artwork}>
-          {renderMigrationNotice()}
-        </HypeWrapper>
-      );
-    }
-
-    // For other flows, use simple wrapper
     return (
-      <div
-        style={{
-          backgroundColor: 'var(--background)',
-          borderRadius: '24px',
-        }}
-      >
+      <HypeWrapper gameConfig={gameConfig} isAnimating={false} artwork={artwork}>
         {renderMigrationNotice()}
-      </div>
+      </HypeWrapper>
     );
   }
 

@@ -26,7 +26,7 @@ import EducationCarousel from './EducationCarousel';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import { ImportStreamModal } from './ImportStream';
 import SupportedGames from './supportedGames/SupportedGames';
-import MigrationNotice from './MigrationNotice';
+import MigrationNotice from './migration/MigrationNotice';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 
 type TModalStreamView = {
@@ -182,6 +182,7 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
       <Scrollable style={{ flexGrow: 1, padding: '20px 0 20px 20px' }}>
         {migrationEnabled && (
           <MigrationNotice
+            variant="page"
             onShowAllClips={() => {
               emitSetView({ view: EHighlighterView.CLIPS, id: undefined });
             }}
@@ -229,6 +230,8 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
         visible={!!showModal}
         destroyOnClose={true}
         keyboard={false}
+        transitionName=""
+        maskTransitionName=""
       >
         {!!v.error && <Alert message={v.error} type="error" showIcon />}
         {showModal?.type === 'upload' && v.highlighterVersion !== '' && (
