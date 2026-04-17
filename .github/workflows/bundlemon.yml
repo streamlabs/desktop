@@ -24,5 +24,6 @@ jobs:
       - name: Run BundleMon
         run: yarn bundlemon
         env:
+          BUNDLEMON_PROJECT_ID: ${{ secrets.BUNDLEMON_PROJECT_ID }}
           CI_COMMIT_SHA: ${{github.event.pull_request.head.sha || github.sha}}
           NODE_OPTIONS: --openssl-legacy-provider
