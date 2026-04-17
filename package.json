@@ -151,7 +151,7 @@
     "babel-plugin-syntax-jsx": "6.18.0",
     "babel-plugin-transform-class-properties": "6.24.1",
     "babel-plugin-transform-vue-jsx": "3.7.0",
-    "bundlemon": "1.2.0",
+    "bundlemon": "3.1.0",
     "classnames": "2.2.6",
     "clean-webpack-plugin": "3.0.0",
     "cli-table": "0.3.1",
