@@ -1288,7 +1288,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       ? remote.session.fromPartition(this.state.auth.partition)
       : remote.session.defaultSession;
 
-    // await this.authModule.revokeToken(this.state.auth.apiToken);
+    await this.authModule.revokeToken(this.state.auth.apiToken);
     this.clearTokenRefresh();
 
     session.clearStorageData({ storages: ['cookies'] });

@@ -311,8 +311,6 @@ export class AuthModule {
       const url = `https://${host}/api/v5/oauth/token`;
       const resp = await jfetch<any>(url, { method: 'POST', headers, body });
 
-      console.log('Refresh token response: ', resp);
-
       if (!resp) {
         throw new Error('Failed to refresh token');
       }
