@@ -24,7 +24,5 @@ jobs:
       - name: Run BundleMon
         run: yarn bundlemon
         env:
-          BUNDLEMON_PROJECT_ID: 61b93ac52424c30009117f11
-          BUNDLEMON_GITHUB_TOKEN: ${{ secrets.BUNDLEMON_GITHUB_TOKEN }}
           CI_COMMIT_SHA: ${{github.event.pull_request.head.sha || github.sha}}
           NODE_OPTIONS: --openssl-legacy-provider
