@@ -4,7 +4,7 @@ import { useRealmObject } from 'components-react/hooks/realm';
 import { Services } from 'components-react/service-provider';
 import { SwitchInput } from 'components-react/shared/inputs';
 import Scrollable from 'components-react/shared/Scrollable';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import { getConfigByGame } from 'services/highlighter/models/game-config.models';
 import { $t } from 'services/i18n/index';
@@ -53,7 +53,7 @@ function AIFeature(props: FeatureProps) {
               disabled={props.disabled || disabled}
               onClick={onClick}
             >
-              { html ? html : text }
+              {html || text}
             </button>
           ))}
         </div>
@@ -98,7 +98,6 @@ export default function AILanding() {
     ),
   }));
 
-  const [addWidgetState, setAddWidgetState] = useState<'idle' | 'loading' | 'success'>('idle');
   const [isAgentAppInstalled, setIsAgentAppInstalled] = useState(false);
   useEffect(() => {
     let active = true;
@@ -142,6 +141,14 @@ export default function AILanding() {
     SideNavService.actions.setCurrentMenuItem(EMenuItemKey.Themes);
   }
 
+  const [addWidgetState, setAddWidgetState] = useState<'idle' | 'loading' | 'success'>('idle');
+  const gamePulseWidgetText = useMemo(() => {
+    if (addWidgetState === 'loading') return $t('Loading');
+    if (addWidgetState === 'success') return $t('Added!');
+    if (existingGamePulseSource) return $t('Open Widget Settings');
+    return $t('Add Widget');
+  }, [addWidgetState, existingGamePulseSource]);
+
   async function onGamePulseWidgetClick() {
     if (existingGamePulseSource) {
       trackEvent('edit-game-pulse-widget');
@@ -152,8 +159,13 @@ export default function AILanding() {
       if (!activeScene) return;
 
       const platform = UserService.views.platform?.type;
-      const name = SourcesService.views.suggestName(WidgetDisplayData(platform)[WidgetType.GamePulseWidget].name);
-      const widget = await WidgetsService.actions.return.createWidget(WidgetType.GamePulseWidget, name);
+      const name = SourcesService.views.suggestName(
+        WidgetDisplayData(platform)[WidgetType.GamePulseWidget].name,
+      );
+      const widget = await WidgetsService.actions.return.createWidget(
+        WidgetType.GamePulseWidget,
+        name,
+      );
 
       // Add animation time for the button "click -> loading -> success" before opening source.
       // The actual work is near-instant, added delays are for user feedback; tweak as needed.
@@ -223,17 +235,11 @@ export default function AILanding() {
                 img={$i('images/ai/ai-game-pulse.png')}
                 disabled={!enabled}
                 actions={{
-                  text:
+                  text: gamePulseWidgetText,
+                  html:
                     addWidgetState === 'loading' ? (
-                      $t("Loading")
-                    ) : addWidgetState === 'success' ? (
-                      $t('Added!')
-                    ) : existingGamePulseSource ? (
-                      $t('Open Widget Settings')
-                    ) : (
-                      $t('Add Widget')
-                    ),
-                  html: addWidgetState === 'loading' ? <i className="fa fa-spinner fa-pulse" /> : undefined,
+                      <i className="fa fa-spinner fa-pulse" />
+                    ) : undefined,
                   disabled: addWidgetState !== 'idle',
                   onClick: onGamePulseWidgetClick,
                 }}
