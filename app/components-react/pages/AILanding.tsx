@@ -88,15 +88,18 @@ export default function AILanding() {
   const visionEnabledState = useRealmObject(VisionService.enabledState);
   const enabled = visionEnabledState.isEnabled;
 
-  const { existingGamePulseSource } = useVuex(() => ({
-    existingGamePulseSource: SourcesService.views.getSources().find(source =>
-      source.isSameType({
-        type: 'browser_source',
-        propertiesManager: 'widget',
-        widgetType: WidgetType.GamePulseWidget,
-      }),
-    ),
-  }));
+  const { sources } = useVuex(() => ({ sources: SourcesService.views.getSources() }));
+  const existingGamePulseSource = useMemo(
+    () =>
+      sources.find(source =>
+        source.isSameType({
+          type: 'browser_source',
+          propertiesManager: 'widget',
+          widgetType: WidgetType.GamePulseWidget,
+        }),
+      ),
+    [sources],
+  );
 
   const [isAgentAppInstalled, setIsAgentAppInstalled] = useState(false);
   useEffect(() => {
