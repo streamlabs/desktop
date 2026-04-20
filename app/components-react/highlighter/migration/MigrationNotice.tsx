@@ -83,6 +83,11 @@ export default function MigrationNotice(props: IMigrationNoticeProps) {
     return <InstallationFlow variant={variant} onCancel={handleInstallCancel} />;
   }
 
+  // Page variant: always delegate to InstallationFlow (carousel handles idle + install states)
+  if (!isModal) {
+    return <InstallationFlow variant={variant} onCancel={handleInstallCancel} />;
+  }
+
   // If Replay is installed and the recorder is running, show a simple message
   if (isReplayInstalled && isRecorderRunning) {
     return (

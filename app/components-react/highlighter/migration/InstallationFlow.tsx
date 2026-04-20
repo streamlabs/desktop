@@ -8,6 +8,7 @@ import { EReplayInstallStep } from 'services/highlighter/models/highlighter.mode
 import { REPLAY_APP_NAME } from 'services/highlighter/constants';
 import { $t } from 'services/i18n';
 import SectionHeader from './SectionHeader';
+import FeatureCarousel, { CAROUSEL_FEATURES } from './FeatureCarousel';
 
 interface IInstallationFlowProps {
   onCancel: () => void;
@@ -23,6 +24,10 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
     error: HighlighterService.state.replayInstall.error as string | null,
   }));
 
+  function handleInstall() {
+    HighlighterService.actions.installStreamlabsReplay();
+  }
+
   function handleRetry() {
     HighlighterService.actions.installStreamlabsReplay();
   }
@@ -32,14 +37,33 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
     props.onCancel();
   }
 
+  // ── Page variant: render inside FeatureCarousel ──
+  if (props.variant === 'page') {
+    return (
+      <FeatureCarousel
+        title={$t(`AI Highlighter is now ${REPLAY_APP_NAME}`)}
+        subtitle={$t('Similar name, but way better!')}
+        description={$t(
+          'Supercharge your workflow with our standalone tool %{appName}. Faster edits, more output in less time. Try it now',
+          { appName: REPLAY_APP_NAME },
+        )}
+        features={CAROUSEL_FEATURES}
+      >
+        <PageInstallCta
+          step={step}
+          progress={progress}
+          onInstall={handleInstall}
+          onRetry={handleRetry}
+          onCancel={handleCancel}
+        />
+      </FeatureCarousel>
+    );
+  }
+
+  // ── Modal variant: unchanged ──
   if (step === 'done') {
     return (
-      <div
-        className={cx(
-          styles.installationFlow,
-          props.variant === 'modal' ? styles.installationFlowModal : styles.installationFlowPage,
-        )}
-      >
+      <div className={cx(styles.installationFlow, styles.installationFlowModal)}>
         <SectionHeader title={$t('Installing Highlighter')} onClose={props.onCancel} />
         <div className={styles.installContent}>
           <div className={styles.successTitle}>{$t('Installation finished')}</div>
@@ -53,12 +77,7 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
 
   if (step === 'error') {
     return (
-      <div
-        className={cx(
-          styles.installationFlow,
-          props.variant === 'modal' ? styles.installationFlowModal : styles.installationFlowPage,
-        )}
-      >
+      <div className={cx(styles.installationFlow, styles.installationFlowModal)}>
         <SectionHeader title={$t('Installing Highlighter')} onClose={handleCancel} />
         <div className={styles.installContent}>
           <div className={styles.errorTitle}>{$t('Installation interrupted')}</div>
@@ -98,12 +117,7 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
   }
 
   return (
-    <div
-      className={cx(
-        styles.installationFlow,
-        props.variant === 'modal' ? styles.installationFlowModal : styles.installationFlowPage,
-      )}
-    >
+    <div className={cx(styles.installationFlow, styles.installationFlowModal)}>
       <SectionHeader
         title={$t('Installing Highlighter')}
         onClose={handleCancel}
@@ -133,4 +147,107 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
       </div>
     </div>
   );
+}
+
+// ── Inline install CTA rendered as FeatureCarousel children (page variant) ──
+
+interface IPageInstallCtaProps {
+  step: EReplayInstallStep;
+  progress: number;
+  onInstall: () => void;
+  onRetry: () => void;
+  onCancel: () => void;
+}
+
+function PageInstallCta({ step, progress, onInstall, onRetry, onCancel }: IPageInstallCtaProps) {
+  const isInstalling = step === 'downloading' || step === 'installing' || step === 'verifying';
+
+  // Idle — CTA button
+  if (step === 'idle') {
+    return (
+      <>
+        <span className={styles.ctaHint}>{$t('Try now →')}</span>
+        <button className={styles.ctaButton} onClick={onInstall}>
+          {$t(`Install ${REPLAY_APP_NAME}`)}
+        </button>
+        <span className={styles.ctaAnnotation}>↳ {$t('Timesaver-in-a-box')}</span>
+      </>
+    );
+  }
+
+  // Downloading / Installing / Verifying — progress bar
+  if (isInstalling) {
+    let statusText = $t(`Downloading ${REPLAY_APP_NAME}...`);
+    if (step === 'installing') statusText = $t(`Installing ${REPLAY_APP_NAME}...`);
+    else if (step === 'verifying') statusText = $t('Verifying installation...');
+
+    return (
+      <div className={styles.progressWrapper}>
+        <div className={styles.progressHeader}>
+          <span className={styles.progressStatus}>{statusText}</span>
+          {step === 'downloading' && (
+            <span className={styles.progressPct}>{Math.round(progress)}%</span>
+          )}
+        </div>
+        <div className={styles.progressTrack}>
+          <div
+            className={cx(styles.progressFill, step !== 'downloading' && styles.progressFillPulse)}
+            style={{ width: step === 'downloading' ? `${progress}%` : '100%' }}
+          />
+        </div>
+        {step === 'downloading' && (
+          <span className={styles.progressHint}>
+            {$t('The installation will start automatically')}
+          </span>
+        )}
+        {step === 'downloading' && (
+          <button className={styles.cancelLink} onClick={onCancel}>
+            {$t('Cancel installation')}
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // Done
+  if (step === 'done') {
+    return (
+      <div className={styles.carouselDone}>
+        <span className={styles.carouselDoneTitle}>{$t('Installation finished')}</span>
+        <span className={styles.carouselDoneSub}>
+          {$t(`${REPLAY_APP_NAME} has been installed and is now running.`)}
+        </span>
+      </div>
+    );
+  }
+
+  // Error
+  if (step === 'error') {
+    return (
+      <div className={styles.carouselError}>
+        <span className={styles.carouselErrorTitle}>{$t('Installation interrupted')}</span>
+        <span className={styles.carouselErrorSub}>
+          {$t("It seems the installation didn't finish.")}{' '}
+          {$t("Let's figure this out together and")}{' '}
+          <a
+            className={styles.supportLink}
+            href="https://support.streamlabs.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={e => {
+              e.preventDefault();
+              require('@electron/remote').shell.openExternal('https://support.streamlabs.com');
+            }}
+          >
+            {$t('contact support')}
+          </a>
+        </span>
+        <button className={styles.ctaButton} onClick={onRetry}>
+          {$t('Re-try installation')}
+        </button>
+      </div>
+    );
+  }
+
+  return null;
 }

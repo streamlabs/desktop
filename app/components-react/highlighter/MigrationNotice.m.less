@@ -163,3 +163,293 @@
     background: #e5e7eb;
   }
 }
+
+// =================================================================================================
+// Feature Carousel
+// =================================================================================================
+
+.carousel-wrapper {
+  display: flex;
+  width: 100%;
+  gap: 64px;
+}
+
+.carousel-left {
+  max-width: 550px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 24px;
+}
+
+.carousel-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.carousel-title {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.carousel-subtitle {
+  font-weight: 500;
+  font-style: italic;
+  opacity: 0.8;
+  margin: 0;
+}
+
+.carousel-description {
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 600;
+  opacity: 0.6;
+  margin: 0;
+}
+
+.feature-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+}
+
+.feature-item {
+  cursor: pointer;
+  border-radius: 9999px;
+  padding: 8px 16px;
+  transition: color 0.2s, background-color 0.2s;
+  opacity: 0.6;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.feature-item-active {
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+  opacity: 1;
+}
+
+.carousel-cta {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cta-hint {
+  font-size: 14px;
+  opacity: 0.6;
+  font-style: italic;
+  margin: 0;
+}
+
+.cta-button {
+  width: fit-content;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  background: #09161d;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: #132a38;
+  }
+
+  &:active {
+    background: #040d12;
+  }
+}
+
+.cta-annotation {
+  font-size: 12px;
+  opacity: 0.6;
+  font-style: italic;
+  margin: 0;
+}
+
+// Carousel: progress bar (inline install states)
+
+.progress-wrapper {
+  min-width: 260px;
+  width: fit-content;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progress-status {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.progress-pct {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.progress-track {
+  height: 8px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: #34d399;
+  transition: width 0.3s ease-out;
+}
+
+.progress-fill-pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.progress-hint {
+  font-size: 12px;
+  opacity: 0.6;
+  margin: 0;
+}
+
+.cancel-link {
+  font-size: 12px;
+  opacity: 0.6;
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: inherit;
+  padding: 0;
+  margin-top: 4px;
+  text-align: left;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+// Carousel: inline done / error states
+
+.carousel-done {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.carousel-done-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.carousel-done-sub {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.carousel-error {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.carousel-error-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ef4444;
+}
+
+.carousel-error-sub {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+// Carousel: right column (image area)
+
+.carousel-right {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+.carousel-card {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.carousel-card-inner {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-card-image {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+}
+
+.carousel-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px;
+  text-align: center;
+  opacity: 0.6;
+}
+
+.carousel-placeholder-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-placeholder-icon-inner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+}
+
+.carousel-placeholder-text {
+  font-size: 14px;
+  font-weight: 500;
+}
