@@ -26,7 +26,6 @@ const AUTO_ADVANCE_INTERVAL = 5000;
 
 interface IFeatureCarouselProps {
   title: string;
-  subtitle?: string;
   description?: string;
   features: Feature[];
   children?: React.ReactNode;
@@ -35,7 +34,7 @@ interface IFeatureCarouselProps {
 type TransitionState = 'hover' | 'animating' | null;
 
 export default function FeatureCarousel(props: IFeatureCarouselProps) {
-  const { title, subtitle, description, features, children } = props;
+  const { title, description, features, children } = props;
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [incomingIndex, setIncomingIndex] = useState<number | null>(null);
@@ -49,7 +48,6 @@ export default function FeatureCarousel(props: IFeatureCarouselProps) {
   const transitionStateRef = useRef(transitionState);
   const incomingIndexRef = useRef(incomingIndex);
 
-  // Keep refs in sync
   currentIndexRef.current = currentIndex;
   isAnimatingRef.current = transitionState === 'animating';
   transitionStateRef.current = transitionState;
@@ -112,11 +110,8 @@ export default function FeatureCarousel(props: IFeatureCarouselProps) {
         setTransitionState('animating');
       } else {
         setTransitionState('hover');
-        // Double-rAF to guarantee browser paints the snapped position before transitioning
         requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            setTransitionState('animating');
-          });
+          setTransitionState('animating');
         });
       }
 
@@ -126,15 +121,21 @@ export default function FeatureCarousel(props: IFeatureCarouselProps) {
   );
 
   const onListItemHover = useCallback((index: number) => {
-    isListHoveredRef.current = true;
-    if (isAnimatingRef.current || index === currentIndexRef.current) return;
+    if (index === currentIndexRef.current) {
+      isListHoveredRef.current = true;
+      return;
+    }
+    if (isAnimatingRef.current) return;
     setDirection(index < currentIndexRef.current ? -1 : 1);
     setIncomingIndex(index);
     setTransitionState('hover');
   }, []);
 
   const onListItemLeave = useCallback((index: number) => {
-    isListHoveredRef.current = false;
+    if (index === currentIndexRef.current) {
+      isListHoveredRef.current = false;
+      return;
+    }
     if (isAnimatingRef.current) return;
     if (incomingIndexRef.current === index) {
       setIncomingIndex(null);
@@ -186,7 +187,6 @@ export default function FeatureCarousel(props: IFeatureCarouselProps) {
       <div className={styles.carouselLeft}>
         <div className={styles.carouselTitleGroup}>
           <h1 className={styles.carouselTitle}>{title}</h1>
-          {subtitle && <p className={styles.carouselSubtitle}>{subtitle}</p>}
         </div>
 
         {description && <p className={styles.carouselDescription}>{description}</p>}

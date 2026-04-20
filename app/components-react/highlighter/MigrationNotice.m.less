@@ -95,14 +95,14 @@
 .error-title {
   font-size: 28px;
   font-weight: 700;
-  color: #ef4444;
+  color: var(--warning);
   margin-bottom: 16px;
 }
 
 .success-title {
   font-size: 28px;
   font-weight: 700;
-  color: #34d399;
+  color: var(--teal);
   margin-bottom: 16px;
 }
 
@@ -124,8 +124,8 @@
 
 .cancel-install-button {
   width: 100%;
-  background: #374151;
-  color: #fff;
+  background: var(--button);
+  color: var(--title);
   border: none;
   padding: 14px 24px;
   font-size: 14px;
@@ -135,18 +135,18 @@
   transition: background-color 0.2s ease;
 
   &:hover {
-    background: #4b5563;
+    background: var(--button-hover);
   }
 
   &:active {
-    background: #1f2937;
+    background: var(--dark-background);
   }
 }
 
 .retry-button {
   width: 100%;
-  background: #ffffff;
-  color: #111827;
+  background: var(--title);
+  color: var(--background);
   border: none;
   padding: 14px 24px;
   font-size: 14px;
@@ -156,11 +156,11 @@
   transition: background-color 0.2s ease;
 
   &:hover {
-    background: #f3f4f6;
+    background: var(--paragraph);
   }
 
   &:active {
-    background: #e5e7eb;
+    background: var(--border);
   }
 }
 
@@ -170,10 +170,10 @@
 
 .carousel-wrapper {
   display: flex;
-  background-color: #0b161a;
-  border-radius: 48px;
+  background-color: var(--dark-background);
+  border-radius: 10px;
   padding: 48px;
-  border: solid 1px rgba(255, 255, 255, 0.1);
+  border: solid 1px var(--border);
   width: 100%;
   gap: 64px;
 }
@@ -219,16 +219,15 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
   padding: 0;
   margin: 0;
-  margin-left: -8px;
+  margin-left: -12px;
 }
 
 .feature-item {
   cursor: pointer;
   border-radius: 9px;
-  padding: 8px 8px;
+  padding: 4px 12px;
   font-size: 14px;
   line-height: 26px;
   letter-spacing: -0.004em;
@@ -246,13 +245,13 @@
   flex-direction: row;
   align-items: center;
   gap: 8px;
-  background: #3b4449;
+  background: var(--section-alt);
   border-radius: 9px;
   font-weight: 700;
   font-size: 14px;
   line-height: 26px;
   letter-spacing: -0.004em;
-  color: #efefef;
+  color: var(--title);
   opacity: 1;
   width: fit-content;
 }
@@ -322,13 +321,13 @@
   flex: 1;
   overflow: hidden;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--icon-semi);
 }
 
 .progress-fill {
   height: 100%;
   border-radius: 9999px;
-  background: #34d399;
+  background: var(--teal);
   transition: width 0.3s ease-out;
 }
 
@@ -349,7 +348,7 @@
 .cancel-x {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--icon);
   font-size: 18px;
   cursor: pointer;
   padding: 0;
@@ -357,7 +356,7 @@
   transition: color 0.2s;
 
   &:hover {
-    color: #fff;
+    color: var(--title);
   }
 }
 
@@ -397,7 +396,7 @@
 .carousel-error-title {
   font-size: 14px;
   font-weight: 600;
-  color: #ef4444;
+  color: var(--warning);
   margin-bottom: 4px;
 }
 
@@ -465,4 +464,9 @@
 .carousel-placeholder-text {
   font-size: 14px;
   font-weight: 500;
+}
+
+.handwritten-annotations {
+  font-family: 'Patrick Hand', cursive;
+  color: var(--teal);
 }
