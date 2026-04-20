@@ -170,6 +170,10 @@
 
 .carousel-wrapper {
   display: flex;
+  background-color: #0b161a;
+  border-radius: 48px;
+  padding: 48px;
+  border: solid 1px rgba(255, 255, 255, 0.1);
   width: 100%;
   gap: 64px;
 }
@@ -218,14 +222,19 @@
   gap: 8px;
   padding: 0;
   margin: 0;
+  margin-left: -8px;
 }
 
 .feature-item {
   cursor: pointer;
-  border-radius: 9999px;
-  padding: 8px 16px;
+  border-radius: 9px;
+  padding: 8px 8px;
+  font-size: 14px;
+  line-height: 26px;
+  letter-spacing: -0.004em;
   transition: color 0.2s, background-color 0.2s;
   opacity: 0.6;
+  width: fit-content;
 
   &:hover {
     opacity: 1;
@@ -233,9 +242,19 @@
 }
 
 .feature-item-active {
-  background: rgba(255, 255, 255, 0.1);
-  font-weight: 600;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  background: #3b4449;
+  border-radius: 9px;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 26px;
+  letter-spacing: -0.004em;
+  color: #efefef;
   opacity: 1;
+  width: fit-content;
 }
 
 .carousel-cta {
@@ -252,29 +271,15 @@
   margin: 0;
 }
 
-.cta-button {
-  width: fit-content;
-  border-radius: 12px;
-  padding: 12px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  background: #09161d;
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  cursor: pointer;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background: #132a38;
-  }
-
-  &:active {
-    background: #040d12;
-  }
+.cta-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
 }
 
 .cta-annotation {
-  font-size: 12px;
+  font-size: 14px;
   opacity: 0.6;
   font-style: italic;
   margin: 0;
@@ -283,35 +288,41 @@
 // Carousel: progress bar (inline install states)
 
 .progress-wrapper {
-  min-width: 260px;
-  width: fit-content;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.progress-left {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
 .progress-status {
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 600;
 }
 
-.progress-pct {
-  font-size: 12px;
-  opacity: 0.6;
+.progress-bar-row {
+  display: flex;
+  align-items: center;
+  max-width: 280px;
+  height: 20px;
+  gap: 12px;
+  justify-content: space-between;
 }
 
 .progress-track {
-  height: 8px;
-  width: 100%;
+  height: 10px;
+  flex: 1;
   overflow: hidden;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .progress-fill {
@@ -335,28 +346,27 @@
   }
 }
 
-.progress-hint {
-  font-size: 12px;
-  opacity: 0.6;
-  margin: 0;
-}
-
-.cancel-link {
-  font-size: 12px;
-  opacity: 0.6;
-  text-decoration: underline;
-  cursor: pointer;
+.cancel-x {
   background: none;
   border: none;
-  color: inherit;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 18px;
+  cursor: pointer;
   padding: 0;
-  margin-top: 4px;
-  text-align: left;
-  transition: opacity 0.2s;
+  line-height: 1;
+  transition: color 0.2s;
 
   &:hover {
-    opacity: 1;
+    color: #fff;
   }
+}
+
+.progress-pct-large {
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.1;
+  white-space: nowrap;
 }
 
 // Carousel: inline done / error states
@@ -364,6 +374,8 @@
 .carousel-done {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100%;
   gap: 4px;
 }
 
@@ -380,18 +392,19 @@
 .carousel-error {
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
 .carousel-error-title {
   font-size: 14px;
   font-weight: 600;
   color: #ef4444;
+  margin-bottom: 4px;
 }
 
 .carousel-error-sub {
   font-size: 12px;
   opacity: 0.6;
+  margin-bottom: 8px;
 }
 
 // Carousel: right column (image area)

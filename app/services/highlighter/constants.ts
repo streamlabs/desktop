@@ -32,11 +32,11 @@ export const AI_HIGHLIGHTER_BUILDS_URL_PRODUCTION =
   'https://cdn-highlighter-builds.streamlabs.com/production/manifest_win_x86_64.json';
 
 export const HIGHLIGHTER_SETUP_URL_STAGING =
-  'https://cdn-highlighter-desktop.streamlabs.com/streamlabs-highlighter/staging/win32/x64/Streamlabs%20Highlighter-Setup.exe';
+  'https://cdn-highlighter-desktop.streamlabs.com/staging/win32/x64/G%20HUB%20Replay-Setup.exe';
 
 export const HIGHLIGHTER_SETUP_URL_PRODUCTION =
   'https://cdn-highlighter-desktop.streamlabs.com/streamlabs-highlighter/production/win32/x64/Streamlabs%20Highlighter-Setup.exe';
 
 export const REPLAY_PROTOCOL = 'streamlabs-highlighter';
 export const REPLAY_APP_NAME = 'Streamlabs Highlighter';
-export const REPLAY_SETUP_EXE_NAME = 'Streamlabs Highlighter-Setup.exe';
+export const REPLAY_SETUP_EXE_NAME = 'G HUB Replay-Setup.exe';

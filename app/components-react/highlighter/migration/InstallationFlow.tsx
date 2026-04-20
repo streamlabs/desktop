@@ -49,13 +49,17 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
         )}
         features={CAROUSEL_FEATURES}
       >
-        <PageInstallCta
-          step={step}
-          progress={progress}
-          onInstall={handleInstall}
-          onRetry={handleRetry}
-          onCancel={handleCancel}
-        />
+        <div
+          style={{ height: 82, display: 'flex', flexDirection: 'column', justifyContent: 'end' }}
+        >
+          <PageInstallCta
+            step={step}
+            progress={progress}
+            onInstall={handleInstall}
+            onRetry={handleRetry}
+            onCancel={handleCancel}
+          />
+        </div>
       </FeatureCarousel>
     );
   }
@@ -100,9 +104,9 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
           </p>
         </div>
         <div className={styles.installActions}>
-          <Button size="large" className={styles.retryButton} onClick={handleRetry}>
+          <button className={styles.retryButton} onClick={handleRetry}>
             {$t('Re-try installation')}
-          </Button>
+          </button>
         </div>
       </div>
     );
@@ -136,14 +140,13 @@ export default function InstallationFlow(props: IInstallationFlowProps) {
         </p>
       </div>
       <div className={styles.installActions}>
-        <Button
-          size="large"
+        <button
           className={styles.cancelInstallButton}
           onClick={handleCancel}
           disabled={step !== 'downloading'}
         >
           {$t('Cancel installation')}
-        </Button>
+        </button>
       </div>
     </div>
   );
@@ -166,11 +169,9 @@ function PageInstallCta({ step, progress, onInstall, onRetry, onCancel }: IPageI
   if (step === 'idle') {
     return (
       <>
-        <span className={styles.ctaHint}>{$t('Try now →')}</span>
-        <button className={styles.ctaButton} onClick={onInstall}>
+        <Button size="large" style={{ width: 'max-content' }} type="primary" onClick={onInstall}>
           {$t(`Install ${REPLAY_APP_NAME}`)}
-        </button>
-        <span className={styles.ctaAnnotation}>↳ {$t('Timesaver-in-a-box')}</span>
+        </Button>
       </>
     );
   }
@@ -183,27 +184,27 @@ function PageInstallCta({ step, progress, onInstall, onRetry, onCancel }: IPageI
 
     return (
       <div className={styles.progressWrapper}>
-        <div className={styles.progressHeader}>
+        <div className={styles.progressLeft}>
           <span className={styles.progressStatus}>{statusText}</span>
-          {step === 'downloading' && (
-            <span className={styles.progressPct}>{Math.round(progress)}%</span>
-          )}
-        </div>
-        <div className={styles.progressTrack}>
-          <div
-            className={cx(styles.progressFill, step !== 'downloading' && styles.progressFillPulse)}
-            style={{ width: step === 'downloading' ? `${progress}%` : '100%' }}
-          />
+          <div className={styles.progressBarRow}>
+            <div className={styles.progressTrack}>
+              <div
+                className={cx(
+                  styles.progressFill,
+                  step !== 'downloading' && styles.progressFillPulse,
+                )}
+                style={{ width: step === 'downloading' ? `${progress}%` : '100%' }}
+              />
+            </div>
+            {step === 'downloading' && (
+              <button className={styles.cancelX} onClick={onCancel}>
+                ✕
+              </button>
+            )}
+          </div>
         </div>
         {step === 'downloading' && (
-          <span className={styles.progressHint}>
-            {$t('The installation will start automatically')}
-          </span>
-        )}
-        {step === 'downloading' && (
-          <button className={styles.cancelLink} onClick={onCancel}>
-            {$t('Cancel installation')}
-          </button>
+          <span className={styles.progressPctLarge}>{Math.round(progress)}%</span>
         )}
       </div>
     );
@@ -242,9 +243,9 @@ function PageInstallCta({ step, progress, onInstall, onRetry, onCancel }: IPageI
             {$t('contact support')}
           </a>
         </span>
-        <button className={styles.ctaButton} onClick={onRetry}>
+        <Button style={{ width: 'max-content' }} type="primary" onClick={onRetry}>
           {$t('Re-try installation')}
-        </button>
+        </Button>
       </div>
     );
   }
