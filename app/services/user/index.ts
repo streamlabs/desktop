@@ -934,6 +934,11 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   get isAlphaGroup() {
     // CI should have a consistent experience, Mac shouldnt have it yet
     if (Utils.env.CI || Utils.env.NODE_ENV === 'test' || getOS() === OS.Mac) return true;
+
+    if (Utils.env.SLD_TEST_GROUP) {
+      return Utils.env.SLD_TEST_GROUP === 'A';
+    }
+
     const localId = this.getLocalUserId();
     return Number(localId.search(/\d/)) % 2 === 0;
   }
