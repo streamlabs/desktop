@@ -404,7 +404,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     // Use PS single-quote escaping then encode as UTF-16LE base64
     // to avoid any command-line quoting/injection issues with the file path.
     const escapedPath = filePath.replace(/'/g, "''");
-    const script = `$sig = Get-AuthenticodeSignature '${escapedPath}'; if ($sig.Status -ne 'Valid') { exit 1 }; if ($sig.SignerCertificate.Subject -notmatch 'Streamlabs') { exit 2 }; exit 0`;
+    const script = `$sig = Get-AuthenticodeSignature '${escapedPath}'; if ($sig.Status -ne 'Valid') { exit 1 }; if ($sig.SignerCertificate.Subject -notmatch 'CN=.*Streamlabs') { exit 2 }; exit 0`;
     const encodedCommand = Buffer.from(script, 'utf16le').toString('base64');
 
     await execAsync(
