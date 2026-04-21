@@ -397,6 +397,34 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   }
 
   /**
+   * Verifies the Authenticode signature of a Windows executable using PowerShell.
+   * Throws if the signature is invalid or the subject does not contain 'Streamlabs'.
+   */
+  private async verifyAuthenticodeSignature(filePath: string): Promise<void> {
+    // Use PS single-quote escaping then encode as UTF-16LE base64
+    // to avoid any command-line quoting/injection issues with the file path.
+    const escapedPath = filePath.replace(/'/g, "''");
+    const script = `$sig = Get-AuthenticodeSignature '${escapedPath}'; if ($sig.Status -ne 'Valid') { exit 1 }; if ($sig.SignerCertificate.Subject -notmatch 'Streamlabs') { exit 2 }; exit 0`;
+    const encodedCommand = Buffer.from(script, 'utf16le').toString('base64');
+
+    await execAsync(
+      `powershell -NonInteractive -NoProfile -EncodedCommand ${encodedCommand}`,
+      { timeout: 15000 },
+    ).catch((err: Error & { code?: number }) => {
+      const code = err.code ?? -1;
+      if (code === 1) {
+        throw new Error('Installer signature verification failed: invalid or missing signature.');
+      }
+      if (code === 2) {
+        throw new Error(
+          'Installer signature verification failed: publisher does not match Streamlabs.',
+        );
+      }
+      throw new Error(`Installer signature check failed: ${err.message}`);
+    });
+  }
+
+  /**
    * Downloads and installs Streamlabs Replay.
    * Fakes progress increments during the download/install phases,
    * verifies the deeplink registry after install, and auto-launches the app.
@@ -461,6 +489,9 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       }
 
       this.SET_REPLAY_INSTALL({ progress: 75 });
+
+      // Verify the Authenticode signature before execution
+      await this.verifyAuthenticodeSignature(setupPath);
 
       // --- Installing phase ---
       this.SET_REPLAY_INSTALL({ step: 'installing', progress: 75 });
