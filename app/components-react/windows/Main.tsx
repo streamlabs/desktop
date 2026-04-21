@@ -51,7 +51,6 @@ export default function Main() {
     EditorCommandsService,
     ScenesService,
     CustomizationService,
-    VisionService,
     OnboardingV2Service,
   } = Services;
   const mainWindowEl = useRef<HTMLDivElement | null>(null);
@@ -255,7 +254,7 @@ export default function Main() {
     className?: string;
     params: any;
     onTotalWidth: (width: number) => void;
-  }> = (appPages as Dictionary<React.FunctionComponent>)[page];
+  }> = (appPages as Dictionary<React.FunctionComponent>)[page] || appPages.Studio;
 
   return (
     <div
@@ -288,7 +287,10 @@ export default function Main() {
           />
         )}
         <div
-          className={cx(styles.mainMiddle, { [styles.mainMiddleCompact]: compactView })}
+          className={cx(styles.mainMiddle, {
+            [styles.mainMiddleCompact]: compactView,
+            [styles.onboarding]: page === 'Onboarding',
+          })}
           ref={mainMiddleEl}
         >
           {!showLoadingSpinner && (

@@ -19,7 +19,8 @@
   }
 
   // Don't obscure the title bar
-  :global(.ant-modal-mask), :global(.ant-modal-wrap) {
+  :global(.ant-modal-mask),
+  :global(.ant-modal-wrap) {
     position: absolute;
     height: calc(100% - 30px);
     top: 30px;
@@ -43,6 +44,10 @@
   width: 100%;
   flex-grow: 1;
   min-width: 0;
+
+  &.onboarding {
+    grid-template-rows: minmax(0, 1fr) !important;
+  }
 }
 
 .titlebar--error {
@@ -126,24 +131,24 @@
 }
 
 .live-dock-collapsed {
-    width: 20px;
-    height: 100%;
-    padding: 0;
-    position: relative;
-    border-left: 1px solid var(--border);
-    box-sizing: border-box;
+  width: 20px;
+  height: 100%;
+  padding: 0;
+  position: relative;
+  border-left: 1px solid var(--border);
+  box-sizing: border-box;
 
-    &.left {
-      border-right: 1px solid var(--border);
+  &.left {
+    border-right: 1px solid var(--border);
 
-      .live-dock-chevron.left {
-        left: 50%;
-      }
+    .live-dock-chevron.left {
+      left: 50%;
     }
+  }
 
-    .live-dock-chevron {
-      .center();
-    }
+  .live-dock-chevron {
+    .center();
+  }
 }
 
 .live-dock-chevron {

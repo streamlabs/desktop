@@ -3,7 +3,7 @@ import styles from './Connect.m.less';
 import commonStyles from './Common.m.less';
 import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
-import { injectState, useModule, mutation } from 'slap';
+import { useModule } from 'slap';
 import { ExtraPlatformConnect } from './ExtraPlatformConnect';
 import {
   EPlatform,
@@ -67,7 +67,7 @@ export function Connect() {
   }
 
   // streamlabs and trovo are added separarely on markup below
-  const platforms = RecordingModeService.views.isRecordingModeEnabled
+  const platforms: TPlatform[] = RecordingModeService.views.isRecordingModeEnabled
     ? ['youtube']
     : ['twitch', 'youtube', 'tiktok', 'kick', 'facebook', 'twitter'];
 
