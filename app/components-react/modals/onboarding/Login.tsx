@@ -8,8 +8,10 @@ import PlatformLogo from 'components-react/shared/PlatformLogo';
 import { ExtraPlatformConnect } from 'components-react/pages/onboarding/ExtraPlatformConnect';
 import { DancingKevins, IOnboardingStepProps, useAuth } from './Onboarding';
 
+type TExtraPlatform = 'dlive' | 'nimotv';
+
 export function Login(p: IOnboardingStepProps) {
-  const [extraPlatform, setExtraPlatform] = useState<'dlive' | 'nimotv'>();
+  const [extraPlatform, setExtraPlatform] = useState<TExtraPlatform>();
 
   const { SLIDLogin, platformLogin } = useAuth();
 
@@ -23,6 +25,8 @@ export function Login(p: IOnboardingStepProps) {
     EPlatform.Trovo,
     EPlatform.Instagram,
   ];
+
+  const extraPlatforms: TExtraPlatform[] = ['dlive', 'nimotv'];
 
   return (
     <div className={styles.centered}>
@@ -50,7 +54,7 @@ export function Login(p: IOnboardingStepProps) {
                   {platformLabels(platform)}
                 </Button>
               ))}
-              {['dlive', 'nimotv'].map((platform: 'dlive' | 'nimotv') => (
+              {extraPlatforms.map((platform: TExtraPlatform) => (
                 <Button onClick={() => setExtraPlatform(platform)} key={platform}>
                   {platformLabels(platform)}
                 </Button>

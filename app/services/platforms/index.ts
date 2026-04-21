@@ -11,6 +11,7 @@ import { ITrovoStartStreamOptions, TrovoService } from './trovo';
 import { TDisplayType } from 'services/settings-v2';
 import { $t } from 'services/i18n';
 import { KickService, IKickStartStreamOptions } from './kick';
+import { PatreonService, IPatreonStartStreamOptions } from './patreon';
 
 export type Tag = string;
 export interface IGame {
@@ -165,7 +166,8 @@ export type TStartStreamOptions =
   | Partial<ITikTokStartStreamOptions>
   | Partial<ITrovoStartStreamOptions>
   | Partial<IInstagramStartStreamOptions>
-  | Partial<IKickStartStreamOptions>;
+  | Partial<IKickStartStreamOptions>
+  | Partial<IPatreonStartStreamOptions>;
 
 // state applicable for all platforms
 export interface IPlatformState {
@@ -274,6 +276,7 @@ export enum EPlatform {
   Twitter = 'twitter',
   Instagram = 'instagram',
   Kick = 'kick',
+  Patreon = 'patreon',
 }
 
 export type TPlatform =
@@ -284,13 +287,15 @@ export type TPlatform =
   | 'trovo'
   | 'twitter'
   | 'instagram'
-  | 'kick';
+  | 'kick'
+  | 'patreon';
 
 export const platformList = [
   EPlatform.Twitch,
   EPlatform.YouTube,
   EPlatform.TikTok,
   EPlatform.Kick,
+  EPlatform.Patreon,
   EPlatform.Facebook,
   EPlatform.Twitter,
   EPlatform.Trovo,
@@ -307,6 +312,7 @@ export const platformLabels = (platform: TPlatform | string) =>
     [EPlatform.Twitter]: 'X',
     [EPlatform.Instagram]: $t('Instagram'),
     [EPlatform.Kick]: $t('Kick'),
+    [EPlatform.Patreon]: $t('Patreon'),
     dlive: 'dlive',
     nimotv: 'NimoTV',
   }[platform] || '');
@@ -321,6 +327,7 @@ export function getPlatformService(platform: TPlatform): IPlatformService {
     kick: KickService.instance,
     twitter: TwitterPlatformService.instance,
     instagram: InstagramService.instance,
+    patreon: PatreonService.instance,
   }[platform];
 }
 
@@ -328,6 +335,6 @@ export interface IPlatformRequest extends RequestInit {
   url: string;
 }
 
-export const externalAuthPlatforms = ['twitch', 'youtube', 'tiktok', 'kick', 'twitter'];
+export const externalAuthPlatforms = ['twitch', 'youtube', 'tiktok', 'kick', 'patreon', 'twitter'];
 
 export const maxNumPlatforms = platformList.length;

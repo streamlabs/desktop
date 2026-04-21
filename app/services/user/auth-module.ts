@@ -54,9 +54,23 @@ export class AuthModule {
       .replace(/\+/g, '-')
       .replace(/\//g, '_');
 
+    // const loginUrl = merge
+    //   ? authUrl
+    //   : `https://${this.hostsService.streamlabs}/client/login` +
+    //     `?_=${Date.now()}` +
+    //     '&skip_splash=true' +
+    //     '&external=electron' +
+    //     `&${platform}` +
+    //     '&force_verify' +
+    //     '&origin=slobs';
+
+    // console.log('login url: ', loginUrl);
+
     const partition = `persist:${uuid()}`;
 
     let code = '';
+
+    console.log('authUrl', authUrl);
 
     if (external) {
       code = await this.externalLogin(authUrl, codeChallenge, merge, onWindowShow);
@@ -167,6 +181,7 @@ export class AuthModule {
           const paramSeparator = merge ? '?' : '&';
           const url = `${authUrl}${paramSeparator}port=${address.port}&code_challenge=${codeChallenge}&code_flow=true`;
 
+          console.log('url');
           electron.shell.openExternal(url);
           onWindowShow();
         }

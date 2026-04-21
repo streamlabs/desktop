@@ -6,13 +6,13 @@ import { StreamSettingsService } from 'services/settings/streaming';
 import { UserService } from 'services/user';
 import { CustomizationService, ICustomizationServiceState } from 'services/customization';
 import { authorizedHeaders, jfetch } from 'util/requests';
-import { EAvailableFeatures, IncrementalRolloutService } from './incremental-rollout';
 import electron from 'electron';
 import { StreamingService } from './streaming';
 import { FacebookService } from './platforms/facebook';
 import { TikTokService } from './platforms/tiktok';
 import { TrovoService } from './platforms/trovo';
 import { KickService } from './platforms/kick';
+import { PatreonService } from './platforms/patreon';
 import * as remote from '@electron/remote';
 import { VideoSettingsService, TDisplayType } from './settings-v2/video';
 import { TwitterPlatformService } from './platforms/twitter';
@@ -104,11 +104,11 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @Inject() customizationService: CustomizationService;
   @Inject() streamSettingsService: StreamSettingsService;
   @Inject() streamingService: StreamingService;
-  @Inject() incrementalRolloutService: IncrementalRolloutService;
   @Inject() facebookService: FacebookService;
   @Inject('TikTokService') tiktokService: TikTokService;
   @Inject() trovoService: TrovoService;
   @Inject() kickService: KickService;
+  @Inject() patreonService: PatreonService;
   @Inject() instagramService: InstagramService;
   @Inject() videoSettingsService: VideoSettingsService;
   @Inject('TwitterPlatformService') twitterService: TwitterPlatformService;
@@ -481,6 +481,14 @@ export class RestreamService extends StatefulService<IRestreamState> {
       kickTarget.mode = isDualOutputMode ? this.getPlatformMode('kick') : 'landscape';
     }
 
+    const patreonTarget = newTargets.find(t => t.platform === 'patreon');
+    if (patreonTarget) {
+      patreonTarget.streamKey = `${this.patreonService.state.ingest}/${this.patreonService.state.streamKey}`;
+      patreonTarget.mode = isDualOutputMode ? this.getPlatformMode('patreon') : 'landscape';
+    }
+
+    // console.log('patreon target ', patreonTarget);
+
     // in dual output mode, only create targets for the displays that are being restreamed
     if (isDualOutputMode) {
       const modesToRestream = this.streamInfo.displaysToRestream.map(display =>
@@ -820,8 +828,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
 }
 
 class RestreamView extends ViewHandler<IRestreamState> {
-  @Inject() incrementalRolloutService: IncrementalRolloutService;
-
   get isGrandfathered() {
     return this.state.grandfathered || this.state.tiktokGrandfathered;
   }

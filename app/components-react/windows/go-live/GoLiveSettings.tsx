@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import styles from './GoLive.m.less';
 import Scrollable from 'components-react/shared/Scrollable';
 import { useGoLiveSettings } from './useGoLiveSettings';
@@ -52,6 +52,7 @@ export default function GoLiveSettings() {
     isStreamShiftMode,
     isStreamShiftDisabled,
     isDualOutputSwitchDisabled,
+    isPatreonEnabled,
     canStreamDualOutput,
     setPrimaryChat,
     openPlatformSettings,
@@ -75,9 +76,17 @@ export default function GoLiveSettings() {
 
       showTweet: module.primaryPlatform && module.primaryPlatform !== 'twitter',
 
-      isStreamShiftDisabled: module.isDualOutputMode,
+      get isPatreonEnabled() {
+        return module.enabledPlatforms.some(p => p === 'patreon');
+      },
 
-      isDualOutputSwitchDisabled: module.isStreamShiftMode && !module.isDualOutputMode,
+      get isStreamShiftDisabled() {
+        return module.isDualOutputMode || module.enabledPlatforms.some(p => p === 'patreon');
+      },
+
+      get isDualOutputSwitchDisabled() {
+        return module.isStreamShiftMode && !module.isDualOutputMode;
+      },
 
       addDestination() {
         this.settingsService.actions.showSettings('Stream');
@@ -120,6 +129,16 @@ export default function GoLiveSettings() {
   const headerText = isDualOutputMode ? $t('Destinations & Outputs:') : $t('Destinations:');
 
   const featureCheckboxWidth = isPrime ? 140 : 155;
+
+  const streamShiftTooltip = useMemo(() => {
+    if (isPatreonEnabled) {
+      return $t('Stream Shift cannot be used with Patreon');
+    }
+
+    return isPrime
+      ? $t('Stream Shift cannot be used with Dual Output')
+      : $t('Upgrade to Ultra to switch streams between devices.');
+  }, [isPrime, isPatreonEnabled]);
 
   return (
     <Row gutter={16} className={styles.settingsRow}>
@@ -192,12 +211,8 @@ export default function GoLiveSettings() {
                 />
               </Tooltip>
               <Tooltip
-                title={
-                  isPrime
-                    ? $t('Stream Shift cannot be used with Dual Output')
-                    : $t('Upgrade to Ultra to switch streams between devices.')
-                }
-                placement="top"
+                title={streamShiftTooltip}
+                placement="topRight"
                 lightShadow={true}
                 disabled={isPrime && !isStreamShiftDisabled}
               >

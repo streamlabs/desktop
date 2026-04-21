@@ -165,6 +165,7 @@ export class StreamingService
         youtube: 'not-started',
         tiktok: 'not-started',
         kick: 'not-started',
+        patreon: 'not-started',
         facebook: 'not-started',
         twitter: 'not-started',
         trovo: 'not-started',

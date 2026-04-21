@@ -126,6 +126,7 @@ export default function NavTools() {
       >
         {menuItems.map((menuItem: IParentMenuItem) => {
           if (isDevMode && menuItem.key === EMenuItemKey.DevTools) {
+            <></>;
             return <NavToolsItem key={menuItem.key} menuItem={menuItem} onClick={openDevTools} />;
           } else if (!isPrime && menuItem.key === EMenuItemKey.GetPrime) {
             return (

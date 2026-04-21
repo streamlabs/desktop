@@ -10,6 +10,7 @@ import { ITrovoStartStreamOptions } from '../platforms/trovo';
 import { IKickStartStreamOptions } from 'services/platforms/kick';
 import { ITwitterStartStreamOptions } from 'services/platforms/twitter';
 import { IInstagramStartStreamOptions } from 'services/platforms/instagram';
+import { IPatreonStartStreamOptions } from 'services/platforms/patreon';
 import { IVideo } from 'obs-studio-node';
 import { TDisplayType } from 'services/settings-v2';
 import { ITargetLiveData } from 'services/restream';
@@ -55,6 +56,7 @@ export interface IStreamInfo {
     youtube: TGoLiveChecklistItemState;
     tiktok: TGoLiveChecklistItemState;
     kick: TGoLiveChecklistItemState;
+    patreon: TGoLiveChecklistItemState;
     facebook: TGoLiveChecklistItemState;
     twitter: TGoLiveChecklistItemState;
     trovo: TGoLiveChecklistItemState;
@@ -75,6 +77,7 @@ export interface IStreamSettings {
     youtube?: IPlatformFlags & IYoutubeStartStreamOptions;
     tiktok?: IPlatformFlags & ITikTokStartStreamOptions;
     kick?: IPlatformFlags & IKickStartStreamOptions;
+    patreon?: IPlatformFlags & IPatreonStartStreamOptions;
     facebook?: IPlatformFlags & IFacebookStartStreamOptions;
     twitter?: IPlatformFlags & ITwitterStartStreamOptions;
     trovo?: IPlatformFlags & ITrovoStartStreamOptions;

@@ -109,14 +109,14 @@ export function ThemeSelector() {
   }, [themesMetadata]);
 
   return (
-    <div style={{ width: '100%' }}>
+    <div className={styles.centered}>
       <h1 className={commonStyles.titleContainer}>{$t('Add your first theme')}</h1>
 
       <div className={commonStyles.subtitleContainer}>
         {$t('Try your first theme now, browse hundreds of more themes later on.')}
       </div>
 
-      <div>
+      <>
         {!installing ? (
           <div className={styles.container}>
             {bigPreview && detailTheme && (
@@ -199,7 +199,7 @@ export function ThemeSelector() {
             <p>{$t('Installing overlay...')}</p>
           </div>
         )}
-      </div>
+      </>
     </div>
   );
 }
