@@ -19,7 +19,7 @@ import { EStreamingState } from 'services/streaming';
 import { TApplicationTheme } from 'services/customization';
 import styles from './Main.m.less';
 import { StatefulService } from 'services';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmProperties, prop } from 'components-react/hooks/realm';
 import Onboarding from 'components-react/modals/onboarding/Onboarding';
 
 // TODO: this is technically deprecated as we have moved customizationService to Realm
@@ -51,30 +51,47 @@ export default function Main() {
     EditorCommandsService,
     ScenesService,
     CustomizationService,
-    VisionService,
-    OnboardingV2Service,
   } = Services;
   const mainWindowEl = useRef<HTMLDivElement | null>(null);
   const mainMiddleEl = useRef<HTMLDivElement | null>(null);
   const windowResizeTimeout = useRef<number | null>(null);
+  const latestRef = useRef({
+    hideStyleBlockers: false,
+    page: '' as string,
+    minEditorWidth: 500,
+    maxDockWidth: 290,
+    minDockWidth: 290,
+    dockWidth: 0,
+  });
 
-  const [bulkLoadFinished, setBulkLoadFinished] = useState(false);
-  const [i18nReady, seti18nReady] = useState(false);
+  // We need to track both bulk load and i18n readiness together so the UI doesn't render
+  // before all the translations are loaded. Loading the UI before translations are ready
+  // could cause a flash of unstyled content because the UI renders with incomplete translations
+  // and then re-renders once the translations are loaded.
+  const loadStateRef = useRef({ bulkLoadFinished: false, i18nReady: false });
+  const [uiReady, setUiReady] = useState(false);
   const [compactView, setCompactView] = useState(false);
   const [hasLiveDock, setHasLiveDock] = useState(true);
-  const [minDockWidth, setMinDockWidth] = useState(290);
-  const [maxDockWidth, setMaxDockWidth] = useState(290);
+
+  // Set dock dimensions together to prevent a render in between with invalid dimensions
+  const [dockBounds, setDockBounds] = useState({ min: 290, max: 290 });
   const [minEditorWidth, setMinEditorWidth] = useState(500);
 
-  const uiReady = bulkLoadFinished && i18nReady;
-
-  const page = useRealmObject(Services.NavigationService.state).currentPage;
-  const params = useRealmObject(Services.NavigationService.state).params;
-  const realmDockWidth = useRealmObject(Services.CustomizationService.state).livedockSize;
-  const isDockCollapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
-  const realmTheme = useRealmObject(Services.CustomizationService.state).theme;
-  const leftDock = useRealmObject(Services.CustomizationService.state).leftDock;
-  const showOnboarding = useRealmObject(OnboardingV2Service.state).showOnboarding;
+  const {
+    page,
+    params,
+    realmDockWidth,
+    isDockCollapsed,
+    realmTheme,
+    leftDock,
+  } = useRealmProperties({
+    page: prop(Services.NavigationService.state, 'currentPage'),
+    params: prop(Services.NavigationService.state, 'params'),
+    realmDockWidth: prop(Services.CustomizationService.state, 'livedockSize'),
+    isDockCollapsed: prop(Services.CustomizationService.state, 'livedockCollapsed'),
+    realmTheme: prop(Services.CustomizationService.state, 'theme'),
+    leftDock: prop(Services.CustomizationService.state, 'leftDock'),
+  });
 
   // Provides smooth chat resizing instead of writing to realm every tick while resizing
   const [dockWidth, setDockWidth] = useState(realmDockWidth);
@@ -97,6 +114,21 @@ export default function Main() {
     activeSceneId: ScenesService.views.activeSceneId,
   }));
 
+  // Update `latestRef` on every render so callbacks always have access to the
+  // latest values without needing to add them to the dependency arrays. Do this
+  // outside of a useEffect to guarantee that the values are never stale. Because
+  // useEffects run after the render phase, there can be cases where a callback is
+  // with the previous `latestRef` values. Setting the values directly in the render
+  // phase ensures that the most up-to-date values are always available.
+  latestRef.current = {
+    hideStyleBlockers,
+    page,
+    minEditorWidth,
+    maxDockWidth: dockBounds.max,
+    minDockWidth: dockBounds.min,
+    dockWidth,
+  };
+
   const showLoadingSpinner = useMemo(
     () => applicationLoading && page !== 'Onboarding' && page !== 'BrowseOverlays',
     [applicationLoading, page],
@@ -116,15 +148,12 @@ export default function Main() {
   }, [isLoggedIn, isOnboarding, hasLiveDock, showLoadingSpinner, platform?.type]);
 
   const theme = useMemo(() => {
-    return !bulkLoadFinished ? loadedTheme() || 'night-theme' : realmTheme;
-  }, [bulkLoadFinished, realmTheme]);
+    return !uiReady ? loadedTheme() || 'night-theme' : realmTheme;
+  }, [uiReady, realmTheme]);
 
-  const updateStyleBlockers = useCallback(
-    (val: boolean) => {
-      WindowsService.actions.updateStyleBlockers('main', val);
-    },
-    [showOnboarding],
-  );
+  const updateStyleBlockers = useCallback((val: boolean) => {
+    WindowsService.actions.updateStyleBlockers('main', val);
+  }, []);
 
   const onDropHandler = useCallback(
     async (event: React.DragEvent) => {
@@ -167,6 +196,7 @@ export default function Main() {
   });
 
   const updateLiveDockWidth = useCallback(() => {
+    const { minDockWidth, maxDockWidth, dockWidth } = latestRef.current;
     let constrainedWidth = Math.max(minDockWidth, dockWidth);
     constrainedWidth = Math.min(maxDockWidth, dockWidth);
 
@@ -181,7 +211,8 @@ export default function Main() {
     }, 300);
   }, []);
 
-  function windowSizeHandler() {
+  const windowSizeHandler = useCallback(() => {
+    const { hideStyleBlockers, page, minEditorWidth } = latestRef.current;
     if (!hideStyleBlockers) {
       updateStyleBlockers(true);
     }
@@ -194,17 +225,24 @@ export default function Main() {
       updateStyleBlockers(false);
       const appRect = mainWindowEl.current?.getBoundingClientRect();
       if (!appRect) return;
-      setMaxDockWidth(Math.min(appRect.width - minEditorWidth, appRect.width / 2));
-      setMinDockWidth(Math.min(290, maxDockWidth));
+
+      // Must use `latestRef` `minEditorWidth` here because the `windowSizeHandler` can be called
+      // before the `handleEditorWidth` debounce finishes and updates the state
+      const newMax = Math.min(appRect.width - latestRef.current.minEditorWidth, appRect.width / 2);
+      const newMin = Math.min(290, newMax);
+      setDockBounds({ min: newMin, max: newMax });
 
       updateLiveDockWidth();
     }, 200);
-  }
+  }, []);
 
   useEffect(() => {
     const unsubscribe = StatefulService.store.subscribe((_, state) => {
-      if (state.bulkLoadFinished) setBulkLoadFinished(true);
-      if (state.i18nReady) seti18nReady(true);
+      if (state.bulkLoadFinished) loadStateRef.current.bulkLoadFinished = true;
+      if (state.i18nReady) loadStateRef.current.i18nReady = true;
+      if (loadStateRef.current.bulkLoadFinished && loadStateRef.current.i18nReady) {
+        setUiReady(true);
+      }
     });
 
     windowSizeHandler();
@@ -217,8 +255,9 @@ export default function Main() {
 
     return () => {
       window.removeEventListener('resize', windowSizeHandler);
+      if (windowResizeTimeout.current) clearTimeout(windowResizeTimeout.current);
       // Sync persisted live dock width in the db
-      CustomizationService.actions.setSettings({ livedockSize: dockWidth });
+      CustomizationService.actions.setSettings({ livedockSize: latestRef.current.dockWidth });
     };
   }, []);
 
@@ -257,6 +296,8 @@ export default function Main() {
     onTotalWidth: (width: number) => void;
   }> = (appPages as Dictionary<React.FunctionComponent>)[page];
 
+  console.log('Rendering main page', { page, params });
+
   return (
     <div
       className={cx(styles.main, theme, 'react')}
@@ -279,8 +320,8 @@ export default function Main() {
         )}
         {renderDock && leftDock && (
           <LiveDockContainer
-            max={maxDockWidth}
-            min={minDockWidth}
+            max={dockBounds.max}
+            min={dockBounds.min}
             width={dockWidth}
             setCollapsed={setCollapsed}
             setLiveDockWidth={setDockWidth}
@@ -307,8 +348,8 @@ export default function Main() {
         </div>
         {renderDock && !leftDock && (
           <LiveDockContainer
-            max={maxDockWidth}
-            min={minDockWidth}
+            max={dockBounds.max}
+            min={dockBounds.min}
             width={dockWidth}
             setCollapsed={setCollapsed}
             setLiveDockWidth={setDockWidth}
@@ -337,7 +378,9 @@ interface ILiveDockContainerProps {
 }
 
 function LiveDockContainer(p: ILiveDockContainerProps) {
-  const isDockCollapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
+  const { isDockCollapsed } = useRealmProperties({
+    isDockCollapsed: prop(Services.CustomizationService.state, 'livedockCollapsed'),
+  });
 
   function Chevron() {
     return (
