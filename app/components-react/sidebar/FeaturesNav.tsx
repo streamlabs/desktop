@@ -22,7 +22,7 @@ import AppsNav from './AppsNav';
 import EditorTabs from './EditorTabs';
 import cx from 'classnames';
 import Utils from 'services/utils';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 
 export default function FeaturesNav() {
   const toggleStudioMode = useCallback(() => {
@@ -82,7 +82,7 @@ export default function FeaturesNav() {
     VisionService,
   } = Services;
 
-  const isVisionRunning = useRealmObject(VisionService.state).isRunning;
+  const { isRunning: isVisionRunning } = useRealmObjectProperty(VisionService.state, 'isRunning');
 
   const {
     featureIsEnabled,
@@ -166,11 +166,11 @@ export default function FeaturesNav() {
 
   const layoutEditorItem = useMemo(() => {
     return menu.menuItems.find(menuItem => menuItem.key === EMenuItemKey.LayoutEditor);
-  }, []);
+  }, [menu]);
 
   const studioModeItem = useMemo(() => {
     return menu.menuItems.find(menuItem => menuItem.key === EMenuItemKey.StudioMode);
-  }, []);
+  }, [menu]);
 
   return (
     <Menu
@@ -210,7 +210,7 @@ export default function FeaturesNav() {
                 )}
               >
                 <EditorTabs type="submenu" />
-                {layoutEditorItem && (
+                {layoutEditorItem?.isActive && (
                   <FeaturesNavItem
                     key={layoutEditorItem.key}
                     isSubMenuItem={true}
@@ -218,7 +218,7 @@ export default function FeaturesNav() {
                     handleNavigation={handleNavigation}
                   />
                 )}
-                {studioModeItem && (
+                {studioModeItem?.isActive && (
                   <FeaturesNavItem
                     key={studioModeItem.key}
                     isSubMenuItem={true}
