@@ -1,7 +1,7 @@
 import React, { CSSProperties } from 'react';
 import { Services } from '../service-provider';
 import cx from 'classnames';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 
 type TUltraIcon = 'badge' | 'day' | 'night' | 'simple';
 
@@ -16,7 +16,10 @@ interface IUltraIcon {
  * when displaying the icon with multicolor styling.
  */
 export default function UltraIcon({ type, className, style }: IUltraIcon) {
-  const isDarkTheme = useRealmObject(Services.CustomizationService.state).isDarkTheme;
+  const { isDarkTheme } = useRealmObjectProperty(
+    Services.CustomizationService.state,
+    'isDarkTheme',
+  );
 
   if (type === 'day' || (!type && !isDarkTheme)) {
     return (

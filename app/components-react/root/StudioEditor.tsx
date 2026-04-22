@@ -10,7 +10,7 @@ import { TDisplayType } from 'services/settings-v2';
 import AutoProgressBar from 'components-react/shared/AutoProgressBar';
 import { useSubscription } from 'components-react/hooks/useSubscription';
 import { message } from 'antd';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 import { ENotificationType } from 'services/notifications';
 import { Service } from 'services/core/service';
 import { AudioNotificationType } from 'services/audio/audio';
@@ -29,7 +29,7 @@ export default function StudioEditor() {
     JsonrpcService,
     DefaultHardwareService,
   } = Services;
-  const performanceMode = useRealmObject(CustomizationService.state).performanceMode;
+  const { performanceMode } = useRealmObjectProperty(CustomizationService.state, 'performanceMode');
   const v = useVuex(() => ({
     cursor: EditorService.state.cursor,
     studioMode: TransitionsService.state.studioMode,

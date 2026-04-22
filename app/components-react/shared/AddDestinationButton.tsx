@@ -9,7 +9,7 @@ import ButtonHighlighted from './ButtonHighlighted';
 import { PlusOutlined } from '@ant-design/icons';
 import styles from './AddDestinationButton.m.less';
 import cx from 'classnames';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 
 const PlusIcon = PlusOutlined as Function;
 interface IAddDestinationButtonProps {
@@ -152,7 +152,10 @@ function UltraAddDestinationButton(p: {
 }
 
 function AddDestinationBanner(p: { className?: string; onClick: () => void }) {
-  const isDarkTheme = useRealmObject(Services.CustomizationService.state).isDarkTheme;
+  const { isDarkTheme } = useRealmObjectProperty(
+    Services.CustomizationService.state,
+    'isDarkTheme',
+  );
 
   const text = $t('Unlock unlimited multistreaming with Ultra and grow your audience faster');
 
@@ -175,7 +178,10 @@ function AddDestinationBanner(p: { className?: string; onClick: () => void }) {
 }
 
 function AddDestinationHeader(p: { className?: string; onClick: () => void }) {
-  const isDarkTheme = useRealmObject(Services.CustomizationService.state).isDarkTheme;
+  const { isDarkTheme } = useRealmObjectProperty(
+    Services.CustomizationService.state,
+    'isDarkTheme',
+  );
 
   const text = $t(
     'Grow your audience faster with unlimited Multistream. Our servers do the work so your PC can stream smoothly.',

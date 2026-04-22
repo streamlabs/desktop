@@ -5,14 +5,17 @@ import { ModalLayout } from 'components-react/shared/ModalLayout';
 import styles from './MarketingModal.m.less';
 import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 import Scrollable from 'components-react/shared/Scrollable';
 
 export default function MarketingModal() {
   const { AnnouncementsService } = Services;
 
-  const productUpdates =
-    useRealmObject(AnnouncementsService.currentAnnouncements).productUpdates || [];
+  const { productUpdates: rawUpdates } = useRealmObjectProperty(
+    AnnouncementsService.currentAnnouncements,
+    'productUpdates',
+  );
+  const productUpdates = rawUpdates || [];
 
   function handleButton(url: string) {
     shell.openExternal(url);

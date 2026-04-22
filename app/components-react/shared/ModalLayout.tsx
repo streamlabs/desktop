@@ -6,7 +6,7 @@ import { $t } from '../../services/i18n';
 import { Button } from 'antd';
 import { ModalProps } from 'antd/lib/modal';
 import Scrollable from './Scrollable';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 
 // use props of Modal from the antd lib
 type TProps = {
@@ -48,7 +48,7 @@ export function ModalLayout(p: TProps) {
   // inject services
   const { WindowsService, CustomizationService } = Services;
 
-  const currentTheme = useRealmObject(CustomizationService.state).theme;
+  const { theme: currentTheme } = useRealmObjectProperty(CustomizationService.state, 'theme');
 
   // define a close method for the modal
   function close() {

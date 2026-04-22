@@ -9,7 +9,7 @@ import * as remote from '@electron/remote';
 import { TStreamShiftStatus } from 'services/restream';
 import { promptAction } from 'components-react/modals';
 import { TSocketEvent } from 'services/websocket';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 
 function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -48,7 +48,10 @@ function StartStreamingButton(p: { disabled?: boolean }) {
     false,
   );
 
-  const updateStreamInfoOnLive = useRealmObject(CustomizationService.state).updateStreamInfoOnLive;
+  const { updateStreamInfoOnLive } = useRealmObjectProperty(
+    CustomizationService.state,
+    'updateStreamInfoOnLive',
+  );
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
   const [isLoading, setIsLoading] = useState(false);

@@ -11,7 +11,7 @@ import groupBy from 'lodash/groupBy';
 import { Tabs, Modal } from 'antd';
 import Display from 'components-react/shared/Display';
 import { useVuex } from 'components-react/hooks';
-import { useRealmObject } from 'components-react/hooks/realm';
+
 
 class MediaFileReader {
   constructor(public readonly filePath: string) {}

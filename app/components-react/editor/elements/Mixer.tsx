@@ -8,12 +8,12 @@ import MixerItem from './mixer/MixerItem';
 import { Services } from 'components-react/service-provider';
 import { Menu } from 'util/menus/Menu';
 import { $t } from 'services/i18n';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 
 const mins = { x: 150, y: 120 };
 
 export function Mixer() {
-  const { EditorCommandsService, AudioService, CustomizationService, WindowsService } = Services;
+  const { EditorCommandsService, AudioService, CustomizationService } = Services;
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -25,12 +25,11 @@ export function Mixer() {
     return !canvas.getContext('webgl');
   }, []);
 
-  const performanceMode = useRealmObject(CustomizationService.state).performanceMode;
-  const { audioSourceIds, hideStyleBlockers } = useVuex(() => ({
+  const { performanceMode } = useRealmObjectProperty(CustomizationService.state, 'performanceMode');
+  const { audioSourceIds } = useVuex(() => ({
     audioSourceIds: AudioService.views.sourcesForCurrentScene
       .filter(source => !source.mixerHidden && source.isControlledViaObs)
       .map(source => source.sourceId),
-    hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
   }));
 
   function showAdvancedSettings() {

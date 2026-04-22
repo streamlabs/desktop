@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from 'antd';
 import { ObsSettingsSection } from './ObsSettings';
 import { $t } from '../../../services/i18n';
@@ -6,7 +6,7 @@ import { Services } from '../../service-provider';
 import { SwitchInput, TextInput } from '../../shared/inputs';
 import { IConnectedDevice } from 'services/api/remote-control-api';
 import styles from './Mobile.m.less';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmProperties, prop } from 'components-react/hooks/realm';
 import { useVuex } from 'components-react/hooks';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import { $i } from 'services/utils';
@@ -16,8 +16,10 @@ import UltraBox from 'components-react/shared/UltraBox';
 export function MobileSettings() {
   const { RemoteControlService, UserService, TcpServerService } = Services;
 
-  const connectedDevices = useRealmObject(RemoteControlService.connectedDevices).devices;
-  const enabled = useRealmObject(RemoteControlService.state).enabled;
+  const { connectedDevices, enabled } = useRealmProperties({
+    connectedDevices: prop(RemoteControlService.connectedDevices, 'devices'),
+    enabled: prop(RemoteControlService.state, 'enabled'),
+  });
 
   const { isLoggedIn, websocketsEnabled, token, port } = useVuex(() => ({
     isLoggedIn: UserService.views.isLoggedIn,
