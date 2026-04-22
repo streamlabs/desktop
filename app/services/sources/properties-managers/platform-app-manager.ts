@@ -3,6 +3,7 @@ import { PropertiesManager } from './properties-manager';
 import { Inject } from 'services/core/injector';
 import * as obs from '../../../../obs-api';
 import { PlatformAppsService } from 'services/platform-apps';
+import { stringifyAppSourceSettings } from 'services/platform-apps/source-url';
 import { TransitionsService } from 'services/transitions';
 
 export interface IPlatformAppManagerSettings {
@@ -63,7 +64,10 @@ export class PlatformAppManager extends PropertiesManager {
   }
 
   applySettings(settings: Dictionary<any>) {
-    super.applySettings(settings);
+    super.applySettings({
+      ...settings,
+      appSettings: stringifyAppSourceSettings(settings.appSettings ?? this.settings.appSettings),
+    });
     this.updateUrl();
   }
 
