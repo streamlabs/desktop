@@ -296,8 +296,6 @@ export default function Main() {
     onTotalWidth: (width: number) => void;
   }> = (appPages as Dictionary<React.FunctionComponent>)[page];
 
-  console.log('Rendering main page', { page, params });
-
   return (
     <div
       className={cx(styles.main, theme, 'react')}
