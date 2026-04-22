@@ -1,23 +1,71 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import cx from 'classnames';
 import styles from '../MigrationNotice.m.less';
+import FeatureItemCard from './FeatureItemCard';
 
 export interface Feature {
   id: string;
   headline: string;
   previewImage?: string;
+  description?: string;
+  topColor?: string;
+  bottomColor?: string;
+  videoUrl?: string;
+  blobColor?: string;
+  iconUrl?: string;
 }
 
 export const CAROUSEL_FEATURES: Feature[] = [
-  { id: 'ai-reels', headline: 'Auto created reels in seconds powered by Streamlabs AI' },
-  { id: 'subtitles', headline: 'Auto subtitles inspired by the pros' },
+  {
+    id: 'ai-reels',
+    headline: 'Auto created reels in seconds powered by Streamlabs AI',
+    topColor: '#19242A',
+    bottomColor: '#19242A',
+    previewImage: '/public/graphics/auto-create.png',
+  },
+  {
+    id: 'subtitles',
+    headline: 'Automatic subtitles',
+    description: 'Add subtitles like the pros with a click of a button. Zero extra work.',
+    topColor: '#0C2C52',
+    bottomColor: '#0C2C52',
+    previewImage: '/public/graphics/subtitles.png',
+  },
   {
     id: 'verticaliser',
-    headline: 'AI Verticaliser - Convert your Horizontal videos into Vertical',
+    headline: 'Ai Verticaliser',
+    description: 'Convert your horizontal Stream in to TikTok and Instagram formats.',
+    topColor: '#380E29',
+    bottomColor: '#380E29',
+    previewImage: '/public/graphics/layout.png',
+    blobColor: '#FE08AD',
   },
-  { id: 'sharing', headline: 'Grow everywhere - Direct sharing' },
-  { id: 'gameplay', headline: 'Auto-Record gameplay - perfect for gamers' },
-  { id: 'titles', headline: 'Get Pro Titles, Thumbnails and descriptions' },
+  {
+    id: 'sharing',
+    headline: 'Grow everywhere',
+    description:
+      'Direct sharing to YouTube, Discord and shortcuts to TikTok, Instagram or X. Grow on twitch and on all platforms.',
+    topColor: '#280e08',
+    bottomColor: '#2D1712',
+    previewImage: '/public/graphics/Grow.png',
+  },
+  {
+    id: 'gameplay',
+    headline: 'Auto record gameplay',
+    description:
+      'Not streaming? No problem! Your gameplay gets recorded automatically - if you want us to',
+    topColor: '#1E0101',
+    bottomColor: '#1E0101',
+    previewImage: '/public/graphics/auto-record.png',
+    blobColor: '#FF4655',
+    iconUrl: '/public/graphics/rec-icon.svg',
+  },
+  {
+    id: 'titles',
+    headline: 'Get Pro Titles, Thumbnails and descriptions',
+    topColor: '#1a1a2e',
+    bottomColor: '#16213e',
+  },
 ];
 
 const ANIM_DURATION = 220;
@@ -161,25 +209,18 @@ export default function FeatureCarousel(props: IFeatureCarouselProps) {
     return () => clearTimeout(timer);
   }, [features.length, selectFeature]);
 
-  const renderCard = (feature: Feature) => {
-    if (feature.previewImage) {
-      return (
-        <img
-          src={feature.previewImage}
-          alt={feature.headline}
-          className={styles.carouselCardImage}
-        />
-      );
-    }
-    return (
-      <div className={styles.carouselPlaceholder}>
-        <div className={styles.carouselPlaceholderIcon}>
-          <div className={styles.carouselPlaceholderIconInner} />
-        </div>
-        <p className={styles.carouselPlaceholderText}>{feature.headline}</p>
-      </div>
-    );
-  };
+  const renderCard = (feature: Feature) => (
+    <FeatureItemCard
+      topColor={feature.topColor}
+      bottomColor={feature.bottomColor}
+      headline={feature.headline}
+      description={feature.description}
+      imageUrl={feature.previewImage}
+      videoUrl={feature.videoUrl}
+      blobColor={feature.blobColor}
+      iconUrl={feature.iconUrl}
+    />
+  );
 
   return (
     <div className={styles.carouselWrapper}>
