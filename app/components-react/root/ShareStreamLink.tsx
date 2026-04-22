@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Services } from '../service-provider';
 import { $t } from 'services/i18n';
 import { clipboard } from 'electron';
@@ -20,7 +20,7 @@ import styles from './ShareStreamLink.m.less';
  * due to 5.x using CSS in JS among other breaking changes.
  * As such, we're left with a Radio Group.
  */
-export const ShareStreamLink = () => {
+export const ShareStreamLink = memo(() => {
   const [expanded, setExpanded] = useState(false);
 
   const toggleExpanded = () => setExpanded(expanded => !expanded);
@@ -91,7 +91,8 @@ export const ShareStreamLink = () => {
       )}
     </div>
   );
-};
+});
+ShareStreamLink.displayName = 'ShareStreamLink';
 
 const copyToClipboard = (link: string) => {
   clipboard.writeText(link);
