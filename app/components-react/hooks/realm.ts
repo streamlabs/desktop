@@ -58,10 +58,7 @@ export function useRealmObjectProperty<T extends RealmObject, K extends keyof T>
 /**
  * Creates a type-safe property binding for use with useRealmProperties.
  */
-export function prop<T extends RealmObject, K extends keyof T>(
-  obj: T,
-  key: K,
-): readonly [T, K] {
+export function prop<T extends RealmObject, K extends keyof T>(obj: T, key: K): readonly [T, K] {
   return [obj, key] as const;
 }
 
@@ -69,7 +66,9 @@ type PropertyBindings = Record<string, readonly [RealmObject, string]>;
 
 type RealmPropertyResult<B extends PropertyBindings> = {
   [P in keyof B]: B[P] extends readonly [infer O, infer K]
-    ? K extends keyof O ? O[K] : never
+    ? K extends keyof O
+      ? O[K]
+      : never
     : never;
 };
 
