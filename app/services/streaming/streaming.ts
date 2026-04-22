@@ -740,7 +740,9 @@ export class StreamingService
       console.error('Error starting video transmission: ', e);
 
       const failureType =
-        typeof e === 'string' && e.includes('encoder') ? 'INVALID_ENCODER' : 'UNKNOWN_ERROR';
+        (e as any).message && (e as any).message.includes('encoder')
+          ? 'INVALID_ENCODER'
+          : 'UNKNOWN_ERROR';
 
       const errorType = this.handleTypedStreamError(
         e,
@@ -1011,7 +1013,7 @@ export class StreamingService
 
     // Format the error message for restream errors to show the details to the user in the bypass error modal
     if (e && typeof e === 'object' && type.split('_').includes('RESTREAM')) {
-      const errorPlatform = platform || this.state.info.error?.platform;
+      const errorPlatform = platformLabels(platform || this.state.info.error?.platform);
       // If the error has a platform associated with it, specify the platform in the error message
       if (errorPlatform) {
         const platformLabel = $t('%{platform} Error', { platform: errorPlatform });
@@ -1034,7 +1036,7 @@ export class StreamingService
 
       const streamError = createStreamError(
         type,
-        { status, statusText: $t('Multistream Error') + ': ' + messages.join('. '), platform },
+        { status, statusText: $t('Multistream Error') + messages.join('. '), platform },
         details.join('\n'),
       );
 
@@ -1458,6 +1460,9 @@ export class StreamingService
       game = this.views.game;
     } catch (e: unknown) {
       console.error('Error fetching stream encoder info: ', e);
+
+      const message = (e as any).message ?? $t('Failed to fetch encoder settings');
+      this.handleTypedStreamError(e, 'INVALID_ENCODER', message);
     }
 
     const eventMetadata: Dictionary<any> = {
@@ -1892,15 +1897,16 @@ export class StreamingService
         this.contexts[contextName].streaming.start();
       } catch (e: unknown) {
         console.error('Error starting streaming:', e);
+        const message =
+          (e as any).message ??
+          $t('An unknown error occurred while starting the stream. Please try again.');
 
         this.createOBSError(
           EOBSOutputType.Streaming,
           contextName,
           EOBSOutputSignal.Start,
           EOutputCode.Error,
-          e instanceof StreamError
-            ? e.message
-            : $t('An unknown Streaming error occurred. Please try again.'),
+          message,
         );
 
         this.handleDestroyOutputContexts(contextName);
@@ -1979,9 +1985,7 @@ export class StreamingService
           ? 'horizontal'
           : 'vertical';
       const message =
-        e instanceof StreamError
-          ? e.message
-          : $t('An unknown Recording error occurred. Please try again.');
+        (e as any).message ?? $t('An unknown Recording error occurred. Please try again.');
 
       // Destroy any existing recording instance and reset the recording state
       // Do not return or throw an error afterwards to allow for the stream and replay buffer to still be toggled
@@ -2769,7 +2773,21 @@ export class StreamingService
 
     // If the instance matches the mode, return to validate it
     if (validOutput && start) {
-      this.contexts[context][type]?.start();
+      try {
+        this.contexts[context][type]?.start();
+      } catch (e: unknown) {
+        console.error(`Error starting validated ${type} instance:`, e);
+
+        const outputType =
+          type === 'streaming' ? EOBSOutputType.Streaming : EOBSOutputType.Recording;
+        this.createOBSError(
+          outputType,
+          display,
+          EOBSOutputSignal.Start,
+          EOutputCode.Error,
+          typeof e === 'string' ? e : $t('An unknown error occurred. Please try again.'),
+        );
+      }
       return;
     }
     if (validOutput) return;
@@ -2832,7 +2850,9 @@ export class StreamingService
       const existingTrack = AudioTrackFactory.getAtIndex(index);
       if (existingTrack) return;
     } catch (e: unknown) {
-      // continue to create track if the audio track does not exist
+      // Continue to create track if the audio track does not exist. This is not a bug.
+      // This call to get at index will throw an error if the track does not exist,
+      // so we can catch the error and create the track if it does not exist.
       console.info('Audio track does not exist, creating new track at index', index);
     }
 
