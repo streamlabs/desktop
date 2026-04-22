@@ -313,7 +313,7 @@ export class PlatformContainerManager {
    */
   private getAppPartition(app: ILoadedApp) {
     const userId = this.userService.platformId;
-    const partition = `platformApp-${app.id}-${userId}-${app.unpacked}`;
+    const partition = `persist:platformApp-${app.id}-${userId}-${app.unpacked}`;
 
     if (!this.sessionsInitialized[partition]) {
       const session = remote.session.fromPartition(partition);
