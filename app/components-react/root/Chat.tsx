@@ -24,7 +24,8 @@ export default function Chat(props: {
     const service = props.restream ? RestreamService : ChatService;
     const cancelUnload = onUnload(() => service.actions.unmountChat(remote.getCurrentWindow().id));
 
-    window.addEventListener('resize', debounce(checkResize, 100));
+    const debouncedCheckResize = debounce(checkResize, 100);
+    window.addEventListener('resize', debouncedCheckResize);
 
     // Work around an electron bug on mac where chat is not interactable
     // after leaving fullscreen until chat is remounted.
@@ -44,7 +45,8 @@ export default function Chat(props: {
     setTimeout(checkResize, 100);
 
     return () => {
-      window.removeEventListener('resize', debounce(checkResize, 100));
+      window.removeEventListener('resize', debouncedCheckResize);
+      debouncedCheckResize.cancel();
 
       if (getOS() === OS.Mac) {
         remote.getCurrentWindow().removeListener('leave-full-screen', leaveFullScreenTrigger);
