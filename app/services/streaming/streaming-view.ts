@@ -664,7 +664,11 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns true if given platforms have a capability
    */
   supports(capability: TPlatformCapability, targetPlatforms?: TPlatform[]): boolean {
-    const platforms = targetPlatforms || this.enabledPlatforms;
+    const platforms =
+      capability === 'stream-schedule'
+        ? this.linkedPlatforms
+        : targetPlatforms || this.enabledPlatforms;
+
     for (const platform of platforms) {
       if (getPlatformService(platform).hasCapability(capability)) return true;
     }

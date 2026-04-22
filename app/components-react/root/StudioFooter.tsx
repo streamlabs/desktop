@@ -52,8 +52,8 @@ function StudioFooterComponent() {
   );
 
   const canSchedule = useMemo(() => {
-    return supportsScheduling && recordingModeEnabled;
-  }, [supportsScheduling, recordingModeEnabled]);
+    return supportsScheduling;
+  }, [supportsScheduling]);
 
   const replayBufferOffline = useMemo(() => {
     return replayBufferStatus === EReplayBufferState.Offline;
