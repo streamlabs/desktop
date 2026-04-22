@@ -195,14 +195,6 @@ export default function Main() {
     setMinEditorWidth(width);
   });
 
-  const updateLiveDockWidth = useCallback(() => {
-    const { minDockWidth, maxDockWidth, dockWidth } = latestRef.current;
-    let constrainedWidth = Math.max(minDockWidth, dockWidth);
-    constrainedWidth = Math.min(maxDockWidth, dockWidth);
-
-    if (dockWidth !== constrainedWidth) setDockWidth(constrainedWidth);
-  }, []);
-
   const setCollapsed = useCallback((livedockCollapsed: boolean) => {
     updateStyleBlockers(true);
     CustomizationService.actions.setSettings({ livedockCollapsed });
@@ -232,7 +224,14 @@ export default function Main() {
       const newMin = Math.min(290, newMax);
       setDockBounds({ min: newMin, max: newMax });
 
-      updateLiveDockWidth();
+      // Update dock width directly instead of calling it in a function to ensure it uses the latest
+      // `newMax` and `newMin` values. If called in a function, it would have `dockBounds` as a dependency,
+      // which would cause it to use stale `newMax` and `newMin` values.
+      const currentDockWidth = latestRef.current.dockWidth;
+      const constrainedWidth = Math.min(newMax, Math.max(newMin, currentDockWidth));
+      if (currentDockWidth !== constrainedWidth) {
+        setDockWidth(constrainedWidth);
+      }
     }, 200);
   }, []);
 
