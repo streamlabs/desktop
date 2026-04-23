@@ -55,6 +55,12 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       },
     ];
 
+    // This debugging log is intentional to verify that the Both option is showing for Twitch when dual stream is available,
+    // and hidden if the user does not have access to dual stream. This is to confirm that the issue is not access.
+    if (p?.platform === 'twitch' && canDualStream) {
+      console.log('Dual stream is available for Twitch, showing Both option');
+    }
+
     if (canDualStream) {
       const tooltip = p?.platform
         ? $t('Stream both horizontally and vertically to %{platform}', {
