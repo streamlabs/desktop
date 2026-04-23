@@ -13,6 +13,7 @@ import NotificationsArea from './NotificationsArea';
 import { Tooltip } from 'antd';
 import { confirmAsync } from 'components-react/modals';
 import RecordingSwitcher from 'components-react/windows/go-live/RecordingSwitcher';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 function StudioFooterComponent() {
   const {
@@ -52,8 +53,8 @@ function StudioFooterComponent() {
   );
 
   const canSchedule = useMemo(() => {
-    return supportsScheduling && recordingModeEnabled;
-  }, [supportsScheduling, recordingModeEnabled]);
+    return supportsScheduling;
+  }, [supportsScheduling]);
 
   const replayBufferOffline = useMemo(() => {
     return replayBufferStatus === EReplayBufferState.Offline;
@@ -308,7 +309,22 @@ const RecordingTooltipTitle = memo(
       return $t('Stop Recording');
     }, [p.isRecording, p.isDualOutputMode, p.useAiHighlighter]);
 
-    return p.isDualOutputMode && !p.isRecording && !p.useAiHighlighter ? (
+    const showRecordingSwitcher = useMemo(() => {
+      if (
+        Services.IncrementalRolloutService.views.featureIsEnabled(
+          EAvailableFeatures.verticalRecording,
+        ) ||
+        Services.IncrementalRolloutService.views.featureIsEnabled(
+          EAvailableFeatures.dualOutputRecording,
+        )
+      ) {
+        return p.isDualOutputMode && !p.isRecording && !p.useAiHighlighter;
+      }
+
+      return false;
+    }, [p.isDualOutputMode, p.isRecording, p.useAiHighlighter]);
+
+    return showRecordingSwitcher ? (
       <RecordingSwitcher label={tooltipText} />
     ) : (
       <span>{tooltipText}</span>
