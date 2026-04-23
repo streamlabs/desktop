@@ -7,6 +7,7 @@ interface IFeatureItemCardProps {
   headline?: string;
   description?: string;
   imageUrl?: string;
+  verticalImageUrl?: string;
   videoUrl?: string;
   blobColor?: string;
   iconUrl?: string;
@@ -20,6 +21,7 @@ export default function FeatureItemCard(props: IFeatureItemCardProps) {
     headline,
     description,
     imageUrl,
+    verticalImageUrl,
     videoUrl,
     blobColor,
     iconUrl,
@@ -48,13 +50,25 @@ export default function FeatureItemCard(props: IFeatureItemCardProps) {
         </div>
       )}
 
-      {children || <CardMedia videoUrl={videoUrl} imageUrl={imageUrl} headline={headline} />}
+      {children || (
+        <CardMedia
+          videoUrl={videoUrl}
+          imageUrl={imageUrl}
+          verticalImageUrl={verticalImageUrl}
+          headline={headline}
+        />
+      )}
     </div>
   );
 }
 
-function CardMedia(props: { videoUrl?: string; imageUrl?: string; headline?: string }) {
-  const { videoUrl, imageUrl, headline } = props;
+function CardMedia(props: {
+  videoUrl?: string;
+  imageUrl?: string;
+  verticalImageUrl?: string;
+  headline?: string;
+}) {
+  const { videoUrl, imageUrl, verticalImageUrl, headline } = props;
 
   if (videoUrl) {
     return (
@@ -67,7 +81,10 @@ function CardMedia(props: { videoUrl?: string; imageUrl?: string; headline?: str
   if (imageUrl) {
     return (
       <div className={styles.cardMedia}>
-        <img src={imageUrl} alt={headline || ''} className={styles.cardImage} />
+        <img src={imageUrl} alt={headline || ''} className={styles.cardImageHorizontal} />
+        {verticalImageUrl && (
+          <img src={verticalImageUrl} alt={headline || ''} className={styles.cardImageVertical} />
+        )}
       </div>
     );
   }

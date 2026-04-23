@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import cx from 'classnames';
-import styles from '../MigrationNotice.m.less';
+import styles from './MigrationNotice.m.less';
 import FeatureItemCard from './FeatureItemCard';
+import { $i } from 'services/utils';
 
+const IMAGE_PATH = 'https://cdn.streamlabs.com/static/imgs/highlighter';
 export interface Feature {
   id: string;
   headline: string;
+  listItemTitle?: string;
   previewImage?: string;
   description?: string;
   topColor?: string;
@@ -18,53 +21,55 @@ export interface Feature {
 export const CAROUSEL_FEATURES: Feature[] = [
   {
     id: 'ai-reels',
-    headline: 'Auto created reels in seconds powered by Streamlabs AI',
+    listItemTitle: 'Auto created reels in seconds powered by Streamlabs AI',
+    headline: 'Turn 1 Recording into 10 Reels - automatically',
     topColor: '#19242A',
     bottomColor: '#19242A',
-    previewImage: '/public/graphics/auto-create.png',
-  },
-  {
-    id: 'subtitles',
-    headline: 'Automatic subtitles',
-    description: 'Add subtitles like the pros with a click of a button. Zero extra work.',
-    topColor: '#0C2C52',
-    bottomColor: '#0C2C52',
-    previewImage: '/public/graphics/subtitles.png',
+    previewImage: `${IMAGE_PATH}/create.webp`,
   },
   {
     id: 'verticaliser',
-    headline: 'Ai Verticaliser',
-    description: 'Convert your horizontal Stream in to TikTok and Instagram formats.',
+    listItemTitle: 'Recording to shorts - fully automatic',
+    headline: 'Horizontal to vertical with one click',
+    description: 'Convert your horizontal stream into TikTok and Instagram formats.',
     topColor: '#380E29',
     bottomColor: '#380E29',
-    previewImage: '/public/graphics/layout.png',
+    previewImage: `${IMAGE_PATH}/layout.webp`,
+    iconUrl: `${IMAGE_PATH}/layout-icon.svg`,
     blobColor: '#FE08AD',
   },
   {
+    id: 'subtitles',
+    listItemTitle: 'Subtitles like the PROs',
+    headline: 'Automatic subtitles',
+    description: 'Add subtitles like the pros with the click of a button. Zero extra work.',
+    topColor: '#0C2C52',
+    bottomColor: '#0C2C52',
+    previewImage: `${IMAGE_PATH}/subtitles.webp`,
+    iconUrl: `${IMAGE_PATH}/subtitles-icon.svg`,
+  },
+  {
     id: 'sharing',
+    listItemTitle: 'Grow on every platform - without effort',
     headline: 'Grow everywhere',
     description:
-      'Direct sharing to YouTube, Discord and shortcuts to TikTok, Instagram or X. Grow on twitch and on all platforms.',
+      'Direct sharing to YouTube, Discord and shortcuts to TikTok, Instagram or X. Grow on all platforms without effort.',
     topColor: '#280e08',
     bottomColor: '#2D1712',
-    previewImage: '/public/graphics/Grow.png',
+    previewImage: `${IMAGE_PATH}/grow.webp`,
+    iconUrl: `${IMAGE_PATH}/grow-icon.svg`,
   },
   {
     id: 'gameplay',
+    listItemTitle: 'Auto-Record: Create content even when you are not live',
     headline: 'Auto record gameplay',
     description:
-      'Not streaming? No problem! Your gameplay gets recorded automatically - if you want us to',
+      'Not streaming? No problem! Your gameplay gets recorded automatically — if you want it to.',
     topColor: '#1E0101',
     bottomColor: '#1E0101',
-    previewImage: '/public/graphics/auto-record.png',
+    previewImage: `${IMAGE_PATH}/auto-record.webp`,
     blobColor: '#FF4655',
-    iconUrl: '/public/graphics/rec-icon.svg',
-  },
-  {
-    id: 'titles',
-    headline: 'Get Pro Titles, Thumbnails and descriptions',
-    topColor: '#1a1a2e',
-    bottomColor: '#16213e',
+    iconUrl: `${IMAGE_PATH}/auto-record-icon.svg`,
   },
 ];
 
@@ -159,7 +164,9 @@ export default function FeatureCarousel(props: IFeatureCarouselProps) {
       } else {
         setTransitionState('hover');
         requestAnimationFrame(() => {
-          setTransitionState('animating');
+          requestAnimationFrame(() => {
+            setTransitionState('animating');
+          });
         });
       }
 
@@ -216,6 +223,7 @@ export default function FeatureCarousel(props: IFeatureCarouselProps) {
       headline={feature.headline}
       description={feature.description}
       imageUrl={feature.previewImage}
+      verticalImageUrl={feature.previewImage?.replace(/\.[^.]+$/, '-vertical.webp')}
       videoUrl={feature.videoUrl}
       blobColor={feature.blobColor}
       iconUrl={feature.iconUrl}
@@ -242,7 +250,7 @@ export default function FeatureCarousel(props: IFeatureCarouselProps) {
               onMouseLeave={() => onListItemLeave(index)}
               onClick={() => selectFeature(index)}
             >
-              {feature.headline}
+              {feature.listItemTitle || feature.headline}
             </li>
           ))}
         </ul>

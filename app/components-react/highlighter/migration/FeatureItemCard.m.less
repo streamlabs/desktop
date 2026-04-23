@@ -8,7 +8,8 @@
   flex-direction: column;
   justify-content: space-between;
   width: fit-content;
-  min-height: 250px;
+  max-width: 900px;
+  height: 100%;
   overflow: hidden;
   border-radius: 16px;
   box-shadow: 0 1.063px 0 0 rgba(255, 255, 255, 0.1) inset,
@@ -80,7 +81,6 @@
 .card-media {
   position: relative;
   z-index: 1;
-  height: 100%;
 }
 
 .card-video {
@@ -89,7 +89,25 @@
   object-fit: cover;
 }
 
-.card-image {
+.card-image-horizontal {
   width: 100%;
   display: block;
+}
+
+.card-image-vertical {
+  width: 100%;
+  display: none;
+}
+
+@container (max-width: 400px) {
+  .card-image-horizontal {
+    display: none;
+  }
+  .feature-icon-badge {
+    display: none;
+  }
+
+  .card-image-vertical {
+    display: block;
+  }
 }
