@@ -5,7 +5,7 @@ import {
   EStreamingState,
   ERecordingState,
 } from '../../../app/services/streaming/streaming-api';
-import { SettingsService } from '../../../app/services/settings';
+import { OutputSettingsService, SettingsService } from '../../../app/services/settings';
 import { reserveUserFromPool, withPoolUser } from '../../helpers/webdriver/user';
 
 // not a react hook
@@ -84,6 +84,28 @@ test('Recording via API', async (t: TExecutionContext) => {
 
   recordingStatus = (await client.fetchNextEvent()).data;
   t.is(recordingStatus, ERecordingState.Offline, 'Recording status should be Offline');
+});
+
+test('Recording filename formatting is read from advanced recording settings', async t => {
+  const client = await getApiClient();
+  const settingsService = client.getResource<SettingsService>('SettingsService');
+  const outputSettingsService =
+    client.getResource<OutputSettingsService>('OutputSettingsService');
+  const customFilenamePattern = '%CCYY-%MM-%DD_%hh-%mm-%ss-%s-%%';
+
+  const advancedSettings = settingsService.state.Advanced.formData;
+  advancedSettings.forEach(subcategory => {
+    subcategory.parameters.forEach(setting => {
+      if (setting.name === 'FilenameFormatting') {
+        setting.value = customFilenamePattern;
+      }
+    });
+  });
+  settingsService.setSettings('Advanced', advancedSettings);
+
+  const recordingSettings = outputSettingsService.getRecordingSettings('horizontal');
+
+  t.is(recordingSettings.fileFormat, customFilenamePattern);
 });
 
 // TODO: Fix this test
