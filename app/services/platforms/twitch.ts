@@ -274,7 +274,7 @@ export class TwitchService
 
         await this.putChannelInfo(channelInfo);
       }
-    } else if (this.streamingService.views.isTwitchDualStreaming) {
+    } else if (this.streamingService.views.isTwitchDualStreamEnabled) {
       // Failsafe to guarantee that enhanced broadcasting is enabled if dual streaming is active
       try {
         await this.setupDualStream(goLiveSettings);
@@ -292,11 +292,12 @@ export class TwitchService
   }
 
   async setupDualStream(goLiveSettings?: IGoLiveSettings) {
-    if (!this.streamingService.views.isTwitchDualStreaming) {
+    if (!this.streamingService.views.isTwitchDualStreamEnabled) {
       return;
     }
 
-    // Enhanced broadcasting is required for dual streaming
+    // Enhanced broadcasting is required for dual streaming, regardless of
+    // how many platforms are enabled
     this.settingsService.setEnhancedBroadcasting(true);
   }
 
