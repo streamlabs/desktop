@@ -93,6 +93,26 @@ export default function AiHighlighterToggle({
 
   const toggleHighlighter = useDebounce(300, HighlighterService.actions.toggleAiHighlighter);
 
+  function showRecorderWarning() {
+    return (
+      <div className={styles.recorderWarning}>
+        <div
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'start', width: '100%' }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: '4px' }}>
+            {$t('External Streamlabs recorder is running')}
+          </div>
+          <div style={{ fontSize: '12px', opacity: 0.8 }}>
+            {$t(`The ${REPLAY_APP_NAME} recorder is also capturing gameplay.`)}
+          </div>
+        </div>
+        <Button type="default" style={{ width: '100%' }} onClick={handleStopRecording}>
+          {$t('Stop External Recording')}
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div>
       {gameIsSupported ? (
@@ -111,43 +131,6 @@ export default function AiHighlighterToggle({
           <div style={{ flexGrow: 0, backgroundColor: 'red' }}></div>
 
           <div className={styles.aiHighlighterBox}>
-            {showReplayRecordingAlert && (
-              <div
-                style={{
-                  zIndex: 10,
-                  marginBottom: '16px',
-                  padding: '16px',
-                  backgroundColor: 'transparent',
-                  border: '2px solid var(--red)',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '20px' }}>⚠️</span>
-                  <div>
-                    <div style={{ fontWeight: 600, marginBottom: '4px' }}>
-                      {$t('External Streamlabs Recorder is Running')}
-                    </div>
-                    <div style={{ fontSize: '12px', opacity: 0.8 }}>
-                      {$t(
-                        `The ${REPLAY_APP_NAME} recorder is currently active and capturing gameplay.`,
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
-                  <Button type="default" onClick={() => setShowReplayRecordingAlert(false)}>
-                    {$t('Record on Both')}
-                  </Button>
-                  <Button type="primary" danger onClick={handleStopRecording}>
-                    {$t('Stop Highlighter Recording')}
-                  </Button>
-                </div>
-              </div>
-            )}
             <div
               className={styles.coloredBlob}
               style={{
@@ -207,116 +190,128 @@ export default function AiHighlighterToggle({
                 </div>
               </div>
             </div>
-            {isExpanded && (
+
+            {showReplayRecordingAlert && useHighlighter ? (
+              showRecorderWarning()
+            ) : (
               <>
-                <div className={styles.expandedWrapper}>
-                  {!useHighlighter ? (
-                    <div
-                      style={{ top: '12px', width: '100%', display: 'flex', position: 'relative' }}
-                    >
-                      {gameConfig?.importModalConfig?.horizontalExampleVideo &&
-                      gameConfig?.importModalConfig?.verticalExampleVideo ? (
-                        <>
-                          <div
-                            className={styles.plattformIcon}
-                            style={{ top: '0px', left: '120px' }}
-                          >
-                            <YouTubeLogo />
-                          </div>
-                          <div
-                            className={styles.plattformIcon}
-                            style={{ top: '97px', left: '32px' }}
-                          >
-                            <DiscordLogo />
-                          </div>
+                {isExpanded && (
+                  <>
+                    <div className={styles.expandedWrapper}>
+                      {!useHighlighter ? (
+                        <div
+                          style={{
+                            top: '12px',
+                            width: '100%',
+                            display: 'flex',
+                            position: 'relative',
+                          }}
+                        >
+                          {gameConfig?.importModalConfig?.horizontalExampleVideo &&
+                          gameConfig?.importModalConfig?.verticalExampleVideo ? (
+                            <>
+                              <div
+                                className={styles.plattformIcon}
+                                style={{ top: '0px', left: '120px' }}
+                              >
+                                <YouTubeLogo />
+                              </div>
+                              <div
+                                className={styles.plattformIcon}
+                                style={{ top: '97px', left: '32px' }}
+                              >
+                                <DiscordLogo />
+                              </div>
 
-                          <div
-                            className={styles.plattformIcon}
-                            style={{ top: '1px', left: '283px' }}
-                          >
-                            <TikTokLogo />
-                          </div>
+                              <div
+                                className={styles.plattformIcon}
+                                style={{ top: '1px', left: '283px' }}
+                              >
+                                <TikTokLogo />
+                              </div>
 
-                          <div
-                            className={styles.plattformIcon}
-                            style={{ top: '93px', left: '187px' }}
-                          >
-                            <InstagramLogo />
-                          </div>
-                          <div
-                            className={styles.horizontalVideo}
-                            style={{
-                              backgroundColor: gameConfig?.importModalConfig?.backgroundColor,
-                              borderColor: gameConfig?.importModalConfig?.accentColor,
-                              boxShadow: `0px 0px 42px -4px ${gameConfig?.importModalConfig?.accentColor}30`,
-                            }}
-                          >
-                            <video
-                              muted
-                              autoPlay
-                              loop
-                              style={{ width: '100%' }}
-                              src={gameConfig.importModalConfig.horizontalExampleVideo}
-                            ></video>
-                          </div>
-                          <div
-                            className={styles.verticalVideo}
-                            style={{
-                              backgroundColor: gameConfig?.importModalConfig?.backgroundColor,
-                              borderColor: gameConfig?.importModalConfig?.accentColor,
-                              boxShadow: `0px 0px 42px -4px ${gameConfig?.importModalConfig?.accentColor}30`,
-                            }}
-                          >
-                            {' '}
-                            <video
-                              muted
-                              autoPlay
-                              loop
-                              style={{ height: '100%' }}
-                              src={gameConfig.importModalConfig.verticalExampleVideo}
-                            ></video>
-                          </div>
-                        </>
+                              <div
+                                className={styles.plattformIcon}
+                                style={{ top: '93px', left: '187px' }}
+                              >
+                                <InstagramLogo />
+                              </div>
+                              <div
+                                className={styles.horizontalVideo}
+                                style={{
+                                  backgroundColor: gameConfig?.importModalConfig?.backgroundColor,
+                                  borderColor: gameConfig?.importModalConfig?.accentColor,
+                                  boxShadow: `0px 0px 42px -4px ${gameConfig?.importModalConfig?.accentColor}30`,
+                                }}
+                              >
+                                <video
+                                  muted
+                                  autoPlay
+                                  loop
+                                  style={{ width: '100%' }}
+                                  src={gameConfig.importModalConfig.horizontalExampleVideo}
+                                ></video>
+                              </div>
+                              <div
+                                className={styles.verticalVideo}
+                                style={{
+                                  backgroundColor: gameConfig?.importModalConfig?.backgroundColor,
+                                  borderColor: gameConfig?.importModalConfig?.accentColor,
+                                  boxShadow: `0px 0px 42px -4px ${gameConfig?.importModalConfig?.accentColor}30`,
+                                }}
+                              >
+                                {' '}
+                                <video
+                                  muted
+                                  autoPlay
+                                  loop
+                                  style={{ height: '100%' }}
+                                  src={gameConfig.importModalConfig.verticalExampleVideo}
+                                ></video>
+                              </div>
+                            </>
+                          ) : (
+                            <div className={styles.image}></div>
+                          )}
+                        </div>
                       ) : (
-                        <div className={styles.image}></div>
+                        <div className={styles.educationSection}>
+                          <div>
+                            <span>⚠️</span>
+                            <span> {$t('Game language must be English')}</span>
+                          </div>{' '}
+                          <div>
+                            {' '}
+                            <span>⚠️</span>
+                            <span> {$t('Game must be fullscreen')}</span>{' '}
+                          </div>
+                          <div>
+                            {' '}
+                            <span>⚠️</span>
+                            <span> {$t('Game mode must be supported')}</span>
+                          </div>
+                          <div
+                            style={{
+                              marginTop: '-10px',
+                              marginLeft: '20px',
+                              fontWeight: 400,
+                            }}
+                          >
+                            <span style={{ fontSize: '12px' }}>
+                              {gameConfig?.gameModes && `(${gameConfig?.gameModes})`}
+                            </span>
+                          </div>
+                          {/* <EducationCarousel game={game!} /> */}
+                        </div>
                       )}
+                      <img
+                        className={`${styles.artworkImage}`}
+                        src={gameConfig?.importModalConfig?.artwork}
+                        alt=""
+                      />
                     </div>
-                  ) : (
-                    <div className={styles.educationSection}>
-                      <div>
-                        <span>⚠️</span>
-                        <span> {$t('Game language must be English')}</span>
-                      </div>{' '}
-                      <div>
-                        {' '}
-                        <span>⚠️</span>
-                        <span> {$t('Game must be fullscreen')}</span>{' '}
-                      </div>
-                      <div>
-                        {' '}
-                        <span>⚠️</span>
-                        <span> {$t('Game mode must be supported')}</span>
-                      </div>
-                      <div
-                        style={{
-                          marginTop: '-10px',
-                          marginLeft: '20px',
-                          fontWeight: 400,
-                        }}
-                      >
-                        <span style={{ fontSize: '12px' }}>
-                          {gameConfig?.gameModes && `(${gameConfig?.gameModes})`}
-                        </span>
-                      </div>
-                      {/* <EducationCarousel game={game!} /> */}
-                    </div>
-                  )}
-                  <img
-                    className={`${styles.artworkImage}`}
-                    src={gameConfig?.importModalConfig?.artwork}
-                    alt=""
-                  />
-                </div>
+                  </>
+                )}
               </>
             )}
           </div>
