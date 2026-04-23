@@ -391,6 +391,11 @@ export class StreamingService
    * Make a transition to Live
    */
   async goLive(newSettings?: IGoLiveSettings) {
+    // Ensure valid encoders for logged out users
+    if (!this.userService.isLoggedIn) {
+      this.settingsService.validateEncoders();
+    }
+
     // To ensure that the correct chat renders if dual streaming Twitch, make sure that Twitch is the primary platform
     if (
       this.userService.state.auth?.primaryPlatform !== 'twitch' &&

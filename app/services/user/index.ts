@@ -313,6 +313,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
 
   setPrimaryPlatform(platform: TPlatform) {
     this.SET_PRIMARY_PLATFORM(platform);
+    this.primaryPlatformChanged.next(platform);
   }
 
   @mutation()
@@ -430,6 +431,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   userLogin = new Subject<IUserAuth>();
   userLogout = new Subject();
   scopeAdded = new Subject();
+  primaryPlatformChanged = new Subject<TPlatform>();
 
   /**
    * Will fire on every login, similar to userLogin, but will
