@@ -30,9 +30,10 @@ export default function PageInstallationFlow(props: IPageInstallationFlowProps) 
 
   return (
     <FeatureCarousel
-      title={$t(`AI Highlighter is now ${REPLAY_APP_NAME}`)}
+      title={$t('AI Highlighter is now %{appName}', { appName: REPLAY_APP_NAME })}
       description={$t(
-        `Supercharge your workflow with our standalone tool ${REPLAY_APP_NAME}. Faster edits, more output in less time. Try it now`,
+        'Supercharge your workflow with our standalone tool %{appName}. Faster edits, more output in less time. Try it now',
+        { appName: REPLAY_APP_NAME },
       )}
       features={CAROUSEL_FEATURES}
     >
@@ -123,7 +124,9 @@ function PageInstallCta({
             type="primary"
             onClick={onOpenOrInstall}
           >
-            {isInstalled ? $t(`Open ${REPLAY_APP_NAME}`) : $t(`Install ${REPLAY_APP_NAME}`)}
+            {isInstalled
+              ? $t('Open %{appName}', { appName: REPLAY_APP_NAME })
+              : $t('Install %{appName}', { appName: REPLAY_APP_NAME })}
             {!isInstalled && (
               <div
                 style={{
@@ -220,10 +223,10 @@ function PageInstallCta({
       <div className={styles.carouselDone}>
         <span className={styles.carouselDoneTitle}>{$t('Installation finished')}</span>
         <span className={styles.carouselDoneSub}>
-          {$t(`${REPLAY_APP_NAME} has been installed and is now running.`)}
+          {$t('%{appName} has been installed and is now running.', { appName: REPLAY_APP_NAME })}
         </span>
         <Button style={{ width: 'max-content' }} type="primary" onClick={onOpenOrInstall}>
-          {$t(`Open ${REPLAY_APP_NAME}`)}
+          {$t('Open %{appName}', { appName: REPLAY_APP_NAME })}
         </Button>
       </div>
     );

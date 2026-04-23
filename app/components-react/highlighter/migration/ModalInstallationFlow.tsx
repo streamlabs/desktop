@@ -41,11 +41,14 @@ export default function ModalInstallationFlow(props: IModalInstallationFlowProps
     if (isInstalled && isRecorderRunning) {
       return (
         <div className={styles.migrationNoticeModal}>
-          <SectionHeader title={$t(`${REPLAY_APP_NAME} is active`)} onClose={props.onCancel} />
+          <SectionHeader
+            title={$t('%{appName} is active', { appName: REPLAY_APP_NAME })}
+            onClose={props.onCancel}
+          />
           <p className={styles.subtitle}>
-            {$t(
-              `The ${REPLAY_APP_NAME} recorder is currently running and capturing your gameplay.`,
-            )}
+            {$t('The %{appName} recorder is currently running and capturing your gameplay.', {
+              appName: REPLAY_APP_NAME,
+            })}
           </p>
         </div>
       );
@@ -53,9 +56,14 @@ export default function ModalInstallationFlow(props: IModalInstallationFlowProps
 
     return (
       <div className={styles.migrationNoticeModal}>
-        <SectionHeader title={$t(`${REPLAY_APP_NAME} is required`)} onClose={props.onCancel} />
+        <SectionHeader
+          title={$t('%{appName} is required', { appName: REPLAY_APP_NAME })}
+          onClose={props.onCancel}
+        />
         <p className={styles.subtitle}>
-          {$t(`Install ${REPLAY_APP_NAME} to import and detect game highlights.`)}
+          {$t('Install %{appName} to import and detect game highlights.', {
+            appName: REPLAY_APP_NAME,
+          })}
         </p>
         <div className={styles.actions}>
           <Button
@@ -63,7 +71,9 @@ export default function ModalInstallationFlow(props: IModalInstallationFlowProps
             onClick={() => handleOpenOrInstall('modal')}
             style={{ width: '100%' }}
           >
-            {isInstalled ? $t(`Open ${REPLAY_APP_NAME}`) : $t(`Install ${REPLAY_APP_NAME}`)}
+            {isInstalled
+              ? $t('Open %{appName}', { appName: REPLAY_APP_NAME })
+              : $t('Install %{appName}', { appName: REPLAY_APP_NAME })}
           </Button>
         </div>
       </div>
@@ -78,7 +88,7 @@ export default function ModalInstallationFlow(props: IModalInstallationFlowProps
         <div className={styles.installContent}>
           <div className={styles.successTitle}>{$t('Installation finished')}</div>
           <p className={styles.installSubtext}>
-            {$t(`${REPLAY_APP_NAME} has been installed and is now running.`)}
+            {$t('%{appName} has been installed and is now running.', { appName: REPLAY_APP_NAME })}
           </p>
         </div>
       </div>

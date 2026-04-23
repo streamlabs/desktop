@@ -58,7 +58,7 @@ export function useInstallState() {
 }
 
 export function getStatusText(step: EReplayInstallStep): string {
-  if (step === 'installing') return $t(`Installing ${REPLAY_APP_NAME}...`);
+  if (step === 'installing') return $t('Installing %{appName}...', { appName: REPLAY_APP_NAME });
   if (step === 'verifying') return $t('Verifying installation...');
-  return $t(`Downloading ${REPLAY_APP_NAME}...`);
+  return $t('Downloading %{appName}...', { appName: REPLAY_APP_NAME });
 }

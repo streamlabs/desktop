@@ -103,7 +103,9 @@ export default function AiHighlighterToggle({
             {$t('External Streamlabs recorder is running')}
           </div>
           <div style={{ fontSize: '12px', opacity: 0.8 }}>
-            {$t(`The ${REPLAY_APP_NAME} recorder is also capturing gameplay.`)}
+            {$t('The %{appName} recorder is also capturing gameplay.', {
+              appName: REPLAY_APP_NAME,
+            })}
           </div>
         </div>
         <Button type="default" style={{ width: '100%' }} onClick={handleStopRecording}>
