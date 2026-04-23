@@ -793,22 +793,8 @@ export class StreamingService
       if (platform === 'twitch') {
         const isEnhancedBroadcasting =
           this.views.isTwitchDualStreamEnabled ||
-          (settings.platforms.twitch && settings.platforms.twitch.isEnhancedBroadcasting) ||
-          this.views.getIsEnhancedBroadcasting();
-
-        this.SET_ENHANCED_BROADCASTING(isEnhancedBroadcasting);
-      }
-
-      // Note: Enhanced broadcasting setting persist in two places during the go live flow:
-      // in the Twitch service and in osn. The setting in the Twitch service is persisted
-      // between streams in order to restore the user's preferences for when they go live with
-      // Twitch dual stream, which requires enhanced broadcasting to be enabled. The setting
-      // in osn is what actually determines if the stream will use enhanced broadcasting.
-      if (platform === 'twitch') {
-        const isEnhancedBroadcasting =
-          this.views.isTwitchDualStreamEnabled ||
-          ((settings.platforms.twitch && settings.platforms.twitch.isEnhancedBroadcasting) ??
-            false);
+          settings.platforms.twitch?.isEnhancedBroadcasting ||
+          false;
 
         this.SET_ENHANCED_BROADCASTING(isEnhancedBroadcasting);
       }
@@ -1751,10 +1737,8 @@ export class StreamingService
 
   private async createEnhancedBroadcastDualOutput() {
     if (this.views.shouldSetupRestream && this.views.isEnhancedBroadcastingMultistream()) {
-      // TODO: confirm can swap displays
       await this.createEnhancedBroadcastMultistream();
     } else {
-      // TODO: confirm can swap displays
       await this.createEnhancedBroadcastSingleStream();
     }
   }

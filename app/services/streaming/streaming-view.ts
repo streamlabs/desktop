@@ -174,7 +174,11 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Primarily used for custom UI handling for Twitch dual stream
    */
   get isTwitchDualStreaming() {
-    return this.isTwitchDualStreamEnabled && this.enabledPlatforms.length === 1;
+    return (
+      this.isTwitchDualStreamEnabled &&
+      this.enabledPlatforms.length === 1 &&
+      this.enabledPlatforms[0] === 'twitch'
+    );
   }
 
   get isTwitchDualStreamEnabled() {
