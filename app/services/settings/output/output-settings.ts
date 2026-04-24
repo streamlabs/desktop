@@ -437,7 +437,7 @@ export class OutputSettingsService extends Service {
 
     const fileFormat = this.settingsService.findSettingValue(
       advanced,
-      'Advanced',
+      'Recording',
       'FilenameFormatting',
     );
     const muxerSettings = this.settingsService.findSettingValue(output, 'Recording', 'MuxerCustom');
