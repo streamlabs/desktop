@@ -352,5 +352,10 @@
   "Vertical stream accidentally started in single output mode. Please report this to support.": "Vertical stream accidentally started in single output mode. Please report this to support.",
   "Dual Output horizontal stream failed to start. Please try again or go live in single output mode.": "Dual Output horizontal stream failed to start. Please try again or go live in single output mode.",
   "Recording in Progress": "Recording in Progress",
-  "Recording is currently saving to disk. Do you want to force stop the recording?": "Recording is currently saving to disk. Do you want to force stop the recording?"
+  "Recording is currently saving to disk. Do you want to force stop the recording?": "Recording is currently saving to disk. Do you want to force stop the recording?",
+  "Unable to start video transmission": "Unable to start video transmission",
+  "Your current encoder is not supported for one or more of your streaming platforms": "Your current encoder is not supported for one or more of your streaming platforms",
+  "switch to a supported encoder such as x264": "switch to a supported encoder such as x264",
+  "An unknown error occurred while starting the stream. Please try again.": "An unknown error occurred while starting the stream. Please try again.",
+  "Failed to fetch encoder settings": "Failed to fetch encoder settings"
 }
