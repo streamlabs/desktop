@@ -296,7 +296,7 @@ export class StreamingService
 
     this.settingsService.settingsUpdated.subscribe(patch => {
       // Update the replay buffer duration if the setting has been changed while active
-      if (patch.Output.RecRBTime && this.isReplayBufferActive) {
+      if (patch?.Output?.RecRBTime && this.isReplayBufferActive) {
         for (const contextName in this.contexts) {
           if (this.contexts[contextName as TDisplayType].replayBuffer) {
             this.contexts[contextName as TDisplayType].replayBuffer.duration =
