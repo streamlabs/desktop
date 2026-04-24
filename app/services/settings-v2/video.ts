@@ -94,16 +94,11 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     vertical: null as IVideoInfo,
   };
 
-  establishedContext = new Subject();
+  establishedContext = new Subject<TDisplayType>();
 
   init() {
     this.establishVideoContext();
-
-    if (this.dualOutputService.views.activeDisplays.vertical) {
-      this.establishVideoContext('vertical');
-    }
-
-    this.establishedContext.next();
+    this.establishVideoContext('vertical');
   }
 
   contexts = {
@@ -324,6 +319,8 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
         `${this.outputResolutions.horizontal.outputWidth}x${this.outputResolutions.horizontal.outputHeight}`,
       );
     }
+
+    this.establishedContext.next(display);
 
     return !!this.contexts[display];
   }
