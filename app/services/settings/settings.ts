@@ -93,6 +93,9 @@ export interface ISettingsValues extends Record<TCategoryName, Dictionary<TObsVa
   Output: {
     Mode: string;
     Encoder: string;
+    DelayEnable: boolean;
+    DelaySec?: number;
+    PreserveDelay?: boolean;
     RecRB?: boolean;
     RecRBTime?: number;
     RecFormat: string;
@@ -154,6 +157,10 @@ export interface ISettingsValues extends Record<TCategoryName, Dictionary<TObsVa
   Advanced: {
     DelayEnable: boolean;
     DelaySec: number;
+    DelayPreserve: boolean;
+    Reconnect: boolean;
+    RetryDelay: number;
+    MaxRetries: number;
     fileCaching: boolean;
     MonitoringDeviceName: string;
     BindIP: string;
@@ -698,7 +705,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     // This function represents a cleaner API we would like to have
     // in the future.
 
-    Object.keys(patch).forEach((categoryName: TCategoryName) => {
+    (Object.keys(patch) as TCategoryName[]).forEach((categoryName: TCategoryName) => {
       const category: Dictionary<any> = patch[categoryName];
       const formSubCategories = this.fetchSettingsFromObs(categoryName).formData;
 

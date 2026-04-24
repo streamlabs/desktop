@@ -295,7 +295,15 @@ export class StreamingService
     );
 
     this.settingsService.settingsUpdated.subscribe(patch => {
-      // This will update the API v2 factory instance when the settings are changed
+      // Update the replay buffer duration if the setting has been changed while active
+      if (patch.Output.RecRBTime && this.isReplayBufferActive) {
+        for (const contextName in this.contexts) {
+          if (this.contexts[contextName as TDisplayType].replayBuffer) {
+            this.contexts[contextName as TDisplayType].replayBuffer.duration =
+              patch.Output.RecRBTime;
+          }
+        }
+      }
     });
   }
 
@@ -1873,9 +1881,28 @@ export class StreamingService
 
       this.contexts[contextName].streaming.service.update(streamSettings);
     }
-    this.contexts[contextName].streaming.delay = DelayFactory.create();
-    this.contexts[contextName].streaming.reconnect = ReconnectFactory.create();
-    this.contexts[contextName].streaming.network = NetworkFactory.create();
+    const delay = DelayFactory.create();
+
+    delay.enabled = this.streamSettingsService.settings.delayEnable;
+    delay.delaySec = this.streamSettingsService.settings.delaySec;
+    delay.preserveDelay = this.streamSettingsService.settings.preserveDelay;
+    this.contexts[contextName].streaming.delay = delay;
+
+    const obsAdvancedSettings = this.settingsService.views.values.Advanced;
+
+    const reconnect = ReconnectFactory.create();
+    reconnect.enabled = obsAdvancedSettings.Reconnect;
+    reconnect.retryDelay = obsAdvancedSettings.RetryDelay;
+    reconnect.maxRetries = obsAdvancedSettings.MaxRetries;
+    this.contexts[contextName].streaming.reconnect = reconnect;
+
+    const network = NetworkFactory.create();
+
+    network.bindIP = obsAdvancedSettings.BindIP;
+    network.enableDynamicBitrate = obsAdvancedSettings.DynamicBitrate;
+    network.enableOptimizations = obsAdvancedSettings.NewSocketLoopEnable;
+    network.enableLowLatency = obsAdvancedSettings.LowLatencyEnable;
+    this.contexts[contextName].streaming.network = network;
 
     if (start) {
       this.contexts[contextName].streaming.start();

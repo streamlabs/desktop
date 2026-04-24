@@ -136,7 +136,6 @@ interface IAdvancedRecordingOutputSettings extends IRecordingOutputSettings {
   rescaling: boolean;
   prefix: string;
   suffix: string;
-  duration: number;
   videoEncoder: EObsAdvancedEncoder;
   /**
    * `useStreamEncoders` is required for the Advanced Recording Factory instance
@@ -433,12 +432,6 @@ export class OutputSettingsService extends Service {
       'Recording',
       'RecRBSuffix',
     );
-    const duration: number = this.settingsService.findSettingValue(
-      output,
-      'Stream Delay',
-      'DelaySec',
-    );
-
     const outputWidth = this.videoSettingsService.outputResolutions[display].outputWidth;
     const outputHeight = this.videoSettingsService.outputResolutions[display].outputHeight;
 
@@ -465,7 +458,6 @@ export class OutputSettingsService extends Service {
         videoEncoder,
         prefix,
         suffix,
-        duration,
         outputWidth,
         outputHeight,
         fileFormat,
