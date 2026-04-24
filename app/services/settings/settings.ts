@@ -705,8 +705,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     // This function represents a cleaner API we would like to have
     // in the future.
 
-    (Object.keys(patch) as TCategoryName[]).forEach((categoryName: TCategoryName) => {
-      const category: Dictionary<any> = patch[categoryName];
+    (Object.entries(patch) as [TCategoryName, Dictionary<any>][]).forEach(([categoryName, category]) => {
       const formSubCategories = this.fetchSettingsFromObs(categoryName).formData;
 
       Object.keys(category).forEach(paramName => {
