@@ -705,23 +705,25 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     // This function represents a cleaner API we would like to have
     // in the future.
 
-    (Object.entries(patch) as [TCategoryName, Dictionary<any>][]).forEach(([categoryName, category]) => {
-      const formSubCategories = this.fetchSettingsFromObs(categoryName).formData;
+    (Object.entries(patch) as [TCategoryName, Dictionary<any>][]).forEach(
+      ([categoryName, category]) => {
+        const formSubCategories = this.fetchSettingsFromObs(categoryName).formData;
 
-      Object.keys(category).forEach(paramName => {
-        formSubCategories.forEach(subCategory => {
-          subCategory.parameters.forEach(subCategoryParam => {
-            if (subCategoryParam.name === paramName) {
-              subCategoryParam.value = category[paramName];
-            }
+        Object.keys(category).forEach(paramName => {
+          formSubCategories.forEach(subCategory => {
+            subCategory.parameters.forEach(subCategoryParam => {
+              if (subCategoryParam.name === paramName) {
+                subCategoryParam.value = category[paramName];
+              }
+            });
           });
         });
-      });
 
-      this.setSettings(categoryName, formSubCategories);
+        this.setSettings(categoryName, formSubCategories);
 
-      this.settingsUpdated.next(patch);
-    });
+        this.settingsUpdated.next(patch);
+      },
+    );
   }
 
   private setAudioSettings(settingsData: ISettingsSubCategory[]) {
