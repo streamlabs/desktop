@@ -102,10 +102,9 @@ interface IOutputContext {
     | ISimpleStreaming
     | IAdvancedStreaming
     | IEnhancedBroadcastingSimpleStreaming
-    | IEnhancedBroadcastingAdvancedStreaming
-    | null;
-  recording: ISimpleRecording | IAdvancedRecording | null;
-  replayBuffer: ISimpleReplayBuffer | IAdvancedReplayBuffer | null;
+    | IEnhancedBroadcastingAdvancedStreaming;
+  recording: ISimpleRecording | IAdvancedRecording;
+  replayBuffer: ISimpleReplayBuffer | IAdvancedReplayBuffer;
 }
 
 interface IStreamingContextSettings {
@@ -198,23 +197,23 @@ export class StreamingService
     streamSecond: Partial<IOutputContext>;
   } = {
     horizontal: {
-      streaming: null as ISimpleStreaming | IAdvancedStreaming,
-      recording: null as ISimpleRecording | IAdvancedRecording,
-      replayBuffer: null as ISimpleReplayBuffer | IAdvancedReplayBuffer,
+      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
+      recording: (null as unknown) as ISimpleRecording | IAdvancedRecording,
+      replayBuffer: (null as unknown) as ISimpleReplayBuffer | IAdvancedReplayBuffer,
     },
     vertical: {
-      streaming: null as ISimpleStreaming | IAdvancedStreaming,
-      recording: null as ISimpleRecording | IAdvancedRecording,
-      replayBuffer: null as ISimpleReplayBuffer | IAdvancedReplayBuffer,
+      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
+      recording: (null as unknown) as ISimpleRecording | IAdvancedRecording,
+      replayBuffer: (null as unknown) as ISimpleReplayBuffer | IAdvancedReplayBuffer,
     },
     enhancedBroadcasting: {
-      streaming: null as ISimpleStreaming | IAdvancedStreaming,
+      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
     },
     stream: {
-      streaming: null as ISimpleStreaming | IAdvancedStreaming,
+      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
     },
     streamSecond: {
-      streaming: null as ISimpleStreaming | IAdvancedStreaming,
+      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
     },
   };
 
@@ -3455,12 +3454,15 @@ export class StreamingService
         if (!instance) continue;
 
         try {
-          this.destroyFactoryInstance(type, instance);
+          this.destroyFactoryInstance(context, type, instance);
         } catch (e: unknown) {
           console.error(`Error destroying ${type} for ${context} during shutdown:`, e);
         }
 
-        this.contexts[context][type] = null as (ISimpleStreaming | IAdvancedStreaming) &
+        this.contexts[context][type] = (null as unknown) as (
+          | ISimpleStreaming
+          | IAdvancedStreaming
+        ) &
           ((ISimpleRecording | IAdvancedRecording) & (ISimpleReplayBuffer | IAdvancedReplayBuffer));
       }
     }
@@ -3469,7 +3471,11 @@ export class StreamingService
   /**
    * Destroy a factory instance by calling the correct factory's destroy method
    */
-  private destroyFactoryInstance(contextType: keyof IOutputContext, instance: any) {
+  private destroyFactoryInstance(
+    contextName: TOutputContext,
+    contextType: keyof IOutputContext,
+    instance: any,
+  ) {
     if (contextType === 'streaming' && this.isEnhancedBroadcastingStreaming(instance)) {
       this.isAdvancedStreaming(instance)
         ? EnhancedBroadcastingAdvancedStreamingFactory.destroy(instance)
@@ -3668,7 +3674,10 @@ export class StreamingService
         }
       }
 
-      this.contexts[contextName][contextType] = null as (ISimpleStreaming | IAdvancedStreaming) &
+      this.contexts[contextName][contextType] = (null as unknown) as (
+        | ISimpleStreaming
+        | IAdvancedStreaming
+      ) &
         ((ISimpleRecording | IAdvancedRecording) & (ISimpleReplayBuffer | IAdvancedReplayBuffer));
 
       Promise.resolve();
