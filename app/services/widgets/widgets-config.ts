@@ -1,3 +1,5 @@
+import type { VisionService } from 'app-services';
+import { ServicesManager } from 'services-manager';
 import { AnchorPoint } from '../../util/ScalableRectangle';
 import { TAlertType } from './alerts-config';
 import { WidgetType } from './widgets-data';
@@ -64,6 +66,8 @@ export interface IWidgetConfig {
     width: number;
     height: number;
   };
+
+  postInstall?(): void;
 }
 
 export function getWidgetsConfig(
@@ -622,6 +626,7 @@ export function getWidgetsConfig(
         width: 800,
         height: 800,
       },
+
       useNewWidgetAPI: true,
       url: `https://${host}/api/v5/widgets/desktop/game-pulse`,
       previewUrl: `https://${host}/widgets/preview/game-pulse/${token}?simulate=1`,
@@ -631,6 +636,12 @@ export function getWidgetsConfig(
       settingsUpdateEvent: 'gamePulseSettingsUpdate',
       customCodeAllowed: false,
       customFieldsAllowed: false,
+
+      postInstall() {
+        const visionService = ServicesManager.instance.getService('VisionService')
+          .instance as VisionService;
+        visionService.actions.setIsEnabled(true);
+      },
     },
   };
 }
