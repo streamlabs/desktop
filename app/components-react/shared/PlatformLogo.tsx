@@ -3,7 +3,7 @@ import { TPlatform } from '../../services/platforms';
 import cx from 'classnames';
 import css from './PlatformLogo.m.less';
 import { Services } from 'components-react/service-provider';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 
 export const sizeMap: Dictionary<number> = {
   small: 14,
@@ -22,7 +22,7 @@ interface IProps {
 
 export default function PlatformLogo(p: IProps & HTMLAttributes<unknown>) {
   const { CustomizationService } = Services;
-  const isDark = useRealmObject(CustomizationService.state).isDarkTheme;
+  const { isDarkTheme: isDark } = useRealmObjectProperty(CustomizationService.state, 'isDarkTheme');
 
   function iconForPlatform() {
     return {

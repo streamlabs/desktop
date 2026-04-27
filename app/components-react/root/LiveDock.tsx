@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, memo } from 'react';
 import * as remote from '@electron/remote';
 import cx from 'classnames';
 import { Menu } from 'antd';
@@ -14,7 +14,7 @@ import styles from './LiveDock.m.less';
 import Tooltip from 'components-react/shared/Tooltip';
 import PlatformAppPageView from 'components-react/shared/PlatformAppPageView';
 import { useVuex } from 'components-react/hooks';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmProperties, prop } from 'components-react/hooks/realm';
 import { $i } from 'services/utils';
 import { ShareStreamLink } from './ShareStreamLink';
 
@@ -300,8 +300,10 @@ function LiveDock() {
     ]),
   );
 
-  const collapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
-  const hideViewerCount = useRealmObject(Services.CustomizationService.state).hideViewerCount;
+  const { collapsed, hideViewerCount } = useRealmProperties({
+    collapsed: prop(Services.CustomizationService.state, 'livedockCollapsed'),
+    hideViewerCount: prop(Services.CustomizationService.state, 'hideViewerCount'),
+  });
   const viewerCount = hideViewerCount ? $t('Viewers Hidden') : currentViewers;
 
   useEffect(() => {
@@ -330,7 +332,7 @@ function LiveDock() {
 
   // Safe getter/setter prevents getting stuck on the chat
   // for an app that was unloaded.
-  function setChat(key: string) {
+  const setChat = useCallback((key: string) => {
     ctrl.store.setState(s => {
       if (!ctrl.chatApps.find(app => app.id === key) && !['default', 'restream'].includes(key)) {
         s.selectedChat = 'default';
@@ -340,7 +342,7 @@ function LiveDock() {
         setVisibleChat(key);
       }
     });
-  }
+  }, []);
 
   const chat = useMemo(() => {
     const primaryChat = Services.UserService.state.auth!.primaryPlatform;
@@ -456,7 +458,10 @@ function LiveDock() {
   );
 }
 
-function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
+const ChatTabs = memo(function ChatTabs(p: {
+  visibleChat: string;
+  setChat: (key: string) => void;
+}) {
   const ctrl = useController(LiveDockCtx);
   return (
     <div className="flex">
@@ -490,4 +495,4 @@ function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
       </div>
     </div>
   );
-}
+});

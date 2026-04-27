@@ -14,7 +14,7 @@ import { $t, I18nService } from 'services/i18n';
 import SourceTag from './SourceTag';
 import { useSourceShowcaseSettings } from './useSourceShowcase';
 import { EAvailableFeatures } from 'services/incremental-rollout';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmProperties, prop } from 'components-react/hooks/realm';
 import styles from './SourceGrid.m.less';
 
 export default function SourceGrid(p: { activeTab: string; searchTerm: string }) {
@@ -50,9 +50,11 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
     primaryPlatform: UserService.views.platform?.type,
   }));
 
-  const customization = useRealmObject(CustomizationService.state);
-  const demoMode = customization.isDarkTheme ? 'night' : 'day';
-  const designerMode = customization.designerMode;
+  const { isDarkTheme, designerMode } = useRealmProperties({
+    isDarkTheme: prop(CustomizationService.state, 'isDarkTheme'),
+    designerMode: prop(CustomizationService.state, 'designerMode'),
+  });
+  const demoMode = isDarkTheme ? 'night' : 'day';
 
   /**
    * English and languages with logographic writing systems

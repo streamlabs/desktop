@@ -5,12 +5,11 @@ import { TAppPage } from 'services/navigation';
 import { SwitchInput } from 'components-react/shared/inputs';
 import styles from './WelcomeToPrime.m.less';
 import { Services } from 'components-react/service-provider';
-import { useVuex } from 'components-react/hooks';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 
 export default function WelcomeToPrime() {
   const { CustomizationService } = Services;
-  const theme = useRealmObject(CustomizationService.state).theme;
+  const { theme } = useRealmObjectProperty(CustomizationService.state, 'theme');
 
   const panelData = [
     {

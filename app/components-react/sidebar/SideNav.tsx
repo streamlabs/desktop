@@ -12,7 +12,7 @@ import { Layout, Button } from 'antd';
 import Scrollable from 'components-react/shared/Scrollable';
 import HelpTip from 'components-react/shared/HelpTip';
 import FeaturesNav from './FeaturesNav';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 
 const { Sider } = Layout;
 
@@ -38,7 +38,7 @@ export default function SideNav() {
   const sider = useRef<HTMLDivElement | null>(null);
   const isMounted = useRef(false);
 
-  const leftDock = useRealmObject(CustomizationService.state).leftDock;
+  const { leftDock } = useRealmObjectProperty(CustomizationService.state, 'leftDock');
 
   const siderMinWidth: number = 50;
   const siderMaxWidth: number = 200;

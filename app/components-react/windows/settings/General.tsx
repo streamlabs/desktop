@@ -8,7 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import { getDefined } from '../../../util/properties-type-guards';
 import { useVuex } from 'components-react/hooks';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 
 export function GeneralSettings() {
   return (
@@ -67,7 +67,10 @@ function ExtraSettings() {
     isSimpleOutputMode: SettingsService.views.isSimpleOutputMode,
   }));
 
-  const updateStreamInfoOnLive = useRealmObject(CustomizationService.state).updateStreamInfoOnLive;
+  const { updateStreamInfoOnLive } = useRealmObjectProperty(
+    CustomizationService.state,
+    'updateStreamInfoOnLive',
+  );
 
   // HDR Settings are not compliant with the auto-optimizer
   // temporarily disable auto config until migrate to new api

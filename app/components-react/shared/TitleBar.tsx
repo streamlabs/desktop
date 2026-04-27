@@ -10,14 +10,14 @@ import KevinSvg from './KevinSvg';
 import styles from './TitleBar.m.less';
 import * as remote from '@electron/remote';
 import Banner from 'components-react/root/Banner';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 
 export default function TitleBar(props: { windowId: string; className?: string }) {
   const { CustomizationService, StreamingService, WindowsService } = Services;
 
   const isMaximizable = remote.getCurrentWindow().isMaximizable() !== false;
   const isMac = byOS({ [OS.Windows]: false, [OS.Mac]: true });
-  const theme = useRealmObject(CustomizationService.state).theme;
+  const { theme } = useRealmObjectProperty(CustomizationService.state, 'theme');
   const { title } = useVuex(
     () => ({
       title: WindowsService.state[props.windowId]?.title,

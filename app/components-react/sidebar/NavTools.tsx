@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import cx from 'classnames';
 import electron from 'electron';
 import Utils from 'services/utils';
@@ -30,15 +30,7 @@ export default function NavTools() {
 
   const isDevMode = useMemo(() => Utils.isDevMode(), []);
 
-  const {
-    isLoggedIn,
-    isPrime,
-    menuItems,
-    isOpen,
-    openMenuItems,
-    expandMenuItem,
-    updateStyleBlockers,
-  } = useVuex(
+  const { isLoggedIn, isPrime, menuItems, isOpen, openMenuItems, expandMenuItem } = useVuex(
     () => ({
       isLoggedIn: UserService.views.isLoggedIn,
       isPrime: UserService.views.isPrime,
@@ -46,26 +38,26 @@ export default function NavTools() {
       isOpen: SideNavService.views.isOpen,
       openMenuItems: SideNavService.views.getExpandedMenuItems(ENavName.BottomNav),
       expandMenuItem: SideNavService.actions.expandMenuItem,
-      updateStyleBlockers: WindowsService.actions.updateStyleBlockers,
     }),
     false,
   );
 
-  const [dashboardOpening, setDashboardOpening] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  function openSettingsWindow(category?: TCategoryName) {
+  const openSettingsWindow = useCallback((category?: TCategoryName) => {
     SettingsService.actions.showSettings(category);
-  }
+  }, []);
 
-  function openDevTools() {
+  const openDevTools = useCallback(() => {
     electron.ipcRenderer.send('openDevTools');
-  }
+  }, []);
 
-  async function openDashboard(page?: string) {
+  const dashboardOpeningRef = useRef(false);
+
+  const openDashboard = useCallback(async (page?: string) => {
     UsageStatisticsService.actions.recordClick('SideNav2', page || 'dashboard');
-    if (dashboardOpening) return;
-    setDashboardOpening(true);
+    if (dashboardOpeningRef.current) return;
+    dashboardOpeningRef.current = true;
 
     try {
       const link = await MagicLinkService.getDashboardMagicLink(page);
@@ -74,10 +66,13 @@ export default function NavTools() {
       console.error('Error generating dashboard magic link', e);
     }
 
-    setDashboardOpening(false);
-  }
+    dashboardOpeningRef.current = false;
+  }, []);
 
-  const throttledOpenDashboard = throttle(openDashboard, 2000, { trailing: false });
+  const throttledOpenDashboard = useMemo(
+    () => throttle(openDashboard, 2000, { trailing: false }),
+    [],
+  );
 
   // Instagram doesn't provide a username, since we're not really linked, pass undefined for a generic logout msg w/o it
   const username =
@@ -89,30 +84,30 @@ export default function NavTools() {
     ? $t('Are you sure you want to log out %{username}?', { username })
     : $t('Are you sure you want to log out?');
 
-  function openHelp() {
+  const openHelp = useCallback(() => {
     UsageStatisticsService.actions.recordClick('SideNav2', 'help');
     remote.shell.openExternal(UrlService.supportLink);
-  }
+  }, []);
 
-  async function upgradeToPrime() {
+  const upgradeToPrime = useCallback(() => {
     UsageStatisticsService.actions.recordClick('SideNav2', 'prime');
     MagicLinkService.linkToPrime('slobs-side-nav');
-  }
+  }, []);
 
-  const handleAuth = () => {
-    if (isLoggedIn) {
+  const handleAuth = useCallback(() => {
+    if (UserService.views.isLoggedIn) {
       Services.DualOutputService.actions.setDualOutputModeIfPossible(false, true);
       UserService.actions.logOut();
     } else {
       WindowsService.actions.closeChildWindow();
       UserService.actions.showLogin();
     }
-  };
+  }, []);
 
-  const handleShowModal = (status: boolean) => {
-    updateStyleBlockers('main', status);
+  const handleShowModal = useCallback((status: boolean) => {
+    WindowsService.actions.updateStyleBlockers('main', status);
     setShowModal(status);
-  };
+  }, []);
 
   return (
     <>
@@ -124,7 +119,7 @@ export default function NavTools() {
         defaultOpenKeys={openMenuItems && openMenuItems}
         getPopupContainer={triggerNode => triggerNode}
       >
-        {menuItems.map((menuItem: IParentMenuItem) => {
+        {menuItems.map((menuItem: IMenuItem | IParentMenuItem) => {
           if (isDevMode && menuItem.key === EMenuItemKey.DevTools) {
             return <NavToolsItem key={menuItem.key} menuItem={menuItem} onClick={openDevTools} />;
           } else if (!isPrime && menuItem.key === EMenuItemKey.GetPrime) {
@@ -161,7 +156,7 @@ export default function NavTools() {
                 }}
               >
                 <DashboardSubMenu
-                  subMenuItems={menuItem?.subMenuItems}
+                  subMenuItems={(menuItem as IParentMenuItem)?.subMenuItems}
                   throttledOpenDashboard={throttledOpenDashboard}
                   openSettingsWindow={openSettingsWindow}
                 />

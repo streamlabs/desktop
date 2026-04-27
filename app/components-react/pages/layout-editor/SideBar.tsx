@@ -5,13 +5,14 @@ import { $t } from 'services/i18n';
 import Scrollable from 'components-react/shared/Scrollable';
 import { Services } from 'components-react/service-provider';
 import { useLayoutEditor } from './hooks';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 
 export default function SideBar() {
   const { LayoutService, CustomizationService } = Services;
   const { currentLayout, setCurrentLayout } = useLayoutEditor();
 
-  const mode = useRealmObject(CustomizationService.state).isDarkTheme ? 'night' : 'day';
+  const { isDarkTheme } = useRealmObjectProperty(CustomizationService.state, 'isDarkTheme');
+  const mode = isDarkTheme ? 'night' : 'day';
 
   function layoutImage(layout: ELayout) {
     const active = currentLayout === layout ? '-active' : '';

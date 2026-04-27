@@ -4,7 +4,7 @@ import * as remote from '@electron/remote';
 import path from 'path';
 import { $t } from 'services/i18n/index';
 import { Services } from 'components-react/service-provider';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmProperties, prop } from 'components-react/hooks/realm';
 import { useVuex } from 'components-react/hooks';
 import { DualOutputDeveloperSettings } from './Developer';
 import { ObsSettingsSection } from './ObsSettings';
@@ -23,8 +23,10 @@ export function SceneCollectionsSettings() {
   const [message, setMessage] = useState('');
   const [collection, setCollection] = useState(SceneCollectionsService.activeCollection?.id || '');
 
-  const mediaBackupOptOut = useRealmObject(CustomizationService.state).mediaBackupOptOut;
-  const designerMode = useRealmObject(CustomizationService.state).designerMode;
+  const { mediaBackupOptOut, designerMode } = useRealmProperties({
+    mediaBackupOptOut: prop(CustomizationService.state, 'mediaBackupOptOut'),
+    designerMode: prop(CustomizationService.state, 'designerMode'),
+  });
 
   const { activeSceneId, collectionOptions } = useVuex(() => ({
     activeSceneId: ScenesService.views.activeSceneId,

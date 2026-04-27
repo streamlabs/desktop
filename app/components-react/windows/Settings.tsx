@@ -6,7 +6,7 @@ import { ESettingsCategory, TCategoryName } from 'services/settings';
 import { EDismissable } from 'services/dismissables';
 import { getOS, OS } from 'util/operating-systems';
 import { Services } from 'components-react/service-provider';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 import { useVuex } from 'components-react/hooks';
 import { $t } from 'services/i18n';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
@@ -86,7 +86,10 @@ export default function Settings() {
     UsageStatisticsService,
   } = Services;
 
-  const currentTab = useRealmObject(NavigationService.state).currentSettingsTab;
+  const { currentSettingsTab: currentTab } = useRealmObjectProperty(
+    NavigationService.state,
+    'currentSettingsTab',
+  );
 
   const { isPrime, isLoggedIn, username, platform, showDismissable } = useVuex(() => ({
     isPrime: UserService.views.isPrime,

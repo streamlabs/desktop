@@ -6,7 +6,7 @@ import { Services } from '../../service-provider';
 import { ISettingsSubCategory, TCategoryName } from '../../../services/settings';
 import { TDisplayType } from 'services/settings-v2';
 import { useVuex } from 'components-react/hooks';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 
 export type IObsFormType = 'default' | 'tabs' | 'collapsible';
 
@@ -14,7 +14,10 @@ export function useObsSettings(page?: TCategoryName) {
   const { SettingsService, NavigationService } = Services;
   const [display, setDisplay] = useState<TDisplayType>('horizontal');
 
-  const category = useRealmObject(NavigationService.state).currentSettingsTab;
+  const { currentSettingsTab: category } = useRealmObjectProperty(
+    NavigationService.state,
+    'currentSettingsTab',
+  );
 
   const memoizedPage = useMemo(() => {
     if (page) return page;

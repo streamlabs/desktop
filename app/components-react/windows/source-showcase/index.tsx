@@ -16,9 +16,8 @@ import {
 import styles from './SourceShowcase.m.less';
 import SourceGrid from './SourceGrid';
 import Scrollable from 'components-react/shared/Scrollable';
-import pick from 'lodash/pick';
 import * as remote from '@electron/remote';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 
 const { Content, Sider } = Layout;
 
@@ -85,7 +84,8 @@ function SideBar() {
     platform: UserService.views.platform?.type,
   }));
 
-  const demoMode = useRealmObject(CustomizationService.state).isDarkTheme ? 'night' : 'day';
+  const { isDarkTheme } = useRealmObjectProperty(CustomizationService.state, 'isDarkTheme');
+  const demoMode = isDarkTheme ? 'night' : 'day';
 
   const appData = useMemo(() => {
     if (!inspectedAppId) return;

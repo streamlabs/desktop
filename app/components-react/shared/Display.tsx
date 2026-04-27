@@ -4,7 +4,7 @@ import { Services } from '../service-provider';
 import { Display as OBSDisplay } from '../../services/video';
 import { TDisplayType } from 'services/settings-v2/video';
 import uuid from 'uuid/v4';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 import Utils from 'services/utils';
 
 interface DisplayProps {
@@ -44,7 +44,10 @@ export default function Display(props: DisplayProps) {
     };
   }, false);
 
-  const paddingColor = useRealmObject(CustomizationService.state).displayBackground;
+  const { displayBackground: paddingColor } = useRealmObjectProperty(
+    CustomizationService.state,
+    'displayBackground',
+  );
 
   const obsDisplay = useRef<OBSDisplay | null>(null);
   const displayEl = useRef<HTMLDivElement>(null);

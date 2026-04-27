@@ -1,5 +1,5 @@
 import cx from 'classnames';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmProperties, prop } from 'components-react/hooks/realm';
 import { Services } from 'components-react/service-provider';
 import { SwitchInput } from 'components-react/shared/inputs';
 import Scrollable from 'components-react/shared/Scrollable';
@@ -75,10 +75,10 @@ export default function AILanding() {
   }
 
   const visionActions = VisionService.actions;
-  const visionState = useRealmObject(VisionService.state);
-
-  const visionEnabledState = useRealmObject(VisionService.enabledState);
-  const enabled = visionEnabledState.isEnabled;
+  const { isStarting: visionStarting, enabled } = useRealmProperties({
+    isStarting: prop(VisionService.state, 'isStarting'),
+    enabled: prop(VisionService.enabledState, 'isEnabled'),
+  });
 
   const [isAgentAppInstalled, setIsAgentAppInstalled] = useState(false);
   useEffect(() => {
@@ -158,11 +158,7 @@ export default function AILanding() {
             className={cx(styles.aiToggle, !enabled && styles.aiToggleEmphasis)}
             onClick={() => onToggleAiClick()}
           >
-            <SwitchInput
-              label={$t('Turn On AI')}
-              disabled={visionState.isStarting}
-              value={enabled}
-            />
+            <SwitchInput label={$t('Turn On AI')} disabled={visionStarting} value={enabled} />
           </div>
           <div className={styles.featureList}>
             <div className={styles.featureListInner}>

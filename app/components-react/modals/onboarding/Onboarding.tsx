@@ -4,13 +4,13 @@ import * as remote from '@electron/remote';
 import * as steps from './steps';
 import { EOnboardingSteps } from 'services/onboarding/onboarding-v2';
 import { Services } from 'components-react/service-provider';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmProperties, prop } from 'components-react/hooks/realm';
 import { $t } from 'services/i18n';
 import { EPlatformCallResult, externalAuthPlatforms, TPlatform } from 'services/platforms';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import KevinSvg from 'components-react/shared/KevinSvg';
 import styles from './Common.m.less';
-import Utils, { $i } from 'services/utils';
+import { $i } from 'services/utils';
 
 const NO_BUTTON_STEPS = new Set([EOnboardingSteps.Splash, EOnboardingSteps.Login]);
 
@@ -35,9 +35,11 @@ export default function Onboarding() {
 
   const [processing, setProcessing] = useState(false);
 
-  const currentStep = useRealmObject(OnboardingV2Service.state).currentStep;
-  const currentIndex = useRealmObject(OnboardingV2Service.state).currentIndex;
-  const showOnboarding = useRealmObject(OnboardingV2Service.state).showOnboarding;
+  const { currentStep, currentIndex, showOnboarding } = useRealmProperties({
+    currentStep: prop(OnboardingV2Service.state, 'currentStep'),
+    currentIndex: prop(OnboardingV2Service.state, 'currentIndex'),
+    showOnboarding: prop(OnboardingV2Service.state, 'showOnboarding'),
+  });
 
   const continueFuncs: PartialRec<EOnboardingSteps, () => void> = useMemo(
     () => ({
