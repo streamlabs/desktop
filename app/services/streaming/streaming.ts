@@ -102,9 +102,10 @@ interface IOutputContext {
     | ISimpleStreaming
     | IAdvancedStreaming
     | IEnhancedBroadcastingSimpleStreaming
-    | IEnhancedBroadcastingAdvancedStreaming;
-  recording: ISimpleRecording | IAdvancedRecording;
-  replayBuffer: ISimpleReplayBuffer | IAdvancedReplayBuffer;
+    | IEnhancedBroadcastingAdvancedStreaming
+    | null;
+  recording: ISimpleRecording | IAdvancedRecording | null;
+  replayBuffer: ISimpleReplayBuffer | IAdvancedReplayBuffer | null;
 }
 
 interface IStreamingContextSettings {
@@ -197,23 +198,23 @@ export class StreamingService
     streamSecond: Partial<IOutputContext>;
   } = {
     horizontal: {
-      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
-      recording: (null as unknown) as ISimpleRecording | IAdvancedRecording,
-      replayBuffer: (null as unknown) as ISimpleReplayBuffer | IAdvancedReplayBuffer,
+      streaming: null,
+      recording: null,
+      replayBuffer: null,
     },
     vertical: {
-      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
-      recording: (null as unknown) as ISimpleRecording | IAdvancedRecording,
-      replayBuffer: (null as unknown) as ISimpleReplayBuffer | IAdvancedReplayBuffer,
+      streaming: null,
+      recording: null,
+      replayBuffer: null,
     },
     enhancedBroadcasting: {
-      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
+      streaming: null,
     },
     stream: {
-      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
+      streaming: null,
     },
     streamSecond: {
-      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
+      streaming: null,
     },
   };
 
@@ -1938,7 +1939,7 @@ export class StreamingService
       );
 
       this.contexts[contextName].streaming.service.update(streamSettings);
-    } else if (!this.views.protectedModeEnabled) {
+    } else if (!this.views.protectedModeEnabled && this.contexts[display].streaming) {
       this.contexts[display].streaming.service = ServiceFactory.legacySettings;
       this.contexts[display].streaming.service.update(streamSettings);
     } else {
@@ -2246,7 +2247,9 @@ export class StreamingService
     // horizontal for all contexts. For recording, we need the streaming dependency to
     // use the correct display's canvas so that the recording captures the right output.
     this.videoSettingsService.validateVideoContext(display);
-    this.contexts[display].streaming.video = this.videoSettingsService.contexts[display];
+    if (this.contexts[display].streaming) {
+      this.contexts[display].streaming.video = this.videoSettingsService.contexts[display];
+    }
 
     this.contexts[display].recording =
       mode === 'Advanced'
@@ -2566,7 +2569,7 @@ export class StreamingService
     if (info.signal === EOBSOutputSignal.Wrote) {
       this.SET_RECORDING_STATUS(nextState, display, new Date().toISOString());
 
-      const fileName = this.contexts[display].recording.lastFile();
+      const fileName = this.contexts[display].recording?.lastFile() ?? '';
 
       const parsedName = byOS({
         [OS.Mac]: fileName,
@@ -2637,10 +2640,12 @@ export class StreamingService
 
       if (isDualOutputReplayBuffer && display === 'horizontal') {
         await new Promise(resolve => setTimeout(resolve, 2000));
-        this.contexts.vertical.replayBuffer.save();
+        this.contexts.vertical.replayBuffer?.save();
       }
 
-      this.replayBufferFileWrite.next(this.contexts[display].replayBuffer.lastFile());
+      if (this.contexts[display].replayBuffer) {
+        this.replayBufferFileWrite.next(this.contexts[display].replayBuffer.lastFile());
+      }
     }
 
     if (info.signal === EOBSOutputSignal.Stop) {
@@ -3564,16 +3569,12 @@ export class StreamingService
         if (!instance) continue;
 
         try {
-          this.destroyFactoryInstance(context, type, instance);
+          this.destroyFactoryInstance(type, instance);
         } catch (e: unknown) {
           console.error(`Error destroying ${type} for ${context} during shutdown:`, e);
         }
 
-        this.contexts[context][type] = (null as unknown) as (
-          | ISimpleStreaming
-          | IAdvancedStreaming
-        ) &
-          ((ISimpleRecording | IAdvancedRecording) & (ISimpleReplayBuffer | IAdvancedReplayBuffer));
+        this.contexts[context][type] = null;
       }
     }
   }
@@ -3581,11 +3582,7 @@ export class StreamingService
   /**
    * Destroy a factory instance by calling the correct factory's destroy method
    */
-  private destroyFactoryInstance(
-    contextName: TOutputContext,
-    contextType: keyof IOutputContext,
-    instance: any,
-  ) {
+  private destroyFactoryInstance(contextType: keyof IOutputContext, instance: any) {
     if (contextType === 'streaming' && this.isEnhancedBroadcastingStreaming(instance)) {
       this.isAdvancedStreaming(instance)
         ? EnhancedBroadcastingAdvancedStreamingFactory.destroy(instance)
@@ -3784,11 +3781,7 @@ export class StreamingService
         }
       }
 
-      this.contexts[contextName][contextType] = (null as unknown) as (
-        | ISimpleStreaming
-        | IAdvancedStreaming
-      ) &
-        ((ISimpleRecording | IAdvancedRecording) & (ISimpleReplayBuffer | IAdvancedReplayBuffer));
+      this.contexts[contextName][contextType] = null;
 
       Promise.resolve();
     }
