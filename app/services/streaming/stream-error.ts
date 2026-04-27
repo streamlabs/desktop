@@ -165,6 +165,16 @@ export const errorTypes = {
       );
     },
   },
+  INVALID_ENCODER: {
+    get message() {
+      return $t(
+        'Your current encoder is not supported for one or more of your streaming platforms',
+      );
+    },
+    get action() {
+      return $t('switch to a supported encoder such as x264');
+    },
+  },
   PRIME_REQUIRED: {
     get message() {
       return $t('This feature is for Ultra members only');

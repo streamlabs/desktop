@@ -93,6 +93,9 @@ export interface ISettingsValues extends Record<TCategoryName, Dictionary<TObsVa
   Output: {
     Mode: string;
     Encoder: string;
+    DelayEnable: boolean;
+    DelaySec?: number;
+    PreserveDelay?: boolean;
     RecRB?: boolean;
     RecRBTime?: number;
     RecFormat: string;
@@ -154,6 +157,10 @@ export interface ISettingsValues extends Record<TCategoryName, Dictionary<TObsVa
   Advanced: {
     DelayEnable: boolean;
     DelaySec: number;
+    DelayPreserve: boolean;
+    Reconnect: boolean;
+    RetryDelay: number;
+    MaxRetries: number;
     fileCaching: boolean;
     MonitoringDeviceName: string;
     BindIP: string;
@@ -324,8 +331,20 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
 
   init() {
     this.loadSettingsIntoStore();
-    this.ensureValidEncoder();
-    this.ensureValidRecordingEncoder();
+    this.validateEncoders();
+
+    // Some encoders are only compatible with certain streaming platforms, so a user
+    // that has logged out with one platform and logged in again with a different platform
+    // might have an invalid encoder selected. Resetting to x264 if they have an incompatible
+    // encoder selected is a simple way to ensure they can stream and record without encoder issues.
+    this.userService.userLoginFinished.subscribe(() => {
+      this.validateEncoders();
+    });
+
+    this.userService.primaryPlatformChanged.subscribe(() => {
+      this.validateEncoders();
+    });
+
     this.sceneCollectionsService.collectionSwitched.subscribe(() => this.refreshAudioSettings());
 
     // TODO: Remove in a week
@@ -698,24 +717,25 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     // This function represents a cleaner API we would like to have
     // in the future.
 
-    Object.keys(patch).forEach((categoryName: TCategoryName) => {
-      const category: Dictionary<any> = patch[categoryName];
-      const formSubCategories = this.fetchSettingsFromObs(categoryName).formData;
+    (Object.entries(patch) as [TCategoryName, Dictionary<any>][]).forEach(
+      ([categoryName, category]) => {
+        const formSubCategories = this.fetchSettingsFromObs(categoryName).formData;
 
-      Object.keys(category).forEach(paramName => {
-        formSubCategories.forEach(subCategory => {
-          subCategory.parameters.forEach(subCategoryParam => {
-            if (subCategoryParam.name === paramName) {
-              subCategoryParam.value = category[paramName];
-            }
+        Object.keys(category).forEach(paramName => {
+          formSubCategories.forEach(subCategory => {
+            subCategory.parameters.forEach(subCategoryParam => {
+              if (subCategoryParam.name === paramName) {
+                subCategoryParam.value = category[paramName];
+              }
+            });
           });
         });
-      });
 
-      this.setSettings(categoryName, formSubCategories);
+        this.setSettings(categoryName, formSubCategories);
 
-      this.settingsUpdated.next(patch);
-    });
+        this.settingsUpdated.next(patch);
+      },
+    );
   }
 
   private setAudioSettings(settingsData: ISettingsSubCategory[]) {
@@ -838,11 +858,29 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     return settings;
   }
 
+  validateEncoders() {
+    this.ensureValidEncoder();
+    this.ensureValidRecordingEncoder();
+  }
+
   private ensureValidEncoder() {
     const encoderSetting: IObsListInput<string> =
       this.findSetting(this.state.Output.formData, 'Streaming', 'Encoder') ??
       this.findSetting(this.state.Output.formData, 'Streaming', 'StreamEncoder');
     const encoderIsValid = !!encoderSetting.options.find(opt => opt.value === encoderSetting.value);
+
+    console.log(
+      "this.findSetting(this.state.Output.formData, 'Streaming', 'Encoder')",
+      JSON.stringify(this.findSetting(this.state.Output.formData, 'Streaming', 'Encoder'), null, 2),
+    );
+    console.log(
+      "this.findSetting(this.state.Output.formData, 'Streaming', 'StreamEncoder')",
+      JSON.stringify(
+        this.findSetting(this.state.Output.formData, 'Streaming', 'StreamEncoder'),
+        null,
+        2,
+      ),
+    );
 
     // The backend incorrectly defaults to obs_x264 in Simple mode rather x264.
     // In this case we shouldn't do anything here.

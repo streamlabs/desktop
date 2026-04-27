@@ -5,7 +5,7 @@ import {
   EStreamingState,
   ERecordingState,
 } from '../../../app/services/streaming/streaming-api';
-import { SettingsService } from '../../../app/services/settings';
+import { OutputSettingsService, SettingsService } from '../../../app/services/settings';
 import { reserveUserFromPool, withPoolUser } from '../../helpers/webdriver/user';
 
 // not a react hook
@@ -84,6 +84,84 @@ test('Recording via API', async (t: TExecutionContext) => {
 
   recordingStatus = (await client.fetchNextEvent()).data;
   t.is(recordingStatus, ERecordingState.Offline, 'Recording status should be Offline');
+});
+
+test('Recording filename formatting is read from advanced recording settings', async t => {
+  const client = await getApiClient();
+  const settingsService = client.getResource<SettingsService>('SettingsService');
+  const outputSettingsService = client.getResource<OutputSettingsService>('OutputSettingsService');
+  const customFilenamePattern = '%CCYY-%MM-%DD_%hh-%mm-%ss-%s-%%';
+
+  const advancedSettings = settingsService.state.Advanced.formData;
+  advancedSettings.forEach(subcategory => {
+    subcategory.parameters.forEach(setting => {
+      if (setting.name === 'FilenameFormatting') {
+        setting.value = customFilenamePattern;
+      }
+    });
+  });
+  settingsService.setSettings('Advanced', advancedSettings);
+
+  const recordingSettings = outputSettingsService.getRecordingSettings('horizontal');
+
+  t.is(recordingSettings.fileFormat, customFilenamePattern);
+});
+
+test('Stream delay is applied via API', async t => {
+  const streamKey = (await reserveUserFromPool(t, 'twitch')).streamKey;
+  const client = await getApiClient();
+  const streamingService = client.getResource<IStreamingServiceApi>('StreamingService');
+  const settingsService = client.getResource<SettingsService>('SettingsService');
+
+  // Configure stream key
+  const streamSettings = settingsService.state.Stream.formData;
+  streamSettings.forEach(subcategory => {
+    subcategory.parameters.forEach(setting => {
+      if (setting.name === 'service') setting.value = 'Twitch';
+      if (setting.name === 'key') setting.value = streamKey;
+    });
+  });
+  settingsService.setSettings('Stream', streamSettings);
+
+  // Enable stream delay
+  const delaySec = 5;
+  const advancedSettings = settingsService.state.Advanced.formData;
+  advancedSettings.forEach(subcategory => {
+    subcategory.parameters.forEach(setting => {
+      if (setting.name === 'DelayEnable') setting.value = true;
+      if (setting.name === 'DelaySec') setting.value = delaySec;
+      if (setting.name === 'PreserveDelay') setting.value = false;
+    });
+  });
+  settingsService.setSettings('Advanced', advancedSettings);
+
+  let streamingStatus = streamingService.getModel().streamingStatus;
+  streamingService.streamingStatusChange.subscribe(() => void 0);
+
+  t.is(streamingStatus, EStreamingState.Offline);
+
+  const startTime = Date.now();
+  streamingService.toggleStreaming();
+
+  streamingStatus = (await client.fetchNextEvent()).data;
+  t.is(streamingStatus, EStreamingState.Starting, 'Streaming status should be Starting');
+
+  streamingStatus = (await client.fetchNextEvent()).data;
+  t.is(streamingStatus, EStreamingState.Live, 'Streaming status should be Live');
+
+  const elapsed = (Date.now() - startTime) / 1000;
+  t.true(
+    elapsed >= delaySec - 1,
+    `Stream delay should be at least ${delaySec - 1}s, was ${elapsed.toFixed(1)}s`,
+  );
+
+  streamingService.toggleStreaming();
+
+  streamingStatus = (await client.fetchNextEvent()).data;
+  t.is(streamingStatus, EStreamingState.Ending, 'Streaming status should be Ending');
+
+  streamingStatus = (await client.fetchNextEvent()).data;
+  t.is(streamingStatus, EStreamingState.Offline, 'Streaming status should be Offline');
 });
 
 // TODO: Fix this test

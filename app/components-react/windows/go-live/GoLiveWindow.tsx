@@ -137,14 +137,20 @@ function ModalFooter() {
     if (isStreamShiftMode) {
       message = $t(
         '%{videoCodec} codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?',
-        { videoCodec: incompatibleRestreamCodecs(codec as EIncompatibleRestreamCodec) },
+        {
+          videoCodec:
+            incompatibleRestreamCodecs(codec as EIncompatibleRestreamCodec) ?? $t('Video'),
+        },
       );
     }
 
     if (isDualOutputMode) {
       message = $t(
         '%{videoCodec} codec is not supported for Dual Output streaming to more than two destinations. Would you like to proceed with the H.264 codec or select another codec?',
-        { videoCodec: incompatibleRestreamCodecs(codec as EIncompatibleRestreamCodec) },
+        {
+          videoCodec:
+            incompatibleRestreamCodecs(codec as EIncompatibleRestreamCodec) ?? $t('Video'),
+        },
       );
     }
 

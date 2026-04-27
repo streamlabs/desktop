@@ -91,6 +91,7 @@ interface IStreamSettings extends IStreamSettingsState {
   keepReplayBufferStreamStops: boolean;
   delayEnable: boolean;
   delaySec: number;
+  preserveDelay: boolean;
 }
 
 // TikTok, X (Twitter), and Instagram all map to Custom because they require entering in stream keys
@@ -266,6 +267,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
       keepReplayBufferStreamStops: obsGeneralSettings.KeepReplayBufferStreamStops,
       delayEnable: obsAdvancedSettings.DelayEnable,
       delaySec: obsAdvancedSettings.DelaySec,
+      preserveDelay: obsAdvancedSettings.DelayPreserve,
     };
   }
 
@@ -436,6 +438,7 @@ class StreamSettingsView extends ViewHandler<IStreamSettingsState> {
       keepReplayBufferStreamStops: obsGeneralSettings.KeepReplayBufferStreamStops,
       delayEnable: obsAdvancedSettings.DelayEnable,
       delaySec: obsAdvancedSettings.DelaySec,
+      preserveDelay: obsAdvancedSettings.DelayPreserve,
     };
   }
 }
