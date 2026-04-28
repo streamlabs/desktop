@@ -1831,7 +1831,7 @@ export class StreamingService
 
     this.createStreamingInstance(contextName, mode, isEnhancedBroadcasting);
 
-    if (this.contexts[contextName].streaming !== null) {
+    if (this.contexts[contextName].streaming === null) {
       const streamError = createStreamError(
         'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
         {},
