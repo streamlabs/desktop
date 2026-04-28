@@ -182,13 +182,77 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
     electron.ipcRenderer.on(
       'performanceStatsResponse',
       (e: electron.Event, am: electron.ProcessMetric[]) => {
+        const streamingStats = this.streamingService.getStreamingPerformanceStats();
         const stats: IPerformanceState = obs.NodeObs.OBS_API_getPerformanceStatistics();
 
+        console.log('streamingStats', streamingStats);
+        // console.log('OBS_API_getPerformanceStatistics', stats);
+        // console.log('osn.Global', {
+        //   laggedFrames: obs.Global.laggedFrames,
+        //   totalFrames: obs.Global.totalFrames,
+        //   locale: obs.Global.locale,
+        //   cpuPercentage: obs.Global.cpuPercentage,
+        //   currentFrameRate: obs.Global.currentFrameRate,
+        //   averageFrameRenderTime: obs.Global.averageFrameRenderTime,
+        //   diskSpaceAvailable: obs.Global.diskSpaceAvailable,
+        //   memoryUsage: obs.Global.memoryUsage,
+        // });
+
+        // console.log('OBS_API_getPerformanceStatistics', JSON.stringify(stats, null, 2));
+        // console.log(
+        //   'osn.Global',
+        //   JSON.stringify(
+        //     {
+        //       laggedFrames: obs.Global.laggedFrames,
+        //       totalFrames: obs.Global.totalFrames,
+        //       locale: obs.Global.locale,
+        //       cpuPercentage: obs.Global.cpuPercentage,
+        //       currentFrameRate: obs.Global.currentFrameRate,
+        //       averageFrameRenderTime: obs.Global.averageFrameRenderTime,
+        //       diskSpaceAvailable: obs.Global.diskSpaceAvailable,
+        //       memoryUsage: obs.Global.memoryUsage,
+        //     },
+        //     null,
+        //     2,
+        //   ),
+        // );
+
+        // -laggedFrames and totalFrames remain in osn::Global
+        // -skippedFrames and encodedFrames remain in osn::Video
+        // -droppedFrames, totalFrames, kbitsPerSec, dataOutput move to osn::Streaming and are based on a Streaming object ID
+        // -cpuPercentage, currentFrameRate, averageTimeToRender, diskSpaceAvailable, and memoryUsage move out of nodeobs_api (OBS_API_getPerformanceStatistics) into individual functions in osn::Global
+
+        // CPU
+        // averageTimeToRenderFrame
+        // diskSpaceAvailable
+        // frameRate
+        // memoryUsage
+        // numberDroppedFrames
+        // percentageDroppedFrames
+        // recordingBandwidth
+        // recordingDataOutput
+        // streamingBandwidth
+        // streamingBandwidthSecond
+        // streamingDataOutput
+        // streamingDataOutputSecond
+
+        // obs.Global
+        // laggedFrames
+        // totalFrames
+        // locale
+        // cpuPercentage
+        // currentFrameRate
+        // averageFrameRenderTime
+        // diskSpaceAvailable
+        // memoryUsage
+
+        // CPU with child processes
         stats.CPU += am
           .map(proc => {
             return proc.cpu.percentCPUUsage;
           })
           .reduce((sum, usage) => sum + usage);
+        // console.log('Total CPU with child processes', stats.CPU);
 
         this.SET_PERFORMANCE_STATS(stats);
         this.monitorAndUpdateStats();
