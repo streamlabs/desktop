@@ -1831,7 +1831,7 @@ export class StreamingService
 
     this.createStreamingInstance(contextName, mode, isEnhancedBroadcasting);
 
-    if (this.contexts[contextName].streaming === null) {
+    if (!this.isStreamingInstance(this.contexts[contextName].streaming)) {
       const streamError = createStreamError(
         'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
         {},
@@ -1839,6 +1839,7 @@ export class StreamingService
       );
 
       this.setError(streamError);
+      return;
     }
 
     if (this.isAdvancedStreaming(this.contexts[contextName].streaming)) {
@@ -1947,8 +1948,8 @@ export class StreamingService
       !this.views.protectedModeEnabled &&
       this.isStreamingInstance(this.contexts[contextName].streaming)
     ) {
-      this.contexts[display].streaming.service = ServiceFactory.legacySettings;
-      this.contexts[display].streaming.service.update(streamSettings);
+      this.contexts[contextName].streaming.service = ServiceFactory.legacySettings;
+      this.contexts[contextName].streaming.service.update(streamSettings);
     } else {
       this.contexts[contextName].streaming.service = ServiceFactory.create(
         streamSettings.streamType,
@@ -2787,6 +2788,17 @@ export class StreamingService
       this.setError(replayBufferError);
     }
 
+    if (!this.isReplayBufferInstance(this.contexts[display].replayBuffer)) {
+      const replayBufferError = createStreamError(
+        'UNKNOWN_REPLAY_BUFFER_ERROR',
+        {},
+        'Failed to create replay buffer instance. Please check your streaming settings, recording settings, and recording file path and try again.',
+      );
+
+      this.setError(replayBufferError);
+      return;
+    }
+
     this.contexts[display].replayBuffer.video = this.videoSettingsService.contexts[display];
     this.contexts[display].replayBuffer.signalHandler = async (signal: EOutputSignal) => {
       await this.handleSignal(signal, display);
@@ -3028,6 +3040,18 @@ export class StreamingService
       this.isAdvancedStreaming(instance) ||
       this.isEnhancedBroadcastingStreaming(instance)
     );
+  }
+
+  private isRecordingInstance(instance: any): instance is ISimpleRecording | IAdvancedRecording {
+    if (!instance) return false;
+    return this.isSimpleRecording(instance) || this.isAdvancedRecording(instance);
+  }
+
+  private isReplayBufferInstance(
+    instance: any,
+  ): instance is ISimpleReplayBuffer | IAdvancedReplayBuffer {
+    if (!instance) return false;
+    return this.isSimpleReplayBuffer(instance) || this.isAdvancedReplayBuffer(instance);
   }
 
   private isAdvancedStreaming(
