@@ -215,6 +215,26 @@ export const errorTypes = {
       );
     },
   },
+  UNKNOWN_RECORDING_ERROR: {
+    get message() {
+      return $t('Unknown recording error, please contact support');
+    },
+    get action() {
+      return $t(
+        'recording settings are incorrect. Check recording path and encoder settings for both streaming and recording.',
+      );
+    },
+  },
+  UNKNOWN_REPLAY_BUFFER_ERROR: {
+    get message() {
+      return $t('Unknown replay buffer error, please contact support');
+    },
+    get action() {
+      return $t(
+        'replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.',
+      );
+    },
+  },
   UNKNOWN_ERROR: {
     // show this error if we caught a runtime error
     // we should treat this error as a bug in the codebase

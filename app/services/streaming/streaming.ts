@@ -1831,13 +1831,14 @@ export class StreamingService
 
     this.createStreamingInstance(contextName, mode, isEnhancedBroadcasting);
 
-    // TODO: Revisit after merge to see if this should be surfaced to the user
-    if (!this.contexts[contextName].streaming) {
-      throwStreamError(
+    if (this.contexts[contextName].streaming !== null) {
+      const streamError = createStreamError(
         'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
         {},
-        'Failed to create streaming instance',
+        $t('Failed to create stream. Please check your settings and try again.'),
       );
+
+      this.setError(streamError);
     }
 
     if (this.isAdvancedStreaming(this.contexts[contextName].streaming)) {
@@ -2294,11 +2295,13 @@ export class StreamingService
       const stream = this.contexts[display].streaming as ISimpleStreaming;
       this.contexts[display].recording.streaming = stream as ISimpleStreaming;
     } else {
-      throwStreamError(
-        'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
+      const recordingError = createStreamError(
+        'UNKNOWN_RECORDING_ERROR',
         {},
-        'Missing streaming instance when assigning to recording instance',
+        $t('Failed to create recording. Please check your settings and file path and try again.'),
       );
+
+      this.setError(recordingError);
     }
 
     // assign context
@@ -2775,11 +2778,13 @@ export class StreamingService
 
       this.contexts[display].replayBuffer = replayBuffer as ISimpleReplayBuffer;
     } else {
-      throwStreamError(
-        'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
+      const replayBufferError = createStreamError(
+        'UNKNOWN_REPLAY_BUFFER_ERROR',
         {},
-        'Unable to create replay buffer instance',
+        'Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.',
       );
+
+      this.setError(replayBufferError);
     }
 
     this.contexts[display].replayBuffer.video = this.videoSettingsService.contexts[display];
