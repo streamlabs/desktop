@@ -1942,7 +1942,10 @@ export class StreamingService
       );
 
       this.contexts[contextName].streaming.service.update(streamSettings);
-    } else if (!this.views.protectedModeEnabled && this.contexts[display].streaming) {
+    } else if (
+      !this.views.protectedModeEnabled &&
+      this.isStreamingInstance(this.contexts[contextName].streaming)
+    ) {
       this.contexts[display].streaming.service = ServiceFactory.legacySettings;
       this.contexts[display].streaming.service.update(streamSettings);
     } else {
@@ -3005,6 +3008,21 @@ export class StreamingService
 
   getRecordingInstance(): ISimpleRecording | IAdvancedRecording | null {
     return this.contexts.horizontal?.recording ?? this.contexts.vertical?.recording ?? null;
+  }
+
+  private isStreamingInstance(
+    instance: any,
+  ): instance is
+    | ISimpleStreaming
+    | IAdvancedStreaming
+    | IEnhancedBroadcastingSimpleStreaming
+    | IEnhancedBroadcastingAdvancedStreaming {
+    if (!instance) return false;
+    return (
+      this.isSimpleStreaming(instance) ||
+      this.isAdvancedStreaming(instance) ||
+      this.isEnhancedBroadcastingStreaming(instance)
+    );
   }
 
   private isAdvancedStreaming(
