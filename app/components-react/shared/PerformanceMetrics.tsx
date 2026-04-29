@@ -3,7 +3,6 @@ import { Tooltip } from 'antd';
 import cx from 'classnames';
 import { useVuex } from '../hooks';
 import { Services } from '../service-provider';
-import cloneDeep from 'lodash/cloneDeep';
 import styles from './PerformanceMetrics.m.less';
 import { $t } from '../../services/i18n';
 import { useRealmObject } from 'components-react/hooks/realm';
@@ -19,16 +18,13 @@ export default function PerformanceMetrics(props: {
 
   const pinnedStats = useRealmObject(CustomizationService.state.pinnedStatistics);
 
-  const v = useVuex(
-    () => ({
-      cpuPercent: PerformanceService.views.cpuPercent,
-      frameRate: PerformanceService.views.frameRate,
-      droppedFrames: PerformanceService.views.droppedFrames,
-      percentDropped: PerformanceService.views.percentDropped,
-      bandwidth: PerformanceService.views.bandwidth,
-    }),
-    false,
-  );
+  const v = useVuex(() => ({
+    cpuPercent: PerformanceService.views.cpuPercent,
+    frameRate: PerformanceService.views.frameRate,
+    droppedFrames: PerformanceService.views.droppedFrames,
+    percentDropped: PerformanceService.views.percentDropped,
+    bandwidth: PerformanceService.views.bandwidth,
+  }));
 
   function showAttribute(attribute: keyof IPinnedStatistics) {
     return props.mode === 'full' || pinnedStats[attribute];

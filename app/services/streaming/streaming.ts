@@ -3254,7 +3254,7 @@ export class StreamingService
   /**
    * PERFORMANCE STATISTICS
    */
-  getStreamingPerformanceStats() {
+  get streamingPerformanceStats() {
     let droppedFrames = 0;
     let totalFrames = 0;
     let kbitsPerSec = 0;
@@ -3271,6 +3271,21 @@ export class StreamingService
     }
 
     return { droppedFrames, totalFrames, kbitsPerSec, dataOutput };
+  }
+
+  get recordingPerformanceStats() {
+    let kbitsPerSec = 0;
+    let dataOutput = 0;
+
+    for (const contextName of Object.keys(this.contexts) as TOutputContext[]) {
+      const instance = this.contexts[contextName].recording;
+      if (!instance) continue;
+
+      kbitsPerSec += instance.streaming.kbitsPerSec;
+      dataOutput += instance.streaming.dataOutput;
+    }
+
+    return { kbitsPerSec, dataOutput };
   }
 
   /**
