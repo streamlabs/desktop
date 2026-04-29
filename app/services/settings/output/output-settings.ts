@@ -633,10 +633,25 @@ export class OutputSettingsService extends Service {
     );
 
     if (mode === 'Advanced') {
-      const rescaling = this.settingsService.findSettingValue(output, 'Recording', 'RecRescale');
+      const rescaling = this.settingsService.findSettingValue(output, 'Streaming', 'Rescale');
 
-      const outputWidth = this.videoSettingsService.outputResolutions[display].outputWidth;
-      const outputHeight = this.videoSettingsService.outputResolutions[display].outputHeight;
+      let outputWidth = this.videoSettingsService.outputResolutions[display].outputWidth;
+      let outputHeight = this.videoSettingsService.outputResolutions[display].outputHeight;
+
+      const rescaleResolution = this.settingsService.findSettingValue(
+        output,
+        'Streaming',
+        'RescaleRes',
+      );
+
+      if (rescaling && rescaleResolution) {
+        const [rescaleWidth, rescaleHeight] = rescaleResolution.split('x').map(Number);
+
+        if (Number.isFinite(rescaleWidth) && Number.isFinite(rescaleHeight)) {
+          outputWidth = rescaleWidth;
+          outputHeight = rescaleHeight;
+        }
+      }
 
       const audioTrack = this.settingsService.findSettingValue(output, 'Streaming', 'TrackIndex');
 
