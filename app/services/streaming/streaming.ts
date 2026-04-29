@@ -1848,8 +1848,10 @@ export class StreamingService
         | IEnhancedBroadcastingAdvancedStreaming;
 
       const resolution = this.videoSettingsService.outputResolutions[display];
-      stream.outputWidth = resolution.outputWidth;
-      stream.outputHeight = resolution.outputHeight;
+      if (!stream.rescaling) {
+        stream.outputWidth = resolution.outputWidth;
+        stream.outputHeight = resolution.outputHeight;
+      }
 
       if (!isEnhancedBroadcasting) {
         // stream audio track

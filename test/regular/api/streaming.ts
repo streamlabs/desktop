@@ -107,6 +107,37 @@ test('Recording filename formatting is read from advanced recording settings', a
   t.is(recordingSettings.fileFormat, customFilenamePattern);
 });
 
+test('Advanced streaming rescale output is read from streaming settings', async t => {
+  const client = await getApiClient();
+  const settingsService = client.getResource<SettingsService>('SettingsService');
+  const outputSettingsService = client.getResource<OutputSettingsService>('OutputSettingsService');
+
+  const setOutputParam = (name: string, value: unknown) => {
+    const outputSettings = settingsService.state.Output.formData;
+    outputSettings.forEach(subcategory => {
+      subcategory.parameters.forEach(setting => {
+        if (setting.name === name) setting.value = value as never;
+      });
+    });
+    settingsService.setSettings('Output', outputSettings);
+  };
+
+  setOutputParam('Mode', 'Advanced');
+  setOutputParam('Rescale', true);
+  setOutputParam('RecRescale', false);
+  setOutputParam('RescaleRes', '960x540');
+
+  const streamingSettings = outputSettingsService.getStreamingSettings('horizontal') as {
+    rescaling: boolean;
+    outputWidth: number;
+    outputHeight: number;
+  };
+
+  t.true(streamingSettings.rescaling);
+  t.is(streamingSettings.outputWidth, 960);
+  t.is(streamingSettings.outputHeight, 540);
+});
+
 test('Stream delay is applied via API', async t => {
   const streamKey = (await reserveUserFromPool(t, 'twitch')).streamKey;
   const client = await getApiClient();
