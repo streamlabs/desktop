@@ -231,6 +231,7 @@ export interface IPlatformService {
   readonly displayName: string;
   readonly mergeUrl: string;
   readonly streamPageUrl: string;
+  readonly verticalStreamPageUrl?: string;
   readonly chatUrl: string;
   readonly dashboardUrl?: string;
 

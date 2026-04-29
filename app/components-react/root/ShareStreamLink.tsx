@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Services } from '../service-provider';
 import { $t } from 'services/i18n';
 import { clipboard } from 'electron';
-import { getPlatformService } from 'services/platforms';
+import { getPlatformService, TPlatform } from 'services/platforms';
 import { Button, message } from 'antd';
 import { CloseOutlined, ShareAltOutlined } from '@ant-design/icons';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
 import Tooltip from 'components-react/shared/Tooltip';
 import styles from './ShareStreamLink.m.less';
+import { useVuex } from 'components-react/hooks';
 
 /*
  * There's a weird issue on the Live Dock where components placed above
@@ -26,20 +27,36 @@ export const ShareStreamLink = () => {
   const toggleExpanded = () => setExpanded(expanded => !expanded);
   const { StreamingService } = Services;
 
-  const items = StreamingService.views.enabledPlatforms.map(platform => {
-    const service = getPlatformService(platform);
-    const streamPageUrl = service.streamPageUrl;
+  const v = useVuex(() => ({
+    enabledPlatforms: StreamingService.views.enabledPlatforms,
+  }));
 
-    if (!streamPageUrl) {
-      return;
-    }
+  const platformUrls = useMemo(
+    () =>
+      v.enabledPlatforms.reduce((urls, platform) => {
+        const service = getPlatformService(platform);
+        const streamPageUrl = service.streamPageUrl;
+        if (streamPageUrl) {
+          urls.push({ platform, streamPageUrl });
+        }
 
+        // See vertical stream link for YouTube. Used for debugging.
+        if (platform === 'youtube' && service.verticalStreamPageUrl) {
+          urls.push({ platform, streamPageUrl: service.verticalStreamPageUrl });
+        }
+
+        return urls;
+      }, [] as { platform: TPlatform; streamPageUrl: string }[]),
+    [v.enabledPlatforms],
+  );
+
+  const items = platformUrls.map(({ platform, streamPageUrl }) => {
     const tooltip = $t('Copy %{platform} link', {
       platform: StreamingService.views.getPlatformDisplayName(platform),
     });
 
     return (
-      <Tooltip key={platform} placement="right" title={tooltip} autoAdjustOverflow={false}>
+      <Tooltip placement="right" title={tooltip} autoAdjustOverflow={false}>
         <Button
           type="text"
           aria-label={tooltip}

@@ -473,6 +473,12 @@ export class YoutubeService
 
     const customDestinations = [...destinations, verticalDestination];
 
+    console.log(
+      'yt dual stream - updated custom destinations: ',
+      customDestinations,
+      verticalDestination,
+    );
+
     this.streamSettingsService.setGoLiveSettings({
       customDestinations,
     });
@@ -569,6 +575,13 @@ export class YoutubeService
         context,
       );
     }
+
+    console.log(
+      'YouTube stream key set in settings, streamKey: ',
+      streamKey,
+      ' context: ',
+      context,
+    );
 
     if (this.streamingService.views.isDualOutputMode && ytSettings.display === 'both') {
       try {
@@ -1174,6 +1187,14 @@ export class YoutubeService
     const youtubeDomain =
       nightMode === 'day' ? 'https://youtube.com' : 'https://gaming.youtube.com';
     return `${youtubeDomain}/watch?v=${this.state.settings.broadcastId}`;
+  }
+
+  get verticalStreamPageUrl() {
+    if (!this.state.verticalBroadcast?.id) return null;
+    const nightMode = this.customizationService.isDarkTheme ? 'night' : 'day';
+    const youtubeDomain =
+      nightMode === 'day' ? 'https://youtube.com' : 'https://gaming.youtube.com';
+    return `${youtubeDomain}/watch?v=${this.state.verticalBroadcast.id}`;
   }
 
   async uploadThumbnail(base64url: string | 'default', videoId: string) {
