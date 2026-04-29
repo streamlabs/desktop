@@ -184,80 +184,13 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
       (e: electron.Event, am: electron.ProcessMetric[]) => {
         const streamingStats = this.streamingService.streamingPerformanceStats;
 
-        // console.log('streamingStats', streamingStats);
-        // console.log('OBS_API_getPerformanceStatistics', stats);
-        // console.log('osn.Global', {
-        //   laggedFrames: obs.Global.laggedFrames,
-        //   totalFrames: obs.Global.totalFrames,
-        //   locale: obs.Global.locale,
-        //   cpuPercentage: obs.Global.cpuPercentage,
-        //   currentFrameRate: obs.Global.currentFrameRate,
-        //   averageFrameRenderTime: obs.Global.averageFrameRenderTime,
-        //   diskSpaceAvailable: obs.Global.diskSpaceAvailable,
-        //   memoryUsage: obs.Global.memoryUsage,
-        // });
-
-        // console.log('OBS_API_getPerformanceStatistics', JSON.stringify(stats, null, 2));
-        // console.log(
-        //   'osn.Global',
-        //   JSON.stringify(
-        //     {
-        //       laggedFrames: obs.Global.laggedFrames,
-        //       totalFrames: obs.Global.totalFrames,
-        //       locale: obs.Global.locale,
-        //       cpuPercentage: obs.Global.cpuPercentage,
-        //       currentFrameRate: obs.Global.currentFrameRate,
-        //       averageFrameRenderTime: obs.Global.averageFrameRenderTime,
-        //       diskSpaceAvailable: obs.Global.diskSpaceAvailable,
-        //       memoryUsage: obs.Global.memoryUsage,
-        //     },
-        //     null,
-        //     2,
-        //   ),
-        // );
-        // console.log('streamingStats', JSON.stringify(streamingStats, null, 2));
-
-        // -laggedFrames and totalFrames remain in osn::Global
-        // -skippedFrames and encodedFrames remain in osn::Video
-        // -droppedFrames, totalFrames, kbitsPerSec, dataOutput move to osn::Streaming and are based on a Streaming object ID
-        // -cpuPercentage, currentFrameRate, averageTimeToRender, diskSpaceAvailable, and memoryUsage move out of nodeobs_api (OBS_API_getPerformanceStatistics) into individual functions in osn::Global
-
-        // stats.streamingBandwidth = streamingStats.kbitsPerSec;
-
-        // stats.CPU += am
-        //   .map(proc => {
-        //     return proc.cpu.percentCPUUsage;
-        //   })
-        //   .reduce((sum, usage) => sum + usage);
-
         // CPU with child processes
-        const CPU = am.reduce(
-          (sum, proc) => sum + proc.cpu.percentCPUUsage,
-          obs.Global.cpuPercentage,
-        );
+        const CPU =
+          obs.Global.cpuPercentage + am.reduce((sum, proc) => sum + proc.cpu.percentCPUUsage, 0);
         const percentageDroppedFrames =
           streamingStats.totalFrames > 0
             ? (streamingStats.droppedFrames / streamingStats.totalFrames) * 100
             : 0;
-
-        // laggedFrames osn::Global
-        // totalFrames osn::Global
-        // skippedFrames osn::Video
-        // encodedFrames osn::Video
-        // averageTimeToRender osn::Global
-        // diskSpaceAvailable osn::Global
-        // memoryUsage osn::Global
-        // - Streaming Object: droppedFrames, totalFrames, kbitsPerSec, dataOutput
-
-        console.log('streamingStats', {
-          droppedFrames: streamingStats.droppedFrames,
-          totalFrames: streamingStats.totalFrames,
-          kbitsPerSec: streamingStats.kbitsPerSec,
-          dataOutput: streamingStats.dataOutput,
-        });
-
-        console.log('framerate', obs.Global.currentFrameRate);
-        console.log('averageFrameRenderTime', obs.Global.averageFrameRenderTime);
 
         // Note: The below commented out properties are legacy from the old `OBS_API_getPerformanceStatistics`
         // response. They are left commented out for now since they are not currently being used in the frontend,
