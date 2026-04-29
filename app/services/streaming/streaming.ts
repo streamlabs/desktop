@@ -757,7 +757,7 @@ export class StreamingService
       console.error('Error starting video transmission: ', e);
 
       const failureType =
-        (e as any).message && (e as any).message.includes('encoder')
+        e && (e as any).message && (e as any).message.includes('encoder')
           ? 'INVALID_ENCODER'
           : 'UNKNOWN_ERROR';
 
@@ -1294,6 +1294,17 @@ export class StreamingService
         // For enhanced broadcasting while multistreaming one of the displays, the horizontal and vertical streaming instances will be handled in `handleStreamingSignal`.
         // If Twitch is the only target for one of the displays, the other display streaming instance will also be handled in `handleStreamingSignal`.
         await this.createEnhancedBroadcastDualOutput();
+      } else if (this.views.isYouTubeDualStreaming) {
+        // To show the vertical stream in the YouTube mobile app, the vertical stream needs to be started last.
+        // So create the horizontal stream instance first
+
+        this.createStreaming({
+          output: 'horizontal',
+          audioTrack: 1,
+          start: true,
+          context: 'horizontal',
+          isEnhancedBroadcasting: false,
+        });
       } else {
         // For dual output without enhanced broadcasting, the vertical stream instance will be created and started after the horizontal stream.
         this.createStreaming({
@@ -1512,7 +1523,11 @@ export class StreamingService
     this.usageStatisticsService.recordFeatureUsage('Streaming');
   }
 
-  private async handleStartDualOutputStream(code: EOBSOutputSignal, context: TOutputContext) {
+  private async handleStartDualOutputStream(
+    code: EOBSOutputSignal,
+    context: TOutputContext,
+    time: string,
+  ) {
     // Handle dual output mode
 
     // Maybe not necessary, but just in case add a small delay to stagger creating/resolving the next streaming instance
@@ -1558,6 +1573,43 @@ export class StreamingService
           // Both display streaming instances exist — resolve the start streaming promise
           await this.handleStartStreaming(code, context as TDisplayType);
         }
+      }
+    } else if (this.views.isYouTubeDualStreaming) {
+      // For YouTube dual streaming without enhanced broadcasting, the horizontal stream needs to be started before the vertical stream.
+      if (context === 'horizontal') {
+        try {
+          this.createStreaming({
+            output: 'vertical',
+            audioTrack: 2,
+            start: true,
+            context: 'vertical',
+            isEnhancedBroadcasting: false,
+          });
+
+          // Update the horizontal stream status to live for the UI
+          this.SET_STREAMING_STATUS(EStreamingState.Live, context, time);
+          this.streamingStatusChange.next(EStreamingState.Live);
+        } catch (e: unknown) {
+          console.error('Error starting vertical stream in YouTube dual streaming', e);
+
+          this.handleFactoryOutputError(
+            {
+              type: 'streaming',
+              signal: 'start',
+              code: EOutputCode.Error,
+              error: 'Error starting vertical stream in YouTube dual streaming',
+            },
+            'vertical',
+            EOBSOutputType.Streaming,
+          );
+
+          this.SET_STREAMING_STATUS(EStreamingState.Offline, context, time);
+          this.streamingStatusChange.next(EStreamingState.Offline);
+        }
+      }
+
+      if (context === 'vertical') {
+        this.handleStartStreaming(code, context);
       }
     } else {
       // In dual output mode without enhanced broadcasting, create the horizontal streaming instance after the vertical stream
@@ -2460,7 +2512,7 @@ export class StreamingService
 
     if (info.signal === EOBSOutputSignal.Start) {
       if (this.views.isDualOutputMode) {
-        await this.handleStartDualOutputStream(info.signal, context);
+        await this.handleStartDualOutputStream(info.signal, context, time);
       } else {
         await this.handleStartSingleOutputStream(info.signal, context, nextState, time);
       }

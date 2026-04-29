@@ -194,6 +194,18 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   /**
+   * Primarily used in the go live flow to swap the order of starting the streams so that the vertical stream
+   * shows as the stream on YouTube's mobile app
+   */
+  get isYouTubeDualStreaming() {
+    return (
+      this.settings.platforms?.youtube &&
+      this.settings.platforms?.youtube?.display === 'both' &&
+      this.isDualOutputMode
+    );
+  }
+
+  /**
    * Returns a list of enabled platforms with useCustomFields==false
    */
   get platformsWithoutCustomFields(): TPlatform[] {
