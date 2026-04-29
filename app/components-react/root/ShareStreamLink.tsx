@@ -41,8 +41,8 @@ export const ShareStreamLink = () => {
         }
 
         // See vertical stream link for YouTube. Used for debugging.
-        if (platform === 'youtube' && service.verticalStreamPageUrl) {
-          urls.push({ platform, streamPageUrl: service.verticalStreamPageUrl });
+        if (platform === 'youtube' && service.verticalStreamPageUrl !== '') {
+          urls.push({ platform, streamPageUrl: service.verticalStreamPageUrl! });
         }
 
         return urls;

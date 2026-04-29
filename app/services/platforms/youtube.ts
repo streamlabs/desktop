@@ -1190,7 +1190,7 @@ export class YoutubeService
   }
 
   get verticalStreamPageUrl() {
-    if (!this.state.verticalBroadcast?.id) return null;
+    if (!this.state.verticalBroadcast?.id) return '';
     const nightMode = this.customizationService.isDarkTheme ? 'night' : 'day';
     const youtubeDomain =
       nightMode === 'day' ? 'https://youtube.com' : 'https://gaming.youtube.com';
