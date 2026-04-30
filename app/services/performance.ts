@@ -68,15 +68,15 @@ interface IMonitorState {
 
 class PerformanceServiceViews extends ViewHandler<IPerformanceState> {
   get cpuPercent() {
-    return this.state.CPU.toFixed(1);
+    return (this.state.CPU ?? 0).toFixed(1);
   }
 
   get frameRate() {
-    return this.state.frameRate.toFixed(2);
+    return (this.state.frameRate ?? 0).toFixed(2);
   }
 
   get droppedFrames() {
-    return this.state.numberDroppedFrames;
+    return this.state.numberDroppedFrames ?? 0;
   }
 
   get percentDropped() {
@@ -84,7 +84,7 @@ class PerformanceServiceViews extends ViewHandler<IPerformanceState> {
   }
 
   get bandwidth() {
-    return this.state.streamingBandwidth.toFixed(0);
+    return (this.state.streamingBandwidth ?? 0).toFixed(0);
   }
 
   get streamQuality() {
@@ -186,7 +186,8 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
 
         // CPU with child processes
         const CPU =
-          obs.Global.cpuPercentage + am.reduce((sum, proc) => sum + proc.cpu.percentCPUUsage, 0);
+          (obs.Global.cpuPercentage ?? 0) +
+          am.reduce((sum, proc) => sum + (proc.cpu?.percentCPUUsage ?? 0), 0);
         const percentageDroppedFrames =
           streamingStats.totalFrames > 0
             ? (streamingStats.droppedFrames / streamingStats.totalFrames) * 100
