@@ -2373,10 +2373,15 @@ export class StreamingService
         key === 'videoEncoder' &&
         (contextName !== 'enhancedBroadcasting' || isEnhancedBroadcastingContext)
       ) {
-        const encoderSettings =
-          type === 'streaming'
-            ? this.outputSettingsService.getStreamingVideoEncoderSettings(mode)
-            : undefined;
+        let encoderSettings;
+        switch (type) {
+          case 'streaming':
+            encoderSettings = this.outputSettingsService.getStreamingVideoEncoderSettings(mode);
+            break;
+          case 'recording':
+            encoderSettings = this.outputSettingsService.getRecordingVideoEncoderSettings(mode);
+            break;
+        }
 
         if (encoderSettings) {
           instance.videoEncoder = VideoEncoderFactory.create(

@@ -886,6 +886,14 @@ export class OutputSettingsService extends Service {
     };
   }
 
+  getRecordingVideoEncoderSettings(mode: TOutputSettingsMode): IRecordingEncoderSettings {
+    const output = this.settingsService.state.Output.formData;
+    const video = this.settingsService.state.Video.formData;
+    const streaming = this.getStreamingEncoderSettings(output, video);
+
+    return this.getRecordingEncoderSettings(output, video, mode, streaming);
+  }
+
   /**
    * This method helps to simplify tuning the encoder's settings
    * This method can patch ONLY Advanced settings
