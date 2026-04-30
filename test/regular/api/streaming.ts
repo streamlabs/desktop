@@ -6,7 +6,6 @@ import {
   ERecordingState,
 } from '../../../app/services/streaming/streaming-api';
 import { OutputSettingsService, SettingsService } from '../../../app/services/settings';
-import { VideoSettingsService } from '../../../app/services/settings-v2/video';
 import { EScaleType } from '../../../obs-api';
 import { reserveUserFromPool, withPoolUser } from '../../helpers/webdriver/user';
 
@@ -113,13 +112,11 @@ test('Advanced streaming rescale output is read from streaming settings', async 
   const client = await getApiClient();
   const settingsService = client.getResource<SettingsService>('SettingsService');
   const outputSettingsService = client.getResource<OutputSettingsService>('OutputSettingsService');
-  const videoSettingsService = client.getResource<VideoSettingsService>('VideoSettingsService');
-  const { baseWidth, baseHeight } = videoSettingsService.baseResolutions.horizontal;
 
   settingsService.setSettingValue('Output', 'Mode', 'Advanced');
   settingsService.setSettingValue('Output', 'RescaleFilter', EScaleType.Bicubic);
   settingsService.setSettingValue('Output', 'RecRescale', false);
-  settingsService.setSettingValue('Output', 'RescaleRes', `${baseWidth}x${baseHeight}`);
+  settingsService.setSettingValue('Output', 'RescaleRes', '960x540');
 
   t.is(outputSettingsService.getSettings().mode, 'Advanced');
 
@@ -132,8 +129,8 @@ test('Advanced streaming rescale output is read from streaming settings', async 
 
   t.true(streamingSettings.rescaling);
   t.is(streamingSettings.rescaleFilter, EScaleType.Bicubic);
-  t.is(streamingSettings.outputWidth, baseWidth);
-  t.is(streamingSettings.outputHeight, baseHeight);
+  t.is(streamingSettings.outputWidth, 960);
+  t.is(streamingSettings.outputHeight, 540);
 });
 
 test('Stream delay is applied via API', async t => {
