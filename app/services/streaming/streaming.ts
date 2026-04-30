@@ -1658,31 +1658,9 @@ export class StreamingService
       this.stopReplayBuffer();
     }
 
-    // Stop the horizontal stream. On the `Stop` signal in `handleStreamingSignal`, all other streaming
-    // instances will be stopped and destroyed. Otherwise, just cleanup all of the streaming instances.
-    if (
-      this.contexts.horizontal.streaming &&
-      this.state.status.horizontal.streaming !== EStreamingState.Offline
-    ) {
-      this.contexts.horizontal.streaming.stop(force);
-
-      // Return because in dual output mode, the vertical stream will be stopped in the `handleStreamingSignal`
-      return;
-    }
-
-    // Stop the vertical stream first because in dual output mode, the horizontal stream will always be
-    // stopped in the `handleStreamingSignal`
-    if (
-      this.contexts.vertical.streaming &&
-      this.state.status.vertical.streaming !== EStreamingState.Offline
-    ) {
-      this.contexts.vertical.streaming.stop(force);
-    }
-
-    // For Twitch dual streaming, the enhanced broadcasting instance is in the `enhancedBroadcasting` context
-    // rather than a display context. Stop it directly.
-    if (this.contexts.enhancedBroadcasting.streaming) {
-      this.contexts.enhancedBroadcasting.streaming.stop(force);
+    // Stop every active streaming output immediately. Relying on later cleanup can leave the
+    // vertical stream alive while vertical recording or replay buffer finishes shutting down.
+    if (this.stopActiveStreamingInstances(force)) {
       return;
     }
 
@@ -1705,6 +1683,34 @@ export class StreamingService
         $t('Error stopping stream: default streams do not exist.'),
       );
     }
+  }
+
+  private stopActiveStreamingInstances(force?: boolean): boolean {
+    let stopped = false;
+    const contextNames: TOutputContext[] = [
+      'vertical',
+      'horizontal',
+      'enhancedBroadcasting',
+      'stream',
+      'streamSecond',
+    ];
+
+    contextNames.forEach(contextName => {
+      const streaming = this.contexts[contextName].streaming;
+      if (!streaming) return;
+
+      const forceStop =
+        force ||
+        (this.isDisplayContext(contextName) &&
+          this.state.status[contextName].streaming === EStreamingState.Offline);
+
+      // OBS can briefly emit deactivate/offline while a reconnect timer is still armed.
+      // If the instance still exists, force-stopping it cancels that pending reconnect.
+      streaming.stop(forceStop);
+      stopped = true;
+    });
+
+    return stopped;
   }
 
   private async createEnhancedBroadcastSingleStream() {
@@ -3666,6 +3672,13 @@ export class StreamingService
         (contextName === 'horizontal' && skipHorizontal) ||
         this.contexts[contextName].streaming === undefined ||
         this.contexts[contextName].streaming === null
+      ) {
+        continue;
+      }
+
+      if (
+        this.isDisplayContext(contextName) &&
+        this.state.status[contextName].streaming === EStreamingState.Offline
       ) {
         continue;
       }
