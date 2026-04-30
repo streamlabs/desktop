@@ -359,6 +359,7 @@
   "switch to a supported encoder such as x264": "switch to a supported encoder such as x264",
   "An unknown error occurred while starting the stream. Please try again.": "An unknown error occurred while starting the stream. Please try again.",
   "Failed to fetch encoder settings": "Failed to fetch encoder settings",
+  "Failed to start video transmission": "Failed to start video transmission",
   "Failed to create stream. Please check your settings and try again.": "Failed to create stream. Please check your settings and try again.",
   "Failed to create recording. Please check your settings and file path and try again.": "Failed to create recording. Please check your settings and file path and try again.",
   "Unknown recording error, please contact support": "Unknown recording error, please contact support",

@@ -972,6 +972,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
    * @remark For debugging purposes only
    */
   private listSettingsByCategory() {
+    if (!Utils.isDevMode()) return;
     const settings = {} as any;
 
     for (const category in this.state) {

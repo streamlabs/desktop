@@ -667,8 +667,6 @@ export class StreamingService
     /**
      * SET MULTISTREAM SETTINGS
      */
-    // TODO: remove after server-side impl
-    this.restreamService.actions.forceStreamShiftGoLive(false);
     if (this.views.shouldSetupRestream) {
       // In single output mode, this sets up multistreaming
       // In dual output mode, this sets up streaming displays to multiple targets
@@ -737,6 +735,7 @@ export class StreamingService
           await this.restreamService.beforeGoLive();
         });
       } catch (e: unknown) {
+        console.log('Restream setup failed', e);
         const errorType = this.handleTypedStreamError(
           e,
           failureType,
@@ -1487,7 +1486,7 @@ export class StreamingService
     } catch (e: unknown) {
       console.error('Error fetching stream encoder info: ', e);
 
-      const message = (e as any).message ?? $t('Failed to fetch encoder settings');
+      const message = (e as any)?.message ?? $t('Failed to fetch encoder settings');
       this.handleTypedStreamError(e, 'INVALID_ENCODER', message);
     }
 
@@ -2144,7 +2143,7 @@ export class StreamingService
         }
 
         const message =
-          (e as any).message ??
+          (e as any)?.message ??
           $t('An unknown error occurred while starting the stream. Please try again.');
 
         this.createOBSError(
