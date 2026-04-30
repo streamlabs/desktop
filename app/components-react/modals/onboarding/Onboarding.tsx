@@ -36,7 +36,9 @@ export default function Onboarding() {
   const [processing, setProcessing] = useState(false);
 
   // Avoid re-rendering the entire onboarding modal when `showOnboarding` changes
-  const { currentIndex, showOnboarding, currentStep } = useRealmObject(OnboardingV2Service.state);
+  // by getting the `currentStep` separately
+  const currentStep = useRealmObjectProperty(OnboardingV2Service.state.currentStep);
+  const { currentIndex, showOnboarding } = useRealmObject(OnboardingV2Service.state);
 
   const continueFuncs: PartialRec<EOnboardingSteps, () => void> = useMemo(
     () => ({
