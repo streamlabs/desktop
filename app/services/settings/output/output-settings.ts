@@ -25,6 +25,9 @@ enum EObsAdvancedEncoder {
   obs_x264 = 'obs_x264',
   amd_amf_h264 = 'amd_amf_h264',
   obs_qsv11 = 'obs_qsv11',
+  obs_qsv11_v2 = 'obs_qsv11_v2',
+  obs_qsv11_hevc = 'obs_qsv11_hevc',
+  obs_qsv11_av1 = 'obs_qsv11_av1',
   jim_nvenc = 'jim_nvenc',
   ffmpeg_aom_av1 = 'ffmpeg_aom_av1',
   ffmpeg_svt_av1 = 'ffmpeg_svt_av1',
@@ -223,7 +226,7 @@ type TOutputSettingsMode = 'Simple' | 'Advanced';
 const simpleEncoderToAnvancedEncoderMap: Dictionary<EObsAdvancedEncoder> = {
   [EObsSimpleEncoder.x264]: EObsAdvancedEncoder.obs_x264,
   [EObsSimpleEncoder.x264_lowcpu]: EObsAdvancedEncoder.obs_x264,
-  [EObsSimpleEncoder.qsv]: EObsAdvancedEncoder.obs_qsv11,
+  [EObsSimpleEncoder.qsv]: EObsAdvancedEncoder.obs_qsv11_v2,
   [EObsSimpleEncoder.nvenc]: EObsAdvancedEncoder.ffmpeg_nvenc,
   [EObsSimpleEncoder.jim_nvenc]: EObsAdvancedEncoder.jim_nvenc,
   [EObsSimpleEncoder.amd]: EObsAdvancedEncoder.amd_amf_h264,
@@ -259,6 +262,9 @@ export function obsEncoderToEncoderFamily(
       return EEncoderFamily.x264;
     case EObsSimpleEncoder.qsv:
     case EObsAdvancedEncoder.obs_qsv11:
+    case EObsAdvancedEncoder.obs_qsv11_v2:
+    case EObsAdvancedEncoder.obs_qsv11_hevc:
+    case EObsAdvancedEncoder.obs_qsv11_av1:
       return EEncoderFamily.qsv;
     case EObsSimpleEncoder.nvenc:
     case EObsAdvancedEncoder.ffmpeg_nvenc:
@@ -274,6 +280,10 @@ export function obsEncoderToEncoderFamily(
       return EEncoderFamily.obs_nvenc_hevc_tex;
     case EObsAdvancedEncoder.obs_nvenc_h264_tex:
       return EEncoderFamily.obs_nvenc_h264_tex;
+    case EObsAdvancedEncoder.ffmpeg_aom_av1:
+      return EEncoderFamily.ffmpeg_aom_av1;
+    case EObsAdvancedEncoder.ffmpeg_svt_av1:
+      return EEncoderFamily.ffmpeg_svt_av1;
   }
 }
 
@@ -401,8 +411,7 @@ export class OutputSettingsService extends Service {
       ? this.settingsService.findSettingValue(output, 'Streaming', field)
       : this.settingsService.findSettingValue(output, 'Recording', 'RecEncoder');
 
-    // START TODO: remove these 2 conversions after encoder updates and use 'encoder' in the lowCPU line below
-    const convertedEncoderName = this.convertEncoderToNewAPI(obsEncoderToEncoderFamily(encoder));
+    const convertedEncoderName = this.convertEncoderToNewAPI(encoder);
     const videoEncoder: EObsAdvancedEncoder =
       convertedEncoderName === EObsSimpleEncoder.x264_lowcpu
         ? EObsAdvancedEncoder.obs_x264
@@ -411,7 +420,6 @@ export class OutputSettingsService extends Service {
     console.log(
       `MLH getRecordingSettings encoder name to convert: ${encoder} converted name: ${convertedEncoderName} final value to use: ${videoEncoder}`,
     );
-    // END TODO: remove these 2 conversions after encoder updates and use 'encoder' in the lowCPU line below
 
     const lowCPU: boolean = convertedEncoderName === EObsSimpleEncoder.x264_lowcpu;
 
@@ -622,11 +630,9 @@ export class OutputSettingsService extends Service {
       'Mode',
     );
 
-    // START TODO: remove this when ditching conversions after encoder updates
-    const encoder = obsEncoderToEncoderFamily(
+    const encoder =
       this.settingsService.findSettingValue(output, 'Streaming', 'Encoder') ||
-        this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder'),
-    ) as EEncoderFamily;
+      this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder');
 
     const convertedEncoderName:
       | EObsSimpleEncoder.x264_lowcpu
@@ -636,15 +642,6 @@ export class OutputSettingsService extends Service {
       convertedEncoderName === EObsSimpleEncoder.x264_lowcpu
         ? EObsAdvancedEncoder.obs_x264
         : convertedEncoderName;
-    // END TODO: remove this when ditching conversions after encoder updates
-
-    // START TODO: use this when ditching conversions after encoder updates
-    // const videoEncoder =
-    //   mode === 'Advanced'
-    //     ? this.settingsService.findSettingValue(output, 'Streaming', 'Encoder')
-    //     : this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder');
-
-    // END TODO: use this when ditching conversions after encoder updates
 
     const enforceBitrateKey = mode === 'Advanced' ? 'ApplyServiceSettings' : 'EnforceBitrate';
     const enforceServiceBitrate = this.settingsService.findSettingValue(
@@ -1014,7 +1011,25 @@ export class OutputSettingsService extends Service {
       case EObsSimpleEncoder.amd:
         return EObsAdvancedEncoder.amd_amf_h264;
       case EObsSimpleEncoder.qsv:
+        return EObsAdvancedEncoder.obs_qsv11_v2;
+      case EObsAdvancedEncoder.obs_x264:
+        return EObsAdvancedEncoder.obs_x264;
+      case EObsAdvancedEncoder.ffmpeg_nvenc:
+        return EObsAdvancedEncoder.ffmpeg_nvenc;
+      case EObsAdvancedEncoder.amd_amf_h264:
+        return EObsAdvancedEncoder.amd_amf_h264;
+      case EObsAdvancedEncoder.obs_qsv11:
         return EObsAdvancedEncoder.obs_qsv11;
+      case EObsAdvancedEncoder.obs_qsv11_v2:
+        return EObsAdvancedEncoder.obs_qsv11_v2;
+      case EObsAdvancedEncoder.obs_qsv11_hevc:
+        return EObsAdvancedEncoder.obs_qsv11_hevc;
+      case EObsAdvancedEncoder.obs_qsv11_av1:
+        return EObsAdvancedEncoder.obs_qsv11_av1;
+      case EObsAdvancedEncoder.ffmpeg_aom_av1:
+        return EObsAdvancedEncoder.ffmpeg_aom_av1;
+      case EObsAdvancedEncoder.ffmpeg_svt_av1:
+        return EObsAdvancedEncoder.ffmpeg_svt_av1;
       case EObsSimpleEncoder.jim_nvenc:
         return EObsAdvancedEncoder.jim_nvenc;
       case EObsSimpleEncoder.x264_lowcpu:
@@ -1025,6 +1040,8 @@ export class OutputSettingsService extends Service {
         return EObsAdvancedEncoder.obs_nvenc_hevc_tex;
       case EObsAdvancedEncoder.obs_nvenc_av1_tex:
         return EObsAdvancedEncoder.obs_nvenc_av1_tex;
+      default:
+        return encoder as EObsAdvancedEncoder;
     }
   }
 
