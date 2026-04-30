@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import fs from 'fs';
 import * as remote from '@electron/remote';
 import cx from 'classnames';
@@ -119,12 +119,9 @@ export default function Main() {
     return !bulkLoadFinished ? loadedTheme() || 'night-theme' : realmTheme;
   }, [bulkLoadFinished, realmTheme]);
 
-  const updateStyleBlockers = useCallback(
-    (val: boolean) => {
-      WindowsService.actions.updateStyleBlockers('main', val);
-    },
-    [showOnboarding],
-  );
+  const updateStyleBlockers = useCallback((val: boolean) => {
+    WindowsService.actions.updateStyleBlockers('main', val);
+  }, []);
 
   const onDropHandler = useCallback(
     async (event: React.DragEvent) => {
@@ -202,14 +199,21 @@ export default function Main() {
   }
 
   useEffect(() => {
-    const unsubscribe = StatefulService.store.subscribe((_, state) => {
+    let unsubscribe: (() => void) | null = null;
+    unsubscribe = StatefulService.store.subscribe((_, state) => {
       if (state.bulkLoadFinished) setBulkLoadFinished(true);
       if (state.i18nReady) seti18nReady(true);
+      if (state.bulkLoadFinished && state.i18nReady && unsubscribe) {
+        unsubscribe();
+        unsubscribe = null;
+      }
     });
 
     windowSizeHandler();
 
-    return unsubscribe;
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -336,25 +340,29 @@ interface ILiveDockContainerProps {
   onLeft?: boolean;
 }
 
-function LiveDockContainer(p: ILiveDockContainerProps) {
-  const isDockCollapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
+const Chevron = memo(function Chevron(p: {
+  onLeft?: boolean;
+  isDockCollapsed: boolean;
+  setCollapsed: (val: boolean) => void;
+}) {
+  return (
+    <div
+      className={cx(styles.liveDockChevron, p.onLeft && styles.left)}
+      onClick={() => p.setCollapsed(!p.isDockCollapsed)}
+    >
+      <i
+        className={cx({
+          'icon-back': (!p.onLeft && p.isDockCollapsed) || (p.onLeft && !p.isDockCollapsed),
+          ['icon-down icon-right']:
+            (p.onLeft && p.isDockCollapsed) || (!p.onLeft && !p.isDockCollapsed),
+        })}
+      />
+    </div>
+  );
+});
 
-  function Chevron() {
-    return (
-      <div
-        className={cx(styles.liveDockChevron, p.onLeft && styles.left)}
-        onClick={() => p.setCollapsed(!isDockCollapsed)}
-      >
-        <i
-          className={cx({
-            'icon-back': (!p.onLeft && isDockCollapsed) || (p.onLeft && !isDockCollapsed),
-            ['icon-down icon-right']:
-              (p.onLeft && isDockCollapsed) || (!p.onLeft && !isDockCollapsed),
-          })}
-        />
-      </div>
-    );
-  }
+const LiveDockContainer = memo(function LiveDockContainer(p: ILiveDockContainerProps) {
+  const isDockCollapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
 
   const transitionName = useMemo(() => {
     if ((p.onLeft && isDockCollapsed) || (!p.onLeft && !isDockCollapsed)) {
@@ -367,7 +375,11 @@ function LiveDockContainer(p: ILiveDockContainerProps) {
     <Animation transitionName={transitionName} transitionAppear>
       {isDockCollapsed && (
         <div className={cx(styles.liveDockCollapsed, p.onLeft && styles.left)} key="collapsed">
-          <Chevron />
+          <Chevron
+            onLeft={p.onLeft}
+            isDockCollapsed={isDockCollapsed}
+            setCollapsed={p.setCollapsed}
+          />
         </div>
       )}
       {!isDockCollapsed && (
@@ -385,10 +397,14 @@ function LiveDockContainer(p: ILiveDockContainerProps) {
             style={{ width: `${p.width}px` }}
           >
             <LiveDock />
-            <Chevron />
+            <Chevron
+              onLeft={p.onLeft}
+              isDockCollapsed={isDockCollapsed}
+              setCollapsed={p.setCollapsed}
+            />
           </div>
         </ResizeBar>
       )}
     </Animation>
   );
-}
+});
