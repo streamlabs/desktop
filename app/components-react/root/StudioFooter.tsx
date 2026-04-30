@@ -32,7 +32,6 @@ function StudioFooterComponent() {
     isLoggedIn,
     supportsScheduling,
     streamQuality,
-    recordingStatus,
     recordingModeEnabled,
     replayBufferEnabled,
     replayBufferStatus,
@@ -43,7 +42,6 @@ function StudioFooterComponent() {
       isLoggedIn: UserService.views.isLoggedIn,
       supportsScheduling: StreamingService.views.supports('stream-schedule'),
       streamQuality: PerformanceService.views.streamQuality,
-      recordingStatus: StreamingService.views.recordingStatus,
       recordingModeEnabled: RecordingModeService.views.isRecordingModeEnabled,
       replayBufferEnabled: SettingsService.views.values.Output.RecRB,
       replayBufferStatus: StreamingService.views.replayBufferStatus,
@@ -51,10 +49,6 @@ function StudioFooterComponent() {
     }),
     false,
   );
-
-  const canSchedule = useMemo(() => {
-    return supportsScheduling;
-  }, [supportsScheduling]);
 
   const replayBufferOffline = useMemo(() => {
     return replayBufferStatus === EReplayBufferState.Offline;
@@ -194,7 +188,7 @@ function StudioFooterComponent() {
             </Tooltip>
           </div>
         )}
-        {canSchedule && (
+        {supportsScheduling && (
           <div className={styles.navItem}>
             <Tooltip placement="left" title={$t('Schedule Stream')}>
               <button className="circle-button" onClick={openScheduleStream}>

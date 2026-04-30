@@ -1,20 +1,24 @@
 import cx from 'classnames';
+import { useVuex } from 'components-react/hooks';
 import { useRealmObject } from 'components-react/hooks/realm';
 import { Services } from 'components-react/service-provider';
 import { SwitchInput } from 'components-react/shared/inputs';
 import Scrollable from 'components-react/shared/Scrollable';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import { getConfigByGame } from 'services/highlighter/models/game-config.models';
 import { $t } from 'services/i18n/index';
 import { EMenuItemKey } from 'services/side-nav';
 import { IOverlayCollectionParams, TOverlayType } from 'services/user';
 import { $i } from 'services/utils';
+import { WidgetDisplayData } from 'services/widgets';
+import { WidgetType } from 'services/widgets/widgets-data';
 import { getOS, OS } from 'util/operating-systems';
 import styles from './AILanding.m.less';
 
 interface FeatureAction {
   text: string;
+  html?: React.ReactNode;
   disabled?: boolean;
   onClick: () => void;
 }
@@ -42,14 +46,14 @@ function AIFeature(props: FeatureProps) {
       <p>{props.description}</p>
       {actions.length > 0 && (
         <div className={styles.aiFeatureActions}>
-          {actions.map(({ text, disabled, onClick }) => (
+          {actions.map(({ text, html, disabled, onClick }) => (
             <button
               key={text}
               className="button"
               disabled={props.disabled || disabled}
               onClick={onClick}
             >
-              {text}
+              {html || text}
             </button>
           ))}
         </div>
@@ -62,9 +66,13 @@ export default function AILanding() {
   const {
     NavigationService,
     PlatformAppsService,
+    ScenesService,
     SideNavService,
+    SourcesService,
     UsageStatisticsService,
+    UserService,
     VisionService,
+    WidgetsService,
   } = Services;
   function trackEvent(type: string, data?: Record<string, any>) {
     UsageStatisticsService.actions.recordAnalyticsEvent('AiFeature', {
@@ -79,6 +87,19 @@ export default function AILanding() {
 
   const visionEnabledState = useRealmObject(VisionService.enabledState);
   const enabled = visionEnabledState.isEnabled;
+
+  const { sources } = useVuex(() => ({ sources: SourcesService.views.getSources() }));
+  const existingGamePulseSource = useMemo(
+    () =>
+      sources.find(source =>
+        source.isSameType({
+          type: 'browser_source',
+          propertiesManager: 'widget',
+          widgetType: WidgetType.GamePulseWidget,
+        }),
+      ),
+    [sources],
+  );
 
   const [isAgentAppInstalled, setIsAgentAppInstalled] = useState(false);
   useEffect(() => {
@@ -123,12 +144,46 @@ export default function AILanding() {
     SideNavService.actions.setCurrentMenuItem(EMenuItemKey.Themes);
   }
 
-  function onBrowseWidgetsClick() {
-    trackEvent('browse-widgets');
-    const type: TOverlayType = 'widget-themes';
-    const params: IOverlayCollectionParams = { collection: 'game-pulse-themes' };
-    NavigationService.actions.navigate('BrowseOverlays', { type, ...params });
-    SideNavService.actions.setCurrentMenuItem(EMenuItemKey.Themes);
+  const [addWidgetState, setAddWidgetState] = useState<'idle' | 'loading' | 'success'>('idle');
+  const gamePulseWidgetText = useMemo(() => {
+    if (addWidgetState === 'loading') return $t('Loading');
+    if (addWidgetState === 'success') return $t('Added!');
+    if (existingGamePulseSource) return $t('Open Widget Settings');
+    return $t('Add Widget');
+  }, [addWidgetState, existingGamePulseSource]);
+
+  async function onGamePulseWidgetClick() {
+    if (existingGamePulseSource) {
+      trackEvent('edit-game-pulse-widget');
+      SourcesService.actions.showSourceProperties(existingGamePulseSource.sourceId);
+    } else {
+      const activeScene = ScenesService.views.activeScene;
+      trackEvent('add-game-pulse-widget', { activeScene: !!activeScene });
+      if (!activeScene) return;
+
+      const platform = UserService.views.platform?.type;
+      const name = SourcesService.views.suggestName(
+        WidgetDisplayData(platform)[WidgetType.GamePulseWidget].name,
+      );
+      const widget = await WidgetsService.actions.return.createWidget(
+        WidgetType.GamePulseWidget,
+        name,
+      );
+
+      // Add animation time for the button "click -> loading -> success" before opening source.
+      // The actual work is near-instant, added delays are for user feedback; tweak as needed.
+      setAddWidgetState('loading');
+      await new Promise(resolve => setTimeout(resolve, 250));
+      setAddWidgetState('success');
+      await new Promise(resolve => setTimeout(resolve, 650));
+
+      const source = widget.getSource();
+      if (source?.hasProps()) {
+        SourcesService.actions.showSourceProperties(source.sourceId);
+      }
+
+      setAddWidgetState('idle');
+    }
   }
 
   async function onInstallAgentClick() {
@@ -182,7 +237,15 @@ export default function AILanding() {
                 )}
                 img={$i('images/ai/ai-game-pulse.png')}
                 disabled={!enabled}
-                actions={{ text: $t('Add Widget'), onClick: onBrowseWidgetsClick }}
+                actions={{
+                  text: gamePulseWidgetText,
+                  html:
+                    addWidgetState === 'loading' ? (
+                      <i className="fa fa-spinner fa-pulse" />
+                    ) : undefined,
+                  disabled: addWidgetState !== 'idle',
+                  onClick: onGamePulseWidgetClick,
+                }}
               />
               <AIFeature
                 name={$t('Intelligent Streaming Agent')}
