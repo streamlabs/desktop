@@ -3,7 +3,7 @@ import { ISettingsSubCategory, SettingsService } from 'services/settings';
 import { TDisplayType, VideoSettingsService } from 'services/settings-v2/video';
 import { Inject } from 'services/core/injector';
 import { Dictionary } from 'vuex';
-import { ERecordingQuality, ERecordingFormat, ISettings } from 'obs-studio-node';
+import { ERecordingQuality, ERecordingFormat, EScaleType, ISettings } from 'obs-studio-node';
 
 /**
  * list of encoders for simple mode
@@ -157,6 +157,7 @@ interface ISimpleStreamingOutputSettings extends IStreamingOutputSettings {
 interface IAdvancedStreamingOutputSettings extends IStreamingOutputSettings {
   audioTrack: number;
   rescaling: boolean;
+  rescaleFilter: EScaleType;
   outputWidth: number;
   outputHeight: number;
   videoEncoder: EObsAdvancedEncoder;
@@ -633,7 +634,12 @@ export class OutputSettingsService extends Service {
     );
 
     if (mode === 'Advanced') {
-      const rescaling = this.settingsService.findSettingValue(output, 'Streaming', 'Rescale');
+      const rescaleFilter =
+        this.settingsService.findSettingValue(output, 'Streaming', 'RescaleFilter') ??
+        (this.settingsService.findSettingValue(output, 'Streaming', 'Rescale')
+          ? EScaleType.Bilinear
+          : EScaleType.Disable);
+      const rescaling = rescaleFilter !== EScaleType.Disable;
 
       let outputWidth = this.videoSettingsService.outputResolutions[display].outputWidth;
       let outputHeight = this.videoSettingsService.outputResolutions[display].outputHeight;
@@ -660,6 +666,7 @@ export class OutputSettingsService extends Service {
         enforceServiceBitrate,
         enableTwitchVOD,
         rescaling,
+        rescaleFilter,
         outputWidth,
         outputHeight,
         audioTrack,
@@ -731,7 +738,12 @@ export class OutputSettingsService extends Service {
     const encoderOptions =
       this.settingsService.findSettingValue(output, 'Streaming', 'x264Settings') ||
       this.settingsService.findSettingValue(output, 'Streaming', 'x264opts');
-    const rescaleOutput = this.settingsService.findSettingValue(output, 'Streaming', 'Rescale');
+    const rescaleFilter =
+      this.settingsService.findSettingValue(output, 'Streaming', 'RescaleFilter') ??
+      (this.settingsService.findSettingValue(output, 'Streaming', 'Rescale')
+        ? EScaleType.Bilinear
+        : EScaleType.Disable);
+    const rescaleOutput = rescaleFilter !== EScaleType.Disable;
 
     const resolutions = this.settingsService
       .findSetting(video, 'Untitled', 'Output')
@@ -926,7 +938,19 @@ export class OutputSettingsService extends Service {
     }
 
     if (settingsPatch.rescaleOutput !== void 0) {
-      this.settingsService.setSettingValue('Output', 'Rescale', settingsPatch.rescaleOutput);
+      const currentRescaleFilter = this.settingsService.findSettingValue(
+        this.settingsService.state.Output.formData,
+        'Streaming',
+        'RescaleFilter',
+      ) as EScaleType | undefined;
+      let rescaleFilter: EScaleType = EScaleType.Disable;
+      if (settingsPatch.rescaleOutput) {
+        rescaleFilter =
+          currentRescaleFilter !== undefined && currentRescaleFilter !== EScaleType.Disable
+            ? currentRescaleFilter
+            : EScaleType.Bilinear;
+      }
+      this.settingsService.setSettingValue('Output', 'RescaleFilter', rescaleFilter);
     }
 
     if (settingsPatch.bitrate !== void 0) {

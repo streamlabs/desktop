@@ -6,6 +6,7 @@ import {
   ERecordingState,
 } from '../../../app/services/streaming/streaming-api';
 import { OutputSettingsService, SettingsService } from '../../../app/services/settings';
+import { EScaleType } from '../../../obs-api';
 import { reserveUserFromPool, withPoolUser } from '../../helpers/webdriver/user';
 
 // not a react hook
@@ -112,28 +113,22 @@ test('Advanced streaming rescale output is read from streaming settings', async 
   const settingsService = client.getResource<SettingsService>('SettingsService');
   const outputSettingsService = client.getResource<OutputSettingsService>('OutputSettingsService');
 
-  const setOutputParam = (name: string, value: unknown) => {
-    const outputSettings = settingsService.state.Output.formData;
-    outputSettings.forEach(subcategory => {
-      subcategory.parameters.forEach(setting => {
-        if (setting.name === name) setting.value = value as never;
-      });
-    });
-    settingsService.setSettings('Output', outputSettings);
-  };
+  settingsService.setSettingValue('Output', 'Mode', 'Advanced');
+  settingsService.setSettingValue('Output', 'RescaleFilter', EScaleType.Bicubic);
+  settingsService.setSettingValue('Output', 'RecRescale', false);
+  settingsService.setSettingValue('Output', 'RescaleRes', '960x540');
 
-  setOutputParam('Mode', 'Advanced');
-  setOutputParam('Rescale', true);
-  setOutputParam('RecRescale', false);
-  setOutputParam('RescaleRes', '960x540');
+  t.is(outputSettingsService.getSettings().mode, 'Advanced');
 
   const streamingSettings = outputSettingsService.getStreamingSettings('horizontal') as {
     rescaling: boolean;
+    rescaleFilter: EScaleType;
     outputWidth: number;
     outputHeight: number;
   };
 
   t.true(streamingSettings.rescaling);
+  t.is(streamingSettings.rescaleFilter, EScaleType.Bicubic);
   t.is(streamingSettings.outputWidth, 960);
   t.is(streamingSettings.outputHeight, 540);
 });
