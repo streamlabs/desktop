@@ -68,13 +68,13 @@ export default function Main() {
 
   const uiReady = bulkLoadFinished && i18nReady;
 
-  const page = useRealmObject(Services.NavigationService.state).currentPage;
-  const params = useRealmObject(Services.NavigationService.state).params;
-  const realmDockWidth = useRealmObject(Services.CustomizationService.state).livedockSize;
-  const isDockCollapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
-  const realmTheme = useRealmObject(Services.CustomizationService.state).theme;
-  const leftDock = useRealmObject(Services.CustomizationService.state).leftDock;
-  const showOnboarding = useRealmObject(OnboardingV2Service.state).showOnboarding;
+  const { currentPage: page, params } = useRealmObject(Services.NavigationService.state);
+  const {
+    livedockSize: realmDockWidth,
+    livedockCollapsed: isDockCollapsed,
+    theme: realmTheme,
+    leftDock,
+  } = useRealmObject(Services.CustomizationService.state);
 
   // Provides smooth chat resizing instead of writing to realm every tick while resizing
   const [dockWidth, setDockWidth] = useState(realmDockWidth);
@@ -119,12 +119,9 @@ export default function Main() {
     return !bulkLoadFinished ? loadedTheme() || 'night-theme' : realmTheme;
   }, [bulkLoadFinished, realmTheme]);
 
-  const updateStyleBlockers = useCallback(
-    (val: boolean) => {
-      WindowsService.actions.updateStyleBlockers('main', val);
-    },
-    [showOnboarding],
-  );
+  const updateStyleBlockers = useCallback((val: boolean) => {
+    WindowsService.actions.updateStyleBlockers('main', val);
+  }, []);
 
   const onDropHandler = useCallback(
     async (event: React.DragEvent) => {

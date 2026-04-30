@@ -300,8 +300,9 @@ function LiveDock() {
     ]),
   );
 
-  const collapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
-  const hideViewerCount = useRealmObject(Services.CustomizationService.state).hideViewerCount;
+  const { livedockCollapsed: collapsed, hideViewerCount } = useRealmObject(
+    Services.CustomizationService.state,
+  );
   const viewerCount = hideViewerCount ? $t('Viewers Hidden') : currentViewers;
 
   useEffect(() => {
