@@ -18,13 +18,16 @@ export default function PerformanceMetrics(props: {
 
   const pinnedStats = useRealmObject(CustomizationService.state.pinnedStatistics);
 
-  const v = useVuex(() => ({
-    cpuPercent: PerformanceService.views.cpuPercent,
-    frameRate: PerformanceService.views.frameRate,
-    droppedFrames: PerformanceService.views.droppedFrames,
-    percentDropped: PerformanceService.views.percentDropped,
-    bandwidth: PerformanceService.views.bandwidth,
-  }));
+  const v = useVuex(
+    () => ({
+      cpuPercent: PerformanceService.views.cpuPercent,
+      frameRate: PerformanceService.views.frameRate,
+      droppedFrames: PerformanceService.views.droppedFrames,
+      percentDropped: PerformanceService.views.percentDropped,
+      bandwidth: PerformanceService.views.bandwidth,
+    }),
+    false,
+  );
 
   function showAttribute(attribute: keyof IPinnedStatistics) {
     return props.mode === 'full' || pinnedStats[attribute];
@@ -55,12 +58,12 @@ export default function PerformanceMetrics(props: {
     bandwidth: { value: v.bandwidth, label: 'kb/s', icon: 'icon-bitrate' },
   };
 
-  const shownCells = [
+  const shownCells = ([
     'cpu',
     'fps',
     'droppedFrames',
     'bandwidth',
-  ].filter((val: keyof IPinnedStatistics) => showAttribute(val));
+  ] as (keyof IPinnedStatistics)[]).filter(val => showAttribute(val));
 
   function showLabel(attribute: string) {
     if (attribute !== 'droppedFrames') return true;
