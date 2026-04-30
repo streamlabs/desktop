@@ -142,6 +142,11 @@ interface IAdvancedRecordingOutputSettings extends IRecordingOutputSettings {
    * but is not a property for the Simple Recording Factory instance.
    */
   useStreamEncoders: boolean;
+  enableFileSplit: boolean;
+  splitTime: number;
+  splitSize: number;
+  splitType: string;
+  resetTimestamps: boolean;
 }
 
 interface IStreamingOutputSettings {
@@ -445,6 +450,31 @@ export class OutputSettingsService extends Service {
     if (mode === 'Advanced') {
       const mixer = this.settingsService.findSettingValue(output, 'Recording', 'RecTracks');
       const rescaling = this.settingsService.findSettingValue(output, 'Recording', 'RecRescale');
+      const enableFileSplit = this.settingsService.findSettingValue(
+        output,
+        'Recording',
+        'RecSplitFile',
+      );
+      const splitTime = this.settingsService.findSettingValue(
+        output,
+        'Recording',
+        'RecSplitFileTime',
+      );
+      const splitSize = this.settingsService.findSettingValue(
+        output,
+        'Recording',
+        'RecSplitFileSize',
+      );
+      const splitType = this.settingsService.findSettingValue(
+        output,
+        'Recording',
+        'RecSplitFileType',
+      );
+      const resetTimestamps = this.settingsService.findSettingValue(
+        output,
+        'Recording',
+        'RecSplitFileResetTimestamps',
+      );
 
       // advanced settings
       return {
@@ -462,6 +492,11 @@ export class OutputSettingsService extends Service {
         outputHeight,
         fileFormat,
         muxerSettings,
+        enableFileSplit,
+        splitTime,
+        splitSize,
+        splitType,
+        resetTimestamps,
       };
     } else {
       // simple settings
