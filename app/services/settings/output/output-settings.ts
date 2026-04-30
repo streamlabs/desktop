@@ -185,6 +185,8 @@ export interface IRecordingEncoderSettings extends IEncoderSettings {
 
 export interface IStreamingEncoderSettings extends IEncoderSettings {
   preset: string;
+  // Deprecated compatibility flag for callers that only need enabled/disabled state.
+  // Advanced streaming runtime settings use RescaleFilter via IAdvancedStreamingOutputSettings.
   rescaleOutput: boolean;
   hasCustomResolution: boolean;
   encoderOptions: string;
@@ -938,11 +940,14 @@ export class OutputSettingsService extends Service {
     }
 
     if (settingsPatch.rescaleOutput !== void 0) {
+      // Rescale is stored as a scale-filter selection in OBS 31. Preserve the
+      // chosen filter when toggling on, and fall back to Bilinear for legacy callers.
       const currentRescaleFilter = this.settingsService.findSettingValue(
         this.settingsService.state.Output.formData,
         'Streaming',
         'RescaleFilter',
       ) as EScaleType | undefined;
+
       let rescaleFilter: EScaleType = EScaleType.Disable;
       if (settingsPatch.rescaleOutput) {
         rescaleFilter =
