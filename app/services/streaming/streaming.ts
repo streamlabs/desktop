@@ -2109,9 +2109,11 @@ export class StreamingService
 
     // To prevent errors, if the recording display is not set to a valid value,
     // correct it to the default display, which is 'horizontal'.
+    // Also show recording UI when using AI highlighter
     if (
       !this.views.settings.recording ||
-      !['horizontal', 'vertical', 'both'].includes(this.views.settings.recording)
+      !['horizontal', 'vertical', 'both'].includes(this.views.settings.recording) ||
+      this.highlighterService.views.useAiHighlighter
     ) {
       const settings = cloneDeep(this.views.settings);
       this.streamSettingsService.setSettings({
