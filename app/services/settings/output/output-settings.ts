@@ -886,12 +886,29 @@ export class OutputSettingsService extends Service {
     };
   }
 
-  getRecordingVideoEncoderSettings(mode: TOutputSettingsMode): IRecordingEncoderSettings {
+  getRecordingVideoEncoderSettings(mode: TOutputSettingsMode): ISettings {
     const output = this.settingsService.state.Output.formData;
     const video = this.settingsService.state.Video.formData;
     const streaming = this.getStreamingEncoderSettings(output, video);
+    const recording = this.getRecordingEncoderSettings(output, video, mode, streaming);
 
-    return this.getRecordingEncoderSettings(output, video, mode, streaming);
+    const encoderSettings: ISettings = {
+      bitrate: recording.bitrate,
+    };
+
+    if (recording.rateControl != null) {
+      encoderSettings.rate_control = recording.rateControl;
+    }
+
+    if (recording.keyint_sec != null) {
+      encoderSettings.keyint_sec = recording.keyint_sec;
+    }
+
+    if (recording.x264opts != null) {
+      encoderSettings.x264opts = recording.x264opts;
+    }
+
+    return encoderSettings;
   }
 
   /**
