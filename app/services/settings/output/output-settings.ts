@@ -24,6 +24,7 @@ enum EObsAdvancedEncoder {
   ffmpeg_nvenc = 'ffmpeg_nvenc',
   obs_x264 = 'obs_x264',
   amd_amf_h264 = 'amd_amf_h264',
+  h264_texture_amf = 'h264_texture_amf',
   obs_qsv11 = 'obs_qsv11',
   obs_qsv11_v2 = 'obs_qsv11_v2',
   obs_qsv11_hevc = 'obs_qsv11_hevc',
@@ -229,7 +230,7 @@ const simpleEncoderToAnvancedEncoderMap: Dictionary<EObsAdvancedEncoder> = {
   [EObsSimpleEncoder.qsv]: EObsAdvancedEncoder.obs_qsv11_v2,
   [EObsSimpleEncoder.nvenc]: EObsAdvancedEncoder.ffmpeg_nvenc,
   [EObsSimpleEncoder.jim_nvenc]: EObsAdvancedEncoder.jim_nvenc,
-  [EObsSimpleEncoder.amd]: EObsAdvancedEncoder.amd_amf_h264,
+  [EObsSimpleEncoder.amd]: EObsAdvancedEncoder.h264_texture_amf,
 };
 
 /**
@@ -273,6 +274,7 @@ export function obsEncoderToEncoderFamily(
       return EEncoderFamily.jim_nvenc;
     case EObsSimpleEncoder.amd:
     case EObsAdvancedEncoder.amd_amf_h264:
+    case EObsAdvancedEncoder.h264_texture_amf:
       return EEncoderFamily.amd;
     case EObsAdvancedEncoder.obs_nvenc_av1_tex:
       return EEncoderFamily.obs_nvenc_av1_tex;
@@ -1009,7 +1011,7 @@ export class OutputSettingsService extends Service {
       case EObsSimpleEncoder.nvenc:
         return EObsAdvancedEncoder.ffmpeg_nvenc;
       case EObsSimpleEncoder.amd:
-        return EObsAdvancedEncoder.amd_amf_h264;
+        return EObsAdvancedEncoder.h264_texture_amf;
       case EObsSimpleEncoder.qsv:
         return EObsAdvancedEncoder.obs_qsv11_v2;
       case EObsAdvancedEncoder.obs_x264:
@@ -1017,7 +1019,9 @@ export class OutputSettingsService extends Service {
       case EObsAdvancedEncoder.ffmpeg_nvenc:
         return EObsAdvancedEncoder.ffmpeg_nvenc;
       case EObsAdvancedEncoder.amd_amf_h264:
-        return EObsAdvancedEncoder.amd_amf_h264;
+        return EObsAdvancedEncoder.h264_texture_amf;
+      case EObsAdvancedEncoder.h264_texture_amf:
+        return EObsAdvancedEncoder.h264_texture_amf;
       case EObsAdvancedEncoder.obs_qsv11:
         return EObsAdvancedEncoder.obs_qsv11;
       case EObsAdvancedEncoder.obs_qsv11_v2:
