@@ -63,11 +63,12 @@ export default memo(function PerformanceMetrics(props: {
     [props.mode, pinnedStats],
   );
 
-  const showAttribute = useCallback(
-    (attribute: keyof IPinnedStatistics) => {
-      return props.mode === 'full' || pinnedStats[attribute];
+  const updatePinnedStats = useCallback(
+    (key: keyof IPinnedStatistics, value: boolean) => {
+      if (props.mode === 'limited') return;
+      CustomizationService.actions.setSettings({ pinnedStatistics: { [key]: value } });
     },
-    [props.mode, pinnedStats],
+    [props.mode, CustomizationService.actions],
   );
 
   return (
@@ -90,7 +91,7 @@ export default memo(function PerformanceMetrics(props: {
             label={data.label}
             icon={data.icon}
             isPinned={pinnedStats[attribute]}
-            onToggle={showAttribute}
+            onToggle={updatePinnedStats}
           />
         );
       })}
