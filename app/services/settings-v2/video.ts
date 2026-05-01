@@ -171,13 +171,31 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
   }
 
   get skippedFrames() {
-    const context = this.contexts.horizontal ?? Video;
-    return context.skippedFrames;
+    let skippedFrames = 0;
+
+    for (const display of displays) {
+      const context =
+        display === 'horizontal' && this.contexts.horizontal === null
+          ? Video
+          : this.contexts[display];
+      skippedFrames += context.skippedFrames;
+    }
+
+    return skippedFrames;
   }
 
   get encodedFrames() {
-    const context = this.contexts.horizontal ?? Video;
-    return context.encodedFrames;
+    let encodedFrames = 0;
+
+    for (const display of displays) {
+      const context =
+        display === 'horizontal' && this.contexts.horizontal === null
+          ? Video
+          : this.contexts[display];
+      encodedFrames += context.encodedFrames;
+    }
+
+    return encodedFrames;
   }
 
   /**

@@ -408,6 +408,16 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       }
     }
 
+    // Disable every Output parameter while streaming or recording. The legacy settings implementation
+    // did this automatically. Because the Factory API does not, apply it here
+    if (categoryName === 'Output' && !this.streamingService.isIdle) {
+      for (const group of settings) {
+        for (const param of group.parameters) {
+          param.enabled = false;
+        }
+      }
+    }
+
     // Replace encoder dropdown options with results from getAvailableEncoders().
     // Skip during save-triggered reloads to avoid blocking the worker on every keystroke.
     if (categoryName === 'Output' && !this.isSaving) {

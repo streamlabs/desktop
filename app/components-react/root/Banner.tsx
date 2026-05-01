@@ -1,16 +1,15 @@
 import React from 'react';
 import * as remote from '@electron/remote';
-import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
 import { TAppPage } from 'services/navigation';
 import { $t } from 'services/i18n';
 import styles from './Banner.m.less';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { useRealmObjectProperty } from 'components-react/hooks/realm';
 import { TCategoryName } from 'services/settings';
 
 export default function Banner() {
   const { AnnouncementsService, SettingsService, NavigationService } = Services;
-  const banner = useRealmObject(AnnouncementsService.currentAnnouncements).banner;
+  const banner = useRealmObjectProperty(AnnouncementsService.currentAnnouncements.banner);
   if (!banner) return <></>;
 
   function handleClick() {
