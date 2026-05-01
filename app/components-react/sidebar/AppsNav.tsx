@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { memo } from 'react';
 import styles from './SideNav.m.less';
 import { useVuex } from 'components-react/hooks';
 import { $t } from 'services/i18n';
@@ -7,13 +7,12 @@ import MenuItem from 'components-react/shared/MenuItem';
 import { EAppPageSlot, ILoadedApp } from 'services/platform-apps';
 import { Menu } from 'util/menus/Menu';
 import cx from 'classnames';
-import Highlighter from 'components-react/pages/Highlighter';
 import { EMenuItemKey } from 'services/side-nav';
 interface IAppsNav {
   type?: 'enabled' | 'selected';
 }
 
-export default function AppsNav(p: IAppsNav) {
+export default memo(function AppsNav(p: IAppsNav) {
   const { NavigationService, PlatformAppsService, SideNavService, HighlighterService } = Services;
   const { type = 'selected' } = p;
 
@@ -164,4 +163,4 @@ export default function AppsNav(p: IAppsNav) {
       )}
     </>
   );
-}
+});
