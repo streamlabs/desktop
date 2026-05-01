@@ -148,7 +148,7 @@ export class ProtocolLinksService extends Service {
     const hash = info.path.replace('/', '');
 
     this.guestCamService.joinAsGuest(hash).catch((e: unknown) => {
-      if (e instanceof DOMException && e.name === 'AbortError') return;
+      if ((e as { name?: string } | null)?.name === 'AbortError') return;
       console.error('Failed to join guest cam session', e);
     });
   }
