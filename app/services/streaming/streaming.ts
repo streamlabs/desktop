@@ -1547,12 +1547,14 @@ export class StreamingService
       // Enhanced Broadcasting sends Twitch only to its assigned display. The other display (if any) needs its
       // own non-Enhanced Broadcasting instance, and the Enhanced Broadcasting display needs one too if it multistreams non-Twitch
       // targets.
+      // Note: right now, the flow for Case C is the same flow as Case B. This is separated in the code out to make debugging easier
+      // in the future since the logic for all the combinations is getting increasingly complex.
       await this.handleStartEnhancedBroadcastingDualOutput(code, context, time);
     } else if (this.views.isYouTubeDualStreaming) {
       // For YouTube dual streaming without enhanced broadcasting, the horizontal stream needs to be started before the vertical stream.
       if (context === 'horizontal') {
         try {
-          this.createStreaming({
+          await this.createStreaming({
             output: 'vertical',
             audioTrack: 2,
             start: true,
@@ -1583,7 +1585,7 @@ export class StreamingService
       }
 
       if (context === 'vertical') {
-        this.handleStartStreaming(code, context);
+        await this.handleStartStreaming(code, context);
       }
     } else {
       // In dual output mode without enhanced broadcasting, create the horizontal streaming instance after the vertical stream

@@ -188,6 +188,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
     return (
       this.settings.platforms?.twitch &&
+      this.enabledPlatforms.includes('twitch') &&
       this.settings.platforms?.twitch.display === 'both' &&
       this.isDualOutputMode
     );
@@ -200,6 +201,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   get isYouTubeDualStreaming() {
     return (
       this.settings.platforms?.youtube &&
+      this.enabledPlatforms.includes('youtube') &&
       this.settings.platforms?.youtube?.display === 'both' &&
       this.isDualOutputMode
     );
