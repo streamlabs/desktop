@@ -38,6 +38,7 @@ export function useRealmObjectProperty<T>(obj: T): T {
   useEffect(() => {
     if (obj == null) return;
     const realmObj = (obj as unknown) as RealmObject;
+    if (!realmObj.realmModel) return;
     const listener = (_o: DefaultObject, changes: ObjectChangeSet<DefaultObject>) => {
       // Nothing has changed
       if (!changes.deleted && changes.changedProperties?.length === 0) return;
