@@ -2283,6 +2283,15 @@ export class StreamingService
       recording.outputWidth = resolution.outputWidth;
       recording.outputHeight = resolution.outputHeight;
 
+      // create recording tracks, if necessary
+      if (Number.isFinite(recording.mixer)) {
+        for (let index = 1; index <= 6; index++) {
+          if (recording.mixer & (1 << (index - 1))) {
+            await this.validateOrCreateAudioTrack(index);
+          }
+        }
+      }
+
       // to prevent reference errors, cast the recording instance
       this.contexts[display].recording = recording as IAdvancedRecording;
     } else {
