@@ -70,13 +70,8 @@ function ExtraSettings() {
   const updateStreamInfoOnLive = useRealmObject(CustomizationService.state).updateStreamInfoOnLive;
 
   // HDR Settings are not compliant with the auto-optimizer
-  // temporarily disable auto config until migrate to new api
-  const canRunOptimizer = false;
-  // !SettingsService.views.hasHDRSettings &&
-  // isTwitch &&
-  // !isRecordingOrStreaming &&
-  // protectedMode &&
-  // isSimpleOutputMode;
+  // Dev override: always show the Auto Optimize button while V2 autoconfig is being tested.
+  const canRunOptimizer = true;
 
   function restartStreamlabelsSession() {
     StreamlabelsService.restartSession().then(result => {

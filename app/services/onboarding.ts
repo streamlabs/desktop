@@ -27,8 +27,7 @@ export enum EOnboardingSteps {
   ObsImport = 'ObsImport',
   HardwareSetup = 'HardwareSetup',
   ThemeSelector = 'ThemeSelector',
-  // temporarily disable auto config until migrate to new api
-  // Optimize = 'Optimize',
+  Optimize = 'Optimize',
   Prime = 'Prime',
 }
 
@@ -102,15 +101,13 @@ export const ONBOARDING_STEPS = (): Record<EOnboardingSteps, IOnboardingStep> =>
       ((isLoggedIn && platformSupportsThemes) || !isLoggedIn),
     isSkippable: true,
   },
-  // temporarily disable auto config until migrate to new api
-  // [EOnboardingSteps.Optimize]: {
-  //   component: 'Optimize' as const,
-  //   disableControls: false,
-  //   hideSkip: false,
-  //   hideButton: true,
-  //   label: $t('Optimize'),
-  //   cond: ({ isTwitchAuthed, isYoutubeAuthed, recordingModeEnabled }: OnboardingStepContext) => isTwitchAuthed || isYoutubeAuthed || recordingModeEnabled,
-  // },
+  [EOnboardingSteps.Optimize]: {
+    component: 'Optimize' as const,
+    hideButton: true,
+    label: $t('Optimize'),
+    cond: ({ isTwitchAuthed, isYoutubeAuthed, recordingModeEnabled }: OnboardingStepContext) =>
+      isTwitchAuthed || isYoutubeAuthed || recordingModeEnabled,
+  },
   [EOnboardingSteps.Prime]: {
     component: 'Prime' as const,
     hideButton: true,
@@ -130,6 +127,8 @@ export interface OnboardingStepContext {
   isLoggedIn: boolean;
   isUltra: boolean;
   platformSupportsThemes: boolean;
+  isTwitchAuthed: boolean;
+  isYoutubeAuthed: boolean;
 }
 
 export interface IOnboardingStep {
@@ -176,8 +175,7 @@ class OnboardingViews extends ViewHandler<IOnboardingServiceState> {
 
       return ONBOARDING_STEPS()[EOnboardingSteps.Connect];
     }
-    // temporarily disable auto config until migrate to new api
-    // if (this.state.options.isOptimize) return ONBOARDING_STEPS()[EOnboardingSteps.Optimize];
+    if (this.state.options.isOptimize) return ONBOARDING_STEPS()[EOnboardingSteps.Optimize];
     if (this.state.options.isHardware) return ONBOARDING_STEPS()[EOnboardingSteps.HardwareSetup];
     if (this.state.options.isImport) return ONBOARDING_STEPS()[EOnboardingSteps.ObsImport];
   }
@@ -191,7 +189,7 @@ class OnboardingViews extends ViewHandler<IOnboardingServiceState> {
     const recordingModeEnabled = this.getServiceViews(RecordingModeService).isRecordingModeEnabled;
 
     const { existingSceneCollections, importedFrom } = this.state;
-    const { isLoggedIn, isPrime: isUltra } = userViews;
+    const { isLoggedIn, isPrime: isUltra, isTwitchAuthed, isYoutubeAuthed } = userViews;
 
     const ctx: OnboardingStepContext = {
       recordingModeEnabled,
@@ -204,6 +202,8 @@ class OnboardingViews extends ViewHandler<IOnboardingServiceState> {
       isPartialSLAuth: userViews.auth && userViews.isPartialSLAuth,
       platformSupportsThemes:
         isLoggedIn && getPlatformService(userViews.platform?.type)?.hasCapability('themes'),
+      isTwitchAuthed,
+      isYoutubeAuthed,
     };
 
     return this.makeSteps(ctx);
@@ -225,6 +225,7 @@ class OnboardingViews extends ViewHandler<IOnboardingServiceState> {
       EOnboardingSteps.ObsImport,
       EOnboardingSteps.HardwareSetup,
       EOnboardingSteps.ThemeSelector,
+      EOnboardingSteps.Optimize,
       EOnboardingSteps.Prime,
     ])(ctx);
   }
