@@ -33,6 +33,21 @@ export interface IHighlighterState {
   isUpdaterRunning: boolean;
   highlighterVersion: string;
   tempRecordingInfo: ITempRecordingInfo;
+  replayInstall: IReplayInstallState;
+}
+
+export type EReplayInstallStep =
+  | 'idle'
+  | 'downloading'
+  | 'installing'
+  | 'verifying'
+  | 'done'
+  | 'error';
+
+export interface IReplayInstallState {
+  step: EReplayInstallStep;
+  progress: number;
+  error: string | null;
 }
 
 // CLIP

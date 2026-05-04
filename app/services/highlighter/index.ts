@@ -12,7 +12,14 @@ import {
 } from 'services/platforms/youtube/uploader';
 import { YoutubeService } from 'services/platforms/youtube';
 import os from 'os';
-import { SCRUB_SPRITE_DIRECTORY, SUPPORTED_FILE_TYPES } from './constants';
+import {
+  SCRUB_SPRITE_DIRECTORY,
+  SUPPORTED_FILE_TYPES,
+  HIGHLIGHTER_SETUP_URL_STAGING,
+  HIGHLIGHTER_SETUP_URL_PRODUCTION,
+  REPLAY_PROTOCOL,
+  REPLAY_SETUP_EXE_NAME,
+} from './constants';
 import { pmap } from 'util/pmap';
 import { RenderingClip } from './rendering/rendering-clip';
 import { throttle } from 'lodash-decorators';
@@ -29,7 +36,7 @@ import moment from 'moment';
 import uuid from 'uuid';
 import { EMenuItemKey } from 'services/side-nav';
 import { AiHighlighterUpdater } from './ai-highlighter-updater';
-import { IDownloadProgress } from 'util/requests';
+import { IDownloadProgress, downloadFile } from 'util/requests';
 import { IncrementalRolloutService } from 'app-services';
 
 import { EAvailableFeatures } from 'services/incremental-rollout';
@@ -47,6 +54,9 @@ import {
   TStreamInfo,
   EHighlighterView,
   ITempRecordingInfo,
+  IReplayInstallState,
+  EReplayInstallStep,
+  TOpenedFrom,
 } from './models/highlighter.models';
 import {
   EExportStep,
@@ -79,6 +89,10 @@ import { addVerticalFilterToExportOptions } from './vertical-export';
 import { isGameSupported } from './models/game-config.models';
 import Utils from 'services/utils';
 import { getOS, OS } from '../../util/operating-systems';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 @InitAfter('StreamingService')
 export class HighlighterService extends PersistentStatefulService<IHighlighterState> {
@@ -131,6 +145,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     isUpdaterRunning: false,
     highlighterVersion: '',
     tempRecordingInfo: {},
+    replayInstall: {
+      step: 'idle',
+      progress: 0,
+      error: null,
+    },
   };
 
   aiHighlighterUpdater: AiHighlighterUpdater;
@@ -295,6 +314,384 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   SET_TEMP_RECORDING_INFO(tempRecordingInfo: ITempRecordingInfo) {
     this.state.tempRecordingInfo = tempRecordingInfo;
   }
+
+  @mutation()
+  SET_REPLAY_INSTALL(installState: Partial<IReplayInstallState>) {
+    this.state.replayInstall = {
+      ...this.state.replayInstall,
+      ...installState,
+    };
+  }
+
+  // =================================================================================================
+  // STREAMLABS REPLAY MIGRATION logic
+  // =================================================================================================
+
+  /**
+   * Checks if Streamlabs Replay is installed by verifying the Windows deeplink protocol registration
+   * @returns Promise<boolean> - true if the ${REPLAY_PROTOCOL} protocol is registered, false otherwise
+   */
+  async isStreamlabsReplayInstalled(): Promise<boolean> {
+    // Only check on Windows
+    if (getOS() !== OS.Windows) {
+      return false;
+    }
+
+    try {
+      // Query the Windows Registry for the protocol handler command
+      const { stdout, stderr } = await execAsync(
+        `reg query "HKEY_CLASSES_ROOT\\${REPLAY_PROTOCOL}\\shell\\open\\command" /ve`,
+        {
+          timeout: 5000,
+        },
+      );
+
+      // Check if stderr is empty and stdout contains meaningful data
+      if (stderr) {
+        return false;
+      }
+
+      // Check if the output contains an actual executable path
+      const hasValidCommand = stdout.includes('.exe');
+
+      return hasValidCommand;
+    } catch (error: unknown) {
+      // If the registry key doesn't exist, reg query will throw an error
+      return false;
+    }
+  }
+
+  /**
+   * Checks if the StreamlabsRecorder.exe process is currently running
+   * @returns Promise<boolean> - true if process is running, false otherwise
+   */
+  async isStreamlabsRecorderRunning(): Promise<boolean> {
+    // Only check on Windows
+    if (getOS() !== OS.Windows) {
+      return false;
+    }
+
+    try {
+      const { stdout } = await execAsync('tasklist /FI "IMAGENAME eq StreamlabsRecorder.exe"', {
+        timeout: 5000,
+      });
+
+      // Check if the process name appears in the output
+      const isRunning = stdout.includes('StreamlabsRecorder.exe');
+
+      return isRunning;
+    } catch (error: unknown) {
+      return false;
+    }
+  }
+
+  // =================================================================================================
+  // STREAMLABS REPLAY INSTALLATION logic
+  // =================================================================================================
+
+  private getReplaySetupUrl(): string {
+    if (Utils.isProduction) {
+      return HIGHLIGHTER_SETUP_URL_PRODUCTION;
+    }
+    return HIGHLIGHTER_SETUP_URL_STAGING;
+  }
+
+  /**
+   * Verifies the Authenticode signature of a Windows executable using PowerShell.
+   * Throws if the signature is invalid or the subject does not contain 'Logitech Inc' (Streamlabs Replay publisher).
+   */
+  private async verifyAuthenticodeSignature(filePath: string): Promise<void> {
+    // Use PS single-quote escaping then encode as UTF-16LE base64
+    // to avoid any command-line quoting/injection issues with the file path.
+    const escapedPath = filePath.replace(/'/g, "''");
+    const script = `$sig = Get-AuthenticodeSignature '${escapedPath}'; if ($sig.Status -ne 'Valid') { exit 1 }; if ($sig.SignerCertificate.Subject -notmatch 'CN=Logitech Inc') { exit 2 }; exit 0`;
+    const encodedCommand = Buffer.from(script, 'utf16le').toString('base64');
+
+    await execAsync(`powershell -NonInteractive -NoProfile -EncodedCommand ${encodedCommand}`, {
+      timeout: 15000,
+    }).catch((err: Error & { code?: number }) => {
+      const code = err.code ?? -1;
+      if (code === 1) {
+        throw new Error('Installer signature verification failed: invalid or missing signature.');
+      }
+      if (code === 2) {
+        throw new Error(
+          'Installer signature verification failed: publisher does not match Logitech Inc.',
+        );
+      }
+      throw new Error(`Installer signature check failed: ${err.message}`);
+    });
+  }
+
+  /**
+   * Downloads and installs Streamlabs Replay.
+   * Fakes progress increments during the download/install phases,
+   * verifies the deeplink registry after install, and auto-launches the app.
+   */
+  private replayInstallAbortController: AbortController | null = null;
+
+  async installStreamlabsReplay(): Promise<boolean> {
+    if (getOS() !== OS.Windows) {
+      this.SET_REPLAY_INSTALL({
+        step: 'error',
+        error: 'Installation is only supported on Windows',
+      });
+      return false;
+    }
+
+    // Abort any previous in-flight install
+    this.replayInstallAbortController?.abort();
+    this.replayInstallAbortController = new AbortController();
+    const { signal } = this.replayInstallAbortController;
+
+    // Track installation started
+    this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+      type: 'ReplayInstallationStarted',
+    });
+
+    let progressInterval: NodeJS.Timeout | null = null;
+
+    const clearProgress = () => {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+      }
+    };
+
+    try {
+      // --- Downloading phase ---
+      this.SET_REPLAY_INSTALL({ step: 'downloading', progress: 0, error: null });
+
+      const setupUrl = this.getReplaySetupUrl();
+
+      // Download the setup exe to temp directory
+      const tempDir = os.tmpdir();
+      const setupPath = path.join(tempDir, REPLAY_SETUP_EXE_NAME);
+
+      await downloadFile(setupUrl, setupPath, (progress: IDownloadProgress) => {
+        // Map download progress to 0-75%
+        const downloadPercent = progress.percent * 75;
+        const current = this.state.replayInstall.progress;
+        if (downloadPercent > current) {
+          this.SET_REPLAY_INSTALL({ progress: downloadPercent });
+        }
+      });
+
+      clearProgress();
+
+      if (signal.aborted) {
+        this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+          type: 'ReplayInstallationCancelled',
+          phase: 'downloading',
+        });
+        return false;
+      }
+
+      this.SET_REPLAY_INSTALL({ progress: 75 });
+
+      // Verify the Authenticode signature before execution
+      await this.verifyAuthenticodeSignature(setupPath);
+
+      // --- Installing phase ---
+      this.SET_REPLAY_INSTALL({ step: 'installing', progress: 75 });
+
+      // Fake progress for install phase
+      progressInterval = setInterval(() => {
+        const current = this.state.replayInstall.progress;
+        if (current < 95) {
+          const increment = Math.max(0.3, (95 - current) * 0.03);
+          this.SET_REPLAY_INSTALL({ progress: Math.min(95, current + increment) });
+        }
+      }, 500);
+
+      // Run the installer silently
+      await execAsync(`"${setupPath}"`, { timeout: 120000 });
+
+      clearProgress();
+
+      if (signal.aborted) {
+        this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+          type: 'ReplayInstallationCancelled',
+          phase: 'installing',
+        });
+        return false;
+      }
+
+      this.SET_REPLAY_INSTALL({ progress: 95 });
+
+      // --- Verifying phase ---
+      this.SET_REPLAY_INSTALL({ step: 'verifying', progress: 96 });
+
+      // Wait a moment for registry to propagate
+      await this.wait(2000);
+
+      if (signal.aborted) {
+        this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+          type: 'ReplayInstallationCancelled',
+          phase: 'verifying',
+        });
+        return false;
+      }
+
+      const isInstalled = await this.isStreamlabsReplayInstalled();
+      if (!isInstalled) {
+        throw new Error(
+          'Installation could not be verified. The deeplink protocol was not registered.',
+        );
+      }
+
+      this.SET_REPLAY_INSTALL({ step: 'done', progress: 100 });
+
+      // Auto-launch Streamlabs Replay
+      try {
+        remote.shell.openExternal(`${REPLAY_PROTOCOL}://open`);
+      } catch (launchError: unknown) {
+        console.error('Failed to auto-launch Streamlabs Replay:', launchError);
+      }
+
+      // Clean up setup file
+      try {
+        await fs.remove(setupPath);
+      } catch {
+        // Non-critical cleanup
+      }
+
+      // Track installation finished successfully
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'ReplayInstallationFinished',
+      });
+
+      return true;
+    } catch (error: unknown) {
+      clearProgress();
+      if (signal.aborted) {
+        this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+          type: 'ReplayInstallationCancelled',
+          phase: 'error',
+        });
+        return false;
+      }
+      const errorMessage = error instanceof Error ? error.message : 'Unknown installation error';
+      console.error('Streamlabs Replay installation failed:', errorMessage);
+      this.SET_REPLAY_INSTALL({ step: 'error', progress: 0, error: errorMessage });
+
+      // Track installation failed
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'ReplayInstallationFailed',
+      });
+
+      return false;
+    } finally {
+      if (this.replayInstallAbortController?.signal === signal) {
+        this.replayInstallAbortController = null;
+      }
+    }
+  }
+
+  cancelReplayInstall() {
+    const wasInstalling =
+      this.state.replayInstall.step !== 'idle' &&
+      this.state.replayInstall.step !== 'done' &&
+      this.state.replayInstall.step !== 'error';
+
+    // Track cancellation if an installation was in progress
+    if (wasInstalling) {
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'ReplayInstallationCancelled',
+        phase: this.state.replayInstall.step,
+      });
+    }
+
+    this.replayInstallAbortController?.abort();
+    this.replayInstallAbortController = null;
+    this.SET_REPLAY_INSTALL({ step: 'idle', progress: 0, error: null });
+  }
+
+  /**
+   * Opens Streamlabs Replay or starts installation if not installed
+   * @param source - Where the action was initiated from ('page' or 'modal')
+   * @returns Promise<boolean> - true if Replay was opened, false if installation was started
+   */
+  async openReplay(source: 'page' | 'modal'): Promise<boolean> {
+    const isInstalled = await this.isStreamlabsReplayInstalled();
+
+    if (isInstalled) {
+      // Track opening Replay
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'ReplayOpen',
+        source,
+      });
+
+      // Open Streamlabs Replay via deeplink
+      try {
+        remote.shell.openExternal(`${REPLAY_PROTOCOL}://open`);
+        return true;
+      } catch (error: unknown) {
+        console.error('Failed to open Streamlabs Replay:', error);
+        try {
+          remote.shell.openExternal(`${REPLAY_PROTOCOL}:`);
+          return true;
+        } catch (fallbackError: unknown) {
+          console.error('Failed to open Streamlabs Replay with fallback:', fallbackError);
+          return false;
+        }
+      }
+    } else {
+      // Track installation click
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'ReplayInstallationClick',
+        source,
+      });
+
+      // Start installation flow for Streamlabs Replay (don't await so UI can update)
+      this.installStreamlabsReplay();
+      return false;
+    }
+  }
+
+  /**
+   * Opens Streamlabs Replay with an import deeplink
+   * @param videoPath - Path to the video file to import
+   * @param game - The game type for the video
+   * @param openedFrom - Where the import was initiated from
+   * @param streamId - Optional stream ID for tracking
+   * @param title - Optional title for the recording
+   */
+  openReplayImport(
+    videoPath: string,
+    game: string,
+    openedFrom: TOpenedFrom,
+    streamId?: string,
+    title?: string,
+  ): void {
+    let deeplink = `${REPLAY_PROTOCOL}://import?path=${encodeURIComponent(
+      videoPath,
+    )}&game=${encodeURIComponent(game)}`;
+
+    if (title) {
+      deeplink += `&title=${encodeURIComponent(title)}`;
+    }
+
+    remote.shell.openExternal(deeplink);
+
+    this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+      type: 'ReplayImport',
+      openedFrom,
+      streamId,
+      game,
+    });
+  }
+  requestStopRecordingReplay() {
+    remote.shell.openExternal(`${REPLAY_PROTOCOL}://stop-recording`);
+
+    this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+      type: 'ReplayRequestStopRecording',
+    });
+  }
+
+  // =================================================================================================
+  //Legacy highlighter support
+  // =================================================================================================
 
   get views() {
     return new HighlighterViews(this.state);
