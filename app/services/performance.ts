@@ -68,15 +68,15 @@ interface IMonitorState {
 
 class PerformanceServiceViews extends ViewHandler<IPerformanceState> {
   get cpuPercent() {
-    return this.state.CPU.toFixed(1);
+    return (this.state.CPU ?? 0).toFixed(1);
   }
 
   get frameRate() {
-    return this.state.frameRate.toFixed(2);
+    return (this.state.frameRate ?? 0).toFixed(2);
   }
 
   get droppedFrames() {
-    return this.state.numberDroppedFrames;
+    return this.state.numberDroppedFrames ?? 0;
   }
 
   get percentDropped() {
@@ -84,7 +84,7 @@ class PerformanceServiceViews extends ViewHandler<IPerformanceState> {
   }
 
   get bandwidth() {
-    return this.state.streamingBandwidth.toFixed(0);
+    return (this.state.streamingBandwidth ?? 0).toFixed(0);
   }
 
   get streamQuality() {
@@ -182,15 +182,34 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
     electron.ipcRenderer.on(
       'performanceStatsResponse',
       (e: electron.Event, am: electron.ProcessMetric[]) => {
-        const stats: IPerformanceState = obs.NodeObs.OBS_API_getPerformanceStatistics();
+        const streamingStats = this.streamingService.streamingPerformanceStats;
 
-        stats.CPU += am
-          .map(proc => {
-            return proc.cpu.percentCPUUsage;
-          })
-          .reduce((sum, usage) => sum + usage);
+        // CPU with child processes
+        const CPU =
+          (obs.Global.cpuPercentage ?? 0) +
+          am.reduce((sum, proc) => sum + (proc.cpu?.percentCPUUsage ?? 0), 0);
+        const percentageDroppedFrames =
+          streamingStats.totalFrames > 0
+            ? (streamingStats.droppedFrames / streamingStats.totalFrames) * 100
+            : 0;
 
-        this.SET_PERFORMANCE_STATS(stats);
+        // Note: The below commented out properties are legacy from the old `OBS_API_getPerformanceStatistics`
+        // response. They are left commented out for now since they are not currently being used in the frontend,
+        // but the mapping should be preserved in case they are needed in the future.
+        // const recordingStats = this.streamingService.recordingPerformanceStats;
+        this.SET_PERFORMANCE_STATS({
+          CPU,
+          frameRate: obs.Global.currentFrameRate,
+          numberDroppedFrames: streamingStats.droppedFrames,
+          percentageDroppedFrames,
+          streamingBandwidth: streamingStats.kbitsPerSec,
+          // averageTimeToRenderFrame: obs.Global.averageFrameRenderTime,
+          // diskSpaceAvailable: obs.Global.diskSpaceAvailable,
+          // memoryUsage: obs.Global.memoryUsage,
+          // recordingBandwidth: recordingStats.kbitsPerSec,
+          // recordingDataOutput: recordingStats.dataOutput,
+          // streamingDataOutput: streamingStats.dataOutput,
+        });
         this.monitorAndUpdateStats();
         this.statisticsUpdated.next(this.state);
         this.statsRequestInProgress = false;

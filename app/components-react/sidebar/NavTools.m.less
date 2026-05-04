@@ -59,8 +59,7 @@
       overflow: visible;
     }
 
-    :global(div.ant-menu.ant-menu-sub.ant-menu-inline),
-    :global(span.ant-menu-title-content) {
+    :global(div.ant-menu.ant-menu-sub.ant-menu-inline) {
       visibility: hidden;
       opacity: 0;
     }
@@ -76,7 +75,13 @@
       white-space: normal !important;
     }
 
-    :global(div.ant-menu.ant-menu-sub.ant-menu-inline),
+    :global(div.ant-menu.ant-menu-sub.ant-menu-inline) {
+      visibility: visible;
+      overflow: visible;
+      opacity: 1;
+      transition: opacity 150ms ease-in 150ms;
+    }
+
     :global(span.ant-menu-title-content) {
       visibility: visible;
       overflow: visible;

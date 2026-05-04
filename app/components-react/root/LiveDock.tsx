@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import * as remote from '@electron/remote';
 import cx from 'classnames';
 import { Menu } from 'antd';
@@ -259,7 +259,7 @@ class LiveDockController {
   }
 }
 
-export default function LiveDockWithContext() {
+function LiveDockWithContext() {
   const controller = useMemo(() => new LiveDockController(), []);
   return (
     <LiveDockCtx.Provider value={controller}>
@@ -268,11 +268,30 @@ export default function LiveDockWithContext() {
   );
 }
 
+export default memo(LiveDockWithContext);
+
+const StreamTimer = memo(function StreamTimer({
+  streamingStatus,
+}: {
+  streamingStatus: EStreamingState;
+}) {
+  const ctrl = useController(LiveDockCtx);
+  const [elapsed, setElapsed] = useState('');
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setElapsed(streamingStatus === EStreamingState.Live ? ctrl.getElapsedStreamTime() : '');
+    }, 200);
+    return () => clearInterval(id);
+  }, [streamingStatus]);
+
+  return <span className={styles.liveDockTimer}>{elapsed}</span>;
+});
+
 function LiveDock() {
   const ctrl = useController(LiveDockCtx);
 
   const [visibleChat, setVisibleChat] = useState('default');
-  const [elapsedStreamTime, setElapsedStreamTime] = useState('');
 
   const {
     hasLiveDockFeature,
@@ -300,22 +319,10 @@ function LiveDock() {
     ]),
   );
 
-  const collapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
-  const hideViewerCount = useRealmObject(Services.CustomizationService.state).hideViewerCount;
+  const { livedockCollapsed: collapsed, hideViewerCount } = useRealmObject(
+    Services.CustomizationService.state,
+  );
   const viewerCount = hideViewerCount ? $t('Viewers Hidden') : currentViewers;
-
-  useEffect(() => {
-    const elapsedInterval = window.setInterval(() => {
-      if (streamingStatus === EStreamingState.Live) {
-        setElapsedStreamTime(ctrl.getElapsedStreamTime());
-      } else {
-        setElapsedStreamTime('');
-      }
-    }, 200);
-
-    return () => clearInterval(elapsedInterval);
-  }, [streamingStatus]);
-
   useEffect(() => {
     if (isRestreaming && streamingStatus === EStreamingState.Starting) {
       Services.RestreamService.actions.refreshChat();
@@ -372,7 +379,7 @@ function LiveDock() {
               })}
             />
             <span className={styles.liveDockText}>{liveText}</span>
-            <span className={styles.liveDockTimer}>{elapsedStreamTime}</span>
+            <StreamTimer streamingStatus={streamingStatus} />
           </div>
           <div className={styles.liveDockViewerCount}>
             <i

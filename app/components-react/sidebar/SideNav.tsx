@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { memo, useCallback, useEffect, useRef } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import cx from 'classnames';
 import { EMenuItemKey, ESubMenuItemKey } from 'services/side-nav';
@@ -37,44 +37,40 @@ export default function SideNav() {
 
   const sider = useRef<HTMLDivElement | null>(null);
   const isMounted = useRef(false);
+  const lastHeight = useRef(0);
+  const isToggling = useRef(false);
 
-  const leftDock = useRealmObject(CustomizationService.state).leftDock;
+  const { leftDock } = useRealmObject(CustomizationService.state);
 
   const siderMinWidth: number = 50;
   const siderMaxWidth: number = 200;
 
-  // We need to ignore resizeObserver entries for vertical resizing
-  let lastHeight = 0;
-
-  const resizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]) => {
-    entries.forEach((entry: ResizeObserverEntry) => {
-      const width = Math.floor(entry?.contentRect?.width);
-      const height = Math.floor(entry?.contentRect?.height);
-
-      if (lastHeight === height && (width === siderMinWidth || width === siderMaxWidth)) {
-        updateStyleBlockers('main', false);
-      }
-      lastHeight = height;
-    });
-  });
-
   useEffect(() => {
     isMounted.current = true;
-    if (!sider || !sider.current) return;
+    if (!sider?.current) return;
 
-    if (sider && sider?.current) {
-      resizeObserver.observe(sider?.current);
+    // We need to ignore resizeObserver entries for vertical resizing
+    const resizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]) => {
+      entries.forEach((entry: ResizeObserverEntry) => {
+        const width = Math.floor(entry?.contentRect?.width);
+        const height = Math.floor(entry?.contentRect?.height);
 
-      if (hideStyleBlockers) {
-        updateStyleBlockers('main', false);
-      }
+        if (lastHeight.current === height && (width === siderMinWidth || width === siderMaxWidth)) {
+          updateStyleBlockers('main', false);
+          isToggling.current = false;
+        }
+        lastHeight.current = height;
+      });
+    });
+
+    resizeObserver.observe(sider.current);
+
+    if (hideStyleBlockers) {
+      updateStyleBlockers('main', false);
     }
 
     return () => {
-      if (sider && sider?.current) {
-        resizeObserver.disconnect();
-      }
-
+      resizeObserver.disconnect();
       isMounted.current = false;
     };
   }, [sider]);
@@ -94,6 +90,14 @@ export default function SideNav() {
       setCurrentMenuItem(subMenuItems[currentMenuItem]);
     }
   }, [currentMenuItem]);
+
+  const handleToggle = useCallback(() => {
+    if (isToggling.current) return;
+    isToggling.current = true;
+    updateSubMenu();
+    toggleMenuStatus();
+    updateStyleBlockers('main', true);
+  }, [updateSubMenu, toggleMenuStatus, updateStyleBlockers]);
 
   return (
     <Layout hasSider className="side-nav">
@@ -128,11 +132,7 @@ export default function SideNav() {
           isOpen && styles.siderOpen,
           leftDock && styles.leftDock,
         )}
-        onClick={() => {
-          updateSubMenu();
-          toggleMenuStatus();
-          updateStyleBlockers('main', true); // hide style blockers
-        }}
+        onClick={handleToggle}
       >
         <i className="icon-back" />
       </Button>
@@ -140,7 +140,7 @@ export default function SideNav() {
   );
 }
 
-function LoginHelpTip() {
+const LoginHelpTip = memo(function LoginHelpTip() {
   return (
     <HelpTip
       title={$t('Login')}
@@ -156,4 +156,4 @@ function LoginHelpTip() {
       </div>
     </HelpTip>
   );
-}
+});

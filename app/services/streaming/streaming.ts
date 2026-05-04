@@ -27,6 +27,7 @@ import {
   SimpleRecordingFactory,
   AdvancedReplayBufferFactory,
   SimpleReplayBufferFactory,
+  ISettings,
 } from '../../../obs-api';
 import { Inject } from 'services/core/injector';
 import moment from 'moment';
@@ -1658,31 +1659,9 @@ export class StreamingService
       this.stopReplayBuffer();
     }
 
-    // Stop the horizontal stream. On the `Stop` signal in `handleStreamingSignal`, all other streaming
-    // instances will be stopped and destroyed. Otherwise, just cleanup all of the streaming instances.
-    if (
-      this.contexts.horizontal.streaming &&
-      this.state.status.horizontal.streaming !== EStreamingState.Offline
-    ) {
-      this.contexts.horizontal.streaming.stop(force);
-
-      // Return because in dual output mode, the vertical stream will be stopped in the `handleStreamingSignal`
-      return;
-    }
-
-    // Stop the vertical stream first because in dual output mode, the horizontal stream will always be
-    // stopped in the `handleStreamingSignal`
-    if (
-      this.contexts.vertical.streaming &&
-      this.state.status.vertical.streaming !== EStreamingState.Offline
-    ) {
-      this.contexts.vertical.streaming.stop(force);
-    }
-
-    // For Twitch dual streaming, the enhanced broadcasting instance is in the `enhancedBroadcasting` context
-    // rather than a display context. Stop it directly.
-    if (this.contexts.enhancedBroadcasting.streaming) {
-      this.contexts.enhancedBroadcasting.streaming.stop(force);
+    // Stop every active streaming output immediately. Relying on later cleanup can leave the
+    // vertical stream alive while vertical recording or replay buffer finishes shutting down.
+    if (this.stopActiveStreamingInstances(force)) {
       return;
     }
 
@@ -1705,6 +1684,34 @@ export class StreamingService
         $t('Error stopping stream: default streams do not exist.'),
       );
     }
+  }
+
+  private stopActiveStreamingInstances(force?: boolean): boolean {
+    let stopped = false;
+    const contextNames: TOutputContext[] = [
+      'vertical',
+      'horizontal',
+      'enhancedBroadcasting',
+      'stream',
+      'streamSecond',
+    ];
+
+    contextNames.forEach(contextName => {
+      const streaming = this.contexts[contextName].streaming;
+      if (!streaming) return;
+
+      const forceStop =
+        force ||
+        (this.isDisplayContext(contextName) &&
+          this.state.status[contextName].streaming === EStreamingState.Offline);
+
+      // OBS can briefly emit deactivate/offline while a reconnect timer is still armed.
+      // If the instance still exists, force-stopping it cancels that pending reconnect.
+      streaming.stop(forceStop);
+      stopped = true;
+    });
+
+    return stopped;
   }
 
   private async createEnhancedBroadcastSingleStream() {
@@ -2103,9 +2110,11 @@ export class StreamingService
 
     // To prevent errors, if the recording display is not set to a valid value,
     // correct it to the default display, which is 'horizontal'.
+    // Also show recording UI when using AI highlighter
     if (
       !this.views.settings.recording ||
-      !['horizontal', 'vertical', 'both'].includes(this.views.settings.recording)
+      !['horizontal', 'vertical', 'both'].includes(this.views.settings.recording) ||
+      this.highlighterService.views.useAiHighlighter
     ) {
       const settings = cloneDeep(this.views.settings);
       this.streamSettingsService.setSettings({
@@ -2275,6 +2284,15 @@ export class StreamingService
       recording.outputWidth = resolution.outputWidth;
       recording.outputHeight = resolution.outputHeight;
 
+      // create recording tracks, if necessary
+      if (Number.isFinite(recording.mixer)) {
+        for (let index = 1; index <= 6; index++) {
+          if (recording.mixer & (1 << (index - 1))) {
+            await this.validateOrCreateAudioTrack(index);
+          }
+        }
+      }
+
       // to prevent reference errors, cast the recording instance
       this.contexts[display].recording = recording as IAdvancedRecording;
     } else {
@@ -2367,10 +2385,15 @@ export class StreamingService
         key === 'videoEncoder' &&
         (contextName !== 'enhancedBroadcasting' || isEnhancedBroadcastingContext)
       ) {
-        const encoderSettings =
-          type === 'streaming'
-            ? this.outputSettingsService.getStreamingVideoEncoderSettings(mode)
-            : undefined;
+        let encoderSettings: ISettings | undefined;
+        switch (type) {
+          case 'streaming':
+            encoderSettings = this.outputSettingsService.getStreamingVideoEncoderSettings(mode);
+            break;
+          case 'recording':
+            encoderSettings = this.outputSettingsService.getRecordingVideoEncoderSettings(mode);
+            break;
+        }
 
         if (encoderSettings) {
           instance.videoEncoder = VideoEncoderFactory.create(
@@ -3253,6 +3276,47 @@ export class StreamingService
     return `${hours}:${minutes}:${seconds}`;
   }
 
+  /**
+   * PERFORMANCE STATISTICS
+   */
+  get streamingPerformanceStats() {
+    let droppedFrames = 0;
+    let totalFrames = 0;
+    let kbitsPerSec = 0;
+    let dataOutput = 0;
+
+    for (const contextName of Object.keys(this.contexts) as TOutputContext[]) {
+      const instance = this.contexts[contextName].streaming;
+      if (!instance) continue;
+
+      droppedFrames += instance.droppedFrames;
+      totalFrames += instance.totalFrames;
+      kbitsPerSec += instance.kbitsPerSec;
+      dataOutput += instance.dataOutput;
+    }
+
+    return { droppedFrames, totalFrames, kbitsPerSec, dataOutput };
+  }
+
+  get recordingPerformanceStats() {
+    let kbitsPerSec = 0;
+    let dataOutput = 0;
+
+    for (const contextName of Object.keys(this.contexts) as TOutputContext[]) {
+      const instance = this.contexts[contextName].recording;
+      if (!instance) continue;
+
+      kbitsPerSec += instance.streaming.kbitsPerSec;
+      dataOutput += instance.streaming.dataOutput;
+    }
+
+    return { kbitsPerSec, dataOutput };
+  }
+
+  /**
+   * AUTO-RETRY
+   */
+
   private async handleRetryStartStreaming(info: IOBSOutputSignalInfo) {
     // Toggle off recording and replay buffer when starting the stream
     const recordWhenStreaming = this.streamSettingsService.settings.recordWhenStreaming;
@@ -3666,6 +3730,13 @@ export class StreamingService
         (contextName === 'horizontal' && skipHorizontal) ||
         this.contexts[contextName].streaming === undefined ||
         this.contexts[contextName].streaming === null
+      ) {
+        continue;
+      }
+
+      if (
+        this.isDisplayContext(contextName) &&
+        this.state.status[contextName].streaming === EStreamingState.Offline
       ) {
         continue;
       }
