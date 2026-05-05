@@ -38,7 +38,7 @@ export const PatreonEditStreamInfo = InputComponent((p: IPlatformComponentParams
         }
         requiredFields={
           <TagsInput
-            label={$t('Access Rules')}
+            label={$t('Audience')}
             placeholder={$t('Select Tier')}
             {...bind.accessRules}
             options={PatreonService.accessRules}
