@@ -50,13 +50,18 @@ export const ShareStreamLink = () => {
     [v.enabledPlatforms],
   );
 
-  const items = platformUrls.map(({ platform, streamPageUrl }) => {
+  const items = platformUrls.map(({ platform, streamPageUrl }, index) => {
     const tooltip = $t('Copy %{platform} link', {
       platform: StreamingService.views.getPlatformDisplayName(platform),
     });
 
     return (
-      <Tooltip placement="right" title={tooltip} autoAdjustOverflow={false}>
+      <Tooltip
+        placement="right"
+        title={tooltip}
+        autoAdjustOverflow={false}
+        key={`${platform}-${index}`}
+      >
         <Button
           type="text"
           aria-label={tooltip}
