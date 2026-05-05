@@ -1554,11 +1554,12 @@ export class StreamingService
       // For YouTube dual streaming without enhanced broadcasting, the horizontal stream needs to be started before the vertical stream.
       if (context === 'horizontal') {
         try {
-          await this.createStreaming({
-            output: 'vertical',
+          await this.validateOrCreateOutputInstance({
+            display: 'vertical',
+            type: 'streaming',
             audioTrack: 2,
-            start: true,
             context: 'vertical',
+            start: true,
             isEnhancedBroadcasting: false,
           });
 
@@ -1566,6 +1567,8 @@ export class StreamingService
           this.SET_STREAMING_STATUS(EStreamingState.Live, context, time);
           this.streamingStatusChange.next(EStreamingState.Live);
         } catch (e: unknown) {
+          // Error will be surfaced from `createStreaming` for YouTube dual streaming only if
+          // the vertical stream fails to start.
           console.error('Error starting vertical stream in YouTube dual streaming', e);
 
           this.handleFactoryOutputError(
@@ -1573,7 +1576,7 @@ export class StreamingService
               type: 'streaming',
               signal: 'start',
               code: EOutputCode.Error,
-              error: 'Error starting vertical stream in YouTube dual streaming',
+              error: $t('Error starting vertical stream in YouTube dual streaming.'),
             },
             'vertical',
             EOBSOutputType.Streaming,
@@ -2122,6 +2125,15 @@ export class StreamingService
         this.contexts[contextName].streaming.start();
       } catch (e: unknown) {
         console.error('Error starting streaming:', e);
+        // Surface YouTube vertical display error to the user
+        if (this.views.isYouTubeDualStreaming && display === 'vertical') {
+          throwStreamError(
+            'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
+            {},
+            $t('Error starting vertical stream in YouTube dual streaming.'),
+          );
+        }
+
         const message =
           (e as any).message ??
           $t('An unknown error occurred while starting the stream. Please try again.');
