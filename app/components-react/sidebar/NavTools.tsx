@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { memo, useMemo, useEffect, useRef, useState } from 'react';
 import cx from 'classnames';
 import electron from 'electron';
 import Utils from 'services/utils';
@@ -17,7 +17,7 @@ import PlatformIndicator from './PlatformIndicator';
 import { AuthModal } from 'components-react/shared/AuthModal';
 import { TCategoryName } from 'services/settings';
 
-export default function NavTools() {
+export default memo(function NavTools() {
   const {
     UserService,
     SettingsService,
@@ -53,6 +53,14 @@ export default function NavTools() {
 
   const [dashboardOpening, setDashboardOpening] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const isMounted = useRef(true);
+
+  useEffect(
+    () => () => {
+      isMounted.current = false;
+    },
+    [],
+  );
 
   function openSettingsWindow(category?: TCategoryName) {
     SettingsService.actions.showSettings(category);
@@ -74,7 +82,7 @@ export default function NavTools() {
       console.error('Error generating dashboard magic link', e);
     }
 
-    setDashboardOpening(false);
+    if (isMounted.current) setDashboardOpening(false);
   }
 
   const throttledOpenDashboard = throttle(openDashboard, 2000, { trailing: false });
@@ -124,7 +132,7 @@ export default function NavTools() {
         defaultOpenKeys={openMenuItems && openMenuItems}
         getPopupContainer={triggerNode => triggerNode}
       >
-        {menuItems.map((menuItem: IParentMenuItem) => {
+        {menuItems.map((menuItem: IMenuItem | IParentMenuItem) => {
           if (isDevMode && menuItem.key === EMenuItemKey.DevTools) {
             return <NavToolsItem key={menuItem.key} menuItem={menuItem} onClick={openDevTools} />;
           } else if (!isPrime && menuItem.key === EMenuItemKey.GetPrime) {
@@ -161,7 +169,7 @@ export default function NavTools() {
                 }}
               >
                 <DashboardSubMenu
-                  subMenuItems={menuItem?.subMenuItems}
+                  subMenuItems={(menuItem as IParentMenuItem)?.subMenuItems}
                   throttledOpenDashboard={throttledOpenDashboard}
                   openSettingsWindow={openSettingsWindow}
                 />
@@ -211,7 +219,7 @@ export default function NavTools() {
       />
     </>
   );
-}
+});
 
 function NavToolsItem(p: {
   menuItem: IMenuItem;
