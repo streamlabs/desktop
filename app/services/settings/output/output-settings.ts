@@ -464,11 +464,8 @@ export class OutputSettingsService extends Service {
         'Recording',
         'RecSplitFile',
       );
-      const splitTime = this.settingsService.findSettingValue(
-        output,
-        'Recording',
-        'RecSplitFileTime',
-      );
+      const splitTime =
+        this.settingsService.findSettingValue(output, 'Recording', 'RecSplitFileTime') * 60; // convert seconds to minutes
       const splitSize = this.settingsService.findSettingValue(
         output,
         'Recording',
