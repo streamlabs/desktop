@@ -487,8 +487,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
       patreonTarget.mode = isDualOutputMode ? this.getPlatformMode('patreon') : 'landscape';
     }
 
-    // console.log('patreon target ', patreonTarget);
-
     // in dual output mode, only create targets for the displays that are being restreamed
     if (isDualOutputMode) {
       const modesToRestream = this.streamInfo.displaysToRestream.map(display =>

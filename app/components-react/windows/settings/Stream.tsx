@@ -25,6 +25,7 @@ import { useSubscription } from 'components-react/hooks/useSubscription';
 import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import Tooltip from 'components-react/shared/Tooltip';
 import ConnectButton from 'components-react/shared/ConnectButton';
+import { Observable } from 'rxjs';
 
 function censorWord(str: string) {
   if (str.length < 3) return str;
@@ -184,7 +185,7 @@ export function StreamSettings() {
 
   // Show a message when the user has unlinked/linked their account on web
   useSubscription(
-    UserService.refreshedLinkedAccounts as any,
+    UserService.refreshedLinkedAccounts as Observable<{ success: boolean; message: string }>,
     (res: { success: boolean; message: string }) => {
       const doShowMessage = () => {
         message.config({

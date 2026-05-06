@@ -59,6 +59,10 @@ export default function PrimaryChatSwitcher({
       return primaryChat;
     }
 
+    // Intentionally don't update the primary chat if no active platforms have chat capabilities, to avoid
+    // errors from setting an unsupported primary platform. Returning `undefined` will show an empty value
+    // in the dropdown without changing the actual primary chat value, indicating to the user that the chat
+    // will not be available until they enable a platform with chat capabilities.
     return primaryChatOptions.length > 0 ? primaryChatOptions[0].value : undefined;
   }, [primaryChat, primaryChatOptions]);
 

@@ -22,6 +22,9 @@ export function PrimaryPlatformSelect() {
     isPrime: UserService.state.isPrime,
   }));
   const { loading, authInProgress, authPlatform, finishSLAuth } = useModule(LoginModule);
+
+  // Note: Patreon is intentionally left out of the platform options since it cannot
+  // be a primary platform if there are other platforms linked
   const platforms: TPlatform[] = [
     'twitch',
     'youtube',
@@ -32,9 +35,6 @@ export function PrimaryPlatformSelect() {
     'twitter',
     'trovo',
   ];
-
-  // Note: Patreon is intentionally left out of the platform options since it cannot
-  // be a primary platform if there are other platforms linked
   const platformOptions = [
     {
       value: 'twitch',

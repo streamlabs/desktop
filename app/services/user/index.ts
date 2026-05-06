@@ -706,8 +706,6 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   async updateLinkedPlatforms() {
     const linkedPlatforms = await this.fetchLinkedPlatforms();
 
-    // console.log('linkedPlatforms ', linkedPlatforms);
-
     if (!linkedPlatforms) return;
 
     if (linkedPlatforms.user_id) {
@@ -1227,8 +1225,6 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     const auth = await this.authModule.startPkceAuth(url, () => {
       this.SET_AUTH_STATE(EAuthProcessState.Idle);
     });
-
-    // console.log('startSLAuth result', auth);
 
     if (!auth) return EPlatformCallResult.Error;
 

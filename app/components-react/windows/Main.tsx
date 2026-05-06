@@ -254,7 +254,11 @@ export default function Main() {
     className?: string;
     params: any;
     onTotalWidth: (width: number) => void;
-  }> = (appPages as Dictionary<React.FunctionComponent>)[page] || appPages.Studio;
+  }> = (appPages[page as keyof typeof appPages] || appPages.Studio) as React.FunctionComponent<{
+    className?: string;
+    params: any;
+    onTotalWidth: (width: number) => void;
+  }>;
 
   return (
     <div

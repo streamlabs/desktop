@@ -124,7 +124,7 @@ export default function NavTools() {
         defaultOpenKeys={openMenuItems && openMenuItems}
         getPopupContainer={triggerNode => triggerNode}
       >
-        {menuItems.map((menuItem: IParentMenuItem) => {
+        {menuItems.map((menuItem: IParentMenuItem | IMenuItem) => {
           if (isDevMode && menuItem.key === EMenuItemKey.DevTools) {
             <></>;
             return <NavToolsItem key={menuItem.key} menuItem={menuItem} onClick={openDevTools} />;
@@ -162,7 +162,7 @@ export default function NavTools() {
                 }}
               >
                 <DashboardSubMenu
-                  subMenuItems={menuItem?.subMenuItems}
+                  subMenuItems={(menuItem as IParentMenuItem)?.subMenuItems}
                   throttledOpenDashboard={throttledOpenDashboard}
                   openSettingsWindow={openSettingsWindow}
                 />

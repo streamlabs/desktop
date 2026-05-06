@@ -166,7 +166,6 @@ export class PatreonService
 
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     const patreonSettings = getDefined(goLiveSettings.platforms.patreon);
-    console.log('patreonSettings', JSON.stringify(patreonSettings, null, 2));
 
     if (goLiveSettings.streamShift && this.streamingService.views.shouldSwitchStreams) {
       await this.setupStreamShiftStream(goLiveSettings);
@@ -200,7 +199,6 @@ export class PatreonService
   async afterStopStream(): Promise<void> {
     await this.endStream(this.state.broadcastId);
     this.SET_BROADCAST_ID('');
-    console.log('Patreon stream ended successfully ', this.state);
   }
 
   // TODO: Confirm after mobile implementation
@@ -247,11 +245,7 @@ export class PatreonService
     const request = new Request(url, { headers });
     return jfetch<IPatreonStreamInfoResponse>(request)
       .then(async res => {
-        console.log('prepopulateInfo info', JSON.stringify(res, null, 2));
         const info = res as IPatreonStreamInfoResponse;
-
-        console.log('info', JSON.stringify(info, null, 2));
-        console.log('info', JSON.stringify(info.campaigns[0], null, 2));
 
         if (info.campaigns.length) {
           this.SET_CAMPAIGN_ID(info.campaigns[0].key.toString());
@@ -275,7 +269,6 @@ export class PatreonService
     const host = this.hostsService.streamlabs;
     const url = `https://${host}/api/v5/slobs/patreon/stream/start`;
     const headers = authorizedHeaders(this.userService.apiToken);
-    console.log('access ryles', JSON.stringify(opts.accessRules));
 
     const body = new FormData();
     body.append('title', opts.title);
