@@ -167,6 +167,10 @@ class SourcesViews extends ViewHandler<ISourcesState> {
     return this.sources.filter(s => s.type === type);
   }
 
+  getSmartSources() {
+    return this.sources.filter(s => s.propertiesManagerType === 'smartBrowserSource');
+  }
+
   suggestName(name?: string): string {
     if (!name) return '';
     return namingHelpers.suggestName(name, (name: string) => this.getSourcesByName(name).length);
