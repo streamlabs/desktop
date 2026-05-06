@@ -261,8 +261,8 @@ export class ReactiveDataService extends Service {
    */
   private ensureVisionRunning() {
     if (!this.visionService.state.isRunning && !this.visionService.state.isStarting) {
-      // Discard the `ensureRunning` promise since we don't need to wait for it to finish here
-      void this.visionService.ensureRunning().catch(e => {
+      // Don't await the `ensureRunning` promise since we don't need to wait for it to finish here
+      this.visionService.ensureRunning().catch(e => {
         console.error('Error validating if Vision (aka Streamlabs AI) is running:', e);
       });
     }
