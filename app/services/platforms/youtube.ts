@@ -544,11 +544,13 @@ export class YoutubeService
     this.state.backupStreamSettings.context = !context ? 'horizontal' : context;
 
     if (!this.streamingService.views.isMultiplatformMode) {
+      // Note: This was previously changed to `rtmp_custom` for dual streaming but
+      // it now works with `rtmp_common` as well.
       this.streamSettingsService.setSettings(
         {
           platform: 'youtube',
           key: streamKey,
-          streamType: 'rtmp_custom',
+          streamType: 'rtmp_common',
           server: 'rtmp://a.rtmp.youtube.com/live2',
         },
         context,
