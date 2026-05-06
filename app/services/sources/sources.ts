@@ -167,10 +167,6 @@ class SourcesViews extends ViewHandler<ISourcesState> {
     return this.sources.filter(s => s.type === type);
   }
 
-  getSmartSources() {
-    return this.sources.filter(s => s.propertiesManagerType === 'smartBrowserSource');
-  }
-
   suggestName(name?: string): string {
     if (!name) return '';
     return namingHelpers.suggestName(name, (name: string) => this.getSourcesByName(name).length);
@@ -668,6 +664,20 @@ export class SourcesService extends StatefulService<ISourcesState> {
 
   getAvailableSourcesTypes(): TSourceType[] {
     return this.getAvailableSourcesTypesList().map(listItem => listItem.value);
+  }
+
+  /**
+   * Get all smart sources
+   * @remark Primarily used for updating the smart browser sources for forwarding socket events
+   * from the reactive data service. For performance optimization, filter smart sources before
+   * constructing the `Source`. This prevents hot paths while iterating through sources, which
+   * may happen frequently when forwarding events from reactive data to smart sources while live.
+   * @returns An array of all of the smart sources in the scene collection
+   */
+  getSmartSources() {
+    return Object.values(this.state.sources)
+      .filter(s => s.propertiesManagerType === 'smartBrowserSource')
+      .map(sourceModel => new Source(sourceModel.sourceId));
   }
 
   private handleSourceCallback(objs: IObsSourceCallbackInfo[]) {

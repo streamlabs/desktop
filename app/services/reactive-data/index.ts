@@ -118,8 +118,8 @@ export class ReactiveDataService extends Service {
         this.writeState({ schemaFlatJson: JSON.stringify(schemaFlat) });
       });
 
-      // If the active scene collection has smart sources, ensure Streamlabs AI is active on login
-      if (this.sourcesService.views.getSmartSources().length > 0) {
+      // If the active scene collection has smart sources, ensure Vision (aka Streamlabs AI) is active on login
+      if (this.sourcesService.getSmartSources().length > 0) {
         this.ensureVisionRunning();
       }
 
@@ -263,7 +263,7 @@ export class ReactiveDataService extends Service {
     if (!this.visionService.state.isRunning && !this.visionService.state.isStarting) {
       // Discard the `ensureRunning` promise since we don't need to wait for it to finish here
       void this.visionService.ensureRunning().catch(e => {
-        console.error('Error validating if Streamlabs AI is running:', e);
+        console.error('Error validating if Vision (aka Streamlabs AI) is running:', e);
       });
     }
   }
@@ -277,7 +277,7 @@ export class ReactiveDataService extends Service {
   private forwardEventToSources(event: TSocketEvent) {
     const message = JSON.stringify(event);
 
-    for (const source of this.sourcesService.views.getSmartSources()) {
+    for (const source of this.sourcesService.getSmartSources()) {
       try {
         source.getObsInput()?.sendMessage({ message });
       } catch (error: unknown) {
