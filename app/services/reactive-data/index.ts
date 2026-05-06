@@ -118,7 +118,10 @@ export class ReactiveDataService extends Service {
         this.writeState({ schemaFlatJson: JSON.stringify(schemaFlat) });
       });
 
-      this.ensureVisionRunning();
+      // If the active scene collection has smart sources, ensure Streamlabs AI is active on login
+      if (this.sourcesService.views.getSmartSources().length > 0) {
+        this.ensureVisionRunning();
+      }
 
       // load everything into our initial state
       this.fetchAndApplyFullState();
@@ -258,7 +261,10 @@ export class ReactiveDataService extends Service {
    */
   private ensureVisionRunning() {
     if (!this.visionService.state.isRunning && !this.visionService.state.isStarting) {
-      this.visionService.ensureRunning();
+      // Discard the `ensureRunning` promise since we don't need to wait for it to finish here
+      void this.visionService.ensureRunning().catch(e => {
+        console.error('Error validating if Streamlabs AI is running:', e);
+      });
     }
   }
 
@@ -268,10 +274,12 @@ export class ReactiveDataService extends Service {
    * send a message to it or if a source is destroyed from a scene collection switch
    * @param event - The websocket event
    */
-  private forwardEventToSources(e: TSocketEvent) {
+  private forwardEventToSources(event: TSocketEvent) {
+    const message = JSON.stringify(event);
+
     for (const source of this.sourcesService.views.getSmartSources()) {
       try {
-        source.getObsInput()?.sendMessage({ message: JSON.stringify(e) });
+        source.getObsInput()?.sendMessage({ message });
       } catch (error: unknown) {
         console.error(`Error forwarding event to source ${source.name}:`, error);
       }
