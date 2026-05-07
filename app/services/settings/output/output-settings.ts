@@ -539,13 +539,19 @@ export class OutputSettingsService extends Service {
     const pathKey = mode === 'Advanced' ? 'RecFilePath' : 'FilePath';
     const path: string = this.settingsService.findSettingValue(output, 'Recording', pathKey);
 
-    const fileFormat: EFileFormat = this.settingsService.findValidListValue(
+    const recFormat: EFileFormat = this.settingsService.findValidListValue(
       output,
       'Recording',
       'RecFormat',
     ) as EFileFormat;
 
-    const format: ERecordingFormat = this.convertFileFormatToRecordingFormat(fileFormat);
+    const format: ERecordingFormat = this.convertFileFormatToRecordingFormat(recFormat);
+
+    const fileFormat: string = this.settingsService.findSettingValue(
+      advanced,
+      'Recording',
+      'FilenameFormatting',
+    );
 
     const overwrite: boolean = this.settingsService.findSettingValue(
       advanced,
@@ -601,6 +607,7 @@ export class OutputSettingsService extends Service {
       return {
         path,
         format,
+        fileFormat,
         overwrite,
         noSpace,
         prefix,
