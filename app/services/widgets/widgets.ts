@@ -201,13 +201,11 @@ export class WidgetsService
       },
     );
 
-    if (isWidgetConfig(type, widget) && widget.postInstall) {
-      widget.postInstall();
-    }
-
     this.usageStatisticsService.recordAnalyticsEvent('WidgetAdded', {
       type: WidgetType[type],
     });
+
+    this.widgetAdded.next({ widget });
 
     return item;
   }
@@ -540,6 +538,8 @@ export class WidgetsService
       .then(handleResponse);
   }
 
+  // TODO: Once remaining widgets are moved to the new react model, remove IWidget and just use IWidgetConfig.
+  widgetAdded = new Subject<{ widget: IWidget | IWidgetConfig }>();
   settingsInvalidated = new Subject();
 
   /**

@@ -66,8 +66,6 @@ export interface IWidgetConfig {
     width: number;
     height: number;
   };
-
-  postInstall?(): void;
 }
 
 export function getWidgetsConfig(
@@ -636,12 +634,6 @@ export function getWidgetsConfig(
       settingsUpdateEvent: 'gamePulseSettingsUpdate',
       customCodeAllowed: false,
       customFieldsAllowed: false,
-
-      postInstall() {
-        const visionService = ServicesManager.instance.getService('VisionService')
-          .instance as VisionService;
-        visionService.actions.setIsEnabled(true);
-      },
     },
   };
 }
