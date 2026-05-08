@@ -35,7 +35,8 @@ export class ListInputController<TValue> extends BaseInputController<TValue> {
     }
 
     // click option
-    const $option = await select(`.ant-select-dropdown [data-option-label="${value}"]`);
+    const selector = /[^\w\d]/.test(value) ? `"${value}"` : value;
+    const $option = await select(`.ant-select-dropdown [data-option-label=${selector}]`);
     await $option.waitForDisplayed();
     await $option.waitForClickable();
     await $option.click();
