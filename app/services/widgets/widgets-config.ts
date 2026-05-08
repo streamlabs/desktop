@@ -23,7 +23,8 @@ export type TWidgetType =
   | WidgetType.SuperchatGoal
   | WidgetType.CharityGoal
   | WidgetType.EventList
-  | WidgetType.GamePulseWidget;
+  | WidgetType.GamePulseWidget
+  | WidgetType.StreamBoss;
 
 export interface IWidgetConfig {
   type: TWidgetType;
@@ -577,9 +578,36 @@ export function getWidgetsConfig(
       customFieldsAllowed: true,
     },
 
-    // StreamBoss: {
-    //
-    //  },
+    [WidgetType.StreamBoss]: {
+      type: WidgetType.StreamBoss,
+
+      defaultTransform: {
+        width: 600,
+        height: 200,
+
+        x: 0,
+        y: 1,
+        anchor: AnchorPoint.SouthWest,
+      },
+
+      settingsWindowSize: {
+        width: 850,
+        height: 700,
+      },
+
+      url: `https://${host}/widgets/streamboss?token=${token}`,
+      previewUrl: `https://${host}/widgets/streamboss?token=${token}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/streamboss`,
+      settingsUpdateEvent: 'streambossSettingsUpdate',
+      goalCreateEvent: 'newStreamboss',
+      goalResetEvent: 'streambossEnd',
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/streamboss/settings`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/streamboss/settings`,
+      goalUrl: `https://${host}/api/v5/slobs/widget/streamboss`,
+      testers: ['follow', 'sub', 'donation', 'bits'],
+      customCodeAllowed: true,
+      customFieldsAllowed: true,
+    },
 
     // TipJar: {
     //

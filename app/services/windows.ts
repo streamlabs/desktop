@@ -54,7 +54,6 @@ import EventFilterMenu from 'components/windows/EventFilterMenu';
 import OverlayPlaceholder from 'components/windows/OverlayPlaceholder';
 import BrowserSourceInteraction from 'components/windows/BrowserSourceInteraction';
 
-import StreamBoss from 'components/widgets/StreamBoss.vue';
 import Credits from 'components/widgets/Credits.vue';
 import TipJar from 'components/widgets/TipJar.vue';
 import MediaShare from 'components/widgets/MediaShare';
@@ -107,7 +106,6 @@ export function getComponents() {
     MultistreamChatInfo,
     Credits,
     TipJar,
-    StreamBoss,
     MediaShare,
     AlertBox,
     SpinWheel,
