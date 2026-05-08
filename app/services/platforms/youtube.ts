@@ -57,6 +57,8 @@ export interface IYoutubeStartStreamOptions extends IExtraBroadcastSettings {
   privacyStatus?: 'private' | 'public' | 'unlisted';
   scheduledStartTime?: number;
   mode?: TOutputOrientation;
+  monetizationEnabled?: boolean;
+  eligibleForMonetization?: boolean;
 }
 
 /**
@@ -110,7 +112,23 @@ export interface IYoutubeLiveBroadcast {
     madeForKids: boolean;
     selfDeclaredMadeForKids: boolean;
   };
+  monetizationDetails?: {
+    cuepointSchedule: {
+      enabled?: boolean;
+      pauseAdsUntil?: string;
+      creatorCuepointConfig?: any;
+      ytOptimizedCuepointConfig?: 'LOW' | 'MEDIUM' | 'HIGH';
+    };
+    adsMonetizationStatus?: 'on' | 'off';
+    eligibleForAdsMonetization?: boolean;
+  };
 }
+
+type TYoutubeLiveBroadcastKey = keyof IYoutubeLiveBroadcast;
+interface IYoutubeLiveBroadcastPatch
+  extends Partial<
+    Record<TYoutubeLiveBroadcastKey, Partial<IYoutubeLiveBroadcast[TYoutubeLiveBroadcastKey]>>
+  > {}
 
 /**
  * A liveStream resource contains information about the video stream that you are transmitting to YouTube.
@@ -237,6 +255,7 @@ export class YoutubeService
       thumbnail: '',
       video: undefined,
       mode: undefined,
+      monetizationEnabled: false,
       display: 'horizontal',
     },
   };
@@ -521,6 +540,11 @@ export class YoutubeService
     let broadcast: IYoutubeLiveBroadcast;
     if (!streamToScheduledBroadcast) {
       broadcast = await this.createBroadcast(ytSettings);
+
+      // Current YT api doesn't let us POST with monetization settings so need to patch it in after creation
+      if (ytSettings.monetizationEnabled) {
+        await this.updateBroadcast(broadcast.id, ytSettings);
+      }
     } else {
       assertIsDefined(ytSettings.broadcastId);
       await this.updateBroadcast(ytSettings.broadcastId, ytSettings);
@@ -862,7 +886,7 @@ export class YoutubeService
     const scheduledStartTime = params.scheduledStartTime
       ? new Date(params.scheduledStartTime)
       : new Date();
-    const data: Dictionary<any> = {
+    const data: IYoutubeLiveBroadcastPatch = {
       snippet: {
         title: params.title,
         scheduledStartTime: scheduledStartTime.toISOString(),
@@ -932,7 +956,7 @@ export class YoutubeService
       scheduledStartTime: scheduledStartTime.toISOString(),
     };
 
-    const contentDetails: Dictionary<any> = {
+    const contentDetails: Partial<IYoutubeLiveBroadcast['contentDetails']> = {
       enableAutoStart: isMidStreamMode
         ? broadcast.contentDetails.enableAutoStart
         : params.enableAutoStart,
@@ -961,8 +985,36 @@ export class YoutubeService
     };
 
     const fields = ['snippet', 'status', 'contentDetails'];
+
+    let monetizationDetails: Partial<IYoutubeLiveBroadcast['monetizationDetails']>;
+    if (broadcast.monetizationDetails) {
+      fields.push('monetizationDetails');
+      this.usageStatisticsService.actions.recordFeatureUsage('YouTubeMonetization');
+
+      const moneyInfo = broadcast.monetizationDetails;
+      monetizationDetails = {
+        adsMonetizationStatus: isMidStreamMode
+          ? moneyInfo?.adsMonetizationStatus
+          : this.getMonetizationStatus(params.monetizationEnabled),
+      };
+      if (!isMidStreamMode && params.monetizationEnabled) {
+        monetizationDetails.cuepointSchedule = {
+          ...moneyInfo.cuepointSchedule,
+          enabled: params.monetizationEnabled,
+          ytOptimizedCuepointConfig: 'MEDIUM',
+          creatorCuepointConfig: undefined,
+        };
+      }
+    }
+
     const endpoint = `liveBroadcasts?part=${fields.join(',')}&id=${id}`;
-    const body: Dictionary<any> = { id, snippet, contentDetails, status };
+    const body: IYoutubeLiveBroadcastPatch = {
+      id,
+      snippet,
+      contentDetails,
+      status,
+      monetizationDetails,
+    };
 
     broadcast = await this.requestYoutube<IYoutubeLiveBroadcast>({
       body: JSON.stringify(body),
@@ -1110,7 +1162,7 @@ export class YoutubeService
 
   async fetchBroadcast(
     id: string,
-    fields = ['snippet', 'contentDetails', 'status'],
+    fields = ['snippet', 'contentDetails', 'status', 'monetizationDetails'],
   ): Promise<IYoutubeLiveBroadcast> {
     const filter = `&id=${id}`;
     const query = `part=${fields.join(',')}${filter}&maxResults=1`;
@@ -1120,6 +1172,10 @@ export class YoutubeService
         `${this.apiBase}/liveBroadcasts?${query}`,
       )
     ).items[0];
+  }
+
+  getMonetizationStatus(val: boolean) {
+    return val ? 'on' : 'off';
   }
 
   get chatUrl() {
@@ -1140,6 +1196,10 @@ export class YoutubeService
       this.fetchBroadcast(broadcastId),
       this.fetchVideo(broadcastId),
     ]);
+    console.log('BROADCAST');
+    console.log(JSON.stringify(broadcast, null, 2));
+    console.log('VIDEO');
+    console.log(JSON.stringify(video, null, 2));
     const { title, description } = broadcast.snippet;
     const { privacyStatus, selfDeclaredMadeForKids } = broadcast.status;
     const { enableDvr, projection, latencyPreference } = broadcast.contentDetails;
@@ -1154,6 +1214,8 @@ export class YoutubeService
       latencyPreference,
       categoryId: video.snippet.categoryId,
       thumbnail: broadcast.snippet.thumbnails.default.url,
+      monetizationEnabled: broadcast.monetizationDetails?.adsMonetizationStatus === 'on',
+      eligibleForMonetization: broadcast.monetizationDetails?.eligibleForAdsMonetization,
     };
   }
 
