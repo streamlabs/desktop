@@ -21,6 +21,11 @@ import {
 import { ExecutionContext } from 'ava';
 import { useForm } from '../helpers/modules/forms';
 
+// Matches filenames produced by the default OBS FilenameFormatting value
+// ("%CCYY-%MM-%DD %hh-%mm-%ss"), e.g. "2024-01-15 10-23-45.mp4".
+// A static name like "Replay.mp4" would not match.
+const TIMESTAMP_FILENAME_RE = /\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2}/;
+
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
@@ -59,6 +64,21 @@ async function toggleReplayBuffer(advanced: boolean = false) {
     await focusMain();
   });
 }
+
+test('Replay Buffer filenames contain a timestamp', async t => {
+  const tmpDir = await setTemporaryRecordingPath();
+  await setOutputResolution('100x100');
+
+  await startReplayBuffer();
+  await sleep(500);
+  await saveReplayBuffer();
+  await stopReplayBuffer();
+
+  await sleep(3000);
+  const files = await readdir(tmpDir);
+  t.is(files.length, 1, 'One replay file was saved');
+  t.regex(files[0], TIMESTAMP_FILENAME_RE, `Filename "${files[0]}" should contain a timestamp`);
+});
 
 test('Replay Buffer', async t => {
   const tmpDir = await setTemporaryRecordingPath();
