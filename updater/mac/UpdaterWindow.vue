@@ -5,6 +5,11 @@
       {{ message }}
     </div>
 
+    <div class="UpdaterWindow-actions" v-if="/New version/.test(message)">
+      <button @click="confirmUpdate">Update</button>
+      <button @click="postponeUpdate">Postpone</button>
+    </div>
+
     <div v-if="percentComplete !== null && !installing && !error">
       <div class="UpdaterWindow-progressPercent">{{ percentComplete }}% complete</div>
       <div class="UpdaterWindow-progressBarContainer">
@@ -37,6 +42,12 @@ export default {
   },
   mounted() {
     ipcRenderer.on('autoUpdate-pushState', (event, data) => {
+      // New update available, return early to allow user agency
+      if (data.updating === false) {
+        this.message = `New version ${data.version} available. Update now?`;
+        return;
+      }
+      // Accepted download
       if (data.version) {
         this.message = `Downloading version ${data.version}`;
       }
@@ -58,6 +69,12 @@ export default {
     download() {
       remote.shell.openExternal('https://streamlabs.com/streamlabs-obs');
       remote.app.quit();
+    },
+    confirmUpdate() {
+      ipcRenderer.send('autoUpdate-confirm');
+    },
+    postponeUpdate() {
+      ipcRenderer.send('autoUpdate-postpone');
     },
   },
 };
@@ -108,6 +125,26 @@ export default {
   cursor: pointer;
   &:hover {
     color: #eee;
+  }
+}
+.UpdaterWindow-actions {
+  display: flex;
+  width: 100%;
+  justify-content: space-around;
+  button {
+    border: 1px solid transparent;
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+    min-height: 32px;
+    line-height: 30px;
+    cursor: pointer;
+    background-color: #4f5e65;
+    padding-left: 8px;
+    padding-right: 8px;
+    &:hover {
+      color: #fff;
+      background-color: lighten(#4f5e65, 8%);
+    }
   }
 }
 </style>
