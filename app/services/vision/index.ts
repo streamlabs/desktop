@@ -1,8 +1,13 @@
 import { InitAfter, Inject, Service } from 'services';
 import * as remote from '@electron/remote';
+import {
+  HostsService,
+  SettingsService,
+  SourcesService,
+  UserService,
+} from 'app-services';
 import path from 'path';
 import { authorizedHeaders, jfetch } from 'util/requests';
-import { HostsService, SettingsService, UserService } from 'app-services';
 import { RealmObject } from 'services/realm';
 import { ObjectSchema } from 'realm';
 import uuid from 'uuid/v4';
@@ -14,6 +19,7 @@ import { ESettingsCategory } from 'services/settings';
 import { Subject } from 'rxjs';
 import { getOS, OS } from 'util/operating-systems';
 import Utils from 'services/utils';
+import { ISource } from 'services/sources';
 
 export class VisionProcess extends RealmObject {
   game: string;
@@ -133,6 +139,8 @@ export class VisionService extends Service {
   @Inject() hostsService: HostsService;
   @Inject() settingsService: SettingsService;
 
+  // Install hook services
+  @Inject() sourcesService: SourcesService;
   enabledState = VisionEnabledState.inject();
   state = VisionState.inject();
 
@@ -147,6 +155,8 @@ export class VisionService extends Service {
       });
     });
 
+    // Hook widget/overlay services to check for vision-dependent installs.
+    this.sourcesService.sourceAdded.subscribe(this.onSourceAdded.bind(this));
     // useful for testing robustness
     // setInterval(() => this.ensureRunning(), 30_000);
   }
@@ -383,6 +393,12 @@ export class VisionService extends Service {
   private writeState(patch: Partial<VisionState>) {
     this.state.db.write(() => Object.assign(this.state, patch));
     this.notifyOfStateChange();
+  }
+
+  private onSourceAdded({ source }: { source: ISource }) {
+    if (source.sourceId === 'smart_browser_source') {
+      this.setIsEnabled(true);
+    }
   }
 
   requestFrame() {
