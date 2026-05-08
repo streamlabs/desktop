@@ -33,6 +33,9 @@ export interface IJsonRpcResponse<TResponse> {
     message?: string;
   };
   mutations?: IMutation[];
+  params?: {
+    windowId?: string;
+  };
 }
 
 declare type TResourceType = 'HELPER' | 'SUBSCRIPTION' | 'EVENT';

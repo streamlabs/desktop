@@ -559,7 +559,13 @@ async function startApp() {
   ipcMain.on('services-message', (event, payload) => {
     const windows = BrowserWindow.getAllWindows();
     windows.forEach(window => {
-      if (window.id === workerWindow.id || window.isDestroyed()) return;
+      if (
+        window.id === workerWindow.id ||
+        window.isDestroyed() ||
+        (payload.params.windowId && payload.params.windowId !== window.id)
+      ) {
+        return;
+      }
       window.webContents.send('services-message', payload);
     });
   });
