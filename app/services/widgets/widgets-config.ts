@@ -1,5 +1,3 @@
-import type { VisionService } from 'app-services';
-import { ServicesManager } from 'services-manager';
 import { AnchorPoint } from '../../util/ScalableRectangle';
 import { TAlertType } from './alerts-config';
 import { WidgetType } from './widgets-data';
