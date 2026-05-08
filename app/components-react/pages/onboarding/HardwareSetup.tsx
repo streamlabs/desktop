@@ -31,14 +31,16 @@ export function HardwareSetup() {
 
   // Set up temporary sources
   useEffect(() => {
-    DefaultHardwareService.createTemporarySources();
-
-    if (!DefaultHardwareService.selectedVideoSource && v.videoDevices.length) {
-      DefaultHardwareService.actions.setDefault('video', v.videoDevices[0].value);
-    }
+    DefaultHardwareService.actions.createTemporarySources();
 
     return () => DefaultHardwareService.actions.clearTemporarySources();
   }, []);
+
+  useEffect(() => {
+    if (!v.selectedVideoSource && v.videoDevices.length) {
+      DefaultHardwareService.actions.setDefault('video', v.videoDevices[0].value);
+    }
+  }, [v.selectedVideoSource, v.videoDevices.length]);
 
   function setVideoDevice(val: string) {
     const oldPresetValue = v.presetFilterValue;
