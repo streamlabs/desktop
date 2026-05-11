@@ -1285,7 +1285,7 @@ export class StreamingService
       if (this.views.isTwitchDualStreaming) {
         await this.createStreaming({
           output: 'both',
-          audioTrack: 1,
+          audioTrack: this.getStreamingAudioTrack(),
           start: true,
           context: 'enhancedBroadcasting',
           isEnhancedBroadcasting: true,
@@ -1301,7 +1301,7 @@ export class StreamingService
 
         this.createStreaming({
           output: 'horizontal',
-          audioTrack: 1,
+          audioTrack: this.getStreamingAudioTrack(),
           start: true,
           context: 'horizontal',
           isEnhancedBroadcasting: false,
@@ -1310,7 +1310,7 @@ export class StreamingService
         // For dual output without enhanced broadcasting, the vertical stream instance will be created and started after the horizontal stream.
         this.createStreaming({
           output: 'vertical',
-          audioTrack: 2,
+          audioTrack: this.getStreamingAudioTrack(),
           start: true,
           context: 'vertical',
           isEnhancedBroadcasting: false,
@@ -1323,7 +1323,7 @@ export class StreamingService
       } else {
         await this.createStreaming({
           output: 'horizontal',
-          audioTrack: 1,
+          audioTrack: this.getStreamingAudioTrack(),
           start: true,
           context: 'horizontal',
           isEnhancedBroadcasting: this.state.enhancedBroadcasting,
@@ -1557,7 +1557,7 @@ export class StreamingService
           await this.validateOrCreateOutputInstance({
             display: 'vertical',
             type: 'streaming',
-            audioTrack: 2,
+            audioTrack: this.getStreamingAudioTrack(),
             context: 'vertical',
             start: true,
             isEnhancedBroadcasting: false,
@@ -1598,7 +1598,7 @@ export class StreamingService
         await this.validateOrCreateOutputInstance({
           display: 'horizontal',
           type: 'streaming',
-          audioTrack: 1,
+          audioTrack: this.getStreamingAudioTrack(),
           context: 'horizontal',
           start: true,
         });
@@ -1658,7 +1658,7 @@ export class StreamingService
       await this.validateOrCreateOutputInstance({
         display: nextDisplay,
         type: 'streaming',
-        audioTrack: nextDisplay === 'horizontal' ? 1 : 2,
+        audioTrack: this.getStreamingAudioTrack(),
         context: nextDisplay,
         start: true,
         isEnhancedBroadcasting: false,
@@ -1707,7 +1707,7 @@ export class StreamingService
       if (this.views.shouldSetupRestream) {
         await this.createStreaming({
           output: 'horizontal',
-          audioTrack: 1,
+          audioTrack: this.getStreamingAudioTrack(),
           start: true,
           context: 'horizontal',
           isEnhancedBroadcasting: false,
@@ -1845,7 +1845,7 @@ export class StreamingService
 
   private async createEnhancedBroadcastSingleStream() {
     const twitchDisplay = this.views.getPlatformDisplayType('twitch');
-    const audioTrack = twitchDisplay === 'horizontal' ? 1 : 2;
+    const audioTrack = this.getStreamingAudioTrack();
 
     // Always create the enhanced broadcasting streaming instance first
     await this.validateOrCreateOutputInstance({
@@ -1991,9 +1991,10 @@ export class StreamingService
 
       if (!isEnhancedBroadcasting) {
         // stream audio track
-        const defaultAudioTrack = display === 'horizontal' ? 1 : 2;
-        this.validateOrCreateAudioTrack(index ?? defaultAudioTrack);
-        stream.audioTrack = index ?? defaultAudioTrack;
+        const audioTrack = index ?? stream.audioTrack ?? this.getStreamingAudioTrack();
+
+        this.validateOrCreateAudioTrack(audioTrack);
+        stream.audioTrack = audioTrack;
       }
 
       // Twitch VOD audio track
@@ -2151,6 +2152,11 @@ export class StreamingService
     }
 
     return Promise.resolve(this.contexts[contextName].streaming);
+  }
+
+  private getStreamingAudioTrack() {
+    const audioTrack = this.settingsService.views.streamTrack + 1;
+    return Number.isFinite(audioTrack) && audioTrack > 0 ? audioTrack : 1;
   }
 
   /**
