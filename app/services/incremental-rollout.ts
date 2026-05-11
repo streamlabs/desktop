@@ -24,6 +24,7 @@ export enum EAvailableFeatures {
   streamShift = 'slobs--stream-shift',
   twitchDualStream = 'slobs--twitch-dual-stream',
   twitchDualStreamPreview = 'slobs--twitch-dual-stream-preview',
+  patreon = 'slobs--patreon',
 
   /**
    * There are two flags because one is used for beta access and
