@@ -28,6 +28,7 @@ import {
   AdvancedReplayBufferFactory,
   SimpleReplayBufferFactory,
   ISettings,
+  EScaleType,
 } from '../../../obs-api';
 import { Inject } from 'services/core/injector';
 import moment from 'moment';
@@ -1996,6 +1997,13 @@ export class StreamingService
 
         this.validateOrCreateAudioTrack(audioTrack);
         stream.audioTrack = audioTrack;
+      }
+
+      // An extra safeguard to ensure that the vertical video context does not have global rescale
+      // TODO: remove this when the comprehensive fix is done
+      if (display === 'vertical') {
+        stream.rescaling = false;
+        stream.rescaleFilter = EScaleType.Disable;
       }
 
       // Twitch VOD audio track
