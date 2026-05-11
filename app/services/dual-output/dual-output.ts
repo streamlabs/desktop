@@ -11,7 +11,7 @@ import { ScenesService, SceneItem, TSceneNode } from 'services/scenes';
 import { TDisplayType, VideoSettingsService } from 'services/settings-v2/video';
 import { TPlatform } from 'services/platforms';
 import { Subject } from 'rxjs';
-import { IVideoInfo } from 'obs-studio-node';
+import { EScaleType, IVideoInfo } from 'obs-studio-node';
 import { ICustomStreamDestination, StreamSettingsService } from 'services/settings/streaming';
 import {
   ISceneCollectionsManifestEntry,
@@ -505,9 +505,17 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
         'Streaming',
         'Rescale',
       );
-      if (globalRescaleOutput) {
+      const globalRescaleFilter = this.settingsService.findSettingValue(
+        output,
+        'Streaming',
+        'RescaleFilter',
+      );
+      if (globalRescaleOutput || globalRescaleFilter !== EScaleType.Disable) {
         // `Output` not a typo, it is different from above
-        this.settingsService.setSettingValue('Output', 'Rescale', false);
+        this.settingsService.setSettingsPatch({
+          Output: { Rescale: false, RescaleFilter: EScaleType.Disable },
+        });
+
         // TODO: find a cleaner way to make dual output recalculate its settings for the vertical display
         // since even after disabling "rescale output" its settings persists, and looks stretched.
         this.settingsService.refreshVideoSettings();
