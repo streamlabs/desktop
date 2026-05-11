@@ -29,7 +29,7 @@ import * as remote from '@electron/remote';
 import fs from 'fs';
 import path from 'path';
 import { Services } from 'components-react/service-provider';
-import { UserService } from 'app-services';
+import { UserService } from 'services/user';
 
 export enum ESettingsCategory {
   AI = 'AI',
@@ -48,6 +48,7 @@ export enum ESettingsCategory {
   GetSupport = 'Get Support',
   InstalledApps = 'Installed Apps',
   Stream = 'Stream',
+  StreamSecond = 'StreamSecond',
   General = 'General',
   Mobile = 'Mobile',
   Hotkeys = 'Hotkeys',
@@ -387,7 +388,10 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     // insert 'Multistreaming' after 'General'
     categories.splice(1, 0, ESettingsCategory.Multistreaming);
     // Deleting 'Virtual Webcam' category to add it below to position properly
-    categories = categories.filter(category => category !== ESettingsCategory.VirtualWebcam);
+    categories = categories.filter(
+      category =>
+        category !== ESettingsCategory.VirtualWebcam && category !== ESettingsCategory.StreamSecond,
+    );
     categories = categories.concat([
       ESettingsCategory.SceneCollections,
       ESettingsCategory.Notifications,
@@ -543,7 +547,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
    * Set an individual setting value
    * @remark When setting video settings, use the v2 video settings service.
    */
-  setSettingValue(categoryName: TCategoryName, name: string, value: TObsValue) {
+  setSettingValue(categoryName: TCategoryName | 'StreamSecond', name: string, value: TObsValue) {
     const newSettings = this.patchSetting(this.fetchSettingsFromObs(categoryName).formData, name, {
       value,
     });

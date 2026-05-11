@@ -35,7 +35,16 @@ const base = {
     allowToChangeInstallationDirectory: true,
     include: 'installer.nsh',
   },
-  asarUnpack : ["**/node-libuiohook/**", "**/node-fontinfo/**", "**/font-manager/**", "**/game_overlay/**","**/color-picker/**"],
+  asarUnpack: [
+    '**/node-libuiohook/**',
+    '**/node-fontinfo/**',
+    '**/font-manager/**',
+    '**/game_overlay/**',
+    '**/color-picker/**',
+  ],
+  // Always create resources/overlay/ in the build (empty by default — drop a
+  // .overlay file in there to make it the default scene collection at startup).
+  extraResources: [{ from: 'overlay-resources', to: 'overlay', filter: ['**/*'] }],
   publish: {
     provider: 'generic',
     url: 'https://slobs-cdn.streamlabs.com',
@@ -64,7 +73,10 @@ const base = {
       if (fs.existsSync(signingPath)) {
         fs.appendFileSync(signingPath, `${config.path}\n`);
       } else {
-        cp.execSync(`logisign client --client logitech-cpg-sign-client --app streamlabs --files "${config.path}"`, { stdio: 'inherit' });
+        cp.execSync(
+          `logisign client --client logitech-cpg-sign-client --app streamlabs --files "${config.path}"`,
+          { stdio: 'inherit' },
+        );
       }
     },
   },

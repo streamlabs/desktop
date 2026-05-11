@@ -37,6 +37,7 @@ export const SETTINGS_CONFIG: Record<ESettingsCategory, ISettingsConfig> = {
     component: pages.MultistreamingSettings,
   },
   [ESettingsCategory.Stream]: { icon: 'fas fa-globe', component: pages.StreamSettings },
+  [ESettingsCategory.StreamSecond]: { icon: 'fas fa-globe', component: pages.StreamSettings },
   [ESettingsCategory.Output]: { icon: 'fas fa-microchip', component: pages.OutputSettings },
   [ESettingsCategory.Video]: { icon: 'fas fa-film', component: pages.VideoSettings },
   [ESettingsCategory.Audio]: { icon: 'icon-audio', component: pages.AudioSettings },

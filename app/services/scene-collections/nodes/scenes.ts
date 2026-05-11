@@ -2,6 +2,7 @@ import { ArrayNode } from './array-node';
 import { SceneItemsNode } from './scene-items';
 import { ScenesService, Scene } from '../../scenes';
 import { SourcesService } from '../../sources';
+import { VideoSettingsService } from '../../settings-v2/video';
 import { HotkeysNode } from './hotkeys';
 import { SceneFiltersNode } from './scene-filters';
 
@@ -19,6 +20,7 @@ export class ScenesNode extends ArrayNode<ISceneSchema, {}, Scene> {
 
   scenesService: ScenesService = ScenesService.instance;
   sourcesService: SourcesService = SourcesService.instance;
+  videoSettingsService: VideoSettingsService = VideoSettingsService.instance;
 
   getItems() {
     return this.scenesService.views.scenes;
@@ -64,6 +66,13 @@ export class ScenesNode extends ArrayNode<ISceneSchema, {}, Scene> {
       ids[item.id] = true;
       return true;
     });
+
+    // Verify vertical video context exists here so it is only checked once per
+    // scene collection load instead of per scene item. App init no longer
+    // unconditionally establishes the vertical context (it's gated on dual
+    // output mode), so loaded overlays that reference vertical sources/items
+    // would otherwise hit a null context downstream.
+    this.videoSettingsService.validateVideoContext('vertical');
   }
 
   loadItem(obj: ISceneSchema): Promise<() => Promise<void>> {

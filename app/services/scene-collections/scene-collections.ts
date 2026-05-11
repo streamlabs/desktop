@@ -11,6 +11,7 @@ import { SceneItemsNode, ISceneItemInfo } from './nodes/scene-items';
 import { TransitionsNode } from './nodes/transitions';
 import { HotkeysNode } from './nodes/hotkeys';
 import { SceneFiltersNode } from './nodes/scene-filters';
+import fs from 'fs';
 import path from 'path';
 import { parse } from './parse';
 import { Scene, ScenesService, TSceneNode } from 'services/scenes';
@@ -45,6 +46,7 @@ import { DualOutputService } from 'services/dual-output';
 import { NodeMapNode } from './nodes/node-map';
 import { VideoSettingsService } from 'services/settings-v2';
 import { WidgetsService, WidgetType } from 'services/widgets';
+import { SettingsService } from 'app-services';
 
 const uuid = window['require']('uuid/v4');
 
@@ -71,6 +73,9 @@ interface ISceneCollectionInternalCreateOptions extends ISceneCollectionCreateOp
 }
 
 const DEFAULT_COLLECTION_NAME = 'Scenes';
+const OVERLAY_NAME = 'TwitchCon Rotterdam 2026';
+const OVERLAY_URL =
+  'https://cdn.streamlabs.com/marketplace/overlays/7684923/19e5b51/8e7ad6b9-b1e2-48f5-b129-aab9ef515e90.overlay';
 
 /**
  * V2 of the scene collections service:
@@ -96,6 +101,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   @Inject() videoSettingsService: VideoSettingsService;
   @Inject() private defaultHardwareService: DefaultHardwareService;
   @Inject() private widgetsService: WidgetsService;
+  @Inject() private settingsService: SettingsService;
 
   collectionAdded = new Subject<ISceneCollectionsManifestEntry>();
   collectionRemoved = new Subject<ISceneCollectionsManifestEntry>();
@@ -137,8 +143,40 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     await this.stateService.loadManifestFile();
     await this.migrateOS();
     await this.safeSync();
-    if (this.activeCollection && this.activeCollection.operatingSystem === getOS()) {
-      await this.load(this.activeCollection.id, true);
+
+    if (!this.userService.isLoggedIn) {
+      this.videoSettingsService.actions.setSettings(
+        {
+          baseWidth: 1920,
+          baseHeight: 1080,
+          outputWidth: 1920,
+          outputHeight: 1080,
+        },
+        'horizontal',
+      );
+
+      this.settingsService.actions.setSettingValue('General', 'RecordWhenStreaming', true);
+
+      // Never wipe collections here. Local wipes only happen in the userLogout
+      // handler below, which uses HARD_DELETE so they don't propagate to the
+      // server on next sync. Wiping at app-start while logged out (e.g. expired
+      // auth) would leave soft-deleted entries that a later login's sync would
+      // push up as user-driven server-side deletions, destroying the user's
+      // collections on the server.
+      //
+      // While logged out we always show the default overlay: if a matching
+      // collection already exists (typical case — installed on prior logout or
+      // first launch), activate it; otherwise install it. Any other user
+      // collections on disk are left untouched.
+      const existingOverlay = this.loadableCollections.find(c => c.name === OVERLAY_NAME);
+      if (existingOverlay) {
+        await this.load(existingOverlay.id);
+      } else {
+        await this.installOverlay(OVERLAY_URL, OVERLAY_NAME, true);
+      }
+
+      this.setLoginRequiredHorizontalVisibility(false);
+      await this.save();
     } else if (this.loadableCollections.length > 0) {
       let latestId = this.loadableCollections[0].id;
       let latestModified = this.loadableCollections[0].modified;
@@ -155,16 +193,89 @@ export class SceneCollectionsService extends Service implements ISceneCollection
       await this.create({ auto: true });
     }
     this.collectionInitialized.next();
+
+    this.userService.userLogout.subscribe(async () => {
+      await this.wipeCollections().catch(e => {
+        console.error('Error wiping scene collections on logout', e);
+      });
+
+      await this.installOverlay(OVERLAY_URL, OVERLAY_NAME, true);
+      this.setLoginRequiredHorizontalVisibility(false);
+      await this.save();
+    });
+
+    this.userService.userLoginFinished.subscribe(() => {
+      this.setLoginRequiredHorizontalVisibility(true);
+      this.save().catch(e => {
+        console.error('Error saving after restoring login-required visibility', e);
+      });
+    });
+  }
+
+  @RunInLoadingMode()
+  async wipeCollections() {
+    // Deload first so we don't leave stale references to the wiped collection.
+    await this.deloadCurrentApplicationState();
+
+    // Hard-delete each collection so the wipe doesn't leave behind soft-deleted
+    // entries with serverIds. Otherwise the next sync (e.g. after the user logs
+    // back in) would treat them as user-driven deletions and remove the user's
+    // existing collections from the server. Hard-delete also avoids `delete()`'s
+    // fallback `create()` call when the active collection is removed and none
+    // are left — which previously left a stray blank collection behind.
+    this.collections.forEach(collection => {
+      this.stateService.HARD_DELETE_COLLECTION(collection.id);
+    });
   }
 
   /**
-   * Should be called when a new user logs in.  If the user has
-   * scene collections backed up on the server, it will reset
-   * the manifest and load from the server.
+   * Should be called when a user logs in. Pulls the user's existing
+   * scene collections down from the server and preserves the default
+   * collection that was installed while logged out, adding it to the
+   * user's collections and setting it as the active (default) one.
    */
   @RunInLoadingMode()
   async setupNewUser() {
-    await this.initialize();
+    // Setup default video settings so that the new scene collection loads correctly
+    this.videoSettingsService.actions.setSettings(
+      {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        outputWidth: 1920,
+        outputHeight: 1080,
+      },
+      'horizontal',
+    );
+
+    this.settingsService.actions.setSettingValue('General', 'RecordWhenStreaming', true);
+
+    // The default collection installed while logged out is currently active.
+    // Capture its id so we can re-activate it after sync pulls down the user's
+    // existing collections (sync also uploads it and assigns it a serverId,
+    // since it has none yet).
+    const preLoginDefaultId = this.activeCollection?.id;
+
+    await this.safeSync();
+
+    if (preLoginDefaultId && this.getCollection(preLoginDefaultId)) {
+      await this.load(preLoginDefaultId);
+      this.setLoginRequiredHorizontalVisibility(true);
+      await this.save();
+    } else if (this.loadableCollections.length > 0) {
+      let latestId = this.loadableCollections[0].id;
+      let latestModified = this.loadableCollections[0].modified;
+
+      this.loadableCollections.forEach(collection => {
+        if (collection.modified > latestModified) {
+          latestModified = collection.modified;
+          latestId = collection.id;
+        }
+      });
+
+      await this.load(latestId);
+    } else {
+      await this.create({ auto: true });
+    }
   }
 
   /**
@@ -375,24 +486,94 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   downloadProgress = new Subject<IDownloadProgress>();
 
   /**
-   * Install a new overlay from a URL
+   * Install a new overlay from a URL.
+   *
+   * Builds can override the URL install by dropping a `.overlay` file into
+   * the `<resources>/overlay/` directory (mapped from `overlay-resources/`
+   * in the source tree by electron-builder). If a local override is present
+   * and loads successfully, it is used in place of the download. Any failure
+   * (missing directory, no `.overlay` file, or a load error) falls back to
+   * downloading the overlay from `url`.
+   *
    * @param url the URL of the overlay file
    * @param name the name of the overlay
-   * @param progressCallback a callback that receives progress of the download
    */
   @RunInLoadingMode({ hideStyleBlockers: false })
-  async installOverlay(url: string, name: string) {
+  async installOverlay(url: string, name: string, installDefault: boolean = false) {
+    const collectionName = installDefault ? name : this.suggestName(name);
+
+    // The bundled local .overlay is the build-time override for the default
+    // logged-out overlay only. Never use it for user-initiated installs from
+    // the themes library or PlatformMerge — those must always download the
+    // URL the user selected.
+    const installedLocalOverlay = await this.tryInstallLocalOverlay(collectionName);
+
+    if (installDefault && installedLocalOverlay) return;
+
     const pathName = await this.overlaysPersistenceService.downloadOverlay(
       url,
       (progress: IDownloadProgress) => {
         this.downloadProgress.next(progress);
       },
     );
-    const collectionName = this.suggestName(name);
     await this.loadOverlay(pathName, collectionName);
 
     // repair scene collection in the case if it has any issues
     this.scenesService.repair();
+
+    if (installDefault) {
+      const sceneId = this.scenesService.views.scenes.find(s => s.name === 'Starting')?.id;
+      if (!sceneId) return;
+
+      this.scenesService.makeSceneActive(sceneId);
+    }
+  }
+
+  /**
+   * Attempts to install the default scene collection from a `.overlay` file
+   * sitting in the build's `<resources>/overlay/` directory (or the source
+   * `overlay-resources/` directory in dev mode). Returns true on success.
+   *
+   * `loadOverlay` swallows extraction errors and leaves a created-but-empty
+   * collection behind; we detect that case here, hard-delete the empty
+   * manifest entry, and return false so the caller can fall back to the URL.
+   */
+  private async tryInstallLocalOverlay(name: string): Promise<boolean> {
+    let localPath: string;
+
+    try {
+      const overlayDir = Utils.isDevMode()
+        ? path.join(remote.app.getAppPath(), 'overlay-resources')
+        : path.join(process.resourcesPath, 'overlay');
+
+      if (!fs.existsSync(overlayDir)) return false;
+
+      const file = fs.readdirSync(overlayDir).find(f => f.toLowerCase().endsWith('.overlay'));
+      if (!file) return false;
+
+      localPath = path.join(overlayDir, file);
+    } catch (e: unknown) {
+      console.error('Failed to read local overlay directory; falling back to URL', e);
+      return false;
+    }
+
+    try {
+      await this.loadOverlay(localPath, name);
+    } catch (e: unknown) {
+      console.error('Local overlay install threw; falling back to URL', e);
+      return false;
+    }
+
+    if (this.scenesService.views.scenes.length === 0) {
+      console.error('Local overlay produced an empty scene collection; falling back to URL');
+      if (this.activeCollection) {
+        this.stateService.HARD_DELETE_COLLECTION(this.activeCollection.id);
+      }
+      return false;
+    }
+
+    this.scenesService.repair();
+    return true;
   }
 
   /**
@@ -418,12 +599,28 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     const collection = await this.insertCollection(id, name, getOS());
     await this.setActiveCollection(id);
 
+    let loadError: unknown;
     try {
       await this.overlaysPersistenceService.loadOverlay(filePath);
       this.setupDefaultAudio(desktopAudioDevice, micDevice);
     } catch (e: unknown) {
       // We tried really really hard :(
       console.error('Overlay installation failed', e);
+      loadError = e;
+    }
+
+    if (loadError && !this.collectionErrorOpen) {
+      this.collectionErrorOpen = true;
+      remote.dialog
+        .showMessageBox(Utils.getMainWindow(), {
+          title: 'Streamlabs Desktop',
+          type: 'warning',
+          message: $t(
+            'Failed to install overlay: %{error}',
+            { error: loadError instanceof Error ? loadError.message : String(loadError) },
+          ),
+        })
+        .then(() => (this.collectionErrorOpen = false));
     }
 
     this.collectionSwitched.next(collection);
@@ -853,6 +1050,22 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     this.scenesService.createScene('Scene', { makeActive: true });
     this.setupDefaultAudio();
     this.transitionsService.ensureTransition();
+  }
+
+  /**
+   * Toggles the eye-icon visibility of horizontal-display scene items
+   * whose source requires a logged-in user (widgets, stream labels,
+   * Collab Cam). Used to hide them in the default overlay while logged
+   * out and restore them after login.
+   */
+  private setLoginRequiredHorizontalVisibility(visible: boolean) {
+    this.scenesService.views.scenes.forEach(scene => {
+      scene.getItems().forEach(item => {
+        if (item.display !== 'horizontal') return;
+        const source = item.getSource();
+        if (source?.requiresLogin) item.setVisibility(visible);
+      });
+    });
   }
 
   /**

@@ -407,17 +407,19 @@ export class OnboardingService extends StatefulService<IOnboardingServiceState> 
   }
 
   startOnboardingIfRequired() {
-    // Useful for testing in dev env
-    if (Utils.env.SLD_FORCE_ONBOARDING_STEP) {
-      this.start();
-      return true;
-    }
+    return false;
 
-    if (localStorage.getItem(this.localStorageKey)) {
-      return false;
-    }
+    // // Useful for testing in dev env
+    // if (Utils.env.SLD_FORCE_ONBOARDING_STEP) {
+    //   this.start();
+    //   return true;
+    // }
 
-    this.start();
-    return true;
+    // if (localStorage.getItem(this.localStorageKey)) {
+    //   return false;
+    // }
+
+    // this.start();
+    // return true;
   }
 }

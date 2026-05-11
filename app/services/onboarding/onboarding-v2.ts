@@ -261,14 +261,17 @@ export class OnboardingV2Service extends Service {
   }
 
   showOnboardingIfNecessary() {
-    if (
-      !Utils.env.SLD_FORCE_ONBOARDING_STEP &&
-      (this.userService.isAlphaGroup || localStorage.getItem(this.localStorageKey))
-    ) {
-      return;
-    }
     this.appService.setOnboarded(true);
-    this.showOnboarding();
+    return;
+
+    // if (
+    //   !Utils.env.SLD_FORCE_ONBOARDING_STEP &&
+    //   (this.userService.isAlphaGroup || localStorage.getItem(this.localStorageKey))
+    // ) {
+    //   return;
+    // }
+    // this.appService.setOnboarded(true);
+    // this.showOnboarding();
   }
 
   showOnboarding() {

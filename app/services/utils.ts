@@ -317,6 +317,10 @@ export function getAppPath() {
   return appPath;
 }
 
+// Build a context for media/ that excludes .overlay binary files. The default
+// require() context matches everything and webpack has no loader for .overlay.
+const mediaContext = (require as any).context('../../media', true, /^\.\/(?!.*\.overlay$).*$/);
+
 /**
  * A fallback-safe method of fetching images
  * from either our local storage or the CDN
@@ -327,7 +331,7 @@ export function $i(mediaPath: string) {
     // Useful for testing media fetches properly from the CDN
     if (Utils.env.SLOBS_USE_CDN_MEDIA) throw new Error('Using CDN');
 
-    const localMediaPath = require(`../../media/${mediaPath}`);
+    const localMediaPath = mediaContext(`./${mediaPath}`);
 
     if (!fs.existsSync(path.resolve(getAppPath(), localMediaPath))) throw new Error('Using CDN');
 

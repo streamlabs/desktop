@@ -234,6 +234,14 @@ export class Source implements ISourceApi {
     return this.configurable;
   }
 
+  get requiresLogin(): boolean {
+    return (
+      this.propertiesManagerType === 'widget' ||
+      this.propertiesManagerType === 'streamlabels' ||
+      this.type === 'mediasoupconnector'
+    );
+  }
+
   // Remap keycodes for keys that are independent of keyboard layout
   getMacVirtualKeyCode(code: number) {
     // The lookup map contains problematic keys that needs to be remapped into a CGKeyCode.

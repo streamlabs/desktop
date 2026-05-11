@@ -1175,11 +1175,39 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
 
     session.clearStorageData({ storages: ['cookies'] });
     this.settingsService.setSettingValue('Stream', 'key', '');
+    this.settingsService.setSettingValue('StreamSecond', 'key', '');
 
     this.writeUserIdFile();
     this.unsubscribeFromSocketConnection();
     this.LOGOUT();
     this.userLogout.next();
+  }
+
+  @RunInLoadingMode()
+  async logoutAndClearCache() {
+    // Attempt to sync scense before logging out
+    await this.sceneCollectionsService.save();
+    await this.sceneCollectionsService.safeSync();
+
+    remote.session.defaultSession.clearCache();
+    remote.session.defaultSession.clearStorageData();
+
+    this.settingsService.setSettingsPatch({
+      Video: { Base: '1920x1080', Output: '1920x1080' },
+    });
+
+    const filePath = path.join(this.appService.appDataDirectory, 'userId');
+    fs.writeFile(filePath, '', err => {
+      if (err) {
+        console.error('Error writing user id file', err);
+      }
+    });
+
+    this.unsubscribeFromSocketConnection();
+    this.LOGOUT();
+    await this.sceneCollectionsService.wipeCollections().catch(e => {
+      console.error('Error wiping scene collections on logout and clear cache', e);
+    });
   }
 
   async reLogin() {

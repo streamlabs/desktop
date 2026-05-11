@@ -157,8 +157,18 @@ export class AppService extends StatefulService<IAppState> {
     }
     this.dismissablesService.initialize();
 
-    electron.ipcRenderer.on('shutdown', () => {
+    electron.ipcRenderer.on('shutdown', async () => {
+      if (this.userService.isLoggedIn) {
+        await this.userService.logoutAndClearCache().catch((e: unknown) => {
+          console.error('Error during shutdown logout:', e);
+        });
+      } else {
+        await this.sceneCollectionsService.wipeCollections().catch((e: unknown) => {
+          console.error('Error wiping scene collections during shutdown for logged out user:', e);
+        });
+      }
       this.windowsService.hideMainWindow();
+
       electron.ipcRenderer.send('acknowledgeShutdown');
       this.shutdownHandler();
     });
