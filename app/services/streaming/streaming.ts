@@ -404,11 +404,20 @@ export class StreamingService
    * Make a transition to Live
    */
   async goLive(newSettings?: IGoLiveSettings) {
+    /**
+     * VALIDATE STREAM SETTINGS
+     */
     // Ensure valid encoders for logged out users
     if (!this.userService.isLoggedIn) {
       this.settingsService.validateEncoders();
     }
 
+    // Disable "Rescale Output" for dual output mode to prevent issues with scaling vertical/horizontal views.
+    this.dualOutputService.disableGlobalRescaleIfNeeded();
+
+    /**
+     * SET TARGET GO LIVE SETTINGS
+     */
     // To ensure that the correct chat renders if dual streaming Twitch, make sure that Twitch is the primary platform
     if (
       this.userService.state.auth?.primaryPlatform !== 'twitch' &&
@@ -472,7 +481,7 @@ export class StreamingService
     }
 
     /**
-     * Set custom destination stream settings
+     * SET CUSTOM DESTINATIONS SETTINGS
      */
     settings.customDestinations.forEach(destination => {
       // only update enabled custom destinations
@@ -489,8 +498,6 @@ export class StreamingService
       destination.video = this.videoSettingsService.contexts[display];
       destination.mode = display === 'horizontal' ? 'landscape' : 'portrait';
     });
-    // Disable "Rescale Output" for dual output mode to prevent issues with scaling vertical/horizontal views.
-    this.dualOutputService.disableGlobalRescaleIfNeeded();
 
     // save enabled platforms to reuse setting with the next app start
     this.streamSettingsService.setSettings({ goLiveSettings: settings });
