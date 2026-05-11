@@ -402,13 +402,13 @@ export class VisionService extends Service {
     this.notifyOfStateChange();
   }
 
-  private onSourceAdded({ source }: { source: ISource }) {
+  private onSourceAdded(source: ISource) {
     if (source.sourceId === 'smart_browser_source') {
       this.setIsEnabled(true);
     }
   }
 
-  private onWidgetAdded({ widget }: { widget: IWidget | IWidgetConfig }) {
+  private onWidgetAdded(widget: IWidget | IWidgetConfig) {
     if ((widget as IWidgetConfig).type === WidgetType.GamePulseWidget) {
       this.setIsEnabled(true);
     }

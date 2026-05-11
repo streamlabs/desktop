@@ -205,7 +205,7 @@ export class WidgetsService
       type: WidgetType[type],
     });
 
-    this.widgetAdded.next({ widget });
+    this.widgetAdded.next(widget);
 
     return item;
   }
@@ -539,7 +539,7 @@ export class WidgetsService
   }
 
   // TODO: Once remaining widgets are moved to the new react model, remove IWidget and just use IWidgetConfig.
-  widgetAdded = new Subject<{ widget: IWidget | IWidgetConfig }>();
+  widgetAdded = new Subject<IWidget | IWidgetConfig>();
   settingsInvalidated = new Subject();
 
   /**
