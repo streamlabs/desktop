@@ -26,7 +26,7 @@ import { getWidgetsConfig, IWidgetConfig } from './widgets-config';
 import { WidgetDisplayData } from '.';
 import { DualOutputService } from 'services/dual-output';
 import { TDisplayType, VideoSettingsService } from 'services/settings-v2';
-import { IncrementalRolloutService, type VisionService } from 'app-services';
+import { IncrementalRolloutService, VisionService } from 'app-services';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 import { UsageStatisticsService } from 'services/usage-statistics';
 

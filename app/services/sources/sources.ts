@@ -43,7 +43,7 @@ import { SmartBrowserSourceManager } from './properties-managers/smart-browser-s
 import { StreamlabelsManager } from './properties-managers/streamlabels-manager';
 import { WidgetManager } from './properties-managers/widget-manager';
 import { SourceDisplayData } from './sources-data';
-import { ReactiveDataService, type VisionService } from 'app-services';
+import { ReactiveDataService, VisionService } from 'app-services';
 import { IReactiveDataEditorProps } from 'components-react/windows/reactive-data-editor/types';
 
 export { EDeinterlaceFieldOrder, EDeinterlaceMode } from '../../../obs-api';
