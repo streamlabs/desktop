@@ -326,9 +326,6 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     // confirm custom destinations have a default display
     this.confirmDestinationDisplays();
 
-    // Disable global Rescale Output
-    this.disableGlobalRescaleIfNeeded();
-
     /**
      * Handles enabling/disabling performance mode when toggling displays
      */
@@ -446,8 +443,6 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     this.toggleDualOutputMode(status);
 
     if (this.state.dualOutputMode) {
-      this.disableGlobalRescaleIfNeeded();
-
       // All dual output scene collections will have been validated when the collection was switched
       // so there is no need to validate the scene nodes again. So just convert the single output collection
       // to dual output if needed.
@@ -493,34 +488,6 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     }
 
     this.SET_SHOW_DUAL_OUTPUT(status);
-  }
-
-  disableGlobalRescaleIfNeeded() {
-    // TODO: this could be improved, either by state tracking or making it compatible with dual output
-    // For now, disable global Rescale Output under Streaming if dual output is enabled
-    if (this.state.dualOutputMode) {
-      const output = this.settingsService.state.Output.formData;
-      const globalRescaleOutput = this.settingsService.findSettingValue(
-        output,
-        'Streaming',
-        'Rescale',
-      );
-      const globalRescaleFilter = this.settingsService.findSettingValue(
-        output,
-        'Streaming',
-        'RescaleFilter',
-      );
-      if (globalRescaleOutput || globalRescaleFilter !== EScaleType.Disable) {
-        // `Output` not a typo, it is different from above
-        this.settingsService.setSettingsPatch({
-          Output: { Rescale: false, RescaleFilter: EScaleType.Disable },
-        });
-
-        // TODO: find a cleaner way to make dual output recalculate its settings for the vertical display
-        // since even after disabling "rescale output" its settings persists, and looks stretched.
-        this.settingsService.refreshVideoSettings();
-      }
-    }
   }
 
   convertSingleOutputToDualOutputCollection() {

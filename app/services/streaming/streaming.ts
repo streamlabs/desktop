@@ -413,9 +413,6 @@ export class StreamingService
       this.settingsService.validateEncoders();
     }
 
-    // Disable "Rescale Output" for dual output mode to prevent issues with scaling vertical/horizontal views.
-    this.dualOutputService.disableGlobalRescaleIfNeeded();
-
     /**
      * SET TARGET GO LIVE SETTINGS
      */

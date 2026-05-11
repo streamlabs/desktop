@@ -670,30 +670,10 @@ export class OutputSettingsService extends Service {
     );
 
     if (mode === 'Advanced') {
-      const rescaleFilter =
-        this.settingsService.findSettingValue(output, 'Streaming', 'RescaleFilter') ??
-        (this.settingsService.findSettingValue(output, 'Streaming', 'Rescale')
-          ? EScaleType.Bilinear
-          : EScaleType.Disable);
-      const rescaling = rescaleFilter !== EScaleType.Disable;
-
-      let outputWidth = this.videoSettingsService.outputResolutions[display].outputWidth;
-      let outputHeight = this.videoSettingsService.outputResolutions[display].outputHeight;
-
-      const rescaleResolution = this.settingsService.findSettingValue(
+      const { rescaling, rescaleFilter, outputWidth, outputHeight } = this.getGlobalRescaleSettings(
         output,
-        'Streaming',
-        'RescaleRes',
+        display,
       );
-
-      if (rescaling && rescaleResolution) {
-        const [rescaleWidth, rescaleHeight] = rescaleResolution.split('x').map(Number);
-
-        if (Number.isFinite(rescaleWidth) && Number.isFinite(rescaleHeight)) {
-          outputWidth = rescaleWidth;
-          outputHeight = rescaleHeight;
-        }
-      }
 
       const audioTrack = this.settingsService.findSettingValue(output, 'Streaming', 'TrackIndex');
 
@@ -727,6 +707,59 @@ export class OutputSettingsService extends Service {
         customEncSettings,
       } as ISimpleStreamingOutputSettings;
     }
+  }
+
+  /**
+   * Get Global Rescale Settings by Display
+   * @remark Currently, streaming instances with the vertical display cannot use global rescale output because
+   * the global rescale settings are for the horizontal display
+   * TODO: refactor when backend changes for per-display rescale are implemented
+   *
+   * @param output - Output settings
+   * @param display - Display for streaming instance
+   * @returns Global Rescale setings
+   */
+  private getGlobalRescaleSettings(output: ISettingsSubCategory[], display: TDisplayType) {
+    let outputWidth = this.videoSettingsService.outputResolutions[display].outputWidth;
+    let outputHeight = this.videoSettingsService.outputResolutions[display].outputHeight;
+
+    if (display === 'vertical') {
+      return {
+        rescaling: false,
+        rescaleFilter: EScaleType.Disable,
+        outputWidth,
+        outputHeight,
+      };
+    }
+
+    const rescaleFilter =
+      this.settingsService.findSettingValue(output, 'Streaming', 'RescaleFilter') ??
+      (this.settingsService.findSettingValue(output, 'Streaming', 'Rescale')
+        ? EScaleType.Bilinear
+        : EScaleType.Disable);
+    const rescaling = rescaleFilter !== EScaleType.Disable;
+
+    const rescaleResolution = this.settingsService.findSettingValue(
+      output,
+      'Streaming',
+      'RescaleRes',
+    );
+
+    if (rescaling && rescaleResolution) {
+      const [rescaleWidth, rescaleHeight] = rescaleResolution.split('x').map(Number);
+
+      if (Number.isFinite(rescaleWidth) && Number.isFinite(rescaleHeight)) {
+        outputWidth = rescaleWidth;
+        outputHeight = rescaleHeight;
+      }
+    }
+
+    return {
+      rescaling,
+      rescaleFilter,
+      outputWidth,
+      outputHeight,
+    };
   }
 
   private getStreamingEncoderSettings(
