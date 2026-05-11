@@ -64,14 +64,29 @@ const base = {
     // assistedInstaller.nsh. Requires electron-builder >= 23.0.6.
     removeDefaultUninstallWelcomePage: true,
   },
-  asarUnpack : ["**/node-libuiohook/**", "**/node-fontinfo/**", "**/font-manager/**", "**/game_overlay/**","**/color-picker/**"],
+  asarUnpack: [
+    '**/node-libuiohook/**',
+    '**/node-fontinfo/**',
+    '**/font-manager/**',
+    '**/game_overlay/**',
+    '**/color-picker/**',
+  ],
+  // Always create resources/overlay/ in the build (empty by default — drop a
+  // .overlay file in there to make it the default scene collection at startup).
+  extraResources: [{ from: 'overlay-resources', to: 'overlay', filter: ['**/*'] }],
   publish: {
     provider: 'generic',
     url: 'https://slobs-cdn.streamlabs.com',
   },
   win: {
     executableName: 'Streamlabs OBS',
-    extraFiles: ['LICENSE', 'AGREEMENT', 'LICENSES', 'shared-resources/**/*', '!shared-resources/README'],
+    extraFiles: [
+      'LICENSE',
+      'AGREEMENT',
+      'LICENSES',
+      'shared-resources/**/*',
+      '!shared-resources/README',
+    ],
     // Replaces `signDlls: true`, removed in electron-builder 26. Both select the
     // same files: `.dll` matches this list, and `.exe` still signs via the
     // isExe fallback in WinPackager.shouldSignFile.
@@ -86,7 +101,8 @@ const base = {
         if (process.env.SLOBS_NO_SIGN) return;
 
         if (
-          config.path.indexOf('node_modules\\obs-studio-node\\data\\obs-plugins\\win-capture') !== -1
+          config.path.indexOf('node_modules\\obs-studio-node\\data\\obs-plugins\\win-capture') !==
+          -1
         ) {
           console.log(`Skipping ${config.path}`);
           return;
@@ -99,7 +115,10 @@ const base = {
         if (fs.existsSync(signingPath)) {
           fs.appendFileSync(signingPath, `${config.path}\n`);
         } else {
-          cp.execSync(`logisign client --client logitech-cpg-sign-client --app streamlabs --files "${config.path}"`, { stdio: 'inherit' });
+          cp.execSync(
+            `logisign client --client logitech-cpg-sign-client --app streamlabs --files "${config.path}"`,
+            { stdio: 'inherit' },
+          );
         }
       },
     },
