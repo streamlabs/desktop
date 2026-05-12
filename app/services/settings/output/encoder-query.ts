@@ -43,6 +43,7 @@ const platformServiceConfig: Record<TPlatform, { streamType: string; service?: s
   twitter: { streamType: 'rtmp_custom' },
   instagram: { streamType: 'rtmp_custom' },
   kick: { streamType: 'rtmp_custom' },
+  patreon: { streamType: 'rtmp_custom' },
 };
 
 interface ICacheEntry {
