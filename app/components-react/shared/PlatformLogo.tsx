@@ -55,8 +55,8 @@ export default function PlatformLogo(p: IProps & HTMLAttributes<unknown>) {
 
   let color = p.color;
 
-  // This might be a hack - but handle twitter and tiktok logo for different themes
-  if (['twitter', 'tiktok'].includes(p.platform) && !isDark) {
+  // This might be a hack - but handle twitter, tiktok, and patreon logo for different themes
+  if (['twitter', 'tiktok', 'patreon'].includes(p.platform) && !isDark) {
     color = 'black';
   }
 
