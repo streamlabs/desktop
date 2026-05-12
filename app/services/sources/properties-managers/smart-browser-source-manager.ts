@@ -85,7 +85,6 @@ export class SmartBrowserSourceManager extends PropertiesManager {
       }
     });
 
-    this.visionService.ensureRunning();
     this.normalizeUrl();
   }
 

@@ -78,6 +78,7 @@ export { FacebookService } from 'services/platforms/facebook';
 export { TikTokService } from 'services/platforms/tiktok';
 export { TrovoService } from 'services/platforms/trovo';
 export { KickService } from 'services/platforms/kick';
+export { PatreonService } from 'services/platforms/patreon';
 export { RestreamService } from 'services/restream';
 export { TwitterService } from 'services/integrations/twitter';
 export { TwitterPlatformService } from 'services/platforms/twitter';
@@ -203,6 +204,7 @@ import { TwitchStudioImporterService } from 'services/ts-importer';
 import { RemoteControlService } from 'services/api/remote-control-api';
 import { UrlService } from 'services/hosts';
 import { KickService } from 'services/platforms/kick';
+import { PatreonService } from 'services/platforms/patreon';
 import { SseService } from './services/server-sent-events';
 import { VisionService } from 'services/vision';
 import { ReactiveDataService } from 'services/reactive-data';
@@ -244,6 +246,7 @@ export const AppServices = {
   TwitchContentClassificationService,
   TrovoService,
   KickService,
+  PatreonService,
   InstagramService,
   DismissablesService,
   HighlighterService,

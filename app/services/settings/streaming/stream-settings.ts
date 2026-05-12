@@ -17,7 +17,6 @@ import {
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import Vue from 'vue';
 import { IVideo } from 'obs-studio-node';
-import { DualOutputService } from 'services/dual-output';
 import { TOutputOrientation } from 'services/restream';
 
 export interface ISavedGoLiveSettings {
@@ -104,6 +103,7 @@ const platformToServiceNameMap: { [key in TPlatform]: string } = {
   twitter: 'Custom',
   instagram: 'Custom',
   kick: 'Custom',
+  patreon: 'Custom',
 };
 
 /**
@@ -115,7 +115,6 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
   @Inject() private userService: UserService;
   @Inject() private platformAppsService: PlatformAppsService;
   @Inject() private streamSettingsService: StreamSettingsService;
-  @Inject() private dualOutputService: DualOutputService;
   @Inject() private streamingService: StreamingService;
   @Inject() private videoSettingsService: VideoSettingsService;
 

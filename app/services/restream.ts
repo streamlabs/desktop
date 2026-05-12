@@ -6,13 +6,14 @@ import { StreamSettingsService } from 'services/settings/streaming';
 import { UserService } from 'services/user';
 import { CustomizationService, ICustomizationServiceState } from 'services/customization';
 import { authorizedHeaders, jfetch } from 'util/requests';
-import { IncrementalRolloutService } from './incremental-rollout';
+import { EAvailableFeatures, IncrementalRolloutService } from './incremental-rollout';
 import electron from 'electron';
 import { StreamingService } from './streaming';
 import { FacebookService } from './platforms/facebook';
 import { TikTokService } from './platforms/tiktok';
 import { TrovoService } from './platforms/trovo';
 import { KickService } from './platforms/kick';
+import { PatreonService } from './platforms/patreon';
 import * as remote from '@electron/remote';
 import { VideoSettingsService, TDisplayType } from './settings-v2/video';
 import { TwitterPlatformService } from './platforms/twitter';
@@ -104,11 +105,11 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @Inject() customizationService: CustomizationService;
   @Inject() streamSettingsService: StreamSettingsService;
   @Inject() streamingService: StreamingService;
-  @Inject() incrementalRolloutService: IncrementalRolloutService;
   @Inject() facebookService: FacebookService;
   @Inject('TikTokService') tiktokService: TikTokService;
   @Inject() trovoService: TrovoService;
   @Inject() kickService: KickService;
+  @Inject() patreonService: PatreonService;
   @Inject() instagramService: InstagramService;
   @Inject() videoSettingsService: VideoSettingsService;
   @Inject('TwitterPlatformService') twitterService: TwitterPlatformService;
@@ -471,6 +472,13 @@ export class RestreamService extends StatefulService<IRestreamState> {
         targetInfo.streamKey = `${this.kickService.state.ingest}/${this.kickService.state.streamKey}`;
       }
 
+      // treat patreon as a custom destination
+      if (platform === 'patreon') {
+        targetInfo.platform = 'relay';
+        targetInfo.streamKey = `${this.patreonService.state.ingest}/${this.patreonService.state.streamKey}`;
+      }
+
+      // reassign platforms to displays if in dual output mode
       if (isDualOutputMode) {
         const mode = this.getPlatformMode(platform) ?? 'landscape';
 
@@ -481,7 +489,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
           platforms.push({ ...targetInfo, mode });
         }
       } else {
-        platforms.push(targetInfo);
+        platforms.push({ ...targetInfo, mode: 'landscape' as TOutputOrientation });
       }
 
       return platforms;
@@ -508,7 +516,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
           dests.push({ ...targetInfo, mode });
         }
       } else {
-        dests.push(targetInfo);
+        dests.push({ ...targetInfo, mode: 'landscape' as TOutputOrientation });
       }
 
       return dests;
@@ -838,8 +846,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
 }
 
 class RestreamView extends ViewHandler<IRestreamState> {
-  @Inject() incrementalRolloutService: IncrementalRolloutService;
-
   get isGrandfathered() {
     return this.state.grandfathered || this.state.tiktokGrandfathered;
   }

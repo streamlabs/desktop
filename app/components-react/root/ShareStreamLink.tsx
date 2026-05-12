@@ -66,7 +66,7 @@ export const ShareStreamLink = () => {
           type="text"
           aria-label={tooltip}
           onClick={() => copyToClipboard(streamPageUrl)}
-          icon={<PlatformLogo platform={platform} />}
+          icon={<PlatformLogo platform={platform} size="small" />}
         />
       </Tooltip>
     );

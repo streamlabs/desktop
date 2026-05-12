@@ -1,19 +1,28 @@
-import { InitAfter, Inject, Service } from 'services';
 import * as remote from '@electron/remote';
+import {
+  HostsService,
+  SettingsService,
+  SourcesService,
+  UserService,
+  WidgetsService,
+} from 'app-services';
+import _ from 'lodash';
+import pMemoize from 'p-memoize';
 import path from 'path';
-import { authorizedHeaders, jfetch } from 'util/requests';
-import { HostsService, SettingsService, UserService } from 'app-services';
-import { RealmObject } from 'services/realm';
 import { ObjectSchema } from 'realm';
+import { Subject } from 'rxjs';
+import { InitAfter, Inject, Service } from 'services';
+import { RealmObject } from 'services/realm';
+import { ESettingsCategory } from 'services/settings';
+import { ISource } from 'services/sources';
+import Utils from 'services/utils';
+import { IWidget, WidgetType } from 'services/widgets';
+import { IWidgetConfig } from 'services/widgets/widgets-config';
+import { getOS, OS } from 'util/operating-systems';
+import { authorizedHeaders, jfetch } from 'util/requests';
 import uuid from 'uuid/v4';
 import { VisionRunner, VisionRunnerStartOptions } from './vision-runner';
 import { VisionUpdater } from './vision-updater';
-import _ from 'lodash';
-import pMemoize from 'p-memoize';
-import { ESettingsCategory } from 'services/settings';
-import { Subject } from 'rxjs';
-import { getOS, OS } from 'util/operating-systems';
-import Utils from 'services/utils';
 
 export class VisionProcess extends RealmObject {
   game: string;
@@ -133,6 +142,10 @@ export class VisionService extends Service {
   @Inject() hostsService: HostsService;
   @Inject() settingsService: SettingsService;
 
+  // Install hook services
+  @Inject() sourcesService: SourcesService;
+  @Inject() widgetsService: WidgetsService;
+
   enabledState = VisionEnabledState.inject();
   state = VisionState.inject();
 
@@ -146,6 +159,10 @@ export class VisionService extends Service {
         isRunning: false,
       });
     });
+
+    // Hook widget/overlay services to check for vision-dependent installs.
+    this.sourcesService.sourceAdded.subscribe(this.onSourceAdded.bind(this));
+    this.widgetsService.widgetAdded.subscribe(this.onWidgetAdded.bind(this));
 
     // useful for testing robustness
     // setInterval(() => this.ensureRunning(), 30_000);
@@ -163,6 +180,8 @@ export class VisionService extends Service {
 
     if (newIsEnabled === false) {
       return this.stop();
+    } else {
+      return this.ensureRunning();
     }
   }
 
@@ -383,6 +402,18 @@ export class VisionService extends Service {
   private writeState(patch: Partial<VisionState>) {
     this.state.db.write(() => Object.assign(this.state, patch));
     this.notifyOfStateChange();
+  }
+
+  private onSourceAdded(source: ISource) {
+    if (source.sourceId === 'smart_browser_source') {
+      this.setIsEnabled(true);
+    }
+  }
+
+  private onWidgetAdded(widget: IWidget | IWidgetConfig) {
+    if ((widget as IWidgetConfig).type === WidgetType.GamePulseWidget) {
+      this.setIsEnabled(true);
+    }
   }
 
   requestFrame() {

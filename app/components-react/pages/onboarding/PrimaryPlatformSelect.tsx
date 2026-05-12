@@ -12,7 +12,7 @@ import Form from 'components-react/shared/inputs/Form';
 import { ListInput } from 'components-react/shared/inputs';
 import { Button } from 'antd';
 import { Services } from 'components-react/service-provider';
-import { useVuex, useWatchVuex } from 'components-react/hooks';
+import { useVuex } from 'components-react/hooks';
 
 export function PrimaryPlatformSelect() {
   const { UserService, OnboardingService } = Services;
@@ -22,7 +22,19 @@ export function PrimaryPlatformSelect() {
     isPrime: UserService.state.isPrime,
   }));
   const { loading, authInProgress, authPlatform, finishSLAuth } = useModule(LoginModule);
-  const platforms = ['twitch', 'youtube', 'tiktok', 'kick', 'facebook', 'twitter', 'trovo'];
+
+  // Note: Patreon is intentionally left out of the platform options since it cannot
+  // be a primary platform if there are other platforms linked
+  const platforms: TPlatform[] = [
+    'twitch',
+    'youtube',
+    'tiktok',
+    'kick',
+    'patreon',
+    'facebook',
+    'twitter',
+    'trovo',
+  ];
   const platformOptions = [
     {
       value: 'twitch',
@@ -33,6 +45,17 @@ export function PrimaryPlatformSelect() {
       value: 'youtube',
       label: 'YouTube',
       image: <PlatformLogo platform="youtube" />,
+    },
+
+    {
+      value: 'tiktok',
+      label: 'TikTok',
+      image: <PlatformLogo platform="tiktok" size={14} />,
+    },
+    {
+      value: 'kick',
+      label: 'Kick',
+      image: <PlatformLogo platform="kick" size={14} />,
     },
     {
       value: 'facebook',
@@ -48,16 +71,6 @@ export function PrimaryPlatformSelect() {
       value: 'twitter',
       label: 'X (Twitter)',
       image: <PlatformLogo platform="twitter" size={14} />,
-    },
-    {
-      value: 'tiktok',
-      label: 'TikTok',
-      image: <PlatformLogo platform="tiktok" size={14} />,
-    },
-    {
-      value: 'kick',
-      label: 'Kick',
-      image: <PlatformLogo platform="kick" size={14} />,
     },
   ].filter(opt => {
     return linkedPlatforms.includes(opt.value as TPlatform);
