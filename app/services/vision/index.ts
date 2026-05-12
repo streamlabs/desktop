@@ -1,19 +1,27 @@
-import { InitAfter, Inject, Service } from 'services';
 import * as remote from '@electron/remote';
+import {
+  HostsService,
+  SettingsService,
+  SourcesService,
+  UserService,
+  WidgetsService,
+} from 'app-services';
+import _ from 'lodash';
+import pMemoize from 'p-memoize';
 import path from 'path';
-import { authorizedHeaders, jfetch } from 'util/requests';
-import { HostsService, SettingsService, UserService } from 'app-services';
-import { RealmObject } from 'services/realm';
 import { ObjectSchema } from 'realm';
+import { Subject } from 'rxjs';
+import { InitAfter, Inject, Service } from 'services';
+import { RealmObject } from 'services/realm';
+import { ESettingsCategory } from 'services/settings';
+import { ISource, TSourceType } from 'services/sources';
+import Utils from 'services/utils';
+import { WidgetType } from 'services/widgets';
+import { getOS, OS } from 'util/operating-systems';
+import { authorizedHeaders, jfetch } from 'util/requests';
 import uuid from 'uuid/v4';
 import { VisionRunner, VisionRunnerStartOptions } from './vision-runner';
 import { VisionUpdater } from './vision-updater';
-import _ from 'lodash';
-import pMemoize from 'p-memoize';
-import { ESettingsCategory } from 'services/settings';
-import { Subject } from 'rxjs';
-import { getOS, OS } from 'util/operating-systems';
-import Utils from 'services/utils';
 
 export class VisionProcess extends RealmObject {
   game: string;
@@ -133,10 +141,19 @@ export class VisionService extends Service {
   @Inject() hostsService: HostsService;
   @Inject() settingsService: SettingsService;
 
+  // Install hook services
+  @Inject() sourcesService: SourcesService;
+  @Inject() widgetsService: WidgetsService;
+
   enabledState = VisionEnabledState.inject();
   state = VisionState.inject();
 
   init() {
+    // Hook widget/overlay services to check for vision-dependent installs.
+    // TODO @widgets-refactor: Remove IWidgetConfig cast.
+    this.widgetsService.widgetCreated.subscribe(({ type }) => this.onWidgetCreated(type));
+    this.sourcesService.sourceCreated.subscribe(({ source }) => this.onSourceCreated(source));
+
     window.addEventListener('beforeunload', () => this.stop());
 
     this.visionRunner.on('exit', () => {
@@ -383,6 +400,26 @@ export class VisionService extends Service {
   private writeState(patch: Partial<VisionState>) {
     this.state.db.write(() => Object.assign(this.state, patch));
     this.notifyOfStateChange();
+  }
+
+  private onSourceCreated(source: ISource) {
+    if (this.state.isRunning) return;
+
+    // Smart browser sources are munged to type: 'browser_source' by OBS.
+    // Check the manager type instead.
+    if (source.propertiesManagerType === 'smartBrowserSource') {
+      console.log('Reactive overlay added, enabling vision service');
+      this.setIsEnabled(true);
+    }
+  }
+
+  private onWidgetCreated(type: WidgetType) {
+    if (this.state.isRunning) return;
+
+    if (type === WidgetType.GamePulseWidget) {
+      console.log('Game Pulse widget added, enabling vision service');
+      this.setIsEnabled(true);
+    }
   }
 
   requestFrame() {

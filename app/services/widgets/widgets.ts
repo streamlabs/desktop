@@ -89,6 +89,14 @@ export class WidgetsService
   @Inject() incrementalRolloutService: IncrementalRolloutService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
 
+  widgetCreated = new Subject<{
+    type: WidgetType;
+    // TODO @widgets-refactor: Remove IWidget and just use IWidgetConfig.
+    widget?: IWidget | IWidgetConfig;
+    serializedWidget?: ISerializableWidget;
+  }>();
+  settingsInvalidated = new Subject();
+
   widgetDisplayData = WidgetDisplayData(); // cache widget display data
 
   protected init() {
@@ -201,14 +209,11 @@ export class WidgetsService
       },
     );
 
-    if (isWidgetConfig(type, widget) && widget.postInstall) {
-      widget.postInstall();
-    }
-
     this.usageStatisticsService.recordAnalyticsEvent('WidgetAdded', {
       type: WidgetType[type],
     });
 
+    this.widgetCreated.next({ type, widget });
     return item;
   }
 
@@ -462,6 +467,8 @@ export class WidgetsService
         );
       });
     }
+
+    this.widgetCreated.next({ type: widget.type, serializedWidget: widget });
   }
 
   createWidgetFromJSON(
@@ -539,8 +546,6 @@ export class WidgetsService
       })
       .then(handleResponse);
   }
-
-  settingsInvalidated = new Subject();
 
   /**
    * Ask the WidgetSetting window to re-load data

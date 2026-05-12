@@ -180,6 +180,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
     temporarySources: {}, // don't save temporarySources in the config file
   } as ISourcesState;
 
+  sourceCreated = new Subject<{ type: TSourceType; source: ISource }>();
   sourceAdded = new Subject<ISource>();
   sourceUpdated = new Subject<ISource>();
   sourceRemoved = new Subject<ISource>();
@@ -363,7 +364,9 @@ export class SourcesService extends StatefulService<ISourcesState> {
       console.log('Error creating obs source: ', e);
     }
 
-    return this.views.getSource(id)!;
+    const source = this.views.getSource(id)!;
+    this.sourceCreated.next({ type, source: source.state });
+    return source;
   }
 
   addSource(obsInput: obs.IInput, name: string, options: ISourceAddOptions = {}) {
