@@ -362,8 +362,41 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
    * Migrate optimized settings to vertical context
    */
   migrateAutoConfigSettings() {
-    // load optimized settings onto horizontal context
-    this.loadLegacySettings('horizontal');
+    // (dev) Trace canvas reads to diagnose stale Video settings page. Remove
+    // once the autoconfig → v1 settings propagation is verified. OSN's
+    // client-side IPC caching for canvas getters was removed, so .video and
+    // .legacySettings already return fresh values on each access.
+    console.log('AutoConfigMigrate (dev): canvas reads', JSON.stringify({
+      horizontalLegacy: this.contexts.horizontal?.legacySettings,
+      horizontalVideo: this.contexts.horizontal?.video,
+      verticalLegacy: this.contexts.vertical?.legacySettings,
+      verticalVideo: this.contexts.vertical?.video,
+    }, null, 2));
+
+    // V2 autoconfig only updates the per-canvas IVideoInfo (`video`), leaving
+    // the v1 obs_video_info global (`legacySettings`) at its pre-autoconfig
+    // values. The shared loadLegacySettings() helper prefers `legacySettings`
+    // when its dimensions are non-zero, which would copy those stale values
+    // into our store. Inline a video-first sync here instead, and push the
+    // fresh values back into `legacySettings` so v1-only readers (Settings →
+    // Video page via fetchSettingsFromObs) see them too.
+    const horizontalCanvas = this.contexts.horizontal;
+    const fresh = horizontalCanvas.video;
+    (Object.keys(fresh) as Array<keyof IVideoInfo>).forEach(key => {
+      this.SET_VIDEO_SETTING(key, fresh[key] as never);
+      this.dualOutputService.setVideoSetting({ [key]: fresh[key] }, 'horizontal');
+    });
+    horizontalCanvas.legacySettings = fresh;
+    if (invalidFps(fresh.fpsNum, fresh.fpsDen)) {
+      this.createDefaultFps('horizontal');
+    }
+
+    // (dev) Trace state after the video-first sync — confirms whether the
+    // canvas values made it into our store. Remove once stable.
+    console.log('AutoConfigMigrate (dev): state after video-first sync', JSON.stringify({
+      horizontal: this.state.horizontal,
+      vertical: this.state.vertical,
+    }, null, 2));
 
     if (this.contexts?.vertical) {
       // add optimized settings to vertical context
@@ -375,12 +408,6 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
         outputHeight: this.state.vertical.outputHeight,
       };
       this.updateVideoSettings(newVerticalSettings, 'vertical');
-
-      // update the Video settings property to the horizontal context dimensions
-      const base = `${this.state.horizontal.baseWidth}x${this.state.horizontal.baseHeight}`;
-      const output = `${this.state.horizontal.outputWidth}x${this.state.horizontal.outputHeight}`;
-      this.settingsService.setSettingValue('Video', 'Base', base);
-      this.settingsService.setSettingValue('Video', 'Output', output);
     } else {
       // if there is no vertical context, only update persisted settings for vertical context
       const horizontalScaleType = this.contexts.horizontal.video.scaleType;
@@ -393,6 +420,19 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
       this.dualOutputService.setVideoSetting({ fpsNum: horizontalFpsNum }, 'vertical');
       this.dualOutputService.setVideoSetting({ fpsDen: horizontalFpsDen }, 'vertical');
     }
+
+    // Refresh the v1 Video settings store from OBS now that the v1 global
+    // (legacySettings) has the fresh values. Covers Base, Output, FPS, etc.
+    // in one go — the Video settings page reads from this store.
+    this.settingsService.refreshVideoSettings();
+
+    // (dev) Confirm the v1 store actually picked up the new values — this is
+    // what the Video settings page renders from. Remove once stable.
+    console.log('AutoConfigMigrate (dev): v1 Video values after refresh', JSON.stringify({
+      base: this.settingsService.views.values.Video?.Base,
+      output: this.settingsService.views.values.Video?.Output,
+      fpsCommon: this.settingsService.views.values.Video?.FPSCommon,
+    }, null, 2));
   }
 
   /**

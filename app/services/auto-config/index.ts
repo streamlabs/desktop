@@ -2,6 +2,7 @@ import { Subject } from 'rxjs';
 import { Service } from '../core/service';
 import {
   SimpleStreamingFactory,
+  AdvancedStreamingFactory,
   ServiceFactory,
   VideoEncoderFactory,
   AudioEncoderFactory,
@@ -9,6 +10,7 @@ import {
   ReconnectFactory,
   NetworkFactory,
   ISimpleStreaming,
+  IAdvancedStreaming,
   IService,
   IVideoEncoder,
   IAudioEncoder,
@@ -18,11 +20,12 @@ import * as obs from '../../../obs-api';
 import { Inject } from 'services';
 import { StreamSettingsService } from 'services/settings/streaming';
 import { OutputSettingsService, SettingsService } from 'services/settings';
-import { getPlatformService } from 'services/platforms';
+import { getPlatformService, TPlatform } from 'services/platforms';
 import { TwitchService } from 'services/platforms/twitch';
 import { YoutubeService } from 'app-services';
 import { VideoSettingsService } from 'services/settings-v2/video';
 import { UserService } from 'services/user';
+import { StreamingService } from 'services/streaming';
 
 export type TConfigEvent =
   | 'starting_step'
@@ -124,10 +127,27 @@ export interface IAutoConfigSummary {
 }
 
 interface ITempStream {
-  stream: ISimpleStreaming;
+  // Advanced streams configure audio via global audio tracks (no audioEncoder
+  // on the stream object), so the audioEncoder field is optional.
+  mode: 'Simple' | 'Advanced';
+  stream: ISimpleStreaming | IAdvancedStreaming;
   service: IService;
   videoEncoder: IVideoEncoder;
-  audioEncoder: IAudioEncoder;
+  audioEncoder?: IAudioEncoder;
+  // Label used in diagnostic logs so multi-target output is intelligible.
+  // For platform-derived streams this is the TPlatform name; for the
+  // single-target backward-compat path it's 'primary'.
+  label: string;
+}
+
+// Per-platform connection info. Built inline in start() so we don't have to
+// touch the global Stream settings (which can only describe one platform at
+// a time and gets stomped by whoever writes last).
+interface IPerPlatformStreamSettings {
+  key: string;
+  server: string;
+  service: string;
+  streamType: string;
 }
 
 export class AutoConfigService extends Service {
@@ -136,6 +156,7 @@ export class AutoConfigService extends Service {
   @Inject() outputSettingsService: OutputSettingsService;
   @Inject() videoSettingsService: VideoSettingsService;
   @Inject() userService: UserService;
+  @Inject() streamingService: StreamingService;
 
   configProgress = new Subject<IConfigProgress>();
   // Dev-only: human-readable trace of what AutoConfig is doing. The Optimize
@@ -152,13 +173,27 @@ export class AutoConfigService extends Service {
   summary = new Subject<IAutoConfigSummary>();
 
   private chainMode: 'streaming' | 'recording' | null = null;
-  private tempStream: ITempStream | null = null;
+  // Multi-target: one entry per stream we passed to InitializeAutoConfig, in
+  // the same order. `targetIdToLabel` maps the V2 backend's reported targetId
+  // back to a human label so per-target events are intelligible. Assumption:
+  // V2's targetId equals the array index of the stream we passed; validated
+  // at runtime in handleV2PayloadEvent (warns if out of range).
+  private tempStreams: ITempStream[] = [];
+  private targetIdToLabel = new Map<number, string>();
+  // Each `selection_decision` event contributes one `picked` (kbps). On done,
+  // we persist min(...) — the narrowest pipe wins, since the user has a
+  // single global encoder bitrate. Empty when the event never fired (e.g.
+  // pre-V2 OSN), in which case persist falls back to reading the encoder.
+  private pickedBitrates: number[] = [];
 
   private logDiag(msg: string, data?: unknown) {
     if (data !== undefined) {
-      console.log(`AutoConfig: ${msg}`, data);
+      // Pass the JSON-serialized form to console.log instead of the raw object
+      // so node's util.inspect doesn't truncate nested fields to `[Object]` —
+      // we want full visibility into IVideoDecision.before/after etc.
       let serialized: string;
       try { serialized = JSON.stringify(data, null, 2); } catch { serialized = String(data); }
+      console.log(`AutoConfig: ${msg}\n${serialized}`);
       this.diagnosticLog.next(`${msg}\n${serialized}`);
     } else {
       console.log(`AutoConfig: ${msg}`);
@@ -168,8 +203,12 @@ export class AutoConfigService extends Service {
 
   private logDiagError(msg: string, err?: unknown) {
     if (err !== undefined) {
-      console.error(`AutoConfig: ${msg}`, err);
-      const errStr = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+      // Same reasoning as logDiag — serialize so nested error context isn't
+      // truncated to `[Object]` in node logs.
+      const errStr = err instanceof Error
+        ? `${err.name}: ${err.message}`
+        : (() => { try { return JSON.stringify(err, null, 2); } catch { return String(err); } })();
+      console.error(`AutoConfig: ${msg}\n${errStr}`);
       this.diagnosticLog.next(`ERROR: ${msg} — ${errStr}`);
     } else {
       console.error(`AutoConfig: ${msg}`);
@@ -182,34 +221,11 @@ export class AutoConfigService extends Service {
       mode: this.outputSettingsService.getSettings().mode,
       streamingBefore: this.outputSettingsService.getSettings().streaming,
     });
-    try {
-      if (this.userService.views.isTwitchAuthed) {
-        const service = getPlatformService('twitch') as TwitchService;
-        const key = await service.fetchStreamKey();
-        this.streamSettingsService.setSettings({ key, platform: 'twitch' });
-      } else if (this.userService.views.isYoutubeAuthed) {
-        const service = getPlatformService('youtube') as YoutubeService;
-        await service.beforeGoLive({
-          platforms: {
-            youtube: {
-              enabled: true,
-              useCustomFields: false,
-              title: 'bandwidthTest',
-              description: 'bandwidthTest',
-              privacyStatus: 'private',
-              categoryId: '1',
-            },
-          },
-          advancedMode: true,
-          customDestinations: [],
-          recording: 'horizontal',
-        });
-      }
-    } catch (e: unknown) {
-      this.logDiagError('failed to fetch stream key', e);
-      this.emit({ event: 'error', description: 'error_fetching_stream_key' });
-      return;
-    }
+
+    // Reset multi-target state from any prior run.
+    this.tempStreams = [];
+    this.targetIdToLabel.clear();
+    this.pickedBitrates = [];
 
     /**
      * Using the optimizer when two contexts are active is tricky because the optimizer
@@ -226,46 +242,161 @@ export class AutoConfigService extends Service {
       this.videoSettingsService.confirmVideoSettingDimensions();
     }
 
-    const streamSettings = this.settingsService.views.values.Stream;
-    if (!streamSettings.key) {
-      this.logDiagError('Stream settings have no key after fetch', { streamSettings });
-      this.emit({ event: 'error', description: 'error_fetching_stream_key' });
+    // Multi-target: enumerate the user's enabled platforms (the same source
+    // real go-live uses) and build one temp stream per platform. Filter to
+    // platforms with explicit support in this autoconfig flow — others would
+    // need their own server/streamType lookup logic, deferred for now.
+    const allEnabled = this.streamingService.views.enabledPlatforms;
+    const supportedPlatforms = allEnabled.filter(
+      (p): p is 'twitch' | 'youtube' => p === 'twitch' || p === 'youtube',
+    );
+    const skipped = allEnabled.filter(p => p !== 'twitch' && p !== 'youtube');
+    if (skipped.length > 0) {
+      this.logDiag('skipping enabled platforms not supported by autoconfig v1', { skipped });
+    }
+
+    if (supportedPlatforms.length === 0) {
+      this.logDiagError(
+        'no supported platforms enabled (twitch or youtube); cannot run bandwidth test',
+        { allEnabled },
+      );
+      this.emit({ event: 'error', description: 'no_supported_platform' });
       return;
     }
 
-    try {
-      this.tempStream = this.createTempStream(streamSettings);
-    } catch (e: unknown) {
-      this.logDiagError('failed to construct temp stream', e);
-      this.disposeTempStream();
-      this.emit({ event: 'error', description: 'temp_stream_setup_failed' });
+    // V2 backend pre-req for Advanced streams: it calls setAudioEncoder()
+    // before StartOutput(), which indexes into the GLOBAL audioTracks array
+    // (osn-advanced-streaming.cpp:264) and silently returns false if the
+    // track or its audioEnc is missing. start() then returns without
+    // calling StartOutput(), so the rtmp_output is created but never
+    // connects — which presents as `no_valid_bandwidth_results` after V2's
+    // 5-second wait. Audio tracks don't persist across OSN sessions, so on
+    // a fresh start (autoconfig usually runs before any go-live in the
+    // session) track 1 doesn't exist yet. Real go-live handles this at
+    // streaming.ts:1866 with the same call. Idempotent, so safe to always
+    // run; no-op for Simple mode (which uses stream.audioEncoder directly).
+    if (this.outputSettingsService.getSettings().mode === 'Advanced') {
+      await this.streamingService.validateOrCreateAudioTrack(1);
+    }
+
+    for (const platform of supportedPlatforms) {
+      try {
+        const perPlatform = await this.prepareStreamSettingsForPlatform(platform);
+        if (!perPlatform.key) {
+          this.logDiagError(`platform ${platform} returned empty key after prepare; skipping`);
+          continue;
+        }
+        const tempStream = this.createTempStream(perPlatform, platform);
+        // targetId is assumed to equal the array index of streams we pass to
+        // InitializeAutoConfig — verified at runtime in handleV2PayloadEvent.
+        this.targetIdToLabel.set(this.tempStreams.length, platform);
+        this.tempStreams.push(tempStream);
+      } catch (e: unknown) {
+        this.logDiagError(`failed to prepare platform ${platform}; skipping`, e);
+      }
+    }
+
+    if (this.tempStreams.length === 0) {
+      this.logDiagError('all enabled platforms failed to prepare; aborting');
+      this.disposeTempStreams();
+      this.emit({ event: 'error', description: 'all_targets_failed_setup' });
       return;
     }
 
     this.chainMode = 'streaming';
-    this.logDiag('starting bandwidth test', {
-      encoderId: this.tempStream.videoEncoder.id,
-      encoderSettings: this.tempStream.videoEncoder.settings,
-      audioEncoderBitrate: this.tempStream.audioEncoder.bitrate,
-    });
-    obs.NodeObs.InitializeAutoConfig((progress: IConfigProgress) => this.handleProgress(progress));
+    const labels = this.tempStreams.map(t => t.label);
+    this.logDiag(`passed ${this.tempStreams.length} streams to InitializeAutoConfig`, { labels });
+    // Per-target diag log so failures per platform are easy to attribute. Don't
+    // log keys themselves (secret) — only their length so we can confirm the
+    // key was populated.
+    const dbg = (v: unknown) => v ?? '(undefined)';
+    for (let i = 0; i < this.tempStreams.length; i++) {
+      const t = this.tempStreams[i];
+      this.logDiag(`target ${i} [${t.label}] config`, {
+        mode: t.mode,
+        encoderId: t.videoEncoder.id,
+        encoderSettings: t.videoEncoder.settings,
+        videoEncoderLastError: dbg(t.videoEncoder.lastError),
+        audioEncoderBitrate: dbg(t.audioEncoder?.bitrate),
+      });
+    }
+
+    obs.NodeObs.InitializeAutoConfig(
+      this.tempStreams.map(t => t.stream),
+      (progress: IConfigProgress) => this.handleProgress(progress),
+    );
     obs.NodeObs.StartBandwidthTest();
+  }
+
+  /**
+   * Per-platform setup for a bandwidth-test target. Calls the platform's own
+   * fetchStreamKey/beforeGoLive to populate its state, then returns the
+   * RTMP server + streamType + key shape that ServiceFactory expects.
+   *
+   * Crucially, this does NOT write to the legacy global `Stream` settings —
+   * each platform owns its key in `getPlatformService(p).state.streamKey`,
+   * so two platforms can coexist without stomping each other.
+   */
+  private async prepareStreamSettingsForPlatform(
+    platform: 'twitch' | 'youtube',
+  ): Promise<IPerPlatformStreamSettings> {
+    if (platform === 'twitch') {
+      const svc = getPlatformService('twitch') as TwitchService;
+      const key = await svc.fetchStreamKey();
+      // Twitch uses rtmp_common with the platform-name service; OSN auto-picks
+      // the closest ingest server when `server: 'auto'`.
+      return { key, server: 'auto', service: 'Twitch', streamType: 'rtmp_common' };
+    }
+    // youtube
+    const svc = getPlatformService('youtube') as YoutubeService;
+    await svc.beforeGoLive({
+      platforms: {
+        youtube: {
+          enabled: true,
+          useCustomFields: false,
+          title: 'bandwidthTest',
+          description: 'bandwidthTest',
+          privacyStatus: 'private',
+          categoryId: '1',
+        },
+      },
+      advancedMode: true,
+      customDestinations: [],
+      recording: 'horizontal',
+    });
+    // Mirrors what youtube.ts:561-571 writes when not in multistream mode —
+    // we replicate it here per-target instead of letting the platform write
+    // to the global Stream settings (which would stomp Twitch's settings
+    // when both are enabled).
+    return {
+      key: svc.state.streamKey,
+      server: 'rtmp://a.rtmp.youtube.com/live2',
+      service: '',
+      streamType: 'rtmp_custom',
+    };
   }
 
   async startRecording() {
     this.chainMode = 'recording';
-    obs.NodeObs.InitializeAutoConfig((progress: IConfigProgress) => this.handleProgress(progress));
+    // Recording-only autoconfig has no streaming target on hand. Under the new
+    // OSN contract this errors out with `no_streaming_targets_provided`; the
+    // 'error' branch in handleProgress will surface it and tear down. Revert
+    // once a proper recording autoconfig path is reintroduced.
+    obs.NodeObs.InitializeAutoConfig(
+      [],
+      (progress: IConfigProgress) => this.handleProgress(progress),
+    );
     obs.NodeObs.StartSetDefaultSettings();
   }
 
-  private createTempStream(streamSettings: { key: string; streamType: string; service: string; server: string }): ITempStream {
+  private createTempStream(streamSettings: IPerPlatformStreamSettings, label: string): ITempStream {
     // Seed the temp stream from the user's real streaming config so V2 autoconfig
-    // runs *on top of* what's already set (encoder type + settings, audio encoder,
-    // network bind/perf flags, simple-mode custom opts) instead of measuring a
-    // hardcoded baseline. Mirrors the canonical go-live wiring in
-    // streaming.ts:1920-1992 (SimpleStreaming branch).
+    // runs *on top of* what's already set (encoder type + settings, network bind
+    // flags, simple/advanced-mode specifics) instead of measuring a hardcoded
+    // baseline. Mirrors the canonical go-live wiring in streaming.ts (Simple +
+    // Advanced branches around lines 1850-1900).
     //
-    // Three settings are *intentionally* overridden away from the user's value
+    // Four settings are *intentionally* overridden away from the user's value
     // because they would corrupt the bandwidth measurement:
     //   - enforceServiceBitrate=false → don't cap at platform nominal
     //   - delay.enabled=false         → stream delay would distort timing
@@ -275,21 +406,31 @@ export class AutoConfigService extends Service {
     const mode = this.outputSettingsService.getSettings().mode;
     const userStreamSettings = this.outputSettingsService.getStreamingSettings('horizontal');
     const userEncoderSettings = this.outputSettingsService.getStreamingVideoEncoderSettings(mode);
-    const userAudioEncoder = this.outputSettingsService.getRecordingAudioEncoderSettings();
     const obsAdvancedSettings = this.settingsService.views.values.Advanced;
 
+    // Names must be unique per target — OSN factory instances are keyed by
+    // name, so two targets sharing 'autoconfig-vencoder' would collide.
     const videoEncoder = VideoEncoderFactory.create(
       userStreamSettings.videoEncoder || 'obs_x264',
-      'autoconfig-vencoder',
+      `autoconfig-vencoder-${label}`,
       userEncoderSettings,
     );
-    const audioEncoder = AudioEncoderFactory.create(
-      userAudioEncoder || 'ffmpeg_aac',
-      'autoconfig-aencoder',
-    );
+    if (videoEncoder.lastError) {
+      this.logDiagError(
+        `videoEncoder reported lastError after create (${label})`,
+        videoEncoder.lastError,
+      );
+    }
+
+    // The service factory id MUST match the user's actual streamType, otherwise
+    // service.update() writes (e.g.) rtmp_custom fields onto an rtmp_common
+    // service and OSN silently rejects them — the bandwidth test then sends
+    // no real bytes and V2 reports `no_valid_bandwidth_results`. Default to
+    // rtmp_common only when streamType is missing.
+    const serviceType = streamSettings.streamType || 'rtmp_common';
     const service = ServiceFactory.create(
-      'rtmp_common',
-      'autoconfig-service',
+      serviceType,
+      `autoconfig-service-${label}`,
       ServiceFactory.legacySettings.settings,
     );
     service.update(streamSettings);
@@ -306,6 +447,42 @@ export class AutoConfigService extends Service {
     network.enableOptimizations = obsAdvancedSettings.NewSocketLoopEnable;
     network.enableLowLatency = obsAdvancedSettings.LowLatencyEnable;
 
+    // Diagnostic-only signal handler shared between flavours. V2 autoconfig
+    // drives the test via InitializeAutoConfig's progress callback; this hook
+    // just surfaces any stream-level signals (start/stop/error) into our log
+    // so we can see them if something unexpected happens during the test.
+    const signalHandler = (signal: EOutputSignal) => {
+      this.logDiag(`temp stream signal [${label}]: type=${signal.type} signal=${signal.signal} code=${signal.code}` +
+        (signal.error ? ` error=${signal.error}` : ''));
+    };
+
+    if (mode === 'Advanced') {
+      const stream = AdvancedStreamingFactory.create();
+      stream.video = this.videoSettingsService.contexts.horizontal;
+      stream.videoEncoder = videoEncoder;
+      stream.service = service;
+      stream.delay = delay;
+      stream.reconnect = reconnect;
+      stream.network = network;
+      stream.enforceServiceBitrate = false; // override: see header comment
+      // Advanced streams use global audio tracks rather than a per-stream
+      // audioEncoder. Track 1 is the horizontal default in the real go-live
+      // path (streaming.ts:1865). Rescaling is left off so the bandwidth
+      // test runs at canvas resolution.
+      stream.audioTrack = 1;
+      stream.rescaling = false;
+      stream.signalHandler = signalHandler;
+      return { mode: 'Advanced', stream, service, videoEncoder, label };
+    }
+
+    // Simple mode: needs an explicit audio encoder on the stream object plus
+    // the simple-only useAdvanced/customEncSettings (raw x264 opts) bridge.
+    const userAudioEncoder = this.outputSettingsService.getRecordingAudioEncoderSettings();
+    const audioEncoder = AudioEncoderFactory.create(
+      userAudioEncoder || 'ffmpeg_aac',
+      `autoconfig-aencoder-${label}`,
+    );
+
     const stream = SimpleStreamingFactory.create();
     stream.video = this.videoSettingsService.contexts.horizontal;
     stream.videoEncoder = videoEncoder;
@@ -316,42 +493,41 @@ export class AutoConfigService extends Service {
     stream.network = network;
     stream.enforceServiceBitrate = false; // override: see header comment
 
-    // Simple-mode-only fields — `useAdvanced=true` lets `customEncSettings`
-    // (the raw x264 opts string) flow into the simple x264 path. Mirroring
-    // these makes the test encoder match the user's go-live behavior.
-    if (mode === 'Simple') {
-      // ISimpleStreamingOutputSettings is file-local in output-settings.ts so
-      // we narrow with a local shape cast rather than a cross-file export.
-      const simpleSettings = userStreamSettings as {
-        useAdvanced?: boolean;
-        customEncSettings?: string;
-      };
-      if (simpleSettings.useAdvanced != null) stream.useAdvanced = simpleSettings.useAdvanced;
-      if (simpleSettings.customEncSettings != null) {
-        stream.customEncSettings = simpleSettings.customEncSettings;
-      }
+    // ISimpleStreamingOutputSettings is file-local in output-settings.ts so
+    // we narrow with a local shape cast rather than a cross-file export.
+    const simpleSettings = userStreamSettings as {
+      useAdvanced?: boolean;
+      customEncSettings?: string;
+    };
+    if (simpleSettings.useAdvanced != null) stream.useAdvanced = simpleSettings.useAdvanced;
+    if (simpleSettings.customEncSettings != null) {
+      stream.customEncSettings = simpleSettings.customEncSettings;
     }
 
-    // Diagnostic-only signal handler. V2 autoconfig drives the test via
-    // InitializeAutoConfig's progress callback; this hook just surfaces any
-    // stream-level signals (e.g. start/stop/error) into our log so we can see
-    // them if something unexpected happens during the test.
-    stream.signalHandler = (signal: EOutputSignal) => {
-      this.logDiag(`temp stream signal: type=${signal.type} signal=${signal.signal} code=${signal.code}` +
-        (signal.error ? ` error=${signal.error}` : ''));
-    };
+    stream.signalHandler = signalHandler;
 
-    return { stream, service, videoEncoder, audioEncoder };
+    return { mode: 'Simple', stream, service, videoEncoder, audioEncoder, label };
   }
 
-  private disposeTempStream() {
-    if (!this.tempStream) return;
-    try { this.tempStream.stream.stop(true); } catch {}
-    try { SimpleStreamingFactory.destroy(this.tempStream.stream); } catch {}
-    try { ServiceFactory.destroy(this.tempStream.service); } catch {}
-    try { this.tempStream.videoEncoder.release(); } catch {}
-    try { this.tempStream.audioEncoder.release(); } catch {}
-    this.tempStream = null;
+  private disposeTempStreams() {
+    for (const t of this.tempStreams) {
+      try { t.stream.stop(true); } catch {}
+      try {
+        if (t.mode === 'Advanced') {
+          AdvancedStreamingFactory.destroy(t.stream as IAdvancedStreaming);
+        } else {
+          SimpleStreamingFactory.destroy(t.stream as ISimpleStreaming);
+        }
+      } catch {}
+      try { ServiceFactory.destroy(t.service); } catch {}
+      try { t.videoEncoder.release(); } catch {}
+      if (t.audioEncoder) {
+        try { t.audioEncoder.release(); } catch {}
+      }
+    }
+    this.tempStreams = [];
+    this.targetIdToLabel.clear();
+    this.pickedBitrates = [];
   }
 
   private emit(progress: IConfigProgress) {
@@ -359,31 +535,56 @@ export class AutoConfigService extends Service {
   }
 
   /**
-   * Read what V2 autoconfig wrote into our temp encoder and persist it back to
-   * the user's output settings. Without this, the chosen bitrate vanishes when
-   * the temp encoder is released and the UI keeps showing the pre-test value.
-   * Only `bitrate` is applied today — extend if logs show V2 mutating other
-   * fields we care about.
+   * Persist V2 autoconfig's chosen bitrate back to the user's output settings.
+   * Without this, the chosen bitrate vanishes when the temp encoders are
+   * released and the UI keeps showing the pre-test value.
+   *
+   * Multi-target: prefer `min(...selection_decision.picked)` across all
+   * targets — the user's encoder has a single global bitrate, and we don't
+   * want to overrun the narrowest pipe. Falls back to reading the first
+   * target's encoder.settings if no `selection_decision` events arrived
+   * (e.g. older OSN), to preserve the single-target behavior.
    */
   private persistAutoConfigEncoderResults() {
     if (!this.chainMode || this.chainMode !== 'streaming') return;
-    if (!this.tempStream) {
-      this.logDiagError('no temp stream to read results from');
+    if (this.tempStreams.length === 0) {
+      this.logDiagError('no temp streams to read results from');
       return;
     }
 
     const beforeStreaming = this.outputSettingsService.getSettings().streaming;
-    const newEncoderSettings = this.tempStream.videoEncoder.settings ?? {};
-    const newAudioBitrate = this.tempStream.audioEncoder.bitrate;
+    let chosenBitrate: number | undefined;
+    let source: 'selection_decision_min' | 'encoder_fallback' | 'none';
+
+    if (this.pickedBitrates.length > 0) {
+      chosenBitrate = Math.min(...this.pickedBitrates);
+      source = 'selection_decision_min';
+      this.logDiag('per-target picks (kbps)', {
+        labels: this.tempStreams.map(t => t.label),
+        picks: this.pickedBitrates,
+        chosen: chosenBitrate,
+      });
+    } else {
+      // Fallback: read whatever V2 wrote into the first target's encoder.
+      const first = this.tempStreams[0];
+      const fallbackSettings = first.videoEncoder.settings ?? {};
+      chosenBitrate = typeof fallbackSettings.bitrate === 'number' ? fallbackSettings.bitrate : undefined;
+      source = chosenBitrate !== undefined ? 'encoder_fallback' : 'none';
+      this.logDiag('no selection_decision events; falling back to first target encoder', {
+        firstTargetLabel: first.label,
+        fallbackBitrate: chosenBitrate,
+      });
+    }
+
     this.logDiag('V2 results to persist', {
-      videoEncoderSettings: newEncoderSettings,
-      audioEncoderBitrate: newAudioBitrate,
+      source,
+      chosenBitrate,
       beforeStreaming,
     });
 
-    if (newEncoderSettings.bitrate != null && newEncoderSettings.bitrate !== beforeStreaming.bitrate) {
+    if (chosenBitrate != null && chosenBitrate !== beforeStreaming.bitrate) {
       this.outputSettingsService.setSettings({
-        streaming: { bitrate: newEncoderSettings.bitrate },
+        streaming: { bitrate: chosenBitrate },
       });
     }
 
@@ -422,16 +623,19 @@ export class AutoConfigService extends Service {
     // must fire first. It also means snapshotEncoderSettings('AFTER') in the
     // UI reads the post-persist values, which is what dev expects.
     if (progress.event === 'done') {
-      // V2 mutates the temp encoder we own (autoconfig-vencoder) — bitrate and
-      // anything else applyResults touched live there until we release it. Read
-      // those values back and persist BEFORE disposeTempStream() releases it,
-      // otherwise the user's stored settings stay at whatever they were before.
+      // V2 mutates the temp encoders we own (autoconfig-vencoder-*) — bitrate
+      // and anything else applyResults touched live there until we release them.
+      // Read those values back (or, in multi-target mode, aggregate from the
+      // collected selection_decision events) and persist BEFORE
+      // disposeTempStreams() releases them, otherwise the user's stored
+      // settings stay at whatever they were before.
       this.persistAutoConfigEncoderResults();
 
-      // Video context: V2 mutates server-side OSN state directly; reads of
-      // contexts[*].video are live IPC getters, so migrateAutoConfigSettings
-      // reads fresh values. obs_set_video_info applies width/height live, but
-      // FPS requires canvas destroy+recreate (handled inside the migration).
+      // Video context: V2 mutates server-side OSN state directly. The OSN
+      // client no longer caches canvas getters, so reads of contexts[*].video
+      // and .legacySettings inside migrateAutoConfigSettings see fresh values.
+      // obs_set_video_info applies width/height live, but FPS requires canvas
+      // destroy+recreate (handled inside the migration).
       this.videoSettingsService.migrateAutoConfigSettings();
 
       this.fetchAndEmitSummary();
@@ -453,11 +657,11 @@ export class AutoConfigService extends Service {
         obs.NodeObs.StartSaveSettings();
       }
     } else if (progress.event === 'done') {
-      this.disposeTempStream();
+      this.disposeTempStreams();
       obs.NodeObs.TerminateAutoConfig();
       this.chainMode = null;
     } else if (progress.event === 'error') {
-      this.disposeTempStream();
+      this.disposeTempStreams();
       obs.NodeObs.TerminateAutoConfig();
       this.chainMode = null;
     }
@@ -477,15 +681,42 @@ export class AutoConfigService extends Service {
       return;
     }
 
-    this.logDiag(progress.event, data);
+    // For per-target events, resolve the target label and surface it in the
+    // diag log alongside the raw payload. We assume targetId == array index
+    // of the streams we passed to InitializeAutoConfig; warn loudly if it's
+    // out of range so the assumption is easy to spot when wrong.
+    const dataObj = data as { targetId?: number };
+    const targetId = typeof dataObj?.targetId === 'number' ? dataObj.targetId : undefined;
+    let targetLabel: string | undefined;
+    if (
+      targetId !== undefined &&
+      (progress.event === 'bandwidth_result' || progress.event === 'selection_decision')
+    ) {
+      targetLabel = this.targetIdToLabel.get(targetId);
+      if (targetLabel === undefined) {
+        this.logDiagError(
+          `V2 ${progress.event} reported targetId=${targetId} outside known range ` +
+            `[0, ${this.tempStreams.length}); the array-index assumption may be wrong`,
+        );
+      }
+    }
+    this.logDiag(progress.event + (targetLabel ? ` [${targetLabel}]` : ''), data);
 
     switch (progress.event) {
       case 'bandwidth_result':
         this.bandwidthResult.next(data as IBandwidthResult);
         break;
-      case 'selection_decision':
-        this.selectionDecision.next(data as ISelectionDecision);
+      case 'selection_decision': {
+        const sel = data as ISelectionDecision;
+        // Collect each target's chosen bitrate. On `done`, the persist step
+        // takes min(...) since the user has a single global encoder bitrate
+        // and we don't want to overrun the narrowest target.
+        if (typeof sel.picked === 'number' && sel.picked > 0) {
+          this.pickedBitrates.push(sel.picked);
+        }
+        this.selectionDecision.next(sel);
         break;
+      }
       case 'video_decision':
         this.videoDecision.next(data as IVideoDecision);
         break;
