@@ -98,12 +98,20 @@ class LiveDockController {
     return this.chatTabs.length > 1;
   }
 
+  get enabledPlatforms() {
+    return this.streamingService.views.enabledPlatforms;
+  }
+
   get defaultPlatformChatVisible() {
     return this.store.selectedChat === 'default';
   }
 
   get restreamChatUrl() {
     return this.restreamService.chatUrl;
+  }
+
+  get primaryPlatform(): TPlatform | undefined {
+    return this.userService.state.auth?.primaryPlatform;
   }
 
   get chatApps(): ILoadedApp[] {
@@ -122,9 +130,15 @@ class LiveDockController {
         this.streamingService.views.hasMultipleTargetsEnabled) ||
       this.hasDifferentDualOutputPlatforms;
 
+    // Mirror streaming-view's chatUrl resolution so the label matches the chat that actually mounts.
+    const authPrimary = this.userService.state.auth.primaryPlatform;
+    const chatPrimary = this.enabledPlatforms.includes(authPrimary)
+      ? authPrimary
+      : this.enabledPlatforms[0];
+
     const tabs: { name: string; value: string }[] = [
       {
-        name: getPlatformService(this.userService.state.auth.primaryPlatform).displayName,
+        name: getPlatformService(chatPrimary).displayName,
         value: 'default',
       },
     ].concat(
@@ -291,6 +305,8 @@ function LiveDock() {
     pageSlot,
     liveText,
     streamingStatus,
+    enabledPlatforms,
+    primaryPlatform,
   } = useVuex(() =>
     pick(ctrl, [
       'isStreaming',
@@ -303,6 +319,8 @@ function LiveDock() {
       'liveText',
       'hasLiveDockFeature',
       'streamingStatus',
+      'enabledPlatforms',
+      'primaryPlatform',
     ]),
   );
 
@@ -348,12 +366,16 @@ function LiveDock() {
     });
   }
 
+  const primaryStreaming = useMemo(() => {
+    return enabledPlatforms.some(platform => platform === primaryPlatform);
+  }, [enabledPlatforms, primaryPlatform]);
+
   const chat = useMemo(() => {
-    const primaryChat = Services.UserService.state.auth!.primaryPlatform;
+    const primaryChat = primaryStreaming ? primaryPlatform : (enabledPlatforms[0] as TPlatform);
 
-    const service = getPlatformService(primaryChat);
+    const service = getPlatformService(primaryChat!);
 
-    if (!service.hasCapability('chat')) {
+    if (!service.hasCapability('chat') && !hasLiveDockFeature('chat-offline')) {
       return <OfflineChat chatEnabled={false} primaryPlatform={primaryChat} />;
     }
 
@@ -365,7 +387,7 @@ function LiveDock() {
         setChat={setChat}
       />
     );
-  }, [Services.UserService.state.auth!.primaryPlatform, visibleChat]);
+  }, [primaryPlatform, enabledPlatforms, visibleChat, isStreaming, isRestreaming]);
 
   return (
     <div className={styles.liveDock}>
@@ -452,6 +474,7 @@ function LiveDock() {
         {/* Although technically there are no style blocking elements here we want it to mirror
           the behavior of our chat pane */}
         {!hideStyleBlockers &&
+          !hasLiveDockFeature('chat-offline') &&
           (!ctrl.platform || (hasLiveDockFeature('chat-streaming') && !isStreaming)) && (
             <OfflineChat chatEnabled={true} primaryPlatform={ctrl.platform} />
           )}

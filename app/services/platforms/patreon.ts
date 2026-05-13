@@ -140,12 +140,11 @@ export class PatreonService
 
   get mergeUrl(): string {
     const host = this.hostsService.streamlabs;
-    // return `https://${host}/dashboard#/settings/account-settings/platforms`;
     return `https://${host}/slobs/merge/${this.userService.apiToken}/patreon_account`;
   }
 
   get chatUrl() {
-    return this.streamPageUrl as string;
+    return '';
   }
 
   get streamPageUrl() {
