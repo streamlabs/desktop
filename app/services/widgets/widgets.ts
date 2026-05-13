@@ -26,7 +26,7 @@ import { getWidgetsConfig, IWidgetConfig } from './widgets-config';
 import { WidgetDisplayData } from '.';
 import { DualOutputService } from 'services/dual-output';
 import { TDisplayType, VideoSettingsService } from 'services/settings-v2';
-import { IncrementalRolloutService, VisionService } from 'app-services';
+import { IncrementalRolloutService } from 'app-services';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 import { UsageStatisticsService } from 'services/usage-statistics';
 
@@ -88,7 +88,6 @@ export class WidgetsService
   @Inject() videoSettingsService: VideoSettingsService;
   @Inject() incrementalRolloutService: IncrementalRolloutService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
-  @Inject() private visionService: VisionService;
 
   widgetDisplayData = WidgetDisplayData(); // cache widget display data
 
@@ -202,11 +201,13 @@ export class WidgetsService
       },
     );
 
+    if (isWidgetConfig(type, widget) && widget.postInstall) {
+      widget.postInstall();
+    }
+
     this.usageStatisticsService.recordAnalyticsEvent('WidgetAdded', {
       type: WidgetType[type],
     });
-
-    this.widgetAdded.next(widget);
 
     return item;
   }
@@ -340,11 +341,7 @@ export class WidgetsService
   private register(sourceId: string) {
     const source = this.sourcesService.views.getSource(sourceId);
     if (source.getPropertiesManagerType() !== 'widget') return;
-    const widgetType = source.getPropertiesManagerSettings().widgetType as WidgetType;
-
-    if (widgetType === WidgetType.GamePulseWidget) {
-      this.visionService.ensureRunning();
-    }
+    const widgetType = source.getPropertiesManagerSettings().widgetType;
 
     this.ADD_WIDGET_SOURCE({
       sourceId: source.sourceId,
@@ -543,8 +540,6 @@ export class WidgetsService
       .then(handleResponse);
   }
 
-  // TODO: Once remaining widgets are moved to the new react model, remove IWidget and just use IWidgetConfig.
-  widgetAdded = new Subject<IWidget | IWidgetConfig>();
   settingsInvalidated = new Subject();
 
   /**

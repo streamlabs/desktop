@@ -43,7 +43,7 @@ import { SmartBrowserSourceManager } from './properties-managers/smart-browser-s
 import { StreamlabelsManager } from './properties-managers/streamlabels-manager';
 import { WidgetManager } from './properties-managers/widget-manager';
 import { SourceDisplayData } from './sources-data';
-import { ReactiveDataService, VisionService } from 'app-services';
+import { ReactiveDataService } from 'app-services';
 import { IReactiveDataEditorProps } from 'components-react/windows/reactive-data-editor/types';
 
 export { EDeinterlaceFieldOrder, EDeinterlaceMode } from '../../../obs-api';
@@ -200,7 +200,6 @@ export class SourcesService extends StatefulService<ISourcesState> {
   @Inject() private incrementalRolloutService: IncrementalRolloutService;
   @Inject() private guestCamService: GuestCamService;
   @Inject() private reactiveDataService: ReactiveDataService;
-  @Inject() private visionService: VisionService;
 
   sourceDisplayData = SourceDisplayData(); // cache source display data
 
@@ -431,10 +430,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
       this.usageStatisticsService.recordFeatureUsage('GameCapture');
     } else if (type === 'spout_capture') {
       this.usageStatisticsService.recordFeatureUsage('SpoutCapture');
-    } else if (type === 'smart_browser_source') {
-      this.visionService.ensureRunning();
     }
-
     const managerKlass = PROPERTIES_MANAGER_TYPES[managerType];
     this.propertiesManagers[id] = {
       manager: new managerKlass(obsInput, options.propertiesManagerSettings || {}, id),
