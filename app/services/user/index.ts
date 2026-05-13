@@ -313,6 +313,12 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   @Inject('TikTokService') tiktokService: TikTokService;
 
   setPrimaryPlatform(platform: TPlatform) {
+    // Patreon and Instagram cannot be primary platforms — they can only be merged
+    // into an existing account, never logged in with directly. Several code paths
+    // (stream-shift go-live, switchPlatforms, etc.) pick `targets[0]`/`enabledPlatforms[0]`
+    // without filtering, which would otherwise leave chat resolving to Patreon's
+    // stream-page placeholder.
+    if (platform === 'patreon' || platform === 'instagram') return;
     this.SET_PRIMARY_PLATFORM(platform);
   }
 
