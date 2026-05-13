@@ -69,7 +69,7 @@ export function Connect() {
   // streamlabs and trovo are added separarely on markup below
   const platforms: TPlatform[] = RecordingModeService.views.isRecordingModeEnabled
     ? ['youtube']
-    : ['twitch', 'youtube', 'tiktok', 'kick', 'facebook', 'twitter'];
+    : ['twitch', 'youtube', 'tiktok', 'kick', 'facebook'];
 
   const shouldAddTrovo = !RecordingModeService.views.isRecordingModeEnabled;
 
