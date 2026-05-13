@@ -64,16 +64,16 @@ export class RealmObject {
           throw new Error(`Object with id does not exist: ${this._initWithId}`);
         }
 
-        // TODO: Make this better
-        // We might already be in a write transaction
-        try {
+        // The setter on dynamically-defined properties accesses `realmModel` from inside
+        // an existing `db.write(...)` callback, so creating the backing model here may run
+        // inside an open transaction. Skip the wrapping `write` in that case to avoid "Realm
+        // is already in a write transaction" errors
+        if (this.db.isInTransaction) {
+          this._realmModel = this.db.create(this.schema.name, {});
+        } else {
           this.db.write(() => {
             this._realmModel = this.db.create(this.schema.name, {});
           });
-        } catch (e: unknown) {
-          // We want to surface legit errors in db/schema config
-          console.log(e);
-          this._realmModel = this.db.create(this.schema.name, {});
         }
 
         this.onCreated();
