@@ -38,6 +38,7 @@ interface IOnboardingInitialization {
 type TNavigationModifier =
   | 'recordingMode'
   | 'loggedIn'
+  | 'isPartialSLAuth'
   | 'isUltra'
   | 'obsInstalled'
   | 'lessThanTwoPlatforms'
@@ -159,7 +160,7 @@ class OnboardingPath {
       // TODO: This is gross since there are 3 optional steps after Login but before Devices
       // and each one can lead to either of the others in line, there's gotta be a better way
       [EOnboardingSteps.Login]: () => {
-        if (modifiers.loggedIn && modifiers.lessThanTwoPlatforms) {
+        if ((modifiers.loggedIn || modifiers.isPartialSLAuth) && modifiers.lessThanTwoPlatforms) {
           return { name: EOnboardingSteps.ConnectMore };
         }
         if (modifiers.obsInstalled) return { name: EOnboardingSteps.OBSImport };
@@ -252,6 +253,7 @@ export class OnboardingV2Service extends Service {
   get modifiers(): TModifiers {
     return {
       loggedIn: this.userService.views.isLoggedIn,
+      isPartialSLAuth: this.userService.views.isPartialSLAuth,
       isUltra: this.userService.views.isPrime,
       recordingMode: this.recordingModeService.views.isRecordingModeEnabled,
       obsInstalled: this.obsImporterService.views.isOBSinstalled(),
@@ -272,20 +274,6 @@ export class OnboardingV2Service extends Service {
   }
 
   showOnboarding() {
-    if (Utils.env.SLD_FORCE_ONBOARDING_STEP !== undefined) {
-      const isValidStep = Object.values(EOnboardingSteps).some(
-        step => step === Utils.env.SLD_FORCE_ONBOARDING_STEP,
-      );
-
-      if (isValidStep) {
-        this.initalizeView({
-          startingStep: { name: Utils.env.SLD_FORCE_ONBOARDING_STEP as EOnboardingSteps },
-          isSingleton: true,
-        });
-        return;
-      }
-    }
-
     this.initalizeView({
       startingStep: { name: EOnboardingSteps.Splash, isSkippable: false, isClosable: false },
       isSingleton: false,
