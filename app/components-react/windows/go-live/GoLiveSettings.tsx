@@ -19,10 +19,8 @@ import cx from 'classnames';
 import StreamShiftToggle from 'components-react/shared/StreamShiftToggle';
 import { CaretDownOutlined } from '@ant-design/icons';
 import Tooltip from 'components-react/shared/Tooltip';
-import * as remote from '@electron/remote';
 import { inject } from 'slap';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
-import { MagicLinkService } from 'services/magic-link';
 import { SettingsService } from 'services/settings';
 import Translate from 'components-react/shared/Translate';
 import { maxNumPlatforms } from 'services/platforms';
@@ -54,12 +52,11 @@ export default function GoLiveSettings() {
     isDualOutputSwitchDisabled,
     canStreamDualOutput,
     setPrimaryChat,
-    openPlatformSettings,
+    addDestination,
   } = useGoLiveSettings().extend(module => {
     return {
       videoEncodingOptimizationService: inject(VideoEncodingOptimizationService),
       settingsService: inject(SettingsService),
-      magicLinkService: inject(MagicLinkService),
 
       get canAddDestinations() {
         const linkedPlatforms = module.state.linkedPlatforms;
@@ -95,17 +92,6 @@ export default function GoLiveSettings() {
         // canUseOptimizedProfile:
         //   VideoEncodingOptimizationService.state.canSeeOptimizedProfile ||
         //   VideoEncodingOptimizationService.state.useOptimizedProfile,
-      },
-
-      async openPlatformSettings() {
-        try {
-          const link = await this.magicLinkService.getDashboardMagicLink(
-            'settings/account-settings/platforms',
-          );
-          remote.shell.openExternal(link);
-        } catch (e: unknown) {
-          console.error('Error generating platform settings magic link', e);
-        }
       },
     };
   });
@@ -154,7 +140,7 @@ export default function GoLiveSettings() {
             <AddDestinationButton
               type="small"
               className={styles.columnPadding}
-              onClick={openPlatformSettings}
+              onClick={addDestination}
             />
           )}
 
