@@ -342,6 +342,7 @@
   "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform": "<dualoutput>Dual Output</dualoutput> est activé : tu dois streamer sur une plateforme horizontale et une plateforme verticale.",
   "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.": "Le streaming vers une acquisition personnalisée est une fonctionnalité avancée. Le multistreaming est désactivé pendant le streaming vers une acquisition personnalisée et certaines fonctionnalités peuvent ne plus fonctionner comme prévu. Passe aux paramètres recommandés pour streamer en multistreaming vers une destination RTMP personnalisée.",
   "%{platform} Error": "%{platform} Error",
+  "Chat is not supported for %{platform}": "Chat is not supported for %{platform}",
   "An unknown Recording error occurred. Please try again.": "An unknown Recording error occurred. Please try again.",
   "An unknown Replay Buffer error occurred. Please try again.": "An unknown Replay Buffer error occurred. Please try again.",
   "Recording in progress. Stop recording to change the recording display.": "Recording in progress. Stop recording to change the recording display.",
