@@ -7,12 +7,12 @@ import cx from 'classnames';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
 import commonStyles from './Common.m.less';
 import { $t } from 'services/i18n';
-import { confirmAsync } from 'components-react/modals';
+import { promptAction } from 'components-react/modals';
 import Form from 'components-react/shared/inputs/Form';
 import { ListInput } from 'components-react/shared/inputs';
 import { Button } from 'antd';
 import { Services } from 'components-react/service-provider';
-import { useVuex, useWatchVuex } from 'components-react/hooks';
+import { useVuex } from 'components-react/hooks';
 
 export function PrimaryPlatformSelect() {
   const { UserService, OnboardingService } = Services;
@@ -22,7 +22,18 @@ export function PrimaryPlatformSelect() {
     isPrime: UserService.state.isPrime,
   }));
   const { loading, authInProgress, authPlatform, finishSLAuth } = useModule(LoginModule);
-  const platforms = ['twitch', 'youtube', 'tiktok', 'kick', 'facebook', 'twitter', 'trovo'];
+
+  // Note: Patreon is intentionally left out of the platform options since it cannot
+  // be a primary platform if there are other platforms linked
+  const platforms: TPlatform[] = [
+    'twitch',
+    'youtube',
+    'tiktok',
+    'kick',
+    'facebook',
+    'twitter',
+    'trovo',
+  ];
   const platformOptions = [
     {
       value: 'twitch',
@@ -66,6 +77,9 @@ export function PrimaryPlatformSelect() {
     platformOptions.length ? platformOptions[0].value : '',
   );
 
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshAttempted, setRefreshAttempted] = useState(false);
+
   // There's probably a better way to do this
   useEffect(() => {
     /*
@@ -82,8 +96,29 @@ export function PrimaryPlatformSelect() {
     // TODO: This is probably dead code now
     if (linkedPlatforms.length) {
       setSelectedPlatform(linkedPlatforms[0]);
+      return;
+    }
+
+    // The user has an SLID but we see no linked platforms, which can happen when
+    // `fetchLinkedPlatforms` silently fails. Try once more before falling back to
+    // the "Connect a Content Platform" UI, which would otherwise ask them to
+    // reconnect platforms they may already have linked server-side.
+    if (!refreshAttempted) {
+      setRefreshAttempted(true);
+      refreshLinkedPlatforms();
     }
   }, [linkedPlatforms.length, isPrime]);
+
+  async function refreshLinkedPlatforms() {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await UserService.actions.return.updateLinkedPlatforms();
+    } finally {
+      // If linked platforms were successfully refreshed, the "Select a Primary Platform" will show
+      setRefreshing(false);
+    }
+  }
 
   // You may be confused why this component doesn't ever call `next()` to
   // continue to the next step.  The index-based step system makes this more
@@ -100,18 +135,21 @@ export function PrimaryPlatformSelect() {
   }
 
   async function onSkip() {
-    const result = await confirmAsync({
+    await promptAction({
       title: $t('Log Out?'),
-      content: $t(
+      message: $t(
         'Streamlabs Desktop requires that you have a connected platform account in order to use all of its features. By skipping this step, you will be logged out and some features may be unavailable.',
       ),
-      okText: $t('Log Out'),
+      btnText: $t('Log Out'),
+      btnType: 'primary',
+      cancelBtnPosition: 'left',
+      fn: () => {
+        finishSLAuth();
+        OnboardingService.actions.finish();
+      },
+      secondaryActionText: $t('Refresh Platforms'),
+      secondaryActionFn: refreshLinkedPlatforms,
     });
-
-    if (result) {
-      await finishSLAuth();
-      if (isLogin) OnboardingService.actions.finish();
-    }
   }
 
   async function selectPrimary(primary?: TPlatform) {
@@ -125,7 +163,9 @@ export function PrimaryPlatformSelect() {
     return (
       <div className={styles.pageContainer}>
         <div className={styles.container}>
-          <h1 className={commonStyles.titleContainer}>{$t('Select a Primary Platform')}</h1>
+          <h1 className={commonStyles.titleContainer} style={{ marginTop: '0px !important' }}>
+            {$t('Select a Primary Platform')}
+          </h1>
           <p style={{ marginBottom: 30, maxWidth: 400, textAlign: 'center' }}>
             {$t(
               'Your Streamlabs account has multiple connected content platforms. Please select the primary platform you will be streaming to using Streamlabs Desktop.',
