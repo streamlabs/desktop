@@ -43,6 +43,7 @@ export const PatreonEditStreamInfo = InputComponent((p: IPlatformComponentParams
             {...bind.accessRules}
             options={PatreonService.accessRules}
             layout={p.layout}
+            required
           />
         }
       />
