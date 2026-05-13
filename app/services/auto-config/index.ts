@@ -23,7 +23,7 @@ import { OutputSettingsService, SettingsService } from 'services/settings';
 import { getPlatformService, TPlatform } from 'services/platforms';
 import { TwitchService } from 'services/platforms/twitch';
 import { YoutubeService } from 'app-services';
-import { VideoSettingsService } from 'services/settings-v2/video';
+import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import { UserService } from 'services/user';
 import { StreamingService } from 'services/streaming';
 
@@ -37,7 +37,11 @@ export type TConfigEvent =
   | 'bandwidth_result'
   | 'selection_decision'
   | 'video_decision'
-  | 'encoder_detection';
+  | 'encoder_detection'
+  // Periodic CPU/RAM/GPU sampling fired by V2 during each phase.
+  // Informational — do not propagate to configProgress (Optimize.tsx
+  // treats unknown events as errors).
+  | 'resource_usage';
 
 export interface IConfigStep {
   startMethod: string;
@@ -138,6 +142,32 @@ interface ITempStream {
   // For platform-derived streams this is the TPlatform name; for the
   // single-target backward-compat path it's 'primary'.
   label: string;
+  // Pattern to match V2 backend events back to this stream by their
+  // serverTested / appliedServer URL. We can't use OSN's `targetId`
+  // (which is the internal IStreaming uid) because the client bindings
+  // don't expose it — see PLATFORM_SERVER_PATTERNS for the source list.
+  serverPattern: RegExp;
+}
+
+// Server URL hostname patterns per platform. Used to map V2 backend events
+// (`bandwidth_result.serverTested`, `selection_decision.appliedServer`) back
+// to the right ITempStream. We tried mapping by array index first but OSN's
+// `targetId` is the internal `osn::IStreaming` uid (nodeobs_autoconfig.cpp:842),
+// and the client `IStreaming` binding doesn't expose `uid` to JS — so we
+// have no way to predict the targetId before events arrive. The server URL
+// is in every relevant event payload, so pattern-matching it is robust as
+// long as we keep these patterns in sync with each platform's ingest CDN.
+const PLATFORM_SERVER_PATTERNS: Record<'twitch' | 'youtube', RegExp> = {
+  // Twitch's modern ingest CDN domain plus the legacy/general fallback.
+  twitch: /live-video\.net|twitch\.tv/i,
+  // YouTube uses a single ingest hostname per region.
+  youtube: /rtmp\.youtube\.com/i,
+};
+
+// Default audio track per canvas — track 1 for horizontal, track 2 for
+// vertical, matching the real go-live wiring in streaming.ts:1865.
+function audioTrackForDisplay(display: TDisplayType): number {
+  return display === 'horizontal' ? 1 : 2;
 }
 
 // Per-platform connection info. Built inline in start() so we don't have to
@@ -174,17 +204,26 @@ export class AutoConfigService extends Service {
 
   private chainMode: 'streaming' | 'recording' | null = null;
   // Multi-target: one entry per stream we passed to InitializeAutoConfig, in
-  // the same order. `targetIdToLabel` maps the V2 backend's reported targetId
-  // back to a human label so per-target events are intelligible. Assumption:
-  // V2's targetId equals the array index of the stream we passed; validated
-  // at runtime in handleV2PayloadEvent (warns if out of range).
+  // the same order. V2 backend events are mapped back to a tempStream by
+  // matching the event's server URL against each tempStream's serverPattern
+  // — see resolveTempStreamByServer().
   private tempStreams: ITempStream[] = [];
-  private targetIdToLabel = new Map<number, string>();
   // Each `selection_decision` event contributes one `picked` (kbps). On done,
   // we persist min(...) — the narrowest pipe wins, since the user has a
   // single global encoder bitrate. Empty when the event never fired (e.g.
   // pre-V2 OSN), in which case persist falls back to reading the encoder.
   private pickedBitrates: number[] = [];
+
+  /**
+   * Map a V2 backend event back to the tempStream it concerns, by URL.
+   * Used for both `bandwidth_result.serverTested` and
+   * `selection_decision.appliedServer`. Returns undefined if the URL is
+   * absent or no tempStream's pattern matches.
+   */
+  private resolveTempStreamByServer(serverUrl: string | undefined): ITempStream | undefined {
+    if (!serverUrl) return undefined;
+    return this.tempStreams.find(t => t.serverPattern.test(serverUrl));
+  }
 
   private logDiag(msg: string, data?: unknown) {
     if (data !== undefined) {
@@ -224,7 +263,6 @@ export class AutoConfigService extends Service {
 
     // Reset multi-target state from any prior run.
     this.tempStreams = [];
-    this.targetIdToLabel.clear();
     this.pickedBitrates = [];
 
     /**
@@ -264,6 +302,21 @@ export class AutoConfigService extends Service {
       return;
     }
 
+    // Resolve which canvas each platform streams from. In dual output the user
+    // can route different platforms to different displays (e.g. Twitch on
+    // vertical, YouTube on horizontal); the temp stream MUST bind to the same
+    // canvas the real go-live would use, otherwise we measure the wrong pipe
+    // and V2 only adjusts the canvas referenced by our streams (see
+    // nodeobs_autoconfig.cpp:2121-2127, which collects canvases from
+    // streamingTargets and dedupes via std::set).
+    const platformDisplays = new Map<'twitch' | 'youtube', TDisplayType>();
+    for (const platform of supportedPlatforms) {
+      platformDisplays.set(platform, this.streamingService.views.getPlatformDisplayType(platform));
+    }
+    this.logDiag('platform display assignments', {
+      assignments: Object.fromEntries(platformDisplays),
+    });
+
     // V2 backend pre-req for Advanced streams: it calls setAudioEncoder()
     // before StartOutput(), which indexes into the GLOBAL audioTracks array
     // (osn-advanced-streaming.cpp:264) and silently returns false if the
@@ -272,24 +325,43 @@ export class AutoConfigService extends Service {
     // connects — which presents as `no_valid_bandwidth_results` after V2's
     // 5-second wait. Audio tracks don't persist across OSN sessions, so on
     // a fresh start (autoconfig usually runs before any go-live in the
-    // session) track 1 doesn't exist yet. Real go-live handles this at
-    // streaming.ts:1866 with the same call. Idempotent, so safe to always
-    // run; no-op for Simple mode (which uses stream.audioEncoder directly).
+    // session) tracks don't exist yet. Real go-live handles this at
+    // streaming.ts:1866 with the same call. Validate every track our targets
+    // will use — track 1 for horizontal, track 2 for vertical (the defaults
+    // from streaming.ts:1865). Idempotent, no-op for Simple mode.
     if (this.outputSettingsService.getSettings().mode === 'Advanced') {
-      await this.streamingService.validateOrCreateAudioTrack(1);
+      const trackIndices = new Set<number>();
+      for (const display of platformDisplays.values()) {
+        trackIndices.add(audioTrackForDisplay(display));
+      }
+      for (const idx of trackIndices) {
+        await this.streamingService.validateOrCreateAudioTrack(idx);
+      }
     }
 
     for (const platform of supportedPlatforms) {
       try {
+        const display = platformDisplays.get(platform)!;
+        // Defensive: if the user has a platform routed to vertical but the
+        // vertical context doesn't exist in this session yet, we'd crash on
+        // contexts[display] in createTempStream. Skip with a warning instead.
+        if (!this.videoSettingsService.contexts?.[display]) {
+          this.logDiagError(
+            `platform ${platform} is routed to display=${display} but that canvas doesn't exist; skipping`,
+          );
+          continue;
+        }
         const perPlatform = await this.prepareStreamSettingsForPlatform(platform);
         if (!perPlatform.key) {
           this.logDiagError(`platform ${platform} returned empty key after prepare; skipping`);
           continue;
         }
-        const tempStream = this.createTempStream(perPlatform, platform);
-        // targetId is assumed to equal the array index of streams we pass to
-        // InitializeAutoConfig — verified at runtime in handleV2PayloadEvent.
-        this.targetIdToLabel.set(this.tempStreams.length, platform);
+        const tempStream = this.createTempStream(
+          perPlatform,
+          platform,
+          PLATFORM_SERVER_PATTERNS[platform],
+          display,
+        );
         this.tempStreams.push(tempStream);
       } catch (e: unknown) {
         this.logDiagError(`failed to prepare platform ${platform}; skipping`, e);
@@ -389,7 +461,12 @@ export class AutoConfigService extends Service {
     obs.NodeObs.StartSetDefaultSettings();
   }
 
-  private createTempStream(streamSettings: IPerPlatformStreamSettings, label: string): ITempStream {
+  private createTempStream(
+    streamSettings: IPerPlatformStreamSettings,
+    label: string,
+    serverPattern: RegExp,
+    display: TDisplayType,
+  ): ITempStream {
     // Seed the temp stream from the user's real streaming config so V2 autoconfig
     // runs *on top of* what's already set (encoder type + settings, network bind
     // flags, simple/advanced-mode specifics) instead of measuring a hardcoded
@@ -458,7 +535,7 @@ export class AutoConfigService extends Service {
 
     if (mode === 'Advanced') {
       const stream = AdvancedStreamingFactory.create();
-      stream.video = this.videoSettingsService.contexts.horizontal;
+      stream.video = this.videoSettingsService.contexts[display];
       stream.videoEncoder = videoEncoder;
       stream.service = service;
       stream.delay = delay;
@@ -466,13 +543,14 @@ export class AutoConfigService extends Service {
       stream.network = network;
       stream.enforceServiceBitrate = false; // override: see header comment
       // Advanced streams use global audio tracks rather than a per-stream
-      // audioEncoder. Track 1 is the horizontal default in the real go-live
-      // path (streaming.ts:1865). Rescaling is left off so the bandwidth
-      // test runs at canvas resolution.
-      stream.audioTrack = 1;
+      // audioEncoder. Track index follows the canvas (track 1 horizontal,
+      // track 2 vertical) — matches real go-live's defaults at
+      // streaming.ts:1865. Rescaling is left off so the bandwidth test
+      // runs at the canvas's own resolution.
+      stream.audioTrack = audioTrackForDisplay(display);
       stream.rescaling = false;
       stream.signalHandler = signalHandler;
-      return { mode: 'Advanced', stream, service, videoEncoder, label };
+      return { mode: 'Advanced', stream, service, videoEncoder, label, serverPattern };
     }
 
     // Simple mode: needs an explicit audio encoder on the stream object plus
@@ -484,7 +562,7 @@ export class AutoConfigService extends Service {
     );
 
     const stream = SimpleStreamingFactory.create();
-    stream.video = this.videoSettingsService.contexts.horizontal;
+    stream.video = this.videoSettingsService.contexts[display];
     stream.videoEncoder = videoEncoder;
     stream.audioEncoder = audioEncoder;
     stream.service = service;
@@ -506,7 +584,7 @@ export class AutoConfigService extends Service {
 
     stream.signalHandler = signalHandler;
 
-    return { mode: 'Simple', stream, service, videoEncoder, audioEncoder, label };
+    return { mode: 'Simple', stream, service, videoEncoder, audioEncoder, label, serverPattern };
   }
 
   private disposeTempStreams() {
@@ -526,7 +604,6 @@ export class AutoConfigService extends Service {
       }
     }
     this.tempStreams = [];
-    this.targetIdToLabel.clear();
     this.pickedBitrates = [];
   }
 
@@ -606,6 +683,16 @@ export class AutoConfigService extends Service {
       return;
     }
 
+    // resource_usage is informational (CPU/RAM/GPU sampling per phase).
+    // Optimize.tsx's `else` branch treats anything that isn't
+    // starting_step/progress/stopping_step/done as an error, so we MUST
+    // intercept it here and not call this.emit() with it. Logged for
+    // diagnostics; not exposed via a typed Subject yet (no consumer needs it).
+    if (progress.event === 'resource_usage') {
+      this.logDiag(`event: resource_usage / ${progress.description}`);
+      return;
+    }
+
     // Trace step transitions in the in-app log (skip per-tick `progress` spam).
     if (progress.event !== 'progress') {
       this.logDiag(`event: ${progress.event} / ${progress.description}`);
@@ -681,22 +768,21 @@ export class AutoConfigService extends Service {
       return;
     }
 
-    // For per-target events, resolve the target label and surface it in the
-    // diag log alongside the raw payload. We assume targetId == array index
-    // of the streams we passed to InitializeAutoConfig; warn loudly if it's
-    // out of range so the assumption is easy to spot when wrong.
-    const dataObj = data as { targetId?: number };
-    const targetId = typeof dataObj?.targetId === 'number' ? dataObj.targetId : undefined;
+    // For per-target events, resolve the target by matching the event's server
+    // URL against each tempStream's serverPattern. OSN's `targetId` is the
+    // internal IStreaming uid (not exposed to JS), so we can't predict it —
+    // the URL is the stable handle. bandwidth_result uses `serverTested`,
+    // selection_decision uses `appliedServer`.
     let targetLabel: string | undefined;
-    if (
-      targetId !== undefined &&
-      (progress.event === 'bandwidth_result' || progress.event === 'selection_decision')
-    ) {
-      targetLabel = this.targetIdToLabel.get(targetId);
-      if (targetLabel === undefined) {
+    if (progress.event === 'bandwidth_result' || progress.event === 'selection_decision') {
+      const urlField = progress.event === 'bandwidth_result' ? 'serverTested' : 'appliedServer';
+      const serverUrl = (data as Record<string, unknown>)?.[urlField] as string | undefined;
+      const match = this.resolveTempStreamByServer(serverUrl);
+      targetLabel = match?.label;
+      if (!targetLabel) {
         this.logDiagError(
-          `V2 ${progress.event} reported targetId=${targetId} outside known range ` +
-            `[0, ${this.tempStreams.length}); the array-index assumption may be wrong`,
+          `V2 ${progress.event}: could not resolve target by ${urlField}="${serverUrl ?? '(missing)'}". ` +
+            `Known patterns: ${this.tempStreams.map(t => `${t.label}=${t.serverPattern}`).join(', ')}`,
         );
       }
     }
