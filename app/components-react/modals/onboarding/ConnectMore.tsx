@@ -33,7 +33,7 @@ export function ConnectMore(p: IOnboardingStepProps) {
       <Header title={$t('Connect Platforms')} description={subtitle} />
       <div className={styles.platformsContainer}>
         {platformCards.map(platform => (
-          <PlatformCard platform={platform} />
+          <PlatformCard key={`${platform}-connect`} platform={platform} />
         ))}
         <div className={cx(styles.centered, styles.platformCard)}>
           <i className="icon-platforms" style={{ fontSize: 32, padding: 8 }} />
