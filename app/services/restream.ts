@@ -453,52 +453,45 @@ export class RestreamService extends StatefulService<IRestreamState> {
         targetInfo.streamKey = `${ttSettings.serverUrl}/${ttSettings.streamKey}`;
       }
 
+      // treat twitter as a custom destination
+      if (platform === 'twitter') {
+        targetInfo.platform = 'relay';
+        targetInfo.streamKey = `${this.twitterService.state.ingest}/${this.twitterService.state.streamKey}`;
+      }
+
+      // treat instagram as a custom destination
+      if (platform === 'instagram') {
+        targetInfo.platform = 'relay';
+        targetInfo.streamKey = `${this.instagramService.state.settings.streamUrl}${this.instagramService.state.streamKey}`;
+      }
+
+      // treat kick as a custom destination
+      if (platform === 'kick') {
+        targetInfo.platform = 'relay';
+        targetInfo.streamKey = `${this.kickService.state.ingest}/${this.kickService.state.streamKey}`;
+      }
+
+      // treat patreon as a custom destination
+      if (platform === 'patreon') {
+        targetInfo.platform = 'patreon';
+        targetInfo.streamKey = `${this.patreonService.state.ingest}/${this.patreonService.state.streamKey}`;
+      }
+
       // reassign platforms to displays if in dual output mode
       if (isDualOutputMode) {
-        const modesToRestream = this.streamInfo.displaysToRestream.map(display =>
-          this.getMode(display),
-        );
+        const mode = this.getPlatformMode(platform) ?? 'landscape';
 
-        // treat twitter as a custom destination
-        if (platform === 'twitter') {
-          targetInfo.platform = 'relay';
-          targetInfo.streamKey = `${this.twitterService.state.ingest}/${this.twitterService.state.streamKey}`;
+        // Add platform if the display is being restreamed in dual output mode
+        if (modesToRestream.includes(mode)) {
+          // In order to restream a platform to a display in dual output mode,
+          // assign the platform to a `mode`, which denotes the display context
+          platforms.push({ ...targetInfo, mode });
         }
-
-        // treat instagram as a custom destination
-        if (platform === 'instagram') {
-          targetInfo.platform = 'relay';
-          targetInfo.streamKey = `${this.instagramService.state.settings.streamUrl}${this.instagramService.state.streamKey}`;
-        }
-
-        // treat kick as a custom destination
-        if (platform === 'kick') {
-          targetInfo.platform = 'relay';
-          targetInfo.streamKey = `${this.kickService.state.ingest}/${this.kickService.state.streamKey}`;
-        }
-
-        // treat patreon as a custom destination
-        if (platform === 'patreon') {
-          targetInfo.platform = 'patreon';
-          targetInfo.streamKey = `${this.patreonService.state.ingest}/${this.patreonService.state.streamKey}`;
-        }
-
-        // reassign platforms to displays if in dual output mode
-        if (isDualOutputMode) {
-          const mode = this.getPlatformMode(platform) ?? 'landscape';
-
-          // Add platform if the display is being restreamed in dual output mode
-          if (modesToRestream.includes(mode)) {
-            // In order to restream a platform to a display in dual output mode,
-            // assign the platform to a `mode`, which denotes the display context
-            platforms.push({ ...targetInfo, mode });
-          }
-        } else {
-          platforms.push({ ...targetInfo, mode: 'landscape' as TOutputOrientation });
-        }
-
-        return platforms;
+      } else {
+        platforms.push({ ...targetInfo, mode: 'landscape' as TOutputOrientation });
       }
+
+      return platforms;
     }, []);
   }
 
