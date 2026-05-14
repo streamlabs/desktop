@@ -382,7 +382,7 @@ function LiveDock() {
 
     const service = getPlatformService(primaryChat!);
 
-    if (!service.hasCapability('chat') && !hasLiveDockFeature('chat-offline')) {
+    if (!service.hasCapability('chat') && !service.hasLiveDockFeature('chat-offline')) {
       return <OfflineChat chatEnabled={false} primaryPlatform={primaryChat} />;
     }
 
