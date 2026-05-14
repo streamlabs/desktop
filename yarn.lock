@@ -3446,13 +3446,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/semver@npm:^7.3.6":
-  version: 7.7.1
-  resolution: "@types/semver@npm:7.7.1"
-  checksum: 76d218e414482a398148d5c28f2bfa017108869f3fc18cda379c9d8d062348f8b9653ae2fa8642d3b5b52e211928fe8be34f22da4e1f08245c84e0e51e040673
-  languageName: node
-  linkType: hard
-
 "@types/socket.io-client@npm:1.4.32":
   version: 1.4.32
   resolution: "@types/socket.io-client@npm:1.4.32"
@@ -5469,13 +5462,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"builder-util-runtime@npm:8.9.2":
-  version: 8.9.2
-  resolution: "builder-util-runtime@npm:8.9.2"
+"builder-util-runtime@npm:9.6.0":
+  version: 9.6.0
+  resolution: "builder-util-runtime@npm:9.6.0"
   dependencies:
-    debug: ^4.3.2
+    debug: ^4.3.4
     sax: ^1.2.4
-  checksum: 35adcd6162e2ed16635ff7b7ecc353e400dcbbb3e7cd01823bfefc7256cefca8c820f62d15a0f7dbee1c7495a5f1fba4e0e238857a79b48d5f6bd35064f27208
+  checksum: 79082932f2494b0f922907f8e5af0f1279ed9e0f871421da7dca841e5011570dd5e337f7f336f6735588bac838c8cfbb702a421acef5b58b885c29bfea03cb1f
   languageName: node
   linkType: hard
 
@@ -7264,19 +7257,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-updater@npm:^4.2.0":
-  version: 4.6.5
-  resolution: "electron-updater@npm:4.6.5"
+"electron-updater@npm:^6.0.0":
+  version: 6.8.5
+  resolution: "electron-updater@npm:6.8.5"
   dependencies:
-    "@types/semver": ^7.3.6
-    builder-util-runtime: 8.9.2
-    fs-extra: ^10.0.0
+    builder-util-runtime: 9.6.0
+    fs-extra: ^10.1.0
     js-yaml: ^4.1.0
     lazy-val: ^1.0.5
     lodash.escaperegexp: ^4.1.2
     lodash.isequal: ^4.5.0
-    semver: ^7.3.5
-  checksum: 06b34490fa6213f5c6a01de6f7b3d96eba4e1b7d27e8346747d8b094b9591684f55f92c703e2ee3407c562a240518c0eede699462cc333fcfe2983141941fe98
+    semver: ~7.7.3
+    tiny-typed-emitter: ^2.1.0
+  checksum: d0802ce0e8cd50d7f50a5970792f74f48af0eb524513d5e6de3da71edbc3a39164c9bdac6c45d392c0e651c1f0f8a24d4fdb6a0d03ab55b1522a95f095ca83b6
   languageName: node
   linkType: hard
 
@@ -8390,6 +8383,17 @@ __metadata:
     jsonfile: ^6.0.1
     universalify: ^2.0.0
   checksum: 5285a3d8f34b917cf2b66af8c231a40c1623626e9d701a20051d3337be16c6d7cac94441c8b3732d47a92a2a027886ca93c69b6a4ae6aee3c89650d2a8880c0a
+  languageName: node
+  linkType: hard
+
+"fs-extra@npm:^10.1.0":
+  version: 10.1.0
+  resolution: "fs-extra@npm:10.1.0"
+  dependencies:
+    graceful-fs: ^4.2.0
+    jsonfile: ^6.0.1
+    universalify: ^2.0.0
+  checksum: dc94ab37096f813cc3ca12f0f1b5ad6744dfed9ed21e953d72530d103cea193c2f81584a39e9dee1bea36de5ee66805678c0dddc048e8af1427ac19c00fffc50
   languageName: node
   linkType: hard
 
@@ -14547,6 +14551,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"semver@npm:~7.7.3":
+  version: 7.7.4
+  resolution: "semver@npm:7.7.4"
+  bin:
+    semver: bin/semver.js
+  checksum: 9b4a6a58e98b9723fafcafa393c9d4e8edefaa60b8dfbe39e30892a3604cf1f45f52df9cfb1ae1a22b44c8b3d57fec8a9bb7b3e1645431587cb272399ede152e
+  languageName: node
+  linkType: hard
+
 "serialize-error@npm:^7.0.1":
   version: 7.0.1
   resolution: "serialize-error@npm:7.0.1"
@@ -14923,7 +14936,7 @@ __metadata:
     electron-chromedriver: 29.3.3
     electron-devtools-installer: 3.1.1
     electron-react-devtools: ^0.5.3
-    electron-updater: ^4.2.0
+    electron-updater: ^6.0.0
     electron-window-state: 5.0.3
     eslint: 7.15.0
     eslint-config-airbnb-base: 14.1.0
@@ -16005,6 +16018,13 @@ __metadata:
   version: 1.1.0
   resolution: "tiny-invariant@npm:1.1.0"
   checksum: 27d29bbb9e1d1d86e25766711c28ad91af6d67c87d561167077ac7fbce5212b97bbfe875e70bc369808e075748c825864c9b61f0e9f8652275ec86bcf4dcc924
+  languageName: node
+  linkType: hard
+
+"tiny-typed-emitter@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "tiny-typed-emitter@npm:2.1.0"
+  checksum: 709bca410054e08df4dc29d5ea0916328bb2900d60245c6a743068ea223887d9fd2c945b6070eb20336275a557a36c2808e5c87d2ed4b60633458632be4a3e10
   languageName: node
   linkType: hard
 
