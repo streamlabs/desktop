@@ -498,14 +498,18 @@ export class TwitchService
   }
 
   async putChannelInfo(settings: Partial<ITwitchStartStreamOptions>): Promise<void> {
-    this.twitchTagsService.actions.setTags(settings.tags);
+    if (settings.tags) {
+      this.twitchTagsService.actions.setTags(settings.tags);
+    } else {
+      console.warn('Trying to update Twitch channel info without tags, skipping tag update');
+    }
     const hasPermission = await this.hasScope('channel:manage:broadcast');
     const scopedTags = hasPermission ? settings.tags : undefined;
 
     // Twitch seems to require you to add a label with disabled to remove it
     const labels = this.twitchContentClassificationService.options.map(option => ({
       id: option.value,
-      is_enabled: settings.contentClassificationLabels.includes(option.value),
+      is_enabled: settings.contentClassificationLabels?.includes(option.value),
     }));
 
     const updateInfo = async (tags: ITwitchStartStreamOptions['tags'] | undefined) =>
@@ -537,13 +541,13 @@ export class TwitchService
         }
 
         const offendingTags = offendingTagsStr.split(', ').map(str => str.toLowerCase());
-        const newTags = settings.tags.filter(tag => !offendingTags.includes(tag.toLowerCase()));
+        const newTags = settings.tags?.filter(tag => !offendingTags.includes(tag.toLowerCase()));
 
         // If we fail the second time we're throwing our hands up and let it blow up as before
         await updateInfo(newTags);
 
         // Remove the offending tags from their list, they can't use them anyways
-        this.twitchTagsService.actions.setTags(newTags);
+        if (newTags) this.twitchTagsService.actions.setTags(newTags);
         this.SET_STREAM_SETTINGS({
           title: settings.title,
           game: settings.game,
