@@ -95,7 +95,7 @@ export function Connect() {
   return (
     <div className={styles.pageContainer}>
       <div className={styles.container}>
-        <h1 className={commonStyles.titleContainer} style={{ marginTop: 0 }}>
+        <h1 className={commonStyles.titleContainer} style={{ marginTop: '0px !important' }}>
           {title}
         </h1>
         {isSignup ? (
