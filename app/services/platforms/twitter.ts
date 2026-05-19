@@ -54,7 +54,7 @@ export class TwitterPlatformService
     ingest: '',
   };
 
-  readonly capabilities = new Set<TPlatformCapability>(['title', 'viewerCount']);
+  readonly capabilities = new Set<TPlatformCapability>(['title', 'viewerCount', 'chat']);
   readonly liveDockFeatures = new Set<TLiveDockFeature>([
     'refresh-chat-streaming',
     'chat-streaming',
