@@ -1,15 +1,15 @@
-import React from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { CommonPlatformFields } from '../CommonPlatformFields';
 import Form from '../../../shared/inputs/Form';
-import { createBinding, InputComponent, TagsInput } from '../../../shared/inputs';
+import { createBinding, InputComponent, RadioInput, TagsInput } from '../../../shared/inputs';
 import PlatformSettingsLayout, { IPlatformComponentParams } from './PlatformSettingsLayout';
 import { IPatreonStartStreamOptions } from '../../../../services/platforms/patreon';
 import { $t } from 'services/i18n/i18n';
 import { Services } from 'components-react/service-provider';
+import styles from './PatreonEditStreamInfo.m.less';
 
-/***
- * Stream Settings for Patreon
- */
+type TPatreonAudienceType = 'all' | 'paid';
+
 export const PatreonEditStreamInfo = InputComponent((p: IPlatformComponentParams<'patreon'>) => {
   const { PatreonService } = Services;
 
@@ -21,6 +21,46 @@ export const PatreonEditStreamInfo = InputComponent((p: IPlatformComponentParams
   const bind = createBinding(patreonSettings, newPatreonSettings =>
     updateSettings(newPatreonSettings),
   );
+
+  const [audienceType, setAudienceType] = useState<TPatreonAudienceType>('all');
+
+  const paidOptions = useMemo(
+    () => PatreonService.accessRules.filter(rule => rule.label.toLowerCase() !== 'free'),
+    [],
+  );
+
+  const audienceOptions = useMemo(
+    () => [
+      { value: 'all', label: $t('All Members') },
+      {
+        value: 'paid',
+        label: $t('Paid'),
+        children: (
+          <TagsInput
+            placeholder={$t('Select Tier')}
+            {...bind.accessRules}
+            value={audienceType === 'all' ? undefined : patreonSettings.accessRules}
+            options={paidOptions}
+            layout="horizontal"
+            disabled={audienceType === 'all'}
+            style={{ width: '100%', flex: 1 }}
+            maxTagCount="responsive"
+            nomargin
+            nolabel
+          />
+        ),
+      },
+    ],
+    [audienceType, paidOptions],
+  );
+
+  const updateAudienceType = useCallback((value: TPatreonAudienceType) => {
+    setAudienceType(value);
+    if (value === 'all') {
+      const rules = PatreonService.accessRules.map(rule => rule.value);
+      updateSettings({ accessRules: rules });
+    }
+  }, []);
 
   return (
     <Form name="patreon-settings">
@@ -37,12 +77,15 @@ export const PatreonEditStreamInfo = InputComponent((p: IPlatformComponentParams
           />
         }
         requiredFields={
-          <TagsInput
+          <RadioInput
+            name="patreon-audience"
             label={$t('Audience')}
-            placeholder={$t('Select Tier')}
-            {...bind.accessRules}
-            options={PatreonService.accessRules}
-            layout={p.layout}
+            options={audienceOptions}
+            value={audienceType}
+            onChange={value => updateAudienceType(value as TPatreonAudienceType)}
+            layout="inline"
+            direction="horizontal"
+            className={styles.patreonTags}
             required
           />
         }
