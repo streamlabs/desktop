@@ -1,11 +1,5 @@
 import * as remote from '@electron/remote';
-import {
-  HostsService,
-  SettingsService,
-  SourcesService,
-  UserService,
-  WidgetsService,
-} from 'app-services';
+import { HostsService, SourcesService, UserService, WidgetsService } from 'app-services';
 import _ from 'lodash';
 import pMemoize from 'p-memoize';
 import path from 'path';
@@ -13,7 +7,6 @@ import { ObjectSchema } from 'realm';
 import { Subject } from 'rxjs';
 import { InitAfter, Inject, Service } from 'services';
 import { RealmObject } from 'services/realm';
-import { ESettingsCategory } from 'services/settings';
 import { ISource, TSourceType } from 'services/sources';
 import Utils from 'services/utils';
 import { WidgetType } from 'services/widgets';
@@ -126,10 +119,6 @@ export class VisionService extends Service {
 
   public sourceStateKeyInterest: Map<string, Set<string>> = new Map();
 
-  // update prompt
-  private lastPromptAt = 0;
-  private lastPromptVersion?: string;
-  private promptCooldownMs = 500;
   onState = new Subject<
     Pick<VisionEnabledState, 'isEnabled'> &
       Pick<VisionState, 'isRunning' | 'isStarting' | 'isInstalling'>
@@ -139,7 +128,6 @@ export class VisionService extends Service {
   >();
   @Inject() userService: UserService;
   @Inject() hostsService: HostsService;
-  @Inject() settingsService: SettingsService;
 
   // Install hook services
   @Inject() sourcesService: SourcesService;
@@ -154,18 +142,19 @@ export class VisionService extends Service {
     this.widgetsService.widgetCreated.subscribe(({ type }) => this.onWidgetCreated(type));
     this.sourcesService.sourceCreated.subscribe(({ source }) => this.onSourceCreated(source));
 
-    window.addEventListener('beforeunload', () => this.stop());
-
-    this.visionRunner.on('exit', () => {
-      this.writeState({
-        pid: 0,
-        port: 0,
-        isRunning: false,
-      });
+    const runnerHandle = this.visionRunner.on('exit', () => {
+      this.writeEnabledState(false);
+      this.writeState({ pid: 0, port: 0, isRunning: false });
     });
 
-    // useful for testing robustness
-    // setInterval(() => this.ensureRunning(), 30_000);
+    window.addEventListener('beforeunload', () => {
+      runnerHandle();
+      return this.stop();
+    });
+
+    if (this.enabledState.isEnabled) {
+      void this.ensureRunning();
+    }
   }
 
   isSupportedForOs() {
@@ -178,8 +167,10 @@ export class VisionService extends Service {
 
     this.writeEnabledState(newIsEnabled);
 
-    if (newIsEnabled === false) {
-      return this.stop();
+    if (newIsEnabled) {
+      await this.ensureRunning();
+    } else {
+      await this.stop();
     }
   }
 
@@ -249,24 +240,15 @@ export class VisionService extends Service {
         });
 
         if (needsUpdate) {
-          if (installedManifest) {
-            this.log(
-              `vision needs update: ${installedManifest.version} -> ${latestManifest.version}`,
-            );
-            // silently update in the background
-            await this.ensureUpdated({ startAfterUpdate: false });
-          } else {
-            const v = latestManifest.version ?? 'unknown';
-            const now = Date.now();
-            const newVersion = this.lastPromptVersion !== v;
-            const cooledDown = now - this.lastPromptAt > this.promptCooldownMs;
+          this.log(
+            installedManifest
+              ? `vision needs update: ${installedManifest.version} -> ${latestManifest.version}`
+              : 'vision not installed, installing...',
+          );
+          await this.ensureUpdated({ startAfterUpdate: false });
 
-            if (newVersion || cooledDown) {
-              this.lastPromptVersion = v;
-              this.lastPromptAt = now;
-              this.settingsService.showSettings(ESettingsCategory.AI);
-            }
-
+          if (this.state.hasFailedToUpdate) {
+            this.writeEnabledState(false);
             return { started: false, reason: 'needs-update' as const };
           }
         }
@@ -348,7 +330,7 @@ export class VisionService extends Service {
     }
   }
 
-  async stop() {
+  private async stop() {
     this.closeEventSource();
     await this.visionRunner.stop();
   }
