@@ -22,18 +22,25 @@ export class StreamlabelsManager extends DefaultManager {
   init() {
     super.init();
     this.subscription = this.streamlabelsService.output.subscribe(output => {
+      // Normalize the statname at lookup time only — never mutate the stored setting.
+      // This allows a label created on Twitch to continue working when the user
+      // switches to YouTube without permanently overwriting the original statname.
+      const lookup = { ...this.settings };
+      this.normalizeSettings(lookup);
+      const statname = lookup.statname;
+
       // TODO: index
       // @ts-ignore
-      if (output[this.settings.statname] !== this.oldOutput) {
+      if (output[statname] !== this.oldOutput) {
         // TODO: index
         // @ts-ignore
-        this.oldOutput = output[this.settings.statname];
+        this.oldOutput = output[statname];
 
         this.obsSource.update({
           ...this.obsSource.settings,
           // TODO: index
           // @ts-ignore
-          text: this.normalizeText(output[this.settings.statname]),
+          text: this.normalizeText(output[statname]),
           read_from_file: false,
         });
       }
@@ -86,10 +93,13 @@ export class StreamlabelsManager extends DefaultManager {
 
   applySettings(settings: Dictionary<any>) {
     if (settings.statname !== this.settings.statname) {
+      // Normalize for lookup only — don't mutate settings.statname
+      const lookup = { statname: settings.statname };
+      this.normalizeSettings(lookup);
       this.obsSource.update({
         // TODO: index
         // @ts-ignore
-        text: this.normalizeText(this.streamlabelsService.output.getValue()[settings.statname]),
+        text: this.normalizeText(this.streamlabelsService.output.getValue()[lookup.statname]),
       });
     }
 
@@ -100,8 +110,9 @@ export class StreamlabelsManager extends DefaultManager {
       ...settings,
     };
 
-    // Modifies the object in-place
-    this.normalizeSettings(newSettings);
+    // Save the original statname — normalization is applied transiently at read time
+    // in the output subscription so labels created on Twitch remain correct when the
+    // user switches to YouTube (and vice versa).
     super.applySettings(newSettings);
   }
 }
