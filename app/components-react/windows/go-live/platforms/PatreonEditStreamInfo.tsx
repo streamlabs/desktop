@@ -35,6 +35,8 @@ export const PatreonEditStreamInfo = InputComponent((p: IPlatformComponentParams
       allRuleValues: rules.map(rule => rule.value),
       allTiersValue: paidRule?.value,
     };
+    // Note: PatreonService.accessRules is assumed to be static or memoized itself
+    // so it's safe to omit it from dependencies
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -58,26 +60,22 @@ export const PatreonEditStreamInfo = InputComponent((p: IPlatformComponentParams
     }
   }
 
-  const onTagsChange = useCallback(
-    (newValues: string[]) => {
-      const addedAllTiers =
-        !!allTiersValue && newValues.includes(allTiersValue) && !allTiersSelected;
-      const stripped = allTiersValue ? newValues.filter(v => v !== allTiersValue) : newValues;
+  function onTagsChange(newValues: string[]) {
+    const addedAllTiers = !!allTiersValue && newValues.includes(allTiersValue) && !allTiersSelected;
+    const stripped = allTiersValue ? newValues.filter(v => v !== allTiersValue) : newValues;
 
-      if (newValues.length === 0) {
-        updateSettings({ accessRules: allTiersValue ? [allTiersValue] : [] });
-        return;
-      }
+    if (newValues.length === 0) {
+      updateSettings({ accessRules: allTiersValue ? [allTiersValue] : [] });
+      return;
+    }
 
-      if (addedAllTiers) {
-        updateSettings({ accessRules: [allTiersValue!] });
-        return;
-      }
+    if (addedAllTiers) {
+      updateSettings({ accessRules: [allTiersValue!] });
+      return;
+    }
 
-      updateSettings({ accessRules: stripped });
-    },
-    [allTiersValue, allTiersSelected, updateSettings],
-  );
+    updateSettings({ accessRules: stripped });
+  }
 
   const tagsValue = useMemo(() => {
     return allTiersSelected && allTiersValue ? [allTiersValue] : patreonSettings.accessRules;

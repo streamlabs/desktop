@@ -101,11 +101,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           className={p.className}
           style={p?.style}
         >
-          <Space
-            size={p?.gapsize ?? undefined}
-            direction={p?.direction ?? 'vertical'}
-            style={p?.style}
-          >
+          <Space size={p?.gapsize ?? undefined} direction={p?.direction ?? 'vertical'}>
             {p.options.map(option => {
               return (
                 <React.Fragment key={option.value}>

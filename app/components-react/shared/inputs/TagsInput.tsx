@@ -83,7 +83,10 @@ export const TagsInput = InputComponent(<T extends any[]>(p: TTagsInputProps<T>)
     <InputWrapper
       {...wrapperAttrs}
       nolabel={p?.nolabel}
-      style={{ margin: p.nomargin ? '0px' : 'inherit' }}
+      style={{
+        ...wrapperAttrs.style,
+        ...(p.nomargin ? { margin: '0px' } : {}),
+      }}
     >
       <Select
         {...inputAttrs}
