@@ -92,6 +92,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
         disabled={!disableToggle && !p?.showTooltip}
         placement="topRight"
         lightShadow
+        autoAdjustOverflow={false}
         className={styles.recordingTooltip}
       >
         {showRecordingToggle && (
