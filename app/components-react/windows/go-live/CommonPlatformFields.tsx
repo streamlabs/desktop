@@ -88,7 +88,9 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
   let maxCharacters = 120;
   const enabledPlatforms = view.enabledPlatforms;
   if (enabledPlatforms.includes('youtube')) {
-    maxCharacters = 100;
+    // When dual-output YouTube "both" is active, a " (Portrait)" suffix is appended to the
+    // vertical stream title, reducing the effective limit from 100 to 90 characters.
+    maxCharacters = view.isYouTubeDualStreaming ? 90 : 100;
   } else if (enabledPlatforms.includes('twitch')) {
     maxCharacters = 140;
   }
