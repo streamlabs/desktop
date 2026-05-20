@@ -19,11 +19,23 @@ export class AudioMixer {
 
     const args = [...inputArgs];
 
-    const inputMap = this.inputs.map((_, index) => `[${index}:a]`).join('');
+    // Normalize each input to 48000 Hz stereo before mixing.
+    // amix requires all inputs to have matching sample rates and channel layouts.
+    // The concat FLAC is already at 48000 Hz (forced in AudioSource.extract), but
+    // user-provided music files (mp3/wav) are commonly at 44100 Hz which causes amix to fail.
+    const normalizedLabels = this.inputs.map((_, index) => `[norm${index}]`);
+    const normFilters = this.inputs
+      .map(
+        (_, index) =>
+          `[${index}:a]aresample=48000,aformat=sample_fmts=s32:channel_layouts=stereo${normalizedLabels[index]}`,
+      )
+      .join(';');
 
-    const filterGraph = `${inputMap}amix=inputs=${
+    const mixFilter = `${normalizedLabels.join('')}amix=inputs=${
       this.inputs.length
-    }:duration=first:weights=${this.inputs.map(i => i.volume).join(' ')}`;
+    }:duration=first:weights=${this.inputs.map(i => i.volume).join(':')}`;
+
+    const filterGraph = `${normFilters};${mixFilter}`;
 
     args.push('-filter_complex', filterGraph);
 
