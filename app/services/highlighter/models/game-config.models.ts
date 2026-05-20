@@ -28,15 +28,6 @@ export const TERMS = {
   ROUND: { singular: 'round', plural: 'rounds' },
   STORM: { singular: 'storm event', plural: 'storm events' },
   MANUAL: { singular: 'manual clip', plural: 'manual clips' },
-  GREAT_AIR: { singular: 'great air', plural: 'great airs' },
-  GREAT_DRIFT: { singular: 'great drift', plural: 'great drifts' },
-  GREAT_SKILL_CHAIN: { singular: 'great skill chain', plural: 'great skill chains' },
-  LEVEL_UP: { singular: 'level up', plural: 'level ups' },
-  QUEST_UPDATE: { singular: 'quest update', plural: 'quest updates' },
-  SOUL_DISCOVERED: { singular: 'soul discovered', plural: 'souls discovered' },
-  TOTEM_OF_UNDYING_USED: { singular: 'totem of undying', plural: 'totems of undying' },
-  LOW_HEALTH: { singular: 'low health', plural: 'low health moments' },
-  BOSS_KILLED: { singular: 'boss killed', plural: 'bosses killed' },
 };
 
 export const EMOJI = {
@@ -58,15 +49,6 @@ export const EMOJI = {
   STORM: '⛈️',
   ROBOT: '🤖',
   MANUAL: '🎬',
-  AIRPLANE: '🛫',
-  DRIFT: '💨',
-  CHAIN: '🔗',
-  LEVEL_UP: '⬆️',
-  SCROLL: '📜',
-  GHOST: '👻',
-  SPARKLES: '✨',
-  BROKEN_HEART: '💔',
-  CROWN: '👑',
   FIRECRACKER: '🧨', // used for config fallback. ⚡ used in components as fallback
 };
 
@@ -612,120 +594,6 @@ const DEADLOCK: IGameConfig = {
   },
 };
 
-const FORZA_HORIZON_6: IGameConfig = {
-  name: EGame.FORZA_HORIZON_6,
-  label: 'Forza Horizon 6',
-  gameModes: '',
-  titleIcon: 'unset',
-  thumbnail: `${thumbnailPath}${EGame.FORZA_HORIZON_6}.png`,
-  state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-    ['great_air']: {
-      emoji: EMOJI.AIRPLANE,
-      description: TERMS.GREAT_AIR,
-      orderPriority: 4,
-      includeInDropdown: true,
-      contextEvent: false,
-    },
-    ['great_drift']: {
-      emoji: EMOJI.DRIFT,
-      description: TERMS.GREAT_DRIFT,
-      orderPriority: 4,
-      includeInDropdown: true,
-      contextEvent: false,
-    },
-    ['great_skill_chain']: {
-      emoji: EMOJI.CHAIN,
-      description: TERMS.GREAT_SKILL_CHAIN,
-      orderPriority: 4,
-      includeInDropdown: true,
-      contextEvent: false,
-    },
-  },
-  importModalConfig: {
-    accentColor: '#7B2CBF',
-    artwork: `${heroPath}${EGame.FORZA_HORIZON_6}.png`,
-    backgroundColor: '#151616',
-  },
-};
-
-const ENSHROUDED: IGameConfig = {
-  name: EGame.ENSHROUDED,
-  label: 'Enshrouded',
-  gameModes: '',
-  titleIcon: 'unset',
-  thumbnail: `${thumbnailPath}${EGame.ENSHROUDED}.png`,
-  state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-    ['level_up']: {
-      emoji: EMOJI.LEVEL_UP,
-      description: TERMS.LEVEL_UP,
-      orderPriority: 4,
-      includeInDropdown: true,
-      contextEvent: false,
-    },
-    ['quest_update']: {
-      emoji: EMOJI.SCROLL,
-      description: TERMS.QUEST_UPDATE,
-      orderPriority: 4,
-      includeInDropdown: true,
-      contextEvent: false,
-    },
-    ['soul_discovered']: {
-      emoji: EMOJI.GHOST,
-      description: TERMS.SOUL_DISCOVERED,
-      orderPriority: 4,
-      includeInDropdown: true,
-      contextEvent: false,
-    },
-  },
-  importModalConfig: {
-    accentColor: '#A55A2A',
-    artwork: `${heroPath}${EGame.ENSHROUDED}.png`,
-    backgroundColor: '#1A1410',
-  },
-};
-
-const MINECRAFT: IGameConfig = {
-  name: EGame.MINECRAFT,
-  label: 'Minecraft',
-  gameModes: '',
-  titleIcon: 'unset',
-  thumbnail: `${thumbnailPath}${EGame.MINECRAFT}.png`,
-  state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-    ['totem_of_undying_used']: {
-      emoji: EMOJI.SPARKLES,
-      description: TERMS.TOTEM_OF_UNDYING_USED,
-      orderPriority: 4,
-      includeInDropdown: true,
-      contextEvent: false,
-    },
-    ['low_health']: {
-      emoji: EMOJI.BROKEN_HEART,
-      description: TERMS.LOW_HEALTH,
-      orderPriority: 4,
-      includeInDropdown: true,
-      contextEvent: false,
-    },
-    ['boss_killed']: {
-      emoji: EMOJI.CROWN,
-      description: TERMS.BOSS_KILLED,
-      orderPriority: 4,
-      includeInDropdown: true,
-      contextEvent: false,
-    },
-  },
-  importModalConfig: {
-    accentColor: '#5BA84A',
-    artwork: `${heroPath}${EGame.MINECRAFT}.png`,
-    backgroundColor: '#1D1A17',
-  },
-};
-
 const UNSET_CONFIG: IGameConfig = {
   name: EGame.UNSET,
   label: 'unset',
@@ -764,9 +632,6 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.EA_SPORTS_FC_26]: EA_SPORTS_FC_26,
   [EGame.NBA_2K26]: NBA_2K26,
   [EGame.DEADLOCK]: DEADLOCK,
-  [EGame.FORZA_HORIZON_6]: FORZA_HORIZON_6,
-  [EGame.ENSHROUDED]: ENSHROUDED,
-  [EGame.MINECRAFT]: MINECRAFT,
   [EGame.UNSET]: UNSET_CONFIG,
 };
 
