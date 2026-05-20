@@ -131,6 +131,14 @@ export class GameOverlayService extends PersistentStatefulService<GameOverlaySta
     super.init();
 
     this.userService.userLogout.subscribe(() => this.setEnabled(false));
+
+    // If the overlay was enabled in a previous session (persisted state), pre-start
+    // it now so the native process is already running when the hotkey is first pressed.
+    // Without this, the first hotkey press always races against the process startup
+    // and silently fails because getStatus() !== 'runing'.
+    if (this.state.isEnabled) {
+      this.initializeOverlay();
+    }
   }
 
   private overlayRunning = false;
@@ -352,6 +360,9 @@ export class GameOverlayService extends PersistentStatefulService<GameOverlaySta
 
     this.SET_ENABLED(shouldEnable);
     if (shouldStop) await this.destroyOverlay();
+    // Pre-start the overlay process as soon as it is enabled so the native
+    // process is 'runing' before the user first presses the hotkey.
+    else if (shouldEnable) this.initializeOverlay();
 
     this.overlayStatusChanged.next(
       shouldEnable ? EGameOverlayState.Enabled : EGameOverlayState.Disabled,
