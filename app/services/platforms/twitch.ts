@@ -35,6 +35,7 @@ import { EAvailableFeatures } from 'services/incremental-rollout';
 export interface ITwitchStartStreamOptions {
   title: string;
   game?: string;
+  gameName: string;
   video?: IVideo;
   tags: string[];
   mode?: TOutputOrientation;
@@ -120,6 +121,7 @@ export class TwitchService
     settings: {
       title: '',
       game: '',
+      gameName: '',
       video: undefined,
       mode: undefined,
       tags: [],
@@ -378,6 +380,7 @@ export class TwitchService
       this.requestTwitch<{
         data: {
           title: string;
+          game_id: string;
           game_name: string;
           is_branded_content: boolean;
           content_classification_labels: string[];
@@ -385,7 +388,8 @@ export class TwitchService
       }>(`${this.apiBase}/helix/channels?broadcaster_id=${this.twitchId}`).then(json => {
         return {
           title: json.data[0].title,
-          game: json.data[0].game_name,
+          game: json.data[0].game_id,
+          gameName: json.data[0].game_name,
           is_branded_content: json.data[0].is_branded_content,
           content_classification_labels: json.data[0].content_classification_labels,
         };
@@ -412,6 +416,7 @@ export class TwitchService
       tags,
       title: channelInfo.title,
       game: channelInfo.game,
+      gameName: channelInfo.gameName,
       isBrandedContent: channelInfo.is_branded_content,
       isEnhancedBroadcasting,
       contentClassificationLabels: channelInfo.content_classification_labels,
@@ -447,6 +452,7 @@ export class TwitchService
       this.requestTwitch<{
         data: {
           title: string;
+          game_id: string;
           game_name: string;
           is_branded_content: boolean;
           content_classification_labels: string[];
@@ -454,7 +460,8 @@ export class TwitchService
       }>(`${this.apiBase}/helix/channels?broadcaster_id=${this.twitchId}`).then(json => {
         return {
           title: settings?.stream_title ?? json.data[0].title,
-          game: json.data[0].game_name,
+          game: json.data[0].game_id,
+          gameName: json.data[0].game_name,
           is_branded_content: json.data[0].is_branded_content,
           content_classification_labels: json.data[0].content_classification_labels,
         };
@@ -465,7 +472,7 @@ export class TwitchService
     ]);
 
     const title = settings?.stream_title ?? channelInfo.title;
-    const game = settings?.game_name ?? channelInfo.game;
+    const game = settings?.game_id ?? channelInfo.game;
 
     const tags: string[] = this.twitchTagsService.views.hasTags
       ? this.twitchTagsService.views.tags
@@ -475,6 +482,7 @@ export class TwitchService
       tags,
       title,
       game,
+      gameName: channelInfo.gameName,
       isBrandedContent: channelInfo.is_branded_content,
       isEnhancedBroadcasting: this.settingsService.isEnhancedBroadcasting(),
       contentClassificationLabels: channelInfo.content_classification_labels,
@@ -489,30 +497,19 @@ export class TwitchService
     }).then(json => json.total);
   }
 
-  async putChannelInfo({
-    title,
-    game,
-    tags = [],
-    contentClassificationLabels = [],
-    isBrandedContent = false,
-    isEnhancedBroadcasting = false,
-  }: ITwitchStartStreamOptions): Promise<void> {
-    let gameId = '';
-    const isUnlisted = game === UNLISTED_GAME_CATEGORY.name;
-    if (isUnlisted) gameId = '0';
-    if (game && !isUnlisted) {
-      gameId = await this.requestTwitch<{ data: { id: string }[] }>(
-        `${this.apiBase}/helix/games?name=${encodeURIComponent(game)}`,
-      ).then(json => json.data[0].id);
+  async putChannelInfo(settings: Partial<ITwitchStartStreamOptions>): Promise<void> {
+    if (settings.tags) {
+      this.twitchTagsService.actions.setTags(settings.tags);
+    } else {
+      console.warn('Trying to update Twitch channel info without tags, skipping tag update');
     }
-    this.twitchTagsService.actions.setTags(tags);
     const hasPermission = await this.hasScope('channel:manage:broadcast');
-    const scopedTags = hasPermission ? tags : undefined;
+    const scopedTags = hasPermission ? settings.tags : undefined;
 
     // Twitch seems to require you to add a label with disabled to remove it
     const labels = this.twitchContentClassificationService.options.map(option => ({
       id: option.value,
-      is_enabled: contentClassificationLabels.includes(option.value),
+      is_enabled: settings.contentClassificationLabels?.includes(option.value),
     }));
 
     const updateInfo = async (tags: ITwitchStartStreamOptions['tags'] | undefined) =>
@@ -521,9 +518,9 @@ export class TwitchService
         method: 'PATCH',
         body: JSON.stringify({
           tags,
-          title,
-          game_id: gameId,
-          is_branded_content: isBrandedContent,
+          title: settings.title,
+          game_id: settings.game,
+          is_branded_content: settings.isBrandedContent,
           content_classification_labels: labels,
         }),
       });
@@ -544,14 +541,19 @@ export class TwitchService
         }
 
         const offendingTags = offendingTagsStr.split(', ').map(str => str.toLowerCase());
-        const newTags = tags.filter(tag => !offendingTags.includes(tag.toLowerCase()));
+        const newTags = settings.tags?.filter(tag => !offendingTags.includes(tag.toLowerCase()));
 
         // If we fail the second time we're throwing our hands up and let it blow up as before
         await updateInfo(newTags);
 
         // Remove the offending tags from their list, they can't use them anyways
-        this.twitchTagsService.actions.setTags(newTags);
-        this.SET_STREAM_SETTINGS({ title, game, tags: newTags });
+        if (newTags) this.twitchTagsService.actions.setTags(newTags);
+        this.SET_STREAM_SETTINGS({
+          title: settings.title,
+          game: settings.game,
+          gameName: settings.gameName,
+          tags: newTags,
+        });
 
         // Notify the user of the tags that were removed
         // TODO: I don't personally like calling Notification code from here
@@ -571,10 +573,11 @@ export class TwitchService
     }
 
     this.SET_STREAM_SETTINGS({
-      title,
-      game,
-      tags,
-      isEnhancedBroadcasting,
+      title: settings.title,
+      game: settings.game,
+      gameName: settings.gameName,
+      tags: settings.tags,
+      isEnhancedBroadcasting: settings.isEnhancedBroadcasting,
     });
   }
 
@@ -594,12 +597,12 @@ export class TwitchService
     return data.map(g => ({ id: g.id, name: g.name, image: g.box_art_url }));
   }
 
-  async fetchGame(name: string): Promise<IGame> {
-    if (name === UNLISTED_GAME_CATEGORY.name) return UNLISTED_GAME_CATEGORY;
+  async fetchGame(id: string): Promise<IGame> {
+    if (id === UNLISTED_GAME_CATEGORY.id) return UNLISTED_GAME_CATEGORY;
 
     const gamesResponse = await platformAuthorizedRequest<{
       data: { id: string; name: string; box_art_url: string }[];
-    }>('twitch', `${this.apiBase}/helix/games?name=${encodeURIComponent(name)}`);
+    }>('twitch', `${this.apiBase}/helix/games?id=${encodeURIComponent(id)}`);
     return gamesResponse.data.map(g => {
       const imageTemplate = g.box_art_url;
       const imageSize = this.gameImageSize;
