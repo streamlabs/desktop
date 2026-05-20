@@ -363,11 +363,17 @@ export class GuestCamService extends StatefulService<IGuestCamServiceState> {
       this.findDefaultSources();
     });
 
-    // Stop screen sharing if the user switches scenes as the source might not be available in the new scene
-    // TODO: consider checking if the source is in the new scene and don't stop sharing if so, might be expensive
+    // Stop screen sharing when the user switches scenes only if the shared source is not
+    // present in the new scene. Sources that exist in multiple scenes should keep sharing.
     this.scenesService.sceneSwitched.subscribe(() => {
       if (this.views.screenshareSource) {
-        this.setScreenshareSource(null);
+        const newScene = this.scenesService.views.getScene(this.scenesService.state.activeSceneId);
+        const sourceInNewScene = newScene
+          ?.getNestedSources()
+          .some(item => item.sourceId === this.views.screenshareSourceId);
+        if (!sourceInNewScene) {
+          this.setScreenshareSource(null);
+        }
       }
     });
 
@@ -596,7 +602,10 @@ export class GuestCamService extends StatefulService<IGuestCamServiceState> {
     await this.producer.addStream('camera', this.views.videoSourceId, this.views.audioSourceId);
 
     if (this.views.screenshareSource) {
-      await this.producer.addStream('screenshare', this.views.screenshareSourceId);
+      const screenshareAudioId = this.views.screenshareSource.audio
+        ? this.views.screenshareSourceId
+        : undefined;
+      await this.producer.addStream('screenshare', this.views.screenshareSourceId, screenshareAudioId);
     }
   }
 
@@ -1025,10 +1034,19 @@ export class GuestCamService extends StatefulService<IGuestCamServiceState> {
 
       if (this.producer && this.views.sourceId) {
         if (sourceId) {
+          const source = this.sourcesService.views.getSource(sourceId);
+          const screenshareAudioId = source?.audio ? sourceId : undefined;
           if (this.producer.screenshareStreamId) {
             this.producer.setStreamSource(sourceId, this.producer.screenshareStreamId, 'video');
+            if (screenshareAudioId) {
+              this.producer.setStreamSource(
+                screenshareAudioId,
+                this.producer.screenshareStreamId,
+                'audio',
+              );
+            }
           } else {
-            this.producer.addStream('screenshare', sourceId);
+            this.producer.addStream('screenshare', sourceId, screenshareAudioId);
           }
         } else {
           if (this.producer.screenshareStreamId) {
