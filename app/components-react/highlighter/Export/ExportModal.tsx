@@ -6,7 +6,7 @@ import Form from 'components-react/shared/inputs/Form';
 import path from 'path';
 import { Button, Progress, Alert, Dropdown } from 'antd';
 import { RadioInput } from 'components-react/shared/inputs/RadioInput';
-import { confirmAsync } from 'components-react/modals';
+import * as remote from '@electron/remote';
 import { $t } from 'services/i18n';
 import { initStore, useController } from '../../hooks/zustand';
 import { EOrientation, TOrientation } from 'services/highlighter/models/ai-highlighter.models';
@@ -266,17 +266,19 @@ function ExportFlow({
 
   async function startExport(orientation: TOrientation) {
     if (await fileExists(exportFile)) {
-      if (
-        !(await confirmAsync({
-          title: $t('Overwite File?'),
-          content: $t('%{filename} already exists. Would you like to overwrite it?', {
-            filename: path.basename(exportFile),
-          }),
-          okText: $t('Overwrite'),
-        }))
-      ) {
-        return;
-      }
+      // Use a native OS dialog so it appears above the modal overlay that contains
+      // this ExportModal — confirmAsync (Ant Design) renders in document.body and
+      // can appear behind the ClipsViewModal which uses a custom getContainer.
+      const { response } = await remote.dialog.showMessageBox({
+        type: 'question',
+        buttons: [$t('Cancel'), $t('Overwrite')],
+        defaultId: 1,
+        title: $t('Overwrite File?'),
+        message: $t('%{filename} already exists. Would you like to overwrite it?', {
+          filename: path.basename(exportFile),
+        }),
+      });
+      if (response !== 1) return;
     }
 
     UsageStatisticsService.actions.recordFeatureUsage('HighlighterExport');
