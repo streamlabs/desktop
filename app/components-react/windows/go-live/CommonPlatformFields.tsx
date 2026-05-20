@@ -141,6 +141,7 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
               max={maxCharacters}
               layout={p.layout}
               size="large"
+              uncontrolled={false}
             />
 
             {/*DESCRIPTION*/}
@@ -152,6 +153,7 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
                 label={$t('Description')}
                 required={descriptionIsRequired}
                 layout={p.layout}
+                uncontrolled={false}
               />
             )}
 

@@ -48,35 +48,10 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
    * Update settings for a specific platform
    */
   updatePlatform(platform: TPlatform, patch: Partial<IGoLiveSettings['platforms'][TPlatform]>) {
-    const currentSettings = this.state.platforms[platform] as
-      | { title?: string; description?: string }
-      | undefined;
-
-    // Platform forms commonly send `{...settings, ...patch}` to onChange, which can
-    // carry empty title/description. Drop those fields from the patch to avoid accidentally
-    // clearing saved title/description when user is just trying to update other settings.
-    const validatedPatch = { ...patch } as Partial<IGoLiveSettings['platforms'][TPlatform]> & {
-      title?: string;
-      description?: string;
-    };
-
-    if (currentSettings) {
-      if ('title' in validatedPatch && !validatedPatch.title && currentSettings.title) {
-        delete validatedPatch.title;
-      }
-
-      if (
-        'description' in validatedPatch &&
-        !validatedPatch.description &&
-        currentSettings.description
-      ) {
-        delete validatedPatch.description;
-      }
-    }
     const updated = {
       platforms: {
         ...this.state.platforms,
-        [platform]: { ...this.state.platforms[platform], ...validatedPatch },
+        [platform]: { ...this.state.platforms[platform], ...patch },
       },
     };
 
