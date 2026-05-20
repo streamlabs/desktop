@@ -23,17 +23,19 @@ export function PrimaryPlatformSelect() {
   }));
   const { loading, authInProgress, authPlatform, finishSLAuth } = useModule(LoginModule);
 
-  // Note: Patreon is intentionally left out of the platform options since it cannot
-  // be a primary platform if there are other platforms linked
   const platforms: TPlatform[] = [
     'twitch',
     'youtube',
     'tiktok',
     'kick',
+    'patreon',
     'facebook',
     'twitter',
     'trovo',
   ];
+
+  // Note: Patreon is intentionally left out of the platform options since it cannot
+  // be a primary platform if there are other platforms linked
   const platformOptions = [
     {
       value: 'twitch',
@@ -44,6 +46,16 @@ export function PrimaryPlatformSelect() {
       value: 'youtube',
       label: 'YouTube',
       image: <PlatformLogo platform="youtube" />,
+    },
+    {
+      value: 'tiktok',
+      label: 'TikTok',
+      image: <PlatformLogo platform="tiktok" size={14} />,
+    },
+    {
+      value: 'kick',
+      label: 'Kick',
+      image: <PlatformLogo platform="kick" size={14} />,
     },
     {
       value: 'facebook',
@@ -59,16 +71,6 @@ export function PrimaryPlatformSelect() {
       value: 'twitter',
       label: 'X (Twitter)',
       image: <PlatformLogo platform="twitter" size={14} />,
-    },
-    {
-      value: 'tiktok',
-      label: 'TikTok',
-      image: <PlatformLogo platform="tiktok" size={14} />,
-    },
-    {
-      value: 'kick',
-      label: 'Kick',
-      image: <PlatformLogo platform="kick" size={14} />,
     },
   ].filter(opt => {
     return linkedPlatforms.includes(opt.value as TPlatform);
