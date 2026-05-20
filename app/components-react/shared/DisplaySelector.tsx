@@ -5,7 +5,6 @@ import { TDisplayType } from 'services/settings-v2';
 import { platformLabels, TPlatform } from 'services/platforms';
 import { useGoLiveSettings } from 'components-react/windows/go-live/useGoLiveSettings';
 import { TDisplayOutput } from 'services/streaming';
-import { IRadioMetadata } from './inputs/metadata';
 import { ICustomRadioOption } from './inputs/RadioInput';
 
 interface IDisplaySelectorProps {
@@ -96,10 +95,10 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
 
   // Convert displays array to Dictionary<TInputValue>
   const displayDict = useMemo(() => {
-    return displays.reduce((acc: Dictionary<IRadioMetadata>, curr) => {
+    return displays.reduce((acc: Dictionary<ICustomRadioOption>, curr) => {
       acc[curr.value] = curr;
       return acc;
-    }, {} as Dictionary<IRadioMetadata>);
+    }, {} as Dictionary<ICustomRadioOption>);
   }, [displays]);
 
   const name = `${p.platform || `destination${p.index}`}Display`;

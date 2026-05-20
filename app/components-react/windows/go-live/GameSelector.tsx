@@ -24,16 +24,19 @@ export default function GameSelector(p: TProps) {
   const isTikTok = platform === 'tiktok';
   const isKick = platform === 'kick';
 
-  if (isTrovo) {
-    selectedGameName = Services.TrovoService.state.channelInfo.gameName;
-  }
-
-  if (isTikTok) {
-    selectedGameName = Services.TikTokService.state.gameName;
-  }
-
-  if (isKick) {
-    selectedGameName = Services.KickService.state.gameName;
+  switch (platform) {
+    case 'twitch':
+      selectedGameName = Services.TwitchService.state.settings.gameName;
+      break;
+    case 'trovo':
+      selectedGameName = Services.TrovoService.state.channelInfo.gameName;
+      break;
+    case 'tiktok':
+      selectedGameName = Services.TikTokService.state.gameName;
+      break;
+    case 'kick':
+      selectedGameName = Services.KickService.state.gameName;
+      break;
   }
 
   const { isSearching, setIsSearching, games, setGames } = useModule(() => {
@@ -68,7 +71,8 @@ export default function GameSelector(p: TProps) {
     // game images available for Twitch, Trovo, and Kick only
     if (!['twitch', 'trovo', 'kick'].includes(platform)) return;
     if (!selectedGameName) return;
-    const game = await platformService.fetchGame(selectedGameName);
+    // Twitch api can return multiple games with the same name, so we have to find the one with the matching id
+    const game = await platformService.fetchGame(isTwitch ? selectedGameId : selectedGameName);
     if (!game || game.name !== selectedGameName) return;
     setGames(
       games.map(opt => (opt.value === selectedGameId ? { ...opt, image: game.image } : opt)),
@@ -79,7 +83,7 @@ export default function GameSelector(p: TProps) {
     if (searchString.length < 2 && platform !== 'tiktok') return;
     const games =
       (await fetchGames(searchString))?.map(g => ({
-        value: ['trovo', 'tiktok', 'kick'].includes(platform) ? g.id : g.name,
+        value: ['trovo', 'tiktok', 'kick', 'twitch'].includes(platform) ? g.id : g.name,
         label: g.name,
         image: g?.image,
       })) ?? [];
