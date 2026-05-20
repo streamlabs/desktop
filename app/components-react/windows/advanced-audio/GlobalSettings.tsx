@@ -75,7 +75,7 @@ export default function GlobalSettings() {
     DefaultHardwareService.actions.toggleMuteNotifications();
   }
 
-  const shouldShowTwitchVODTrack = isAdvancedOutput && isTwitchAuthedAndActive && !isMultiStreaming;
+  const shouldShowTwitchVODTrack = isTwitchAuthedAndActive && !isMultiStreaming;
 
   return (
     <>
@@ -120,7 +120,7 @@ export default function GlobalSettings() {
               disabled={isStreaming}
             />
 
-            {vodTrackEnabled && (
+            {vodTrackEnabled && isAdvancedOutput && (
               <ListInput
                 label={$t('Twitch VOD Track')}
                 value={vodTrack + 1}
