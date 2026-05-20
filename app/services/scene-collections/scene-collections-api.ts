@@ -111,4 +111,16 @@ export interface ISceneCollectionsManifestEntry {
    * past a single app life cycle.
    */
   auto?: boolean;
+
+  /**
+   * The URL of the overlay theme that was installed into this collection,
+   * stored so assets can be automatically re-downloaded if the cache is wiped.
+   */
+  overlayUrl?: string;
+
+  /**
+   * The stable folder name used when extracting this overlay's assets into
+   * the Overlays directory.  Used together with overlayUrl for auto-restore.
+   */
+  overlayAssetsId?: string;
 }

@@ -290,6 +290,15 @@ export class SceneCollectionsStateService extends StatefulService<ISceneCollecti
   }
 
   @mutation()
+  SET_OVERLAY_INFO(id: string, overlayUrl: string, overlayAssetsId: string) {
+    const coll = this.state.collections.find(coll => coll.id === id);
+    if (coll) {
+      Vue.set(coll, 'overlayUrl', overlayUrl);
+      Vue.set(coll, 'overlayAssetsId', overlayAssetsId);
+    }
+  }
+
+  @mutation()
   LOAD_STATE(state: ISceneCollectionsManifest) {
     Object.keys(state).forEach(key => {
       // TODO: index

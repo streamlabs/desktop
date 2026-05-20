@@ -12,6 +12,7 @@ import { TransitionsNode } from './nodes/transitions';
 import { HotkeysNode } from './nodes/hotkeys';
 import { SceneFiltersNode } from './nodes/scene-filters';
 import path from 'path';
+import fs from 'fs';
 import { parse } from './parse';
 import { Scene, ScenesService, TSceneNode } from 'services/scenes';
 import { SourcesService, TSourceType } from 'services/sources';
@@ -137,6 +138,28 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     await this.stateService.loadManifestFile();
     await this.migrateOS();
     await this.safeSync();
+
+    // If this collection was installed from an overlay and its assets folder is
+    // missing (e.g. the cache was wiped), re-download and re-extract the assets
+    // before loading so sources resolve to existing files instead of going blank.
+    const active = this.activeCollection;
+    if (active?.overlayUrl && active?.overlayAssetsId) {
+      const assetsPath = path.join(
+        this.overlaysPersistenceService.overlaysDirectory,
+        active.overlayAssetsId,
+      );
+      if (!fs.existsSync(assetsPath)) {
+        try {
+          await this.overlaysPersistenceService.restoreOverlayAssets(
+            active.overlayUrl,
+            active.overlayAssetsId,
+          );
+        } catch (e: unknown) {
+          console.error('Failed to restore overlay assets on startup:', e);
+        }
+      }
+    }
+
     if (this.activeCollection && this.activeCollection.operatingSystem === getOS()) {
       await this.load(this.activeCollection.id, true);
     } else if (this.loadableCollections.length > 0) {
@@ -382,6 +405,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    */
   @RunInLoadingMode({ hideStyleBlockers: false })
   async installOverlay(url: string, name: string) {
+    const overlayAssetsId = uuid();
     const pathName = await this.overlaysPersistenceService.downloadOverlay(
       url,
       (progress: IDownloadProgress) => {
@@ -389,7 +413,13 @@ export class SceneCollectionsService extends Service implements ISceneCollection
       },
     );
     const collectionName = this.suggestName(name);
-    await this.loadOverlay(pathName, collectionName);
+    await this.loadOverlay(pathName, collectionName, overlayAssetsId);
+
+    // Persist the overlay URL and stable assets folder name so assets can be
+    // automatically restored if the cache is ever wiped.
+    if (this.activeCollection) {
+      this.stateService.SET_OVERLAY_INFO(this.activeCollection.id, url, overlayAssetsId);
+    }
 
     // repair scene collection in the case if it has any issues
     this.scenesService.repair();
@@ -401,7 +431,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * @param name the name of the overlay
    */
   @RunInLoadingMode()
-  async loadOverlay(filePath: string, name: string) {
+  async loadOverlay(filePath: string, name: string, overlayAssetsId?: string) {
     // Save the current audio devices for Desktop Audio and Mic so when we
     // install a new overlay they're preserved.
     // TODO: this only works if the user sources have the default names
@@ -419,7 +449,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     await this.setActiveCollection(id);
 
     try {
-      await this.overlaysPersistenceService.loadOverlay(filePath);
+      await this.overlaysPersistenceService.loadOverlay(filePath, overlayAssetsId);
       this.setupDefaultAudio(desktopAudioDevice, micDevice);
     } catch (e: unknown) {
       // We tried really really hard :(

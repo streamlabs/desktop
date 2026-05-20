@@ -60,8 +60,8 @@ export class OverlaysPersistenceService extends Service {
     return overlayPath;
   }
 
-  async loadOverlay(overlayFilePath: string) {
-    const overlayName = path.parse(overlayFilePath).name;
+  async loadOverlay(overlayFilePath: string, assetsId?: string) {
+    const overlayName = assetsId || path.parse(overlayFilePath).name;
     const assetsPath = path.join(this.overlaysDirectory, overlayName);
 
     this.ensureOverlaysDirectory();
@@ -86,6 +86,39 @@ export class OverlaysPersistenceService extends Service {
 
     this.scenesService.makeSceneActive(this.scenesService.views.scenes[0].id);
     this.selectionService.views.globalSelection.reset();
+  }
+
+  /**
+   * Re-downloads an overlay from a URL and re-extracts only its assets into
+   * the Overlays directory, without creating any OBS sources.  Used to restore
+   * missing overlay assets after a cache wipe.
+   */
+  async restoreOverlayAssets(
+    url: string,
+    assetsId: string,
+    progressCallback?: (progress: IDownloadProgress) => void,
+  ) {
+    const overlayFilePath = await this.downloadOverlay(url, progressCallback);
+    const assetsPath = path.join(this.overlaysDirectory, assetsId);
+
+    this.ensureOverlaysDirectory();
+
+    await new Promise<void>(async (resolve, reject) => {
+      const extractZip = (await importExtractZip()).default;
+      extractZip(overlayFilePath, { dir: assetsPath }, err => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+
+    try {
+      fs.unlinkSync(overlayFilePath);
+    } catch {
+      // Temp file cleanup is best-effort
+    }
   }
 
   async saveOverlay(overlayFilePath: string) {
