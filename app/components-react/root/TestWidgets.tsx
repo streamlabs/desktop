@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Animation from 'rc-animate';
 import { Services } from '../service-provider';
 import { $t } from '../../services/i18n';
+import { useVuex } from 'components-react/hooks';
 
 type VisionTesterValue = 'elimination' | 'victory' | 'death';
 
@@ -54,7 +55,7 @@ export default function TestWidgets(p: { testers?: string[] }) {
     };
   }, [SourcesService]);
 
-  const allTesters = useMemo(() => WidgetsService.views.testers, []);
+  const { allTesters } = useVuex(() => ({ allTesters: WidgetsService.views.testers }));
   const widgetTesters = p.testers
     ? allTesters.filter(tester => p.testers?.includes(tester.name))
     : allTesters;
