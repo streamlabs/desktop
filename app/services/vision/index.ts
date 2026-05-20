@@ -163,6 +163,8 @@ export class VisionService extends Service {
 
     if (newIsEnabled === false) {
       return this.stop();
+    } else {
+      return this.ensureRunning();
     }
   }
 
