@@ -6,6 +6,7 @@ import { SourcesService, ISourceAddOptions } from 'services/sources';
 import { mutation } from 'services/core';
 import { SceneCollectionsService } from 'services/scene-collections';
 import { byOS, OS } from 'util/operating-systems';
+import { Subscription } from 'rxjs';
 
 interface IDefaultHardwareServiceState {
   defaultVideoDevice: string;
@@ -30,8 +31,41 @@ export class DefaultHardwareService extends PersistentStatefulService<IDefaultHa
   @Inject() private sourcesService: SourcesService;
   @Inject() private sceneCollectionsService: SceneCollectionsService;
 
+  private collectionInitSub: Subscription;
+
   init() {
     super.init();
+
+    // After each collection load, verify the persisted default audio device is
+    // still available. If the mic was unplugged between sessions, fall back to
+    // 'default' so the Mic/Aux source produces audio instead of silently failing.
+    this.collectionInitSub = this.sceneCollectionsService.collectionInitialized.subscribe(() => {
+      this.ensureDefaultAudioDevice();
+    });
+  }
+
+  /**
+   * Checks whether the persisted defaultAudioDevice still exists in the system's
+   * device list. If the device has been disconnected, resets both the persisted
+   * state and the active Mic/Aux OBS source to 'default'.
+   */
+  private ensureDefaultAudioDevice() {
+    const deviceId = this.state.defaultAudioDevice;
+    if (!deviceId || deviceId === 'default') return;
+
+    const available = this.audioDevices.some(d => d.id === deviceId);
+    if (available) return;
+
+    // Device not found — fall back to 'default'
+    this.SET_DEVICE('audio', 'default');
+
+    // Also update the live OBS source so audio is not silently missing
+    const micSource = this.sourcesService.views.sources.find(
+      s => s.channel === E_AUDIO_CHANNELS.INPUT_1,
+    );
+    if (micSource) {
+      micSource.updateSettings({ device_id: 'default' });
+    }
   }
 
   createTemporarySources() {
