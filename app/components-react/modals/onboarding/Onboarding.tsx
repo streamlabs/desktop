@@ -199,6 +199,15 @@ export function useAuth() {
           return;
         });
     }
+
+    // If the user logged in via SLID first (isPartialSLAuth), the platform they
+    // just connected becomes their primary platform. finishSLAuth completes the
+    // full login sequence (scene collections, userLogin event, etc.) that
+    // startSLAuth intentionally left pending.
+    if (result === EPlatformCallResult.Success && UserService.views.isPartialSLAuth) {
+      await UserService.actions.return.finishSLAuth(platform);
+    }
+
     OnboardingV2Service.actions.takeStep();
   }, []);
 
