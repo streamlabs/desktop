@@ -120,13 +120,11 @@ export class EncoderQueryService extends Service {
     }
 
     try {
-      const existing = this.streamingService.getRecordingInstance();
-      if (existing && hasGetAvailableEncoders(existing)) {
-        const result = mapEncoders(existing.getAvailableEncoders());
-        this.recordingEncoderCache = { key: cacheKey, value: result };
-        return result;
-      }
-
+      // Do not use the existing recording instance here: its format may differ from the
+      // requested `format` parameter, causing the returned encoder list to be wrong.
+      // For example, if the existing instance uses mp4, querying for FLV would incorrectly
+      // return AV1 as a valid encoder, preventing ensureValidRecordingEncoder from resetting
+      // to a compatible encoder. Always create a temp instance with the correct format.
       if (mode === 'Simple') {
         const instance = SimpleRecordingFactory.create();
         try {
