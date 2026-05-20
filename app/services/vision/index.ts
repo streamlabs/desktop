@@ -57,6 +57,7 @@ export class VisionState extends RealmObject {
   isCurrentlyUpdating: boolean;
   isInstalling: boolean;
   isStarting: boolean;
+  isStopping: boolean;
   isRunning: boolean;
   pid: number;
   port: number;
@@ -76,6 +77,7 @@ export class VisionState extends RealmObject {
       isRunning: { type: 'bool', default: false },
       isInstalling: { type: 'bool', default: false },
       isStarting: { type: 'bool', default: false },
+      isStopping: { type: 'bool', default: false },
       pid: { type: 'int', default: 0 },
       port: { type: 'int', default: 0 },
       needsUpdate: { type: 'bool', default: false },
@@ -333,7 +335,12 @@ export class VisionService extends Service {
 
   async stop() {
     this.closeEventSource();
-    await this.visionRunner.stop();
+    this.writeState({ isStopping: true });
+    try {
+      await this.visionRunner.stop();
+    } finally {
+      this.writeState({ isStopping: false });
+    }
   }
 
   private log(...args: any[]) {

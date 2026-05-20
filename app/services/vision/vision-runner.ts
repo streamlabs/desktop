@@ -110,7 +110,9 @@ export class VisionRunner extends Emittery<VisionRunnerEvents> {
       } else {
         proc.kill('SIGTERM');
       }
-      await Promise.race([once(proc, 'exit'), new Promise(res => setTimeout(res, 10_000))]);
+      // Wait up to 3 s for a clean exit, then force-kill. 10 s was too long and
+      // caused the app to appear completely frozen after clicking "Stop AI".
+      await Promise.race([once(proc, 'exit'), new Promise(res => setTimeout(res, 3_000))]);
 
       if (!proc.killed) {
         proc.kill('SIGKILL');

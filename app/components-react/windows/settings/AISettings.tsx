@@ -43,6 +43,7 @@ type VisionInfoProps = {
   status: VisionStatus;
   enabled: boolean;
   starting: boolean;
+  stopping: boolean;
   needsUpdate: boolean;
   installedVersion: string;
   pid?: number;
@@ -64,6 +65,7 @@ function VisionInfo({
   status,
   enabled,
   starting,
+  stopping,
   needsUpdate,
   installedVersion,
   pid,
@@ -140,8 +142,12 @@ function VisionInfo({
               </button>
             )}
 
-            <button className="button button--warn" onClick={stopProcess}>
-              Stop Streamlabs AI
+            <button
+              className="button button--warn"
+              onClick={stopProcess}
+              disabled={stopping}
+            >
+              {stopping ? $t('Stopping...') : $t('Stop Streamlabs AI')}
             </button>
           </div>
         )}
@@ -273,6 +279,7 @@ export function AISettings() {
         status={getStatusText(state)}
         enabled={enabled}
         starting={state.isStarting}
+        stopping={state.isStopping}
         needsUpdate={state.needsUpdate}
         installedVersion={state.installedVersion}
         pid={state.pid}
