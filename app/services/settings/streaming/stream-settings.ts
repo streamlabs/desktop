@@ -309,6 +309,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
       protectedModeMigrationRequired: false,
       key: '',
       streamType: 'rtmp_common',
+      description: '',
       /*
        * If we pass `undefined` to `goLiveSettings`, for some reason the worker process gets
        * the update correctly, but the main process receives a sequence of updates like this:
