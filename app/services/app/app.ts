@@ -236,6 +236,7 @@ export class AppService extends StatefulService<IAppState> {
       obs.NodeObs.RemoveVolmeterCallback();
       obs.NodeObs.OBS_service_removeCallback();
       obs.IPC.disconnect();
+      this.realmService.close();
       this.crashReporterService.endShutdown();
       electron.ipcRenderer.send('shutdownComplete');
     }, 300);
