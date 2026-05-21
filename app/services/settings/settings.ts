@@ -966,7 +966,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
 
     // Use getAvailableEncoders() to check if the current recording encoder is
     // compatible with the selected file format.
-    if (recFormat !== undefined) {
+    if (recFormat !== undefined && !(mode === 'Advanced' && recordingEncoder === 'none')) {
       try {
         const availableEncoders = this.encoderQueryService.getAvailableRecordingEncoders(
           mode,

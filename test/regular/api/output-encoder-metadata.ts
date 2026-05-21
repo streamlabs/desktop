@@ -443,6 +443,52 @@ test('legacy advanced recording encoder ids resolve to backend metadata', async 
   );
 });
 
+test('recording use stream encoder selection remains valid during encoder validation', async t => {
+  const client = await getApiClient();
+  const encoderQueryService = client.getResource<EncoderQueryService>('EncoderQueryService');
+  const outputSettingsService = client.getResource<OutputSettingsService>('OutputSettingsService');
+  const settingsService = client.getResource<SettingsService>('SettingsService');
+
+  const streamingEncoder = requireFirstEncoder(
+    t,
+    encoderQueryService.getAvailableStreamingEncoderMetadata('Advanced'),
+    'Expected at least one advanced streaming encoder',
+  );
+
+  settingsService.setSettingValue('Output', 'Mode', 'Advanced');
+  settingsService.setSettingValue('Output', 'RecFormat', ERecordingFormat.MKV);
+  settingsService.setSettingValue('Output', 'Encoder', streamingEncoder.name);
+  settingsService.setSettingValue('Output', 'RecEncoder', 'none');
+  settingsService.loadSettingsIntoStore();
+
+  t.is(
+    settingsService.findSettingValue(
+      settingsService.state.Output.formData,
+      'Recording',
+      'RecEncoder',
+    ),
+    'none',
+    'settings load should preserve the recording use-stream-encoder option',
+  );
+
+  settingsService.validateEncoders();
+
+  t.is(
+    settingsService.findSettingValue(
+      settingsService.state.Output.formData,
+      'Recording',
+      'RecEncoder',
+    ),
+    'none',
+    'recording encoder validation should preserve the use-stream-encoder option',
+  );
+
+  t.true(
+    outputSettingsService.getSettings().recording.isSameAsStream,
+    'output settings should continue treating RecEncoder=none as use stream encoder',
+  );
+});
+
 test('output recording settings use backend encoder metadata', async t => {
   const client = await getApiClient();
   const encoderQueryService = client.getResource<EncoderQueryService>('EncoderQueryService');
