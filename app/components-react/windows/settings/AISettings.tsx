@@ -84,9 +84,15 @@ function VisionInfo({
           value={enabled}
           onChange={() => setIsEnabled(!enabled)}
         />
-        <div>Installed: {installedVersion ? `${$t('Yes')} (${installedVersion})` : $t('No')}</div>
-        <div>PID: {pid || ''}</div>
-        <div>Port: {port || ''}</div>
+        <div>
+          {$t('Installed')}: {installedVersion ? `${$t('Yes')} (${installedVersion})` : $t('No')}
+        </div>
+        <div>
+          {$t('PID')}: {pid || ''}
+        </div>
+        <div>
+          {$t('Port')}: {port || ''}
+        </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
           <button
@@ -94,20 +100,20 @@ function VisionInfo({
             disabled={!isRunning || !eventsUrl}
             onClick={() => eventsUrl && openExternal(eventsUrl)}
           >
-            Open Events Log
+            {$t('Open Events Log')}
           </button>
           <button
             className="button button--action"
             disabled={!isRunning || !frameUrl}
             onClick={() => frameUrl && openExternal(frameUrl)}
           >
-            Open Display Frame
+            {$t('Open Display Frame')}
           </button>
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ marginTop: 12 }}>
-            <div style={{ marginBottom: 6 }}>Active Process</div>
+            <div style={{ marginBottom: 6 }}>{$t('Active Process')}</div>
             <Select
               style={{ minWidth: 240 }}
               disabled={!enabled || !isRunning}
@@ -125,7 +131,7 @@ function VisionInfo({
           </div>
 
           <div style={{ marginTop: 12 }}>
-            <div style={{ marginBottom: 6 }}>Selected Game</div>
+            <div style={{ marginBottom: 6 }}>{$t('Selected Game')}</div>
             <Select
               style={{ minWidth: 240 }}
               disabled={!enabled || !isRunning}
