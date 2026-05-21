@@ -188,10 +188,7 @@ export class EncoderQueryService extends Service {
     return this.recordingEncoderCache?.key === cacheKey ? this.recordingEncoderCache.encoders : [];
   }
 
-  resolveStreamingEncoderId(
-    mode: TOutputSettingsMode,
-    selectedEncoder: string,
-  ): string {
+  resolveStreamingEncoderId(mode: TOutputSettingsMode, selectedEncoder: string): string {
     const encoder = findEncoder(this.getAvailableStreamingEncoderMetadata(mode), selectedEncoder);
 
     if (encoder) return encoder.id;

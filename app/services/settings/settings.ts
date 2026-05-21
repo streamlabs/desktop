@@ -810,16 +810,12 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     try {
       // Replace streaming encoder options from obs-studio-node metadata.
       const streamEncoderField = mode === 'Advanced' ? 'Encoder' : 'StreamEncoder';
-      const streamEncoderSetting = this.findSetting(
-        settings,
-        'Streaming',
-        streamEncoderField,
-      ) as IObsListInput<string> | undefined;
+      const streamEncoderSetting = this.findSetting(settings, 'Streaming', streamEncoderField) as
+        | IObsListInput<string>
+        | undefined;
 
       if (streamEncoderSetting) {
-        const streamEncoderOptions = this.encoderQueryService.getAvailableStreamingEncoders(
-          mode,
-        );
+        const streamEncoderOptions = this.encoderQueryService.getAvailableStreamingEncoders(mode);
 
         if (streamEncoderOptions.length > 0) {
           // Only update options if values actually differ to avoid triggering re-renders
@@ -979,7 +975,10 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
           mode,
           recFormat,
         );
-        const encoderValue = resolveAvailableEncoderOptionValue(availableEncoders, recordingEncoder);
+        const encoderValue = resolveAvailableEncoderOptionValue(
+          availableEncoders,
+          recordingEncoder,
+        );
 
         if (!encoderValue && recordingEncoder) {
           const patchedSettings = this.patchSetting(outputSettings, 'RecEncoder', {
