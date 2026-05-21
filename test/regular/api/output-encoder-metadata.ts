@@ -6,6 +6,7 @@ import {
   OutputSettingsService,
   SettingsService,
 } from '../../../app/services/settings';
+import { legacyEncoderAliasToObsEncoderIdOrSelf } from '../../../app/services/settings/output/encoder-compatibility';
 import { ERecordingFormat } from '../../../obs-api';
 import type { IEncoderOption } from 'obs-studio-node';
 import type { TOutputSettingsMode } from '../../../app/services/settings';
@@ -72,6 +73,10 @@ function getFirstSettingOptionValue(
 
   return value;
 }
+
+test('legacy QSV v1 encoder id migrates to backend advertised QSV v2 id', t => {
+  t.is(legacyEncoderAliasToObsEncoderIdOrSelf('obs_qsv11'), 'obs_qsv11_v2');
+});
 
 test('backend-advertised streaming encoders resolve to Desktop metadata', async t => {
   const client = await getApiClient();
@@ -249,6 +254,31 @@ test('legacy advanced streaming encoder ids resolve to backend metadata', async 
     migratedEncoder.codec,
     'legacy AMD advanced encoder id should resolve to migrated backend codec metadata',
   );
+
+  const qsvEncoder = encoderQueryService
+    .getAvailableStreamingEncoderMetadata('Advanced')
+    .find(encoder => encoder.id === 'obs_qsv11_v2');
+
+  if (!qsvEncoder) {
+    t.pass('QSV v2 encoder is not available in this test environment');
+    return;
+  }
+
+  settingsService.setSettingValue('Output', 'Mode', 'Advanced');
+  settingsService.setSettingValue('Output', 'Encoder', 'obs_qsv11');
+
+  const qsvStreamingSettings = outputSettingsService.getSettings().streaming;
+
+  t.is(
+    qsvStreamingSettings.encoder,
+    qsvEncoder.family,
+    'legacy QSV v1 advanced encoder id should resolve to migrated backend family metadata',
+  );
+  t.is(
+    qsvStreamingSettings.codec,
+    qsvEncoder.codec,
+    'legacy QSV v1 advanced encoder id should resolve to migrated backend codec metadata',
+  );
 });
 
 test('legacy advanced recording encoder ids resolve to backend metadata', async t => {
@@ -312,6 +342,28 @@ test('legacy advanced recording encoder ids resolve to backend metadata', async 
     recordingSettings.codec,
     migratedEncoder.codec,
     'legacy AMD advanced encoder id should resolve to migrated recording codec metadata',
+  );
+
+  const qsvEncoder = recordingEncoders.find(encoder => encoder.id === 'obs_qsv11_v2');
+
+  if (!qsvEncoder) {
+    t.pass('QSV v2 encoder is not available in this test environment');
+    return;
+  }
+
+  settingsService.setSettingValue('Output', 'RecEncoder', 'obs_qsv11');
+
+  const qsvRecordingSettings = outputSettingsService.getSettings().recording;
+
+  t.is(
+    qsvRecordingSettings.encoder,
+    qsvEncoder.family,
+    'legacy QSV v1 advanced encoder id should resolve to migrated recording family metadata',
+  );
+  t.is(
+    qsvRecordingSettings.codec,
+    qsvEncoder.codec,
+    'legacy QSV v1 advanced encoder id should resolve to migrated recording codec metadata',
   );
 });
 

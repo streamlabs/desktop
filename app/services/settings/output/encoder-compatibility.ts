@@ -28,6 +28,7 @@ const legacyEncoderAliasToObsEncoderId: Record<string, TObsVideoEncoderId> = {
 
 const legacyAdvancedEncoderIdMigrations: Record<string, TObsVideoEncoderId> = {
   amd_amf_h264: 'h264_texture_amf',
+  obs_qsv11: 'obs_qsv11_v2',
 };
 
 export function legacyEncoderAliasToObsEncoderIdOrSelf(
