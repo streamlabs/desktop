@@ -127,7 +127,7 @@ export const PatreonEditStreamInfo = InputComponent((p: IPlatformComponentParams
         requiredFields={
           <RadioInput
             name="patreon-audience"
-            label={$t('Audience')}
+            label={$t('Patreon Audience')}
             options={audienceOptions}
             value={audienceType}
             onChange={value => updateAudienceType(value as TPatreonAudienceType)}
