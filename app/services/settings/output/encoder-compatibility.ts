@@ -40,3 +40,15 @@ export function legacyEncoderAliasToObsEncoderIdOrSelf(
     encoder
   );
 }
+
+export function resolveAvailableEncoderOptionValue<T extends string>(
+  encoderOptions: { value: T }[],
+  encoder: string | undefined,
+): T | undefined {
+  if (!encoder) return undefined;
+
+  const normalizedEncoder = legacyEncoderAliasToObsEncoderIdOrSelf(encoder);
+  return encoderOptions.find(option => {
+    return option.value === encoder || option.value === normalizedEncoder;
+  })?.value;
+}

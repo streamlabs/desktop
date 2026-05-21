@@ -6,7 +6,10 @@ import {
   OutputSettingsService,
   SettingsService,
 } from '../../../app/services/settings';
-import { legacyEncoderAliasToObsEncoderIdOrSelf } from '../../../app/services/settings/output/encoder-compatibility';
+import {
+  legacyEncoderAliasToObsEncoderIdOrSelf,
+  resolveAvailableEncoderOptionValue,
+} from '../../../app/services/settings/output/encoder-compatibility';
 import { ERecordingFormat } from '../../../obs-api';
 import type { IEncoderOption } from 'obs-studio-node';
 import type { TOutputSettingsMode } from '../../../app/services/settings';
@@ -76,6 +79,19 @@ function getFirstSettingOptionValue(
 
 test('legacy QSV v1 encoder id migrates to backend advertised QSV v2 id', t => {
   t.is(legacyEncoderAliasToObsEncoderIdOrSelf('obs_qsv11'), 'obs_qsv11_v2');
+});
+
+test('legacy encoder ids match canonical encoder option values', t => {
+  const encoderOptions = [
+    { description: 'Software (x264)', value: 'obs_x264' },
+    { description: 'AMD HW H.264', value: 'h264_texture_amf' },
+    { description: 'QuickSync H.264', value: 'obs_qsv11_v2' },
+  ];
+
+  t.is(resolveAvailableEncoderOptionValue(encoderOptions, 'amd_amf_h264'), 'h264_texture_amf');
+  t.is(resolveAvailableEncoderOptionValue(encoderOptions, 'obs_qsv11'), 'obs_qsv11_v2');
+  t.is(resolveAvailableEncoderOptionValue(encoderOptions, 'h264_texture_amf'), 'h264_texture_amf');
+  t.is(resolveAvailableEncoderOptionValue(encoderOptions, 'missing_encoder'), undefined);
 });
 
 test('backend-advertised streaming encoders resolve to Desktop metadata', async t => {
@@ -216,9 +232,19 @@ test('legacy advanced streaming encoder ids resolve to backend metadata', async 
 
   settingsService.setSettingValue('Output', 'Mode', 'Advanced');
   settingsService.setSettingValue('Output', 'Encoder', 'x264');
+  settingsService.loadSettingsIntoStore();
 
   const x264StreamingSettings = outputSettingsService.getSettings().streaming;
 
+  t.is(
+    settingsService.findSettingValue(
+      settingsService.state.Output.formData,
+      'Streaming',
+      'Encoder',
+    ),
+    x264Encoder.name,
+    'settings load should canonicalize legacy x264 alias to the backend encoder option value',
+  );
   t.is(
     x264StreamingSettings.encoder,
     x264Encoder.family,
@@ -241,9 +267,19 @@ test('legacy advanced streaming encoder ids resolve to backend metadata', async 
 
   settingsService.setSettingValue('Output', 'Mode', 'Advanced');
   settingsService.setSettingValue('Output', 'Encoder', 'amd_amf_h264');
+  settingsService.loadSettingsIntoStore();
 
   const streamingSettings = outputSettingsService.getSettings().streaming;
 
+  t.is(
+    settingsService.findSettingValue(
+      settingsService.state.Output.formData,
+      'Streaming',
+      'Encoder',
+    ),
+    migratedEncoder.name,
+    'settings load should canonicalize legacy AMD encoder id to the backend encoder option value',
+  );
   t.is(
     streamingSettings.encoder,
     migratedEncoder.family,
@@ -266,9 +302,19 @@ test('legacy advanced streaming encoder ids resolve to backend metadata', async 
 
   settingsService.setSettingValue('Output', 'Mode', 'Advanced');
   settingsService.setSettingValue('Output', 'Encoder', 'obs_qsv11');
+  settingsService.loadSettingsIntoStore();
 
   const qsvStreamingSettings = outputSettingsService.getSettings().streaming;
 
+  t.is(
+    settingsService.findSettingValue(
+      settingsService.state.Output.formData,
+      'Streaming',
+      'Encoder',
+    ),
+    qsvEncoder.name,
+    'settings load should canonicalize legacy QSV encoder id to the backend encoder option value',
+  );
   t.is(
     qsvStreamingSettings.encoder,
     qsvEncoder.family,
@@ -308,9 +354,19 @@ test('legacy advanced recording encoder ids resolve to backend metadata', async 
   settingsService.setSettingValue('Output', 'RecFormat', ERecordingFormat.MKV);
   settingsService.setSettingValue('Output', 'Encoder', streamingX264Encoder.name);
   settingsService.setSettingValue('Output', 'RecEncoder', 'x264');
+  settingsService.loadSettingsIntoStore();
 
   const x264RecordingSettings = outputSettingsService.getSettings().recording;
 
+  t.is(
+    settingsService.findSettingValue(
+      settingsService.state.Output.formData,
+      'Recording',
+      'RecEncoder',
+    ),
+    recordingX264Encoder.name,
+    'settings load should canonicalize legacy x264 recording alias to the backend encoder option value',
+  );
   t.is(
     x264RecordingSettings.encoder,
     recordingX264Encoder.family,
@@ -330,9 +386,19 @@ test('legacy advanced recording encoder ids resolve to backend metadata', async 
   }
 
   settingsService.setSettingValue('Output', 'RecEncoder', 'amd_amf_h264');
+  settingsService.loadSettingsIntoStore();
 
   const recordingSettings = outputSettingsService.getSettings().recording;
 
+  t.is(
+    settingsService.findSettingValue(
+      settingsService.state.Output.formData,
+      'Recording',
+      'RecEncoder',
+    ),
+    migratedEncoder.name,
+    'settings load should canonicalize legacy AMD recording encoder id to the backend encoder option value',
+  );
   t.is(
     recordingSettings.encoder,
     migratedEncoder.family,
@@ -352,9 +418,19 @@ test('legacy advanced recording encoder ids resolve to backend metadata', async 
   }
 
   settingsService.setSettingValue('Output', 'RecEncoder', 'obs_qsv11');
+  settingsService.loadSettingsIntoStore();
 
   const qsvRecordingSettings = outputSettingsService.getSettings().recording;
 
+  t.is(
+    settingsService.findSettingValue(
+      settingsService.state.Output.formData,
+      'Recording',
+      'RecEncoder',
+    ),
+    qsvEncoder.name,
+    'settings load should canonicalize legacy QSV recording encoder id to the backend encoder option value',
+  );
   t.is(
     qsvRecordingSettings.encoder,
     qsvEncoder.family,
