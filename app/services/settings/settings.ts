@@ -18,11 +18,11 @@ import { AppService } from 'services/app';
 import { $t } from 'services/i18n';
 import {
   encoderFieldsMap,
-  obsEncoderToEncoderFamily,
   EFileFormat,
   convertFileFormatToRecordingFormat,
   EncoderQueryService,
 } from './output';
+import type { TOutputSettingsMode } from './output';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { EDeviceType, HardwareService } from 'services/hardware';
 import { StreamingService } from 'services/streaming';
@@ -396,14 +396,27 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       !this.streamingService.isIdle &&
       this.videoEncodingOptimizationService.state.useOptimizedProfile
     ) {
-      const encoder = obsEncoderToEncoderFamily(
+      const mode = this.findSettingValue(settings, 'Untitled', 'Mode') as TOutputSettingsMode;
+      const selectedEncoder =
         this.findSettingValue(settings, 'Streaming', 'Encoder') ||
-          this.findSettingValue(settings, 'Streaming', 'StreamEncoder'),
+        this.findSettingValue(settings, 'Streaming', 'StreamEncoder');
+      const encoder = this.encoderQueryService.resolveStreamingEncoderFamily(
+        mode,
+        selectedEncoder,
+      ) as keyof typeof encoderFieldsMap | undefined;
+      const presetField = this.encoderQueryService.resolveStreamingEncoderPreset(
+        mode,
+        selectedEncoder,
       );
+
+      if (!encoder || !presetField) {
+        throw new Error(`Missing streaming encoder metadata for ${selectedEncoder}`);
+      }
+
       // Setting preset visibility
-      settings = this.patchSetting(settings, encoderFieldsMap[encoder].preset, { visible: false });
+      settings = this.patchSetting(settings, presetField, { visible: false });
       // Setting encoder settings visibility
-      if (encoder === 'x264') {
+      if (encoder === 'x264' && encoderFieldsMap[encoder]?.encoderOptions) {
         settings = this.patchSetting(settings, encoderFieldsMap[encoder].encoderOptions, {
           visible: false,
         });
@@ -791,22 +804,20 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
    * getAvailableEncoders() on streaming/recording instances.
    */
   private replaceEncoderOptions(settings: ISettingsSubCategory[]): ISettingsSubCategory[] {
-    const mode: string = this.findSettingValue(settings, 'Untitled', 'Mode');
-    // Stream settings may not be loaded yet during init (loadSettingsIntoStore
-    // processes categories in order and Stream may come after Output).
-    const streamSettings = this.state.Stream ? this.views.values.Stream : undefined;
+    const mode = this.findSettingValue(settings, 'Untitled', 'Mode') as TOutputSettingsMode;
 
     try {
-      // Replace streaming encoder options (skip if stream settings aren't available yet)
+      // Replace streaming encoder options from obs-studio-node metadata.
       const streamEncoderField = mode === 'Advanced' ? 'Encoder' : 'StreamEncoder';
-      const streamEncoderSetting = streamSettings
-        ? (this.findSetting(settings, 'Streaming', streamEncoderField) as IObsListInput<string>)
-        : undefined;
+      const streamEncoderSetting = this.findSetting(
+        settings,
+        'Streaming',
+        streamEncoderField,
+      ) as IObsListInput<string> | undefined;
 
       if (streamEncoderSetting) {
         const streamEncoderOptions = this.encoderQueryService.getAvailableStreamingEncoders(
-          mode as 'Simple' | 'Advanced',
-          streamSettings,
+          mode,
         );
 
         if (streamEncoderOptions.length > 0) {
@@ -840,7 +851,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
 
         if (recordingFormat !== undefined) {
           const recEncoderOptions = this.encoderQueryService.getAvailableRecordingEncoders(
-            mode as 'Simple' | 'Advanced',
+            mode,
             recordingFormat,
           );
 
@@ -929,7 +940,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       'RecEncoder',
     ) as string;
 
-    const mode: string = this.findSettingValue(outputSettings, 'Untitled', 'Mode');
+    const mode = this.findSettingValue(outputSettings, 'Untitled', 'Mode') as TOutputSettingsMode;
     const recFormat = convertFileFormatToRecordingFormat(recordingFormat);
 
     // Use getAvailableEncoders() to check if the current recording encoder is
@@ -937,7 +948,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     if (recFormat !== undefined) {
       try {
         const availableEncoders = this.encoderQueryService.getAvailableRecordingEncoders(
-          mode as 'Simple' | 'Advanced',
+          mode,
           recFormat,
         );
         const encoderIsValid = availableEncoders.some(opt => opt.value === recordingEncoder);

@@ -3,6 +3,7 @@ import { EEncoderFamily } from 'services/settings';
 export interface IEncoderProfile {
   game: string;
   encoder: EEncoderFamily;
+  codec?: string;
   bitrateMin: number;
   bitrateMax: number;
   presetIn: string;

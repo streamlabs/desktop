@@ -11,16 +11,8 @@ import {
 } from '../../../../obs-api';
 import { StreamingService } from 'services/streaming';
 import { TPlatform } from 'services/platforms';
-
-/**
- * The module.ts in obs-studio-node is out of sync with module.d.ts and is
- * missing getAvailableEncoders and IEncoderOption.  TypeScript resolves
- * .ts over .d.ts, so we declare the shapes we need locally.
- */
-interface IEncoderOption {
-  title: string;
-  name: string;
-}
+import type { IEncoderOption } from 'obs-studio-node';
+import type { TOutputSettingsMode } from './output-settings';
 
 interface IWithAvailableEncoders {
   getAvailableEncoders(): IEncoderOption[];
@@ -48,7 +40,17 @@ const platformServiceConfig: Record<TPlatform, { streamType: string; service?: s
 
 interface ICacheEntry {
   key: string;
-  value: IObsListOption<string>[];
+  encoders: IEncoderOption[];
+  options: IObsListOption<string>[];
+}
+
+function findEncoder(
+  encoders: IEncoderOption[],
+  selectedEncoder: string,
+): IEncoderOption | undefined {
+  return encoders.find(encoder => {
+    return encoder.name === selectedEncoder || encoder.id === selectedEncoder;
+  });
 }
 
 export class EncoderQueryService extends Service {
@@ -57,23 +59,21 @@ export class EncoderQueryService extends Service {
   private streamingEncoderCache: ICacheEntry | null = null;
   private recordingEncoderCache: ICacheEntry | null = null;
 
-  getAvailableStreamingEncoders(
-    mode: 'Simple' | 'Advanced',
-    streamSettings?: Record<string, any>,
-  ): IObsListOption<string>[] {
+  getAvailableStreamingEncoders(mode: TOutputSettingsMode): IObsListOption<string>[] {
     const platform = this.getPrimaryPlatform();
     const cacheKey = `${mode}:${platform || 'none'}`;
 
     if (this.streamingEncoderCache?.key === cacheKey) {
-      return this.streamingEncoderCache.value;
+      return this.streamingEncoderCache.options;
     }
 
     try {
       const existing = this.streamingService.getStreamingInstance();
       if (existing && hasGetAvailableEncoders(existing)) {
-        const result = mapEncoders(existing.getAvailableEncoders());
-        this.streamingEncoderCache = { key: cacheKey, value: result };
-        return result;
+        const encoders = existing.getAvailableEncoders();
+        const options = mapEncoders(encoders);
+        this.streamingEncoderCache = { key: cacheKey, encoders, options };
+        return options;
       }
 
       if (mode === 'Simple') {
@@ -82,9 +82,10 @@ export class EncoderQueryService extends Service {
         try {
           service = this.setupTempStreamingService(instance);
           if (!hasGetAvailableEncoders(instance)) return [];
-          const result = mapEncoders(instance.getAvailableEncoders());
-          this.streamingEncoderCache = { key: cacheKey, value: result };
-          return result;
+          const encoders = instance.getAvailableEncoders();
+          const options = mapEncoders(encoders);
+          this.streamingEncoderCache = { key: cacheKey, encoders, options };
+          return options;
         } finally {
           SimpleStreamingFactory.destroy(instance);
           if (service) ServiceFactory.destroy(service);
@@ -95,9 +96,10 @@ export class EncoderQueryService extends Service {
         try {
           service = this.setupTempStreamingService(instance);
           if (!hasGetAvailableEncoders(instance)) return [];
-          const result = mapEncoders(instance.getAvailableEncoders());
-          this.streamingEncoderCache = { key: cacheKey, value: result };
-          return result;
+          const encoders = instance.getAvailableEncoders();
+          const options = mapEncoders(encoders);
+          this.streamingEncoderCache = { key: cacheKey, encoders, options };
+          return options;
         } finally {
           AdvancedStreamingFactory.destroy(instance);
           if (service) ServiceFactory.destroy(service);
@@ -110,21 +112,22 @@ export class EncoderQueryService extends Service {
   }
 
   getAvailableRecordingEncoders(
-    mode: 'Simple' | 'Advanced',
+    mode: TOutputSettingsMode,
     format: ERecordingFormat,
   ): IObsListOption<string>[] {
     const cacheKey = `${mode}:${format}`;
 
     if (this.recordingEncoderCache?.key === cacheKey) {
-      return this.recordingEncoderCache.value;
+      return this.recordingEncoderCache.options;
     }
 
     try {
       const existing = this.streamingService.getRecordingInstance();
       if (existing && hasGetAvailableEncoders(existing)) {
-        const result = mapEncoders(existing.getAvailableEncoders());
-        this.recordingEncoderCache = { key: cacheKey, value: result };
-        return result;
+        const encoders = existing.getAvailableEncoders();
+        const options = mapEncoders(encoders);
+        this.recordingEncoderCache = { key: cacheKey, encoders, options };
+        return options;
       }
 
       if (mode === 'Simple') {
@@ -132,9 +135,10 @@ export class EncoderQueryService extends Service {
         try {
           instance.format = format;
           if (!hasGetAvailableEncoders(instance)) return [];
-          const result = mapEncoders(instance.getAvailableEncoders());
-          this.recordingEncoderCache = { key: cacheKey, value: result };
-          return result;
+          const encoders = instance.getAvailableEncoders();
+          const options = mapEncoders(encoders);
+          this.recordingEncoderCache = { key: cacheKey, encoders, options };
+          return options;
         } finally {
           SimpleRecordingFactory.destroy(instance);
         }
@@ -143,9 +147,10 @@ export class EncoderQueryService extends Service {
         try {
           instance.format = format;
           if (!hasGetAvailableEncoders(instance)) return [];
-          const result = mapEncoders(instance.getAvailableEncoders());
-          this.recordingEncoderCache = { key: cacheKey, value: result };
-          return result;
+          const encoders = instance.getAvailableEncoders();
+          const options = mapEncoders(encoders);
+          this.recordingEncoderCache = { key: cacheKey, encoders, options };
+          return options;
         } finally {
           AdvancedRecordingFactory.destroy(instance);
         }
@@ -154,6 +159,91 @@ export class EncoderQueryService extends Service {
       console.error('Error querying available recording encoders', e);
       return [];
     }
+  }
+
+  getAvailableStreamingEncoderMetadata(mode: TOutputSettingsMode): IEncoderOption[] {
+    const platform = this.getPrimaryPlatform();
+    const cacheKey = `${mode}:${platform || 'none'}`;
+
+    this.getAvailableStreamingEncoders(mode);
+    return this.streamingEncoderCache?.key === cacheKey ? this.streamingEncoderCache.encoders : [];
+  }
+
+  getAvailableRecordingEncoderMetadata(
+    mode: TOutputSettingsMode,
+    format: ERecordingFormat,
+  ): IEncoderOption[] {
+    const cacheKey = `${mode}:${format}`;
+
+    this.getAvailableRecordingEncoders(mode, format);
+    return this.recordingEncoderCache?.key === cacheKey ? this.recordingEncoderCache.encoders : [];
+  }
+
+  resolveStreamingEncoderId(
+    mode: TOutputSettingsMode,
+    selectedEncoder: string,
+  ): string {
+    const encoder = findEncoder(this.getAvailableStreamingEncoderMetadata(mode), selectedEncoder);
+
+    if (encoder) return encoder.id;
+
+    console.warn(`[EncoderQueryService] No metadata for streaming encoder ${selectedEncoder}`);
+    return selectedEncoder;
+  }
+
+  resolveRecordingEncoderId(
+    mode: TOutputSettingsMode,
+    format: ERecordingFormat,
+    selectedEncoder: string,
+  ): string {
+    const encoder = findEncoder(
+      this.getAvailableRecordingEncoderMetadata(mode, format),
+      selectedEncoder,
+    );
+
+    if (encoder) return encoder.id;
+
+    console.warn(`[EncoderQueryService] No metadata for recording encoder ${selectedEncoder}`);
+    return selectedEncoder;
+  }
+
+  resolveStreamingEncoderFamily(
+    mode: TOutputSettingsMode,
+    selectedEncoder: string,
+  ): string | undefined {
+    return findEncoder(this.getAvailableStreamingEncoderMetadata(mode), selectedEncoder)?.family;
+  }
+
+  resolveRecordingEncoderFamily(
+    mode: TOutputSettingsMode,
+    format: ERecordingFormat,
+    selectedEncoder: string,
+  ): string | undefined {
+    return findEncoder(this.getAvailableRecordingEncoderMetadata(mode, format), selectedEncoder)
+      ?.family;
+  }
+
+  resolveStreamingEncoderPreset(
+    mode: TOutputSettingsMode,
+    selectedEncoder: string,
+  ): string | undefined {
+    return findEncoder(this.getAvailableStreamingEncoderMetadata(mode), selectedEncoder)?.preset;
+  }
+
+  resolveStreamingEncoderCodec(
+    mode: TOutputSettingsMode,
+    selectedEncoder: string,
+  ): string | undefined {
+    return findEncoder(this.getAvailableStreamingEncoderMetadata(mode), selectedEncoder)?.codec;
+  }
+
+  resolveRecordingEncoderCodec(
+    mode: TOutputSettingsMode,
+    format: ERecordingFormat,
+    selectedEncoder: string,
+  ): string | undefined {
+    return findEncoder(this.getAvailableRecordingEncoderMetadata(mode, format), selectedEncoder)
+      ?.codec;
   }
 
   /**
