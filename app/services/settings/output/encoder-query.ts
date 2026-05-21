@@ -13,6 +13,7 @@ import { StreamingService } from 'services/streaming';
 import { TPlatform } from 'services/platforms';
 import type { IEncoderOption } from 'obs-studio-node';
 import type { TOutputSettingsMode } from './output-settings';
+import { legacyEncoderAliasToObsEncoderIdOrSelf } from './encoder-compatibility';
 
 interface IWithAvailableEncoders {
   getAvailableEncoders(): IEncoderOption[];
@@ -48,8 +49,14 @@ function findEncoder(
   encoders: IEncoderOption[],
   selectedEncoder: string,
 ): IEncoderOption | undefined {
+  const normalizedEncoder = legacyEncoderAliasToObsEncoderIdOrSelf(selectedEncoder);
   return encoders.find(encoder => {
-    return encoder.name === selectedEncoder || encoder.id === selectedEncoder;
+    return (
+      encoder.name === selectedEncoder ||
+      encoder.id === selectedEncoder ||
+      encoder.name === normalizedEncoder ||
+      encoder.id === normalizedEncoder
+    );
   });
 }
 

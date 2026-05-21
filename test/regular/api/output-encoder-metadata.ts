@@ -196,6 +196,125 @@ test('output streaming settings use backend encoder metadata', async t => {
   );
 });
 
+test('legacy advanced streaming encoder ids resolve to backend metadata', async t => {
+  const client = await getApiClient();
+  const encoderQueryService = client.getResource<EncoderQueryService>('EncoderQueryService');
+  const outputSettingsService = client.getResource<OutputSettingsService>('OutputSettingsService');
+  const settingsService = client.getResource<SettingsService>('SettingsService');
+
+  const x264Encoder = requireEncoder(
+    t,
+    encoderQueryService.getAvailableStreamingEncoderMetadata('Advanced'),
+    encoder => encoder.id === 'obs_x264',
+    'Expected advanced streaming encoders to include software x264',
+  );
+
+  settingsService.setSettingValue('Output', 'Mode', 'Advanced');
+  settingsService.setSettingValue('Output', 'Encoder', 'x264');
+
+  const x264StreamingSettings = outputSettingsService.getSettings().streaming;
+
+  t.is(
+    x264StreamingSettings.encoder,
+    x264Encoder.family,
+    'legacy x264 alias should resolve to migrated backend family metadata',
+  );
+  t.is(
+    x264StreamingSettings.codec,
+    x264Encoder.codec,
+    'legacy x264 alias should resolve to migrated backend codec metadata',
+  );
+
+  const migratedEncoder = encoderQueryService
+    .getAvailableStreamingEncoderMetadata('Advanced')
+    .find(encoder => encoder.id === 'h264_texture_amf');
+
+  if (!migratedEncoder) {
+    t.pass('AMD texture encoder is not available in this test environment');
+    return;
+  }
+
+  settingsService.setSettingValue('Output', 'Mode', 'Advanced');
+  settingsService.setSettingValue('Output', 'Encoder', 'amd_amf_h264');
+
+  const streamingSettings = outputSettingsService.getSettings().streaming;
+
+  t.is(
+    streamingSettings.encoder,
+    migratedEncoder.family,
+    'legacy AMD advanced encoder id should resolve to migrated backend family metadata',
+  );
+  t.is(
+    streamingSettings.codec,
+    migratedEncoder.codec,
+    'legacy AMD advanced encoder id should resolve to migrated backend codec metadata',
+  );
+});
+
+test('legacy advanced recording encoder ids resolve to backend metadata', async t => {
+  const client = await getApiClient();
+  const encoderQueryService = client.getResource<EncoderQueryService>('EncoderQueryService');
+  const outputSettingsService = client.getResource<OutputSettingsService>('OutputSettingsService');
+  const settingsService = client.getResource<SettingsService>('SettingsService');
+
+  const streamingX264Encoder = requireEncoder(
+    t,
+    encoderQueryService.getAvailableStreamingEncoderMetadata('Advanced'),
+    encoder => encoder.id === 'obs_x264',
+    'Expected advanced streaming encoders to include software x264',
+  );
+  const recordingEncoders = encoderQueryService.getAvailableRecordingEncoderMetadata(
+    'Advanced',
+    ERecordingFormat.MKV,
+  );
+  const recordingX264Encoder = requireEncoder(
+    t,
+    recordingEncoders,
+    encoder => encoder.id === 'obs_x264',
+    'Expected advanced recording encoders to include software x264',
+  );
+
+  settingsService.setSettingValue('Output', 'Mode', 'Advanced');
+  settingsService.setSettingValue('Output', 'RecFormat', ERecordingFormat.MKV);
+  settingsService.setSettingValue('Output', 'Encoder', streamingX264Encoder.name);
+  settingsService.setSettingValue('Output', 'RecEncoder', 'x264');
+
+  const x264RecordingSettings = outputSettingsService.getSettings().recording;
+
+  t.is(
+    x264RecordingSettings.encoder,
+    recordingX264Encoder.family,
+    'legacy x264 alias should resolve to migrated recording family metadata',
+  );
+  t.is(
+    x264RecordingSettings.codec,
+    recordingX264Encoder.codec,
+    'legacy x264 alias should resolve to migrated recording codec metadata',
+  );
+
+  const migratedEncoder = recordingEncoders.find(encoder => encoder.id === 'h264_texture_amf');
+
+  if (!migratedEncoder) {
+    t.pass('AMD texture encoder is not available in this test environment');
+    return;
+  }
+
+  settingsService.setSettingValue('Output', 'RecEncoder', 'amd_amf_h264');
+
+  const recordingSettings = outputSettingsService.getSettings().recording;
+
+  t.is(
+    recordingSettings.encoder,
+    migratedEncoder.family,
+    'legacy AMD advanced encoder id should resolve to migrated recording family metadata',
+  );
+  t.is(
+    recordingSettings.codec,
+    migratedEncoder.codec,
+    'legacy AMD advanced encoder id should resolve to migrated recording codec metadata',
+  );
+});
+
 test('output recording settings use backend encoder metadata', async t => {
   const client = await getApiClient();
   const encoderQueryService = client.getResource<EncoderQueryService>('EncoderQueryService');

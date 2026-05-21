@@ -4,23 +4,13 @@ import { TDisplayType, VideoSettingsService } from 'services/settings-v2/video';
 import { Inject } from 'services/core/injector';
 import { ERecordingQuality, ERecordingFormat, EScaleType, ISettings } from 'obs-studio-node';
 import { EncoderQueryService } from './encoder-query';
-
-/**
- * Simple output mode can still persist these historical aliases in user settings.
- * They are compatibility values only: do not use them as the source of truth for
- * availability, concrete OBS ids, families, presets, or codecs. Resolve those
- * through EncoderQueryService, which reads obs-studio-node metadata.
- */
-export enum EObsSimpleEncoder {
-  x264 = 'x264',
-  x264_lowcpu = 'x264_lowcpu',
-  nvenc = 'nvenc',
-  amd = 'amd',
-  qsv = 'qsv',
-  jim_nvenc = 'jim_nvenc',
-}
-
-type TObsVideoEncoderId = string;
+import {
+  EObsSimpleEncoder,
+  legacyEncoderAliasToObsEncoderIdOrSelf,
+  OBS_X264_ENCODER_ID,
+  TObsVideoEncoderId,
+} from './encoder-compatibility';
+export { EObsSimpleEncoder } from './encoder-compatibility';
 
 /**
  * Encoder family keys used by Desktop features such as optimized profiles and
@@ -216,26 +206,6 @@ export const incompatibleRestreamCodecs = (codec: EIncompatibleRestreamCodec) =>
 
 export type TOutputSettingsMode = 'Simple' | 'Advanced';
 
-const OBS_X264_ENCODER_ID = 'obs_x264';
-
-/**
- * Compatibility bridge for older/simple settings values. New encoder ids must
- * come from obs-studio-node metadata; this map only handles values that Desktop
- * may still have persisted or that legacy callers still pass as family aliases.
- */
-const legacyEncoderAliasToObsEncoderId: Record<string, TObsVideoEncoderId> = {
-  [EObsSimpleEncoder.x264]: OBS_X264_ENCODER_ID,
-  [EObsSimpleEncoder.x264_lowcpu]: OBS_X264_ENCODER_ID,
-  [EObsSimpleEncoder.qsv]: 'obs_qsv11_v2',
-  [EObsSimpleEncoder.nvenc]: 'ffmpeg_nvenc',
-  [EObsSimpleEncoder.jim_nvenc]: 'jim_nvenc',
-  [EObsSimpleEncoder.amd]: 'h264_texture_amf',
-};
-
-const legacyAdvancedEncoderIdMigrations: Record<string, TObsVideoEncoderId> = {
-  amd_amf_h264: 'h264_texture_amf',
-};
-
 /**
  * each encoder have different names for setting fields
  */
@@ -251,16 +221,6 @@ export const encoderFieldsMap = {
   [EEncoderFamily.obs_nvenc_hevc_tex]: { preset: 'preset' },
   [EEncoderFamily.obs_nvenc_h264_tex]: { preset: 'preset' },
 };
-
-function legacyEncoderAliasToObsEncoderIdOrSelf(
-  encoder: EObsSimpleEncoder | EEncoderFamily | string,
-): TObsVideoEncoderId {
-  return (
-    legacyEncoderAliasToObsEncoderId[encoder] ||
-    legacyAdvancedEncoderIdMigrations[encoder] ||
-    encoder
-  );
-}
 
 export function convertFileFormatToRecordingFormat(format: EFileFormat): ERecordingFormat {
   switch (format) {
