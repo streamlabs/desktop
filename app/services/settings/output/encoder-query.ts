@@ -49,6 +49,8 @@ function findEncoder(
   encoders: IEncoderOption[],
   selectedEncoder: string,
 ): IEncoderOption | undefined {
+  // Match both UI setting values and concrete OBS encoder ids. Legacy saved values
+  // are normalized so old configs can still resolve to backend-owned metadata.
   const normalizedEncoder = legacyEncoderAliasToObsEncoderIdOrSelf(selectedEncoder);
   return encoders.find(encoder => {
     return (

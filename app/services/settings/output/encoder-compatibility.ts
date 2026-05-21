@@ -17,6 +17,9 @@ export type TObsVideoEncoderId = string;
 
 export const OBS_X264_ENCODER_ID = 'obs_x264';
 
+// Saved OBS settings can contain historical Desktop aliases or deprecated OBS ids.
+// OSN metadata remains the source of truth; this map only translates old persisted
+// values to current encoder ids before option validation or metadata lookup.
 const legacyEncoderAliasToObsEncoderId: Record<string, TObsVideoEncoderId> = {
   [EObsSimpleEncoder.x264]: OBS_X264_ENCODER_ID,
   [EObsSimpleEncoder.x264_lowcpu]: OBS_X264_ENCODER_ID,
@@ -41,6 +44,9 @@ export function legacyEncoderAliasToObsEncoderIdOrSelf(
   );
 }
 
+// Dropdown values come from current OSN metadata, while saved settings may still
+// contain legacy aliases. Return the canonical option value when the saved value
+// maps to an available encoder.
 export function resolveAvailableEncoderOptionValue<T extends string>(
   encoderOptions: { value: T }[],
   encoder: string | undefined,

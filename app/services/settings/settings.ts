@@ -829,6 +829,8 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
             streamEncoderSetting.options = streamEncoderOptions;
           }
 
+          // Rebuilding options from OSN can make old saved values disappear from the list.
+          // Canonicalize legacy values before falling back to the first available encoder.
           const streamEncoderValue = resolveAvailableEncoderOptionValue(
             streamEncoderOptions,
             streamEncoderSetting.value,
@@ -864,7 +866,8 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
           );
 
           if (recEncoderOptions.length > 0) {
-            // Preserve the "Use stream encoder" (none) pseudo-option from OBS
+            // OBS stores "none" for Advanced recording's "(Use stream encoder)" option.
+            // It is not a real encoder, but it must remain selectable when options are rebuilt.
             const origOptions = recEncoderSetting.options || [];
             const noneOpt = origOptions.find((o: any) => o.value === 'none');
             const fullRecOptions = noneOpt ? [noneOpt, ...recEncoderOptions] : recEncoderOptions;
@@ -876,6 +879,8 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
               recEncoderSetting.options = fullRecOptions;
             }
 
+            // Rebuilding options from OSN can make old saved values disappear from the list.
+            // Canonicalize legacy values before falling back to the first available encoder.
             const recEncoderValue = resolveAvailableEncoderOptionValue(
               fullRecOptions,
               recEncoderSetting.value,
@@ -964,6 +969,8 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     const mode = this.findSettingValue(outputSettings, 'Untitled', 'Mode') as TOutputSettingsMode;
     const recFormat = convertFileFormatToRecordingFormat(recordingFormat);
 
+    // In Advanced mode, RecEncoder="none" means use the stream encoder.
+    // Treat it as valid instead of checking it against the real recording encoder list.
     // Use getAvailableEncoders() to check if the current recording encoder is
     // compatible with the selected file format.
     if (recFormat !== undefined && !(mode === 'Advanced' && recordingEncoder === 'none')) {
