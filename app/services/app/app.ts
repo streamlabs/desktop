@@ -49,6 +49,7 @@ import { NavigationService } from 'services/navigation';
 import { StreamingService } from 'services/streaming';
 import { VirtualWebcamService } from 'services/virtual-webcam';
 import { WebsocketService } from 'services/websocket';
+import { DiagnosticsService } from 'services/diagnostics';
 
 interface IAppState {
   loading: boolean;
@@ -106,6 +107,7 @@ export class AppService extends StatefulService<IAppState> {
   @Inject() private streamingService: StreamingService;
   @Inject() private virtualWebcamService: VirtualWebcamService;
   @Inject() private websocketService: WebsocketService;
+  @Inject() private diagnosticsService: DiagnosticsService;
 
   static initialState: IAppState = {
     loading: true,
@@ -230,6 +232,7 @@ export class AppService extends StatefulService<IAppState> {
       this.virtualWebcamService.stop();
       this.videoSettingsService.shutdown();
       await this.gameOverlayService.destroy();
+      this.diagnosticsService.shutdown();
       await this.fileManagerService.flushAll();
       obs.NodeObs.RemoveSourceCallback();
       obs.NodeObs.RemoveTransitionCallback();

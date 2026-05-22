@@ -207,6 +207,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
   } = {};
 
   streaming = false;
+  private statsFlushInterval: ReturnType<typeof setInterval>;
 
   init() {
     super.init();
@@ -259,12 +260,17 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       this.UPDATE_STREAM({ error, platforms, destinations, type });
     });
 
-    setInterval(() => {
+    this.statsFlushInterval = setInterval(() => {
       // Flush stats to persistent storage every 60 seconds.
       // This means we have relatively up to date stats even in
       // the event of a crash.
       this.saveAccumulators();
     }, STATS_FLUSH_INTERVAL);
+  }
+
+  shutdown() {
+    this.saveAccumulators();
+    clearInterval(this.statsFlushInterval);
   }
 
   private saveAccumulators() {
