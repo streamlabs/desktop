@@ -47,5 +47,6 @@
   "Collab Cam requires a source": "Нужен источник для Collab Cam",
   "At least one Collab Cam source is required to use Collab Cam. Would you like to add one now?": "Чтобы воспользоваться Collab Cam, нужен хотя бы один источник. Добавить его сейчас?",
   "You now have access to Collab Cam!": "Теперь у вас есть доступ к Collab Cam!",
-  "You must be logged in to use Collab Cam.": "Для использования Collab Cam необходимо войти в систему."
+  "You must be logged in to use Collab Cam.": "Для использования Collab Cam необходимо войти в систему.",
+  "There was an error setting the Collab Cam source. Please confirm the source exists and try again.": "There was an error setting the Collab Cam source. Please confirm the source exists and try again."
 }

@@ -10,6 +10,7 @@ import {
 import { Inject } from 'services/core/injector';
 import { Subject } from 'rxjs';
 import { PlatformAppsService } from 'services/platform-apps';
+import { stringifyAppSourceSettings } from 'services/platform-apps/source-url';
 import { ScenesService } from 'services/scenes';
 import { AudioService } from 'services/audio';
 import { SourceFiltersService } from 'app-services';
@@ -107,7 +108,7 @@ export class SourcesModule extends Module {
   getAppSourceSettings(ctx: IApiContext, sourceId: string) {
     const source = this.getAppSourceForApp(sourceId, ctx.app.id);
 
-    return source.getPropertiesManagerSettings().appSettings;
+    return stringifyAppSourceSettings(source.getPropertiesManagerSettings().appSettings);
   }
 
   @apiMethod()
@@ -115,7 +116,7 @@ export class SourcesModule extends Module {
     const source = this.getAppSourceForApp(sourceId, ctx.app.id);
 
     source.setPropertiesManagerSettings({
-      appSettings: settings,
+      appSettings: stringifyAppSourceSettings(settings),
     });
   }
 
@@ -153,7 +154,7 @@ export class SourcesModule extends Module {
       propertiesManagerSettings: {
         appSourceId,
         appId: ctx.app.id,
-        appSettings: {},
+        appSettings: '',
       },
     });
 

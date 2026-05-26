@@ -927,7 +927,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   enableAutoSave() {
     if (this.autoSaveInterval) return;
     this.autoSaveInterval = window.setInterval(async () => {
-      if (this.streamingService.state.streamingStatus === EStreamingState.Live) return;
+      if (this.streamingService.views.streamingStatus === EStreamingState.Live) return;
 
       this.autoSavePromise = this.save();
       await this.autoSavePromise;

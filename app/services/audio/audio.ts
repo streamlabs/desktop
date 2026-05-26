@@ -111,8 +111,23 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
         .getPropertiesFormData()
         .find(data => data.name === 'reroute_audio');
       if (formData) {
+        const isControlledViaObs = !!formData.value;
+
+        if (
+          audioSource &&
+          !audioSource.isControlledViaObs && //  only run when the checkbox is changing from off to on
+          isControlledViaObs &&
+          audioSource.monitoringType === obs.EMonitoringType.MonitoringOnly
+        ) {
+          // When the option "Control audio via Streamlabs Desktop" is unchecked, the browser engine plays directly to
+          // the system audio device (Desktop Audio). The monitoring setting is just a saved state in this case.
+          // When it is checked, monitoring behaves like other sources and we need to make sure that it is reset
+          // to conform to the OBS default behavior. Users can opt back into monitoring afterward.
+          this.setSettings(source.sourceId, { monitoringType: obs.EMonitoringType.None });
+        }
+
         this.UPDATE_AUDIO_SOURCE(source.sourceId, {
-          isControlledViaObs: !!formData.value,
+          isControlledViaObs,
         });
       }
 

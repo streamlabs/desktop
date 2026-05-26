@@ -94,16 +94,11 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     vertical: null as IVideoInfo,
   };
 
-  establishedContext = new Subject();
+  establishedContext = new Subject<TDisplayType>();
 
   init() {
     this.establishVideoContext();
-
-    if (this.dualOutputService.views.activeDisplays.vertical) {
-      this.establishVideoContext('vertical');
-    }
-
-    this.establishedContext.next();
+    this.establishVideoContext('vertical');
   }
 
   contexts = {
@@ -173,6 +168,34 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
         outputHeight: this.state.vertical?.outputHeight,
       },
     };
+  }
+
+  get skippedFrames() {
+    let skippedFrames = 0;
+
+    for (const display of displays) {
+      const context =
+        display === 'horizontal' && this.contexts.horizontal === null
+          ? Video
+          : this.contexts[display];
+      skippedFrames += context.skippedFrames;
+    }
+
+    return skippedFrames;
+  }
+
+  get encodedFrames() {
+    let encodedFrames = 0;
+
+    for (const display of displays) {
+      const context =
+        display === 'horizontal' && this.contexts.horizontal === null
+          ? Video
+          : this.contexts[display];
+      encodedFrames += context.encodedFrames;
+    }
+
+    return encodedFrames;
   }
 
   /**
@@ -314,6 +337,8 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
         `${this.outputResolutions.horizontal.outputWidth}x${this.outputResolutions.horizontal.outputHeight}`,
       );
     }
+
+    this.establishedContext.next(display);
 
     return !!this.contexts[display];
   }

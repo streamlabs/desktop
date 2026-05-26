@@ -72,6 +72,13 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
   }
 
   switchPlatforms(enabledPlatforms: TPlatform[]) {
+    if (this.isPrimaryPlatform('instagram') || this.isPrimaryPlatform('patreon')) {
+      const newPrimary = enabledPlatforms.find(p => p !== 'instagram' && p !== 'patreon');
+      if (newPrimary) {
+        this.setPrimaryPlatform(newPrimary);
+      }
+    }
+
     this.linkedPlatforms.forEach(platform => {
       this.updatePlatform(platform, { enabled: enabledPlatforms.includes(platform) });
     });
@@ -123,17 +130,8 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
    * @param display - Display to toggle
    * @param radioBtn - If true, the display will be the only one selected for recording
    */
-  toggleRecordingDisplay(display: TDisplayType, radioBtn: boolean = false) {
-    if (radioBtn) {
-      this.updateSettings({ recording: [display] });
-      return;
-    }
-
-    if (this.state.recording.includes(display)) {
-      this.updateSettings({ recording: this.state.recording.filter(d => d !== display) });
-    } else {
-      this.updateSettings({ recording: [...this.state.recording, display] });
-    }
+  toggleRecordingDisplay(output: TDisplayOutput) {
+    this.updateSettings({ recording: output });
   }
 
   /**
@@ -215,6 +213,10 @@ export class GoLiveSettingsModule {
     await StreamingService.actions.return.prepopulateInfo();
     // TODO investigate mutation order issue
     await new Promise(r => setTimeout(r, 100));
+
+    // After async operations the Go Live window may have been closed,
+    // destroying the state controller. Bail out if the module no longer exists.
+    if (!this.state.getMetadata?.()) return;
 
     const prepopulateOptions = this.state.prepopulateOptions;
     const view = new StreamInfoView({});
@@ -300,6 +302,16 @@ export class GoLiveSettingsModule {
    * If platform is enabled then prepopulate its settings
    */
   switchPlatforms(enabledPlatforms: TPlatform[], skipPrepopulate?: boolean) {
+    // If Patreon or Instagram is the current primary (merge-only / no chat),
+    // promote any other enabled platform to primary so chat & stream-info
+    // routing don't resolve to a non-streaming platform.
+    if (this.state.isPrimaryPlatform('instagram') || this.state.isPrimaryPlatform('patreon')) {
+      const newPrimary = enabledPlatforms.find(p => p !== 'instagram' && p !== 'patreon');
+      if (newPrimary) {
+        this.setPrimaryChat(newPrimary);
+      }
+    }
+
     this.state.linkedPlatforms.forEach(platform => {
       this.state.updatePlatform(platform, { enabled: enabledPlatforms.includes(platform) });
     });
@@ -351,6 +363,11 @@ export class GoLiveSettingsModule {
 
   updateCustomDestinationDisplayAndSaveSettings(destId: number, display: TDisplayType) {
     this.state.updateCustomDestinationDisplay(destId, display);
+    this.save(this.state.settings);
+  }
+
+  updateRecordingDisplayAndSaveSettings(display: TDisplayOutput) {
+    this.state.toggleRecordingDisplay(display);
     this.save(this.state.settings);
   }
 

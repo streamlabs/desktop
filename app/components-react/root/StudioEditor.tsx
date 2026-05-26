@@ -433,7 +433,6 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
         <span className={cx({ [styles.displayVisible]: showHorizontal })}>
           {$t('Horizontal canvas')}
         </span>
-        {showRecordingIcons && <DualOutputIcons display="horizontal" />}
       </div>
 
       <div
@@ -466,14 +465,25 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
 function DualOutputIcons(p: { display: TDisplayType }) {
   const { StreamingService } = Services;
 
-  const { showStreaming, showRecording } = useVuex(() => ({
-    showStreaming:
-      (p.display === 'horizontal' && StreamingService.views.isHorizontalStreaming) ||
-      (p.display === 'vertical' && StreamingService.views.isVerticalStreaming),
-    showRecording:
-      (p.display === 'horizontal' && StreamingService.views.isHorizontalRecording) ||
-      (p.display === 'vertical' && StreamingService.views.isVerticalRecording),
+  const {
+    isHorizontalStreaming,
+    isVerticalStreaming,
+    isHorizontalRecording,
+    isVerticalRecording,
+  } = useVuex(() => ({
+    isHorizontalStreaming: StreamingService.views.isHorizontalStreaming,
+    isVerticalStreaming: StreamingService.views.isVerticalStreaming,
+    isHorizontalRecording: StreamingService.views.isHorizontalRecording,
+    isVerticalRecording: StreamingService.views.isVerticalRecording,
   }));
+
+  const showStreaming = useMemo(() => {
+    return p.display === 'horizontal' ? isHorizontalStreaming : isVerticalStreaming;
+  }, [p.display, isHorizontalStreaming, isVerticalStreaming]);
+
+  const showRecording = useMemo(() => {
+    return p.display === 'horizontal' ? isHorizontalRecording : isVerticalRecording;
+  }, [p.display, isHorizontalRecording, isVerticalRecording]);
 
   return (
     <>

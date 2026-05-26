@@ -123,10 +123,16 @@ export async function chatIsVisible(multistream: boolean = false) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   return await useMainWindow(async () => {
     if (multistream) {
-      return await isDisplayed('span=Multistream');
+      return await isDisplayed('span=Multistream', {
+        timeout: 3000,
+        timeoutMsg: 'Multistream chat did not appear',
+      });
     }
 
-    return await isDisplayed('a=Refresh Chat');
+    return await isDisplayed('a=Refresh Chat', {
+      timeout: 3000,
+      timeoutMsg: 'Refresh Chat did not appear',
+    });
   });
 }
 

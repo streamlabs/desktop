@@ -1,5 +1,5 @@
 import { Button } from 'antd';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { $t } from 'services/i18n';
 import { EPlatformCallResult, externalAuthPlatforms, TPlatform } from 'services/platforms';
 import styles from './ConnectButton.m.less';
@@ -9,8 +9,14 @@ import { alertAsync } from 'components-react/modals';
 import { EAuthProcessState } from 'services/user';
 import { useVuex } from 'components-react/hooks';
 
-export default function ConnectButton(p: { platform: TPlatform; className?: string }) {
-  const { UserService, InstagramService } = Services;
+interface IConnectButtonProps {
+  platform: TPlatform;
+  className?: string;
+  onClick?: () => void;
+}
+
+export default function ConnectButton(p: IConnectButtonProps) {
+  const { UserService, InstagramService, WindowsService, StreamSettingsService } = Services;
 
   const { isLoading, authInProgress } = useVuex(() => ({
     isLoading: UserService.state.authProcessState === EAuthProcessState.Loading,
@@ -18,11 +24,11 @@ export default function ConnectButton(p: { platform: TPlatform; className?: stri
     instagramSettings: InstagramService.state.settings,
   }));
 
-  async function platformMergeInline(platform: TPlatform) {
+  const platformMergeInline = useCallback(async (platform: TPlatform) => {
     const mode = externalAuthPlatforms.includes(platform) ? 'external' : 'internal';
 
-    await Services.UserService.actions.return.startAuth(platform, mode, true).then(res => {
-      Services.WindowsService.actions.setWindowOnTop('child');
+    await UserService.actions.return.startAuth(platform, mode, true).then(res => {
+      WindowsService.actions.setWindowOnTop('child');
       if (res === EPlatformCallResult.Error) {
         alertAsync(
           $t(
@@ -32,30 +38,31 @@ export default function ConnectButton(p: { platform: TPlatform; className?: stri
         return;
       }
 
-      Services.StreamSettingsService.actions.setSettings({ protectedModeEnabled: true });
+      StreamSettingsService.actions.setSettings({ protectedModeEnabled: true });
     });
-  }
+  }, []);
 
-  async function instagramConnect() {
-    await UserService.actions.return.startAuth('instagram', 'internal', true);
-  }
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
+      e.stopPropagation();
+      if (p.platform === 'instagram') {
+        UserService.actions.return.startAuth('instagram', 'internal', true);
+      } else {
+        platformMergeInline(p.platform);
+      }
+    },
+    [p.platform, platformMergeInline],
+  );
 
   return (
     <Button
-      onClick={e => {
-        e.stopPropagation();
-        if (p.platform === 'instagram') {
-          instagramConnect();
-        } else {
-          platformMergeInline(p.platform);
-        }
-      }}
+      onClick={handleClick}
       className={cx(p?.className, { [styles.tiktokConnectBtn]: p.platform === 'tiktok' })}
       disabled={isLoading || authInProgress}
       style={{
         backgroundColor: `var(--${p.platform})`,
         borderColor: 'transparent',
-        color: ['trovo', 'instagram', 'kick'].includes(p.platform) ? 'black' : 'inherit',
+        color: ['trovo', 'instagram', 'kick', 'patreon'].includes(p.platform) ? 'black' : 'inherit',
       }}
     >
       {$t('Connect')}

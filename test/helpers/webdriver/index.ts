@@ -19,8 +19,16 @@ import {
   waitForElectronInstancesExist,
 } from './runner-utils';
 import { skipOnboarding } from '../modules/onboarding';
-import { closeWindow, focusChild, focusMain, getClient, waitForLoader } from '../modules/core';
+import {
+  clickButton,
+  closeWindow,
+  focusChild,
+  focusMain,
+  getClient,
+  waitForLoader,
+} from '../modules/core';
 import { clearCollections } from '../modules/api/scenes';
+import { platform } from 'os';
 export const test = testFn; // the overridden "test" function
 
 const path = require('path');
@@ -238,16 +246,23 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
       capabilities: {
         browserName: 'chrome',
         'goog:chromeOptions': {
-          binary: path.join(
-            __dirname,
-            '..',
-            '..',
-            '..',
-            '..',
-            'node_modules',
-            '.bin',
-            'electron.cmd',
-          ),
+          binary:
+            process.platform === 'win32'
+              ? path.join(__dirname, '..', '..', '..', '..', 'node_modules', '.bin', 'electron.cmd')
+              : path.join(
+                  __dirname,
+                  '..',
+                  '..',
+                  '..',
+                  '..',
+                  'node_modules',
+                  'electron',
+                  'dist',
+                  'Electron.app',
+                  'Contents',
+                  'MacOS',
+                  'Electron',
+                ),
           args: [
             ...appArgs,
             '--app=test-main.js',
@@ -281,6 +296,10 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     // the tests much more stable, especially on slow systems.
     await t.context.app.client.setTimeout({ implicit: options.implicitTimeout });
 
+    if (platform() === 'darwin') {
+      // Select the "Continue" button on the macOS permissions page (MacPermissions.tsx), if it exists.
+      await clickButton('Continue');
+    }
     // Pretty much all tests except for onboarding-specific
     // tests will want to skip this flow, so we do it automatically.
     await waitForLoader();

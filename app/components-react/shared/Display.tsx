@@ -68,8 +68,7 @@ export default function Display(props: DisplayProps) {
 
   function handleResize() {
     if (!obsDisplay.current) return;
-    const [width, height] = v.baseResolution.split('x');
-    obsDisplay.current.resize(Number(width), Number(height));
+    obsDisplay.current.refreshOutputRegion();
   }
 
   function onClickHandler(event: React.MouseEvent) {

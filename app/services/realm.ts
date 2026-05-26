@@ -64,16 +64,12 @@ export class RealmObject {
           throw new Error(`Object with id does not exist: ${this._initWithId}`);
         }
 
-        // TODO: Make this better
-        // We might already be in a write transaction
-        try {
+        if (this.db.isInTransaction) {
+          this._realmModel = this.db.create(this.schema.name, {});
+        } else {
           this.db.write(() => {
             this._realmModel = this.db.create(this.schema.name, {});
           });
-        } catch (e: unknown) {
-          // We want to surface legit errors in db/schema config
-          console.log(e);
-          this._realmModel = this.db.create(this.schema.name, {});
         }
 
         this.onCreated();

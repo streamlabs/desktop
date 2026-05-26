@@ -7,7 +7,6 @@
   "End Goal": "Hedefi Sonlandır",
   "Starting Amount": "Başlangıç Miktarı",
   "End After": "Sonrasında Bitir:",
-  "Include resubs?": "Yeniden abone olanlar dahil edilsin mi?",
   "Layout": "Düzen",
   "Background Color": "Arka Plan Rengi",
   "Bar Color": "Çubuk Rengi",
@@ -24,5 +23,8 @@
   "Member Goal": "Üye Hedefi",
   "Streamlabs Charity Goal": "Streamlabs Charity Amacı",
   "Streamlabs Charity Donations": "Streamlabs Charity Bağışları",
-  "Charity donations": "Hayırseverlik bağışları"
+  "Charity donations": "Hayırseverlik bağışları",
+  "Goal Settings": "Goal Settings",
+  "Must be in MM/DD/YYYY format.": "Must be in MM/DD/YYYY format.",
+  "Condensed": "Condensed"
 }
