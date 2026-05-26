@@ -7,7 +7,6 @@
   "End Goal": "Конечная цель",
   "Starting Amount": "Начальное количество",
   "End After": "Закончить после",
-  "Include resubs?": "Включить вернувшихся подписчиков?",
   "Layout": "Макет",
   "Background Color": "Цвет фона",
   "Bar Color": "Цвет полоски",
@@ -24,5 +23,8 @@
   "Member Goal": "Цель в участниках",
   "Streamlabs Charity Goal": "Цель по благотворительности в Streamlabs",
   "Streamlabs Charity Donations": "Пожертвования в Streamlabs",
-  "Charity donations": "Пожертвования"
+  "Charity donations": "Пожертвования",
+  "Goal Settings": "Goal Settings",
+  "Must be in MM/DD/YYYY format.": "Must be in MM/DD/YYYY format.",
+  "Condensed": "Condensed"
 }

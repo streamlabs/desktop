@@ -1,5 +1,10 @@
 import { TClip } from 'services/highlighter/models/highlighter.models';
-import { SCRUB_HEIGHT, SCRUB_WIDTH, SCRUB_FRAMES } from 'services/highlighter/constants';
+import {
+  SCRUB_HEIGHT,
+  SCRUB_WIDTH,
+  SCRUB_WIDTH_VERTICAL,
+  SCRUB_FRAMES,
+} from 'services/highlighter/constants';
 import React, { useState } from 'react';
 import { Services } from 'components-react/service-provider';
 import { BoolButtonInput } from 'components-react/shared/inputs/BoolButtonInput';
@@ -10,7 +15,7 @@ import { isAiClip } from './utils';
 import { useVuex } from 'components-react/hooks';
 import ClipPreviewInfo from './ClipPreviewInfo';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
-import * as remote from '@electron/remote';
+import cx from 'classnames';
 
 export default function ClipPreview(props: {
   clipId: string;
@@ -33,8 +38,10 @@ export default function ClipPreview(props: {
     return <>deleted</>;
   }
 
+  const width = v.clip.display === 'vertical' ? SCRUB_WIDTH_VERTICAL : SCRUB_WIDTH;
+
   function mouseMove(e: React.MouseEvent) {
-    const frameIdx = Math.floor((e.nativeEvent.offsetX / SCRUB_WIDTH) * SCRUB_FRAMES);
+    const frameIdx = Math.floor((e.nativeEvent.offsetX / width) * SCRUB_FRAMES);
     if (scrubFrame !== frameIdx) {
       setScrubFrame(frameIdx);
     }
@@ -50,12 +57,13 @@ export default function ClipPreview(props: {
         {!v.clip.deleted && (
           <img
             src={clipThumbnail}
-            className={styles.previewImage}
+            className={cx(styles.previewImage, {
+              [styles.verticalPreview]: v.clip.display === 'vertical',
+            })}
             style={{
-              width: `${SCRUB_WIDTH}px`,
+              width: `${width}px`,
               height: `${SCRUB_HEIGHT}px`,
-
-              objectPosition: `-${scrubFrame * SCRUB_WIDTH}px`,
+              objectPosition: `-${scrubFrame * width}px`,
             }}
             onMouseMove={mouseMove}
             onClick={props.emitShowTrim}

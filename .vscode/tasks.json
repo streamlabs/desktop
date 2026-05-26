@@ -2,6 +2,13 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "compile-tests",
+      "type": "shell",
+      "command": "yarn tsc -p test",
+      "group": "build",
+      "problemMatcher": ["$tsc"]
+    },
+    {
       "type": "npm",
       "script": "compile",
       "group": {

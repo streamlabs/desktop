@@ -47,5 +47,6 @@
   "Collab Cam requires a source": "Quelle erforderlich für Collab Cam",
   "At least one Collab Cam source is required to use Collab Cam. Would you like to add one now?": "Für die Verwendung von Collab Cam ist mindestens eine Collab Cam Quelle erforderlich. Möchten Sie sie jetzt hinzufügen?",
   "You now have access to Collab Cam!": "Sie haben jetzt Zugriff auf Collab Cam!",
-  "You must be logged in to use Collab Cam.": "Sie müssen eingeloggt sein, um Collab Cam zu nutzen."
+  "You must be logged in to use Collab Cam.": "Sie müssen eingeloggt sein, um Collab Cam zu nutzen.",
+  "There was an error setting the Collab Cam source. Please confirm the source exists and try again.": "There was an error setting the Collab Cam source. Please confirm the source exists and try again."
 }

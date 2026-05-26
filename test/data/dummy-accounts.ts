@@ -3,7 +3,7 @@ import { ITestUser } from '../helpers/webdriver/user';
 import { TPlatform } from 'services/platforms';
 
 // update this list for platforms that use dummy user accounts for tests
-const platforms = ['twitter', 'instagram', 'tiktok', 'kick'] as const;
+const platforms = ['twitter', 'instagram', 'tiktok', 'kick', 'patreon'] as const;
 type DummyUserPlatforms = typeof platforms;
 export type TTestDummyUserPlatforms = DummyUserPlatforms[number];
 
@@ -141,6 +141,24 @@ export const kickUser1: IDummyTestUser = {
 };
 
 /**
+ * Patreon
+ */
+
+export const patreonUser1: IDummyTestUser = {
+  email: 'patreonUser1@email.com',
+  workerId: 'patreonWorkerId1',
+  updated: 'patreonUpdatedId1',
+  username: 'patreonUser1',
+  type: 'patreon',
+  id: 'patreonId1',
+  token: 'patreonToken1',
+  apiToken: 'patreonApiToken1',
+  ingest: 'rtmps://patreonIngestUrl:443/rtmp/',
+  streamKey: 'patreonStreamKey1',
+  widgetToken: 'patreonWidgetToken1',
+};
+
+/**
  * Check if platform should use a dummy account with tests
  * @param platform platform for login
  * @returns If platform is of the TTestDummyUserPlatforms type
@@ -160,6 +178,8 @@ export function getDummyUser(
   platform: TTestDummyUserPlatforms,
   tikTokLiveScope?: TTikTokLiveScopeTypes,
 ): IDummyTestUser | undefined {
+  if (platform === 'patreon') return patreonUser1;
+
   if (platform === 'instagram') return instagramUser1;
 
   if (platform === 'twitter') return twitterUser1;

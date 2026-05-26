@@ -8,17 +8,22 @@ import invert from 'lodash/invert';
 import cloneDeep from 'lodash/cloneDeep';
 import { TwitchService } from 'services/platforms/twitch';
 import { PlatformAppsService } from 'services/platform-apps';
-import { IGoLiveSettings, IPlatformFlags, StreamingService } from 'services/streaming';
+import {
+  IGoLiveSettings,
+  IPlatformFlags,
+  StreamingService,
+  TDisplayOutput,
+} from 'services/streaming';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import Vue from 'vue';
 import { IVideo } from 'obs-studio-node';
-import { DualOutputService } from 'services/dual-output';
 import { TOutputOrientation } from 'services/restream';
 
 export interface ISavedGoLiveSettings {
   platforms: Partial<Record<TPlatform, IPlatformFlags>>;
   customDestinations?: ICustomStreamDestination[];
   advancedMode: boolean;
+  recording?: TDisplayOutput;
   streamShift?: boolean;
 }
 
@@ -85,6 +90,7 @@ interface IStreamSettings extends IStreamSettingsState {
   keepReplayBufferStreamStops: boolean;
   delayEnable: boolean;
   delaySec: number;
+  preserveDelay: boolean;
 }
 
 // TikTok, X (Twitter), and Instagram all map to Custom because they require entering in stream keys
@@ -97,6 +103,7 @@ const platformToServiceNameMap: { [key in TPlatform]: string } = {
   twitter: 'Custom',
   instagram: 'Custom',
   kick: 'Custom',
+  patreon: 'Custom',
 };
 
 /**
@@ -108,7 +115,6 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
   @Inject() private userService: UserService;
   @Inject() private platformAppsService: PlatformAppsService;
   @Inject() private streamSettingsService: StreamSettingsService;
-  @Inject() private dualOutputService: DualOutputService;
   @Inject() private streamingService: StreamingService;
   @Inject() private videoSettingsService: VideoSettingsService;
 
@@ -260,6 +266,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
       keepReplayBufferStreamStops: obsGeneralSettings.KeepReplayBufferStreamStops,
       delayEnable: obsAdvancedSettings.DelayEnable,
       delaySec: obsAdvancedSettings.DelaySec,
+      preserveDelay: obsAdvancedSettings.DelayPreserve,
     };
   }
 
@@ -430,6 +437,7 @@ class StreamSettingsView extends ViewHandler<IStreamSettingsState> {
       keepReplayBufferStreamStops: obsGeneralSettings.KeepReplayBufferStreamStops,
       delayEnable: obsAdvancedSettings.DelayEnable,
       delaySec: obsAdvancedSettings.DelaySec,
+      preserveDelay: obsAdvancedSettings.DelayPreserve,
     };
   }
 }

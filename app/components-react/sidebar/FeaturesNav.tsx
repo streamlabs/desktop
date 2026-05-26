@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, memo } from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import {
   ENavName,
   EMenuItemKey,
@@ -24,7 +24,7 @@ import cx from 'classnames';
 import Utils from 'services/utils';
 import { useRealmObject } from 'components-react/hooks/realm';
 
-export default function FeaturesNav() {
+export default memo(function FeaturesNav() {
   const toggleStudioMode = useCallback(() => {
     UsageStatisticsService.actions.recordClick('NavTools', 'studio-mode');
     if (TransitionsService.views.studioMode) {
@@ -82,7 +82,7 @@ export default function FeaturesNav() {
     VisionService,
   } = Services;
 
-  const isVisionRunning = useRealmObject(VisionService.state).isRunning;
+  const { isRunning: isVisionRunning } = useRealmObject(VisionService.state);
 
   const {
     featureIsEnabled,
@@ -214,6 +214,7 @@ export default function FeaturesNav() {
                   <FeaturesNavItem
                     key={layoutEditorItem.key}
                     isSubMenuItem={true}
+                    isOpen={isOpen}
                     menuItem={layoutEditorItem}
                     handleNavigation={handleNavigation}
                   />
@@ -222,6 +223,7 @@ export default function FeaturesNav() {
                   <FeaturesNavItem
                     key={studioModeItem.key}
                     isSubMenuItem={true}
+                    isOpen={isOpen}
                     menuItem={studioModeItem}
                     handleNavigation={handleNavigation}
                     className={cx(menuStyles[studioModeItem.key])}
@@ -251,6 +253,7 @@ export default function FeaturesNav() {
                 <FeaturesNavItem
                   key={subMenuItem.key}
                   isSubMenuItem={true}
+                  isOpen={isOpen}
                   menuItem={subMenuItem}
                   badge={menuBadges[subMenuItem.key]}
                   className={cx(menuStyles[subMenuItem.key])}
@@ -274,6 +277,7 @@ export default function FeaturesNav() {
             !isHidden && (
               <FeaturesNavItem
                 key={menuItem.key}
+                isOpen={isOpen}
                 menuItem={menuItem}
                 badge={menuBadges[menuItem.key]}
                 className={cx(menuStyles[menuItem.key])}
@@ -290,28 +294,26 @@ export default function FeaturesNav() {
       )}
     </Menu>
   );
-}
+});
 
 const FeaturesNavItem = memo(
   (p: {
     isSubMenuItem?: boolean;
+    isOpen: boolean;
     menuItem: IMenuItem | IParentMenuItem;
     handleNavigation: (menuItem: IMenuItem, key?: string) => void;
     badge?: string;
     className?: string;
   }) => {
     const { SideNavService, TransitionsService, DualOutputService } = Services;
-    const { isSubMenuItem, menuItem, badge, handleNavigation, className } = p;
+    const { isSubMenuItem, isOpen, menuItem, badge, handleNavigation, className } = p;
 
-    const { currentMenuItem, isOpen, studioMode, dualOutputMode, showBothDisplays } = useVuex(
-      () => ({
-        currentMenuItem: SideNavService.views.currentMenuItem,
-        isOpen: SideNavService.views.isOpen,
-        studioMode: TransitionsService.views.studioMode,
-        dualOutputMode: DualOutputService.views.dualOutputMode,
-        showBothDisplays: DualOutputService.views.showBothDisplays,
-      }),
-    );
+    const { currentMenuItem, studioMode, dualOutputMode, showBothDisplays } = useVuex(() => ({
+      currentMenuItem: SideNavService.views.currentMenuItem,
+      studioMode: TransitionsService.views.studioMode,
+      dualOutputMode: DualOutputService.views.dualOutputMode,
+      showBothDisplays: DualOutputService.views.showBothDisplays,
+    }));
 
     const title = useMemo(() => menuTitles(menuItem.key), [menuItem]);
 

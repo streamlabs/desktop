@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import * as remote from '@electron/remote';
 import cx from 'classnames';
 import { Menu } from 'antd';
@@ -6,7 +6,12 @@ import pick from 'lodash/pick';
 import { initStore, useController } from 'components-react/hooks/zustand';
 import { EStreamingState } from 'services/streaming';
 import { EAppPageSlot, ILoadedApp } from 'services/platform-apps';
-import { getPlatformService, TLiveDockFeature, TPlatform } from 'services/platforms';
+import {
+  getPlatformService,
+  platformLabels,
+  TLiveDockFeature,
+  TPlatform,
+} from 'services/platforms';
 import { $t } from 'services/i18n';
 import { Services } from '../service-provider';
 import Chat from './Chat';
@@ -40,7 +45,7 @@ class LiveDockController {
   }
 
   get streamingStatus() {
-    return this.streamingService.state.streamingStatus;
+    return this.streamingService.views.streamingStatus;
   }
 
   get isStreaming() {
@@ -93,12 +98,20 @@ class LiveDockController {
     return this.chatTabs.length > 1;
   }
 
+  get enabledPlatforms() {
+    return this.streamingService.views.enabledPlatforms;
+  }
+
   get defaultPlatformChatVisible() {
     return this.store.selectedChat === 'default';
   }
 
   get restreamChatUrl() {
     return this.restreamService.chatUrl;
+  }
+
+  get primaryPlatform(): TPlatform | undefined {
+    return this.userService.state.auth?.primaryPlatform;
   }
 
   get chatApps(): ILoadedApp[] {
@@ -117,9 +130,15 @@ class LiveDockController {
         this.streamingService.views.hasMultipleTargetsEnabled) ||
       this.hasDifferentDualOutputPlatforms;
 
+    // Mirror streaming-view's chatUrl resolution so the label matches the chat that actually mounts.
+    const authPrimary = this.userService.state.auth.primaryPlatform;
+    const chatPrimary = this.enabledPlatforms.includes(authPrimary)
+      ? authPrimary
+      : this.enabledPlatforms[0];
+
     const tabs: { name: string; value: string }[] = [
       {
-        name: getPlatformService(this.userService.state.auth.primaryPlatform).displayName,
+        name: getPlatformService(chatPrimary).displayName,
         value: 'default',
       },
     ].concat(
@@ -175,9 +194,10 @@ class LiveDockController {
   }
 
   get canEditChannelInfo(): boolean {
-    // Twitter & Tiktok don't support editing title after going live
+    // Twitter, TikTok & Patreon don't support editing title after going live
     if (this.isPlatform('twitter') && !this.isRestreaming) return false;
     if (this.isPlatform('tiktok') && !this.isRestreaming) return false;
+    if (this.isPlatform('patreon') && !this.isRestreaming) return false;
 
     return (
       this.streamingService.views.isMidStreamMode ||
@@ -259,7 +279,7 @@ class LiveDockController {
   }
 }
 
-export default function LiveDockWithContext() {
+function LiveDockWithContext() {
   const controller = useMemo(() => new LiveDockController(), []);
   return (
     <LiveDockCtx.Provider value={controller}>
@@ -268,11 +288,30 @@ export default function LiveDockWithContext() {
   );
 }
 
+export default memo(LiveDockWithContext);
+
+const StreamTimer = memo(function StreamTimer({
+  streamingStatus,
+}: {
+  streamingStatus: EStreamingState;
+}) {
+  const ctrl = useController(LiveDockCtx);
+  const [elapsed, setElapsed] = useState('');
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setElapsed(streamingStatus === EStreamingState.Live ? ctrl.getElapsedStreamTime() : '');
+    }, 200);
+    return () => clearInterval(id);
+  }, [streamingStatus]);
+
+  return <span className={styles.liveDockTimer}>{elapsed}</span>;
+});
+
 function LiveDock() {
   const ctrl = useController(LiveDockCtx);
 
   const [visibleChat, setVisibleChat] = useState('default');
-  const [elapsedStreamTime, setElapsedStreamTime] = useState('');
 
   const {
     hasLiveDockFeature,
@@ -285,6 +324,8 @@ function LiveDock() {
     pageSlot,
     liveText,
     streamingStatus,
+    enabledPlatforms,
+    primaryPlatform,
   } = useVuex(() =>
     pick(ctrl, [
       'isStreaming',
@@ -297,25 +338,15 @@ function LiveDock() {
       'liveText',
       'hasLiveDockFeature',
       'streamingStatus',
+      'enabledPlatforms',
+      'primaryPlatform',
     ]),
   );
 
-  const collapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
-  const hideViewerCount = useRealmObject(Services.CustomizationService.state).hideViewerCount;
+  const { livedockCollapsed: collapsed, hideViewerCount } = useRealmObject(
+    Services.CustomizationService.state,
+  );
   const viewerCount = hideViewerCount ? $t('Viewers Hidden') : currentViewers;
-
-  useEffect(() => {
-    const elapsedInterval = window.setInterval(() => {
-      if (streamingStatus === EStreamingState.Live) {
-        setElapsedStreamTime(ctrl.getElapsedStreamTime());
-      } else {
-        setElapsedStreamTime('');
-      }
-    }, 200);
-
-    return () => clearInterval(elapsedInterval);
-  }, [streamingStatus]);
-
   useEffect(() => {
     if (isRestreaming && streamingStatus === EStreamingState.Starting) {
       Services.RestreamService.actions.refreshChat();
@@ -342,13 +373,17 @@ function LiveDock() {
     });
   }
 
-  const chat = useMemo(() => {
-    const primaryChat = Services.UserService.state.auth!.primaryPlatform;
+  const primaryStreaming = useMemo(() => {
+    return enabledPlatforms.some(platform => platform === primaryPlatform);
+  }, [enabledPlatforms, primaryPlatform]);
 
-    const showInstagramInfo = primaryChat === 'instagram';
-    if (showInstagramInfo) {
-      // FIXME: empty tab
-      return <></>;
+  const chat = useMemo(() => {
+    const primaryChat = primaryStreaming ? primaryPlatform : (enabledPlatforms[0] as TPlatform);
+
+    const service = getPlatformService(primaryChat!);
+
+    if (!service.hasCapability('chat') && !service.hasLiveDockFeature('chat-offline')) {
+      return <OfflineChat chatEnabled={false} primaryPlatform={primaryChat} />;
     }
 
     return (
@@ -359,7 +394,7 @@ function LiveDock() {
         setChat={setChat}
       />
     );
-  }, [Services.UserService.state.auth!.primaryPlatform, visibleChat]);
+  }, [primaryPlatform, enabledPlatforms, visibleChat, isStreaming, isRestreaming]);
 
   return (
     <div className={styles.liveDock}>
@@ -372,7 +407,7 @@ function LiveDock() {
               })}
             />
             <span className={styles.liveDockText}>{liveText}</span>
-            <span className={styles.liveDockTimer}>{elapsedStreamTime}</span>
+            <StreamTimer streamingStatus={streamingStatus} />
           </div>
           <div className={styles.liveDockViewerCount}>
             <i
@@ -428,7 +463,8 @@ function LiveDock() {
         </div>
         {!hideStyleBlockers &&
           (hasLiveDockFeature('chat-offline') ||
-            (isStreaming && hasLiveDockFeature('chat-streaming'))) && (
+            (isStreaming && hasLiveDockFeature('chat-streaming')) ||
+            !hasLiveDockFeature('chat-streaming')) && (
             <div className={styles.liveDockChat}>
               {hasChatTabs && <ChatTabs visibleChat={visibleChat} setChat={setChat} />}
               {!applicationLoading && !collapsed && chat}
@@ -445,11 +481,9 @@ function LiveDock() {
         {/* Although technically there are no style blocking elements here we want it to mirror
           the behavior of our chat pane */}
         {!hideStyleBlockers &&
+          !hasLiveDockFeature('chat-offline') &&
           (!ctrl.platform || (hasLiveDockFeature('chat-streaming') && !isStreaming)) && (
-            <div className={cx('flex flex--center flex--column', styles.liveDockChatOffline)}>
-              <img className={styles.liveDockChatImgOffline} src={ctrl.offlineImageSrc} />
-              <span>{$t('Your chat is currently offline')}</span>
-            </div>
+            <OfflineChat chatEnabled={true} primaryPlatform={ctrl.platform} />
           )}
       </div>
     </div>
@@ -488,6 +522,23 @@ function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
           <i className={cx(styles.liveDockChatTabsInfo, 'icon-information')} />
         </Tooltip>
       </div>
+    </div>
+  );
+}
+
+function OfflineChat(p: { chatEnabled: boolean; primaryPlatform?: TPlatform }) {
+  return (
+    <div className={cx('flex flex--center flex--column', styles.liveDockChatOffline)}>
+      <img className={styles.liveDockChatImgOffline} src={$i('images/sleeping-kevin-day.png')} />
+      {p.primaryPlatform && !p.chatEnabled ? (
+        <span>
+          {$t('Chat is not supported for %{platform}', {
+            platform: platformLabels(p.primaryPlatform),
+          })}
+        </span>
+      ) : (
+        <span>{$t('Your chat is currently offline')}</span>
+      )}
     </div>
   );
 }

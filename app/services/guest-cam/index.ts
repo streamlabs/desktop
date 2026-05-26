@@ -1020,20 +1020,31 @@ export class GuestCamService extends StatefulService<IGuestCamServiceState> {
   }
 
   setScreenshareSource(sourceId?: string) {
-    this.SET_SCREENSHARE_SOURCE(sourceId ?? '');
+    try {
+      this.SET_SCREENSHARE_SOURCE(sourceId ?? '');
 
-    if (this.producer && this.views.sourceId) {
-      if (sourceId) {
-        if (this.producer.screenshareStreamId) {
-          this.producer.setStreamSource(sourceId, this.producer.screenshareStreamId, 'video');
+      if (this.producer && this.views.sourceId) {
+        if (sourceId) {
+          if (this.producer.screenshareStreamId) {
+            this.producer.setStreamSource(sourceId, this.producer.screenshareStreamId, 'video');
+          } else {
+            this.producer.addStream('screenshare', sourceId);
+          }
         } else {
-          this.producer.addStream('screenshare', sourceId);
-        }
-      } else {
-        if (this.producer.screenshareStreamId) {
-          this.producer.stopStream(this.producer.screenshareStreamId);
+          if (this.producer.screenshareStreamId) {
+            this.producer.stopStream(this.producer.screenshareStreamId);
+          }
         }
       }
+    } catch (e: unknown) {
+      this.error('Error setting screenshare source', e);
+
+      // Surface the error to the user
+      alert(
+        $t(
+          'There was an error setting the Collab Cam source. Please confirm the source exists and try again.',
+        ),
+      );
     }
   }
 

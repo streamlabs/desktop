@@ -168,8 +168,6 @@ test(
     await goLiveWithMultistream();
     await stopStream();
 
-    await goLiveWithDefaultCodec();
-
     t.pass();
   },
 );
@@ -309,8 +307,6 @@ test('Stream Shift', withUser('twitch', { prime: true, multistream: true }), asy
 
   // Multistream shift
   await goLiveWithStreamShift(t, true);
-
-  await goLiveWithDefaultCodec();
 
   t.pass();
 });

@@ -7,6 +7,8 @@ import { $t } from './i18n';
 import { ELayout, ELayoutElement, LayoutService } from './layout';
 import { ScenesService } from './scenes';
 import { EObsSimpleEncoder, SettingsService } from './settings';
+import { EncoderQueryService } from './settings/output';
+import { ERecordingFormat } from 'obs-studio-node';
 import { AnchorPoint, ScalableRectangle } from 'util/ScalableRectangle';
 import { TDisplayType, VideoSettingsService } from './settings-v2/video';
 import { ENotificationType, NotificationsService } from 'services/notifications';
@@ -21,6 +23,7 @@ import { YoutubeService } from 'services/platforms/youtube';
 export interface IRecordingEntry {
   timestamp: string;
   filename: string;
+  display?: TDisplayType;
 }
 
 export interface IUploadInfo {
@@ -64,6 +67,7 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
   @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private navigationService: NavigationService;
   @Inject() private sharedStorageService: SharedStorageService;
+  @Inject() private encoderQueryService: EncoderQueryService;
 
   static defaultState: IRecordingModeState = {
     enabled: false,
@@ -186,7 +190,7 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
    */
   addRecordingEntry(filename: string, display?: TDisplayType) {
     const timestamp = moment().format();
-    this.ADD_RECORDING_ENTRY(timestamp, filename);
+    this.ADD_RECORDING_ENTRY(timestamp, filename, display);
     let message = $t('A new Recording has been completed. Click for more info');
 
     if (display) {
@@ -341,9 +345,9 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
     this.settingsService.setSettingsPatch({ Output: { Mode: 'Simple' } });
     this.settingsService.setSettingsPatch({ Output: { RecQuality: 'Small' } });
 
-    const availableEncoders = this.settingsService
-      .findSetting(this.settingsService.state.Output.formData, 'Recording', 'RecEncoder')
-      .options.map((opt: { value: EObsSimpleEncoder }) => opt.value);
+    const availableEncoders = this.encoderQueryService
+      .getAvailableRecordingEncoders('Simple', ERecordingFormat.MP4)
+      .map(opt => opt.value);
     const bestEncoder = encoderPriority.find(e => {
       return availableEncoders.includes(e);
     });
@@ -354,8 +358,8 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
   }
 
   @mutation()
-  private ADD_RECORDING_ENTRY(timestamp: string, filename: string) {
-    Vue.set(this.state.recordingHistory, timestamp, { timestamp, filename });
+  private ADD_RECORDING_ENTRY(timestamp: string, filename: string, display: TDisplayType) {
+    Vue.set(this.state.recordingHistory, timestamp, { timestamp, filename, display });
   }
 
   @mutation()

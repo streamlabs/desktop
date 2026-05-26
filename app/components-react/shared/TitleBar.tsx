@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import cx from 'classnames';
 import { useVuex } from '../hooks';
 import { Services } from '../service-provider';
@@ -12,7 +12,7 @@ import * as remote from '@electron/remote';
 import Banner from 'components-react/root/Banner';
 import { useRealmObject } from 'components-react/hooks/realm';
 
-export default function TitleBar(props: { windowId: string; className?: string }) {
+function TitleBar(props: { windowId: string; className?: string }) {
   const { CustomizationService, StreamingService, WindowsService } = Services;
 
   const isMaximizable = remote.getCurrentWindow().isMaximizable() !== false;
@@ -30,13 +30,14 @@ export default function TitleBar(props: { windowId: string; className?: string }
   const primeTheme = /prime/.test(theme);
   const [errorState, setErrorState] = useState(false);
 
-  useEffect(lifecycle, []);
-
-  function lifecycle() {
-    if (Utils.isDevMode()) {
-      ipcRenderer.on('unhandledErrorState', () => setErrorState(true));
-    }
-  }
+  useEffect(() => {
+    if (!Utils.isDevMode()) return;
+    const handler = () => setErrorState(true);
+    ipcRenderer.on('unhandledErrorState', handler);
+    return () => {
+      ipcRenderer.removeListener('unhandledErrorState', handler);
+    };
+  }, []);
 
   function minimize() {
     remote.getCurrentWindow().minimize();
@@ -96,3 +97,5 @@ export default function TitleBar(props: { windowId: string; className?: string }
     </>
   );
 }
+
+export default memo(TitleBar);

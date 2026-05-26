@@ -15,9 +15,11 @@ import { fillForm } from './forms';
 import { showSettingsWindow } from './settings/settings';
 import {
   chatIsVisible,
-  stopStream,
+  clickGoLive,
   submit,
   waitForSettingsWindowLoaded,
+  waitForStreamStart,
+  stopStream,
   waitForStreamStop,
 } from './streaming';
 
@@ -58,14 +60,27 @@ export async function toggleAccountForDisplay(display: 'horizontal' | 'vertical'
     for (const platform of platforms) {
       if (platform === 'instagram') {
         await addDummyAccount('instagram');
+        await clickGoLive();
       }
 
-      await focusChild();
-      await fillForm({ [platform]: true, [`${platform}Display`]: display });
+      await fillForm({ [platform]: true });
       await waitForSettingsWindowLoaded();
 
+      const formLoaded = await isDisplayed(`div[data-name="${platform}-settings"]`);
       // If the settings form loads, then an account has successfully been toggled
-      if (await isDisplayed(`div[data-name="${platform}-settings"]`)) {
+      if (formLoaded) {
+        if (platform === 'youtube') {
+          await fillForm({
+            description: 'Test Description',
+            youtubeDisplay: display,
+            primaryChat: 'YouTube',
+          });
+        }
+
+        if (platform === 'trovo') {
+          await fillForm({ trovoGame: 'Doom', trovoDisplay: display, primaryChat: 'Trovo' });
+        }
+
         return platform;
       }
     }
@@ -76,20 +91,22 @@ export async function toggleAccountForDisplay(display: 'horizontal' | 'vertical'
   return null;
 }
 
-export async function waitForDualOutputStreamStart(platform: string) {
+export async function goLiveWithDualOutput(platform: string) {
   await waitForSettingsWindowLoaded();
 
   await submit();
   await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
 
-  // Dummy accounts won't go live
   if (platform === 'instagram') {
+    // Dummy accounts won't go live
     await sleep(1000);
     await chatIsVisible();
     await waitForStreamStop();
     skipCheckingErrorsInLog();
   } else {
-    await chatIsVisible(true);
+    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
+    await waitForStreamStart();
+    await isDisplayed('span=Multistream');
     await stopStream();
   }
 }

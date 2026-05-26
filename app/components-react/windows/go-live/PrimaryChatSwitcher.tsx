@@ -40,15 +40,31 @@ export default function PrimaryChatSwitcher({
 }: IPrimaryChatSwitcherProps) {
   const primaryChatOptions = useMemo(
     () =>
-      enabledPlatforms.map(platform => {
+      enabledPlatforms.reduce((options: { label: string; value: TPlatform }[], platform) => {
         const service = getPlatformService(platform);
-        return {
-          label: service.displayName,
-          value: platform,
-        };
-      }),
+        if (service.hasCapability('chat')) {
+          options.push({
+            label: service.displayName,
+            value: platform,
+          });
+        }
+        return options;
+      }, []),
     [enabledPlatforms],
   );
+
+  const value = useMemo(() => {
+    const hasChatOption = primaryChatOptions.some(option => option.value === primaryChat);
+    if (hasChatOption) {
+      return primaryChat;
+    }
+
+    // Intentionally don't update the primary chat if no active platforms have chat capabilities, to avoid
+    // errors from setting an unsupported primary platform. Returning `undefined` will show an empty value
+    // in the dropdown without changing the actual primary chat value, indicating to the user that the chat
+    // will not be available until they enable a platform with chat capabilities.
+    return primaryChatOptions.length > 0 ? primaryChatOptions[0].value : undefined;
+  }, [primaryChat, primaryChatOptions]);
 
   return (
     <div data-name="primaryChat" style={style} className={className}>
@@ -76,7 +92,7 @@ export default function PrimaryChatSwitcher({
           options={primaryChatOptions}
           labelRender={opt => renderPrimaryChatOption(opt, logo)}
           optionRender={opt => renderPrimaryChatOption(opt, logo)}
-          value={primaryChat}
+          value={value}
           onChange={onSetPrimaryChat}
           suffixIcon={suffixIcon}
           size={size}
