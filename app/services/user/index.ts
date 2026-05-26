@@ -1059,7 +1059,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
         if (params.install) {
           urlSubParams.append('install', params.install);
         }
-        url += `/${type}?${modeQuery}#/?${urlSubParams}`;
+        url += `?${modeQuery}#/?${urlSubParams}`;
       } else if ('collection' in params && params.collection) {
         url += `/c/${params.collection}?${modeQuery}`;
       }
