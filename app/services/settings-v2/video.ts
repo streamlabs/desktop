@@ -96,6 +96,13 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
 
   establishedContext = new Subject<TDisplayType>();
 
+  /**
+   * Emitted when a video context fails to establish (e.g. graphics device lost
+   * during startup, leaving the libobs canvas mix as NULL). Consumers should
+   * gate streaming/recording start on this and surface a user-facing error.
+   */
+  videoContextError = new Subject<{ display: TDisplayType; error: string }>();
+
   init() {
     this.establishVideoContext();
     this.establishVideoContext('vertical');
@@ -315,12 +322,27 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     if (this.contexts[display]) return;
     this.SET_VIDEO_CONTEXT(display);
     this.contexts[display] = VideoFactory.create();
-    this.migrateSettings(display);
 
-    this.contexts[display].video = this.state[display];
-    this.contexts[display].legacySettings = this.state[display];
-    Video.video = this.state.horizontal;
-    Video.legacySettings = this.state.horizontal;
+    try {
+      this.migrateSettings(display);
+
+      this.contexts[display].video = this.state[display];
+      this.contexts[display].legacySettings = this.state[display];
+      Video.video = this.state.horizontal;
+      Video.legacySettings = this.state.horizontal;
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      console.error(
+        `[VideoSettingsService] Failed to establish ${display} video context: ${message}`,
+      );
+      if (this.contexts[display]) {
+        this.contexts[display].destroy();
+        this.contexts[display] = null as IVideo;
+      }
+      this.DESTROY_VIDEO_CONTEXT(display);
+      this.videoContextError.next({ display, error: message });
+      return false;
+    }
 
     if (display === 'vertical') {
       // ensure vertical context as the same fps settings as the horizontal context
