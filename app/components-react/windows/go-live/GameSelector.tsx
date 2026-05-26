@@ -11,7 +11,10 @@ import { IListOption } from '../../shared/inputs/ListInput';
 import { Services } from '../../service-provider';
 import { injectState, useModule } from 'slap';
 
-type TProps = TSlobsInputProps<{ platform: TPlatform; layout?: TInputLayout }, string>;
+type TProps = TSlobsInputProps<
+  { platform: TPlatform; layout?: TInputLayout; onNameChange?: (name: string) => void },
+  string
+>;
 
 export default function GameSelector(p: TProps) {
   const { platform } = p;
@@ -140,6 +143,10 @@ export default function GameSelector(p: TProps) {
       onSearch={onSearch}
       onSelect={(val, opts) => {
         onSelect(opts.labelrender);
+
+        if (p.onNameChange && typeof opts.label === 'string') {
+          p.onNameChange(opts.label);
+        }
       }}
       filterOption={filterOption}
       debounce={500}
