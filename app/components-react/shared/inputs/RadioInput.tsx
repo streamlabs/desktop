@@ -42,7 +42,11 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
   };
 
   return (
-    <InputWrapper {...wrapperAttrs} data-title={p.label}>
+    <InputWrapper
+      {...wrapperAttrs}
+      data-title={p.label}
+      className={cx({ [styles.defaultRadio]: !p.buttons && !p.icons })}
+    >
       {p.buttons && (
         <Radio.Group
           {...inputProps}
@@ -104,7 +108,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           <Space size={p?.gapsize ?? undefined} direction={p?.direction ?? 'vertical'}>
             {p.options.map(option => {
               return (
-                <React.Fragment key={option.value}>
+                <React.Fragment key={`${p.name}-${option.value}`}>
                   <Radio
                     value={option.value}
                     disabled={p.disabled}
