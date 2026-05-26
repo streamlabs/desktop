@@ -3,6 +3,7 @@ import styles from './SupportedGames.m.less';
 import { supportedGames } from 'services/highlighter/models/game-config.models';
 import { Tooltip } from 'antd';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
+import Scrollable from 'components-react/shared/Scrollable';
 
 export default function SupportedGames({
   gamesVisible,
@@ -45,42 +46,44 @@ export default function SupportedGames({
       {games.length > gamesVisible && (
         <Tooltip
           overlay={
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start', // Align items to the left
-                justifyContent: 'flex-start', // Align content to the top
-                padding: '16px',
-                marginTop: '8px',
-              }}
-            >
-              <h1 style={{ marginBottom: '8px' }}>Supported games</h1>
-              {gamesSortedAlphabetical.map((game, index) => (
-                <div
-                  onClick={e => emitClick && emitClick(game.value)}
-                  key={game.value + index}
-                  style={{
-                    cursor: 'pointer',
-                    display: 'flex',
-                    marginBottom: 8,
-                    width: '100%',
-                    alignItems: 'center', // Ensure items inside each row are aligned properly
-                    justifyContent: 'flex-start', // Align items to the left
-                  }}
-                >
-                  <img
-                    width={'40px'}
-                    height={'40px'}
-                    className={styles.thumbnail}
-                    style={{ marginRight: 0 }}
-                    src={game.image}
-                    alt={game.label}
-                  />
-                  <p style={{ marginBottom: 0, marginLeft: 4 }}>{game.label}</p>
-                </div>
-              ))}
-            </div>
+            <Scrollable style={{ maxHeight: '80vh' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start', // Align items to the left
+                  justifyContent: 'flex-start', // Align content to the top
+                  padding: '16px',
+                  marginTop: '8px',
+                }}
+              >
+                <h1 style={{ marginBottom: '8px' }}>Supported games</h1>
+                {gamesSortedAlphabetical.map((game, index) => (
+                  <div
+                    onClick={e => emitClick && emitClick(game.value)}
+                    key={game.value + index}
+                    style={{
+                      cursor: 'pointer',
+                      display: 'flex',
+                      marginBottom: 8,
+                      width: '100%',
+                      alignItems: 'center', // Ensure items inside each row are aligned properly
+                      justifyContent: 'flex-start', // Align items to the left
+                    }}
+                  >
+                    <img
+                      width={'40px'}
+                      height={'40px'}
+                      className={styles.thumbnail}
+                      style={{ marginRight: 0 }}
+                      src={game.image}
+                      alt={game.label}
+                    />
+                    <p style={{ marginBottom: 0, marginLeft: 4 }}>{game.label}</p>
+                  </div>
+                ))}
+              </div>
+            </Scrollable>
           }
         >
           <div
