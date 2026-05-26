@@ -16,12 +16,15 @@ export const PatreonEditStreamInfo = InputComponent((p: IPlatformComponentParams
   const patreonSettings = p.value;
 
   function updateSettings(patch: Partial<IPatreonStartStreamOptions>) {
-    p.onChange({ ...patreonSettings, ...patch });
+    if ('accessRules' in patch && !('title' in patch)) {
+      // Prevent clearing the title when only updating access rules
+      p.onChange(patch);
+    } else {
+      p.onChange({ ...patreonSettings, ...patch });
+    }
   }
 
-  const bind = createBinding(patreonSettings, newPatreonSettings =>
-    updateSettings(newPatreonSettings),
-  );
+  const bind = createBinding(patreonSettings, updatedSettings => updateSettings(updatedSettings));
 
   // Memoize tier options and related values to avoid unnecessary calculations on each render
   const { allTiersRule, tierOptions, allRuleValues, allTiersValue } = useMemo(() => {
