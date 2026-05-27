@@ -321,10 +321,15 @@ export class GoLiveSettingsModule {
     /*
      * If there's exactly one enabled platform, set primaryChat to it,
      * ensures there's a primary platform if the user has multiple selected and then
-     * deselects all but one
+     * deselects all but one.
+     * Do not set merge-only platforms (Patreon, Instagram) as primary since they
+     * cannot be used for authentication on app restart.
      */
     if (this.state.enabledPlatforms.length === 1) {
-      this.setPrimaryChat(this.state.enabledPlatforms[0]);
+      const platform = this.state.enabledPlatforms[0];
+      if (platform !== 'patreon' && platform !== 'instagram') {
+        this.setPrimaryChat(platform);
+      }
     }
     /*
      * This should only trigger on free user mode: when toggling another platform
