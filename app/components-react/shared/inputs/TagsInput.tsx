@@ -10,7 +10,7 @@ import { $t } from '../../../services/i18n';
 import Message from '../Message';
 
 // select which features from the antd lib we are going to use
-const ANT_SELECT_FEATURES = ['showSearch', 'loading', 'size'] as const;
+const ANT_SELECT_FEATURES = ['showSearch', 'loading', 'size', 'maxTagCount'] as const;
 
 interface ICustomTagsProps<TValue> extends Omit<ICustomListProps<SingleType<TValue>>, 'options'> {
   max?: number;
@@ -22,6 +22,8 @@ interface ICustomTagsProps<TValue> extends Omit<ICustomListProps<SingleType<TVal
   mode?: 'tags' | 'multiple';
   tokenSeparators?: string[];
   dropdownStyle?: React.CSSProperties;
+  nomargin?: boolean;
+  nolabel?: boolean;
 }
 
 export type TTagsInputProps<TValue> = TSlobsInputProps<
@@ -32,7 +34,11 @@ export type TTagsInputProps<TValue> = TSlobsInputProps<
 >;
 
 export const TagsInput = InputComponent(<T extends any[]>(p: TTagsInputProps<T>) => {
-  const { inputAttrs, wrapperAttrs } = useInput('tags', p, ['tokenSeparators', 'dropdownStyle']);
+  const { inputAttrs, wrapperAttrs } = useInput('tags', p, [
+    'tokenSeparators',
+    'dropdownStyle',
+    'maxTagCount',
+  ]);
   const options = p.options || [];
   const tagsMap = useMemo(() => keyBy(options, 'value'), [options]);
 
@@ -74,7 +80,14 @@ export const TagsInput = InputComponent(<T extends any[]>(p: TTagsInputProps<T>)
   const displayValue = (inputAttrs.value || []).map((val: string) => tagsMap[val]?.label);
 
   return (
-    <InputWrapper {...wrapperAttrs}>
+    <InputWrapper
+      {...wrapperAttrs}
+      nolabel={p?.nolabel}
+      style={{
+        ...wrapperAttrs.style,
+        ...(p.nomargin ? { margin: '0px' } : {}),
+      }}
+    >
       <Select
         {...inputAttrs}
         // search by label instead value

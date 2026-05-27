@@ -203,6 +203,18 @@ export class WebsocketService extends Service {
     this.sceneCollectionsService.collectionInitialized.subscribe(() => {
       this.openSocketConnection();
     });
+
+    // If the user starts logged out and then logs in later (e.g. via onboarding),
+    // collectionInitialized has already fired with isLoggedIn=false and bailed
+    // out without opening the socket. Reopen here so post-login socket events
+    // (account_merged / account_unlinked / etc) actually reach the app.
+    this.userService.userLoginFinished.subscribe(() => {
+      this.openSocketConnection();
+    });
+
+    this.userService.userLogout.subscribe(() => {
+      if (this.socket) this.socket.disconnect();
+    });
   }
 
   async openSocketConnection() {

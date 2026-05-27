@@ -26,6 +26,7 @@ import { MagicLinkService } from 'services/magic-link';
 import { SettingsService } from 'services/settings';
 import Translate from 'components-react/shared/Translate';
 import { maxNumPlatforms } from 'services/platforms';
+import { useMemo } from 'react';
 
 /**
  * Renders settings for starting the stream
@@ -52,6 +53,7 @@ export default function GoLiveSettings() {
     isStreamShiftMode,
     isStreamShiftDisabled,
     isDualOutputSwitchDisabled,
+    isPatreonEnabled,
     canStreamDualOutput,
     setPrimaryChat,
     openPlatformSettings,
@@ -75,7 +77,13 @@ export default function GoLiveSettings() {
 
       showTweet: module.primaryPlatform && module.primaryPlatform !== 'twitter',
 
-      isStreamShiftDisabled: module.isDualOutputMode,
+      get isPatreonEnabled() {
+        return module.enabledPlatforms.some(p => p === 'patreon');
+      },
+
+      get isStreamShiftDisabled() {
+        return module.isDualOutputMode || module.enabledPlatforms.some(p => p === 'patreon');
+      },
 
       isDualOutputSwitchDisabled: module.isStreamShiftMode && !module.isDualOutputMode,
 
@@ -120,6 +128,16 @@ export default function GoLiveSettings() {
   const headerText = isDualOutputMode ? $t('Destinations & Outputs:') : $t('Destinations:');
 
   const featureCheckboxWidth = isPrime ? 140 : 155;
+
+  const streamShiftTooltip = useMemo(() => {
+    if (isPatreonEnabled) {
+      return $t('Stream Shift cannot be used with Patreon');
+    }
+
+    return isPrime
+      ? $t('Stream Shift cannot be used with Dual Output')
+      : $t('Upgrade to Ultra to switch streams between devices.');
+  }, [isPrime, isPatreonEnabled]);
 
   return (
     <Row gutter={16} className={styles.settingsRow}>
@@ -192,11 +210,7 @@ export default function GoLiveSettings() {
                 />
               </Tooltip>
               <Tooltip
-                title={
-                  isPrime
-                    ? $t('Stream Shift cannot be used with Dual Output')
-                    : $t('Upgrade to Ultra to switch streams between devices.')
-                }
+                title={streamShiftTooltip}
                 placement="top"
                 lightShadow={true}
                 disabled={isPrime && !isStreamShiftDisabled}

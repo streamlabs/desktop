@@ -55,7 +55,7 @@ export default function ConnectButton(p: { platform: TPlatform; className?: stri
       style={{
         backgroundColor: `var(--${p.platform})`,
         borderColor: 'transparent',
-        color: ['trovo', 'instagram', 'kick'].includes(p.platform) ? 'black' : 'inherit',
+        color: ['trovo', 'instagram', 'kick', 'patreon'].includes(p.platform) ? 'black' : 'inherit',
       }}
     >
       {$t('Connect')}

@@ -13,6 +13,7 @@ import { FacebookService } from './platforms/facebook';
 import { TikTokService } from './platforms/tiktok';
 import { TrovoService } from './platforms/trovo';
 import { KickService } from './platforms/kick';
+import { PatreonService } from './platforms/patreon';
 import * as remote from '@electron/remote';
 import { VideoSettingsService, TDisplayType } from './settings-v2/video';
 import { TwitterPlatformService } from './platforms/twitter';
@@ -109,6 +110,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @Inject('TikTokService') tiktokService: TikTokService;
   @Inject() trovoService: TrovoService;
   @Inject() kickService: KickService;
+  @Inject() patreonService: PatreonService;
   @Inject() instagramService: InstagramService;
   @Inject() videoSettingsService: VideoSettingsService;
   @Inject('TwitterPlatformService') twitterService: TwitterPlatformService;
@@ -479,6 +481,14 @@ export class RestreamService extends StatefulService<IRestreamState> {
       kickTarget.platform = 'relay';
       kickTarget.streamKey = `${this.kickService.state.ingest}/${this.kickService.state.streamKey}`;
       kickTarget.mode = isDualOutputMode ? this.getPlatformMode('kick') : 'landscape';
+    }
+
+    // treat patreon as a custom destination
+    const patreonTarget = newTargets.find(t => t.platform === 'patreon');
+    if (patreonTarget) {
+      patreonTarget.platform = 'patreon';
+      patreonTarget.streamKey = `${this.patreonService.state.ingest}/${this.patreonService.state.streamKey}`;
+      patreonTarget.mode = isDualOutputMode ? this.getPlatformMode('patreon') : 'landscape';
     }
 
     // in dual output mode, only create targets for the displays that are being restreamed

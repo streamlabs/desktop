@@ -72,6 +72,13 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
   }
 
   switchPlatforms(enabledPlatforms: TPlatform[]) {
+    if (this.isPrimaryPlatform('instagram') || this.isPrimaryPlatform('patreon')) {
+      const newPrimary = enabledPlatforms.find(p => p !== 'instagram' && p !== 'patreon');
+      if (newPrimary) {
+        this.setPrimaryPlatform(newPrimary);
+      }
+    }
+
     this.linkedPlatforms.forEach(platform => {
       this.updatePlatform(platform, { enabled: enabledPlatforms.includes(platform) });
     });
@@ -300,6 +307,16 @@ export class GoLiveSettingsModule {
    * If platform is enabled then prepopulate its settings
    */
   switchPlatforms(enabledPlatforms: TPlatform[], skipPrepopulate?: boolean) {
+    // If Patreon or Instagram is the current primary (merge-only / no chat),
+    // promote any other enabled platform to primary so chat & stream-info
+    // routing don't resolve to a non-streaming platform.
+    if (this.state.isPrimaryPlatform('instagram') || this.state.isPrimaryPlatform('patreon')) {
+      const newPrimary = enabledPlatforms.find(p => p !== 'instagram' && p !== 'patreon');
+      if (newPrimary) {
+        this.setPrimaryChat(newPrimary);
+      }
+    }
+
     this.state.linkedPlatforms.forEach(platform => {
       this.state.updatePlatform(platform, { enabled: enabledPlatforms.includes(platform) });
     });

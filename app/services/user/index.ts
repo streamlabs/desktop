@@ -119,6 +119,7 @@ interface ILinkedPlatformsResponse {
   tiktok_account?: ILinkedPlatform;
   trovo_account?: ILinkedPlatform;
   kick_account?: ILinkedPlatform;
+  patreon_account?: ILinkedPlatform;
   streamlabs_account?: ILinkedPlatform;
   twitter_account?: ILinkedPlatform;
   user_id: number;
@@ -476,6 +477,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
         });
       }
 
+      console.log('Received account merge/unlink event, refreshing linked platforms ', event);
       if (['account_merged', 'account_unlinked'].includes(event.type)) {
         if (!this.isLoggedIn) return;
 
@@ -801,6 +803,17 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       });
     } else if (this.state.auth.primaryPlatform !== 'kick') {
       this.UNLINK_PLATFORM('kick');
+    }
+
+    if (linkedPlatforms.patreon_account) {
+      this.UPDATE_PLATFORM({
+        type: 'patreon',
+        username: linkedPlatforms.patreon_account.platform_name,
+        id: linkedPlatforms.patreon_account.platform_id,
+        token: linkedPlatforms.patreon_account.access_token,
+      });
+    } else if (this.state.auth.primaryPlatform !== 'patreon') {
+      this.UNLINK_PLATFORM('patreon');
     }
 
     if (linkedPlatforms.streamlabs_account) {

@@ -139,7 +139,9 @@ export function Connect() {
                     onClick={() => authPlatform(platform, afterLogin)}
                     key={platform}
                     logoSize={
-                      ['twitter', 'tiktok', 'youtube', 'kick'].includes(platform) ? 15 : undefined
+                      ['twitter', 'tiktok', 'youtube', 'kick', 'patreon'].includes(platform)
+                        ? 15
+                        : undefined
                     }
                   >
                     <Translate

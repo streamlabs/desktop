@@ -97,6 +97,7 @@ const platformToServiceNameMap: { [key in TPlatform]: string } = {
   twitter: 'Custom',
   instagram: 'Custom',
   kick: 'Custom',
+  patreon: 'Custom',
 };
 
 /**
