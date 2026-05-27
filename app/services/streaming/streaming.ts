@@ -1461,7 +1461,11 @@ export class StreamingService
    */
   private async handleStartStreaming(code: EOBSOutputSignal, display: TDisplayType) {
     // Handle start recording when start streaming
-    if (this.streamSettingsService.settings.recordWhenStreaming && !this.isRecording) {
+    const shouldRecord =
+      this.streamSettingsService.settings.recordWhenStreaming ||
+      this.highlighterService.views.useAiHighlighter;
+
+    if (shouldRecord && !this.isRecording) {
       await this.toggleRecording();
     }
 
