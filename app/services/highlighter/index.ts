@@ -389,7 +389,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   // =================================================================================================
 
   private getReplaySetupUrl(): string {
-    if (Utils.isProduction) {
+    if (Utils.getHighlighterEnvironment() === 'production') {
       return HIGHLIGHTER_SETUP_URL_PRODUCTION;
     }
     return HIGHLIGHTER_SETUP_URL_STAGING;

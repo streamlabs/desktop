@@ -3,6 +3,7 @@ import { Button } from 'antd';
 import cx from 'classnames';
 import { REPLAY_APP_NAME } from 'services/highlighter/constants';
 import { $t } from 'services/i18n';
+import Utils from 'services/utils';
 import styles from './MigrationNotice.m.less';
 import FeatureCarousel, { CAROUSEL_FEATURES } from './FeatureCarousel';
 import { useInstallState, getStatusText } from './useInstallState';
@@ -28,27 +29,48 @@ export default function PageInstallationFlow(props: IPageInstallationFlowProps) 
     props.onCancel();
   }
 
+  const isStaging = Utils.getHighlighterEnvironment() !== 'production';
+
   return (
-    <FeatureCarousel
-      title={$t('AI Highlighter is now %{appName}', { appName: REPLAY_APP_NAME })}
-      description={$t(
-        'Supercharge your workflow with our standalone tool %{appName}. Faster edits, more output in less time. Try it now',
-        { appName: REPLAY_APP_NAME },
-      )}
-      features={CAROUSEL_FEATURES}
-    >
-      <div style={{ height: 82, display: 'flex', flexDirection: 'column', justifyContent: 'end' }}>
-        <PageInstallCta
-          step={step}
-          progress={progress}
-          isInstalled={isInstalled ?? false}
-          onOpenOrInstall={() => handleOpenOrInstall('page')}
-          onRetry={handleRetry}
-          onCancel={onCancel}
-          onShowAllClips={props.onShowAllClips}
-        />
-      </div>
-    </FeatureCarousel>
+    <>
+      <FeatureCarousel
+        title={$t('AI Highlighter is now %{appName}', { appName: REPLAY_APP_NAME })}
+        description={$t(
+          'Supercharge your workflow with our standalone tool %{appName}. Faster edits, more output in less time. Try it now',
+          { appName: REPLAY_APP_NAME },
+        )}
+        features={CAROUSEL_FEATURES}
+      >
+        <div
+          style={{ height: 82, display: 'flex', flexDirection: 'column', justifyContent: 'end' }}
+        >
+          <PageInstallCta
+            step={step}
+            progress={progress}
+            isInstalled={isInstalled ?? false}
+            onOpenOrInstall={() => handleOpenOrInstall('page')}
+            onRetry={handleRetry}
+            onCancel={onCancel}
+            onShowAllClips={props.onShowAllClips}
+          />
+          {isStaging && (
+            <div
+              style={{
+                padding: '4px 8px',
+                color: '#ff9800',
+                fontWeight: 600,
+                fontSize: 11,
+                marginTop: 8,
+                marginBottom: 8,
+                borderRadius: 4,
+              }}
+            >
+              STAGING
+            </div>
+          )}
+        </div>
+      </FeatureCarousel>
+    </>
   );
 }
 
