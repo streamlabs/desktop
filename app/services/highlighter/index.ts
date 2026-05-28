@@ -416,14 +416,14 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'AiRecordingGoinglive',
           streamId,
-          game: this.streamingService.views.game,
+          game: this.streamingService.views.gameName,
         });
 
         if (!this.aiHighlighterFeatureEnabled) {
           this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
             type: 'AiHighlighterFeatureNotEnabled',
             streamId,
-            game: this.streamingService.views.game,
+            game: this.streamingService.views.gameName,
           });
           return;
         }
@@ -435,15 +435,15 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'AiRecordingHighlighterIsActive',
           streamId,
-          game: this.streamingService.views.game,
+          game: this.streamingService.views.gameName,
         });
 
-        if (!isGameSupported(this.streamingService.views.game)) {
+        if (!isGameSupported(this.streamingService.views.gameName)) {
           return;
         }
 
         let game;
-        const normalizedGameName = isGameSupported(this.streamingService.views.game);
+        const normalizedGameName = isGameSupported(this.streamingService.views.gameName);
         if (normalizedGameName) {
           game = normalizedGameName as EGame;
         } else {
@@ -505,7 +505,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'AiRecordingFinished',
           streamId: streamInfo?.id,
-          game: this.streamingService.views.game,
+          game: this.streamingService.views.gameName,
         });
         this.streamingService.actions.toggleRecording();
 
@@ -528,7 +528,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
             type: 'AiRecordingExists',
             duration,
             streamId: streamInfo?.id,
-            game: this.streamingService.views.game,
+            game: this.streamingService.views.gameName,
           });
         })
         .catch(error => {
