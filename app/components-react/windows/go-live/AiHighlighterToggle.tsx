@@ -52,14 +52,14 @@ export default function AiHighlighterToggle({
     if (supportedGame) {
       setIsExpanded(true);
       setGameConfig(getConfigByGame(supportedGame));
-      if (!useHighlighter) {
-        HighlighterService.actions.toggleAiHighlighter();
-      }
+      // if (!useHighlighter) {
+      //   HighlighterService.actions.toggleAiHighlighter();
+      // }
     } else {
       setGameConfig(null);
-      if (useHighlighter) {
-        HighlighterService.actions.toggleAiHighlighter();
-      }
+      // if (useHighlighter) {
+      //   HighlighterService.actions.toggleAiHighlighter();
+      // }
     }
   }, [game]);
 

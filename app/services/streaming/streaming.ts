@@ -1460,12 +1460,12 @@ export class StreamingService
    * @param code - EOBSOutputSignal - for logging the signal for debugging purposes
    */
   private async handleStartStreaming(code: EOBSOutputSignal, display: TDisplayType) {
-    // Handle start recording when start streaming
-    const shouldRecord =
-      this.streamSettingsService.settings.recordWhenStreaming ||
-      this.highlighterService.views.useAiHighlighter;
+    // // Handle start recording when start streaming
+    // const shouldRecord =
+    //   this.streamSettingsService.settings.recordWhenStreaming ||
+    //   this.highlighterService.views.useAiHighlighter;
 
-    if (shouldRecord && !this.isRecording) {
+    if (this.streamSettingsService.settings.recordWhenStreaming && !this.isRecording) {
       await this.toggleRecording();
     }
 
