@@ -115,12 +115,12 @@ function SmallAddDestinationButton(p: { className?: string; onClick: () => void 
   return (
     <Button
       data-name="default-add-destination"
-      className={cx(styles.addDestinationBtn, styles.smallBtn, p.className)}
+      className={cx(styles.smallBtn, p.className)}
       onClick={p.onClick}
       block
     >
-      <PlusIcon style={{ paddingLeft: '17px', fontSize: '24px' }} />
-      <span style={{ flex: 1 }}>{$t('Add Destination')}</span>
+      <PlusIcon style={{ color: 'var(--title)' }} />
+      <span>{$t('Add Destination')}</span>
     </Button>
   );
 }
