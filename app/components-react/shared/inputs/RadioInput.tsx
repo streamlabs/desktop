@@ -51,6 +51,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
       data-title={p.label}
       nolabel={p.nolabel}
       className={cx({
+        [styles.defaultRadio]: optionType === 'default' && !p.icons,
         [styles.iconsLeft]: p.alignIcons === 'left',
         [styles.iconsCenter]: p.alignIcons === 'center',
         [styles.iconsRight]: p.alignIcons === 'right',
@@ -121,7 +122,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           <Space size={p?.gapsize ?? undefined} direction={p?.direction ?? 'vertical'}>
             {p.options.map(option => {
               return (
-                <React.Fragment key={option.value}>
+                <React.Fragment key={`${p.name}-${option.value}`}>
                   <Radio
                     value={option.value}
                     disabled={p.disabled}

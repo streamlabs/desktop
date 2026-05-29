@@ -55,7 +55,8 @@ const TwitchRequiredFields = memo((p: IPlatformComponentParams<'twitch'>) => {
         <TwitchTagsInput label={$t('Twitch Tags')} {...bind.tags} layout="vertical" />
       </div>
       {p.isAiHighlighterEnabled && (
-        <AiHighlighterToggle key="ai-toggle" game={bind.game?.value} banner={true} />
+        // <AiHighlighterToggle key="ai-toggle" game={bind.game?.value} banner={true} />
+        <></>
       )}
     </>
   );
@@ -103,12 +104,44 @@ const TwitchOptionalFields = memo((p: IPlatformComponentParams<'twitch'>) => {
 
   return (
     <>
+      {/* <GameSelector
+        key="twitch-game"
+        platform={'twitch'}
+        {...bind.game}
+        onNameChange={bind.gameName.onChange}
+        layout={p.layout}
+      />
+      {p.isAiHighlighterEnabled && (
+        <AiHighlighterToggle key="ai-toggle" game={bind.gameName.value} cardIsExpanded={false} />
+      )}
+      {isEnhancedBroadcastingVisible && !isUpdateMode && (
+        <InputWrapper
+          layout={p.layout}
+          className={cx({ [styles.hideLabel]: p.layout === 'vertical' })}
+        >
+          <CheckboxInput
+            style={{ display: 'inline-block' }}
+            label={$t('Enhanced broadcasting')}
+            tooltip={$t(
+              'Enhanced broadcasting automatically optimizes your settings to encode and send multiple video qualities to Twitch. Selecting this option will send basic information about your computer and software setup.',
+            )}
+            {...bind.isEnhancedBroadcasting}
+            disabled={isDualStream || p.isStreamShiftMode}
+            value={enhancedBroadcastingEnabled}
+          />
+          <Badge
+            style={{ display: 'inline-block' }}
+            dismissableKey={EDismissable.EnhancedBroadcasting}
+            content={'Beta'}
+          />
+        </InputWrapper>
+      )} */}
       <TwitchContentClassificationInput {...bind.contentClassificationLabels} layout={p.layout} />
       <div className="flex__horizontal">
         <InputWrapper layout="vertical" nolabel>
           <CheckboxInput label={$t('Stream features branded content')} {...bind.isBrandedContent} />
         </InputWrapper>
-        <CustomFieldsCheckbox {...p} platform="twitch" />
+        {/* <CustomFieldsCheckbox {...p} platform="twitch" /> */}
         {process.platform !== 'darwin' && (
           <InputWrapper layout="vertical" nolabel>
             <CheckboxInput
