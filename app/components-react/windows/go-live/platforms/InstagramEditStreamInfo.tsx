@@ -42,7 +42,7 @@ export function InstagramEditStreamInfo(p: Props) {
       />
       {!isStreamSettingsWindow && (
         <Alert
-          style={{ marginBottom: 8 }}
+          style={{ marginTop: '16px' }}
           message={$t(
             'Remember to open Instagram in browser and click "Go Live" to start streaming!',
           )}

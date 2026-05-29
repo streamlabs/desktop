@@ -16,8 +16,7 @@ import { IYoutubeStartStreamOptions, YoutubeService } from '../../../../services
 import PlatformSettingsLayout, { IPlatformComponentParams } from './PlatformSettingsLayout';
 import { assertIsDefined } from '../../../../util/properties-type-guards';
 import { inject, injectQuery, useModule } from 'slap';
-import styles from './YoutubeEditStreamInfo.m.less';
-import cx from 'classnames';
+import { CustomFieldsCheckbox } from '../CustomFieldsCheckbox';
 
 /***
  * Stream Settings for YT
@@ -89,7 +88,7 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
   function renderCommonFields() {
     return (
       <CommonPlatformFields
-        key="common"
+        key="youtube-common"
         platform="youtube"
         layoutMode={p.layoutMode}
         value={ytSettings}
@@ -101,7 +100,7 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
 
   function renderBroadcastInput() {
     return (
-      <div key={'broadcast'}>
+      <div key={'youtube-essential'}>
         {!isScheduleMode && (
           <BroadcastInput
             label={$t('Event')}
@@ -118,7 +117,7 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
 
   function renderOptionalFields() {
     return (
-      <div key="optional">
+      <div key="youtube-optional">
         {!isMidStreamMode && (
           <>
             <ListInput
@@ -176,54 +175,62 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
             />
           </>
         )}
-        <InputWrapper
-          label={$t('Additional Settings')}
-          layout={p.layout}
-          className={cx(styles.youtubeCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
-        >
+
+        <div className="flex__horizontal">
           {!isScheduleMode && !isMidStreamMode && (
-            <CheckboxInput
-              {...bind.enableAutoStart}
-              label={$t('Enable Auto-start')}
-              tooltip={$t(
-                'Enabling auto-start will automatically start the stream when you start sending data from your streaming software',
-              )}
-            />
+            <InputWrapper label={$t('Enable Auto-start')} layout="vertical" nolabel>
+              <CheckboxInput
+                {...bind.enableAutoStart}
+                label={$t('Enable Auto-start')}
+                tooltip={$t(
+                  'Enabling auto-start will automatically start the stream when you start sending data from your streaming software',
+                )}
+              />
+            </InputWrapper>
           )}
           {!isScheduleMode && (
+            <InputWrapper label={$t('Enable Auto-stop')} layout="vertical" nolabel>
+              <CheckboxInput
+                {...bind.enableAutoStop}
+                label={$t('Enable Auto-stop')}
+                tooltip={$t(
+                  'Enabling auto-stop will automatically stop the stream when you stop sending data from your streaming software',
+                )}
+              />
+            </InputWrapper>
+          )}
+          <CustomFieldsCheckbox {...p} platform="youtube" />
+          <InputWrapper label={$t('Enable DVR')} layout="vertical" nolabel>
             <CheckboxInput
-              {...bind.enableAutoStop}
-              label={$t('Enable Auto-stop')}
+              {...bind.enableDvr}
+              label={$t('Enable DVR')}
               tooltip={$t(
-                'Enabling auto-stop will automatically stop the stream when you stop sending data from your streaming software',
+                'DVR controls enable the viewer to control the video playback experience by pausing, rewinding, or fast forwarding content',
               )}
             />
-          )}
-          <CheckboxInput
-            {...bind.enableDvr}
-            label={$t('Enable DVR')}
-            tooltip={$t(
-              'DVR controls enable the viewer to control the video playback experience by pausing, rewinding, or fast forwarding content',
-            )}
-          />
+          </InputWrapper>
           {!isMidStreamMode && (
             <>
-              <CheckboxInput
-                label={$t('360° video')}
-                value={is360video}
-                onChange={projectionChangeHandler}
-              />
-              <CheckboxInput label={$t('Made for kids')} {...bind.selfDeclaredMadeForKids} />
-              {shouldShowSafeForKidsWarn && (
-                <p>
-                  {$t(
-                    "Features like personalized ads and live chat won't be available on live streams made for kids.",
-                  )}
-                </p>
-              )}
+              <InputWrapper label={$t('360° video')} layout="vertical" nolabel>
+                <CheckboxInput
+                  label={$t('360° video')}
+                  value={is360video}
+                  onChange={projectionChangeHandler}
+                />
+              </InputWrapper>
+              <InputWrapper label={$t('Made for kids')} layout="vertical" nolabel>
+                <CheckboxInput label={$t('Made for kids')} {...bind.selfDeclaredMadeForKids} />
+                {shouldShowSafeForKidsWarn && (
+                  <p>
+                    {$t(
+                      "Features like personalized ads and live chat won't be available on live streams made for kids.",
+                    )}
+                  </p>
+                )}
+              </InputWrapper>
             </>
           )}
-        </InputWrapper>
+        </div>
       </div>
     );
   }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { TPlatform } from '../../../../services/platforms';
 import { ITwitchStartStreamOptions } from '../../../../services/platforms/twitch';
 import { IYoutubeStartStreamOptions } from '../../../../services/platforms/youtube';
@@ -18,24 +18,11 @@ export default function PlatformSettingsLayout(p: {
   essentialOptionalFields?: JSX.Element;
   layout?: TInputLayout;
 }) {
-  let layoutItems = [];
-  switch (p.layoutMode) {
-    case 'singlePlatform':
-      layoutItems = [
-        p.essentialOptionalFields,
-        p.commonFields,
-        p.requiredFields,
-        p.optionalFields,
-        p.layout,
-      ];
-      break;
-    case 'multiplatformSimple':
-      layoutItems = [p.requiredFields, p.layout];
-      return p.requiredFields;
-    case 'multiplatformAdvanced':
-      layoutItems = [p.essentialOptionalFields, p.requiredFields, p.optionalFields, p.commonFields];
-      break;
-  }
+  const layoutItems = useMemo(
+    () => [p.essentialOptionalFields, p.commonFields, p.requiredFields, p.optionalFields, p.layout],
+    [p.essentialOptionalFields, p.commonFields, p.requiredFields, p.optionalFields, p.layout],
+  );
+
   return <>{layoutItems.map(item => item)}</>;
 }
 
@@ -55,7 +42,9 @@ export interface IPlatformComponentParams<T extends TPlatform> {
   layout?: TInputLayout;
   isUpdateMode?: boolean;
   isScheduleMode?: boolean;
+  enabledPlatformsCount?: number;
   isDualOutputMode?: boolean;
   isAiHighlighterEnabled?: boolean;
   isStreamShiftMode?: boolean;
+  isMidStreamMode?: boolean;
 }

@@ -1,43 +1,36 @@
-import React from 'react';
+import React, { memo } from 'react';
 import Form from '../../../shared/inputs/Form';
 import { $t } from '../../../../services/i18n';
 import { Services } from '../../../service-provider';
 import { Button, Tooltip } from 'antd';
+import Tabs from 'components-react/shared/Tabs';
 import InputWrapper from '../../../shared/inputs/InputWrapper';
 import PlatformSettingsLayout, { IPlatformComponentParams } from './PlatformSettingsLayout';
 import * as remote from '@electron/remote';
 import { CommonPlatformFields } from '../CommonPlatformFields';
 import { ITikTokStartStreamOptions } from 'services/platforms/tiktok';
 import { RadioInput, TextInput, createBinding } from 'components-react/shared/inputs';
-import InfoBanner from 'components-react/shared/InfoBanner';
+import Translate from 'components-react/shared/Translate';
 import GameSelector from '../GameSelector';
-import { EDismissable } from 'services/dismissables';
-import styles from './TikTokEditStreamInfo.m.less';
-import cx from 'classnames';
+import { CustomFieldsCheckbox } from '../CustomFieldsCheckbox';
+import InfoBadge from 'components-react/shared/InfoBadge';
 
 /**
  * @remark The filename for this component is intentionally not consistent with capitalization to preserve the commit history
  */
 export function TikTokEditStreamInfo(p: IPlatformComponentParams<'tiktok'>) {
-  const { TikTokService } = Services;
   const ttSettings = p.value;
-  const approved = TikTokService.scope === 'approved';
-  const denied = TikTokService.scope === 'denied';
-  const controls = TikTokService.audienceControls;
 
   function updateSettings(patch: Partial<ITikTokStartStreamOptions>) {
     p.onChange({ ...ttSettings, ...patch });
   }
-
-  const bind = createBinding(ttSettings, updatedSettings => updateSettings(updatedSettings));
-
   return (
     <Form name="tiktok-settings">
       <PlatformSettingsLayout
         layoutMode={p.layoutMode}
         commonFields={
           <CommonPlatformFields
-            key="common"
+            key="tiktok-common"
             platform="tiktok"
             layoutMode={p.layoutMode}
             value={ttSettings}
@@ -45,38 +38,95 @@ export function TikTokEditStreamInfo(p: IPlatformComponentParams<'tiktok'>) {
             layout={p.layout}
           />
         }
-        requiredFields={<div key="empty-tiktok" />}
+        requiredFields={<TikTokRequired key="tiktok-required" {...p} />}
       />
-      {approved && (
-        <GameSelector key="optional" platform={'tiktok'} {...bind.game} layout={p.layout} />
-      )}
-      {approved && !controls.disable && (
-        <RadioInput
-          key="audience-ctrl"
-          options={controls.types}
-          defaultValue={controls.audienceType}
-          value={controls.audienceType}
-          label={$t('TikTok Audience')}
-          direction="horizontal"
-          colon
-          {...bind.audienceType}
-          layout={p.layout}
-        />
-      )}
-      {!approved && <TikTokEnterCredentialsFormInfo {...p} denied={denied} />}
     </Form>
   );
 }
 
-export function TikTokEnterCredentialsFormInfo(
-  p: IPlatformComponentParams<'tiktok'> & { denied: boolean },
-) {
+const TikTokLiveAccessForm = memo((p: IPlatformComponentParams<'tiktok'>) => {
+  const { TikTokService } = Services;
+  const bind = createBinding(p.value, updatedSettings =>
+    p.onChange({ ...p.value, ...updatedSettings }),
+  );
+
+  const controls = TikTokService.audienceControls;
+  const approved = TikTokService.scope === 'approved';
+
+  return (
+    <>
+      {approved ? (
+        <div>
+          <InfoBadge
+            size="sm"
+            color="var(--primary)"
+            bgColor="lighten(--primary, 8%)"
+            content={
+              <>
+                <i className="icon-check" />
+                <span>{$t('Streamlabs access enabled')}</span>
+              </>
+            }
+          />
+          <GameSelector
+            platform={'tiktok'}
+            {...bind.game}
+            layout="vertical"
+            labelAlign="left"
+            style={{ marginBottom: '4px' }}
+            description={
+              <Translate
+                message={$t(
+                  'Stream at least 50% gaming content to maintain TikTok streaming access. <link>Learn more</link>',
+                )}
+                style={{ fontSize: '14px', fontStyle: 'normal' }}
+              >
+                <a onClick={openInfoPage} slot="link" style={{ textDecoration: 'underline' }} />
+              </Translate>
+            }
+          />
+
+          {!controls.disable && (
+            <RadioInput
+              options={controls.types}
+              defaultValue={controls.audienceType}
+              value={controls.audienceType}
+              label={$t('TikTok Audience')}
+              direction="horizontal"
+              colon
+              {...bind.audienceType}
+              layout="vertical"
+              style={{ marginTop: '10px' }}
+              labelAlign="left"
+            />
+          )}
+          <CustomFieldsCheckbox {...p} platform="tiktok" />
+        </div>
+      ) : (
+        <TikTokInfo />
+      )}
+    </>
+  );
+});
+
+const TikTokStreamKeyForm = memo((p: IPlatformComponentParams<'tiktok'>) => {
   const bind = createBinding(p.value, updatedSettings =>
     p.onChange({ ...p.value, ...updatedSettings }),
   );
 
   return (
     <>
+      <Translate
+        message={$t(
+          'Use your TikTok stream key to stream. Stream Keys are granted by TikTok and renew after each session. <link>See Guide</link>',
+        )}
+      >
+        <a
+          onClick={openInfoPage}
+          slot="link"
+          style={{ textDecoration: 'underline', color: 'var(--paragraph)' }}
+        />
+      </Translate>
       <TextInput
         label={
           <Tooltip title={$t('Generate with "Locate my Stream Key"')} placement="right">
@@ -86,8 +136,10 @@ export function TikTokEnterCredentialsFormInfo(
         }
         required
         {...bind.serverUrl}
-        layout={p.layout}
+        layout="horizontal"
         size="large"
+        labelAlign="left"
+        style={{ marginTop: '24px', fontSize: '14px' }}
       />
       <TextInput
         label={
@@ -98,53 +150,50 @@ export function TikTokEnterCredentialsFormInfo(
         }
         required
         {...bind.streamKey}
-        layout={p.layout}
+        layout="horizontal"
         size="large"
+        style={{ marginBottom: '10px', fontSize: '14px' }}
+        labelAlign="left"
       />
-      <InputWrapper
-        extra={
-          <div style={{ display: 'flex', flexDirection: 'column' }} className="input-extra">
-            {p.denied ? <TikTokDenied /> : <TikTokInfo />}
-          </div>
-        }
-        layout={p.layout}
-        className={cx({ [styles.hideLabel]: p.layout === 'vertical' })}
-      >
-        <TikTokButtons denied={p.denied} />
+      <InputWrapper layout="horizontal">
+        <Button onClick={openProducer} style={{ width: '100%', marginBottom: '8px' }}>
+          {$t('Locate my Stream Key')}
+        </Button>
+        <Translate
+          message={$t("Can't find your stream key? <link>Click here</link>")}
+          style={{ fontSize: '12px' }}
+        >
+          <a onClick={openProducer} style={{ textDecoration: 'underline' }} slot="link" />
+        </Translate>
+        <CustomFieldsCheckbox {...p} platform="tiktok" layout="horizontal" />
       </InputWrapper>
     </>
   );
-}
-
-function TikTokDenied() {
-  return (
-    <InfoBanner
-      id="tiktok-denied"
-      message={$t('TikTok Live Access not granted. Click here to learn more.')}
-      type="info"
-      onClick={() => {
-        openConfirmation();
-        Services.UsageStatisticsService.recordAnalyticsEvent('TikTokApplyPrompt', {
-          component: 'NotGrantedBannerDismissed',
-        });
-      }}
-      dismissableKey={EDismissable.TikTokRejected}
-    />
-  );
-}
+});
 
 function TikTokInfo() {
   return (
     <>
-      <a id="tiktok-faq" onClick={() => openInfoPage()}>
-        {$t('Go live to TikTok with a single click. Click here to learn more.')}
-      </a>
-      <InfoBanner
-        id="tiktok-info"
-        message={$t("Approvals are solely at TikTok's discretion.")}
-        type="info"
-        style={{ marginTop: '5px', marginBottom: '5px' }}
-      />
+      <Translate
+        message={$t(
+          'Request access to stream without a stream key directly through Streamlabs. You must stream at least 50% gaming content continuously. <link>Learn more</link>',
+        )}
+      >
+        <a onClick={openInfoPage} slot="link" style={{ textDecoration: 'underline' }} />
+      </Translate>
+      <Button
+        onClick={openApplicationInfoPage}
+        style={{
+          marginTop: '16px',
+          padding: '8px 16px',
+          color: 'var(--title)',
+          borderRadius: '8px',
+          height: 'unset',
+        }}
+      >
+        {$t('Request streaming access through Streamlabs')}
+        <i className="icon-pop-out-2" style={{ marginLeft: '5px' }} />
+      </Button>
     </>
   );
 }
@@ -190,6 +239,41 @@ function TikTokButtons(p: { denied: boolean }) {
   );
 }
 
+const TikTokRequired = memo((p: IPlatformComponentParams<'tiktok'>) => {
+  return (
+    <>
+      <Tabs
+        type="card"
+        moreIcon={null}
+        tabBarGutter={0}
+        tabs={[
+          {
+            label: (
+              <>
+                <span>{$t('Streamlabs Access')}</span>
+                <InfoBadge
+                  content={$t('Recommended')}
+                  size="sm"
+                  color="var(--action-button-text)"
+                  bgColor="var(--callout)"
+                  style={{ marginLeft: '12px', padding: '1px 5px', fontWeight: 500 }}
+                />
+              </>
+            ),
+            id: 'live-access',
+            content: <TikTokLiveAccessForm {...p} />,
+          },
+          {
+            label: $t('Stream with TikTok Stream Key'),
+            id: 'stream-key',
+            content: <TikTokStreamKeyForm {...p} />,
+          },
+        ]}
+      />
+    </>
+  );
+});
+
 function openInfoPage() {
   remote.shell.openExternal(Services.TikTokService.infoUrl);
 }
@@ -200,8 +284,4 @@ function openApplicationInfoPage() {
 
 function openProducer() {
   remote.shell.openExternal(Services.TikTokService.legacyDashboardUrl);
-}
-
-function openConfirmation() {
-  remote.shell.openExternal(Services.TikTokService.confirmationUrl);
 }
