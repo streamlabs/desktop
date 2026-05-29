@@ -298,7 +298,10 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
       if (!legacy.baseWidth || !legacy.baseHeight) {
         Object.keys(horizontalDisplayData).forEach((key: keyof IVideoInfo) => {
           this.SET_VIDEO_SETTING(key, horizontalDisplayData[key], 'horizontal');
-          this.dualOutputService.setVideoSetting({ [key]: horizontalDisplayData[key] }, 'horizontal');
+          this.dualOutputService.setVideoSetting(
+            { [key]: horizontalDisplayData[key] },
+            'horizontal',
+          );
         });
         this.contexts.horizontal.video = horizontalDisplayData;
       } else {
