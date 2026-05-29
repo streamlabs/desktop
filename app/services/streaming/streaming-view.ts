@@ -110,6 +110,15 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     );
   }
 
+  get gameName() {
+    return (
+      (this.platforms.twitch?.enabled && this.platforms.twitch.gameName) ||
+      (this.platforms.facebook?.enabled && this.platforms.facebook.game) ||
+      (this.platforms.trovo?.enabled && this.platforms.trovo.game) ||
+      ''
+    );
+  }
+
   getPlatformDisplayName(platform: TPlatform): string {
     return getPlatformService(platform).displayName;
   }
