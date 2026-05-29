@@ -55,7 +55,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.getServiceViews(DualOutputService);
   }
 
-  private get incrementalRolloutService() {
+  private get incrementalRolloutView() {
     return this.getServiceViews(IncrementalRolloutService);
   }
 
@@ -123,11 +123,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns a sorted list of all platforms (linked and unlinked)
    */
   get allPlatforms(): TPlatform[] {
-    const platforms = !this.incrementalRolloutService.featureIsEnabled(EAvailableFeatures.patreon)
-      ? platformList.filter(p => p !== 'patreon')
-      : platformList;
-
-    return this.getSortedPlatforms(platforms);
+    return this.getSortedPlatforms(platformList);
   }
 
   /**
@@ -585,17 +581,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     };
   }
 
-  get isAdvancedMode(): boolean {
-    return (this.isMultiplatformMode || this.isDualOutputMode) && this.settings.advancedMode;
-  }
-
-  get canShowAdvancedMode() {
-    if (this.isStreamShiftMode) {
-      return this.enabledPlatforms.length > 1;
-    }
-    return this.isMultiplatformMode || this.isDualOutputMode;
-  }
-
   /**
    * Returns common fields for the stream such as title, description, game
    */
@@ -893,5 +878,9 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   get selectiveRecording() {
     return this.streamingState.selectiveRecording;
+  }
+
+  get canEditLiveOutputs() {
+    return this.incrementalRolloutView.featureIsEnabled(EAvailableFeatures.liveOutputEditing);
   }
 }

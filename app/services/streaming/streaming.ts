@@ -174,6 +174,7 @@ export class StreamingService
   @Inject() private settingsService: SettingsService;
   @Inject() private signalsService: SignalsService;
   @Inject() private highlighterService: HighlighterService;
+
   streamingStatusChange = new Subject<EStreamingState>();
   recordingStatusChange = new Subject<ERecordingState>();
   replayBufferStatusChange = new Subject<EReplayBufferState>();
@@ -3343,8 +3344,8 @@ export class StreamingService
    * Prefill fields with data if `prepopulateOptions` provided
    */
   showGoLiveWindow(prepopulateOptions?: IGoLiveSettings['prepopulateOptions']) {
-    const height = 750;
-    const width = 800;
+    const height = 800;
+    const width = 910;
 
     this.windowsService.showWindow({
       componentName: 'GoLiveWindow',
@@ -3358,6 +3359,9 @@ export class StreamingService
   }
 
   showEditStream() {
+    // TODO: Update when add edit
+    // const height = 800;
+    // const width = 910;
     const height = 750;
     const width = 800;
 
