@@ -16,6 +16,7 @@ import { DualOutputService } from 'services/dual-output';
 import { SettingsService } from 'services/settings';
 import { OutputSettingsService } from 'services/settings/output';
 import { Subject } from 'rxjs';
+import { horizontalDisplayData } from './default-settings-data';
 
 /**
  * Display Types
@@ -290,7 +291,19 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
      */
     if (display === 'horizontal' && !this.dualOutputService.views.videoSettings?.horizontal) {
       this.loadLegacySettings();
-      this.contexts.horizontal.video = this.contexts.horizontal.legacySettings;
+      // Fresh canvas reads back 0x0 for both legacySettings and video. osn 0.26.28
+      // now throws on SetVideoContext(0x0) where it previously dropped the error.
+      // Seed with defaults so the first push validates; autoconfig overwrites later.
+      const legacy = this.contexts.horizontal.legacySettings;
+      if (!legacy.baseWidth || !legacy.baseHeight) {
+        Object.keys(horizontalDisplayData).forEach((key: keyof IVideoInfo) => {
+          this.SET_VIDEO_SETTING(key, horizontalDisplayData[key], 'horizontal');
+          this.dualOutputService.setVideoSetting({ [key]: horizontalDisplayData[key] }, 'horizontal');
+        });
+        this.contexts.horizontal.video = horizontalDisplayData;
+      } else {
+        this.contexts.horizontal.video = legacy;
+      }
     } else {
       // otherwise, load them from the dual output service
       const settings = this.dualOutputService.views.videoSettings[display];
