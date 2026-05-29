@@ -1,11 +1,17 @@
-import { ExecuteInWorkerProcess, StatefulService, ViewHandler, mutation } from 'services/core';
+import {
+  ExecuteInWorkerProcess,
+  StatefulService,
+  ViewHandler,
+  mutation,
+  InitAfter,
+} from 'services/core';
 import * as obs from '../../obs-api';
 import path from 'path';
 import { getChecksum } from 'util/requests';
 import { byOS, OS } from 'util/operating-systems';
 import { Inject } from 'services/core/injector';
 import { SettingsService } from 'services/settings';
-import { UsageStatisticsService, SourcesService } from 'app-services';
+import { UsageStatisticsService, SourcesService, UserService } from 'app-services';
 import * as remote from '@electron/remote';
 import { Subject } from 'rxjs';
 import { VCamOutputType } from 'obs-studio-node';
@@ -57,11 +63,13 @@ interface IVirtualWebcamServiceState {
   installStatus: EVirtualWebcamPluginInstallStatus;
 }
 
+@InitAfter('UserService')
 export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceState> {
   @Inject() usageStatisticsService: UsageStatisticsService;
   @Inject() sourcesService: SourcesService;
   @Inject() settingsService: SettingsService;
   @Inject() signalsService: SignalsService;
+  @Inject() userService: UserService;
 
   static initialState: IVirtualWebcamServiceState = {
     running: false,
@@ -97,6 +105,14 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
           });
         }
       },
+    });
+
+    this.userService.userLoginFinished.subscribe(() => {
+      if (this.state.installStatus === EVirtualWebcamPluginInstallStatus.Installed) {
+        this.start();
+      } else {
+        this.installOnStartup();
+      }
     });
   }
 
@@ -174,6 +190,18 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
         break;
     }
     return errorMessage;
+  }
+
+  @ExecuteInWorkerProcess()
+  installOnStartup() {
+    try {
+      this.setInstallStatus();
+      if (this.state.installStatus !== EVirtualWebcamPluginInstallStatus.Installed) {
+        this.install();
+      }
+    } catch (error: unknown) {
+      console.error('Error during virtual webcam installOnStartup:', error);
+    }
   }
 
   /**

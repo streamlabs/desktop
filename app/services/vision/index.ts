@@ -149,6 +149,10 @@ export class VisionService extends Service {
 
     // useful for testing robustness
     // setInterval(() => this.ensureRunning(), 30_000);
+
+    this.userService.userLoginFinished.subscribe(() => {
+      this.ensureRunning();
+    });
   }
 
   isSupportedForOs() {
