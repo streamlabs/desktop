@@ -3,8 +3,8 @@ import { EVideoFormat, EColorSpace, ERangeType, EScaleType, EFPSType } from 'obs
 export const horizontalDisplayData = {
   fpsNum: 30,
   fpsDen: 1,
-  baseWidth: 1920,
-  baseHeight: 1080,
+  baseWidth: 1280,
+  baseHeight: 720,
   outputWidth: 1280,
   outputHeight: 720,
   outputFormat: EVideoFormat.I420,
