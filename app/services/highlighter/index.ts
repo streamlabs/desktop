@@ -1287,6 +1287,14 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     }
   }
 
+  // Don't use the installAiHighlighter function here, because we don't want to record an event
+  // for installing from startup
+  async installOnStartup() {
+    this.setAiHighlighter(true);
+    await this.aiHighlighterUpdater.isNewVersionAvailable();
+    this.startUpdater();
+  }
+
   async installAiHighlighter(
     downloadNow: boolean = false,
     location: 'Highlighter-tab' | 'Go-live-flow',

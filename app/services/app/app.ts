@@ -46,6 +46,7 @@ import * as remote from '@electron/remote';
 import { RealmService } from 'services/realm';
 import { StreamAvatarService } from 'services/stream-avatar/stream-avatar-service';
 import { NavigationService } from 'services/navigation';
+import { HighlighterService } from 'services/highlighter';
 
 interface IAppState {
   loading: boolean;
@@ -100,6 +101,7 @@ export class AppService extends StatefulService<IAppState> {
   @Inject() private realmService: RealmService;
   @Inject() private streamAvatarService: StreamAvatarService;
   @Inject() private navigationService: NavigationService;
+  @Inject() private highlighterService: HighlighterService;
 
   static initialState: IAppState = {
     loading: true,
@@ -310,6 +312,7 @@ export class AppService extends StatefulService<IAppState> {
 
     this.tcpServerService.startRequestsHandling();
     this.sceneCollectionsService.enableAutoSave();
+    this.highlighterService.installOnStartup();
     this.FINISH_LOADING();
     this.loadingChanged.next(false);
     // Set timeout to allow transition animation to play
