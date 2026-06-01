@@ -31,6 +31,7 @@ interface ICustomRadioGroupProps {
   gapsize?: number;
   alignIcons?: 'left' | 'center' | 'right';
   optionType?: 'default' | 'button';
+  filled?: boolean;
 }
 
 type TRadioInputProps = TSlobsInputProps<ICustomRadioGroupProps, string, {}>;
@@ -83,6 +84,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           className={cx(p.className, styles.iconRadio, {
             [styles.iconDefault]: optionType === 'default',
             [styles.iconButton]: optionType === 'button',
+            [styles.filled]: p.filled,
           })}
           style={p?.style}
           disabled={p.disabled}

@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { Divider } from 'antd';
 import { ListInput } from 'components-react/shared/inputs';
 import Form from 'components-react/shared/inputs/Form';
 import { getPlatformService, TPlatform } from 'services/platforms';
@@ -8,6 +7,8 @@ import Tooltip from 'components-react/shared/Tooltip';
 import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
 import UltraIcon from 'components-react/shared/UltraIcon';
+import styles from './GoLive.m.less';
+import cx from 'classnames';
 
 interface IPrimaryChatSwitcherProps {
   enabledPlatforms: TPlatform[];
@@ -66,41 +67,46 @@ export default function PrimaryChatSwitcher({
     return primaryChatOptions.length > 0 ? primaryChatOptions[0].value : undefined;
   }, [primaryChat, primaryChatOptions]);
 
+  const switcherDisabled = useMemo(() => {
+    if (disabled) return false;
+    return primaryChatOptions.length === 1;
+  }, [disabled, primaryChatOptions]);
+
   return (
-    <div data-name="primaryChat" style={style} className={className}>
-      {border && <Divider style={{ marginBottom: '8px' }} />}
-      <Form layout={layout}>
-        <ListInput
-          name="primaryChat"
-          label={
-            tooltip ? (
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                {`${$t('Primary Chat')}:`}
-                {!Services.UserService.views.isPrime &&
-                !Services.DualOutputService.views.dualOutputMode ? (
-                  <UltraIcon type="badge" style={{ marginLeft: '10px' }} />
-                ) : (
-                  <Tooltip title={tooltip} placement="top" lightShadow={true}>
-                    <i className="icon-information" style={{ marginLeft: '10px' }} />
-                  </Tooltip>
-                )}
-              </div>
-            ) : (
-              `${$t('Primary Chat')}:`
-            )
-          }
-          options={primaryChatOptions}
-          labelRender={opt => renderPrimaryChatOption(opt, logo)}
-          optionRender={opt => renderPrimaryChatOption(opt, logo)}
-          value={value}
-          onChange={onSetPrimaryChat}
-          suffixIcon={suffixIcon}
-          size={size}
-          disabled={disabled}
-          dropdownMatchSelectWidth={false}
-        />
-      </Form>
-    </div>
+    <Form layout={layout}>
+      <ListInput
+        name="primaryChat"
+        style={style}
+        className={cx(className, { [styles.disabled]: switcherDisabled })}
+        label={
+          tooltip ? (
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              {`${$t('Primary Chat')}:`}
+              {!Services.UserService.views.isPrime &&
+              !Services.DualOutputService.views.dualOutputMode ? (
+                <UltraIcon type="badge" style={{ marginLeft: '10px' }} />
+              ) : (
+                <Tooltip title={tooltip} placement="top" lightShadow={true}>
+                  <i className="icon-information" style={{ marginLeft: '10px' }} />
+                </Tooltip>
+              )}
+            </div>
+          ) : (
+            `${$t('Primary Chat')}:`
+          )
+        }
+        options={primaryChatOptions}
+        labelRender={opt => renderPrimaryChatOption(opt, logo)}
+        optionRender={opt => renderPrimaryChatOption(opt, logo)}
+        value={value}
+        onChange={onSetPrimaryChat}
+        suffixIcon={suffixIcon}
+        size={size}
+        disabled={switcherDisabled}
+        dropdownMatchSelectWidth={false}
+        bordered={border}
+      />
+    </Form>
   );
 }
 

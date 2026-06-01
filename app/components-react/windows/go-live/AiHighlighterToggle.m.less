@@ -5,6 +5,53 @@
 @paddingRight: 24px;
 @paddingBottom: 20px;
 
+.highlighter-banner-wrapper {
+  margin-top: 4px !important;
+  margin-left: 4px !important;
+}
+
+.highlighter-banner {
+  display: flex;
+  align-items: center;
+  background-color: var(--callout);
+  border-radius: 4px;
+
+  :global(.ant-alert-message) {
+    color: var(--section);
+    font-weight: 500;
+
+    span {
+      vertical-align: text-top;
+    }
+
+    a {
+      color: var(--section);
+    }
+  }
+
+  :global(.ant-alert-info) {
+    background-color: unset;
+    border: 0px;
+  }
+
+  :global(.ant-row.ant-form-item) {
+    margin-top: 0px;
+    margin-left: 8px;
+  }
+
+  :global(.ant-switch) {
+    background-color: var(--button);
+  }
+
+  :global(.ant-switch-handle::before) {
+    background-color: var(--title);
+  }
+
+  :global(.ant-switch-checked) {
+    background-color: var(--section) !important;
+  }
+}
+
 .ai-highlighter-box {
   position: relative;
   overflow: hidden;
@@ -157,4 +204,14 @@
   flex-direction: column;
   font-size: 16px;
   font-weight: 500;
+}
+
+.highlighter-card {
+  margin: 16px 0px;
+  display: flex;
+  justify-content: flex-end;
+  flex-flow: row-wrap;
+  width: 100%;
+  background-color: var(--dark-background);
+  border-radius: 8px;
 }
