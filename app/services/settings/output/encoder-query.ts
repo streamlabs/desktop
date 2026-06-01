@@ -123,11 +123,11 @@ export class EncoderQueryService extends Service {
       const existing = this.streamingService.getRecordingInstance();
       if (existing) {
         existing.format = format;
-      }
-      if (existing && hasGetAvailableEncoders(existing)) {
-        const result = mapEncoders(existing.getAvailableEncoders());
-        this.recordingEncoderCache = { key: cacheKey, value: result };
-        return result;
+        if (hasGetAvailableEncoders(existing)) {
+          const result = mapEncoders(existing.getAvailableEncoders());
+          this.recordingEncoderCache = { key: cacheKey, value: result };
+          return result;
+        }
       }
 
       if (mode === 'Simple') {
