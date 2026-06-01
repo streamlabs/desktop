@@ -37,7 +37,6 @@ export const DestinationSwitchers = memo(() => {
     switchPlatforms,
     switchCustomDestination,
     isPlatformLinked,
-    isPrimaryPlatform,
     isRestreamEnabled,
     isStreamShiftMode,
     isPrime,
@@ -50,6 +49,16 @@ export const DestinationSwitchers = memo(() => {
   enabledPlatformsRef.current = enabledPlatforms;
   const enabledDestRef = useRef(enabledDestinations);
   enabledDestRef.current = enabledDestinations;
+
+  // Keep values in refs so the toggle handlers below can stay referentially stable.
+  // The handlers only run on user actions (never during render), so reading `.current`
+  // always has the latest value.
+  const isPrimeRef = useRef(isPrime);
+  isPrimeRef.current = isPrime;
+  const isRestreamEnabledRef = useRef(isRestreamEnabled);
+  isRestreamEnabledRef.current = isRestreamEnabled;
+  const alwaysEnabledPlatformsRef = useRef(alwaysEnabledPlatforms);
+  alwaysEnabledPlatformsRef.current = alwaysEnabledPlatforms;
 
   // Some platforms are always shown, even if not linked so add them to the list of platforms to display
   const platforms = useMemo(() => {
@@ -84,74 +93,93 @@ export const DestinationSwitchers = memo(() => {
     }
   }
 
-  function togglePlatform(platform: TPlatform, enabled: boolean) {
-    // Only allow non-ultra users to have 2 platforms, or 1 platform and 1 custom destination enabled
-    if (!isPrime) {
-      if (enabled && alwaysEnabledPlatforms.includes(platform)) {
-        enabledPlatformsRef.current.push(platform);
-      } else if (enabled) {
-        enabledPlatformsRef.current = enabledPlatformsRef.current.filter(p =>
-          alwaysEnabledPlatforms.includes(p),
-        );
-        enabledPlatformsRef.current.push(platform);
+  const togglePlatform = useCallback(
+    (platform: TPlatform, enabled: boolean) => {
+      // Only allow non-ultra users to have 2 platforms, or 1 platform and 1 custom destination enabled
+      if (!isPrimeRef.current) {
+        if (enabled) {
+          const total = enabledPlatformsRef.current.length + enabledDestRef.current.length;
+          if (total >= 2) {
+            enabledPlatformsRef.current = enabledPlatformsRef.current.slice(1);
+          }
+          enabledPlatformsRef.current.push(platform);
+        } else {
+          enabledPlatformsRef.current = enabledPlatformsRef.current.filter(p => p !== platform);
+        }
+
+        if (!enabledPlatformsRef.current.length) {
+          enabledPlatformsRef.current.push(platform);
+        }
+
+        emitSwitch();
+        return enabledPlatformsRef.current.includes(platform);
+      }
+
+      // user can always stream to tiktok in single output mode
+      if (!isRestreamEnabledRef.current && !alwaysEnabledPlatformsRef.current.includes(platform)) {
+        /*
+         * Clearing this list ensures that when a new platform is selected, instead of enabling 2 platforms
+         * we switch to 1 enabled platforms that was just toggled.
+         */
+        enabledPlatformsRef.current = [];
       } else {
         enabledPlatformsRef.current = enabledPlatformsRef.current.filter(p => p !== platform);
       }
 
+      if (enabled) {
+        enabledPlatformsRef.current.push(platform);
+      }
+
+      // Do not allow disabling the last platform
       if (!enabledPlatformsRef.current.length) {
         enabledPlatformsRef.current.push(platform);
       }
 
       emitSwitch();
       return enabledPlatformsRef.current.includes(platform);
-    }
+    },
+    [emitSwitch],
+  );
 
-    // user can always stream to tiktok in single output mode
-    if (!isRestreamEnabled && !alwaysEnabledPlatforms.includes(platform)) {
-      /*
-       * Clearing this list ensures that when a new platform is selected, instead of enabling 2 platforms
-       * we switch to 1 enabled platforms that was just toggled.
-       */
-      enabledPlatformsRef.current = [];
-    } else {
-      enabledPlatformsRef.current = enabledPlatformsRef.current.filter(p => p !== platform);
-    }
-
-    if (enabled) {
-      enabledPlatformsRef.current.push(platform);
-    }
-
-    // Do not allow disabling the last platform
-    if (!enabledPlatformsRef.current.length) {
-      enabledPlatformsRef.current.push(platform);
-    }
-
-    emitSwitch();
-    return enabledPlatformsRef.current.includes(platform);
-  }
-
-  function toggleDestination(index: number, enabled: boolean) {
-    // In dual output mode, only allow non-ultra users to have 2 platforms, or 1 platform and 1 custom destination enabled
-    if (!isPrime) {
-      if (enabledPlatformsRef.current.length + enabledDestRef.current.length < 2) {
-        enabledDestRef.current.push(index);
-      } else {
-        enabledDestRef.current = enabledDestRef.current.filter((dest, i) => i !== index);
+  const toggleDestination = useCallback(
+    (index: number, enabled: boolean) => {
+      // In dual output mode, only allow non-ultra users to have 2 platforms, or 1 platform and 1 custom destination enabled
+      if (!isPrimeRef.current) {
+        enabledDestRef.current = enabledDestRef.current.filter(dest => dest !== index);
+        if (enabled) {
+          enabledDestRef.current.push(index);
+        }
+        emitSwitch(index, enabled);
+        return;
       }
+
+      enabledDestRef.current = enabledDestRef.current.filter((dest, i) => i !== index);
+
+      if (enabled) {
+        enabledDestRef.current.push(index);
+      }
+
       emitSwitch(index, enabled);
-      return;
-    }
 
-    enabledDestRef.current = enabledDestRef.current.filter((dest, i) => i !== index);
+      return enabledDestRef.current.includes(index);
+    },
+    [emitSwitch],
+  );
 
-    if (enabled) {
-      enabledDestRef.current.push(index);
-    }
+  // Cache one stable onChange per key so the memoized <DestinationSwitcher>s
+  // aren't re-rendered by a fresh inline arrow on every parent render.
+  // eslint-disable-next-line no-spaced-func, func-call-spacing
+  const platformHandlers = useRef<Record<string, (isEnabled: boolean) => void>>({});
+  const getPlatformHandler = (platform: TPlatform) =>
+    platformHandlers.current[platform] ??
+    (platformHandlers.current[platform] = (isEnabled: boolean) =>
+      togglePlatform(platform, isEnabled));
 
-    emitSwitch(index, enabled);
-
-    return enabledDestRef.current.includes(index);
-  }
+  // eslint-disable-next-line no-spaced-func, func-call-spacing
+  const destHandlers = useRef<Record<number, (isEnabled: boolean) => void>>({});
+  const getDestHandler = (ind: number) =>
+    destHandlers.current[ind] ??
+    (destHandlers.current[ind] = (enabled: boolean) => toggleDestination(ind, enabled));
 
   return (
     <div className={cx(styles.switchWrapper)}>
@@ -159,12 +187,8 @@ export const DestinationSwitchers = memo(() => {
         <DestinationSwitcher
           key={platform}
           destination={platform}
-          enabled={
-            isPrime
-              ? isEnabled(platform)
-              : isEnabled(platform) && (isPrimaryPlatform(platform) || platform === 'tiktok')
-          }
-          onChange={enabled => togglePlatform(platform, enabled)}
+          enabled={isEnabled(platform)}
+          onChange={getPlatformHandler(platform)}
           switchDisabled={!isEnabled(platform) && disableNonUltraSwitchers}
           isStreamShiftMode={isStreamShiftMode}
           index={ind}
@@ -176,7 +200,7 @@ export const DestinationSwitchers = memo(() => {
           key={ind}
           destination={dest}
           enabled={dest.enabled && !disableCustomDestinationSwitchers}
-          onChange={enabled => toggleDestination(ind, enabled)}
+          onChange={getDestHandler(ind)}
           switchDisabled={
             disableCustomDestinationSwitchers || (!dest.enabled && disableNonUltraSwitchers)
           }
@@ -252,24 +276,18 @@ const DestinationSwitcher = memo(
       [p.enabled, p.onChange],
     );
 
-    const { title, description, Logo } = (() => {
-      const { UserService } = Services;
+    // Read the platform username (non-reactive, same as before) so it can key the memo below
+    const username = platform
+      ? Services.UserService.state.auth?.platforms[platform]?.username ?? ''
+      : '';
 
+    const { title, description } = useMemo(() => {
       if (platform) {
         // define slots for a platform switcher
         const service = getPlatformService(platform);
-        const platformAuthData = UserService.state.auth?.platforms[platform];
-        const username = platformAuthData?.username ?? '';
-
         return {
           title: service.displayName,
           description: username,
-          Logo: () => (
-            <PlatformLogo
-              platform={platform}
-              className={cx(styles.platformLogo, styles[`platform-logo-${platform}`])}
-            />
-          ),
         };
       } else {
         // define slots for a custom destination switcher
@@ -277,10 +295,23 @@ const DestinationSwitcher = memo(
         return {
           title: destination.name,
           description: destination.url,
-          Logo: () => <i className={cx(styles.destinationLogo, 'fa fa-globe')} />,
         };
       }
-    })();
+    }, [platform, username, p.destination]);
+
+    // Memoize the icon as an element (not a component type) so PlatformLogo is
+    // reconciled as the same element across renders instead of being remounted
+    const icon = useMemo(() => {
+      if (platform) {
+        return (
+          <PlatformLogo
+            platform={platform}
+            className={cx(styles.platformLogo, styles[`platform-logo-${platform}`])}
+          />
+        );
+      }
+      return <i className={cx(styles.destinationLogo, 'fa fa-globe')} />;
+    }, [platform]);
 
     return (
       <SwitcherCard
@@ -288,7 +319,7 @@ const DestinationSwitcher = memo(
         onClick={onClickHandler}
         value={p.enabled}
         switchClassName={platform ? 'platform-switch' : 'destination-switch'}
-        icon={<Logo />}
+        icon={icon}
         name={platform ?? `destination${p?.index}`}
         label={label}
         title={title}

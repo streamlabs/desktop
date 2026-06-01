@@ -184,7 +184,7 @@ export default function GoLiveSettings() {
         span={shouldShowLeftCol ? 17 : 24}
         className={cx(styles.rightColumn, !shouldShowLeftCol && styles.destinationMode)}
       >
-        <Spinner visible={isLoading} />
+        <Spinner visible={isLoading} relative />
         <GoLiveError />
         {shouldShowSettings && (
           <Scrollable className={styles.rightColumnScroll}>

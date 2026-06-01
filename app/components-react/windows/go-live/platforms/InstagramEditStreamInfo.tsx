@@ -2,7 +2,7 @@ import React from 'react';
 import { Alert, Button } from 'antd';
 import { clipboard } from 'electron';
 import { IPlatformComponentParams } from './PlatformSettingsLayout';
-import { TextInput, createBinding } from '../../../shared/inputs';
+import { TextInput, createBinding, InputComponent } from '../../../shared/inputs';
 import Form from '../../../shared/inputs/Form';
 import { $t } from 'services/i18n';
 
@@ -10,7 +10,7 @@ type Props = IPlatformComponentParams<'instagram'> & {
   isStreamSettingsWindow?: boolean;
 };
 
-export function InstagramEditStreamInfo(p: Props) {
+export const InstagramEditStreamInfo = InputComponent((p: Props) => {
   const bind = createBinding(p.value, updatedSettings =>
     p.onChange({ ...p.value, ...updatedSettings }),
   );
@@ -53,7 +53,7 @@ export function InstagramEditStreamInfo(p: Props) {
       )}
     </Form>
   );
-}
+});
 
 function PasteButton({ onPaste }: { onPaste: (text: string) => void }) {
   return (

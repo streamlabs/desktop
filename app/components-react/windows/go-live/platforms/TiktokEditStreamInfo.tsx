@@ -9,7 +9,12 @@ import PlatformSettingsLayout, { IPlatformComponentParams } from './PlatformSett
 import * as remote from '@electron/remote';
 import { CommonPlatformFields } from '../CommonPlatformFields';
 import { ITikTokStartStreamOptions } from 'services/platforms/tiktok';
-import { RadioInput, TextInput, createBinding } from 'components-react/shared/inputs';
+import {
+  RadioInput,
+  TextInput,
+  createBinding,
+  InputComponent,
+} from 'components-react/shared/inputs';
 import Translate from 'components-react/shared/Translate';
 import GameSelector from '../GameSelector';
 import { CustomFieldsCheckbox } from '../CustomFieldsCheckbox';
@@ -18,7 +23,7 @@ import InfoBadge from 'components-react/shared/InfoBadge';
 /**
  * @remark The filename for this component is intentionally not consistent with capitalization to preserve the commit history
  */
-export function TikTokEditStreamInfo(p: IPlatformComponentParams<'tiktok'>) {
+export const TikTokEditStreamInfo = InputComponent((p: IPlatformComponentParams<'tiktok'>) => {
   const ttSettings = p.value;
 
   function updateSettings(patch: Partial<ITikTokStartStreamOptions>) {
@@ -42,7 +47,7 @@ export function TikTokEditStreamInfo(p: IPlatformComponentParams<'tiktok'>) {
       />
     </Form>
   );
-}
+});
 
 const TikTokLiveAccessForm = memo((p: IPlatformComponentParams<'tiktok'>) => {
   const { TikTokService } = Services;
@@ -100,7 +105,11 @@ const TikTokLiveAccessForm = memo((p: IPlatformComponentParams<'tiktok'>) => {
               labelAlign="left"
             />
           )}
-          <CustomFieldsCheckbox {...p} platform="tiktok" />
+          <CustomFieldsCheckbox
+            {...p}
+            platform="tiktok"
+            onChange={newSettings => p.onChange({ ...p.value, ...newSettings })}
+          />
         </div>
       ) : (
         <TikTokInfo />
@@ -165,7 +174,12 @@ const TikTokStreamKeyForm = memo((p: IPlatformComponentParams<'tiktok'>) => {
         >
           <a onClick={openProducer} style={{ textDecoration: 'underline' }} slot="link" />
         </Translate>
-        <CustomFieldsCheckbox {...p} platform="tiktok" layout="horizontal" />
+        <CustomFieldsCheckbox
+          {...p}
+          platform="tiktok"
+          layout="horizontal"
+          onChange={newSettings => p.onChange({ ...p.value, ...newSettings })}
+        />
       </InputWrapper>
     </>
   );

@@ -7,7 +7,7 @@ import { TwitchEditStreamInfo } from './platforms/TwitchEditStreamInfo';
 import { Section } from './Section';
 import { YoutubeEditStreamInfo } from './platforms/YoutubeEditStreamInfo';
 import { TikTokEditStreamInfo } from './platforms/TiktokEditStreamInfo';
-import FacebookEditStreamInfo from './platforms/FacebookEditStreamInfo';
+import { FacebookEditStreamInfo } from './platforms/FacebookEditStreamInfo';
 import { IPlatformComponentParams } from './platforms/PlatformSettingsLayout';
 import { getDefined } from '../../../util/properties-type-guards';
 import { TrovoEditStreamInfo } from './platforms/TrovoEditStreamInfo';
@@ -20,7 +20,6 @@ import { inject } from 'slap';
 import { HighlighterService } from 'app-services';
 import { SwitcherCard } from './SwitcherCard';
 import UltraIcon from 'components-react/shared/UltraIcon';
-import Utils from 'services/utils';
 
 export default function PlatformSettings() {
   const {
@@ -70,9 +69,6 @@ export default function PlatformSettings() {
 
   const layoutMode = 'multiplatformAdvanced';
 
-  const showLiveSettings = true;
-  // const showLiveSettings = canEditLiveOutputs && Utils.isPreview();
-
   function createPlatformBinding<T extends TPlatform>(platform: T): IPlatformComponentParams<T> {
     return {
       isUpdateMode,
@@ -94,7 +90,7 @@ export default function PlatformSettings() {
   return (
     // minHeight is required for the loading spinner
     <div style={{ minHeight: '150px', height: '100%', flex: 1 }}>
-      {showLiveSettings && (
+      {canEditLiveOutputs && (
         <>
           <h2>{$t('Live Settings')}</h2>
           <div className="flex__horizontal margin">

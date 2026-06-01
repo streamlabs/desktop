@@ -4,13 +4,13 @@ import {
   ETwitterChatType,
   ITwitterStartStreamOptions,
 } from '../../../../services/platforms/twitter';
-import { ListInput, createBinding } from '../../../shared/inputs';
+import { ListInput, createBinding, InputComponent } from '../../../shared/inputs';
 import Form from '../../../shared/inputs/Form';
 import { CommonPlatformFields } from '../CommonPlatformFields';
 import { $t } from 'services/i18n';
 import { CustomFieldsCheckbox } from '../CustomFieldsCheckbox';
 
-export function TwitterEditStreamInfo(p: IPlatformComponentParams<'twitter'>) {
+export const TwitterEditStreamInfo = InputComponent((p: IPlatformComponentParams<'twitter'>) => {
   const twSettings = p.value;
 
   function updateSettings(patch: Partial<ITwitterStartStreamOptions>) {
@@ -74,4 +74,4 @@ export function TwitterEditStreamInfo(p: IPlatformComponentParams<'twitter'>) {
       />
     </Form>
   );
-}
+});

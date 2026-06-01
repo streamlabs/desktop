@@ -1,7 +1,6 @@
 import { TPlatform } from '../../../services/platforms';
 import React, { useMemo, useCallback } from 'react';
 import { InputComponent, TInputLayout } from '../../shared/inputs';
-import { TLayoutMode } from './platforms/PlatformSettingsLayout';
 import InputWrapper from '../../shared/inputs/InputWrapper';
 import { CheckboxInput } from 'components-react/shared/inputs/CheckboxInput';
 import { $t } from 'services/i18n';
