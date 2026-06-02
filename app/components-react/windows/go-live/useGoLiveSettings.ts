@@ -484,6 +484,11 @@ export class GoLiveSettingsModule {
    * Validate the form and start streaming
    */
   async goLive() {
+    if (Services.HighlighterService.views.useAiHighlighter) {
+      Services.SettingsService.setSettingValue('General', 'RecordWhenStreaming', true);
+      Services.SettingsService.setSettingValue('General', 'ReplayBufferWhileStreaming', true);
+    }
+
     if (await this.validate()) {
       Services.StreamingService.actions.goLive(this.state.settings);
     }

@@ -11,7 +11,10 @@ import { IListOption } from '../../shared/inputs/ListInput';
 import { Services } from '../../service-provider';
 import { injectState, useModule } from 'slap';
 
-type TProps = TSlobsInputProps<{ platform: TPlatform; layout?: TInputLayout }, string>;
+type TProps = TSlobsInputProps<
+  { platform: TPlatform; layout?: TInputLayout; onNameChange?: (name: string) => void },
+  string
+>;
 
 export default function GameSelector(p: TProps) {
   const { platform } = p;
@@ -94,8 +97,6 @@ export default function GameSelector(p: TProps) {
         image: g?.image,
       })) ?? [];
 
-    console.log('games', JSON.stringify(games, null, 2));
-
     setGames(games);
     setIsSearching(false);
   }
@@ -108,7 +109,6 @@ export default function GameSelector(p: TProps) {
   function onSelect(searchString: string) {
     const game = games.find(game => game.label === searchString);
 
-    console.log('Selected game', game);
     if (isTikTok) {
       Services.TikTokService.actions.setGameName(searchString);
     }
@@ -158,6 +158,10 @@ export default function GameSelector(p: TProps) {
       onSearch={onSearch}
       onSelect={(val, opts) => {
         onSelect(typeof opts.label === 'string' ? opts.label : '');
+
+        if (p.onNameChange) {
+          p.onNameChange(typeof opts.label === 'string' ? opts.label : '');
+        }
       }}
       filterOption={filterOption}
       debounce={500}

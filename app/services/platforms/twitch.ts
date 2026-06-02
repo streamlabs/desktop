@@ -420,6 +420,7 @@ export class TwitchService
       title: channelInfo.title,
       game: channelInfo.game,
       gameId: channelInfo.gameId,
+      gameName: channelInfo.gameName,
       isBrandedContent: channelInfo.is_branded_content,
       isEnhancedBroadcasting,
       contentClassificationLabels: channelInfo.content_classification_labels,
@@ -487,6 +488,7 @@ export class TwitchService
       title,
       game,
       gameId: channelInfo.gameId,
+      gameName: channelInfo.gameName,
       isBrandedContent: channelInfo.is_branded_content,
       isEnhancedBroadcasting: this.settingsService.isEnhancedBroadcasting(),
       contentClassificationLabels: channelInfo.content_classification_labels,
@@ -523,7 +525,7 @@ export class TwitchService
         body: JSON.stringify({
           tags,
           title: settings.title,
-          game_id: settings.game,
+          game_id: settings.gameId,
           is_branded_content: settings.isBrandedContent,
           content_classification_labels: labels,
         }),
@@ -581,6 +583,7 @@ export class TwitchService
       title: settings.title,
       game: settings.game,
       gameId: settings.gameId,
+      gameName: settings.gameName,
       tags: settings.tags,
       isEnhancedBroadcasting: settings.isEnhancedBroadcasting,
     });
