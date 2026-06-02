@@ -1460,18 +1460,27 @@ export class StreamingService
    * @param code - EOBSOutputSignal - for logging the signal for debugging purposes
    */
   private async handleStartStreaming(code: EOBSOutputSignal, display: TDisplayType) {
-    // Handle start recording when start streaming
-    if (this.streamSettingsService.settings.recordWhenStreaming && !this.isRecording) {
-      await this.toggleRecording();
-    }
+    const useAiHighlighter = this.highlighterService.views.useAiHighlighter;
 
     // Handle start replay buffer when start streaming
+    // Replay buffer must be started before recording because createReplayBuffer
+    // recreates the recording output instance, which would stop an active recording.
+    const shouldStartReplay =
+      this.streamSettingsService.settings.replayBufferWhileStreaming || useAiHighlighter;
+
     if (
-      this.streamSettingsService.settings.replayBufferWhileStreaming &&
+      shouldStartReplay &&
       this.outputSettingsService.getSettings().replayBuffer.enabled &&
       !this.isReplayBufferActive
     ) {
       this.startReplayBuffer();
+    }
+
+    // Handle start recording when start streaming
+    const shouldRecord =
+      this.streamSettingsService.settings.recordWhenStreaming || useAiHighlighter;
+    if (shouldRecord && !this.isRecording) {
+      await this.toggleRecording();
     }
 
     this.SET_STREAMING_STATUS(EStreamingState.Live, display, new Date().toISOString());
@@ -1766,14 +1775,20 @@ export class StreamingService
    * @param force - boolean, whether to force stop the stream
    */
   private async handleStopStreaming(force?: boolean) {
+    // When AI highlighter is active, it manages recording and replay buffer stop
+    // in the Ending status handler to ensure clips are captured correctly
+    const aiManagesRecording = this.highlighterService.views.useAiHighlighter;
+
     // Recording must be stopped before stopping the replay buffer
     // for the correct order of destruction of the context instances
-    const keepRecording = this.streamSettingsService.settings.keepRecordingWhenStreamStops;
+    const keepRecording =
+      this.streamSettingsService.settings.keepRecordingWhenStreamStops || aiManagesRecording;
     if (!keepRecording && this.getIsRecordingStatus(ERecordingState.Recording)) {
       this.toggleRecording();
     }
 
-    const keepReplaying = this.streamSettingsService.settings.keepReplayBufferStreamStops;
+    const keepReplaying =
+      this.streamSettingsService.settings.keepReplayBufferStreamStops || aiManagesRecording;
     if (!keepReplaying && this.getIsReplayBufferStatus(EReplayBufferState.Running)) {
       this.stopReplayBuffer();
     }

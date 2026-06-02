@@ -507,7 +507,14 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           streamId: streamInfo?.id,
           game: this.streamingService.views.game,
         });
-        this.streamingService.actions.toggleRecording();
+
+        if (this.streamingService.views.isRecording) {
+          this.streamingService.actions.toggleRecording();
+        }
+
+        if (this.streamingService.views.isReplayBufferActive) {
+          this.streamingService.actions.stopReplayBuffer();
+        }
 
         // Load potential replaybuffer clips
         await this.loadClips(streamInfo.id);
