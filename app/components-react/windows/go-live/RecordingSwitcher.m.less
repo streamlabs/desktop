@@ -1,8 +1,23 @@
 @import '../../../styles/index.less';
 
 .recording-tooltip {
+  display: flex;
+  align-items: center;
+
   i.info {
     margin-left: 10px;
+  }
+
+  :global(.ant-col.ant-form-item-label) {
+    display: none !important;
+  }
+
+  :global(.ant-row.ant-form-item) {
+    margin-right: 0px !important;
+  }
+
+  :global(.ant-switch.ant-switch-small) {
+    margin-right: 0px !important;
   }
 }
 
