@@ -420,13 +420,6 @@ export class GoLiveSettingsModule {
     this.save(this.state.settings);
   }
 
-  /**
-   * Determine if all dual output go live requirements are fulfilled
-   */
-  get canStreamDualOutput() {
-    return this.state.getCanStreamDualOutput(this.state);
-  }
-
   getIsInvalidDualStream(): boolean {
     if (this.isPrime) {
       return false;

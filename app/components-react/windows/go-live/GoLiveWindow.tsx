@@ -63,7 +63,6 @@ function ModalFooter() {
     goLive,
     close,
     goBackToSettings,
-    getCanStreamDualOutput,
     isLoading,
     isDualOutputMode,
     isPrime,
@@ -94,7 +93,7 @@ function ModalFooter() {
     },
 
     async checkIsLive() {
-      return this.restreamService.actions.return.checkIsLive();
+      return this.restreamService.actions.checkIsLive();
     },
 
     async forceStreamShiftGoLive() {
@@ -132,8 +131,6 @@ function ModalFooter() {
     // Check if user is live on mount to handle the case where the stream switcher status
     // changed while the user had the Go Live Window closed.
     isFetchingStreamStatus.current = true;
-    Services.RestreamService.actions.checkIsLive();
-    isFetchingStreamStatus.current = false;
 
     const subscription = Services.RestreamService.isLive.subscribe(async isLive => {
       if (!isPrime) return;
@@ -155,6 +152,9 @@ function ModalFooter() {
         await promptUseDefaultCodec();
       }
     });
+
+    debouncedCheckIsLive();
+    isFetchingStreamStatus.current = false;
 
     return () => {
       debouncedCheckIsLive.cancel();
@@ -261,27 +261,6 @@ function ModalFooter() {
   }, [isDualOutputMode]);
 
   const handleGoLive = useCallback(async () => {
-    if (isDualOutputMode && !getCanStreamDualOutput()) {
-      message.error({
-        key: 'dual-output-error',
-        className: styles.errorAlert,
-        content: (
-          <div className={styles.alertContent}>
-            <div style={{ marginRight: '10px' }}>
-              {$t(
-                'To use Dual Output you must stream to one horizontal and one vertical platform.',
-              )}
-            </div>
-
-            <i className="icon-close" />
-          </div>
-        ),
-        onClick: () => message.destroy('dual-output-error'),
-      });
-
-      return;
-    }
-
     if (
       isPrime &&
       !streamShiftForceGoLive &&
@@ -307,7 +286,6 @@ function ModalFooter() {
     isPrime,
     streamShiftForceGoLive,
     hasIncompatibleCodec,
-    getCanStreamDualOutput,
     debouncedCheckIsLive,
     goLive,
   ]);

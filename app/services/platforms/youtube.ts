@@ -557,7 +557,7 @@ export class YoutubeService
       );
     }
 
-    if (this.streamingService.views.isDualOutputMode && ytSettings.display === 'both') {
+    if (ytSettings.display === 'both') {
       try {
         // Prevent rate limit errors by delaying the dual stream setup by 1 second
         await new Promise<void>(resolve => {

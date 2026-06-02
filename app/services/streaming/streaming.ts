@@ -448,7 +448,11 @@ export class StreamingService
     const settings = newSettings || cloneDeep(this.views.savedSettings);
 
     // For the Stream Shift, match remote targets to local targets
-    if (settings.streamShift && this.restreamService.views.hasStreamShiftTargets) {
+    if (
+      settings.streamShift &&
+      this.restreamService.views.hasStreamShiftTargets &&
+      !this.restreamService.views.streamShiftForceGoLive
+    ) {
       await this.restreamService.fetchTargetData();
 
       const targets: TPlatform[] = this.restreamService.views.streamShiftTargets.reduce(
@@ -1373,16 +1377,6 @@ export class StreamingService
   }
 
   async toggleStreaming(options?: TStartStreamOptions, force = false) {
-    if (this.views.isDualOutputMode && !this.views.getCanStreamDualOutput() && this.isIdle) {
-      this.notificationsService.actions.push({
-        message: $t('Set up Go Live Settings for Dual Output Mode in the Go Live window.'),
-        type: ENotificationType.WARNING,
-        lifeTime: 2000,
-      });
-      this.showGoLiveWindow();
-      return;
-    }
-
     if (
       this.state.status.horizontal.streaming === EStreamingState.Offline &&
       this.state.status.vertical.streaming === EStreamingState.Offline

@@ -22,6 +22,7 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
     lifecycle,
     isMultiplatformMode,
     isDualOutputMode,
+    isStreamShiftMode,
     checklist,
     warning,
     getPlatformDisplayName,
@@ -66,7 +67,12 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
           {!isUpdateMode &&
             isMultiplatformMode &&
             !isDualOutputMode &&
-            renderCheck($t('Configure the Multistream service'), checklist.setupMultistream)}
+            renderCheck(
+              isStreamShiftMode
+                ? $t('Configure the Stream Shift service')
+                : $t('Configure the Multistream service'),
+              checklist.setupMultistream,
+            )}
 
           {/* DUAL OUTPUT */}
           {!isUpdateMode &&
