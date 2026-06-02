@@ -83,16 +83,8 @@ function TwitchRequiredFields(p: IPlatformComponentParams<'twitch'>) {
     process.platform !== 'darwin' || (process.platform === 'darwin' && process.arch === 'arm64');
   return (
     <>
-      <GameSelector
-        key="twitch-game"
-        platform={'twitch'}
-        {...bind.game}
-        layout={p.layout}
-        onNameChange={bind.gameName.onChange}
-      />
-      {p.isAiHighlighterEnabled && (
-        <AiHighlighterToggle key="ai-toggle" game={bind.gameName.value} cardIsExpanded={false} />
-      )}
+      <GameSelector key="twitch-game" platform={'twitch'} {...bind.game} layout={p.layout} />
+      {p.isAiHighlighterEnabled && <AiHighlighterToggle key="ai-toggle" cardIsExpanded={false} />}
       {isEnhancedBroadcastingVisible && !isUpdateMode && (
         <InputWrapper
           layout={p.layout}
