@@ -16,6 +16,7 @@ import { DualOutputService } from 'services/dual-output';
 import { SettingsService } from 'services/settings';
 import { OutputSettingsService } from 'services/settings/output';
 import { Subject } from 'rxjs';
+import { horizontalDisplayData } from './default-settings-data';
 
 /**
  * Display Types
@@ -95,6 +96,13 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
   };
 
   establishedContext = new Subject<TDisplayType>();
+
+  /**
+   * Emitted when a video context fails to establish (e.g. graphics device lost
+   * during startup, leaving the libobs canvas mix as NULL). Consumers should
+   * gate streaming/recording start on this and surface a user-facing error.
+   */
+  videoContextError = new Subject<{ display: TDisplayType; error: string }>();
 
   init() {
     this.establishVideoContext();
@@ -283,7 +291,22 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
      */
     if (display === 'horizontal' && !this.dualOutputService.views.videoSettings?.horizontal) {
       this.loadLegacySettings();
-      this.contexts.horizontal.video = this.contexts.horizontal.legacySettings;
+      // Fresh canvas reads back 0x0 for both legacySettings and video. osn 0.26.28
+      // now throws on SetVideoContext(0x0) where it previously dropped the error.
+      // Seed with defaults so the first push validates; autoconfig overwrites later.
+      const legacy = this.contexts.horizontal.legacySettings;
+      if (!legacy.baseWidth || !legacy.baseHeight) {
+        Object.keys(horizontalDisplayData).forEach((key: keyof IVideoInfo) => {
+          this.SET_VIDEO_SETTING(key, horizontalDisplayData[key], 'horizontal');
+          this.dualOutputService.setVideoSetting(
+            { [key]: horizontalDisplayData[key] },
+            'horizontal',
+          );
+        });
+        this.contexts.horizontal.video = horizontalDisplayData;
+      } else {
+        this.contexts.horizontal.video = legacy;
+      }
     } else {
       // otherwise, load them from the dual output service
       const settings = this.dualOutputService.views.videoSettings[display];
@@ -315,12 +338,27 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     if (this.contexts[display]) return;
     this.SET_VIDEO_CONTEXT(display);
     this.contexts[display] = VideoFactory.create();
-    this.migrateSettings(display);
 
-    this.contexts[display].video = this.state[display];
-    this.contexts[display].legacySettings = this.state[display];
-    Video.video = this.state.horizontal;
-    Video.legacySettings = this.state.horizontal;
+    try {
+      this.migrateSettings(display);
+
+      this.contexts[display].video = this.state[display];
+      this.contexts[display].legacySettings = this.state[display];
+      Video.video = this.state.horizontal;
+      Video.legacySettings = this.state.horizontal;
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      console.error(
+        `[VideoSettingsService] Failed to establish ${display} video context: ${message}`,
+      );
+      if (this.contexts[display]) {
+        this.contexts[display].destroy();
+        this.contexts[display] = null as IVideo;
+      }
+      this.DESTROY_VIDEO_CONTEXT(display);
+      this.videoContextError.next({ display, error: message });
+      return false;
+    }
 
     if (display === 'vertical') {
       // ensure vertical context as the same fps settings as the horizontal context
