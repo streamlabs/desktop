@@ -116,7 +116,6 @@ export { SseService } from 'services/server-sent-events';
 // WIDGETS
 export { WidgetSource, WidgetsService } from './services/widgets';
 export { StreamBossService } from 'services/widgets/settings/stream-boss';
-export { TipJarService } from 'services/widgets/settings/tip-jar';
 export { MediaShareService } from 'services/widgets/settings/media-share';
 export { AlertBoxService } from 'services/widgets/settings/alert-box';
 export { SpinWheelService } from 'services/widgets/settings/spin-wheel';
