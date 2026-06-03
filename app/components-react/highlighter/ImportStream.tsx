@@ -16,6 +16,7 @@ import path from 'path';
 import MigrationNotice from './migration/MigrationNotice';
 import { HypeWrapper } from './HypeWrapper';
 import { EAvailableFeatures } from 'services/incremental-rollout';
+import uuid from 'uuid';
 
 type GameConfig = ReturnType<typeof getConfigByGame>;
 
@@ -98,6 +99,43 @@ export function ImportStreamModal({
   }
 
   async function startImport(game: EGame, filePath: string[] | undefined, id?: string) {
+    if (!migrationEnabled) {
+      // Old highlighter flow: use local AI detection
+      const streamInfo: IStreamInfoForAiHighlighter = {
+        id: id ?? 'manual_' + uuid(),
+        title: inputValue.replace(/[\\/:"*?<>|]+/g, ''),
+        game,
+      };
+      try {
+        if (game && filePath && filePath.length > 0) {
+          HighlighterService.actions.detectAndClipAiHighlights(filePath[0], streamInfo);
+          UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+            type: 'DetectionInModalStarted',
+            openedFrom,
+            streamId: id,
+            game,
+          });
+          closeModal(false);
+          return;
+        }
+
+        filePath = await importStreamFromDevice();
+        if (filePath && filePath.length > 0) {
+          HighlighterService.actions.detectAndClipAiHighlights(filePath[0], streamInfo);
+          UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+            type: 'DetectionInModalStarted',
+            openedFrom,
+            streamId: id,
+            game,
+          });
+          closeModal(false);
+        }
+      } catch (error: unknown) {
+        console.error('Error importing file from device', error);
+      }
+      return;
+    }
+
     try {
       // Check if Replay is installed, auto-install for after-stream flow
       const isInstalled = await HighlighterService.isStreamlabsReplayInstalled();

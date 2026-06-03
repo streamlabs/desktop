@@ -116,7 +116,7 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
 
   // This should also open the ImportStreamModal
   function onDrop(e: React.DragEvent<HTMLDivElement>) {
-    if (v.highlighterVersion === '') return;
+    if (v.highlighterVersion === '' && !migrationEnabled) return;
 
     const extensions = SUPPORTED_FILE_TYPES.map(e => `.${e}`);
     const files: string[] = [];
@@ -149,7 +149,7 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
           <h1 style={{ margin: 0 }}>{$t('My Stream Highlights')}</h1>
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
-          {v.highlighterVersion !== '' && (
+          {(v.highlighterVersion !== '' || migrationEnabled) && (
             <div
               className={styles.uploadWrapper}
               style={{
@@ -234,7 +234,7 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
         maskTransitionName=""
       >
         {!!v.error && <Alert message={v.error} type="error" showIcon />}
-        {showModal?.type === 'upload' && v.highlighterVersion !== '' && (
+        {showModal?.type === 'upload' && (v.highlighterVersion !== '' || migrationEnabled) && (
           <ImportStreamModal
             close={closeModal}
             videoPath={showModal.path}
