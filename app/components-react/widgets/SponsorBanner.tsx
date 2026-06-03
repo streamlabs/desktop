@@ -38,25 +38,16 @@ interface ISponsorBannerState extends IWidgetCommonState {
 }
 
 export function SponsorBanner() {
-  const {
-    isLoading,
-    settings,
-    formSettings,
-    generalMeta,
-    visualMeta,
-    updateSetting,
-    setSelectedTab,
-    selectedTab,
-  } = useSponsorBanner();
+  const w = useSponsorBanner();
 
   const positions = useMemo(() => {
-    if (isLoading) return ['1'];
-    return settings.placement_options === 'double' ? ['1', '2'] : ['1'];
-  }, [isLoading, settings.placement_options]);
+    if (!w.hasLoadedSettings()) return ['1'];
+    return w.settings.placement_options === 'double' ? ['1', '2'] : ['1'];
+  }, [w.settings, w.hasLoadedSettings]);
 
   return (
     <WidgetLayout>
-      <Menu onClick={e => setSelectedTab(e.key)} selectedKeys={[selectedTab]}>
+      <Menu onClick={e => w.setSelectedTab(e.key)} selectedKeys={[w.selectedTab]}>
         <Menu.Item key="general">{$t('General Settings')}</Menu.Item>
         {positions.map(number => (
           <Menu.Item key={number}>{$t('Image Set %{number}', { number })}</Menu.Item>
@@ -64,19 +55,23 @@ export function SponsorBanner() {
         <Menu.Item key="visual">{$t('Visual Settings')}</Menu.Item>
       </Menu>
       <Form>
-        {!isLoading && selectedTab === 'general' && (
-          <FormFactory metadata={generalMeta} values={formSettings} onChange={updateSetting} />
-        )}
-        {!isLoading && ['1', '2'].includes(selectedTab) && (
-          <ImageSection
-            key={selectedTab}
-            placement={selectedTab as '1' | '2'}
-            values={settings}
-            updateSetting={updateSetting}
+        {w.hasLoadedSettings() && w.selectedTab === 'general' && (
+          <FormFactory
+            metadata={w.generalMeta}
+            values={w.formSettings}
+            onChange={w.updateSetting}
           />
         )}
-        {!isLoading && selectedTab === 'visual' && (
-          <FormFactory metadata={visualMeta} values={formSettings} onChange={updateSetting} />
+        {w.hasLoadedSettings() && ['1', '2'].includes(w.selectedTab) && (
+          <ImageSection
+            key={w.selectedTab}
+            placement={w.selectedTab as '1' | '2'}
+            values={w.settings}
+            updateSetting={w.updateSetting}
+          />
+        )}
+        {w.hasLoadedSettings() && w.selectedTab === 'visual' && (
+          <FormFactory metadata={w.visualMeta} values={w.formSettings} onChange={w.updateSetting} />
         )}
       </Form>
     </WidgetLayout>
@@ -165,11 +160,11 @@ export class SponsorBannerModule extends WidgetModule<ISponsorBannerState> {
           layout: metadata.any({
             type: 'imagepicker',
             label: $t('Image Layout'),
+            displayed: this.settings?.placement_options === 'double',
             options: [
               { label: '', value: 'side', image: $i('images/layout-image-side.png') },
               { label: '', value: 'above', image: $i('images/layout-image-above.png') },
             ],
-            displayed: this.settings.placement_options === 'double',
           }),
         },
       }),
@@ -207,7 +202,7 @@ export class SponsorBannerModule extends WidgetModule<ISponsorBannerState> {
         label: $t('Transparent'),
         children: {
           background_container_color: metadata.color({
-            displayed: !this.settings.background_color_option,
+            displayed: !this.settings?.background_color_option,
           }),
         },
       }),
