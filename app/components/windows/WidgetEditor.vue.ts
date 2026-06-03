@@ -31,7 +31,6 @@ class WidgetEditorProps {
   selectedAlert?: string = null;
   /**
    * Declaration of additional sections in the right panel
-   * @see example of usage in TipJar.vue.ts
    */
   slots?: IWidgetNavItem[] = null;
   /**

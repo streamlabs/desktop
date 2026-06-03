@@ -36,11 +36,11 @@ interface IChatBoxState extends IWidgetCommonState {
 }
 
 export function ChatBox() {
-  const { isLoading, settings, meta, updateSetting } = useChatBox();
+  const { settings, meta, hasLoadedSettings, updateSetting } = useChatBox();
 
   return (
     <WidgetLayout>
-      {!isLoading && <FormFactory metadata={meta} values={settings} onChange={updateSetting} />}
+      {hasLoadedSettings(settings) && <FormFactory metadata={meta} values={settings} onChange={updateSetting} />}
     </WidgetLayout>
   );
 }

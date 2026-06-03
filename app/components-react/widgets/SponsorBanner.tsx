@@ -7,7 +7,6 @@ import { $t } from '../../services/i18n';
 import { metadata } from '../shared/inputs/metadata';
 import FormFactory from 'components-react/shared/inputs/FormFactory';
 import { $i } from 'services/utils';
-import InputWrapper from 'components-react/shared/inputs/InputWrapper';
 import { MediaUrlInput, NumberInput } from 'components-react/shared/inputs';
 import Form from 'components-react/shared/inputs/Form';
 
@@ -39,20 +38,20 @@ interface ISponsorBannerState extends IWidgetCommonState {
 
 export function SponsorBanner() {
   const {
-    isLoading,
     settings,
     formSettings,
     generalMeta,
     visualMeta,
+    hasLoadedSettings,
     updateSetting,
     setSelectedTab,
     selectedTab,
   } = useSponsorBanner();
 
   const positions = useMemo(() => {
-    if (isLoading) return ['1'];
+    if (!hasLoadedSettings(settings)) return ['1'];
     return settings.placement_options === 'double' ? ['1', '2'] : ['1'];
-  }, [isLoading, settings.placement_options]);
+  }, [settings, hasLoadedSettings]);
 
   return (
     <WidgetLayout>
@@ -64,10 +63,10 @@ export function SponsorBanner() {
         <Menu.Item key="visual">{$t('Visual Settings')}</Menu.Item>
       </Menu>
       <Form>
-        {!isLoading && selectedTab === 'general' && (
+        {hasLoadedSettings(settings) && selectedTab === 'general' && (
           <FormFactory metadata={generalMeta} values={formSettings} onChange={updateSetting} />
         )}
-        {!isLoading && ['1', '2'].includes(selectedTab) && (
+        {hasLoadedSettings(settings) && ['1', '2'].includes(selectedTab) && (
           <ImageSection
             key={selectedTab}
             placement={selectedTab as '1' | '2'}
@@ -75,7 +74,7 @@ export function SponsorBanner() {
             updateSetting={updateSetting}
           />
         )}
-        {!isLoading && selectedTab === 'visual' && (
+        {hasLoadedSettings(settings) && selectedTab === 'visual' && (
           <FormFactory metadata={visualMeta} values={formSettings} onChange={updateSetting} />
         )}
       </Form>
@@ -162,14 +161,13 @@ export class SponsorBannerModule extends WidgetModule<ISponsorBannerState> {
           { label: $t('Double'), value: 'double' },
         ],
         children: {
-          layout: metadata.any({
-            type: 'imagepicker',
+          layout: metadata.imagepicker({
             label: $t('Image Layout'),
+            displayed: this.settings?.placement_options === 'double',
             options: [
               { label: '', value: 'side', image: $i('images/layout-image-side.png') },
               { label: '', value: 'above', image: $i('images/layout-image-above.png') },
             ],
-            displayed: this.settings.placement_options === 'double',
           }),
         },
       }),
@@ -207,7 +205,7 @@ export class SponsorBannerModule extends WidgetModule<ISponsorBannerState> {
         label: $t('Transparent'),
         children: {
           background_container_color: metadata.color({
-            displayed: !this.settings.background_color_option,
+            displayed: !this.settings?.background_color_option,
           }),
         },
       }),
@@ -236,7 +234,7 @@ export class SponsorBannerModule extends WidgetModule<ISponsorBannerState> {
           data.settings.hide_duration_secs + data.settings.hide_duration * 60,
         show_duration_in_seconds:
           data.settings.show_duration_secs + data.settings.show_duration * 60,
-        // make data structure interable and type-predictable
+        // make data structure iterable and type-predictable
         placement_1_images: data.settings.image_1_href.map((href: string, i: number) => {
           const subbedHref =
             href === '/imgs/streamlabs.png'

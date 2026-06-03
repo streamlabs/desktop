@@ -50,11 +50,11 @@ function fromMeta(meta: TCreditsMeta): Record<string, IBaseMetadata> {
 
 export function Credits() {
   const {
-    isLoading,
     settings,
     creditsMeta,
     fontMeta,
     visualMeta,
+    hasLoadedSettings,
     updateSetting,
     setSelectedTab,
     selectedTab,
@@ -69,13 +69,13 @@ export function Credits() {
         <Menu.Item key="visual">{$t('Visual Settings')}</Menu.Item>
       </Menu>
       <Form>
-        {!isLoading && selectedTab === 'credits' && (
+        {hasLoadedSettings(settings) && selectedTab === 'credits' && (
           <FormFactory metadata={creditsMeta} values={settings} onChange={updateSetting} />
         )}
-        {!isLoading && selectedTab === 'font' && (
+        {hasLoadedSettings(settings) && selectedTab === 'font' && (
           <FormFactory metadata={fontMeta} values={settings} onChange={updateSetting} />
         )}
-        {!isLoading && selectedTab === 'visual' && (
+        {hasLoadedSettings(settings) && selectedTab === 'visual' && (
           <FormFactory metadata={visualMeta} values={settings} onChange={updateSetting} />
         )}
       </Form>

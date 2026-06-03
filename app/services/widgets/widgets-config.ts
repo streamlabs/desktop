@@ -24,6 +24,7 @@ export type TWidgetType =
   | WidgetType.SuperchatGoal
   | WidgetType.CharityGoal
   | WidgetType.EventList
+  | WidgetType.TipJar
   | WidgetType.GamePulseWidget;
 
 export interface IWidgetConfig {
@@ -604,9 +605,31 @@ export function getWidgetsConfig(
     //
     //  },
 
-    // TipJar: {
-    //
-    // },
+    [WidgetType.TipJar]: {
+      type: WidgetType.TipJar,
+
+      defaultTransform: {
+        width: 600,
+        height: 600,
+        x: 1,
+        y: 0.5,
+        anchor: AnchorPoint.East,
+      },
+
+      settingsWindowSize: {
+        width: 850,
+        height: 700,
+      },
+
+      url: `https://${host}/widgets/tip-jar/v1/${token}`,
+      previewUrl: `https://${host}/widgets/tip-jar/v1/${token}?simulate=1`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/jar`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/tipjar`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/tipjar`,
+      settingsUpdateEvent: 'tipJarSettingsUpdate',
+      customCodeAllowed: true,
+      customFieldsAllowed: true,
+    },
 
     [WidgetType.CustomWidget]: {
       type: WidgetType.CustomWidget,

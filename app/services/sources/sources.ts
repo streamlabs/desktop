@@ -829,7 +829,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
       // 'SpinWheel',
       'SponsorBanner',
       // 'StreamBoss',
-      // 'TipJar',
+      'TipJar',
       'ViewerCount',
       'GameWidget',
       'CustomWidget',
