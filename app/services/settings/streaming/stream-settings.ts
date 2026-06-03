@@ -226,8 +226,8 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
         if (this.streamingService.views.isDualOutputMode) {
           const display = this.streamingService.views.getPlatformDisplayType(platform as TPlatform);
           platformSettings.video = this.videoSettingsService.contexts[display];
-          platforms[platform] = platformSettings;
         }
+        platforms[platform] = platformSettings;
       });
       patch.platforms = platforms as ISavedGoLiveSettings['platforms'];
     }

@@ -40,7 +40,6 @@ export const DestinationSwitchers = memo(() => {
     isRestreamEnabled,
     isStreamShiftMode,
     isPrime,
-    alwaysEnabledPlatforms,
     alwaysShownPlatforms,
   } = useGoLiveSettings();
 
@@ -55,10 +54,6 @@ export const DestinationSwitchers = memo(() => {
   // always has the latest value.
   const isPrimeRef = useRef(isPrime);
   isPrimeRef.current = isPrime;
-  const isRestreamEnabledRef = useRef(isRestreamEnabled);
-  isRestreamEnabledRef.current = isRestreamEnabled;
-  const alwaysEnabledPlatformsRef = useRef(alwaysEnabledPlatforms);
-  alwaysEnabledPlatformsRef.current = alwaysEnabledPlatforms;
 
   // Some platforms are always shown, even if not linked so add them to the list of platforms to display
   const platforms = useMemo(() => {
@@ -115,19 +110,10 @@ export const DestinationSwitchers = memo(() => {
         return enabledPlatformsRef.current.includes(platform);
       }
 
-      // user can always stream to tiktok in single output mode
-      if (!isRestreamEnabledRef.current && !alwaysEnabledPlatformsRef.current.includes(platform)) {
-        /*
-         * Clearing this list ensures that when a new platform is selected, instead of enabling 2 platforms
-         * we switch to 1 enabled platforms that was just toggled.
-         */
-        enabledPlatformsRef.current = [];
-      } else {
-        enabledPlatformsRef.current = enabledPlatformsRef.current.filter(p => p !== platform);
-      }
-
       if (enabled) {
         enabledPlatformsRef.current.push(platform);
+      } else {
+        enabledPlatformsRef.current = enabledPlatformsRef.current.filter(p => p !== platform);
       }
 
       // Do not allow disabling the last platform
