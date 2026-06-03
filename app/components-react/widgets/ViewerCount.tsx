@@ -20,21 +20,21 @@ interface IViewerCountState extends IWidgetCommonState {
 }
 
 export function ViewerCount() {
-  const { isLoading, bind } = useViewerCount();
+  const w = useViewerCount();
   // use 1 column layout
   return (
     <WidgetLayout>
-      {!isLoading && (
+      {w.hasLoadedSettings() && (
         <>
           <InputWrapper label={$t('Enabled Streams')}>
-            <CheckboxInput label={$t('Twitch Viewers')} {...bind.twitch} />
-            <CheckboxInput label={$t('YouTube Viewers')} {...bind.youtube} />
-            <CheckboxInput label={$t('Facebook Viewers')} {...bind.facebook} />
+            <CheckboxInput label={$t('Twitch Viewers')} {...w.bind.twitch} />
+            <CheckboxInput label={$t('YouTube Viewers')} {...w.bind.youtube} />
+            <CheckboxInput label={$t('Facebook Viewers')} {...w.bind.facebook} />
           </InputWrapper>
 
-          <FontFamilyInput label={$t('Font')} {...bind.font} />
-          <ColorInput label={$t('Font Color')} {...bind.font_color} />
-          <FontSizeInput label={$t('Font Size')} {...bind.font_size} debounce={500} />
+          <FontFamilyInput label={$t('Font')} {...w.bind.font} />
+          <ColorInput label={$t('Font Color')} {...w.bind.font_color} />
+          <FontSizeInput label={$t('Font Size')} {...w.bind.font_size} debounce={500} />
         </>
       )}
     </WidgetLayout>

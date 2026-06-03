@@ -45,23 +45,11 @@ interface IGoalState extends IWidgetCommonState {
 }
 
 export function GenericGoal() {
-  const {
-    isLoading,
-    settings,
-    createGoalMeta,
-    goalSettings,
-    visualMeta,
-    updateSetting,
-    setSelectedTab,
-    selectedTab,
-    saveGoal,
-    resetGoal,
-    type,
-  } = useGenericGoal();
+  const w = useGenericGoal();
 
-  const isCharity = type === WidgetType.CharityGoal;
+  const isCharity = w.type === WidgetType.CharityGoal;
 
-  const hasGoal = !!goalSettings;
+  const hasGoal = !!w.goalSettings;
 
   const [goalCreateValues, setGoalCreateValues] = useState<Dictionary<TInputValue>>({
     title: '',
@@ -82,35 +70,35 @@ export function GenericGoal() {
 
   return (
     <WidgetLayout>
-      <Menu onClick={e => setSelectedTab(e.key)} selectedKeys={[selectedTab]}>
+      <Menu onClick={e => w.setSelectedTab(e.key)} selectedKeys={[w.selectedTab]}>
         <Menu.Item key="general">{$t('Visual Settings')}</Menu.Item>
         {!isCharity && <Menu.Item key="goal">{$t('Goal Settings')}</Menu.Item>}
       </Menu>
       <Form>
-        {!isLoading && selectedTab === 'goal' && !hasGoal && (
+        {w.hasLoadedSettings() && w.selectedTab === 'goal' && !hasGoal && (
           <>
             <FormFactory
-              metadata={createGoalMeta}
+              metadata={w.createGoalMeta}
               values={goalCreateValues}
               onChange={updateGoalCreate}
             />
             <Button
               className="button button--action"
-              onClick={() => saveGoal(goalCreateValues)}
+              onClick={() => w.saveGoal(goalCreateValues)}
               style={{ marginBottom: 16 }}
             >
               {$t('Start Goal')}
             </Button>
           </>
         )}
-        {!isLoading && selectedTab === 'goal' && hasGoal && (
-          <DisplayGoal goal={goalSettings} resetGoal={resetGoal} />
+        {w.hasLoadedSettings() && w.selectedTab === 'goal' && hasGoal && (
+          <DisplayGoal goal={w.goalSettings} resetGoal={w.resetGoal} />
         )}
-        {!isLoading && selectedTab === 'general' && (
+        {w.hasLoadedSettings() && w.selectedTab === 'general' && (
           <FormFactory
-            metadata={visualMeta}
-            values={settings}
-            onChange={updateSetting}
+            metadata={w.visualMeta}
+            values={w.settings}
+            onChange={w.updateSetting}
             name="visualSettingsForm"
           />
         )}

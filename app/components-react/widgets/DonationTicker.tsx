@@ -11,7 +11,6 @@ import {
   TextInput,
   SliderInput,
 } from '../shared/inputs';
-import { injectFormBinding } from 'slap';
 
 interface IDonationTickerState extends IWidgetState {
   data: {
@@ -33,61 +32,60 @@ interface IDonationTickerState extends IWidgetState {
 }
 
 export function DonationTicker() {
-  const { isLoading, bind, tips } = useDonationTicker();
-  // use 1 column layout
+  const w = useDonationTicker();
   return (
     <WidgetLayout>
-      {!isLoading && (
+      {w.hasLoadedSettings() && (
         <>
           <TextInput
             label={$t('Message Format')}
-            {...bind.message_format}
-            tooltip={tips.messageFormatTooltip}
+            {...w.bind.message_format}
+            tooltip={w.tips.messageFormatTooltip}
           />
           <NumberInput
             label={$t('Max Donations')}
-            {...bind.max_donations}
+            {...w.bind.max_donations}
             min={0}
             max={1000}
-            tooltip={tips.maxDonationsTooltip}
+            tooltip={w.tips.maxDonationsTooltip}
           />
           <SliderInput
             label={$t('Text Scroll Speed')}
-            {...bind.scroll_speed}
+            {...w.bind.scroll_speed}
             max={10}
-            tooltip={tips.scrollSpeedTooltip}
+            tooltip={w.tips.scrollSpeedTooltip}
           />
           <ColorInput
             label={$t('Background Color')}
-            {...bind.background_color}
-            tooltip={tips.backgroundColorTooltip}
+            {...w.bind.background_color}
+            tooltip={w.tips.backgroundColorTooltip}
           />
 
-          <FontFamilyInput label={$t('Font')} {...bind.font} />
+          <FontFamilyInput label={$t('Font')} {...w.bind.font} />
           <FontSizeInput
             label={$t('Font Size')}
-            {...bind.font_size}
-            tooltip={tips.fontSizeTooltip}
+            {...w.bind.font_size}
+            tooltip={w.tips.fontSizeTooltip}
           />
           <FontWeightInput
             label={$t('Font Weight')}
-            {...bind.font_weight}
-            tooltip={tips.fontWeightTooltip}
+            {...w.bind.font_weight}
+            tooltip={w.tips.fontWeightTooltip}
           />
           <ColorInput
             label={$t('Text Color')}
-            {...bind.font_color}
-            tooltip={tips.textColorTooltip}
+            {...w.bind.font_color}
+            tooltip={w.tips.textColorTooltip}
           />
           <ColorInput
             label={$t('Name Text Color')}
-            {...bind.font_color2}
-            tooltip={tips.nameColorTooltip}
+            {...w.bind.font_color2}
+            tooltip={w.tips.nameColorTooltip}
           />
           <ColorInput
             label={$t('Amount Text Color')}
-            {...bind.font_color3}
-            tooltip={tips.amountColorTooltip}
+            {...w.bind.font_color3}
+            tooltip={w.tips.amountColorTooltip}
           />
         </>
       )}
@@ -96,7 +94,6 @@ export function DonationTicker() {
 }
 
 export class DonationTickerModule extends WidgetModule<IDonationTickerState> {
-
   patchAfterFetch(data: any): IDonationTickerState {
     // backend accepts and returns some numerical values as strings
     data.settings.font_size = parseInt(data.settings.font_size, 10);
