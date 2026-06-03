@@ -292,11 +292,46 @@ export class YoutubeService
     repeatRequestIfRateLimitExceed = true,
   ): Promise<T> {
     try {
+      const error = {
+        code: 400,
+        message:
+          'Scheduled start time must be in the future and close enough to the current date that a broadcast could be reliably scheduled at that time.',
+        errors: [
+          {
+            message:
+              'Scheduled start time must be in the future and close enough to the current date that a broadcast could be reliably scheduled at that time.',
+            domain: 'youtube.liveBroadcast',
+            reason: 'invalidScheduledStartTime',
+            extendedHelp:
+              'https://developers.google.com/youtube/v3/live/docs/liveBroadcasts#snippet.scheduledStartTime',
+          },
+        ],
+      };
+      throw new Error(JSON.stringify(error));
       return await platformAuthorizedRequest<T>('youtube', reqInfo);
     } catch (e: unknown) {
-      console.error(`Failed ${this.displayName} API Request:`, reqInfo);
+      console.error('Failed YouTube API Request:', reqInfo);
 
-      const error = e as any;
+      const error = {
+        result: {
+          code: 400,
+          message:
+            'Scheduled start time must be in the future and close enough to the current date that a broadcast could be reliably scheduled at that time.',
+          errors: [
+            {
+              message:
+                'Scheduled start time must be in the future and close enough to the current date that a broadcast could be reliably scheduled at that time.',
+              domain: 'youtube.liveBroadcast',
+              reason: 'invalidScheduledStartTime',
+              extendedHelp:
+                'https://developers.google.com/youtube/v3/live/docs/liveBroadcasts#snippet.scheduledStartTime',
+            },
+          ],
+        },
+      };
+
+      // const error = typeof e === 'string' ? JSON.parse(e) : (e as any);
+      console.log('YouTube API Error', e);
 
       // Log specific Youtube API errors if they exist
       if (error?.result && error.result?.error) {
@@ -304,33 +339,57 @@ export class YoutubeService
       }
 
       let details = $t('Connection Failed');
-      if (error?.message) {
-        details = error.message;
+      let errorType: TStreamErrorType = 'PLATFORM_REQUEST_FAILED';
+
+      const code = error?.code || error?.status;
+      const hasReason = error?.errors && error?.errors.length && error?.errors[0].reason;
+      const reason = hasReason ? error.errors[0].reason : '';
+
+      if (code) {
+        switch (code) {
+          case 400:
+            //       if (hasReason && error.errors[0].reason === 'invalidImage') {
+            //         details = $t('Thumbnail image content is invalid.');
+            //       } else if (hasReason && error.errors[0].reason === 'mediaBodyRequired') {
+            //         details = $t('Thumbnail file does not include image content.');
+            //       }
+            // Only repeat the request once if the error is due to rate limiting
+            if (reason === 'liveStreamingNotEnabled' && repeatRequestIfRateLimitExceed) {
+              await Utils.sleep(3000);
+              errorType = 'YOUTUBE_STREAMING_DISABLED';
+              return await this.requestYoutube(reqInfo, false);
+            }
+
+            // If the error is due to the user trying to stream to a broadcast that is in the past,
+            // stream to a new broadcast
+            if (reason === 'invalidScheduledStartTime') {
+              await Utils.sleep(3000);
+            }
+            break;
+          case 403:
+            //       details = $t('Forbidden');
+            break;
+          case 423:
+            errorType = 'YOUTUBE_TOKEN_EXPIRED';
+            details = $t('YouTube token has expired, re-login or re-merge YouTube account');
+            break;
+          case 404:
+            //       details = $t('Not found');
+            break;
+        }
       }
 
       if (error?.url ?? error?.url.split('/').includes('token')) {
         error.statusText = `${$t('Authentication Error')}: ${details}`;
       }
 
-      const isLiveStreamingDisabled =
-        error?.errors &&
-        error?.errors.length &&
-        error?.errors[0].reason === 'liveStreamingNotEnabled';
+      console.log('e ', e);
+      console.log('Error Status: ', error);
+      console.log('Error Type: ', errorType);
+      console.log('Error Obj: ', { ...error, platform: 'youtube' });
+      console.log('Error Details: ', error.details);
 
-      // if the rate limit exceeded then repeat request after 3s delay
-      if (isLiveStreamingDisabled && repeatRequestIfRateLimitExceed) {
-        await Utils.sleep(3000);
-        return await this.requestYoutube(reqInfo, false);
-      }
-
-      let errorType: TStreamErrorType = 'PLATFORM_REQUEST_FAILED';
-      if (isLiveStreamingDisabled) {
-        errorType = 'YOUTUBE_STREAMING_DISABLED';
-      } else if (error?.status === 423) {
-        errorType = 'YOUTUBE_TOKEN_EXPIRED';
-      }
-
-      return throwStreamError(errorType, { ...error, platform: 'youtube' }, details);
+      return throwStreamError(errorType, { ...error, platform: 'youtube' }, error.details);
     }
   }
 
