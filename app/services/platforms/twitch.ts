@@ -527,7 +527,7 @@ export class TwitchService
           title: settings.title,
           // On load, the game is set as the game name. This is needed to correctly load the default form item
           // but when the game is updated, Twitch requires the game ID, so use the id stored on state as a backup
-          game_id: /^\d+$/.test(settings.game) ? settings.game : settings.gameId,
+          game_id: settings.game && /^\d+$/.test(settings.game) ? settings.game : settings.gameId,
           is_branded_content: settings.isBrandedContent,
           content_classification_labels: labels,
         }),
