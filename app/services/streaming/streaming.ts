@@ -174,6 +174,7 @@ export class StreamingService
   @Inject() private settingsService: SettingsService;
   @Inject() private signalsService: SignalsService;
   @Inject() private highlighterService: HighlighterService;
+
   streamingStatusChange = new Subject<EStreamingState>();
   recordingStatusChange = new Subject<ERecordingState>();
   replayBufferStatusChange = new Subject<EReplayBufferState>();
@@ -447,7 +448,11 @@ export class StreamingService
     const settings = newSettings || cloneDeep(this.views.savedSettings);
 
     // For the Stream Shift, match remote targets to local targets
-    if (settings.streamShift && this.restreamService.views.hasStreamShiftTargets) {
+    if (
+      settings.streamShift &&
+      this.restreamService.views.hasStreamShiftTargets &&
+      !this.restreamService.views.streamShiftForceGoLive
+    ) {
       await this.restreamService.fetchTargetData();
 
       const targets: TPlatform[] = this.restreamService.views.streamShiftTargets.reduce(
@@ -666,8 +671,6 @@ export class StreamingService
     /**
      * SET MULTISTREAM SETTINGS
      */
-    // TODO: remove after server-side impl
-    this.restreamService.actions.forceStreamShiftGoLive(false);
     if (this.views.shouldSetupRestream) {
       // In single output mode, this sets up multistreaming
       // In dual output mode, this sets up streaming displays to multiple targets
@@ -736,6 +739,7 @@ export class StreamingService
           await this.restreamService.beforeGoLive();
         });
       } catch (e: unknown) {
+        console.log('Restream setup failed', e);
         const errorType = this.handleTypedStreamError(
           e,
           failureType,
@@ -1373,16 +1377,6 @@ export class StreamingService
   }
 
   async toggleStreaming(options?: TStartStreamOptions, force = false) {
-    if (this.views.isDualOutputMode && !this.views.getCanStreamDualOutput() && this.isIdle) {
-      this.notificationsService.actions.push({
-        message: $t('Set up Go Live Settings for Dual Output Mode in the Go Live window.'),
-        type: ENotificationType.WARNING,
-        lifeTime: 2000,
-      });
-      this.showGoLiveWindow();
-      return;
-    }
-
     if (
       this.state.status.horizontal.streaming === EStreamingState.Offline &&
       this.state.status.vertical.streaming === EStreamingState.Offline
@@ -1504,7 +1498,7 @@ export class StreamingService
     } catch (e: unknown) {
       console.error('Error fetching stream encoder info: ', e);
 
-      const message = (e as any).message ?? $t('Failed to fetch encoder settings');
+      const message = (e as any)?.message ?? $t('Failed to fetch encoder settings');
       this.handleTypedStreamError(e, 'INVALID_ENCODER', message);
     }
 
@@ -2161,7 +2155,7 @@ export class StreamingService
         }
 
         const message =
-          (e as any).message ??
+          (e as any)?.message ??
           $t('An unknown error occurred while starting the stream. Please try again.');
 
         this.createOBSError(
@@ -3375,8 +3369,8 @@ export class StreamingService
    * Prefill fields with data if `prepopulateOptions` provided
    */
   showGoLiveWindow(prepopulateOptions?: IGoLiveSettings['prepopulateOptions']) {
-    const height = 750;
-    const width = 800;
+    const height = 800;
+    const width = 910;
 
     this.windowsService.showWindow({
       componentName: 'GoLiveWindow',
@@ -3390,6 +3384,9 @@ export class StreamingService
   }
 
   showEditStream() {
+    // TODO: Update when add edit
+    // const height = 800;
+    // const width = 910;
     const height = 750;
     const width = 800;
 

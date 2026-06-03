@@ -4,7 +4,11 @@ import { HostsService } from 'services/hosts';
 import { getPlatformService, TPlatform } from 'services/platforms';
 import { StreamSettingsService } from 'services/settings/streaming';
 import { UserService } from 'services/user';
-import { CustomizationService, ICustomizationServiceState } from 'services/customization';
+import {
+  CustomizationService,
+  CustomizationState,
+  ICustomizationServiceState,
+} from 'services/customization';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import electron from 'electron';
 import { StreamingService } from './streaming';
@@ -21,6 +25,7 @@ import { PlatformAppsService } from './platform-apps';
 import { DualOutputService } from 'services/dual-output';
 import { SettingsService } from 'services/settings';
 import { throwStreamError } from './streaming/stream-error';
+import { Subject } from 'rxjs';
 import uuid from 'uuid';
 import Utils from './utils';
 import { $t } from './i18n';
@@ -117,6 +122,15 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @Inject() settingsService: SettingsService;
 
   settings: IUserSettingsResponse;
+
+  isLive = new Subject<boolean>();
+
+  emitIsLiveForTest(isLive: boolean): void {
+    if (!Utils.isTestMode()) return;
+    this.streamSettingsService.setGoLiveSettings({ streamShift: true });
+    this.SET_STREAM_SWITCHER_STATUS('pending');
+    this.isLive.next(isLive);
+  }
 
   static initialState: IRestreamState = {
     enabled: true,
@@ -330,6 +344,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   async beforeGoLive() {
     if (!this.streamInfo.getIsValidRestreamConfig()) {
+      console.log('Invalid restream config, cannot go live with restream');
       throwStreamError('RESTREAM_SETUP_FAILED');
     }
 
@@ -548,6 +563,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       this.SET_STREAM_SWITCHER_TARGETS([]);
     }
 
+    this.isLive.next(status.isLive);
     return status.isLive;
   }
 
@@ -574,8 +590,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
     const request = new Request(url, { headers, method: 'GET' });
 
-    return jfetch(request)
-      .then((res: { [key: string]: ITargetLiveData[] }) => {
+    return jfetch<{ [key: string]: ITargetLiveData[] }>(request)
+      .then(res => {
         const targets = this.state.streamShiftTargets.reduce((targetData: ITargetLiveData[], t) => {
           const platform = t.platform as string;
           if (t.platform !== 'relay') {
@@ -672,6 +688,12 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return fetch(request).then(res => res.json());
   }
 
+  async deleteTargets() {
+    const targets = await this.fetchTargets();
+    const promises = targets.map(t => this.deleteTarget(t.id));
+    await Promise.all(promises);
+  }
+
   /**
    * Stream Shift
    */
@@ -684,6 +706,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     this.SET_STREAM_SWITCHER_STATUS('inactive');
     this.SET_STREAM_SWITCHER_STREAM_ID();
     this.SET_STREAM_SWITCHER_TARGETS([]);
+    this.SET_STREAM_SWITCHER_FORCE_GO_LIVE(false);
   }
 
   async confirmStreamShift(action: TStreamShiftAction) {
@@ -741,13 +764,13 @@ export class RestreamService extends StatefulService<IRestreamState> {
     }
   }
 
-  forceStreamShiftGoLive(shouldForce: boolean) {
-    if (shouldForce) {
-      this.streamSettingsService.setGoLiveSettings({ streamShift: false });
-      this.SET_STREAM_SWITCHER_STATUS('inactive');
-    }
-
-    this.SET_STREAM_SWITCHER_FORCE_GO_LIVE(shouldForce);
+  async forceStreamShiftGoLive() {
+    this.streamSettingsService.setGoLiveSettings({ streamShift: false });
+    await this.deleteTargets();
+    this.SET_STREAM_SWITCHER_STATUS('inactive');
+    this.SET_STREAM_SWITCHER_STREAM_ID();
+    this.SET_STREAM_SWITCHER_TARGETS([]);
+    this.SET_STREAM_SWITCHER_FORCE_GO_LIVE(true);
   }
 
   /* Chat Handling
@@ -808,7 +831,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     });
 
     this.customizationService.settingsChanged.subscribe(
-      (changed: Partial<ICustomizationServiceState>) => {
+      (changed: DeepPartial<CustomizationState>) => {
         this.handleSettingsChanged(changed);
       },
     );
@@ -826,7 +849,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     this.chatView = null;
   }
 
-  private handleSettingsChanged(changed: Partial<ICustomizationServiceState>) {
+  private handleSettingsChanged(changed: DeepPartial<ICustomizationServiceState>) {
     if (!this.chatView) return;
     if (changed.chatZoomFactor) {
       this.chatView.webContents.setZoomFactor(changed.chatZoomFactor);
@@ -871,7 +894,7 @@ class RestreamView extends ViewHandler<IRestreamState> {
     return this.state.streamShiftTargets.length > 0;
   }
 
-  get shouldForceGoLive() {
+  get streamShiftForceGoLive() {
     return this.state.streamShiftForceGoLive;
   }
 }

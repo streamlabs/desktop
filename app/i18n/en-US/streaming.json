@@ -124,6 +124,7 @@
   "Show Advanced Settings": "Show Advanced Settings",
   "Configure the Multistream service": "Configure the Multistream service",
   "Configure the Dual Output service": "Configure the Dual Output service",
+  "Configure the Stream Shift service": "Configure the Stream Shift service",
   "Apply optimized settings": "Apply optimized settings",
   "Start video transmission": "Start video transmission",
   "Publish Youtube broadcast": "Publish Youtube broadcast",
@@ -359,11 +360,15 @@
   "switch to a supported encoder such as x264": "switch to a supported encoder such as x264",
   "An unknown error occurred while starting the stream. Please try again.": "An unknown error occurred while starting the stream. Please try again.",
   "Failed to fetch encoder settings": "Failed to fetch encoder settings",
+  "Failed to start video transmission": "Failed to start video transmission",
   "Failed to create stream. Please check your settings and try again.": "Failed to create stream. Please check your settings and try again.",
   "Failed to create recording. Please check your settings and file path and try again.": "Failed to create recording. Please check your settings and file path and try again.",
   "Unknown recording error, please contact support": "Unknown recording error, please contact support",
   "recording settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "recording settings are incorrect. Check recording path and encoder settings for both streaming and recording.",
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.",
   "Unknown replay buffer error, please contact support": "Unknown replay buffer error, please contact support",
-  "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording."
+  "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.",
+  "Manage output destinations mid-stream.": "Manage output destinations mid-stream.",
+  "Switch between devices while live.": "Switch between devices while live.",
+  "Live output editing": "Live output editing"
 }

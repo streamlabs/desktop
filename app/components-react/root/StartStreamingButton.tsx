@@ -11,6 +11,7 @@ import { promptAction } from 'components-react/modals';
 import { TSocketEvent } from 'services/websocket';
 import { useRealmObject } from 'components-react/hooks/realm';
 import debounce from 'lodash/debounce';
+import Utils from 'services/utils';
 
 function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -29,6 +30,7 @@ function StartStreamingButton(p: { disabled?: boolean }) {
     delayEnabled,
     delaySeconds,
     streamShiftStatus,
+    streamShiftForceGoLive,
     isDualOutputMode,
     isLoggedIn,
     isPrime,
@@ -40,6 +42,7 @@ function StartStreamingButton(p: { disabled?: boolean }) {
       delayEnabled: StreamingService.views.delayEnabled,
       delaySeconds: StreamingService.views.delaySeconds,
       streamShiftStatus: RestreamService.state.streamShiftStatus,
+      streamShiftForceGoLive: RestreamService.state.streamShiftForceGoLive,
       isDualOutputMode: StreamingService.views.isDualOutputMode,
       isLoggedIn: UserService.isLoggedIn,
       isPrime: UserService.state.isPrime,
@@ -74,6 +77,7 @@ function StartStreamingButton(p: { disabled?: boolean }) {
   }, [delaySecondsRemaining, streamingStatus, delayEnabled]);
 
   useEffect(() => {
+    // Check for stream shift status on mount. This will happen on app launch because the main window is always active
     if (!isDualOutputMode && isPrime && streamingStatus === EStreamingState.Offline) {
       fetchStreamShiftStatus().catch((e: unknown) => {
         console.error('Error fetching stream shift status:', e);
@@ -81,6 +85,7 @@ function StartStreamingButton(p: { disabled?: boolean }) {
     }
 
     const streamShiftEvent = StreamingService.streamShiftEvent.subscribe((event: TSocketEvent) => {
+      if (streamShiftForceGoLive) return;
       if (event.type !== 'streamSwitchRequest' && event.type !== 'switchActionComplete') {
         return;
       }
@@ -104,6 +109,7 @@ function StartStreamingButton(p: { disabled?: boolean }) {
         // Only record analytics if the stream was switched from this device to a different one
         if (!isIncomingStream) {
           Services.RestreamService.actions.endStreamShiftStream(event.data.identifier);
+
           recordStreamShiftAnalytics('complete', event.data.identifier);
         }
 
@@ -127,6 +133,9 @@ function StartStreamingButton(p: { disabled?: boolean }) {
   }, []);
 
   const recordStreamShiftAnalytics = useCallback((action: 'request' | 'complete', id: string) => {
+    // Prevent recording analytics event in test mode
+    if (!Utils.isTestMode()) return;
+
     // Note: because the event's stream id is from the device that requested the switch,
     // it is not possible to know what type of device the stream will be switching from.
     // We can only identify the type of device the stream is switching to.
@@ -198,52 +207,6 @@ function StartStreamingButton(p: { disabled?: boolean }) {
         if (!goLive) return;
       }
 
-      // Only check for Stream Shift for ultra users
-      if (isLoggedIn && isPrime) {
-        try {
-          setIsLoading(true);
-          const isLive = await fetchStreamShiftStatus();
-          setIsLoading(false);
-
-          const message = isDualOutputMode
-            ? $t(
-                'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. Dual Output will be disabled since not supported in this mode. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
-              )
-            : $t(
-                'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
-              );
-
-          if (isLive) {
-            const { streamShiftForceGoLive } = RestreamService.state;
-            let shouldForceGoLive = streamShiftForceGoLive;
-
-            await promptAction({
-              title: $t('Another stream detected'),
-              message,
-              btnText: $t('Switch to Streamlabs Desktop'),
-              fn: startStreamShift,
-              cancelBtnText: $t('Cancel'),
-              cancelBtnPosition: 'left',
-              secondaryActionText: $t('Force Start'),
-              secondaryActionFn: async () => {
-                // FIXME: this should actually do something server-side
-                RestreamService.actions.return.forceStreamShiftGoLive(true);
-                shouldForceGoLive = true;
-              },
-            });
-
-            if (!shouldForceGoLive) {
-              return;
-            }
-          }
-        } catch (e: unknown) {
-          console.error('Error checking stream switcher status when toggle streaming:', e);
-          setIsLoading(false);
-
-          return;
-        }
-      }
-
       if (shouldShowGoLiveWindow()) {
         if (!StreamingService.views.hasPendingChecks()) {
           StreamingService.actions.resetInfo();
@@ -283,14 +246,6 @@ function StartStreamingButton(p: { disabled?: boolean }) {
       return false;
     }
   }, []);
-
-  const startStreamShift = useCallback(() => {
-    if (isDualOutputMode) {
-      Services.DualOutputService.actions.toggleDisplay(false, 'vertical');
-    }
-
-    StreamingService.actions.goLive();
-  }, [isDualOutputMode]);
 
   const shouldShowGoLiveWindow = useCallback(() => {
     if (!UserService.isLoggedIn) return false;

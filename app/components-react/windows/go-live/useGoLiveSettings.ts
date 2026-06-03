@@ -420,13 +420,6 @@ export class GoLiveSettingsModule {
     this.save(this.state.settings);
   }
 
-  /**
-   * Determine if all dual output go live requirements are fulfilled
-   */
-  get canStreamDualOutput() {
-    return this.state.getCanStreamDualOutput(this.state);
-  }
-
   getIsInvalidDualStream(): boolean {
     if (this.isPrime) {
       return false;
@@ -469,6 +462,14 @@ export class GoLiveSettingsModule {
     if (this.getIsInvalidDualStream()) {
       message.info($t('Upgrade to Ultra to allow more than two outputs'), 2, () => true);
       return;
+    }
+
+    // Disable AI Highlighter if Twitch is not enabled, because it's a Twitch-only feature
+    if (
+      Services.HighlighterService.aiHighlighterFeatureEnabled &&
+      !this.state.isEnabled('twitch')
+    ) {
+      Services.HighlighterService.actions.setAiHighlighter(false);
     }
 
     try {

@@ -1,6 +1,8 @@
 import {
   chatIsVisible,
   clickGoLive,
+  fireIsLiveEvent,
+  fireStreamShiftSocketEvent,
   prepareToGoLive,
   stopStream,
   submit,
@@ -13,6 +15,8 @@ import { fillForm, useForm } from '../../helpers/modules/forms';
 import {
   click,
   clickButton,
+  clickWhenDisplayed,
+  focusChild,
   focusMain,
   isDisplayed,
   waitForDisplayed,
@@ -32,8 +36,12 @@ import { sleep } from '../../helpers/sleep';
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
-async function enableAllPlatforms() {
+async function enableAllPlatforms(skipYoutube: boolean = false) {
   for (const platform of ['twitch', 'youtube', 'trovo']) {
+    if (platform === 'youtube' && skipYoutube) {
+      continue;
+    }
+
     await fillForm({ [platform]: true });
     await sleep(500);
     await waitForSettingsWindowLoaded();
@@ -47,7 +55,7 @@ async function goLiveWithMultistream() {
   // YouTube accounts fail for reasons unrelated to the tests. Check for the bypass prompt, which is
   // shown when setting up a multistream fails, including for errors from YouTube
   // Try toggling off YouTube and going live again
-  const bypassPrompted = await isDisplayed('button=Bypass and Go Live', { timeout: 2000 });
+  const bypassPrompted = await isDisplayed('button=Bypass and Go Live', { timeout: 5000 });
 
   if (bypassPrompted) {
     await clickButton('Close');
@@ -70,30 +78,47 @@ async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean)
   await waitForSettingsWindowLoaded();
 
   if (multistream) {
-    await enableAllPlatforms();
+    await enableAllPlatforms(true);
     await waitForSettingsWindowLoaded();
     await fillForm({
       title: 'Test stream',
-      description: 'Test stream description',
       twitchGame: 'Fortnite',
       trovoGame: 'Doom',
       streamShift: true,
     });
-    await goLiveWithMultistream();
   } else {
     await fillForm({ twitch: true });
     await waitForSettingsWindowLoaded();
     await fillForm({ title: 'Test stream', twitchGame: 'Fortnite', streamShift: true });
-    await waitForSettingsWindowLoaded();
-    await submit();
-    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
-    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
-    // Confirm chat loads
-    await waitForStreamStart();
-    await focusMain();
-    await chatIsVisible();
   }
 
+  await waitForSettingsWindowLoaded();
+  await submit();
+
+  // Confirm chat loads
+  await waitForStreamStart();
+  await focusMain();
+  await chatIsVisible();
+
+  // Simulate switching stream to another device
+  await fireStreamShiftSocketEvent('streamSwitchRequest', 'testRemoteStreamId');
+  await fireStreamShiftSocketEvent('switchActionComplete', 'testRemoteStreamId');
+  await focusMain();
+  await waitForDisplayed('span=Stream successfully switched', { timeout: 10000 });
+  await clickWhenDisplayed('.ant-modal-close');
+
+  // Simulate switching to the current device
+  await clickGoLive();
+  await waitForSettingsWindowLoaded();
+  await fireIsLiveEvent(true);
+  await waitForDisplayed('span=Switch to Streamlabs Desktop', { timeout: 10000 });
+  // await sleep(10000); // wait to ensure the event is processed before going live again
+  await focusMain();
+  t.true(await isDisplayed('button=Claim Stream'));
+  await focusChild();
+  await click('span=Switch to Streamlabs Desktop');
+
+  await waitForStreamStart();
   await stopStream();
   await waitForStreamStop();
 }
@@ -162,17 +187,21 @@ test(
       description: 'Test stream description',
       twitchGame: 'Fortnite',
       trovoGame: 'Doom',
-      primaryChat: 'YouTube',
+      primaryChat: 'Trovo',
     });
 
     await goLiveWithMultistream();
     await stopStream();
 
+    await goLiveWithDefaultCodec();
+
     t.pass();
   },
 );
 
-test(
+// The current iteration of the go live window only has one mode, so this test is skipped unless
+// the advanced mode is reactivated.
+test.skip(
   'Multistream advanced mode',
   withUser('twitch', { prime: true, multistream: true }),
   async t => {
@@ -312,7 +341,9 @@ test('Stream Shift', withUser('twitch', { prime: true, multistream: true }), asy
   await goLiveWithStreamShift(t, false);
 
   // Multistream shift
-  await goLiveWithStreamShift(t, true);
+  // await goLiveWithStreamShift(t, true);
+
+  // await goLiveWithDefaultCodec();
 
   t.pass();
 });

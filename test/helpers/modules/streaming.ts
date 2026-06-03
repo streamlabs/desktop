@@ -20,6 +20,12 @@ import { sleep } from '../sleep';
 import { fillForm, TFormData, useForm } from './forms';
 import { setOutputResolution, showSettingsWindow } from './settings/settings';
 import { StreamSettingsService } from '../../../app/services/settings/streaming';
+import {
+  WebsocketService,
+  IStreamShiftRequested,
+  IStreamShiftActionCompleted,
+} from '../../../app/services/websocket';
+import { RestreamService } from '../../../app/services/restream';
 
 /**
  * Go live and wait for stream start
@@ -237,4 +243,35 @@ export async function addCustomDestination(name: string, url: string, streamKey:
     streamKey,
   });
   await clickButton('Save');
+}
+
+/**
+ * Mock a Stream Shift socket event
+ *
+ * @param type - 'streamSwitchRequest' (switch to another device) or
+ *               'switchActionComplete' (switch to the current device)
+ * @param identifier - stream id
+ */
+export async function fireStreamShiftSocketEvent(
+  type: IStreamShiftRequested['type'] | IStreamShiftActionCompleted['type'],
+  identifier: string,
+): Promise<void> {
+  const event: IStreamShiftRequested | IStreamShiftActionCompleted = {
+    type,
+    for: '',
+    data: { identifier },
+    event_id: `test_${type}`,
+  };
+  (await getApiClient())
+    .getResource<WebsocketService>('WebsocketService')
+    .sendSocketEventForTest(event);
+}
+
+/**
+ * Emit directly on RestreamService.isLive, triggering the GoLive window's subscription
+ * without going through the real HTTP API. Pass true to show the "Another stream detected"
+ * prompt; pass false to clear it.
+ */
+export async function fireIsLiveEvent(isLive: boolean): Promise<void> {
+  (await getApiClient()).getResource<RestreamService>('RestreamService').emitIsLiveForTest(isLive);
 }

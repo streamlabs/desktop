@@ -9,6 +9,7 @@ import { IRecentEvent, ISafeModeServerSettings } from 'services/recent-events';
 import { importSocketIOClient } from '../util/slow-imports';
 import { SceneCollectionsService } from 'services/scene-collections';
 import { TPlatform } from './platforms';
+import Utils from './utils';
 
 export type TSocketEvent =
   | IStreamlabelsSocketEvent
@@ -242,6 +243,11 @@ export class WebsocketService extends Service {
           this.socketEvent.next(e);
         });
       });
+  }
+
+  sendSocketEventForTest(event: TSocketEvent): void {
+    if (!Utils.isTestMode()) return;
+    this.socketEvent.next(event);
   }
 
   private log(message: string, ...args: any[]) {

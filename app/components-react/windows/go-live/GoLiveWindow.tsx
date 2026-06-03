@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './GoLive.m.less';
 import { WindowsService } from 'services/windows';
 import {
@@ -19,6 +19,8 @@ import { useGoLiveSettings, useGoLiveSettingsRoot } from './useGoLiveSettings';
 import { inject } from 'slap';
 import RecordingSwitcher from './RecordingSwitcher';
 import { promptAction } from 'components-react/modals';
+import TwitterInput from './Twitter';
+import debounce from 'lodash/debounce';
 
 export default function GoLiveWindow() {
   const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
@@ -34,7 +36,7 @@ export default function GoLiveWindow() {
   const shouldShowChecklist = ['runChecklist', 'live'].includes(lifecycle);
 
   return (
-    <ModalLayout footer={<ModalFooter />} className={styles.dualOutputGoLive}>
+    <ModalLayout footer={<ModalFooter />} className={styles.goLiveSettings}>
       <Form
         form={form!}
         style={{ position: 'relative', height: '100%' }}
@@ -61,7 +63,6 @@ function ModalFooter() {
     goLive,
     close,
     goBackToSettings,
-    getCanStreamDualOutput,
     isLoading,
     isDualOutputMode,
     isPrime,
@@ -73,6 +74,7 @@ function ModalFooter() {
     forceStreamShiftGoLive,
     goLiveWithDefaultCodec,
     showSettings,
+    setStreamShift,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
     settingsService: inject(SettingsService),
@@ -87,15 +89,15 @@ function ModalFooter() {
     },
 
     get streamShiftForceGoLive() {
-      return this.restreamService.state.streamShiftForceGoLive;
+      return this.restreamService.views.streamShiftForceGoLive;
     },
 
     async checkIsLive() {
-      return this.restreamService.actions.return.checkIsLive();
+      return this.restreamService.actions.checkIsLive();
     },
 
     async forceStreamShiftGoLive() {
-      this.restreamService.actions.forceStreamShiftGoLive(true);
+      this.restreamService.actions.forceStreamShiftGoLive();
     },
 
     get hasIncompatibleCodec() {
@@ -118,7 +120,59 @@ function ModalFooter() {
     },
   }));
 
-  const [isFetchingStreamStatus, setIsFetchingStreamStatus] = useState(false);
+  const [isCoolingDown, setIsCoolingDown] = useState(false);
+
+  // Use refs to track stream status fetching and whether the user should go live to avoid
+  // unnecessary rerenders that could effect persistence of the status during the async checks
+  const isFetchingStreamStatus = useRef(false);
+  const shouldGoLive = useRef(false);
+
+  useEffect(() => {
+    // Check if user is live on mount to handle the case where the stream switcher status
+    // changed while the user had the Go Live Window closed.
+    isFetchingStreamStatus.current = true;
+
+    const subscription = Services.RestreamService.isLive.subscribe(async isLive => {
+      if (!isPrime) return;
+      if (shouldGoLive.current) {
+        goLive();
+        shouldGoLive.current = false;
+        return;
+      }
+
+      isFetchingStreamStatus.current = false;
+
+      // Prompt to confirm stream switch if the stream exists
+      if (isLive && !streamShiftForceGoLive) {
+        await promptStreamShift();
+      } else if (!isLive && hasIncompatibleCodec) {
+        console.log('Incompatible codec detected, prompting user to change codec');
+        // If the user is not live but has an incompatible codec, prompt to change codec
+        await promptUseDefaultCodec();
+      }
+    });
+
+    debouncedCheckIsLive();
+    isFetchingStreamStatus.current = false;
+
+    return () => {
+      debouncedCheckIsLive.cancel();
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    // Timer for cooldown on stream switcher from the user forcing start while live on another device.
+    // Use the `isFetchingStreamStatus` ref to track the cooldown to prevent the user from fetching
+    // the status during the cooldown
+    if (!isCoolingDown) return;
+
+    const timer = setTimeout(() => {
+      setIsCoolingDown(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [isCoolingDown]);
 
   const shouldShowConfirm = ['prepopulate', 'waitForNewSettings'].includes(lifecycle);
   const shouldShowGoBackButton =
@@ -126,6 +180,36 @@ function ModalFooter() {
   const shouldShowRecordingSwitcher = ['empty', 'prepopulate', 'waitForNewSettings'].includes(
     lifecycle,
   );
+
+  const promptStreamShift = useCallback(async () => {
+    await promptAction({
+      title: $t('Another stream detected'),
+      message: $t(
+        'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
+      ),
+      btnText: $t('Switch to Streamlabs Desktop'),
+      fn: () => {
+        // If the user is live and has an incompatible codec, prompt to change codec
+        // or the stream will not go live
+        if (hasIncompatibleCodec) {
+          promptUseDefaultCodec();
+        } else {
+          startStreamShift();
+          close();
+        }
+      },
+      cancelBtnText: $t('Cancel'),
+      cancelBtnPosition: 'left',
+      cancelFn: () => close(),
+      secondaryActionText: $t('Force Start'),
+      secondaryActionFn: async () => {
+        setStreamShift(false);
+        setIsCoolingDown(true);
+        await forceStreamShiftGoLive();
+      },
+      maskClosable: false,
+    });
+  }, [hasIncompatibleCodec]);
 
   const promptUseDefaultCodec = useCallback(async () => {
     // If the user is not live but has an incompatible codec, prompt to change codec
@@ -166,87 +250,60 @@ function ModalFooter() {
     });
   }, [hasIncompatibleCodec, isStreamShiftMode, isDualOutputMode, codec]);
 
-  const handleGoLive = useCallback(async () => {
-    if (isDualOutputMode && !getCanStreamDualOutput()) {
-      message.error({
-        key: 'dual-output-error',
-        className: styles.errorAlert,
-        content: (
-          <div className={styles.alertContent}>
-            <div style={{ marginRight: '10px' }}>
-              {$t(
-                'To use Dual Output you must stream to one horizontal and one vertical platform.',
-              )}
-            </div>
+  const debouncedCheckIsLive = debounce(checkIsLive, 1000);
 
-            <i className="icon-close" />
-          </div>
-        ),
-        onClick: () => message.destroy('dual-output-error'),
-      });
-
-      return;
-    }
-
-    if (isPrime) {
-      try {
-        setIsFetchingStreamStatus(true);
-        const isLive = await checkIsLive();
-        setIsFetchingStreamStatus(false);
-
-        // Prompt to confirm stream switch if the stream exists
-        // TODO: unify with start streaming button prompt
-        if (isLive && !streamShiftForceGoLive) {
-          let shouldForceGoLive = false;
-
-          await promptAction({
-            title: $t('Another stream detected'),
-            message: $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
-            ),
-            btnText: $t('Switch to Streamlabs Desktop'),
-            fn: () => {
-              // If the user is live and has an incompatible codec, prompt to change codec
-              // or the stream will not go live
-              if (hasIncompatibleCodec) {
-                promptUseDefaultCodec();
-              } else {
-                goLive();
-                close();
-              }
-            },
-            cancelBtnText: $t('Cancel'),
-            cancelBtnPosition: 'left',
-            secondaryActionText: $t('Force Start'),
-            secondaryActionFn: async () => {
-              forceStreamShiftGoLive();
-              shouldForceGoLive = true;
-            },
-          });
-
-          if (!shouldForceGoLive) return;
-        } else if (!isLive && hasIncompatibleCodec) {
-          console.log('Incompatible codec detected, prompting user to change codec');
-          // If the user is not live but has an incompatible codec, prompt to change codec
-          await promptUseDefaultCodec();
-          return;
-        }
-      } catch (e: unknown) {
-        console.error('Error checking stream switcher status:', e);
-
-        setIsFetchingStreamStatus(false);
-      }
+  const startStreamShift = useCallback(() => {
+    if (isDualOutputMode) {
+      Services.DualOutputService.actions.toggleDisplay(false, 'vertical');
     }
 
     goLive();
-  }, [isDualOutputMode, isPrime, streamShiftForceGoLive, hasIncompatibleCodec]);
+  }, [isDualOutputMode]);
+
+  const handleGoLive = useCallback(async () => {
+    if (!isPrime) {
+      goLive();
+    } else {
+      const shouldCheckIsLive =
+        !streamShiftForceGoLive &&
+        isFetchingStreamStatus.current === false &&
+        shouldGoLive.current === false;
+
+      // Check for ultra users already being live with stream shift
+      if (shouldCheckIsLive) {
+        shouldGoLive.current = true;
+        isFetchingStreamStatus.current = true;
+        try {
+          // This will resolve with the subscription to the restream service `isLive` observable
+          // where `goLive` will be called if the user is not already live
+          await debouncedCheckIsLive();
+        } catch (e: unknown) {
+          console.error('Error checking stream switcher status:', e);
+
+          isFetchingStreamStatus.current = false;
+          shouldGoLive.current = false;
+        }
+      } else {
+        goLive();
+      }
+    }
+  }, [
+    isDualOutputMode,
+    isPrime,
+    streamShiftForceGoLive,
+    hasIncompatibleCodec,
+    debouncedCheckIsLive,
+    goLive,
+  ]);
 
   return (
     <Form layout={'inline'}>
-      {shouldShowRecordingSwitcher && shouldShowConfirm && (
-        <RecordingSwitcher showRecordingToggle={true} />
-      )}
-
+      <div className={styles.goLiveFooter}>
+        <TwitterInput />
+        {shouldShowRecordingSwitcher && shouldShowConfirm && (
+          <RecordingSwitcher showRecordingToggle={true} />
+        )}
+      </div>
       {/* CLOSE BUTTON */}
       <Button onClick={close}>{$t('Close')}</Button>
 
@@ -261,10 +318,10 @@ function ModalFooter() {
           data-name="confirmGoLiveBtn"
           type="primary"
           onClick={handleGoLive}
-          disabled={isLoading || !!error}
+          disabled={isLoading || !!error || isCoolingDown}
           className={styles.confirmBtn}
         >
-          {isFetchingStreamStatus ? (
+          {isCoolingDown || isFetchingStreamStatus.current === true ? (
             <i className="fa fa-spinner fa-pulse" />
           ) : (
             $t('Confirm & Go Live')

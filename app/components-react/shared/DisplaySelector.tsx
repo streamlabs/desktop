@@ -14,6 +14,8 @@ interface IDisplaySelectorProps {
   className?: string;
   style?: CSSProperties;
   nolabel?: boolean;
+  alignIcons?: 'left' | 'center' | 'right';
+  visible?: boolean;
 }
 
 export default function DisplaySelector(p: IDisplaySelectorProps) {
@@ -81,15 +83,16 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     return defaultDisplays;
   }, [canDualStream]);
 
-  const onChange = (val: TDisplayOutput) => {
+  const onChange = (val: string) => {
+    const updatedDisplay = val as TDisplayOutput;
     if (p.platform) {
-      updatePlatformDisplayAndSaveSettings(p.platform, val);
+      updatePlatformDisplayAndSaveSettings(p.platform, updatedDisplay);
     } else {
-      if (val === 'both') {
+      if (updatedDisplay === 'both') {
         // There's no UI that would allow for this, but just in case
         throw new Error('Attempted to update custom display for dual stream, this is impossible');
       }
-      updateCustomDestinationDisplayAndSaveSettings(p.index, val as TDisplayType);
+      updateCustomDestinationDisplayAndSaveSettings(p.index, updatedDisplay as TDisplayType);
     }
   };
 
@@ -112,12 +115,14 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       value={value}
       defaultValue="horizontal"
       options={displays}
+      alignIcons={p?.alignIcons}
       onChange={onChange}
       icons={true}
       className={p?.className}
       style={p?.style}
       direction="horizontal"
       gapsize={0}
+      optionType="button"
     />
   );
 }

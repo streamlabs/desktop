@@ -209,5 +209,7 @@
   "YouTube Chapter Markers (for recording)": "YouTube Chapter Markers (for recording)",
   "Export Markers": "Export Markers",
   "Timeline starts from 01:00:00 (default)": "Timeline starts from 01:00:00 (default)",
-  "Export full highlight duration as marker range": "Export full highlight duration as marker range"
+  "Export full highlight duration as marker range": "Export full highlight duration as marker range",
+  "Replay": "Replay",
+  "Automatically capture highlights of your game with <replay>Replay</replay>": "Automatically capture highlights of your game with <replay>Replay</replay>"
 }

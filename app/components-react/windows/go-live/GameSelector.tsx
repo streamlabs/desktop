@@ -10,9 +10,14 @@ import { $t } from '../../../services/i18n';
 import { IListOption } from '../../shared/inputs/ListInput';
 import { Services } from '../../service-provider';
 import { injectState, useModule } from 'slap';
+import { CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
 
 type TProps = TSlobsInputProps<
-  { platform: TPlatform; layout?: TInputLayout; onNameChange?: (name: string) => void },
+  {
+    platform: TPlatform;
+    layout?: TInputLayout;
+    description?: string | React.ReactNode;
+  },
   string
 >;
 
@@ -158,10 +163,6 @@ export default function GameSelector(p: TProps) {
       onSearch={onSearch}
       onSelect={(val, opts) => {
         onSelect(typeof opts.label === 'string' ? opts.label : '');
-
-        if (p.onNameChange) {
-          p.onNameChange(typeof opts.label === 'string' ? opts.label : '');
-        }
       }}
       filterOption={filterOption}
       debounce={500}
@@ -174,6 +175,9 @@ export default function GameSelector(p: TProps) {
       allowClear
       layout={p.layout}
       size="large"
+      style={p.style}
+      suffixIcon={isSearching ? <CaretUpOutlined /> : <CaretDownOutlined />}
+      description={p.description}
     />
   );
 }

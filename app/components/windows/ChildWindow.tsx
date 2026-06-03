@@ -19,6 +19,7 @@ export default class ChildWindow extends Vue {
   components: IWindowOptions[] = [];
   private refreshingTimeout: number;
   private modalOptions: IModalOptions = { renderFn: null };
+  private isGoLiveActive = false;
 
   unbind: () => void;
 
@@ -62,6 +63,14 @@ export default class ChildWindow extends Vue {
 
   @Watch('theme')
   updateAntd(newTheme: Theme, oldTheme: Theme) {
+    if (this.isGoLiveActive && this.activeGoLiveTheme) {
+      // Swap to the Go Live variant matching the new app theme
+      const newGoLiveTheme = ChildWindow.goLiveThemeMap[newTheme] ?? 'golive-night-theme';
+      antdThemes[this.activeGoLiveTheme].unuse();
+      antdThemes[newGoLiveTheme].use();
+      this.activeGoLiveTheme = newGoLiveTheme;
+      return;
+    }
     antdThemes[oldTheme].unuse();
     antdThemes[newTheme].use();
   }
@@ -92,10 +101,13 @@ export default class ChildWindow extends Vue {
     window.removeEventListener('resize', this.windowSizeHandler);
     // If the window was closed, just clear the stack
     if (!options.isShown) {
+      this.restoreAppTheme();
       this.clearComponentStack();
       WindowsService.hideModal();
       return;
     }
+
+    this.applyGoLiveThemeIfNeeded(options.componentName);
 
     if (options.preservePrevWindow) {
       this.handlePreservePrevWindow(options);
@@ -138,6 +150,36 @@ export default class ChildWindow extends Vue {
     this.currentComponent.isShown = true;
     this.setWindowTitle();
     window.addEventListener('resize', this.windowSizeHandler);
+  }
+
+  private static readonly goLiveThemeMap: Record<string, Theme> = {
+    'night-theme': 'golive-night-theme',
+    'day-theme': 'golive-day-theme',
+    'prime-dark': 'golive-prime-dark',
+    'prime-light': 'golive-prime-light',
+  };
+
+  private activeGoLiveTheme: Theme | null = null;
+
+  private applyGoLiveThemeIfNeeded(componentName: string | undefined) {
+    const isGoLive = componentName === 'GoLiveWindow';
+    if (isGoLive && !this.isGoLiveActive) {
+      const goLiveTheme = ChildWindow.goLiveThemeMap[this.theme] ?? 'golive-night-theme';
+      antdThemes[this.theme].unuse();
+      antdThemes[goLiveTheme].use();
+      this.activeGoLiveTheme = goLiveTheme;
+      this.isGoLiveActive = true;
+    } else if (!isGoLive && this.isGoLiveActive) {
+      this.restoreAppTheme();
+    }
+  }
+
+  private restoreAppTheme() {
+    if (!this.isGoLiveActive || !this.activeGoLiveTheme) return;
+    antdThemes[this.activeGoLiveTheme].unuse();
+    antdThemes[this.theme].use();
+    this.activeGoLiveTheme = null;
+    this.isGoLiveActive = false;
   }
 
   render() {

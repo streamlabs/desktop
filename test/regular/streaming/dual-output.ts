@@ -265,16 +265,15 @@ test('Dual Output Go Live Non-Ultra', async t => {
       timeout: 5000,
     });
     await clickIfDisplayed('div.ant-message-notice-content');
-    await sleep(200);
 
     await fillForm({
       instagram: true,
-      instagramDisplay: 'vertical',
     });
 
     await waitForSettingsWindowLoaded();
 
     await fillForm({
+      instagramDisplay: 'vertical',
       title: 'Test stream',
       twitchGame: 'Fortnite',
       streamUrl: dummy.streamUrl,
@@ -289,7 +288,7 @@ test('Dual Output Go Live Non-Ultra', async t => {
     // Clean up the dummy account
     await showSettingsWindow('Stream', async () => {
       await waitForDisplayed('h2=Stream Destinations');
-      await clickWhenDisplayed('[data-name="instagramUnlink"]');
+      await clickWhenDisplayed('[data-name="instagramUnlink"]', { timeout: 3000 });
       await clickButton('Close');
     });
 

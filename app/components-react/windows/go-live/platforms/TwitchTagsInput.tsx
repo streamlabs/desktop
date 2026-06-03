@@ -58,6 +58,7 @@ export function TwitchTagsInput(p: TTwitchTagsInputProps) {
       dropdownStyle={{ display: 'none' }}
       layout={p.layout}
       size="large"
+      style={{ flex: 1 }}
     />
   );
 }

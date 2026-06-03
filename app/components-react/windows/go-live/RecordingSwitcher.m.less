@@ -2,22 +2,29 @@
 
 .recording-tooltip {
   display: flex;
+  flex-direction: row;
   align-items: center;
 
   i.info {
     margin-left: 10px;
   }
 
-  :global(div.ant-form-item) {
+  :global(.ant-col.ant-form-item-label) {
+    display: none !important;
+  }
+
+  :global(.ant-row.ant-form-item) {
     margin-right: 0px !important;
-    margin-bottom: 0px !important;
+  }
+
+  :global(.ant-switch.ant-switch-small) {
+    margin-right: 0px !important;
   }
 }
 
 .recording-switcher {
-  display: flex;
-  justify-content: flex-start;
-  flex: 1;
+  color: var(--title);
+  margin-right: 16px;
 
   :global(.ant-switch-checked) {
     background-color: var(--title);

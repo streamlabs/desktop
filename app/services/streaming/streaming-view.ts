@@ -51,11 +51,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.getServiceViews(TwitchService);
   }
 
-  private get dualOutputView() {
-    return this.getServiceViews(DualOutputService);
-  }
-
-  private get incrementalRolloutService() {
+  private get incrementalRolloutView() {
     return this.getServiceViews(IncrementalRolloutService);
   }
 
@@ -132,11 +128,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns a sorted list of all platforms (linked and unlinked)
    */
   get allPlatforms(): TPlatform[] {
-    const platforms = !this.incrementalRolloutService.featureIsEnabled(EAvailableFeatures.patreon)
-      ? platformList.filter(p => p !== 'patreon')
-      : platformList;
-
-    return this.getSortedPlatforms(platforms);
+    return this.getSortedPlatforms(platformList);
   }
 
   /**
@@ -207,8 +199,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       this.settings.platforms?.twitch &&
       this.enabledPlatforms.includes('twitch') &&
-      this.settings.platforms?.twitch.display === 'both' &&
-      this.isDualOutputMode
+      this.settings.platforms?.twitch.display === 'both'
     );
   }
 
@@ -220,8 +211,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       this.settings.platforms?.youtube &&
       this.enabledPlatforms.includes('youtube') &&
-      this.settings.platforms?.youtube?.display === 'both' &&
-      this.isDualOutputMode
+      this.settings.platforms?.youtube?.display === 'both'
     );
   }
 
@@ -320,7 +310,8 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns if dual output mode is on. Dual output mode is only available to logged in users
    */
   get isDualOutputMode(): boolean {
-    return this.dualOutputView.dualOutputMode && this.userView.isLoggedIn;
+    if (!this.userView.isLoggedIn || !this.info) return false;
+    return this.shouldSetupDualOutput;
   }
 
   getPlatformDisplayType(platform: TPlatform): TDisplayType {
@@ -407,27 +398,27 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     );
   }
 
-  getCanStreamDualOutput(settings?: IGoLiveSettings): boolean {
-    const platforms = settings?.platforms || this.settings.platforms;
+  get shouldSetupDualOutput(): boolean {
+    // Read from state to avoid circular dependency:
+    // isDualOutputMode → shouldSetupDualOutput → this.settings → savedSettings → getSavedPlatformSettings → isDualOutputMode
+    const savedSettings = this.streamSettingsView.state.goLiveSettings;
+    if (!savedSettings?.platforms) return false;
 
-    const customDestinations = settings?.customDestinations || this.customDestinations;
+    const platforms = savedSettings.platforms;
+    const customDestinations = savedSettings.customDestinations || [];
 
     const platformDisplays = { horizontal: [] as TPlatform[], vertical: [] as TPlatform[] };
 
     for (const platform in platforms) {
-      // If any platform is configured as `Both` for outputs we technically should satisfy
-      // this requirement and ignore the warning
-      if (
-        platforms[platform as TPlatform]?.enabled &&
-        platforms[platform as TPlatform]?.display === 'both'
-      ) {
-        return true;
-      }
+      const p = platforms[platform as TPlatform];
+      if (!p?.enabled || !this.isPlatformLinked(platform as TPlatform)) continue;
 
-      if (platforms[platform as TPlatform]?.enabled) {
-        const display = this.getPlatformDisplayType(platform as TPlatform);
-        platformDisplays[display].push(platform as TPlatform);
-      }
+      const display = p.display ?? 'horizontal';
+
+      // Any enabled platform with 'both' display automatically enables dual output mode
+      if (display === 'both') return true;
+
+      platformDisplays[display].push(platform as TPlatform);
     }
 
     // determine which enabled custom destinations use which displays
@@ -440,6 +431,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       },
       { horizontal: [], vertical: [] },
     );
+
     // determine if both displays are selected for active platforms
     const horizontalHasDestinations =
       platformDisplays.horizontal.length > 0 || destinationDisplays.horizontal.length > 0;
@@ -592,17 +584,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       recording: savedGoLiveSettings?.recording || 'horizontal',
       streamShift: savedGoLiveSettings?.streamShift || false,
     };
-  }
-
-  get isAdvancedMode(): boolean {
-    return (this.isMultiplatformMode || this.isDualOutputMode) && this.settings.advancedMode;
-  }
-
-  get canShowAdvancedMode() {
-    if (this.isStreamShiftMode) {
-      return this.enabledPlatforms.length > 1;
-    }
-    return this.isMultiplatformMode || this.isDualOutputMode;
   }
 
   /**
@@ -902,5 +883,9 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   get selectiveRecording() {
     return this.streamingState.selectiveRecording;
+  }
+
+  get canEditLiveOutputs() {
+    return this.incrementalRolloutView.featureIsEnabled(EAvailableFeatures.liveOutputEditing);
   }
 }

@@ -118,8 +118,8 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
               options={options}
               onChange={val => updateRecordingDisplayAndSaveSettings(val as TDisplayType)}
               icons={true}
-              className={styles.recordingDisplay}
               disabled={v.isRecording || disableIcons}
+              optionType="default"
             />
             {showRecordingToggle && <> {$t('format')} </>}
           </>
