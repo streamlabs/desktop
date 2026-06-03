@@ -21,11 +21,11 @@ interface IViewerCountState extends IWidgetCommonState {
 }
 
 export function ViewerCount() {
-  const { isLoading, bind } = useViewerCount();
+  const { settings, bind, hasLoadedSettings } = useViewerCount();
   // use 1 column layout
   return (
     <WidgetLayout>
-      {!isLoading && (
+      {hasLoadedSettings(settings) && (
         <>
           <InputWrapper label={$t('Enabled Streams')}>
             <CheckboxInput label={$t('Twitch Viewers')} {...bind.twitch} />

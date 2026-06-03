@@ -76,9 +76,9 @@ function gameOption(key: string) {
 }
 
 export function GameWidget() {
-  const { isLoading, bind, selectedTab, setSelectedTab, settings } = useGameWidget();
+  const { settings, bind, hasLoadedSettings, setSelectedTab, selectedTab } = useGameWidget();
 
-  const availableGames = settings.available_games?.map(gameOption);
+  const availableGames = settings?.available_games?.map(gameOption);
 
   return (
     <WidgetLayout>
@@ -87,7 +87,7 @@ export function GameWidget() {
         <Menu.Item key="game">{$t('Game Settings')}</Menu.Item>
       </Menu>
       <Form>
-        {!isLoading && selectedTab === 'general' && (
+        {hasLoadedSettings(settings) && selectedTab === 'general' && (
           <>
             <ListInput label={$t('Current Game')} {...bind.current_game} options={availableGames} />
             <SliderInput
@@ -118,7 +118,7 @@ export function GameWidget() {
             />
           </>
         )}
-        {!isLoading && selectedTab === 'game' && <GameOptions game={settings.current_game} />}
+        {hasLoadedSettings(settings) && selectedTab === 'game' && <GameOptions game={settings.current_game} />}
       </Form>
     </WidgetLayout>
   );
@@ -131,7 +131,9 @@ function useGameWidget() {
 }
 
 function GameOptions(p: { game: TGameType }) {
-  const { settings, updateSettings } = useGameWidget();
+  const { settings, hasLoadedSettings, updateSettings } = useGameWidget();
+  if (!hasLoadedSettings(settings)) return <></>;
+
   function updateGameOption(key: keyof ITicTacToeOptions) {
     return (value: unknown) => {
       updateSettings({ game_options: { [p.game]: { [key]: value } } });

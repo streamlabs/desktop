@@ -56,11 +56,11 @@ interface IEventListState extends IWidgetCommonState {
 
 export function EventList() {
   const {
-    isLoading,
     settings,
     eventMeta,
     fontMeta,
     visualMeta,
+    hasLoadedSettings,
     updateSetting,
     setSelectedTab,
     selectedTab,
@@ -75,13 +75,13 @@ export function EventList() {
         <Menu.Item key="visual">{$t('Visual Settings')}</Menu.Item>
       </Menu>
       <Form>
-        {!isLoading && selectedTab === 'event' && (
+        {hasLoadedSettings(settings) && selectedTab === 'event' && (
           <FormFactory metadata={eventMeta} values={settings} onChange={updateSetting} />
         )}
-        {!isLoading && selectedTab === 'font' && (
+        {hasLoadedSettings(settings) && selectedTab === 'font' && (
           <FormFactory metadata={fontMeta} values={settings} onChange={updateSetting} />
         )}
-        {!isLoading && selectedTab === 'visual' && (
+        {hasLoadedSettings(settings) && selectedTab === 'visual' && (
           <FormFactory metadata={visualMeta} values={settings} onChange={updateSetting} />
         )}
       </Form>

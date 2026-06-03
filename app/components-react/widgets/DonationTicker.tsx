@@ -33,11 +33,11 @@ interface IDonationTickerState extends IWidgetState {
 }
 
 export function DonationTicker() {
-  const { isLoading, bind, tips } = useDonationTicker();
+  const { settings, bind, tips, hasLoadedSettings } = useDonationTicker();
   // use 1 column layout
   return (
     <WidgetLayout>
-      {!isLoading && (
+      {hasLoadedSettings(settings) && (
         <>
           <TextInput
             label={$t('Message Format')}

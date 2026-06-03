@@ -74,7 +74,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
   get groupOptions(): IGamePulseGroupOption[] {
     const gamesMeta = this.games;
 
-    const games = Object.entries(this.settings.games || {}).map(([gameId, gameData]) => ({
+    const games = Object.entries(this.settings?.games || {}).map(([gameId, gameData]) => ({
       id: gameId,
       name: gamesMeta?.[gameId]?.title || gameId,
       enabled: !!gameData?.enabled,
@@ -83,7 +83,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     const global: IGamePulseGroupOption = {
       id: ScopeId.Global,
       name: 'Global',
-      enabled: !!this.settings.global?.enabled,
+      enabled: !!this.settings?.global?.enabled,
     };
 
     return [global, ...games];
@@ -127,7 +127,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     return this.hasTriggersFn(this.settings);
   }
 
-  hasTriggersFn(settings: GamePulseWidgetSettings): boolean {
+  hasTriggersFn(settings: GamePulseWidgetSettings | null): boolean {
     const globalTriggers = settings?.global?.triggers || [];
     const gameTriggers = Object.values(settings?.games || {}).flatMap(
       group => group?.triggers || [],
@@ -180,6 +180,8 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     scopeId: string,
     updater: (trigger: GamePulseTrigger) => GamePulseTrigger,
   ) {
+    if (!this.hasLoadedSettings(this.settings)) return;
+
     const isGlobal = scopeId === ScopeId.Global;
     const groupSettings = this.getScope(scopeId) || { enabled: true, triggers: [] };
     const updatedGroupSettings = {
@@ -193,7 +195,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
         ? { global: updatedGroupSettings }
         : {
             games: {
-              ...(this.settings.games || {}),
+              ...this.settings.games,
               [scopeId]: updatedGroupSettings,
             },
           }),
@@ -326,6 +328,8 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
 
   /** Enable all trigger groups at once. */
   public enableAllGroups() {
+    if (!this.hasLoadedSettings(this.settings)) return;
+
     const games = this.settings.games || {};
     const newGames: Record<string, GamePulseTriggerGroup> = {};
 
@@ -351,6 +355,8 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
 
   /** Disable all trigger groups at once. */
   public disableAllGroups() {
+    if (!this.hasLoadedSettings(this.settings)) return;
+
     const games = this.settings.games || {};
     const newGames: Record<string, GamePulseTriggerGroup> = {};
 
@@ -394,6 +400,8 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
   @Bind()
   @Throttle(1000)
   public async testGamePulseTrigger(trigger: GamePulseTrigger) {
+    if (!this.hasLoadedSettings(this.settings)) return;
+
     if (!this.settings.is_muted) {
       /**
        * Ensure settings are muted before testing so that the user doesn't
@@ -482,6 +490,8 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     name: string;
     triggerType: TriggerType;
   }) {
+    if (!this.hasLoadedSettings(this.settings)) return;
+
     const newTrigger = buildNewTrigger({
       triggerType,
       eventKey: eventType,
@@ -536,7 +546,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
 
   /** Helper to resolve a trigger group (global or game-specific) from settings. */
   private getScope(scopeId: string, settings = this.settings) {
-    return scopeId === ScopeId.Global ? settings.global : settings.games?.[scopeId];
+    return scopeId === ScopeId.Global ? settings?.global : settings?.games?.[scopeId];
   }
 
   /** Get all triggers for a specific group. */

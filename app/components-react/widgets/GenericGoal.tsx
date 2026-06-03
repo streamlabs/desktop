@@ -46,11 +46,11 @@ interface IGoalState extends IWidgetCommonState {
 
 export function GenericGoal() {
   const {
-    isLoading,
     settings,
     createGoalMeta,
     goalSettings,
     visualMeta,
+    hasLoadedSettings,
     updateSetting,
     setSelectedTab,
     selectedTab,
@@ -87,7 +87,7 @@ export function GenericGoal() {
         {!isCharity && <Menu.Item key="goal">{$t('Goal Settings')}</Menu.Item>}
       </Menu>
       <Form>
-        {!isLoading && selectedTab === 'goal' && !hasGoal && (
+        {hasLoadedSettings(settings) && selectedTab === 'goal' && !hasGoal && (
           <>
             <FormFactory
               metadata={createGoalMeta}
@@ -103,10 +103,10 @@ export function GenericGoal() {
             </Button>
           </>
         )}
-        {!isLoading && selectedTab === 'goal' && hasGoal && (
+        {hasLoadedSettings(settings) && selectedTab === 'goal' && hasGoal && (
           <DisplayGoal goal={goalSettings} resetGoal={resetGoal} />
         )}
-        {!isLoading && selectedTab === 'general' && (
+        {hasLoadedSettings(settings) && selectedTab === 'general' && (
           <FormFactory
             metadata={visualMeta}
             values={settings}

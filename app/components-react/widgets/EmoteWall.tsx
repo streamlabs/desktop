@@ -20,19 +20,19 @@ interface IEmoteWallState extends IWidgetCommonState {
 }
 
 export function EmoteWall() {
-  const { isLoading, settings, meta, updateSetting } = useEmoteWall();
+  const { settings, meta, hasLoadedSettings, updateSetting } = useEmoteWall();
 
   // use 1 column layout
   return (
     <WidgetLayout>
-      {!isLoading && <FormFactory metadata={meta} values={settings} onChange={updateSetting} />}
+      {hasLoadedSettings(settings) && <FormFactory metadata={meta} values={settings} onChange={updateSetting} />}
     </WidgetLayout>
   );
 }
 
 export class EmoteWallModule extends WidgetModule<IEmoteWallState> {
   get isComboRequired() {
-    return this.settings?.combo_required;
+    return this.settings?.combo_required ?? false;
   }
 
   get meta() {
@@ -48,13 +48,13 @@ export class EmoteWallModule extends WidgetModule<IEmoteWallState> {
             label: $t('Combo Count'),
             min: 2,
             max: 100,
-            displayed: this.settings?.combo_required,
+            displayed: this.isComboRequired,
           }),
           combo_timeframe: metadata.seconds({
             label: $t('Combo Timeframe'),
             min: 1000,
             max: 60000,
-            displayed: this.settings?.combo_required,
+            displayed: this.isComboRequired,
           }),
         },
       },

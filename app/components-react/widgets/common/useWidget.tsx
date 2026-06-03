@@ -167,11 +167,15 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
     return this.widgetState.data;
   }
 
+  hasLoadedSettings(settings: TWidgetState['data']['settings'] | null): settings is TWidgetState['data']['settings'] {
+    return !!settings && !this.state.isLoading;
+  }
+
   /**
    * returns widget's settings from the store
    */
-  get settings(): TWidgetState['data']['settings'] {
-    return this.widgetData.settings;
+  get settings(): TWidgetState['data']['settings'] | null {
+    return !this.state.isLoading && this.widgetData.settings ? this.widgetData.settings : null;
   }
 
   get availableAlerts(): TAlertType[] {
@@ -179,6 +183,7 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
   }
 
   get customCode(): ICustomCode | null {
+    if (!this.settings) return null;
     return pick(
       this.settings,
       'custom_enabled',
@@ -284,7 +289,7 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
   // Update setting compatible with FormFactory
   public updateSetting(key: string) {
     return (value: any) => {
-      if (Array.isArray(this.settings[key])) {
+      if (this.settings && Array.isArray(this.settings[key])) {
         this.replaceSettings({ [key]: value });
       } else {
         this.updateSettings({ [key]: value });
