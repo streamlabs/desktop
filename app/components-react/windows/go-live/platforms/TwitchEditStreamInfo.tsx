@@ -13,7 +13,6 @@ import AiHighlighterToggle from '../AiHighlighterToggle';
 import Badge from 'components-react/shared/DismissableBadge';
 import { EDismissable } from 'services/dismissables';
 import { CustomFieldsCheckbox } from '../CustomFieldsCheckbox';
-import Utils from 'services/utils';
 
 export const TwitchEditStreamInfo = InputComponent((p: IPlatformComponentParams<'twitch'>) => {
   const twSettings = p.value;
@@ -74,11 +73,6 @@ const TwitchOptionalFields = memo((p: IPlatformComponentParams<'twitch'>) => {
   const isDualStream = useMemo(() => {
     return twSettings?.display === 'both' && p.isDualOutputMode;
   }, [p.isDualOutputMode, twSettings?.display]);
-
-  const multiplePlatformEnabled = useMemo(() => {
-    if (!p.enabledPlatformsCount) return false;
-    return p.enabledPlatformsCount > 1;
-  }, [p.enabledPlatformsCount, isDualStream]);
 
   const enhancedBroadcastingTooltipText = useMemo(() => {
     return p.isDualOutputMode
