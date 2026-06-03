@@ -1460,18 +1460,36 @@ export class StreamingService
    * @param code - EOBSOutputSignal - for logging the signal for debugging purposes
    */
   private async handleStartStreaming(code: EOBSOutputSignal, display: TDisplayType) {
-    // Handle start recording when start streaming
-    if (this.streamSettingsService.settings.recordWhenStreaming && !this.isRecording) {
-      await this.toggleRecording();
-    }
+    const shouldStartHighlighterOutputs = this.highlighterService.shouldStartHighlighterOutputs;
 
     // Handle start replay buffer when start streaming
+    // Replay buffer must be started before recording because createReplayBuffer
+    // recreates the recording output instance, which would stop an active recording.
+    const shouldReplay =
+      this.streamSettingsService.settings.replayBufferWhileStreaming ||
+      shouldStartHighlighterOutputs;
     if (
-      this.streamSettingsService.settings.replayBufferWhileStreaming &&
+      shouldReplay &&
       this.outputSettingsService.getSettings().replayBuffer.enabled &&
       !this.isReplayBufferActive
     ) {
-      this.startReplayBuffer();
+      const replayDisplay =
+        this.views.isDualOutputMode && !shouldStartHighlighterOutputs
+          ? this.views.getOutputDisplayType()
+          : 'horizontal';
+
+      this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Running, replayDisplay);
+      await this.createReplayBuffer({
+        display: replayDisplay,
+        audioTrack: replayDisplay === 'horizontal' ? 1 : 2,
+      });
+    }
+
+    // Handle start recording when start streaming
+    const shouldRecord =
+      this.streamSettingsService.settings.recordWhenStreaming || shouldStartHighlighterOutputs;
+    if (shouldRecord && !this.isRecording) {
+      await this.toggleRecording();
     }
 
     this.SET_STREAMING_STATUS(EStreamingState.Live, display, new Date().toISOString());
@@ -2675,6 +2693,20 @@ export class StreamingService
       // Error handling with a stop signal is handled in the `signalHandler`
     } else if (info.signal === EOBSOutputSignal.Deactivate) {
       // The `deactivate` signal is sent after the `stop` signal
+
+      // Handle stopping recording and replay buffer started by AI Highlighter.
+      // handleStopStreaming already stops these for the normal recordWhenStreaming/
+      // replayBufferWhileStreaming settings, so only stop here for outputs that
+      // the highlighter started (which handleStopStreaming doesn't know about).
+      if (this.highlighterService.shouldStartHighlighterOutputs) {
+        if (this.isRecording) {
+          await this.toggleRecording();
+        }
+
+        if (this.isReplayBufferActive) {
+          this.stopReplayBuffer();
+        }
+      }
 
       // For the UI, set the streaming status to offline on the `deactivate` signal
       if (

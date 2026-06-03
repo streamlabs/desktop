@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import styles from './AiHighlighterToggle.m.less';
 import { Services } from 'components-react/service-provider';
 import { useDebounce, useVuex } from 'components-react/hooks';
-import EducationCarousel from 'components-react/highlighter/EducationCarousel';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { getConfigByGame, isGameSupported } from 'services/highlighter/models/game-config.models';
@@ -16,13 +15,7 @@ import {
 } from 'components-react/highlighter/ImportStream';
 import { promptAction } from 'components-react/modals';
 
-export default function AiHighlighterToggle({
-  game,
-  cardIsExpanded,
-}: {
-  game: string | undefined;
-  cardIsExpanded: boolean;
-}) {
+export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded: boolean }) {
   //TODO M: Probably good way to integrate the highlighter in to GoLiveSettings
   const { HighlighterService, StreamingService } = Services;
   const {
@@ -31,6 +24,7 @@ export default function AiHighlighterToggle({
     isVerticalRecording,
     isVerticalReplayBuffer,
     outputDisplay,
+    gameName,
   } = useVuex(() => {
     return {
       useHighlighter: HighlighterService.views.useAiHighlighter,
@@ -38,6 +32,7 @@ export default function AiHighlighterToggle({
       isVerticalRecording: StreamingService.views.isVerticalRecording,
       isVerticalReplayBuffer: StreamingService.views.isVerticalReplayBuffer,
       outputDisplay: StreamingService.views.outputDisplay,
+      gameName: StreamingService.views.gameName,
     };
   });
 
@@ -47,7 +42,7 @@ export default function AiHighlighterToggle({
     (isVerticalRecording || isVerticalReplayBuffer) && outputDisplay === 'vertical';
 
   useEffect(() => {
-    const supportedGame = isGameSupported(game);
+    const supportedGame = isGameSupported(gameName);
     setGameIsSupported(!!supportedGame);
     if (supportedGame) {
       setIsExpanded(true);
@@ -55,7 +50,7 @@ export default function AiHighlighterToggle({
     } else {
       setGameConfig(null);
     }
-  }, [game]);
+  }, [gameName]);
 
   function getInitialExpandedState() {
     if (gameIsSupported) {
@@ -157,7 +152,7 @@ export default function AiHighlighterToggle({
                       size="small"
                       type="primary"
                       onClick={() => {
-                        HighlighterService.installAiHighlighter(false, 'Go-live-flow', game);
+                        HighlighterService.installAiHighlighter(false, 'Go-live-flow', gameName);
                       }}
                     >
                       {$t('Install AI Highlighter')}
@@ -283,7 +278,6 @@ export default function AiHighlighterToggle({
                           {gameConfig?.gameModes && `(${gameConfig?.gameModes})`}
                         </span>
                       </div>
-                      {/* <EducationCarousel game={game!} /> */}
                     </div>
                   )}
                   <img
