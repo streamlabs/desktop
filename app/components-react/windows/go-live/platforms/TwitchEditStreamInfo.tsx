@@ -19,7 +19,9 @@ export const TwitchEditStreamInfo = InputComponent((p: IPlatformComponentParams<
   const twSettings = p.value;
 
   function updateSettings(patch: Partial<ITwitchStartStreamOptions>) {
-    p.onChange({ ...twSettings, ...patch });
+    // Read p.value (a getter) for fresh state to avoid stale closure when
+    // multiple callbacks (onChange + onSelect) fire in the same event.
+    p.onChange({ ...p.value, ...patch });
   }
 
   return (
@@ -36,8 +38,12 @@ export const TwitchEditStreamInfo = InputComponent((p: IPlatformComponentParams<
             layout={p.layout}
           />
         }
-        requiredFields={<TwitchRequiredFields key="twitch-required" {...p} />}
-        optionalFields={<TwitchOptionalFields key="twitch-optional" {...p} />}
+        requiredFields={
+          <TwitchRequiredFields key="twitch-required" {...p} onChange={updateSettings} />
+        }
+        optionalFields={
+          <TwitchOptionalFields key="twitch-optional" {...p} onChange={updateSettings} />
+        }
       />
     </Form>
   );
@@ -51,29 +57,19 @@ const TwitchRequiredFields = memo((p: IPlatformComponentParams<'twitch'>) => {
   return (
     <>
       <div className="flex__horizontal margin">
-        <GameSelector
-          key="twitch-game"
-          platform="twitch"
-          {...bind.game}
-          onNameChange={bind.gameName.onChange}
-          layout="vertical"
-        />
+        <GameSelector key="twitch-game" platform="twitch" {...bind.game} layout="vertical" />
         <TwitchTagsInput label={$t('Twitch Tags')} {...bind.tags} layout="vertical" />
       </div>
-      {p.isAiHighlighterEnabled && (
-        <AiHighlighterToggle key="ai-toggle" game={bind.game?.value} banner={true} />
-      )}
+      {p.isAiHighlighterEnabled && <AiHighlighterToggle key="ai-toggle" banner={true} />}
     </>
   );
 });
 
 const TwitchOptionalFields = memo((p: IPlatformComponentParams<'twitch'>) => {
   const twSettings = p.value;
-  function updateSettings(patch: Partial<ITwitchStartStreamOptions>) {
-    p.onChange({ ...twSettings, ...patch });
-  }
-
-  const bind = createBinding(twSettings, updatedSettings => updateSettings(updatedSettings));
+  const bind = createBinding(twSettings, updatedSettings =>
+    p.onChange({ ...p.value, ...updatedSettings }),
+  );
 
   const isDualStream = useMemo(() => {
     return twSettings?.display === 'both' && p.isDualOutputMode;

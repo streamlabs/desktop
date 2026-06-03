@@ -17,23 +17,21 @@ import { promptAction } from 'components-react/modals';
 import InputWrapper from 'components-react/shared/inputs/InputWrapper';
 import Translate from 'components-react/shared/Translate';
 
-export default function AiHighlighterToggle(p: {
-  game: string | undefined;
-  banner?: React.ReactNode;
-}) {
+export default function AiHighlighterToggle(p: { banner?: React.ReactNode }) {
   //TODO M: Probably good way to integrate the highlighter in to GoLiveSettings
   const { HighlighterService, StreamingService } = Services;
-  const { isVerticalRecording, isVerticalReplayBuffer, outputDisplay } = useVuex(() => {
+  const { isVerticalRecording, isVerticalReplayBuffer, outputDisplay, gameName } = useVuex(() => {
     return {
       isVerticalRecording: StreamingService.views.isVerticalRecording,
       isVerticalReplayBuffer: StreamingService.views.isVerticalReplayBuffer,
       outputDisplay: StreamingService.views.outputDisplay,
+      gameName: StreamingService.views.gameName,
     };
   });
 
   const gameIsSupported = useMemo(() => {
-    return isGameSupported(p.game);
-  }, [p.game]);
+    return isGameSupported(gameName);
+  }, [gameName]);
 
   const disableAIHighlighter = useMemo(() => {
     return (isVerticalRecording || isVerticalReplayBuffer) && outputDisplay === 'vertical';
@@ -82,9 +80,9 @@ export default function AiHighlighterToggle(p: {
   return gameIsSupported ? (
     <InputWrapper layout="vertical" label={$t('AI Highlighter')} nolabel>
       {p.banner ? (
-        <AIHighlighterBanner game={p.game} toggleHighlighter={toggleHighlighter} />
+        <AIHighlighterBanner game={gameName} toggleHighlighter={toggleHighlighter} />
       ) : (
-        <AIHighlighterCard game={p.game} toggleHighlighter={toggleHighlighter} />
+        <AIHighlighterCard game={gameName} toggleHighlighter={toggleHighlighter} />
       )}
     </InputWrapper>
   ) : (
@@ -135,11 +133,12 @@ const AIHighlighterBanner = memo(
 );
 
 const AIHighlighterCard = memo((p: { game: string | undefined; toggleHighlighter: () => void }) => {
-  const { HighlighterService } = Services;
-  const { useHighlighter, highlighterVersion } = useVuex(
+  const { HighlighterService, StreamingService } = Services;
+  const { useHighlighter, highlighterVersion, gameName } = useVuex(
     () => ({
       useHighlighter: HighlighterService.views.useAiHighlighter,
       highlighterVersion: HighlighterService.views.highlighterVersion,
+      gameName: StreamingService.views.gameName,
     }),
     false,
   );
@@ -204,7 +203,7 @@ const AIHighlighterCard = memo((p: { game: string | undefined; toggleHighlighter
                   size="small"
                   type="primary"
                   onClick={() => {
-                    HighlighterService.installAiHighlighter(false, 'Go-live-flow', p.game);
+                    HighlighterService.installAiHighlighter(false, 'Go-live-flow', gameName);
                   }}
                 >
                   {$t('Install AI Highlighter')}
@@ -318,7 +317,6 @@ const AIHighlighterCard = memo((p: { game: string | undefined; toggleHighlighter
                       {gameConfig?.gameModes && `(${gameConfig?.gameModes})`}
                     </span>
                   </div>
-                  {/* <EducationCarousel game={game!} /> */}
                 </div>
               )}
               <img
