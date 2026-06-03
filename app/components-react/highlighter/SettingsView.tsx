@@ -211,6 +211,7 @@ export default function SettingsView({
 
                 {v.highlighterVersion !== '' ? (
                   <SwitchInput
+                    name="aiHighlighter"
                     style={{ margin: 0, marginLeft: '-10px' }}
                     size="default"
                     value={disableAIHighlighter ? false : v.useAiHighlighter}

@@ -141,6 +141,7 @@ export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded
 
                   {highlighterVersion !== '' ? (
                     <SwitchInput
+                      name="aiHighlighter"
                       style={{ width: '80px', margin: 0, marginTop: '-2px' }}
                       value={disableAIHighlighter ? false : useHighlighter}
                       label=""
