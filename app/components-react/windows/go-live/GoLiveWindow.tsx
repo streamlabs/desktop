@@ -143,7 +143,6 @@ function ModalFooter() {
       isFetchingStreamStatus.current = false;
 
       // Prompt to confirm stream switch if the stream exists
-      // TODO: unify with start streaming button prompt
       if (isLive && !streamShiftForceGoLive) {
         await promptStreamShift();
       } else if (!isLive && hasIncompatibleCodec) {
@@ -208,6 +207,7 @@ function ModalFooter() {
         setIsCoolingDown(true);
         await forceStreamShiftGoLive();
       },
+      maskClosable: false,
     });
   }, [hasIncompatibleCodec]);
 
@@ -261,26 +261,32 @@ function ModalFooter() {
   }, [isDualOutputMode]);
 
   const handleGoLive = useCallback(async () => {
-    if (
-      isPrime &&
-      !streamShiftForceGoLive &&
-      !isFetchingStreamStatus.current === false &&
-      shouldGoLive.current === false
-    ) {
-      shouldGoLive.current = true;
-      isFetchingStreamStatus.current = true;
-      try {
-        // This will resolve with the subscription to the restream service `isLive` observable
-        debouncedCheckIsLive();
-        return;
-      } catch (e: unknown) {
-        console.error('Error checking stream switcher status:', e);
+    if (!isPrime) {
+      goLive();
+    } else {
+      const shouldCheckIsLive =
+        !streamShiftForceGoLive &&
+        isFetchingStreamStatus.current === false &&
+        shouldGoLive.current === false;
 
-        isFetchingStreamStatus.current = false;
+      // Check for ultra users already being live with stream shift
+      if (shouldCheckIsLive) {
+        shouldGoLive.current = true;
+        isFetchingStreamStatus.current = true;
+        try {
+          // This will resolve with the subscription to the restream service `isLive` observable
+          // where `goLive` will be called if the user is not already live
+          await debouncedCheckIsLive();
+        } catch (e: unknown) {
+          console.error('Error checking stream switcher status:', e);
+
+          isFetchingStreamStatus.current = false;
+          shouldGoLive.current = false;
+        }
+      } else {
+        goLive();
       }
     }
-
-    goLive();
   }, [
     isDualOutputMode,
     isPrime,

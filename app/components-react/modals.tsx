@@ -135,6 +135,7 @@ export function promptAction(p: {
   icon?: React.ReactNode;
   secondaryActionText?: string;
   secondaryActionFn?: () => unknown;
+  maskClosable?: boolean;
 }) {
   return alertAsync({
     bodyStyle: { padding: '24px' },
@@ -144,7 +145,7 @@ export function promptAction(p: {
     content: p.message,
     icon: p?.icon,
     closable: true,
-    maskClosable: true,
+    maskClosable: p.maskClosable ?? true,
     cancelButtonProps: { style: { display: 'none' } },
     okButtonProps: { style: { display: 'none' } },
     modalRender: node => (

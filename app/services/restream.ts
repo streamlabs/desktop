@@ -760,7 +760,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
   async forceStreamShiftGoLive() {
     this.streamSettingsService.setGoLiveSettings({ streamShift: false });
     await this.deleteTargets();
-    await this.updateStreamShift('approved');
     this.SET_STREAM_SWITCHER_STATUS('inactive');
     this.SET_STREAM_SWITCHER_STREAM_ID();
     this.SET_STREAM_SWITCHER_TARGETS([]);
