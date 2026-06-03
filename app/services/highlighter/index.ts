@@ -133,6 +133,18 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   aiHighlighterFeatureEnabled = getOS() === OS.Windows || Utils.isDevMode();
   streamMilestones: IStreamMilestones | null = null;
 
+  /**
+   * Whether AI Highlighter should start recording and replay buffer outputs.
+   * Checks feature flag, user preference, and game support.
+   */
+  get shouldStartHighlighterOutputs(): boolean {
+    return (
+      this.aiHighlighterFeatureEnabled &&
+      this.views.useAiHighlighter &&
+      !!isGameSupported(this.streamingService.views.game)
+    );
+  }
+
   static filter(state: IHighlighterState) {
     return {
       ...this.defaultState,
@@ -461,10 +473,9 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           streamId: streamInfo?.id,
         });
 
-        if (this.streamingService.views.isRecording === false) {
-          this.streamingService.actions.toggleRecording();
-        }
-
+        // Recording and replay buffer are started by handleStartStreaming
+        // before the Live status is emitted, so they should already be active.
+        if (aiRecordingInProgress) return;
         aiRecordingInProgress = true;
         aiRecordingStartTime = moment();
       }
@@ -507,7 +518,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           streamId: streamInfo?.id,
           game: this.streamingService.views.game,
         });
-        this.streamingService.actions.toggleRecording();
 
         // Load potential replaybuffer clips
         await this.loadClips(streamInfo.id);

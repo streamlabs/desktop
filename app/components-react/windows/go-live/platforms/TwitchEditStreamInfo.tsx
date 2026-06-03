@@ -19,7 +19,9 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
   const twSettings = p.value;
 
   function updateSettings(patch: Partial<ITwitchStartStreamOptions>) {
-    p.onChange({ ...twSettings, ...patch });
+    // Read p.value (a getter) for fresh state to avoid stale closure when
+    // multiple callbacks (onChange + onSelect) fire in the same event.
+    p.onChange({ ...p.value, ...patch });
   }
 
   const bind = createBinding(twSettings, updatedSettings => updateSettings(updatedSettings));
@@ -51,7 +53,7 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
             layout={p.layout}
           />
         }
-        requiredFields={<TwitchRequiredFields {...p} key="required" />}
+        requiredFields={<TwitchRequiredFields key="required" {...p} onChange={updateSettings} />}
         optionalFields={optionalFields}
       />
     </Form>
@@ -62,7 +64,7 @@ function TwitchRequiredFields(p: IPlatformComponentParams<'twitch'>) {
   const { isUpdateMode } = p;
   const twSettings = p.value;
   const bind = createBinding(twSettings, updatedSettings =>
-    p.onChange({ ...twSettings, ...updatedSettings }),
+    p.onChange({ ...p.value, ...updatedSettings }),
   );
 
   const isDualStream = useMemo(() => {
@@ -79,19 +81,10 @@ function TwitchRequiredFields(p: IPlatformComponentParams<'twitch'>) {
   // Twitch enhanced broadcasting is only available on Windows and Apple Silicon Macs due to hardware encoding requirements
   const isEnhancedBroadcastingVisible =
     process.platform !== 'darwin' || (process.platform === 'darwin' && process.arch === 'arm64');
-
   return (
     <>
-      <GameSelector
-        key="twitch-game"
-        platform={'twitch'}
-        {...bind.game}
-        onNameChange={bind.gameName.onChange}
-        layout={p.layout}
-      />
-      {p.isAiHighlighterEnabled && (
-        <AiHighlighterToggle key="ai-toggle" game={bind.gameName.value} cardIsExpanded={false} />
-      )}
+      <GameSelector key="twitch-game" platform={'twitch'} {...bind.game} layout={p.layout} />
+      {p.isAiHighlighterEnabled && <AiHighlighterToggle key="ai-toggle" cardIsExpanded={false} />}
       {isEnhancedBroadcastingVisible && !isUpdateMode && (
         <InputWrapper
           layout={p.layout}
