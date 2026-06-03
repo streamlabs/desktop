@@ -623,15 +623,17 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
       // Open Streamlabs Replay via deeplink
       try {
-        remote.shell.openExternal(`${REPLAY_PROTOCOL}://open`);
+        await remote.shell.openExternal(`${REPLAY_PROTOCOL}://open`);
         return true;
       } catch (error: unknown) {
         console.error('Failed to open Streamlabs Replay:', error);
         try {
-          remote.shell.openExternal(`${REPLAY_PROTOCOL}:`);
+          await remote.shell.openExternal(`${REPLAY_PROTOCOL}:`);
           return true;
         } catch (fallbackError: unknown) {
           console.error('Failed to open Streamlabs Replay with fallback:', fallbackError);
+          // Protocol is registered but app is missing — start installation
+          this.installStreamlabsReplay();
           return false;
         }
       }
