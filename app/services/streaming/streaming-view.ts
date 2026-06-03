@@ -413,10 +413,12 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       const p = platforms[platform as TPlatform];
       if (!p?.enabled || !this.isPlatformLinked(platform as TPlatform)) continue;
 
-      // Any enabled platform with 'both' display automatically enables dual output mode
-      if (p.display === 'both') return true;
+      const display = p.display ?? 'horizontal';
 
-      platformDisplays[p.display].push(platform as TPlatform);
+      // Any enabled platform with 'both' display automatically enables dual output mode
+      if (display === 'both') return true;
+
+      platformDisplays[display].push(platform as TPlatform);
     }
 
     // determine which enabled custom destinations use which displays
