@@ -125,6 +125,13 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   isLive = new Subject<boolean>();
 
+  emitIsLiveForTest(isLive: boolean): void {
+    if (!Utils.isTestMode()) return;
+    this.streamSettingsService.setGoLiveSettings({ streamShift: true });
+    this.SET_STREAM_SWITCHER_STATUS('pending');
+    this.isLive.next(isLive);
+  }
+
   static initialState: IRestreamState = {
     enabled: true,
     grandfathered: false,

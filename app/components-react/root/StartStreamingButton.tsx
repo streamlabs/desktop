@@ -11,6 +11,7 @@ import { promptAction } from 'components-react/modals';
 import { TSocketEvent } from 'services/websocket';
 import { useRealmObject } from 'components-react/hooks/realm';
 import debounce from 'lodash/debounce';
+import Utils from 'services/utils';
 
 function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -108,6 +109,7 @@ function StartStreamingButton(p: { disabled?: boolean }) {
         // Only record analytics if the stream was switched from this device to a different one
         if (!isIncomingStream) {
           Services.RestreamService.actions.endStreamShiftStream(event.data.identifier);
+
           recordStreamShiftAnalytics('complete', event.data.identifier);
         }
 
@@ -131,6 +133,9 @@ function StartStreamingButton(p: { disabled?: boolean }) {
   }, []);
 
   const recordStreamShiftAnalytics = useCallback((action: 'request' | 'complete', id: string) => {
+    // Prevent recording analytics event in test mode
+    if (!Utils.isTestMode()) return;
+
     // Note: because the event's stream id is from the device that requested the switch,
     // it is not possible to know what type of device the stream will be switching from.
     // We can only identify the type of device the stream is switching to.
