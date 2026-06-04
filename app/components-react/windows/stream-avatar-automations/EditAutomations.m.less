@@ -1,0 +1,94 @@
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th {
+  text-align: left;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.4px;
+  color: var(--paragraph);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 12px;
+  color: var(--title);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.table tbody tr:hover {
+  background: var(--section);
+}
+
+.descCell {
+  font-weight: 600;
+}
+
+.mutedCell {
+  color: var(--paragraph);
+}
+
+.actionsCol {
+  width: 1%;
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: flex-end;
+}
+
+.rowActions i {
+  cursor: pointer;
+  color: var(--icon-active);
+  font-size: 14px;
+}
+
+.rowActions i:hover {
+  color: var(--title);
+}
+
+.errorIcon,
+.rowActions i.errorIcon,
+.rowActions i.errorIcon:hover {
+  color: var(--red);
+  cursor: default;
+}
+
+.disabledIcon,
+.rowActions i.disabledIcon,
+.rowActions i.disabledIcon:hover {
+  opacity: 0.4;
+  pointer-events: none;
+  color: var(--icon-active);
+}
+
+.badge {
+  display: inline-block;
+  background: var(--section);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  margin-right: 6px;
+  white-space: nowrap;
+  color: var(--title);
+}
+
+.message {
+  padding: 24px;
+  color: var(--paragraph);
+  text-align: center;
+}
+
+.empty {
+  margin-top: 48px;
+}
