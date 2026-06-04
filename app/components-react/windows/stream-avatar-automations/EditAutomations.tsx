@@ -162,8 +162,9 @@ export default function EditAutomations() {
                           <Spin size="small" />
                         ) : (
                           <i
-                            className={`icon-play-round ${simulatingId !== null ? styles.disabledIcon : ''
-                              }`}
+                            className={`icon-play-round ${
+                              simulatingId !== null ? styles.disabledIcon : ''
+                            }`}
                             onClick={() => simulate(automation)}
                           />
                         )}

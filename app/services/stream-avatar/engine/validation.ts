@@ -64,9 +64,7 @@ function validateAction(
       if (!name) {
         issues.push(actionIssue('scene', $t('Select a scene to switch to.')));
       } else if (!resources.scenes.some(s => s.name === name)) {
-        issues.push(
-          actionIssue('scene', t('Scene "%{name}" no longer exists.', { name })),
-        );
+        issues.push(actionIssue('scene', t('Scene "%{name}" no longer exists.', { name })));
       }
       break;
     }
@@ -77,9 +75,7 @@ function validateAction(
       if (!name) {
         issues.push(actionIssue('source', $t('Select a source.')));
       } else if (!resources.sources.some(s => s.name === name)) {
-        issues.push(
-          actionIssue('source', t('Source "%{name}" is unavailable.', { name })),
-        );
+        issues.push(actionIssue('source', t('Source "%{name}" is unavailable.', { name })));
       }
       break;
     }

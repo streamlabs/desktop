@@ -58,13 +58,14 @@ export class StreamAvatarApiService extends Service {
         headers: authorizedHeaders(token, new Headers({ 'Content-Type': 'application/json' })),
       });
 
-    try {
-      return await jfetch<T>(makeRequest(await this.getToken()));
-    } catch (e: any) {
-      if (e?.status === 401) {
+    return await jfetch<T>(makeRequest(await this.getToken())).catch(async e => {
+      if ((e as any)?.status === 401) {
+        console.warn('[StreamAvatarApi] Token expired, refreshing and retrying...', {
+          path,
+        });
         return await jfetch<T>(makeRequest(await this.getToken(true)));
       }
       throw e;
-    }
+    });
   }
 }
