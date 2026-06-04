@@ -1,4 +1,5 @@
 import React, { CSSProperties, useEffect, useState } from 'react';
+import { Select, Input } from 'antd';
 import { ReactSortable } from 'react-sortablejs';
 import uuid from 'uuid/v4';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
@@ -17,16 +18,13 @@ import type {
   ExportedAction,
   ExportedActionProps,
 } from 'services/stream-avatar/engine/actions';
+import { TextInput, CheckboxInput, SliderInput } from 'components-react/shared/inputs';
 
 const errorTextStyle: CSSProperties = {
   margin: '4px 0 0',
   color: 'var(--red)',
   fontSize: '12px',
 };
-
-function fieldBorder(invalid: boolean): CSSProperties {
-  return { borderColor: invalid ? 'var(--red)' : 'var(--border)' };
-}
 
 // Drag-and-drop reordering needs a stable key per row that survives reorders and
 // inserts (using the array index would make React/Sortable lose track on move).
@@ -69,44 +67,28 @@ const iconButtonStyle: CSSProperties = {
   fontSize: '16px',
 };
 
-const ACTION_OPTIONS = Object.entries(ActionRegistry).map(([type, def]) => ({
-  type: type as ActionType,
-  label: def.label,
-}));
-
-const GAME_OPTIONS = Object.entries(GAME_NAMES)
-  .map(([id, name]) => ({ id, name }))
-  .sort((a, b) => a.name.localeCompare(b.name));
-
-function getConditionOptions(gameId: string) {
-  return Object.entries(Conditions)
-    .filter(([, def]) => def.group === gameId && !def.disabled)
-    .map(([key, def]) => ({ type: key as ConditionType, label: def.label }))
-    .sort((a, b) => a.label.localeCompare(b.label));
-}
-
-const inputStyle: CSSProperties = {
-  background: 'var(--solid-input)',
-  color: 'var(--title)',
-  border: '1px solid var(--border)',
-  borderRadius: '4px',
-  padding: '4px 6px',
-  boxSizing: 'border-box',
-};
-
-// Full-width control that lines up with the row's fixed control height.
-const rowControlStyle: CSSProperties = {
-  ...inputStyle,
-  width: '100%',
-  height: CONTROL_HEIGHT,
-};
-
 const labelStyle: CSSProperties = {
   display: 'block',
   marginBottom: '4px',
   fontWeight: 600,
   color: 'var(--title)',
 };
+
+const ACTION_OPTIONS = Object.entries(ActionRegistry).map(([type, def]) => ({
+  label: def.label,
+  value: type as ActionType,
+}));
+
+const GAME_OPTIONS = Object.entries(GAME_NAMES)
+  .map(([id, name]) => ({ label: name, value: id }))
+  .sort((a, b) => a.label.localeCompare(b.label));
+
+function getConditionOptions(gameId: string) {
+  return Object.entries(Conditions)
+    .filter(([, def]) => def.group === gameId && !def.disabled)
+    .map(([key, def]) => ({ label: def.label, value: key as ConditionType }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
 
 interface ActionEditorProps {
   action: ExportedAction;
@@ -153,74 +135,62 @@ function ActionEditor({
   // than one row (e.g. a source select plus its checkbox).
   function renderControl() {
     switch (action.type) {
-      case 'common.switch_to_scene':
+      case 'common.switch_to_scene': {
+        const sceneOptions = [
+          ...(sceneMissing
+            ? [{ label: `${sceneName} (${$t('unavailable')})`, value: sceneName }]
+            : []),
+          ...scenes.map(s => ({ label: s.name, value: s.name })),
+        ];
         return (
           <>
-            <select
-              value={sceneName}
-              onChange={e => setProp('scene', { name: e.target.value })}
-              style={{ ...rowControlStyle, ...fieldBorder(!!errors?.scene) }}
-            >
-              <option value="">{$t('— select scene —')}</option>
-              {sceneMissing && (
-                <option value={sceneName}>{`${sceneName} (${$t('unavailable')})`}</option>
-              )}
-              {scenes.map(s => (
-                <option key={s.id} value={s.name}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+            <Select
+              value={sceneName || undefined}
+              onChange={val => setProp('scene', { name: val })}
+              style={{ width: '100%' }}
+              placeholder={$t('— select scene —')}
+              options={sceneOptions}
+            />
             {errors?.scene && <p style={errorTextStyle}>{errors.scene}</p>}
           </>
         );
+      }
 
       case 'common.show_source':
-      case 'common.hide_source':
+      case 'common.hide_source': {
+        const sourceOptions = [
+          ...(sourceMissing
+            ? [{ label: `${sourceName} (${$t('unavailable')})`, value: sourceName }]
+            : []),
+          ...sources.map(s => ({ label: s.name, value: s.name })),
+        ];
         return (
           <>
-            <select
-              value={sourceName}
-              onChange={e => setProp('source', { name: e.target.value })}
-              style={{ ...rowControlStyle, ...fieldBorder(!!errors?.source) }}
-            >
-              <option value="">{$t('— select source —')}</option>
-              {sourceMissing && (
-                <option value={sourceName}>{`${sourceName} (${$t('unavailable')})`}</option>
-              )}
-              {sources.map(s => (
-                <option key={s.id} value={s.name}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+            <Select
+              value={sourceName || undefined}
+              onChange={val => setProp('source', { name: val })}
+              style={{ width: '100%' }}
+              placeholder={$t('— select source —')}
+              options={sourceOptions}
+            />
             {errors?.source && <p style={errorTextStyle}>{errors.source}</p>}
             {action.type === 'common.show_source' && (
-              <label
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}
-              >
-                <input
-                  type="checkbox"
-                  checked={!!props.hide_if_condition_false}
-                  onChange={e => setProp('hide_if_condition_false', e.target.checked)}
-                />
-                {$t('Hide if condition is false')}
-              </label>
+              <CheckboxInput
+                value={!!props.hide_if_condition_false}
+                onChange={val => setProp('hide_if_condition_false', val)}
+                label={$t('Hide if condition is false')}
+              />
             )}
             {action.type === 'common.hide_source' && (
-              <label
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}
-              >
-                <input
-                  type="checkbox"
-                  checked={!!props.show_if_condition_false}
-                  onChange={e => setProp('show_if_condition_false', e.target.checked)}
-                />
-                {$t('Show if condition is false')}
-              </label>
+              <CheckboxInput
+                value={!!props.show_if_condition_false}
+                onChange={val => setProp('show_if_condition_false', val)}
+                label={$t('Show if condition is false')}
+              />
             )}
           </>
         );
+      }
 
       case 'common.wait_for_ms':
         return (
@@ -239,14 +209,14 @@ function ActionEditor({
                 {((props.duration ?? 5000) / 1000).toFixed(1)} {$t('seconds')}
               </span>
             </div>
-            <input
-              type="range"
+            <SliderInput
+              nowrap
+              value={props.duration ?? 5000}
+              onChange={val => setProp('duration', val)}
               min={500}
               max={60000}
               step={500}
-              value={props.duration ?? 5000}
-              onChange={e => setProp('duration', Number(e.target.value))}
-              style={{ width: '100%' }}
+              tipFormatter={(val: number) => `${(val / 1000).toFixed(1)}s`}
             />
           </>
         );
@@ -254,13 +224,11 @@ function ActionEditor({
       case 'co-host.instruction':
         return (
           <>
-            <input
-              type="text"
+            <Input
               value={props.instruction ?? ''}
               onChange={e => setProp('instruction', e.target.value)}
               placeholder={$t('Instruction')}
               maxLength={MAX_INSTRUCTION_LENGTH}
-              style={{ ...rowControlStyle, ...fieldBorder(!!errors?.instruction) }}
             />
             {errors?.instruction && <p style={errorTextStyle}>{errors.instruction}</p>}
           </>
@@ -306,17 +274,12 @@ function ActionEditor({
         />
       </div>
 
-      <select
+      <Select
         value={action.type}
-        onChange={e => setType(e.target.value as ActionType)}
-        style={rowControlStyle}
-      >
-        {ACTION_OPTIONS.map(o => (
-          <option key={o.type} value={o.type}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+        onChange={val => setType(val as ActionType)}
+        style={{ width: '100%' }}
+        options={ACTION_OPTIONS}
+      />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
         {renderControl()}
@@ -362,7 +325,7 @@ export default function AutomationEditor({ initial, onClose }: Props) {
     if (initial?.conditions?.[0]) {
       return (initial.conditions[0].type as string).split('.')[0];
     }
-    return GAME_OPTIONS[0].id;
+    return GAME_OPTIONS[0].value;
   });
   const [conditionType, setConditionType] = useState<ConditionType | ''>(() => {
     return (initial?.conditions?.[0]?.type as ConditionType) ?? '';
@@ -418,8 +381,8 @@ export default function AutomationEditor({ initial, onClose }: Props) {
   useEffect(() => {
     // Reset condition selection when game changes
     if (conditionOptions.length > 0) {
-      const current = conditionOptions.find(o => o.type === conditionType);
-      if (!current) setConditionType(conditionOptions[0].type);
+      const current = conditionOptions.find(o => o.value === conditionType);
+      if (!current) setConditionType(conditionOptions[0].value);
     } else {
       setConditionType('');
     }
@@ -478,12 +441,8 @@ export default function AutomationEditor({ initial, onClose }: Props) {
   }
 
   const getButtonText = () => {
-    if (saving) {
-      return $t('Saving...');
-    }
-    if (initial) {
-      return $t('Save Changes');
-    }
+    if (saving) return $t('Saving...');
+    if (initial) return $t('Save Changes');
     return $t('Create Automation');
   };
 
@@ -511,58 +470,34 @@ export default function AutomationEditor({ initial, onClose }: Props) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {/* Description */}
-        <div>
-          <label style={labelStyle}>{$t('Description')}</label>
-          <input
-            type="text"
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            maxLength={100}
-            placeholder={$t('e.g. Victory Royale reaction')}
-            style={{
-              ...inputStyle,
-              width: '100%',
-              padding: '6px 8px',
-              ...fieldBorder(!!descriptionError),
-            }}
-          />
-          {descriptionError && <p style={errorTextStyle}>{descriptionError}</p>}
-        </div>
+        <TextInput
+          label={$t('Description')}
+          value={description}
+          onChange={val => setDescription(val)}
+          placeholder={$t('e.g. Victory Royale reaction')}
+          validateStatus={descriptionError ? 'error' : undefined}
+          help={descriptionError}
+        />
 
         {/* Condition */}
         <div>
           <label style={labelStyle}>{$t('When (Condition)')}</label>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <select
+            <Select
               value={selectedGame}
-              onChange={e => setSelectedGame(e.target.value)}
-              style={{ ...inputStyle, padding: '6px 8px', flex: '0 0 auto' }}
-            >
-              {GAME_OPTIONS.map(g => (
-                <option key={g.id} value={g.id}>
-                  {g.name}
-                </option>
-              ))}
-            </select>
-            <select
-              value={conditionType}
-              onChange={e => setConditionType(e.target.value as ConditionType)}
-              style={{
-                ...inputStyle,
-                padding: '6px 8px',
-                flex: 1,
-                ...fieldBorder(!!conditionError),
-              }}
-            >
-              {conditionOptions.length === 0 && (
-                <option value="">{$t('No conditions available')}</option>
-              )}
-              {conditionOptions.map(c => (
-                <option key={c.type} value={c.type}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
+              onChange={val => setSelectedGame(val)}
+              style={{ flex: '0 0 auto' }}
+              options={GAME_OPTIONS}
+            />
+            <Select
+              value={conditionType || undefined}
+              onChange={val => setConditionType(val as ConditionType)}
+              style={{ flex: 1, minWidth: 0 }}
+              placeholder={
+                conditionOptions.length === 0 ? $t('No conditions available') : undefined
+              }
+              options={conditionOptions}
+            />
           </div>
           {conditionError && <p style={errorTextStyle}>{conditionError}</p>}
         </div>

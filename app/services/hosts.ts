@@ -49,13 +49,13 @@ export class HostsService extends Service {
   }
 
   get streamAvatarApi() {
-    if (Util.shouldUseAvatarLocalHost()) {
-      return 'localhost:3000';
-    } else if (Util.shouldUseBeta()) {
-      return 'ai-agent.streamlabs.com';
-    }
+    // if (Util.shouldUseAvatarLocalHost()) {
+    //   return 'localhost:3000';
+    // } else if (Util.shouldUseBeta()) {
+    //   return 'ai-agent.streamlabs.com';
+    // }
 
-    return 'isa.streamlabs.com';
+    return 'ai-agent.streamlabs.com';
   }
 }
 

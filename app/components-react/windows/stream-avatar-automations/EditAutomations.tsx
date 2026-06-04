@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Switch, Tooltip, Empty, Spin } from 'antd';
+import { Switch, Tooltip, Empty, Spin, Popconfirm } from 'antd';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
@@ -73,7 +73,6 @@ export default function EditAutomations() {
 
   function remove(automation: TAutomationExport) {
     if (!automation.id) return;
-    if (!window.confirm($t('Delete this automation?'))) return;
     AutomationsService.actions.remove(automation.id);
   }
 
@@ -172,9 +171,16 @@ export default function EditAutomations() {
                       <Tooltip title={$t('Edit')}>
                         <i className="icon-edit" onClick={() => edit(automation)} />
                       </Tooltip>
-                      <Tooltip title={$t('Delete')}>
-                        <i className="icon-trash" onClick={() => remove(automation)} />
-                      </Tooltip>
+                      <Popconfirm
+                        title={$t('Delete this automation?')}
+                        onConfirm={() => remove(automation)}
+                        okText={$t('Delete')}
+                        cancelText={$t('Cancel')}
+                      >
+                        <Tooltip title={$t('Delete')}>
+                          <i className="icon-trash" />
+                        </Tooltip>
+                      </Popconfirm>
                     </div>
                   </td>
                 </tr>
