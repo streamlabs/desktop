@@ -64,6 +64,10 @@ export { SettingsManagerService } from 'services/settings-manager';
 export { MarkersService } from 'services/markers';
 export { RealmService } from 'services/realm';
 export { StreamAvatarService } from 'services/stream-avatar/stream-avatar-service';
+export { StreamAvatarApiService } from 'services/stream-avatar/stream-avatar-api-service';
+export { AgentSocketService } from 'services/stream-avatar/agent-socket-service';
+export { AutomationsService } from 'services/stream-avatar/automations-service';
+export { AutomationsEngineService } from 'services/stream-avatar/automations-engine-service';
 export { OnboardingV2Service } from 'services/onboarding/onboarding-v2';
 
 // ONLINE SERVICES
@@ -212,6 +216,10 @@ import { SignalsService } from 'services/signals-manager';
 import { TroubleshooterService } from 'services/troubleshooter';
 import { OnboardingV2Service } from 'services/onboarding/onboarding-v2';
 import { VirtualWebcamService } from 'services/virtual-webcam';
+import { StreamAvatarApiService } from 'services/stream-avatar/stream-avatar-api-service';
+import { AgentSocketService } from 'services/stream-avatar/agent-socket-service';
+import { AutomationsService } from 'services/stream-avatar/automations-service';
+import { AutomationsEngineService } from 'services/stream-avatar/automations-engine-service';
 
 export const AppServices = {
   AppService,
@@ -301,4 +309,8 @@ export const AppServices = {
   ReactiveDataService,
   TroubleshooterService,
   OnboardingV2Service,
+  StreamAvatarApiService,
+  AgentSocketService,
+  AutomationsService,
+  AutomationsEngineService,
 };

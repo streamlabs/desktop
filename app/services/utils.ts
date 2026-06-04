@@ -133,6 +133,10 @@ export default class Utils {
     return Utils.env.SLOBS_USE_LOCAL_HOST as boolean;
   }
 
+  static shouldUseAvatarLocalHost(): boolean {
+    return true;
+  }
+
   static shouldUseBeta(): boolean {
     return (process.env.SLD_COMPILE_FOR_BETA || Utils.env.SLD_USE_BETA) as boolean;
   }

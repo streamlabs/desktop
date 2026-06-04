@@ -25,6 +25,7 @@ function SceneSelector() {
     SourceFiltersService,
     ProjectorService,
     EditorCommandsService,
+    AutomationsService,
   } = Services;
 
   const { treeSort } = useTree(true);
@@ -176,6 +177,12 @@ function SceneSelector() {
 
         <Tooltip title={$t('Edit Scene Transitions.')} placement="bottomRight">
           <i className="icon-transition icon-button icon-button--lg" onClick={showTransitions} />
+        </Tooltip>
+        <Tooltip title={$t('Edit Automations.')} placement="bottomRight">
+          <i
+            className="icon-smart-record icon-button icon-button--lg"
+            onClick={() => AutomationsService.actions.showAutomations()}
+          />
         </Tooltip>
       </div>
       <Scrollable style={{ height: '100%' }} className={styles.scenesContainer}>

@@ -39,6 +39,7 @@ import RecentEventsWindow from './windows/RecentEvents';
 import DismissableBadge from './shared/DismissableBadge';
 import UltraIcon from './shared/UltraIcon';
 import EditTransform from './windows/EditTransform';
+import EditAutomations from './windows/stream-avatar-automations/EditAutomations';
 import MarketingModal from './windows/MarketingModal';
 import Main from './windows/Main';
 import Loader from './pages/Loader';
@@ -93,6 +94,7 @@ export const components = {
   DismissableBadge,
   UltraIcon,
   EditTransform,
+  EditAutomations,
   Blank,
   MarketingModal,
   Main: createRoot(Main),
