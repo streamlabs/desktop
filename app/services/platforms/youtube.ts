@@ -500,7 +500,11 @@ export class YoutubeService
       return;
     }
 
+    // Make sure the scheduled stream exists and is in the future
     const streamToScheduledBroadcast = !!ytSettings.broadcastId;
+    if (ytSettings.scheduledStartTime && !(ytSettings.scheduledStartTime > new Date().getTime())) {
+      ytSettings.scheduledStartTime = new Date().getTime();
+    }
     // update selected LiveBroadcast with new title and description
     // or create a new LiveBroadcast if there are no broadcasts selected
     let broadcast: IYoutubeLiveBroadcast;
