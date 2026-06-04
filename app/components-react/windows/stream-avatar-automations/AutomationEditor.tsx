@@ -1,4 +1,6 @@
 import React, { CSSProperties, useEffect, useState } from 'react';
+import { ReactSortable } from 'react-sortablejs';
+import uuid from 'uuid/v4';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
@@ -26,6 +28,47 @@ function fieldBorder(invalid: boolean): CSSProperties {
   return { borderColor: invalid ? 'var(--red)' : 'var(--border)' };
 }
 
+// Drag-and-drop reordering needs a stable key per row that survives reorders and
+// inserts (using the array index would make React/Sortable lose track on move).
+interface ActionRow {
+  id: string;
+  action: ExportedAction;
+}
+
+function makeRow(action: ExportedAction): ActionRow {
+  return { id: uuid(), action: withActionDefaults(action) };
+}
+
+// Height of a single control line, so the grip and +/- icons align with the
+// action's primary input regardless of any extra rows (checkbox, slider) below.
+const CONTROL_HEIGHT = '32px';
+
+const dragHandleStyle: CSSProperties = {
+  cursor: 'grab',
+  color: 'var(--paragraph)',
+  fontSize: '16px',
+};
+
+const gripCellStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  height: CONTROL_HEIGHT,
+};
+
+const actionsCellStyle: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'flex-end',
+  alignItems: 'center',
+  gap: '10px',
+  height: CONTROL_HEIGHT,
+};
+
+const iconButtonStyle: CSSProperties = {
+  cursor: 'pointer',
+  color: 'var(--icon-active)',
+  fontSize: '16px',
+};
+
 const ACTION_OPTIONS = Object.entries(ActionRegistry).map(([type, def]) => ({
   type: type as ActionType,
   label: def.label,
@@ -48,6 +91,13 @@ const inputStyle: CSSProperties = {
   boxSizing: 'border-box',
 };
 
+// Full-width control that lines up with the row's fixed control height.
+const rowControlStyle: CSSProperties = {
+  ...inputStyle,
+  width: '100%',
+  height: CONTROL_HEIGHT,
+};
+
 const labelStyle: CSSProperties = {
   display: 'block',
   marginBottom: '4px',
@@ -58,20 +108,24 @@ const labelStyle: CSSProperties = {
 interface ActionEditorProps {
   action: ExportedAction;
   index: number;
+  isFirst: boolean;
   scenes: { id: string; name: string }[];
   sources: { id: string; name: string }[];
   errors?: Record<string, string>;
   onChange: (index: number, action: ExportedAction) => void;
+  onInsert: (index: number) => void;
   onRemove: (index: number) => void;
 }
 
 function ActionEditor({
   action,
   index,
+  isFirst,
   scenes,
   sources,
   errors,
   onChange,
+  onInsert,
   onRemove,
 }: ActionEditorProps) {
   function setType(type: ActionType) {
@@ -92,134 +146,193 @@ function ActionEditor({
   const sourceName = props.source?.name ?? '';
   const sourceMissing = !!sourceName && !sources.some(s => s.name === sourceName);
 
+  // The action's inline control (column 3), stacked vertically when it has more
+  // than one row (e.g. a source select plus its checkbox).
+  function renderControl() {
+    switch (action.type) {
+      case 'common.switch_to_scene':
+        return (
+          <>
+            <select
+              value={sceneName}
+              onChange={e => setProp('scene', { name: e.target.value })}
+              style={{ ...rowControlStyle, ...fieldBorder(!!errors?.scene) }}
+            >
+              <option value="">{$t('— select scene —')}</option>
+              {sceneMissing && (
+                <option value={sceneName}>{`${sceneName} (${$t('unavailable')})`}</option>
+              )}
+              {scenes.map(s => (
+                <option key={s.id} value={s.name}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+            {errors?.scene && <p style={errorTextStyle}>{errors.scene}</p>}
+          </>
+        );
+
+      case 'common.show_source':
+      case 'common.hide_source':
+        return (
+          <>
+            <select
+              value={sourceName}
+              onChange={e => setProp('source', { name: e.target.value })}
+              style={{ ...rowControlStyle, ...fieldBorder(!!errors?.source) }}
+            >
+              <option value="">{$t('— select source —')}</option>
+              {sourceMissing && (
+                <option value={sourceName}>{`${sourceName} (${$t('unavailable')})`}</option>
+              )}
+              {sources.map(s => (
+                <option key={s.id} value={s.name}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+            {errors?.source && <p style={errorTextStyle}>{errors.source}</p>}
+            {action.type === 'common.show_source' && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                <input
+                  type="checkbox"
+                  checked={!!props.hide_if_condition_false}
+                  onChange={e => setProp('hide_if_condition_false', e.target.checked)}
+                />
+                {$t('Hide if condition is false')}
+              </label>
+            )}
+            {action.type === 'common.hide_source' && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                <input
+                  type="checkbox"
+                  checked={!!props.show_if_condition_false}
+                  onChange={e => setProp('show_if_condition_false', e.target.checked)}
+                />
+                {$t('Show if condition is false')}
+              </label>
+            )}
+          </>
+        );
+
+      case 'common.wait_for_ms':
+        return (
+          <>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                height: CONTROL_HEIGHT,
+                fontSize: '12px',
+              }}
+            >
+              <span style={{ fontWeight: 600, color: 'var(--title)' }}>{$t('Duration')}</span>
+              <span style={{ color: 'var(--paragraph)' }}>
+                {((props.duration ?? 5000) / 1000).toFixed(1)} {$t('seconds')}
+              </span>
+            </div>
+            <input
+              type="range"
+              min={500}
+              max={60000}
+              step={500}
+              value={props.duration ?? 5000}
+              onChange={e => setProp('duration', Number(e.target.value))}
+              style={{ width: '100%' }}
+            />
+          </>
+        );
+
+      case 'co-host.instruction':
+        return (
+          <>
+            <input
+              type="text"
+              value={props.instruction ?? ''}
+              onChange={e => setProp('instruction', e.target.value)}
+              placeholder={$t('Instruction')}
+              maxLength={MAX_INSTRUCTION_LENGTH}
+              style={{ ...rowControlStyle, ...fieldBorder(!!errors?.instruction) }}
+            />
+            {errors?.instruction && <p style={errorTextStyle}>{errors.instruction}</p>}
+          </>
+        );
+
+      case 'co-host.comment':
+        return (
+          <p
+            style={{
+              margin: 0,
+              minHeight: CONTROL_HEIGHT,
+              display: 'flex',
+              alignItems: 'center',
+              fontSize: '12px',
+              color: 'var(--paragraph)',
+            }}
+          >
+            {$t('The co-host will automatically comment based on the active game condition.')}
+          </p>
+        );
+
+      default:
+        return null;
+    }
+  }
+
   return (
     <div
       style={{
-        background: 'var(--section)',
-        borderRadius: '4px',
-        padding: '10px',
-        marginBottom: '8px',
+        display: 'grid',
+        gridTemplateColumns: 'auto minmax(0, 1fr) minmax(0, 1fr) auto',
+        gap: '12px',
+        alignItems: 'start',
+        padding: '12px 0',
+        borderTop: isFirst ? 'none' : '1px solid var(--border)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-        <select
-          value={action.type}
-          onChange={e => setType(e.target.value as ActionType)}
-          style={{ ...inputStyle, flex: 1 }}
-        >
-          {ACTION_OPTIONS.map(o => (
-            <option key={o.type} value={o.type}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <button
-          className="button button--warn"
-          onClick={() => onRemove(index)}
-          style={{ fontSize: '12px', padding: '2px 8px' }}
-        >
-          ✕
-        </button>
+      <div style={gripCellStyle}>
+        <i
+          className="sa-action-drag-handle fas fa-grip-vertical"
+          style={dragHandleStyle}
+          title={$t('Drag to reorder')}
+        />
       </div>
 
-      {action.type === 'common.switch_to_scene' && (
-        <>
-          <select
-            value={sceneName}
-            onChange={e => setProp('scene', { name: e.target.value })}
-            style={{ ...inputStyle, width: '100%', ...fieldBorder(!!errors?.scene) }}
-          >
-            <option value="">{$t('— select scene —')}</option>
-            {sceneMissing && (
-              <option value={sceneName}>{`${sceneName} (${$t('unavailable')})`}</option>
-            )}
-            {scenes.map(s => (
-              <option key={s.id} value={s.name}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-          {errors?.scene && <p style={errorTextStyle}>{errors.scene}</p>}
-        </>
-      )}
+      <select
+        value={action.type}
+        onChange={e => setType(e.target.value as ActionType)}
+        style={rowControlStyle}
+      >
+        {ACTION_OPTIONS.map(o => (
+          <option key={o.type} value={o.type}>
+            {o.label}
+          </option>
+        ))}
+      </select>
 
-      {(action.type === 'common.show_source' || action.type === 'common.hide_source') && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <select
-            value={sourceName}
-            onChange={e => setProp('source', { name: e.target.value })}
-            style={{ ...inputStyle, width: '100%', ...fieldBorder(!!errors?.source) }}
-          >
-            <option value="">{$t('— select source —')}</option>
-            {sourceMissing && (
-              <option value={sourceName}>{`${sourceName} (${$t('unavailable')})`}</option>
-            )}
-            {sources.map(s => (
-              <option key={s.id} value={s.name}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-          {errors?.source && <p style={errorTextStyle}>{errors.source}</p>}
-          {action.type === 'common.show_source' && (
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
-              <input
-                type="checkbox"
-                checked={!!props.hide_if_condition_false}
-                onChange={e => setProp('hide_if_condition_false', e.target.checked)}
-              />
-              {$t('Hide if condition is false')}
-            </label>
-          )}
-          {action.type === 'common.hide_source' && (
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
-              <input
-                type="checkbox"
-                checked={!!props.show_if_condition_false}
-                onChange={e => setProp('show_if_condition_false', e.target.checked)}
-              />
-              {$t('Show if condition is false')}
-            </label>
-          )}
-        </div>
-      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+        {renderControl()}
+      </div>
 
-      {action.type === 'common.wait_for_ms' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <label style={{ fontSize: '12px' }}>
-            {$t('Duration')}: {((props.duration ?? 5000) / 1000).toFixed(1)}s
-          </label>
-          <input
-            type="range"
-            min={500}
-            max={60000}
-            step={500}
-            value={props.duration ?? 5000}
-            onChange={e => setProp('duration', Number(e.target.value))}
-            style={{ width: '100%' }}
+      <div style={actionsCellStyle}>
+        <i
+          className="icon-add"
+          style={iconButtonStyle}
+          title={$t('Insert a new action after this one')}
+          onClick={() => onInsert(index)}
+        />
+        {isFirst ? (
+          <span style={{ width: '16px', display: 'inline-block' }} />
+        ) : (
+          <i
+            className="icon-subtract"
+            style={iconButtonStyle}
+            title={$t('Remove this action')}
+            onClick={() => onRemove(index)}
           />
-        </div>
-      )}
-
-      {action.type === 'co-host.comment' && (
-        <p style={{ margin: 0, fontSize: '12px', color: 'var(--paragraph)' }}>
-          {$t('The co-host will automatically comment based on the active game condition.')}
-        </p>
-      )}
-
-      {action.type === 'co-host.instruction' && (
-        <>
-          <input
-            type="text"
-            value={props.instruction ?? ''}
-            onChange={e => setProp('instruction', e.target.value)}
-            placeholder={$t('Instruction')}
-            maxLength={MAX_INSTRUCTION_LENGTH}
-            style={{ ...inputStyle, width: '100%', ...fieldBorder(!!errors?.instruction) }}
-          />
-          {errors?.instruction && <p style={errorTextStyle}>{errors.instruction}</p>}
-        </>
-      )}
+        )}
+      </div>
     </div>
   );
 }
@@ -247,11 +360,15 @@ export default function AutomationEditor({ initial, onClose }: Props) {
   const [conditionType, setConditionType] = useState<ConditionType | ''>(() => {
     return (initial?.conditions?.[0]?.type as ConditionType) ?? '';
   });
-  const [actions, setActions] = useState<ExportedAction[]>(
-    (initial?.actions as ExportedAction[])?.filter(a => a?.type).map(withActionDefaults) ?? [
-      withActionDefaults({ type: 'common.save_replay' }),
-    ],
+  const [rows, setRows] = useState<ActionRow[]>(
+    () =>
+      (initial?.actions as ExportedAction[])?.filter(a => a?.type).map(makeRow) ?? [
+        makeRow({ type: 'common.save_replay' }),
+      ],
   );
+  // `rows` carries the stable drag keys; `actions` is the plain ordered list the
+  // validator and save payload consume.
+  const actions = rows.map(r => r.action);
   // Enable/disable is managed from the list, not here; new automations default
   // to enabled and edits preserve the existing value.
   const enabled = initial?.enabled ?? true;
@@ -302,15 +419,25 @@ export default function AutomationEditor({ initial, onClose }: Props) {
   }, [selectedGame]);
 
   function handleActionChange(index: number, action: ExportedAction) {
-    setActions(prev => prev.map((a, i) => (i === index ? action : a)));
+    setRows(prev => prev.map((r, i) => (i === index ? { ...r, action } : r)));
   }
 
   function handleActionRemove(index: number) {
-    setActions(prev => prev.filter((_, i) => i !== index));
+    setRows(prev => prev.filter((_, i) => i !== index));
   }
 
   function handleAddAction() {
-    setActions(prev => [...prev, withActionDefaults({ type: 'common.save_replay' })]);
+    setRows(prev => [...prev, makeRow({ type: 'common.save_replay' })]);
+  }
+
+  // Insert a new action directly after `afterIndex` so steps can be added
+  // between existing ones, not just appended.
+  function handleInsertAction(afterIndex: number) {
+    setRows(prev => {
+      const next = [...prev];
+      next.splice(afterIndex + 1, 0, makeRow({ type: 'common.save_replay' }));
+      return next;
+    });
   }
 
   async function handleSave() {
@@ -421,18 +548,29 @@ export default function AutomationEditor({ initial, onClose }: Props) {
         {/* Actions */}
         <div>
           <label style={{ ...labelStyle, marginBottom: '8px' }}>{$t('Do (Actions)')}</label>
-          {actions.map((action, i) => (
-            <ActionEditor
-              key={i}
-              action={action}
-              index={i}
-              scenes={scenes}
-              sources={sources}
-              errors={actionErrors[i]}
-              onChange={handleActionChange}
-              onRemove={handleActionRemove}
-            />
-          ))}
+          <ReactSortable<ActionRow>
+            list={rows}
+            setList={setRows}
+            handle=".sa-action-drag-handle"
+            animation={200}
+            tag="div"
+          >
+            {rows.map((row, i) => (
+              <div key={row.id}>
+                <ActionEditor
+                  action={row.action}
+                  index={i}
+                  isFirst={i === 0}
+                  scenes={scenes}
+                  sources={sources}
+                  errors={actionErrors[i]}
+                  onChange={handleActionChange}
+                  onInsert={handleInsertAction}
+                  onRemove={handleActionRemove}
+                />
+              </div>
+            ))}
+          </ReactSortable>
           {actionsError && <p style={errorTextStyle}>{actionsError}</p>}
           <button className="button button--default" onClick={handleAddAction} style={{ fontSize: '12px' }}>
             {$t('+ Add Action')}
