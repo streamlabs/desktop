@@ -67,7 +67,7 @@ export const ActionRegistry = {
     properties: {
       scene: new Properties.Scene({ label: 'Scene' }),
     },
-    process: async ({ conditionsMet, props, context }) => {
+    process: async ({ conditionsMet, props, context }: ActionProcessPayload) => {
       if (!conditionsMet || !props?.scene) return;
       context.switchScene(props.scene.id);
     },
@@ -81,7 +81,7 @@ export const ActionRegistry = {
       source: new Properties.Source({ label: 'Source' }),
       show_if_condition_false: new Properties.Checkbox({ label: 'Show if condition is false' }),
     },
-    process: async ({ conditionsMet, props, context }) => {
+    process: async ({ conditionsMet, props, context }: ActionProcessPayload) => {
       if (!props?.source) return;
       if (!conditionsMet) {
         if (props.show_if_condition_false) {
@@ -101,7 +101,7 @@ export const ActionRegistry = {
       source: new Properties.Source({ label: 'Source' }),
       hide_if_condition_false: new Properties.Checkbox({ label: 'Hide if condition is false' }),
     },
-    process: async ({ conditionsMet, props, context }) => {
+    process: async ({ conditionsMet, props, context }: ActionProcessPayload) => {
       if (!props?.source) return;
       if (!conditionsMet) {
         if (props.hide_if_condition_false) {
@@ -117,7 +117,7 @@ export const ActionRegistry = {
     group: 'common',
     name: 'save_replay',
     label: 'Save Replay',
-    process: async ({ conditionsMet, context }) => {
+    process: async ({ conditionsMet, context }: ActionProcessPayload) => {
       if (!conditionsMet) return;
       await context.saveReplay();
     },
@@ -137,7 +137,7 @@ export const ActionRegistry = {
         format: (ms: number) => `${(ms / 1000).toFixed(1)} ${ms === 1000 ? 'second' : 'seconds'}`,
       }),
     },
-    process: async ({ conditionsMet, props }) => {
+    process: async ({ conditionsMet, props }: ActionProcessPayload) => {
       if (!conditionsMet || typeof props?.duration !== 'number') return;
       await sleep(props.duration);
     },
@@ -148,7 +148,7 @@ export const ActionRegistry = {
     name: 'comment',
     label: 'Co-host Comment',
     properties: {},
-    process: async ({ conditionsMet, conditions }) => {
+    process: async ({ conditionsMet, conditions }: ActionProcessPayload) => {
       if (!conditionsMet) return;
       for (const c of conditions) {
         const instruction = Instructions[c.type as keyof typeof Instructions];
@@ -164,12 +164,12 @@ export const ActionRegistry = {
     properties: {
       instruction: new Properties.Text({ label: 'Instruction' }),
     },
-    process: async ({ conditionsMet, props }) => {
+    process: async ({ conditionsMet, props }: ActionProcessPayload) => {
       if (!conditionsMet || !props?.instruction) return;
       console.log('[AutomationsEngine] co-host.instruction', { instruction: props.instruction });
     },
   },
-} as const satisfies Record<string, ActionDef>;
+} as const;
 
 export type ActionType = keyof typeof ActionRegistry;
 
@@ -195,7 +195,9 @@ export function defaultExportedProps(type: ActionType): ExportedActionProps | un
   if (!('properties' in def) || !def.properties) return undefined;
 
   const props: Partial<ExportedActionProps> = {};
-  for (const [key, property] of Object.entries(def.properties as Record<string, PropertyInstance>)) {
+  for (const [key, property] of Object.entries(
+    def.properties as Record<string, PropertyInstance>,
+  )) {
     const value = (property as any).config?.default;
     if (value !== undefined) props[key as keyof ExportedActionProps] = value as never;
   }
@@ -217,15 +219,13 @@ const valueFromExport = (
   property: PropertyInstance,
   v: unknown,
   context: ActionContext,
-): Promise<unknown> | unknown =>
-  (property as any).valueFromExport(v, context);
+): Promise<unknown> | unknown => (property as any).valueFromExport(v, context);
 
 const valueToExport = (
   property: PropertyInstance,
   v: unknown,
   context: ActionContext,
-): Promise<unknown> | unknown =>
-  (property as any).valueToExport(v, context);
+): Promise<unknown> | unknown => (property as any).valueToExport(v, context);
 
 const importAction = async (exported: ExportedAction, context: ActionContext): Promise<Action> => {
   const def = ActionRegistry[exported.type];
@@ -236,9 +236,15 @@ const importAction = async (exported: ExportedAction, context: ActionContext): P
   }
 
   const props: Partial<ActionProps> = {};
-  for (const [key, property] of Object.entries(def.properties as Record<string, PropertyInstance>)) {
+  for (const [key, property] of Object.entries(
+    def.properties as Record<string, PropertyInstance>,
+  )) {
     const propValue = exported.props?.[key as keyof ExportedActionProps] as unknown;
-    props[key as keyof ActionProps] = (await valueFromExport(property, propValue, context)) as never;
+    props[key as keyof ActionProps] = (await valueFromExport(
+      property,
+      propValue,
+      context,
+    )) as never;
   }
 
   return {
@@ -257,9 +263,15 @@ const exportAction = async (action: Action, context: ActionContext): Promise<Exp
   }
 
   const props: Partial<ExportedActionProps> = {};
-  for (const [key, property] of Object.entries(def.properties as Record<string, PropertyInstance>)) {
+  for (const [key, property] of Object.entries(
+    def.properties as Record<string, PropertyInstance>,
+  )) {
     const propValue = action.props?.[key as keyof ActionProps] as unknown;
-    props[key as keyof ExportedActionProps] = (await valueToExport(property, propValue, context)) as never;
+    props[key as keyof ExportedActionProps] = (await valueToExport(
+      property,
+      propValue,
+      context,
+    )) as never;
   }
 
   return {
@@ -295,6 +307,13 @@ export class Actions {
     const def = ActionRegistry[action.type];
     if (!def) throw new Error(`Action ${action.type} not found`);
 
-    return def.process({ conditionsMet, conditions, context, props: action.props, state, prevState });
+    return def.process({
+      conditionsMet,
+      conditions,
+      context,
+      props: action.props,
+      state,
+      prevState,
+    });
   }
 }

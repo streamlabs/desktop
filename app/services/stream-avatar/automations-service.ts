@@ -86,7 +86,7 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
       const automations = await this.agentSocketService.getAutomations();
       console.log('[AutomationsService] fetchAll() got', automations?.length, 'automations');
       this.SET_AUTOMATIONS(automations as TAutomationExport[]);
-    } catch (e) {
+    } catch (e: unknown) {
       this.SET_LOADING(false);
       console.error('[AutomationsService] fetchAll failed', e);
     }

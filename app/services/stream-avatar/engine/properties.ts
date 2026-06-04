@@ -12,48 +12,62 @@ abstract class PropertyBase<T, Config extends Record<string, any> & { default?: 
   }
 
   valueFromExport(v: E, _context: ActionContext): MaybePromise<T> {
-    return v as unknown as T;
+    return (v as unknown) as T;
   }
   valueToExport(v: T, _context: ActionContext): MaybePromise<E> {
-    return v as unknown as E;
+    return (v as unknown) as E;
   }
 }
 
 class SceneProperty extends PropertyBase<{ id: string }, { label: string }, { name: string }> {
-  override valueFromExport(v: { name: string }, { resolveSceneId }: ActionContext) {
+  valueFromExport(v: { name: string }, { resolveSceneId }: ActionContext) {
     return resolveSceneId(v).then(scene => ({ id: scene.id }));
   }
-  override valueToExport(v: { id: string }, { resolveSceneId }: ActionContext) {
+  valueToExport(v: { id: string }, { resolveSceneId }: ActionContext) {
     return resolveSceneId(v).then(scene => ({ name: scene.name }));
   }
 }
 
 class SourceProperty extends PropertyBase<{ id: string }, { label: string }, { name: string }> {
-  override valueFromExport(v: { name: string }, { resolveSourceId }: ActionContext) {
+  valueFromExport(v: { name: string }, { resolveSourceId }: ActionContext) {
     return resolveSourceId(v).then(source => ({ id: source.id }));
   }
-  override valueToExport(v: { id: string }, { resolveSourceId }: ActionContext) {
+  valueToExport(v: { id: string }, { resolveSourceId }: ActionContext) {
     return resolveSourceId(v).then(source => ({ name: source.name }));
   }
 }
 
 class SliderProperty extends PropertyBase<
   number,
-  { label: string; default: number; min: number; max: number; step: number; format?: (v: number) => string }
+  {
+    label: string;
+    default: number;
+    min: number;
+    max: number;
+    step: number;
+    format?: (v: number) => string;
+  }
 > {}
 
 class SliderRangeProperty extends PropertyBase<
   [number, number],
-  { label: string; default: [number, number]; min: number; max: number; step: number; format?: (v: [number, number]) => string }
+  {
+    label: string;
+    default: [number, number];
+    min: number;
+    max: number;
+    step: number;
+    format?: (v: [number, number]) => string;
+  }
 > {}
 
 class CheckboxProperty extends PropertyBase<boolean, { label: string }> {}
 
 class TextProperty extends PropertyBase<string, { label: string }> {
-  override valueFromExport(v: string) {
+  valueFromExport(v: string) {
     return v;
   }
-  override valueToExport(v: string) {
+  valueToExport(v: string) {
     return v;
   }
 }
@@ -68,4 +82,4 @@ export const Properties = {
 } as const;
 
 export type PropertyMap = Record<string, PropertyInstance> | undefined;
-export type PropertyInstance = InstanceType<(typeof Properties)[keyof typeof Properties]>;
+export type PropertyInstance = InstanceType<typeof Properties[keyof typeof Properties]>;

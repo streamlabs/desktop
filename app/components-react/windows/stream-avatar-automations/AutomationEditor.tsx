@@ -196,7 +196,9 @@ function ActionEditor({
             </select>
             {errors?.source && <p style={errorTextStyle}>{errors.source}</p>}
             {action.type === 'common.show_source' && (
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+              <label
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}
+              >
                 <input
                   type="checkbox"
                   checked={!!props.hide_if_condition_false}
@@ -206,7 +208,9 @@ function ActionEditor({
               </label>
             )}
             {action.type === 'common.hide_source' && (
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+              <label
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}
+              >
                 <input
                   type="checkbox"
                   checked={!!props.show_if_condition_false}
@@ -466,12 +470,22 @@ export default function AutomationEditor({ initial, onClose }: Props) {
         await AutomationsService.actions.create(payload);
       }
       onClose();
-    } catch (e: any) {
-      setError(e?.message ?? $t('Failed to save automation.'));
+    } catch (e: unknown) {
+      setError((e as any)?.message ?? $t('Failed to save automation.'));
     } finally {
       setSaving(false);
     }
   }
+
+  const getButtonText = () => {
+    if (saving) {
+      return $t('Saving...');
+    }
+    if (initial) {
+      return $t('Save Changes');
+    }
+    return $t('Create Automation');
+  };
 
   const footer = (
     <>
@@ -484,7 +498,7 @@ export default function AutomationEditor({ initial, onClose }: Props) {
         onClick={handleSave}
         disabled={saving}
       >
-        {saving ? $t('Saving...') : initial ? $t('Save Changes') : $t('Create Automation')}
+        {getButtonText()}
       </button>
     </>
   );
@@ -533,7 +547,12 @@ export default function AutomationEditor({ initial, onClose }: Props) {
             <select
               value={conditionType}
               onChange={e => setConditionType(e.target.value as ConditionType)}
-              style={{ ...inputStyle, padding: '6px 8px', flex: 1, ...fieldBorder(!!conditionError) }}
+              style={{
+                ...inputStyle,
+                padding: '6px 8px',
+                flex: 1,
+                ...fieldBorder(!!conditionError),
+              }}
             >
               {conditionOptions.length === 0 && (
                 <option value="">{$t('No conditions available')}</option>
@@ -575,7 +594,11 @@ export default function AutomationEditor({ initial, onClose }: Props) {
             ))}
           </ReactSortable>
           {actionsError && <p style={errorTextStyle}>{actionsError}</p>}
-          <button className="button button--default" onClick={handleAddAction} style={{ fontSize: '12px' }}>
+          <button
+            className="button button--default"
+            onClick={handleAddAction}
+            style={{ fontSize: '12px' }}
+          >
             {$t('+ Add Action')}
           </button>
         </div>

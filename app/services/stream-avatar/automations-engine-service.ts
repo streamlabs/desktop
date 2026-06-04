@@ -121,7 +121,7 @@ export class AutomationsEngineService extends Service {
             state: this.gameState,
             prevState: this.prevState,
           });
-        } catch (error) {
+        } catch (error: unknown) {
           console.warn('[AutomationsEngine] simulate action failed', {
             action: exportedAction.type,
             error,
@@ -303,7 +303,7 @@ export class AutomationsEngineService extends Service {
             state,
             prevState,
           });
-        } catch (error) {
+        } catch (error: unknown) {
           console.warn('[AutomationsEngine] Action failed', { action: exportedAction.type, error });
         }
       }

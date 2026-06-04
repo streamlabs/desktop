@@ -100,7 +100,7 @@ export class AgentSocketService extends Service {
               (this.socket as any).io.opts.query = { token: freshJwt };
               this.socket.connect();
             }
-          } catch (e) {
+          } catch (e: unknown) {
             console.error('[AgentSocket] token refresh on connect_error failed:', e);
           }
         }
@@ -108,13 +108,16 @@ export class AgentSocketService extends Service {
 
       console.log('[AgentSocket] calling socket.connect()...');
       this.socket.connect();
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('[AgentSocket] connect() threw:', e);
     }
   }
 
   private async call<T>(event: string, ...args: any[]): Promise<T> {
-    console.log(`[AgentSocket] call("${event}") awaiting ready... socket connected:`, this.socket?.connected);
+    console.log(
+      `[AgentSocket] call("${event}") awaiting ready... socket connected:`,
+      this.socket?.connected,
+    );
     await this.readyPromise;
     console.log(`[AgentSocket] call("${event}") ready resolved, emitting`);
     return new Promise<T>((resolve, reject) => {
