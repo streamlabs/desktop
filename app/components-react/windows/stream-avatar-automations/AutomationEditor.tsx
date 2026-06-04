@@ -488,6 +488,7 @@ export default function AutomationEditor({ initial, onClose }: Props) {
               onChange={val => setSelectedGame(val)}
               style={{ flex: '0 0 auto' }}
               options={GAME_OPTIONS}
+              dropdownMatchSelectWidth={false}
             />
             <Select
               value={conditionType || undefined}
