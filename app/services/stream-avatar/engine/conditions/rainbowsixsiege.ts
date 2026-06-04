@@ -1,4 +1,5 @@
 import { ConditionDefinition } from '.';
+import { onEvent } from './shared';
 
 export type RainbowSixSiegeConditionPropsMap = {
   //----------------------
@@ -28,53 +29,24 @@ export const RainbowSixSiegeConditions: {
   [K in RainbowSixSiegeConditionType]: ConditionDefinition<K>;
 } = {
   'rainbow_six_siege.round_start': {
-    group: 'rainbow_six_siege',
-    name: 'round_start',
     label: 'Round Started (Preparation Phase)',
-    evaluate: ({ state }) => state.pendingEvents.has('game_start'),
+    evaluate: onEvent('game_start'),
   },
 
   'rainbow_six_siege.action_phase': {
-    group: 'rainbow_six_siege',
-    name: 'action_phase',
     label: 'Action Phase Started',
-    evaluate: ({ state }) => state.pendingEvents.has('action_phase'),
+    evaluate: onEvent('action_phase'),
   },
 
-  'rainbow_six_siege.round_end': {
-    group: 'rainbow_six_siege',
-    name: 'round_end',
-    label: 'Round Ended',
-    evaluate: ({ state }) => state.pendingEvents.has('game_end'),
-  },
+  'rainbow_six_siege.round_end': { label: 'Round Ended', evaluate: onEvent('game_end') },
 
-  'rainbow_six_siege.victory': {
-    group: 'rainbow_six_siege',
-    name: 'victory',
-    label: 'Round Won',
-    evaluate: ({ state }) => state.pendingEvents.has('victory'),
-  },
+  'rainbow_six_siege.victory': { label: 'Round Won', evaluate: onEvent('victory') },
 
-  'rainbow_six_siege.defeat': {
-    group: 'rainbow_six_siege',
-    name: 'defeat',
-    label: 'Round Lost',
-    evaluate: ({ state }) => state.pendingEvents.has('defeat'),
-  },
+  'rainbow_six_siege.defeat': { label: 'Round Lost', evaluate: onEvent('defeat') },
 
-  'rainbow_six_siege.elimination': {
-    group: 'rainbow_six_siege',
-    name: 'elimination',
-    label: 'Enemy Eliminated',
-    evaluate: ({ state }) => state.pendingEvents.has('elimination'),
-  },
+  'rainbow_six_siege.elimination': { label: 'Enemy Eliminated', evaluate: onEvent('elimination') },
 
-  'rainbow_six_siege.player_eliminated': {
-    group: 'rainbow_six_siege',
-    name: 'player_eliminated',
-    label: 'Player Eliminated',
-    evaluate: ({ state }) => state.pendingEvents.has('death'),
-  },
-} as const;
+  'rainbow_six_siege.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
+};
 
 export default RainbowSixSiegeConditions;

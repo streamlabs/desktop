@@ -1,5 +1,5 @@
-import { Properties } from '../properties';
 import { ConditionDefinition } from '.';
+import { onEvent, lowHealth, eliminationCount } from './shared';
 
 export type ValorantConditionPropsMap = {
   //----------------------
@@ -29,74 +29,19 @@ export const ValorantConditions: {
   [K in ValorantConditionType]: ConditionDefinition<K>;
 } = {
   // Game Flow
-  'valorant.round_started': {
-    group: 'valorant',
-    name: 'round_started',
-    label: 'Round Started',
-    evaluate: ({ state }) => state.pendingEvents.has('game_start'),
-  },
+  'valorant.round_started': { label: 'Round Started', evaluate: onEvent('game_start') },
 
-  // Health / Shield Conditions
-  'valorant.low_health': {
-    group: 'valorant',
-    name: 'low_health',
-    label: 'Low Health',
-    evaluate: ({ state }) => {
-      const { health = 0 } = state;
-      return health > 0 && health < 50;
-    },
-  },
+  // Health / Shield
+  'valorant.low_health': { label: 'Low Health', evaluate: lowHealth },
 
   // Player
-  'valorant.victory': {
-    group: 'valorant',
-    name: 'victory',
-    label: 'Victory',
-    evaluate: ({ state }) => state.pendingEvents.has('victory'),
-  },
-
-  'valorant.defeat': {
-    group: 'valorant',
-    name: 'defeat',
-    label: 'Defeat',
-    evaluate: ({ state }) => state.pendingEvents.has('defeat'),
-  },
-
-  'valorant.player_eliminated': {
-    group: 'valorant',
-    name: 'player_eliminated',
-    label: 'Player Eliminated',
-    evaluate: ({ state }) => state.pendingEvents.has('death'),
-  },
+  'valorant.victory': { label: 'Victory', evaluate: onEvent('victory') },
+  'valorant.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
+  'valorant.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
 
   // Enemy
-  'valorant.elimination': {
-    group: 'valorant',
-    name: 'elimination',
-    label: 'Enemy Eliminated',
-    evaluate: ({ state }) => state.pendingEvents.has('elimination'),
-  },
-
-  'valorant.elimination_count': {
-    group: 'valorant',
-    name: 'elimination_count',
-    label: 'Enemy Elimination Count',
-    properties: {
-      elimination_count: new Properties.SliderRange({
-        label: '# of Eliminations',
-        min: 0,
-        max: 50,
-        default: [5, 5],
-        step: 1,
-      }),
-    },
-    evaluate: ({ state, prevState, props }) => {
-      const [min, max] = props?.elimination_count ?? [5, 5];
-      const { eliminations = 0 } = state;
-      const { eliminations: prevEliminations = 0 } = prevState;
-      return eliminations >= min && prevEliminations <= max;
-    },
-  },
-} as const;
+  'valorant.elimination': { label: 'Enemy Eliminated', evaluate: onEvent('elimination') },
+  'valorant.elimination_count': eliminationCount(),
+};
 
 export default ValorantConditions;

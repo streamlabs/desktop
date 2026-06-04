@@ -1,4 +1,5 @@
 import { ConditionDefinition } from '.';
+import { onEvent } from './shared';
 
 export type MarathonConditionPropsMap = {
   //----------------------
@@ -28,61 +29,21 @@ export type MarathonConditionProps<T extends MarathonConditionType> = MarathonCo
 export const MarathonConditions: {
   [K in MarathonConditionType]: ConditionDefinition<K>;
 } = {
-  'marathon.game_start': {
-    group: 'marathon',
-    name: 'game_start',
-    label: 'Match Started',
-    evaluate: ({ state }) => state.pendingEvents.has('game_start'),
-  },
+  'marathon.game_start': { label: 'Match Started', evaluate: onEvent('game_start') },
 
-  'marathon.game_end': {
-    group: 'marathon',
-    name: 'game_end',
-    label: 'Match Ended',
-    evaluate: ({ state }) => state.pendingEvents.has('game_end'),
-  },
+  'marathon.game_end': { label: 'Match Ended', evaluate: onEvent('game_end') },
 
-  'marathon.victory': {
-    group: 'marathon',
-    name: 'victory',
-    label: 'Exfiltrated (Victory)',
-    evaluate: ({ state }) => state.pendingEvents.has('victory'),
-  },
+  'marathon.victory': { label: 'Exfiltrated (Victory)', evaluate: onEvent('victory') },
 
-  'marathon.defeat': {
-    group: 'marathon',
-    name: 'defeat',
-    label: 'Eliminated (Defeat)',
-    evaluate: ({ state }) => state.pendingEvents.has('defeat'),
-  },
+  'marathon.defeat': { label: 'Eliminated (Defeat)', evaluate: onEvent('defeat') },
 
-  'marathon.player_knocked': {
-    group: 'marathon',
-    name: 'player_knocked',
-    label: 'Player Knocked',
-    evaluate: ({ state }) => state.pendingEvents.has('player_knocked'),
-  },
+  'marathon.player_knocked': { label: 'Player Knocked', evaluate: onEvent('player_knocked') },
 
-  'marathon.player_eliminated': {
-    group: 'marathon',
-    name: 'player_eliminated',
-    label: 'Player Eliminated',
-    evaluate: ({ state }) => state.pendingEvents.has('death'),
-  },
+  'marathon.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
 
-  'marathon.elimination': {
-    group: 'marathon',
-    name: 'elimination',
-    label: 'Runner Eliminated',
-    evaluate: ({ state }) => state.pendingEvents.has('elimination'),
-  },
+  'marathon.elimination': { label: 'Runner Eliminated', evaluate: onEvent('elimination') },
 
-  'marathon.knockout': {
-    group: 'marathon',
-    name: 'knockout',
-    label: 'Runner Knocked',
-    evaluate: ({ state }) => state.pendingEvents.has('knockout'),
-  },
-} as const;
+  'marathon.knockout': { label: 'Runner Knocked', evaluate: onEvent('knockout') },
+};
 
 export default MarathonConditions;

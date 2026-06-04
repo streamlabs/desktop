@@ -74,12 +74,15 @@ const ACTION_OPTIONS = Object.entries(ActionRegistry).map(([type, def]) => ({
   label: def.label,
 }));
 
-const GAME_OPTIONS = Object.entries(GAME_NAMES).map(([id, name]) => ({ id, name }));
+const GAME_OPTIONS = Object.entries(GAME_NAMES)
+  .map(([id, name]) => ({ id, name }))
+  .sort((a, b) => a.name.localeCompare(b.name));
 
 function getConditionOptions(gameId: string) {
   return Object.entries(Conditions)
     .filter(([, def]) => def.group === gameId && !def.disabled)
-    .map(([key, def]) => ({ type: key as ConditionType, label: def.label }));
+    .map(([key, def]) => ({ type: key as ConditionType, label: def.label }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 }
 
 const inputStyle: CSSProperties = {

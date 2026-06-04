@@ -1,4 +1,5 @@
 import { ConditionDefinition } from '.';
+import { onEvent } from './shared';
 
 export type Overwatch2ConditionPropsMap = {
   //----------------------
@@ -26,47 +27,17 @@ export type Overwatch2ConditionProps<
 export const Overwatch2Conditions: {
   [K in Overwatch2ConditionType]: ConditionDefinition<K>;
 } = {
-  'overwatch_2.round_start': {
-    group: 'overwatch_2',
-    name: 'round_start',
-    label: 'Round Started',
-    evaluate: ({ state }) => state.pendingEvents.has('game_start'),
-  },
+  'overwatch_2.round_start': { label: 'Round Started', evaluate: onEvent('game_start') },
 
-  'overwatch_2.round_end': {
-    group: 'overwatch_2',
-    name: 'round_end',
-    label: 'Round Ended',
-    evaluate: ({ state }) => state.pendingEvents.has('game_end'),
-  },
+  'overwatch_2.round_end': { label: 'Round Ended', evaluate: onEvent('game_end') },
 
-  'overwatch_2.victory': {
-    group: 'overwatch_2',
-    name: 'victory',
-    label: 'Victory',
-    evaluate: ({ state }) => state.pendingEvents.has('victory'),
-  },
+  'overwatch_2.victory': { label: 'Victory', evaluate: onEvent('victory') },
 
-  'overwatch_2.defeat': {
-    group: 'overwatch_2',
-    name: 'defeat',
-    label: 'Defeat',
-    evaluate: ({ state }) => state.pendingEvents.has('defeat'),
-  },
+  'overwatch_2.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
 
-  'overwatch_2.elimination': {
-    group: 'overwatch_2',
-    name: 'elimination',
-    label: 'Elimination',
-    evaluate: ({ state }) => state.pendingEvents.has('elimination'),
-  },
+  'overwatch_2.elimination': { label: 'Elimination', evaluate: onEvent('elimination') },
 
-  'overwatch_2.player_eliminated': {
-    group: 'overwatch_2',
-    name: 'player_eliminated',
-    label: 'Player Eliminated',
-    evaluate: ({ state }) => state.pendingEvents.has('death'),
-  },
-} as const;
+  'overwatch_2.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
+};
 
 export default Overwatch2Conditions;

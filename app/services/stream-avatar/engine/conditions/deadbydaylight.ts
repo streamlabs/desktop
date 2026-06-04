@@ -1,4 +1,5 @@
 import { ConditionDefinition } from '.';
+import { onEvent } from './shared';
 
 export type DeadByDaylightConditionPropsMap = {
   //----------------------
@@ -27,54 +28,28 @@ export type DeadByDaylightConditionProps<
 export const DeadByDaylightConditions: {
   [K in DeadByDaylightConditionType]: ConditionDefinition<K>;
 } = {
-  'dead_by_daylight.game_start': {
-    group: 'dead_by_daylight',
-    name: 'game_start',
-    label: 'Match Started',
-    evaluate: ({ state }) => state.pendingEvents.has('game_start'),
-  },
+  'dead_by_daylight.game_start': { label: 'Match Started', evaluate: onEvent('game_start') },
 
-  'dead_by_daylight.game_end': {
-    group: 'dead_by_daylight',
-    name: 'game_end',
-    label: 'Match Ended',
-    evaluate: ({ state }) => state.pendingEvents.has('game_end'),
-  },
+  'dead_by_daylight.game_end': { label: 'Match Ended', evaluate: onEvent('game_end') },
 
-  'dead_by_daylight.victory': {
-    group: 'dead_by_daylight',
-    name: 'victory',
-    label: 'Victory',
-    evaluate: ({ state }) => state.pendingEvents.has('victory'),
-  },
+  'dead_by_daylight.victory': { label: 'Victory', evaluate: onEvent('victory') },
 
   'dead_by_daylight.player_eliminated': {
-    group: 'dead_by_daylight',
-    name: 'player_eliminated',
     label: 'Player Sacrificed / Eliminated',
-    evaluate: ({ state }) => state.pendingEvents.has('death'),
+    evaluate: onEvent('death'),
   },
 
   'dead_by_daylight.elimination': {
-    group: 'dead_by_daylight',
-    name: 'elimination',
     label: 'Survivor Sacrificed (Killer)',
-    evaluate: ({ state }) => state.pendingEvents.has('elimination'),
+    evaluate: onEvent('elimination'),
   },
 
   'dead_by_daylight.hooked_survivor': {
-    group: 'dead_by_daylight',
-    name: 'hooked_survivor',
     label: 'Survivor Hooked',
-    evaluate: ({ state }) => state.pendingEvents.has('hooked_survivor'),
+    evaluate: onEvent('hooked_survivor'),
   },
 
-  'dead_by_daylight.escaped': {
-    group: 'dead_by_daylight',
-    name: 'escaped',
-    label: 'Survivor Escaped',
-    evaluate: ({ state }) => state.pendingEvents.has('escaped'),
-  },
-} as const;
+  'dead_by_daylight.escaped': { label: 'Survivor Escaped', evaluate: onEvent('escaped') },
+};
 
 export default DeadByDaylightConditions;

@@ -1,4 +1,5 @@
 import { ConditionDefinition } from '.';
+import { onEvent } from './shared';
 
 export type LeagueOfLegendsConditionPropsMap = {
   //----------------------
@@ -32,75 +33,37 @@ export type LeagueOfLegendsConditionProps<
 export const LeagueOfLegendsConditions: {
   [K in LeagueOfLegendsConditionType]: ConditionDefinition<K>;
 } = {
-  'league_of_legends.game_start': {
-    group: 'league_of_legends',
-    name: 'game_start',
-    label: 'Game Started',
-    evaluate: ({ state }) => state.pendingEvents.has('game_start'),
-  },
+  'league_of_legends.game_start': { label: 'Game Started', evaluate: onEvent('game_start') },
 
-  'league_of_legends.game_end': {
-    group: 'league_of_legends',
-    name: 'game_end',
-    label: 'Game Ended',
-    evaluate: ({ state }) => state.pendingEvents.has('game_end'),
-  },
+  'league_of_legends.game_end': { label: 'Game Ended', evaluate: onEvent('game_end') },
 
-  'league_of_legends.victory': {
-    group: 'league_of_legends',
-    name: 'victory',
-    label: 'Victory',
-    evaluate: ({ state }) => state.pendingEvents.has('victory'),
-  },
+  'league_of_legends.victory': { label: 'Victory', evaluate: onEvent('victory') },
 
-  'league_of_legends.defeat': {
-    group: 'league_of_legends',
-    name: 'defeat',
-    label: 'Defeat',
-    evaluate: ({ state }) => state.pendingEvents.has('defeat'),
-  },
+  'league_of_legends.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
 
-  'league_of_legends.elimination': {
-    group: 'league_of_legends',
-    name: 'elimination',
-    label: 'Champion Kill',
-    evaluate: ({ state }) => state.pendingEvents.has('elimination'),
-  },
+  'league_of_legends.elimination': { label: 'Champion Kill', evaluate: onEvent('elimination') },
 
-  'league_of_legends.player_eliminated': {
-    group: 'league_of_legends',
-    name: 'player_eliminated',
-    label: 'Player Died',
-    evaluate: ({ state }) => state.pendingEvents.has('death'),
-  },
+  'league_of_legends.player_eliminated': { label: 'Player Died', evaluate: onEvent('death') },
 
   'league_of_legends.objective_ally': {
-    group: 'league_of_legends',
-    name: 'objective_ally',
     label: 'Ally Team Secured Objective',
-    evaluate: ({ state }) => state.pendingEvents.has('objective_ally'),
+    evaluate: onEvent('objective_ally'),
   },
 
   'league_of_legends.objective_enemy': {
-    group: 'league_of_legends',
-    name: 'objective_enemy',
     label: 'Enemy Team Secured Objective',
-    evaluate: ({ state }) => state.pendingEvents.has('objective_enemy'),
+    evaluate: onEvent('objective_enemy'),
   },
 
   'league_of_legends.enemy_turret_destroyed': {
-    group: 'league_of_legends',
-    name: 'enemy_turret_destroyed',
     label: 'Enemy Turret Destroyed',
-    evaluate: ({ state }) => state.pendingEvents.has('enemy_turret_destroyed'),
+    evaluate: onEvent('enemy_turret_destroyed'),
   },
 
   'league_of_legends.ally_turret_destroyed': {
-    group: 'league_of_legends',
-    name: 'ally_turret_destroyed',
     label: 'Ally Turret Destroyed',
-    evaluate: ({ state }) => state.pendingEvents.has('ally_turret_destroyed'),
+    evaluate: onEvent('ally_turret_destroyed'),
   },
-} as const;
+};
 
 export default LeagueOfLegendsConditions;

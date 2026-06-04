@@ -1,4 +1,5 @@
 import { ConditionDefinition } from '.';
+import { onEvent } from './shared';
 
 export type WarThunderConditionPropsMap = {
   //----------------------
@@ -17,12 +18,7 @@ export type WarThunderConditionProps<
 export const WarThunderConditions: {
   [K in WarThunderConditionType]: ConditionDefinition<K>;
 } = {
-  'war_thunder.elimination': {
-    group: 'war_thunder',
-    name: 'elimination',
-    label: 'Target Destroyed',
-    evaluate: ({ state }) => state.pendingEvents.has('elimination'),
-  },
-} as const;
+  'war_thunder.elimination': { label: 'Target Destroyed', evaluate: onEvent('elimination') },
+};
 
 export default WarThunderConditions;

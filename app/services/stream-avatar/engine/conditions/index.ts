@@ -57,38 +57,17 @@ export type ConditionPropsMap = FortniteConditionPropsMap &
   ForzaHorizon6ConditionPropsMap &
   EnshroudedConditionPropsMap;
 
-export type ConditionType =
-  | keyof FortniteConditionPropsMap
-  | keyof PubgConditionPropsMap
-  | keyof ValorantConditionPropsMap
-  | keyof CounterStrike2ConditionPropsMap
-  | keyof WarzoneConditionPropsMap
-  | keyof ArcRaidersConditionPropsMap
-  | keyof BlackOps6ConditionPropsMap
-  | keyof RocketLeagueConditionPropsMap
-  | keyof MinecraftConditionPropsMap
-  | keyof ApexLegendsConditionPropsMap
-  | keyof Battlefield6ConditionPropsMap
-  | keyof DeadByDaylightConditionPropsMap
-  | keyof DeadlockConditionPropsMap
-  | keyof Dota2ConditionPropsMap
-  | keyof LeagueOfLegendsConditionPropsMap
-  | keyof MarvelRivalsConditionPropsMap
-  | keyof Overwatch2ConditionPropsMap
-  | keyof RainbowSixSiegeConditionPropsMap
-  | keyof WarThunderConditionPropsMap
-  | keyof MarathonConditionPropsMap
-  | keyof F125ConditionPropsMap
-  | keyof EaSportsFc26ConditionPropsMap
-  | keyof Nba2k26ConditionPropsMap
-  | keyof ForzaHorizon6ConditionPropsMap
-  | keyof EnshroudedConditionPropsMap;
+export type ConditionType = keyof ConditionPropsMap;
 
 export type ConditionProps<T extends ConditionType> = ConditionPropsMap[T];
 
+/**
+ * Shape each per-game file declares for a condition. `group` is intentionally
+ * absent — it is always the registry key's prefix (e.g. `fortnite` in
+ * `fortnite.victory`) and is injected once when {@link Conditions} is built,
+ * rather than repeated on every entry.
+ */
 export type ConditionDefinition<K extends ConditionType> = {
-  group: string;
-  name: string;
   label: string;
   disabled?: boolean;
   properties?: Record<string, PropertyInstance>;
@@ -97,6 +76,11 @@ export type ConditionDefinition<K extends ConditionType> = {
     prevState: GameState;
     props: ConditionPropsMap[K];
   }) => boolean;
+};
+
+/** A condition as exposed by the registry, with its derived `group`. */
+export type RegisteredCondition<K extends ConditionType> = ConditionDefinition<K> & {
+  group: string;
 };
 
 const perGameConditions = {
@@ -127,7 +111,12 @@ const perGameConditions = {
   ...EnshroudedConditions,
 } as const;
 
-export const Conditions: { [K in ConditionType]: ConditionDefinition<K> } = perGameConditions;
+export const Conditions = Object.fromEntries(
+  Object.entries(perGameConditions).map(([type, def]) => [
+    type,
+    { ...def, group: type.split('.')[0] },
+  ]),
+) as { [K in ConditionType]: RegisteredCondition<K> };
 
 export const GAME_NAMES: Record<string, string> = {
   fortnite: 'Fortnite',

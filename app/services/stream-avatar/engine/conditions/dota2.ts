@@ -1,4 +1,5 @@
 import { ConditionDefinition } from '.';
+import { onEvent } from './shared';
 
 export type Dota2ConditionPropsMap = {
   //----------------------
@@ -28,61 +29,24 @@ export type Dota2ConditionProps<T extends Dota2ConditionType> = Dota2ConditionPr
 export const Dota2Conditions: {
   [K in Dota2ConditionType]: ConditionDefinition<K>;
 } = {
-  'dota_2.game_start': {
-    group: 'dota_2',
-    name: 'game_start',
-    label: 'Game Started',
-    evaluate: ({ state }) => state.pendingEvents.has('game_start'),
-  },
+  'dota_2.game_start': { label: 'Game Started', evaluate: onEvent('game_start') },
 
-  'dota_2.game_end': {
-    group: 'dota_2',
-    name: 'game_end',
-    label: 'Game Ended',
-    evaluate: ({ state }) => state.pendingEvents.has('game_end'),
-  },
+  'dota_2.game_end': { label: 'Game Ended', evaluate: onEvent('game_end') },
 
-  'dota_2.victory': {
-    group: 'dota_2',
-    name: 'victory',
-    label: 'Victory',
-    evaluate: ({ state }) => state.pendingEvents.has('victory'),
-  },
+  'dota_2.victory': { label: 'Victory', evaluate: onEvent('victory') },
 
-  'dota_2.defeat': {
-    group: 'dota_2',
-    name: 'defeat',
-    label: 'Defeat',
-    evaluate: ({ state }) => state.pendingEvents.has('defeat'),
-  },
+  'dota_2.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
 
-  'dota_2.elimination': {
-    group: 'dota_2',
-    name: 'elimination',
-    label: 'Hero Kill',
-    evaluate: ({ state }) => state.pendingEvents.has('elimination'),
-  },
+  'dota_2.elimination': { label: 'Hero Kill', evaluate: onEvent('elimination') },
 
-  'dota_2.player_eliminated': {
-    group: 'dota_2',
-    name: 'player_eliminated',
-    label: 'Player Died',
-    evaluate: ({ state }) => state.pendingEvents.has('death'),
-  },
+  'dota_2.player_eliminated': { label: 'Player Died', evaluate: onEvent('death') },
 
-  'dota_2.tower_destroyed': {
-    group: 'dota_2',
-    name: 'tower_destroyed',
-    label: 'Tower Destroyed',
-    evaluate: ({ state }) => state.pendingEvents.has('tower_destroyed'),
-  },
+  'dota_2.tower_destroyed': { label: 'Tower Destroyed', evaluate: onEvent('tower_destroyed') },
 
   'dota_2.glyph_used': {
-    group: 'dota_2',
-    name: 'glyph_used',
     label: 'Glyph of Fortification Used',
-    evaluate: ({ state }) => state.pendingEvents.has('glyph_used'),
+    evaluate: onEvent('glyph_used'),
   },
-} as const;
+};
 
 export default Dota2Conditions;
