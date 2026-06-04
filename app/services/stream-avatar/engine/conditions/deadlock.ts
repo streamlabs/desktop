@@ -1,4 +1,5 @@
 import { ConditionDefinition } from '.';
+import { onEvent } from './shared';
 
 export type DeadlockConditionPropsMap = {
   //----------------------
@@ -24,47 +25,17 @@ export type DeadlockConditionProps<T extends DeadlockConditionType> = DeadlockCo
 export const DeadlockConditions: {
   [K in DeadlockConditionType]: ConditionDefinition<K>;
 } = {
-  'deadlock.game_start': {
-    group: 'deadlock',
-    name: 'game_start',
-    label: 'Game Started',
-    evaluate: ({ state }) => state.pendingEvents.has('game_start'),
-  },
+  'deadlock.game_start': { label: 'Game Started', evaluate: onEvent('game_start') },
 
-  'deadlock.game_end': {
-    group: 'deadlock',
-    name: 'game_end',
-    label: 'Game Ended',
-    evaluate: ({ state }) => state.pendingEvents.has('game_end'),
-  },
+  'deadlock.game_end': { label: 'Game Ended', evaluate: onEvent('game_end') },
 
-  'deadlock.victory': {
-    group: 'deadlock',
-    name: 'victory',
-    label: 'Victory',
-    evaluate: ({ state }) => state.pendingEvents.has('victory'),
-  },
+  'deadlock.victory': { label: 'Victory', evaluate: onEvent('victory') },
 
-  'deadlock.defeat': {
-    group: 'deadlock',
-    name: 'defeat',
-    label: 'Defeat',
-    evaluate: ({ state }) => state.pendingEvents.has('defeat'),
-  },
+  'deadlock.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
 
-  'deadlock.elimination': {
-    group: 'deadlock',
-    name: 'elimination',
-    label: 'Enemy Eliminated',
-    evaluate: ({ state }) => state.pendingEvents.has('elimination'),
-  },
+  'deadlock.elimination': { label: 'Enemy Eliminated', evaluate: onEvent('elimination') },
 
-  'deadlock.player_eliminated': {
-    group: 'deadlock',
-    name: 'player_eliminated',
-    label: 'Player Eliminated',
-    evaluate: ({ state }) => state.pendingEvents.has('death'),
-  },
-} as const;
+  'deadlock.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
+};
 
 export default DeadlockConditions;

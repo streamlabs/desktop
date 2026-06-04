@@ -1,4 +1,5 @@
 import { ConditionDefinition } from '.';
+import { onEvent } from './shared';
 
 export type MinecraftConditionPropsMap = {
   //----------------------
@@ -30,57 +31,18 @@ export const MinecraftConditions: {
   [K in MinecraftConditionType]: ConditionDefinition<K>;
 } = {
   'minecraft.ender_dragon_spawned': {
-    group: 'minecraft',
-    name: 'ender_dragon_spawned',
     label: 'Ender Dragon Spawned',
-    evaluate: ({ state }) => state.pendingEvents.has('ender_dragon_spawned'),
+    evaluate: onEvent('ender_dragon_spawned'),
   },
+  'minecraft.boss_killed': { label: 'Boss Killed', evaluate: onEvent('boss_killed') },
+  'minecraft.wither_spawned': { label: 'Wither Spawned', evaluate: onEvent('wither_spawned') },
+  'minecraft.advancement_made': { label: 'Advancement Made', evaluate: onEvent('advancement_made') },
+  'minecraft.first_diamond': { label: 'First Diamond', evaluate: onEvent('first_diamond') },
+  'minecraft.nether_entered': { label: 'Nether Entered', evaluate: onEvent('nether_entered') },
+  'minecraft.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
 
-  'minecraft.boss_killed': {
-    group: 'minecraft',
-    name: 'boss_killed',
-    label: 'Boss Killed',
-    evaluate: ({ state }) => state.pendingEvents.has('boss_killed'),
-  },
-
-  'minecraft.wither_spawned': {
-    group: 'minecraft',
-    name: 'wither_spawned',
-    label: 'Wither Spawned',
-    evaluate: ({ state }) => state.pendingEvents.has('wither_spawned'),
-  },
-
-  'minecraft.advancement_made': {
-    group: 'minecraft',
-    name: 'advancement_made',
-    label: 'Advancement Made',
-    evaluate: ({ state }) => state.pendingEvents.has('advancement_made'),
-  },
-
-  'minecraft.first_diamond': {
-    group: 'minecraft',
-    name: 'first_diamond',
-    label: 'First Diamond',
-    evaluate: ({ state }) => state.pendingEvents.has('first_diamond'),
-  },
-
-  'minecraft.nether_entered': {
-    group: 'minecraft',
-    name: 'nether_entered',
-    label: 'Nether Entered',
-    evaluate: ({ state }) => state.pendingEvents.has('nether_entered'),
-  },
-
-  'minecraft.player_eliminated': {
-    group: 'minecraft',
-    name: 'player_eliminated',
-    label: 'Player Eliminated',
-    evaluate: ({ state }) => state.pendingEvents.has('death'),
-  },
-
+  // Edge-triggered: fires only on the tick health first drops into the danger zone.
   'minecraft.low_health': {
-    group: 'minecraft',
-    name: 'low_health',
     label: 'Low Health',
     evaluate: ({ state, prevState }) => {
       const { health = 100 } = state;
@@ -90,11 +52,9 @@ export const MinecraftConditions: {
   },
 
   'minecraft.totem_of_undying_used': {
-    group: 'minecraft',
-    name: 'totem_of_undying_used',
     label: 'Totem of Undying Used',
-    evaluate: ({ state }) => state.pendingEvents.has('totem_of_undying_used'),
+    evaluate: onEvent('totem_of_undying_used'),
   },
-} as const;
+};
 
 export default MinecraftConditions;

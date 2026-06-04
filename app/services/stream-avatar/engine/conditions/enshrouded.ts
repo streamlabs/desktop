@@ -1,4 +1,5 @@
 import { ConditionDefinition } from '.';
+import { onEvent } from './shared';
 
 export type EnshroudedConditionPropsMap = {
   //----------------------
@@ -24,33 +25,13 @@ export type EnshroudedConditionProps<
 export const EnshroudedConditions: {
   [K in EnshroudedConditionType]: ConditionDefinition<K>;
 } = {
-  'enshrouded.player_eliminated': {
-    group: 'enshrouded',
-    name: 'player_eliminated',
-    label: 'Player Eliminated',
-    evaluate: ({ state }) => state.pendingEvents.has('death'),
-  },
+  'enshrouded.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
 
-  'enshrouded.level_up': {
-    group: 'enshrouded',
-    name: 'level_up',
-    label: 'Level Up',
-    evaluate: ({ state }) => state.pendingEvents.has('level_up'),
-  },
+  'enshrouded.level_up': { label: 'Level Up', evaluate: onEvent('level_up') },
 
-  'enshrouded.soul_discovered': {
-    group: 'enshrouded',
-    name: 'soul_discovered',
-    label: 'Soul Discovered',
-    evaluate: ({ state }) => state.pendingEvents.has('soul_discovered'),
-  },
+  'enshrouded.soul_discovered': { label: 'Soul Discovered', evaluate: onEvent('soul_discovered') },
 
-  'enshrouded.quest_update': {
-    group: 'enshrouded',
-    name: 'quest_update',
-    label: 'Quest Updated',
-    evaluate: ({ state }) => state.pendingEvents.has('quest_update'),
-  },
-} as const;
+  'enshrouded.quest_update': { label: 'Quest Updated', evaluate: onEvent('quest_update') },
+};
 
 export default EnshroudedConditions;

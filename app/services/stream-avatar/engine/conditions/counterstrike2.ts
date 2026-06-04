@@ -1,5 +1,5 @@
-import { Properties } from '../properties';
 import { ConditionDefinition } from '.';
+import { onEvent, lowHealth, eliminationCount } from './shared';
 
 export type CounterStrike2ConditionPropsMap = {
   //----------------------
@@ -38,109 +38,25 @@ export const CounterStrike2Conditions: {
   [K in CounterStrike2ConditionType]: ConditionDefinition<K>;
 } = {
   // Game Flow
-  'counter_strike_2.round_started': {
-    group: 'counter_strike_2',
-    name: 'round_started',
-    label: 'Round Started',
-    evaluate: ({ state }) => state.pendingEvents.has('game_start'),
-  },
+  'counter_strike_2.round_started': { label: 'Round Started', evaluate: onEvent('game_start') },
 
-  // Health / Shield Conditions
-  'counter_strike_2.low_health': {
-    group: 'counter_strike_2',
-    name: 'low_health',
-    label: 'Low Health',
-    evaluate: ({ state }) => {
-      const { health = 0 } = state;
-      return health > 0 && health < 50;
-    },
-  },
+  // Health / Shield
+  'counter_strike_2.low_health': { label: 'Low Health', evaluate: lowHealth },
 
   // Player
-  'counter_strike_2.victory': {
-    group: 'counter_strike_2',
-    name: 'victory',
-    label: 'Victory',
-    evaluate: ({ state }) => state.pendingEvents.has('victory'),
-  },
-
-  'counter_strike_2.defeat': {
-    group: 'counter_strike_2',
-    name: 'defeat',
-    label: 'Defeat',
-    evaluate: ({ state }) => state.pendingEvents.has('defeat'),
-  },
-
-  'counter_strike_2.player_eliminated': {
-    group: 'counter_strike_2',
-    name: 'player_eliminated',
-    label: 'Player Eliminated',
-    evaluate: ({ state }) => state.pendingEvents.has('death'),
-  },
+  'counter_strike_2.victory': { label: 'Victory', evaluate: onEvent('victory') },
+  'counter_strike_2.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
+  'counter_strike_2.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
 
   // Enemy
-  'counter_strike_2.elimination': {
-    group: 'counter_strike_2',
-    name: 'elimination',
-    label: 'Enemy Eliminated',
-    evaluate: ({ state }) => state.pendingEvents.has('elimination'),
-  },
+  'counter_strike_2.elimination': { label: 'Enemy Eliminated', evaluate: onEvent('elimination') },
+  'counter_strike_2.elimination_count': eliminationCount(),
 
-  'counter_strike_2.elimination_count': {
-    group: 'counter_strike_2',
-    name: 'elimination_count',
-    label: 'Enemy Elimination Count',
-    properties: {
-      elimination_count: new Properties.SliderRange({
-        label: '# of Eliminations',
-        min: 0,
-        max: 50,
-        default: [5, 5],
-        step: 1,
-      }),
-    },
-    evaluate: ({ state, prevState, props }) => {
-      const [min, max] = props?.elimination_count ?? [5, 5];
-      const { eliminations = 0 } = state;
-      const { eliminations: prevEliminations = 0 } = prevState;
-      return eliminations >= min && prevEliminations <= max;
-    },
-  },
-
-  'counter_strike_2.first_half': {
-    group: 'counter_strike_2',
-    name: 'first_half',
-    label: 'First Half',
-    evaluate: ({ state }) => state.pendingEvents.has('first_half'),
-  },
-
-  'counter_strike_2.second_half': {
-    group: 'counter_strike_2',
-    name: 'second_half',
-    label: 'Second Half',
-    evaluate: ({ state }) => state.pendingEvents.has('second_half'),
-  },
-
-  'counter_strike_2.round_won': {
-    group: 'counter_strike_2',
-    name: 'round_won',
-    label: 'Round Won',
-    evaluate: ({ state }) => state.pendingEvents.has('round_won'),
-  },
-
-  'counter_strike_2.round_lost': {
-    group: 'counter_strike_2',
-    name: 'round_lost',
-    label: 'Round Lost',
-    evaluate: ({ state }) => state.pendingEvents.has('round_lost'),
-  },
-
-  'counter_strike_2.game_ended': {
-    group: 'counter_strike_2',
-    name: 'game_ended',
-    label: 'Game Ended',
-    evaluate: ({ state }) => state.pendingEvents.has('game_end'),
-  },
-} as const;
+  'counter_strike_2.first_half': { label: 'First Half', evaluate: onEvent('first_half') },
+  'counter_strike_2.second_half': { label: 'Second Half', evaluate: onEvent('second_half') },
+  'counter_strike_2.round_won': { label: 'Round Won', evaluate: onEvent('round_won') },
+  'counter_strike_2.round_lost': { label: 'Round Lost', evaluate: onEvent('round_lost') },
+  'counter_strike_2.game_ended': { label: 'Game Ended', evaluate: onEvent('game_end') },
+};
 
 export default CounterStrike2Conditions;

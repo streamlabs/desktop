@@ -1,4 +1,5 @@
 import { ConditionDefinition } from '.';
+import { onEvent } from './shared';
 
 export type BlackOps6ConditionPropsMap = {
   //----------------------
@@ -22,33 +23,13 @@ export type BlackOps6ConditionProps<
 export const BlackOps6Conditions: {
   [K in BlackOps6ConditionType]: ConditionDefinition<K>;
 } = {
-  'black_ops_6.elimination': {
-    group: 'black_ops_6',
-    name: 'elimination',
-    label: 'Enemy Eliminated',
-    evaluate: ({ state }) => state.pendingEvents.has('elimination'),
-  },
+  'black_ops_6.elimination': { label: 'Enemy Eliminated', evaluate: onEvent('elimination') },
 
-  'black_ops_6.victory': {
-    group: 'black_ops_6',
-    name: 'victory',
-    label: 'Victory',
-    evaluate: ({ state }) => state.pendingEvents.has('victory'),
-  },
+  'black_ops_6.victory': { label: 'Victory', evaluate: onEvent('victory') },
 
-  'black_ops_6.defeat': {
-    group: 'black_ops_6',
-    name: 'defeat',
-    label: 'Defeat',
-    evaluate: ({ state }) => state.pendingEvents.has('defeat'),
-  },
+  'black_ops_6.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
 
-  'black_ops_6.spectating': {
-    group: 'black_ops_6',
-    name: 'spectating',
-    label: 'Spectating',
-    evaluate: ({ state }) => state.pendingEvents.has('spectating'),
-  },
-} as const;
+  'black_ops_6.spectating': { label: 'Spectating', evaluate: onEvent('spectating') },
+};
 
 export default BlackOps6Conditions;

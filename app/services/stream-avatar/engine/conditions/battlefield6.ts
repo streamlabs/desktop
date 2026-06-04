@@ -1,4 +1,5 @@
 import { ConditionDefinition } from '.';
+import { onEvent } from './shared';
 
 export type Battlefield6ConditionPropsMap = {
   //----------------------
@@ -26,47 +27,17 @@ export type Battlefield6ConditionProps<
 export const Battlefield6Conditions: {
   [K in Battlefield6ConditionType]: ConditionDefinition<K>;
 } = {
-  'battlefield_6.game_start': {
-    group: 'battlefield_6',
-    name: 'game_start',
-    label: 'Game Started',
-    evaluate: ({ state }) => state.pendingEvents.has('game_start'),
-  },
+  'battlefield_6.game_start': { label: 'Game Started', evaluate: onEvent('game_start') },
 
-  'battlefield_6.game_end': {
-    group: 'battlefield_6',
-    name: 'game_end',
-    label: 'Game Ended',
-    evaluate: ({ state }) => state.pendingEvents.has('game_end'),
-  },
+  'battlefield_6.game_end': { label: 'Game Ended', evaluate: onEvent('game_end') },
 
-  'battlefield_6.victory': {
-    group: 'battlefield_6',
-    name: 'victory',
-    label: 'Victory',
-    evaluate: ({ state }) => state.pendingEvents.has('victory'),
-  },
+  'battlefield_6.victory': { label: 'Victory', evaluate: onEvent('victory') },
 
-  'battlefield_6.defeat': {
-    group: 'battlefield_6',
-    name: 'defeat',
-    label: 'Defeat',
-    evaluate: ({ state }) => state.pendingEvents.has('defeat'),
-  },
+  'battlefield_6.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
 
-  'battlefield_6.elimination': {
-    group: 'battlefield_6',
-    name: 'elimination',
-    label: 'Enemy Eliminated',
-    evaluate: ({ state }) => state.pendingEvents.has('elimination'),
-  },
+  'battlefield_6.elimination': { label: 'Enemy Eliminated', evaluate: onEvent('elimination') },
 
-  'battlefield_6.player_eliminated': {
-    group: 'battlefield_6',
-    name: 'player_eliminated',
-    label: 'Player Eliminated',
-    evaluate: ({ state }) => state.pendingEvents.has('death'),
-  },
-} as const;
+  'battlefield_6.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
+};
 
 export default Battlefield6Conditions;

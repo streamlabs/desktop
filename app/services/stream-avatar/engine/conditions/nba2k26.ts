@@ -1,4 +1,5 @@
 import { ConditionDefinition } from '.';
+import { onEvent } from './shared';
 
 export type Nba2k26ConditionPropsMap = {
   //----------------------
@@ -20,33 +21,13 @@ export type Nba2k26ConditionProps<T extends Nba2k26ConditionType> = Nba2k26Condi
 export const Nba2k26Conditions: {
   [K in Nba2k26ConditionType]: ConditionDefinition<K>;
 } = {
-  'nba_2k26.game_start': {
-    group: 'nba_2k26',
-    name: 'game_start',
-    label: 'Game Started',
-    evaluate: ({ state }) => state.pendingEvents.has('game_start'),
-  },
+  'nba_2k26.game_start': { label: 'Game Started', evaluate: onEvent('game_start') },
 
-  'nba_2k26.game_end': {
-    group: 'nba_2k26',
-    name: 'game_end',
-    label: 'Game Ended (Final)',
-    evaluate: ({ state }) => state.pendingEvents.has('game_end'),
-  },
+  'nba_2k26.game_end': { label: 'Game Ended (Final)', evaluate: onEvent('game_end') },
 
-  'nba_2k26.goal': {
-    group: 'nba_2k26',
-    name: 'goal',
-    label: 'Basket Scored',
-    evaluate: ({ state }) => state.pendingEvents.has('goal'),
-  },
+  'nba_2k26.goal': { label: 'Basket Scored', evaluate: onEvent('goal') },
 
-  'nba_2k26.halftime': {
-    group: 'nba_2k26',
-    name: 'halftime',
-    label: 'Halftime',
-    evaluate: ({ state }) => state.pendingEvents.has('halftime'),
-  },
-} as const;
+  'nba_2k26.halftime': { label: 'Halftime', evaluate: onEvent('halftime') },
+};
 
 export default Nba2k26Conditions;

@@ -24,7 +24,7 @@ import Nba2k26Instructions from "./nba2k26";
 import ForzaHorizon6Instructions from "./forzahorizon6";
 import EnshroudedInstructions from "./enshrouded";
 
-export const Instructions = {
+const perGameInstructions = {
   ...FortniteInstructions,
   ...PubgInstructions,
   ...ValorantInstructions,
@@ -52,5 +52,22 @@ export const Instructions = {
   ...EnshroudedInstructions,
 } as const;
 
-export type InstructionType = keyof typeof Instructions;
+/**
+ * Every avatar instruction must end with this word-limit directive. Rather than
+ * repeating it on every line of every game file, each game file holds just the
+ * creative prompt and the limit is appended here (idempotently, so a prompt that
+ * already includes it is left untouched).
+ */
+const WORD_LIMIT = '8 words max.';
+
+const withWordLimit = (prompt: string): string => {
+  const trimmed = prompt.trim();
+  return trimmed.endsWith(WORD_LIMIT) ? trimmed : `${trimmed} ${WORD_LIMIT}`;
+};
+
+export type InstructionType = keyof typeof perGameInstructions;
 export type TInstruction = InstructionType;
+
+export const Instructions = Object.fromEntries(
+  Object.entries(perGameInstructions).map(([type, prompt]) => [type, withWordLimit(prompt)]),
+) as Record<InstructionType, string>;
