@@ -194,6 +194,10 @@ export interface IPlatformService {
 
   fetchUserInfo: () => Promise<IUserInfo>;
 
+  /**
+   * Note: intentionally declared using method syntax (not a function-typed property)
+   * to avoid strict contravariant parameter checking when platform services implement this interface.
+   */
   putChannelInfo(channelInfo: TStartStreamOptions): Promise<void>;
 
   searchGames?: (searchString: string) => Promise<IGame[]>;
