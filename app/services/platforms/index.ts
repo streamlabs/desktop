@@ -194,7 +194,7 @@ export interface IPlatformService {
 
   fetchUserInfo: () => Promise<IUserInfo>;
 
-  putChannelInfo: (channelInfo: TStartStreamOptions) => Promise<void>;
+  putChannelInfo(channelInfo: TStartStreamOptions): Promise<void>;
 
   searchGames?: (searchString: string) => Promise<IGame[]>;
 
