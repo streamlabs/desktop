@@ -25,6 +25,7 @@ export type TWidgetType =
   | WidgetType.CharityGoal
   | WidgetType.EventList
   | WidgetType.TipJar
+  | WidgetType.StreamBoss
   | WidgetType.GamePulseWidget;
 
 export interface IWidgetConfig {
@@ -601,9 +602,32 @@ export function getWidgetsConfig(
       customFieldsAllowed: true,
     },
 
-    // StreamBoss: {
-    //
-    //  },
+    [WidgetType.StreamBoss]: {
+      type: WidgetType.StreamBoss,
+
+      defaultTransform: {
+        width: 600,
+        height: 200,
+        x: 0,
+        y: 1,
+        anchor: AnchorPoint.SouthWest,
+      },
+
+      settingsWindowSize: {
+        width: 850,
+        height: 800,
+      },
+
+      url: `https://${host}/widgets/streamboss?token=${token}`,
+      previewUrl: `https://${host}/widgets/streamboss?token=${token}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/streamboss`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/streamboss/settings`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/streamboss/settings`,
+      settingsUpdateEvent: 'streambossSettingsUpdate',
+      goalUrl: `https://${host}/api/v5/slobs/widget/streamboss`,
+      customCodeAllowed: true,
+      customFieldsAllowed: true,
+    },
 
     [WidgetType.TipJar]: {
       type: WidgetType.TipJar,
