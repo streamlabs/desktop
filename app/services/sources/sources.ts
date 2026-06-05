@@ -831,7 +831,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
       // 'Poll',
       // 'SpinWheel',
       'SponsorBanner',
-      // 'StreamBoss',
+      'StreamBoss',
       'TipJar',
       'ViewerCount',
       'GameWidget',

@@ -17,7 +17,7 @@ import { EventList, EventListModule } from '../EventList';
 // Poll
 // SpinWheel
 import { SponsorBanner, SponsorBannerModule } from '../SponsorBanner';
-// StreamBoss
+import { StreamBoss, StreamBossModule } from '../StreamBoss';
 import { Jar, JarModule } from '../Jar';
 import { GameWidget, GameWidgetModule } from '../GameWidget';
 import { ViewerCount, ViewerCountModule } from '../ViewerCount';
@@ -48,7 +48,7 @@ export const components = {
   // Poll
   // SpinWheel
   SponsorBanner: [SponsorBanner, SponsorBannerModule],
-  // StreamBoss
+  StreamBoss: [StreamBoss, StreamBossModule],
   TipJar: [Jar, JarModule],
   ViewerCount: [ViewerCount, ViewerCountModule],
   GameWidget: [GameWidget, GameWidgetModule],
