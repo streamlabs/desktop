@@ -733,6 +733,11 @@ export class YoutubeService
       'scheduledStartTime',
     ]);
 
+    // Ensure scheduled start time is in the future
+    if (snippet.scheduledStartTime && !(new Date(snippet.scheduledStartTime) > new Date())) {
+      snippet.scheduledStartTime = new Date().toISOString();
+    }
+
     // `zxx` is a `Not applicable` language code
     // YouTube API doesn't allow us to set this code
     if (snippet.defaultAudioLanguage === 'zxx') delete snippet.defaultAudioLanguage;
