@@ -70,7 +70,10 @@ test('OBS Importer', async t => {
   t.true(await sceneExisting('Scene'));
   t.true(await sceneExisting('Scene 2'));
   t.true(await sourceIsExisting('Color Source'));
-  t.true(await sourceIsExisting('Text (GDI+)'));
+  // Text (GDI+) is Windows-only; the imported source will not exist on macOS
+  if (process.platform !== 'darwin') {
+    t.true(await sourceIsExisting('Text (GDI+)'));
+  }
 
   // check collection 2 exists
   await focusMain();

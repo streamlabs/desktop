@@ -188,12 +188,11 @@ export async function waitForElectronInstancesExist() {
   const timeout = 10000;
 
   let timeleft = timeout;
-  return new Promise(async resolve => {
-    let tasks: any[] = [];
-    do {
-      tasks = await getElectronInstances();
-      timeleft -= interval;
-    } while (tasks.length || timeleft < 0);
-    resolve(null);
-  });
+  let tasks: any[] = await getElectronInstances();
+
+  while (tasks.length > 0 && timeleft > 0) {
+    await new Promise(resolve => setTimeout(resolve, interval));
+    timeleft -= interval;
+    tasks = await getElectronInstances();
+  }
 }

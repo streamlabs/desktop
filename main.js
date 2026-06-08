@@ -1,6 +1,22 @@
 const appStartTime = Date.now();
 let lastEventTime = 0;
 
+// On macOS, writing to a closed stdout/stderr pipe throws EPIPE. Replace write with a noop
+process.stdout.on('error', err => {
+  if (err.code === 'EPIPE') {
+    process.stdout.write = () => true;
+  } else {
+    throw err;
+  }
+});
+process.stderr.on('error', err => {
+  if (err.code === 'EPIPE') {
+    process.stderr.write = () => true;
+  } else {
+    throw err;
+  }
+});
+
 ////////////////////////////////////////////////////////////////////////////////
 // Set Up Environment Variables
 ////////////////////////////////////////////////////////////////////////////////
