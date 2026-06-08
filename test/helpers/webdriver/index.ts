@@ -389,7 +389,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
         // RxJS Subscriber.unsubscribe null-dereference during React passive effect cleanup
         // on app shutdown. This is a teardown race condition triggered by the test harness
         // forcibly closing the app and is not indicative of a test failure.
-        if (record.match(/Cannot read properties of null \(reading 'closed'\)/)) {
+        if (process.platform === 'darwin' && record.match(/Cannot read properties of null \(reading 'closed'\)/)) {
           ignoringErrors = true;
           return false;
         }

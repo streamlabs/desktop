@@ -195,4 +195,7 @@ export async function waitForElectronInstancesExist() {
     timeleft -= interval;
     tasks = await getElectronInstances();
   }
+   if (tasks.length > 0) {
+     throw new Error('Timed out waiting for Electron instances to exit');
+   }
 }
