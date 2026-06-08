@@ -4,7 +4,6 @@ import styles from './AiHighlighterToggle.m.less';
 import { Services } from 'components-react/service-provider';
 import * as remote from '@electron/remote';
 import { useDebounce, useVuex } from 'components-react/hooks';
-import EducationCarousel from 'components-react/highlighter/EducationCarousel';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { getConfigByGame, isGameSupported } from 'services/highlighter/models/game-config.models';
@@ -19,13 +18,7 @@ import { REPLAY_APP_NAME } from 'services/highlighter/constants';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 import { promptAction } from 'components-react/modals';
 
-export default function AiHighlighterToggle({
-  game,
-  cardIsExpanded,
-}: {
-  game: string | undefined;
-  cardIsExpanded: boolean;
-}) {
+export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded: boolean }) {
   //TODO M: Probably good way to integrate the highlighter in to GoLiveSettings
   const { HighlighterService, StreamingService, IncrementalRolloutService } = Services;
   const {
@@ -34,6 +27,7 @@ export default function AiHighlighterToggle({
     isVerticalRecording,
     isVerticalReplayBuffer,
     outputDisplay,
+    gameName,
   } = useVuex(() => {
     return {
       useHighlighter: HighlighterService.views.useAiHighlighter,
@@ -41,6 +35,7 @@ export default function AiHighlighterToggle({
       isVerticalRecording: StreamingService.views.isVerticalRecording,
       isVerticalReplayBuffer: StreamingService.views.isVerticalReplayBuffer,
       outputDisplay: StreamingService.views.outputDisplay,
+      gameName: StreamingService.views.gameName,
     };
   });
 
@@ -51,7 +46,7 @@ export default function AiHighlighterToggle({
     (isVerticalRecording || isVerticalReplayBuffer) && outputDisplay === 'vertical';
 
   useEffect(() => {
-    const supportedGame = isGameSupported(game);
+    const supportedGame = isGameSupported(gameName);
     setGameIsSupported(!!supportedGame);
     if (supportedGame) {
       setIsExpanded(true);
@@ -59,7 +54,7 @@ export default function AiHighlighterToggle({
     } else {
       setGameConfig(null);
     }
-  }, [game]);
+  }, [gameName]);
 
   useEffect(() => {
     checkRecorderStatus();
@@ -214,7 +209,7 @@ export default function AiHighlighterToggle({
                         HighlighterService.actions.installAiHighlighter(
                           false,
                           'Go-live-flow',
-                          game,
+                          gameName,
                         );
                       }}
                     >

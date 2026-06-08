@@ -34,7 +34,8 @@ import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export interface ITwitchStartStreamOptions {
   title: string;
-  game?: string;
+  game: string;
+  gameId: string;
   gameName: string;
   video?: IVideo;
   tags: string[];
@@ -121,6 +122,7 @@ export class TwitchService
     settings: {
       title: '',
       game: '',
+      gameId: '',
       gameName: '',
       video: undefined,
       mode: undefined,
@@ -388,7 +390,8 @@ export class TwitchService
       }>(`${this.apiBase}/helix/channels?broadcaster_id=${this.twitchId}`).then(json => {
         return {
           title: json.data[0].title,
-          game: json.data[0].game_id,
+          game: json.data[0].game_name,
+          gameId: json.data[0].game_id,
           gameName: json.data[0].game_name,
           is_branded_content: json.data[0].is_branded_content,
           content_classification_labels: json.data[0].content_classification_labels,
@@ -416,6 +419,7 @@ export class TwitchService
       tags,
       title: channelInfo.title,
       game: channelInfo.game,
+      gameId: channelInfo.gameId,
       gameName: channelInfo.gameName,
       isBrandedContent: channelInfo.is_branded_content,
       isEnhancedBroadcasting,
@@ -460,7 +464,8 @@ export class TwitchService
       }>(`${this.apiBase}/helix/channels?broadcaster_id=${this.twitchId}`).then(json => {
         return {
           title: settings?.stream_title ?? json.data[0].title,
-          game: json.data[0].game_id,
+          game: json.data[0].game_name,
+          gameId: json.data[0].game_id,
           gameName: json.data[0].game_name,
           is_branded_content: json.data[0].is_branded_content,
           content_classification_labels: json.data[0].content_classification_labels,
@@ -482,6 +487,7 @@ export class TwitchService
       tags,
       title,
       game,
+      gameId: channelInfo.gameId,
       gameName: channelInfo.gameName,
       isBrandedContent: channelInfo.is_branded_content,
       isEnhancedBroadcasting: this.settingsService.isEnhancedBroadcasting(),
@@ -519,7 +525,9 @@ export class TwitchService
         body: JSON.stringify({
           tags,
           title: settings.title,
-          game_id: settings.game,
+          // On load, the game is set as the game name. This is needed to correctly load the default form item
+          // but when the game is updated, Twitch requires the game ID, so use the id stored on state as a backup
+          game_id: settings.game && /^\d+$/.test(settings.game) ? settings.game : settings.gameId,
           is_branded_content: settings.isBrandedContent,
           content_classification_labels: labels,
         }),
@@ -550,8 +558,9 @@ export class TwitchService
         if (newTags) this.twitchTagsService.actions.setTags(newTags);
         this.SET_STREAM_SETTINGS({
           title: settings.title,
-          game: settings.game,
+          game: settings.gameName,
           gameName: settings.gameName,
+          gameId: settings.game,
           tags: newTags,
         });
 
@@ -575,6 +584,7 @@ export class TwitchService
     this.SET_STREAM_SETTINGS({
       title: settings.title,
       game: settings.game,
+      gameId: settings.gameId,
       gameName: settings.gameName,
       tags: settings.tags,
       isEnhancedBroadcasting: settings.isEnhancedBroadcasting,
@@ -611,6 +621,10 @@ export class TwitchService
         .replace('{height}', imageSize.height.toString());
       return { id: g.id, name: g.name, image };
     })[0];
+  }
+
+  setGameInfo({ gameId, gameName }: { gameId: string; gameName: string }) {
+    this.UPDATE_STREAM_SETTINGS({ gameId, gameName });
   }
 
   get chatUrl(): string {
