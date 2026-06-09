@@ -208,16 +208,21 @@ test('Recording from Go Live window', async t => {
   await logOut(t, true);
 });
 
-async function createRecordingWithRescaling(): Promise<void> {
+/*
+ * Open Output settings, fill out the recording form with the provided arguments,
+ * and verify that a recording can be successfully created with those settings.
+ * The callback can be used to click additional options in the form after filling
+ * out the main parameters.
+ */
+async function createRecordingWithFormParms(formArgs: any, callback?: any): Promise<void> {
   await showSettingsWindow('Output', async () => {
     await clickTab('Recording');
 
     const { fillForm } = useForm('Recording');
-    await fillForm({
-      RecFormat: 'mkv',
-      RecRescale: true,
-      RecRescaleRes: '1280x720',
-    });
+    await fillForm(formArgs);
+    if (callback) {
+      await callback();
+    }
     await clickButton('Close');
   });
 
@@ -271,9 +276,39 @@ test('Recording with rescaling', async t => {
 
     // Advanced Recording
     const tmpDir = await setTemporaryRecordingPath(true);
-    await createRecordingWithRescaling();
+    await createRecordingWithFormParms({
+      RecFormat: 'mkv',
+      RecRescale: true,
+      RecRescaleRes: '1280x720',
+    });
 
     await validateRescaleRecording(t, tmpDir, 1280, 720);
+  } finally {
+    await logOut(t, true);
+  }
+});
+
+async function validateTitleContainsNoSpaces(t: TExecutionContext, tmpDir: string): Promise<void> {
+  const files = await readdir(tmpDir);
+  t.true(files.length >= 1, `Files that were created:\n${files.join('\n')}`);
+  const videoFile = files.find(f => f.endsWith('.mkv'));
+  t.truthy(videoFile, 'Expected a .mkv recording file');
+  if (!videoFile) return;
+  t.false(videoFile.includes(' '), `Recording filename should not contain spaces: "${videoFile}"`);
+}
+
+test('Recording without spaces', async t => {
+  await logIn(t);
+  try {
+    // low resolution reduces CPU usage
+    await setOutputResolution('100x100');
+
+    const tmpDir = await setTemporaryRecordingPath(true);
+    await createRecordingWithFormParms({ RecFormat: 'mkv' }, async () => {
+      await clickCheckbox('RecFileNameWithoutSpace');
+    });
+
+    await validateTitleContainsNoSpaces(t, tmpDir);
   } finally {
     await logOut(t, true);
   }
