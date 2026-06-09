@@ -214,7 +214,10 @@ test('Recording from Go Live window', async t => {
  * The callback can be used to click additional options in the form after filling
  * out the main parameters.
  */
-async function createRecordingWithFormParms(formArgs: any, callback?: any): Promise<void> {
+async function createRecordingWithFormParms(
+  formArgs: Record<string, unknown>,
+  callback?: () => Promise<void>,
+): Promise<void> {
   await showSettingsWindow('Output', async () => {
     await clickTab('Recording');
 
