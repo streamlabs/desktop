@@ -227,7 +227,6 @@ export class AppService extends StatefulService<IAppState> {
       await this.sceneCollectionsService.deinitialize();
       this.performanceService.stop();
       this.transitionsService.shutdown();
-      this.virtualWebcamService.stop();
       this.videoSettingsService.shutdown();
       await this.gameOverlayService.destroy();
       await this.fileManagerService.flushAll();
