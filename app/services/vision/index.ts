@@ -1,19 +1,20 @@
-import { InitAfter, Inject, Service } from 'services';
 import * as remote from '@electron/remote';
+import { HostsService, SourcesService, UserService, WidgetsService } from 'app-services';
+import _ from 'lodash';
+import pMemoize from 'p-memoize';
 import path from 'path';
-import { authorizedHeaders, jfetch } from 'util/requests';
-import { HostsService, SettingsService, UserService } from 'app-services';
-import { RealmObject } from 'services/realm';
 import { ObjectSchema } from 'realm';
+import { Subject } from 'rxjs';
+import { InitAfter, Inject, Service } from 'services';
+import { RealmObject } from 'services/realm';
+import { ISource, TSourceType } from 'services/sources';
+import Utils from 'services/utils';
+import { WidgetType } from 'services/widgets';
+import { getOS, OS } from 'util/operating-systems';
+import { authorizedHeaders, jfetch } from 'util/requests';
 import uuid from 'uuid/v4';
 import { VisionRunner, VisionRunnerStartOptions } from './vision-runner';
 import { VisionUpdater } from './vision-updater';
-import _ from 'lodash';
-import pMemoize from 'p-memoize';
-import { ESettingsCategory } from 'services/settings';
-import { Subject } from 'rxjs';
-import { getOS, OS } from 'util/operating-systems';
-import Utils from 'services/utils';
 
 export class VisionProcess extends RealmObject {
   game: string;
@@ -118,10 +119,6 @@ export class VisionService extends Service {
 
   public sourceStateKeyInterest: Map<string, Set<string>> = new Map();
 
-  // update prompt
-  private lastPromptAt = 0;
-  private lastPromptVersion?: string;
-  private promptCooldownMs = 500;
   onState = new Subject<
     Pick<VisionEnabledState, 'isEnabled'> &
       Pick<VisionState, 'isRunning' | 'isStarting' | 'isInstalling'>
@@ -131,24 +128,33 @@ export class VisionService extends Service {
   >();
   @Inject() userService: UserService;
   @Inject() hostsService: HostsService;
-  @Inject() settingsService: SettingsService;
+
+  // Install hook services
+  @Inject() sourcesService: SourcesService;
+  @Inject() widgetsService: WidgetsService;
 
   enabledState = VisionEnabledState.inject();
   state = VisionState.inject();
 
   init() {
-    window.addEventListener('beforeunload', () => this.stop());
+    // Hook widget/overlay services to check for vision-dependent installs.
+    // TODO @widgets-refactor: Remove IWidgetConfig cast.
+    this.widgetsService.widgetCreated.subscribe(({ type }) => this.onWidgetCreated(type));
+    this.sourcesService.sourceCreated.subscribe(({ source }) => this.onSourceCreated(source));
 
-    this.visionRunner.on('exit', () => {
-      this.writeState({
-        pid: 0,
-        port: 0,
-        isRunning: false,
-      });
+    const runnerHandle = this.visionRunner.on('exit', () => {
+      this.writeEnabledState(false);
+      this.writeState({ pid: 0, port: 0, isRunning: false });
     });
 
-    // useful for testing robustness
-    // setInterval(() => this.ensureRunning(), 30_000);
+    window.addEventListener('beforeunload', () => {
+      runnerHandle();
+      return this.stop();
+    });
+
+    if (this.enabledState.isEnabled) {
+      void this.ensureRunning();
+    }
   }
 
   isSupportedForOs() {
@@ -161,8 +167,10 @@ export class VisionService extends Service {
 
     this.writeEnabledState(newIsEnabled);
 
-    if (newIsEnabled === false) {
-      return this.stop();
+    if (newIsEnabled) {
+      await this.ensureRunning();
+    } else {
+      await this.stop();
     }
   }
 
@@ -232,24 +240,15 @@ export class VisionService extends Service {
         });
 
         if (needsUpdate) {
-          if (installedManifest) {
-            this.log(
-              `vision needs update: ${installedManifest.version} -> ${latestManifest.version}`,
-            );
-            // silently update in the background
-            await this.ensureUpdated({ startAfterUpdate: false });
-          } else {
-            const v = latestManifest.version ?? 'unknown';
-            const now = Date.now();
-            const newVersion = this.lastPromptVersion !== v;
-            const cooledDown = now - this.lastPromptAt > this.promptCooldownMs;
+          this.log(
+            installedManifest
+              ? `vision needs update: ${installedManifest.version} -> ${latestManifest.version}`
+              : 'vision not installed, installing...',
+          );
+          await this.ensureUpdated({ startAfterUpdate: false });
 
-            if (newVersion || cooledDown) {
-              this.lastPromptVersion = v;
-              this.lastPromptAt = now;
-              this.settingsService.showSettings(ESettingsCategory.AI);
-            }
-
+          if (this.state.hasFailedToUpdate) {
+            this.writeEnabledState(false);
             return { started: false, reason: 'needs-update' as const };
           }
         }
@@ -331,7 +330,7 @@ export class VisionService extends Service {
     }
   }
 
-  async stop() {
+  private async stop() {
     this.closeEventSource();
     await this.visionRunner.stop();
   }
@@ -383,6 +382,26 @@ export class VisionService extends Service {
   private writeState(patch: Partial<VisionState>) {
     this.state.db.write(() => Object.assign(this.state, patch));
     this.notifyOfStateChange();
+  }
+
+  private onSourceCreated(source: ISource) {
+    if (this.state.isRunning) return;
+
+    // Smart browser sources are munged to type: 'browser_source' by OBS.
+    // Check the manager type instead.
+    if (source.propertiesManagerType === 'smartBrowserSource') {
+      console.log('Reactive overlay added, enabling vision service');
+      this.setIsEnabled(true);
+    }
+  }
+
+  private onWidgetCreated(type: WidgetType) {
+    if (this.state.isRunning) return;
+
+    if (type === WidgetType.GamePulseWidget) {
+      console.log('Game Pulse widget added, enabling vision service');
+      this.setIsEnabled(true);
+    }
   }
 
   requestFrame() {
