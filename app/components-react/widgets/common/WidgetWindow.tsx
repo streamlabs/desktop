@@ -15,7 +15,7 @@ import { EmoteWall, EmoteWallModule } from '../EmoteWall';
 import { EventList, EventListModule } from '../EventList';
 // MediaShare
 // Poll
-// SpinWheel
+import { SpinWheel, SpinWheelModule } from '../SpinWheel';
 import { SponsorBanner, SponsorBannerModule } from '../SponsorBanner';
 import { StreamBoss, StreamBossModule } from '../StreamBoss';
 import { Jar, JarModule } from '../Jar';
@@ -44,7 +44,7 @@ export const components = {
   EventList: [EventList, EventListModule],
   // MediaShare
   // Poll
-  // SpinWheel
+  SpinWheel: [SpinWheel, SpinWheelModule],
   SponsorBanner: [SponsorBanner, SponsorBannerModule],
   StreamBoss: [StreamBoss, StreamBossModule],
   TipJar: [Jar, JarModule],

@@ -150,6 +150,7 @@ export const reactWidgets: TWidgetType[] = [
   'EventList',
   'FollowerGoal',
   'GamePulseWidget',
+  'SpinWheel',
   'SponsorBanner',
   'StreamBoss',
   'SubGoal',
