@@ -5,7 +5,7 @@ import { getChecksum } from 'util/requests';
 import { byOS, OS } from 'util/operating-systems';
 import { Inject } from 'services/core/injector';
 import { SettingsService } from 'services/settings';
-import { UsageStatisticsService, SourcesService } from 'app-services';
+import { UsageStatisticsService, SourcesService, AppService } from 'app-services';
 import * as remote from '@electron/remote';
 import { Subject } from 'rxjs';
 import { VCamOutputType } from 'obs-studio-node';
@@ -58,6 +58,7 @@ interface IVirtualWebcamServiceState {
 }
 
 export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceState> {
+  @Inject() appService: AppService;
   @Inject() usageStatisticsService: UsageStatisticsService;
   @Inject() sourcesService: SourcesService;
   @Inject() settingsService: SettingsService;
@@ -75,6 +76,8 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
   signalInfoChanged = new Subject<IOBSOutputSignalInfo>();
 
   protected init(): void {
+    this.appService.shutdownStarted.subscribe(() => this.stop());
+
     byOS({
       [OS.Windows]: () => {
         this.setInstallStatus();
