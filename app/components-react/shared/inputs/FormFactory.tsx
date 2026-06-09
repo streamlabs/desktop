@@ -28,6 +28,7 @@ const componentTable: {
   textarea: inputs.TextAreaInput,
   color: inputs.ColorInput,
   mediaurl: inputs.MediaUrlInput,
+  audiourl: inputs.AudioUrlInput,
   imagepicker: inputs.ImagePickerInput,
   time: inputs.TimeInput,
   animation: inputs.AnimationInput,

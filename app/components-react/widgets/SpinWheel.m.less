@@ -1,0 +1,66 @@
+.category-editor {
+  &-row {
+    margin-bottom: 16px;
+    align-items: center;
+    gap: 8px;
+
+    &--name {
+      flex: 1;
+    }
+
+    &--close-button {
+      margin-left: 4px;
+      cursor: pointer;
+    }
+  }
+
+  &-buttons {
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+  }
+}
+
+.section-editor {
+  &-row {
+    margin-bottom: 16px;
+    align-items: center;
+    gap: 8px;
+
+    &--category {
+      flex-basis: 160px;
+
+      :global(.ant-select) {
+        width: 100% !important;
+      }
+    }
+
+    &--weight {
+      flex: 1;
+    }
+
+    &-buttons {
+      flex-basis: 58px;
+    }
+
+    &--close-button {
+      margin-left: 4px;
+      cursor: pointer;
+    }
+  }
+
+  &--warning {
+    margin-bottom: 16px;
+    text-align: center;
+    font-style: italic;
+    opacity: 0.5;
+  }
+
+  &-buttons {
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+  }
+}

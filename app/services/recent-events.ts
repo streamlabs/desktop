@@ -998,6 +998,14 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
     });
   }
 
+  async spinWheel() {
+    const url = `https://${this.hostsService.streamlabs}/api/v5/slobs/widget/wheel/spin/${this.userService.widgetToken}`;
+    const headers = authorizedHeaders(this.userService.apiToken);
+    const request = new Request(url, { headers, method: 'POST' });
+    const response = await fetch(request);
+    return handleResponse(response);
+  }
+
   showSafeModeWindow() {
     this.windowsService.showWindow({
       componentName: 'SafeMode',
