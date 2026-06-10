@@ -72,6 +72,13 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
   }
 
   switchPlatforms(enabledPlatforms: TPlatform[]) {
+    if (this.isPrimaryPlatform('instagram') || this.isPrimaryPlatform('patreon')) {
+      const newPrimary = enabledPlatforms.find(p => p !== 'instagram' && p !== 'patreon');
+      if (newPrimary) {
+        this.setPrimaryPlatform(newPrimary);
+      }
+    }
+
     this.linkedPlatforms.forEach(platform => {
       this.updatePlatform(platform, { enabled: enabledPlatforms.includes(platform) });
     });
@@ -295,6 +302,16 @@ export class GoLiveSettingsModule {
    * If platform is enabled then prepopulate its settings
    */
   switchPlatforms(enabledPlatforms: TPlatform[], skipPrepopulate?: boolean) {
+    // If Patreon or Instagram is the current primary (merge-only / no chat),
+    // promote any other enabled platform to primary so chat & stream-info
+    // routing don't resolve to a non-streaming platform.
+    if (this.state.isPrimaryPlatform('instagram') || this.state.isPrimaryPlatform('patreon')) {
+      const newPrimary = enabledPlatforms.find(p => p !== 'instagram' && p !== 'patreon');
+      if (newPrimary) {
+        this.setPrimaryChat(newPrimary);
+      }
+    }
+
     this.state.linkedPlatforms.forEach(platform => {
       this.state.updatePlatform(platform, { enabled: enabledPlatforms.includes(platform) });
     });
@@ -304,10 +321,15 @@ export class GoLiveSettingsModule {
     /*
      * If there's exactly one enabled platform, set primaryChat to it,
      * ensures there's a primary platform if the user has multiple selected and then
-     * deselects all but one
+     * deselects all but one.
+     * Do not set merge-only platforms (Patreon, Instagram) as primary since they
+     * cannot be used for authentication on app restart.
      */
     if (this.state.enabledPlatforms.length === 1) {
-      this.setPrimaryChat(this.state.enabledPlatforms[0]);
+      const platform = this.state.enabledPlatforms[0];
+      if (platform !== 'patreon' && platform !== 'instagram') {
+        this.setPrimaryChat(platform);
+      }
     }
     /*
      * This should only trigger on free user mode: when toggling another platform

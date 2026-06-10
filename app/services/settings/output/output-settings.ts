@@ -446,8 +446,8 @@ export class OutputSettingsService extends Service {
       'Recording',
       'RecRBSuffix',
     );
-    const outputWidth = this.videoSettingsService.outputResolutions[display].outputWidth;
-    const outputHeight = this.videoSettingsService.outputResolutions[display].outputHeight;
+    let outputWidth = this.videoSettingsService.outputResolutions[display].outputWidth;
+    let outputHeight = this.videoSettingsService.outputResolutions[display].outputHeight;
 
     const fileFormat = this.settingsService.findSettingValue(
       advanced,
@@ -459,16 +459,27 @@ export class OutputSettingsService extends Service {
     if (mode === 'Advanced') {
       const mixer = this.settingsService.findSettingValue(output, 'Recording', 'RecTracks');
       const rescaling = this.settingsService.findSettingValue(output, 'Recording', 'RecRescale');
+      if (rescaling) {
+        const rescaleResolution = this.settingsService.findSettingValue(
+          output,
+          'Recording',
+          'RecRescaleRes',
+        );
+        if (rescaleResolution) {
+          const [rescaleWidth, rescaleHeight] = rescaleResolution.split('x').map(Number);
+          if (Number.isFinite(rescaleWidth) && Number.isFinite(rescaleHeight)) {
+            outputWidth = rescaleWidth;
+            outputHeight = rescaleHeight;
+          }
+        }
+      }
       const enableFileSplit = this.settingsService.findSettingValue(
         output,
         'Recording',
         'RecSplitFile',
       );
-      const splitTime = this.settingsService.findSettingValue(
-        output,
-        'Recording',
-        'RecSplitFileTime',
-      );
+      const splitTime =
+        this.settingsService.findSettingValue(output, 'Recording', 'RecSplitFileTime') * 60; // convert seconds to minutes
       const splitSize = this.settingsService.findSettingValue(
         output,
         'Recording',
@@ -542,13 +553,19 @@ export class OutputSettingsService extends Service {
     const pathKey = mode === 'Advanced' ? 'RecFilePath' : 'FilePath';
     const path: string = this.settingsService.findSettingValue(output, 'Recording', pathKey);
 
-    const fileFormat: EFileFormat = this.settingsService.findValidListValue(
+    const recFormat: EFileFormat = this.settingsService.findValidListValue(
       output,
       'Recording',
       'RecFormat',
     ) as EFileFormat;
 
-    const format: ERecordingFormat = this.convertFileFormatToRecordingFormat(fileFormat);
+    const format: ERecordingFormat = this.convertFileFormatToRecordingFormat(recFormat);
+
+    const fileFormat: string = this.settingsService.findSettingValue(
+      advanced,
+      'Recording',
+      'FilenameFormatting',
+    );
 
     const overwrite: boolean = this.settingsService.findSettingValue(
       advanced,
@@ -604,6 +621,7 @@ export class OutputSettingsService extends Service {
       return {
         path,
         format,
+        fileFormat,
         overwrite,
         noSpace,
         prefix,
@@ -666,30 +684,10 @@ export class OutputSettingsService extends Service {
     );
 
     if (mode === 'Advanced') {
-      const rescaleFilter =
-        this.settingsService.findSettingValue(output, 'Streaming', 'RescaleFilter') ??
-        (this.settingsService.findSettingValue(output, 'Streaming', 'Rescale')
-          ? EScaleType.Bilinear
-          : EScaleType.Disable);
-      const rescaling = rescaleFilter !== EScaleType.Disable;
-
-      let outputWidth = this.videoSettingsService.outputResolutions[display].outputWidth;
-      let outputHeight = this.videoSettingsService.outputResolutions[display].outputHeight;
-
-      const rescaleResolution = this.settingsService.findSettingValue(
+      const { rescaling, rescaleFilter, outputWidth, outputHeight } = this.getGlobalRescaleSettings(
         output,
-        'Streaming',
-        'RescaleRes',
+        display,
       );
-
-      if (rescaling && rescaleResolution) {
-        const [rescaleWidth, rescaleHeight] = rescaleResolution.split('x').map(Number);
-
-        if (Number.isFinite(rescaleWidth) && Number.isFinite(rescaleHeight)) {
-          outputWidth = rescaleWidth;
-          outputHeight = rescaleHeight;
-        }
-      }
 
       const audioTrack = this.settingsService.findSettingValue(output, 'Streaming', 'TrackIndex');
 
@@ -723,6 +721,59 @@ export class OutputSettingsService extends Service {
         customEncSettings,
       } as ISimpleStreamingOutputSettings;
     }
+  }
+
+  /**
+   * Get Global Rescale Settings by Display
+   * @remark Currently, streaming instances with the vertical display cannot use global rescale output because
+   * the global rescale settings are for the horizontal display
+   * TODO: refactor when backend changes for per-display rescale are implemented
+   *
+   * @param output - Output settings
+   * @param display - Display for streaming instance
+   * @returns Global Rescale setings
+   */
+  private getGlobalRescaleSettings(output: ISettingsSubCategory[], display: TDisplayType) {
+    let outputWidth = this.videoSettingsService.outputResolutions[display].outputWidth;
+    let outputHeight = this.videoSettingsService.outputResolutions[display].outputHeight;
+
+    if (display === 'vertical') {
+      return {
+        rescaling: false,
+        rescaleFilter: EScaleType.Disable,
+        outputWidth,
+        outputHeight,
+      };
+    }
+
+    const rescaleFilter =
+      this.settingsService.findSettingValue(output, 'Streaming', 'RescaleFilter') ??
+      (this.settingsService.findSettingValue(output, 'Streaming', 'Rescale')
+        ? EScaleType.Bilinear
+        : EScaleType.Disable);
+    const rescaling = rescaleFilter !== EScaleType.Disable;
+
+    const rescaleResolution = this.settingsService.findSettingValue(
+      output,
+      'Streaming',
+      'RescaleRes',
+    );
+
+    if (rescaling && rescaleResolution) {
+      const [rescaleWidth, rescaleHeight] = rescaleResolution.split('x').map(Number);
+
+      if (Number.isFinite(rescaleWidth) && Number.isFinite(rescaleHeight)) {
+        outputWidth = rescaleWidth;
+        outputHeight = rescaleHeight;
+      }
+    }
+
+    return {
+      rescaling,
+      rescaleFilter,
+      outputWidth,
+      outputHeight,
+    };
   }
 
   private getStreamingEncoderSettings(

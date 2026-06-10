@@ -87,9 +87,12 @@
 
 .platforms-container {
   display: flex;
-  justify-content: space-evenly;
+  justify-content: flex-start;
   width: 800px;
+  height: 296px;
   flex-wrap: wrap;
+  row-gap: 16px;
+  column-gap: 30px;
 }
 
 .platform-card {
@@ -98,7 +101,6 @@
   border-radius: 16px;
   background: var(--section);
   overflow: hidden;
-  margin-top: 16px;
   padding-top: 16px;
 
   &:hover {

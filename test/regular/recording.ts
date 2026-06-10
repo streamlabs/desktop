@@ -19,6 +19,7 @@ import {
 import {
   clickButton,
   clickTab,
+  clickCheckbox,
   clickToggle,
   clickWhenDisplayed,
   focusMain,
@@ -29,10 +30,20 @@ import { logIn, logOut } from '../helpers/webdriver/user';
 import { toggleDualOutputMode } from '../helpers/modules/dual-output';
 import { showPage } from '../helpers/modules/navigation';
 import { useForm, fillForm } from '../helpers/modules/forms';
+import * as childProcess from 'child_process';
+import * as path from 'path';
+import { platform } from 'os';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
+
+const FFMPEG_DIR = path.resolve('node_modules', 'obs-studio-node');
+
+const FFPROBE_EXE = path.join(
+  FFMPEG_DIR,
+  platform() === 'darwin' ? path.join('Frameworks', 'ffprobe') : 'ffprobe.exe',
+);
 
 /**
  * Iterate over all formats and record a 0.5s video in each.
@@ -195,4 +206,75 @@ test('Recording from Go Live window', async t => {
   await validateRecordingFiles(t, tmpDir, 1);
 
   await logOut(t, true);
+});
+
+async function createRecordingWithRescaling(): Promise<void> {
+  await showSettingsWindow('Output', async () => {
+    await clickTab('Recording');
+
+    const { fillForm } = useForm('Recording');
+    await fillForm({
+      RecFormat: 'mkv',
+      RecRescale: true,
+      RecRescaleRes: '1280x720',
+    });
+    await clickButton('Close');
+  });
+
+  await focusMain();
+  await startRecording();
+  await sleep(500);
+  await stopRecording();
+  await sleep(2000);
+
+  // Confirm notification has been shown and navigate to the recording history
+  await focusMain();
+  await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
+  await waitForDisplayed('h1=Recordings', { timeout: 1000 });
+  await sleep(500);
+  await showPage('Editor');
+}
+
+async function validateRescaleRecording(
+  t: TExecutionContext,
+  tmpDir: string,
+  expectedWidth: number,
+  expectedHeight: number,
+): Promise<void> {
+  const files = await readdir(tmpDir);
+  t.true(files.length >= 1, `Files that were created:\n${files.join('\n')}`);
+  // Pick the first video file and verify its resolution matches the rescale dimensions
+  const videoFile = files.find(f => f.endsWith('.mkv'));
+  t.truthy(videoFile, 'Expected a .mkv recording file');
+
+  const filePath = path.join(tmpDir, videoFile);
+  const result = childProcess.execFileSync(
+    FFPROBE_EXE,
+    ['-v', 'quiet', '-print_format', 'json', '-show_streams', filePath],
+    { encoding: 'utf8' },
+  );
+  const { streams } = JSON.parse(result);
+  const videoStream = streams.find((s: any) => s.codec_type === 'video');
+  if (!videoStream) {
+    t.fail(`No video stream found. Streams: ${JSON.stringify(streams)}`);
+    return;
+  }
+  t.is(videoStream.width, expectedWidth, `Recording width should be ${expectedWidth}`);
+  t.is(videoStream.height, expectedHeight, `Recording height should be ${expectedHeight}`);
+}
+
+test('Recording with rescaling', async t => {
+  await logIn(t);
+  try {
+    // low resolution reduces CPU usage
+    await setOutputResolution('1920x1080'); // Not using 100x100 since we are rescaling resolution.
+
+    // Advanced Recording
+    const tmpDir = await setTemporaryRecordingPath(true);
+    await createRecordingWithRescaling();
+
+    await validateRescaleRecording(t, tmpDir, 1280, 720);
+  } finally {
+    await logOut(t, true);
+  }
 });

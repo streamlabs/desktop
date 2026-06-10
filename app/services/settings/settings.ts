@@ -20,7 +20,6 @@ import {
   encoderFieldsMap,
   obsEncoderToEncoderFamily,
   EFileFormat,
-  EEncoderFamily,
   convertFileFormatToRecordingFormat,
   EncoderQueryService,
 } from './output';
@@ -37,6 +36,7 @@ import fs from 'fs';
 import path from 'path';
 import { Services } from 'components-react/service-provider';
 import { UserService } from 'app-services';
+import { EScaleType } from '../../../obs-api';
 
 export enum ESettingsCategory {
   AI = 'AI',
@@ -96,6 +96,8 @@ export interface ISettingsValues extends Record<TCategoryName, Dictionary<TObsVa
     DelayEnable: boolean;
     DelaySec?: number;
     PreserveDelay?: boolean;
+    Rescale?: boolean;
+    RescaleFilter?: EScaleType;
     RecRB?: boolean;
     RecRBTime?: number;
     RecFormat: string;

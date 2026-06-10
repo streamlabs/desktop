@@ -43,6 +43,7 @@ const platformServiceConfig: Record<TPlatform, { streamType: string; service?: s
   twitter: { streamType: 'rtmp_custom' },
   instagram: { streamType: 'rtmp_custom' },
   kick: { streamType: 'rtmp_custom' },
+  patreon: { streamType: 'rtmp_custom' },
 };
 
 interface ICacheEntry {
@@ -120,10 +121,13 @@ export class EncoderQueryService extends Service {
 
     try {
       const existing = this.streamingService.getRecordingInstance();
-      if (existing && hasGetAvailableEncoders(existing)) {
-        const result = mapEncoders(existing.getAvailableEncoders());
-        this.recordingEncoderCache = { key: cacheKey, value: result };
-        return result;
+      if (existing) {
+        existing.format = format;
+        if (hasGetAvailableEncoders(existing)) {
+          const result = mapEncoders(existing.getAvailableEncoders());
+          this.recordingEncoderCache = { key: cacheKey, value: result };
+          return result;
+        }
       }
 
       if (mode === 'Simple') {

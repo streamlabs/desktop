@@ -9,6 +9,7 @@ import { ListInput } from 'components-react/shared/inputs';
 import { platformLabels, TPlatform } from 'services/platforms';
 import { Header, IOnboardingStepProps, useAuth } from './Onboarding';
 import Form from 'components-react/shared/inputs/Form';
+import Scrollable from 'components-react/shared/Scrollable';
 
 export function ConnectMore(p: IOnboardingStepProps) {
   const { UserService } = Services;
@@ -23,7 +24,7 @@ export function ConnectMore(p: IOnboardingStepProps) {
       )
     : $t('Connect your accounts for the best experience. You can always connect more later.');
 
-  const platformCards: TPlatform[] = ['twitch', 'youtube', 'tiktok', 'kick', 'facebook'];
+  const platformCards: TPlatform[] = ['twitch', 'youtube', 'tiktok', 'kick', 'patreon', 'facebook'];
   const listedPlatforms: TPlatform[] = ['trovo', 'twitter', 'instagram'];
 
   const { mergePlatform } = useAuth();
@@ -31,26 +32,28 @@ export function ConnectMore(p: IOnboardingStepProps) {
   return (
     <div className={styles.centered}>
       <Header title={$t('Connect Platforms')} description={subtitle} />
-      <div className={styles.platformsContainer}>
-        {platformCards.map(platform => (
-          <PlatformCard platform={platform} />
-        ))}
-        <div className={cx(styles.centered, styles.platformCard)}>
-          <i className="icon-platforms" style={{ fontSize: 32, padding: 8 }} />
-          <span>{$t('Select another platform')}</span>
-          <Form style={{ width: '100%', padding: '0 16px' }}>
-            <ListInput
-              options={listedPlatforms.map(platform => ({
-                label: platformLabels(platform),
-                value: platform,
-              }))}
-              onInput={mergePlatform}
-              nolabel
-              style={{ marginTop: 16 }}
-            />
-          </Form>
+      <Scrollable>
+        <div className={styles.platformsContainer}>
+          {platformCards.map(platform => (
+            <PlatformCard key={`${platform}-connect`} platform={platform} />
+          ))}
+          <div className={cx(styles.centered, styles.platformCard)}>
+            <i className="icon-platforms" style={{ fontSize: 32, padding: 8 }} />
+            <span>{$t('Select another platform')}</span>
+            <Form style={{ width: '100%', padding: '0 16px' }}>
+              <ListInput
+                options={listedPlatforms.map(platform => ({
+                  label: platformLabels(platform),
+                  value: platform,
+                }))}
+                onInput={mergePlatform}
+                nolabel
+                style={{ marginTop: 16 }}
+              />
+            </Form>
+          </div>
         </div>
-      </div>
+      </Scrollable>
     </div>
   );
 }

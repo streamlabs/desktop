@@ -1,13 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { $t } from '../../../services/i18n';
 import { ICustomStreamDestination } from '../../../services/settings/streaming';
 import { EStreamingState } from '../../../services/streaming';
-import {
-  EPlatformCallResult,
-  externalAuthPlatforms,
-  getPlatformService,
-  TPlatform,
-} from '../../../services/platforms';
+import { EPlatformCallResult, getPlatformService, TPlatform } from '../../../services/platforms';
 import cloneDeep from 'lodash/cloneDeep';
 import namingHelpers from '../../../util/NamingHelpers';
 import { Services } from '../../service-provider';
@@ -16,7 +11,7 @@ import styles from './Stream.m.less';
 import cx from 'classnames';
 import { Button, message } from 'antd';
 import PlatformLogo from '../../shared/PlatformLogo';
-import { injectState, mutation, useModule } from 'slap';
+import { initStore, useController } from '../../hooks/zustand';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import ButtonHighlighted from 'components-react/shared/ButtonHighlighted';
 import { useVuex } from 'components-react/hooks';
@@ -26,11 +21,11 @@ import { InstagramEditStreamInfo } from '../go-live/platforms/InstagramEditStrea
 import { IInstagramStartStreamOptions } from 'services/platforms/instagram';
 import { metadata } from 'components-react/shared/inputs/metadata';
 import FormFactory, { TInputValue } from 'components-react/shared/inputs/FormFactory';
-import { alertAsync } from '../../modals';
-import { EAuthProcessState } from '../../../services/user';
 import { useSubscription } from 'components-react/hooks/useSubscription';
 import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import Tooltip from 'components-react/shared/Tooltip';
+import ConnectButton from 'components-react/shared/ConnectButton';
+import { Observable } from 'rxjs';
 
 function censorWord(str: string) {
   if (str.length < 3) return str;
@@ -42,14 +37,8 @@ function censorEmail(str: string) {
   return censorWord(parts[0]) + '@' + censorWord(parts[1]);
 }
 
-/**
- * A Redux module for components in the StreamSetting window
- */
-class StreamSettingsModule {
-  constructor() {}
-
-  // DEFINE A STATE
-  state = injectState({
+class StreamSettingsController {
+  store = initStore({
     // false = edit mode off
     // true = add custom destination mode
     // number = edit custom destination mode where number is the index of the destination
@@ -64,8 +53,6 @@ class StreamSettingsModule {
     } as ICustomStreamDestination,
   });
 
-  // INJECT SERVICES
-
   private get streamSettingsService() {
     return Services.StreamSettingsService;
   }
@@ -76,28 +63,28 @@ class StreamSettingsModule {
     return Services.MagicLinkService;
   }
 
-  // DEFINE MUTATIONS
-
-  @mutation()
   editCustomDest(ind: number) {
-    this.state.customDestForm = cloneDeep(this.customDestinations[ind]);
-    this.state.editCustomDestMode = ind;
+    this.store.setState(s => {
+      s.customDestForm = cloneDeep(this.customDestinations[ind]);
+      s.editCustomDestMode = ind;
+    });
   }
 
-  @mutation()
   addCustomDest(linkToPrime: boolean = false) {
     if (linkToPrime) {
       this.magicLinkService.actions.linkToPrime('slobs-multistream');
       return;
     }
     const name: string = this.suggestCustomDestName();
-    this.state.customDestForm = {
-      name,
-      streamKey: '',
-      url: '',
-      enabled: false,
-    };
-    this.state.editCustomDestMode = true;
+    this.store.setState(s => {
+      s.customDestForm = {
+        name,
+        streamKey: '',
+        url: '',
+        enabled: false,
+      };
+      s.editCustomDestMode = true;
+    });
   }
 
   removeCustomDest(ind: number) {
@@ -106,34 +93,33 @@ class StreamSettingsModule {
     this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
   }
 
-  @mutation()
   stopEditing() {
-    this.state.editCustomDestMode = false;
+    this.store.update('editCustomDestMode', false);
   }
 
-  @mutation()
   updateCustomDestForm(updatedFields: Partial<ICustomStreamDestination>) {
-    this.state.customDestForm = { ...this.state.customDestForm, ...updatedFields };
+    this.store.setState(s => {
+      s.customDestForm = { ...s.customDestForm, ...updatedFields };
+    });
   }
 
-  @mutation()
   private fixUrl() {
     // add "/" to the end of url string
-    if (
-      this.state.customDestForm.streamKey &&
-      this.state.customDestForm.url.charAt(this.state.customDestForm.url.length - 1) !== '/'
-    ) {
-      this.state.customDestForm.url += '/';
-    }
+    this.store.setState(s => {
+      if (
+        s.customDestForm.streamKey &&
+        s.customDestForm.url.charAt(s.customDestForm.url.length - 1) !== '/'
+      ) {
+        s.customDestForm.url += '/';
+      }
+    });
   }
-
-  // DEFINE ACTIONS AND GETTERS
 
   get formValues() {
     return {
-      url: this.state.customDestForm.url,
-      streamKey: this.state.customDestForm.streamKey || '',
-      name: this.state.customDestForm.name,
+      url: this.store.customDestForm.url,
+      streamKey: this.store.customDestForm.streamKey || '',
+      name: this.store.customDestForm.name,
     };
   }
 
@@ -146,21 +132,21 @@ class StreamSettingsModule {
   }
 
   async saveCustomDest() {
-    if (!this.state.customDestForm.url.includes('?')) {
+    if (!this.store.customDestForm.url.includes('?')) {
       // if the url contains parameters, don't add a trailing /
       this.fixUrl();
     }
 
     const destinations = cloneDeep(this.customDestinations);
-    const isUpdateMode = typeof this.state.editCustomDestMode === 'number';
+    const isUpdateMode = typeof this.store.editCustomDestMode === 'number';
     if (isUpdateMode) {
-      const ind = this.state.editCustomDestMode as number;
+      const ind = this.store.editCustomDestMode as number;
       // preserve destination display setting or set to horizontal by default
       const display = destinations[ind]?.display ?? 'horizontal';
-      destinations.splice(ind, 1, { ...this.state.customDestForm, display });
+      destinations.splice(ind, 1, { ...this.store.customDestForm, display });
     } else {
       // set display to horizontal by default
-      destinations.push({ ...this.state.customDestForm, display: 'horizontal' });
+      destinations.push({ ...this.store.customDestForm, display: 'horizontal' });
     }
     this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
     this.stopEditing();
@@ -174,15 +160,17 @@ class StreamSettingsModule {
   }
 }
 
-// wrap the module into a React hook
+export const StreamSettingsCtx = React.createContext<StreamSettingsController | null>(null);
+
 function useStreamSettings() {
-  return useModule(StreamSettingsModule);
+  return useController(StreamSettingsCtx);
 }
 
 /**
  * A root component for StreamSettings
  */
 export function StreamSettings() {
+  const controller = useMemo(() => new StreamSettingsController(), []);
   const { StreamingService, StreamSettingsService, UserService, DualOutputService } = Services;
 
   const { canEditSettings, protectedModeEnabled, needToShowWarning, platforms, isPrime } = useVuex(
@@ -197,7 +185,7 @@ export function StreamSettings() {
 
   // Show a message when the user has unlinked/linked their account on web
   useSubscription(
-    UserService.refreshedLinkedAccounts,
+    UserService.refreshedLinkedAccounts as Observable<{ success: boolean; message: string }>,
     (res: { success: boolean; message: string }) => {
       const doShowMessage = () => {
         message.config({
@@ -241,70 +229,75 @@ export function StreamSettings() {
   }
 
   return (
-    <div className={styles.section}>
-      {/* account info */}
-      {protectedModeEnabled && (
-        <div className={styles.protectedMode}>
-          {!isPrime && (
-            <AddDestinationButton
-              type="header"
-              onClick={() => Services.MagicLinkService.linkToPrime('slobs-stream-settings')}
-            />
-          )}
-          <h2>{$t('Streamlabs ID')}</h2>
-          <SLIDBlock />
-          <div className={styles.streamHeaderWrapper}>
-            <h2 style={{ flex: 1 }}>{$t('Stream Destinations')}</h2>
-          </div>
-          {platforms.map(platform => (
-            <Platform key={platform} platform={platform} />
-          ))}
+    <StreamSettingsCtx.Provider value={controller}>
+      <div className={styles.section}>
+        {/* account info */}
+        {protectedModeEnabled && (
+          <div className={styles.protectedMode}>
+            {!isPrime && (
+              <AddDestinationButton
+                type="header"
+                onClick={() => Services.MagicLinkService.linkToPrime('slobs-stream-settings')}
+              />
+            )}
+            <h2>{$t('Streamlabs ID')}</h2>
+            <SLIDBlock />
+            <div className={styles.streamHeaderWrapper}>
+              <h2 style={{ flex: 1 }}>{$t('Stream Destinations')}</h2>
+            </div>
+            {platforms.map(platform => (
+              <Platform key={platform} platform={platform} />
+            ))}
 
-          <CustomDestinationList />
+            <CustomDestinationList />
 
-          {canEditSettings && (
-            <Tooltip
-              title="Stream to a single custom ingest without any linked platforms. Add a custom destination to multistream to a custom RTMP."
-              lightShadow
-              placement="rightBottom"
-            >
-              <a
-                className={styles.customDest}
-                onClick={disableProtectedMode}
-                style={{ marginBottom: '10px' }}
+            {canEditSettings && (
+              <Tooltip
+                title="Stream to a single custom ingest without any linked platforms. Add a custom destination to multistream to a custom RTMP."
+                lightShadow
+                placement="rightBottom"
               >
-                {$t('Stream to custom ingest')}
-              </a>
-              <i className="icon-information" style={{ marginLeft: '7px', fontWeight: 'unset' }} />
-            </Tooltip>
-          )}
-        </div>
-      )}
+                <a
+                  className={styles.customDest}
+                  onClick={disableProtectedMode}
+                  style={{ marginBottom: '10px' }}
+                >
+                  {$t('Stream to custom ingest')}
+                </a>
+                <i
+                  className="icon-information"
+                  style={{ marginLeft: '7px', fontWeight: 'unset' }}
+                />
+              </Tooltip>
+            )}
+          </div>
+        )}
 
-      {/* WARNING messages */}
-      {!canEditSettings && (
-        <div className="section section--warning">
-          {$t("You can not change these settings when you're live")}
-        </div>
-      )}
-      {needToShowWarning && (
-        <div className="section section--info">
-          <b>{$t('Warning')}: </b>
-          {$t(
-            'Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.',
-          )}
-          <br />
-          <br />
+        {/* WARNING messages */}
+        {!canEditSettings && (
+          <div className="section section--warning">
+            {$t("You can not change these settings when you're live")}
+          </div>
+        )}
+        {needToShowWarning && (
+          <div className="section section--info">
+            <b>{$t('Warning')}: </b>
+            {$t(
+              'Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.',
+            )}
+            <br />
+            <br />
 
-          {canEditSettings && (
-            <Button onClick={enableProtectedMode}>{$t('Use recommended settings')}</Button>
-          )}
-        </div>
-      )}
+            {canEditSettings && (
+              <Button onClick={enableProtectedMode}>{$t('Use recommended settings')}</Button>
+            )}
+          </div>
+        )}
 
-      {/* OBS settings */}
-      {!protectedModeEnabled && canEditSettings && <ObsGenericSettingsForm page="Stream" />}
-    </div>
+        {/* OBS settings */}
+        {!protectedModeEnabled && canEditSettings && <ObsGenericSettingsForm page="Stream" />}
+      </div>
+    </StreamSettingsCtx.Provider>
   );
 }
 
@@ -370,9 +363,7 @@ function Platform(p: { platform: TPlatform }) {
   const platform = p.platform;
   const { UserService, StreamingService, InstagramService } = Services;
 
-  const { isLoading, authInProgress, instagramSettings, canEditSettings } = useVuex(() => ({
-    isLoading: UserService.state.authProcessState === EAuthProcessState.Loading,
-    authInProgress: UserService.state.authProcessState === EAuthProcessState.InProgress,
+  const { instagramSettings, canEditSettings } = useVuex(() => ({
     instagramSettings: InstagramService.state.settings,
     canEditSettings: StreamingService.views.streamingStatus === EStreamingState.Offline,
   }));
@@ -390,24 +381,6 @@ function Platform(p: { platform: TPlatform }) {
     getPlatformService(platform).unlink();
   }
 
-  async function platformMergeInline(platform: TPlatform) {
-    const mode = externalAuthPlatforms.includes(platform) ? 'external' : 'internal';
-
-    await Services.UserService.actions.return.startAuth(platform, mode, true).then(res => {
-      Services.WindowsService.actions.setWindowOnTop('child');
-      if (res === EPlatformCallResult.Error) {
-        alertAsync(
-          $t(
-            'This account is already linked to another Streamlabs Account. Please use a different account.',
-          ),
-        );
-        return;
-      }
-
-      Services.StreamSettingsService.actions.setSettings({ protectedModeEnabled: true });
-    });
-  }
-
   /*
    * TODO: don't really see much value in having Instagram text boxes here, since
    * user needs to re-enter stream key every time they go live anyways, makes code brittle,
@@ -416,6 +389,12 @@ function Platform(p: { platform: TPlatform }) {
   const isInstagram = platform === 'instagram';
   const [showInstagramFields, setShowInstagramFields] = useState(isInstagram && isMerged);
   const shouldShowUsername = !isInstagram;
+
+  useEffect(() => {
+    if (isInstagram && isMerged) {
+      setShowInstagramFields(true);
+    }
+  }, [isInstagram, isMerged]);
 
   const usernameOrBlank = shouldShowUsername ? (
     <>
@@ -427,12 +406,6 @@ function Platform(p: { platform: TPlatform }) {
     ''
   );
 
-  const instagramConnect = async () => {
-    const success = await UserService.actions.return.startAuth(platform, 'internal', true);
-    if (!success) return;
-    setShowInstagramFields(true);
-  };
-
   const instagramUnlink = () => {
     // 1. reset stream key and url after unlinking if the user chooses to re-link immediately
     updateInstagramSettings({ title: '', streamKey: '', streamUrl: '' });
@@ -441,23 +414,6 @@ function Platform(p: { platform: TPlatform }) {
     // 3. unlink platform
     platformUnlink(platform);
   };
-
-  const ConnectButton = () => (
-    <span>
-      <Button
-        onClick={isInstagram ? instagramConnect : () => platformMergeInline(platform)}
-        className={cx({ [styles.tiktokConnectBtn]: platform === 'tiktok' })}
-        disabled={isLoading || authInProgress}
-        style={{
-          backgroundColor: `var(--${platform})`,
-          borderColor: 'transparent',
-          color: ['trovo', 'instagram', 'kick'].includes(platform) ? 'black' : 'inherit',
-        }}
-      >
-        {$t('Connect')}
-      </Button>
-    </span>
-  );
 
   const updateInstagramSettings = (newSettings: IInstagramStartStreamOptions) => {
     InstagramService.actions.updateSettings(newSettings);
@@ -507,7 +463,7 @@ function Platform(p: { platform: TPlatform }) {
         </div>
 
         <div style={{ marginLeft: 'auto' }}>
-          {shouldShowConnectBtn && <ConnectButton />}
+          {shouldShowConnectBtn && <ConnectButton platform={platform} />}
           {shouldShowUnlinkBtn && (
             <Button
               data-name={`${platform}Unlink`}
@@ -541,10 +497,12 @@ function Platform(p: { platform: TPlatform }) {
  * Renders a custom destinations list
  */
 function CustomDestinationList() {
-  const { customDestinations, editCustomDestMode, addCustomDest } = useStreamSettings();
+  const { addCustomDest, store } = useStreamSettings();
 
-  const { isPrime } = useVuex(() => ({
+  const editCustomDestMode = store.useState(s => s.editCustomDestMode);
+  const { isPrime, customDestinations } = useVuex(() => ({
     isPrime: Services.UserService.isPrime,
+    customDestinations: Services.StreamingService.views.savedSettings.customDestinations,
   }));
 
   const destinations = customDestinations;
@@ -587,7 +545,8 @@ function CustomDestinationList() {
  * Renders a single custom destination
  */
 function CustomDestination(p: { destination: ICustomStreamDestination; ind: number }) {
-  const { editCustomDestMode, removeCustomDest, editCustomDest } = useStreamSettings();
+  const { removeCustomDest, editCustomDest, store } = useStreamSettings();
+  const editCustomDestMode = store.useState(s => s.editCustomDestMode);
   const isEditMode = editCustomDestMode === p.ind;
   return (
     <div className={cx('section', 'flex--column', styles.section)}>
@@ -624,7 +583,13 @@ function CustomDestination(p: { destination: ICustomStreamDestination; ind: numb
  * Renders an ADD/EDIT form for the custom destination
  */
 function CustomDestForm() {
-  const { saveCustomDest, stopEditing, formValues, updateCustomDestForm } = useStreamSettings();
+  const { saveCustomDest, stopEditing, updateCustomDestForm, store } = useStreamSettings();
+  const customDestForm = store.useState(s => s.customDestForm);
+  const formValues = {
+    url: customDestForm.url,
+    streamKey: customDestForm.streamKey || '',
+    name: customDestForm.name,
+  };
 
   const urlValidator = {
     message: $t(
@@ -644,7 +609,6 @@ function CustomDestForm() {
 
   function editField(key: string) {
     return (value: TInputValue) => {
-      console.log(key, value, /^(?!.*streamlabs\.com).*/.test(value as string));
       updateCustomDestForm({ [key]: value });
     };
   }

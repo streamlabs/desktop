@@ -21,6 +21,7 @@ export interface IEnv {
   SLOBS_USE_CDN_MEDIA: boolean;
   SLD_USE_BETA: boolean;
   SLD_FORCE_ONBOARDING_STEP: string;
+  SLD_TEST_GROUP: string;
   // Allows joining as a guest instead of a host for guest cam
   SLD_GUEST_CAM_HASH: string;
   CI: boolean;

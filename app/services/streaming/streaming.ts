@@ -28,6 +28,7 @@ import {
   AdvancedReplayBufferFactory,
   SimpleReplayBufferFactory,
   ISettings,
+  EScaleType,
 } from '../../../obs-api';
 import { Inject } from 'services/core/injector';
 import moment from 'moment';
@@ -258,6 +259,7 @@ export class StreamingService
         youtube: 'not-started',
         tiktok: 'not-started',
         kick: 'not-started',
+        patreon: 'not-started',
         facebook: 'not-started',
         twitter: 'not-started',
         trovo: 'not-started',
@@ -404,11 +406,17 @@ export class StreamingService
    * Make a transition to Live
    */
   async goLive(newSettings?: IGoLiveSettings) {
+    /**
+     * VALIDATE STREAM SETTINGS
+     */
     // Ensure valid encoders for logged out users
     if (!this.userService.isLoggedIn) {
       this.settingsService.validateEncoders();
     }
 
+    /**
+     * SET TARGET GO LIVE SETTINGS
+     */
     // To ensure that the correct chat renders if dual streaming Twitch, make sure that Twitch is the primary platform
     if (
       this.userService.state.auth?.primaryPlatform !== 'twitch' &&
@@ -472,7 +480,7 @@ export class StreamingService
     }
 
     /**
-     * Set custom destination stream settings
+     * SET CUSTOM DESTINATIONS SETTINGS
      */
     settings.customDestinations.forEach(destination => {
       // only update enabled custom destinations
@@ -489,8 +497,6 @@ export class StreamingService
       destination.video = this.videoSettingsService.contexts[display];
       destination.mode = display === 'horizontal' ? 'landscape' : 'portrait';
     });
-    // Disable "Rescale Output" for dual output mode to prevent issues with scaling vertical/horizontal views.
-    this.dualOutputService.disableGlobalRescaleIfNeeded();
 
     // save enabled platforms to reuse setting with the next app start
     this.streamSettingsService.setSettings({ goLiveSettings: settings });
@@ -1285,7 +1291,7 @@ export class StreamingService
       if (this.views.isTwitchDualStreaming) {
         await this.createStreaming({
           output: 'both',
-          audioTrack: 1,
+          audioTrack: this.getStreamingAudioTrack(),
           start: true,
           context: 'enhancedBroadcasting',
           isEnhancedBroadcasting: true,
@@ -1301,7 +1307,7 @@ export class StreamingService
 
         this.createStreaming({
           output: 'horizontal',
-          audioTrack: 1,
+          audioTrack: this.getStreamingAudioTrack(),
           start: true,
           context: 'horizontal',
           isEnhancedBroadcasting: false,
@@ -1310,7 +1316,7 @@ export class StreamingService
         // For dual output without enhanced broadcasting, the vertical stream instance will be created and started after the horizontal stream.
         this.createStreaming({
           output: 'vertical',
-          audioTrack: 2,
+          audioTrack: this.getStreamingAudioTrack(),
           start: true,
           context: 'vertical',
           isEnhancedBroadcasting: false,
@@ -1323,7 +1329,7 @@ export class StreamingService
       } else {
         await this.createStreaming({
           output: 'horizontal',
-          audioTrack: 1,
+          audioTrack: this.getStreamingAudioTrack(),
           start: true,
           context: 'horizontal',
           isEnhancedBroadcasting: this.state.enhancedBroadcasting,
@@ -1454,18 +1460,36 @@ export class StreamingService
    * @param code - EOBSOutputSignal - for logging the signal for debugging purposes
    */
   private async handleStartStreaming(code: EOBSOutputSignal, display: TDisplayType) {
-    // Handle start recording when start streaming
-    if (this.streamSettingsService.settings.recordWhenStreaming && !this.isRecording) {
-      await this.toggleRecording();
-    }
+    const shouldStartHighlighterOutputs = this.highlighterService.shouldStartHighlighterOutputs;
 
     // Handle start replay buffer when start streaming
+    // Replay buffer must be started before recording because createReplayBuffer
+    // recreates the recording output instance, which would stop an active recording.
+    const shouldReplay =
+      this.streamSettingsService.settings.replayBufferWhileStreaming ||
+      shouldStartHighlighterOutputs;
     if (
-      this.streamSettingsService.settings.replayBufferWhileStreaming &&
+      shouldReplay &&
       this.outputSettingsService.getSettings().replayBuffer.enabled &&
       !this.isReplayBufferActive
     ) {
-      this.startReplayBuffer();
+      const replayDisplay =
+        this.views.isDualOutputMode && !shouldStartHighlighterOutputs
+          ? this.views.getOutputDisplayType()
+          : 'horizontal';
+
+      this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Running, replayDisplay);
+      await this.createReplayBuffer({
+        display: replayDisplay,
+        audioTrack: replayDisplay === 'horizontal' ? 1 : 2,
+      });
+    }
+
+    // Handle start recording when start streaming
+    const shouldRecord =
+      this.streamSettingsService.settings.recordWhenStreaming || shouldStartHighlighterOutputs;
+    if (shouldRecord && !this.isRecording) {
+      await this.toggleRecording();
     }
 
     this.SET_STREAMING_STATUS(EStreamingState.Live, display, new Date().toISOString());
@@ -1557,7 +1581,7 @@ export class StreamingService
           await this.validateOrCreateOutputInstance({
             display: 'vertical',
             type: 'streaming',
-            audioTrack: 2,
+            audioTrack: this.getStreamingAudioTrack(),
             context: 'vertical',
             start: true,
             isEnhancedBroadcasting: false,
@@ -1598,7 +1622,7 @@ export class StreamingService
         await this.validateOrCreateOutputInstance({
           display: 'horizontal',
           type: 'streaming',
-          audioTrack: 1,
+          audioTrack: this.getStreamingAudioTrack(),
           context: 'horizontal',
           start: true,
         });
@@ -1658,7 +1682,7 @@ export class StreamingService
       await this.validateOrCreateOutputInstance({
         display: nextDisplay,
         type: 'streaming',
-        audioTrack: nextDisplay === 'horizontal' ? 1 : 2,
+        audioTrack: this.getStreamingAudioTrack(),
         context: nextDisplay,
         start: true,
         isEnhancedBroadcasting: false,
@@ -1707,7 +1731,7 @@ export class StreamingService
       if (this.views.shouldSetupRestream) {
         await this.createStreaming({
           output: 'horizontal',
-          audioTrack: 1,
+          audioTrack: this.getStreamingAudioTrack(),
           start: true,
           context: 'horizontal',
           isEnhancedBroadcasting: false,
@@ -1845,7 +1869,7 @@ export class StreamingService
 
   private async createEnhancedBroadcastSingleStream() {
     const twitchDisplay = this.views.getPlatformDisplayType('twitch');
-    const audioTrack = twitchDisplay === 'horizontal' ? 1 : 2;
+    const audioTrack = this.getStreamingAudioTrack();
 
     // Always create the enhanced broadcasting streaming instance first
     await this.validateOrCreateOutputInstance({
@@ -1983,17 +2007,19 @@ export class StreamingService
         | IAdvancedStreaming
         | IEnhancedBroadcastingAdvancedStreaming;
 
-      const resolution = this.videoSettingsService.outputResolutions[display];
-      if (!stream.rescaling) {
-        stream.outputWidth = resolution.outputWidth;
-        stream.outputHeight = resolution.outputHeight;
-      }
-
       if (!isEnhancedBroadcasting) {
         // stream audio track
-        const defaultAudioTrack = display === 'horizontal' ? 1 : 2;
-        this.validateOrCreateAudioTrack(index ?? defaultAudioTrack);
-        stream.audioTrack = index ?? defaultAudioTrack;
+        const audioTrack = index ?? stream.audioTrack ?? this.getStreamingAudioTrack();
+
+        this.validateOrCreateAudioTrack(audioTrack);
+        stream.audioTrack = audioTrack;
+      }
+
+      // An extra safeguard to ensure that the vertical video context does not have global rescale
+      // TODO: remove this when the comprehensive fix is done
+      if (display === 'vertical') {
+        stream.rescaling = false;
+        stream.rescaleFilter = EScaleType.Disable;
       }
 
       // Twitch VOD audio track
@@ -2151,6 +2177,11 @@ export class StreamingService
     }
 
     return Promise.resolve(this.contexts[contextName].streaming);
+  }
+
+  private getStreamingAudioTrack() {
+    const audioTrack = this.settingsService.views.streamTrack + 1;
+    return Number.isFinite(audioTrack) && audioTrack > 0 ? audioTrack : 1;
   }
 
   /**
@@ -2417,10 +2448,13 @@ export class StreamingService
     if (this.isAdvancedRecording(this.contexts[display].recording)) {
       // cast the recording instance to advanced recording to be able to set the values correctly
       const recording = this.migrateSettings('recording', display) as IAdvancedRecording;
-      // output resolutions
-      const resolution = this.videoSettingsService.outputResolutions[display];
-      recording.outputWidth = resolution.outputWidth;
-      recording.outputHeight = resolution.outputHeight;
+      // output resolutions: use the rescale resolution when rescaling is enabled,
+      // otherwise fall back to the canvas output resolution
+      if (!recording.rescaling) {
+        const resolution = this.videoSettingsService.outputResolutions[display];
+        recording.outputWidth = resolution.outputWidth;
+        recording.outputHeight = resolution.outputHeight;
+      }
 
       // create recording tracks, if necessary
       if (Number.isFinite(recording.mixer)) {
@@ -2662,6 +2696,20 @@ export class StreamingService
       // Error handling with a stop signal is handled in the `signalHandler`
     } else if (info.signal === EOBSOutputSignal.Deactivate) {
       // The `deactivate` signal is sent after the `stop` signal
+
+      // Handle stopping recording and replay buffer started by AI Highlighter.
+      // handleStopStreaming already stops these for the normal recordWhenStreaming/
+      // replayBufferWhileStreaming settings, so only stop here for outputs that
+      // the highlighter started (which handleStopStreaming doesn't know about).
+      if (this.highlighterService.shouldStartHighlighterOutputs) {
+        if (this.isRecording) {
+          await this.toggleRecording();
+        }
+
+        if (this.isReplayBufferActive) {
+          this.stopReplayBuffer();
+        }
+      }
 
       // For the UI, set the streaming status to offline on the `deactivate` signal
       if (

@@ -500,7 +500,11 @@ export class YoutubeService
       return;
     }
 
+    // Make sure the scheduled stream exists and is in the future
     const streamToScheduledBroadcast = !!ytSettings.broadcastId;
+    if (ytSettings.scheduledStartTime && !(ytSettings.scheduledStartTime > new Date().getTime())) {
+      ytSettings.scheduledStartTime = new Date().getTime();
+    }
     // update selected LiveBroadcast with new title and description
     // or create a new LiveBroadcast if there are no broadcasts selected
     let broadcast: IYoutubeLiveBroadcast;
@@ -544,11 +548,13 @@ export class YoutubeService
     this.state.backupStreamSettings.context = !context ? 'horizontal' : context;
 
     if (!this.streamingService.views.isMultiplatformMode) {
+      // Note: This was previously changed to `rtmp_custom` for dual streaming but
+      // it now works with `rtmp_common` as well.
       this.streamSettingsService.setSettings(
         {
           platform: 'youtube',
           key: streamKey,
-          streamType: 'rtmp_custom',
+          streamType: 'rtmp_common',
           server: 'rtmp://a.rtmp.youtube.com/live2',
         },
         context,
@@ -726,6 +732,11 @@ export class YoutubeService
       'defaultAudioLanguage',
       'scheduledStartTime',
     ]);
+
+    // Ensure scheduled start time is in the future
+    if (snippet.scheduledStartTime && !(new Date(snippet.scheduledStartTime) > new Date())) {
+      snippet.scheduledStartTime = new Date().toISOString();
+    }
 
     // `zxx` is a `Not applicable` language code
     // YouTube API doesn't allow us to set this code

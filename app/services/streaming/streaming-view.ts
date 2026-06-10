@@ -13,6 +13,7 @@ import { RestreamService, TStreamShiftStatus } from '../restream';
 import { DualOutputService, TDisplayPlatforms, TDisplayDestinations } from '../dual-output';
 import { getPlatformService, TPlatform, TPlatformCapability, platformList } from '../platforms';
 import { TwitchService, TwitterService } from '../../app-services';
+import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremental-rollout';
 import cloneDeep from 'lodash/cloneDeep';
 import difference from 'lodash/difference';
 import { Services } from '../../components-react/service-provider';
@@ -52,6 +53,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   private get dualOutputView() {
     return this.getServiceViews(DualOutputService);
+  }
+
+  private get incrementalRolloutService() {
+    return this.getServiceViews(IncrementalRolloutService);
   }
 
   private get streamingState() {
@@ -105,6 +110,15 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     );
   }
 
+  get gameName() {
+    return (
+      (this.platforms.twitch?.enabled && this.platforms.twitch.gameName) ||
+      (this.platforms.facebook?.enabled && this.platforms.facebook.game) ||
+      (this.platforms.trovo?.enabled && this.platforms.trovo.game) ||
+      ''
+    );
+  }
+
   getPlatformDisplayName(platform: TPlatform): string {
     return getPlatformService(platform).displayName;
   }
@@ -118,7 +132,11 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns a sorted list of all platforms (linked and unlinked)
    */
   get allPlatforms(): TPlatform[] {
-    return this.getSortedPlatforms(platformList);
+    const platforms = !this.incrementalRolloutService.featureIsEnabled(EAvailableFeatures.patreon)
+      ? platformList.filter(p => p !== 'patreon')
+      : platformList;
+
+    return this.getSortedPlatforms(platforms);
   }
 
   /**
@@ -682,10 +700,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns true if given platforms have a capability
    */
   supports(capability: TPlatformCapability, targetPlatforms?: TPlatform[]): boolean {
-    const platforms =
-      capability === 'stream-schedule'
-        ? this.linkedPlatforms
-        : targetPlatforms || this.enabledPlatforms;
+    const platforms = targetPlatforms || this.enabledPlatforms;
 
     for (const platform of platforms) {
       if (getPlatformService(platform).hasCapability(capability)) return true;

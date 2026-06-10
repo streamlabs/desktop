@@ -14,6 +14,7 @@ import { TrovoEditStreamInfo } from './platforms/TrovoEditStreamInfo';
 import { TwitterEditStreamInfo } from './platforms/TwitterEditStreamInfo';
 import { InstagramEditStreamInfo } from './platforms/InstagramEditStreamInfo';
 import { KickEditStreamInfo } from './platforms/KickEditStreamInfo';
+import { PatreonEditStreamInfo } from './platforms/PatreonEditStreamInfo';
 import AdvancedSettingsSwitch from './AdvancedSettingsSwitch';
 import { TInputLayout } from 'components-react/shared/inputs';
 import { inject } from 'slap';
@@ -91,6 +92,7 @@ export default function PlatformSettings() {
       {shouldShowSettings && (
         <div style={{ width: '100%' }}>
           <div
+            key="platform-settings-header"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -137,6 +139,9 @@ export default function PlatformSettings() {
               )}
               {platform === 'kick' && (
                 <KickEditStreamInfo {...createPlatformBinding('kick')} layout={layout} />
+              )}
+              {platform === 'patreon' && (
+                <PatreonEditStreamInfo {...createPlatformBinding('patreon')} layout={layout} />
               )}
               {platform === 'trovo' && (
                 <TrovoEditStreamInfo {...createPlatformBinding('trovo')} layout={layout} />
