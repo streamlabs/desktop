@@ -19,5 +19,8 @@
   "Custom Destination": "Destino personalizado",
   "This app is currently popped out in another window.": "Esta aplicación está actualmente abierta en otra ventana.",
   "Error granting chat permissions.": "No se han podido conceder los permisos del chat.",
-  "Authentication Error": "Error de autenticación"
+  "Authentication Error": "Error de autenticación",
+  "Diagnostic Report Uploaded Successfully": "Diagnostic Report Uploaded Successfully",
+  "Copy Report ID": "Copy Report ID",
+  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team."
 }
