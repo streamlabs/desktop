@@ -669,6 +669,20 @@ export class SourcesService extends StatefulService<ISourcesState> {
     return this.getAvailableSourcesTypesList().map(listItem => listItem.value);
   }
 
+  /**
+   * Get all smart sources
+   * @remark Primarily used for updating the smart browser sources for forwarding socket events
+   * from the reactive data service. For performance optimization, filter smart sources before
+   * constructing the `Source`. This prevents hot paths while iterating through sources, which
+   * may happen frequently when forwarding events from reactive data to smart sources while live.
+   * @returns An array of all of the smart sources in the scene collection
+   */
+  getSmartSources() {
+    return Object.values(this.state.sources)
+      .filter(s => s.propertiesManagerType === 'smartBrowserSource')
+      .map(sourceModel => new Source(sourceModel.sourceId));
+  }
+
   private handleSourceCallback(objs: IObsSourceCallbackInfo[]) {
     objs.forEach(info => {
       const source = this.views.getSource(info.name);
