@@ -56,7 +56,6 @@ import BrowserSourceInteraction from 'components/windows/BrowserSourceInteractio
 
 import MediaShare from 'components/widgets/MediaShare';
 import AlertBox from 'components/widgets/AlertBox.vue';
-import SpinWheel from 'components/widgets/SpinWheel.vue';
 import Poll from 'components/widgets/Poll';
 import ChatHighlight from 'components/widgets/ChatHighlight';
 
@@ -104,7 +103,6 @@ export function getComponents() {
     MultistreamChatInfo,
     MediaShare,
     AlertBox,
-    SpinWheel,
     Poll,
     ChatHighlight,
     WelcomeToPrime,
