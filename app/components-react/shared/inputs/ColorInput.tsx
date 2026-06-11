@@ -58,6 +58,7 @@ export function ColorInput(p: TSlobsInputProps<{}, string | IRGBAColor>) {
   const { wrapperAttrs, inputAttrs } = useInput('color', { ...p, debounce });
   const divAttrs = omit(inputAttrs, 'onChange');
   const [textInputVal, setTextInputVal] = useState(colorToHex(inputAttrs.value));
+  const [pickerVisible, setPickerVisible] = useState(false);
   const alphaMode = typeof inputAttrs.value !== 'string';
 
   useEffect(() => {
@@ -165,6 +166,8 @@ export function ColorInput(p: TSlobsInputProps<{}, string | IRGBAColor>) {
       <Popover
         content={picker}
         trigger="click"
+        visible={pickerVisible}
+        onVisibleChange={setPickerVisible}
         placement="bottomLeft"
         getPopupContainer={getPopupContainer}
         overlayStyle={{ marginTop: '-20px' }}
@@ -178,7 +181,13 @@ export function ColorInput(p: TSlobsInputProps<{}, string | IRGBAColor>) {
           ref={ref}
           // render color box
           prefix={
-            <span style={{ width: '22px' }}>
+            <span
+              style={{ width: '22px', cursor: 'pointer' }}
+              onClick={e => {
+                e.stopPropagation();
+                setPickerVisible(v => !v);
+              }}
+            >
               <div
                 style={{
                   backgroundColor: colorToHex(inputAttrs.value),
