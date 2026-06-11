@@ -1170,7 +1170,7 @@ export class YoutubeService
     ).items[0];
   }
 
-  getMonetizationStatus(val: boolean) {
+  getMonetizationStatus(val?: boolean) {
     return val ? 'on' : 'off';
   }
 
