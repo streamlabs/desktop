@@ -47,6 +47,8 @@ import { RealmService } from 'services/realm';
 import { StreamAvatarService } from 'services/stream-avatar/stream-avatar-service';
 import { NavigationService } from 'services/navigation';
 import { StreamingService } from 'services/streaming';
+import { VirtualWebcamService } from 'services/virtual-webcam';
+import { WebsocketService } from 'services/websocket';
 
 interface IAppState {
   loading: boolean;
@@ -102,6 +104,8 @@ export class AppService extends StatefulService<IAppState> {
   @Inject() private streamAvatarService: StreamAvatarService;
   @Inject() private navigationService: NavigationService;
   @Inject() private streamingService: StreamingService;
+  @Inject() private virtualWebcamService: VirtualWebcamService;
+  @Inject() private websocketService: WebsocketService;
 
   static initialState: IAppState = {
     loading: true,
@@ -211,6 +215,8 @@ export class AppService extends StatefulService<IAppState> {
       this.streamAvatarService.stopAvatarProcess();
       this.crashReporterService.beginShutdown();
       this.shutdownStarted.next();
+      this.recentEventsService.shutdown();
+      this.websocketService.disconnect();
       this.keyListenerService.shutdown();
       this.platformAppsService.unloadAllApps();
       await this.usageStatisticsService.flushEvents();
