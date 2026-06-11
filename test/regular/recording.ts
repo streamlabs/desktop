@@ -19,20 +19,31 @@ import {
 import {
   clickButton,
   clickTab,
+  clickCheckbox,
   clickToggle,
   clickWhenDisplayed,
   focusMain,
   getNumElements,
   waitForDisplayed,
 } from '../helpers/modules/core';
-import { logIn } from '../helpers/webdriver/user';
+import { logIn, logOut } from '../helpers/webdriver/user';
 import { toggleDualOutputMode } from '../helpers/modules/dual-output';
 import { showPage } from '../helpers/modules/navigation';
 import { useForm, fillForm } from '../helpers/modules/forms';
+import * as childProcess from 'child_process';
+import * as path from 'path';
+import { platform } from 'os';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
+
+const FFMPEG_DIR = path.resolve('node_modules', 'obs-studio-node');
+
+const FFPROBE_EXE = path.join(
+  FFMPEG_DIR,
+  platform() === 'darwin' ? path.join('Frameworks', 'ffprobe') : 'ffprobe.exe',
+);
 
 /**
  * Iterate over all formats and record a 0.5s video in each.
@@ -60,11 +71,7 @@ async function createRecordingFiles(advanced: boolean = false): Promise<number> 
     await startRecording();
     await sleep(500);
     await stopRecording();
-
-    // in advanced mode, it may take a little longer to save the recording
-    if (advanced) {
-      await sleep(1000);
-    }
+    await sleep(2000);
 
     // Confirm notification has been shown and navigate to the recording history
     await focusMain();
@@ -103,7 +110,13 @@ async function validateRecordingFiles(
   waitForDisplayed('h1=Recordings');
 
   const numRecordings = await getNumElements('[data-test=filename]');
-  t.is(numRecordings, numFiles, 'All recordings show in history matches number of files recorded');
+  t.is(
+    numRecordings,
+    numFiles,
+    `All recordings from ${
+      advanced ? 'Advanced' : 'Simple'
+    } mode in history matches number of files recorded`,
+  );
 }
 
 /**
@@ -156,16 +169,19 @@ test('Recording with two contexts active', async t => {
 
   const numFiles = await createRecordingFiles(true);
   await validateRecordingFiles(t, tmpDir, numFiles, true);
+
+  await logOut(t, true);
 });
 
 test('Recording from Go Live window', async t => {
   const user = await logIn(t);
-  await setOutputResolution('100x100');
-  const tmpDir = await setTemporaryRecordingPath();
   await prepareToGoLive();
+  const tmpDir = await setTemporaryRecordingPath();
 
   await clickGoLive();
   await waitForSettingsWindowLoaded();
+
+  await clickToggle('recording-toggle');
 
   if (user.type === 'twitch') {
     await fillForm({
@@ -173,14 +189,130 @@ test('Recording from Go Live window', async t => {
     });
   }
 
-  await clickToggle('recording-toggle');
+  if (user.type === 'youtube') {
+    await fillForm({
+      title: 'Test Stream',
+      description: 'Test Stream Description',
+    });
+  }
 
   await submit();
   await waitForStreamStart();
   await focusMain();
+  await sleep(2000);
   await stopRecording();
   await stopStream();
 
+  await validateRecordingFiles(t, tmpDir, 1);
+
+  await logOut(t, true);
+});
+
+/*
+ * Open Output settings, fill out the recording form with the provided arguments,
+ * and verify that a recording can be successfully created with those settings.
+ * The callback can be used to click additional options in the form after filling
+ * out the main parameters.
+ */
+async function createRecordingWithFormParms(
+  formArgs: Record<string, unknown>,
+  callback?: () => Promise<void>,
+): Promise<void> {
+  await showSettingsWindow('Output', async () => {
+    await clickTab('Recording');
+
+    const { fillForm } = useForm('Recording');
+    await fillForm(formArgs);
+    if (callback) {
+      await callback();
+    }
+    await clickButton('Close');
+  });
+
+  await focusMain();
+  await startRecording();
+  await sleep(500);
+  await stopRecording();
+  await sleep(2000);
+
+  // Confirm notification has been shown and navigate to the recording history
+  await focusMain();
+  await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
+  await waitForDisplayed('h1=Recordings', { timeout: 1000 });
+  await sleep(500);
+  await showPage('Editor');
+}
+
+async function validateRescaleRecording(
+  t: TExecutionContext,
+  tmpDir: string,
+  expectedWidth: number,
+  expectedHeight: number,
+): Promise<void> {
   const files = await readdir(tmpDir);
-  t.is(files.length, 1, `Files that were created:\n${files.join('\n')}`);
+  t.true(files.length >= 1, `Files that were created:\n${files.join('\n')}`);
+  // Pick the first video file and verify its resolution matches the rescale dimensions
+  const videoFile = files.find(f => f.endsWith('.mkv'));
+  t.truthy(videoFile, 'Expected a .mkv recording file');
+
+  const filePath = path.join(tmpDir, videoFile);
+  const result = childProcess.execFileSync(
+    FFPROBE_EXE,
+    ['-v', 'quiet', '-print_format', 'json', '-show_streams', filePath],
+    { encoding: 'utf8' },
+  );
+  const { streams } = JSON.parse(result);
+  const videoStream = streams.find((s: any) => s.codec_type === 'video');
+  if (!videoStream) {
+    t.fail(`No video stream found. Streams: ${JSON.stringify(streams)}`);
+    return;
+  }
+  t.is(videoStream.width, expectedWidth, `Recording width should be ${expectedWidth}`);
+  t.is(videoStream.height, expectedHeight, `Recording height should be ${expectedHeight}`);
+}
+
+test('Recording with rescaling', async t => {
+  await logIn(t);
+  try {
+    // low resolution reduces CPU usage
+    await setOutputResolution('1920x1080'); // Not using 100x100 since we are rescaling resolution.
+
+    // Advanced Recording
+    const tmpDir = await setTemporaryRecordingPath(true);
+    await createRecordingWithFormParms({
+      RecFormat: 'mkv',
+      RecRescale: true,
+      RecRescaleRes: '1280x720',
+    });
+
+    await validateRescaleRecording(t, tmpDir, 1280, 720);
+  } finally {
+    await logOut(t, true);
+  }
+});
+
+async function validateTitleContainsNoSpaces(t: TExecutionContext, tmpDir: string): Promise<void> {
+  const files = await readdir(tmpDir);
+  t.true(files.length >= 1, `Files that were created:\n${files.join('\n')}`);
+  const videoFile = files.find(f => f.endsWith('.mkv'));
+  t.truthy(videoFile, 'Expected a .mkv recording file');
+  if (!videoFile) return;
+  t.false(videoFile.includes(' '), `Recording filename should not contain spaces: "${videoFile}"`);
+}
+
+test('Recording without spaces', async t => {
+  await logIn(t);
+  try {
+    // low resolution reduces CPU usage
+    await setOutputResolution('100x100');
+
+    const tmpDir = await setTemporaryRecordingPath(true);
+    await createRecordingWithFormParms({ RecFormat: 'mkv' }, async () => {
+      await clickCheckbox('RecFileNameWithoutSpace');
+    });
+
+    await validateTitleContainsNoSpaces(t, tmpDir);
+  } finally {
+    await logOut(t, true);
+  }
 });

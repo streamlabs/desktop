@@ -155,6 +155,7 @@
   "Instagram Live": "Instagram Live",
   "X (Twitter)": "X (Twitter)",
   "Kick": "Kick",
+  "Patreon": "Patreon",
   "Facebook Profiles": "Profils Facebook",
   "Facebook Pages": "Pages Facebook",
   "Alert Box": "Fenêtre d'alerte",
@@ -171,5 +172,9 @@
   "Alert Box Settings": "Paramètres de la fenêtre d'alerte",
   "Alerts and Widgets": "Alertes et widgets",
   "AI": "AI",
-  "Upgrade": "Mise à niveau"
+  "Between": "Between",
+  "Upgrade": "Mise à niveau",
+  "Edit Data": "Edit Data",
+  "Edit Reactive Data": "Edit Reactive Data",
+  "Reactive Data Editor": "Reactive Data Editor"
 }

@@ -55,7 +55,6 @@ export interface IPlatformComponentParams<T extends TPlatform> {
   layout?: TInputLayout;
   isUpdateMode?: boolean;
   isScheduleMode?: boolean;
-  enabledPlatformsCount?: number;
   isDualOutputMode?: boolean;
   isAiHighlighterEnabled?: boolean;
   isStreamShiftMode?: boolean;

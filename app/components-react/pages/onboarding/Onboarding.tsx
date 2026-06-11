@@ -209,9 +209,15 @@ export class OnboardingModule {
   get currentStep(): IOnboardingStep {
     // Useful for testing in development
     if (Utils.env.SLD_FORCE_ONBOARDING_STEP) {
-      return ONBOARDING_STEPS()[
+      const step = ONBOARDING_STEPS()[
         Utils.env.SLD_FORCE_ONBOARDING_STEP as keyof typeof EOnboardingSteps
       ];
+
+      if (!step) {
+        return ONBOARDING_STEPS()[EOnboardingSteps.StreamingOrRecording];
+      }
+
+      return step;
     }
 
     return this.singletonStep ?? this.steps[this.state.stepIndex];

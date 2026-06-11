@@ -23,8 +23,7 @@ export function SceneCollectionsSettings() {
   const [message, setMessage] = useState('');
   const [collection, setCollection] = useState(SceneCollectionsService.activeCollection?.id || '');
 
-  const mediaBackupOptOut = useRealmObject(CustomizationService.state).mediaBackupOptOut;
-  const designerMode = useRealmObject(CustomizationService.state).designerMode;
+  const { mediaBackupOptOut, designerMode } = useRealmObject(CustomizationService.state);
 
   const { activeSceneId, collectionOptions } = useVuex(() => ({
     activeSceneId: ScenesService.views.activeSceneId,

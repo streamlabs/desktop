@@ -360,7 +360,6 @@ export class YoutubeService
 
   async setupStreamShiftStream(goLiveSettings: IGoLiveSettings) {
     const settings = goLiveSettings?.streamShiftSettings;
-    console.log('YouTube Stream Shift settings ', settings);
 
     if (settings && settings.broadcast_id !== null && !settings.is_live) {
       console.error('Stream Shift Error: YouTube is not live');
@@ -373,8 +372,6 @@ export class YoutubeService
 
       // Use the last broadcast in the list, which should be the most recent one
       let broadcast = liveBroadcasts?.[liveBroadcasts.length - 1];
-      console.log('YouTube fetched ', liveBroadcasts?.length, ' active broadcasts');
-      console.log('YouTube fetched active broadcast', broadcast);
 
       // Try to find an upcoming broadcast if there are no active broadcasts
       if (!broadcast) {
@@ -385,8 +382,7 @@ export class YoutubeService
           ),
         );
         const upcomingBroadcasts = await this.fetchBroadcastsByStatus('upcoming');
-        console.log('YouTube fetched ', upcomingBroadcasts?.length, ' upcoming broadcasts');
-        console.log('YouTube fetched upcoming broadcast', broadcast);
+
         broadcast = upcomingBroadcasts?.[upcomingBroadcasts.length - 1];
       }
 
@@ -398,14 +394,12 @@ export class YoutubeService
           title: settings?.stream_title ?? ytSettings.title,
           description: ytSettings?.description ?? '',
         });
-        console.log('YouTube created broadcast', broadcast);
       }
 
       // Validate stream binding to broadcast
       if (broadcast.contentDetails.boundStreamId) {
         const liveStream = await this.fetchLiveStream(broadcast.contentDetails.boundStreamId);
         console.debug('Bound stream for YouTube broadcast: ', !!liveStream);
-        console.log('YouTube found stream', liveStream, ' bound to broadcast', broadcast.id);
         const streamKey = liveStream.cdn.ingestionInfo.streamName;
         this.SET_STREAM_KEY(streamKey);
       } else {
@@ -413,21 +407,12 @@ export class YoutubeService
         const liveStream = await this.createLiveStream(broadcast.snippet.title);
         await this.bindStreamToBroadcast(broadcast.id, liveStream.id);
 
-        console.log(
-          'YouTube created stream',
-          liveStream,
-          ' and bound it to broadcast',
-          broadcast.id,
-        );
-
         const streamKey = liveStream.cdn.ingestionInfo.streamName;
         this.SET_STREAM_KEY(streamKey);
       }
 
       const video = await this.fetchVideo(broadcast.id);
       this.SET_STREAM_ID(broadcast.contentDetails.boundStreamId);
-
-      console.log('YouTube fetched video', video, ' for broadcast', broadcast.id);
 
       const title = settings?.stream_title ?? broadcast.snippet.title;
 
@@ -534,7 +519,11 @@ export class YoutubeService
       return;
     }
 
+    // Make sure the scheduled stream exists and is in the future
     const streamToScheduledBroadcast = !!ytSettings.broadcastId;
+    if (ytSettings.scheduledStartTime && !(ytSettings.scheduledStartTime > new Date().getTime())) {
+      ytSettings.scheduledStartTime = new Date().getTime();
+    }
     // update selected LiveBroadcast with new title and description
     // or create a new LiveBroadcast if there are no broadcasts selected
     let broadcast: IYoutubeLiveBroadcast;
@@ -583,11 +572,13 @@ export class YoutubeService
     this.state.backupStreamSettings.context = !context ? 'horizontal' : context;
 
     if (!this.streamingService.views.isMultiplatformMode) {
+      // Note: This was previously changed to `rtmp_custom` for dual streaming but
+      // it now works with `rtmp_common` as well.
       this.streamSettingsService.setSettings(
         {
           platform: 'youtube',
           key: streamKey,
-          streamType: 'rtmp_custom',
+          streamType: 'rtmp_common',
           server: 'rtmp://a.rtmp.youtube.com/live2',
         },
         context,
@@ -765,6 +756,11 @@ export class YoutubeService
       'defaultAudioLanguage',
       'scheduledStartTime',
     ]);
+
+    // Ensure scheduled start time is in the future
+    if (snippet.scheduledStartTime && !(new Date(snippet.scheduledStartTime) > new Date())) {
+      snippet.scheduledStartTime = new Date().toISOString();
+    }
 
     // `zxx` is a `Not applicable` language code
     // YouTube API doesn't allow us to set this code
@@ -1236,6 +1232,14 @@ export class YoutubeService
     const youtubeDomain =
       nightMode === 'day' ? 'https://youtube.com' : 'https://gaming.youtube.com';
     return `${youtubeDomain}/watch?v=${this.state.settings.broadcastId}`;
+  }
+
+  get verticalStreamPageUrl() {
+    if (!this.state.verticalBroadcast?.id) return '';
+    const nightMode = this.customizationService.isDarkTheme ? 'night' : 'day';
+    const youtubeDomain =
+      nightMode === 'day' ? 'https://youtube.com' : 'https://gaming.youtube.com';
+    return `${youtubeDomain}/watch?v=${this.state.verticalBroadcast.id}`;
   }
 
   async uploadThumbnail(base64url: string | 'default', videoId: string) {

@@ -82,6 +82,7 @@ export interface IObsReturnTypes {
   func_stop_sender: {};
   func_stop_receiver: {};
   func_stop_producer: {};
+  func_reset_device: {};
 }
 
 interface IRoomResponse {
@@ -898,11 +899,19 @@ export class GuestCamService extends StatefulService<IGuestCamServiceState> {
       this.producer = null;
     }
 
-    // TODO: AFAIK there is no way to cleanly recreate the producer without
-    // entirely disconnecting destroying all state on the server. For now, we
-    // disconnect from the socket and start listening to guests again.
+    // Disconnect the socket and reset the native mediasoup transceiver so the
+    // next session starts from a clean device. Without the reset, the singleton
+    // transceiver in mediasoup-connector retains m_device across sessions and
+    // every subsequent func_load_device call hits the "Device already exists"
+    // early-return path, leaving stale WebRTC state in place.
     this.socket.disconnect();
     this.socket = null;
+
+    const sourceForReset = this.views.sources[0];
+    if (sourceForReset) {
+      this.makeObsRequest(sourceForReset.sourceId, 'func_reset_device');
+    }
+
     this.CLEAR_GUESTS();
   }
 
@@ -1020,20 +1029,31 @@ export class GuestCamService extends StatefulService<IGuestCamServiceState> {
   }
 
   setScreenshareSource(sourceId?: string) {
-    this.SET_SCREENSHARE_SOURCE(sourceId ?? '');
+    try {
+      this.SET_SCREENSHARE_SOURCE(sourceId ?? '');
 
-    if (this.producer && this.views.sourceId) {
-      if (sourceId) {
-        if (this.producer.screenshareStreamId) {
-          this.producer.setStreamSource(sourceId, this.producer.screenshareStreamId, 'video');
+      if (this.producer && this.views.sourceId) {
+        if (sourceId) {
+          if (this.producer.screenshareStreamId) {
+            this.producer.setStreamSource(sourceId, this.producer.screenshareStreamId, 'video');
+          } else {
+            this.producer.addStream('screenshare', sourceId);
+          }
         } else {
-          this.producer.addStream('screenshare', sourceId);
-        }
-      } else {
-        if (this.producer.screenshareStreamId) {
-          this.producer.stopStream(this.producer.screenshareStreamId);
+          if (this.producer.screenshareStreamId) {
+            this.producer.stopStream(this.producer.screenshareStreamId);
+          }
         }
       }
+    } catch (e: unknown) {
+      this.error('Error setting screenshare source', e);
+
+      // Surface the error to the user
+      alert(
+        $t(
+          'There was an error setting the Collab Cam source. Please confirm the source exists and try again.',
+        ),
+      );
     }
   }
 
