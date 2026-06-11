@@ -49,7 +49,7 @@ const loadingStrings = () => [
   'You can give your Cloudbot chat bot a Custom Name',
   'With Streamlabs Ultra, you can change the name of your Cloudbot chat bot.',
   'Use a Stream Label source to highlight recent follows, subs counts, top tippers & more.',
-  'Game Pulse sources can display your media when you get a Kill, Win, Death & more in over 50 supported games.',
+  'Game Pulse sources can display your media when you get a Kill, Win, Death & more in over 25 supported games.',
   'Use the Game Pulse source for game-driven reactions and animations.',
   'Display an on-screen victory celebration every time you win in Fortnite with the Game Pulse widget.',
   'Set subscriber or fundraising goals using the Goal Widgets.',
