@@ -472,6 +472,10 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
     this.unsubscribeFromSocketConnection();
   }
 
+  shutdown() {
+    this.unsubscribeFromSocketConnection();
+  }
+
   fetchRecentEvents() {
     const typeString = this.getEventTypesString();
     // eslint-disable-next-line

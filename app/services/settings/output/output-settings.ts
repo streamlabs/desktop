@@ -430,10 +430,11 @@ export class OutputSettingsService extends Service {
       'OverwriteIfExists',
     );
 
-    const noSpace: boolean = this.settingsService.findSettingValue(
+    const noSpaceKey = mode === 'Advanced' ? 'RecFileNameWithoutSpace' : 'FileNameWithoutSpace';
+    const noSpace: boolean = !!this.settingsService.findSettingValue(
       output,
       'Recording',
-      'FileNameWithoutSpace',
+      noSpaceKey,
     );
 
     const prefix: string = this.settingsService.findSettingValue(
@@ -573,10 +574,11 @@ export class OutputSettingsService extends Service {
       'OverwriteIfExists',
     );
 
-    const noSpace: boolean = this.settingsService.findSettingValue(
+    const noSpaceKey = mode === 'Advanced' ? 'RecFileNameWithoutSpace' : 'FileNameWithoutSpace';
+    const noSpace: boolean = !!this.settingsService.findSettingValue(
       output,
       'Recording',
-      'FileNameWithoutSpace',
+      noSpaceKey,
     );
 
     const prefix: string = this.settingsService.findSettingValue(

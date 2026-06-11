@@ -6,7 +6,7 @@ import {
   InputComponent,
   ListInput,
 } from '../../../shared/inputs';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Services } from '../../../service-provider';
 import { $t } from '../../../../services/i18n';
 import BroadcastInput from './BroadcastInput';
@@ -64,7 +64,11 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
 
   // re-fill form when the broadcastId selected
   useEffect(() => {
-    if (!broadcastId) return;
+    if (!broadcastId) {
+      // Cannot have monetization enabled before the broadcast is checked
+      updateSettings({ monetizationEnabled: false, eligibleForMonetization: false });
+      return;
+    }
     Services.YoutubeService.actions.return
       .fetchStartStreamOptionsForBroadcast(broadcastId)
       .then(newYtSettings => {
@@ -220,6 +224,9 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
                     "Features like personalized ads and live chat won't be available on live streams made for kids.",
                   )}
                 </p>
+              )}
+              {!isScheduleMode && ytSettings.eligibleForMonetization && (
+                <CheckboxInput label={$t('Enable Monetization')} {...bind.monetizationEnabled} />
               )}
             </>
           )}
