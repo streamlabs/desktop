@@ -4,6 +4,7 @@ import { useRealmObject } from 'components-react/hooks/realm';
 import { Services } from 'components-react/service-provider';
 import { SwitchInput } from 'components-react/shared/inputs';
 import Scrollable from 'components-react/shared/Scrollable';
+import { Modal, Tooltip } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import { getConfigByGame } from 'services/highlighter/models/game-config.models';
@@ -64,6 +65,7 @@ function AIFeature(props: FeatureProps) {
 
 export default function AILanding() {
   const {
+    HostsService,
     NavigationService,
     PlatformAppsService,
     ScenesService,
@@ -200,6 +202,81 @@ export default function AILanding() {
     SideNavService.actions.setCurrentMenuItem(`sub-${AGENT_APP_ID}`);
   }
 
+  const showcasedGames = [
+    EGame.FORTNITE,
+    EGame.VALORANT,
+    EGame.LEAGUE_OF_LEGENDS,
+    EGame.APEX_LEGENDS,
+    EGame.COUNTER_STRIKE_2,
+    EGame.MARVEL_RIVALS,
+    EGame.OVERWATCH_2,
+    EGame.WARZONE,
+    EGame.PUBG,
+    EGame.BATTLEFIELD_6,
+  ] as const;
+  const [supportedGames, setAdditionalSupportedGames] = useState<Record<EGame, string>>();
+  const [showMoreGamesModal, setShowMoreGamesModal] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    let processing = false;
+
+    void loadSupportedGames();
+    return () => {
+      active = false;
+    };
+
+    async function loadSupportedGames() {
+      if (processing) return;
+      processing = true;
+
+      const supportedGamesUrl = `https://${HostsService.highlighterCdn}/configs/games.json`;
+
+      const response = await fetch(supportedGamesUrl);
+      const json = (await response.json()) as { games: { id: string; label: string }[] };
+
+      if (!active) return;
+
+      const gameEntries = json.games.map(g => [g.id, g.label]);
+      const games = Object.fromEntries(gameEntries) as Record<EGame, string>;
+      setAdditionalSupportedGames(games);
+
+      processing = false;
+    }
+  }, []);
+
+  const supportedGamesTitles = useMemo(
+    () => (supportedGames ? Object.values(supportedGames) : []),
+    [supportedGames],
+  );
+
+  const moreGamesTooltip = useMemo(() => {
+    if (!supportedGames || Object.keys(supportedGames).length === 0) return null;
+
+    const additionalGamesMap = new Map(Object.entries(supportedGames));
+    showcasedGames.forEach(game => additionalGamesMap.delete(game));
+
+    const filteredGames = Array.from(additionalGamesMap.values());
+    const hasMore = filteredGames.length > 8;
+    const visible = hasMore ? filteredGames.slice(0, 8) : filteredGames;
+
+    return (
+      <div>
+        <ul className={styles.moreGamesList}>
+          {visible.map(label => (
+            <li>{label}</li>
+          ))}
+        </ul>
+        {hasMore && (
+          <div className={styles.moreGamesCta}>
+            <div>{$t('And more!')}</div>
+            <div>{$t('Click to see all games')}</div>
+          </div>
+        )}
+      </div>
+    );
+  }, [supportedGames]);
+
   return (
     <div className={styles.aiLandingRoot}>
       <Scrollable style={{ flexGrow: 1, width: '100%' }}>
@@ -267,29 +344,37 @@ export default function AILanding() {
           </div>
           <div className={styles.supportedGames}>
             <h3>{$t('Supported Games:')}</h3>
-            <div className={styles.supportedGameList}>
-              {[
-                EGame.FORTNITE,
-                EGame.VALORANT,
-                EGame.LEAGUE_OF_LEGENDS,
-                EGame.APEX_LEGENDS,
-                EGame.COUNTER_STRIKE_2,
-                EGame.MARVEL_RIVALS,
-                EGame.OVERWATCH_2,
-                EGame.WARZONE,
-                EGame.PUBG,
-                EGame.BATTLEFIELD_6,
-              ]
+            <div className={styles.supportedGamesList}>
+              {showcasedGames
                 .map(game => getConfigByGame(game))
                 .filter(config => config.titleIcon && config.titleIcon !== 'unset')
                 .map(config => (
                   <img key={config.name} src={config.titleIcon} alt={config.label} />
                 ))}
-              <img src={$i('images/ai/and-more.svg')} />
+              <Tooltip title={moreGamesTooltip}>
+                <img
+                  src={$i('images/ai/and-more.svg')}
+                  className={styles.moreGamesIcon}
+                  onClick={() => supportedGamesTitles.length > 0 && setShowMoreGamesModal(true)}
+                />
+              </Tooltip>
             </div>
           </div>
         </div>
       </Scrollable>
+      <Modal
+        title={$t('All Supported Games')}
+        visible={showMoreGamesModal}
+        onCancel={() => setShowMoreGamesModal(false)}
+        footer={null}
+        getContainer={false}
+      >
+        <ul className={styles.moreGamesList}>
+          {supportedGamesTitles.map(label => (
+            <li key={label}>{label}</li>
+          ))}
+        </ul>
+      </Modal>
     </div>
   );
 }
