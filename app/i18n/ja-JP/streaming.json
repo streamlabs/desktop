@@ -311,7 +311,6 @@
   "%{platform} Setup Error: Toggling off %{platform} to bypass and go live.": "%{platform} セットアップエラー：%{platform} をオフに切り替えると、バイパスしてライブ配信を開始します。",
   "Recording Audio Encoder": "録音オーディオエンコーダー",
   "Record Stream in": "ストリームを次の",
-  "format": "形式で録画",
   "Record Stream": "ストリームを録画",
   "AI Highlighter is enabled. Recording will start when stream starts.": "AI Highlighter が有効です。ストリームが始まると録画が始まります。",
   "Connection Failed": "接続に失敗しました",
