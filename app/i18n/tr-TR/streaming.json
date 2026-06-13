@@ -311,7 +311,6 @@
   "%{platform} Setup Error: Toggling off %{platform} to bypass and go live.": "{platform} Kurulum Hatası: Bypass etmek ve canlı yayına geçmek için %{platform} seçeneğini kapatın.",
   "Recording Audio Encoder": "Kayıt Ses Kodlayıcısı",
   "Record Stream in": "Yayını Şuraya Kaydedin:",
-  "format": "format",
   "Record Stream": "Yayını Kaydedin",
   "AI Highlighter is enabled. Recording will start when stream starts.": "AI Highlighter etkinleştirildi. Yayın başladığında kayıt başlayacaktır.",
   "Connection Failed": "Bağlantı Başarısız",

@@ -19,5 +19,8 @@
   "Custom Destination": "Brugerdefineret destination",
   "This app is currently popped out in another window.": "Denne app er i øjeblikket poppet op i et andet vindue.",
   "Error granting chat permissions.": "Fejl under tildeling af chatrettigheder.",
-  "Authentication Error": "Godkendelsesfejl"
+  "Authentication Error": "Godkendelsesfejl",
+  "Diagnostic Report Uploaded Successfully": "Diagnostic Report Uploaded Successfully",
+  "Copy Report ID": "Copy Report ID",
+  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team."
 }

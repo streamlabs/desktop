@@ -311,7 +311,6 @@
   "%{platform} Setup Error: Toggling off %{platform} to bypass and go live.": "%{platform} 设置错误：切换关闭 %{platform}，以跳过并直播。",
   "Recording Audio Encoder": "录音音频编码器",
   "Record Stream in": "记录直播",
-  "format": "格式",
   "Record Stream": "记录直播",
   "AI Highlighter is enabled. Recording will start when stream starts.": "已启用 AI Highlighter。直播开始时将开始录制。",
   "Connection Failed": "连接失败",
