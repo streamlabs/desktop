@@ -311,7 +311,6 @@
   "%{platform} Setup Error: Toggling off %{platform} to bypass and go live.": "Errore di configurazione di %{platform}: Disattiva %{platform} per bypassare e andare in diretta.",
   "Recording Audio Encoder": "Registrazione del codificatore audio",
   "Record Stream in": "Registra streaming in",
-  "format": "formato",
   "Record Stream": "Registra streaming",
   "AI Highlighter is enabled. Recording will start when stream starts.": "AI Highlighter è attivo. La registrazione inizierà quando verrà avviato lo streaming.",
   "Connection Failed": "Connessione non riuscita",
