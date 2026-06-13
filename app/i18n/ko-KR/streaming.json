@@ -311,7 +311,6 @@
   "%{platform} Setup Error: Toggling off %{platform} to bypass and go live.": "%{platform} 설정 오류: %{platform}(을)를 끄고 우회하여 라이브를 합니다.",
   "Recording Audio Encoder": "녹화 오디오 인코더",
   "Record Stream in": "스트리밍 녹화",
-  "format": "포맷",
   "Record Stream": "스트리밍 녹화",
   "AI Highlighter is enabled. Recording will start when stream starts.": "AI Highlighter가 활성화되었습니다. 스트리밍이 시작되면 녹화가 시작됩니다.",
   "Connection Failed": "연결 실패",
