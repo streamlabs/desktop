@@ -12,17 +12,17 @@
   align-items: center;
   padding: 4px 8px 4px 12px;
   flex-shrink: 0;
+  gap: 4px;
+}
 
-  i {
-    font-size: 16px;
-    cursor: pointer;
-    opacity: 0.7;
-
-    &:hover {
-      opacity: 1;
-      color: var(--icon-active);
-    }
-  }
+.title {
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--title);
+  margin-right: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .list {

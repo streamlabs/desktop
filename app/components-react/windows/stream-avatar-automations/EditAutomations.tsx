@@ -51,14 +51,26 @@ export default function EditAutomations() {
     AutomationsService.actions.fetchAll();
   }, []);
 
-  // If launched with a specific automation id, jump straight into the editor.
-  // Read queryParams reactively so re-opening with a different id re-triggers.
+  // Read queryParams reactively so changes re-trigger when window is reused.
   const { WindowsService } = Services;
-  const { editAutomationId } = useVuex(() => ({
+  const { editAutomationId, createNew } = useVuex(() => ({
     editAutomationId: WindowsService.state.child.queryParams?.editAutomationId as
       | number
       | undefined,
+    createNew: !!WindowsService.state.child.queryParams?.createNew,
   }));
+
+  // True when launched from the AutomationsElement — close the window on done instead of returning to list.
+  const launchedFromElement = !!editAutomationId || createNew;
+
+  // Jump straight into create flow when launched with createNew param.
+  useEffect(() => {
+    if (!createNew) return;
+    setCreating(true);
+    setEditingAutomation(null);
+  }, [createNew]);
+
+  // Jump straight into the editor for a specific automation when launched with editAutomationId.
   useEffect(() => {
     if (!editAutomationId || automations.length === 0) return;
     const target = automations.find(a => a.id === editAutomationId);
@@ -101,8 +113,12 @@ export default function EditAutomations() {
   }
 
   function closeEditor() {
-    setEditingAutomation(null);
-    setCreating(false);
+    if (launchedFromElement) {
+      WindowsService.actions.closeChildWindow();
+    } else {
+      setEditingAutomation(null);
+      setCreating(false);
+    }
   }
 
   if (creating || editingAutomation) {
