@@ -50,6 +50,18 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
     });
   }
 
+  showAutomationEditor(id: number) {
+    this.windowsService.showWindow({
+      componentName: 'EditAutomations',
+      title: $t('Automations'),
+      size: {
+        width: 900,
+        height: 650,
+      },
+      queryParams: { editAutomationId: id },
+    });
+  }
+
   @mutation()
   private SET_AUTOMATIONS(automations: TAutomationExport[]) {
     this.state.automations = automations;
@@ -99,7 +111,17 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
   }
 
   async update(id: number, automation: Partial<TAutomationExport>): Promise<TAutomationExport> {
-    const updated = await this.agentSocketService.updateAutomation({ ...automation, id });
+    // Explicitly build the payload — avoid spreading the full runtime object which
+    // includes server-managed fields (user_id, created_at, updated_at) returned by
+    // getAutomations but not accepted for writes.
+    const payload = {
+      id,
+      description: automation.description,
+      conditions: automation.conditions,
+      actions: automation.actions,
+      enabled: automation.enabled,
+    };
+    const updated = await this.agentSocketService.updateAutomation(payload);
     this.UPDATE_AUTOMATION(updated as TAutomationExport);
     return updated as TAutomationExport;
   }

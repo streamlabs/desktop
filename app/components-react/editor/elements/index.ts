@@ -7,3 +7,4 @@ export { RecordingPreview } from './RecordingPreview';
 export { StreamPreview } from './StreamPreview';
 export { Browser } from './Browser';
 export { Display } from './Display';
+export { AutomationsElement as Automations } from './AutomationsElement';

@@ -51,6 +51,20 @@ export default function EditAutomations() {
     AutomationsService.actions.fetchAll();
   }, []);
 
+  // If launched with a specific automation id, jump straight into the editor.
+  // Read queryParams reactively so re-opening with a different id re-triggers.
+  const { WindowsService } = Services;
+  const { editAutomationId } = useVuex(() => ({
+    editAutomationId: WindowsService.state.child.queryParams?.editAutomationId as
+      | number
+      | undefined,
+  }));
+  useEffect(() => {
+    if (!editAutomationId || automations.length === 0) return;
+    const target = automations.find(a => a.id === editAutomationId);
+    if (target) setEditingAutomation(target);
+  }, [editAutomationId, automations]);
+
   async function simulate(automation: TAutomationExport) {
     if (!automation.id || simulatingId !== null) return;
     setSimulatingId(automation.id);
