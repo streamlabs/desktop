@@ -44,6 +44,14 @@ export class HostsService extends Service {
     return 'platform.streamlabs.com';
   }
 
+  get highlighterCdn() {
+    if (Util.shouldUseBeta()) {
+      return 'cdn-highlighter-desktop.streamlabs.com/staging';
+    }
+
+    return 'cdn-highlighter-desktop.streamlabs.com/production';
+  }
+
   get analitycs() {
     return 'r2d2.streamlabs.com';
   }
