@@ -74,6 +74,7 @@ export enum ELayoutElement {
   StreamPreview = 'StreamPreview',
   RecordingPreview = 'RecordingPreview',
   Browser = 'Browser',
+  Automations = 'Automations',
 }
 
 export type TLayoutElement = `${ELayoutElement}`;
@@ -121,5 +122,9 @@ export const ELEMENT_DATA = (): IElementData => ({
   [ELayoutElement.Browser]: {
     title: $t('Website'),
     component: 'Browser',
+  },
+  [ELayoutElement.Automations]: {
+    title: $t('Automations'),
+    component: 'Automations',
   },
 });
