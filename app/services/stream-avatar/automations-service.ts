@@ -62,6 +62,18 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
     });
   }
 
+  showCreateAutomation() {
+    this.windowsService.showWindow({
+      componentName: 'EditAutomations',
+      title: $t('Automations'),
+      size: {
+        width: 900,
+        height: 650,
+      },
+      queryParams: { createNew: true },
+    });
+  }
+
   @mutation()
   private SET_AUTOMATIONS(automations: TAutomationExport[]) {
     this.state.automations = automations;

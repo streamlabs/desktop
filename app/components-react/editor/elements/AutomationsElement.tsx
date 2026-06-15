@@ -50,8 +50,8 @@ function AutomationsContent() {
     });
   }
 
-  function openEditor() {
-    AutomationsService.actions.showAutomations();
+  function openCreate() {
+    AutomationsService.actions.showCreateAutomation();
   }
 
   if (loading) {
@@ -65,8 +65,9 @@ function AutomationsContent() {
   return (
     <div className={styles.wrapper}>
       <div className={styles.topBar}>
+        <span className={styles.title}>{$t('Automations')}</span>
         <Tooltip title={$t('Add Automation')}>
-          <i className="icon-add-circle" onClick={openEditor} />
+          <i className="icon-add-circle icon-button icon-button--lg" onClick={openCreate} />
         </Tooltip>
       </div>
 
