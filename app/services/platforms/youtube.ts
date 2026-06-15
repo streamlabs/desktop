@@ -1009,8 +1009,9 @@ export class YoutubeService
       snippet,
       contentDetails,
       status,
-      monetizationDetails,
     };
+
+    if (params.eligibleForMonetization) body.monetizationDetails = monetizationDetails;
 
     broadcast = await this.requestYoutube<IYoutubeLiveBroadcast>({
       body: JSON.stringify(body),
