@@ -27,5 +27,7 @@
   "This scene transition is managed by an App and cannot be edited.": "이 장면 전환은 앱에 의해 관리되며 편집할 수 없습니다.",
   "Global Transition": "글로벌 전환",
   "Edit": "편집",
-  "Live": "라이브"
+  "Live": "라이브",
+  "Transitions": "Transitions",
+  "Connections": "Connections"
 }
