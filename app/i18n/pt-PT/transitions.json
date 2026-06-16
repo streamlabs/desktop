@@ -27,5 +27,7 @@
   "This scene transition is managed by an App and cannot be edited.": "A transição de cena é gerida por uma aplicação e não pode ser editada.",
   "Global Transition": "Transição global",
   "Edit": "Editar",
-  "Live": "Em direto"
+  "Live": "Em direto",
+  "Transitions": "Transitions",
+  "Connections": "Connections"
 }
