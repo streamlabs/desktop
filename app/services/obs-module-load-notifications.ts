@@ -1,8 +1,7 @@
-import type { IObsModuleLoadFailure } from 'obs-studio-node';
 import type * as ObsStudioNode from 'obs-studio-node';
 import type { ISceneCollectionSchema } from 'services/scene-collections';
 
-export type { IObsModuleLoadFailure };
+export type IObsModuleLoadFailure = ObsStudioNode.IObsModuleLoadFailure;
 
 export const NDI_RUNTIME_VERSION_MISMATCH: typeof ObsStudioNode.NDI_RUNTIME_VERSION_MISMATCH =
   'NDI_RUNTIME_VERSION_MISMATCH';
@@ -58,7 +57,9 @@ export function activeSceneCollectionHasNdiSources(
 ): boolean {
   if (!activeCollectionId) return false;
 
-  const activeCollection = sceneCollections.find(collection => collection.id === activeCollectionId);
+  const activeCollection = sceneCollections.find(
+    collection => collection.id === activeCollectionId,
+  );
   return activeCollection?.sources.some(source => source.type === 'ndi_source') || false;
 }
 
