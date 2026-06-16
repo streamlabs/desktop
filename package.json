@@ -110,7 +110,7 @@
   "devDependencies": {
     "7zip-bin": "2.4.1",
     "@ant-design/icons": "4.6.2",
-    "@babel/core": "7.17.2",
+    "@babel/core": "7.29.6",
     "@babel/plugin-proposal-decorators": "7.17.2",
     "@babel/preset-env": "7.22.10",
     "@electron/notarize": "^2.3.2",
