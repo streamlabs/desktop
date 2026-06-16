@@ -311,7 +311,6 @@
   "%{platform} Setup Error: Toggling off %{platform} to bypass and go live.": "Błąd konfiguracji %{platform}: Wyłącza %{platform}, aby pominąć i rozpocząć transmisję na żywo.",
   "Recording Audio Encoder": "Koder audio dla nagrywania",
   "Record Stream in": "Nagrywaj transmisję w",
-  "format": "formacie",
   "Record Stream": "Nagrywaj transmisję",
   "AI Highlighter is enabled. Recording will start when stream starts.": "Aplikacja AI Highlighter jest włączona. Nagrywanie rozpocznie się wraz z transmisją.",
   "Connection Failed": "Połączenie nie powiodło się",

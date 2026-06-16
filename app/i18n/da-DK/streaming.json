@@ -311,7 +311,6 @@
   "%{platform} Setup Error: Toggling off %{platform} to bypass and go live.": "%{platform}-opsætningsfejl: Deaktiverer %{platform} for at omgå og gå live",
   "Recording Audio Encoder": "Optagelse af lydkoder",
   "Record Stream in": "Optag stream i",
-  "format": "format",
   "Record Stream": "Optag stream",
   "AI Highlighter is enabled. Recording will start when stream starts.": "AI Highlighter er aktiveret. Optagelsen starter, når streamen starter.",
   "Connection Failed": "Forbindelse mislykkedes",
