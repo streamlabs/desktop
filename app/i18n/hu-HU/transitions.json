@@ -27,5 +27,7 @@
   "This scene transition is managed by an App and cannot be edited.": "Ezt a jelenetátmenetet egy alkalmazás kezeli, és nem szerkeszthető.",
   "Global Transition": "Globális átmenet",
   "Edit": "Szerkesztés",
-  "Live": "Élő"
+  "Live": "Élő",
+  "Transitions": "Transitions",
+  "Connections": "Connections"
 }
