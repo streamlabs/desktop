@@ -32,6 +32,8 @@ export default function TransitionSettings(p: { transitionId: string }) {
 
   const formData = useMemo(() => {
     return TransitionsService.getPropertiesFormData(p.transitionId);
+    // Note: the OBS form is predicated on the value type which this function reads internally
+    // but can become stale in react without the type being attached to the dependency graph
   }, [p.transitionId, values.type]);
 
   function handleObsChange(patch: TObsFormData) {

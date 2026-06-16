@@ -30,7 +30,7 @@ export default function TransitionsTable(p: {
   }
 
   function getEditableMessage(id: string) {
-    if (canEdit(id)) return;
+    if (canEdit(id)) return '';
     return $t('This scene transition is managed by an App and cannot be edited.');
   }
 
