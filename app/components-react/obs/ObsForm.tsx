@@ -333,6 +333,21 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
         />
       );
 
+    case 'OBS_PROPERTY_FLOAT':
+      // eslint-disable-next-line no-case-declarations
+      const floatVal = p.value as IObsNumberInputValue;
+
+      return (
+        <ObsNumberInput
+          {...inputProps}
+          step={floatVal.stepVal}
+          min={floatVal.minVal}
+          max={1}
+          ref={ref}
+          data-name={p.value.name}
+        />
+      );
+
     default:
       return <span style={{ color: 'red' }}>Unknown input type {type}</span>;
   }
