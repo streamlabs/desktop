@@ -27,5 +27,7 @@
   "This scene transition is managed by an App and cannot be edited.": "Bu sahne geçişi bir Uygulama tarafından yönetiliyor, bu nedenle düzenlenemez.",
   "Global Transition": "Global Geçiş",
   "Edit": "Düzenle",
-  "Live": "Canlı"
+  "Live": "Canlı",
+  "Transitions": "Transitions",
+  "Connections": "Connections"
 }
