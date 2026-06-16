@@ -27,5 +27,7 @@
   "This scene transition is managed by an App and cannot be edited.": "Tento přechod scény spravuje aplikace a nelze jej upravovat.",
   "Global Transition": "Globální přechod",
   "Edit": "Upravit",
-  "Live": "Živě"
+  "Live": "Živě",
+  "Transitions": "Transitions",
+  "Connections": "Connections"
 }
