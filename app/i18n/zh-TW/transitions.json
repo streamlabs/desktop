@@ -27,5 +27,7 @@
   "This scene transition is managed by an App and cannot be edited.": "此場景轉場效果是由應用程式管理，無法編輯。",
   "Global Transition": "全域轉場效果",
   "Edit": "編輯",
-  "Live": "直播"
+  "Live": "直播",
+  "Transitions": "Transitions",
+  "Connections": "Connections"
 }
