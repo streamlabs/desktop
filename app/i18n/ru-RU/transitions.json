@@ -27,5 +27,7 @@
   "This scene transition is managed by an App and cannot be edited.": "Этот переход нельзя отредактировать, поскольку он управляется приложением.",
   "Global Transition": "Глобальный переход",
   "Edit": "Изменить",
-  "Live": "Трансляция"
+  "Live": "Трансляция",
+  "Transitions": "Transitions",
+  "Connections": "Connections"
 }
