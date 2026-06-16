@@ -106,9 +106,7 @@ test('activeSceneCollectionHasNdiSources ignores ndi sources in inactive collect
         sceneCollection('active', [
           { sourceId: 'browser', name: 'Browser', type: 'browser_source' },
         ]),
-        sceneCollection('inactive', [
-          { sourceId: 'camera', name: 'Camera', type: 'ndi_source' },
-        ]),
+        sceneCollection('inactive', [{ sourceId: 'camera', name: 'Camera', type: 'ndi_source' }]),
       ],
       'active',
     ),
@@ -118,9 +116,7 @@ test('activeSceneCollectionHasNdiSources ignores ndi sources in inactive collect
 test('activeSceneCollectionHasNdiSources returns false without active collection id', t => {
   t.false(
     activeSceneCollectionHasNdiSources(
-      [
-        sceneCollection('active', [{ sourceId: 'camera', name: 'Camera', type: 'ndi_source' }]),
-      ],
+      [sceneCollection('active', [{ sourceId: 'camera', name: 'Camera', type: 'ndi_source' }])],
       undefined,
     ),
   );
@@ -136,9 +132,7 @@ test('shouldShowNdiRuntimeNotification returns true for ndi runtime failure in a
           message: 'NDI Runtime 6 or newer was not found.',
         },
       ],
-      [
-        sceneCollection('active', [{ sourceId: 'camera', name: 'Camera', type: 'ndi_source' }]),
-      ],
+      [sceneCollection('active', [{ sourceId: 'camera', name: 'Camera', type: 'ndi_source' }])],
       'active',
     ),
   );
@@ -158,9 +152,7 @@ test('shouldShowNdiRuntimeNotification returns false for ndi runtime failure in 
         sceneCollection('active', [
           { sourceId: 'browser', name: 'Browser', type: 'browser_source' },
         ]),
-        sceneCollection('inactive', [
-          { sourceId: 'camera', name: 'Camera', type: 'ndi_source' },
-        ]),
+        sceneCollection('inactive', [{ sourceId: 'camera', name: 'Camera', type: 'ndi_source' }]),
       ],
       'active',
     ),
@@ -171,9 +163,7 @@ test('shouldShowNdiRuntimeNotification returns false for active ndi collection w
   t.false(
     shouldShowNdiRuntimeNotification(
       [{ module: 'other-plugin', code: 'MODULE_LOAD_FAILED', message: 'ignore' }],
-      [
-        sceneCollection('active', [{ sourceId: 'camera', name: 'Camera', type: 'ndi_source' }]),
-      ],
+      [sceneCollection('active', [{ sourceId: 'camera', name: 'Camera', type: 'ndi_source' }])],
       'active',
     ),
   );
