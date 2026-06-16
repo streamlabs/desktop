@@ -147,6 +147,9 @@ export class ProtocolLinksService extends Service {
   private guestCamJoin(info: IProtocolLinkInfo) {
     const hash = info.path.replace('/', '');
 
-    this.guestCamService.joinAsGuest(hash);
+    this.guestCamService.joinAsGuest(hash).catch((e: unknown) => {
+      if ((e as { name?: string } | null)?.name === 'AbortError') return;
+      console.error('Failed to join guest cam session', e);
+    });
   }
 }

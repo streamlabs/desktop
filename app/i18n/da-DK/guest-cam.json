@@ -47,5 +47,6 @@
   "Collab Cam requires a source": "Collab Cam kræver en kilde",
   "At least one Collab Cam source is required to use Collab Cam. Would you like to add one now?": "Der kræves mindst én Collab Cam-kilde for at bruge Collab Cam. Ønsker du at tilføje en nu?",
   "You now have access to Collab Cam!": "Du har nu adgang til Collab Cam.",
-  "You must be logged in to use Collab Cam.": "Du skal være logget ind for at bruge Collab Cam."
+  "You must be logged in to use Collab Cam.": "Du skal være logget ind for at bruge Collab Cam.",
+  "There was an error setting the Collab Cam source. Please confirm the source exists and try again.": "There was an error setting the Collab Cam source. Please confirm the source exists and try again."
 }

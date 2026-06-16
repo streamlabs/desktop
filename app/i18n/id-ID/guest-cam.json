@@ -47,5 +47,6 @@
   "Collab Cam requires a source": "Collab Cam memerlukan sebuah sumber",
   "At least one Collab Cam source is required to use Collab Cam. Would you like to add one now?": "Memerlukan setidaknya satu sumber Collab Cam untuk menggunakan Collab Cam. Apakah Anda ingin menambahkan satu sekarang?",
   "You now have access to Collab Cam!": "Kini, Anda memiliki akses ke Collab Cam!",
-  "You must be logged in to use Collab Cam.": "Anda harus masuk untuk menggunakan Collab Cam."
+  "You must be logged in to use Collab Cam.": "Anda harus masuk untuk menggunakan Collab Cam.",
+  "There was an error setting the Collab Cam source. Please confirm the source exists and try again.": "There was an error setting the Collab Cam source. Please confirm the source exists and try again."
 }

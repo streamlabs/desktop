@@ -3,7 +3,7 @@ import styles from './Connect.m.less';
 import commonStyles from './Common.m.less';
 import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
-import { injectState, useModule, mutation } from 'slap';
+import { useModule } from 'slap';
 import { ExtraPlatformConnect } from './ExtraPlatformConnect';
 import {
   EPlatform,
@@ -67,9 +67,9 @@ export function Connect() {
   }
 
   // streamlabs and trovo are added separarely on markup below
-  const platforms = RecordingModeService.views.isRecordingModeEnabled
+  const platforms: TPlatform[] = RecordingModeService.views.isRecordingModeEnabled
     ? ['youtube']
-    : ['twitch', 'youtube', 'tiktok', 'kick', 'facebook', 'twitter'];
+    : ['twitch', 'youtube', 'tiktok', 'kick', 'facebook'];
 
   const shouldAddTrovo = !RecordingModeService.views.isRecordingModeEnabled;
 
@@ -95,9 +95,7 @@ export function Connect() {
   return (
     <div className={styles.pageContainer}>
       <div className={styles.container}>
-        <h1 className={commonStyles.titleContainer} style={{ marginTop: 0 }}>
-          {title}
-        </h1>
+        <h1 className={commonStyles.titleContainer}>{title}</h1>
         {isSignup ? (
           <Signup onSignupLinkClick={() => setIsSignup(false)} onSuccess={afterLogin} />
         ) : (
@@ -139,7 +137,9 @@ export function Connect() {
                     onClick={() => authPlatform(platform, afterLogin)}
                     key={platform}
                     logoSize={
-                      ['twitter', 'tiktok', 'youtube', 'kick'].includes(platform) ? 15 : undefined
+                      ['twitter', 'tiktok', 'youtube', 'kick', 'patreon'].includes(platform)
+                        ? 15
+                        : undefined
                     }
                   >
                     <Translate
@@ -153,6 +153,17 @@ export function Connect() {
                 ))}
               </div>
               <div className={styles.extraPlatformsContainer}>
+                <PlatformIconButton
+                  name={EPlatform.Twitter}
+                  platform={EPlatform.Twitter}
+                  disabled={loading || authInProgress}
+                  loading={loading}
+                  onClick={() => authPlatform(EPlatform.Twitter, afterLogin)}
+                  title={$t('Log in with %{platform}', {
+                    platform: platformLabels(EPlatform.Twitter),
+                  })}
+                  style={{ marginLeft: '15px' }}
+                />
                 {shouldAddTrovo && (
                   <PlatformIconButton
                     name={EPlatform.Trovo}

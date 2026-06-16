@@ -87,8 +87,19 @@ export function VirtualWebcamSettings() {
       ? $t('Output Scene')
       : $t('Output Source');
 
-  function onSelectType(value: string, label: string) {
-    v.update((value as unknown) as VCamOutputType, label);
+  function onSelectType(value: string) {
+    const type = Number(value) as VCamOutputType;
+    let name = '';
+    if (type === VCamOutputType.SceneOutput) {
+      const scenes = ScenesService.views.scenes;
+      name = scenes.length ? scenes[0].id : '';
+    } else if (type === VCamOutputType.SourceOutput) {
+      const sources = SourcesService.views
+        .getSources()
+        .filter(source => source.type !== 'scene' && source.video);
+      name = sources.length ? sources[0].sourceId : '';
+    }
+    v.update(type, name);
   }
 
   function onSelectSelection(value: string) {
@@ -114,8 +125,8 @@ export function VirtualWebcamSettings() {
               options={OUTPUT_TYPE_OPTIONS}
               value={v.outputType}
               defaultValue={OUTPUT_TYPE_OPTIONS[0].value}
-              onSelect={(val: string, opts) => {
-                onSelectType(val, opts.labelrender);
+              onSelect={(val: string) => {
+                onSelectType(val);
               }}
               allowClear={false}
               style={{ width: '100%' }}

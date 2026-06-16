@@ -253,6 +253,8 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     });
 
     this.streamingService.streamErrorCreated.subscribe((error: string) => {
+      // Only record stream errors in the diag report for streams that actually went live
+      if (!this.streaming) return;
       const { platforms, destinations, type } = this.formatStreamInfo();
       this.UPDATE_STREAM({ error, platforms, destinations, type });
     });

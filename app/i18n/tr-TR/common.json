@@ -155,6 +155,7 @@
   "Instagram Live": "Instagram Live",
   "X (Twitter)": "X (Twitter)",
   "Kick": "Kick",
+  "Patreon": "Patreon",
   "Facebook Profiles": "Facebook Profilleri",
   "Facebook Pages": "Facebook Sayfaları",
   "Alert Box": "Uyarı kutusu",
@@ -171,5 +172,9 @@
   "Alert Box Settings": "Uyarı Kutusu Seçenekleri",
   "Alerts and Widgets": "Uyarılar ve Pencere Ögeleri",
   "AI": "YAPAY ZEKA",
-  "Upgrade": "Yükselt"
+  "Between": "Between",
+  "Upgrade": "Yükselt",
+  "Edit Data": "Edit Data",
+  "Edit Reactive Data": "Edit Reactive Data",
+  "Reactive Data Editor": "Reactive Data Editor"
 }

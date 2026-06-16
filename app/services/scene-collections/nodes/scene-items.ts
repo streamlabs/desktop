@@ -59,9 +59,6 @@ export class SceneItemsNode extends Node<ISchema, {}> {
   @Inject('DualOutputService')
   dualOutputService: DualOutputService;
 
-  @Inject('VideoSettingsService')
-  videoSettingsService: VideoSettingsService;
-
   getItems(context: IContext) {
     return context.scene.getNodes().slice().reverse();
   }
@@ -142,11 +139,7 @@ export class SceneItemsNode extends Node<ISchema, {}> {
     // on first load, a dual output scene needs to assign displays and contexts to the scene items
     // but if the scene item already has a display assigned, skip it
     if (this.dualOutputService.views.hasNodeMap(context.scene.id)) {
-      // nodes must be assigned to a context, so if it doesn't exist, establish it
-      this.videoSettingsService.validateVideoContext();
-
       const nodeMap = this.dualOutputService.views.sceneNodeMaps[context.scene.id];
-
       const verticalNodeIds = Object.values(nodeMap);
 
       this.data.items.forEach(item => {

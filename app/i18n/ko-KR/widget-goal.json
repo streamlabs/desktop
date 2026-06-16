@@ -7,7 +7,6 @@
   "End Goal": "목표 종료",
   "Starting Amount": "시작 금액",
   "End After": "다음 이후 종료:",
-  "Include resubs?": "재구독을 포함하시겠습니끼?",
   "Layout": "레이아웃",
   "Background Color": "배경색",
   "Bar Color": "바 색상",
@@ -24,5 +23,8 @@
   "Member Goal": "멤버 목표",
   "Streamlabs Charity Goal": "Streamlabs 자선 목표",
   "Streamlabs Charity Donations": "Streamlabs 자선 후원",
-  "Charity donations": "자선 도네이션"
+  "Charity donations": "자선 도네이션",
+  "Goal Settings": "Goal Settings",
+  "Must be in MM/DD/YYYY format.": "Must be in MM/DD/YYYY format.",
+  "Condensed": "Condensed"
 }

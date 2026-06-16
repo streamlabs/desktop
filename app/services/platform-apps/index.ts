@@ -14,6 +14,7 @@ import { UserService } from 'services/user';
 import trim from 'lodash/trim';
 import without from 'lodash/without';
 import { PlatformContainerManager, getPageUrl, getAssetUrl } from './container-manager';
+import { stringifyAppSourceSettings } from './source-url';
 import { NavigationService } from 'services/navigation';
 import { InitAfter } from '../core';
 import * as remote from '@electron/remote';
@@ -571,7 +572,7 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
     });
   }
 
-  getPageUrlForSource(appId: string, appSourceId: string, settings = '') {
+  getPageUrlForSource(appId: string, appSourceId: string, settings: unknown = '') {
     const app = this.views.getApp(appId);
 
     if (!app) return null;
@@ -583,8 +584,10 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
 
     let url = getPageUrl(app, source.file);
 
-    if (settings) {
-      url = `${url}&settings=${encodeURIComponent(settings)}`;
+    const normalizedSettings = stringifyAppSourceSettings(settings);
+
+    if (normalizedSettings) {
+      url = `${url}&settings=${encodeURIComponent(normalizedSettings)}`;
     }
 
     url = `${url}&source=true`;

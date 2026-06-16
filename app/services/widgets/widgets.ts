@@ -8,7 +8,7 @@ import namingHelpers from 'util/NamingHelpers';
 import fs from 'fs';
 import { ServicesManager } from 'services-manager';
 import { authorizedHeaders, handleResponse } from 'util/requests';
-import { ISerializableWidget, IWidgetSource, IWidgetsServiceApi } from './widgets-api';
+import { ISerializableWidget, IWidget, IWidgetSource, IWidgetsServiceApi } from './widgets-api';
 import { WidgetType, WidgetDefinitions, makeWidgetTesters } from './widgets-data';
 import { mutation, StatefulService, ViewHandler } from '../core/stateful-service';
 import { WidgetSource } from './widget-source';
@@ -22,7 +22,7 @@ import { TWindowComponentName } from '../windows';
 import { THttpMethod } from './settings/widget-settings';
 import { TPlatform } from '../platforms';
 import { getAlertsConfig, TAlertType } from './alerts-config';
-import { getWidgetsConfig } from './widgets-config';
+import { getWidgetsConfig, IWidgetConfig } from './widgets-config';
 import { WidgetDisplayData } from '.';
 import { DualOutputService } from 'services/dual-output';
 import { TDisplayType, VideoSettingsService } from 'services/settings-v2';
@@ -89,6 +89,14 @@ export class WidgetsService
   @Inject() incrementalRolloutService: IncrementalRolloutService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
 
+  widgetCreated = new Subject<{
+    type: WidgetType;
+    // TODO @widgets-refactor: Remove IWidget and just use IWidgetConfig.
+    widget?: IWidget | IWidgetConfig;
+    serializedWidget?: ISerializableWidget;
+  }>();
+  settingsInvalidated = new Subject();
+
   widgetDisplayData = WidgetDisplayData(); // cache widget display data
 
   protected init() {
@@ -139,13 +147,19 @@ export class WidgetsService
   createWidget(type: WidgetType, name?: string): SceneItem {
     if (!this.userService.isLoggedIn) return;
 
-    // TODO: index
-    // DonationGoal is not defined in widgetsConfig, lots of them commented out
+    // TODO: Once remaining widgets are moved to the new react model, remove this and just use IWidgetConfig everywhere.
+    const isWidgetConfig = (t: WidgetType, w: IWidgetConfig | IWidget): w is IWidgetConfig => {
+      // @ts-ignore
+      return !!this.widgetsConfig[t];
+    };
+
+    // TODO: See above
     // @ts-ignore
-    const widget = this.widgetsConfig[type] || WidgetDefinitions[type];
-    // TODO: index
-    // @ts-ignore
-    const widgetTransform = this.widgetsConfig[type]?.defaultTransform || WidgetDefinitions[type];
+    const widget: IWidgetConfig | IWidget = this.widgetsConfig[type] || WidgetDefinitions[type];
+
+    const widgetTransform = isWidgetConfig(type, widget)
+      ? widget.defaultTransform
+      : WidgetDefinitions[type];
 
     const suggestedName =
       name ||
@@ -172,9 +186,7 @@ export class WidgetsService
       suggestedName,
       'browser_source',
       {
-        // TODO: index
-        // @ts-ignore
-        url: this.widgetsConfig[type]
+        url: isWidgetConfig(type, widget)
           ? widget.url
           : widget.url(this.hostsService.streamlabs, this.userService.widgetToken),
         width: widgetTransform.width,
@@ -201,6 +213,7 @@ export class WidgetsService
       type: WidgetType[type],
     });
 
+    this.widgetCreated.next({ type, widget });
     return item;
   }
 
@@ -454,6 +467,8 @@ export class WidgetsService
         );
       });
     }
+
+    this.widgetCreated.next({ type: widget.type, serializedWidget: widget });
   }
 
   createWidgetFromJSON(
@@ -531,8 +546,6 @@ export class WidgetsService
       })
       .then(handleResponse);
   }
-
-  settingsInvalidated = new Subject();
 
   /**
    * Ask the WidgetSetting window to re-load data

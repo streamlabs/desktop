@@ -13,6 +13,7 @@ export interface ICustomRadioOption {
   defaultValue?: string;
   icon?: string;
   tooltip?: string;
+  children?: React.ReactNode;
 }
 
 interface ICustomRadioGroupProps {
@@ -41,7 +42,11 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
   };
 
   return (
-    <InputWrapper {...wrapperAttrs} data-title={p.label}>
+    <InputWrapper
+      {...wrapperAttrs}
+      data-title={p.label}
+      className={cx({ [styles.defaultRadio]: !p.buttons && !p.icons })}
+    >
       {p.buttons && (
         <Radio.Group
           {...inputProps}
@@ -103,16 +108,20 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           <Space size={p?.gapsize ?? undefined} direction={p?.direction ?? 'vertical'}>
             {p.options.map(option => {
               return (
-                <Radio
-                  key={option.value}
-                  value={option.value}
-                  disabled={p.disabled}
-                  name={`${p.name}-${option.value}`}
-                >
-                  {option.label}
-                  {option.description && <br />}
-                  {option.description && <span style={{ fontSize: 12 }}>{option.description}</span>}
-                </Radio>
+                <React.Fragment key={`${p.name}-${option.value}`}>
+                  <Radio
+                    value={option.value}
+                    disabled={p.disabled}
+                    name={`${p.name}-${option.value}`}
+                  >
+                    {option.label}
+                    {option.description && <br />}
+                    {option.description && (
+                      <span style={{ fontSize: 12 }}>{option.description}</span>
+                    )}
+                  </Radio>
+                  {option.children}
+                </React.Fragment>
               );
             })}
           </Space>

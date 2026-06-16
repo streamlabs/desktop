@@ -47,5 +47,6 @@
   "Collab Cam requires a source": "Collab Cam에 소스 필요",
   "At least one Collab Cam source is required to use Collab Cam. Would you like to add one now?": "Collab Cam을 사용하려면 하나 이상의 Collab Cam 소스가 필요합니다. 지금 하나를 추가할까요?",
   "You now have access to Collab Cam!": "이제 Collab Cam을 이용할 수 있습니다!",
-  "You must be logged in to use Collab Cam.": "Collab Cam을 사용하려면 로그인해야 합니다."
+  "You must be logged in to use Collab Cam.": "Collab Cam을 사용하려면 로그인해야 합니다.",
+  "There was an error setting the Collab Cam source. Please confirm the source exists and try again.": "There was an error setting the Collab Cam source. Please confirm the source exists and try again."
 }

@@ -1,10 +1,13 @@
 !include MUI2.nsh
 
 !macro customInstall
-  NSISdl::download https://aka.ms/vs/17/release/vc_redist.x64.exe "$INSTDIR\vc_redist.x64.exe"
+  ; Download to the secure NSIS temp dir (not user-writable) to prevent
+  ; binary planting / privilege escalation if $INSTDIR is a world-writable path.
+  InitPluginsDir
+  NSISdl::download https://aka.ms/vs/17/release/vc_redist.x64.exe "$PLUGINSDIR\vc_redist.x64.exe"
 
-  ${If} ${FileExists} `$INSTDIR\vc_redist.x64.exe`
-    ExecWait '$INSTDIR\vc_redist.x64.exe /passive /norestart' $1
+  ${If} ${FileExists} `$PLUGINSDIR\vc_redist.x64.exe`
+    ExecWait '$PLUGINSDIR\vc_redist.x64.exe /passive /norestart' $1
 
     ${If} $1 != '0'
       ${If} $1 != '3010'

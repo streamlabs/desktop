@@ -46,6 +46,14 @@ export const errorTypes = {
       return $t('Failed to configure the Multistream server');
     },
   },
+  RESTREAM_ENHANCED_BROADCASTING_FAILED: {
+    get message() {
+      return $t('Failed to configure the Multistream server for Enhanced Broadcasting');
+    },
+    get action() {
+      return $t('disable Enhanced Broadcasting for Twitch and try again');
+    },
+  },
   DUAL_OUTPUT_RESTREAM_DISABLED: {
     get message() {
       return $t('The Multistream server is temporarily unavailable for Dual Output');
@@ -157,6 +165,16 @@ export const errorTypes = {
       );
     },
   },
+  INVALID_ENCODER: {
+    get message() {
+      return $t(
+        'Your current encoder is not supported for one or more of your streaming platforms',
+      );
+    },
+    get action() {
+      return $t('switch to a supported encoder such as x264');
+    },
+  },
   PRIME_REQUIRED: {
     get message() {
       return $t('This feature is for Ultra members only');
@@ -194,6 +212,26 @@ export const errorTypes = {
     get action() {
       return $t(
         'request rejected by streaming platform with no other details provided. Confirm go live settings, streaming approval status and output settings',
+      );
+    },
+  },
+  UNKNOWN_RECORDING_ERROR: {
+    get message() {
+      return $t('Unknown recording error, please contact support');
+    },
+    get action() {
+      return $t(
+        'recording settings are incorrect. Check recording path and encoder settings for both streaming and recording.',
+      );
+    },
+  },
+  UNKNOWN_REPLAY_BUFFER_ERROR: {
+    get message() {
+      return $t('Unknown replay buffer error, please contact support');
+    },
+    get action() {
+      return $t(
+        'replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.',
       );
     },
   },
@@ -388,6 +426,7 @@ export function formatUnknownErrorMessage(
   info: IOBSOutputSignalInfo | string,
   userMessage: string,
   reportMessage: string,
+  target?: TPlatform | string,
 ): IErrorMessages {
   console.debug(
     'Formatting unknown streaming error: ',
@@ -432,7 +471,7 @@ export function formatUnknownErrorMessage(
         // TODO: we wanna refactor this, at least extract, and we should definitely fix types in the future
         // ref: IOBSOutputSignalInfo
         let error;
-        let platform;
+        let platform = target;
 
         if (typeof info.error === 'string' && info.error !== '') {
           /*

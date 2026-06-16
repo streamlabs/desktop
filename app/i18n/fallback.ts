@@ -71,6 +71,7 @@ const fallbackDictionary = {
   ...require('./en-US/stream-shift.json'),
   ...require('./en-US/developer.json'),
   ...require('./en-US/dual-output.json'),
+  ...require('./en-US/patreon.json'),
 };
 
 export default fallbackDictionary;
