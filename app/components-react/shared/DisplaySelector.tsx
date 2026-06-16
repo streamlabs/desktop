@@ -118,6 +118,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       style={p?.style}
       direction="horizontal"
       gapsize={0}
+      nowrap
     />
   );
 }
