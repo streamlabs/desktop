@@ -31,6 +31,7 @@ import { ENotificationType, NotificationsService } from '../notifications';
 import { $t } from '../i18n';
 import { IncrementalRolloutService } from 'app-services';
 import { EAvailableFeatures } from 'services/incremental-rollout';
+import { getOS, OS } from 'util/operating-systems';
 
 export interface ITwitchStartStreamOptions {
   title: string;
@@ -85,19 +86,9 @@ class TwitchServiceViews extends ViewHandler<ITwitchServiceState> {
     return this.getServiceViews(IncrementalRolloutService);
   }
 
-  /**
-   * TODO: This variable currently needs to be different for preview vs live releases
-   * while twitch is in closed beta for this feature, meaning we need to change it
-   * every time we release to production and then change it back
-   *
-   * Preview releases: "twitchDualStreamPreview"
-   * Production releases: "twitchDualStream"
-   */
   get hasTwitchDualStreamAccess() {
-    const featureName = Utils.env.SLOBS_PREVIEW
-      ? EAvailableFeatures.twitchDualStreamPreview
-      : EAvailableFeatures.twitchDualStream;
-    return this.incrementalRolloutServiceView.featureIsEnabled(featureName);
+    if (getOS() === OS.Mac) return false;
+    return this.incrementalRolloutServiceView.featureIsEnabled(EAvailableFeatures.twitchDualStream);
   }
 }
 
