@@ -53,7 +53,10 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
   const customization = useRealmObject(CustomizationService.state);
   const demoMode = customization.isDarkTheme ? 'night' : 'day';
   const designerMode = customization.designerMode;
-
+  /**
+   * These widgets have been deprecated and are being hidden.
+   */
+  const DEPRECATED_WIDGETS: WidgetType[] = [WidgetType.SubscriberGoal, WidgetType.GameWidget, WidgetType.SupporterGoal, WidgetType.StarsGoal];
   /**
    * English and languages with logographic writing systems
    * generally have shorter strings so we prevent those cards from wrapping.
@@ -73,7 +76,11 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
   const iterableWidgetTypesBase = useMemo(() => {
     // TODO: this can be combined and the conditions improved to make it more performant and readable
     const filtered = Object.keys(WidgetType)
-      .filter((type: string) => isNaN(Number(type)) && type !== 'SubscriberGoal')
+      .filter(
+        (type: string) =>
+          isNaN(Number(type)) &&
+          !DEPRECATED_WIDGETS.includes(WidgetType[type as keyof typeof WidgetType] as WidgetType),
+      )
       .filter((type: string) => {
         // @ts-ignore
         const displayData = WidgetDisplayData(primaryPlatform)[WidgetType[type]];

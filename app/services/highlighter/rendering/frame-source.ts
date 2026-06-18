@@ -1,14 +1,14 @@
-import path from 'path';
 import execa from 'execa';
 import {
   FFMPEG_EXE,
   SCRUB_FRAMES,
   SCRUB_HEIGHT,
-  SCRUB_SPRITE_DIRECTORY,
   SCRUB_WIDTH,
+  SCRUB_WIDTH_VERTICAL,
 } from '../constants';
 import { FrameReadError } from './errors';
 import { IExportOptions } from '../models/rendering.models';
+import { TDisplayType } from 'services/settings-v2';
 
 export class FrameSource {
   writeBuffer = Buffer.allocUnsafe(this.options.width * this.options.height * 4);
@@ -23,6 +23,8 @@ export class FrameSource {
 
   private finished = false;
   private error = false;
+
+  private display: TDisplayType = 'horizontal';
 
   currentFrame = 0;
 
@@ -40,19 +42,22 @@ export class FrameSource {
     public readonly startTrim: number,
     public readonly endTrim: number,
     public readonly options: IExportOptions,
-  ) {}
+    display: TDisplayType = 'horizontal',
+  ) {
+    this.display = display;
+  }
 
   async exportScrubbingSprite(path: string) {
     this.scrubJpg = path;
+
+    const width = this.display === 'vertical' ? SCRUB_WIDTH_VERTICAL : SCRUB_WIDTH;
 
     /* eslint-disable */
     const args = [
       '-i',
       this.sourcePath,
       '-vf',
-      `scale=${SCRUB_WIDTH}:${SCRUB_HEIGHT},fps=${
-        SCRUB_FRAMES / this.duration
-      },tile=${SCRUB_FRAMES}x1`,
+      `scale=${width}:${SCRUB_HEIGHT},fps=${SCRUB_FRAMES / this.duration},tile=${SCRUB_FRAMES}x1`,
       '-frames:v',
       '1',
       '-y',

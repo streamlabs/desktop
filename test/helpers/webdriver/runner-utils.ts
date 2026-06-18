@@ -160,8 +160,22 @@ export function requestUtilsServer(path: string, method = 'get', body?: unknown)
 }
 
 async function getElectronInstances() {
-  const tasks = await tasklist();
-  return tasks.filter((task: any) => task.imageName === 'electron.exe');
+  if (process.platform === 'win32') {
+    const tasks = await tasklist();
+    return tasks.filter((task: any) => task.imageName === 'electron.exe');
+  }
+
+  // Returns an object { pid: number, comm: string } for each process, where comm is the command that launched the process
+  const { execSync } = require('child_process');
+  const output = execSync('ps -eo pid,comm').toString();
+  return output
+    .split('\n')
+    .slice(1)
+    .map((line: string) => {
+      const [pid, ...commParts] = line.trim().split(/\s+/);
+      return { pid: parseInt(pid, 10), comm: commParts.join(' ') };
+    })
+    .filter((proc: any) => proc.comm && proc.comm.includes('electron'));
 }
 
 export async function killElectronInstances() {
@@ -174,12 +188,14 @@ export async function waitForElectronInstancesExist() {
   const timeout = 10000;
 
   let timeleft = timeout;
-  return new Promise(async resolve => {
-    let tasks: any[] = [];
-    do {
-      tasks = await getElectronInstances();
-      timeleft -= interval;
-    } while (tasks.length || timeleft < 0);
-    resolve(null);
-  });
+  let tasks: any[] = await getElectronInstances();
+
+  while (tasks.length > 0 && timeleft > 0) {
+    await new Promise(resolve => setTimeout(resolve, interval));
+    timeleft -= interval;
+    tasks = await getElectronInstances();
+  }
+   if (tasks.length > 0) {
+     throw new Error('Timed out waiting for Electron instances to exit');
+   }
 }

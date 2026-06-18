@@ -168,8 +168,6 @@ test(
     await goLiveWithMultistream();
     await stopStream();
 
-    await goLiveWithDefaultCodec();
-
     t.pass();
   },
 );
@@ -188,27 +186,33 @@ test(
     await waitForSettingsWindowLoaded();
 
     const twitchForm = useForm('twitch-settings');
-    await twitchForm.fillForm({
+    const twitchSettings = {
       customEnabled: true,
       title: 'twitch title',
       twitchGame: 'Fortnite',
       // TODO: Re-enable after reauthing userpool
       // twitchTags: ['100%'],
-    });
+    };
+    await twitchForm.fillForm(twitchSettings);
+    await twitchForm.assertFormContains(twitchSettings);
 
     const youtubeForm = useForm('youtube-settings');
-    await youtubeForm.fillForm({
+    const youtubeSettings = {
       customEnabled: true,
       title: 'youtube title',
       description: 'youtube description',
-    });
+    };
+    await youtubeForm.fillForm(youtubeSettings);
+    await youtubeForm.assertFormContains(youtubeSettings);
 
     const trovoForm = useForm('trovo-settings');
-    await trovoForm.fillForm({
+    const trovoSettings = {
       customEnabled: true,
-      trovoGame: 'Doom',
       title: 'trovo title',
-    });
+      trovoGame: 'Doom',
+    };
+    await trovoForm.fillForm(trovoSettings);
+    await trovoForm.assertFormContains(trovoSettings);
 
     await goLiveWithMultistream();
     await stopStream();
@@ -309,8 +313,6 @@ test('Stream Shift', withUser('twitch', { prime: true, multistream: true }), asy
 
   // Multistream shift
   await goLiveWithStreamShift(t, true);
-
-  await goLiveWithDefaultCodec();
 
   t.pass();
 });

@@ -155,6 +155,7 @@
   "Instagram Live": "Instagram 直播",
   "X (Twitter)": "X (Twitter)",
   "Kick": "Kick",
+  "Patreon": "Patreon",
   "Facebook Profiles": "Facebook 個人檔案",
   "Facebook Pages": "Facebook 粉絲專頁",
   "Alert Box": "通知方塊",
@@ -171,5 +172,9 @@
   "Alert Box Settings": "通知方塊設定",
   "Alerts and Widgets": "通知與小工具",
   "AI": "AI",
-  "Upgrade": "升級"
+  "Between": "Between",
+  "Upgrade": "升級",
+  "Edit Data": "Edit Data",
+  "Edit Reactive Data": "Edit Reactive Data",
+  "Reactive Data Editor": "Reactive Data Editor"
 }

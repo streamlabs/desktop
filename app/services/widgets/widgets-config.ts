@@ -622,6 +622,7 @@ export function getWidgetsConfig(
         width: 800,
         height: 800,
       },
+
       useNewWidgetAPI: true,
       url: `https://${host}/api/v5/widgets/desktop/game-pulse`,
       previewUrl: `https://${host}/widgets/preview/game-pulse/${token}?simulate=1`,

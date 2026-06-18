@@ -1,0 +1,56 @@
+import React, { useMemo } from 'react';
+import { metadata } from 'components-react/shared/inputs/metadata';
+import FormFactory, { TInputValue } from 'components-react/shared/inputs/FormFactory';
+import { useVuex } from 'components-react/hooks';
+import { Services } from 'components-react/service-provider';
+import { $t } from 'services/i18n';
+
+export default function ConnectionSettings(p: { connectionId: string }) {
+  const { ScenesService, TransitionsService, EditorCommandsService } = Services;
+
+  const { sceneOptions, transitionOptions, connection } = useVuex(() => ({
+    sceneOptions: [
+      { label: $t('All'), value: 'ALL' },
+      ...ScenesService.views.scenes.map(scene => ({
+        label: scene.name,
+        value: scene.id,
+      })),
+    ],
+    transitionOptions: TransitionsService.views.transitions.map(transition => ({
+      label: transition.name,
+      value: transition.id,
+    })),
+    connection: TransitionsService.views.connections.find(conn => conn.id === p.connectionId),
+  }));
+
+  const meta = {
+    fromSceneId: metadata.list({ label: $t('Beginning Scene'), options: sceneOptions }),
+    transitionId: metadata.list({ label: $t('Scene Transition'), options: transitionOptions }),
+    toSceneId: metadata.list({ label: $t('Ending Scene'), options: sceneOptions }),
+  };
+
+  const values = useMemo(
+    () => ({
+      fromSceneId: connection?.fromSceneId || '',
+      transitionId: connection?.transitionId || '',
+      toSceneId: connection?.toSceneId || '',
+    }),
+    [connection?.fromSceneId, connection?.transitionId, connection?.toSceneId],
+  );
+
+  function handleChange(key: string) {
+    return (val: TInputValue) =>
+      EditorCommandsService.actions.executeCommand('EditConnectionCommand', p.connectionId, {
+        [key]: val,
+      });
+  }
+
+  return (
+    <FormFactory
+      formOptions={{ layout: 'horizontal' }}
+      metadata={meta}
+      values={values}
+      onChange={handleChange}
+    />
+  );
+}

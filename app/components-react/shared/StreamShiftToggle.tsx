@@ -26,6 +26,7 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
     }
   }, [isPrime, isStreamShiftMode]);
 
+  const value = p?.disabled ? false : isStreamShiftMode;
   const label = $t('Stream Shift');
 
   function handleTooltipClick() {
@@ -44,10 +45,9 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
               <div
                 className={styles.labelUltraBadge}
                 onClick={() => {
-                  Services.MagicLinkService.actions.linkToPrime(
-                    'slobs-streamswitcher',
-                    { event: 'StreamShift' },
-                  );
+                  Services.MagicLinkService.actions.linkToPrime('slobs-streamswitcher', {
+                    event: 'StreamShift',
+                  });
                 }}
               >
                 <UltraIcon type="badge" style={{ marginRight: '5px' }} />
@@ -58,7 +58,7 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
             )
           }
           name="streamShift"
-          value={isStreamShiftMode}
+          value={value}
           onChange={(status: boolean) => {
             setStreamShift(status);
             Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {

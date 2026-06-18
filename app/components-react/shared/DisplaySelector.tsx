@@ -5,7 +5,6 @@ import { TDisplayType } from 'services/settings-v2';
 import { platformLabels, TPlatform } from 'services/platforms';
 import { useGoLiveSettings } from 'components-react/windows/go-live/useGoLiveSettings';
 import { TDisplayOutput } from 'services/streaming';
-import { IRadioMetadata } from './inputs/metadata';
 import { ICustomRadioOption } from './inputs/RadioInput';
 
 interface IDisplaySelectorProps {
@@ -55,6 +54,12 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       },
     ];
 
+    // This debugging log is intentional to verify that the Both option is showing for Twitch when dual stream is available,
+    // and hidden if the user does not have access to dual stream. This is to confirm that the issue is not access.
+    if (p?.platform === 'twitch' && canDualStream) {
+      console.log('Dual stream is available for Twitch, showing Both option');
+    }
+
     if (canDualStream) {
       const tooltip = p?.platform
         ? $t('Stream both horizontally and vertically to %{platform}', {
@@ -90,10 +95,10 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
 
   // Convert displays array to Dictionary<TInputValue>
   const displayDict = useMemo(() => {
-    return displays.reduce((acc: Dictionary<IRadioMetadata>, curr) => {
+    return displays.reduce((acc: Dictionary<ICustomRadioOption>, curr) => {
       acc[curr.value] = curr;
       return acc;
-    }, {} as Dictionary<IRadioMetadata>);
+    }, {} as Dictionary<ICustomRadioOption>);
   }, [displays]);
 
   const name = `${p.platform || `destination${p.index}`}Display`;
@@ -113,6 +118,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       style={p?.style}
       direction="horizontal"
       gapsize={0}
+      nowrap
     />
   );
 }

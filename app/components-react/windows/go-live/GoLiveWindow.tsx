@@ -123,6 +123,9 @@ function ModalFooter() {
   const shouldShowConfirm = ['prepopulate', 'waitForNewSettings'].includes(lifecycle);
   const shouldShowGoBackButton =
     lifecycle === 'runChecklist' && error && checklist.startVideoTransmission !== 'done';
+  const shouldShowRecordingSwitcher = ['empty', 'prepopulate', 'waitForNewSettings'].includes(
+    lifecycle,
+  );
 
   const promptUseDefaultCodec = useCallback(async () => {
     // If the user is not live but has an incompatible codec, prompt to change codec
@@ -134,14 +137,20 @@ function ModalFooter() {
     if (isStreamShiftMode) {
       message = $t(
         '%{videoCodec} codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?',
-        { videoCodec: incompatibleRestreamCodecs(codec as EIncompatibleRestreamCodec) },
+        {
+          videoCodec:
+            incompatibleRestreamCodecs(codec as EIncompatibleRestreamCodec) ?? $t('Video'),
+        },
       );
     }
 
     if (isDualOutputMode) {
       message = $t(
         '%{videoCodec} codec is not supported for Dual Output streaming to more than two destinations. Would you like to proceed with the H.264 codec or select another codec?',
-        { videoCodec: incompatibleRestreamCodecs(codec as EIncompatibleRestreamCodec) },
+        {
+          videoCodec:
+            incompatibleRestreamCodecs(codec as EIncompatibleRestreamCodec) ?? $t('Video'),
+        },
       );
     }
 
@@ -234,7 +243,10 @@ function ModalFooter() {
 
   return (
     <Form layout={'inline'}>
-      {!isDualOutputMode && shouldShowConfirm && <RecordingSwitcher />}
+      {shouldShowRecordingSwitcher && shouldShowConfirm && (
+        <RecordingSwitcher showRecordingToggle={true} />
+      )}
+
       {/* CLOSE BUTTON */}
       <Button onClick={close}>{$t('Close')}</Button>
 

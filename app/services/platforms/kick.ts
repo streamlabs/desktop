@@ -123,7 +123,13 @@ export class KickService
   readonly domain = 'https://kick.com';
   readonly platform = 'kick';
   readonly displayName = 'Kick';
-  readonly capabilities = new Set<TPlatformCapability>(['title', 'chat', 'game', 'viewerCount']);
+  readonly capabilities = new Set<TPlatformCapability>([
+    'title',
+    'chat',
+    'game',
+    'viewerCount',
+    'streamlabels',
+  ]);
   readonly liveDockFeatures = new Set<TLiveDockFeature>([
     'view-stream',
     'refresh-chat',

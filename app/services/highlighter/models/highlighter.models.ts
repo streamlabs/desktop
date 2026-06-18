@@ -6,6 +6,7 @@ import {
   IHighlight,
 } from './ai-highlighter.models';
 import { ITransitionInfo, IAudioInfo, IExportInfo, IVideoInfo } from './rendering.models';
+import { TDisplayType } from 'services/settings-v2';
 
 export type TClip = IAiClip | IReplayBufferClip | IManualClip;
 export interface ITempRecordingInfo {
@@ -55,6 +56,7 @@ interface IBaseClip {
   duration?: number;
   deleted: boolean;
   globalOrderPosition: number;
+  display?: TDisplayType;
   streamInfo:
     | {
         [streamId: string]: TStreamInfo;

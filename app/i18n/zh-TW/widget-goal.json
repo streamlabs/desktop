@@ -7,7 +7,6 @@
   "End Goal": "結束目標",
   "Starting Amount": "開始金額",
   "End After": "結束期限",
-  "Include resubs?": "包括重新訂閱嗎？",
   "Layout": "版面",
   "Background Color": "背景顏色",
   "Bar Color": "橫條顏色",
@@ -24,5 +23,8 @@
   "Member Goal": "會員目標",
   "Streamlabs Charity Goal": "Streamlabs 慈善目標",
   "Streamlabs Charity Donations": "Streamlabs 慈善捐贈",
-  "Charity donations": "慈善贊助"
+  "Charity donations": "慈善贊助",
+  "Goal Settings": "Goal Settings",
+  "Must be in MM/DD/YYYY format.": "Must be in MM/DD/YYYY format.",
+  "Condensed": "Condensed"
 }
