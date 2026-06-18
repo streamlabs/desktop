@@ -5,6 +5,7 @@ import { StreamingService } from 'services/streaming';
 import { WebsocketService } from 'services/websocket';
 import { VisionService, VisionProcess } from 'services/vision';
 import { AutomationsService } from './automations-service';
+import { AgentSocketService } from './agent-socket-service';
 import Utils from 'services/utils';
 import { toUpper } from 'lodash';
 import {
@@ -34,6 +35,7 @@ export class AutomationsEngineService extends Service {
   @Inject() private websocketService: WebsocketService;
   @Inject() private visionService: VisionService;
   @Inject() private automationsService: AutomationsService;
+  @Inject() private agentSocketService: AgentSocketService;
 
   private gameState: GameState = { ...defaultGameState, pendingEvents: new Set() };
   private prevState: GameState = { ...defaultGameState, pendingEvents: new Set() };
@@ -82,6 +84,14 @@ export class AutomationsEngineService extends Service {
           await new Promise(resolve => setTimeout(resolve, 500));
         }
         this.streamingService.saveReplay();
+      },
+
+      sendInstruction: (instruction: string) => {
+        this.agentSocketService.sendInstruction(instruction);
+      },
+
+      sendSimulationBark: (conditionType: string) => {
+        this.agentSocketService.sendSimulationBark(conditionType);
       },
     };
 
@@ -211,51 +221,8 @@ export class AutomationsEngineService extends Service {
           next.health = 100;
           break;
 
-        case 'spectating':
-        case 'action_phase':
-        case 'deploy':
-        case 'victory':
-        case 'death':
-        case 'defeat':
-        case 'knockout':
-        case 'player_knocked':
-        case 'redeploying':
-        case 'storm_shrinking':
-        case 'gulag_start':
-        case 'gulag_end':
-        case 'first_half':
-        case 'second_half':
-        case 'round_won':
-        case 'round_lost':
-        case 'enemy_spotted':
-        case 'enemy_detected':
-        case 'interesting_moment':
-        case 'ender_dragon_spawned':
-        case 'boss_killed':
-        case 'wither_spawned':
-        case 'advancement_made':
-        case 'first_diamond':
-        case 'nether_entered':
-        case 'totem_of_undying_used':
-        case 'player_revived':
-        case 'hooked_survivor':
-        case 'escaped':
-        case 'tower_destroyed':
-        case 'glyph_used':
-        case 'objective_ally':
-        case 'objective_enemy':
-        case 'enemy_turret_destroyed':
-        case 'ally_turret_destroyed':
-        case 'position_change':
-        case 'lap_change':
-        case 'goal':
-        case 'set_piece':
-        case 'halftime':
-        case 'fulltime':
-          newEvents.push(name);
-          break;
-
         default:
+          newEvents.push(name);
           break;
       }
     }

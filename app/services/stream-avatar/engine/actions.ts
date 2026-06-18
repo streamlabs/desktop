@@ -1,6 +1,6 @@
 import uuid from 'uuid/v4';
 import { Properties, PropertyInstance, PropertyMap } from './properties';
-import { Instructions } from './instructions';
+import { Instructions, interpolateInstruction } from './instructions';
 import type { TCondition } from './conditions';
 import type { GameState } from './game-state';
 
@@ -15,6 +15,8 @@ export type ActionContext = {
   switchScene: (id: string) => void;
   setSourceVisible: (id: string, visible: boolean) => void;
   saveReplay: () => Promise<void>;
+  sendInstruction: (instruction: string) => void;
+  sendSimulationBark: (conditionType: string) => void;
 };
 
 export type ActionProps = {
@@ -148,11 +150,18 @@ export const ActionRegistry = {
     name: 'comment',
     label: 'Co-host Comment',
     properties: {},
-    process: async ({ conditionsMet, conditions }: ActionProcessPayload) => {
+    process: async ({ conditionsMet, conditions, context, state, props }: ActionProcessPayload) => {
       if (!conditionsMet) return;
       for (const c of conditions) {
-        const instruction = Instructions[c.type as keyof typeof Instructions];
-        console.log('[AutomationsEngine] co-host.comment', { condition: c.type, instruction });
+        if (props?.simulating) {
+          context.sendSimulationBark(c.type);
+        } else {
+          const template = Instructions[c.type as keyof typeof Instructions];
+          if (!template) continue;
+          const instruction = interpolateInstruction(template, state);
+          console.log('[AutomationsEngine] co-host.comment', { condition: c.type, instruction });
+          context.sendInstruction(instruction);
+        }
       }
     },
   },
@@ -164,9 +173,10 @@ export const ActionRegistry = {
     properties: {
       instruction: new Properties.Text({ label: 'Instruction' }),
     },
-    process: async ({ conditionsMet, props }: ActionProcessPayload) => {
-      if (!conditionsMet || !props?.instruction) return;
+    process: async ({ conditionsMet, props, context }: ActionProcessPayload) => {
+      if (!conditionsMet || !props?.instruction || props?.simulating) return;
       console.log('[AutomationsEngine] co-host.instruction', { instruction: props.instruction });
+      context.sendInstruction(props.instruction);
     },
   },
 } as const;

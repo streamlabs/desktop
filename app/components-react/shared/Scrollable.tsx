@@ -1,4 +1,4 @@
-import React, { HTMLAttributes, useState, CSSProperties } from 'react';
+import React, { HTMLAttributes, useState, useEffect, useRef, CSSProperties } from 'react';
 
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { OverflowBehavior } from 'overlayscrollbars';
@@ -25,7 +25,18 @@ export default function Scrollable(initialProps: IScrollableProps & HTMLAttribut
     ...initialProps,
   };
 
+  const osRef = useRef<OverlayScrollbarsComponent>(null);
   const [wrapperStyles, setWrapperStyles] = useState<CSSProperties>({});
+
+  useEffect(() => {
+    // Force a layout update on the next frame so the scrollbar reflects the
+    // resolved calc() height. Without this, OverlayScrollbars measures before
+    // the parent container has settled and misses overflow on initial open.
+    const id = requestAnimationFrame(() => {
+      osRef.current?.osInstance()?.update(true);
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   function onOverflowChanged(ev?: { yScrollable: boolean }) {
     if (!ev) return;
@@ -39,6 +50,7 @@ export default function Scrollable(initialProps: IScrollableProps & HTMLAttribut
 
   return (
     <OverlayScrollbarsComponent
+      ref={osRef}
       style={{ ...p.style, ...wrapperStyles }}
       options={{
         autoUpdate: true,

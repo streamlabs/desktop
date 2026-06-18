@@ -154,6 +154,14 @@ export class AgentSocketService extends Service {
     this.socket?.emit('message', message);
   }
 
+  sendSimulationBark(conditionType: string) {
+    const message = {
+      type: 'simulationBark',
+      data: { conditionType },
+    };
+    this.socket?.emit('message', message);
+  }
+
   sendTrigger(name: string, parameters: Record<string, unknown>, response: 'text' | 'tts' = 'tts') {
     const message = {
       type: 'trigger',

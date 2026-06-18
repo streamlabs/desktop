@@ -63,7 +63,8 @@ export class HostsService extends Service {
     //   return 'ai-agent.streamlabs.com';
     // }
 
-    return 'ai-agent.streamlabs.com';
+    //return 'ai-agent.streamlabs.com';
+    return 'localhost:3000';
   }
 }
 
