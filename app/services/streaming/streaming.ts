@@ -3525,6 +3525,10 @@ export class StreamingService
       dataOutput += instance.dataOutput;
     }
 
+    // TODO: Add UI to show bitrate by display but for now average the two displays, which is more accurate
+    // than only showing the horizontal display's bitrate in dual output mode
+    kbitsPerSec = Math.round(kbitsPerSec / 2);
+
     return { droppedFrames, totalFrames, kbitsPerSec, dataOutput };
   }
 
