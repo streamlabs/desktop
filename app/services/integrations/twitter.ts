@@ -183,9 +183,6 @@ export class TwitterView extends ViewHandler<ITwitterServiceState> {
       if (this.userView.platform.type === 'twitch') {
         url = `https://twitch.tv/${this.userView.platform.username}`;
       }
-      if (this.userView.platform.type === 'trovo') {
-        url = `https://trovo.live/${this.userView.platform.username}`;
-      }
     }
     return url;
   }

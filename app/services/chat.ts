@@ -280,34 +280,6 @@ export class ChatService extends Service {
             },
             'ffz-settings',
           );
-          // Recognize trovo login and perform in an embedded window
-        } else if (details.url === 'https://trovo.live/?openLogin=1') {
-          const loginWindow = new remote.BrowserWindow({
-            width: 600,
-            height: 800,
-            webPreferences: {
-              partition: this.userService.views.auth?.partition,
-              nodeIntegration: false,
-              // Prevent trovo from playing streams in the background
-              autoplayPolicy: 'document-user-activation-required',
-            },
-          });
-          loginWindow.webContents.setAudioMuted(true);
-
-          // This is pretty hacky, but Trovo just reloads the page after login,
-          // so on second load, just close the window.
-          let loadedOnce = false;
-
-          loginWindow.webContents.on('did-navigate', () => {
-            if (loadedOnce) {
-              loginWindow.close();
-            } else {
-              loadedOnce = true;
-            }
-          });
-
-          loginWindow.removeMenu();
-          loginWindow.loadURL(details.url);
         } else {
           remote.shell.openExternal(details.url);
         }

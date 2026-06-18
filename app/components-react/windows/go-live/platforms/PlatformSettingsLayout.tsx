@@ -4,7 +4,6 @@ import { ITwitchStartStreamOptions } from '../../../../services/platforms/twitch
 import { IYoutubeStartStreamOptions } from '../../../../services/platforms/youtube';
 import { IFacebookStartStreamOptions } from '../../../../services/platforms/facebook';
 import { ITikTokStartStreamOptions } from '../../../../services/platforms/tiktok';
-import { ITrovoStartStreamOptions } from '../../../../services/platforms/trovo';
 import { IKickStartStreamOptions } from '../../../../services/platforms/kick';
 import { TInputLayout } from 'components-react/shared/inputs';
 
@@ -44,7 +43,6 @@ export interface IPlatformSettings extends Partial<Record<TPlatform, any>> {
   youtube?: IYoutubeStartStreamOptions;
   facebook?: IFacebookStartStreamOptions;
   tiktok?: ITikTokStartStreamOptions;
-  trovo?: ITrovoStartStreamOptions;
   kick?: IKickStartStreamOptions;
 }
 

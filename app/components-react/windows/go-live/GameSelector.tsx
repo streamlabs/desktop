@@ -23,7 +23,6 @@ export default function GameSelector(p: TProps) {
   let selectedGameName = selectedGameId;
 
   const isTwitch = platform === 'twitch';
-  const isTrovo = platform === 'trovo';
   const isTikTok = platform === 'tiktok';
   const isKick = platform === 'kick';
 
@@ -31,9 +30,6 @@ export default function GameSelector(p: TProps) {
     case 'twitch':
       selectedGameName = Services.TwitchService.state.settings.game;
       selectedGameId = Services.TwitchService.state.settings.gameId;
-      break;
-    case 'trovo':
-      selectedGameName = Services.TrovoService.state.channelInfo.gameName;
       break;
     case 'tiktok':
       selectedGameName = Services.TikTokService.state.gameName;
@@ -74,8 +70,8 @@ export default function GameSelector(p: TProps) {
   }, []);
 
   async function loadImageForSelectedGame() {
-    // game images available for Twitch, Trovo, and Kick only
-    if (!['twitch', 'trovo', 'kick'].includes(platform)) return;
+    // game images available for Twitch and Kick only
+    if (!['twitch', 'kick'].includes(platform)) return;
     if (!selectedGameName) return;
     // Twitch api can return multiple games with the same name, so we have to find the one with the matching id
     const game = await platformService.fetchGame(isTwitch ? selectedGameId : selectedGameName);
@@ -92,7 +88,7 @@ export default function GameSelector(p: TProps) {
     hasSearched.current = true;
     const games =
       (await fetchGames(searchString))?.map(g => ({
-        value: ['trovo', 'tiktok', 'kick', 'twitch'].includes(platform) ? g.id : g.name,
+        value: ['tiktok', 'kick', 'twitch'].includes(platform) ? g.id : g.name,
         label: g.name,
         image: g?.image,
       })) ?? [];
@@ -129,7 +125,6 @@ export default function GameSelector(p: TProps) {
   const label = {
     twitch: $t('Twitch Category'),
     facebook: $t('Facebook Game'),
-    trovo: $t('Trovo Category'),
     tiktok: $t('TikTok Category'),
     kick: $t('Kick Category'),
   }[platform as string];
@@ -165,8 +160,8 @@ export default function GameSelector(p: TProps) {
       }}
       filterOption={filterOption}
       debounce={500}
-      required={isTwitch || isTrovo || isKick}
-      hasImage={isTwitch || isTrovo || isKick}
+      required={isTwitch || isKick}
+      hasImage={isTwitch || isKick}
       onBeforeSearch={onBeforeSearchHandler}
       imageSize={platformService.gameImageSize}
       loading={isSearching}
