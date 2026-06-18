@@ -1,4 +1,7 @@
+// Grace period for the worker to acknowledge shutdown.
 const SHUTDOWN_ACK_TIMEOUT_MS = 10 * 1000;
+
+// The teardown window after the worker has acknowledged shutdown.
 const SHUTDOWN_COMPLETE_TIMEOUT_MS = 30 * 1000;
 
 function writeLog(logger, level, message) {
@@ -40,6 +43,8 @@ function createShutdownCoordinator(options) {
     clearCompletionTimer();
   }
 
+
+   // Clears pending shutdown timers and delegates the actual application teardown.
   function forceShutdown(reason) {
     if (forced) return;
 
@@ -49,6 +54,7 @@ function createShutdownCoordinator(options) {
     onForceShutdown(reason);
   }
 
+   // Starts shutdown and waits for the worker renderer to acknowledge the request.
   function beginShutdown() {
     if (shutdownStarted) return false;
 
@@ -61,6 +67,7 @@ function createShutdownCoordinator(options) {
     return true;
   }
 
+  // Records that the worker accepted shutdown and starts waiting for completion.
   function acknowledgeShutdown() {
     if (!shutdownStarted || forced) return false;
 
@@ -75,6 +82,7 @@ function createShutdownCoordinator(options) {
     return true;
   }
 
+  // Records a clean worker shutdown and clears all watchdog timers.
   function completeShutdown() {
     if (!shutdownStarted || forced) return false;
 
@@ -83,6 +91,7 @@ function createShutdownCoordinator(options) {
     return true;
   }
 
+  // Releases the single-instance lock when another launch happens during shutdown.
   function handleSecondInstance() {
     if (!shutdownStarted || forced) return false;
 
