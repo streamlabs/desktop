@@ -205,38 +205,98 @@ export class AppService extends StatefulService<IAppState> {
 
   shutdownStarted = new Subject();
 
+  private async runShutdownStep(name: string, fn: () => Promise<unknown> | unknown) {
+    console.log(`[Shutdown] Starting ${name}`);
+
+    try {
+      await fn();
+      console.log(`[Shutdown] Completed ${name}`);
+    } catch (e) {
+      console.error(`[Shutdown] Failed ${name}`, e);
+    }
+  }
+
   @track('app_close')
   private shutdownHandler() {
     this.START_LOADING();
     this.loadingChanged.next(true);
-    this.tcpServerService.stopListening();
     window.setTimeout(async () => {
-      obs.NodeObs.InitShutdownSequence();
-      this.streamAvatarService.stopAvatarProcess();
-      this.crashReporterService.beginShutdown();
-      this.shutdownStarted.next();
-      this.recentEventsService.shutdown();
-      this.websocketService.disconnect();
-      this.keyListenerService.shutdown();
-      this.platformAppsService.unloadAllApps();
-      await this.usageStatisticsService.flushEvents();
-      await this.streamingService.shutdown();
-      this.windowsService.shutdown();
-      this.ipcServerService.stopListening();
-      await this.userService.flushUserSession();
-      await this.sceneCollectionsService.deinitialize();
-      this.performanceService.stop();
-      this.transitionsService.shutdown();
-      this.videoSettingsService.shutdown();
-      await this.gameOverlayService.destroy();
-      await this.fileManagerService.flushAll();
-      obs.NodeObs.RemoveSourceCallback();
-      obs.NodeObs.RemoveTransitionCallback();
-      obs.NodeObs.RemoveVolmeterCallback();
-      obs.NodeObs.OBS_service_removeCallback();
-      obs.IPC.disconnect();
-      this.crashReporterService.endShutdown();
-      electron.ipcRenderer.send('shutdownComplete');
+      try {
+        await this.runShutdownStep('TcpServerService.stopListening', () =>
+          this.tcpServerService.stopListening(),
+        );
+        await this.runShutdownStep('NodeObs.InitShutdownSequence', () =>
+          obs.NodeObs.InitShutdownSequence(),
+        );
+        await this.runShutdownStep('StreamAvatarService.stopAvatarProcess', () =>
+          this.streamAvatarService.stopAvatarProcess(),
+        );
+        await this.runShutdownStep('CrashReporterService.beginShutdown', () =>
+          this.crashReporterService.beginShutdown(),
+        );
+        await this.runShutdownStep('AppService.shutdownStarted', () => this.shutdownStarted.next());
+        await this.runShutdownStep('RecentEventsService.shutdown', () =>
+          this.recentEventsService.shutdown(),
+        );
+        await this.runShutdownStep('WebsocketService.disconnect', () =>
+          this.websocketService.disconnect(),
+        );
+        await this.runShutdownStep('KeyListenerService.shutdown', () =>
+          this.keyListenerService.shutdown(),
+        );
+        await this.runShutdownStep('PlatformAppsService.unloadAllApps', () =>
+          this.platformAppsService.unloadAllApps(),
+        );
+        await this.runShutdownStep('UsageStatisticsService.flushEvents', () =>
+          this.usageStatisticsService.flushEvents(),
+        );
+        await this.runShutdownStep('StreamingService.shutdown', () =>
+          this.streamingService.shutdown(),
+        );
+        await this.runShutdownStep('WindowsService.shutdown', () => this.windowsService.shutdown());
+        await this.runShutdownStep('IpcServerService.stopListening', () =>
+          this.ipcServerService.stopListening(),
+        );
+        await this.runShutdownStep('UserService.flushUserSession', () =>
+          this.userService.flushUserSession(),
+        );
+        await this.runShutdownStep('SceneCollectionsService.deinitialize', () =>
+          this.sceneCollectionsService.deinitialize(),
+        );
+        await this.runShutdownStep('PerformanceService.stop', () => this.performanceService.stop());
+        await this.runShutdownStep('TransitionsService.shutdown', () =>
+          this.transitionsService.shutdown(),
+        );
+        await this.runShutdownStep('VideoSettingsService.shutdown', () =>
+          this.videoSettingsService.shutdown(),
+        );
+        await this.runShutdownStep('GameOverlayService.destroy', () =>
+          this.gameOverlayService.destroy(),
+        );
+        await this.runShutdownStep('FileManagerService.flushAll', () =>
+          this.fileManagerService.flushAll(),
+        );
+        await this.runShutdownStep('NodeObs.RemoveSourceCallback', () =>
+          obs.NodeObs.RemoveSourceCallback(),
+        );
+        await this.runShutdownStep('NodeObs.RemoveTransitionCallback', () =>
+          obs.NodeObs.RemoveTransitionCallback(),
+        );
+        await this.runShutdownStep('NodeObs.RemoveVolmeterCallback', () =>
+          obs.NodeObs.RemoveVolmeterCallback(),
+        );
+        await this.runShutdownStep('NodeObs.OBS_service_removeCallback', () =>
+          obs.NodeObs.OBS_service_removeCallback(),
+        );
+        await this.runShutdownStep('OBS IPC disconnect', () => obs.IPC.disconnect());
+        await this.runShutdownStep('CrashReporterService.endShutdown', () =>
+          this.crashReporterService.endShutdown(),
+        );
+      } catch (e) {
+        console.error('[Shutdown] Unexpected shutdown failure', e);
+      } finally {
+        electron.ipcRenderer.send('shutdownComplete');
+      }
     }, 300);
   }
 

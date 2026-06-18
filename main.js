@@ -85,6 +85,7 @@ if (!gotTheLock) {
 
 const bootstrap = require('./updater/build/bootstrap.js');
 const bundleUpdater = require('./updater/build/bundle-updater.js');
+const { createShutdownCoordinator } = require('./app/util/shutdown-coordinator');
 const uuid = require('uuid/v4');
 const semver = require('semver');
 const windowStateKeeper = require('electron-window-state');
@@ -272,9 +273,20 @@ app.on('ready', () => {
 // closing the windows before exit.
 let allowMainWindowClose = false;
 let shutdownStarted = false;
-let appShutdownTimeout;
+let shutdownCoordinator;
 
 global.indexUrl = `file://${__dirname}/index.html`;
+
+function forceShutdown(reason) {
+  console.warn(`[Shutdown] Force exiting application: ${reason}`);
+  allowMainWindowClose = true;
+
+  BrowserWindow.getAllWindows().forEach(window => {
+    if (!window.isDestroyed()) window.destroy();
+  });
+
+  app.exit(0);
+}
 
 function openDevTools() {
   childWindow.webContents.openDevTools({ mode: 'detach' });
@@ -291,6 +303,11 @@ async function startApp() {
   const crashHandler = require('crash-handler');
   const isDevMode = process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test';
   const crashHandlerLogPath = app.getPath('userData');
+
+  shutdownCoordinator = createShutdownCoordinator({
+    logger: console,
+    onForceShutdown: forceShutdown,
+  });
 
   if (process.platform === 'win32') {
     overlay = require('game_overlay');
@@ -430,15 +447,8 @@ async function startApp() {
   mainWindow.on('close', e => {
     if (!shutdownStarted) {
       shutdownStarted = true;
+      shutdownCoordinator.beginShutdown();
       workerWindow.send('shutdown');
-
-      // We give the worker window 10 seconds to acknowledge a request
-      // to shut down.  Otherwise, we just close it.
-      appShutdownTimeout = setTimeout(() => {
-        allowMainWindowClose = true;
-        if (!mainWindow.isDestroyed()) mainWindow.close();
-        if (!workerWindow.isDestroyed()) workerWindow.close();
-      }, 10 * 1000);
     }
 
     if (!allowMainWindowClose) e.preventDefault();
@@ -463,10 +473,11 @@ async function startApp() {
   });
 
   ipcMain.on('acknowledgeShutdown', () => {
-    if (appShutdownTimeout) clearTimeout(appShutdownTimeout);
+    shutdownCoordinator.acknowledgeShutdown();
   });
 
   ipcMain.on('shutdownComplete', () => {
+    shutdownCoordinator.completeShutdown();
     allowMainWindowClose = true;
     mainWindow.close();
     workerWindow.close();
@@ -598,6 +609,9 @@ if (fs.existsSync(haDisableFile)) app.disableHardwareAcceleration();
 app.setAsDefaultProtocolClient('slobs');
 
 app.on('second-instance', (event, argv, cwd) => {
+  // During shutdown, a second launch means this instance is still holding the single-instance lock.
+  if (shutdownStarted && shutdownCoordinator && shutdownCoordinator.handleSecondInstance()) return;
+
   // Check for protocol links in the argv of the other process
   argv.forEach(arg => {
     if (arg.match(/^slobs:\/\//)) {
