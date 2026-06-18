@@ -188,6 +188,7 @@ export class StreamingService
   streamingStateChange = new Subject<void>();
 
   powerSaveId: number;
+  private numInstances: number = 0;
 
   private resolveStartStreaming: Function = () => {};
   private rejectStartStreaming: Function = () => {};
@@ -2661,6 +2662,9 @@ export class StreamingService
       } else {
         await this.handleStartSingleOutputStream(info.signal, context, nextState, time);
       }
+      // Memoize number of streaming instances for performance metrics calculation
+      this.numInstances++;
+
       // Updating state for the UI is handled in the above functions
       return;
     } else if (info.signal === EOBSOutputSignal.Activate) {
@@ -3514,20 +3518,28 @@ export class StreamingService
     let totalFrames = 0;
     let kbitsPerSec = 0;
     let dataOutput = 0;
-
     for (const contextName of Object.keys(this.contexts) as TOutputContext[]) {
       const instance = this.contexts[contextName].streaming;
       if (!instance) continue;
 
-      droppedFrames += instance.droppedFrames;
-      totalFrames += instance.totalFrames;
-      kbitsPerSec += instance.kbitsPerSec;
-      dataOutput += instance.dataOutput;
+      // Twitch enhanced broadcasting and dual format encodes three additional resolutions on the frontend
+      // so we need to average these for accurate display bitrate
+      if (this.isEnhancedBroadcastingStreaming(instance)) {
+        droppedFrames += instance.droppedFrames;
+        totalFrames += instance.totalFrames;
+        kbitsPerSec += Math.round(instance.kbitsPerSec / 3);
+        dataOutput += instance.dataOutput;
+      } else {
+        droppedFrames += instance.droppedFrames;
+        totalFrames += instance.totalFrames;
+        kbitsPerSec += instance.kbitsPerSec;
+        dataOutput += instance.dataOutput;
+      }
     }
 
     // TODO: Add UI to show bitrate by display but for now average the all instances, which is more accurate
     // than only showing the horizontal display's bitrate in dual output mode
-    kbitsPerSec = Math.round(kbitsPerSec / Object.keys(this.contexts).length);
+    kbitsPerSec = Math.round(kbitsPerSec / this.numInstances);
 
     return { droppedFrames, totalFrames, kbitsPerSec, dataOutput };
   }
@@ -3985,6 +3997,8 @@ export class StreamingService
 
       this.contexts[contextName].streaming?.stop(true);
     }
+
+    this.numInstances = 0;
   }
 
   /**
