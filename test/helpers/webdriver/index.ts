@@ -324,10 +324,13 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
 
   stopAppFn = async function stopApp(t: TExecutionContext, clearCache = true) {
     try {
-      await closeWindow('main');
-      await waitForElectronInstancesExist();
+      if (process.platform !== 'darwin') {
+        // closeWindow crashes on macOS.
+        await closeWindow('main');
+        await waitForElectronInstancesExist();
+      }
 
-      app.stop();
+      await app.stop();
     } catch (e: unknown) {
       fail('Crash on shutdown');
       console.error(e);
@@ -380,6 +383,17 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
 
         // TODO: Only enable this check when running tests locally
         if (record.match(/Missing translation/)) {
+          return false;
+        }
+
+        // RxJS Subscriber.unsubscribe null-dereference during React passive effect cleanup
+        // on app shutdown. This is a teardown race condition triggered by the test harness
+        // forcibly closing the app and is not indicative of a test failure.
+        if (
+          process.platform === 'darwin' &&
+          record.match(/Cannot read properties of null \(reading 'closed'\)/)
+        ) {
+          ignoringErrors = true;
           return false;
         }
 

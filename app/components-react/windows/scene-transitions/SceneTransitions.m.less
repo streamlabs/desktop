@@ -1,0 +1,49 @@
+@import '../../../styles/index';
+
+.transition-blank {
+  text-align: center;
+  padding: 50px;
+}
+
+.transition-default {
+  color: var(--teal);
+}
+
+.transition-default-selector {
+  cursor: pointer;
+  width: 90px;
+
+  &:hover {
+    :not(.transition-default) {
+      color: var(--white);
+    }
+  }
+}
+
+.table-container {
+  :global(.ant-table-thead) > tr > th {
+    background: none;
+    border-bottom: none;
+  }
+}
+
+.table-controls {
+  display: flex;
+}
+
+.transition-control {
+  margin-left: 10px;
+}
+
+.transition-control:not(.disabled) {
+  cursor: pointer;
+  .icon-hover();
+}
+
+.transition-redundant {
+  color: var(--info);
+
+  &:hover {
+    color: var(--info);
+  }
+}

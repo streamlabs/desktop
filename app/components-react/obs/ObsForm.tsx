@@ -115,6 +115,8 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
   };
 
   switch (type) {
+    // TODO: confirm that 'OBS_PROPERTY_FLOAT' should be handled in its own case
+    // case 'OBS_PROPERTY_FLOAT':
     case 'OBS_PROPERTY_DOUBLE':
       return <ObsNumberInput {...inputProps} ref={ref} data-name={p.value.name} />;
     case 'OBS_PROPERTY_INT':
@@ -327,6 +329,21 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
           step={1}
           min={uintVal.minVal}
           max={uintVal.maxVal}
+          ref={ref}
+          data-name={p.value.name}
+        />
+      );
+
+    case 'OBS_PROPERTY_FLOAT':
+      // eslint-disable-next-line no-case-declarations
+      const floatVal = p.value as IObsNumberInputValue;
+
+      return (
+        <ObsNumberInput
+          {...inputProps}
+          step={floatVal.stepVal}
+          min={floatVal.minVal}
+          max={1}
           ref={ref}
           data-name={p.value.name}
         />

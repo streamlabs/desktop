@@ -121,7 +121,6 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
               disabled={v.isRecording || disableIcons}
               optionType="default"
             />
-            {showRecordingToggle && <> {$t('format')} </>}
           </>
         )}
         {disableToggle && <i className={cx(styles.info, 'icon-information')} />}

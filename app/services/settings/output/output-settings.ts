@@ -430,10 +430,11 @@ export class OutputSettingsService extends Service {
       'OverwriteIfExists',
     );
 
-    const noSpace: boolean = this.settingsService.findSettingValue(
+    const noSpaceKey = mode === 'Advanced' ? 'RecFileNameWithoutSpace' : 'FileNameWithoutSpace';
+    const noSpace: boolean = !!this.settingsService.findSettingValue(
       output,
       'Recording',
-      'FileNameWithoutSpace',
+      noSpaceKey,
     );
 
     const prefix: string = this.settingsService.findSettingValue(
@@ -446,8 +447,8 @@ export class OutputSettingsService extends Service {
       'Recording',
       'RecRBSuffix',
     );
-    const outputWidth = this.videoSettingsService.outputResolutions[display].outputWidth;
-    const outputHeight = this.videoSettingsService.outputResolutions[display].outputHeight;
+    let outputWidth = this.videoSettingsService.outputResolutions[display].outputWidth;
+    let outputHeight = this.videoSettingsService.outputResolutions[display].outputHeight;
 
     const fileFormat = this.settingsService.findSettingValue(
       advanced,
@@ -459,6 +460,20 @@ export class OutputSettingsService extends Service {
     if (mode === 'Advanced') {
       const mixer = this.settingsService.findSettingValue(output, 'Recording', 'RecTracks');
       const rescaling = this.settingsService.findSettingValue(output, 'Recording', 'RecRescale');
+      if (rescaling) {
+        const rescaleResolution = this.settingsService.findSettingValue(
+          output,
+          'Recording',
+          'RecRescaleRes',
+        );
+        if (rescaleResolution) {
+          const [rescaleWidth, rescaleHeight] = rescaleResolution.split('x').map(Number);
+          if (Number.isFinite(rescaleWidth) && Number.isFinite(rescaleHeight)) {
+            outputWidth = rescaleWidth;
+            outputHeight = rescaleHeight;
+          }
+        }
+      }
       const enableFileSplit = this.settingsService.findSettingValue(
         output,
         'Recording',
@@ -559,10 +574,11 @@ export class OutputSettingsService extends Service {
       'OverwriteIfExists',
     );
 
-    const noSpace: boolean = this.settingsService.findSettingValue(
+    const noSpaceKey = mode === 'Advanced' ? 'RecFileNameWithoutSpace' : 'FileNameWithoutSpace';
+    const noSpace: boolean = !!this.settingsService.findSettingValue(
       output,
       'Recording',
-      'FileNameWithoutSpace',
+      noSpaceKey,
     );
 
     const prefix: string = this.settingsService.findSettingValue(

@@ -2442,10 +2442,13 @@ export class StreamingService
     if (this.isAdvancedRecording(this.contexts[display].recording)) {
       // cast the recording instance to advanced recording to be able to set the values correctly
       const recording = this.migrateSettings('recording', display) as IAdvancedRecording;
-      // output resolutions
-      const resolution = this.videoSettingsService.outputResolutions[display];
-      recording.outputWidth = resolution.outputWidth;
-      recording.outputHeight = resolution.outputHeight;
+      // output resolutions: use the rescale resolution when rescaling is enabled,
+      // otherwise fall back to the canvas output resolution
+      if (!recording.rescaling) {
+        const resolution = this.videoSettingsService.outputResolutions[display];
+        recording.outputWidth = resolution.outputWidth;
+        recording.outputHeight = resolution.outputHeight;
+      }
 
       // create recording tracks, if necessary
       if (Number.isFinite(recording.mixer)) {

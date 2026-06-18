@@ -353,8 +353,8 @@ export class OnboardingV2Service extends Service {
     this.usageStatisticsService.actions.recordAnalyticsEvent('Onboarding', {
       type,
       currentStep: this.currentStepName,
-      prevStep: this.path.prevStepName,
-      nextStep: this.path.nextStepName,
+      prevStep: this.path?.prevStepName,
+      nextStep: this.path?.nextStepName,
       isUltra: this.userService.views.isPrime,
       hasExistingSceneCollections: this.hasExistingSceneCollections,
       hasOBSInstalled: this.obsImporterService.views.isOBSinstalled(),
