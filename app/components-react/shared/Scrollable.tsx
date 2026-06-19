@@ -38,6 +38,20 @@ export default function Scrollable(initialProps: IScrollableProps & HTMLAttribut
     return () => cancelAnimationFrame(id);
   }, []);
 
+  useEffect(() => {
+    // autoUpdate watches the host element (fixed height via CSS) and won't fire
+    // when async content grows past the viewport. Observe the lib's own content
+    // element (grows with the children) so the scrollbar appears once data loads.
+    const instance = osRef.current?.osInstance();
+    const content = instance?.getElements()?.content as HTMLElement | undefined;
+    if (!content) return;
+    const ro = new ResizeObserver(() => {
+      osRef.current?.osInstance()?.update(true);
+    });
+    ro.observe(content);
+    return () => ro.disconnect();
+  }, []);
+
   function onOverflowChanged(ev?: { yScrollable: boolean }) {
     if (!ev) return;
     if (p.snapToWindowEdge && ev.yScrollable) {
