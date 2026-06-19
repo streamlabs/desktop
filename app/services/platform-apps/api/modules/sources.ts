@@ -282,4 +282,14 @@ export class SourcesModule extends Module {
   ) {
     this.sourceFiltersService.add(sourceId, filterType, filterName, settings);
   }
+
+  @apiMethod()
+  removeFilter(ctx: IApiContext, sourceId: string, filterName: string) {
+    this.sourceFiltersService.remove(sourceId, filterName);
+  }
+
+  @apiMethod()
+  setFilterEnabled(ctx: IApiContext, sourceId: string, filterName: string, enabled: boolean) {
+    this.sourceFiltersService.setVisibility(sourceId, filterName, enabled);
+  }
 }
