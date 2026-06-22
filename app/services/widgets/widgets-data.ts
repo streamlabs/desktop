@@ -112,6 +112,12 @@ export const makeWidgetTesters = (host: string): IWidgetTester[] => {
       platforms: ['twitch'],
     },
     {
+      type: 'power_up',
+      name: 'Power-Up',
+      url: testUrl('power_up'),
+      platforms: ['twitch'],
+    },
+    {
       name: 'Super Chat',
       url: testUrl('fanfunding'),
       platforms: ['youtube'],
