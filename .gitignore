@@ -31,4 +31,5 @@ license_en.txt
 !.yarn/sdks
 !.yarn/versions
 chromedriver.log
+.slobs-mcp-cache/
 shared-resources/ai-highlighter/*

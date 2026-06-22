@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "webdriverio": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["node_modules/@wdio/mcp/lib/server.js"]
+    }
+  }
+}
