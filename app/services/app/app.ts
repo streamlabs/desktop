@@ -355,4 +355,5 @@ export class AppService extends StatefulService<IAppState> {
   private SET_ONBOARDED(onboarded: boolean) {
     this.state.onboarded = onboarded;
   }
+
 }

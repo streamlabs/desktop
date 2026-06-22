@@ -825,11 +825,6 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       this.UNLINK_PLATFORM('twitter');
     }
 
-    // Remove Trovo if present - platform is no longer supported
-    if ((this.state.auth.platforms as any).trovo) {
-      Vue.delete(this.state.auth.platforms as any, 'trovo');
-    }
-
     if (linkedPlatforms.force_login_required) return true;
   }
 

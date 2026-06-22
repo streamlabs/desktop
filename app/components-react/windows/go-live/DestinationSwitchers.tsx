@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, MouseEvent } from 'react';
+import React, { useRef, useMemo, MouseEvent, memo } from 'react';
 import { getPlatformService, platformLabels, TPlatform } from '../../../services/platforms';
 import cx from 'classnames';
 import { $t } from '../../../services/i18n';
@@ -11,7 +11,8 @@ import { useDebounce } from '../../hooks';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import DisplaySelector from 'components-react/shared/DisplaySelector';
 import ConnectButton from 'components-react/shared/ConnectButton';
-import { message } from 'antd';
+import { message, Tooltip } from 'antd';
+import { shell } from '@electron/remote';
 
 /**
  * Allows enabling/disabling platforms and custom destinations for the stream
@@ -154,6 +155,8 @@ export function DestinationSwitchers() {
     emitSwitch(index, enabled);
   }
 
+  const hasTrovo = !!(Services.UserService.state.auth?.platforms as any)?.trovo;
+
   return (
     <div className={cx(styles.switchWrapper, styles.columnPadding)}>
       {platforms.map((platform, ind) => (
@@ -171,6 +174,8 @@ export function DestinationSwitchers() {
           index={ind}
         />
       ))}
+
+      {hasTrovo && <TrovoCard />}
 
       {customDestinations?.map((dest, ind) => (
         <DestinationSwitcher
@@ -346,5 +351,56 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
         <ConnectButton platform={platform} className={styles.connectButton} />
       )}
     </div>
+  );
+});
+
+const TrovoCard = memo(() => {
+  return (
+    <Tooltip
+      title={
+        <span>
+          {$t('Trovo is no longer supported.')}{' '}
+          <a
+            onClick={() =>
+              shell.openExternal(
+                `https://${Services.HostsService.streamlabs}/dashboard#/settings/account-settings/platforms`,
+              )
+            }
+            style={{ color: 'var(--teal)', cursor: 'pointer' }}
+          >
+            {$t('Manage your platforms')}
+          </a>
+        </span>
+      }
+    >
+      <div
+        className={cx('single-output-card', styles.platformSwitcher, styles.platformDisabled)}
+        style={{ cursor: 'default', opacity: 0.5 }}
+      >
+        <div className={cx(styles.colInput)}>
+          <SwitchInput
+            value={false}
+            name="trovo"
+            disabled
+            nolabel
+            label="Trovo"
+            className="platform-switch"
+            color="secondary"
+            size="default"
+            skipWrapperAttrs
+          />
+        </div>
+        <div className={cx('logo', styles.platformLogo)}>
+          <img
+            src="https://slobs-cdn.streamlabs.com/media/trovo.png"
+            style={{ width: 40, height: 40, objectFit: 'contain' }}
+          />
+        </div>
+        <div className={styles.colAccount}>
+          <div className={styles.platformName}>{$t('Trovo')}</div>
+          <div className={styles.platformHandle}>{$t('No longer supported')}</div>
+        </div>
+      </div>
+    </Tooltip>
   );
 });
