@@ -834,7 +834,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     }
 
     // Remove Trovo if present - platform is no longer supported
-    if ((this.state.auth.platforms as any).trovo) {
+    if (this.state.auth.platforms.hasOwnProperty('trovo')) {
       this.UNLINK_PLATFORM('trovo');
     }
 
