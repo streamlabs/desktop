@@ -329,8 +329,16 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     Vue.set(this.state.auth.platforms, auth.type, auth);
   }
 
+  /**
+   * Unlink a platform from the user's account.
+   * @remark This only removes the platform from the local state, it does not remove it from the server.
+   * Trovo is added because it is a deprecated platform that is no longer supported, but may still be
+   * present in the user's account if they had previously linked it. This allows us to remove it from
+   * the local state to prevent the user from attempting to use it.
+   * @param platform - platform or deprecated platform 'trovo'
+   */
   @mutation()
-  UNLINK_PLATFORM(platform: TPlatform) {
+  UNLINK_PLATFORM(platform: TPlatform | 'trovo') {
     Vue.delete(this.state.auth.platforms, platform);
   }
 
