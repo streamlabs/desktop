@@ -158,9 +158,6 @@ export class AppService extends StatefulService<IAppState> {
       await this.sceneCollectionsService.initialize();
     }
 
-    if (this.userService.isAlphaGroup) {
-      this.SET_ONBOARDED(this.onboardingService.startOnboardingIfRequired());
-    }
     this.dismissablesService.initialize();
 
     electron.ipcRenderer.on('shutdown', () => {
