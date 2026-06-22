@@ -228,10 +228,6 @@ export function StreamSettings() {
     });
   }
 
-  const mergeUrl = `https://${Services.HostsService.streamlabs}/dashboard#/settings/account-settings/platforms`;
-
-  const hasTrovo = !!(UserService.state.auth?.platforms as any)?.trovo;
-
   return (
     <StreamSettingsCtx.Provider value={controller}>
       <div className={styles.section}>
@@ -252,46 +248,6 @@ export function StreamSettings() {
             {platforms.map(platform => (
               <Platform key={platform} platform={platform} />
             ))}
-
-            {hasTrovo && (
-              <Tooltip
-                title={
-                  <span>
-                    {$t('Trovo is no longer supported.')}{' '}
-                    <a
-                      onClick={() => remote.shell.openExternal(mergeUrl)}
-                      style={{ color: 'var(--teal)', cursor: 'pointer' }}
-                    >
-                      {$t('Manage your platforms')}
-                    </a>
-                  </span>
-                }
-              >
-                <div className={cx('section', styles.section)}>
-                  <div className={styles.targetCard}>
-                    <PlatformLogo
-                      className={styles.targetLogo}
-                      style={{ marginRight: '10px' }}
-                      size={36}
-                      platform="trovo"
-                    />
-                    <div className={styles.targetData} style={{ opacity: 0.5 }}>
-                      <span className={styles.targetType}>{$t('Trovo')}</span>
-                      <br />
-                      <span className={styles.targetName}>{$t('No longer supported')}</span>
-                      <br />
-                    </div>
-                    <div style={{ marginLeft: 'auto' }}>
-                      {canEditSettings && (
-                        <Button danger onClick={() => remote.shell.openExternal(mergeUrl)}>
-                          {$t('Unlink')}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </Tooltip>
-            )}
 
             <CustomDestinationList />
 

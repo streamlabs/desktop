@@ -21,6 +21,7 @@ import styles from './Main.m.less';
 import { StatefulService } from 'services';
 import { useRealmObject } from 'components-react/hooks/realm';
 import Onboarding from 'components-react/modals/onboarding/Onboarding';
+import { alertAsync } from 'components-react/modals';
 
 // TODO: this is technically deprecated as we have moved customizationService to Realm
 // but some users may still have this value

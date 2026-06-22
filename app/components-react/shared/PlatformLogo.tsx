@@ -11,7 +11,7 @@ export const sizeMap: Dictionary<number> = {
 };
 
 interface IProps {
-  platform: TPlatform | 'nimotv' | 'dlive' | 'instagram' | 'streamlabs' | 'trovo';
+  platform: TPlatform | 'nimotv' | 'dlive' | 'instagram' | 'streamlabs';
   size?: keyof typeof sizeMap | number;
   color?: string;
   nocolor?: boolean;
@@ -37,7 +37,6 @@ export default function PlatformLogo(p: IProps & HTMLAttributes<unknown>) {
       instagram: 'instagram',
       kick: 'kick',
       patreon: 'patreon',
-      trovo: 'trovo',
     }[p.platform];
   }
   const size = p.size && (sizeMap[p.size] ?? p.size);
@@ -58,16 +57,6 @@ export default function PlatformLogo(p: IProps & HTMLAttributes<unknown>) {
   // This might be a hack - but handle twitter, tiktok, and patreon logo for different themes
   if (['twitter', 'tiktok', 'patreon'].includes(p.platform) && !isDark) {
     color = 'black';
-  }
-
-  if (p.platform === 'trovo') {
-    return (
-      <img
-        src="https://slobs-cdn.streamlabs.com/media/trovo.png"
-        style={{ width: 36, height: 36, objectFit: 'contain', opacity: 0.5 }}
-        className={cx(p.className)}
-      />
-    );
   }
 
   return (
