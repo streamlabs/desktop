@@ -329,6 +329,11 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     Vue.set(this.state.auth.platforms, auth.type, auth);
   }
 
+  @mutation()
+  UPDATE_LEGACY_PLATFORM(auth: IPlatformAuth) {
+    Vue.set(this.state.auth, 'platform', auth);
+  }
+
   /**
    * Unlink a platform from the user's account.
    * @remark This only removes the platform from the local state, it does not remove it from the server.
@@ -833,8 +838,27 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       this.UNLINK_PLATFORM('twitter');
     }
 
-    // Remove Trovo if present - platform is no longer supported
+    // Remove Trovo if present because it is deprecated
     if (this.state.auth.platforms.hasOwnProperty('trovo')) {
+      const isTrovoPrimary = (this.state.auth.primaryPlatform as string) === 'trovo';
+      const newPrimary = Object.keys(this.state.auth.platforms).find(p => p !== 'trovo') as
+        | TPlatform
+        | undefined;
+
+      // Handle setting a new primary platform if Trovo was primary, or log the user out
+      // if it was the only linked platform
+      if (isTrovoPrimary) {
+        if (newPrimary) {
+          this.setPrimaryPlatform(newPrimary);
+          // Keep legacy single-platform auth in sync for rollback safety
+          this.UPDATE_LEGACY_PLATFORM(this.state.auth.platforms[newPrimary]);
+        } else {
+          this.LOGOUT();
+          // Force logout if Trovo was the only linked platform since it's deprecated
+          return true;
+        }
+      }
+
       this.UNLINK_PLATFORM('trovo');
     }
 
