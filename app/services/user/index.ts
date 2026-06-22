@@ -835,7 +835,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
 
     // Remove Trovo if present - platform is no longer supported
     if ((this.state.auth.platforms as any).trovo) {
-      Vue.delete(this.state.auth.platforms as any, 'trovo');
+      this.UNLINK_PLATFORM('trovo');
     }
 
     if (linkedPlatforms.force_login_required) return true;
