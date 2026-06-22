@@ -44,7 +44,7 @@ function createShutdownCoordinator(options) {
   }
 
 
-   // Clears pending shutdown timers and delegates the actual application teardown.
+  // Clears pending shutdown timers and delegates the actual application teardown.
   function forceShutdown(reason) {
     if (forced) return;
 
@@ -54,7 +54,7 @@ function createShutdownCoordinator(options) {
     onForceShutdown(reason);
   }
 
-   // Starts shutdown and waits for the worker renderer to acknowledge the request.
+  // Starts shutdown and waits for the worker renderer to acknowledge the request.
   function beginShutdown() {
     if (shutdownStarted) return false;
 
