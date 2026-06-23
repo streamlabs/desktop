@@ -45,7 +45,7 @@ export default function GoLiveSettings() {
     isStreamShiftMode,
     isStreamShiftDisabled,
     isPatreonEnabled,
-    openPlatformSettings,
+    addDestination,
     showTopAddDestination,
     showBottomAddDestination,
     setPrimaryChat,
@@ -138,14 +138,14 @@ export default function GoLiveSettings() {
 
           <Scrollable className={styles.leftColumnScroll}>
             {showTopAddDestination && (
-              <AddDestinationButton type="small" onClick={openPlatformSettings} />
+              <AddDestinationButton type="small" onClick={addDestination} />
             )}
             <DestinationSwitchers />
             {showBottomAddDestination && (
               <AddDestinationButton
                 type="small"
                 className={styles.bottom}
-                onClick={openPlatformSettings}
+                onClick={addDestination}
               />
             )}
             <div className={styles.leftFooter}>

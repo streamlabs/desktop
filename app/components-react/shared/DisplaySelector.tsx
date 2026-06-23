@@ -1,4 +1,4 @@
-import React, { CSSProperties, useMemo } from 'react';
+import React, { CSSProperties, useCallback, useMemo } from 'react';
 import { $t } from 'services/i18n';
 import { RadioInput } from './inputs';
 import { TDisplayType } from 'services/settings-v2';
@@ -56,12 +56,6 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       },
     ];
 
-    // This debugging log is intentional to verify that the Both option is showing for Twitch when dual stream is available,
-    // and hidden if the user does not have access to dual stream. This is to confirm that the issue is not access.
-    if (p?.platform === 'twitch' && canDualStream) {
-      console.log('Dual stream is available for Twitch, showing Both option');
-    }
-
     if (canDualStream) {
       const tooltip = p?.platform
         ? $t('Stream both horizontally and vertically to %{platform}', {
@@ -83,18 +77,21 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     return defaultDisplays;
   }, [canDualStream]);
 
-  const onChange = (val: string) => {
-    const updatedDisplay = val as TDisplayOutput;
-    if (p.platform) {
-      updatePlatformDisplayAndSaveSettings(p.platform, updatedDisplay);
-    } else {
-      if (updatedDisplay === 'both') {
-        // There's no UI that would allow for this, but just in case
-        throw new Error('Attempted to update custom display for dual stream, this is impossible');
+  const onChange = useCallback(
+    (val: string) => {
+      const updatedDisplay = val as TDisplayOutput;
+      if (p.platform) {
+        updatePlatformDisplayAndSaveSettings(p.platform, updatedDisplay);
+      } else {
+        if (updatedDisplay === 'both') {
+          // There's no UI that would allow for this, but just in case
+          throw new Error('Attempted to update custom display for dual stream, this is impossible');
+        }
+        updateCustomDestinationDisplayAndSaveSettings(p.index, updatedDisplay as TDisplayType);
       }
-      updateCustomDestinationDisplayAndSaveSettings(p.index, updatedDisplay as TDisplayType);
-    }
-  };
+    },
+    [p.platform, p.index],
+  );
 
   // Convert displays array to Dictionary<TInputValue>
   const displayDict = useMemo(() => {
