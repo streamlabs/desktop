@@ -35,10 +35,11 @@
 }
 
 .alert-button {
-  min-height: 30px !important;
-  height: 30px;
+  min-height: 20px !important;
+  height: 20px !important;
   background-color: rgba(251, 72, 76, 0.36) !important;
-  margin: 0 4px !important;
+  margin: 5px 0px 5px 5px !important;
+  line-height: 20px !important;
   font-size: 12px;
 }
 
@@ -71,6 +72,10 @@
   &.warning {
     background-color: var(--warning-bg);
     color: var(--warning);
+
+    i {
+      margin-right: 5px !important;
+    }
   }
 
   &.success {
