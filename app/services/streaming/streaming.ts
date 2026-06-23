@@ -3523,7 +3523,8 @@ export class StreamingService
       if (!instance) continue;
 
       // Twitch enhanced broadcasting and dual format encodes three additional resolutions on the frontend
-      // so we need to average these for accurate display bitrate
+      // so we need to average these for accurate display bitrate. Note: Enhanced broadcasting will always be
+      // around 4500 kbitsPerSec bitrate requirements for the resolutions.
       if (this.isEnhancedBroadcastingStreaming(instance)) {
         droppedFrames += instance.droppedFrames;
         totalFrames += instance.totalFrames;
@@ -3539,7 +3540,10 @@ export class StreamingService
 
     // TODO: Add UI to show bitrate by display but for now average the all instances, which is more accurate
     // than only showing the horizontal display's bitrate in dual output mode
-    kbitsPerSec = Math.round(kbitsPerSec / this.numInstances);
+
+    if (this.numInstances > 1) {
+      kbitsPerSec = Math.round(kbitsPerSec / this.numInstances);
+    }
 
     return { droppedFrames, totalFrames, kbitsPerSec, dataOutput };
   }
