@@ -760,7 +760,18 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     // don't reuse broadcastId and thumbnail for Youtube
     // TODO: index
     // @ts-ignore
-    if (settings && settings['broadcastId']) settings['broadcastId'] = '';
+    if (settings && settings['broadcastId']) {
+      // @ts-ignore
+      settings['broadcastId'] = '';
+
+      if (platform === 'youtube') {
+        // YouTube monetization fields are broadcast-specific — reset when broadcastId is cleared
+        // @ts-ignore
+        settings['monetizationEnabled'] = false;
+        // @ts-ignore
+        settings['eligibleForMonetization'] = false;
+      }
+    }
     // TODO: index
     // @ts-ignore
     if (settings && settings['thumbnail']) settings['thumbnail'] = '';

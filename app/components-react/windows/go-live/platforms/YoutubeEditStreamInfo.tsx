@@ -63,11 +63,7 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
 
   // re-fill form when the broadcastId selected
   useEffect(() => {
-    if (!broadcastId) {
-      // Cannot have monetization enabled before the broadcast is checked
-      updateSettings({ monetizationEnabled: false, eligibleForMonetization: false });
-      return;
-    }
+    if (!broadcastId) return;
     Services.YoutubeService.actions.return
       .fetchStartStreamOptionsForBroadcast(broadcastId)
       .then(newYtSettings => {
