@@ -5,7 +5,7 @@ import { UserService } from './user';
 import { HostsService } from './hosts';
 import fs from 'fs';
 import path from 'path';
-import { authorizedHeaders, handleResponse } from 'util/requests';
+import { authorizedHeaders, handleResponse, jfetch } from 'util/requests';
 import throttle from 'lodash/throttle';
 import { Service } from './core/service';
 import Utils from './utils';
@@ -131,6 +131,14 @@ export class UsageStatisticsService extends Service {
   installerId: string;
   version = Utils.env.SLOBS_VERSION;
 
+  /**
+   * Whether this installer originated from YouTube (e.g. downloaded directly
+   * from the user's YouTube Studio page). Used to drive an accelerated
+   * onboarding flow. Synchronously readable once `fetchInstallerOrigin` resolves.
+   */
+  youtubeOrigin = false;
+  private youtubeOriginFetched = false;
+
   private analyticsEvents: IAnalyticsEvent[] = [];
   private refl: string = '';
   private event: TAnalyticsEvent | null = null;
@@ -179,6 +187,31 @@ export class UsageStatisticsService extends Service {
     }
 
     this.installerId = installerId;
+  }
+
+  /**
+   * Asks the server whether this installer id originated from YouTube. The
+   * result is cached on the service so onboarding can read it synchronously.
+   * Requires no auth (keyed only on installer id, callable pre-login).
+   * Defaults to false on any failure or when no installer id is present.
+   */
+  async fetchInstallerOrigin(): Promise<boolean> {
+    if (!this.youtubeOriginFetched && this.installerId) {
+      this.youtubeOriginFetched = true;
+
+      try {
+        const url = `https://${this.hostsService.streamlabs}/api/v5/slobs/installer/${this.installerId}/origin`;
+        const resp = await jfetch<{ youtube?: boolean }>(url);
+        this.youtubeOrigin = !!resp?.youtube;
+      } catch (e: unknown) {
+        console.warn('Failed to fetch installer origin; defaulting youtubeOrigin=false', e);
+        this.youtubeOrigin = false;
+      }
+    }
+
+    // return this.youtubeOrigin;
+    this.youtubeOrigin = true; // @@ TEMP override to force youtube flow for all users while we test it
+    return true;
   }
 
   get isProduction() {

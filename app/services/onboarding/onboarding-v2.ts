@@ -15,6 +15,7 @@ import Utils from '../utils';
 
 export enum EOnboardingSteps {
   Splash = 'Splash',
+  YouTubeWelcome = 'YouTubeWelcome',
   Login = 'Login',
   RecordingLogin = 'RecordingLogin',
   ConnectMore = 'ConnectMore',
@@ -42,7 +43,8 @@ type TNavigationModifier =
   | 'isUltra'
   | 'obsInstalled'
   | 'lessThanTwoPlatforms'
-  | 'hasSceneCollections';
+  | 'hasSceneCollections'
+  | 'youtubeOrigin';
 type TModifiers = Record<TNavigationModifier, boolean>;
 
 type TOnboardingNavigationEvent = 'skip' | 'continue' | 'backtrack' | 'completed' | 'closed';
@@ -144,6 +146,12 @@ class OnboardingPath {
    *
    * Recording Mode
    * Login Splash -> Recording Mode Login -> OBS Import (if obs installed)
+   *
+   * YouTube Origin (accelerated flow for installers downloaded from YouTube Studio)
+   * YouTube Welcome (prompts YouTube login) -> Setup Devices -> Themes
+   * The YouTube Welcome screen is the entry point (Splash is skipped) and offers
+   * a small escape hatch (exitYouTubeFlow) that drops the user into the normal
+   * Login flow instead.
    */
   private determineNextStep(
     modifiers?: Record<TNavigationModifier, boolean>,
@@ -153,6 +161,13 @@ class OnboardingPath {
       [EOnboardingSteps.Splash]: () => {
         if (modifiers.recordingMode) return { name: EOnboardingSteps.RecordingLogin };
         return { name: EOnboardingSteps.Login };
+      },
+      [EOnboardingSteps.YouTubeWelcome]: () => {
+        // Escape hatch: the user dismissed the YouTube flow, send them to the
+        // normal login screen and let the standard flow take over from there.
+        if (!modifiers.youtubeOrigin) return { name: EOnboardingSteps.Login };
+        // Logged in with YouTube on the welcome screen, continue accelerated flow.
+        return { name: EOnboardingSteps.Devices };
       },
       [EOnboardingSteps.RecordingLogin]: () => {
         if (modifiers.obsInstalled) return { name: EOnboardingSteps.OBSImport };
@@ -240,6 +255,11 @@ export class OnboardingV2Service extends Service {
   singletonPath = false;
   localStorageKey = 'UserHasBeenOnboarded';
 
+  // Set when the user opts out of the accelerated YouTube flow via the escape
+  // hatch on the welcome screen. Disables the youtubeOrigin navigation modifier
+  // so navigation falls back to the normal flow. Reset on each initalizeView.
+  youtubeFlowDismissed = false;
+
   // Uncomment to debug/style a specific step
   // init() {
   //   super.init();
@@ -259,7 +279,17 @@ export class OnboardingV2Service extends Service {
       obsInstalled: this.obsImporterService.views.isOBSinstalled(),
       lessThanTwoPlatforms: this.userService.views.linkedPlatforms.length < 2,
       hasSceneCollections: !!this.hasExistingSceneCollections,
+      youtubeOrigin: this.usageStatisticsService.youtubeOrigin && !this.youtubeFlowDismissed,
     };
+  }
+
+  /**
+   * Opt out of the accelerated YouTube onboarding flow. Navigation then falls
+   * back to the normal flow from the current step (i.e. the standard Login).
+   */
+  exitYouTubeFlow() {
+    this.youtubeFlowDismissed = true;
+    this.takeStep();
   }
 
   showOnboardingIfNecessary() {
@@ -274,8 +304,15 @@ export class OnboardingV2Service extends Service {
   }
 
   showOnboarding() {
+    // YouTube-origin installs land directly on the accelerated welcome screen,
+    // skipping the standard splash. The flag is resolved during app startup
+    // (AppService.load) so it's available synchronously here.
+    const startingStep = this.usageStatisticsService.youtubeOrigin
+      ? EOnboardingSteps.YouTubeWelcome
+      : EOnboardingSteps.Splash;
+
     this.initalizeView({
-      startingStep: { name: EOnboardingSteps.Splash, isSkippable: false, isClosable: false },
+      startingStep: { name: startingStep, isSkippable: false, isClosable: false },
       isSingleton: false,
     });
   }
@@ -328,6 +365,7 @@ export class OnboardingV2Service extends Service {
 
   private initalizeView(config: IOnboardingInitialization) {
     this.windowsService.actions.showModalLayer('main');
+    this.youtubeFlowDismissed = false;
     this.singletonPath = config.isSingleton;
     this.path = new OnboardingPath(config.isSingleton);
     this.path.append(config.startingStep);

@@ -952,6 +952,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     }
 
     const localId = this.getLocalUserId();
+    return false;
     return Number(localId.search(/\d/)) % 2 === 0;
   }
 

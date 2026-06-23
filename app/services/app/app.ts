@@ -142,10 +142,16 @@ export class AppService extends StatefulService<IAppState> {
 
       // this config should be downloaded before any game-capture source has been added to the scene
       this.downloadAutoGameCaptureConfig(),
+
+      // Resolve whether this installer originated from YouTube so onboarding can
+      // synchronously branch into the accelerated flow. Defaults to false on failure.
+      this.usageStatisticsService.fetchInstallerOrigin(),
     ]).catch(e => {
       // probably the internet is disconnected
       console.error('Auto login failed', e);
     });
+
+    console.log('INSTALLER ORIGIN:', this.usageStatisticsService.youtubeOrigin);
 
     // Second, we want to start the crash reporter service.  We do this
     // after the user service because we want crashes to be associated

@@ -12,7 +12,11 @@ import KevinSvg from 'components-react/shared/KevinSvg';
 import styles from './Common.m.less';
 import { $i } from 'services/utils';
 
-const NO_BUTTON_STEPS = new Set([EOnboardingSteps.Splash, EOnboardingSteps.Login]);
+const NO_BUTTON_STEPS = new Set([
+  EOnboardingSteps.Splash,
+  EOnboardingSteps.YouTubeWelcome,
+  EOnboardingSteps.Login,
+]);
 
 export interface IOnboardingStepProps {
   processing: boolean;
@@ -21,6 +25,7 @@ export interface IOnboardingStepProps {
 
 const STEPS_MAP = {
   [EOnboardingSteps.Splash]: steps.Splash,
+  [EOnboardingSteps.YouTubeWelcome]: steps.YouTubeWelcome,
   [EOnboardingSteps.Login]: steps.Login,
   [EOnboardingSteps.RecordingLogin]: steps.RecordingLogin,
   [EOnboardingSteps.ConnectMore]: steps.ConnectMore,
