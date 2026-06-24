@@ -12,72 +12,129 @@ interface PreMadeItem {
   description: string;
   gameName: string;
   color: string;
+  /** CDN video URL shown in the carousel preview */
+  src: string;
+  /** When set, a hidden ffmpeg_source is created in the active scene */
+  source?: {
+    name: string;
+    assetKey: string;
+    loop: boolean;
+  };
   automation: Omit<TAutomationExport, 'id'>;
 }
 
-// ponytail: static seed data — replace with API fetch when catalog exists
 const PRE_MADE: PreMadeItem[] = [
   {
     title: 'Victory Royale',
-    description: 'Co-host comments on each win.',
+    description: 'Co-host comments on each game win.',
     gameName: 'Fortnite',
     color: '#1a3a5c',
+    src: 'https://cdn-avatar-builds.streamlabs.com/assets/victory-royale-celebration.webm',
+    source: {
+      name: 'victory-royale',
+      assetKey: 'victory-royale-celebration-animation.webm',
+      loop: false,
+    },
     automation: {
       description: 'Victory Royale',
+      enabled: true,
       conditions: [{ type: 'fortnite.victory_royale' as ConditionType }],
-      actions: [{ type: 'co-host.comment' }],
-      enabled: true,
-    },
-  },
-  {
-    title: 'Enemy Knocked',
-    description: 'Co-host reacts when you knock an enemy.',
-    gameName: 'Fortnite',
-    color: '#2d4a1e',
-    automation: {
-      description: 'Enemy Knocked',
-      conditions: [{ type: 'fortnite.knocked' as ConditionType }],
-      actions: [{ type: 'co-host.comment' }],
-      enabled: true,
-    },
-  },
-  {
-    title: 'Defeat',
-    description: 'Co-host reacts to each defeat.',
-    gameName: 'Fortnite',
-    color: '#3a1a1a',
-    automation: {
-      description: 'Defeat',
-      conditions: [{ type: 'fortnite.defeat' as ConditionType }],
-      actions: [{ type: 'co-host.comment' }],
-      enabled: true,
-    },
-  },
-  {
-    title: 'Round Won',
-    description: 'Co-host comments on every round win.',
-    gameName: 'Valorant',
-    color: '#2a1a3a',
-    automation: {
-      description: 'Round Won',
-      conditions: [{ type: 'valorant.victory' as ConditionType }],
-      actions: [{ type: 'co-host.comment' }],
-      enabled: true,
+      actions: [
+        { type: 'common.show_source', props: { source: { name: 'victory-royale' } } },
+        { type: 'co-host.comment' },
+        { type: 'common.wait_for_ms', props: { duration: 5000 } },
+        { type: 'common.hide_source', props: { source: { name: 'victory-royale' } } },
+      ],
     },
   },
   {
     title: 'Player Eliminated',
-    description: 'Co-host reacts to each elimination.',
-    gameName: 'Valorant',
-    color: '#1a1a3a',
+    description: 'Co-host comments on player elimination.',
+    gameName: 'Fortnite',
+    color: '#2d4a1e',
+    src: 'https://cdn-avatar-builds.streamlabs.com/assets/player-killed.webm',
+    source: { name: 'player-killed', assetKey: 'player-killed-animation.webm', loop: false },
     automation: {
       description: 'Player Eliminated',
-      conditions: [{ type: 'valorant.player_eliminated' as ConditionType }],
-      actions: [{ type: 'co-host.comment' }],
       enabled: true,
+      conditions: [{ type: 'fortnite.player_eliminated' as ConditionType }],
+      actions: [
+        { type: 'common.show_source', props: { source: { name: 'player-killed' } } },
+        { type: 'co-host.comment' },
+        { type: 'common.wait_for_ms', props: { duration: 5000 } },
+        { type: 'common.hide_source', props: { source: { name: 'player-killed' } } },
+      ],
+    },
+  },
+  {
+    title: 'Low Player Health',
+    description: 'Co-host comments when player health is low.',
+    gameName: 'Fortnite',
+    color: '#3a1a1a',
+    src: 'https://cdn-avatar-builds.streamlabs.com/assets/low-player-health.webm',
+    source: { name: 'low-player-health', assetKey: 'low-player-health-animation', loop: true },
+    automation: {
+      description: 'Low Player Health',
+      enabled: true,
+      conditions: [{ type: 'fortnite.low_health' as ConditionType }],
+      actions: [
+        {
+          type: 'common.show_source',
+          props: { source: { name: 'low-player-health' }, hide_if_condition_false: true },
+        },
+        { type: 'co-host.comment' },
+      ],
+    },
+  },
+  {
+    title: 'Enemy Knocked',
+    description: 'Co-host comments on enemy knockdowns.',
+    gameName: 'Fortnite',
+    color: '#2a1a3a',
+    src: 'https://cdn-avatar-builds.streamlabs.com/assets/player-eliminated.webm',
+    source: { name: 'enemy-eliminated', assetKey: 'player-eliminated-animation.webm', loop: false },
+    automation: {
+      description: 'Enemy Knocked',
+      enabled: true,
+      conditions: [{ type: 'fortnite.knocked' as ConditionType }],
+      actions: [
+        { type: 'common.show_source', props: { source: { name: 'enemy-eliminated' } } },
+        { type: 'co-host.comment' },
+        { type: 'common.wait_for_ms', props: { duration: 3000 } },
+        { type: 'common.hide_source', props: { source: { name: 'enemy-eliminated' } } },
+      ],
     },
   },
 ];
+
+async function createSourceIfNeeded(
+  sourceName: string,
+  assetKey: string,
+  loop: boolean,
+  assets: string[],
+) {
+  const { ScenesService, SourcesService } = Services;
+  const activeScene = ScenesService.views.activeScene;
+  if (!activeScene) return;
+
+  // Dedup: skip if a source with this name is already in the active scene
+  const existingSource = SourcesService.views.sources.find(s => s.name === sourceName);
+  if (existingSource) {
+    const inScene = activeScene
+      .getItems()
+      .some((item: any) => item.sourceId === existingSource.sourceId);
+    if (inScene) return;
+  }
+
+  const assetPath = assets.find(a => a.includes(assetKey));
+  if (!assetPath) return;
+
+  const sceneItem = activeScene.createAndAddSource(sourceName, 'ffmpeg_source', {
+    local_file: assetPath,
+    loop,
+  });
+  sceneItem?.setVisibility(false);
+}
 
 interface Props {
   onClose: () => void;
@@ -102,20 +159,31 @@ export default function PreMadeAutomations({ onClose }: Props) {
     setCurrentIndex(index);
   }
 
-  function prev() {
-    setCurrentIndex(i => (i > 0 ? i - 1 : PRE_MADE.length - 1));
-  }
-
-  function next() {
-    setCurrentIndex(i => (i < PRE_MADE.length - 1 ? i + 1 : 0));
-  }
-
   async function handleComplete() {
     setSaving(true);
     try {
+      const assets: string[] =
+        (await (window as any)?.streamlabsOBS?.v1?.NativeComponents?.getAssets?.()) ?? [];
+
       for (const index of enabledSet) {
-        await AutomationsService.actions.create(PRE_MADE[index].automation);
+        const item = PRE_MADE[index];
+
+        if (item.source) {
+          try {
+            await createSourceIfNeeded(
+              item.source.name,
+              item.source.assetKey,
+              item.source.loop,
+              assets,
+            );
+          } catch {
+            // non-fatal — continue creating the automation
+          }
+        }
+
+        await AutomationsService.actions.create(item.automation);
       }
+
       onClose();
     } finally {
       setSaving(false);
@@ -144,19 +212,23 @@ export default function PreMadeAutomations({ onClose }: Props) {
     <ModalLayout footer={footer}>
       <div className={styles.container}>
         <div className={styles.gameIcon}>
-          <i className="fa fa-gamepad" />
+          <i className="icon-streamlabs" />
         </div>
 
         <h2 className={styles.title}>{$t('Select Pre-made Automation')}</h2>
 
         <div className={styles.featured}>
-          <Button type="text" className={styles.navBtn} onClick={prev}>
-            <i className="fa fa-chevron-left" />
-          </Button>
-
           <div className={styles.card}>
-            <div className={styles.preview} style={{ background: current.color }}>
-              <span className={styles.previewLabel}>{current.gameName}</span>
+            <div className={styles.preview}>
+              <video
+                key={current.src}
+                src={current.src}
+                className={styles.previewVideo}
+                autoPlay
+                muted
+                loop
+                playsInline
+              />
             </div>
             <div className={styles.infoRow}>
               <div>
@@ -169,21 +241,24 @@ export default function PreMadeAutomations({ onClose }: Props) {
               />
             </div>
           </div>
-
-          <Button type="text" className={styles.navBtn} onClick={next}>
-            <i className="fa fa-chevron-right" />
-          </Button>
         </div>
 
         <div className={styles.thumbnailStrip}>
           {PRE_MADE.map((item, i) => (
-            <Button
+            <div
               key={i}
-              type="text"
               className={`${styles.thumbnail} ${i === currentIndex ? styles.thumbnailActive : ''}`}
               onClick={() => goTo(i)}
-              style={{ background: item.color }}
-            />
+            >
+              <video
+                src={item.src}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className={styles.thumbnailVideo}
+              />
+            </div>
           ))}
         </div>
 

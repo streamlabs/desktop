@@ -45,7 +45,7 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
       title: $t('Automations'),
       size: {
         width: 900,
-        height: 650,
+        height: 750,
       },
     });
   }
@@ -56,7 +56,7 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
       title: $t('Automations'),
       size: {
         width: 900,
-        height: 650,
+        height: 750,
       },
       queryParams: { editAutomationId: id },
     });
@@ -68,7 +68,7 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
       title: $t('Automations'),
       size: {
         width: 900,
-        height: 650,
+        height: 750,
       },
       queryParams: { createNew: true },
     });

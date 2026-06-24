@@ -20,6 +20,7 @@ import type {
   ExportedActionProps,
 } from 'services/stream-avatar/engine/actions';
 import { TextInput, CheckboxInput, SliderInput } from 'components-react/shared/inputs';
+import styles from './AutomationEditor.m.less';
 
 const errorTextStyle: CSSProperties = {
   margin: '4px 0 0',
@@ -54,8 +55,6 @@ const trashCellStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   height: CONTROL_HEIGHT,
-  cursor: 'pointer',
-  color: 'var(--icon-active)',
   fontSize: '14px',
 };
 
@@ -241,7 +240,7 @@ function ActionEditor({
         gridTemplateColumns: 'auto 1.2fr minmax(0, 1fr) auto',
         gap: '12px',
         alignItems: 'start',
-        padding: '12px 0',
+        padding: '8px 0',
         borderBottom: '1px solid var(--border)',
       }}
     >
@@ -264,7 +263,12 @@ function ActionEditor({
         {renderControl()}
       </div>
 
-      <div style={trashCellStyle} onClick={() => onRemove(index)} title={$t('Remove reaction')}>
+      <div
+        style={trashCellStyle}
+        className={styles.trashIcon}
+        onClick={() => onRemove(index)}
+        title={$t('Remove reaction')}
+      >
         <i className="icon-trash" />
       </div>
     </div>
@@ -501,7 +505,6 @@ export default function AutomationEditor({ initial, onClose, onViewTemplates }: 
               onChange={val => setSelectedGame(val)}
               placeholder={$t('Select a Game')}
               options={GAME_OPTIONS}
-              dropdownMatchSelectWidth={false}
             />
             <Select
               value={conditionType || undefined}
@@ -564,7 +567,7 @@ export default function AutomationEditor({ initial, onClose, onViewTemplates }: 
             handle=".sa-action-drag-handle"
             animation={200}
             tag="div"
-            style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
+            style={{ display: 'flex', flexDirection: 'column' }}
           >
             {rows.map((row, i) => (
               <div key={row.id}>
