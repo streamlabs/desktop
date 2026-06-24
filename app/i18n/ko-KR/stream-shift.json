@@ -10,6 +10,7 @@
   "Stream Shift cannot be used with Dual Output": "Stream Shift는 Dual Output과 함께 사용할 수 없습니다.",
   "Dual Output cannot be used with Stream Shift": "Dual Output은 Stream Shift와 함께 사용할 수 없습니다.",
   "Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!": "스트리밍이 Streamlabs Desktop으로 성공적으로 전환되었습니다. 즐거운 스트리밍 되세요!",
+  "Your stream has been successfully switched to Streamlabs Mobile. Enjoy your stream!": "Your stream has been successfully switched to Streamlabs Mobile. Enjoy your stream!",
   "Your stream has been switched to Streamlabs Desktop from another device. Enjoy your stream!": "스트리밍이 다른 기기에서 Streamlabs Desktop으로 전환되었습니다. 즐거운 스트리밍 되세요!",
   "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.": "다른 디바이스의 스트리밍이 감지되었습니다. 스트리밍을 Streamlabs Desktop으로 전환하시겠습니까? 이 스트리밍을 계속 진행하지 않으려면 현재 스트리밍 소스에서 종료하세요.",
   "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. Dual Output will be disabled since not supported in this mode.": "다른 디바이스의 스트리밍이 감지되었습니다. 스트리밍을 Streamlabs Desktop으로 전환하시겠습니까? 이 스트리밍을 계속 진행하지 않으려면 현재 스트리밍 소스에서 종료하세요. Dual Output은 이 모드에서 지원되지 않으므로 비활성화됩니다.",
