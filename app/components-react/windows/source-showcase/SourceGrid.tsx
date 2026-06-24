@@ -53,7 +53,10 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
   const customization = useRealmObject(CustomizationService.state);
   const demoMode = customization.isDarkTheme ? 'night' : 'day';
   const designerMode = customization.designerMode;
-
+  /**
+   * These widgets have been deprecated and are being hidden.
+   */
+  const DEPRECATED_WIDGETS: WidgetType[] = [WidgetType.SubscriberGoal, WidgetType.GameWidget, WidgetType.SupporterGoal, WidgetType.StarsGoal];
   /**
    * English and languages with logographic writing systems
    * generally have shorter strings so we prevent those cards from wrapping.
@@ -73,7 +76,24 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
   const iterableWidgetTypesBase = useMemo(() => {
     // TODO: this can be combined and the conditions improved to make it more performant and readable
     const filtered = Object.keys(WidgetType)
-      .filter((type: string) => isNaN(Number(type)) && type !== 'SubscriberGoal')
+      .filter(
+        (type: string) =>
+          isNaN(Number(type)) &&
+          !DEPRECATED_WIDGETS.includes(WidgetType[type as keyof typeof WidgetType] as WidgetType),
+      )
+      .filter((type: string) => {
+        // @ts-ignore
+        const displayData = WidgetDisplayData(primaryPlatform)[WidgetType[type]];
+
+        if (displayData?.supportedOS) {
+          return byOS({
+            [OS.Windows]: displayData.supportedOS.includes(OS.Windows),
+            [OS.Mac]: displayData.supportedOS.includes(OS.Mac),
+          });
+        }
+
+        return true;
+      })
       .filter((type: string) => {
         // TODO: index
         // @ts-ignore
@@ -234,6 +254,7 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
   const essentialWidgetsOrder = [
     WidgetType.AlertBox,
     WidgetType.ChatBox,
+    WidgetType.GamePulseWidget,
     WidgetType.EventList,
     WidgetType.ViewerCount,
     'streamlabel',
@@ -257,7 +278,7 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
       .sort(customOrder(essentialSourcesOrder, s => s.value));
 
     const essentialWidgets = iterableWidgetTypes.filter(type =>
-      [WidgetType.AlertBox, WidgetType.ChatBox, 'streamlabel'].includes(
+      [WidgetType.AlertBox, WidgetType.ChatBox, WidgetType.GamePulseWidget, 'streamlabel'].includes(
         // TODO: index
         // @ts-ignore
         type === 'streamlabel' ? type : WidgetType[type],
@@ -601,7 +622,7 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
   }, [p.activeTab, availableAppSources, appsList, widgetList]);
 
   return (
-    <Scrollable style={{ height: 'calc(100% - 64px)' }} className={styles.sourceGrid}>
+    <Scrollable style={{ height: 'calc(100% - 46px)' }} className={styles.sourceGrid}>
       <Row gutter={[8, 8]} style={{ marginLeft: '8px', marginRight: '8px', paddingBottom: '24px' }}>
         {p.activeTab === 'all' ? (
           <>

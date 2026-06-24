@@ -48,7 +48,7 @@ const setCategoryNameFrom = (srcOrScene: Source | Scene | null) => (hotkey: IAug
 
 export function Hotkeys(props: ISettingsProps) {
   const { globalSearchStr: searchString } = props;
-  const { HotkeysService, SourcesService, ScenesService, DualOutputService } = Services;
+  const { HotkeysService, SourcesService, ScenesService } = Services;
   const [hotkeySet, setHotkeysSet] = useState<IHotkeysSet | null>(null);
 
   useEffect(() => {
@@ -122,7 +122,6 @@ export function Hotkeys(props: ISettingsProps) {
     return <div />;
   }
   const isSearch = !!searchString;
-  const isDualOutputMode = DualOutputService.views.dualOutputMode;
 
   const generalHotkeys = filteredHotkeySet.general;
   const hasGeneralHotkeys = !!generalHotkeys.length;
@@ -140,7 +139,7 @@ export function Hotkeys(props: ISettingsProps) {
     id: string,
     hotkeys: any,
     title: string,
-    isDualOutputScene: boolean = false,
+    isSceneHotkey: boolean = false,
   ) {
     return (
       <HotkeyGroup
@@ -148,9 +147,7 @@ export function Hotkeys(props: ISettingsProps) {
         title={title}
         hotkeys={hotkeys}
         isSearch={isSearch}
-        hasSceneHotkeys={hasSceneHotkeys}
-        isDualOutputMode={isDualOutputMode}
-        isDualOutputScene={isDualOutputScene}
+        isSceneHotkey={isSceneHotkey}
       />
     );
   }
@@ -158,9 +155,9 @@ export function Hotkeys(props: ISettingsProps) {
   function renderScenesHotkeyGroup(sceneId: string) {
     const sceneHotkeys = filteredHotkeySet.scenes[sceneId];
     const scene = ScenesService.views.getScene(sceneId);
-    const isDualOutputScene = scene?.getIsDualOutputScene();
+    const isSceneHotkey = scene?.getIsDualOutputScene();
 
-    return scene ? renderHotkeyGroup(sceneId, sceneHotkeys, scene.name, isDualOutputScene) : null;
+    return scene ? renderHotkeyGroup(sceneId, sceneHotkeys, scene.name, isSceneHotkey) : null;
   }
 
   function renderSourcesHotkeyGroup(sourceId: string) {
@@ -195,12 +192,7 @@ export function Hotkeys(props: ISettingsProps) {
               </Tooltip>
             </div>
           )}
-          <HotkeyGroup
-            hotkeys={generalHotkeys}
-            isSearch={isSearch}
-            title={null}
-            isDualOutputMode={isDualOutputMode}
-          />
+          <HotkeyGroup hotkeys={generalHotkeys} isSearch={isSearch} title={null} />
         </>
       )}
       {hasSceneHotkeys && (
@@ -230,12 +222,7 @@ export function Hotkeys(props: ISettingsProps) {
               {$t('Learn more here')}
             </a>
           </div>
-          <HotkeyGroup
-            hotkeys={markerHotkeys}
-            isSearch={isSearch}
-            title={null}
-            isDualOutputMode={isDualOutputMode}
-          />
+          <HotkeyGroup hotkeys={markerHotkeys} isSearch={isSearch} title={null} />
         </>
       )}
     </div>

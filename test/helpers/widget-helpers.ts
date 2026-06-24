@@ -32,6 +32,7 @@ export enum EWidgetType {
   MediaShare = 14,
   SubGoal = 15,
   CustomWidget = 16,
+  GamePulseWidget = 17,
 }
 
 /**

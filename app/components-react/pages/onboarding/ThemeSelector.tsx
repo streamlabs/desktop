@@ -43,7 +43,12 @@ export function ThemeSelector() {
 
   function previewImages(theme: IThemeMetadata) {
     if (!theme?.data) return [];
-    return Object.values(theme.data.custom_images).slice(0, 3);
+    const customImages = Object.values(theme.data.custom_images).slice(0, 3);
+    if (customImages.length > 0) {
+      return customImages;
+    } else {
+      return theme.data.preview_images;
+    }
   }
 
   function focusTheme(theme: IThemeMetadata | null) {
@@ -104,14 +109,14 @@ export function ThemeSelector() {
   }, [themesMetadata]);
 
   return (
-    <div style={{ width: '100%' }}>
+    <div className={styles.centered}>
       <h1 className={commonStyles.titleContainer}>{$t('Add your first theme')}</h1>
 
       <div className={commonStyles.subtitleContainer}>
         {$t('Try your first theme now, browse hundreds of more themes later on.')}
       </div>
 
-      <div>
+      <>
         {!installing ? (
           <div className={styles.container}>
             {bigPreview && detailTheme && (
@@ -194,7 +199,7 @@ export function ThemeSelector() {
             <p>{$t('Installing overlay...')}</p>
           </div>
         )}
-      </div>
+      </>
     </div>
   );
 }

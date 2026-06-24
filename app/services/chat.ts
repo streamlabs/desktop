@@ -27,9 +27,7 @@ export function enableBTTVEmotesScript(isDarkTheme: boolean) {
   /*eslint-disable */
   return `
 localStorage.setItem('bttv_clickTwitchEmotes', true);
-localStorage.setItem('bttv_darkenedMode', ${
-  isDarkTheme ? 'true' : 'false'
-});
+localStorage.setItem('bttv_darkenedMode', ${isDarkTheme ? 'true' : 'false'});
 
 var bttvscript = document.createElement('script');
 bttvscript.setAttribute('src','https://cdn.betterttv.net/betterttv.js');
@@ -48,7 +46,7 @@ function loadLazyEmotes() {
 
 loadLazyEmotes();
 0;
-`
+`;
   /*eslint-enable */
 }
 
@@ -180,15 +178,48 @@ export class ChatService extends Service {
     if (!this.chatUrl) return; // user has logged out
     if (!this.chatView) return; // chat was already deinitialized
 
+    // Prevent tokenless requests from being counted against the per-session
+    // attempt cap by clearing TikTok session data before loading the chat URL.
+    if (this.userService.platformType === 'tiktok') {
+      await this.clearTikTokSession();
+    }
+
     // try to load chat url
     await this.chatView.webContents.loadURL(this.chatUrl).catch(this.handleRedirectError);
 
-    // sometimes it fails to load chat
-    // try to load again if needed
+    // Skip attempting to reload chat for TikTok: the second navigation re-runs webmssdk mid-redirect
+    // and counts agains the per-session attempt cap, causing the chat to be blocked.
+    if (this.userService.platformType === 'tiktok') return;
+
+    // Sometimes the chat url fails to load so try to load again if needed.
     await Utils.sleep(1000);
     if (this.chatView.webContents.getURL() !== this.chatUrl) {
       await this.chatView.webContents.loadURL(this.chatUrl).catch(this.handleRedirectError);
     }
+  }
+
+  private async clearTikTokSession() {
+    const partition = this.userService.state.auth?.partition;
+    if (!partition) return;
+    const ttSession = remote.session.fromPartition(partition);
+
+    // Preserve an existing TikTok login: if a session cookie is present the
+    // user is already authenticated, so skip the clear and keep them logged in
+    // across stream starts and app restarts.
+    const sessionCookies = await ttSession.cookies.get({
+      domain: '.tiktok.com',
+      name: 'sessionid',
+    });
+    if (sessionCookies.length > 0) return;
+
+    const storages: ('cookies' | 'localstorage' | 'indexdb' | 'serviceworkers')[] = [
+      'cookies',
+      'localstorage',
+      'indexdb',
+      'serviceworkers',
+    ];
+    await ttSession.clearStorageData({ origin: 'https://www.tiktok.com', storages });
+    await ttSession.clearStorageData({ origin: 'https://livecenter.tiktok.com', storages });
   }
 
   handleRedirectError(e: Error) {
@@ -352,8 +383,9 @@ export class ChatService extends Service {
             .executeJavaScript(
               `
                 document.querySelector('html').style = 'overflow-y: hidden !important;';
-
-                var chatContainer = document.querySelector('iframe').contentDocument.querySelector('body > div > div > div');
+                const iframe = document.querySelector('iframe');
+                if (!iframe || !iframe.contentDocument) return;
+                var chatContainer = iframe.contentDocument.querySelector('body > div > div > div');
                 chatContainer.style.marginLeft = '0';
                 chatContainer.style.marginRight = '0';
                 chatContainer.style.maxWidth = 'none';

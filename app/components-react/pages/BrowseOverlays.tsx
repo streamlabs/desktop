@@ -9,10 +9,17 @@ import BrowserView from 'components-react/shared/BrowserView';
 import { GuestApiHandler } from 'util/guest-api-handler';
 import { downloadFile, IDownloadProgress } from 'util/requests';
 import * as remote from '@electron/remote';
+import omit from 'lodash/omit';
 import { Services } from 'components-react/service-provider';
+import {
+  IOverlayCollectionParams,
+  IOverlayIdParams,
+  TOverlayParams,
+  TOverlayType,
+} from 'services/user';
 
 export default function BrowseOverlays(p: {
-  params: { type: 'overlay' | 'widget-themes' | 'site-themes'; id?: string; install?: string };
+  params: { type: TOverlayType } & TOverlayParams;
   className?: string;
 }) {
   const {
@@ -35,15 +42,19 @@ export default function BrowseOverlays(p: {
     async function getOverlaysUrl() {
       const url = await UserService.actions.return.overlaysUrl(
         p.params.type,
-        p.params?.id,
-        p.params?.install,
+        p.params ? omit(p.params, 'type') : undefined,
       );
       if (!url) return;
       setOverlaysUrl(url);
     }
 
     getOverlaysUrl();
-  }, [p.params.type, p.params?.id, p.params?.install]);
+  }, [
+    p.params.type,
+    (p.params as IOverlayIdParams)?.id,
+    (p.params as IOverlayIdParams)?.install,
+    (p.params as IOverlayCollectionParams)?.collection,
+  ]);
 
   function onBrowserViewReady(view: Electron.BrowserView) {
     new GuestApiHandler().exposeApi(view.webContents.id, {

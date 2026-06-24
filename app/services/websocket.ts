@@ -244,6 +244,13 @@ export class WebsocketService extends Service {
       });
   }
 
+  disconnect() {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = undefined;
+    }
+  }
+
   private log(message: string, ...args: any[]) {
     console.debug(`WS: ${message}`, ...args);
 

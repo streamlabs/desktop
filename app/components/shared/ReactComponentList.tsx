@@ -1,5 +1,6 @@
 import { Component } from 'vue-property-decorator';
 import ReactComponent from './ReactComponent';
+import { IReactiveDataEditorProps } from 'components-react/windows/reactive-data-editor/types';
 
 @Component({
   props: {
@@ -252,6 +253,14 @@ export class SafeMode extends ReactComponent {}
 
 @Component({
   props: {
+    name: { default: 'SceneTransitions' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+  },
+})
+export class SceneTransitions extends ReactComponent {}
+
+@Component({
+  props: {
     name: { default: 'Settings' },
     wrapperStyles: { default: () => ({ height: '100%' }) },
   },
@@ -265,6 +274,17 @@ export class Settings extends ReactComponent {}
   },
 })
 export class SourceProperties extends ReactComponent {}
+
+@Component({
+  props: {
+    name: { default: 'ReactiveDataEditorWindow' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+    componentProps: {
+      default: () => ({ stateKeysOfInterest: [] } as IReactiveDataEditorProps),
+    },
+  },
+})
+export class ReactiveDataEditorWindow extends ReactComponent<IReactiveDataEditorProps> {}
 
 @Component({
   props: {

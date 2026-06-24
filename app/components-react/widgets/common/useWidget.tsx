@@ -37,6 +37,7 @@ export interface IWidgetCommonState {
 export interface IWidgetState {
   data: {
     settings: any;
+    goal?: any;
   };
 }
 
@@ -222,6 +223,10 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
     );
   }
 
+  get streamlabsHost() {
+    return Services.HostsService.streamlabs;
+  }
+
   private get widgetsService() {
     return Services.WidgetsService;
   }
@@ -290,7 +295,7 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
   /**
    * Fetch settings from the server
    */
-  private async fetchData(): Promise<TWidgetState['data']> {
+  protected async fetchData(): Promise<TWidgetState['data']> {
     const widgetType = WidgetDefinitions[this.config.type].humanType;
 
     // load widget settings data into state
@@ -493,8 +498,8 @@ export function useWidgetRoot<T extends typeof WidgetModule>(Module: T, params: 
 /**
  * Returns the widget's module from the existing context and selects requested fields
  */
-export function useWidget<TModule extends WidgetModule>() {
-  return useModule('WidgetModule') as GetUseModuleResult<TModule>;
+export function useWidget<TModule extends WidgetModule>(params?: WidgetParams) {
+  return useModule('WidgetModule', params ? [params] : undefined) as GetUseModuleResult<TModule>;
 }
 
 /**

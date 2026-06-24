@@ -2,10 +2,8 @@ import { mutation, StatefulService, ViewHandler } from 'services/core/stateful-s
 import * as obs from '../../obs-api';
 import { Inject } from 'services/core/injector';
 import { TObsValue, TObsFormData } from 'components/obs/inputs/ObsInput';
-import { IListOption } from 'components/shared/inputs';
 import { WindowsService } from 'services/windows';
 import { ScenesService } from 'services/scenes';
-import { Scene } from 'services/scenes/scene';
 import uuid from 'uuid/v4';
 import { SceneCollectionsService } from 'services/scene-collections';
 import { $t } from 'services/i18n';
@@ -40,7 +38,7 @@ interface ITransitionsState {
   studioMode: boolean;
 }
 
-interface ITransition {
+export interface ITransition {
   id: string;
   name: string;
   type: ETransitionType;
@@ -67,23 +65,30 @@ export interface ITransitionCreateOptions {
 }
 
 class TransitionsViews extends ViewHandler<ITransitionsState> {
-  getTypes(): IListOption<ETransitionType>[] {
+  getTypes(): { label: string; value: ETransitionType }[] {
     const types = [
-      { title: $t('Cut'), value: ETransitionType.Cut },
-      { title: $t('Fade'), value: ETransitionType.Fade },
-      { title: $t('Swipe'), value: ETransitionType.Swipe },
-      { title: $t('Slide'), value: ETransitionType.Slide },
-      { title: $t('Fade to Color'), value: ETransitionType.FadeToColor },
-      { title: $t('Luma Wipe'), value: ETransitionType.LumaWipe },
-      { title: $t('Stinger'), value: ETransitionType.Stinger },
+      { label: $t('Cut'), value: ETransitionType.Cut },
+      { label: $t('Fade'), value: ETransitionType.Fade },
+      { label: $t('Swipe'), value: ETransitionType.Swipe },
+      { label: $t('Slide'), value: ETransitionType.Slide },
+      { label: $t('Fade to Color'), value: ETransitionType.FadeToColor },
+      { label: $t('Luma Wipe'), value: ETransitionType.LumaWipe },
+      { label: $t('Stinger'), value: ETransitionType.Stinger },
     ];
 
     if (getOS() === OS.Windows) {
-      types.push({ title: $t('Motion'), value: ETransitionType.Motion });
-      types.push({ title: $t('Shuffle'), value: ETransitionType.Shuffle });
+      types.push({ label: $t('Motion'), value: ETransitionType.Motion });
+      types.push({ label: $t('Shuffle'), value: ETransitionType.Shuffle });
     }
 
     return types;
+  }
+
+  getPropertiesForTransition(
+    transitionId: string,
+  ): Partial<{ type: string; duration: number; name: string }> {
+    const found = this.state.transitions.find(tran => tran.id === transitionId);
+    return found || {};
   }
 
   /**
@@ -103,6 +108,22 @@ class TransitionsViews extends ViewHandler<ITransitionsState> {
 
   getConnection(id: string) {
     return this.state.connections.find(conn => conn.id === id);
+  }
+
+  getTransition(id: string) {
+    return this.state.transitions.find(tran => tran.id === id);
+  }
+
+  get transitions() {
+    return this.state.transitions;
+  }
+
+  get defaultTransitionId() {
+    return this.state.defaultTransitionId;
+  }
+
+  get connections() {
+    return this.state.connections;
   }
 
   get studioMode() {
@@ -184,15 +205,18 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
     );
 
     // a video context must be initialized before loading the scene transition
-    const establishedContext = this.videoSettingsService.establishedContext.subscribe(() => {
-      if (!this.studioModeTransition) this.createStudioModeTransition();
+    const establishedContext = this.videoSettingsService.establishedContext.subscribe(display => {
+      if (display === 'horizontal' && !this.studioModeTransition) this.createStudioModeTransition();
       establishedContext.unsubscribe();
     });
   }
 
   enableStudioMode() {
     if (this.state.studioMode) return;
-    if (this.dualOutputService.views.dualOutputMode) {
+    if (
+      this.dualOutputService.views.dualOutputMode ||
+      this.dualOutputService.views.showBothDisplays
+    ) {
       this.notificationsService.actions.push({
         message: $t('Cannot toggle Studio Mode in Dual Output Mode.'),
         type: ENotificationType.WARNING,
@@ -592,12 +616,15 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
 
   @mutation()
   private ADD_TRANSITION(id: string, name: string, type: ETransitionType, duration: number) {
-    this.state.transitions.push({
-      id,
-      name,
-      type,
-      duration,
-    });
+    this.state.transitions = [
+      ...this.state.transitions,
+      {
+        id,
+        name,
+        type,
+        duration,
+      },
+    ];
   }
 
   @mutation()
@@ -633,7 +660,7 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
 
   @mutation()
   private ADD_CONNECTION(connection: ITransitionConnection) {
-    this.state.connections.push(connection);
+    this.state.connections = [...this.state.connections, connection];
   }
 
   @mutation()

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   getPlatformService,
   IGame,
@@ -11,12 +11,15 @@ import { IListOption } from '../../shared/inputs/ListInput';
 import { Services } from '../../service-provider';
 import { injectState, useModule } from 'slap';
 
-type TProps = TSlobsInputProps<{ platform: TPlatform; layout?: TInputLayout }, string>;
+type TProps = TSlobsInputProps<
+  { platform: TPlatform; layout?: TInputLayout; onNameChange?: (name: string) => void },
+  string
+>;
 
 export default function GameSelector(p: TProps) {
   const { platform } = p;
   const platformService = (getPlatformService(platform) as unknown) as IPlatformCapabilityGame;
-  const selectedGameId = platformService.state.settings.game;
+  let selectedGameId = platformService.state.settings.game;
   let selectedGameName = selectedGameId;
 
   const isTwitch = platform === 'twitch';
@@ -24,16 +27,20 @@ export default function GameSelector(p: TProps) {
   const isTikTok = platform === 'tiktok';
   const isKick = platform === 'kick';
 
-  if (isTrovo) {
-    selectedGameName = Services.TrovoService.state.channelInfo.gameName;
-  }
-
-  if (isTikTok) {
-    selectedGameName = Services.TikTokService.state.gameName;
-  }
-
-  if (isKick) {
-    selectedGameName = Services.KickService.state.gameName;
+  switch (platform) {
+    case 'twitch':
+      selectedGameName = Services.TwitchService.state.settings.game;
+      selectedGameId = Services.TwitchService.state.settings.gameId;
+      break;
+    case 'trovo':
+      selectedGameName = Services.TrovoService.state.channelInfo.gameName;
+      break;
+    case 'tiktok':
+      selectedGameName = Services.TikTokService.state.gameName;
+      break;
+    case 'kick':
+      selectedGameName = Services.KickService.state.gameName;
+      break;
   }
 
   const { isSearching, setIsSearching, games, setGames } = useModule(() => {
@@ -56,6 +63,8 @@ export default function GameSelector(p: TProps) {
     };
   });
 
+  const hasSearched = useRef(false);
+
   function fetchGames(query: string): Promise<IGame[]> {
     return platformService.searchGames(query);
   }
@@ -68,8 +77,11 @@ export default function GameSelector(p: TProps) {
     // game images available for Twitch, Trovo, and Kick only
     if (!['twitch', 'trovo', 'kick'].includes(platform)) return;
     if (!selectedGameName) return;
-    const game = await platformService.fetchGame(selectedGameName);
+    // Twitch api can return multiple games with the same name, so we have to find the one with the matching id
+    const game = await platformService.fetchGame(isTwitch ? selectedGameId : selectedGameName);
     if (!game || game.name !== selectedGameName) return;
+    // Don't overwrite search results if the user has already searched
+    if (hasSearched.current) return;
     setGames(
       games.map(opt => (opt.value === selectedGameId ? { ...opt, image: game.image } : opt)),
     );
@@ -77,9 +89,10 @@ export default function GameSelector(p: TProps) {
 
   async function onSearch(searchString: string) {
     if (searchString.length < 2 && platform !== 'tiktok') return;
+    hasSearched.current = true;
     const games =
       (await fetchGames(searchString))?.map(g => ({
-        value: ['trovo', 'tiktok', 'kick'].includes(platform) ? g.id : g.name,
+        value: ['trovo', 'tiktok', 'kick', 'twitch'].includes(platform) ? g.id : g.name,
         label: g.name,
         image: g?.image,
       })) ?? [];
@@ -98,6 +111,15 @@ export default function GameSelector(p: TProps) {
 
     if (isTikTok) {
       Services.TikTokService.actions.setGameName(searchString);
+    }
+
+    if (isTwitch) {
+      // Because Twitch's API requires the game id but highlighter requires the name, we have
+      // to track both to update the Twitch API separately
+      Services.TwitchService.actions.setGameInfo({
+        gameId: game?.value ?? '',
+        gameName: game?.label ?? '',
+      });
     }
 
     if (!game) return;
@@ -135,7 +157,11 @@ export default function GameSelector(p: TProps) {
       showSearch
       onSearch={onSearch}
       onSelect={(val, opts) => {
-        onSelect(opts.labelrender);
+        onSelect(typeof opts.label === 'string' ? opts.label : '');
+
+        if (p.onNameChange) {
+          p.onNameChange(typeof opts.label === 'string' ? opts.label : '');
+        }
       }}
       filterOption={filterOption}
       debounce={500}

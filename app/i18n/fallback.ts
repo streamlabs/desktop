@@ -11,6 +11,7 @@
  */
 
 const fallbackDictionary = {
+  ...require('./en-US/ai.json'),
   ...require('./en-US/advanced-statistics.json'),
   ...require('./en-US/app.json'),
   ...require('./en-US/apps.json'),
@@ -56,6 +57,7 @@ const fallbackDictionary = {
   ...require('./en-US/widget-poll.json'),
   ...require('./en-US/widget-emote-wall.json'),
   ...require('./en-US/widget-chat-highlight.json'),
+  ...require('./en-US/widget-game-pulse.json'),
   ...require('./en-US/widgets.json'),
   ...require('./en-US/youtube.json'),
   ...require('./en-US/grow.json'),
@@ -68,6 +70,8 @@ const fallbackDictionary = {
   ...require('./en-US/kick.json'),
   ...require('./en-US/stream-shift.json'),
   ...require('./en-US/developer.json'),
+  ...require('./en-US/dual-output.json'),
+  ...require('./en-US/patreon.json'),
 };
 
 export default fallbackDictionary;

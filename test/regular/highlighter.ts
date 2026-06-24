@@ -11,6 +11,7 @@ import {
 import { logIn } from '../helpers/modules/user';
 import { saveReplayBuffer } from '../helpers/modules/replay-buffer';
 import { assertFormContains, fillForm } from '../helpers/modules/forms';
+import { withUser } from '../helpers/webdriver/user';
 const path = require('path');
 const fs = require('fs');
 
@@ -42,4 +43,13 @@ test('Highlighter save and export', async t => {
   await clickButton('Export Horizontal');
   await waitForDisplayed('h2=Publish to', { timeout: 60000 });
   t.true(fs.existsSync(exportLocation), 'The video file should exist');
+});
+
+test.skip('AI Highlighter', withUser('twitch', { prime: true }), async t => {
+  const recordingDir = await setTemporaryRecordingPath();
+
+  await showPage('Highlighter');
+  await clickButton('Install AI Highlighter App');
+
+  await prepareToGoLive();
 });

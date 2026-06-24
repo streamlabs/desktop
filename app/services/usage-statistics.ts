@@ -39,6 +39,7 @@ export type TAnalyticsEvent =
   | 'Shown'
   | 'AppStart'
   | 'Highlighter'
+  | 'AiFeature'
   | 'AIHighlighter'
   | 'Hardware'
   | 'WebcamUse'
@@ -53,8 +54,13 @@ export type TAnalyticsEvent =
   | 'TikTokApplyPrompt'
   | 'ScheduleStream'
   | 'StreamShift'
+  | 'DualOutputRecording' // @@ TODO add analytics for DualOutputRecording
+  | 'VerticalRecording' // @@ TODO add analytics for VerticalRecording
   | 'Ultra'
-  | 'Onboarding';
+  | 'Onboarding'
+  | 'WidgetAdded'
+  | 'WidgetRemoved'
+  | 'GamePulse';
 
 // Refls are used as uuids for ultra components and should be updated for new ulta components.
 export type TUltraRefl =

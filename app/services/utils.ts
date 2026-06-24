@@ -21,10 +21,12 @@ export interface IEnv {
   SLOBS_USE_CDN_MEDIA: boolean;
   SLD_USE_BETA: boolean;
   SLD_FORCE_ONBOARDING_STEP: string;
+  SLD_TEST_GROUP: string;
   // Allows joining as a guest instead of a host for guest cam
   SLD_GUEST_CAM_HASH: string;
   CI: boolean;
   HIGHLIGHTER_ENV: 'production' | 'staging' | 'local';
+  PRODUCT_UPDATES: boolean;
 }
 
 export default class Utils {
@@ -133,6 +135,15 @@ export default class Utils {
 
   static shouldUseBeta(): boolean {
     return (process.env.SLD_COMPILE_FOR_BETA || Utils.env.SLD_USE_BETA) as boolean;
+  }
+
+  /**
+   * Show product updates
+   * @remark Primarily used to show the marketing modal on app start for development and testing purposes
+   * @returns if product updates should be shown
+   */
+  static showProductUpdates(): boolean {
+    return Utils.env.NODE_ENV !== 'production' && (Utils.env.PRODUCT_UPDATES as boolean);
   }
 
   /**

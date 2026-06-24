@@ -9,6 +9,7 @@ interface IButtonHighlighted extends ButtonProps {
   disabled?: boolean;
   style?: CSSProperties;
   filled?: boolean;
+  filledDark?: boolean;
   faded?: boolean;
   text?: string;
   noMargin?: boolean;
@@ -22,6 +23,7 @@ export default function ButtonHighlighted(p: IButtonHighlighted) {
         styles.highlighted,
         p.className,
         { [styles.filled]: p.filled },
+        { [styles.filledDark]: p.filledDark },
         { [styles.faded]: p.faded },
         { [styles.noMargin]: p.noMargin },
       )}

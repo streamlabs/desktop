@@ -10,7 +10,11 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
       - name: Install Dependencies
         run: yarn install --immutable
       - name: Compile Assets
@@ -20,6 +24,5 @@ jobs:
       - name: Run BundleMon
         run: yarn bundlemon
         env:
-          BUNDLEMON_PROJECT_ID: 61b93ac52424c30009117f11
           CI_COMMIT_SHA: ${{github.event.pull_request.head.sha || github.sha}}
           NODE_OPTIONS: --openssl-legacy-provider

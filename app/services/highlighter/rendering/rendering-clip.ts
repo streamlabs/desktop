@@ -5,10 +5,12 @@ import { FFPROBE_EXE, SCRUB_SPRITE_DIRECTORY } from '../constants';
 import fs from 'fs';
 import path from 'path';
 import { IExportOptions } from '../models/rendering.models';
+import { TDisplayType } from 'services/settings-v2';
 
 export class RenderingClip {
   frameSource: FrameSource;
   audioSource: AudioSource;
+  display: TDisplayType = 'horizontal';
 
   duration: number;
 
@@ -22,7 +24,9 @@ export class RenderingClip {
 
   deleted = false;
 
-  constructor(public readonly sourcePath: string) {}
+  constructor(public readonly sourcePath: string, display?: TDisplayType) {
+    this.display = display;
+  }
 
   /**
    * Performs all async operations needed to display
@@ -82,7 +86,16 @@ export class RenderingClip {
   }
 
   private async doInit() {
-    await this.reset({ fps: 30, width: 1280, height: 720, preset: 'ultrafast' });
+    const width = this.display === 'vertical' ? 405 : 1280;
+
+    await this.reset({
+      fps: 30,
+      width,
+      height: 720,
+      preset: 'ultrafast',
+      display: this.display,
+    });
+
     if (this.deleted) return;
     if (this.frameSource) {
       try {

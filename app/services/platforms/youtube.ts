@@ -37,6 +37,15 @@ interface IYoutubeServiceState extends IPlatformState {
   broadcastStatus: TBroadcastLifecycleStatus | '';
   settings: IYoutubeStartStreamOptions;
   categories: IYoutubeCategory[];
+  backupStreamSettings?: IBackUpStreamSettings;
+}
+
+interface IBackUpStreamSettings {
+  service: string;
+  key: string;
+  server: string;
+  streamType: 'rtmp_common' | 'rtmp_custom' | 'whip_custom';
+  context: TDisplayType;
 }
 
 export interface IYoutubeStartStreamOptions extends IExtraBroadcastSettings {
@@ -48,6 +57,8 @@ export interface IYoutubeStartStreamOptions extends IExtraBroadcastSettings {
   privacyStatus?: 'private' | 'public' | 'unlisted';
   scheduledStartTime?: number;
   mode?: TOutputOrientation;
+  monetizationEnabled?: boolean;
+  eligibleForMonetization?: boolean;
 }
 
 /**
@@ -101,7 +112,23 @@ export interface IYoutubeLiveBroadcast {
     madeForKids: boolean;
     selfDeclaredMadeForKids: boolean;
   };
+  monetizationDetails?: {
+    cuepointSchedule: {
+      enabled?: boolean;
+      pauseAdsUntil?: string;
+      creatorCuepointConfig?: any;
+      ytOptimizedCuepointConfig?: 'LOW' | 'MEDIUM' | 'HIGH';
+    };
+    adsMonetizationStatus?: 'on' | 'off';
+    eligibleForAdsMonetization?: boolean;
+  };
 }
+
+type TYoutubeLiveBroadcastKey = keyof IYoutubeLiveBroadcast;
+interface IYoutubeLiveBroadcastPatch
+  extends Partial<
+    Record<TYoutubeLiveBroadcastKey, Partial<IYoutubeLiveBroadcast[TYoutubeLiveBroadcastKey]>>
+  > {}
 
 /**
  * A liveStream resource contains information about the video stream that you are transmitting to YouTube.
@@ -228,6 +255,7 @@ export class YoutubeService
       thumbnail: '',
       video: undefined,
       mode: undefined,
+      monetizationEnabled: false,
       display: 'horizontal',
     },
   };
@@ -321,7 +349,7 @@ export class YoutubeService
         errorType = 'YOUTUBE_TOKEN_EXPIRED';
       }
 
-      throw throwStreamError(errorType, { ...error, platform: 'youtube' }, details);
+      return throwStreamError(errorType, { ...error, platform: 'youtube' }, details);
     }
   }
 
@@ -332,7 +360,6 @@ export class YoutubeService
 
   async setupStreamShiftStream(goLiveSettings: IGoLiveSettings) {
     const settings = goLiveSettings?.streamShiftSettings;
-    console.log('YouTube Stream Shift settings ', settings);
 
     if (settings && settings.broadcast_id !== null && !settings.is_live) {
       console.error('Stream Shift Error: YouTube is not live');
@@ -345,8 +372,6 @@ export class YoutubeService
 
       // Use the last broadcast in the list, which should be the most recent one
       let broadcast = liveBroadcasts?.[liveBroadcasts.length - 1];
-      console.log('YouTube fetched ', liveBroadcasts?.length, ' active broadcasts');
-      console.log('YouTube fetched active broadcast', broadcast);
 
       // Try to find an upcoming broadcast if there are no active broadcasts
       if (!broadcast) {
@@ -357,8 +382,7 @@ export class YoutubeService
           ),
         );
         const upcomingBroadcasts = await this.fetchBroadcastsByStatus('upcoming');
-        console.log('YouTube fetched ', upcomingBroadcasts?.length, ' upcoming broadcasts');
-        console.log('YouTube fetched upcoming broadcast', broadcast);
+
         broadcast = upcomingBroadcasts?.[upcomingBroadcasts.length - 1];
       }
 
@@ -370,14 +394,12 @@ export class YoutubeService
           title: settings?.stream_title ?? ytSettings.title,
           description: ytSettings?.description ?? '',
         });
-        console.log('YouTube created broadcast', broadcast);
       }
 
       // Validate stream binding to broadcast
       if (broadcast.contentDetails.boundStreamId) {
         const liveStream = await this.fetchLiveStream(broadcast.contentDetails.boundStreamId);
         console.debug('Bound stream for YouTube broadcast: ', !!liveStream);
-        console.log('YouTube found stream', liveStream, ' bound to broadcast', broadcast.id);
         const streamKey = liveStream.cdn.ingestionInfo.streamName;
         this.SET_STREAM_KEY(streamKey);
       } else {
@@ -385,21 +407,12 @@ export class YoutubeService
         const liveStream = await this.createLiveStream(broadcast.snippet.title);
         await this.bindStreamToBroadcast(broadcast.id, liveStream.id);
 
-        console.log(
-          'YouTube created stream',
-          liveStream,
-          ' and bound it to broadcast',
-          broadcast.id,
-        );
-
         const streamKey = liveStream.cdn.ingestionInfo.streamName;
         this.SET_STREAM_KEY(streamKey);
       }
 
       const video = await this.fetchVideo(broadcast.id);
       this.SET_STREAM_ID(broadcast.contentDetails.boundStreamId);
-
-      console.log('YouTube fetched video', video, ' for broadcast', broadcast.id);
 
       const title = settings?.stream_title ?? broadcast.snippet.title;
 
@@ -506,12 +519,21 @@ export class YoutubeService
       return;
     }
 
+    // Make sure the scheduled stream exists and is in the future
     const streamToScheduledBroadcast = !!ytSettings.broadcastId;
+    if (ytSettings.scheduledStartTime && !(ytSettings.scheduledStartTime > new Date().getTime())) {
+      ytSettings.scheduledStartTime = new Date().getTime();
+    }
     // update selected LiveBroadcast with new title and description
     // or create a new LiveBroadcast if there are no broadcasts selected
     let broadcast: IYoutubeLiveBroadcast;
     if (!streamToScheduledBroadcast) {
       broadcast = await this.createBroadcast(ytSettings);
+
+      // Current YT api doesn't let us POST with monetization settings so need to patch it in after creation
+      if (ytSettings.monetizationEnabled) {
+        await this.updateBroadcast(broadcast.id, ytSettings);
+      }
     } else {
       assertIsDefined(ytSettings.broadcastId);
       await this.updateBroadcast(ytSettings.broadcastId, ytSettings);
@@ -538,12 +560,25 @@ export class YoutubeService
     // setup key and platform type in the OBS settings
     const streamKey = stream.cdn.ingestionInfo.streamName;
 
+    //save user's current rtmp_common settings to restore after Go Live since they are overwritten here
+    const currentSettings = this.streamSettingsService.settings;
+    if (!this.state.backupStreamSettings) {
+      this.state.backupStreamSettings = {} as IBackUpStreamSettings;
+    }
+    this.state.backupStreamSettings.service = currentSettings.service;
+    this.state.backupStreamSettings.key = currentSettings.key;
+    this.state.backupStreamSettings.server = currentSettings.server;
+    this.state.backupStreamSettings.streamType = currentSettings.streamType;
+    this.state.backupStreamSettings.context = !context ? 'horizontal' : context;
+
     if (!this.streamingService.views.isMultiplatformMode) {
+      // Note: This was previously changed to `rtmp_custom` for dual streaming but
+      // it now works with `rtmp_common` as well.
       this.streamSettingsService.setSettings(
         {
           platform: 'youtube',
           key: streamKey,
-          streamType: 'rtmp_custom',
+          streamType: 'rtmp_common',
           server: 'rtmp://a.rtmp.youtube.com/live2',
         },
         context,
@@ -551,13 +586,21 @@ export class YoutubeService
     }
 
     if (this.streamingService.views.isDualOutputMode && ytSettings.display === 'both') {
-      // Prevent rate limit errors by delaying the dual stream setup by 1 second
-      await new Promise<void>(resolve => {
-        setTimeout(async () => {
-          await this.setupDualStream(goLiveSettings);
-          resolve();
-        }, 1000);
-      });
+      try {
+        // Prevent rate limit errors by delaying the dual stream setup by 1 second
+        await new Promise<void>(resolve => {
+          setTimeout(async () => {
+            await this.setupDualStream(goLiveSettings);
+            resolve();
+          }, 1000);
+        });
+      } catch (e: unknown) {
+        console.error('Error setting up YouTube dual stream', e);
+
+        // Catch error to prevent blocking the horizontal stream starting if there is an issue
+        // setting up the vertical stream
+        this.postNotification('Error setting up YouTube dual stream. Vertical stream not started.');
+      }
     }
 
     // Updating the thumbnail in the stream settings happens when creating the broadcast.
@@ -599,6 +642,20 @@ export class YoutubeService
     this.SET_VERTICAL_BROADCAST({} as IYoutubeLiveBroadcast);
     this.SET_VERTICAL_STREAM_KEY('');
     this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
+
+    //restore user's previous settings in case they were overwritten on Go Live
+    if (this.state.backupStreamSettings) {
+      this.streamSettingsService.setSettings(
+        {
+          platform: 'youtube',
+          service: this.state.backupStreamSettings.service,
+          key: this.state.backupStreamSettings.key,
+          streamType: this.state.backupStreamSettings.streamType,
+          server: this.state.backupStreamSettings.server,
+        },
+        this.state.backupStreamSettings.context,
+      );
+    }
   }
 
   /**
@@ -700,6 +757,11 @@ export class YoutubeService
       'scheduledStartTime',
     ]);
 
+    // Ensure scheduled start time is in the future
+    if (snippet.scheduledStartTime && !(new Date(snippet.scheduledStartTime) > new Date())) {
+      snippet.scheduledStartTime = new Date().toISOString();
+    }
+
     // `zxx` is a `Not applicable` language code
     // YouTube API doesn't allow us to set this code
     if (snippet.defaultAudioLanguage === 'zxx') delete snippet.defaultAudioLanguage;
@@ -731,11 +793,22 @@ export class YoutubeService
     // If the user's token has expired, refresh it and try again
     if (status === EPlatformCallResult.TokenExpired) {
       await this.fetchNewToken();
-      await this.validatePlatform();
+      const status = await this.validatePlatform();
+
+      if (status === EPlatformCallResult.TokenExpired || status === EPlatformCallResult.Error) {
+        throwStreamError('YOUTUBE_TOKEN_EXPIRED', { platform: 'youtube' });
+      }
     }
 
-    if (!this.state.liveStreamingEnabled) {
-      throw throwStreamError('YOUTUBE_STREAMING_DISABLED', { platform: 'youtube' });
+    if (status === EPlatformCallResult.Error) {
+      throwStreamError('PLATFORM_REQUEST_FAILED', { platform: 'youtube' });
+    }
+
+    if (
+      !this.state.liveStreamingEnabled ||
+      status === EPlatformCallResult.YoutubeStreamingDisabled
+    ) {
+      throwStreamError('YOUTUBE_STREAMING_DISABLED', { platform: 'youtube' });
     }
     const settings = this.state.settings;
     this.UPDATE_STREAM_SETTINGS({
@@ -809,7 +882,7 @@ export class YoutubeService
     const scheduledStartTime = params.scheduledStartTime
       ? new Date(params.scheduledStartTime)
       : new Date();
-    const data: Dictionary<any> = {
+    const data: IYoutubeLiveBroadcastPatch = {
       snippet: {
         title: params.title,
         scheduledStartTime: scheduledStartTime.toISOString(),
@@ -879,7 +952,7 @@ export class YoutubeService
       scheduledStartTime: scheduledStartTime.toISOString(),
     };
 
-    const contentDetails: Dictionary<any> = {
+    const contentDetails: Partial<IYoutubeLiveBroadcast['contentDetails']> = {
       enableAutoStart: isMidStreamMode
         ? broadcast.contentDetails.enableAutoStart
         : params.enableAutoStart,
@@ -908,8 +981,37 @@ export class YoutubeService
     };
 
     const fields = ['snippet', 'status', 'contentDetails'];
+
+    let monetizationDetails: Partial<IYoutubeLiveBroadcast['monetizationDetails']>;
+    if (broadcast.monetizationDetails) {
+      fields.push('monetizationDetails');
+      this.usageStatisticsService.actions.recordFeatureUsage('YouTubeMonetization');
+
+      const moneyInfo = broadcast.monetizationDetails;
+      monetizationDetails = {
+        adsMonetizationStatus: isMidStreamMode
+          ? moneyInfo?.adsMonetizationStatus
+          : this.getMonetizationStatus(params.monetizationEnabled),
+      };
+      if (!isMidStreamMode && params.monetizationEnabled) {
+        monetizationDetails.cuepointSchedule = {
+          ...moneyInfo.cuepointSchedule,
+          enabled: params.monetizationEnabled,
+          ytOptimizedCuepointConfig: 'MEDIUM',
+          creatorCuepointConfig: undefined,
+        };
+      }
+    }
+
     const endpoint = `liveBroadcasts?part=${fields.join(',')}&id=${id}`;
-    const body: Dictionary<any> = { id, snippet, contentDetails, status };
+    const body: IYoutubeLiveBroadcastPatch = {
+      id,
+      snippet,
+      contentDetails,
+      status,
+    };
+
+    if (params.eligibleForMonetization) body.monetizationDetails = monetizationDetails;
 
     broadcast = await this.requestYoutube<IYoutubeLiveBroadcast>({
       body: JSON.stringify(body),
@@ -1057,7 +1159,7 @@ export class YoutubeService
 
   async fetchBroadcast(
     id: string,
-    fields = ['snippet', 'contentDetails', 'status'],
+    fields = ['snippet', 'contentDetails', 'status', 'monetizationDetails'],
   ): Promise<IYoutubeLiveBroadcast> {
     const filter = `&id=${id}`;
     const query = `part=${fields.join(',')}${filter}&maxResults=1`;
@@ -1067,6 +1169,10 @@ export class YoutubeService
         `${this.apiBase}/liveBroadcasts?${query}`,
       )
     ).items[0];
+  }
+
+  getMonetizationStatus(val?: boolean) {
+    return val ? 'on' : 'off';
   }
 
   get chatUrl() {
@@ -1087,6 +1193,10 @@ export class YoutubeService
       this.fetchBroadcast(broadcastId),
       this.fetchVideo(broadcastId),
     ]);
+    console.log('BROADCAST');
+    console.log(JSON.stringify(broadcast, null, 2));
+    console.log('VIDEO');
+    console.log(JSON.stringify(video, null, 2));
     const { title, description } = broadcast.snippet;
     const { privacyStatus, selfDeclaredMadeForKids } = broadcast.status;
     const { enableDvr, projection, latencyPreference } = broadcast.contentDetails;
@@ -1101,6 +1211,8 @@ export class YoutubeService
       latencyPreference,
       categoryId: video.snippet.categoryId,
       thumbnail: broadcast.snippet.thumbnails.default.url,
+      monetizationEnabled: broadcast.monetizationDetails?.adsMonetizationStatus === 'on',
+      eligibleForMonetization: broadcast.monetizationDetails?.eligibleForAdsMonetization,
     };
   }
 
@@ -1123,6 +1235,14 @@ export class YoutubeService
     return `${youtubeDomain}/watch?v=${this.state.settings.broadcastId}`;
   }
 
+  get verticalStreamPageUrl() {
+    if (!this.state.verticalBroadcast?.id) return '';
+    const nightMode = this.customizationService.isDarkTheme ? 'night' : 'day';
+    const youtubeDomain =
+      nightMode === 'day' ? 'https://youtube.com' : 'https://gaming.youtube.com';
+    return `${youtubeDomain}/watch?v=${this.state.verticalBroadcast.id}`;
+  }
+
   async uploadThumbnail(base64url: string | 'default', videoId: string) {
     // if `default` passed as url then upload default url
     // otherwise convert the passed base64url to blob
@@ -1137,12 +1257,11 @@ export class YoutubeService
 
     const body = await fetch(url).then(res => res.blob());
 
-    try {
-      await jfetch(
-        `https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${videoId}`,
-        { method: 'POST', body, headers: { Authorization: `Bearer ${this.oauthToken}` } },
-      );
-    } catch (e: unknown) {
+    await jfetch(`https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${videoId}`, {
+      method: 'POST',
+      body,
+      headers: { Authorization: `Bearer ${this.oauthToken}` },
+    }).catch(e => {
       console.error('Failed to upload thumbnail', e);
       const errorType = 'YOUTUBE_THUMBNAIL_UPLOAD_FAILED';
       const error = e as any;
@@ -1177,8 +1296,8 @@ export class YoutubeService
         }
       }
 
-      throw throwStreamError(errorType, { ...error, platform: 'youtube' }, details);
-    }
+      return throwStreamError(errorType, { ...error, platform: 'youtube' }, details);
+    });
   }
 
   async stopBroadcast(broadcastId: string) {

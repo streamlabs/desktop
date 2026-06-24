@@ -55,6 +55,19 @@
         "SLOBS_PRODUCTION_DEBUG": "true"
       },
       "outputCapture": "std"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Run Tests",
+      "program": "${workspaceFolder}/node_modules/ava/cli.js",
+      "args": ["--timeout=3m", "--verbose", "./test-dist/test/regular/**/*.js"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/test-dist/**/*.js"],
+      "autoAttachChildProcesses": true,
+      "preLaunchTask": "compile-tests"
     }
   ],
   "compounds": [

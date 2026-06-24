@@ -17,6 +17,7 @@ export const FFPROBE_EXE = path.join(
 );
 
 export const SCRUB_WIDTH = 320;
+export const SCRUB_WIDTH_VERTICAL = 100;
 export const SCRUB_HEIGHT = 180;
 export const SCRUB_FRAMES = 20;
 export const SCRUB_SPRITE_DIRECTORY = path.join(remote.app.getPath('userData'), 'highlighter');

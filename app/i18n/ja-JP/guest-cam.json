@@ -47,5 +47,6 @@
   "Collab Cam requires a source": "Collab Cam ではソースが必要です",
   "At least one Collab Cam source is required to use Collab Cam. Would you like to add one now?": "Collab Cam を使用するには、最低 1 つの Collab Cam ソースが必要です。ソースを今すぐ追加しますか？",
   "You now have access to Collab Cam!": "Collab Cam にアクセスできるようになりました！",
-  "You must be logged in to use Collab Cam.": "Collab Cam を使用するには、ログインする必要があります。"
+  "You must be logged in to use Collab Cam.": "Collab Cam を使用するには、ログインする必要があります。",
+  "There was an error setting the Collab Cam source. Please confirm the source exists and try again.": "There was an error setting the Collab Cam source. Please confirm the source exists and try again."
 }

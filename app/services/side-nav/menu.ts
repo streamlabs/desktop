@@ -66,7 +66,7 @@ class SideNavViews extends ViewHandler<ISideNavServiceState> {
   }
 
   get loggedOutMenuItemKeys() {
-    return loggedOutMenuItems.map(item => item.key);
+    return new Set(loggedOutMenuItems.map(item => item.key));
   }
 
   get loggedOutMenuItemTargets() {
@@ -98,7 +98,7 @@ export class SideNavService extends PersistentStatefulService<ISideNavServiceSta
 
   // Since this service persists menu items, for now please change this version
   // when changes are made to navbar
-  version = '4';
+  version = '5';
 
   static defaultState: ISideNavServiceState = {
     version: '0',

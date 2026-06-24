@@ -2,6 +2,7 @@ import { sleep } from './sleep';
 import { cloneDeep, isMatch } from 'lodash';
 import { TExecutionContext } from './webdriver';
 import { click } from './modules/core';
+import { setInputValue as setBaseInputValue } from './modules/forms/base';
 
 interface IUIInput {
   type: string;
@@ -514,15 +515,7 @@ export class FormMonkey {
   }
 
   async setInputValue(selector: string, value: string) {
-    const $el = await this.client.$(selector);
-
-    await $el.waitForDisplayed();
-    await $el.click();
-    await ((this.client.keys(['Control', 'a']) as any) as Promise<any>); // select all
-    await ((this.client.keys('Control') as any) as Promise<any>); // release ctrl key
-    await ((this.client.keys('Backspace') as any) as Promise<any>); // clear
-    await $el.click(); // click again if it's a list input
-    await ((this.client.keys(value) as any) as Promise<any>); // type text
+    await setBaseInputValue(selector, value);
   }
 
   async setTwitchTagsValue(selector: string, values: string[]) {

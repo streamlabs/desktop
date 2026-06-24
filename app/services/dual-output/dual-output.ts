@@ -11,7 +11,7 @@ import { ScenesService, SceneItem, TSceneNode } from 'services/scenes';
 import { TDisplayType, VideoSettingsService } from 'services/settings-v2/video';
 import { TPlatform } from 'services/platforms';
 import { Subject } from 'rxjs';
-import { IVideoInfo } from 'obs-studio-node';
+import { EScaleType, IVideoInfo } from 'obs-studio-node';
 import { ICustomStreamDestination, StreamSettingsService } from 'services/settings/streaming';
 import {
   ISceneCollectionsManifestEntry,
@@ -27,7 +27,8 @@ import invert from 'lodash/invert';
 import forEachRight from 'lodash/forEachRight';
 import { NotificationsService, ENotificationType } from 'services/notifications';
 import { $t } from 'services/i18n';
-import { JsonrpcService } from 'app-services';
+import { JsonrpcService } from 'services/api/jsonrpc';
+import { CustomizationService, CustomizationState } from 'services/customization';
 
 interface IDisplayVideoSettings {
   horizontal: IVideoInfo;
@@ -41,7 +42,6 @@ interface IDualOutputServiceState {
   dualOutputMode: boolean;
   videoSettings: IDisplayVideoSettings;
   isLoading: boolean;
-  recording: TDisplayType[];
 }
 
 enum EOutputDisplayType {
@@ -153,10 +153,6 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
     return this.state.videoSettings;
   }
 
-  get recording() {
-    return this.state.recording;
-  }
-
   get activeDisplays() {
     return this.state.videoSettings.activeDisplays;
   }
@@ -167,6 +163,14 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
 
   get showVerticalDisplay() {
     return this.state.dualOutputMode && this.activeDisplays.vertical && !this.state.isLoading;
+  }
+
+  get showBothDisplays() {
+    return this.showHorizontalDisplay && this.showVerticalDisplay;
+  }
+
+  get hideBothDisplays() {
+    return !this.showHorizontalDisplay && !this.showVerticalDisplay;
   }
 
   get onlyVerticalDisplayActive() {
@@ -292,6 +296,7 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
   @Inject() private settingsService: SettingsService;
   @Inject() private notificationsService: NotificationsService;
   @Inject() private jsonrpcService: JsonrpcService;
+  @Inject() private customizationService: CustomizationService;
 
   static defaultState: IDualOutputServiceState = {
     dualOutputMode: false,
@@ -303,13 +308,13 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
         vertical: false,
       },
     },
-    recording: ['horizontal'],
     isLoading: false,
   };
 
   sceneNodeHandled = new Subject<number>();
   collectionHandled = new Subject<{ [sceneId: string]: Dictionary<string> } | null>();
   dualOutputModeChanged = new Subject<boolean>();
+  displayToggled = new Subject();
 
   get views() {
     return new DualOutputViews(this.state);
@@ -321,8 +326,30 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     // confirm custom destinations have a default display
     this.confirmDestinationDisplays();
 
-    // Disable global Rescale Output
-    this.disableGlobalRescaleIfNeeded();
+    /**
+     * Handles enabling/disabling performance mode when toggling displays
+     */
+    this.displayToggled.subscribe(() => {
+      if (this.views.hideBothDisplays && !this.customizationService.performanceMode) {
+        this.customizationService.actions.togglePerformanceMode();
+      }
+    });
+
+    /**
+     * In dual output mode, when toggling off performance mode show both displays
+     */
+    this.customizationService.settingsChanged.subscribe(
+      (settingsPatch: DeepPartial<CustomizationState>) => {
+        if (
+          settingsPatch.performanceMode !== null &&
+          settingsPatch.performanceMode === false &&
+          this.views.dualOutputMode
+        ) {
+          this.toggleDisplay(true, 'horizontal');
+          this.toggleDisplay(true, 'vertical');
+        }
+      },
+    );
 
     /**
      * Ensures that scene collection loads correctly for dual output
@@ -416,8 +443,6 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     this.toggleDualOutputMode(status);
 
     if (this.state.dualOutputMode) {
-      this.disableGlobalRescaleIfNeeded();
-
       // All dual output scene collections will have been validated when the collection was switched
       // so there is no need to validate the scene nodes again. So just convert the single output collection
       // to dual output if needed.
@@ -458,27 +483,11 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
    * @remark Primarily a wrapper for the mutation to toggle dual output mode
    */
   toggleDualOutputMode(status: boolean) {
-    this.SET_SHOW_DUAL_OUTPUT(status);
-  }
-
-  disableGlobalRescaleIfNeeded() {
-    // TODO: this could be improved, either by state tracking or making it compatible with dual output
-    // For now, disable global Rescale Output under Streaming if dual output is enabled
-    if (this.state.dualOutputMode) {
-      const output = this.settingsService.state.Output.formData;
-      const globalRescaleOutput = this.settingsService.findSettingValue(
-        output,
-        'Streaming',
-        'Rescale',
-      );
-      if (globalRescaleOutput) {
-        // `Output` not a typo, it is different from above
-        this.settingsService.setSettingValue('Output', 'Rescale', false);
-        // TODO: find a cleaner way to make dual output recalculate its settings for the vertical display
-        // since even after disabling "rescale output" its settings persists, and looks stretched.
-        this.settingsService.refreshVideoSettings();
-      }
+    if (this.views.hideBothDisplays && !this.customizationService.performanceMode) {
+      this.customizationService.actions.togglePerformanceMode();
     }
+
+    this.SET_SHOW_DUAL_OUTPUT(status);
   }
 
   convertSingleOutputToDualOutputCollection() {
@@ -651,6 +660,14 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     if (!sceneNodes) return;
     const corruptedNodeIds = new Set<string>();
 
+    const sceneNodeMap = this.views.sceneNodeMaps[sceneId];
+    const invertedSceneNodeMap = invert(sceneNodeMap);
+
+    // The keys in the nodemap are the ids for the horizontal nodes. Initialize with all keys
+    // and delete entries as nodes are visited; whatever remains are stale entries whose
+    // horizontal node no longer exists in the scene.
+    const horizontalNodeIds = new Set<string>(Object.keys(sceneNodeMap));
+
     // Iterate over the scene nodes in reverse order to automatically handle correctly ordering
     // any nodes created as a part of the validation process. This optimizes validation by skipping
     // an extra loop over the nodes to reorder them.
@@ -659,11 +676,15 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
       if (corruptedNodeIds.has(node.id)) return;
 
       // confirm partner node exists
-      const nodeMap =
-        node?.display === 'vertical'
-          ? invert(this.views.sceneNodeMaps[sceneId])
-          : this.views.sceneNodeMaps[sceneId];
+      const nodeMap = node?.display === 'vertical' ? invertedSceneNodeMap : sceneNodeMap;
       const partnerNode = this.validatePartnerNode(node, nodeMap, sceneNodes);
+
+      // Remove from horizontal node ids because we have confirmed this entry.
+      // Any nodes added as a horizontal partner node for a vertical node do not need
+      // to be validated again in the node map
+      if (node.display === 'horizontal') {
+        horizontalNodeIds.delete(node.id);
+      }
 
       // confirm source and output for scene items
       if (node.isItem() && partnerNode.isItem()) {
@@ -675,6 +696,13 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
       }
 
       this.sceneNodeHandled.next(index);
+    });
+
+    // After confirming all of the scene items, `horizontalNodeIds` should be empty.
+    // If there are any remaining entries, these are stale entries in the scene node map.
+    // To repair the scene node map, delete these incorrect entries.
+    horizontalNodeIds.forEach((horizontalId: string) => {
+      this.sceneCollectionsService.removeNodeMapEntry(sceneId, horizontalId);
     });
 
     this.SET_IS_LOADING(false);
@@ -844,6 +872,8 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
    */
   toggleDisplay(status: boolean, display: TDisplayType) {
     this.SET_DISPLAY_ACTIVE(status, display);
+
+    this.displayToggled.next();
   }
 
   /**

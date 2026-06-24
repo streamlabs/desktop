@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 import { Button, ButtonProps } from 'antd';
 import cx from 'classnames';
 import { TPlatform } from '../../services/platforms';
@@ -23,6 +23,7 @@ interface PlatformIconButtonProps {
   disabled?: boolean;
   loading?: boolean;
   name: string;
+  style?: CSSProperties;
 }
 
 const loadingIcon = <i className="fas fa-spinner fa-spin" />;
@@ -36,9 +37,15 @@ export const PlatformIconButton = ({
   disabled,
   loading,
   name,
+  style,
 }: PlatformIconButtonProps) => {
   const icon = platform ? (
-    <PlatformLogo platform={platform} size={logoSize} className={styles.platformIcon} />
+    <PlatformLogo
+      platform={platform}
+      size={logoSize}
+      className={styles.platformIcon}
+      style={style}
+    />
   ) : (
     <img src={logo}></img>
   );

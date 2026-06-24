@@ -1,4 +1,5 @@
 import {
+  chatIsVisible,
   clickGoLive,
   prepareToGoLive,
   stopStream,
@@ -19,7 +20,12 @@ import {
 import { logIn } from '../../helpers/modules/user';
 import { releaseUserInPool, reserveUserFromPool, withUser } from '../../helpers/webdriver/user';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
-import { test, TExecutionContext, useWebdriver } from '../../helpers/webdriver';
+import {
+  skipCheckingErrorsInLog,
+  test,
+  TExecutionContext,
+  useWebdriver,
+} from '../../helpers/webdriver';
 import { sleep } from '../../helpers/sleep';
 
 // not a react hook
@@ -32,6 +38,31 @@ async function enableAllPlatforms() {
     await sleep(500);
     await waitForSettingsWindowLoaded();
   }
+}
+
+async function goLiveWithMultistream() {
+  await submit();
+  await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
+
+  // YouTube accounts fail for reasons unrelated to the tests. Check for the bypass prompt, which is
+  // shown when setting up a multistream fails, including for errors from YouTube
+  // Try toggling off YouTube and going live again
+  const bypassPrompted = await isDisplayed('button=Bypass and Go Live', { timeout: 2000 });
+
+  if (bypassPrompted) {
+    await clickButton('Close');
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+    await fillForm({ youtube: false });
+    await waitForSettingsWindowLoaded();
+    await submit();
+    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
+    skipCheckingErrorsInLog();
+  }
+
+  await waitForDisplayed("h1=You're live!", { timeout: 60000 });
+  // Confirm chat loads
+  await chatIsVisible(true);
 }
 
 async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean) {
@@ -48,20 +79,20 @@ async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean)
       trovoGame: 'Doom',
       streamShift: true,
     });
+    await goLiveWithMultistream();
   } else {
     await fillForm({ twitch: true });
     await waitForSettingsWindowLoaded();
     await fillForm({ title: 'Test stream', twitchGame: 'Fortnite', streamShift: true });
+    await waitForSettingsWindowLoaded();
+    await submit();
+    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
+    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
+    // Confirm chat loads
+    await waitForStreamStart();
+    await focusMain();
+    await chatIsVisible();
   }
-
-  await waitForSettingsWindowLoaded();
-  await submit();
-  await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
-  await waitForDisplayed("h1=You're live!", { timeout: 60000 });
-  // Confirm chat loads
-  await waitForStreamStart();
-  await focusMain();
-  await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
 
   await stopStream();
   await waitForStreamStop();
@@ -91,11 +122,11 @@ async function goLiveWithDefaultCodec() {
   // Try a new codec the incompatible codec dialog
   await clickButton('Select Codec');
 
-  console.log('Selecting a different incompatible codec');
-
   // Select another incompatible codec
   await fillForm('Streaming', { Encoder: 'SVT-AV1' });
   await clickButton('Close');
+
+  await sleep(1000); // Wait for the settings to apply
 
   await clickGoLive();
   await waitForSettingsWindowLoaded();
@@ -134,15 +165,8 @@ test(
       primaryChat: 'YouTube',
     });
 
-    await submit();
-    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
-    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
-    // Confirm chat loads
-    await focusMain();
-    await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
+    await goLiveWithMultistream();
     await stopStream();
-
-    await goLiveWithDefaultCodec();
 
     t.pass();
   },
@@ -162,31 +186,35 @@ test(
     await waitForSettingsWindowLoaded();
 
     const twitchForm = useForm('twitch-settings');
-    await twitchForm.fillForm({
+    const twitchSettings = {
       customEnabled: true,
       title: 'twitch title',
       twitchGame: 'Fortnite',
       // TODO: Re-enable after reauthing userpool
       // twitchTags: ['100%'],
-    });
+    };
+    await twitchForm.fillForm(twitchSettings);
+    await twitchForm.assertFormContains(twitchSettings);
 
     const youtubeForm = useForm('youtube-settings');
-    await youtubeForm.fillForm({
+    const youtubeSettings = {
       customEnabled: true,
       title: 'youtube title',
       description: 'youtube description',
-    });
+    };
+    await youtubeForm.fillForm(youtubeSettings);
+    await youtubeForm.assertFormContains(youtubeSettings);
 
     const trovoForm = useForm('trovo-settings');
-    await trovoForm.fillForm({
+    const trovoSettings = {
       customEnabled: true,
-      trovoGame: 'Doom',
       title: 'trovo title',
-    });
+      trovoGame: 'Doom',
+    };
+    await trovoForm.fillForm(trovoSettings);
+    await trovoForm.assertFormContains(trovoSettings);
 
-    await submit();
-    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
-    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
+    await goLiveWithMultistream();
     await stopStream();
 
     t.pass();
@@ -285,8 +313,6 @@ test('Stream Shift', withUser('twitch', { prime: true, multistream: true }), asy
 
   // Multistream shift
   await goLiveWithStreamShift(t, true);
-
-  await goLiveWithDefaultCodec();
 
   t.pass();
 });

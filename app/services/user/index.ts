@@ -42,6 +42,7 @@ import { TTikTokLiveScopeTypes } from 'services/platforms/tiktok/api';
 import { UsageStatisticsService } from 'app-services';
 import { debounce } from 'lodash-decorators';
 import { getOS, OS } from 'util/operating-systems';
+import { URLSearchParams } from 'url';
 
 export enum EAuthProcessState {
   Idle = 'idle',
@@ -118,6 +119,7 @@ interface ILinkedPlatformsResponse {
   tiktok_account?: ILinkedPlatform;
   trovo_account?: ILinkedPlatform;
   kick_account?: ILinkedPlatform;
+  patreon_account?: ILinkedPlatform;
   streamlabs_account?: ILinkedPlatform;
   twitter_account?: ILinkedPlatform;
   user_id: number;
@@ -281,6 +283,17 @@ class UserViews extends ViewHandler<IUserServiceState> {
   }
 }
 
+export type TOverlayType = 'overlays' | 'widget-themes' | 'site-themes' | 'collectibles';
+export interface IOverlayIdParams {
+  id: string;
+  install?: string;
+}
+export interface IOverlayCollectionParams {
+  collection?: string;
+}
+
+export type TOverlayParams = IOverlayIdParams | IOverlayCollectionParams;
+
 export class UserService extends PersistentStatefulService<IUserServiceState> {
   @Inject() private hostsService: HostsService;
   @Inject() private customizationService: CustomizationService;
@@ -301,6 +314,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
 
   setPrimaryPlatform(platform: TPlatform) {
     this.SET_PRIMARY_PLATFORM(platform);
+    this.primaryPlatformChanged.next(platform);
   }
 
   @mutation()
@@ -418,6 +432,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   userLogin = new Subject<IUserAuth>();
   userLogout = new Subject();
   scopeAdded = new Subject();
+  primaryPlatformChanged = new Subject<TPlatform>();
 
   /**
    * Will fire on every login, similar to userLogin, but will
@@ -791,6 +806,17 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       this.UNLINK_PLATFORM('kick');
     }
 
+    if (linkedPlatforms.patreon_account) {
+      this.UPDATE_PLATFORM({
+        type: 'patreon',
+        username: linkedPlatforms.patreon_account.platform_name,
+        id: linkedPlatforms.patreon_account.platform_id,
+        token: linkedPlatforms.patreon_account.access_token,
+      });
+    } else if (this.state.auth.primaryPlatform !== 'patreon') {
+      this.UNLINK_PLATFORM('patreon');
+    }
+
     if (linkedPlatforms.streamlabs_account) {
       this.SET_SLID({
         id: linkedPlatforms.streamlabs_account.platform_id,
@@ -920,6 +946,11 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   get isAlphaGroup() {
     // CI should have a consistent experience, Mac shouldnt have it yet
     if (Utils.env.CI || Utils.env.NODE_ENV === 'test' || getOS() === OS.Mac) return true;
+
+    if (Utils.env.SLD_TEST_GROUP) {
+      return Utils.env.SLD_TEST_GROUP === 'A';
+    }
+
     const localId = this.getLocalUserId();
     return Number(localId.search(/\d/)) % 2 === 0;
   }
@@ -980,8 +1011,6 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     this.SET_PRIME(true);
     this.subscribedToPrime.next();
     if (this.navigationService.state.currentPage === 'Onboarding') return;
-    const theme = this.customizationService.isDarkTheme ? 'prime-dark' : 'prime-light';
-    this.customizationService.setTheme(theme);
     this.showPrimeWindow();
   }
 
@@ -1018,30 +1047,30 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     return await this.magicLinkService.actions.return.getMagicSessionUrl(url);
   }
 
-  async overlaysUrl(
-    type?: 'overlay' | 'widget-themes' | 'site-themes' | 'collectibles',
-    id?: string,
-    install?: string,
-  ) {
+  async overlaysUrl(type?: TOverlayType, params?: TOverlayParams) {
     const uiTheme = this.customizationService.isDarkTheme ? 'night' : 'day';
 
     let url = `https://${this.hostsService.streamlabs}/library`;
+    const modeQuery = `mode=${uiTheme}&slobs`;
 
-    if (type && !id) {
-      url += `/${type}`;
+    if (type && params) {
+      if ('id' in params) {
+        const urlSubParams = new URLSearchParams({ type, id: params.id });
+        if (params.install) {
+          urlSubParams.append('install', params.install);
+        }
+        url += `?${modeQuery}#/?${urlSubParams}`;
+      } else if ('collection' in params && params.collection) {
+        url += `/c/${params.collection}?${modeQuery}`;
+      }
+    } else {
+      if (type) {
+        url += `/${type}`;
+      }
+      url += `?${modeQuery}`;
     }
 
-    url += `?mode=${uiTheme}&slobs`;
-
-    if (type && id) {
-      url += `#/?type=${type}&id=${id}`;
-    }
-
-    if (install) {
-      url += `&install=${install}`;
-    }
-
-    return await this.magicLinkService.actions.return.getMagicSessionUrl(url);
+    return this.magicLinkService.actions.return.getMagicSessionUrl(url);
   }
 
   getDonationSettings() {

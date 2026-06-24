@@ -1,14 +1,12 @@
+import * as remote from '@electron/remote';
+import { message, Progress, Select } from 'antd';
 import { useRealmObject } from 'components-react/hooks/realm';
 import { Services } from 'components-react/service-provider';
+import { SwitchInput } from 'components-react/shared/inputs';
 import React, { useEffect, useMemo } from 'react';
-import { message, Progress, Select } from 'antd';
-import { ObsSettingsSection } from './ObsSettings';
-import { confirmAsync } from 'components-react/modals';
-import * as remote from '@electron/remote';
-import { VisionRunnerStartOptions } from 'services/vision/vision-runner';
 import { $t } from 'services/i18n/index';
-import { VisionProcess, VisionState } from 'services/vision';
-import { ESettingsCategory } from 'services/settings';
+import { VisionProcess, VisionService, VisionState } from 'services/vision';
+import { ObsSettingsSection } from './ObsSettings';
 
 type VisionStatus = 'running' | 'starting' | 'updating' | 'stopped';
 
@@ -42,7 +40,8 @@ function VisionInstalling(props: { percent: number; isUpdate: boolean }) {
 
 type VisionInfoProps = {
   status: VisionStatus;
-  needsUpdate: boolean;
+  enabled: boolean;
+  starting: boolean;
   installedVersion: string;
   pid?: number;
   port?: number;
@@ -50,23 +49,20 @@ type VisionInfoProps = {
   activeProcessId: number;
   availableGames: Dictionary<string>;
   selectedGame: string;
-  requestAvailableProcesses: () => void;
-  activateProcess: (pid: number, gameHint?: string) => void;
-  startProcess: (opts?: VisionRunnerStartOptions) => void;
-  ensureUpdated: () => void;
-  stopProcess: () => void;
+  setIsEnabled: VisionService['actions']['setIsEnabled'];
+  requestAvailableProcesses: VisionService['actions']['requestAvailableProcesses'];
+  activateProcess: VisionService['actions']['activateProcess'];
   openExternal: (url: string) => void;
 };
 
 function VisionInfo({
   status,
-  needsUpdate,
+  enabled,
+  starting,
   installedVersion,
   pid,
   port,
-  startProcess,
-  stopProcess,
-  ensureUpdated,
+  setIsEnabled,
   openExternal,
   activeProcessId,
   availableProcesses,
@@ -75,111 +71,83 @@ function VisionInfo({
   availableGames,
   selectedGame,
 }: VisionInfoProps) {
-  const activeProcess = availableProcesses?.find(p => p.pid === activeProcessId);
   const eventsUrl = useMemo(() => buildLocalUrl(port, '/events'), [port]);
   const frameUrl = useMemo(() => buildLocalUrl(port, '/display_frame'), [port]);
-  const isQaBundle = useMemo(
-    () =>
-      remote.process.argv.includes('--bundle-qa') && activeProcess?.executable_name === 'vlc.exe',
-    [activeProcess],
-  );
+  const isRunning = useMemo(() => status === 'running', [status]);
+
   return (
     <ObsSettingsSection title="Streamlabs AI">
       <div style={{ marginBottom: 16 }}>
+        <SwitchInput
+          label={$t('Turn On AI')}
+          disabled={starting}
+          value={enabled}
+          onChange={() => setIsEnabled(!enabled)}
+        />
         <div>
-          Installed: {installedVersion ? $t('Yes') : $t('No')}
-          {installedVersion ? ` (${installedVersion})` : ''}
+          {$t('Installed')}: {installedVersion ? `${$t('Yes')} (${installedVersion})` : $t('No')}
         </div>
-        <div>Status: {status}</div>
+        <div>
+          {$t('PID')}: {pid || ''}
+        </div>
+        <div>
+          {$t('Port')}: {port || ''}
+        </div>
 
-        {status === 'running' && !!pid && <div>PID: {pid}</div>}
-        {status === 'running' && !!port && <div>Port: {port}</div>}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
+          <button
+            className="button button--action"
+            disabled={!isRunning || !eventsUrl}
+            onClick={() => eventsUrl && openExternal(eventsUrl)}
+          >
+            {$t('Open Events Log')}
+          </button>
+          <button
+            className="button button--action"
+            disabled={!isRunning || !frameUrl}
+            onClick={() => frameUrl && openExternal(frameUrl)}
+          >
+            {$t('Open Display Frame')}
+          </button>
+        </div>
 
-        {status === 'stopped' && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
-            {needsUpdate && (
-              <button className="button button--action" onClick={() => ensureUpdated()}>
-                Update Streamlabs AI
-              </button>
-            )}
-
-            {!needsUpdate && (
-              <button
-                className="button button--action"
-                onClick={e => startProcess({ debugMode: e.ctrlKey })}
-              >
-                Start Streamlabs AI
-              </button>
-            )}
-          </div>
-        )}
-
-        {status === 'running' && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
-            {eventsUrl && (
-              <button className="button button--action" onClick={() => openExternal(eventsUrl)}>
-                Open Events Log
-              </button>
-            )}
-
-            {frameUrl && (
-              <button className="button button--action" onClick={() => openExternal(frameUrl)}>
-                Open Display Frame
-              </button>
-            )}
-
-            <button className="button button--warn" onClick={stopProcess}>
-              Stop Streamlabs AI
-            </button>
-          </div>
-        )}
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 12,
-          }}
-        >
-          {status === 'running' && availableProcesses && (
-            <div style={{ marginTop: 12 }}>
-              <div style={{ marginBottom: 6 }}>Active Process</div>
-              <Select
-                style={{ minWidth: 240 }}
-                value={activeProcessId}
-                onFocus={() => requestAvailableProcesses()}
-                onChange={val => activateProcess(val, selectedGame)}
-              >
-                {availableProcesses.map(p => (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ marginTop: 12 }}>
+            <div style={{ marginBottom: 6 }}>{$t('Active Process')}</div>
+            <Select
+              style={{ minWidth: 240 }}
+              disabled={!enabled || !isRunning}
+              value={isRunning ? activeProcessId : undefined}
+              onFocus={() => isRunning && requestAvailableProcesses()}
+              onChange={val => activateProcess(val, selectedGame)}
+            >
+              {isRunning &&
+                availableProcesses?.map(p => (
                   <Select.Option key={p.pid} value={p.pid}>
                     {p.title || p.executable_name}
                   </Select.Option>
                 ))}
-              </Select>
-            </div>
-          )}
+            </Select>
+          </div>
 
-          {status === 'running' &&
-            (activeProcess?.type === 'capture_device' || isQaBundle) &&
-            availableGames &&
-            Object.keys(availableGames).length > 0 && (
-              <div style={{ marginTop: 12 }}>
-                <div style={{ marginBottom: 6 }}>Selected Game</div>
-                <Select
-                  style={{ minWidth: 240 }}
-                  value={selectedGame}
-                  onChange={val => {
-                    console.log('Changing game to: ', val);
-                    activateProcess(activeProcessId, val);
-                  }}
-                >
-                  {Object.entries(availableGames).map(([key, label]) => (
-                    <Select.Option key={key} value={key}>
-                      {label}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </div>
-            )}
+          <div style={{ marginTop: 12 }}>
+            <div style={{ marginBottom: 6 }}>{$t('Selected Game')}</div>
+            <Select
+              style={{ minWidth: 240 }}
+              disabled={!enabled || !isRunning}
+              value={selectedGame}
+              onChange={val => {
+                console.log('Changing game to: ', val);
+                activateProcess(activeProcessId, val);
+              }}
+            >
+              {Object.entries(availableGames).map(([key, label]) => (
+                <Select.Option key={key} value={key}>
+                  {label}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
         </div>
       </div>
     </ObsSettingsSection>
@@ -191,36 +159,20 @@ function openLink(url: string) {
 }
 
 export function AISettings() {
-  const { VisionService } = Services;
-  const state = useRealmObject(VisionService.state);
+  const { UsageStatisticsService, VisionService } = Services;
   const actions = VisionService.actions;
-  const promptOpen = React.useRef(false);
+  const state = useRealmObject(VisionService.state);
 
-  useEffect(() => {
-    // make sure we don't keep opening confirm dialogs
-    if (promptOpen.current) return;
+  const visionEnabledState = useRealmObject(VisionService.enabledState);
+  const enabled = visionEnabledState.isEnabled;
 
-    // do we need to update?
-    if (!state.needsUpdate) return;
-
-    let message = 'Streamlabs AI must be updated before you can use it.';
-    let button = 'Update Now';
-
-    if (!state.installedVersion) {
-      message =
-        'Streamlabs needs to download additional components. Would you like to install them now?';
-      button = 'Install';
-    }
-
-    promptOpen.current = true;
-
-    confirmAsync({ title: message, okText: button }).then(confirmed => {
-      promptOpen.current = false;
-      if (confirmed) {
-        actions.ensureUpdated();
-      }
+  function trackEvent(type: string, data?: Record<string, any>) {
+    UsageStatisticsService.actions.recordAnalyticsEvent('AiFeature', {
+      type,
+      source: 'AiSettings',
+      ...(data ?? {}),
     });
-  }, []);
+  }
 
   useEffect(() => {
     if (state.hasFailedToUpdate) {
@@ -237,22 +189,27 @@ export function AISettings() {
     }
   }, [state.isRunning]);
 
+  function onToggleAiClick(isEnabled?: boolean) {
+    const newIsEnabled = isEnabled ?? !enabled;
+    trackEvent('enabled', { enabled: String(newIsEnabled) });
+    actions.setIsEnabled(newIsEnabled);
+  }
+
   return (
     <div>
       <VisionInfo
         status={getStatusText(state)}
-        needsUpdate={state.needsUpdate}
+        enabled={enabled}
+        starting={state.isStarting}
         installedVersion={state.installedVersion}
         pid={state.pid}
         port={state.port}
-        stopProcess={() => actions.stop()}
         openExternal={openLink}
-        startProcess={(options: VisionRunnerStartOptions) => actions.ensureRunning(options)}
-        ensureUpdated={() => actions.ensureUpdated()}
+        setIsEnabled={onToggleAiClick}
         availableProcesses={state.availableProcesses}
         activeProcessId={state.selectedProcessId}
-        requestAvailableProcesses={() => actions.requestAvailableProcesses()}
-        activateProcess={(pid, gameHint) => actions.activateProcess(pid, gameHint)}
+        requestAvailableProcesses={actions.requestAvailableProcesses}
+        activateProcess={actions.activateProcess}
         availableGames={state.availableGames}
         selectedGame={state.selectedGame}
       />

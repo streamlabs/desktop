@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { memo, useMemo, useEffect, useRef, useState } from 'react';
 import cx from 'classnames';
 import electron from 'electron';
 import Utils from 'services/utils';
@@ -15,10 +15,9 @@ import MenuItem from 'components-react/shared/MenuItem';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import PlatformIndicator from './PlatformIndicator';
 import { AuthModal } from 'components-react/shared/AuthModal';
-import { ESettingsCategory, TCategoryName } from 'services/settings';
-import { getOS, OS } from 'util/operating-systems';
+import { TCategoryName } from 'services/settings';
 
-export default function NavTools(p: { isVisionRunning: boolean }) {
+export default memo(function NavTools() {
   const {
     UserService,
     SettingsService,
@@ -30,10 +29,6 @@ export default function NavTools(p: { isVisionRunning: boolean }) {
   } = Services;
 
   const isDevMode = useMemo(() => Utils.isDevMode(), []);
-
-  const showAiTab = useMemo(() => {
-    return getOS() === OS.Windows || (getOS() === OS.Mac && isDevMode);
-  }, [isDevMode]);
 
   const {
     isLoggedIn,
@@ -58,6 +53,14 @@ export default function NavTools(p: { isVisionRunning: boolean }) {
 
   const [dashboardOpening, setDashboardOpening] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const isMounted = useRef(true);
+
+  useEffect(
+    () => () => {
+      isMounted.current = false;
+    },
+    [],
+  );
 
   function openSettingsWindow(category?: TCategoryName) {
     SettingsService.actions.showSettings(category);
@@ -79,7 +82,7 @@ export default function NavTools(p: { isVisionRunning: boolean }) {
       console.error('Error generating dashboard magic link', e);
     }
 
-    setDashboardOpening(false);
+    if (isMounted.current) setDashboardOpening(false);
   }
 
   const throttledOpenDashboard = throttle(openDashboard, 2000, { trailing: false });
@@ -129,8 +132,9 @@ export default function NavTools(p: { isVisionRunning: boolean }) {
         defaultOpenKeys={openMenuItems && openMenuItems}
         getPopupContainer={triggerNode => triggerNode}
       >
-        {menuItems.map((menuItem: IParentMenuItem) => {
+        {menuItems.map((menuItem: IParentMenuItem | IMenuItem) => {
           if (isDevMode && menuItem.key === EMenuItemKey.DevTools) {
+            <></>;
             return <NavToolsItem key={menuItem.key} menuItem={menuItem} onClick={openDevTools} />;
           } else if (!isPrime && menuItem.key === EMenuItemKey.GetPrime) {
             return (
@@ -166,7 +170,7 @@ export default function NavTools(p: { isVisionRunning: boolean }) {
                 }}
               >
                 <DashboardSubMenu
-                  subMenuItems={menuItem?.subMenuItems}
+                  subMenuItems={(menuItem as IParentMenuItem)?.subMenuItems}
                   throttledOpenDashboard={throttledOpenDashboard}
                   openSettingsWindow={openSettingsWindow}
                 />
@@ -185,15 +189,6 @@ export default function NavTools(p: { isVisionRunning: boolean }) {
                   </div>
                 }
                 onClick={() => openHelp()}
-              />
-            );
-          } else if (showAiTab && menuItem.key === EMenuItemKey.AI) {
-            return (
-              <NavToolsItem
-                key={menuItem.key}
-                menuItem={menuItem}
-                className={cx({ [styles.vision]: p.isVisionRunning })}
-                onClick={() => openSettingsWindow(ESettingsCategory.AI)}
               />
             );
           } else if (menuItem.key === EMenuItemKey.Settings) {
@@ -225,7 +220,7 @@ export default function NavTools(p: { isVisionRunning: boolean }) {
       />
     </>
   );
-}
+});
 
 function NavToolsItem(p: {
   menuItem: IMenuItem;

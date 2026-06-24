@@ -30,7 +30,7 @@ export default function AddDestinationButton(p: IAddDestinationButtonProps) {
         if (module.isPrime) {
           SettingsService.actions.showSettings('Stream');
         } else if (module.isDualOutputMode) {
-          MagicLinkService.linkToPrime('slobs-dual-output', 'DualOutput');
+          MagicLinkService.linkToPrime('slobs-dual-output', { event: 'DualOutput' });
         } else {
           MagicLinkService.linkToPrime('slobs-single-output');
         }

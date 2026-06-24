@@ -30,9 +30,6 @@ import uuid from 'uuid';
 import { EMenuItemKey } from 'services/side-nav';
 import { AiHighlighterUpdater } from './ai-highlighter-updater';
 import { IDownloadProgress } from 'util/requests';
-import { IncrementalRolloutService } from 'app-services';
-
-import { EAvailableFeatures } from 'services/incremental-rollout';
 import {
   EUploadPlatform,
   IAiClip,
@@ -90,7 +87,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   @Inject() jsonrpcService: JsonrpcService;
   @Inject() navigationService: NavigationService;
   @Inject() sharedStorageService: SharedStorageService;
-  @Inject() incrementalRolloutService: IncrementalRolloutService;
 
   static defaultState: IHighlighterState = {
     clips: {},
@@ -136,6 +132,18 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   aiHighlighterUpdater: AiHighlighterUpdater;
   aiHighlighterFeatureEnabled = getOS() === OS.Windows || Utils.isDevMode();
   streamMilestones: IStreamMilestones | null = null;
+
+  /**
+   * Whether AI Highlighter should start recording and replay buffer outputs.
+   * Checks feature flag, user preference, and game support.
+   */
+  get shouldStartHighlighterOutputs(): boolean {
+    return (
+      this.aiHighlighterFeatureEnabled &&
+      this.views.useAiHighlighter &&
+      !!isGameSupported(this.streamingService.views.game)
+    );
+  }
 
   static filter(state: IHighlighterState) {
     return {
@@ -465,10 +473,9 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           streamId: streamInfo?.id,
         });
 
-        if (this.streamingService.views.isRecording === false) {
-          this.streamingService.actions.toggleRecording();
-        }
-
+        // Recording and replay buffer are started by handleStartStreaming
+        // before the Live status is emitted, so they should already be active.
+        if (aiRecordingInProgress) return;
         aiRecordingInProgress = true;
         aiRecordingStartTime = moment();
       }
@@ -511,7 +518,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           streamId: streamInfo?.id,
           game: this.streamingService.views.game,
         });
-        this.streamingService.actions.toggleRecording();
 
         // Load potential replaybuffer clips
         await this.loadClips(streamInfo.id);
@@ -695,6 +701,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         });
         return;
       } else {
+        const display = this.streamingService.views.getOutputDisplayType();
+
         this.ADD_CLIP({
           path: clipData.path,
           loaded: false,
@@ -703,6 +711,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           endTrim: 0,
           deleted: false,
           source,
+          display,
 
           // Manual clips always get prepended to be visible after adding them
           // ReplayBuffers will appended to have them in the correct order.
@@ -954,7 +963,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       }
 
       this.renderingClips[clip.path] =
-        this.renderingClips[clip.path] ?? new RenderingClip(clip.path);
+        this.renderingClips[clip.path] ?? new RenderingClip(clip.path, clip.display);
     }
 
     //TODO M: tracking type not correct
@@ -1471,7 +1480,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
             game: setStreamInfo.game,
           });
         },
-        streamInfo.game === 'unset' ? undefined : streamInfo.game,
+        this.extractGameFromStream(streamInfo),
       );
 
       this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
@@ -1510,6 +1519,15 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
     return;
   }
+  private extractGameFromStream(streamInfo: IStreamInfoForAiHighlighter): EGame | undefined {
+    if (!streamInfo.game || streamInfo.game === 'unset') return undefined;
+    // black ops 7 configs are identical to black ops 6
+    if (streamInfo.game === EGame.BLACK_OPS_7) {
+      return EGame.BLACK_OPS_6;
+    }
+    return streamInfo.game;
+  }
+
   getRoundDetails(
     clips: TClip[],
   ): { round: number; inputs: IInput[]; duration: number; hypeScore: number }[] {
