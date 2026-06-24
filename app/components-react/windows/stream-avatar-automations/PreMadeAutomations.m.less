@@ -1,0 +1,142 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 8px;
+}
+
+.gameIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--icon-active);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #000;
+  margin-bottom: 12px;
+}
+
+.title {
+  margin: 0 0 20px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--title);
+  text-align: center;
+}
+
+.featured {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.navBtn {
+  background: none;
+  border: none;
+  color: var(--paragraph);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 8px;
+  flex-shrink: 0;
+  border-radius: 4px;
+
+  &:hover {
+    color: var(--title);
+    background: var(--section);
+  }
+}
+
+.card {
+  flex: 1;
+  min-width: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.preview {
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.previewLabel {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--section);
+  gap: 12px;
+}
+
+.itemTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--title);
+  margin-bottom: 2px;
+}
+
+.itemDesc {
+  font-size: 12px;
+  color: var(--paragraph);
+}
+
+.thumbnailStrip {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.thumbnail {
+  width: 72px;
+  height: 48px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+
+  &:hover {
+    border-color: var(--icon-active);
+  }
+}
+
+.thumbnailActive {
+  border-color: var(--icon-active);
+}
+
+.dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--paragraph);
+  }
+}
+
+.dotActive {
+  background: var(--icon-active);
+}
