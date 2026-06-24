@@ -1,8 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import cx from 'classnames';
 import styles from './MigrationNotice.m.less';
 import FeatureItemCard from './FeatureItemCard';
-import { $i } from 'services/utils';
 
 const IMAGE_PATH = 'https://cdn.streamlabs.com/static/imgs/highlighter';
 export interface Feature {
@@ -77,6 +76,57 @@ const ANIM_DURATION = 220;
 const AUTO_ANIM_DURATION = 500;
 const AUTO_ADVANCE_INTERVAL = 5000;
 
+interface TransitionInfo {
+  fromIndex: number;
+  toIndex: number;
+  direction: 1 | -1;
+  duration: number;
+}
+
+interface CarouselState {
+  activeIndex: number;
+  transition: TransitionInfo | null;
+}
+
+type CarouselAction =
+  | { type: 'GO_TO'; index: number; direction?: 1 | -1; duration?: number }
+  | { type: 'ADVANCE'; featureCount: number }
+  | { type: 'FINISH' };
+
+function carouselReducer(state: CarouselState, action: CarouselAction): CarouselState {
+  switch (action.type) {
+    case 'GO_TO': {
+      if (state.transition || action.index === state.activeIndex) return state;
+      return {
+        activeIndex: action.index,
+        transition: {
+          fromIndex: state.activeIndex,
+          toIndex: action.index,
+          direction: action.direction ?? (action.index > state.activeIndex ? 1 : -1),
+          duration: action.duration ?? ANIM_DURATION,
+        },
+      };
+    }
+    case 'ADVANCE': {
+      if (state.transition) return state;
+      const next = (state.activeIndex + 1) % action.featureCount;
+      return {
+        activeIndex: next,
+        transition: {
+          fromIndex: state.activeIndex,
+          toIndex: next,
+          direction: 1,
+          duration: AUTO_ANIM_DURATION,
+        },
+      };
+    }
+    case 'FINISH':
+      return { ...state, transition: null };
+    default:
+      return state;
+  }
+}
+
 interface IFeatureCarouselProps {
   title: string;
   description?: string;
@@ -84,137 +134,80 @@ interface IFeatureCarouselProps {
   children?: React.ReactNode;
 }
 
-type TransitionState = 'hover' | 'animating' | null;
-
 export default function FeatureCarousel(props: IFeatureCarouselProps) {
   const { title, description, features, children } = props;
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [incomingIndex, setIncomingIndex] = useState<number | null>(null);
-  const [transitionState, setTransitionState] = useState<TransitionState>(null);
-  const [animDuration, setAnimDuration] = useState(ANIM_DURATION);
-  const [direction, setDirection] = useState<-1 | 1>(1);
+  const [{ activeIndex, transition }, dispatch] = useReducer(carouselReducer, {
+    activeIndex: 0,
+    transition: null,
+  });
+  const [animPhase, setAnimPhase] = useState<'prep' | 'go' | null>(null);
+  const isHoveredRef = useRef(false);
 
-  const isListHoveredRef = useRef(false);
-  const isAnimatingRef = useRef(false);
-  const currentIndexRef = useRef(currentIndex);
-  const transitionStateRef = useRef(transitionState);
-  const incomingIndexRef = useRef(incomingIndex);
-
-  currentIndexRef.current = currentIndex;
-  isAnimatingRef.current = transitionState === 'animating';
-  transitionStateRef.current = transitionState;
-  incomingIndexRef.current = incomingIndex;
-
-  const currentFeature = useMemo(() => features[currentIndex], [features, currentIndex]);
-  const incomingFeature = useMemo(() => (incomingIndex !== null ? features[incomingIndex] : null), [
-    features,
-    incomingIndex,
-  ]);
-
-  const currentCardStyle = useMemo<React.CSSProperties>(() => {
-    if (transitionState === 'animating') {
-      return {
-        transform: `translateY(${direction * -500}px)`,
-        opacity: 0,
-        transition: `transform ${animDuration}ms ease, opacity ${animDuration}ms ease`,
-      };
+  // Two-frame animation: prep (position off-screen) → go (animate in)
+  useEffect(() => {
+    if (!transition) {
+      setAnimPhase(null);
+      return;
     }
-    return { transform: 'translateY(0)', opacity: 1, transition: 'none' };
-  }, [transitionState, direction, animDuration]);
 
-  const incomingCardStyle = useMemo<React.CSSProperties>(() => {
-    if (transitionState === 'hover') {
+    setAnimPhase('prep');
+    let card2Animation: number;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const card1Animation = requestAnimationFrame(() => {
+      card2Animation = requestAnimationFrame(() => {
+        setAnimPhase('go');
+        timer = setTimeout(() => dispatch({ type: 'FINISH' }), transition.duration);
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(card1Animation);
+      if (card2Animation) cancelAnimationFrame(card2Animation);
+      if (timer) clearTimeout(timer);
+    };
+  }, [transition]);
+
+  // Auto-advance
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (!isHoveredRef.current) {
+        dispatch({ type: 'ADVANCE', featureCount: features.length });
+      }
+    }, AUTO_ADVANCE_INTERVAL);
+    return () => clearInterval(id);
+  }, [features.length]);
+
+  const outgoingStyle = useMemo<React.CSSProperties>(() => {
+    if (!transition || animPhase !== 'go') return {};
+    return {
+      transform: `translateY(${transition.direction * -500}px)`,
+      opacity: 0,
+      transition: `transform ${transition.duration}ms ease, opacity ${transition.duration}ms ease`,
+    };
+  }, [transition, animPhase]);
+
+  const incomingStyle = useMemo<React.CSSProperties>(() => {
+    if (!transition) return {};
+    if (animPhase === 'prep') {
       return {
-        transform: `translateY(${direction * 500}px)`,
+        transform: `translateY(${transition.direction * 500}px)`,
         opacity: 0,
         transition: 'none',
       };
     }
-    if (transitionState === 'animating') {
+    if (animPhase === 'go') {
       return {
         transform: 'translateY(0)',
         opacity: 1,
-        transition: `transform ${animDuration}ms ease, opacity ${animDuration}ms ease`,
+        transition: `transform ${transition.duration}ms ease, opacity ${transition.duration}ms ease`,
       };
     }
     return {};
-  }, [transitionState, direction, animDuration]);
+  }, [transition, animPhase]);
 
-  const finishAnimation = useCallback((index: number) => {
-    setCurrentIndex(index);
-    setIncomingIndex(null);
-    setTransitionState(null);
-  }, []);
-
-  const selectFeature = useCallback(
-    (index: number, duration = ANIM_DURATION, forceDirection?: -1 | 1) => {
-      if (isAnimatingRef.current || index === currentIndexRef.current) return;
-
-      setAnimDuration(duration);
-      const dir = forceDirection ?? (index < currentIndexRef.current ? -1 : 1);
-      setDirection(dir);
-
-      const wasPreloaded =
-        transitionStateRef.current === 'hover' && incomingIndexRef.current === index;
-      setIncomingIndex(index);
-
-      if (wasPreloaded) {
-        setTransitionState('animating');
-      } else {
-        setTransitionState('hover');
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            setTransitionState('animating');
-          });
-        });
-      }
-
-      setTimeout(() => finishAnimation(index), duration);
-    },
-    [finishAnimation],
-  );
-
-  const onListItemHover = useCallback((index: number) => {
-    if (index === currentIndexRef.current) {
-      isListHoveredRef.current = true;
-      return;
-    }
-    if (isAnimatingRef.current) return;
-    setDirection(index < currentIndexRef.current ? -1 : 1);
-    setIncomingIndex(index);
-    setTransitionState('hover');
-  }, []);
-
-  const onListItemLeave = useCallback((index: number) => {
-    if (index === currentIndexRef.current) {
-      isListHoveredRef.current = false;
-      return;
-    }
-    if (isAnimatingRef.current) return;
-    if (incomingIndexRef.current === index) {
-      setIncomingIndex(null);
-      setTransitionState(null);
-    }
-  }, []);
-
-  // Auto-advance timer
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-
-    const schedule = () => {
-      timer = setTimeout(() => {
-        if (!isListHoveredRef.current && !isAnimatingRef.current) {
-          const next = (currentIndexRef.current + 1) % features.length;
-          selectFeature(next, AUTO_ANIM_DURATION, 1);
-        }
-        schedule();
-      }, AUTO_ADVANCE_INTERVAL);
-    };
-
-    schedule();
-    return () => clearTimeout(timer);
-  }, [features.length, selectFeature]);
+  const outgoingFeature = transition ? features[transition.fromIndex] : null;
 
   const renderCard = (feature: Feature) => (
     <FeatureItemCard
@@ -241,14 +234,16 @@ export default function FeatureCarousel(props: IFeatureCarouselProps) {
         {description && <p className={styles.carouselDescription}>{description}</p>}
 
         {/* Feature list */}
-        <ul className={styles.featureList}>
+        <ul
+          className={styles.featureList}
+          onMouseEnter={() => (isHoveredRef.current = true)}
+          onMouseLeave={() => (isHoveredRef.current = false)}
+        >
           {features.map((feature, index) => (
             <li
               key={feature.id}
-              className={cx(styles.featureItem, index === currentIndex && styles.featureItemActive)}
-              onMouseEnter={() => onListItemHover(index)}
-              onMouseLeave={() => onListItemLeave(index)}
-              onClick={() => selectFeature(index)}
+              className={cx(styles.featureItem, index === activeIndex && styles.featureItemActive)}
+              onClick={() => dispatch({ type: 'GO_TO', index })}
             >
               {feature.listItemTitle || feature.headline}
             </li>
@@ -261,21 +256,21 @@ export default function FeatureCarousel(props: IFeatureCarouselProps) {
 
       {/* Right column — animated cards */}
       <div className={styles.carouselRight}>
-        {/* Current card */}
-        <div className={styles.carouselCard}>
-          <div className={styles.carouselCardInner} style={currentCardStyle}>
-            {renderCard(currentFeature)}
-          </div>
-        </div>
-
-        {/* Incoming card */}
-        {incomingFeature && (
+        {/* Outgoing card (visible only during transition) */}
+        {outgoingFeature && (
           <div className={styles.carouselCard}>
-            <div className={styles.carouselCardInner} style={incomingCardStyle}>
-              {renderCard(incomingFeature)}
+            <div className={styles.carouselCardInner} style={outgoingStyle}>
+              {renderCard(outgoingFeature)}
             </div>
           </div>
         )}
+
+        {/* Active card (slides in during transition, static otherwise) */}
+        <div className={styles.carouselCard}>
+          <div className={styles.carouselCardInner} style={transition ? incomingStyle : {}}>
+            {renderCard(features[activeIndex])}
+          </div>
+        </div>
       </div>
     </div>
   );
