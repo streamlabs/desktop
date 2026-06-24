@@ -12,8 +12,8 @@ import { InternalApiClient } from 'services/api/internal-api-client';
  * @see Inject() decorator
  * Also it initialize all services with `InitAfter()` decorator
  * @see InitAfter() decorator
- * This is only the service that executes its methods in all widows
- * instead of redirecting the calls to the main window
+ * This is the only service that executes its methods in all windows
+ * instead of redirecting the calls to the worker window
  */
 export class ServicesManager extends Service {
   /**
@@ -29,8 +29,9 @@ export class ServicesManager extends Service {
   private instances: Dictionary<Service> = {};
 
   /**
-   * The child windows or one-off windows don't execute services methods directly
-   * They use InternalApiClient to send IPC requests to the main window
+   * Non-worker (UI) windows don't execute service methods directly.
+   * They use InternalApiClient to send IPC requests (via the main process)
+   * to the worker window.
    */
   internalApiClient: InternalApiClient;
 
@@ -43,7 +44,7 @@ export class ServicesManager extends Service {
     // Renderer windows access services in the worker window via proxy API
     if (!Utils.isWorkerWindow()) {
       this.internalApiClient = new InternalApiClient();
-      // redirect all services methods calls to the main window's services
+      // redirect all service method calls to the worker window's services
       Service.setupProxy(service => this.internalApiClient.applyIpcProxy(service));
       // don't call the init method for all services
       Service.setupInitFunction(service => null);

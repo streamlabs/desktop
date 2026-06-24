@@ -39,7 +39,7 @@ export abstract class RpcApi extends Service {
   private requestErrors: string[] = [];
 
   /**
-   * Keep created subscriptions in the main window to not allow to subscribe to the channel twice
+   * Keep created subscriptions in the worker window to not allow to subscribe to the channel twice
    */
   subscriptions: Dictionary<Subscription> = {};
 
@@ -306,7 +306,7 @@ export abstract class RpcApi extends Service {
 
   /**
    * This prevents to send mutations to the API client until the API request is not completed
-   * Save all mutations called in the main window to buffer, and send them when API request is completed
+   * Save all mutations called in the worker window to buffer, and send them when API request is completed
    */
   private startBufferingMutations() {
     this.mutationsBufferingEnabled = true;

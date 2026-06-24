@@ -12,15 +12,16 @@ const { ipcRenderer } = electron;
 
 /**
  * A client for communication with internalApi
- * Only the child window and one-off windows instantiate this class
+ * Instantiated in every non-worker (UI) window — main, child, and one-off — to
+ * proxy service calls over IPC to the worker window, where services execute.
  */
 export class InternalApiClient {
   private servicesManager: ServicesManager = ServicesManager.instance;
 
   /**
-   * If the result of calling a service method in the main window is promise -
-   * we create a linked promise in the child window and keep its callbacks here until
-   * the promise in the main window will be resolved or rejected
+   * When a service method executed in the worker window returns a promise, we
+   * create a linked promise here in the calling window and keep its callbacks in
+   * this map until the worker resolves or rejects the original promise.
    */
   private promises: Dictionary<Function[]> = {};
 
@@ -42,7 +43,8 @@ export class InternalApiClient {
   }
 
   /**
-   * All services methods calls will be sent to the main window
+   * All service method calls are sent over IPC (via the Electron main process)
+   * to the worker window, where the services actually execute.
    * TODO: add more comments and try to refactor
    */
   applyIpcProxy(service: Service, isAction = false, shouldReturn = false): Service {
@@ -313,7 +315,7 @@ export class InternalApiClient {
             // skip the promise result if this promise has been created from another window
             if (!promises[promisePayload.resourceId]) return;
 
-            // resolve or reject the promise depending on the response from the main window
+            // resolve or reject the promise depending on the response from the worker window
             const [resolve, reject] = promises[promisePayload.resourceId];
             const callback = promisePayload.isRejected ? reject : resolve;
             callback(promisePayload.data);
