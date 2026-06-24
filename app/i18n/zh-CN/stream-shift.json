@@ -10,6 +10,7 @@
   "Stream Shift cannot be used with Dual Output": "Stream Shift 不能与 Dual Output 一起使用",
   "Dual Output cannot be used with Stream Shift": "Dual Output 不能与 Stream Shift 一起使用",
   "Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!": "您的直播已成功切换到 Streamlabs Desktop。开始直播吧！",
+  "Your stream has been successfully switched to Streamlabs Mobile. Enjoy your stream!": "Your stream has been successfully switched to Streamlabs Mobile. Enjoy your stream!",
   "Your stream has been switched to Streamlabs Desktop from another device. Enjoy your stream!": "您的直播已从另一台设备切换到 Streamlabs Desktop。开始直播吧！",
   "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.": "检测到另一台设备上有直播。您想将直播切换到 Streamlabs Desktop 吗？如果您不希望继续此直播，请从当前直播源结束直播。",
   "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. Dual Output will be disabled since not supported in this mode.": "检测到另一台设备上有直播。您想将直播切换到 Streamlabs Desktop 吗？如果您不希望继续此直播，请从当前直播源结束直播。因为在此模式下不支持 Dual Output，所以会禁用 Dual Output。",
