@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import cx from 'classnames';
 import styles from './MigrationNotice.m.less';
 import FeatureItemCard from './FeatureItemCard';
+import { $t } from 'services/i18n';
 
 const IMAGE_PATH = 'https://cdn.streamlabs.com/static/imgs/highlighter';
 export interface Feature {
@@ -213,8 +214,8 @@ export default function FeatureCarousel(props: IFeatureCarouselProps) {
     <FeatureItemCard
       topColor={feature.topColor}
       bottomColor={feature.bottomColor}
-      headline={feature.headline}
-      description={feature.description}
+      headline={$t(feature.headline)}
+      description={feature.description ? $t(feature.description) : undefined}
       imageUrl={feature.previewImage}
       verticalImageUrl={feature.previewImage?.replace(/\.[^.]+$/, '-vertical.webp')}
       videoUrl={feature.videoUrl}
@@ -245,7 +246,7 @@ export default function FeatureCarousel(props: IFeatureCarouselProps) {
               className={cx(styles.featureItem, index === activeIndex && styles.featureItemActive)}
               onClick={() => dispatch({ type: 'GO_TO', index })}
             >
-              {feature.listItemTitle || feature.headline}
+              {$t(feature.listItemTitle || feature.headline)}
             </li>
           ))}
         </ul>
