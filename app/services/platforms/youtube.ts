@@ -316,40 +316,72 @@ export class YoutubeService
       console.error(`Failed ${this.displayName} API Request:`, reqInfo);
 
       const error = e as any;
+      const details = error?.message ?? $t('Connection Failed');
 
-      // Log specific Youtube API errors if they exist
-      if (error?.result && error.result?.error) {
-        console.log('Youtube API Error: ', JSON.stringify(error.result.error, null, 2));
+      // If the error doesn't have a result or an error object, it's not a YouTube API error response
+      if (!error?.result || !error.result?.error) {
+        return throwStreamError(
+          'PLATFORM_REQUEST_FAILED',
+          { ...error, platform: 'youtube' },
+          details,
+        );
       }
 
-      let details = $t('Connection Failed');
-      if (error?.message) {
-        details = error.message;
+      const json = error.result.error;
+
+      // If there are no errors in the array, check the status code
+      if (!json?.errors || !json.errors.length) {
+        if (!json.status) {
+          console.error('No status or reason in YouTube API error response', json);
+          return throwStreamError('PLATFORM_REQUEST_FAILED', {
+            ...error,
+            platform: 'youtube',
+            details,
+          });
+        }
+
+        if (json.status === 423) {
+          console.error('Error 423: YouTube token expired, need to refresh', json);
+          return throwStreamError('YOUTUBE_TOKEN_EXPIRED', {
+            ...error,
+            platform: 'youtube',
+            details,
+          });
+        }
+
+        if (json.status !== 403) {
+          console.error('Error ', json.status, ': Non-generic error', json);
+          return throwStreamError('PLATFORM_REQUEST_FAILED', {
+            ...error,
+            platform: 'youtube',
+            details,
+          });
+        }
       }
 
-      if (error?.url ?? error?.url.split('/').includes('token')) {
-        error.statusText = `${$t('Authentication Error')}: ${details}`;
+      // If there are errors in the array, check the first one for the reason
+      const firstError = json.errors[0];
+      if (firstError.reason) {
+        console.log('YouTube API error Reason:', firstError.reason, json);
+
+        if (firstError.reason === 'liveStreamingNotEnabled') {
+          if (repeatRequestIfRateLimitExceed) {
+            await Utils.sleep(3000);
+            return await this.requestYoutube(reqInfo, false);
+          }
+          return throwStreamError('YOUTUBE_STREAMING_DISABLED', {
+            ...error,
+            platform: 'youtube',
+            details,
+          });
+        }
       }
 
-      const isLiveStreamingDisabled =
-        error?.errors &&
-        error?.errors.length &&
-        error?.errors[0].reason === 'liveStreamingNotEnabled';
-
-      // if the rate limit exceeded then repeat request after 3s delay
-      if (isLiveStreamingDisabled && repeatRequestIfRateLimitExceed) {
-        await Utils.sleep(3000);
-        return await this.requestYoutube(reqInfo, false);
-      }
-
-      let errorType: TStreamErrorType = 'PLATFORM_REQUEST_FAILED';
-      if (isLiveStreamingDisabled) {
-        errorType = 'YOUTUBE_STREAMING_DISABLED';
-      } else if (error?.status === 423) {
-        errorType = 'YOUTUBE_TOKEN_EXPIRED';
-      }
-
-      return throwStreamError(errorType, { ...error, platform: 'youtube' }, details);
+      return throwStreamError('PLATFORM_REQUEST_FAILED', {
+        ...error,
+        platform: 'youtube',
+        details,
+      });
     }
   }
 
@@ -665,44 +697,18 @@ export class YoutubeService
     try {
       const endpoint = 'liveStreams?part=id,snippet&mine=true';
       const url = `${this.apiBase}/${endpoint}`;
-      await platformAuthorizedRequest('youtube', url);
+      await this.requestYoutube(url, false);
       this.SET_ENABLED_STATUS(true);
       return EPlatformCallResult.Success;
     } catch (e: unknown) {
-      const error = e as any;
-
-      // Check if this is a YouTube live stream API error response
-      if (error?.errors && error?.status) {
-        if (error.status === 423) {
-          console.error('Error 423: YouTube token expired, need to refresh', error);
-          this.SET_ENABLED_STATUS(false);
-          return EPlatformCallResult.TokenExpired;
+      this.SET_ENABLED_STATUS(false);
+      if (e instanceof StreamError) {
+        if (e.type === 'YOUTUBE_TOKEN_EXPIRED') return EPlatformCallResult.TokenExpired;
+        if (e.type === 'YOUTUBE_STREAMING_DISABLED') {
+          return EPlatformCallResult.YoutubeStreamingDisabled;
         }
-        if (error.status && error.status !== 403) {
-          console.error('Error checking if YT is enabled for live streaming', error);
-          return EPlatformCallResult.Error;
-        }
-        if (error?.errors.length && error?.errors[0].reason === 'liveStreamingNotEnabled') {
-          this.SET_ENABLED_STATUS(false);
-        }
-
-        return EPlatformCallResult.YoutubeStreamingDisabled;
       }
-
-      // Otherwise, it's probably a generic YouTube API error
-      if (error.status !== 403) {
-        console.error('Got 403 checking if YT is enabled for live streaming', error);
-        return EPlatformCallResult.Error;
-      }
-      const json = error.result;
-      if (
-        json.error &&
-        json.error.errors &&
-        json.error.errors[0].reason === 'liveStreamingNotEnabled'
-      ) {
-        this.SET_ENABLED_STATUS(false);
-      }
-      return EPlatformCallResult.YoutubeStreamingDisabled;
+      return EPlatformCallResult.Error;
     }
   }
 
@@ -1059,19 +1065,22 @@ export class YoutubeService
    */
   private async createLiveStream(title: string): Promise<IYoutubeLiveStream> {
     const endpoint = 'liveStreams?part=cdn,snippet,contentDetails';
-    return platformAuthorizedRequest<IYoutubeLiveStream>('youtube', {
-      url: `${this.apiBase}/${endpoint}`,
-      method: 'POST',
-      body: JSON.stringify({
-        snippet: { title },
-        cdn: {
-          frameRate: 'variable',
-          ingestionType: 'rtmp',
-          resolution: 'variable',
-        },
-        contentDetails: { isReusable: false },
-      }),
-    });
+    return this.requestYoutube<IYoutubeLiveStream>(
+      {
+        url: `${this.apiBase}/${endpoint}`,
+        method: 'POST',
+        body: JSON.stringify({
+          snippet: { title },
+          cdn: {
+            frameRate: 'variable',
+            ingestionType: 'rtmp',
+            resolution: 'variable',
+          },
+          contentDetails: { isReusable: false },
+        }),
+      },
+      false,
+    );
   }
 
   get liveDockEnabled(): boolean {
@@ -1088,15 +1097,15 @@ export class YoutubeService
     // fetch active and upcoming broadcasts simultaneously
     let [activeBroadcasts, upcomingBroadcasts] = await Promise.all([
       (
-        await platformAuthorizedRequest<IYoutubeCollection<IYoutubeLiveBroadcast>>(
-          'youtube',
+        await this.requestYoutube<IYoutubeCollection<IYoutubeLiveBroadcast>>(
           `${this.apiBase}/liveBroadcasts?${query}&broadcastStatus=active`,
+          false,
         )
       ).items,
       (
-        await platformAuthorizedRequest<IYoutubeCollection<IYoutubeLiveBroadcast>>(
-          'youtube',
+        await this.requestYoutube<IYoutubeCollection<IYoutubeLiveBroadcast>>(
           `${this.apiBase}/liveBroadcasts?${query}&broadcastStatus=upcoming`,
+          false,
         )
       ).items,
     ]);
@@ -1129,9 +1138,9 @@ export class YoutubeService
     const fields = ['snippet', 'contentDetails', 'status'];
     const query = `part=${fields.join(',')}&broadcastType=all&mine=true&maxResults=100`;
     const broadcasts = (
-      await platformAuthorizedRequest<IYoutubeCollection<IYoutubeLiveBroadcast>>(
-        'youtube',
+      await this.requestYoutube<IYoutubeCollection<IYoutubeLiveBroadcast>>(
         `${this.apiBase}/liveBroadcasts?${query}`,
+        false,
       )
     ).items;
     return broadcasts;
@@ -1143,9 +1152,9 @@ export class YoutubeService
     const fields = ['snippet', 'contentDetails', 'status'];
     const query = `part=${fields.join(',')}`;
     const broadcasts = (
-      await platformAuthorizedRequest<IYoutubeCollection<IYoutubeLiveBroadcast>>(
-        'youtube',
+      await this.requestYoutube<IYoutubeCollection<IYoutubeLiveBroadcast>>(
         `${this.apiBase}/liveBroadcasts?${query}&broadcastStatus=${status}&maxResults=100`,
+        false,
       )
     ).items;
     return broadcasts;
@@ -1153,8 +1162,7 @@ export class YoutubeService
 
   private async fetchLiveStream(id: string): Promise<IYoutubeLiveStream> {
     const url = `${this.apiBase}/liveStreams?part=cdn,snippet,contentDetails&id=${id}`;
-    return (await platformAuthorizedRequest<{ items: IYoutubeLiveStream[] }>('youtube', url))
-      .items[0];
+    return (await this.requestYoutube<{ items: IYoutubeLiveStream[] }>(url, false)).items[0];
   }
 
   async fetchBroadcast(
@@ -1164,9 +1172,9 @@ export class YoutubeService
     const filter = `&id=${id}`;
     const query = `part=${fields.join(',')}${filter}&maxResults=1`;
     return (
-      await platformAuthorizedRequest<IYoutubeCollection<IYoutubeLiveBroadcast>>(
-        'youtube',
+      await this.requestYoutube<IYoutubeCollection<IYoutubeLiveBroadcast>>(
         `${this.apiBase}/liveBroadcasts?${query}`,
+        false,
       )
     ).items[0];
   }
@@ -1303,16 +1311,19 @@ export class YoutubeService
   async stopBroadcast(broadcastId: string) {
     // https://www.googleapis.com/youtube/v3/liveBroadcasts/transition
     const endpoint = `liveBroadcasts/transition?id=${broadcastId}&broadcastStatus=complete`;
-    return platformAuthorizedRequest<IYoutubeLiveStream>('youtube', {
-      url: `${this.apiBase}/${endpoint}`,
-      method: 'POST',
-    });
+    return this.requestYoutube<IYoutubeLiveStream>(
+      {
+        url: `${this.apiBase}/${endpoint}`,
+        method: 'POST',
+      },
+      false,
+    );
   }
 
   fetchFollowers() {
-    return platformAuthorizedRequest<{ items: { statistics: { subscriberCount: number } }[] }>(
-      'youtube',
+    return this.requestYoutube<{ items: { statistics: { subscriberCount: number } }[] }>(
       `${this.apiBase}/channels?part=statistics&mine=true`,
+      false,
     )
       .then(json => Number(json.items[0].statistics.subscriberCount))
       .catch(() => 0);
