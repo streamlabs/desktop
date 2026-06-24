@@ -10,6 +10,7 @@
   "Stream Shift cannot be used with Dual Output": "Stream Shift はデュアル出力と併用できません",
   "Dual Output cannot be used with Stream Shift": "デュアル出力は Stream Shift と併用できません。",
   "Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!": "ストリームが Streamlabs Desktop に正常に切り替えられました。ストリームをお楽しみください！",
+  "Your stream has been successfully switched to Streamlabs Mobile. Enjoy your stream!": "Your stream has been successfully switched to Streamlabs Mobile. Enjoy your stream!",
   "Your stream has been switched to Streamlabs Desktop from another device. Enjoy your stream!": "ストリームが他のデバイスから Streamlabs Desktop に切り替えられました。ストリームをお楽しみください！",
   "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.": "他のデバイス上のストリームが検出されました。ストリームを Streamlabs Desktop に切り替えますか？このストリームを継続しない場合は、現在のストリーミングソースから終了してください。",
   "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. Dual Output will be disabled since not supported in this mode.": "他のデバイス上のストリームが検出されました。ストリームを Streamlabs Desktop に切り替えますか？このストリームを継続しない場合は、現在のストリーミングソースから終了してください。デュアル出力は、このモードではサポートされていないため無効になります。",
