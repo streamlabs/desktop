@@ -18,6 +18,7 @@ interface PreMadeItem {
   source?: {
     name: string;
     assetKey: string;
+    downloadUrl: string;
     loop: boolean;
   };
   automation: Omit<TAutomationExport, 'id'>;
@@ -33,6 +34,8 @@ const PRE_MADE: PreMadeItem[] = [
     source: {
       name: 'victory-royale',
       assetKey: 'victory-royale-celebration-animation.webm',
+      downloadUrl:
+        'https://cdn-avatar-builds.streamlabs.com/assets/victory-royale-celebration-animation.webm',
       loop: false,
     },
     automation: {
@@ -48,14 +51,19 @@ const PRE_MADE: PreMadeItem[] = [
     },
   },
   {
-    title: 'Player Eliminated',
-    description: 'Co-host comments on player elimination.',
+    title: 'Enemy Eliminated',
+    description: 'Co-host comments on enemy elimination.',
     gameName: 'Fortnite',
     color: '#2d4a1e',
     src: 'https://cdn-avatar-builds.streamlabs.com/assets/player-killed.webm',
-    source: { name: 'player-killed', assetKey: 'player-killed-animation.webm', loop: false },
+    source: {
+      name: 'player-killed',
+      assetKey: 'player-killed-animation.webm',
+      downloadUrl: 'https://cdn-avatar-builds.streamlabs.com/assets/player-killed-animation.webm',
+      loop: false,
+    },
     automation: {
-      description: 'Player Eliminated',
+      description: 'Enemy Eliminated',
       enabled: true,
       conditions: [{ type: 'fortnite.player_eliminated' as ConditionType }],
       actions: [
@@ -72,7 +80,13 @@ const PRE_MADE: PreMadeItem[] = [
     gameName: 'Fortnite',
     color: '#3a1a1a',
     src: 'https://cdn-avatar-builds.streamlabs.com/assets/low-player-health.webm',
-    source: { name: 'low-player-health', assetKey: 'low-player-health-animation', loop: true },
+    source: {
+      name: 'low-player-health',
+      assetKey: 'low-player-health-animation',
+      downloadUrl:
+        'https://cdn-avatar-builds.streamlabs.com/assets/low-player-health-animation.webm',
+      loop: true,
+    },
     automation: {
       description: 'Low Player Health',
       enabled: true,
@@ -87,53 +101,128 @@ const PRE_MADE: PreMadeItem[] = [
     },
   },
   {
-    title: 'Enemy Knocked',
-    description: 'Co-host comments on enemy knockdowns.',
+    title: 'Player Eliminated',
+    description: 'Co-host comments when you are eliminated.',
     gameName: 'Fortnite',
     color: '#2a1a3a',
     src: 'https://cdn-avatar-builds.streamlabs.com/assets/player-eliminated.webm',
-    source: { name: 'enemy-eliminated', assetKey: 'player-eliminated-animation.webm', loop: false },
+    source: {
+      name: 'player-eliminated',
+      assetKey: 'player-eliminated-animation.webm',
+      downloadUrl:
+        'https://cdn-avatar-builds.streamlabs.com/assets/player-eliminated-animation.webm',
+      loop: false,
+    },
     automation: {
-      description: 'Enemy Knocked',
+      description: 'Player Eliminated',
       enabled: true,
-      conditions: [{ type: 'fortnite.knocked' as ConditionType }],
+      conditions: [{ type: 'fortnite.player_eliminated' as ConditionType }],
       actions: [
-        { type: 'common.show_source', props: { source: { name: 'enemy-eliminated' } } },
+        { type: 'common.show_source', props: { source: { name: 'player-eliminated' } } },
         { type: 'co-host.comment' },
         { type: 'common.wait_for_ms', props: { duration: 3000 } },
-        { type: 'common.hide_source', props: { source: { name: 'enemy-eliminated' } } },
+        { type: 'common.hide_source', props: { source: { name: 'player-eliminated' } } },
       ],
     },
   },
 ];
 
+async function downloadAsset(downloadUrl: string, assetKey: string): Promise<string | null> {
+  try {
+    const os = require('os') as typeof import('os');
+    const fs = require('fs') as typeof import('fs');
+    const path = require('path') as typeof import('path');
+
+    const dir = path.join(os.tmpdir(), 'slobs-avatar-assets');
+    fs.mkdirSync(dir, { recursive: true });
+    const savePath = path.join(dir, path.basename(assetKey));
+
+    console.log('[downloadAsset] downloading', downloadUrl, '->', savePath);
+    const response = await fetch(downloadUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const buffer = await response.arrayBuffer();
+    fs.writeFileSync(savePath, Buffer.from(buffer));
+    console.log('[downloadAsset] saved', savePath);
+    return savePath;
+  } catch (e: unknown) {
+    console.error('[downloadAsset] failed:', e);
+    return null;
+  }
+}
+
 async function createSourceIfNeeded(
   sourceName: string,
   assetKey: string,
+  downloadUrl: string,
   loop: boolean,
   assets: string[],
 ) {
+  console.log('[createSourceIfNeeded] start', {
+    sourceName,
+    assetKey,
+    loop,
+    assetCount: assets.length,
+  });
+
   const { ScenesService, SourcesService } = Services;
   const activeScene = ScenesService.views.activeScene;
-  if (!activeScene) return;
+  if (!activeScene) {
+    console.warn('[createSourceIfNeeded] no active scene, aborting');
+    return;
+  }
+  console.log('[createSourceIfNeeded] active scene:', activeScene.id, activeScene.name);
 
   // Dedup: skip if a source with this name is already in the active scene
   const existingSource = SourcesService.views.sources.find(s => s.name === sourceName);
+  console.log(
+    '[createSourceIfNeeded] existing source:',
+    existingSource ? existingSource.sourceId : 'none',
+  );
   if (existingSource) {
-    const inScene = activeScene
-      .getItems()
-      .some((item: any) => item.sourceId === existingSource.sourceId);
+    const sceneItems = activeScene.getItems();
+    const inScene = sceneItems.some((item: any) => item.sourceId === existingSource.sourceId);
+    console.log(
+      '[createSourceIfNeeded] already in scene:',
+      inScene,
+      '| scene item count:',
+      sceneItems.length,
+    );
     if (inScene) return;
   }
 
-  const assetPath = assets.find(a => a.includes(assetKey));
-  if (!assetPath) return;
+  let assetPath = assets.find(a => a.includes(assetKey));
+  console.log(
+    '[createSourceIfNeeded] asset path:',
+    assetPath ?? 'NOT FOUND',
+    '| searched key:',
+    assetKey,
+  );
 
-  const sceneItem = activeScene.createAndAddSource(sourceName, 'ffmpeg_source', {
-    local_file: assetPath,
-    loop,
-  });
-  sceneItem?.setVisibility(false);
+  if (!assetPath) {
+    console.log('[createSourceIfNeeded] asset not found locally, downloading from:', downloadUrl);
+    assetPath = (await downloadAsset(downloadUrl, assetKey)) ?? undefined;
+    if (!assetPath) {
+      console.warn('[createSourceIfNeeded] download failed, aborting');
+      return;
+    }
+  }
+
+  console.log('[createSourceIfNeeded] creating source:', sourceName, 'at', assetPath);
+  const sceneItemId = await ScenesService.actions.return.createAndAddSource(
+    activeScene.id,
+    sourceName,
+    'ffmpeg_source',
+    { local_file: assetPath, loop },
+  );
+  console.log('[createSourceIfNeeded] scene item id:', sceneItemId);
+
+  if (sceneItemId) {
+    const scene = ScenesService.views.getScene(activeScene.id);
+    const sceneItem = scene?.getItem(sceneItemId);
+    sceneItem?.setVisibility(false);
+    console.log('[createSourceIfNeeded] visibility set to hidden');
+  }
 }
 
 interface Props {
@@ -173,6 +262,7 @@ export default function PreMadeAutomations({ onClose }: Props) {
             await createSourceIfNeeded(
               item.source.name,
               item.source.assetKey,
+              item.source.downloadUrl,
               item.source.loop,
               assets,
             );
@@ -183,11 +273,10 @@ export default function PreMadeAutomations({ onClose }: Props) {
 
         await AutomationsService.actions.create(item.automation);
       }
-
-      onClose();
     } finally {
       setSaving(false);
     }
+    onClose();
   }
 
   const current = PRE_MADE[currentIndex];
