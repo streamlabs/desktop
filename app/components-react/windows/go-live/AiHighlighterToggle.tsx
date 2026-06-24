@@ -8,12 +8,8 @@ import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { getConfigByGame, isGameSupported } from 'services/highlighter/models/game-config.models';
 import { $t } from 'services/i18n';
-import {
-  YouTubeLogo,
-  DiscordLogo,
-  TikTokLogo,
-  InstagramLogo,
-} from 'components-react/highlighter/HypeWrapper';
+import { DiscordLogo } from 'components-react/highlighter/HypeWrapper';
+import PlatformLogo from 'components-react/shared/PlatformLogo';
 import { REPLAY_APP_NAME } from 'services/highlighter/constants';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 import { promptAction } from 'components-react/modals';
@@ -261,7 +257,7 @@ export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded
                                 className={styles.plattformIcon}
                                 style={{ top: '0px', left: '120px' }}
                               >
-                                <YouTubeLogo />
+                                <PlatformLogo platform="youtube" size={30} />
                               </div>
                               <div
                                 className={styles.plattformIcon}
@@ -274,14 +270,14 @@ export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded
                                 className={styles.plattformIcon}
                                 style={{ top: '1px', left: '283px' }}
                               >
-                                <TikTokLogo />
+                                <PlatformLogo platform="tiktok" size={30} />
                               </div>
 
                               <div
                                 className={styles.plattformIcon}
                                 style={{ top: '93px', left: '187px' }}
                               >
-                                <InstagramLogo />
+                                <PlatformLogo platform="instagram" size={30} />
                               </div>
                               <div
                                 className={styles.horizontalVideo}
