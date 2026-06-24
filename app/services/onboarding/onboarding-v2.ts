@@ -4,11 +4,17 @@ import * as remote from '@electron/remote';
 import { Inject, Service } from 'services/core';
 import {
   AppService,
+  DualOutputService,
   ObsImporterService,
   RecordingModeService,
   SceneCollectionsService,
+  SceneItem,
+  ScenesService,
+  SourcesService,
+  StreamSettingsService,
   UsageStatisticsService,
   UserService,
+  VideoSettingsService,
   WindowsService,
 } from 'app-services';
 import Utils from '../utils';
@@ -16,6 +22,7 @@ import Utils from '../utils';
 export enum EOnboardingSteps {
   Splash = 'Splash',
   YouTubeWelcome = 'YouTubeWelcome',
+  YouTubeDualOutput = 'YouTubeDualOutput',
   Login = 'Login',
   RecordingLogin = 'RecordingLogin',
   ConnectMore = 'ConnectMore',
@@ -148,10 +155,11 @@ class OnboardingPath {
    * Login Splash -> Recording Mode Login -> OBS Import (if obs installed)
    *
    * YouTube Origin (accelerated flow for installers downloaded from YouTube Studio)
-   * YouTube Welcome (prompts YouTube login) -> Setup Devices -> Themes
+   * YouTube Welcome (prompts YouTube login) -> YouTube Dual Output -> Setup Devices -> (done)
    * The YouTube Welcome screen is the entry point (Splash is skipped) and offers
    * a small escape hatch (exitYouTubeFlow) that drops the user into the normal
-   * Login flow instead.
+   * Login flow instead. The flow ends after Devices (Themes is skipped) and
+   * completeOnboarding seeds the editor with the default sources.
    */
   private determineNextStep(
     modifiers?: Record<TNavigationModifier, boolean>,
@@ -167,8 +175,9 @@ class OnboardingPath {
         // normal login screen and let the standard flow take over from there.
         if (!modifiers.youtubeOrigin) return { name: EOnboardingSteps.Login };
         // Logged in with YouTube on the welcome screen, continue accelerated flow.
-        return { name: EOnboardingSteps.Devices };
+        return { name: EOnboardingSteps.YouTubeDualOutput };
       },
+      [EOnboardingSteps.YouTubeDualOutput]: () => ({ name: EOnboardingSteps.Devices }),
       [EOnboardingSteps.RecordingLogin]: () => {
         if (modifiers.obsInstalled) return { name: EOnboardingSteps.OBSImport };
       },
@@ -193,6 +202,9 @@ class OnboardingPath {
       },
       [EOnboardingSteps.Ultra]: () => ({ name: EOnboardingSteps.Devices }),
       [EOnboardingSteps.Devices]: () => {
+        // The YouTube flow ends after Devices, skipping Themes. Default sources
+        // are seeded in completeOnboarding.
+        if (modifiers.youtubeOrigin) return;
         if (modifiers.loggedIn && !modifiers.hasSceneCollections) {
           return { name: EOnboardingSteps.Themes };
         }
@@ -248,6 +260,11 @@ export class OnboardingV2Service extends Service {
   @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private appService: AppService;
   @Inject() private windowsService: WindowsService;
+  @Inject() private dualOutputService: DualOutputService;
+  @Inject() private scenesService: ScenesService;
+  @Inject() private videoSettingsService: VideoSettingsService;
+  @Inject() private sourcesService: SourcesService;
+  @Inject() private streamSettingsService: StreamSettingsService;
 
   state = OnboardingServiceState.inject();
 
@@ -270,6 +287,12 @@ export class OnboardingV2Service extends Service {
     return this.state.currentStep.name;
   }
 
+  // True when we're in the accelerated YouTube flow (YT-origin install that the
+  // user hasn't opted out of via the escape hatch).
+  get isYouTubeFlow() {
+    return this.usageStatisticsService.youtubeOrigin && !this.youtubeFlowDismissed;
+  }
+
   get modifiers(): TModifiers {
     return {
       loggedIn: this.userService.views.isLoggedIn,
@@ -279,7 +302,7 @@ export class OnboardingV2Service extends Service {
       obsInstalled: this.obsImporterService.views.isOBSinstalled(),
       lessThanTwoPlatforms: this.userService.views.linkedPlatforms.length < 2,
       hasSceneCollections: !!this.hasExistingSceneCollections,
-      youtubeOrigin: this.usageStatisticsService.youtubeOrigin && !this.youtubeFlowDismissed,
+      youtubeOrigin: this.isYouTubeFlow,
     };
   }
 
@@ -332,6 +355,13 @@ export class OnboardingV2Service extends Service {
   }
 
   takeStep(skipped?: boolean) {
+    // Continuing past the Devices step adds a webcam to the scene. The YouTube
+    // flow seeds its own sources (including a webcam) in seedDefaultCollection,
+    // so skip this there to avoid a duplicate webcam.
+    if (!skipped && this.currentStepName === EOnboardingSteps.Devices && !this.isYouTubeFlow) {
+      this.recordingModeService.actions.addRecordingWebcam();
+    }
+
     this.recordOnboardingNavEvent(skipped ? 'skip' : 'continue');
     const nextStep = this.path.takeNextStep(this.modifiers);
     // if there are no additional steps we've reached the end of the path
@@ -380,11 +410,151 @@ export class OnboardingV2Service extends Service {
       remote.session.defaultSession.flushStorageData();
       console.log('Set onboarding key successful.');
       this.recordOnboardingNavEvent(closedEarly ? 'closed' : 'completed');
+
+      // The YouTube flow skips the Themes step, so seed the editor with the
+      // default sources a new user would get by skipping Themes.
+      if (!closedEarly && this.isYouTubeFlow) {
+        this.seedDefaultCollection();
+      }
     }
     this.setShowOnboarding(false);
     this.windowsService.actions.hideModalLayer('main');
     this.setCurrentStep(null);
     this.path = null;
+  }
+
+  /**
+   * Demo: always start from a fresh scene collection with the default sources
+   * (Game Capture, Webcam, Alert Box). In production this should instead be
+   * gated on `sceneCollectionsService.newUserFirstLogin` so we never overwrite
+   * an existing user's collection.
+   */
+  private async seedDefaultCollection() {
+    const dualOutputEnabled = this.dualOutputService.views.dualOutputMode;
+
+    // Turn dual output off before creating the collection. Otherwise the new
+    // (empty) collection is auto-converted to dual output on collectionSwitched
+    // before we add the default sources, which marks it as a dual output
+    // collection and prevents the default sources from getting vertical partner
+    // nodes when we re-enable below.
+    if (dualOutputEnabled) {
+      this.dualOutputService.toggleDualOutputMode(false);
+    }
+
+    await this.sceneCollectionsService.create();
+    this.sceneCollectionsService.setupDefaultSources(true);
+
+    // Fit the game capture to the horizontal canvas.
+    const horizontalGame = this.scenesService.views.activeScene
+      ?.getItems()
+      .find(item => item.display !== 'vertical' && item.getSource()?.name === 'Game Capture');
+    horizontalGame?.fitToScreen('horizontal');
+
+    if (dualOutputEnabled) {
+      // Re-enable dual output to convert the now-populated single-output
+      // collection so the default sources get vertical partner nodes. The
+      // conversion runs in loading mode (async), so wait for collectionHandled
+      // before arranging the vertical canvas, otherwise the partner nodes won't
+      // exist yet.
+      const sub = this.dualOutputService.collectionHandled.subscribe(() => {
+        sub.unsubscribe();
+        this.arrangeVerticalDefaultLayout();
+        this.enableYouTubeOnBothDisplays();
+      });
+      this.dualOutputService.setDualOutputModeIfPossible(true, true);
+    }
+  }
+
+  /**
+   * Arrange the vertical partner nodes of the default sources into a sensible
+   * portrait layout (they're otherwise all stacked in the top-left corner).
+   * Game capture fills the top half, webcam the bottom half, and the alert box
+   * is centered as an overlay.
+   */
+  private arrangeVerticalDefaultLayout() {
+    const scene = this.scenesService.views.activeScene;
+    if (!scene) return;
+
+    const {
+      baseWidth: width,
+      baseHeight: height,
+    } = this.videoSettingsService.baseResolutions.vertical;
+
+    const verticalItems = scene.getItems().filter(item => item.display === 'vertical');
+    const findItem = (name: string) => verticalItems.find(item => item.getSource()?.name === name);
+
+    const game = findItem('Game Capture');
+    const webcam = findItem('Webcam');
+    const alertBox = findItem('Alert Box');
+
+    // Game capture: full width, centered in the top half.
+    if (game) {
+      game.fitToScreen('vertical');
+      const rect = game.getBoundingRect();
+      game.setTransform({
+        position: { x: (width - rect.width) / 2, y: (height / 2 - rect.height) / 2 },
+      });
+    }
+
+    // Webcam: full width, centered in the bottom half. A freshly added webcam
+    // source has no dimensions until its device initializes, so this waits for
+    // the size before positioning (see placeVerticalWebcamWhenReady).
+    if (webcam) {
+      this.placeVerticalWebcamWhenReady(webcam);
+    }
+
+    // Alert box: centered overlay.
+    if (alertBox) {
+      alertBox.centerOnScreen('vertical');
+    }
+  }
+
+  /**
+   * Position the vertical webcam in the bottom half of the canvas. A freshly
+   * created dshow/avcapture source reports its dimensions asynchronously, so
+   * fitToScreen would produce a degenerate transform if called too early. Wait
+   * for the source to report a size first.
+   */
+  private placeVerticalWebcamWhenReady(webcam: SceneItem) {
+    const place = () => {
+      const {
+        baseWidth: width,
+        baseHeight: height,
+      } = this.videoSettingsService.baseResolutions.vertical;
+      webcam.fitToScreen('vertical');
+      const rect = webcam.getBoundingRect();
+      webcam.setTransform({
+        position: { x: (width - rect.width) / 2, y: height / 2 + (height / 2 - rect.height) / 2 },
+      });
+    };
+
+    if (webcam.width && webcam.height) {
+      place();
+      return;
+    }
+
+    const sub = this.sourcesService.sourceUpdated.subscribe(source => {
+      if (source.sourceId === webcam.sourceId && source.width && source.height) {
+        sub.unsubscribe();
+        place();
+      }
+    });
+
+    // Stop waiting after 10s if the source never reports a size.
+    setTimeout(() => sub.unsubscribe(), 10 * 1000);
+  }
+
+  /**
+   * Pre-enable the YouTube destination on both the horizontal and vertical
+   * displays so the user doesn't have to configure it in the go live window.
+   */
+  private enableYouTubeOnBothDisplays() {
+    this.streamSettingsService.actions.setGoLiveSettings({
+      platforms: {
+        // Only enabled/display are persisted by setGoLiveSettings.
+        youtube: { enabled: true, display: 'both' },
+      },
+    } as any);
   }
 
   private recordOnboardingNavEvent(type: TOnboardingNavigationEvent) {

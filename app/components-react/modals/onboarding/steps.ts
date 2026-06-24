@@ -1,5 +1,6 @@
 export { Splash } from './Splash';
 export { YouTubeWelcome } from './YouTubeWelcome';
+export { YouTubeDualOutput } from './YouTubeDualOutput';
 export { Login } from './Login';
 export { RecordingLogin } from './RecordingLogin';
 export { ConnectMore } from './ConnectMore';

@@ -15,6 +15,7 @@ import { $i } from 'services/utils';
 const NO_BUTTON_STEPS = new Set([
   EOnboardingSteps.Splash,
   EOnboardingSteps.YouTubeWelcome,
+  EOnboardingSteps.YouTubeDualOutput,
   EOnboardingSteps.Login,
 ]);
 
@@ -26,6 +27,7 @@ export interface IOnboardingStepProps {
 const STEPS_MAP = {
   [EOnboardingSteps.Splash]: steps.Splash,
   [EOnboardingSteps.YouTubeWelcome]: steps.YouTubeWelcome,
+  [EOnboardingSteps.YouTubeDualOutput]: steps.YouTubeDualOutput,
   [EOnboardingSteps.Login]: steps.Login,
   [EOnboardingSteps.RecordingLogin]: steps.RecordingLogin,
   [EOnboardingSteps.ConnectMore]: steps.ConnectMore,
@@ -36,7 +38,7 @@ const STEPS_MAP = {
 };
 
 export default function Onboarding() {
-  const { OnboardingV2Service, RecordingModeService } = Services;
+  const { OnboardingV2Service } = Services;
 
   const [processing, setProcessing] = useState(false);
 
@@ -45,14 +47,10 @@ export default function Onboarding() {
   const currentStep = useRealmObjectProperty(OnboardingV2Service.state.currentStep);
   const { currentIndex, showOnboarding } = useRealmObject(OnboardingV2Service.state);
 
-  const continueFuncs: PartialRec<EOnboardingSteps, () => void> = useMemo(
-    () => ({
-      [EOnboardingSteps.Devices]: () => {
-        RecordingModeService.actions.addRecordingWebcam();
-      },
-    }),
-    [],
-  );
+  // Per-step actions to run when the user clicks Continue (before navigating).
+  // Note: the Devices webcam is added in OnboardingV2Service.takeStep so it can
+  // be skipped for the YouTube flow, which seeds its own sources.
+  const continueFuncs: PartialRec<EOnboardingSteps, () => void> = useMemo(() => ({}), []);
 
   useEffect(() => {
     OnboardingV2Service.actions.showOnboardingIfNecessary();
