@@ -15,7 +15,6 @@
   font-weight: 400;
   color: var(--paragraph);
   padding: 8px 12px;
-  border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 
@@ -37,6 +36,10 @@
 
 .table tbody td:last-child {
   border-radius: 0 8px 8px 0;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .mutedCell {

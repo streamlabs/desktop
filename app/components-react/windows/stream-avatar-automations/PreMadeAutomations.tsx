@@ -65,7 +65,7 @@ const PRE_MADE: PreMadeItem[] = [
     automation: {
       description: 'Enemy Eliminated',
       enabled: true,
-      conditions: [{ type: 'fortnite.player_eliminated' as ConditionType }],
+      conditions: [{ type: 'fortnite.elimination' as ConditionType }],
       actions: [
         { type: 'common.show_source', props: { source: { name: 'player-killed' } } },
         { type: 'co-host.comment' },
