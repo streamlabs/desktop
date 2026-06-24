@@ -4,6 +4,7 @@ import cx from 'classnames';
 import styles from './MigrationNotice.m.less';
 import { REPLAY_APP_NAME } from 'services/highlighter/constants';
 import { $t } from 'services/i18n';
+import Translate from 'components-react/shared/Translate';
 import SectionHeader from './SectionHeader';
 import { useInstallState, getStatusText } from './useInstallState';
 
@@ -103,21 +104,23 @@ export default function ModalInstallationFlow(props: IModalInstallationFlowProps
         <div className={styles.installContent}>
           <div className={styles.errorTitle}>{$t('Installation interrupted')}</div>
           <p className={styles.installSubtext}>
-            {$t("It seems the installation didn't finish.")}
-            <br />
-            {$t("Let's figure this out together and")}{' '}
-            <a
-              className={styles.supportLink}
-              href="https://support.streamlabs.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={e => {
-                e.preventDefault();
-                require('@electron/remote').shell.openExternal('https://support.streamlabs.com');
-              }}
+            <Translate
+              message={$t(
+                "It seems the installation didn't finish. Let's figure this out together and <support>contact support</support>",
+              )}
             >
-              {$t('contact support')}
-            </a>
+              <a
+                slot="support"
+                className={styles.supportLink}
+                href="https://support.streamlabs.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e: React.MouseEvent) => {
+                  e.preventDefault();
+                  require('@electron/remote').shell.openExternal('https://support.streamlabs.com');
+                }}
+              />
+            </Translate>
           </p>
         </div>
         <div className={styles.installActions}>

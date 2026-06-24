@@ -235,5 +235,6 @@
   "Downloading %{appName}...": "Downloading %{appName}...",
   "External Streamlabs recorder is running": "External Streamlabs recorder is running",
   "The %{appName} recorder is also capturing gameplay.": "The %{appName} recorder is also capturing gameplay.",
-  "Stop External Recording": "Stop External Recording"
+  "Stop External Recording": "Stop External Recording",
+  "It seems the installation didn't finish. Let's figure this out together and <support>contact support</support>": "It seems the installation didn't finish. Let's figure this out together and <support>contact support</support>"
 }
