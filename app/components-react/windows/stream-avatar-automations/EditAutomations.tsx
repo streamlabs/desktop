@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Switch, Tooltip, Empty, Spin, Popconfirm } from 'antd';
+import { Button, Switch, Tooltip, Spin, Popconfirm, Select, Dropdown, Menu, Tag } from 'antd';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
@@ -9,6 +9,7 @@ import { ActionRegistry } from 'services/stream-avatar/engine/actions';
 import { validateAutomation } from 'services/stream-avatar/engine/validation';
 import type { TAutomationExport } from 'services/stream-avatar/engine/automations';
 import AutomationEditor from './AutomationEditor';
+import PreMadeAutomations from './PreMadeAutomations';
 import styles from './EditAutomations.m.less';
 
 function conditionLabel(condition: { type: string } | null) {
@@ -34,6 +35,10 @@ function summarizeActions(actions: TAutomationExport['actions']) {
     .join(', ');
 }
 
+const GAME_FILTER_OPTIONS = Object.entries(GAME_NAMES)
+  .map(([id, name]) => ({ label: name, value: id }))
+  .sort((a, b) => a.label.localeCompare(b.label));
+
 export default function EditAutomations() {
   const { AutomationsService, AutomationsEngineService, ScenesService, SourcesService } = Services;
   const { automations, loading, scenes, sources } = useVuex(() => ({
@@ -45,13 +50,14 @@ export default function EditAutomations() {
 
   const [editingAutomation, setEditingAutomation] = useState<TAutomationExport | null>(null);
   const [creating, setCreating] = useState(false);
+  const [showPreMade, setShowPreMade] = useState(false);
+  const [filterGame, setFilterGame] = useState('');
   const [simulatingId, setSimulatingId] = useState<number | null>(null);
 
   useEffect(() => {
     AutomationsService.actions.fetchAll();
   }, []);
 
-  // Read queryParams reactively so changes re-trigger when window is reused.
   const { WindowsService } = Services;
   const { editAutomationId, createNew } = useVuex(() => ({
     editAutomationId: WindowsService.state.child.queryParams?.editAutomationId as
@@ -60,17 +66,14 @@ export default function EditAutomations() {
     createNew: !!WindowsService.state.child.queryParams?.createNew,
   }));
 
-  // True when launched from the AutomationsElement — close the window on done instead of returning to list.
   const launchedFromElement = !!editAutomationId || createNew;
 
-  // Jump straight into create flow when launched with createNew param.
   useEffect(() => {
     if (!createNew) return;
     setCreating(true);
     setEditingAutomation(null);
   }, [createNew]);
 
-  // Jump straight into the editor for a specific automation when launched with editAutomationId.
   useEffect(() => {
     if (!editAutomationId || automations.length === 0) return;
     const target = automations.find(a => a.id === editAutomationId);
@@ -81,8 +84,6 @@ export default function EditAutomations() {
     if (!automation.id || simulatingId !== null) return;
     setSimulatingId(automation.id);
     try {
-      // `.return` so the promise resolves only after the worker finishes the
-      // simulation (including its revert delay), keeping the spinner accurate.
       await AutomationsEngineService.actions.return.simulateAutomation(automation.id);
     } finally {
       setSimulatingId(null);
@@ -105,11 +106,13 @@ export default function EditAutomations() {
   function edit(automation: TAutomationExport) {
     setEditingAutomation(automation);
     setCreating(false);
+    setShowPreMade(false);
   }
 
   function create() {
     setEditingAutomation(null);
     setCreating(true);
+    setShowPreMade(false);
   }
 
   function closeEditor() {
@@ -118,34 +121,132 @@ export default function EditAutomations() {
     } else {
       setEditingAutomation(null);
       setCreating(false);
+      setShowPreMade(false);
     }
   }
 
-  if (creating || editingAutomation) {
-    return <AutomationEditor initial={editingAutomation ?? undefined} onClose={closeEditor} />;
+  function closeWindow() {
+    WindowsService.actions.closeChildWindow();
   }
 
+  if (creating || editingAutomation) {
+    return (
+      <AutomationEditor
+        initial={editingAutomation ?? undefined}
+        onClose={closeEditor}
+        onViewTemplates={() => {
+          closeEditor();
+          setShowPreMade(true);
+        }}
+      />
+    );
+  }
+
+  if (showPreMade) {
+    return <PreMadeAutomations onClose={() => setShowPreMade(false)} />;
+  }
+
+  const filtered = filterGame
+    ? automations.filter(a =>
+        a.conditions.some(
+          c => (Conditions[c.type as keyof typeof Conditions]?.group ?? '') === filterGame,
+        ),
+      )
+    : automations;
+
+  const addNewMenu = (
+    <Menu>
+      <Menu.Item key="new" onClick={create}>
+        {$t('Add New Automation')}
+      </Menu.Item>
+      <Menu.Item key="premade" onClick={() => setShowPreMade(true)}>
+        {$t('Select from Pre-made')}
+      </Menu.Item>
+    </Menu>
+  );
+
+  const footer = (
+    <>
+      <Button onClick={closeWindow}>{$t('Cancel')}</Button>
+      <Button type="primary" style={{ marginLeft: '8px' }} onClick={closeWindow}>
+        {$t('Complete')}
+      </Button>
+    </>
+  );
+
   return (
-    <ModalLayout scrollable onOk={create} okText={$t('New Automation')}>
+    <ModalLayout footer={footer} scrollable>
+      <div className={styles.pageHeader}>
+        <div className={styles.titleBlock}>
+          <h1 className={styles.pageTitle}>
+            {$t('Automations')}
+            <Tooltip
+              title={$t('Automatically trigger stream effects in response to gameplay events')}
+            >
+              <i className={`fa fa-info-circle ${styles.infoIcon}`} />
+            </Tooltip>
+          </h1>
+          <p className={styles.pageSubtitle}>
+            {$t('Automatically trigger on stream effects in response to gameplay events.')}
+          </p>
+        </div>
+
+        <div className={styles.controls}>
+          <span className={styles.filterLabel}>{$t('Filter by')}</span>
+          <Select
+            value={filterGame}
+            onChange={val => setFilterGame(val)}
+            options={[{ label: $t('All game automations'), value: '' }, ...GAME_FILTER_OPTIONS]}
+            style={{ width: 200 }}
+          />
+          <Dropdown overlay={addNewMenu} trigger={['click']}>
+            <Button type="primary" className={styles.addNewBtn}>
+              <i className="icon-add-circle" style={{ marginRight: 6 }} />
+              {$t('Add New')}
+            </Button>
+          </Dropdown>
+        </div>
+      </div>
+
       {loading && <div className={styles.message}>{$t('Loading...')}</div>}
 
       {!loading && automations.length === 0 && (
-        <Empty className={styles.empty} description={$t("You don't have any automations yet.")} />
+        <div className={styles.emptyCard}>
+          <div className={styles.emptyImage} />
+          <h3 className={styles.emptyTitle}>{$t("You don't have Automations set up yet.")}</h3>
+          <p className={styles.emptyDesc}>
+            {$t(
+              'Automatically trigger on stream effects including visual effects, transitions, sounds, agent commentary (and more) in response to gameplay events such as kills, wins, knocks, deaths, and much more. See supported games.',
+            )}
+          </p>
+          <div className={styles.emptyActions}>
+            <Button type="primary" onClick={create}>
+              {$t('Create Custom')}
+            </Button>
+            <Button type="primary" onClick={() => setShowPreMade(true)}>
+              {$t('Use Pre-made Automations')}
+            </Button>
+          </div>
+        </div>
       )}
 
-      {!loading && automations.length > 0 && (
+      {!loading && automations.length > 0 && filtered.length === 0 && (
+        <div className={styles.message}>{$t('No automations match the selected filter.')}</div>
+      )}
+
+      {!loading && filtered.length > 0 && (
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>{$t('Description')}</th>
-              <th>{$t('When')}</th>
-              <th>{$t('Do')}</th>
-              <th>{$t('Game')}</th>
+              <th>{$t('DESCRIPTION')}</th>
+              <th>{$t('TRIGGER')}</th>
+              <th>{$t('REACTION')}</th>
+              <th>{$t('GAME')}</th>
               <th className={styles.actionsCol} />
             </tr>
           </thead>
           <tbody>
-            {automations.map(automation => {
+            {filtered.map(automation => {
               const issues = validateAutomation(automation, { scenes, sources });
               return (
                 <tr key={automation.id}>
@@ -158,9 +259,9 @@ export default function EditAutomations() {
                     {automation.conditions.map((c, i) => {
                       const game = conditionGame(c);
                       return game ? (
-                        <span key={i} className={styles.badge}>
+                        <Tag key={i} className={styles.badge}>
                           {game}
-                        </span>
+                        </Tag>
                       ) : null;
                     })}
                   </td>

@@ -1,15 +1,16 @@
+// ── Table ─────────────────────────────────────────────
+
 .table {
   width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
 }
 
 .table th {
   text-align: left;
-  text-transform: uppercase;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 400;
-  letter-spacing: 0.4px;
   color: var(--paragraph);
   padding: 8px 12px;
   border-bottom: 1px solid var(--border);
@@ -23,16 +24,35 @@
   vertical-align: middle;
 }
 
-.table tbody tr:hover {
+.table tbody tr:hover td {
   background: var(--section);
 }
 
-.descCell {
-  font-weight: 600;
+.table th:first-child {
+  padding-left: 0;
+}
+
+.table tbody td:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.table tbody td:last-child {
+  border-radius: 0 8px 8px 0;
 }
 
 .mutedCell {
   color: var(--paragraph);
+}
+
+.badge {
+  background: #4f5e65 !important;
+  border-color: transparent !important;
+  border-radius: 6px !important;
+  color: #fff !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 3px 6px !important;
+  margin-right: 4px;
 }
 
 .actionsCol {
@@ -48,7 +68,7 @@
 
 .rowActions i {
   cursor: pointer;
-  color: var(--icon-active);
+  color: #91979a;
   font-size: 14px;
 }
 
@@ -71,24 +91,103 @@
   color: var(--icon-active);
 }
 
-.badge {
-  display: inline-block;
-  background: var(--section);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 2px 8px;
-  font-size: 11px;
-  margin-right: 6px;
-  white-space: nowrap;
-  color: var(--title);
-}
-
 .message {
   padding: 24px;
   color: var(--paragraph);
   text-align: center;
 }
 
-.empty {
-  margin-top: 48px;
+// ── Page header ───────────────────────────────────────
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.titleBlock {
+  flex: 1;
+  min-width: 0;
+}
+
+.pageTitle {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--title);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.infoIcon {
+  font-size: 14px;
+  color: var(--paragraph);
+  cursor: default;
+}
+
+.pageSubtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--paragraph);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.filterLabel {
+  font-size: 13px;
+  color: var(--paragraph);
+  white-space: nowrap;
+}
+
+.addNewBtn {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+// ── Empty state ───────────────────────────────────────
+
+.emptyCard {
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 40px 24px;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.emptyImage {
+  width: 260px;
+  height: 160px;
+  background: var(--section);
+  border-radius: 8px;
+  margin: 0 auto 24px;
+}
+
+.emptyTitle {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--title);
+}
+
+.emptyDesc {
+  margin: 0 auto 24px;
+  max-width: 480px;
+  font-size: 13px;
+  color: var(--paragraph);
+  line-height: 1.5;
+}
+
+.emptyActions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
 }

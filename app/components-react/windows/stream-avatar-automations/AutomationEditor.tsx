@@ -1,5 +1,6 @@
 import React, { CSSProperties, useEffect, useState } from 'react';
-import { Select, Input } from 'antd';
+import { Button, Select, Input, Slider } from 'antd';
+import { Properties } from 'services/stream-avatar/engine/properties';
 import { ReactSortable } from 'react-sortablejs';
 import uuid from 'uuid/v4';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
@@ -26,8 +27,6 @@ const errorTextStyle: CSSProperties = {
   fontSize: '12px',
 };
 
-// Drag-and-drop reordering needs a stable key per row that survives reorders and
-// inserts (using the array index would make React/Sortable lose track on move).
 interface ActionRow {
   id: string;
   action: ExportedAction;
@@ -37,8 +36,6 @@ function makeRow(action: ExportedAction): ActionRow {
   return { id: uuid(), action: withActionDefaults(action) };
 }
 
-// Height of a single control line, so the grip and +/- icons align with the
-// action's primary input regardless of any extra rows (checkbox, slider) below.
 const CONTROL_HEIGHT = '32px';
 
 const dragHandleStyle: CSSProperties = {
@@ -53,25 +50,13 @@ const gripCellStyle: CSSProperties = {
   height: CONTROL_HEIGHT,
 };
 
-const actionsCellStyle: CSSProperties = {
+const trashCellStyle: CSSProperties = {
   display: 'flex',
-  justifyContent: 'flex-end',
   alignItems: 'center',
-  gap: '10px',
   height: CONTROL_HEIGHT,
-};
-
-const iconButtonStyle: CSSProperties = {
   cursor: 'pointer',
   color: 'var(--icon-active)',
-  fontSize: '16px',
-};
-
-const labelStyle: CSSProperties = {
-  display: 'block',
-  marginBottom: '4px',
-  fontWeight: 600,
-  color: 'var(--title)',
+  fontSize: '14px',
 };
 
 const ACTION_OPTIONS = Object.entries(ActionRegistry).map(([type, def]) => ({
@@ -93,24 +78,20 @@ function getConditionOptions(gameId: string) {
 interface ActionEditorProps {
   action: ExportedAction;
   index: number;
-  isFirst: boolean;
   scenes: { id: string; name: string }[];
   sources: { id: string; name: string }[];
   errors?: Record<string, string>;
   onChange: (index: number, action: ExportedAction) => void;
-  onInsert: (index: number) => void;
   onRemove: (index: number) => void;
 }
 
 function ActionEditor({
   action,
   index,
-  isFirst,
   scenes,
   sources,
   errors,
   onChange,
-  onInsert,
   onRemove,
 }: ActionEditorProps) {
   function setType(type: ActionType) {
@@ -131,8 +112,6 @@ function ActionEditor({
   const sourceName = props.source?.name ?? '';
   const sourceMissing = !!sourceName && !sources.some(s => s.name === sourceName);
 
-  // The action's inline control (column 3), stacked vertically when it has more
-  // than one row (e.g. a source select plus its checkbox).
   function renderControl() {
     switch (action.type) {
       case 'common.switch_to_scene': {
@@ -259,11 +238,11 @@ function ActionEditor({
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: 'auto minmax(0, 1fr) minmax(0, 1fr) auto',
+        gridTemplateColumns: 'auto 1.2fr minmax(0, 1fr) auto',
         gap: '12px',
         alignItems: 'start',
         padding: '12px 0',
-        borderTop: isFirst ? 'none' : '1px solid var(--border)',
+        borderBottom: '1px solid var(--border)',
       }}
     >
       <div style={gripCellStyle}>
@@ -275,9 +254,9 @@ function ActionEditor({
       </div>
 
       <Select
-        value={action.type}
+        value={action.type || undefined}
         onChange={val => setType(val as ActionType)}
-        style={{ width: '100%' }}
+        placeholder={$t('Select an Action...')}
         options={ACTION_OPTIONS}
       />
 
@@ -285,23 +264,8 @@ function ActionEditor({
         {renderControl()}
       </div>
 
-      <div style={actionsCellStyle}>
-        <i
-          className="icon-add"
-          style={iconButtonStyle}
-          title={$t('Insert a new action after this one')}
-          onClick={() => onInsert(index)}
-        />
-        {isFirst ? (
-          <span style={{ width: '16px', display: 'inline-block' }} />
-        ) : (
-          <i
-            className="icon-subtract"
-            style={iconButtonStyle}
-            title={$t('Remove this action')}
-            onClick={() => onRemove(index)}
-          />
-        )}
+      <div style={trashCellStyle} onClick={() => onRemove(index)} title={$t('Remove reaction')}>
+        <i className="icon-trash" />
       </div>
     </div>
   );
@@ -310,9 +274,10 @@ function ActionEditor({
 interface Props {
   initial?: TAutomationExport;
   onClose: () => void;
+  onViewTemplates?: () => void;
 }
 
-export default function AutomationEditor({ initial, onClose }: Props) {
+export default function AutomationEditor({ initial, onClose, onViewTemplates }: Props) {
   const { AutomationsService, ScenesService, SourcesService } = Services;
 
   const { scenes, sources } = useVuex(() => ({
@@ -325,35 +290,34 @@ export default function AutomationEditor({ initial, onClose }: Props) {
     if (initial?.conditions?.[0]) {
       return (initial.conditions[0].type as string).split('.')[0];
     }
-    return GAME_OPTIONS[0].value;
+    return '';
   });
   const [conditionType, setConditionType] = useState<ConditionType | ''>(() => {
     return (initial?.conditions?.[0]?.type as ConditionType) ?? '';
   });
+  const [conditionProps, setConditionProps] = useState<Record<string, unknown>>(() => {
+    return (initial?.conditions?.[0]?.props as Record<string, unknown>) ?? {};
+  });
   const [rows, setRows] = useState<ActionRow[]>(
     () =>
       (initial?.actions as ExportedAction[])?.filter(a => a?.type).map(makeRow) ?? [
-        makeRow({ type: 'common.save_replay' }),
+        { id: uuid(), action: { type: '' as ActionType } },
       ],
   );
-  // `rows` carries the stable drag keys; `actions` is the plain ordered list the
-  // validator and save payload consume.
-  const actions = rows.map(r => r.action);
-  // Enable/disable is managed from the list, not here; new automations default
-  // to enabled and edits preserve the existing value.
+  // Filter rows without a selected type — they're unfinished UI placeholders.
+  const actions = rows.filter(r => r.action.type).map(r => r.action);
   const enabled = initial?.enabled ?? true;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  // Required-field errors stay hidden on a fresh form until the first save
-  // attempt; existing automations show them immediately so a deleted scene/
-  // source surfaces the moment the editor opens.
   const [attempted, setAttempted] = useState(!!initial);
 
   const conditionOptions = getConditionOptions(selectedGame);
 
+  const conditionPropsForSave = Object.keys(conditionProps).length > 0 ? conditionProps : undefined;
+
   const draft: TAutomationExport = {
     description,
-    conditions: conditionType ? [{ type: conditionType }] : [],
+    conditions: conditionType ? [{ type: conditionType, props: conditionPropsForSave as any }] : [],
     actions,
     enabled,
   };
@@ -365,11 +329,9 @@ export default function AutomationEditor({ initial, onClose }: Props) {
   const conditionError = attempted
     ? issues.find(i => i.scope === 'conditions')?.message
     : undefined;
-  // "Add at least one action" has no actionIndex; show it once a save is tried.
   const actionsError = attempted
     ? issues.find(i => i.scope === 'action' && i.actionIndex === undefined)?.message
     : undefined;
-  // Per-action field errors render live so unavailable selections are obvious.
   const actionErrors: Record<number, Record<string, string>> = {};
   issues.forEach(i => {
     if (i.scope === 'action' && i.actionIndex !== undefined && i.field) {
@@ -378,14 +340,21 @@ export default function AutomationEditor({ initial, onClose }: Props) {
     }
   });
 
-  useEffect(() => {
-    // Reset condition selection when game changes
-    if (conditionOptions.length > 0) {
-      const current = conditionOptions.find(o => o.value === conditionType);
-      if (!current) setConditionType(conditionOptions[0].value);
-    } else {
-      setConditionType('');
+  function applyConditionType(type: ConditionType | '') {
+    setConditionType(type);
+    const def = type ? Conditions[type] : undefined;
+    const defaults: Record<string, unknown> = {};
+    if (def?.properties) {
+      for (const [key, prop] of Object.entries(def.properties)) {
+        if ('default' in prop.config) defaults[key] = prop.config.default;
+      }
     }
+    setConditionProps(defaults);
+  }
+
+  useEffect(() => {
+    const current = conditionOptions.find(o => o.value === conditionType);
+    if (!current) applyConditionType('');
   }, [selectedGame]);
 
   function handleActionChange(index: number, action: ExportedAction) {
@@ -397,17 +366,7 @@ export default function AutomationEditor({ initial, onClose }: Props) {
   }
 
   function handleAddAction() {
-    setRows(prev => [...prev, makeRow({ type: 'common.save_replay' })]);
-  }
-
-  // Insert a new action directly after `afterIndex` so steps can be added
-  // between existing ones, not just appended.
-  function handleInsertAction(afterIndex: number) {
-    setRows(prev => {
-      const next = [...prev];
-      next.splice(afterIndex + 1, 0, makeRow({ type: 'common.save_replay' }));
-      return next;
-    });
+    setRows(prev => [...prev, { id: uuid(), action: { type: '' as ActionType } }]);
   }
 
   async function handleSave() {
@@ -422,7 +381,9 @@ export default function AutomationEditor({ initial, onClose }: Props) {
     try {
       const payload: Omit<TAutomationExport, 'id'> = {
         description: description.trim(),
-        conditions: conditionType ? [{ type: conditionType }] : [],
+        conditions: conditionType
+          ? [{ type: conditionType, props: conditionPropsForSave as any }]
+          : [],
         actions,
         enabled,
       };
@@ -440,103 +401,190 @@ export default function AutomationEditor({ initial, onClose }: Props) {
     }
   }
 
-  const getButtonText = () => {
-    if (saving) return $t('Saving...');
-    if (initial) return $t('Save Changes');
-    return $t('Create Automation');
+  const sectionLabelStyle: CSSProperties = {
+    display: 'block',
+    marginBottom: 8,
+    fontWeight: 700,
+    fontSize: 15,
+    color: 'var(--title)',
   };
+
+  const sectionSubtitleStyle: CSSProperties = {
+    margin: 0,
+    fontSize: 12,
+    color: 'var(--paragraph)',
+  };
+
+  // ponytail: var avoids no-nested-ternary lint rule
+  let saveLabel = initial ? $t('Save Automation') : $t('Create Automation');
+  if (saving) saveLabel = $t('Saving...');
 
   const footer = (
     <>
-      <button className="button button--default" onClick={onClose} disabled={saving}>
-        {$t('Back')}
-      </button>
-      <button
-        className="button button--action"
-        style={{ marginLeft: '8px' }}
+      <Button onClick={onClose} disabled={saving} style={{ fontWeight: 500 }}>
+        {$t('Cancel')}
+      </Button>
+      <Button
+        type="primary"
+        style={{ marginLeft: '8px', fontWeight: 600 }}
         onClick={handleSave}
         disabled={saving}
       >
-        {getButtonText()}
-      </button>
+        {saveLabel}
+      </Button>
     </>
   );
 
   return (
     <ModalLayout scrollable footer={footer}>
-      <h2 style={{ marginTop: 0, color: 'var(--title)' }}>
-        {initial ? $t('Edit Automation') : $t('New Automation')}
-      </h2>
+      {/* Header */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 20,
+        }}
+      >
+        <h2 style={{ margin: 0, color: 'var(--title)', fontWeight: 700 }}>
+          {initial ? $t('Edit Automation') : $t('Add New Automation')}
+        </h2>
+        {onViewTemplates && (
+          <Button
+            type="link"
+            onClick={onViewTemplates}
+            style={{
+              color: 'var(--paragraph)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <i className="fa fa-eye" />
+            {$t('View Automation Templates')}
+          </Button>
+        )}
+      </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
         {/* Description */}
-        <TextInput
-          label={$t('Description')}
-          value={description}
-          onChange={val => setDescription(val)}
-          placeholder={$t('e.g. Victory Royale reaction')}
-          validateStatus={descriptionError ? 'error' : undefined}
-          help={descriptionError}
-        />
+        <div style={{ marginBottom: 24 }}>
+          <label
+            style={{
+              display: 'block',
+              marginBottom: 8,
+              fontSize: 15,
+              color: 'var(--title)',
+              fontWeight: 700,
+            }}
+          >
+            {$t('Description')}
+          </label>
+          <TextInput
+            nowrap
+            value={description}
+            onChange={val => setDescription(val)}
+            placeholder={$t('e.g. Victory Royale reaction')}
+          />
+          {descriptionError && <p style={errorTextStyle}>{descriptionError}</p>}
+        </div>
 
-        {/* Condition */}
-        <div>
-          <label style={labelStyle}>{$t('When (Condition)')}</label>
-          <div style={{ display: 'flex', gap: '8px' }}>
+        {/* Trigger */}
+        <div style={{ marginBottom: 24 }}>
+          <label style={sectionLabelStyle}>{$t('Add Trigger')}</label>
+          <p style={{ ...sectionSubtitleStyle, marginBottom: 16 }}>
+            {$t('Set the condition that activates this automation')}
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
             <Select
-              value={selectedGame}
+              value={selectedGame || undefined}
               onChange={val => setSelectedGame(val)}
-              style={{ flex: '0 0 auto' }}
+              placeholder={$t('Select a Game')}
               options={GAME_OPTIONS}
               dropdownMatchSelectWidth={false}
             />
             <Select
               value={conditionType || undefined}
-              onChange={val => setConditionType(val as ConditionType)}
-              style={{ flex: 1, minWidth: 0 }}
-              placeholder={
-                conditionOptions.length === 0 ? $t('No conditions available') : undefined
-              }
+              onChange={val => applyConditionType(val as ConditionType)}
+              placeholder={$t('Select a Condition')}
               options={conditionOptions}
             />
           </div>
           {conditionError && <p style={errorTextStyle}>{conditionError}</p>}
+
+          {/* Condition-specific property inputs (e.g. elimination_count range) */}
+          {conditionType &&
+            (() => {
+              const def = Conditions[conditionType as ConditionType];
+              if (!def?.properties) return null;
+              return Object.entries(def.properties).map(([key, prop]) => {
+                if (prop instanceof Properties.SliderRange) {
+                  const { min, max, step, label } = prop.config;
+                  const value = (conditionProps[key] as [number, number]) ?? prop.config.default;
+                  return (
+                    <div key={key} style={{ marginTop: 12 }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          marginBottom: 4,
+                          fontSize: 12,
+                        }}
+                      >
+                        <span style={{ color: 'var(--title)', fontWeight: 600 }}>{label}</span>
+                        <span style={{ color: 'var(--paragraph)' }}>
+                          {value[0]} – {value[1]}
+                        </span>
+                      </div>
+                      <Slider
+                        range
+                        min={min}
+                        max={max}
+                        step={step}
+                        value={value}
+                        onChange={val => setConditionProps(prev => ({ ...prev, [key]: val }))}
+                      />
+                    </div>
+                  );
+                }
+                return null;
+              });
+            })()}
         </div>
 
-        {/* Actions */}
+        {/* Reactions */}
         <div>
-          <label style={{ ...labelStyle, marginBottom: '8px' }}>{$t('Do (Actions)')}</label>
+          <label style={sectionLabelStyle}>{$t('Add Reaction(s)')}</label>
+          <p style={{ ...sectionSubtitleStyle, marginBottom: 16 }}>
+            {$t('Add action(s) to perform after the trigger')}
+          </p>
           <ReactSortable<ActionRow>
             list={rows}
             setList={setRows}
             handle=".sa-action-drag-handle"
             animation={200}
             tag="div"
+            style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
           >
             {rows.map((row, i) => (
               <div key={row.id}>
                 <ActionEditor
                   action={row.action}
                   index={i}
-                  isFirst={i === 0}
                   scenes={scenes}
                   sources={sources}
                   errors={actionErrors[i]}
                   onChange={handleActionChange}
-                  onInsert={handleInsertAction}
                   onRemove={handleActionRemove}
                 />
               </div>
             ))}
           </ReactSortable>
           {actionsError && <p style={errorTextStyle}>{actionsError}</p>}
-          <button
-            className="button button--default"
-            onClick={handleAddAction}
-            style={{ fontSize: '12px' }}
-          >
-            {$t('+ Add Action')}
-          </button>
+          <Button block onClick={handleAddAction} style={{ marginTop: 16, fontWeight: 700 }}>
+            <i className="icon-add-circle" style={{ marginRight: 6 }} />
+            {$t('Add Reaction')}
+          </Button>
         </div>
 
         {error && <p style={{ color: 'var(--red)', margin: 0 }}>{error}</p>}
