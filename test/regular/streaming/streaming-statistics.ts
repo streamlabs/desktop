@@ -1,7 +1,7 @@
 import test from 'ava';
 import { calculateStreamingPerformanceStats } from '../../../app/services/streaming/streaming-statistics';
 
-test('streaming stats use the current live instance count for bitrate averaging', t => {
+test('Streaming stats use the current live instance count for bitrate averaging', t => {
   const stats = calculateStreamingPerformanceStats([
     {
       droppedFrames: 0,
@@ -14,7 +14,7 @@ test('streaming stats use the current live instance count for bitrate averaging'
   t.is(stats.kbitsPerSec, 6000);
 });
 
-test('streaming stats average bitrate across active regular streaming instances without display stats', t => {
+test('Streaming stats average bitrate across active regular streaming instances without display stats', t => {
   const stats = calculateStreamingPerformanceStats([
     {
       display: 'horizontal',
@@ -40,7 +40,7 @@ test('streaming stats average bitrate across active regular streaming instances 
   });
 });
 
-test('streaming stats keep enhanced broadcasting aggregate bitrate', t => {
+test('Streaming stats keep enhanced broadcasting aggregate bitrate', t => {
   const stats = calculateStreamingPerformanceStats([
     {
       droppedFrames: 0,
@@ -53,7 +53,7 @@ test('streaming stats keep enhanced broadcasting aggregate bitrate', t => {
   t.is(stats.kbitsPerSec, 13500);
 });
 
-test('streaming stats report regular streaming bitrate by display', t => {
+test('Streaming stats report regular streaming bitrate by display', t => {
   const stats = calculateStreamingPerformanceStats(
     [
       {
@@ -80,7 +80,7 @@ test('streaming stats report regular streaming bitrate by display', t => {
   });
 });
 
-test('streaming stats report enhanced broadcasting bitrate by display', t => {
+test('Streaming stats report enhanced broadcasting bitrate by display', t => {
   const stats = calculateStreamingPerformanceStats(
     [
       {
