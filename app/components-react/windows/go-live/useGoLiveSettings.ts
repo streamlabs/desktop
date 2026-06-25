@@ -28,7 +28,7 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
     ...this.savedSettings,
   };
 
-  isUpdating: boolean;
+  isUpdating: boolean = false;
 
   get settings(): IGoLiveSettingsState {
     return this.state;
@@ -142,13 +142,20 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
   }
 
   /**
+   * Enable/Disable Live Output Editing
+   */
+  toggleLiveOutputEditing(status: boolean) {
+    this.updateSettings({ liveOutputEditing: status });
+  }
+
+  /**
    * Set a common field like title or description for all eligible platforms
    **/
   updateCommonFields(
     fields: { title: string; description: string },
     shouldChangeAllPlatforms = false,
   ) {
-    Object.keys(fields).forEach((fieldName: TCommonFieldName) => {
+    (Object.keys(fields) as TCommonFieldName[]).forEach((fieldName: TCommonFieldName) => {
       const view = this.getView();
       const value = fields[fieldName];
       const platforms = shouldChangeAllPlatforms
@@ -227,14 +234,16 @@ export class GoLiveSettingsModule {
     };
 
     if (this.state.isUpdateMode && !view.isMidStreamMode) {
-      Object.keys(settings.platforms).forEach((platform: TPlatform) => {
-        // In multi-platform mode, allow deleting all platform settings, including primary
-        if (!isMultiplatformMode && this.state.isPrimaryPlatform(platform)) {
-          return;
-        }
+      (Object.keys(settings.platforms) as (keyof typeof settings.platforms)[]).forEach(
+        (platform: TPlatform) => {
+          // In multi-platform mode, allow deleting all platform settings, including primary
+          if (!isMultiplatformMode && this.state.isPrimaryPlatform(platform)) {
+            return;
+          }
 
-        delete settings.platforms[platform];
-      });
+          delete settings.platforms[platform];
+        },
+      );
     }
 
     // prefill the form if `prepopulateOptions` provided
@@ -417,6 +426,11 @@ export class GoLiveSettingsModule {
 
   setStreamShift(status: boolean) {
     this.state.toggleStreamShift(status);
+    this.save(this.state.settings);
+  }
+
+  setLiveOutputEditing(status: boolean) {
+    this.state.toggleLiveOutputEditing(status);
     this.save(this.state.settings);
   }
 

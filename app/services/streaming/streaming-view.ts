@@ -230,7 +230,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns a list of enabled for streaming platforms from the given settings object
    */
   getEnabledPlatforms(platforms: IStreamSettings['platforms']): TPlatform[] {
-    return Object.keys(platforms).filter(
+    return (Object.keys(platforms) as TPlatform[]).filter(
       (platform: TPlatform) =>
         this.linkedPlatforms.includes(platform) && platforms[platform]?.enabled,
     ) as TPlatform[];
@@ -282,11 +282,28 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   /**
+   * Returns if the user can edit live outputs mid-stream.
+   */
+  get isLiveOutputEditing(): boolean {
+    return this.settings.liveOutputEditing ?? false;
+  }
+
+  /**
    * Returns if the restream service should be set up when going live
    */
   get shouldSetupRestream(): boolean {
     // The stream switcher uses the restream service
     if (this.isStreamShiftMode) return true;
+
+    // Live output editing uses the restream service
+    // TODO: Comment in when implemented
+    // if (this.isLiveOutputEditing) return true;
+
+    // TODO: Swap with the above when implemented
+    if (this.isLiveOutputEditing) {
+      console.log('LIVE OUTPUT EDITING ENABLED');
+      return false;
+    }
 
     // In dual output mode, if a display has more than one target that display uses the restream service
     const restreamDualOutputMode =
