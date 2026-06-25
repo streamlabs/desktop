@@ -15009,7 +15009,7 @@ __metadata:
     typedoc: 0.24.8
     typescript: 5.6.2
     urijs: 1.19.11
-    uuid: ^3.0.1
+    uuid: ^11.0.0
     v-selectpage: 2.0.2
     v-tooltip: v2.1.3
     vee-validate: 2.2.0
@@ -16636,7 +16636,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:^3.0.1, uuid@npm:^3.4.0":
+"uuid@npm:^11.0.0":
+  version: 11.1.1
+  resolution: "uuid@npm:11.1.1"
+  bin:
+    uuid: dist/esm/bin/uuid
+  checksum: 1c1ea6ffc9fd02a343d77151734af65644ebf5bac733b59bdab85859cf793cf03ac8d60909fa19dcd2272e154b20734c464b667afd8bdac02b4da5e206079469
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^3.4.0":
   version: 3.4.0
   resolution: "uuid@npm:3.4.0"
   bin:

@@ -104,7 +104,7 @@
     "sharp": "^0.33.5",
     "socket.io-client": "2.3.1",
     "tasklist": "^3.1.1",
-    "uuid": "^3.0.1",
+    "uuid": "^11.0.0",
     "vuejs-datepicker": "^1.6.2"
   },
   "devDependencies": {
