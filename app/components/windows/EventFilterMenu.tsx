@@ -47,10 +47,6 @@ export default class EventFilterMenu extends TsxComponent<{}> {
     return this.userService.platform.type === 'twitch';
   }
 
-  get isTrovo() {
-    return this.userService.platform.type === 'trovo';
-  }
-
   updateFilter(filter: string, value: boolean | number) {
     this.recentEventsService.updateFilterPreference(filter, value);
   }
@@ -143,7 +139,7 @@ export default class EventFilterMenu extends TsxComponent<{}> {
       <ModalLayout customControls showControls={false}>
         <div slot="content" class={styles.flexColumn}>
           {this.renderGeneralFilters}
-          {(this.isTwitch || this.isTrovo) && (
+          {this.isTwitch && (
             <div class={styles.subFilters}>
               {this.renderSubFilters}
               {this.renderResubFilters}

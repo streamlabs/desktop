@@ -31,7 +31,6 @@ export function PrimaryPlatformSelect() {
     'patreon',
     'facebook',
     'twitter',
-    'trovo',
   ];
 
   // Note: Patreon is intentionally left out of the platform options since it cannot
@@ -61,11 +60,6 @@ export function PrimaryPlatformSelect() {
       value: 'facebook',
       label: 'Facebook',
       image: <PlatformLogo platform="facebook" />,
-    },
-    {
-      value: 'trovo',
-      label: 'Trovo',
-      image: <PlatformLogo platform="trovo" size={14} />,
     },
     {
       value: 'twitter',
@@ -216,7 +210,7 @@ export function PrimaryPlatformSelect() {
                 <PlatformLogo
                   platform={platform}
                   size="medium"
-                  color={['tiktok', 'trovo'].includes(platform) ? 'black' : 'white'}
+                  color={platform === 'tiktok' ? 'black' : 'white'}
                 />
               )}
             </button>

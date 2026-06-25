@@ -33,7 +33,7 @@ import { sleep } from '../../helpers/sleep';
 useWebdriver();
 
 async function enableAllPlatforms() {
-  for (const platform of ['twitch', 'youtube', 'trovo']) {
+  for (const platform of ['twitch', 'youtube']) {
     await fillForm({ [platform]: true });
     await sleep(500);
     await waitForSettingsWindowLoaded();
@@ -76,7 +76,6 @@ async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean)
       title: 'Test stream',
       description: 'Test stream description',
       twitchGame: 'Fortnite',
-      trovoGame: 'Doom',
       streamShift: true,
     });
     await goLiveWithMultistream();
@@ -161,7 +160,6 @@ test(
       title: 'Test stream',
       description: 'Test stream description',
       twitchGame: 'Fortnite',
-      trovoGame: 'Doom',
       primaryChat: 'YouTube',
     });
 
@@ -204,15 +202,6 @@ test(
     };
     await youtubeForm.fillForm(youtubeSettings);
     await youtubeForm.assertFormContains(youtubeSettings);
-
-    const trovoForm = useForm('trovo-settings');
-    const trovoSettings = {
-      customEnabled: true,
-      title: 'trovo title',
-      trovoGame: 'Doom',
-    };
-    await trovoForm.fillForm(trovoSettings);
-    await trovoForm.assertFormContains(trovoSettings);
 
     await goLiveWithMultistream();
     await stopStream();
