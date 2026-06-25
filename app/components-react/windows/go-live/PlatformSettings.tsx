@@ -38,10 +38,12 @@ export default function PlatformSettings() {
     isStreamShiftMode,
     isStreamShiftDisabled,
     isPatreonEnabled,
+    isLiveOutputEditingEnabled,
     enabledPlatformsCount,
     isMidStreamMode,
     isPrime,
     setStreamShift,
+    setLiveOutputEditingEnabled,
     canEditLiveOutputs,
   } = useGoLiveSettings().extend(settings => ({
     highlighterService: inject(HighlighterService),
@@ -103,7 +105,7 @@ export default function PlatformSettings() {
     return '';
   }, [isPrime, isPatreonEnabled, isDualOutputMode]);
 
-  const disableStreamShiftTooltip = useMemo(() => isPrime && isStreamShiftDisabled, [
+  const disableStreamShiftTooltip = useMemo(() => isPrime && !isStreamShiftDisabled, [
     isPrime,
     isStreamShiftDisabled,
   ]);
@@ -144,8 +146,8 @@ export default function PlatformSettings() {
           <h2>{$t('Live Settings')}</h2>
           <div className="flex__horizontal margin">
             <SwitcherCard
-              onClick={() => setStreamShift(!isStreamShiftMode)}
-              value={isStreamShiftMode}
+              onClick={() => setLiveOutputEditingEnabled(!isLiveOutputEditingEnabled)}
+              value={isLiveOutputEditingEnabled}
               title={
                 <>
                   {$t('Live output editing')}
@@ -157,7 +159,7 @@ export default function PlatformSettings() {
               icon="icon-output"
               disabled={!isPrime}
               tooltip={liveOutputTooltip}
-              tooltipDisabled={!isPrime}
+              tooltipDisabled={isPrime}
             />
             <SwitcherCard
               onClick={() => setStreamShift(!isStreamShiftMode)}
@@ -173,7 +175,7 @@ export default function PlatformSettings() {
               icon="icon-repeat-2"
               disabled={!isPrime}
               tooltip={streamShiftTooltip}
-              tooltipDisabled={!disableStreamShiftTooltip}
+              tooltipDisabled={disableStreamShiftTooltip}
             />
           </div>
         </>

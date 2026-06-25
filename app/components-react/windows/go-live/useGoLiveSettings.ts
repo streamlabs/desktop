@@ -429,7 +429,7 @@ export class GoLiveSettingsModule {
     this.save(this.state.settings);
   }
 
-  setLiveOutputEditing(status: boolean) {
+  setLiveOutputEditingEnabled(status: boolean) {
     this.state.toggleLiveOutputEditing(status);
     this.save(this.state.settings);
   }

@@ -63,11 +63,11 @@
   background: var(--card-target);
   transition: transform 0.05s;
   cursor: pointer;
-  margin-bottom: 15px;
   padding: 8px 10px;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
+  width: 100%;
 
   .destination-info {
     display: flex;
@@ -114,7 +114,11 @@
   padding-bottom: 55px;
 }
 
-.platform-switcher:last-child {
+.switcher-tooltip {
+  margin-bottom: 15px;
+}
+
+.switcher-tooltip:last-of-type {
   margin-bottom: 0px;
 }
 

@@ -18,11 +18,7 @@ import { useDebounce } from '../../hooks';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import DisplaySelector from 'components-react/shared/DisplaySelector';
 import { message } from 'antd';
-import {
-  SwitcherCard,
-  ISwitcherCardHandle,
-  ISwitcherCardHandle as IDestinationSwitcherHandle,
-} from './SwitcherCard';
+import { SwitcherCard, ISwitcherCardHandle } from './SwitcherCard';
 import AnimatedWrapper from 'components-react/shared/AnimatedWrapper';
 
 /**
@@ -311,6 +307,7 @@ const DestinationSwitcher = memo(
         title={title}
         description={description}
         className={cx({ [styles.disabled]: disabled })}
+        tooltipClassName={styles.switcherTooltip}
       >
         {/* DISPLAY TOGGLES */}
         <AnimatedWrapper

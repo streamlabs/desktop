@@ -32,7 +32,23 @@ interface ISwitcherCardProps {
   tooltipDisabled?: boolean;
   className?: string;
   switchClassName?: string;
+  tooltipClassName?: string;
   disabled?: boolean;
+}
+
+interface ISwitcherCardContentsProps {
+  className?: string;
+  switchClassName?: string;
+  onClick: (e: MouseEvent) => void;
+  onTransitionEnd: (e: React.TransitionEvent<HTMLDivElement>) => void;
+  value: boolean;
+  name: string;
+  disabled?: boolean;
+  label?: string;
+  title: string | ReactNode;
+  icon?: string | ReactNode;
+  description: string;
+  children?: ReactNode;
 }
 
 /**
@@ -89,39 +105,60 @@ export const SwitcherCard = forwardRef<ISwitcherCardHandle, ISwitcherCardProps>(
     <Tooltip
       title={p.tooltip ?? null}
       placement="left"
-      overlayClassName={styles.switcherTooltip}
+      className={p.tooltipClassName}
+      overlayClassName={cx(styles.switcherTooltip)}
       disabled={p.tooltipDisabled}
     >
-      <div className={cx(styles.platformSwitcher, p.className)} onClick={handleClick}>
-        <div className={styles.destinationInfo}>
-          <div className={styles.colInput} onTransitionEnd={handleTransitionEnd}>
-            <SwitchInput
-              value={displayValue}
-              name={p.name}
-              disabled={p.disabled}
-              label={p.label ?? p.title}
-              nolabel
-              className={p.switchClassName}
-              skipWrapperAttrs={true}
-            />
-          </div>
-
-          <div className={styles.colInfo}>
-            <div className={styles.colAccount}>
-              {/* PLATFORM LOGO AND NAME*/}
-              {typeof p.icon === 'string' ? (
-                <i className={p.icon} style={{ color: 'var(--title)', marginRight: '8px' }} />
-              ) : (
-                p.icon
-              )}
-              {/* PLATFORM HANDLE */}
-              <div className={styles.platformName}>{p.title}</div>
-            </div>
-            <div className={styles.platformHandle}>{p.description}</div>
-            {p?.children}
-          </div>
-        </div>
-      </div>
+      <SwitcherCardContents
+        className={p.className}
+        switchClassName={p.switchClassName}
+        onClick={handleClick}
+        onTransitionEnd={handleTransitionEnd}
+        value={displayValue}
+        name={p.name}
+        disabled={p.disabled}
+        label={p.label}
+        title={p.title}
+        icon={p.icon}
+        description={p.description}
+      >
+        {p.children}
+      </SwitcherCardContents>
     </Tooltip>
   );
 });
+
+function SwitcherCardContents(p: ISwitcherCardContentsProps) {
+  return (
+    <div className={cx(styles.platformSwitcher, p.className)} onClick={p.onClick}>
+      <div className={styles.destinationInfo}>
+        <div className={styles.colInput} onTransitionEnd={p.onTransitionEnd}>
+          <SwitchInput
+            value={p.value}
+            name={p.name}
+            disabled={p.disabled}
+            label={p.label ?? p.title}
+            nolabel
+            className={p.switchClassName}
+            skipWrapperAttrs={true}
+          />
+        </div>
+
+        <div className={styles.colInfo}>
+          <div className={styles.colAccount}>
+            {/* PLATFORM LOGO AND NAME*/}
+            {typeof p.icon === 'string' ? (
+              <i className={p.icon} style={{ color: 'var(--title)', marginRight: '8px' }} />
+            ) : (
+              p.icon
+            )}
+            {/* PLATFORM HANDLE */}
+            <div className={styles.platformName}>{p.title}</div>
+          </div>
+          <div className={styles.platformHandle}>{p.description}</div>
+          {p?.children}
+        </div>
+      </div>
+    </div>
+  );
+}

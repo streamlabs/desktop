@@ -10,7 +10,7 @@ import {
 import { StreamSettingsService, ICustomStreamDestination } from '../settings/streaming';
 import { UserService } from '../user';
 import { RestreamService, TStreamShiftStatus } from '../restream';
-import { DualOutputService, TDisplayPlatforms, TDisplayDestinations } from '../dual-output';
+import { TDisplayPlatforms, TDisplayDestinations } from '../dual-output';
 import { getPlatformService, TPlatform, TPlatformCapability, platformList } from '../platforms';
 import { TwitchService, TwitterService } from '../../app-services';
 import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremental-rollout';
@@ -284,7 +284,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   /**
    * Returns if the user can edit live outputs mid-stream.
    */
-  get isLiveOutputEditing(): boolean {
+  get isLiveOutputEditingEnabled(): boolean {
     return this.settings.liveOutputEditing ?? false;
   }
 
@@ -297,10 +297,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
     // Live output editing uses the restream service
     // TODO: Comment in when implemented
-    // if (this.isLiveOutputEditing) return true;
+    // if (this.isLiveOutputEditingEnabled) return true;
 
     // TODO: Swap with the above when implemented
-    if (this.isLiveOutputEditing) {
+    if (this.isLiveOutputEditingEnabled) {
       console.log('LIVE OUTPUT EDITING ENABLED');
       return false;
     }
