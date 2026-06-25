@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import cx from 'classnames';
 import styles from './DestinationSwitchers.m.less';
-import { Tooltip } from 'antd';
+import Tooltip from 'components-react/shared/Tooltip';
 import { SwitchInput } from '../../shared/inputs';
 
 export interface ISwitcherCardHandle {
@@ -28,7 +28,8 @@ interface ISwitcherCardProps {
   description: string;
   value: boolean;
   onClick: (e: MouseEvent) => boolean | void | unknown;
-  tooltipTitle?: string;
+  tooltip?: string;
+  tooltipDisabled?: boolean;
   className?: string;
   switchClassName?: string;
   disabled?: boolean;
@@ -86,9 +87,10 @@ export const SwitcherCard = forwardRef<ISwitcherCardHandle, ISwitcherCardProps>(
 
   return (
     <Tooltip
-      title={p.tooltipTitle ?? null}
+      title={p.tooltip ?? null}
       placement="left"
       overlayClassName={styles.switcherTooltip}
+      disabled={p.tooltipDisabled}
     >
       <div className={cx(styles.platformSwitcher, p.className)} onClick={handleClick}>
         <div className={styles.destinationInfo}>

@@ -22,7 +22,6 @@ import { VideoEncodingOptimizationService } from 'services/video-encoding-optimi
 import { MagicLinkService } from 'services/magic-link';
 import { SettingsService } from 'services/settings';
 import { maxNumPlatforms } from 'services/platforms';
-import Utils from 'services/utils';
 import Tooltip from 'components-react/shared/Tooltip';
 
 /**
@@ -45,6 +44,7 @@ export default function GoLiveSettings() {
     isStreamShiftMode,
     isStreamShiftDisabled,
     isPatreonEnabled,
+    isDualOutputMode,
     addDestination,
     showTopAddDestination,
     showBottomAddDestination,
@@ -121,10 +121,21 @@ export default function GoLiveSettings() {
       return $t('Stream Shift cannot be used with Patreon');
     }
 
-    return isPrime
-      ? $t('Stream Shift cannot be used with Dual Output')
-      : $t('Upgrade to Ultra to switch streams between devices.');
-  }, [isPrime, isPatreonEnabled]);
+    if (!isPrime) {
+      return $t('Upgrade to Ultra to switch streams between devices.');
+    }
+
+    if (isDualOutputMode) {
+      return $t('Stream Shift cannot be used with Dual Output');
+    }
+
+    return '';
+  }, [isPrime, isPatreonEnabled, isDualOutputMode]);
+
+  const disableStreamShiftTooltip = useMemo(() => isPrime && isStreamShiftDisabled, [
+    isPrime,
+    isStreamShiftDisabled,
+  ]);
 
   return (
     <Row gutter={8} className={styles.goLiveSettings}>
@@ -167,7 +178,7 @@ export default function GoLiveSettings() {
                 title={streamShiftTooltip}
                 placement="top"
                 lightShadow={true}
-                disabled={isStreamShiftDisabled}
+                disabled={disableStreamShiftTooltip}
               >
                 <StreamShiftToggle
                   style={{ width: featureCheckboxWidth }}

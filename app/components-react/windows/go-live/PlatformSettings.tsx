@@ -1,7 +1,7 @@
+import React, { useMemo, useCallback } from 'react';
 import { CommonPlatformFields } from './CommonPlatformFields';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import { $t } from '../../../services/i18n';
-import React from 'react';
 import { TPlatform } from '../../../services/platforms';
 import { TwitchEditStreamInfo } from './platforms/TwitchEditStreamInfo';
 import { Section } from './Section';
@@ -36,6 +36,8 @@ export default function PlatformSettings() {
     isDualOutputMode,
     isAiHighlighterEnabled,
     isStreamShiftMode,
+    isStreamShiftDisabled,
+    isPatreonEnabled,
     enabledPlatformsCount,
     isMidStreamMode,
     isPrime,
@@ -62,6 +64,14 @@ export default function PlatformSettings() {
       return this.highlighterService.aiHighlighterFeatureEnabled;
     },
 
+    get isPatreonEnabled() {
+      return settings.enabledPlatforms.some(p => p === 'patreon');
+    },
+
+    get isStreamShiftDisabled() {
+      return !settings.isPrime || settings.enabledPlatforms.some(p => p === 'patreon');
+    },
+
     get enabledPlatformsCount() {
       return settings.enabledPlatforms.length;
     },
@@ -69,23 +79,62 @@ export default function PlatformSettings() {
 
   const layoutMode = 'multiplatformAdvanced';
 
-  function createPlatformBinding<T extends TPlatform>(platform: T): IPlatformComponentParams<T> {
-    return {
-      isUpdateMode,
-      layoutMode,
-      isDualOutputMode,
-      isStreamShiftMode,
-      isAiHighlighterEnabled,
-      isMidStreamMode,
-      enabledPlatformsCount,
-      get value() {
-        return getDefined(settings.platforms[platform]);
-      },
-      onChange(newSettings) {
-        updatePlatform(platform, newSettings);
-      },
-    };
-  }
+  const liveOutputTooltip = useMemo(() => {
+    if (!isPrime) {
+      return $t('Upgrade to Ultra to manage live outputs mid-stream.');
+    }
+
+    return '';
+  }, [isPrime]);
+
+  const streamShiftTooltip = useMemo(() => {
+    if (isPatreonEnabled) {
+      return $t('Stream Shift cannot be used with Patreon');
+    }
+
+    if (!isPrime) {
+      return $t('Upgrade to Ultra to switch streams between devices.');
+    }
+
+    if (isDualOutputMode) {
+      return $t('Stream Shift cannot be used with Dual Output');
+    }
+
+    return '';
+  }, [isPrime, isPatreonEnabled, isDualOutputMode]);
+
+  const disableStreamShiftTooltip = useMemo(() => isPrime && isStreamShiftDisabled, [
+    isPrime,
+    isStreamShiftDisabled,
+  ]);
+
+  const createPlatformBinding = useCallback(
+    <T extends TPlatform>(platform: T): IPlatformComponentParams<T> => {
+      return {
+        isUpdateMode,
+        layoutMode,
+        isDualOutputMode,
+        isStreamShiftMode,
+        isAiHighlighterEnabled,
+        isMidStreamMode,
+        enabledPlatformsCount,
+        get value() {
+          return getDefined(settings.platforms[platform]);
+        },
+        onChange(newSettings) {
+          updatePlatform(platform, newSettings);
+        },
+      };
+    },
+    [settings, updatePlatform],
+  );
+
+  const handleChange = useCallback(
+    val => {
+      updateCommonFields(val);
+    },
+    [updateCommonFields],
+  );
 
   return (
     // minHeight is required for the loading spinner
@@ -107,6 +156,8 @@ export default function PlatformSettings() {
               description={$t('Manage output destinations mid-stream.')}
               icon="icon-output"
               disabled={!isPrime}
+              tooltip={liveOutputTooltip}
+              tooltipDisabled={!isPrime}
             />
             <SwitcherCard
               onClick={() => setStreamShift(!isStreamShiftMode)}
@@ -121,6 +172,8 @@ export default function PlatformSettings() {
               description={$t('Switch between devices while live.')}
               icon="icon-repeat-2"
               disabled={!isPrime}
+              tooltip={streamShiftTooltip}
+              tooltipDisabled={!disableStreamShiftTooltip}
             />
           </div>
         </>
@@ -133,7 +186,7 @@ export default function PlatformSettings() {
         <CommonPlatformFields
           descriptionIsRequired={descriptionIsRequired}
           value={commonFields}
-          onChange={updateCommonFields}
+          onChange={handleChange}
           enabledPlatforms={enabledPlatforms}
           layout={layout}
         />
