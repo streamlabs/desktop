@@ -10,7 +10,7 @@ import {
 import { StreamSettingsService, ICustomStreamDestination } from '../settings/streaming';
 import { UserService } from '../user';
 import { RestreamService, TStreamShiftStatus } from '../restream';
-import { DualOutputService, TDisplayPlatforms, TDisplayDestinations } from '../dual-output';
+import { TDisplayPlatforms, TDisplayDestinations, DualOutputService } from '../dual-output';
 import { getPlatformService, TPlatform, TPlatformCapability, platformList } from '../platforms';
 import { TwitchService, TwitterService } from '../../app-services';
 import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremental-rollout';
@@ -779,7 +779,21 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     // don't reuse broadcastId and thumbnail for Youtube
     // TODO: index
     // @ts-ignore
-    if (settings && settings['broadcastId']) settings['broadcastId'] = '';
+    if (settings && settings['broadcastId']) {
+      // TODO: index
+      // @ts-ignore
+      settings['broadcastId'] = '';
+
+      if (platform === 'youtube') {
+        // Cannot have monetization enabled before the broadcast is checked
+        // TODO: index
+        // @ts-ignore
+        settings['monetizationEnabled'] = false;
+        // TODO: index
+        // @ts-ignore
+        settings['eligibleForMonetization'] = false;
+      }
+    }
     // TODO: index
     // @ts-ignore
     if (settings && settings['thumbnail']) settings['thumbnail'] = '';
