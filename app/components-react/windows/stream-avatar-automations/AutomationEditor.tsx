@@ -286,7 +286,9 @@ export default function AutomationEditor({ initial, onClose, onViewTemplates }: 
 
   const { scenes, sources } = useVuex(() => ({
     scenes: ScenesService.views.scenes.map(s => ({ id: s.id, name: s.name })),
-    sources: SourcesService.views.sources.map(s => ({ id: s.sourceId, name: s.name })),
+    sources: SourcesService.views.sources
+      .filter(s => s.video)
+      .map(s => ({ id: s.sourceId, name: s.name })),
   }));
 
   const [description, setDescription] = useState(initial?.description ?? '');
