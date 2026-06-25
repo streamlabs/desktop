@@ -263,7 +263,6 @@ export class StreamingService
         patreon: 'not-started',
         facebook: 'not-started',
         twitter: 'not-started',
-        trovo: 'not-started',
         instagram: 'not-started',
         setupMultistream: 'not-started',
         setupDualOutput: 'not-started',

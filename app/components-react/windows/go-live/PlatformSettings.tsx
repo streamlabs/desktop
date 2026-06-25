@@ -10,7 +10,6 @@ import { TikTokEditStreamInfo } from './platforms/TiktokEditStreamInfo';
 import FacebookEditStreamInfo from './platforms/FacebookEditStreamInfo';
 import { IPlatformComponentParams, TLayoutMode } from './platforms/PlatformSettingsLayout';
 import { getDefined } from '../../../util/properties-type-guards';
-import { TrovoEditStreamInfo } from './platforms/TrovoEditStreamInfo';
 import { TwitterEditStreamInfo } from './platforms/TwitterEditStreamInfo';
 import { InstagramEditStreamInfo } from './platforms/InstagramEditStreamInfo';
 import { KickEditStreamInfo } from './platforms/KickEditStreamInfo';
@@ -142,9 +141,6 @@ export default function PlatformSettings() {
               )}
               {platform === 'patreon' && (
                 <PatreonEditStreamInfo {...createPlatformBinding('patreon')} layout={layout} />
-              )}
-              {platform === 'trovo' && (
-                <TrovoEditStreamInfo {...createPlatformBinding('trovo')} layout={layout} />
               )}
               {platform === 'twitter' && (
                 <TwitterEditStreamInfo {...createPlatformBinding('twitter')} layout={layout} />
