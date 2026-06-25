@@ -212,7 +212,16 @@ export default function EditAutomations() {
 
       {!loading && automations.length === 0 && (
         <div className={styles.emptyCard}>
-          <div className={styles.emptyImage} />
+          <div
+            className={styles.emptyImage}
+            style={{
+              backgroundImage:
+                'url(https://cdn-avatar-builds.streamlabs.com/assets/ISA-automation-placeholder.png)',
+              backgroundSize: 'contain',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'center',
+            }}
+          />
           <h3 className={styles.emptyTitle}>{$t("You don't have Automations set up yet.")}</h3>
           <p className={styles.emptyDesc}>
             {$t(
