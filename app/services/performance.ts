@@ -16,6 +16,10 @@ import { StreamingService, EStreamingState } from 'services/streaming';
 import { VideoSettingsService } from 'services/settings-v2/video';
 import { DualOutputService } from 'services/dual-output';
 import { UsageStatisticsService } from './usage-statistics';
+import {
+  createEmptyDisplayStats,
+  TStreamingPerformanceDisplayStatsByDisplay,
+} from './streaming/streaming-statistics';
 
 interface IPerformanceState {
   CPU: number;
@@ -28,6 +32,7 @@ interface IPerformanceState {
   numberEncodedFrames: number;
   numberRenderedFrames: number;
   streamingBandwidth: number;
+  streamingBandwidthByDisplay: TStreamingPerformanceDisplayStatsByDisplay;
   frameRate: number;
 }
 
@@ -87,6 +92,13 @@ class PerformanceServiceViews extends ViewHandler<IPerformanceState> {
     return (this.state.streamingBandwidth ?? 0).toFixed(0);
   }
 
+  get bandwidthByDisplay() {
+    return {
+      horizontal: (this.state.streamingBandwidthByDisplay?.horizontal.kbitsPerSec ?? 0).toFixed(0),
+      vertical: (this.state.streamingBandwidthByDisplay?.vertical.kbitsPerSec ?? 0).toFixed(0),
+    };
+  }
+
   get streamQuality() {
     if (
       this.state.percentageDroppedFrames > 50 ||
@@ -127,6 +139,7 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
     numberEncodedFrames: 0,
     numberRenderedFrames: 0,
     streamingBandwidth: 0,
+    streamingBandwidthByDisplay: createEmptyDisplayStats(),
     frameRate: 0,
   };
 
@@ -203,6 +216,7 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
           numberDroppedFrames: streamingStats.droppedFrames,
           percentageDroppedFrames,
           streamingBandwidth: streamingStats.kbitsPerSec,
+          streamingBandwidthByDisplay: streamingStats.byDisplay ?? createEmptyDisplayStats(),
           // averageTimeToRenderFrame: obs.Global.averageFrameRenderTime,
           // diskSpaceAvailable: obs.Global.diskSpaceAvailable,
           // memoryUsage: obs.Global.memoryUsage,
