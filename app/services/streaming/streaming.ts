@@ -3546,9 +3546,6 @@ export class StreamingService
       });
     }
 
-    // TODO: Add UI to show bitrate by display but for now average the all instances, which is more accurate
-    // than only showing the horizontal display's bitrate in dual output mode
-
     return calculateStreamingPerformanceStats(instances, { calculateByDisplay: isDualOutputMode });
   }
 

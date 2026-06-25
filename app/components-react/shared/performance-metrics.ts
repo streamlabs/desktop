@@ -1,4 +1,5 @@
 import { IPinnedStatistics } from 'services/customization';
+import { $t } from 'services/i18n';
 
 export interface IPerformanceMetricValues {
   cpuPercent: string;
@@ -21,18 +22,15 @@ export interface IPerformanceMetricMetadata {
   icon: string;
 }
 
-type TTranslate = (key: string, params?: Record<string, unknown>) => string;
-
 export function getPerformanceMetricMetadata(
   values: IPerformanceMetricValues,
-  translate: TTranslate,
 ): IPerformanceMetricMetadata[] {
   const metrics: IPerformanceMetricMetadata[] = [
     {
       key: 'cpu',
       attribute: 'cpu',
       value: `${values.cpuPercent}%`,
-      label: translate('CPU'),
+      label: $t('CPU'),
       icon: 'icon-cpu',
     },
     {
@@ -46,7 +44,7 @@ export function getPerformanceMetricMetadata(
       key: 'droppedFrames',
       attribute: 'droppedFrames',
       value: `${values.droppedFrames} (${values.percentDropped}%)`,
-      label: translate('Dropped Frames'),
+      label: $t('Dropped Frames'),
       icon: 'icon-dropped-frames',
     },
   ];

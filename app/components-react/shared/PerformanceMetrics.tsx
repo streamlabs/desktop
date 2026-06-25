@@ -47,7 +47,7 @@ export default memo(function PerformanceMetrics(props: {
   );
 
   const metadata = useMemo(
-    () => getPerformanceMetricMetadata(v, $t),
+    () => getPerformanceMetricMetadata(v),
     [
       v.bandwidth,
       v.bandwidthByDisplay.horizontal,
