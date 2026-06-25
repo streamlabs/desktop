@@ -3399,15 +3399,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/request@npm:2.48.5":
-  version: 2.48.5
-  resolution: "@types/request@npm:2.48.5"
+"@types/request@npm:2.48.13":
+  version: 2.48.13
+  resolution: "@types/request@npm:2.48.13"
   dependencies:
     "@types/caseless": "*"
     "@types/node": "*"
     "@types/tough-cookie": "*"
-    form-data: ^2.5.0
-  checksum: 02572a0558b9a95ae1a2fa3912b45c4c12f587e25773b2d9bdbf5dfa6f2da5e3787d22256ee0dc4836250f39cf2dcb39fc4ded5bf554c0f948a623c8772e8bd3
+    form-data: ^2.5.5
+  checksum: d94d9baad0e192da36d39f5617214ad705f5a00e19ef57244479074f2354f8f759c44b8dc3efba1e9fbc3e6a0ddaf8366abdfaa81dad324c4a9686b8e6d98981
   languageName: node
   linkType: hard
 
@@ -8315,7 +8315,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"form-data@npm:^2.5.0":
+"form-data@npm:^2.5.0, form-data@npm:^2.5.5":
   version: 2.5.5
   resolution: "form-data@npm:2.5.5"
   dependencies:
@@ -14886,7 +14886,7 @@ __metadata:
     "@types/qrcode.react": 1.0.2
     "@types/react": 17.0.8
     "@types/react-resizable": 3.0.6
-    "@types/request": 2.48.5
+    "@types/request": 2.48.13
     "@types/semver": 6.2.1
     "@types/socket.io-client": 1.4.32
     "@types/sortablejs": 1.10.6

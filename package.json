@@ -134,7 +134,7 @@
     "@types/qrcode.react": "1.0.2",
     "@types/react": "17.0.8",
     "@types/react-resizable": "3.0.6",
-    "@types/request": "2.48.5",
+    "@types/request": "2.48.13",
     "@types/semver": "6.2.1",
     "@types/socket.io-client": "1.4.32",
     "@types/sortablejs": "1.10.6",
