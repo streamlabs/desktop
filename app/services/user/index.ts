@@ -117,7 +117,6 @@ interface ILinkedPlatformsResponse {
   facebook_account?: ILinkedPlatform;
   youtube_account?: ILinkedPlatform;
   tiktok_account?: ILinkedPlatform;
-  trovo_account?: ILinkedPlatform;
   kick_account?: ILinkedPlatform;
   patreon_account?: ILinkedPlatform;
   streamlabs_account?: ILinkedPlatform;
@@ -331,7 +330,20 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   }
 
   @mutation()
-  UNLINK_PLATFORM(platform: TPlatform) {
+  UPDATE_LEGACY_PLATFORM(auth: IPlatformAuth) {
+    Vue.set(this.state.auth, 'platform', auth);
+  }
+
+  /**
+   * Unlink a platform from the user's account.
+   * @remark This only removes the platform from the local state, it does not remove it from the server.
+   * Trovo is added because it is a deprecated platform that is no longer supported, but may still be
+   * present in the user's account if they had previously linked it. This allows us to remove it from
+   * the local state to prevent the user from attempting to use it.
+   * @param platform - platform or deprecated platform 'trovo'
+   */
+  @mutation()
+  UNLINK_PLATFORM(platform: TPlatform | 'trovo') {
     Vue.delete(this.state.auth.platforms, platform);
   }
 
@@ -784,17 +796,6 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       this.UNLINK_PLATFORM('tiktok');
     }
 
-    if (linkedPlatforms.trovo_account) {
-      this.UPDATE_PLATFORM({
-        type: 'trovo',
-        username: linkedPlatforms.trovo_account.platform_name,
-        id: linkedPlatforms.trovo_account.platform_id,
-        token: linkedPlatforms.trovo_account.access_token,
-      });
-    } else if (this.state.auth.primaryPlatform !== 'trovo') {
-      this.UNLINK_PLATFORM('trovo');
-    }
-
     if (linkedPlatforms.kick_account) {
       this.UPDATE_PLATFORM({
         type: 'kick',
@@ -835,6 +836,30 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       });
     } else if (this.state.auth.primaryPlatform !== 'twitter') {
       this.UNLINK_PLATFORM('twitter');
+    }
+
+    // Remove Trovo if present because it is deprecated
+    if (this.state.auth.platforms.hasOwnProperty('trovo')) {
+      const isTrovoPrimary = (this.state.auth.primaryPlatform as string) === 'trovo';
+      const newPrimary = Object.keys(this.state.auth.platforms).find(p => p !== 'trovo') as
+        | TPlatform
+        | undefined;
+
+      // Handle setting a new primary platform if Trovo was primary, or log the user out
+      // if it was the only linked platform
+      if (isTrovoPrimary) {
+        if (newPrimary) {
+          this.setPrimaryPlatform(newPrimary);
+          // Keep legacy single-platform auth in sync for rollback safety
+          this.UPDATE_LEGACY_PLATFORM(this.state.auth.platforms[newPrimary]);
+        } else {
+          this.LOGOUT();
+          // Force logout if Trovo was the only linked platform since it's deprecated
+          return true;
+        }
+      }
+
+      this.UNLINK_PLATFORM('trovo');
     }
 
     if (linkedPlatforms.force_login_required) return true;

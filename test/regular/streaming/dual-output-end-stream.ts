@@ -39,11 +39,6 @@ test(
       await clickGoLive();
       await waitForSettingsWindowLoaded();
       await fillForm({
-        trovo: true,
-      });
-      await waitForSettingsWindowLoaded();
-      await fillForm({
-        trovoDisplay: 'vertical',
         twitchDisplay: 'horizontal',
         primaryChat: 'Twitch',
       });

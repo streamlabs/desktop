@@ -169,7 +169,7 @@ export function PlatformCard(p: { platform: ICommunityReach }) {
     twitch: 'Twitch',
     facebook: 'Facebook',
     youtube: 'YouTube',
-    trovo: 'Trovo',
+
   };
   return (
     <div className={styles.card}>

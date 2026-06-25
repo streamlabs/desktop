@@ -6,7 +6,6 @@ import { IFacebookStartStreamOptions } from '../platforms/facebook';
 import { IStreamError } from './stream-error';
 import { ICustomStreamDestination } from '../settings/streaming';
 import { ITikTokStartStreamOptions } from '../platforms/tiktok';
-import { ITrovoStartStreamOptions } from '../platforms/trovo';
 import { IKickStartStreamOptions } from 'services/platforms/kick';
 import { ITwitterStartStreamOptions } from 'services/platforms/twitter';
 import { IInstagramStartStreamOptions } from 'services/platforms/instagram';
@@ -60,7 +59,6 @@ export interface IStreamInfo {
     patreon: TGoLiveChecklistItemState;
     facebook: TGoLiveChecklistItemState;
     twitter: TGoLiveChecklistItemState;
-    trovo: TGoLiveChecklistItemState;
     instagram: TGoLiveChecklistItemState;
     setupMultistream: TGoLiveChecklistItemState;
     setupDualOutput: TGoLiveChecklistItemState;
@@ -81,7 +79,6 @@ export interface IStreamSettings {
     patreon?: IPlatformFlags & IPatreonStartStreamOptions;
     facebook?: IPlatformFlags & IFacebookStartStreamOptions;
     twitter?: IPlatformFlags & ITwitterStartStreamOptions;
-    trovo?: IPlatformFlags & ITrovoStartStreamOptions;
     instagram?: IPlatformFlags & IInstagramStartStreamOptions;
   };
   customDestinations: ICustomStreamDestination[];

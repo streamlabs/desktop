@@ -62,7 +62,7 @@ export default function ConnectButton(p: IConnectButtonProps) {
       style={{
         backgroundColor: `var(--${p.platform})`,
         borderColor: 'transparent',
-        color: ['trovo', 'instagram', 'kick', 'patreon'].includes(p.platform) ? 'black' : 'inherit',
+        color: ['instagram', 'kick', 'patreon'].includes(p.platform) ? 'black' : 'inherit',
       }}
     >
       {$t('Connect')}

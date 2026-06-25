@@ -18,9 +18,6 @@ export type TAlertType =
   | 'facebook_stars'
   | 'facebook_like'
   | 'facebook_follow'
-  | 'trovo_follow'
-  | 'trovo_sub'
-  | 'trovo_raid'
   | 'twitchcharitydonation'
   | 'loyalty_store_redemption'
   | 'pledge'
@@ -68,14 +65,6 @@ export function getAlertsConfig(
       tooltip: $t('Plays an alert for new Facebook followers'),
     },
 
-    trovo_follow: {
-      type: 'trovo_follow',
-      name: $t('Trovo Follow'),
-      apiKey: 'trovo_follow',
-      platforms: ['trovo'],
-      tooltip: $t('Plays an alert for new Trovo followers'),
-    },
-
     sub: {
       type: 'sub',
       apiKey: 'sub',
@@ -83,14 +72,6 @@ export function getAlertsConfig(
       platforms: ['twitch'],
       tooltip: $t('Plays an alert for new Twitch subscriptions'),
       tooltipLink: 'https://help.twitch.tv/s/article/how-to-subscribe',
-    },
-
-    trovo_sub: {
-      type: 'trovo_sub',
-      apiKey: 'trovo_sub',
-      name: $t('Trovo Subscription'),
-      platforms: ['trovo'],
-      tooltip: $t('Plays an alert for new Trovo subscriptions'),
     },
 
     bits: {
@@ -109,14 +90,6 @@ export function getAlertsConfig(
       platforms: ['twitch'],
       tooltip: $t('Plays an alert when another streamer raids your channel'),
       tooltipLink: 'https://help.twitch.tv/s/article/how-to-use-raids',
-    },
-
-    trovo_raid: {
-      name: $t('Trovo Raid'),
-      type: 'trovo_raid',
-      apiKey: 'trovo_raid',
-      platforms: ['trovo'],
-      tooltip: $t('Plays an alert when another streamer raids your channel'),
     },
 
     sponsor: {
