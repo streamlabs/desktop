@@ -162,7 +162,7 @@ export default class ChildWindow extends Vue {
   private activeGoLiveTheme: Theme | null = null;
 
   private applyGoLiveThemeIfNeeded(componentName: string | undefined) {
-    const isGoLive = componentName === 'GoLiveWindow';
+    const isGoLive = componentName === 'GoLiveWindow' || componentName === 'EditStreamWindow';
     if (isGoLive && !this.isGoLiveActive) {
       const goLiveTheme = ChildWindow.goLiveThemeMap[this.theme] ?? 'golive-night-theme';
       antdThemes[this.theme].unuse();

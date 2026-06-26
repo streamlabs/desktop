@@ -45,6 +45,7 @@ export default function GoLiveSettings() {
     isStreamShiftDisabled,
     isPatreonEnabled,
     isDualOutputMode,
+    isUpdateMode,
     addDestination,
     showTopAddDestination,
     showBottomAddDestination,
@@ -108,7 +109,10 @@ export default function GoLiveSettings() {
   });
 
   const shouldShowSettings = !error && !isLoading;
-  const shouldShowLeftCol = isStreamShiftMode ? true : protectedModeEnabled;
+  const shouldShowLeftCol = useMemo(() => {
+    if (isUpdateMode) return false;
+    return isStreamShiftMode ? true : protectedModeEnabled;
+  }, [isUpdateMode, isStreamShiftMode, protectedModeEnabled]);
 
   const shouldShowPrimaryChatSwitcher = hasMultiplePlatforms;
 
@@ -193,7 +197,10 @@ export default function GoLiveSettings() {
       {/*RIGHT COLUMN*/}
       <Col
         span={shouldShowLeftCol ? 17 : 24}
-        className={cx(styles.rightColumn, !shouldShowLeftCol && styles.destinationMode)}
+        className={cx(styles.rightColumn, {
+          [styles.destinationMode]: !shouldShowLeftCol && !isUpdateMode,
+          [styles.updateMode]: isUpdateMode,
+        })}
       >
         <Spinner visible={isLoading} relative />
         <GoLiveError />
@@ -205,7 +212,7 @@ export default function GoLiveSettings() {
             {/*PLATFORM SETTINGS*/}
             <PlatformSettings />
             {/*EXTRAS*/}
-            {!!canUseOptimizedProfile && (
+            {!!canUseOptimizedProfile && !isUpdateMode && (
               <Section title={$t('Extras')}>
                 <OptimizedProfileSwitcher />
               </Section>

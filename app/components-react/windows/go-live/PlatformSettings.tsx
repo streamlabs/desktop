@@ -20,6 +20,8 @@ import { inject } from 'slap';
 import { HighlighterService } from 'app-services';
 import { SwitcherCard } from './SwitcherCard';
 import UltraIcon from 'components-react/shared/UltraIcon';
+import PrimaryChatSwitcher from './PrimaryChatSwitcher';
+import { CaretDownOutlined } from '@ant-design/icons';
 
 export default function PlatformSettings() {
   const {
@@ -39,9 +41,13 @@ export default function PlatformSettings() {
     isStreamShiftDisabled,
     isPatreonEnabled,
     isLiveOutputEditingEnabled,
+    isLiveOutputEditingDisabled,
     enabledPlatformsCount,
     isMidStreamMode,
     isPrime,
+    primaryChat,
+    hasMultiplePlatforms,
+    setPrimaryChat,
     setStreamShift,
     setLiveOutputEditingEnabled,
     canEditLiveOutputs,
@@ -72,6 +78,10 @@ export default function PlatformSettings() {
 
     get isStreamShiftDisabled() {
       return !settings.isPrime || settings.enabledPlatforms.some(p => p === 'patreon');
+    },
+
+    get isLiveOutputEditingDisabled() {
+      return !settings.isPrime || settings.isStreamShiftMode;
     },
 
     get enabledPlatformsCount() {
@@ -157,7 +167,7 @@ export default function PlatformSettings() {
               name="liveOutput"
               description={$t('Manage output destinations mid-stream.')}
               icon="icon-output"
-              disabled={!isPrime}
+              disabled={isLiveOutputEditingDisabled}
               tooltip={liveOutputTooltip}
               tooltipDisabled={isPrime}
             />
@@ -173,7 +183,7 @@ export default function PlatformSettings() {
               name="streamShift"
               description={$t('Switch between devices while live.')}
               icon="icon-repeat-2"
-              disabled={!isPrime}
+              disabled={isStreamShiftDisabled}
               tooltip={streamShiftTooltip}
               tooltipDisabled={disableStreamShiftTooltip}
             />
@@ -181,7 +191,7 @@ export default function PlatformSettings() {
         </>
       )}
 
-      <h2>{$t('Channel Settings')}</h2>
+      <h2 style={{ marginTop: '15px' }}>{$t('Channel Settings')}</h2>
 
       {/*COMMON FIELDS*/}
       <Section>
@@ -192,6 +202,17 @@ export default function PlatformSettings() {
           enabledPlatforms={enabledPlatforms}
           layout={layout}
         />
+        {/* TODO: Remove when left column implemented */}
+        {isUpdateMode && hasMultiplePlatforms && (
+          <PrimaryChatSwitcher
+            enabledPlatforms={enabledPlatforms}
+            onSetPrimaryChat={setPrimaryChat}
+            primaryChat={primaryChat}
+            suffixIcon={<CaretDownOutlined />}
+            layout="vertical"
+            logo={false}
+          />
+        )}
       </Section>
 
       {/*SETTINGS FOR EACH ENABLED PLATFORM*/}

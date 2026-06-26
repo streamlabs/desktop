@@ -9,26 +9,14 @@ import GoLiveChecklist from './GoLiveChecklist';
 import Form from '../../shared/inputs/Form';
 import Animation from 'rc-animate';
 import { useGoLiveSettingsRoot } from './useGoLiveSettings';
-import PlatformSettings from './PlatformSettings';
-import Scrollable from '../../shared/Scrollable';
-import Spinner from '../../shared/Spinner';
-import GoLiveError from './GoLiveError';
-import PrimaryChatSwitcher from './PrimaryChatSwitcher';
+import GoLiveSettings from './GoLiveSettings';
+import TwitterInput from './Twitter';
 
 export default function EditStreamWindow() {
   const { StreamingService, WindowsService } = Services;
-  const {
-    error,
-    lifecycle,
-    updateStream,
-    prepopulate,
-    isLoading,
-    form,
-    enabledPlatforms,
-    hasMultiplePlatforms,
-    primaryChat,
-    setPrimaryChat,
-  } = useGoLiveSettingsRoot({ isUpdateMode: true });
+  const { error, lifecycle, updateStream, prepopulate, isLoading, form } = useGoLiveSettingsRoot({
+    isUpdateMode: true,
+  });
 
   const shouldShowChecklist = lifecycle === 'runChecklist';
   const shouldShowSettings = !shouldShowChecklist;
@@ -53,6 +41,9 @@ export default function EditStreamWindow() {
   function renderFooter() {
     return (
       <Form layout={'inline'}>
+        <div className={styles.goLiveFooter}>
+          <TwitterInput />
+        </div>
         {/* CLOSE BUTTON */}
         <Button onClick={close}>{$t('Close')}</Button>
 
@@ -71,33 +62,17 @@ export default function EditStreamWindow() {
     );
   }
 
-  const shouldShowPrimaryChatSwitcher = hasMultiplePlatforms;
-
   return (
-    <ModalLayout footer={renderFooter()}>
+    <ModalLayout footer={renderFooter()} className={styles.goLiveSettings}>
       <Form
         form={form}
         style={{ position: 'relative', height: '100%' }}
         layout="horizontal"
         name="editStreamForm"
       >
-        <Spinner visible={isLoading} />
         <Animation transitionName="fade">
           {/* STEP 1 - FILL OUT THE SETTINGS FORM */}
-          {shouldShowSettings && (
-            <Scrollable key={'settings'} style={{ height: '100%' }} snapToWindowEdge>
-              <GoLiveError />
-              <PlatformSettings />
-              {shouldShowPrimaryChatSwitcher && (
-                <PrimaryChatSwitcher
-                  layout="horizontal"
-                  enabledPlatforms={enabledPlatforms}
-                  primaryChat={primaryChat}
-                  onSetPrimaryChat={setPrimaryChat}
-                />
-              )}
-            </Scrollable>
-          )}
+          {shouldShowSettings && <GoLiveSettings key={'settings'} />}
 
           {/* STEP 2 - RUN THE CHECKLIST */}
           {shouldShowChecklist && <GoLiveChecklist className={styles.page} key={'checklist'} />}
