@@ -95,6 +95,13 @@ import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services
 import { SignalsService } from 'services/signals-manager';
 import { TSocketEvent } from 'services/websocket';
 import { HighlighterService } from 'services/highlighter';
+import {
+  canDestroyDisplayOutputContext,
+  isDisplayOutputContext,
+  shouldStopDisplayContextBeforeDestroy as shouldStopDisplayOutputContextBeforeDestroy,
+  shouldStopStreamingContext as shouldStopStreamingOutputContext,
+  TStreamingDisplay,
+} from './output-context';
 
 type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
 type TOutputContext = TDisplayType | 'enhancedBroadcasting' | 'stream' | 'streamSecond';
@@ -1853,6 +1860,7 @@ export class StreamingService
     contextNames.forEach(contextName => {
       const streaming = this.contexts[contextName].streaming;
       if (!streaming) return;
+      if (!this.shouldStopStreamingOutputContext(contextName)) return;
 
       const forceStop =
         force ||
@@ -3256,7 +3264,41 @@ export class StreamingService
   }
 
   private isDisplayContext(context: TOutputContext): context is TDisplayType {
-    return context === 'horizontal' || context === 'vertical';
+    return isDisplayOutputContext(context);
+  }
+
+  private hasEnhancedBroadcastingStreamingInstance() {
+    return this.isEnhancedBroadcastingStreaming(this.contexts.enhancedBroadcasting.streaming);
+  }
+
+  private shouldStopStreamingOutputContext(contextName: TOutputContext) {
+    return shouldStopStreamingOutputContext(
+      contextName,
+      this.hasEnhancedBroadcastingStreamingInstance(),
+      display => this.displayNeedsNonEnhancedBroadcastingInstance(display),
+    );
+  }
+
+  private canDestroyDisplayOutputContext(contextName: TDisplayType) {
+    return canDestroyDisplayOutputContext(
+      contextName as TStreamingDisplay,
+      this.state.status[contextName],
+      this.hasEnhancedBroadcastingStreamingInstance(),
+      display => this.displayNeedsNonEnhancedBroadcastingInstance(display),
+    );
+  }
+
+  private shouldStopDisplayOutputContextBeforeDestroy(
+    contextName: TDisplayType,
+    contextType: keyof IOutputContext,
+  ) {
+    return shouldStopDisplayOutputContextBeforeDestroy(
+      contextName as TStreamingDisplay,
+      contextType,
+      this.state.status[contextName],
+      this.hasEnhancedBroadcastingStreamingInstance(),
+      display => this.displayNeedsNonEnhancedBroadcastingInstance(display),
+    );
   }
 
   private isEnhancedBroadcastingStreaming(
@@ -3975,7 +4017,8 @@ export class StreamingService
       if (
         (contextName === 'horizontal' && skipHorizontal) ||
         this.contexts[contextName].streaming === undefined ||
-        this.contexts[contextName].streaming === null
+        this.contexts[contextName].streaming === null ||
+        !this.shouldStopStreamingOutputContext(contextName)
       ) {
         continue;
       }
@@ -4015,10 +4058,7 @@ export class StreamingService
     }
 
     // For the horizontal and vertical contexts, only destroy instances if all outputs are offline
-    const offline =
-      this.state.status[context].replayBuffer === EReplayBufferState.Offline &&
-      this.state.status[context].recording === ERecordingState.Offline &&
-      this.state.status[context].streaming === EStreamingState.Offline;
+    const offline = this.canDestroyDisplayOutputContext(context);
 
     if (offline || force) {
       await this.destroyOutputContextIfExists(context, 'replayBuffer');
@@ -4055,8 +4095,7 @@ export class StreamingService
       // Prevent errors by stopping an active context before destroying it
       if (
         this.isDisplayContext(contextName) &&
-        this.state.status[contextName][contextType] &&
-        this.state.status[contextName][contextType].toString() !== 'offline'
+        this.shouldStopDisplayOutputContextBeforeDestroy(contextName, contextType)
       ) {
         this.contexts[contextName][contextType].stop(true);
 
