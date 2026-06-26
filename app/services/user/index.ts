@@ -283,6 +283,15 @@ class UserViews extends ViewHandler<IUserServiceState> {
 }
 
 export type TOverlayType = 'overlays' | 'widget-themes' | 'site-themes' | 'collectibles';
+
+/**
+ * Dashboard hash-routes that can be embedded inside Desktop via
+ * {@link UserService.widgetEmbedUrl}. Mirrors core's embeddable route prefixes
+ * (`/alertbox`, `/cloudbot`, `/widgets/*`). `widgets/${string}` covers every widget
+ * settings page (e.g. `widgets/chat-box`, `widgets/tip-goal`) without enumerating them.
+ */
+export type TWidgetEmbedProduct = 'alertbox' | 'cloudbot' | `widgets/${string}`;
+
 export interface IOverlayIdParams {
   id: string;
   install?: string;
@@ -1070,6 +1079,26 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     if (id) url += `&id=${id}`;
 
     return await this.magicLinkService.actions.return.getMagicSessionUrl(url);
+  }
+
+  /**
+   * Builds a magic-session URL for a dashboard widget-settings page embedded inside Desktop.
+   *
+   * The `origin=desktop&embed=true` flags live in the hash, so core hides its global chrome
+   * (top header + left nav) and renders the page inline. We hand the fully-formed URL
+   * (fragment included) to `getMagicSessionUrl`, which `encodeURIComponent`s it so the `#`
+   * survives the redirect; never build this URL without encoding the fragment.
+   *
+   * @param product - the embeddable dashboard product to open
+   * @returns the magic-session URL, or undefined if token minting fails
+   */
+  async widgetEmbedUrl(product: TWidgetEmbedProduct) {
+    const uiTheme = this.customizationService.isDarkTheme ? 'night' : 'day';
+    const target =
+      `https://${this.hostsService.streamlabs}/dashboard?mode=${uiTheme}` +
+      `#/${product}?origin=desktop&embed=true`;
+
+    return await this.magicLinkService.actions.return.getMagicSessionUrl(target);
   }
 
   async overlaysUrl(type?: TOverlayType, params?: TOverlayParams) {

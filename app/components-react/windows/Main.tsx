@@ -97,7 +97,13 @@ export default function Main() {
   }));
 
   const showLoadingSpinner = useMemo(
-    () => applicationLoading && page !== 'Onboarding' && page !== 'BrowseOverlays',
+    () =>
+      applicationLoading &&
+      page !== 'Onboarding' &&
+      page !== 'BrowseOverlays' &&
+      page !== 'AlertBox' &&
+      page !== 'Cloudbot' &&
+      page !== 'Widgets',
     [applicationLoading, page],
   );
 

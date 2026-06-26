@@ -1,6 +1,8 @@
 export { default as AILanding } from './AILanding';
+export { default as AlertBox } from './AlertBox';
 export { default as AlertboxLibrary } from './AlertboxLibrary';
 export { default as BrowseOverlays } from './BrowseOverlays';
+export { default as Cloudbot } from './Cloudbot';
 export { default as Grow } from './grow/Grow';
 export { default as Highlighter } from './Highlighter';
 export { default as LayoutEditor } from './layout-editor/LayoutEditor';
@@ -14,3 +16,4 @@ export { default as RecordingHistory } from './RecordingHistory';
 export { default as StreamScheduler } from './stream-scheduler/StreamScheduler';
 export { default as Studio } from './Studio';
 export { default as ThemeAudit } from './ThemeAudit';
+export { default as Widgets } from './Widgets';
