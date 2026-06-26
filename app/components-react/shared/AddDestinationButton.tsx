@@ -159,9 +159,10 @@ function AddDestinationBanner(p: { className?: string; onClick: () => void }) {
   return (
     <ButtonHighlighted
       data-name="banner-add-destination"
-      faded
-      className={cx(styles.infoBanner, { [styles.night]: isDarkTheme }, p?.className)}
+      faded={isDarkTheme}
+      className={cx(styles.infoBanner, p?.className)}
       onClick={p.onClick}
+      filledLight={!isDarkTheme}
     >
       <UltraIcon type="badge" className={styles.ultraIcon} />
       <div className={styles.ultraText}>

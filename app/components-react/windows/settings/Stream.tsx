@@ -26,6 +26,7 @@ import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import Tooltip from 'components-react/shared/Tooltip';
 import ConnectButton from 'components-react/shared/ConnectButton';
 import { Observable } from 'rxjs';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 function censorWord(str: string) {
   if (str.length < 3) return str;
@@ -504,6 +505,7 @@ function CustomDestinationList() {
     isPrime: Services.UserService.isPrime,
     customDestinations: Services.StreamingService.views.savedSettings.customDestinations,
   }));
+  const isDarkTheme = useRealmObject(Services.CustomizationService.state).isDarkTheme;
 
   const destinations = customDestinations;
   const isEditMode = editCustomDestMode !== false;
@@ -526,9 +528,10 @@ function CustomDestinationList() {
           {shouldShowPrimeLabel ? (
             <ButtonHighlighted
               onClick={() => addCustomDest(true)}
-              filled
+              filled={isDarkTheme}
               text={$t('Ultra')}
               icon={<UltraIcon type="simple" />}
+              filledLight={!isDarkTheme}
             />
           ) : (
             <div className={styles.ultra} />
