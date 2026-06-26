@@ -102,7 +102,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
               SettingsService.actions.setSettingValue('General', 'RecordWhenStreaming', val);
             }}
             uncontrolled
-            label={showRecordingIcons ? $t('Record Stream in') : $t('Record Stream')}
+            label={$t('Record Stream')}
             layout="horizontal"
             checkmark
             disabled={disableToggle}

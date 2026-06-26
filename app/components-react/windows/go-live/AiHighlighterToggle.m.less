@@ -38,17 +38,24 @@
     margin-left: 8px;
   }
 
-  :global(.ant-switch) {
-    background-color: var(--button);
+  :global(.ant-switch:not(.ant-switch-checked)) {
+    background-color: var(--icon-toggle);
   }
 
-  :global(.ant-switch-handle::before) {
-    background-color: var(--title);
-  }
+  // :global(.ant-switch-checked) {
+  //   background-color: unset !important;
+  // }
 
-  :global(.ant-switch-checked) {
-    background-color: var(--section) !important;
-  }
+  //   background-color: var(--button);
+  // }
+
+  // :global(.ant-switch-handle::before) {
+  //   background-color: var(--title);
+  // }
+
+  // :global(.ant-switch-checked) {
+  //   background-color: var(--button-hover) !important;
+  // }
 }
 
 .ai-highlighter-box {
@@ -214,3 +221,5 @@
   background-color: var(--dark-background);
   border-radius: 8px;
 }
+
+// .highlighter-banner___36EFl .ant-switch-handle::before
