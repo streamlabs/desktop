@@ -34,6 +34,13 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
     );
   }
 
+  function handleToggleStreamShift(status?: boolean) {
+    setStreamShift(status ?? !isStreamShiftMode);
+    Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {
+      toggle: status,
+    });
+  }
+
   return (
     <div className={styles.streamShiftWrapper}>
       <div className={cx(p?.className, styles.streamShiftToggle)} style={p?.style}>
@@ -49,21 +56,18 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
                   });
                 }}
               >
-                <UltraIcon type="badge" style={{ marginRight: '5px' }} />
-                <div className={styles.labelCheckbox}>{label}</div>
+                <UltraIcon type="badge" className={styles.ultraIcon} />
+                <div className={cx(styles.labelCheckbox, styles.ultra)}>{label}</div>
               </div>
             ) : (
-              <div className={styles.labelCheckbox}>{label}</div>
+              <div className={styles.labelCheckbox} onClick={() => handleToggleStreamShift()}>
+                {label}
+              </div>
             )
           }
           name="streamShift"
           value={isStreamShiftMode}
-          onChange={(status: boolean) => {
-            setStreamShift(status);
-            Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {
-              toggle: status,
-            });
-          }}
+          onChange={handleToggleStreamShift}
           disabled={p?.disabled}
         />
 
