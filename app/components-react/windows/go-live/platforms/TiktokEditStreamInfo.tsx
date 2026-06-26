@@ -20,8 +20,6 @@ import GameSelector from '../GameSelector';
 import { CustomFieldsCheckbox } from '../CustomFieldsCheckbox';
 import InfoBadge from 'components-react/shared/InfoBadge';
 import styles from './TikTokEditStreamInfo.m.less';
-import { useRealmObject } from 'components-react/hooks/realm';
-import cx from 'classnames';
 
 /**
  * @remark The filename for this component is intentionally not consistent with capitalization to preserve the commit history
@@ -234,7 +232,7 @@ function TikTokButtons(p: { denied: boolean }) {
           Services.UsageStatisticsService.recordAnalyticsEvent('TikTokApplyPrompt', data);
           openApplicationInfoPage();
         }}
-        className={cx(styles.tiktokApply)}
+        className={styles.tiktokApply}
       >
         {text}
       </Button>
@@ -243,15 +241,13 @@ function TikTokButtons(p: { denied: boolean }) {
 }
 
 const TikTokRequired = memo((p: IPlatformComponentParams<'tiktok'>) => {
-  const isDarkTheme = useRealmObject(Services.CustomizationService.state).isDarkTheme;
-
   return (
     <>
       <Tabs
         type="card"
         moreIcon={null}
         tabBarGutter={0}
-        className={cx(styles.tiktokTabs, { [styles.light]: !isDarkTheme })}
+        subType="filled"
         tabs={[
           {
             label: (

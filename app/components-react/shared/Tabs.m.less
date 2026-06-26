@@ -1,0 +1,13 @@
+.card-filled {
+  :global(.ant-tabs-tab:hover) {
+    filter: brightness(1.25);
+  }
+
+  :global(.ant-tabs-tab.ant-tabs-tab-active:hover) {
+    filter: brightness(0.95) !important;
+  }
+
+  &:global(.ant-tabs-top > .ant-tabs-nav::before) {
+    border-bottom: 0px;
+  }
+}

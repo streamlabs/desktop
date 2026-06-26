@@ -3,6 +3,8 @@ import { Tabs as AntdTabs, TabsProps } from 'antd';
 import { $t } from 'services/i18n';
 import { TSlobsInputProps, ValuesOf } from './inputs';
 import omit from 'lodash/omit';
+import cx from 'classnames';
+import styles from './Tabs.m.less';
 
 const ANT_TAB_FEATURES = ['type', 'moreIcon', 'tabBarGutter', 'tabPosition'] as const;
 
@@ -23,10 +25,11 @@ interface ICustomTabs {
   onChange?: (param?: any) => void;
   style?: CSSProperties;
   tabStyle?: CSSProperties;
+  subType?: 'filled';
 }
 
 export default function Tabs(p: TTabInputProps) {
-  const tabProps = omit(p, 'tabStyle', 'tabs', 'onInput');
+  const tabProps = omit(p, 'tabStyle', 'tabs', 'onInput', 'subType');
   // return dual output tab data by default
   const tabs = useMemo(() => {
     return p.tabs
@@ -61,8 +64,15 @@ export default function Tabs(p: TTabInputProps) {
         ];
   }, [p.tabs]);
 
+  const type = p.subType === 'filled' ? 'card' : p.type;
+
   return (
-    <AntdTabs defaultActiveKey={tabs[0].id} {...tabProps}>
+    <AntdTabs
+      defaultActiveKey={tabs[0].id}
+      {...tabProps}
+      type={type}
+      className={cx(p.className, { [styles.cardFilled]: p.subType === 'filled' })}
+    >
       {tabs.map((tab: ITab) => (
         <AntdTabs.TabPane tab={tab.label} key={tab.id} style={p?.tabStyle}>
           {tab.content}
