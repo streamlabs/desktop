@@ -66,11 +66,11 @@ export default function EditStreamWindow() {
     <ModalLayout footer={renderFooter()} className={styles.goLiveSettings}>
       <Form
         form={form}
-        style={{ position: 'relative', height: '100%' }}
+        style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}
         layout="horizontal"
         name="editStreamForm"
       >
-        <Animation transitionName="fade">
+        <Animation transitionName="fade" style={{ flex: 1, minHeight: 0 }}>
           {/* STEP 1 - FILL OUT THE SETTINGS FORM */}
           {shouldShowSettings && <GoLiveSettings key={'settings'} />}
 
