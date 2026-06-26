@@ -185,9 +185,10 @@ function AddDestinationHeader(p: { className?: string; onClick: () => void }) {
   return (
     <ButtonHighlighted
       data-name="header-add-destination"
-      faded
+      faded={isDarkTheme}
+      filledLight={!isDarkTheme}
       noMargin
-      className={cx(styles.addDestinationHeader, { [styles.night]: isDarkTheme }, p?.className)}
+      className={cx(styles.addDestinationHeader, p?.className)}
       onClick={p.onClick}
     >
       <UltraIcon type="badge" className={styles.ultraIconLg} />
