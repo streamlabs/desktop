@@ -3,3 +3,39 @@
     display: none;
   }
 }
+
+.tiktok-tabs {
+  transition: filter 0.3s ease;
+
+  :global(.ant-tabs-tab:hover) {
+    filter: brightness(1.25);
+  }
+
+  :global(.ant-tabs-tab.ant-tabs-tab-active:hover) {
+    filter: brightness(0.95) !important;
+  }
+
+  &:global(.ant-tabs-top > .ant-tabs-nav::before) {
+    border-bottom: 0px;
+  }
+}
+
+.tiktok-badge {
+  background-color: var(--callout);
+  color: var(--action-button-text);
+  margin-left: 12px;
+  padding: 1px 5px;
+  font-weight: 500;
+}
+
+.tiktok-apply {
+  margin-top: 16px;
+  padding: 8px 16px;
+  color: var(--title) !important;
+  border-radius: 8px;
+  height: unset;
+
+  i {
+    margin-left: 5px !important;
+  }
+}

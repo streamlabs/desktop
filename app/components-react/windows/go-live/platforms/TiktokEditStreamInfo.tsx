@@ -19,6 +19,9 @@ import Translate from 'components-react/shared/Translate';
 import GameSelector from '../GameSelector';
 import { CustomFieldsCheckbox } from '../CustomFieldsCheckbox';
 import InfoBadge from 'components-react/shared/InfoBadge';
+import styles from './TikTokEditStreamInfo.m.less';
+import { useRealmObject } from 'components-react/hooks/realm';
+import cx from 'classnames';
 
 /**
  * @remark The filename for this component is intentionally not consistent with capitalization to preserve the commit history
@@ -195,18 +198,9 @@ function TikTokInfo() {
       >
         <a onClick={openInfoPage} slot="link" style={{ textDecoration: 'underline' }} />
       </Translate>
-      <Button
-        onClick={openApplicationInfoPage}
-        style={{
-          marginTop: '16px',
-          padding: '8px 16px',
-          color: 'var(--title)',
-          borderRadius: '8px',
-          height: 'unset',
-        }}
-      >
+      <Button onClick={openApplicationInfoPage} className={styles.tiktokApply}>
         {$t('Request streaming access through Streamlabs')}
-        <i className="icon-pop-out-2" style={{ marginLeft: '5px' }} />
+        <i className="icon-pop-out-2" />
       </Button>
     </>
   );
@@ -240,12 +234,7 @@ function TikTokButtons(p: { denied: boolean }) {
           Services.UsageStatisticsService.recordAnalyticsEvent('TikTokApplyPrompt', data);
           openApplicationInfoPage();
         }}
-        style={{
-          width: '100%',
-          marginBottom: '10px',
-          background: 'var(--tiktok-btn)',
-          color: 'var(--black)',
-        }}
+        className={cx(styles.tiktokApply)}
       >
         {text}
       </Button>
@@ -254,24 +243,21 @@ function TikTokButtons(p: { denied: boolean }) {
 }
 
 const TikTokRequired = memo((p: IPlatformComponentParams<'tiktok'>) => {
+  const isDarkTheme = useRealmObject(Services.CustomizationService.state).isDarkTheme;
+
   return (
     <>
       <Tabs
         type="card"
         moreIcon={null}
         tabBarGutter={0}
+        className={cx(styles.tiktokTabs, { [styles.light]: !isDarkTheme })}
         tabs={[
           {
             label: (
               <>
                 <span>{$t('Streamlabs Access')}</span>
-                <InfoBadge
-                  content={$t('Recommended')}
-                  size="sm"
-                  color="var(--action-button-text)"
-                  bgColor="var(--callout)"
-                  style={{ marginLeft: '12px', padding: '1px 5px', fontWeight: 500 }}
-                />
+                <InfoBadge content={$t('Recommended')} size="sm" className={styles.tiktokBadge} />
               </>
             ),
             id: 'live-access',
