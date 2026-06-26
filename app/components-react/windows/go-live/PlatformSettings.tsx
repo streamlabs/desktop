@@ -16,12 +16,11 @@ import { InstagramEditStreamInfo } from './platforms/InstagramEditStreamInfo';
 import { KickEditStreamInfo } from './platforms/KickEditStreamInfo';
 import { PatreonEditStreamInfo } from './platforms/PatreonEditStreamInfo';
 import { TInputLayout } from 'components-react/shared/inputs';
-import { inject } from 'slap';
-import { HighlighterService } from 'app-services';
 import { SwitcherCard } from './SwitcherCard';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import PrimaryChatSwitcher from './PrimaryChatSwitcher';
 import { CaretDownOutlined } from '@ant-design/icons';
+import { Services } from 'components-react/service-provider';
 
 export default function PlatformSettings() {
   const {
@@ -52,40 +51,13 @@ export default function PlatformSettings() {
     setLiveOutputEditingEnabled,
     canEditLiveOutputs,
   } = useGoLiveSettings().extend(settings => ({
-    highlighterService: inject(HighlighterService),
-
     get descriptionIsRequired() {
       const fbSettings = settings.state.platforms['facebook'];
-      const descriptionIsRequired = fbSettings && fbSettings.enabled && !fbSettings.useCustomFields;
-      return descriptionIsRequired;
-    },
-
-    get isTikTokConnected() {
-      return settings.isPlatformLinked('tiktok');
+      return fbSettings && fbSettings.enabled && !fbSettings.useCustomFields;
     },
 
     get layout(): TInputLayout {
       return 'vertical';
-    },
-
-    get isAiHighlighterEnabled() {
-      return this.highlighterService.aiHighlighterFeatureEnabled;
-    },
-
-    get isPatreonEnabled() {
-      return settings.enabledPlatforms.some(p => p === 'patreon');
-    },
-
-    get isStreamShiftDisabled() {
-      return !settings.isPrime || settings.enabledPlatforms.some(p => p === 'patreon');
-    },
-
-    get isLiveOutputEditingDisabled() {
-      return !settings.isPrime || settings.isStreamShiftMode;
-    },
-
-    get enabledPlatformsCount() {
-      return settings.enabledPlatforms.length;
     },
   }));
 
@@ -119,6 +91,42 @@ export default function PlatformSettings() {
     isPrime,
     isStreamShiftDisabled,
   ]);
+
+  const handleToggleStreamShift = useCallback(
+    (status?: boolean) => {
+      if (!isPrime) {
+        // TODO: Comment in when ready
+        // Services.MagicLinkService.actions.linkToPrime('slobs-streamswitcher', {
+        //   event: 'StreamShift',
+        // });
+        return;
+      }
+
+      setStreamShift(status ?? !isStreamShiftMode);
+      Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {
+        toggle: status ?? !isStreamShiftMode,
+      });
+    },
+    [setStreamShift, isStreamShiftMode],
+  );
+
+  const handleToggleLiveOutputEditing = useCallback(
+    (status?: boolean) => {
+      if (!isPrime) {
+        // TODO: Comment in when ready
+        // Services.MagicLinkService.actions.linkToPrime('slobs-live-output-editing', {
+        //   event: 'LiveOutputEditing',
+        // });
+        return;
+      }
+
+      setLiveOutputEditingEnabled(status ?? !isLiveOutputEditingEnabled);
+      Services.UsageStatisticsService.actions.recordAnalyticsEvent('LiveOutputEditing', {
+        toggle: status ?? !isLiveOutputEditingEnabled,
+      });
+    },
+    [setLiveOutputEditingEnabled, isLiveOutputEditingEnabled],
+  );
 
   const createPlatformBinding = useCallback(
     <T extends TPlatform>(platform: T): IPlatformComponentParams<T> => {
@@ -156,7 +164,7 @@ export default function PlatformSettings() {
           <h2>{$t('Live Settings')}</h2>
           <div className="flex__horizontal margin">
             <SwitcherCard
-              onClick={() => setLiveOutputEditingEnabled(!isLiveOutputEditingEnabled)}
+              onClick={() => handleToggleLiveOutputEditing()}
               value={isLiveOutputEditingEnabled}
               title={
                 <>
@@ -172,7 +180,7 @@ export default function PlatformSettings() {
               tooltipDisabled={isPrime}
             />
             <SwitcherCard
-              onClick={() => setStreamShift(!isStreamShiftMode)}
+              onClick={() => handleToggleStreamShift()}
               value={isStreamShiftMode}
               title={
                 <>

@@ -21,7 +21,6 @@ import { inject } from 'slap';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { MagicLinkService } from 'services/magic-link';
 import { SettingsService } from 'services/settings';
-import { maxNumPlatforms } from 'services/platforms';
 import Tooltip from 'components-react/shared/Tooltip';
 
 /**
@@ -56,20 +55,6 @@ export default function GoLiveSettings() {
       settingsService: inject(SettingsService),
       magicLinkService: inject(MagicLinkService),
 
-      get canAddDestinations() {
-        const linkedPlatforms = module.state.linkedPlatforms;
-        const customDestinations = module.state.customDestinations;
-        return linkedPlatforms.length + customDestinations.length < maxNumPlatforms + 5;
-      },
-
-      get isPatreonEnabled() {
-        return module.enabledPlatforms.some(p => p === 'patreon');
-      },
-
-      get isStreamShiftDisabled() {
-        return !module.isPrime || module.enabledPlatforms.some(p => p === 'patreon');
-      },
-
       addDestination() {
         this.settingsService.actions.showSettings('Stream');
       },
@@ -81,10 +66,6 @@ export default function GoLiveSettings() {
           this.videoEncodingOptimizationService.state.canSeeOptimizedProfile ||
           this.videoEncodingOptimizationService.state.useOptimizedProfile
         );
-
-        // canUseOptimizedProfile:
-        //   VideoEncodingOptimizationService.state.canSeeOptimizedProfile ||
-        //   VideoEncodingOptimizationService.state.useOptimizedProfile,
       },
 
       async openPlatformSettings() {
@@ -96,14 +77,6 @@ export default function GoLiveSettings() {
         } catch (e: unknown) {
           console.error('Error generating platform settings magic link', e);
         }
-      },
-
-      get showTopAddDestination() {
-        return this.canAddDestinations && module.state.linkedPlatforms.length > 1;
-      },
-
-      get showBottomAddDestination() {
-        return module.state.linkedPlatforms.length < 2;
       },
     };
   });
@@ -183,6 +156,7 @@ export default function GoLiveSettings() {
                 placement="top"
                 lightShadow={true}
                 disabled={disableStreamShiftTooltip}
+                tooltipClassName={styles.streamShiftTooltip}
               >
                 <StreamShiftToggle
                   style={{ width: featureCheckboxWidth }}

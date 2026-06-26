@@ -1,5 +1,5 @@
 import { IGoLiveSettings, StreamInfoView, TDisplayOutput } from '../../../services/streaming';
-import { platformList, TPlatform } from '../../../services/platforms';
+import { maxNumPlatforms, platformList, TPlatform } from '../../../services/platforms';
 import { ICustomStreamDestination } from 'services/settings/streaming';
 import { Services } from '../../service-provider';
 import cloneDeep from 'lodash/cloneDeep';
@@ -536,6 +536,60 @@ export class GoLiveSettingsModule {
 
   get codec() {
     return Services.SettingsService.views.values.Output.Encoder;
+  }
+
+  get isPatreonEnabled() {
+    return this.state.enabledPlatforms.some((p: TPlatform) => p === 'patreon');
+  }
+
+  get isStreamShiftDisabled() {
+    if (!this.isPrime) return true;
+    return this.isPatreonEnabled;
+  }
+
+  get isLiveOutputEditingDisabled() {
+    if (!this.isPrime) return true;
+    return this.state.isStreamShiftMode;
+  }
+
+  get enabledPlatformsCount() {
+    return this.state.enabledPlatforms.length;
+  }
+
+  get isTikTokConnected() {
+    return this.state.isPlatformLinked('tiktok');
+  }
+
+  get canAddDestinations() {
+    return (
+      this.state.linkedPlatforms.length + this.state.customDestinations.length < maxNumPlatforms + 5
+    );
+  }
+
+  get showTopAddDestination() {
+    return this.canAddDestinations && this.state.linkedPlatforms.length > 1;
+  }
+
+  get showBottomAddDestination() {
+    return this.state.linkedPlatforms.length < 2;
+  }
+
+  get disableCustomDestinationSwitchers() {
+    return (
+      !this.isRestreamEnabled &&
+      !this.state.enabledPlatforms.includes('tiktok') &&
+      this.state.enabledPlatforms.length > 1
+    );
+  }
+
+  get disableNonUltraSwitchers() {
+    return (
+      !this.isPrime && this.state.enabledPlatforms.length + this.enabledDestinations.length >= 2
+    );
+  }
+
+  get isAiHighlighterEnabled() {
+    return Services.HighlighterService.aiHighlighterFeatureEnabled;
   }
 }
 

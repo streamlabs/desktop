@@ -106,9 +106,10 @@ export const SwitcherCard = forwardRef<ISwitcherCardHandle, ISwitcherCardProps>(
       title={p.tooltip ?? null}
       placement="left"
       className={p.tooltipClassName}
-      overlayClassName={cx(styles.switcherTooltip)}
+      overlayClassName={styles.switcherTooltip}
       disabled={p.tooltipDisabled}
       styleContent={false}
+      lightShadow={true}
     >
       <SwitcherCardContents
         className={p.className}

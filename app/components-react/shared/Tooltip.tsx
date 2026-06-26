@@ -31,6 +31,7 @@ interface ITooltipTipProps {
   autoAdjustOverflow?: boolean;
   visible?: boolean;
   overlayClassName?: string;
+  tooltipClassName?: string;
   onClick?: () => void;
 }
 
@@ -50,6 +51,7 @@ export default function Tooltip(p: PropsWithChildren<ITooltipTipProps>) {
     visible,
     onClick,
     overlayClassName,
+    tooltipClassName,
   } = p;
 
   return (
@@ -66,7 +68,7 @@ export default function Tooltip(p: PropsWithChildren<ITooltipTipProps>) {
         </>
       ) : (
         <AntdTooltip
-          className={cx({
+          className={cx(tooltipClassName, {
             [styles.tooltipContent]: styleContent,
             [styles.lightShadow]: lightShadow,
           })}

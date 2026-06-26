@@ -33,10 +33,11 @@ export const DestinationSwitchers = memo(() => {
     switchPlatforms,
     switchCustomDestination,
     isPlatformLinked,
-    isRestreamEnabled,
     isStreamShiftMode,
     isPrime,
     alwaysShownPlatforms,
+    disableCustomDestinationSwitchers,
+    disableNonUltraSwitchers,
   } = useGoLiveSettings();
 
   /// Use these references to apply debounce for error handling and switch animation
@@ -60,13 +61,6 @@ export const DestinationSwitchers = memo(() => {
       ? linkedPlatforms.concat(unlinkedAlwaysShownPlatforms)
       : linkedPlatforms;
   }, [linkedPlatforms, enabledPlatformsRef.current, enabledPlatforms]);
-
-  // Disable custom destination switchers when restream is not available, such as for a non-ultra user.
-  // The one exception for a non-ultra user in single output mode is if TikTok is the only enabled platform
-  const disableCustomDestinationSwitchers =
-    !isRestreamEnabled && !isEnabled('tiktok') && enabledPlatformsRef.current.length > 1;
-  const disableNonUltraSwitchers =
-    !isPrime && enabledPlatformsRef.current.length + enabledDestRef.current.length >= 2;
 
   const emitSwitch = useDebounce(500, (ind?: number, enabled?: boolean) => {
     if (ind !== undefined && enabled !== undefined) {
