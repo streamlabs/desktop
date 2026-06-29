@@ -90,7 +90,22 @@ export const DestinationSwitchers = memo(() => {
         if (enabled) {
           const total = enabledPlatformsRef.current.length + enabledDestRef.current.length;
           if (total >= 2) {
-            enabledPlatformsRef.current = enabledPlatformsRef.current.slice(1);
+            message.info({
+              key: 'switcher-info-alert',
+              content: (
+                <div className={styles.alertContent}>
+                  <div>
+                    {$t(
+                      "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
+                    )}
+                  </div>
+                  <i className="icon-close" />
+                </div>
+              ),
+              className: styles.infoAlert,
+              onClick: () => message.destroy('switcher-info-alert'),
+            });
+            return false;
           }
           enabledPlatformsRef.current.push(platform);
         } else {
@@ -126,6 +141,27 @@ export const DestinationSwitchers = memo(() => {
     (index: number, enabled: boolean) => {
       // In dual output mode, only allow non-ultra users to have 2 platforms, or 1 platform and 1 custom destination enabled
       if (!isPrimeRef.current) {
+        if (enabled) {
+          const total = enabledPlatformsRef.current.length + enabledDestRef.current.length;
+          if (total >= 2) {
+            message.info({
+              key: 'switcher-info-alert',
+              content: (
+                <div className={styles.alertContent}>
+                  <div>
+                    {$t(
+                      "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
+                    )}
+                  </div>
+                  <i className="icon-close" />
+                </div>
+              ),
+              className: styles.infoAlert,
+              onClick: () => message.destroy('switcher-info-alert'),
+            });
+            return;
+          }
+        }
         enabledDestRef.current = enabledDestRef.current.filter(dest => dest !== index);
         if (enabled) {
           enabledDestRef.current.push(index);
@@ -326,36 +362,35 @@ const DestinationSwitcher = memo(
       (e: MouseEvent) => {
         const enabled = p.enabled;
 
-        // If we're disabling the switch we shouldn't be emitting anything past below
-        if (disabled) {
-          if (!Services.UserService.state.isPrime) {
-            const content = p.bothDisplayPlatformLabel
-              ? $t(
-                  'Select a different display for %{platform} to toggle on another destination, or upgrade to Ultra to enable multistreaming.',
-                  { platform: p.bothDisplayPlatformLabel },
-                )
-              : $t(
-                  "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
-                );
-
+        if (!Services.UserService.state.isPrime) {
+          if (p.bothDisplayPlatformLabel) {
             message.info({
               key: 'switcher-info-alert',
               content: (
                 <div className={styles.alertContent}>
-                  <div>{content}</div>
+                  <div>
+                    {$t(
+                      'Select a different display for %{platform} to toggle on another destination, or upgrade to Ultra to enable multistreaming.',
+                      { platform: p.bothDisplayPlatformLabel },
+                    )}
+                  </div>
                   <i className="icon-close" />
                 </div>
               ),
               className: styles.infoAlert,
               onClick: () => message.destroy('switcher-info-alert'),
             });
+            return enabled;
           }
-          return enabled;
+          // Max-2 check is done inside togglePlatform/toggleDestination using current refs,
+          // so always pass through — the handler shows the message if needed.
+          return p.onChange(!enabled);
         }
 
+        if (disabled) return enabled;
         return p.onChange(!enabled);
       },
-      [p.enabled, p.onChange, p.bothDisplayPlatformLabel],
+      [p.enabled, p.onChange, p.bothDisplayPlatformLabel, disabled],
     );
 
     // Read the platform username (non-reactive, same as before) so it can key the memo below
