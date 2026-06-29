@@ -35,6 +35,7 @@ export default class Credits extends WidgetSettings<ICreditsData, CreditsService
       followers: $t('Show Followers'),
       subscribers: $t('Show Subscribers'),
       bits: $t('Show Cheers'),
+      power_ups: $t('Show Power-Ups'),
       moderators: $t('Show Moderators'),
       // Youtube
       subscriptions: $t('Show Subscriptions'),
@@ -49,6 +50,7 @@ export default class Credits extends WidgetSettings<ICreditsData, CreditsService
       followers_change: $t('Followers'),
       subscribers_change: $t('Subscribers & Resubs'),
       bits_change: $t('Cheers'),
+      power_ups_change: $t('Power-Ups'),
       mods_change: $t('Moderators'),
       // Youtube
       subscriptions_change: $t('Subscriptions'),
