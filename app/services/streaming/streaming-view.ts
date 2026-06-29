@@ -236,6 +236,41 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     ) as TPlatform[];
   }
 
+  /*
+   * Returns if the non-ultra user has a valid display assignment to go live
+   */
+  get hasValidDisplayAssignment(): boolean {
+    // Only check for non-ultra users
+    if (this.userView.isPrime) return true;
+
+    const numEnabledPlatforms = this.enabledPlatforms.length;
+
+    // Users can always stream to one platform
+    if (numEnabledPlatforms === 1) return true;
+
+    const numEnabledDestinations = this.customDestinations.filter(dest => dest.enabled).length;
+
+    // Users can stream to two targets when in dual output mode if
+    //  1. 2 Platforms: 1 Horizontal, 1 Vertical
+    //  2. 1 Platform, 1 Custom Destination: 1 Horizontal, 1 Vertical
+    //  3. 1 Platform: Both Horizontal and Vertical
+    if (numEnabledPlatforms + numEnabledDestinations === 2) {
+      const numHorizontalPlatforms = this.activeDisplayPlatforms.horizontal.length;
+      const numVerticalPlatforms = this.activeDisplayPlatforms.vertical.length;
+      const numHorizontalDestinations = this.activeDisplayDestinations.horizontal.length;
+      const numVerticalDestinations = this.activeDisplayDestinations.vertical.length;
+
+      // Handle case 1 and case 3. "Both" will show the same platform for both horizontal and vertical streams
+      if (numHorizontalPlatforms === 1 && numVerticalPlatforms === 1) return true;
+
+      // Handle case 2
+      if (numHorizontalPlatforms === 1 && numVerticalDestinations === 1) return true;
+      if (numVerticalPlatforms === 1 && numHorizontalDestinations === 1) return true;
+    }
+
+    return false;
+  }
+
   /**
    * Returns if the user can or should use the restream service
    */

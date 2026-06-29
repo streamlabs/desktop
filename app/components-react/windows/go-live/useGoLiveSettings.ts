@@ -375,6 +375,16 @@ export class GoLiveSettingsModule {
     this.save(this.state.settings);
   }
 
+  setPlatformEnabled(platform: TPlatform, enabled: boolean) {
+    this.state.updatePlatform(platform, { enabled });
+    this.save(this.state.settings);
+  }
+
+  setCustomDestinationEnabled(index: number, enabled: boolean) {
+    this.state.switchCustomDestination(index, enabled);
+    this.save(this.state.settings);
+  }
+
   updateCustomDestinationDisplayAndSaveSettings(destId: number, display: TDisplayType) {
     this.state.updateCustomDestinationDisplay(destId, display);
     this.save(this.state.settings);
@@ -478,6 +488,26 @@ export class GoLiveSettingsModule {
       return;
     }
 
+    if (!this.isPrime && this.state.isDualOutputMode) {
+      const totalEnabled =
+        this.state.enabledPlatforms.length +
+        this.state.customDestinations.filter(d => d.enabled).length;
+      if (totalEnabled >= 2) {
+        const hasHorizontal = this.state.horizontalStream.length > 0;
+        const hasVertical = this.state.verticalStream.length > 0;
+        if (!hasHorizontal || !hasVertical) {
+          message.info(
+            $t(
+              'Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming.',
+            ),
+            2,
+            () => true,
+          );
+          return;
+        }
+      }
+    }
+
     // Disable AI Highlighter if Twitch is not enabled, because it's a Twitch-only feature
     if (
       Services.HighlighterService.aiHighlighterFeatureEnabled &&
@@ -556,10 +586,6 @@ export class GoLiveSettingsModule {
     return this.state.enabledPlatforms.length;
   }
 
-  get isTikTokConnected() {
-    return this.state.isPlatformLinked('tiktok');
-  }
-
   get canAddDestinations() {
     return (
       this.state.linkedPlatforms.length + this.state.customDestinations.length < maxNumPlatforms + 5
@@ -583,8 +609,19 @@ export class GoLiveSettingsModule {
   }
 
   get disableNonUltraSwitchers() {
+    console.log('this.state.enabledPlatforms.length', this.state.enabledPlatforms.length);
     return (
       !this.isPrime && this.state.enabledPlatforms.length + this.enabledDestinations.length >= 2
+    );
+  }
+
+  // Returns the label of the enabled platform with 'both' display selected, if any, for non-prime users.
+  get nonPrimeBothDisplayPlatform(): TPlatform | null {
+    if (this.isPrime) return null;
+    return (
+      this.state.enabledPlatforms.find(
+        platform => this.state.settings.platforms[platform]?.display === 'both',
+      ) ?? null
     );
   }
 

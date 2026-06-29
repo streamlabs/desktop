@@ -338,7 +338,7 @@ export class StreamingService
         // prime users are eligible for streaming to any platform
         const primeRequired = this.isPrimeRequired(platform);
 
-        if (primeRequired && !this.views.isDualOutputMode) {
+        if (primeRequired) {
           this.setError('PRIME_REQUIRED');
           this.UPDATE_STREAM_INFO({ lifecycle: 'empty' });
           return;
@@ -399,6 +399,10 @@ export class StreamingService
       if (this.restreamService.facebookGrandfathered && allowFacebook) {
         return false;
       }
+    }
+
+    if (!isPrime && this.views.enabledPlatforms.length <= 2) {
+      return false;
     }
 
     return true;

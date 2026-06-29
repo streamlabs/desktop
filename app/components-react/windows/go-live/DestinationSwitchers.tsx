@@ -6,6 +6,7 @@ import React, {
   MouseEvent,
   memo,
   useCallback,
+  useEffect,
 } from 'react';
 import { getPlatformService, platformLabels, TPlatform } from '../../../services/platforms';
 import cx from 'classnames';
@@ -39,6 +40,9 @@ export const DestinationSwitchers = memo(() => {
     alwaysShownPlatforms,
     disableCustomDestinationSwitchers,
     disableNonUltraSwitchers,
+    nonPrimeBothDisplayPlatform,
+    setPlatformEnabled,
+    setCustomDestinationEnabled,
   } = useGoLiveSettings();
 
   /// Use these references to apply debounce for error handling and switch animation
@@ -158,37 +162,129 @@ export const DestinationSwitchers = memo(() => {
     destHandlers.current[ind] ??
     (destHandlers.current[ind] = (enabled: boolean) => toggleDestination(ind, enabled));
 
+  const customDestinationsRef = useRef(customDestinations);
+  customDestinationsRef.current = customDestinations;
+
+  const disabledByBothRef = useRef<
+    { type: 'platform'; id: TPlatform } | { type: 'destination'; index: number } | null
+  >(null);
+  const prevBothPlatformRef = useRef<TPlatform | null>(null);
+
+  useEffect(() => {
+    const prev = prevBothPlatformRef.current;
+    prevBothPlatformRef.current = nonPrimeBothDisplayPlatform;
+
+    if (nonPrimeBothDisplayPlatform && !prev) {
+      const otherPlatform = enabledPlatformsRef.current.find(
+        p => p !== nonPrimeBothDisplayPlatform,
+      );
+      if (otherPlatform) {
+        setPlatformEnabled(otherPlatform, false);
+        disabledByBothRef.current = { type: 'platform', id: otherPlatform };
+        message.info({
+          key: 'both-display-info-alert',
+          content: (
+            <div className={styles.alertContent}>
+              <div>
+                {$t(
+                  '%{otherPlatform} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.',
+                  {
+                    platform: platformLabels(nonPrimeBothDisplayPlatform),
+                    otherPlatform: platformLabels(otherPlatform),
+                  },
+                )}
+              </div>
+              <i className="icon-close" />
+            </div>
+          ),
+          className: styles.infoAlert,
+          onClick: () => message.destroy('both-display-info-alert'),
+        });
+      } else {
+        const destIndex = customDestinationsRef.current.findIndex(d => d.enabled);
+        if (destIndex >= 0) {
+          setCustomDestinationEnabled(destIndex, false);
+          disabledByBothRef.current = { type: 'destination', index: destIndex };
+          message.info({
+            key: 'both-display-info-alert',
+            content: (
+              <div className={styles.alertContent}>
+                <div>
+                  {$t(
+                    '%{destination} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.',
+                    {
+                      platform: platformLabels(nonPrimeBothDisplayPlatform),
+                      destination: customDestinationsRef.current[destIndex].name,
+                    },
+                  )}
+                </div>
+                <i className="icon-close" />
+              </div>
+            ),
+            className: styles.infoAlert,
+            onClick: () => message.destroy('both-display-info-alert'),
+          });
+        }
+      }
+    } else if (!nonPrimeBothDisplayPlatform && disabledByBothRef.current) {
+      const tracked = disabledByBothRef.current;
+      disabledByBothRef.current = null;
+      if (tracked.type === 'platform') {
+        setPlatformEnabled(tracked.id, true);
+      } else {
+        setCustomDestinationEnabled(tracked.index, true);
+      }
+    }
+  }, [nonPrimeBothDisplayPlatform, setPlatformEnabled, setCustomDestinationEnabled]);
+
   const hideDisplaySelector = useMemo(() => {
     return isPatreonEnabled ? false : isStreamShiftMode;
   }, [isPatreonEnabled, isStreamShiftMode]);
 
   return (
     <div className={cx(styles.switchWrapper)}>
-      {platforms.map((platform, ind) => (
-        <DestinationSwitcher
-          key={platform}
-          destination={platform}
-          enabled={isEnabled(platform)}
-          onChange={getPlatformHandler(platform)}
-          switchDisabled={!isEnabled(platform) && disableNonUltraSwitchers}
-          hideDisplaySelector={hideDisplaySelector}
-          index={ind}
-        />
-      ))}
+      {platforms.map((platform, ind) => {
+        const disabledByBoth =
+          !!nonPrimeBothDisplayPlatform &&
+          !isEnabled(platform) &&
+          platform !== nonPrimeBothDisplayPlatform;
+        return (
+          <DestinationSwitcher
+            key={platform}
+            destination={platform}
+            enabled={isEnabled(platform)}
+            onChange={getPlatformHandler(platform)}
+            switchDisabled={(!isEnabled(platform) && disableNonUltraSwitchers) || disabledByBoth}
+            bothDisplayPlatformLabel={
+              disabledByBoth ? platformLabels(nonPrimeBothDisplayPlatform!) : undefined
+            }
+            hideDisplaySelector={hideDisplaySelector}
+            index={ind}
+          />
+        );
+      })}
 
-      {customDestinations?.map((dest, ind) => (
-        <DestinationSwitcher
-          key={ind}
-          destination={dest}
-          enabled={dest.enabled && !disableCustomDestinationSwitchers}
-          onChange={getDestHandler(ind)}
-          switchDisabled={
-            disableCustomDestinationSwitchers || (!dest.enabled && disableNonUltraSwitchers)
-          }
-          hideDisplaySelector={hideDisplaySelector}
-          index={ind}
-        />
-      ))}
+      {customDestinations?.map((dest, ind) => {
+        const disabledByBoth = !!nonPrimeBothDisplayPlatform && !dest.enabled;
+        return (
+          <DestinationSwitcher
+            key={ind}
+            destination={dest}
+            enabled={dest.enabled && !disableCustomDestinationSwitchers}
+            onChange={getDestHandler(ind)}
+            switchDisabled={
+              disableCustomDestinationSwitchers ||
+              (!dest.enabled && disableNonUltraSwitchers) ||
+              disabledByBoth
+            }
+            bothDisplayPlatformLabel={
+              disabledByBoth ? platformLabels(nonPrimeBothDisplayPlatform!) : undefined
+            }
+            hideDisplaySelector={hideDisplaySelector}
+            index={ind}
+          />
+        );
+      })}
     </div>
   );
 });
@@ -198,6 +294,7 @@ interface IDestinationSwitcherProps {
   enabled: boolean;
   onChange: (enabled: boolean) => unknown;
   switchDisabled?: boolean;
+  bothDisplayPlatformLabel?: string;
   index: number;
   hideDisplaySelector: boolean;
   isUnlinked?: boolean;
@@ -232,16 +329,20 @@ const DestinationSwitcher = memo(
         // If we're disabling the switch we shouldn't be emitting anything past below
         if (disabled) {
           if (!Services.UserService.state.isPrime) {
+            const content = p.bothDisplayPlatformLabel
+              ? $t(
+                  'Select a different display for %{platform} to toggle on another destination, or upgrade to Ultra to enable multistreaming.',
+                  { platform: p.bothDisplayPlatformLabel },
+                )
+              : $t(
+                  "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
+                );
+
             message.info({
               key: 'switcher-info-alert',
               content: (
                 <div className={styles.alertContent}>
-                  <div>
-                    {$t(
-                      "You've selected the two streaming destinations. Disable a destination to enable a different one. \nYou can always upgrade to Ultra for multistreaming.",
-                    )}
-                  </div>
-
+                  <div>{content}</div>
                   <i className="icon-close" />
                 </div>
               ),
@@ -254,7 +355,7 @@ const DestinationSwitcher = memo(
 
         return p.onChange(!enabled);
       },
-      [p.enabled, p.onChange],
+      [p.enabled, p.onChange, p.bothDisplayPlatformLabel],
     );
 
     // Read the platform username (non-reactive, same as before) so it can key the memo below

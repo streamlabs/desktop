@@ -75,6 +75,7 @@ function ModalFooter() {
     goLiveWithDefaultCodec,
     showSettings,
     setStreamShift,
+    hasValidDisplayAssignment,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
     settingsService: inject(SettingsService),
@@ -262,6 +263,27 @@ function ModalFooter() {
 
   const handleGoLive = useCallback(async () => {
     if (!isPrime) {
+      // Check to see if the user has a valid display assignment
+      if (!hasValidDisplayAssignment) {
+        message.info({
+          key: 'dual-output-info-alert',
+          content: (
+            <div className={styles.alertContent}>
+              <div>
+                {$t(
+                  'To use Dual Output you must stream to at least one horizontal and one vertical platform.',
+                )}
+              </div>
+              <i className="icon-close" />
+            </div>
+          ),
+          className: styles.infoAlert,
+          onClick: () => message.destroy('dual-output-info-alert'),
+        });
+
+        return;
+      }
+
       goLive();
     } else {
       const shouldCheckIsLive =
