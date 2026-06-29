@@ -482,11 +482,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
       await downloadFile(setupUrl, setupPath, (progress: IDownloadProgress) => {
         // Map download progress to 0-75%
-        const downloadPercent = progress.percent * 75;
-        const current = this.state.replayInstall.progress;
-        if (downloadPercent > current) {
-          this.SET_REPLAY_INSTALL({ progress: downloadPercent });
-        }
+        const downloadPercent = progress.percent * 100;
+        this.setReplayDownloadProgress(downloadPercent);
       });
 
       clearProgress();
@@ -499,13 +496,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         return false;
       }
 
-      this.SET_REPLAY_INSTALL({ progress: 75 });
-
       // Verify the Authenticode signature before execution
       await this.verifyAuthenticodeSignature(setupPath);
 
       // --- Installing phase ---
-      this.SET_REPLAY_INSTALL({ step: 'installing', progress: 75 });
+      this.SET_REPLAY_INSTALL({ step: 'installing', progress: 100 });
 
       // Fake progress for install phase
       progressInterval = setInterval(() => {
@@ -1661,6 +1656,14 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       renderingClips.push(outro);
     }
     return renderingClips;
+  }
+
+  @throttle(100)
+  private setReplayDownloadProgress(progress: number) {
+    const current = this.state.replayInstall.progress;
+    if (progress > current) {
+      this.SET_REPLAY_INSTALL({ progress });
+    }
   }
 
   // We throttle because this can go extremely fast, especially on previews
