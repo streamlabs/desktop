@@ -104,6 +104,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   @Inject() jsonrpcService: JsonrpcService;
   @Inject() navigationService: NavigationService;
   @Inject() sharedStorageService: SharedStorageService;
+  @Inject() incrementalRolloutService: IncrementalRolloutService;
 
   static defaultState: IHighlighterState = {
     clips: {},
@@ -1703,19 +1704,27 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     location: 'Highlighter-tab' | 'Go-live-flow',
     game?: string,
   ) {
-    this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
-      type: 'Installation',
-      location,
-      game,
-    });
+    if (!downloadNow) {
+      this.setAiHighlighter(true);
+      this.SET_HIGHLIGHTER_VERSION('0.0.0');
+      return;
+    }
 
-    this.setAiHighlighter(true);
-    if (downloadNow) {
+    const migrationEnabled = this.incrementalRolloutService.views.featureIsEnabled(
+      EAvailableFeatures.highlighterMigration,
+    );
+
+    if (migrationEnabled) {
+      await this.installStreamlabsReplay();
+    } else {
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'Installation',
+        location,
+        game,
+      });
+
       await this.aiHighlighterUpdater.isNewVersionAvailable();
       this.startUpdater();
-    } else {
-      // Only for go live view to immediately show the toggle. For other flows, the updater will set the version
-      this.SET_HIGHLIGHTER_VERSION('0.0.0');
     }
   }
 
