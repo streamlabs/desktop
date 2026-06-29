@@ -34,6 +34,7 @@ export const DestinationSwitchers = memo(() => {
     switchCustomDestination,
     isPlatformLinked,
     isStreamShiftMode,
+    isPatreonEnabled,
     isPrime,
     alwaysShownPlatforms,
     disableCustomDestinationSwitchers,
@@ -157,6 +158,10 @@ export const DestinationSwitchers = memo(() => {
     destHandlers.current[ind] ??
     (destHandlers.current[ind] = (enabled: boolean) => toggleDestination(ind, enabled));
 
+  const hideDisplaySelector = useMemo(() => {
+    return isPatreonEnabled ? false : isStreamShiftMode;
+  }, [isPatreonEnabled, isStreamShiftMode]);
+
   return (
     <div className={cx(styles.switchWrapper)}>
       {platforms.map((platform, ind) => (
@@ -166,7 +171,7 @@ export const DestinationSwitchers = memo(() => {
           enabled={isEnabled(platform)}
           onChange={getPlatformHandler(platform)}
           switchDisabled={!isEnabled(platform) && disableNonUltraSwitchers}
-          isStreamShiftMode={isStreamShiftMode}
+          hideDisplaySelector={hideDisplaySelector}
           index={ind}
         />
       ))}
@@ -180,7 +185,7 @@ export const DestinationSwitchers = memo(() => {
           switchDisabled={
             disableCustomDestinationSwitchers || (!dest.enabled && disableNonUltraSwitchers)
           }
-          isStreamShiftMode={isStreamShiftMode}
+          hideDisplaySelector={hideDisplaySelector}
           index={ind}
         />
       ))}
@@ -194,7 +199,7 @@ interface IDestinationSwitcherProps {
   onChange: (enabled: boolean) => unknown;
   switchDisabled?: boolean;
   index: number;
-  isStreamShiftMode: boolean;
+  hideDisplaySelector: boolean;
   isUnlinked?: boolean;
 }
 
@@ -305,7 +310,7 @@ const DestinationSwitcher = memo(
       >
         {/* DISPLAY TOGGLES */}
         <AnimatedWrapper
-          visible={p.enabled && !p.isStreamShiftMode}
+          visible={p.enabled && !p.hideDisplaySelector}
           className={styles.displaySelectorWrapper}
           onClick={e => e.stopPropagation()}
           height="35px"
@@ -317,7 +322,7 @@ const DestinationSwitcher = memo(
             platform={platform}
             index={p.index}
             alignIcons="left"
-            visible={p.enabled && !p.isStreamShiftMode}
+            visible={p.enabled && !p.hideDisplaySelector}
           />
         </AnimatedWrapper>
       </SwitcherCard>
