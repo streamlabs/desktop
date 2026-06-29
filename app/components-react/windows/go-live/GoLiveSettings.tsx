@@ -42,8 +42,6 @@ export default function GoLiveSettings() {
     isPrime,
     isStreamShiftMode,
     isStreamShiftDisabled,
-    isPatreonEnabled,
-    isDualOutputMode,
     isUpdateMode,
     addDestination,
     showTopAddDestination,
@@ -93,27 +91,6 @@ export default function GoLiveSettings() {
 
   const featureCheckboxWidth = isPrime ? 130 : 135;
 
-  const streamShiftTooltip = useMemo(() => {
-    if (isPatreonEnabled) {
-      return $t('Stream Shift cannot be used with Patreon');
-    }
-
-    if (!isPrime) {
-      return $t('Upgrade to Ultra to switch streams between devices.');
-    }
-
-    if (isDualOutputMode) {
-      return $t('Stream Shift cannot be used with Dual Output');
-    }
-
-    return '';
-  }, [isPrime, isPatreonEnabled, isDualOutputMode]);
-
-  const disableStreamShiftTooltip = useMemo(() => isPrime && isStreamShiftDisabled, [
-    isPrime,
-    isStreamShiftDisabled,
-  ]);
-
   return (
     <Row gutter={8} className={styles.goLiveSettings}>
       {/*LEFT COLUMN*/}
@@ -150,19 +127,10 @@ export default function GoLiveSettings() {
                 border={false}
                 disabled={!shouldShowPrimaryChatSwitcher}
               />
-
-              <Tooltip
-                title={streamShiftTooltip}
-                placement="top"
-                lightShadow={true}
-                disabled={disableStreamShiftTooltip}
-                tooltipClassName={styles.streamShiftTooltip}
-              >
-                <StreamShiftToggle
-                  style={{ width: featureCheckboxWidth }}
-                  disabled={isStreamShiftDisabled}
-                />
-              </Tooltip>
+              <StreamShiftToggle
+                style={{ width: featureCheckboxWidth }}
+                disabled={isStreamShiftDisabled}
+              />
             </div>
           </Scrollable>
         </Col>

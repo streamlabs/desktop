@@ -1,4 +1,4 @@
-import React, { CSSProperties, useEffect } from 'react';
+import React, { CSSProperties, useEffect, useMemo } from 'react';
 import { shell } from '@electron/remote';
 import styles from './StreamShiftToggle.m.less';
 import Tooltip from 'components-react/shared/Tooltip';
@@ -17,7 +17,14 @@ interface IStreamShiftToggle {
 }
 
 export default function StreamShiftToggle(p: IStreamShiftToggle) {
-  const { isPrime, isStreamShiftMode, setStreamShift } = useGoLiveSettings();
+  const {
+    isPrime,
+    isStreamShiftMode,
+    setStreamShift,
+    isDualOutputMode,
+    isPatreonEnabled,
+    isStreamShiftDisabled,
+  } = useGoLiveSettings();
 
   useEffect(() => {
     // Ensure that non-ultra users have the stream switcher disabled
@@ -28,18 +35,32 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
 
   const label = $t('Stream Shift');
 
-  function handleTooltipClick() {
-    shell.openExternal(
-      'https://streamlabs.com/content-hub/post/how-to-use-streamlabs-stream-shift',
-    );
-  }
-
   function handleToggleStreamShift(status?: boolean) {
     setStreamShift(status ?? !isStreamShiftMode);
     Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {
       toggle: status,
     });
   }
+
+  const isStreamShiftEnabled = useMemo(() => {
+    return isPatreonEnabled ? false : isStreamShiftMode;
+  }, [isPatreonEnabled, isStreamShiftMode]);
+
+  const disableToggle = useMemo(() => {
+    if (p?.disabled) return true;
+    if (!isPrime) return true;
+    if (isPatreonEnabled) return true;
+    if (isDualOutputMode) return true;
+    return isStreamShiftDisabled;
+  }, [p?.disabled, isPatreonEnabled, isDualOutputMode, isPrime, isStreamShiftDisabled]);
+
+  // <Tooltip
+  //   title={streamShiftTooltip}
+  //   placement="top"
+  //   lightShadow={true}
+  //   disabled={disableStreamShiftTooltip}
+  //   tooltipClassName={styles.streamShiftTooltip}
+  // ></Tooltip>
 
   return (
     <div className={styles.streamShiftWrapper}>
@@ -66,23 +87,15 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
             )
           }
           name="streamShift"
-          value={isStreamShiftMode}
+          value={isStreamShiftEnabled}
           onChange={handleToggleStreamShift}
-          disabled={p?.disabled}
+          disabled={disableToggle}
         />
 
         <Tooltip
-          title={
-            <span onClick={handleTooltipClick}>
-              {$t(
-                'Stay uninterrupted by switching between devices mid stream. Works between Desktop and Mobile App.',
-              )}
-              <a style={{ marginLeft: 4 }}>{$t('Learn More')}</a>
-            </span>
-          }
+          title={<StreamShiftTooltip />}
           placement="top"
           lightShadow={true}
-          disabled={p?.disabled}
           className={styles.tooltip}
         >
           <i className="icon-information" />
@@ -90,5 +103,54 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
       </div>
       <Badge className={styles.betaBadge} content={'Beta'} />
     </div>
+  );
+}
+
+function StreamShiftTooltip() {
+  const {
+    isPrime,
+    isDualOutputMode,
+    isPatreonEnabled,
+    isStreamShiftDisabled,
+  } = useGoLiveSettings();
+
+  const tooltipText = useMemo(() => {
+    if (!isPrime) {
+      return $t('Upgrade to Ultra to switch streams between devices.');
+    }
+
+    if (isPatreonEnabled) {
+      return $t('Stream Shift cannot be used with Patreon');
+    }
+
+    if (isDualOutputMode) {
+      return $t('Stream Shift cannot be used with Dual Output');
+    }
+
+    return '';
+  }, [isPrime, isPatreonEnabled, isDualOutputMode]);
+
+  const showTextTooltip = useMemo(() => {
+    if (isPatreonEnabled) return true;
+    if (!isPrime) return true;
+    if (isDualOutputMode) return true;
+    return false;
+  }, [isPrime, isPatreonEnabled, isDualOutputMode]);
+
+  function handleTooltipClick() {
+    shell.openExternal(
+      'https://streamlabs.com/content-hub/post/how-to-use-streamlabs-stream-shift',
+    );
+  }
+
+  return showTextTooltip ? (
+    <>{tooltipText}</>
+  ) : (
+    <span onClick={handleTooltipClick}>
+      {$t(
+        'Stay uninterrupted by switching between devices mid stream. Works between Desktop and Mobile App.',
+      )}
+      <a style={{ marginLeft: 4 }}>{$t('Learn More')}</a>
+    </span>
   );
 }
