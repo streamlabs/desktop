@@ -914,9 +914,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get canEditLiveOutputs() {
-    return (
-      !this.isMidStreamMode &&
-      this.incrementalRolloutView.featureIsEnabled(EAvailableFeatures.liveOutputEditing)
-    );
+    return false;
+    // return (
+    //   !this.isMidStreamMode &&
+    //   this.incrementalRolloutView.featureIsEnabled(EAvailableFeatures.liveOutputEditing)
+    // );
   }
 }

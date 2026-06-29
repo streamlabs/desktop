@@ -32,7 +32,6 @@ export default function PlatformSettings() {
     updateCommonFields,
     descriptionIsRequired,
     isUpdateMode,
-    isTikTokConnected,
     layout,
     isDualOutputMode,
     isAiHighlighterEnabled,
@@ -238,7 +237,7 @@ export default function PlatformSettings() {
           {platform === 'youtube' && (
             <YoutubeEditStreamInfo {...createPlatformBinding('youtube')} layout={layout} />
           )}
-          {platform === 'tiktok' && isTikTokConnected && (
+          {platform === 'tiktok' && (
             <TikTokEditStreamInfo {...createPlatformBinding('tiktok')} layout={layout} />
           )}
           {platform === 'kick' && (
