@@ -604,7 +604,6 @@ export class GoLiveSettingsModule {
   }
 
   get disableNonUltraSwitchers() {
-    console.log('this.state.enabledPlatforms.length', this.state.enabledPlatforms.length);
     return (
       !this.isPrime && this.state.enabledPlatforms.length + this.enabledDestinations.length >= 2
     );

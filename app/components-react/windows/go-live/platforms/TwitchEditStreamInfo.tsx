@@ -71,8 +71,8 @@ const TwitchOptionalFields = memo((p: IPlatformComponentParams<'twitch'>) => {
   );
 
   const isDualStream = useMemo(() => {
-    return twSettings?.display === 'both' && p.isDualOutputMode;
-  }, [p.isDualOutputMode, twSettings?.display]);
+    return twSettings?.display === 'both';
+  }, [twSettings?.display]);
 
   const enhancedBroadcastingTooltipText = useMemo(() => {
     return p.isDualOutputMode
