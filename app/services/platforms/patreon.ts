@@ -293,18 +293,21 @@ export class PatreonService
       .catch(e => {
         console.warn('Error starting Patreon stream: ', e);
 
+        let message = e.message ?? 'Unknown error starting Patreon stream';
         if (e.result) {
-          const message = e.statusText !== '' ? e.statusText : e.result.data.message;
-          throwStreamError(
-            'PLATFORM_REQUEST_FAILED',
-            {
-              status: e.status,
-              statusText: message,
-              platform: 'patreon',
-            },
-            e.result.data.message,
-          );
+          message = e.statusText || e.result.data.message;
         }
+        const details = e.result?.data?.message ?? message;
+
+        throwStreamError(
+          'PLATFORM_REQUEST_FAILED',
+          {
+            status: e.status,
+            statusText: message,
+            platform: 'patreon',
+          },
+          details,
+        );
       });
   }
 
@@ -327,18 +330,21 @@ export class PatreonService
       .catch(e => {
         console.warn('Error ending Patreon stream: ', e);
 
+        let message = e.message ?? 'Unknown error ending Patreon stream';
         if (e.result) {
-          const message = e.statusText !== '' ? e.statusText : e.result.data.message;
-          throwStreamError(
-            'PLATFORM_REQUEST_FAILED',
-            {
-              status: e.status,
-              statusText: message,
-              platform: 'patreon',
-            },
-            e.result.data.message,
-          );
+          message = e.statusText || e.result.data.message;
         }
+        const details = e.result?.data?.message ?? message;
+
+        throwStreamError(
+          'PLATFORM_REQUEST_FAILED',
+          {
+            status: e.status,
+            statusText: message,
+            platform: 'patreon',
+          },
+          details,
+        );
       });
   }
 
