@@ -40,7 +40,7 @@ useWebdriver();
 async function logInYouTubeEnabledAccount(
   t: TExecutionContext,
   retries: number = 3,
-): Promise<void> {
+): Promise<boolean | void> {
   // only exclude multistream accounts on the first attempt to expand the user pool on later attempts
   const multistream = retries === 3 ? false : undefined;
   if (retries === 0) {
@@ -62,10 +62,13 @@ async function logInYouTubeEnabledAccount(
   }
 
   await closeWindow('child');
+
+  // return true if we had a retry so that we can skip checking errors in the log for account reasons
+  return retries === 3;
 }
 
 test('Streaming to Youtube', async t => {
-  await logInYouTubeEnabledAccount(t);
+  const retried = await logInYouTubeEnabledAccount(t);
   t.false(await chatIsVisible(), 'Chat should not be visible for YT before stream starts');
 
   await goLive({
@@ -87,12 +90,16 @@ test('Streaming to Youtube', async t => {
   await waitForStreamStart();
   await stopStream();
 
+  if (retried) {
+    skipCheckingErrorsInLog();
+  }
+
   t.pass('Streamed to YouTube single output and dual stream successfully');
 });
 
 // TODO flaky
 test.skip('Streaming to the scheduled event on Youtube', async t => {
-  await logInYouTubeEnabledAccount(t);
+  const retried = await logInYouTubeEnabledAccount(t);
   const tomorrow = moment().add(1, 'day').toDate();
   await scheduleStream(tomorrow, { platform: 'YouTube', title: 'Test YT Scheduler' });
   await prepareToGoLive();
@@ -108,11 +115,15 @@ test.skip('Streaming to the scheduled event on Youtube', async t => {
   await goLive({
     broadcastId: 'Test YT Scheduler',
   });
+
+  if (retried) {
+    skipCheckingErrorsInLog();
+  }
 });
 
 // TODO flaky
 test.skip('GoLive from StreamScheduler', async t => {
-  await logInYouTubeEnabledAccount(t);
+  const retried = await logInYouTubeEnabledAccount(t);
   await prepareToGoLive();
 
   // schedule stream
@@ -132,11 +143,16 @@ test.skip('GoLive from StreamScheduler', async t => {
   await focusChild();
   await submit();
   await waitForStreamStart();
+
+  if (retried) {
+    skipCheckingErrorsInLog();
+  }
+
   t.pass();
 });
 
 test('Start stream twice to the same YT event', async t => {
-  await logInYouTubeEnabledAccount(t);
+  const retried = await logInYouTubeEnabledAccount(t);
 
   // create event via scheduling form
   const now = Date.now();
@@ -152,11 +168,16 @@ test('Start stream twice to the same YT event', async t => {
     enableAutoStop: true,
   });
   await stopStream();
+
+  if (retried) {
+    skipCheckingErrorsInLog();
+  }
+
   t.pass();
 });
 
 test('Youtube streaming is disabled', async t => {
-  skipCheckingErrorsInLog();
+  const retried = await logInYouTubeEnabledAccount(t);
   await logIn('youtube', { streamingIsDisabled: true, notStreamable: true });
 
   t.true(
@@ -166,5 +187,10 @@ test('Youtube streaming is disabled', async t => {
   await prepareToGoLive();
   await clickGoLive();
   await focusChild();
+
+  if (retried) {
+    skipCheckingErrorsInLog();
+  }
+
   await waitForDisplayed('button=Enable Live Streaming');
 });

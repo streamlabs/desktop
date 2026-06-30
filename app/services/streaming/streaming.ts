@@ -1575,6 +1575,9 @@ export class StreamingService
       await this.handleStartEnhancedBroadcastingDualOutput(code, context, time);
     } else if (this.views.isYouTubeDualStreaming) {
       // For YouTube dual streaming without enhanced broadcasting, the horizontal stream needs to be started before the vertical stream.
+      // Don't set horizontal to Live here. Wait until the vertical Start signal arrives so that
+      // streamingStatus only reports Live once both streams are actually running. Setting it early
+      // causes a race where the UI shows "End Stream" before the vertical instance existed.
       if (context === 'horizontal') {
         try {
           await this.validateOrCreateOutputInstance({
@@ -1585,10 +1588,6 @@ export class StreamingService
             start: true,
             isEnhancedBroadcasting: false,
           });
-
-          // Update the horizontal stream status to live for the UI
-          this.SET_STREAMING_STATUS(EStreamingState.Live, context, time);
-          this.streamingStatusChange.next(EStreamingState.Live);
         } catch (e: unknown) {
           // Error will be surfaced from `createStreaming` for YouTube dual streaming only if
           // the vertical stream fails to start.
@@ -1611,6 +1610,9 @@ export class StreamingService
       }
 
       if (context === 'vertical') {
+        // Both streams have now started so set horizontal to Live first, then handleStartStreaming
+        // sets vertical to Live and resolves the start streaming promise.
+        this.SET_STREAMING_STATUS(EStreamingState.Live, 'horizontal', time);
         await this.handleStartStreaming(code, context);
       }
     } else {

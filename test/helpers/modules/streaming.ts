@@ -107,6 +107,10 @@ export async function stopStream() {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
     await clickButton('End Stream');
+    console.log('Clicked "End Stream" button');
+    await waitForStreamStop();
+    console.log('Stream stopped');
+
     await waitForStreamStop();
   });
 }
@@ -159,13 +163,14 @@ export async function waitForSettingsWindowLoaded() {
 }
 
 async function waitForStreamShift() {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  await useMainWindow(async () => {
-    const streamShifted = await isDisplayed('span=Another stream detected', { timeout: 5000 });
-    if (streamShifted) {
-      await click('span=Force Start');
-    }
-  });
+  // The "Another stream detected" prompt renders in the child window (GoLive)
+  // via promptAction (Ant Design modal). Check the child window for the prompt
+  // and dismiss it if found so the go live flow can proceed.
+  await focusChild();
+  const streamShifted = await isDisplayed('span=Another stream detected', { timeout: 5000 });
+  if (streamShifted) {
+    await click('span=Force Start');
+  }
 }
 
 export async function switchAdvancedMode() {
