@@ -78,7 +78,7 @@ function StartStreamingButton(p: { disabled?: boolean }) {
 
   useEffect(() => {
     // Check for stream shift status on mount. This will happen on app launch because the main window is always active
-    if (!isDualOutputMode && isPrime && streamingStatus === EStreamingState.Offline) {
+    if (isPrime && streamingStatus === EStreamingState.Offline) {
       fetchStreamShiftStatus().catch((e: unknown) => {
         console.error('Error fetching stream shift status:', e);
       });

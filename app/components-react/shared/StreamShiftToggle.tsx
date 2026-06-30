@@ -22,7 +22,6 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
     isStreamShiftMode,
     setStreamShift,
     isDualOutputMode,
-    isPatreonEnabled,
     isStreamShiftDisabled,
   } = useGoLiveSettings();
 
@@ -43,16 +42,15 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
   }
 
   const isStreamShiftEnabled = useMemo(() => {
-    return isPatreonEnabled ? false : isStreamShiftMode;
-  }, [isPatreonEnabled, isStreamShiftMode]);
+    return isStreamShiftMode;
+  }, [isStreamShiftMode]);
 
   const disableToggle = useMemo(() => {
     if (p?.disabled) return true;
     if (!isPrime) return true;
-    if (isPatreonEnabled) return true;
     if (isDualOutputMode) return true;
     return isStreamShiftDisabled;
-  }, [p?.disabled, isPatreonEnabled, isDualOutputMode, isPrime, isStreamShiftDisabled]);
+  }, [p?.disabled, isDualOutputMode, isPrime, isStreamShiftDisabled]);
 
   // <Tooltip
   //   title={streamShiftTooltip}
@@ -107,20 +105,11 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
 }
 
 function StreamShiftTooltip() {
-  const {
-    isPrime,
-    isDualOutputMode,
-    isPatreonEnabled,
-    isStreamShiftDisabled,
-  } = useGoLiveSettings();
+  const { isPrime, isDualOutputMode, isStreamShiftDisabled } = useGoLiveSettings();
 
   const tooltipText = useMemo(() => {
     if (!isPrime) {
       return $t('Upgrade to Ultra to switch streams between devices.');
-    }
-
-    if (isPatreonEnabled) {
-      return $t('Stream Shift cannot be used with Patreon');
     }
 
     if (isDualOutputMode) {
@@ -128,14 +117,13 @@ function StreamShiftTooltip() {
     }
 
     return '';
-  }, [isPrime, isPatreonEnabled, isDualOutputMode]);
+  }, [isPrime, isDualOutputMode]);
 
   const showTextTooltip = useMemo(() => {
-    if (isPatreonEnabled) return true;
     if (!isPrime) return true;
     if (isDualOutputMode) return true;
     return false;
-  }, [isPrime, isPatreonEnabled, isDualOutputMode]);
+  }, [isPrime, isDualOutputMode]);
 
   function handleTooltipClick() {
     shell.openExternal(

@@ -80,7 +80,14 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
     maxCharacters = 140;
   }
 
+  const hasPatreon = p.platform === 'patreon' || enabledPlatforms.includes('patreon');
+  const minCharacters = hasPatreon ? 3 : undefined;
+
   const titleTooltip = useMemo(() => {
+    if (hasPatreon) {
+      return $t('Patreon requires a title of at least 3 characters');
+    }
+
     if (enabledPlatforms.includes('tiktok')) {
       return $t('Only 32 characters of your title will display on TikTok');
     }
@@ -111,6 +118,7 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
         }
         required={true}
         max={maxCharacters}
+        min={minCharacters}
         layout={p.layout}
         style={{ marginTop: !p.platform ? '0px' : '10px' }}
         size="large"
@@ -124,6 +132,7 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
           name="description"
           label={$t('Description')}
           required={descriptionIsRequired}
+          min={minCharacters}
           layout={p.layout}
         />
       )}

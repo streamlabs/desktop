@@ -35,7 +35,6 @@ export const DestinationSwitchers = memo(() => {
     switchCustomDestination,
     isPlatformLinked,
     isStreamShiftMode,
-    isPatreonEnabled,
     isPrime,
     alwaysShownPlatforms,
     disableCustomDestinationSwitchers,
@@ -274,8 +273,8 @@ export const DestinationSwitchers = memo(() => {
   }, [nonPrimeBothDisplayPlatform, setPlatformEnabled, setCustomDestinationEnabled]);
 
   const hideDisplaySelector = useMemo(() => {
-    return isPatreonEnabled ? false : isStreamShiftMode;
-  }, [isPatreonEnabled, isStreamShiftMode]);
+    return isStreamShiftMode;
+  }, [isStreamShiftMode]);
 
   return (
     <div className={cx(styles.switchWrapper)}>
