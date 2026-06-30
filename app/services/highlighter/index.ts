@@ -481,8 +481,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       const setupPath = path.join(tempDir, REPLAY_SETUP_EXE_NAME);
 
       await downloadFile(setupUrl, setupPath, (progress: IDownloadProgress) => {
-        // Map download progress to 0-75%
-        const downloadPercent = progress.percent * 100;
+        // Map download progress to 0-94%
+        const downloadPercent = progress.percent * 94;
         this.setReplayDownloadProgress(downloadPercent);
       });
 
@@ -500,14 +500,14 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       await this.verifyAuthenticodeSignature(setupPath);
 
       // --- Installing phase ---
-      this.SET_REPLAY_INSTALL({ step: 'installing', progress: 100 });
+      this.SET_REPLAY_INSTALL({ step: 'installing', progress: 94 });
 
       // Fake progress for install phase
       progressInterval = setInterval(() => {
         const current = this.state.replayInstall.progress;
         if (current < 95) {
           const increment = Math.max(0.3, (95 - current) * 0.03);
-          this.SET_REPLAY_INSTALL({ progress: Math.min(95, current + increment) });
+          this.setReplayDownloadProgress(Math.min(95, current + increment));
         }
       }, 500);
 
@@ -524,7 +524,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         return false;
       }
 
-      this.SET_REPLAY_INSTALL({ progress: 95 });
+      this.setReplayDownloadProgress(95);
 
       // --- Verifying phase ---
       this.SET_REPLAY_INSTALL({ step: 'verifying', progress: 96 });
@@ -546,7 +546,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           'Installation could not be verified. The deeplink protocol was not registered.',
         );
       }
-
       this.SET_REPLAY_INSTALL({ step: 'done', progress: 100 });
 
       // Auto-launch Streamlabs Replay
@@ -1707,8 +1706,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     location: 'Highlighter-tab' | 'Go-live-flow',
     game?: string,
   ) {
+    this.setAiHighlighter(true);
     if (!downloadNow) {
-      this.setAiHighlighter(true);
       this.SET_HIGHLIGHTER_VERSION('0.0.0');
       return;
     }
