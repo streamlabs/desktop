@@ -64,6 +64,7 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
   // re-fill form when the broadcastId selected
   useEffect(() => {
     if (!broadcastId) return;
+
     Services.YoutubeService.actions.return
       .fetchStartStreamOptionsForBroadcast(broadcastId)
       .then(newYtSettings => {

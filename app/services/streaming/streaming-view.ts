@@ -101,7 +101,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       (this.platforms.twitch?.enabled && this.platforms.twitch.game) ||
       (this.platforms.facebook?.enabled && this.platforms.facebook.game) ||
-      (this.platforms.trovo?.enabled && this.platforms.trovo.game) ||
       ''
     );
   }
@@ -110,7 +109,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       (this.platforms.twitch?.enabled && this.platforms.twitch.gameName) ||
       (this.platforms.facebook?.enabled && this.platforms.facebook.game) ||
-      (this.platforms.trovo?.enabled && this.platforms.trovo.game) ||
       ''
     );
   }
@@ -813,13 +811,16 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     // TODO: index
     // @ts-ignore
     if (settings && settings['broadcastId']) {
+      // TODO: index
       // @ts-ignore
       settings['broadcastId'] = '';
 
       if (platform === 'youtube') {
-        // YouTube monetization fields are broadcast-specific — reset when broadcastId is cleared
+        // Cannot have monetization enabled before the broadcast is checked
+        // TODO: index
         // @ts-ignore
         settings['monetizationEnabled'] = false;
+        // TODO: index
         // @ts-ignore
         settings['eligibleForMonetization'] = false;
       }

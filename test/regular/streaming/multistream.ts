@@ -36,12 +36,9 @@ import { sleep } from '../../helpers/sleep';
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
-async function enableAllPlatforms(skipYoutube: boolean = false) {
-  for (const platform of ['twitch', 'youtube', 'trovo']) {
-    if (platform === 'youtube' && skipYoutube) {
-      continue;
-    }
 
+async function enableAllPlatforms() {
+  for (const platform of ['twitch', 'youtube']) {
     await fillForm({ [platform]: true });
     await sleep(500);
     await waitForSettingsWindowLoaded();
@@ -83,7 +80,6 @@ async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean)
     await fillForm({
       title: 'Test stream',
       twitchGame: 'Fortnite',
-      trovoGame: 'Doom',
       streamShift: true,
     });
   } else {
@@ -185,8 +181,7 @@ test(
       title: 'Test stream',
       description: 'Test stream description',
       twitchGame: 'Fortnite',
-      trovoGame: 'Doom',
-      primaryChat: 'Trovo',
+      primaryChat: 'YouTube',
     });
 
     await goLiveWithMultistream();
@@ -232,15 +227,6 @@ test.skip(
     };
     await youtubeForm.fillForm(youtubeSettings);
     await youtubeForm.assertFormContains(youtubeSettings);
-
-    const trovoForm = useForm('trovo-settings');
-    const trovoSettings = {
-      customEnabled: true,
-      title: 'trovo title',
-      trovoGame: 'Doom',
-    };
-    await trovoForm.fillForm(trovoSettings);
-    await trovoForm.assertFormContains(trovoSettings);
 
     await goLiveWithMultistream();
     await stopStream();

@@ -60,12 +60,12 @@ export const makeWidgetTesters = (host: string): IWidgetTester[] => {
 
   /**
    * Return an alert type undecorated if the platform is Twitch, (e.g. sub),
-   * or with a platform prefix otherwise, (e.g. trovo_follow)
+   * or with a platform prefix otherwise, (e.g. facebook_follow)
    *
    * Examples:
    *
    * alertTypeWithTwitchDefault('sub', 'twitch') => sub
-   * alertTypeWithTwitchDefault('follow', 'trovo') => trovo_follow
+   * alertTypeWithTwitchDefault('follow', 'facebook') => facebook_follow
    */
   const alertTypeWithTwitchDefault = (alertType: TAlertType, platform: TPlatform): TAlertType => {
     const alert = platform === ('twitch' as TPlatform) ? alertType : `${platform}_${alertType}`;
@@ -80,7 +80,7 @@ export const makeWidgetTesters = (host: string): IWidgetTester[] => {
       url(platform) {
         return testUrl(alertTypeWithTwitchDefault('follow', platform));
       },
-      platforms: ['twitch', 'facebook', 'trovo'],
+      platforms: ['twitch', 'facebook'],
     },
     {
       name: 'Subscriber',
@@ -92,7 +92,7 @@ export const makeWidgetTesters = (host: string): IWidgetTester[] => {
       url(platform) {
         return testUrl(alertTypeWithTwitchDefault('sub', platform));
       },
-      platforms: ['twitch', 'trovo'],
+      platforms: ['twitch'],
     },
     {
       name: 'Membership',
@@ -103,7 +103,7 @@ export const makeWidgetTesters = (host: string): IWidgetTester[] => {
       type: 'donations',
       name: 'Tip',
       url: testUrl('donation'),
-      platforms: ['twitch', 'youtube', 'facebook', 'tiktok', 'trovo'],
+      platforms: ['twitch', 'youtube', 'facebook', 'tiktok'],
     },
     {
       type: 'bits',
@@ -568,7 +568,7 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
       $t('Subscriptions'),
       $t('Follows'),
       $t('Bits'),
-      $t('Platforms: Twitch, YouTube, Facebook, Trovo & integrations'),
+      $t('Platforms: Twitch, YouTube, Facebook & integrations'),
     ],
     icon: 'icon-alert-box',
     shortDesc: $t('Dynamic live alerts'),
@@ -588,12 +588,11 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
     description: $t('Set a follower goal for your viewers to help you reach.'),
     demoVideo: false,
     demoFilename: 'source-follower-goal.png',
-    platforms: new Set(['twitch', 'facebook', 'youtube', 'trovo']),
+    platforms: new Set(['twitch', 'facebook', 'youtube']),
     supportList: [
       $t('Twitch Followers'),
       $t('YouTube Subscribers'),
       $t('Facebook Followers'),
-      $t('Trovo Followers'),
     ],
     icon: 'fas fa-calendar',
     group: 'goals',
@@ -607,7 +606,6 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
       $t('Twitch Subscribers'),
       $t('YouTube Members'),
       $t('Facebook Supporters'),
-      $t('Trovo Subscribers'),
     ],
     platforms: new Set(['twitch', 'youtube']),
     icon: 'fas fa-calendar',
@@ -678,7 +676,7 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
     shortDesc: $t('Display chatters on screen'),
     demoVideo: false,
     demoFilename: 'source-chatbox.png',
-    supportList: [$t('Twitch chat'), $t('YouTube chat'), $t('Facebook chat'), $t('Trovo chat')],
+    supportList: [$t('Twitch chat'), $t('YouTube chat'), $t('Facebook chat')],
     icon: 'fas fa-comments',
     group: 'essential',
   },
@@ -695,7 +693,7 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
       $t('Super Chats'),
       $t('Supporters'),
       $t('Charity donations'),
-      $t('Platform support: Twitch, YouTube, Facebook, Trovo'),
+      $t('Platform support: Twitch, YouTube, Facebook'),
     ],
     icon: 'fas fa-th-list',
     shortDesc: $t('Display recent events'),
@@ -711,7 +709,7 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
       $t('Subscriptions'),
       $t('Follows'),
       $t('Bits'),
-      $t('Platform support: Twitch, YouTube, Facebook, Trovo'),
+      $t('Platform support: Twitch, YouTube, Facebook'),
     ],
     icon: 'fas fa-beer',
     group: 'interactive',
@@ -721,7 +719,7 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
     description: $t('Show off the count of live viewers by platform.'),
     demoVideo: false,
     demoFilename: 'source-viewer-count.png',
-    supportList: ['YouTube', 'Twitch', 'Facebook', 'Trovo'],
+    supportList: ['YouTube', 'Twitch', 'Facebook'],
     icon: 'fas fa-eye',
     group: 'essential',
   },
@@ -732,7 +730,7 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
     ),
     demoVideo: false,
     demoFilename: 'source-streamboss.png',
-    supportList: [$t('Twitch Bits'), $t('Platform support: Twitch, YouTube, Facebook, Trovo')],
+    supportList: [$t('Twitch Bits'), $t('Platform support: Twitch, YouTube, Facebook')],
     icon: 'fas fa-gavel',
     group: 'interactive',
   },
@@ -748,7 +746,7 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
       $t('New Subscribers'),
       $t('Cheers'),
       $t('Tips'),
-      $t('Platform support: Twitch, YouTube, Facebook, Trovo'),
+      $t('Platform support: Twitch, YouTube, Facebook'),
     ],
     platforms: new Set(['twitch', 'youtube']),
     icon: 'fas fa-align-center',
