@@ -142,6 +142,10 @@ export class ReactiveDataService extends Service {
 
       if (!this.userService.isLoggedIn) return;
 
+      if (this.sourcesService.getSmartSources().length > 0) {
+        this.ensureVisionRunning();
+      }
+
       this.fetchAndApplyFullState();
     });
 
