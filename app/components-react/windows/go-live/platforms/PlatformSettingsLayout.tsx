@@ -19,11 +19,19 @@ export default function PlatformSettingsLayout(p: {
   layout?: TInputLayout;
 }) {
   const layoutItems = useMemo(
-    () => [p.essentialOptionalFields, p.commonFields, p.requiredFields, p.optionalFields, p.layout],
-    [p.essentialOptionalFields, p.commonFields, p.requiredFields, p.optionalFields, p.layout],
+    () => [p.essentialOptionalFields, p.commonFields, p.requiredFields, p.optionalFields],
+    [p.essentialOptionalFields, p.commonFields, p.requiredFields, p.optionalFields],
   );
 
-  return <>{layoutItems.map(item => item)}</>;
+  const [essentialOptionalFields, commonFields, requiredFields, optionalFields] = layoutItems;
+  return (
+    <>
+      {essentialOptionalFields}
+      {commonFields}
+      {requiredFields}
+      {optionalFields}
+    </>
+  );
 }
 
 export interface IPlatformSettings extends Partial<Record<TPlatform, any>> {

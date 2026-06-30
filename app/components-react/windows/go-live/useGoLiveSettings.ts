@@ -572,6 +572,22 @@ export class GoLiveSettingsModule {
     return !this.isPrime;
   }
 
+  /**
+   * Override the default behavior of toggling stream shift so that the user is still
+   * able to toggle stream shift on/off when they have a single platform enabled and
+   * that platform has its display set to 'both'. Otherwise, the isDualOutputMode check
+   * would prevent the user from toggling stream shift on/off.
+   * Note: This should never happen but is a failsafe in case something goes wrong with
+   * the Go Live window's state.
+   */
+  get forceStreamShiftToggleEnabled() {
+    return (
+      this.state.isStreamShiftMode &&
+      this.state.enabledPlatforms.length === 1 &&
+      this.state.settings.platforms[this.state.enabledPlatforms[0]]?.display === 'both'
+    );
+  }
+
   get isLiveOutputEditingDisabled() {
     if (!this.isPrime) return true;
     return this.state.isStreamShiftMode;

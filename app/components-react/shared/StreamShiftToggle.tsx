@@ -23,6 +23,7 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
     setStreamShift,
     isDualOutputMode,
     isStreamShiftDisabled,
+    forceStreamShiftToggleEnabled,
   } = useGoLiveSettings();
 
   useEffect(() => {
@@ -48,9 +49,15 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
   const disableToggle = useMemo(() => {
     if (p?.disabled) return true;
     if (!isPrime) return true;
-    if (isDualOutputMode) return true;
+    if (isDualOutputMode && !forceStreamShiftToggleEnabled) return true;
     return isStreamShiftDisabled;
-  }, [p?.disabled, isDualOutputMode, isPrime, isStreamShiftDisabled]);
+  }, [
+    p?.disabled,
+    isDualOutputMode,
+    forceStreamShiftToggleEnabled,
+    isPrime,
+    isStreamShiftDisabled,
+  ]);
 
   // <Tooltip
   //   title={streamShiftTooltip}
@@ -105,25 +112,25 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
 }
 
 function StreamShiftTooltip() {
-  const { isPrime, isDualOutputMode, isStreamShiftDisabled } = useGoLiveSettings();
+  const { isPrime, isDualOutputMode, forceStreamShiftToggleEnabled } = useGoLiveSettings();
 
   const tooltipText = useMemo(() => {
     if (!isPrime) {
-      return $t('Upgrade to Ultra to switch streams between devices.');
+      return { name: 'not-ultra', text: $t('Upgrade to Ultra to switch streams between devices.') };
     }
 
-    if (isDualOutputMode) {
-      return $t('Stream Shift cannot be used with Dual Output');
+    if (isDualOutputMode && !forceStreamShiftToggleEnabled) {
+      return { name: 'dual-output', text: $t('Stream Shift cannot be used with Dual Output') };
     }
 
-    return '';
-  }, [isPrime, isDualOutputMode]);
+    return { name: 'default', text: '' };
+  }, [isPrime, isDualOutputMode, forceStreamShiftToggleEnabled]);
 
   const showTextTooltip = useMemo(() => {
     if (!isPrime) return true;
-    if (isDualOutputMode) return true;
+    if (isDualOutputMode && !forceStreamShiftToggleEnabled) return true;
     return false;
-  }, [isPrime, isDualOutputMode]);
+  }, [isPrime, isDualOutputMode, forceStreamShiftToggleEnabled]);
 
   function handleTooltipClick() {
     shell.openExternal(
@@ -132,9 +139,9 @@ function StreamShiftTooltip() {
   }
 
   return showTextTooltip ? (
-    <>{tooltipText}</>
+    <span data-name={tooltipText.name}>{tooltipText.text}</span>
   ) : (
-    <span onClick={handleTooltipClick}>
+    <span data-name="explanation" onClick={handleTooltipClick}>
       {$t(
         'Stay uninterrupted by switching between devices mid stream. Works between Desktop and Mobile App.',
       )}

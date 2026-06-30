@@ -20,7 +20,6 @@ import { inject } from 'slap';
 import RecordingSwitcher from './RecordingSwitcher';
 import { promptAction } from 'components-react/modals';
 import TwitterInput from './Twitter';
-import debounce from 'lodash/debounce';
 
 export default function GoLiveWindow() {
   const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
@@ -68,13 +67,14 @@ function ModalFooter() {
     isPrime,
     isStreamShiftMode,
     hasIncompatibleCodec,
-    streamShiftForceGoLive,
+    streamShiftStatus,
     codec,
     checkIsLive,
     forceStreamShiftGoLive,
     goLiveWithDefaultCodec,
     showSettings,
     setStreamShift,
+    clearStreamShiftPending,
     hasValidDisplayAssignment,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
@@ -89,12 +89,12 @@ function ModalFooter() {
       module.prepopulate();
     },
 
-    get streamShiftForceGoLive() {
-      return this.restreamService.views.streamShiftForceGoLive;
+    get streamShiftStatus() {
+      return module.streamShiftStatus;
     },
 
     async checkIsLive() {
-      return this.restreamService.actions.checkIsLive();
+      return this.restreamService.actions.return.checkIsLive();
     },
 
     async forceStreamShiftGoLive() {
@@ -119,98 +119,22 @@ function ModalFooter() {
     showSettings() {
       this.settingsService.actions.showSettings('Output');
     },
+
+    clearStreamShiftPending() {
+      this.restreamService.actions.setStreamShiftStatus('inactive');
+    },
   }));
 
   const [isCoolingDown, setIsCoolingDown] = useState(false);
+  const isStreamShiftPromptShown = useRef(false);
 
-  // Use refs to track stream status fetching and whether the user should go live to avoid
-  // unnecessary rerenders that could effect persistence of the status during the async checks
-  const isFetchingStreamStatus = useRef(false);
-  const shouldGoLive = useRef(false);
-
+  // Check stream shift status on mount for Prime users
   useEffect(() => {
-    // Check if user is live on mount to handle the case where the stream switcher status
-    // changed while the user had the Go Live Window closed.
-    isFetchingStreamStatus.current = true;
-
-    const subscription = Services.RestreamService.isLive.subscribe(async isLive => {
-      if (!isPrime) return;
-      if (shouldGoLive.current) {
-        goLive();
-        shouldGoLive.current = false;
-        return;
-      }
-
-      isFetchingStreamStatus.current = false;
-
-      // Prompt to confirm stream switch if the stream exists
-      if (isLive && !streamShiftForceGoLive) {
-        await promptStreamShift();
-      } else if (!isLive && hasIncompatibleCodec) {
-        console.log('Incompatible codec detected, prompting user to change codec');
-        // If the user is not live but has an incompatible codec, prompt to change codec
-        await promptUseDefaultCodec();
-      }
+    if (!isPrime) return;
+    checkIsLive().catch((e: unknown) => {
+      console.error('Error checking stream shift status on mount:', e);
     });
-
-    debouncedCheckIsLive();
-    isFetchingStreamStatus.current = false;
-
-    return () => {
-      debouncedCheckIsLive.cancel();
-      subscription.unsubscribe();
-    };
   }, []);
-
-  useEffect(() => {
-    // Timer for cooldown on stream switcher from the user forcing start while live on another device.
-    // Use the `isFetchingStreamStatus` ref to track the cooldown to prevent the user from fetching
-    // the status during the cooldown
-    if (!isCoolingDown) return;
-
-    const timer = setTimeout(() => {
-      setIsCoolingDown(false);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [isCoolingDown]);
-
-  const shouldShowConfirm = ['prepopulate', 'waitForNewSettings'].includes(lifecycle);
-  const shouldShowGoBackButton =
-    lifecycle === 'runChecklist' && error && checklist.startVideoTransmission !== 'done';
-  const shouldShowRecordingSwitcher = ['empty', 'prepopulate', 'waitForNewSettings'].includes(
-    lifecycle,
-  );
-
-  const promptStreamShift = useCallback(async () => {
-    await promptAction({
-      title: $t('Another stream detected'),
-      message: $t(
-        'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
-      ),
-      btnText: $t('Switch to Streamlabs Desktop'),
-      fn: () => {
-        // If the user is live and has an incompatible codec, prompt to change codec
-        // or the stream will not go live
-        if (hasIncompatibleCodec) {
-          promptUseDefaultCodec();
-        } else {
-          startStreamShift();
-          close();
-        }
-      },
-      cancelBtnText: $t('Cancel'),
-      cancelBtnPosition: 'left',
-      cancelFn: () => close(),
-      secondaryActionText: $t('Force Start'),
-      secondaryActionFn: async () => {
-        setStreamShift(false);
-        setIsCoolingDown(true);
-        await forceStreamShiftGoLive();
-      },
-      maskClosable: false,
-    });
-  }, [hasIncompatibleCodec]);
 
   const promptUseDefaultCodec = useCallback(async () => {
     // If the user is not live but has an incompatible codec, prompt to change codec
@@ -249,17 +173,82 @@ function ModalFooter() {
       secondaryActionText: $t('Select Codec'),
       secondaryActionFn: showSettings,
     });
-  }, [hasIncompatibleCodec, isStreamShiftMode, isDualOutputMode, codec]);
-
-  const debouncedCheckIsLive = debounce(checkIsLive, 1000);
+  }, [isStreamShiftMode, isDualOutputMode, codec]);
 
   const startStreamShift = useCallback(() => {
     if (isDualOutputMode) {
       Services.DualOutputService.actions.toggleDisplay(false, 'vertical');
     }
 
+    setStreamShift(true);
     goLive();
-  }, [isDualOutputMode]);
+  }, [isDualOutputMode, goLive, setStreamShift]);
+
+  const promptStreamShift = useCallback(async () => {
+    isStreamShiftPromptShown.current = true;
+    await promptAction({
+      title: $t('Another stream detected'),
+      message: $t(
+        'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
+      ),
+      btnText: $t('Switch to Streamlabs Desktop'),
+      fn: () => {
+        isStreamShiftPromptShown.current = false;
+        if (hasIncompatibleCodec) {
+          promptUseDefaultCodec();
+        } else {
+          startStreamShift();
+          close();
+        }
+      },
+      cancelBtnText: $t('Cancel'),
+      cancelBtnPosition: 'left',
+      cancelFn: () => {
+        isStreamShiftPromptShown.current = false;
+        clearStreamShiftPending();
+        close();
+      },
+      secondaryActionText: $t('Force Start'),
+      secondaryActionFn: async () => {
+        isStreamShiftPromptShown.current = false;
+        setStreamShift(false);
+        setIsCoolingDown(true);
+        await forceStreamShiftGoLive();
+      },
+      maskClosable: false,
+    });
+  }, [
+    hasIncompatibleCodec,
+    startStreamShift,
+    close,
+    forceStreamShiftGoLive,
+    promptUseDefaultCodec,
+    clearStreamShiftPending,
+  ]);
+
+  // When the streaming service detects an active stream on another device, show the prompt
+  useEffect(() => {
+    if (streamShiftStatus !== 'pending') return;
+    if (isStreamShiftPromptShown.current) return;
+    promptStreamShift();
+  }, [streamShiftStatus]);
+
+  useEffect(() => {
+    if (!isCoolingDown) return;
+
+    const timer = setTimeout(() => {
+      setIsCoolingDown(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [isCoolingDown]);
+
+  const shouldShowConfirm = ['prepopulate', 'waitForNewSettings'].includes(lifecycle);
+  const shouldShowGoBackButton =
+    lifecycle === 'runChecklist' && error && checklist.startVideoTransmission !== 'done';
+  const shouldShowRecordingSwitcher = ['empty', 'prepopulate', 'waitForNewSettings'].includes(
+    lifecycle,
+  );
 
   const handleGoLive = useCallback(async () => {
     if (!isPrime) {
@@ -283,40 +272,17 @@ function ModalFooter() {
 
         return;
       }
-
-      goLive();
-    } else {
-      const shouldCheckIsLive =
-        !streamShiftForceGoLive &&
-        isFetchingStreamStatus.current === false &&
-        shouldGoLive.current === false;
-
-      // Check for ultra users already being live with stream shift
-      if (shouldCheckIsLive) {
-        shouldGoLive.current = true;
-        isFetchingStreamStatus.current = true;
-        try {
-          // This will resolve with the subscription to the restream service `isLive` observable
-          // where `goLive` will be called if the user is not already live
-          await debouncedCheckIsLive();
-        } catch (e: unknown) {
-          console.error('Error checking stream switcher status:', e);
-
-          isFetchingStreamStatus.current = false;
-          shouldGoLive.current = false;
-        }
-      } else {
-        goLive();
-      }
     }
-  }, [
-    isDualOutputMode,
-    isPrime,
-    streamShiftForceGoLive,
-    hasIncompatibleCodec,
-    debouncedCheckIsLive,
-    goLive,
-  ]);
+
+    // Check for incompatible codec before going live (non-stream-shift case)
+    if (hasIncompatibleCodec) {
+      await promptUseDefaultCodec();
+      return;
+    }
+
+    // The streaming service handles the stream shift check internally
+    goLive();
+  }, [isPrime, hasValidDisplayAssignment, hasIncompatibleCodec, promptUseDefaultCodec, goLive]);
 
   return (
     <Form layout={'inline'}>
@@ -343,11 +309,7 @@ function ModalFooter() {
           disabled={isLoading || !!error || isCoolingDown}
           className={styles.confirmBtn}
         >
-          {isCoolingDown || isFetchingStreamStatus.current === true ? (
-            <i className="fa fa-spinner fa-pulse" />
-          ) : (
-            $t('Confirm & Go Live')
-          )}
+          {isCoolingDown ? <i className="fa fa-spinner fa-pulse" /> : $t('Confirm & Go Live')}
         </Button>
       )}
     </Form>

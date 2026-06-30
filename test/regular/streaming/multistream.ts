@@ -11,7 +11,7 @@ import {
   waitForStreamStart,
   waitForStreamStop,
 } from '../../helpers/modules/streaming';
-import { fillForm, useForm } from '../../helpers/modules/forms';
+import { assertFormContains, fillForm, useForm } from '../../helpers/modules/forms';
 import {
   click,
   clickButton,
@@ -19,6 +19,7 @@ import {
   focusChild,
   focusMain,
   isDisplayed,
+  isTooltipDisplayed,
   waitForDisplayed,
 } from '../../helpers/modules/core';
 import { logIn } from '../../helpers/modules/user';
@@ -35,7 +36,6 @@ import { sleep } from '../../helpers/sleep';
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
-
 async function enableAllPlatforms(skipYoutube: boolean = false) {
   for (const platform of ['twitch', 'youtube', 'trovo']) {
     if (platform === 'youtube' && skipYoutube) {
@@ -112,9 +112,8 @@ async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean)
   await waitForSettingsWindowLoaded();
   await fireIsLiveEvent(true);
   await waitForDisplayed('span=Switch to Streamlabs Desktop', { timeout: 10000 });
-  // await sleep(10000); // wait to ensure the event is processed before going live again
   await focusMain();
-  t.true(await isDisplayed('button=Claim Stream'));
+  t.true(await isDisplayed('button=Claim Stream'), 'Claim Stream button should be displayed');
   await focusChild();
   await click('span=Switch to Streamlabs Desktop');
 
@@ -337,6 +336,39 @@ test('Custom stream destinations', async t => {
 test('Stream Shift', withUser('twitch', { prime: true, multistream: true }), async t => {
   await prepareToGoLive();
 
+  await clickGoLive();
+  await waitForSettingsWindowLoaded();
+
+  // TODO: Enable checking for tooltips after modifying the disableTransitionsCode in webdriver
+  // Default tooltip
+  await isTooltipDisplayed('i.icon-information', '[data-name="explanation"]', 1000);
+
+  // Default tooltip stays the same when multiple platforms are enabled
+  await fillForm({ youtube: true });
+  await isTooltipDisplayed('i.icon-information', '[data-name="explanation"]', 1000);
+
+  // Dual output tooltip
+  await fillForm({ youtubeDisplay: 'vertical' });
+  await isTooltipDisplayed('i.icon-information', '[data-name="dual-output"]', 1000);
+  await assertFormContains({ streamShift: false });
+  await fillForm({ youtubeDisplay: 'horizontal' });
+  await fillForm({ streamShift: true });
+
+  // Stream Shift toggle hides/shows display selectors
+  t.false(
+    await isDisplayed('[data-name="display-selector"]', { timeout: 1000 }),
+    'Toggling on Stream Shift hides display selectors',
+  );
+  await fillForm({ streamShift: false });
+  await isDisplayed('[data-name="display-selector"]', { timeout: 1000 });
+  await fillForm({ youtube: false });
+
+  // TODO: Patreon tooltip
+  // await fillForm({ patreon: true });
+  // await isTooltipDisplayed('i.icon-information', '[data-name="patreon"]', 1000);
+  // await fillForm({ patreon: false });
+
+  await waitForSettingsWindowLoaded();
   // Single stream shift
   await goLiveWithStreamShift(t, false);
 

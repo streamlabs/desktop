@@ -451,6 +451,7 @@ const DestinationSwitcher = memo(
           height="35px"
         >
           <DisplaySelector
+            data-name="display-selector"
             title={title}
             nolabel
             className={styles.displaySelector}
