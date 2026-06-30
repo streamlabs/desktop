@@ -212,6 +212,8 @@ export function StreamSettings() {
   function disableProtectedMode() {
     StreamSettingsService.actions.setSettings({
       protectedModeEnabled: false,
+      key: '',
+      server: '',
       streamType: 'rtmp_common',
     });
 
@@ -224,6 +226,7 @@ export function StreamSettings() {
     StreamSettingsService.actions.setSettings({
       protectedModeEnabled: true,
       key: '',
+      server: '',
       streamType: 'rtmp_custom',
     });
   }
