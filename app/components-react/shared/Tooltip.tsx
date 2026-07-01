@@ -33,6 +33,7 @@ interface ITooltipTipProps {
   overlayClassName?: string;
   tooltipClassName?: string;
   onClick?: () => void;
+  name?: string;
 }
 
 export default function Tooltip(p: PropsWithChildren<ITooltipTipProps>) {
@@ -56,6 +57,7 @@ export default function Tooltip(p: PropsWithChildren<ITooltipTipProps>) {
 
   return (
     <div
+      data-name={p.name}
       id={id}
       className={cx(className, styles.tooltipWrapper)}
       style={wrapperStyle}

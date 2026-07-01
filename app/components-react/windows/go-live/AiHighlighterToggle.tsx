@@ -157,23 +157,13 @@ export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded
       </div>
     );
   }
-  if (!isExpanded) {
-    return (
-      <AIHighlighterBanner
-        game={gameName}
-        toggleHighlighter={() => {
-          toggleHighlighter();
-          setIsExpanded(!isExpanded);
-        }}
-      />
-    );
-  }
 
   return (
     <div>
       {gameIsSupported ? (
         <div
           key={'aiSelector'}
+          data-name="ai-highlighter-selector"
           style={{
             marginTop: '12px',
             marginBottom: '24px',
@@ -205,6 +195,7 @@ export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded
 
                   {highlighterVersion !== '' ? (
                     <SwitchInput
+                      name="replay"
                       style={{ width: '80px', margin: 0, marginTop: '-2px' }}
                       value={disableAIHighlighter ? false : useHighlighter}
                       label=""

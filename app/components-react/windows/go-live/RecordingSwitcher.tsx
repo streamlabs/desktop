@@ -10,6 +10,7 @@ import { RadioInput } from 'components-react/shared/inputs/RadioInput';
 import cx from 'classnames';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 import { TDisplayType } from 'services/settings-v2/video';
+import { isGameSupported } from 'services/highlighter/models/game-config.models';
 
 interface IRecordingSettingsProps {
   showRecordingToggle?: boolean;
@@ -20,7 +21,7 @@ interface IRecordingSettingsProps {
 }
 
 export default function RecordingSwitcher(p: IRecordingSettingsProps) {
-  const { updateRecordingDisplayAndSaveSettings } = useGoLiveSettings();
+  const { updateRecordingDisplayAndSaveSettings, game } = useGoLiveSettings();
   const {
     DualOutputService,
     StreamSettingsService,
@@ -43,9 +44,14 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
       StreamSettingsService.views.settings?.goLiveSettings?.recording ?? 'horizontal',
   }));
 
-  const recordWhenStartStream = useMemo(() => v.recordWhenStreaming || v.useAiHighlighter, [
+  const shouldUseAiHighlighter = useMemo(() => {
+    return isGameSupported(game) && v.useAiHighlighter;
+  }, [game, v.useAiHighlighter]);
+
+  const recordWhenStartStream = useMemo(() => v.recordWhenStreaming || shouldUseAiHighlighter, [
     v.recordWhenStreaming,
-    v.useAiHighlighter,
+    shouldUseAiHighlighter,
+    game,
   ]);
 
   const showRecordingToggle = useMemo(() => p?.showRecordingToggle ?? false, [
@@ -60,14 +66,14 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
     return false;
   }, [v.isDualOutputMode, v.canRecordVertical]);
 
-  const disableToggle = useMemo(() => v.useAiHighlighter || v.isRecording, [
-    v.useAiHighlighter,
+  const disableToggle = useMemo(() => shouldUseAiHighlighter || v.isRecording, [
+    shouldUseAiHighlighter,
     v.isRecording,
   ]);
 
   const disableIcons = useMemo(
-    () => v.useAiHighlighter || v.isRecording || v.isReplayBufferActive,
-    [v.useAiHighlighter, v.isRecording, v.isReplayBufferActive],
+    () => shouldUseAiHighlighter || v.isRecording || v.isReplayBufferActive,
+    [shouldUseAiHighlighter, v.isRecording, v.isReplayBufferActive, game],
   );
 
   const options = useMemo(() => {
@@ -82,12 +88,17 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
       v.isRecording
         ? $t('Recording in progress. Stop recording to change the recording display.')
         : $t('AI Highlighter is enabled. Recording will start when stream starts.'),
-    [v.isRecording],
+    [v.isRecording, shouldUseAiHighlighter, game],
   );
 
   return (
-    <div style={p?.style} className={cx(p?.className, styles.recordingSwitcher)}>
+    <div
+      data-name="recording-switcher"
+      style={p?.style}
+      className={cx(p?.className, styles.recordingSwitcher)}
+    >
       <Tooltip
+        name="recording-toggle-tooltip"
         title={message}
         disabled={!disableToggle && !p?.showTooltip}
         placement="topRight"
@@ -96,7 +107,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
       >
         {showRecordingToggle && (
           <SwitchInput
-            name="recording-toggle"
+            name="recording"
             value={recordWhenStartStream}
             onChange={val => {
               SettingsService.actions.setSettingValue('General', 'RecordWhenStreaming', val);
@@ -111,7 +122,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
         {showRecordingIcons && (
           <>
             <RadioInput
-              name="recording-display"
+              name="recordingDisplay"
               defaultValue="horizontal"
               value={v.recordingDisplay}
               label={p?.label}

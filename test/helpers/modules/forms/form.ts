@@ -282,29 +282,33 @@ export async function readFields(...args: unknown[]): Promise<TFormData> {
 
 /**
  * A shortcut for useForm().assertFormContains()
+ * The second argument can be an assertion message (a string containing spaces)
+ * or the indexKey for field lookup.
  */
 export async function assertFormContains(
   formData: TFormData,
-  indexKey?: string,
+  messageOrIndexKey?: string,
+  indexKeyOrValueKey?: string,
   valueKey?: string,
 ): Promise<unknown>;
 export async function assertFormContains(
   formName: string,
   formData: TFormData,
-  indexKey?: string,
+  messageOrIndexKey?: string,
+  indexKeyOrValueKey?: string,
   valueKey?: string,
 ): Promise<unknown>;
 export async function assertFormContains(...args: any[]): Promise<unknown> {
   if (typeof args[0] === 'string') {
-    const [formName, formData, indexKey, valueKey] = args;
+    const [formName, formData, ...rest] = args;
     // TODO: fake hook
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useForm(formName).assertFormContains(formData, indexKey, valueKey);
+    return useForm(formName).assertFormContains(formData, ...rest);
   } else {
-    const [formData, indexKey, valueKey] = args;
+    const [formData, ...rest] = args;
     // TODO: fake hook
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useForm().assertFormContains(formData, indexKey, valueKey);
+    return useForm().assertFormContains(formData, ...rest);
   }
 }
 

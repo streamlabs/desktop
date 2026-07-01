@@ -211,6 +211,7 @@ export default function SettingsView({
 
                 {v.highlighterVersion !== '' ? (
                   <SwitchInput
+                    name="useHighlighter"
                     style={{ margin: 0, marginLeft: '-10px' }}
                     size="default"
                     value={disableAIHighlighter ? false : v.useAiHighlighter}
@@ -218,6 +219,7 @@ export default function SettingsView({
                   />
                 ) : (
                   <Button
+                    name="installHighlighter"
                     style={{ width: 'fit-content' }}
                     type="primary"
                     onClick={() => {
