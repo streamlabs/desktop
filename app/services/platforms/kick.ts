@@ -212,7 +212,9 @@ export class KickService
   }
 
   async afterStopStream(): Promise<void> {
-    await this.endStream(this.state.platformId);
+    if (this.state.platformId) {
+      await this.endStream(this.state.platformId);
+    }
 
     // clear server url and stream key
     this.SET_INGEST('');
