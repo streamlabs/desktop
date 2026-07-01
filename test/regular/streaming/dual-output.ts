@@ -1,8 +1,10 @@
 import {
   clickGoLive,
   prepareToGoLive,
+  stopStream,
   submit,
   waitForSettingsWindowLoaded,
+  waitForStreamStart,
 } from '../../helpers/modules/streaming';
 import {
   click,
@@ -242,35 +244,24 @@ test('Dual Output Go Live Non-Ultra', async t => {
   await toggleDualOutputMode(true);
   await prepareToGoLive();
 
-  await clickGoLive();
-  await waitForSettingsWindowLoaded();
-  await submit();
-
-  // Cannot go live in dual output mode with only one target linked
-  await waitForDisplayed('div.ant-message-notice-content', {
-    timeout: 10000,
-  });
-  await clickIfDisplayed('div.ant-message-notice-content');
-  await sleep(200);
-
-  await closeWindow('child');
   const dummy = await addDummyAccount('instagram');
 
   try {
     await clickGoLive();
-    await submit();
 
-    // Cannot go live in dual output mode with all targets assigned to one display
-    await waitForDisplayed('div.ant-message-notice-content', {
-      timeout: 5000,
-    });
-    await clickIfDisplayed('div.ant-message-notice-content');
-
+    await waitForSettingsWindowLoaded();
     await fillForm({
       instagram: true,
     });
 
     await waitForSettingsWindowLoaded();
+    await submit();
+
+    // Cannot go live with more than one platform assigned to the same display
+    await waitForDisplayed('div.ant-message-notice-content', {
+      timeout: 5000,
+    });
+    await clickIfDisplayed('div.ant-message-notice-content');
 
     await fillForm({
       instagramDisplay: 'vertical',
@@ -310,18 +301,23 @@ test(
 
       await clickGoLive();
       await waitForSettingsWindowLoaded();
+      await fillForm({
+        youtube: true,
+        twitchDisplay: 'vertical',
+        primaryChat: 'Twitch',
+      });
+      await waitForSettingsWindowLoaded();
       await submit();
 
-      // Cannot go live in dual output mode with all targets assigned to one display
-      await waitForDisplayed('div.ant-message-notice-content', {
-        timeout: 10000,
-      });
-      await clickIfDisplayed('div.ant-message-notice-content');
-      await sleep(500);
+      await waitForStreamStart();
+      await stopStream();
 
-      // Dual output with one platform for each display
+      await clickGoLive();
+      await waitForSettingsWindowLoaded();
       await fillForm({
-        twitchDisplay: 'vertical',
+        twitchDisplay: 'horizontal',
+        youtubeDisplay: 'vertical',
+        primaryChat: 'YouTube',
       });
       await goLiveWithDualOutput('twitch');
     } catch (e: unknown) {

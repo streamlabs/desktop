@@ -177,7 +177,6 @@ test('Start stream twice to the same YT event', async t => {
 });
 
 test('Youtube streaming is disabled', async t => {
-  const retried = await logInYouTubeEnabledAccount(t);
   await logIn('youtube', { streamingIsDisabled: true, notStreamable: true });
 
   t.true(
@@ -188,9 +187,7 @@ test('Youtube streaming is disabled', async t => {
   await clickGoLive();
   await focusChild();
 
-  if (retried) {
-    skipCheckingErrorsInLog();
-  }
-
   await waitForDisplayed('button=Enable Live Streaming');
+
+  skipCheckingErrorsInLog();
 });

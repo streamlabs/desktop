@@ -1616,8 +1616,8 @@ export class StreamingService
       }
     } else {
       // In dual output mode without enhanced broadcasting, create the horizontal streaming instance after the vertical stream
-      // has started. The start streaming promise resolves when the vertical stream starts because the vertical stream is the
-      // last streaming instance created
+      // has started. The start streaming promise resolves when the horizontal stream starts because the horizontal stream is the
+      // last streaming instance created.
       if (context === 'vertical') {
         await this.validateOrCreateOutputInstance({
           display: 'horizontal',
@@ -1633,6 +1633,13 @@ export class StreamingService
         // Only resolve the start streaming promise after the horizontal stream has started to prevent unintended side effects of duplicate
         // actions taken after starting the stream
         await this.handleStartStreaming(code, context);
+
+        if (this.state.status.vertical.streaming === EStreamingState.Starting) {
+          // The horizontal stream has started but the vertical stream status is still Starting. Update the status here, instead of
+          // when the vertical stream actually starts, to prevent a race condition where the UI might show all streams as Live when
+          // they are still starting.
+          this.SET_STREAMING_STATUS(EStreamingState.Live, 'vertical', time);
+        }
       }
     }
   }

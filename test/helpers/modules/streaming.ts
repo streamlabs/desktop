@@ -107,10 +107,6 @@ export async function stopStream() {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
     await clickButton('End Stream');
-    console.log('Clicked "End Stream" button');
-    await waitForStreamStop();
-    console.log('Stream stopped');
-
     await waitForStreamStop();
   });
 }
