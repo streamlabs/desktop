@@ -568,8 +568,13 @@ export class GoLiveSettingsModule {
     return Services.SettingsService.views.values.Output.Encoder;
   }
 
+  get isPatreonEnabled() {
+    return this.state.enabledPlatforms.some((p: TPlatform) => p === 'patreon');
+  }
+
   get isStreamShiftDisabled() {
-    return !this.isPrime;
+    if (!this.isPrime) return true;
+    return this.isPatreonEnabled;
   }
 
   /**

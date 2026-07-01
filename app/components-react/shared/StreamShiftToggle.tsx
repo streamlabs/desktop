@@ -22,6 +22,7 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
     isStreamShiftMode,
     setStreamShift,
     isDualOutputMode,
+    isPatreonEnabled,
     isStreamShiftDisabled,
     forceStreamShiftToggleEnabled,
   } = useGoLiveSettings();
@@ -43,16 +44,18 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
   }
 
   const isStreamShiftEnabled = useMemo(() => {
-    return isStreamShiftMode;
-  }, [isStreamShiftMode]);
+    return isPatreonEnabled ? false : isStreamShiftMode;
+  }, [isPatreonEnabled, isStreamShiftMode]);
 
   const disableToggle = useMemo(() => {
     if (p?.disabled) return true;
     if (!isPrime) return true;
+    if (isPatreonEnabled) return true;
     if (isDualOutputMode && !forceStreamShiftToggleEnabled) return true;
     return isStreamShiftDisabled;
   }, [
     p?.disabled,
+    isPatreonEnabled,
     isDualOutputMode,
     forceStreamShiftToggleEnabled,
     isPrime,
@@ -112,11 +115,20 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
 }
 
 function StreamShiftTooltip() {
-  const { isPrime, isDualOutputMode, forceStreamShiftToggleEnabled } = useGoLiveSettings();
+  const {
+    isPrime,
+    isDualOutputMode,
+    isPatreonEnabled,
+    forceStreamShiftToggleEnabled,
+  } = useGoLiveSettings();
 
   const tooltipText = useMemo(() => {
     if (!isPrime) {
       return { name: 'not-ultra', text: $t('Upgrade to Ultra to switch streams between devices.') };
+    }
+
+    if (isPatreonEnabled) {
+      return { name: 'patreon', text: $t('Stream Shift cannot be used with Patreon') };
     }
 
     if (isDualOutputMode && !forceStreamShiftToggleEnabled) {
@@ -124,13 +136,14 @@ function StreamShiftTooltip() {
     }
 
     return { name: 'default', text: '' };
-  }, [isPrime, isDualOutputMode, forceStreamShiftToggleEnabled]);
+  }, [isPrime, isPatreonEnabled, isDualOutputMode, forceStreamShiftToggleEnabled]);
 
   const showTextTooltip = useMemo(() => {
+    if (isPatreonEnabled) return true;
     if (!isPrime) return true;
     if (isDualOutputMode && !forceStreamShiftToggleEnabled) return true;
     return false;
-  }, [isPrime, isDualOutputMode, forceStreamShiftToggleEnabled]);
+  }, [isPrime, isPatreonEnabled, isDualOutputMode, forceStreamShiftToggleEnabled]);
 
   function handleTooltipClick() {
     shell.openExternal(

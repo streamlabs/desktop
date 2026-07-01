@@ -36,6 +36,7 @@ export default function PlatformSettings() {
     isAiHighlighterEnabled,
     isStreamShiftMode,
     isStreamShiftDisabled,
+    isPatreonEnabled,
     isLiveOutputEditingEnabled,
     isLiveOutputEditingDisabled,
     enabledPlatformsCount,
@@ -69,6 +70,10 @@ export default function PlatformSettings() {
   }, [isPrime]);
 
   const streamShiftTooltip = useMemo(() => {
+    if (isPatreonEnabled) {
+      return $t('Stream Shift cannot be used with Patreon');
+    }
+
     if (!isPrime) {
       return $t('Upgrade to Ultra to switch streams between devices.');
     }
@@ -78,7 +83,7 @@ export default function PlatformSettings() {
     }
 
     return '';
-  }, [isPrime, isDualOutputMode]);
+  }, [isPrime, isPatreonEnabled, isDualOutputMode]);
 
   const disableStreamShiftTooltip = useMemo(() => isPrime && !isStreamShiftDisabled, [
     isPrime,
