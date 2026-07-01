@@ -160,6 +160,15 @@ export async function addDummyAccount(
   return user;
 }
 
+/**
+ * Remove a dummy account that was previously added
+ * @param platform - platform to unlink
+ */
+export async function removeDummyAccount(platform: TTestDummyUserPlatforms): Promise<void> {
+  const api = await getApiClient();
+  api.getResource<UserService>('UserService').removeDummyAccount(platform);
+}
+
 export async function loginWithAuthInfo(
   t: TExecutionContext,
   userInfo: ITestUser | IDummyTestUser,

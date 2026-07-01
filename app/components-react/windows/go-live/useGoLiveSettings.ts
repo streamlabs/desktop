@@ -271,12 +271,14 @@ export class GoLiveSettingsModule {
      */
     const { canEnableRestream } = RestreamService.views;
 
-    // Tiktok and Kick can stay active
+    // Always enabled platforms can stay active
     const enabledPlatforms = this.state.enabledPlatforms.filter(
       platform => !this.state.alwaysEnabledPlatforms.includes(platform),
     );
 
-    if (!dualOutputMode && !canEnableRestream && enabledPlatforms.length > 1) {
+    // Non-Ultra users can only have 2 targets enabled at a time, so if they have more than 2 enabled,
+    // filter out a non-primary platform
+    if (!canEnableRestream && enabledPlatforms.length > 2) {
       /* Find the platform that was set as primary chat to remain enabled,
        * if for some reason we fail to find it default to the last selected platform
        */
