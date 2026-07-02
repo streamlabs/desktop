@@ -21,7 +21,6 @@ import { inject } from 'slap';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { MagicLinkService } from 'services/magic-link';
 import { SettingsService } from 'services/settings';
-import Tooltip from 'components-react/shared/Tooltip';
 
 /**
  * Renders settings for starting the stream
@@ -101,7 +100,7 @@ export default function GoLiveSettings() {
             <AddDestinationButton type="banner" className={styles.addDestinationBanner} />
           )}
 
-          <Scrollable className={styles.leftColumnScroll}>
+          <Scrollable className={cx(styles.leftColumnScroll, { [styles.nonUltra]: !isPrime })}>
             {showTopAddDestination && (
               <AddDestinationButton type="small" onClick={addDestination} />
             )}
