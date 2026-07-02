@@ -374,6 +374,11 @@ export class RealmService extends Service {
     this.ephemeralDb = await Realm.open(this.ephemeralConfig as any);
   }
 
+  close() {
+    this.persistentDb?.close();
+    this.ephemeralDb?.close();
+  }
+
   executeMigrations(oldRealm: Realm, newRealm: Realm) {
     Object.values(RealmService.registeredClasses).forEach(klass => {
       klass.onMigration(oldRealm, newRealm);
