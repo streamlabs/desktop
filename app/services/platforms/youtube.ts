@@ -349,6 +349,15 @@ export class YoutubeService
           });
         }
 
+        if (json.status === 503) {
+          console.error('Error 503: YouTube service unavailable', json);
+          return throwStreamError('YOUTUBE_UNAVAILABLE', {
+            ...error,
+            platform: 'youtube',
+            details,
+          });
+        }
+
         if (json.status !== 403) {
           console.error('Error ', json.status, ': Non-generic error', json);
           return throwStreamError('PLATFORM_REQUEST_FAILED', {
