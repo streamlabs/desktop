@@ -263,10 +263,7 @@ export class OnboardingV2Service extends Service {
   }
 
   showOnboardingIfNecessary() {
-    if (
-      !Utils.env.SLD_FORCE_ONBOARDING_STEP &&
-      (this.userService.isAlphaGroup || localStorage.getItem(this.localStorageKey))
-    ) {
+    if (!Utils.env.SLD_FORCE_ONBOARDING_STEP && localStorage.getItem(this.localStorageKey)) {
       return;
     }
     this.appService.setOnboarded(true);
@@ -298,7 +295,10 @@ export class OnboardingV2Service extends Service {
     this.recordOnboardingNavEvent(skipped ? 'skip' : 'continue');
     const nextStep = this.path.takeNextStep(this.modifiers);
     // if there are no additional steps we've reached the end of the path
-    if (!nextStep) this.completeOnboarding();
+    if (!nextStep) {
+      this.completeOnboarding();
+      return;
+    }
     this.setCurrentStep(nextStep);
     this.setIndex(this.path.index);
   }
