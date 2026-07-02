@@ -334,6 +334,8 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
     // TODO: Swap with the above when implemented
     if (this.isLiveOutputEditingEnabled) {
+      // This log is intentionally left in for development purposes to confirm that live output
+      // editing is being detected correctly. It will be removed when live output editing is implemented.
       console.log('LIVE OUTPUT EDITING ENABLED');
       return false;
     }

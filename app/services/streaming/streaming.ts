@@ -1637,7 +1637,8 @@ export class StreamingService
         if (this.state.status.vertical.streaming === EStreamingState.Starting) {
           // The horizontal stream has started but the vertical stream status is still Starting. Update the status here, instead of
           // when the vertical stream actually starts, to prevent a race condition where the UI might show all streams as Live when
-          // they are still starting.
+          // they are still starting. This ensures that vertical is set to Live so the UI reflects the correct state, which is that
+          // both streams are now live.
           this.SET_STREAMING_STATUS(EStreamingState.Live, 'vertical', time);
         }
       }

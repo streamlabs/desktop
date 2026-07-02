@@ -166,7 +166,7 @@ export async function addDummyAccount(
  */
 export async function removeDummyAccount(platform: TTestDummyUserPlatforms): Promise<void> {
   const api = await getApiClient();
-  api.getResource<UserService>('UserService').removeDummyAccount(platform);
+  await api.getResource<UserService>('UserService').removeDummyAccount(platform);
 }
 
 export async function loginWithAuthInfo(
