@@ -6,24 +6,21 @@ import { $t } from 'services/i18n';
 import { Row, Col } from 'antd';
 import { Section } from './Section';
 import PlatformSettings from './PlatformSettings';
-import TwitterInput from './Twitter';
 import OptimizedProfileSwitcher from './OptimizedProfileSwitcher';
 import Spinner from 'components-react/shared/Spinner';
 import GoLiveError from './GoLiveError';
 import PrimaryChatSwitcher from './PrimaryChatSwitcher';
 import ColorSpaceWarnings from './ColorSpaceWarnings';
-import DualOutputToggle from 'components-react/shared/DualOutputToggle';
 import { DestinationSwitchers } from './DestinationSwitchers';
 import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import cx from 'classnames';
 import StreamShiftToggle from 'components-react/shared/StreamShiftToggle';
 import { CaretDownOutlined } from '@ant-design/icons';
-import Tooltip from 'components-react/shared/Tooltip';
+import * as remote from '@electron/remote';
 import { inject } from 'slap';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
+import { MagicLinkService } from 'services/magic-link';
 import { SettingsService } from 'services/settings';
-import Translate from 'components-react/shared/Translate';
-import { maxNumPlatforms } from 'services/platforms';
 
 /**
  * Renders settings for starting the stream
@@ -33,57 +30,27 @@ import { maxNumPlatforms } from 'services/platforms';
  **/
 export default function GoLiveSettings() {
   const {
-    isAdvancedMode,
     protectedModeEnabled,
     error,
     isLoading,
-    isDualOutputMode,
-    canAddDestinations,
     canUseOptimizedProfile,
-    showTweet,
     hasMultiplePlatforms,
-    hasMultiplePlatformsLinked,
     enabledPlatforms,
     primaryChat,
     recommendedColorSpaceWarnings,
     isPrime,
     isStreamShiftMode,
     isStreamShiftDisabled,
-    isDualOutputSwitchDisabled,
-    isPatreonEnabled,
-    canStreamDualOutput,
-    setPrimaryChat,
+    isUpdateMode,
     addDestination,
+    showTopAddDestination,
+    showBottomAddDestination,
+    setPrimaryChat,
   } = useGoLiveSettings().extend(module => {
     return {
       videoEncodingOptimizationService: inject(VideoEncodingOptimizationService),
       settingsService: inject(SettingsService),
-
-      get canAddDestinations() {
-        const linkedPlatforms = module.state.linkedPlatforms;
-        const customDestinations = module.state.customDestinations;
-        return linkedPlatforms.length + customDestinations.length < maxNumPlatforms + 5;
-      },
-
-      showSelector: !module.isPrime && module.isDualOutputMode,
-
-      hasMultiplePlatformsLinked: module.state.linkedPlatforms.length > 1,
-
-      isPrime: module.isPrime,
-
-      showTweet: module.primaryPlatform && module.primaryPlatform !== 'twitter',
-
-      get isPatreonEnabled() {
-        return module.enabledPlatforms.some(p => p === 'patreon');
-      },
-
-      get isStreamShiftDisabled() {
-        return module.isDualOutputMode || module.enabledPlatforms.some(p => p === 'patreon');
-      },
-
-      get isDualOutputSwitchDisabled() {
-        return module.isStreamShiftMode && !module.isDualOutputMode;
-      },
+      magicLinkService: inject(MagicLinkService),
 
       addDestination() {
         this.settingsService.actions.showSettings('Stream');
@@ -92,157 +59,106 @@ export default function GoLiveSettings() {
       // temporarily hide the checkbox until streaming and output settings
       // are migrated to the new API
       get canUseOptimizedProfile() {
-        if (module.isDualOutputMode) return false;
         return (
           this.videoEncodingOptimizationService.state.canSeeOptimizedProfile ||
           this.videoEncodingOptimizationService.state.useOptimizedProfile
         );
+      },
 
-        // canUseOptimizedProfile:
-        //   VideoEncodingOptimizationService.state.canSeeOptimizedProfile ||
-        //   VideoEncodingOptimizationService.state.useOptimizedProfile,
+      async openPlatformSettings() {
+        try {
+          const link = await this.magicLinkService.getDashboardMagicLink(
+            'settings/account-settings/platforms',
+          );
+          remote.shell.openExternal(link);
+        } catch (e: unknown) {
+          console.error('Error generating platform settings magic link', e);
+        }
       },
     };
   });
 
   const shouldShowSettings = !error && !isLoading;
-  const shouldShowLeftCol = isDualOutputMode ? true : protectedModeEnabled;
-  const shouldShowAddDestButton = canAddDestinations;
+  const shouldShowLeftCol = useMemo(() => {
+    if (isUpdateMode) return false;
+    return isStreamShiftMode ? true : protectedModeEnabled;
+  }, [isUpdateMode, isStreamShiftMode, protectedModeEnabled]);
 
-  const shouldShowPrimaryChatSwitcher =
-    hasMultiplePlatforms || (isDualOutputMode && hasMultiplePlatformsLinked);
+  const shouldShowPrimaryChatSwitcher = hasMultiplePlatforms;
 
-  const headerText = isDualOutputMode ? $t('Destinations & Outputs:') : $t('Destinations:');
+  const headerText = $t('Destinations');
 
-  const featureCheckboxWidth = isPrime ? 140 : 155;
-
-  const streamShiftTooltip = useMemo(() => {
-    if (isPatreonEnabled) {
-      return $t('Stream Shift cannot be used with Patreon');
-    }
-
-    return isPrime
-      ? $t('Stream Shift cannot be used with Dual Output')
-      : $t('Upgrade to Ultra to switch streams between devices.');
-  }, [isPrime, isPatreonEnabled]);
+  const featureCheckboxWidth = isPrime ? 130 : 135;
 
   return (
-    <Row gutter={16} className={styles.settingsRow}>
+    <Row gutter={8} className={styles.goLiveSettings}>
       {/*LEFT COLUMN*/}
       {shouldShowLeftCol && (
-        <Col span={9} className={styles.leftColumn}>
-          {isDualOutputMode && (
-            <div className={cx(styles.dualOutputAlert, { [styles.error]: !canStreamDualOutput })}>
-              <Translate message="<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform">
-                <u slot="dualoutput" />
-              </Translate>
-            </div>
-          )}
-          <div
-            className={cx(styles.columnContent, {
-              [styles.dualOutput]: isDualOutputMode,
-              [styles.alertClosed]: isDualOutputMode,
-              [styles.alertOpen]: isDualOutputMode && !canStreamDualOutput,
-            })}
-          >
-            <div className={cx(styles.columnHeader, { [styles.ultraColumnHeader]: isPrime })}>
-              {headerText}
-            </div>
-            {!isPrime && <AddDestinationButton type="banner" className={styles.addDestination} />}
-
-            <Scrollable className={styles.switcherWrapper}>
-              <DestinationSwitchers />
-            </Scrollable>
-          </div>
-
-          {shouldShowAddDestButton && (
-            <AddDestinationButton
-              type="small"
-              className={styles.columnPadding}
-              onClick={addDestination}
-            />
+        <Col span={7} className={styles.leftColumn}>
+          <h2>{headerText}</h2>
+          {!isPrime && (
+            <AddDestinationButton type="banner" className={styles.addDestinationBanner} />
           )}
 
-          <div className={styles.leftFooter}>
-            <PrimaryChatSwitcher
-              className={cx(styles.primaryChat, {
-                [styles.disabled]: !shouldShowPrimaryChatSwitcher,
-              })}
-              enabledPlatforms={enabledPlatforms}
-              onSetPrimaryChat={setPrimaryChat}
-              primaryChat={primaryChat}
-              suffixIcon={<CaretDownOutlined />}
-              layout="horizontal"
-              logo={false}
-              border={false}
-              disabled={!shouldShowPrimaryChatSwitcher}
-            />
-
-            <div className={cx(styles.toggleWrapper, { [styles.shiftEnabled]: isStreamShiftMode })}>
-              <Tooltip
-                title={$t('Dual Output cannot be used with Stream Shift')}
-                placement="top"
-                lightShadow={true}
-                disabled={isDualOutputSwitchDisabled || !isPrime}
-              >
-                <DualOutputToggle
-                  className={styles.featureToggle}
-                  checkboxClassname={styles.featureCheckbox}
-                  style={{ paddingBottom: '10px', width: featureCheckboxWidth }}
-                  disabled={isStreamShiftMode}
-                  tooltipDisabled={isStreamShiftMode}
-                  label={$t('Dual Output')}
-                  type="single"
-                  lightShadow
-                />
-              </Tooltip>
-              <Tooltip
-                title={streamShiftTooltip}
-                placement="topRight"
-                lightShadow={true}
-                disabled={isPrime && !isStreamShiftDisabled}
-              >
-                <StreamShiftToggle
-                  className={styles.featureToggle}
-                  checkboxClassname={styles.featureCheckbox}
-                  style={{ width: featureCheckboxWidth }}
-                  disabled={isStreamShiftDisabled || !isPrime}
-                />
-              </Tooltip>
+          <Scrollable className={cx(styles.leftColumnScroll, { [styles.nonUltra]: !isPrime })}>
+            {showTopAddDestination && (
+              <AddDestinationButton type="small" onClick={addDestination} />
+            )}
+            <DestinationSwitchers />
+            {showBottomAddDestination && (
+              <AddDestinationButton
+                type="small"
+                className={styles.bottom}
+                onClick={addDestination}
+              />
+            )}
+            <div className={styles.leftFooter}>
+              <PrimaryChatSwitcher
+                className={cx(styles.primaryChat, {
+                  [styles.disabled]: !shouldShowPrimaryChatSwitcher,
+                })}
+                enabledPlatforms={enabledPlatforms}
+                onSetPrimaryChat={setPrimaryChat}
+                primaryChat={primaryChat}
+                suffixIcon={<CaretDownOutlined />}
+                layout="horizontal"
+                logo={false}
+                border={false}
+                disabled={!shouldShowPrimaryChatSwitcher}
+              />
+              <StreamShiftToggle
+                style={{ width: featureCheckboxWidth }}
+                disabled={isStreamShiftDisabled}
+              />
             </div>
-          </div>
+          </Scrollable>
         </Col>
       )}
 
       {/*RIGHT COLUMN*/}
       <Col
-        span={shouldShowLeftCol ? 15 : 24}
-        className={cx(styles.rightColumn, !shouldShowLeftCol && styles.destinationMode)}
+        span={shouldShowLeftCol ? 17 : 24}
+        className={cx(styles.rightColumn, {
+          [styles.destinationMode]: !shouldShowLeftCol && !isUpdateMode,
+          [styles.updateMode]: isUpdateMode,
+        })}
       >
-        <Spinner visible={isLoading} />
+        <Spinner visible={isLoading} relative />
         <GoLiveError />
         {shouldShowSettings && (
-          <>
-            <Scrollable style={{ height: '92%' }} snapToWindowEdge>
-              {recommendedColorSpaceWarnings && (
-                <ColorSpaceWarnings warnings={recommendedColorSpaceWarnings} />
-              )}
-              {/*PLATFORM SETTINGS*/}
-              <PlatformSettings />
-              {/*ADD SOME SPACE IN ADVANCED MODE*/}
-              {isAdvancedMode && <div className={styles.spacer} />}
-              {/*EXTRAS*/}
-              {!!canUseOptimizedProfile && (
-                <Section isSimpleMode={!isAdvancedMode} title={$t('Extras')}>
-                  <OptimizedProfileSwitcher />
-                </Section>
-              )}
-
-              {/* Spacer is as  scrollable padding-bottom */}
-              <div className={styles.spacer} />
-            </Scrollable>
-            {showTweet && <TwitterInput />}
-          </>
+          <Scrollable className={styles.rightColumnScroll}>
+            {recommendedColorSpaceWarnings && (
+              <ColorSpaceWarnings warnings={recommendedColorSpaceWarnings} />
+            )}
+            {/*PLATFORM SETTINGS*/}
+            <PlatformSettings />
+            {/*EXTRAS*/}
+            {!!canUseOptimizedProfile && !isUpdateMode && (
+              <Section title={$t('Extras')}>
+                <OptimizedProfileSwitcher />
+              </Section>
+            )}
+          </Scrollable>
         )}
       </Col>
     </Row>

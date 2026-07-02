@@ -1,6 +1,7 @@
 import {
   clickGoLive,
   prepareToGoLive,
+  stopStream,
   submit,
   waitForSettingsWindowLoaded,
   waitForStreamStart,
@@ -39,8 +40,14 @@ test(
       await clickGoLive();
       await waitForSettingsWindowLoaded();
       await fillForm({
+        youtube: true,
+      });
+      await waitForSettingsWindowLoaded();
+
+      await fillForm({
         twitchDisplay: 'horizontal',
         primaryChat: 'Twitch',
+        youtubeDisplay: 'vertical',
       });
       await submit();
 

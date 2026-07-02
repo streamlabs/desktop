@@ -1,5 +1,5 @@
 import { IGoLiveSettings, StreamInfoView, TDisplayOutput } from '../../../services/streaming';
-import { platformList, TPlatform } from '../../../services/platforms';
+import { maxNumPlatforms, platformList, TPlatform } from '../../../services/platforms';
 import { ICustomStreamDestination } from 'services/settings/streaming';
 import { Services } from '../../service-provider';
 import cloneDeep from 'lodash/cloneDeep';
@@ -28,7 +28,7 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
     ...this.savedSettings,
   };
 
-  isUpdating: boolean;
+  isUpdating: boolean = false;
 
   get settings(): IGoLiveSettingsState {
     return this.state;
@@ -142,13 +142,20 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
   }
 
   /**
+   * Enable/Disable Live Output Editing
+   */
+  toggleLiveOutputEditing(status: boolean) {
+    this.updateSettings({ liveOutputEditing: status });
+  }
+
+  /**
    * Set a common field like title or description for all eligible platforms
    **/
   updateCommonFields(
     fields: { title: string; description: string },
     shouldChangeAllPlatforms = false,
   ) {
-    Object.keys(fields).forEach((fieldName: TCommonFieldName) => {
+    (Object.keys(fields) as TCommonFieldName[]).forEach((fieldName: TCommonFieldName) => {
       const view = this.getView();
       const value = fields[fieldName];
       const platforms = shouldChangeAllPlatforms
@@ -227,14 +234,16 @@ export class GoLiveSettingsModule {
     };
 
     if (this.state.isUpdateMode && !view.isMidStreamMode) {
-      Object.keys(settings.platforms).forEach((platform: TPlatform) => {
-        // In multi-platform mode, allow deleting all platform settings, including primary
-        if (!isMultiplatformMode && this.state.isPrimaryPlatform(platform)) {
-          return;
-        }
+      (Object.keys(settings.platforms) as (keyof typeof settings.platforms)[]).forEach(
+        (platform: TPlatform) => {
+          // In multi-platform mode, allow deleting all platform settings, including primary
+          if (!isMultiplatformMode && this.state.isPrimaryPlatform(platform)) {
+            return;
+          }
 
-        delete settings.platforms[platform];
-      });
+          delete settings.platforms[platform];
+        },
+      );
     }
 
     // prefill the form if `prepopulateOptions` provided
@@ -262,12 +271,14 @@ export class GoLiveSettingsModule {
      */
     const { canEnableRestream } = RestreamService.views;
 
-    // Tiktok and Kick can stay active
+    // Always enabled platforms can stay active
     const enabledPlatforms = this.state.enabledPlatforms.filter(
       platform => !this.state.alwaysEnabledPlatforms.includes(platform),
     );
 
-    if (!dualOutputMode && !canEnableRestream && enabledPlatforms.length > 1) {
+    // Non-Ultra users can only have 2 targets enabled at a time, so if they have more than 2 enabled,
+    // filter out a non-primary platform
+    if (!canEnableRestream && enabledPlatforms.length > 2) {
       /* Find the platform that was set as primary chat to remain enabled,
        * if for some reason we fail to find it default to the last selected platform
        */
@@ -366,6 +377,16 @@ export class GoLiveSettingsModule {
     this.save(this.state.settings);
   }
 
+  setPlatformEnabled(platform: TPlatform, enabled: boolean) {
+    this.state.updatePlatform(platform, { enabled });
+    this.save(this.state.settings);
+  }
+
+  setCustomDestinationEnabled(index: number, enabled: boolean) {
+    this.state.switchCustomDestination(index, enabled);
+    this.save(this.state.settings);
+  }
+
   updateCustomDestinationDisplayAndSaveSettings(destId: number, display: TDisplayType) {
     this.state.updateCustomDestinationDisplay(destId, display);
     this.save(this.state.settings);
@@ -420,11 +441,9 @@ export class GoLiveSettingsModule {
     this.save(this.state.settings);
   }
 
-  /**
-   * Determine if all dual output go live requirements are fulfilled
-   */
-  get canStreamDualOutput() {
-    return this.state.getCanStreamDualOutput(this.state);
+  setLiveOutputEditingEnabled(status: boolean) {
+    this.state.toggleLiveOutputEditing(status);
+    this.save(this.state.settings);
   }
 
   getIsInvalidDualStream(): boolean {
@@ -469,6 +488,34 @@ export class GoLiveSettingsModule {
     if (this.getIsInvalidDualStream()) {
       message.info($t('Upgrade to Ultra to allow more than two outputs'), 2, () => true);
       return;
+    }
+
+    if (!this.isPrime && this.state.isDualOutputMode) {
+      const totalEnabled =
+        this.state.enabledPlatforms.length +
+        this.state.customDestinations.filter(d => d.enabled).length;
+      if (totalEnabled >= 2) {
+        const hasHorizontal = this.state.horizontalStream.length > 0;
+        const hasVertical = this.state.verticalStream.length > 0;
+        if (!hasHorizontal || !hasVertical) {
+          message.info(
+            $t(
+              'Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming.',
+            ),
+            2,
+            () => true,
+          );
+          return;
+        }
+      }
+    }
+
+    // Disable AI Highlighter if Twitch is not enabled, because it's a Twitch-only feature
+    if (
+      Services.HighlighterService.aiHighlighterFeatureEnabled &&
+      !this.state.isEnabled('twitch')
+    ) {
+      Services.HighlighterService.actions.setAiHighlighter(false);
     }
 
     try {
@@ -521,6 +568,82 @@ export class GoLiveSettingsModule {
 
   get codec() {
     return Services.SettingsService.views.values.Output.Encoder;
+  }
+
+  get isPatreonEnabled() {
+    return this.state.enabledPlatforms.some((p: TPlatform) => p === 'patreon');
+  }
+
+  get isStreamShiftDisabled() {
+    if (!this.isPrime) return true;
+    return this.isPatreonEnabled;
+  }
+
+  /**
+   * Override the default behavior of toggling stream shift so that the user is still
+   * able to toggle stream shift on/off when they have a single platform enabled and
+   * that platform has its display set to 'both'. Otherwise, the isDualOutputMode check
+   * would prevent the user from toggling stream shift on/off.
+   * Note: This should never happen but is a failsafe in case something goes wrong with
+   * the Go Live window's state.
+   */
+  get forceStreamShiftToggleEnabled() {
+    return (
+      this.state.isStreamShiftMode &&
+      this.state.enabledPlatforms.length === 1 &&
+      this.state.settings.platforms[this.state.enabledPlatforms[0]]?.display === 'both'
+    );
+  }
+
+  get isLiveOutputEditingDisabled() {
+    if (!this.isPrime) return true;
+    return this.state.isStreamShiftMode;
+  }
+
+  get enabledPlatformsCount() {
+    return this.state.enabledPlatforms.length;
+  }
+
+  get canAddDestinations() {
+    return (
+      this.state.linkedPlatforms.length + this.state.customDestinations.length < maxNumPlatforms + 5
+    );
+  }
+
+  get showTopAddDestination() {
+    return this.canAddDestinations && this.state.linkedPlatforms.length > 1;
+  }
+
+  get showBottomAddDestination() {
+    return this.state.linkedPlatforms.length < 2;
+  }
+
+  get disableCustomDestinationSwitchers() {
+    return (
+      !this.isRestreamEnabled &&
+      !this.state.enabledPlatforms.includes('tiktok') &&
+      this.state.enabledPlatforms.length > 1
+    );
+  }
+
+  get disableNonUltraSwitchers() {
+    return (
+      !this.isPrime && this.state.enabledPlatforms.length + this.enabledDestinations.length >= 2
+    );
+  }
+
+  // Returns the label of the enabled platform with 'both' display selected, if any, for non-prime users.
+  get nonPrimeBothDisplayPlatform(): TPlatform | null {
+    if (this.isPrime) return null;
+    return (
+      this.state.enabledPlatforms.find(
+        platform => this.state.settings.platforms[platform]?.display === 'both',
+      ) ?? null
+    );
+  }
+
+  get isAiHighlighterEnabled() {
+    return Services.HighlighterService.aiHighlighterFeatureEnabled;
   }
 }
 

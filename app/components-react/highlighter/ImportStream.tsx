@@ -1,6 +1,7 @@
-import { Button, Form, Select } from 'antd';
+import { Button, Select } from 'antd';
 import { Services } from 'components-react/service-provider';
 import { ListInput, TextInput } from 'components-react/shared/inputs';
+import Form from 'components-react/shared/inputs/Form';
 import * as remote from '@electron/remote';
 import { SUPPORTED_FILE_TYPES } from 'services/highlighter/constants';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';

@@ -96,6 +96,15 @@ export async function hoverElement(selector: string, duration?: number) {
   }
 }
 
+export async function isTooltipDisplayed(
+  hoverSelector: string,
+  tooltipSelector: string,
+  duration?: number,
+): Promise<boolean> {
+  await hoverElement(hoverSelector, duration);
+  return isDisplayed(tooltipSelector);
+}
+
 export async function isDisplayed(selectorOrEl: TSelectorOrEl, waitForOptions?: WaitForOptions) {
   if (waitForOptions) {
     try {

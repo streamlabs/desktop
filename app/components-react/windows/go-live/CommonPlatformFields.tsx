@@ -1,19 +1,11 @@
 import { TPlatform } from '../../../services/platforms';
 import { $t } from '../../../services/i18n';
 import React, { useMemo } from 'react';
-import {
-  CheckboxInput,
-  InputComponent,
-  TextAreaInput,
-  TextInput,
-  TInputLayout,
-} from '../../shared/inputs';
-import { assertIsDefined } from '../../../util/properties-type-guards';
-import InputWrapper from '../../shared/inputs/InputWrapper';
-import Animate from 'rc-animate';
+import { InputComponent, TextAreaInput, TextInput, TInputLayout } from '../../shared/inputs';
 import { TLayoutMode } from './platforms/PlatformSettingsLayout';
 import { Services } from '../../service-provider';
 import { Tooltip } from 'antd';
+import AnimatedWrapper from 'components-react/shared/AnimatedWrapper';
 
 interface ICommonPlatformSettings {
   title: string;
@@ -45,20 +37,9 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
   const defaultProps = { layoutMode: 'singlePlatform' as TLayoutMode };
   const p: IProps = { ...defaultProps, ...rawProps };
 
-  const { HighlighterService } = Services;
-
   function updatePlatform(patch: Partial<ICommonPlatformSettings>) {
     const platformSettings = p.value;
     p.onChange({ ...platformSettings, ...patch });
-  }
-
-  /**
-   * Toggle the "Use different title and description " checkbox
-   **/
-  function toggleUseCustom() {
-    assertIsDefined(p.platform);
-    const isEnabled = p.value.useCustomFields;
-    updatePlatform({ useCustomFields: !isEnabled });
   }
 
   function updateCommonField(fieldName: TCustomFieldName, value: string) {
@@ -66,8 +47,10 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
   }
 
   const view = Services.StreamingService.views;
-  const hasCustomCheckbox = p.layoutMode === 'multiplatformAdvanced';
-  const fieldsAreVisible = !hasCustomCheckbox || p.value.useCustomFields;
+  const fieldsAreVisible = useMemo(() => {
+    if (p.layoutMode === 'singlePlatform') return true;
+    return !p.platform || p.value.useCustomFields || false;
+  }, [p.layoutMode, p.platform, p.value.useCustomFields]);
   const descriptionIsRequired =
     typeof p.descriptionIsRequired === 'boolean'
       ? p.descriptionIsRequired
@@ -79,10 +62,17 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
 
   const fields = p.value;
 
-  // find out the best title for common fields
-  const title = hasDescription
-    ? $t('Use different title and description')
-    : $t('Use different title');
+  const height = useMemo(() => {
+    if (!fieldsAreVisible) {
+      return '0px';
+    }
+
+    if (hasDescription) {
+      return '162px';
+    }
+
+    return '71px';
+  }, [fieldsAreVisible, hasDescription]);
 
   // determine max character length for title by enabled platform limitation
   let maxCharacters = 120;
@@ -93,11 +83,14 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
     maxCharacters = 140;
   }
 
-  if (!enabledPlatforms.includes('twitch') && HighlighterService.views.useAiHighlighter) {
-    HighlighterService.actions.setAiHighlighter(false);
-  }
+  const hasPatreon = p.platform === 'patreon' || enabledPlatforms.includes('patreon');
+  const minCharacters = hasPatreon ? 3 : undefined;
 
   const titleTooltip = useMemo(() => {
+    if (hasPatreon) {
+      return $t('Patreon requires a title of at least 3 characters');
+    }
+
     if (enabledPlatforms.includes('tiktok')) {
       return $t('Only 32 characters of your title will display on TikTok');
     }
@@ -106,57 +99,46 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
   }, [enabledPlatforms]);
 
   return (
-    <div>
-      {/* USE CUSTOM CHECKBOX */}
-      {hasCustomCheckbox && (
-        <InputWrapper layout={p.layout}>
-          <CheckboxInput
-            name="customEnabled"
-            value={p.value.useCustomFields}
-            onChange={toggleUseCustom}
-            label={title}
-          />
-        </InputWrapper>
+    <AnimatedWrapper
+      visible={fieldsAreVisible}
+      style={{ marginBottom: p.platform && fieldsAreVisible ? '10px' : '0px' }}
+      height={height}
+    >
+      {/*TITLE*/}
+      <TextInput
+        value={fields['title']}
+        name="title"
+        onChange={val => updateCommonField('title', val)}
+        label={
+          titleTooltip ? (
+            <Tooltip title={titleTooltip} placement="right">
+              {$t('Title')}
+              <i className="icon-information" style={{ marginLeft: '5px' }} />
+            </Tooltip>
+          ) : (
+            $t('Title')
+          )
+        }
+        required={true}
+        max={maxCharacters}
+        min={minCharacters}
+        layout={p.layout}
+        style={{ marginTop: !p.platform ? '0px' : '10px' }}
+        size="large"
+      />
+
+      {/*DESCRIPTION*/}
+      {hasDescription && (
+        <TextAreaInput
+          value={fields['description']}
+          onChange={val => updateCommonField('description', val)}
+          name="description"
+          label={$t('Description')}
+          required={descriptionIsRequired}
+          min={minCharacters}
+          layout={p.layout}
+        />
       )}
-
-      <Animate transitionName="slidedown">
-        {fieldsAreVisible && (
-          <div>
-            {/*TITLE*/}
-            <TextInput
-              value={fields['title']}
-              name="title"
-              onChange={val => updateCommonField('title', val)}
-              label={
-                titleTooltip ? (
-                  <Tooltip title={titleTooltip} placement="right">
-                    {$t('Title')}
-                    <i className="icon-information" style={{ marginLeft: '5px' }} />
-                  </Tooltip>
-                ) : (
-                  $t('Title')
-                )
-              }
-              required={true}
-              max={maxCharacters}
-              layout={p.layout}
-              size="large"
-            />
-
-            {/*DESCRIPTION*/}
-            {hasDescription && (
-              <TextAreaInput
-                value={fields['description']}
-                onChange={val => updateCommonField('description', val)}
-                name="description"
-                label={$t('Description')}
-                required={descriptionIsRequired}
-                layout={p.layout}
-              />
-            )}
-          </div>
-        )}
-      </Animate>
-    </div>
+    </AnimatedWrapper>
   );
 });

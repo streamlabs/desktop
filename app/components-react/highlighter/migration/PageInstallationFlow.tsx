@@ -42,6 +42,7 @@ export default function PageInstallationFlow(props: IPageInstallationFlowProps) 
         features={CAROUSEL_FEATURES}
       >
         <div
+          data-name="streamlabs-highlighter"
           style={{ height: 82, display: 'flex', flexDirection: 'column', justifyContent: 'end' }}
         >
           <PageInstallCta
