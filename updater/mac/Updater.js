@@ -2,6 +2,7 @@
 // be required by the main electron process.
 
 const { autoUpdater } = require('electron-updater');
+const path = require('path');
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 
 class Updater {
@@ -13,6 +14,7 @@ class Updater {
   // good option either, since then closing the auto updater will
   // orphan the main process in the background.
   constructor(startApp, channel) {
+    autoUpdater.autoDownload = false;
     this.startApp = startApp;
     if (process.arch === 'arm64') {
       this.channel = 'arm64-' + channel;
@@ -57,6 +59,13 @@ class Updater {
       this.browserWindow = this.initWindow();
       this.updateState.version = info.version;
       this.updateState.percent = 0;
+      this.updateState.updating = false;
+
+      if (info.releaseNotes === 'force-update') {
+        autoUpdater.downloadUpdate();
+        this.updateState.updating = true;
+      }
+
       this.pushState();
     });
 
@@ -94,6 +103,19 @@ class Updater {
     ipcMain.on('autoUpdate-getState', () => {
       this.pushState();
     });
+
+    ipcMain.on('autoUpdate-postpone', () => {
+      console.log('Updater: Update postponed');
+      this.startApp();
+      this.finished = true;
+      if (this.browserWindow) this.browserWindow.close();
+    });
+
+    ipcMain.on('autoUpdate-confirm', () => {
+      console.log('Updater: Update beginning');
+      this.updateState.updating = true;
+      autoUpdater.downloadUpdate();
+    });
   }
 
   initWindow() {
@@ -116,7 +138,7 @@ class Updater {
       if (!this.finished) app.quit();
     });
 
-    browserWindow.loadURL('file://' + __dirname + '/index.html');
+    browserWindow.loadURL(path.join('file://', __dirname, '/index.html'));
 
     return browserWindow;
   }
