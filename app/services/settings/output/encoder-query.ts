@@ -38,7 +38,6 @@ const platformServiceConfig: Record<TPlatform, { streamType: string; service?: s
   twitch: { streamType: 'rtmp_common', service: 'Twitch' },
   youtube: { streamType: 'rtmp_common', service: 'YouTube - RTMPS' },
   facebook: { streamType: 'rtmp_common', service: 'Facebook Live' },
-  trovo: { streamType: 'rtmp_custom' },
   tiktok: { streamType: 'rtmp_custom' },
   twitter: { streamType: 'rtmp_custom' },
   instagram: { streamType: 'rtmp_custom' },

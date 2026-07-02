@@ -362,6 +362,7 @@ export class YoutubeService
       // If there are errors in the array, check the first one for the reason
       const firstError = json.errors[0];
       if (firstError.reason) {
+        // Log the reason and the full error response for debugging
         console.log('YouTube API error Reason:', firstError.reason, json);
 
         if (firstError.reason === 'liveStreamingNotEnabled') {
@@ -701,6 +702,11 @@ export class YoutubeService
       this.SET_ENABLED_STATUS(true);
       return EPlatformCallResult.Success;
     } catch (e: unknown) {
+      if ((e as any)?.result?.error?.errors?.length) {
+        console.log('Youtube API Error Reason: ', (e as any).result.error.errors[0].reason);
+      }
+      console.error('Error validating YouTube platform', e);
+
       this.SET_ENABLED_STATUS(false);
       if (e instanceof StreamError) {
         if (e.type === 'YOUTUBE_TOKEN_EXPIRED') return EPlatformCallResult.TokenExpired;
