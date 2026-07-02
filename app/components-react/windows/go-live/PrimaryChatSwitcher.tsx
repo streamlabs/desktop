@@ -68,7 +68,7 @@ export default function PrimaryChatSwitcher({
   }, [primaryChat, primaryChatOptions]);
 
   const switcherDisabled = useMemo(() => {
-    if (disabled) return false;
+    if (disabled) return true;
     return primaryChatOptions.length === 1;
   }, [disabled, primaryChatOptions]);
 

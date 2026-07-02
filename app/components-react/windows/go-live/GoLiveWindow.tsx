@@ -173,7 +173,7 @@ function ModalFooter() {
       secondaryActionText: $t('Select Codec'),
       secondaryActionFn: showSettings,
     });
-  }, [isStreamShiftMode, isDualOutputMode, codec]);
+  }, [isStreamShiftMode, isDualOutputMode, codec, goLiveWithDefaultCodec, showSettings]);
 
   const startStreamShift = useCallback(() => {
     if (isDualOutputMode) {
@@ -231,7 +231,7 @@ function ModalFooter() {
     if (streamShiftStatus !== 'pending') return;
     if (isStreamShiftPromptShown.current) return;
     promptStreamShift();
-  }, [streamShiftStatus]);
+  }, [streamShiftStatus, promptStreamShift]);
 
   useEffect(() => {
     if (!isCoolingDown) return;

@@ -37,6 +37,7 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
   const label = $t('Stream Shift');
 
   function handleToggleStreamShift(status?: boolean) {
+    if (disableToggle) return;
     const newStatus = status ?? !isStreamShiftMode;
     setStreamShift(newStatus);
     Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {
@@ -62,14 +63,6 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
     isPrime,
     isStreamShiftDisabled,
   ]);
-
-  // <Tooltip
-  //   title={streamShiftTooltip}
-  //   placement="top"
-  //   lightShadow={true}
-  //   disabled={disableStreamShiftTooltip}
-  //   tooltipClassName={styles.streamShiftTooltip}
-  // ></Tooltip>
 
   return (
     <div className={styles.streamShiftWrapper}>

@@ -64,7 +64,7 @@ async function logInYouTubeEnabledAccount(
   await closeWindow('child');
 
   // return true if we had a retry so that we can skip checking errors in the log for account reasons
-  return retries === 3;
+  return retries !== 3;
 }
 
 test('Streaming to Youtube', async t => {
