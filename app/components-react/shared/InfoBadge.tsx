@@ -21,8 +21,8 @@ export default function InfoBadge(p: IInfoBadge) {
       })}
       style={{
         ...p.style,
-        color: `${p.color} !important`,
-        backgroundColor: `${p.bgColor} !important`,
+        color: p.color,
+        backgroundColor: p.bgColor,
       }}
     >
       {p.content}

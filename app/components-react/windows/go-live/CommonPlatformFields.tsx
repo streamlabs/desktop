@@ -47,7 +47,10 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
   }
 
   const view = Services.StreamingService.views;
-  const fieldsAreVisible = !p.platform || p.value.useCustomFields || false;
+  const fieldsAreVisible = useMemo(() => {
+    if (p.layoutMode === 'singlePlatform') return true;
+    return !p.platform || p.value.useCustomFields || false;
+  }, [p.layoutMode, p.platform, p.value.useCustomFields]);
   const descriptionIsRequired =
     typeof p.descriptionIsRequired === 'boolean'
       ? p.descriptionIsRequired

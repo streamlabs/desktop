@@ -37,9 +37,10 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
   const label = $t('Stream Shift');
 
   function handleToggleStreamShift(status?: boolean) {
-    setStreamShift(status ?? !isStreamShiftMode);
+    const newStatus = status ?? !isStreamShiftMode;
+    setStreamShift(newStatus);
     Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {
-      toggle: status,
+      toggle: newStatus,
     });
   }
 

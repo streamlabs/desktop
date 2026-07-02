@@ -134,7 +134,7 @@ function StartStreamingButton(p: { disabled?: boolean }) {
 
   const recordStreamShiftAnalytics = useCallback((action: 'request' | 'complete', id: string) => {
     // Prevent recording analytics event in test mode
-    if (!Utils.isTestMode()) return;
+    if (Utils.isTestMode()) return;
 
     // Note: because the event's stream id is from the device that requested the switch,
     // it is not possible to know what type of device the stream will be switching from.
