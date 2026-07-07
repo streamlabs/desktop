@@ -161,9 +161,6 @@ export class AppService extends StatefulService<IAppState> {
     }
     await this.obsModuleLoadNotificationsService.refreshModuleLoadNotifications();
 
-    if (this.userService.isAlphaGroup) {
-      this.SET_ONBOARDED(this.onboardingService.startOnboardingIfRequired());
-    }
     this.dismissablesService.initialize();
 
     electron.ipcRenderer.on('shutdown', () => {

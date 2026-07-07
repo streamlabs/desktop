@@ -22,7 +22,6 @@ export function Login(p: IOnboardingStepProps) {
     EPlatform.Kick,
     EPlatform.Facebook,
     EPlatform.Twitter,
-    EPlatform.Trovo,
     EPlatform.Instagram,
   ];
 

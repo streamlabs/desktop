@@ -188,10 +188,6 @@ export class StreamBossService extends BaseGoalService<IStreamBossData, IStreamB
         { key: 'superchat_multiplier', title: $t('Damage Per Superchat Dollar'), isInteger: true },
         { key: 'follow_multiplier', title: $t('Damage Per Subscriber'), isInteger: true },
       ],
-      trovo: [
-        { key: 'sub_multiplier', title: $t('Damage Per Subscriber'), isInteger: true },
-        { key: 'follow_multiplier', title: $t('Damage Per Follower'), isInteger: true },
-      ],
     }[platform];
   }
 }

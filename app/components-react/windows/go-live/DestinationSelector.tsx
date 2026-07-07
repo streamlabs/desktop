@@ -50,7 +50,7 @@ export default function DestinationSelector(p: IDestinationSelectorProps) {
             <PlatformLogo
               platform={platform as TPlatform}
               className={styles.selectorIcon}
-              fontIcon={['tiktok', 'trovo'].includes(platform) ? platform : undefined}
+              fontIcon={platform === 'tiktok' ? platform : undefined}
             />
             {platformLabels(platform)}
           </>

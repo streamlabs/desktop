@@ -29,9 +29,6 @@ export const API_NAME_MAP = {
   facebook_share: 'shares',
   facebook_follow: 'fbfollows',
   loyalty_store_redemption: 'loyaltystore',
-  trovo_follow: 'trovo_follow',
-  trovo_sub: 'trovo_sub',
-  trovo_raid: 'trovo_raid',
 };
 
 export const alertNameMap = () => ({
@@ -62,9 +59,6 @@ export const alertNameMap = () => ({
   loyaltystore: $t('Cloudbot Store'),
   stickers: $t('Stickers'),
   effects: $t('Effects/Rallies'),
-  trovo_follow: $t('Trovo Follow'),
-  trovo_sub: $t('Trovo Subscription'),
-  trovo_raid: $t('Trovo Raid'),
 });
 
 // different tests are required due to api idiosyncracies

@@ -50,8 +50,6 @@ interface ITrains {
   superchat: ITrainInfo;
   youtube_subscriber: ITrainInfo;
   facebook_follow: ITrainInfo;
-  trovo_follow: ITrainInfo;
-  trovo_subscription: ITrainInfo;
 }
 
 export interface IStreamlabelSet {
@@ -88,8 +86,6 @@ type TTrainType =
   | 'sponsor'
   | 'superchat'
   | 'youtube_subscriber'
-  | 'trovo_follow'
-  | 'trovo_subscription'
   | 'facebook_follow';
 
 interface IStreamlabelsServiceState {
@@ -157,12 +153,6 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
       counter: 0,
       setting: 'train_twitch_subscriptions',
     },
-    trovo_subscription: {
-      mostRecentEventAt: null,
-      mostRecentName: null,
-      counter: 0,
-      setting: 'train_trovo_subscriptions',
-    },
     youtube_subscriber: {
       mostRecentEventAt: null,
       mostRecentName: null,
@@ -180,12 +170,6 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
       mostRecentName: null,
       counter: 0,
       setting: 'train_facebook_follows',
-    },
-    trovo_follow: {
-      mostRecentEventAt: null,
-      mostRecentName: null,
-      counter: 0,
-      setting: 'train_trovo_follows',
     },
     support: {
       mostRecentEventAt: null,
@@ -290,8 +274,6 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
         'train_youtube_superchats',
         'train_youtube_subscribers',
         'train_facebook_follows',
-        'train_trovo_follows',
-        'train_trovo_subscriptions',
       ].includes(statname)
     ) {
       this.outputAllTrains();
@@ -545,14 +527,6 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
         this.trains.youtube_subscriber.mostRecentName = latest.name;
 
         this.outputTrainInfo('youtube_subscriber');
-      } else if (event.for === 'trovo_account') {
-        this.trains.trovo_follow.mostRecentEventAt = Date.now();
-        this.trains.trovo_follow.counter += event.message.length;
-
-        const latest = event.message[event.message.length - 1];
-        this.trains.trovo_follow.mostRecentName = latest.name;
-
-        this.outputTrainInfo('trovo_follow');
       }
     } else if (event.type === 'subscription') {
       if (event.for === 'twitch_account') {
@@ -571,14 +545,6 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
         this.trains.sponsor.mostRecentName = latest.name;
 
         this.outputTrainInfo('sponsor');
-      } else if (event.for === 'trovo_account') {
-        this.trains.trovo_subscription.mostRecentEventAt = Date.now();
-        this.trains.trovo_subscription.counter += event.message.length;
-
-        const latest = event.message[event.message.length - 1];
-        this.trains.trovo_subscription.mostRecentName = latest.name;
-
-        this.outputTrainInfo('trovo_subscription');
       }
     } else if (event.type === 'support') {
       this.trains.support.mostRecentEventAt = Date.now();

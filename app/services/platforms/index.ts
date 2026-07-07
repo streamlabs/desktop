@@ -7,7 +7,6 @@ import { TwitterPlatformService } from './twitter';
 import { TTwitchOAuthScope } from './twitch/index';
 import { IGoLiveSettings } from 'services/streaming';
 import { WidgetType } from '../widgets';
-import { ITrovoStartStreamOptions, TrovoService } from './trovo';
 import { TDisplayType } from 'services/settings-v2';
 import { $t } from 'services/i18n';
 import { KickService, IKickStartStreamOptions } from './kick';
@@ -164,7 +163,6 @@ export type TStartStreamOptions =
   | IYoutubeStartStreamOptions
   | Partial<IFacebookStartStreamOptions>
   | Partial<ITikTokStartStreamOptions>
-  | Partial<ITrovoStartStreamOptions>
   | Partial<IInstagramStartStreamOptions>
   | Partial<IKickStartStreamOptions>
   | Partial<IPatreonStartStreamOptions>;
@@ -273,7 +271,6 @@ export enum EPlatform {
   YouTube = 'youtube',
   Facebook = 'facebook',
   TikTok = 'tiktok',
-  Trovo = 'trovo',
   Twitter = 'twitter',
   Instagram = 'instagram',
   Kick = 'kick',
@@ -285,7 +282,6 @@ export type TPlatform =
   | 'youtube'
   | 'facebook'
   | 'tiktok'
-  | 'trovo'
   | 'twitter'
   | 'instagram'
   | 'kick'
@@ -299,7 +295,6 @@ export const platformList = [
   EPlatform.Patreon,
   EPlatform.Facebook,
   EPlatform.Twitter,
-  EPlatform.Trovo,
   EPlatform.Instagram,
 ];
 
@@ -309,7 +304,6 @@ export const platformLabels = (platform: TPlatform | string) =>
     [EPlatform.YouTube]: $t('YouTube'),
     [EPlatform.Facebook]: $t('Facebook'),
     [EPlatform.TikTok]: $t('TikTok'),
-    [EPlatform.Trovo]: $t('Trovo'),
     [EPlatform.Twitter]: 'X',
     [EPlatform.Instagram]: $t('Instagram'),
     [EPlatform.Kick]: $t('Kick'),
@@ -324,7 +318,6 @@ export function getPlatformService(platform: TPlatform): IPlatformService {
     youtube: YoutubeService.instance,
     facebook: FacebookService.instance,
     tiktok: TikTokService.instance,
-    trovo: TrovoService.instance,
     kick: KickService.instance,
     twitter: TwitterPlatformService.instance,
     instagram: InstagramService.instance,

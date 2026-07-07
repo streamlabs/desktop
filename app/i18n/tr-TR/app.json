@@ -19,5 +19,8 @@
   "Custom Destination": "Özel Hedef",
   "This app is currently popped out in another window.": "Bu uygulama şu anda başka bir pencerede açık.",
   "Error granting chat permissions.": "Sohbet izinleri verilirken hata oluştu.",
-  "Authentication Error": "Kimlik Doğrulama Hatası"
+  "Authentication Error": "Kimlik Doğrulama Hatası",
+  "Diagnostic Report Uploaded Successfully": "Diagnostic Report Uploaded Successfully",
+  "Copy Report ID": "Copy Report ID",
+  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team."
 }

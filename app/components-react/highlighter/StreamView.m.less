@@ -12,6 +12,9 @@
   :global(.ant-modal-wrap),
   :global(.ant-modal-mask) {
     position: absolute;
+    top: 0 !important;
+    height: 100% !important;
+    overflow: hidden !important;
   }
 
   :global(.os-content-glue) {
@@ -33,6 +36,9 @@
   :global(.ant-modal-wrap),
   :global(.ant-modal-mask) {
     position: absolute;
+    top: 0 !important;
+    height: 100% !important;
+    overflow: hidden !important;
   }
 
   :global(.os-content-glue) {
@@ -62,6 +68,13 @@
 
 .stream-card-modal-root {
   position: relative;
+  :global(.ant-modal-wrap),
+  :global(.ant-modal-mask) {
+    position: absolute;
+    top: 0 !important;
+    height: 100% !important;
+    overflow: hidden !important;
+  }
 }
 
 // Upload
@@ -81,8 +94,9 @@
   --fixed-height: 504px;
   --fixed-width: 441px;
   position: relative;
-  width: 80vw;
   height: 80vh;
+  width: 80vw;
+  max-width: 1500px;
   display: grid;
   border-radius: 24px;
   overflow: hidden;
@@ -253,6 +267,7 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+  height: 556px; // needs to be hardcoded. to match hypewrapper
 
   :global {
     /* Hide labels */
@@ -369,4 +384,15 @@
   height: 23px;
   object-fit: cover;
   border-radius: 1px;
+}
+
+.explainer-text-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.explainer-text {
+  opacity: 60%;
+  text-align: center;
+  width: 100%;
 }
