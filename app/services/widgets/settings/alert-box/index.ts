@@ -55,7 +55,17 @@ export class AlertBoxService extends WidgetSettingsService<IAlertBoxData> {
       settingsUpdateEvent: 'filteredAlertBoxSettingsUpdate',
       customCodeAllowed: true,
       customFieldsAllowed: true,
-      testers: ['Follow', 'Subscription', 'Donation', 'Bits', 'Share', 'Support', 'Stars', 'Like'],
+      testers: [
+        'Follow',
+        'Subscription',
+        'Donation',
+        'Bits',
+        'Power-Ups',
+        'Share',
+        'Support',
+        'Stars',
+        'Like',
+      ],
     };
   }
 
@@ -252,6 +262,7 @@ export class AlertBoxService extends WidgetSettingsService<IAlertBoxData> {
 
       // These settings are handled differently and purposely dropped on the floor in reshapeVariation
       newSettings.bits_alert_min_amount = settings.bits_alert_min_amount;
+      newSettings.power_up_alert_min_amount = settings.power_up_alert_min_amount;
       newSettings.donation_alert_min_amount = settings.donation_alert_min_amount;
       newSettings.fanfunding_alert_min_amount = settings.fanfunding_alert_min_amount;
       newSettings.host_viewer_minimum = settings.host_viewer_minimum;
