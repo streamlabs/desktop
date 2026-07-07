@@ -76,20 +76,23 @@ function gameOption(key: string) {
 }
 
 export function GameWidget() {
-  const { isLoading, bind, selectedTab, setSelectedTab, settings } = useGameWidget();
-
-  const availableGames = settings.available_games?.map(gameOption);
+  const w = useGameWidget();
+  const availableGames = w.settings?.available_games?.map(gameOption);
 
   return (
     <WidgetLayout>
-      <Menu onClick={e => setSelectedTab(e.key)} selectedKeys={[selectedTab]}>
+      <Menu onClick={e => w.setSelectedTab(e.key)} selectedKeys={[w.selectedTab]}>
         <Menu.Item key="general">{$t('General Settings')}</Menu.Item>
         <Menu.Item key="game">{$t('Game Settings')}</Menu.Item>
       </Menu>
       <Form>
-        {!isLoading && selectedTab === 'general' && (
+        {w.hasLoadedSettings() && w.selectedTab === 'general' && (
           <>
-            <ListInput label={$t('Current Game')} {...bind.current_game} options={availableGames} />
+            <ListInput
+              label={$t('Current Game')}
+              {...w.bind.current_game}
+              options={availableGames}
+            />
             <SliderInput
               label={$t('Chat Decision Time')}
               tooltip={{
@@ -98,27 +101,29 @@ export function GameWidget() {
                 ),
                 placement: 'bottom',
               }}
-              {...bind.decision_poll_timer}
+              {...w.bind.decision_poll_timer}
               {...metadata.seconds({ min: 3000, max: 15000 })}
             />
             <TextInput
               label={$t('Trigger Command')}
               tooltip={$t('Command used by the chat to provide their response')}
-              {...bind.trigger_command}
+              {...w.bind.trigger_command}
             />
             <TextInput
               label={$t('No Input Recieved')}
               tooltip={$t("Message displayed to let the chat know they didn't provide any input")}
-              {...bind.no_input_received_message}
+              {...w.bind.no_input_received_message}
             />
             <TextInput
               label={$t('Restarting Game')}
               tooltip={$t('Message displayed to let the chat know the game is restarting')}
-              {...bind.restarting_game_message}
+              {...w.bind.restarting_game_message}
             />
           </>
         )}
-        {!isLoading && selectedTab === 'game' && <GameOptions game={settings.current_game} />}
+        {w.hasLoadedSettings() && w.selectedTab === 'game' && (
+          <GameOptions game={w.settings.current_game} />
+        )}
       </Form>
     </WidgetLayout>
   );
@@ -131,18 +136,19 @@ function useGameWidget() {
 }
 
 function GameOptions(p: { game: TGameType }) {
-  const { settings, updateSettings } = useGameWidget();
+  const w = useGameWidget();
+  if (!w.hasLoadedSettings()) return <></>;
+
   function updateGameOption(key: keyof ITicTacToeOptions) {
     return (value: unknown) => {
-      updateSettings({ game_options: { [p.game]: { [key]: value } } });
+      w.updateSettings({ game_options: { [p.game]: { [key]: value } } });
     };
   }
 
   const GameSettings = componentMap[p.game];
-
   return (
     <GameSettings
-      gameSettings={settings.game_options[p.game] as TGameOptions}
+      gameSettings={w.settings.game_options[p.game] as TGameOptions}
       updateGameOption={updateGameOption}
     />
   );

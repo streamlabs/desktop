@@ -44,6 +44,7 @@ export const metadata = {
     type: 'radio',
   }),
   animation: (options: IAnimationMetadata) => ({ ...options, type: 'animation' }),
+  imagepicker: <T>(options: IListMetadata<T>) => ({ ...options, type: 'imagepicker' }),
 };
 
 export interface IBaseMetadata {
@@ -114,6 +115,12 @@ interface IFileMetadata extends IBaseMetadata {
 
 interface IAnimationMetadata extends IListMetadata {
   filter?: 'in' | 'out' | 'text' | 'eventIn' | 'eventOut';
+}
+
+interface IImageOptionMetadata<T = string> {
+  label: string;
+  image: string;
+  value: T;
 }
 
 export interface IListMetadata<T = string> extends IBaseMetadata {
