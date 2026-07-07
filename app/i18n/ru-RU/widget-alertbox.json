@@ -118,6 +118,8 @@
   "Cheer (Bits)": "Cheer-сообщение (Bits)",
   "Plays an alert when a viewer sends a Cheer": "Когда зритель отправляет Cheer-сообщение, воспроизводится оповещение",
   "Plays an alert when another streamer raids your channel": "Когда другой стример устраивает рейд на ваш канал, воспроизводится оповещение",
+  "Use Power-Up Image": "Use Power-Up Image",
+  "Plays an alert when a viewer uses a Power-Up": "Plays an alert when a viewer uses a Power-Up",
   "YouTube Super Chat": "Суперчат YouTube",
   "Facebook Support": "Поддержка в Facebook",
   "Plays an alert for new Facebook Supporters": "При появлении новых жертвователей в Facebook воспроизводится оповещение",
