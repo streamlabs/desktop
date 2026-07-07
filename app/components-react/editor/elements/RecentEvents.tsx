@@ -183,6 +183,7 @@ function EventCell(p: { event: IRecentEvent }) {
     if (event.type === 'superchat' || event.formatted_amount || event.formattedAmount) {
       return 'donation';
     }
+    if (event.type === 'power_up') return 'bits';
     return event.type;
   }
 
@@ -192,6 +193,13 @@ function EventCell(p: { event: IRecentEvent }) {
     if (event.type === 'superchat') return event.displayString;
     if (event.type === 'sticker' || event.type === 'effect') {
       return `${event.amount} ${event.currency}`;
+    }
+    if (event.type === 'power_up') {
+      if (event.power_up_name && event.amount) {
+        return `${event.power_up_name} (${event.amount} bits)`;
+      }
+      if (event.power_up_name) return event.power_up_name;
+      return `${event.amount} bits`;
     }
     return `${event.amount} ${event.type}`;
   }
