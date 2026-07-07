@@ -77,7 +77,6 @@ export {
 } from 'services/platforms/twitch/index';
 export { FacebookService } from 'services/platforms/facebook';
 export { TikTokService } from 'services/platforms/tiktok';
-export { TrovoService } from 'services/platforms/trovo';
 export { KickService } from 'services/platforms/kick';
 export { PatreonService } from 'services/platforms/patreon';
 export { RestreamService } from 'services/restream';
@@ -147,7 +146,6 @@ import {
   TwitchTagsService,
   TwitchContentClassificationService,
 } from './services/platforms/twitch/index';
-import { TrovoService } from './services/platforms/trovo';
 import { YoutubeService } from './services/platforms/youtube';
 import { FacebookService } from './services/platforms/facebook';
 import { TikTokService } from './services/platforms/tiktok';
@@ -246,7 +244,6 @@ export const AppServices = {
   TwitterPlatformService,
   TwitchTagsService,
   TwitchContentClassificationService,
-  TrovoService,
   KickService,
   PatreonService,
   InstagramService,

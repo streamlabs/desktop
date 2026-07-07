@@ -19,5 +19,8 @@
   "Custom Destination": "Aangepaste bestemming",
   "This app is currently popped out in another window.": "Deze app is nu in een ander venster geopend.",
   "Error granting chat permissions.": "Er is een fout opgetreden bij het geven van chat-toestemming.",
-  "Authentication Error": "Authenticatiefout"
+  "Authentication Error": "Authenticatiefout",
+  "Diagnostic Report Uploaded Successfully": "Diagnostic Report Uploaded Successfully",
+  "Copy Report ID": "Copy Report ID",
+  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team."
 }

@@ -95,9 +95,8 @@ export default function GoLiveError() {
   }
 
   function handlePlatformRequestError(error: IStreamError, message?: string) {
-    // show remerge/relogin component for certain Twitch and Trovo errors
     if (
-      ['twitch', 'trovo', 'tiktok'].includes(error.platform as string) &&
+      ['twitch', 'tiktok'].includes(error.platform as string) &&
       error?.status &&
       [401, 500].includes(error?.status)
     ) {

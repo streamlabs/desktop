@@ -319,6 +319,7 @@ export class YoutubeService
 
       // Log specific Youtube API errors if they exist
       if (error?.result && error.result?.error) {
+        console.log('Youtube API Error Reason: ', error.result.error.errors[0].reason);
         console.log('Youtube API Error: ', JSON.stringify(error.result.error, null, 2));
       }
 
@@ -670,6 +671,9 @@ export class YoutubeService
       return EPlatformCallResult.Success;
     } catch (e: unknown) {
       const error = e as any;
+
+      console.log('Youtube API Error Reason: ', error?.result?.error?.errors[0]?.reason);
+      console.log('Youtube API Error: ', JSON.stringify(error?.result?.error, null, 2));
 
       // Check if this is a YouTube live stream API error response
       if (error?.errors && error?.status) {

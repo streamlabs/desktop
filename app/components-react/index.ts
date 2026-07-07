@@ -48,6 +48,7 @@ import ReactiveDataEditorWindow from './windows/reactive-data-editor/ReactiveDat
 import { PlatformMerge, PlatformAppStore, PlatformAppMainPage } from './pages';
 import Settings from './windows/Settings';
 import Troubleshooter from './windows/Troubleshooter';
+import SceneTransitions from './windows/scene-transitions';
 
 // list of React components to be used inside Vue components
 export const components = {
@@ -102,4 +103,5 @@ export const components = {
   ReactiveDataEditorWindow,
   Settings: createRoot(Settings),
   Troubleshooter,
+  SceneTransitions,
 };

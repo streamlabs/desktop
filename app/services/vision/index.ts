@@ -136,7 +136,13 @@ export class VisionService extends Service {
   enabledState = VisionEnabledState.inject();
   state = VisionState.inject();
 
+  isSupportedForOs() {
+    return getOS() === OS.Windows || (getOS() === OS.Mac && Utils.isDevMode());
+  }
+
   init() {
+    if (!this.isSupportedForOs()) return;
+
     // Hook widget/overlay services to check for vision-dependent installs.
     // TODO @widgets-refactor: Remove IWidgetConfig cast.
     this.widgetsService.widgetCreated.subscribe(({ type }) => this.onWidgetCreated(type));
@@ -157,10 +163,6 @@ export class VisionService extends Service {
     }
   }
 
-  isSupportedForOs() {
-    return getOS() === OS.Windows || (getOS() === OS.Mac && Utils.isDevMode());
-  }
-
   async setIsEnabled(isEnabled?: boolean) {
     const newIsEnabled = isEnabled !== false;
     if (this.enabledState.isEnabled === newIsEnabled) return;
@@ -174,7 +176,7 @@ export class VisionService extends Service {
     }
   }
 
-  ensureUpdated = pMemoize(
+  private ensureUpdated = pMemoize(
     async ({ startAfterUpdate = true }: { startAfterUpdate?: boolean } = {}) => {
       this.log('ensureUpdated()');
 
@@ -220,6 +222,11 @@ export class VisionService extends Service {
 
   ensureRunning = pMemoize(
     async ({ debugMode = false }: VisionRunnerStartOptions = {}) => {
+      if (!this.isSupportedForOs()) {
+        this.log('Vision is not supported for this platform at this time.');
+        return;
+      }
+
       const { isEnabled } = this.enabledState;
 
       this.log('ensureRunning(): ' + JSON.stringify({ isEnabled, debugMode }));

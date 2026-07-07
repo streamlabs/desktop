@@ -10,7 +10,6 @@ import electron from 'electron';
 import { StreamingService } from './streaming';
 import { FacebookService } from './platforms/facebook';
 import { TikTokService } from './platforms/tiktok';
-import { TrovoService } from './platforms/trovo';
 import { KickService } from './platforms/kick';
 import { PatreonService } from './platforms/patreon';
 import * as remote from '@electron/remote';
@@ -106,7 +105,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @Inject() streamingService: StreamingService;
   @Inject() facebookService: FacebookService;
   @Inject('TikTokService') tiktokService: TikTokService;
-  @Inject() trovoService: TrovoService;
   @Inject() kickService: KickService;
   @Inject() patreonService: PatreonService;
   @Inject() instagramService: InstagramService;
