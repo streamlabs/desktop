@@ -96,12 +96,9 @@ import { SignalsService } from 'services/signals-manager';
 import { TSocketEvent } from 'services/websocket';
 import { HighlighterService } from 'services/highlighter';
 import {
-  ENHANCED_BROADCASTING_RESOLUTION_CHANGE_NOTIFICATION_CODE,
-  IEnhancedBroadcastingResolutionChangePayload,
-  createEnhancedBroadcastingResolutionChangeNotificationOptions,
-  isEnhancedBroadcastingResolutionChangeOutputSignal,
-  parseEnhancedBroadcastingResolutionChangeSignal,
-} from 'services/enhanced-broadcasting-notifications';
+  RESOLUTION_CHANGE_NOTIFICATION_CODE,
+  createResolutionChangeNotification,
+} from './enhanced-broadcasting-notifications';
 
 type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
 type TOutputContext = TDisplayType | 'enhancedBroadcasting' | 'stream' | 'streamSecond';
@@ -2651,28 +2648,16 @@ export class StreamingService
   }
 
   private handleEnhancedBroadcastingResolutionChangeSignal(info: EOutputSignal): boolean {
-    if (!isEnhancedBroadcastingResolutionChangeOutputSignal(info)) return false;
+    const notification = createResolutionChangeNotification(info);
+    if (!notification) return false;
 
-    const payload = parseEnhancedBroadcastingResolutionChangeSignal(info);
-    if (!payload) return false;
-
-    this.pushEnhancedBroadcastingResolutionChangeNotification(payload);
+    this.clearEnhancedBroadcastingResolutionChangeNotification();
+    this.notificationsService.push(notification);
     return true;
   }
 
-  private pushEnhancedBroadcastingResolutionChangeNotification(
-    payload: IEnhancedBroadcastingResolutionChangePayload | null,
-  ) {
-    if (!payload) return;
-
-    const options = createEnhancedBroadcastingResolutionChangeNotificationOptions(payload);
-
-    this.clearEnhancedBroadcastingResolutionChangeNotification();
-    if (options) this.notificationsService.push(options);
-  }
-
   private clearEnhancedBroadcastingResolutionChangeNotification() {
-    this.notificationsService.removeByCode(ENHANCED_BROADCASTING_RESOLUTION_CHANGE_NOTIFICATION_CODE);
+    this.notificationsService.removeByCode(RESOLUTION_CHANGE_NOTIFICATION_CODE);
   }
 
   private async handleStreamingSignal(info: EOutputSignal, context: TOutputContext) {

@@ -1,31 +1,30 @@
-import { ENotificationType } from './notifications/notifications-api';
-import type { INotificationOptions } from './notifications/notifications-api';
+import { ENotificationType } from '../notifications/notifications-api';
+import type { INotificationOptions } from '../notifications/notifications-api';
 
-export const ENHANCED_BROADCASTING_RESOLUTION_CHANGE_SIGNAL =
-  'enhanced_broadcasting_resolution_change';
+const RESOLUTION_CHANGE_SIGNAL = 'enhanced_broadcasting_resolution_change';
 
-export const ENHANCED_BROADCASTING_RESOLUTION_CHANGE_NOTIFICATION_CODE =
+export const RESOLUTION_CHANGE_NOTIFICATION_CODE =
   'TWITCH_ENHANCED_BROADCASTING_RESOLUTION_CHANGE';
 
-type TEnhancedBroadcastingCanvas = 'horizontal' | 'vertical';
+type TCanvas = 'horizontal' | 'vertical';
 
-export interface IEnhancedBroadcastingResolutionChange {
-  canvas: TEnhancedBroadcastingCanvas;
+interface IResolutionChange {
+  canvas: TCanvas;
   width: number;
   height: number;
 }
 
-export interface IEnhancedBroadcastingResolutionChangePayload {
-  resolutionChanges: IEnhancedBroadcastingResolutionChange[];
+interface IResolutionChangePayload {
+  resolutionChanges: IResolutionChange[];
 }
 
-interface IEnhancedBroadcastingResolutionChangeSignal {
+interface IResolutionChangeSignal {
   type?: string;
   signal: string;
   error?: string;
 }
 
-export interface IEnhancedBroadcastingResolutionChangeNotification {
+interface IResolutionChangeNotification {
   code: string;
   message: string;
   type: ENotificationType;
@@ -35,11 +34,11 @@ function isPositiveInteger(value: unknown): value is number {
   return Number.isInteger(value) && (value as number) > 0;
 }
 
-function isSupportedCanvas(value: unknown): value is TEnhancedBroadcastingCanvas {
+function isSupportedCanvas(value: unknown): value is TCanvas {
   return value === 'horizontal' || value === 'vertical';
 }
 
-function normalizeResolutionChange(value: unknown): IEnhancedBroadcastingResolutionChange | null {
+function normalizeResolutionChange(value: unknown): IResolutionChange | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
 
   const change = value as Record<string, unknown>;
@@ -53,10 +52,8 @@ function normalizeResolutionChange(value: unknown): IEnhancedBroadcastingResolut
   };
 }
 
-function sortResolutionChanges(
-  resolutionChanges: IEnhancedBroadcastingResolutionChange[],
-): IEnhancedBroadcastingResolutionChange[] {
-  const canvasOrder: Record<TEnhancedBroadcastingCanvas, number> = {
+function sortResolutionChanges(resolutionChanges: IResolutionChange[]): IResolutionChange[] {
+  const canvasOrder: Record<TCanvas, number> = {
     horizontal: 0,
     vertical: 1,
   };
@@ -64,10 +61,16 @@ function sortResolutionChanges(
   return [...resolutionChanges].sort((a, b) => canvasOrder[a.canvas] - canvasOrder[b.canvas]);
 }
 
-export function parseEnhancedBroadcastingResolutionChangeSignal(
-  info: IEnhancedBroadcastingResolutionChangeSignal,
-): IEnhancedBroadcastingResolutionChangePayload | null {
-  if (!isEnhancedBroadcastingResolutionChangeOutputSignal(info)) return null;
+function isResolutionChangeSignal(info: IResolutionChangeSignal): boolean {
+  if (info.type && info.type !== 'streaming') return false;
+
+  return info.signal === RESOLUTION_CHANGE_SIGNAL && !!info.error;
+}
+
+function parseResolutionChangeSignal(
+  info: IResolutionChangeSignal,
+): IResolutionChangePayload | null {
+  if (!isResolutionChangeSignal(info)) return null;
 
   try {
     const payload = JSON.parse(info.error);
@@ -76,8 +79,8 @@ export function parseEnhancedBroadcastingResolutionChangeSignal(
     const changes = (payload as { resolution_changes?: unknown }).resolution_changes;
     if (!Array.isArray(changes) || changes.length === 0) return null;
 
-    const seenCanvases = new Set<TEnhancedBroadcastingCanvas>();
-    const resolutionChanges: IEnhancedBroadcastingResolutionChange[] = [];
+    const seenCanvases = new Set<TCanvas>();
+    const resolutionChanges: IResolutionChange[] = [];
     for (const value of changes) {
       const resolutionChange = normalizeResolutionChange(value);
       if (!resolutionChange || seenCanvases.has(resolutionChange.canvas)) return null;
@@ -92,25 +95,17 @@ export function parseEnhancedBroadcastingResolutionChangeSignal(
   }
 }
 
-export function isEnhancedBroadcastingResolutionChangeOutputSignal(
-  info: IEnhancedBroadcastingResolutionChangeSignal,
-): boolean {
-  if (info.type && info.type !== 'streaming') return false;
-
-  return info.signal === ENHANCED_BROADCASTING_RESOLUTION_CHANGE_SIGNAL && !!info.error;
-}
-
-function formatResolution({ width, height }: IEnhancedBroadcastingResolutionChange): string {
+function formatResolution({ width, height }: IResolutionChange): string {
   return `${width}\u00d7${height}`;
 }
 
-function formatCanvasResolution(change: IEnhancedBroadcastingResolutionChange): string {
+function formatCanvasResolution(change: IResolutionChange): string {
   return `${formatResolution(change)} for the ${change.canvas} canvas`;
 }
 
-export function getEnhancedBroadcastingResolutionChangeNotification(
-  payload: IEnhancedBroadcastingResolutionChangePayload,
-): IEnhancedBroadcastingResolutionChangeNotification | null {
+function getResolutionChangeNotification(
+  payload: IResolutionChangePayload,
+): IResolutionChangeNotification | null {
   const resolutionChanges = sortResolutionChanges(payload.resolutionChanges);
   if (resolutionChanges.length === 0) return null;
 
@@ -126,16 +121,19 @@ export function getEnhancedBroadcastingResolutionChangeNotification(
           )} because Enhanced Broadcasting detected them as the optimal configurations for your system.`;
 
   return {
-    code: ENHANCED_BROADCASTING_RESOLUTION_CHANGE_NOTIFICATION_CODE,
+    code: RESOLUTION_CHANGE_NOTIFICATION_CODE,
     message,
     type: ENotificationType.INFO,
   };
 }
 
-export function createEnhancedBroadcastingResolutionChangeNotificationOptions(
-  payload: IEnhancedBroadcastingResolutionChangePayload,
+export function createResolutionChangeNotification(
+  info: IResolutionChangeSignal,
 ): INotificationOptions | null {
-  const notification = getEnhancedBroadcastingResolutionChangeNotification(payload);
+  const payload = parseResolutionChangeSignal(info);
+  if (!payload) return null;
+
+  const notification = getResolutionChangeNotification(payload);
   if (!notification) return null;
 
   return {
