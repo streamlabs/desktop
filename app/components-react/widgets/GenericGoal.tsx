@@ -209,8 +209,11 @@ export class GenericGoalModule extends WidgetModule<IGoalState> {
       font: { type: 'fontFamily', label: $t('Font Family') },
     };
 
-    if (this.state.type === WidgetType.SubGoal) {
-      return { include_resubs: metadata.switch({ label: $t('Include Resubs') }), ...meta };
+    switch (this.state.type) {
+      case WidgetType.SubGoal:
+        return { include_resubs: metadata.switch({ label: $t('Include Resubs') }), ...meta };
+      case WidgetType.BitGoal:
+        return { count_power_ups: metadata.switch({ label: $t('Count Power-Ups') }), ...meta };
     }
     return meta;
   }
