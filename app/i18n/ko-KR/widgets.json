@@ -25,6 +25,7 @@
   "Subscription": "구독",
   "Donation": "후원",
   "Bits": "비트",
+  "Power-Ups": "Power-Ups",
   "Host": "호스트",
   "The Google Font to use for the text. Visit http://google.com/fonts to find one! Popular Fonts include: Open Sans, Roboto, Oswald, Lato, and Droid Sans.": "텍스트에 사용할 Google 폰트. http://google.com/fonts에 방문하여 찾아보세요! 인기 폰트는 Open Sans, Roboto, Oswald, Lato, Droid Sans입니다.",
   "A hex code for the base text color.": "기본 텍스트 색상을 위한 16진수 코드입니다.",
