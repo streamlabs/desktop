@@ -16,6 +16,7 @@ const nameMap = () => ({
   tips: $t('Tips & Donations'),
   twitch_follows: $t('Twitch Follows'),
   twitch_bits: $t('Twitch Bits'),
+  twitch_power_ups: $t('Twitch Power-Ups'),
   twitch_subs: $t('Twitch Subs'),
   twitch_resubs: $t('Twitch Resubs'),
   youtube_subscribers: $t('YouTube Subscriptions'),
