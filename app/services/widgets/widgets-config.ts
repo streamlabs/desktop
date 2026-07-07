@@ -24,6 +24,7 @@ export type TWidgetType =
   | WidgetType.EventList
   | WidgetType.TipJar
   | WidgetType.StreamBoss
+  | WidgetType.SpinWheel
   | WidgetType.GamePulseWidget;
 
 export interface IWidgetConfig {
@@ -566,9 +567,31 @@ export function getWidgetsConfig(
     //
     //  },
 
-    // SpinWheel: {
-    //
-    // },
+    [WidgetType.SpinWheel]: {
+      type: WidgetType.SpinWheel,
+
+      defaultTransform: {
+        width: 600,
+        height: 800,
+        x: 0,
+        y: 1,
+        anchor: AnchorPoint.SouthWest,
+      },
+
+      settingsWindowSize: {
+        width: 850,
+        height: 700,
+      },
+
+      url: `https://${host}/widgets/wheel?token=${token}`,
+      previewUrl: `https://${host}/widgets/wheel?token=${token}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/wheel`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/wheel`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/wheel`,
+      settingsUpdateEvent: 'WheelSettingsUpdate',
+      customCodeAllowed: true,
+      customFieldsAllowed: true,
+    },
 
     [WidgetType.SponsorBanner]: {
       type: WidgetType.SponsorBanner,
