@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Switch, Tooltip, Spin, Popconfirm, Select, Dropdown, Menu, Tag } from 'antd';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
+import Spinner from 'components-react/shared/Spinner';
 import { useVuex } from 'components-react/hooks';
 import { useAgentAppInstalled } from 'components-react/hooks/useAgentAppInstalled';
 import { Services } from 'components-react/service-provider';
@@ -41,10 +42,17 @@ const GAME_FILTER_OPTIONS = Object.entries(GAME_NAMES)
   .sort((a, b) => a.label.localeCompare(b.label));
 
 export default function EditAutomations() {
-  const { AutomationsService, AutomationsEngineService, ScenesService, SourcesService } = Services;
-  const { automations, loading, scenes, sources } = useVuex(() => ({
+  const {
+    AutomationsService,
+    AutomationsEngineService,
+    AgentSocketService,
+    ScenesService,
+    SourcesService,
+  } = Services;
+  const { automations, loaded, error, scenes, sources } = useVuex(() => ({
     automations: AutomationsService.state.automations,
-    loading: AutomationsService.state.loading,
+    loaded: AutomationsService.state.loaded,
+    error: AutomationsService.state.error,
     scenes: ScenesService.views.scenes.map(s => ({ id: s.id, name: s.name })),
     sources: SourcesService.views.sources.map(s => ({ id: s.sourceId, name: s.name })),
   }));
@@ -59,6 +67,13 @@ export default function EditAutomations() {
   useEffect(() => {
     AutomationsService.actions.fetchAll();
   }, []);
+
+  function retryNow() {
+    // fetchAll() alone can't help if the socket itself never connected — force
+    // a fresh connection attempt too, not just another doomed-to-timeout call.
+    AgentSocketService.actions.reconnect();
+    AutomationsService.actions.fetchAll();
+  }
 
   const { WindowsService } = Services;
   const { editAutomationId, createNew } = useVuex(() => ({
@@ -210,9 +225,18 @@ export default function EditAutomations() {
         </div>
       </div>
 
-      {loading && <div className={styles.message}>{$t('Loading...')}</div>}
+      {!loaded && !error && <Spinner visible relative />}
 
-      {!loading && automations.length === 0 && (
+      {error && (
+        <div className={styles.message}>
+          {$t('Unable to reach the automations server. Retrying…')}
+          <Button type="link" onClick={retryNow} style={{ marginLeft: 8 }}>
+            {$t('Retry Now')}
+          </Button>
+        </div>
+      )}
+
+      {loaded && automations.length === 0 && (
         <div className={styles.emptyCard}>
           <div
             className={styles.emptyImage}
@@ -241,11 +265,11 @@ export default function EditAutomations() {
         </div>
       )}
 
-      {!loading && automations.length > 0 && filtered.length === 0 && (
+      {loaded && automations.length > 0 && filtered.length === 0 && (
         <div className={styles.message}>{$t('No automations match the selected filter.')}</div>
       )}
 
-      {!loading && filtered.length > 0 && (
+      {loaded && filtered.length > 0 && (
         <table className={styles.table}>
           <thead>
             <tr>

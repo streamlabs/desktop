@@ -12,7 +12,11 @@ interface IAutomationsState {
   automations: TAutomationExport[];
   loading: boolean;
   loaded: boolean;
+  error: boolean;
 }
+
+const RETRY_BASE_DELAY_MS = 2000;
+const RETRY_MAX_DELAY_MS = 30000;
 
 @InitAfter('UserService')
 export class AutomationsService extends StatefulService<IAutomationsState> {
@@ -20,11 +24,15 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
     automations: [],
     loading: false,
     loaded: false,
+    error: false,
   };
 
   @Inject() private agentSocketService: AgentSocketService;
   @Inject() private userService: UserService;
   @Inject() private windowsService: WindowsService;
+
+  private retryDelay = RETRY_BASE_DELAY_MS;
+  private retryTimer: number | null = null;
 
   init() {
     console.log('[AutomationsService] init() called. isWorkerWindow:', Utils.isWorkerWindow());
@@ -36,6 +44,15 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
     this.userService.userLogin.subscribe(() => {
       console.log('[AutomationsService] userLogin fired, fetching');
       this.fetchAll();
+    });
+    this.userService.userLogout.subscribe(() => {
+      console.log('[AutomationsService] userLogout fired, resetting');
+      if (this.retryTimer !== null) {
+        clearTimeout(this.retryTimer);
+        this.retryTimer = null;
+      }
+      this.retryDelay = RETRY_BASE_DELAY_MS;
+      this.RESET();
     });
   }
 
@@ -79,11 +96,17 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
     this.state.automations = automations;
     this.state.loaded = true;
     this.state.loading = false;
+    this.state.error = false;
   }
 
   @mutation()
   private SET_LOADING(loading: boolean) {
     this.state.loading = loading;
+  }
+
+  @mutation()
+  private SET_ERROR(error: boolean) {
+    this.state.error = error;
   }
 
   @mutation()
@@ -103,17 +126,41 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
     this.state.automations = this.state.automations.filter(a => a.id !== id);
   }
 
+  @mutation()
+  private RESET() {
+    this.state.automations = [];
+    this.state.loading = false;
+    this.state.loaded = false;
+    this.state.error = false;
+  }
+
   async fetchAll(): Promise<void> {
     console.log('[AutomationsService] fetchAll() start');
+    if (this.retryTimer !== null) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
     this.SET_LOADING(true);
     try {
       const automations = await this.agentSocketService.getAutomations();
       console.log('[AutomationsService] fetchAll() got', automations?.length, 'automations');
       this.SET_AUTOMATIONS(automations as TAutomationExport[]);
+      this.retryDelay = RETRY_BASE_DELAY_MS;
     } catch (e: unknown) {
       this.SET_LOADING(false);
+      this.SET_ERROR(true);
       console.error('[AutomationsService] fetchAll failed', e);
+      this.scheduleRetry();
     }
+  }
+
+  private scheduleRetry() {
+    if (this.retryTimer !== null) return;
+    this.retryTimer = window.setTimeout(() => {
+      this.retryTimer = null;
+      if (this.userService.isLoggedIn) this.fetchAll();
+    }, this.retryDelay);
+    this.retryDelay = Math.min(this.retryDelay * 2, RETRY_MAX_DELAY_MS);
   }
 
   async create(automation: Omit<TAutomationExport, 'id'>): Promise<TAutomationExport> {
