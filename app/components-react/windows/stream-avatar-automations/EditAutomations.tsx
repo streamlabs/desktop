@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Switch, Tooltip, Spin, Popconfirm, Select, Dropdown, Menu, Tag } from 'antd';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import { useVuex } from 'components-react/hooks';
+import { useAgentAppInstalled } from 'components-react/hooks/useAgentAppInstalled';
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
 import { Conditions, GAME_NAMES } from 'services/stream-avatar/engine/conditions';
@@ -47,6 +48,7 @@ export default function EditAutomations() {
     scenes: ScenesService.views.scenes.map(s => ({ id: s.id, name: s.name })),
     sources: SourcesService.views.sources.map(s => ({ id: s.sourceId, name: s.name })),
   }));
+  const { isInstalled: isAgentInstalled, isEnabled: isAgentEnabled } = useAgentAppInstalled();
 
   const [editingAutomation, setEditingAutomation] = useState<TAutomationExport | null>(null);
   const [creating, setCreating] = useState(false);
@@ -256,7 +258,11 @@ export default function EditAutomations() {
           </thead>
           <tbody>
             {filtered.map(automation => {
-              const issues = validateAutomation(automation, { scenes, sources });
+              const issues = validateAutomation(automation, {
+                scenes,
+                sources,
+                agentAppReady: isAgentInstalled && isAgentEnabled,
+              });
               return (
                 <tr key={automation.id}>
                   <td className={styles.descCell}>
