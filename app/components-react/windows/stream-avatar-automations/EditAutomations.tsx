@@ -12,6 +12,7 @@ import { validateAutomation } from 'services/stream-avatar/engine/validation';
 import type { TAutomationExport } from 'services/stream-avatar/engine/automations';
 import AutomationEditor from './AutomationEditor';
 import PreMadeAutomations from './PreMadeAutomations';
+import { AutomationsAnalytics } from './AutomationsAnalytics';
 import styles from './EditAutomations.m.less';
 
 function conditionLabel(condition: { type: string } | null) {
@@ -65,6 +66,7 @@ export default function EditAutomations() {
   const [simulatingId, setSimulatingId] = useState<number | null>(null);
 
   useEffect(() => {
+    AutomationsAnalytics.pageView();
     AutomationsService.actions.fetchAll();
   }, []);
 

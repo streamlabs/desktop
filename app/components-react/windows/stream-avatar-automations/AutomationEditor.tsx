@@ -16,6 +16,7 @@ import {
   MAX_INSTRUCTION_LENGTH,
 } from 'services/stream-avatar/engine/validation';
 import type { TAutomationExport } from 'services/stream-avatar/engine/automations';
+import { AutomationsAnalytics } from './AutomationsAnalytics';
 import type {
   ActionType,
   ExportedAction,
@@ -523,10 +524,16 @@ export default function AutomationEditor({ initial, onClose, onViewTemplates }: 
         enabled,
       };
 
+      const game = payload.conditions[0]?.type.split('.')[0] ?? 'unknown';
+      const trigger = payload.conditions[0]?.type ?? 'unknown';
+      const actionTypes = payload.actions.map((a: { type: string }) => a.type);
+
       if (initial?.id) {
         await AutomationsService.actions.update(initial.id, payload);
+        AutomationsAnalytics.automationUpdated(game, trigger, actionTypes);
       } else {
         await AutomationsService.actions.create(payload);
+        AutomationsAnalytics.automationCreated(game, trigger, actionTypes);
       }
       onClose();
     } catch (e: unknown) {

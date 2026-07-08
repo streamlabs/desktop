@@ -5,6 +5,7 @@ import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
 import type { ConditionType } from 'services/stream-avatar/engine/conditions';
 import type { TAutomationExport } from 'services/stream-avatar/engine/automations';
+import { AutomationsAnalytics } from './AutomationsAnalytics';
 import styles from './PreMadeAutomations.m.less';
 
 interface PreMadeItem {
@@ -272,6 +273,11 @@ export default function PreMadeAutomations({ onClose }: Props) {
         }
 
         await AutomationsService.actions.create(item.automation);
+        AutomationsAnalytics.templateAdded(
+          item.automation.conditions[0]?.type.split('.')[0] ?? 'unknown',
+          item.automation.conditions[0]?.type ?? 'unknown',
+          item.automation.actions.map(a => a.type),
+        );
       }
     } finally {
       setSaving(false);
