@@ -6,6 +6,7 @@ import { WebsocketService } from 'services/websocket';
 import { VisionService, VisionProcess } from 'services/vision';
 import { AutomationsService } from './automations-service';
 import { AgentSocketService } from './agent-socket-service';
+import { UsageStatisticsService } from 'services/usage-statistics';
 import Utils from 'services/utils';
 import { toUpper } from 'lodash';
 import {
@@ -36,6 +37,7 @@ export class AutomationsEngineService extends Service {
   @Inject() private visionService: VisionService;
   @Inject() private automationsService: AutomationsService;
   @Inject() private agentSocketService: AgentSocketService;
+  @Inject() private usageStatisticsService: UsageStatisticsService;
 
   private gameState: GameState = { ...defaultGameState, pendingEvents: new Set() };
   private prevState: GameState = { ...defaultGameState, pendingEvents: new Set() };
@@ -258,6 +260,13 @@ export class AutomationsEngineService extends Service {
       if (!conditionResults.length) continue;
 
       const conditionsNotMet = conditionResults.some(r => !r.status);
+
+      this.usageStatisticsService.recordAnalyticsEvent('Automations', {
+        action: 'automation_fired',
+        game: currentGame,
+        trigger: conditionResults[0]?.condition.type ?? 'unknown',
+        actions: automation.actions.map(a => a.type),
+      });
 
       for (const exportedAction of automation.actions) {
         try {

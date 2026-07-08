@@ -60,7 +60,8 @@ export type TAnalyticsEvent =
   | 'Onboarding'
   | 'WidgetAdded'
   | 'WidgetRemoved'
-  | 'GamePulse';
+  | 'GamePulse'
+  | 'Automations';
 
 // Refls are used as uuids for ultra components and should be updated for new ulta components.
 export type TUltraRefl =
