@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
 import { EMenuItemKey } from 'services/side-nav';
 import { getOS, OS } from 'util/operating-systems';
@@ -12,39 +13,25 @@ export const AGENT_APP_ID = '93125d1c33';
  * the same detection/redirect logic AILanding.tsx uses for its co-host
  * feature card. Installed and enabled are tracked separately since a user
  * can install the app but later disable it from Settings > Installed Apps.
+ *
+ * Reads reactively off PlatformAppsService's Vuex state (rather than local
+ * component state) so every consumer of this hook — e.g. the automations
+ * list and its edit modal — stays in sync the instant the app is installed
+ * or enabled anywhere, without needing to remount.
  */
 export function useAgentAppInstalled() {
   const { NavigationService, PlatformAppsService, SideNavService } = Services;
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [isEnabled, setIsEnabled] = useState(false);
 
   useEffect(() => {
-    let active = true;
-    let processing = false;
-
-    void loadProductionApps();
-
-    return () => {
-      active = false;
-    };
-
-    async function loadProductionApps() {
-      if (getOS() !== OS.Windows) return;
-      if (processing) return;
-
-      processing = true;
-      setIsInstalled(false);
-      setIsEnabled(false);
-      await PlatformAppsService.actions.return.loadProductionApps();
-
-      if (!active) return;
-
-      const app = PlatformAppsService.views.productionApps.find(a => a.id === AGENT_APP_ID);
-      setIsInstalled(!!app);
-      setIsEnabled(!!app?.enabled);
-      processing = false;
-    }
+    if (getOS() !== OS.Windows) return;
+    void PlatformAppsService.actions.return.loadProductionApps();
   }, []);
+
+  const { isInstalled, isEnabled } = useVuex(() => {
+    if (getOS() !== OS.Windows) return { isInstalled: false, isEnabled: false };
+    const app = PlatformAppsService.views.productionApps.find(a => a.id === AGENT_APP_ID);
+    return { isInstalled: !!app, isEnabled: !!app?.enabled };
+  });
 
   async function installAgent() {
     await PlatformAppsService.actions.return.refreshProductionApps();
@@ -54,7 +41,6 @@ export function useAgentAppInstalled() {
 
   function enableAgent() {
     PlatformAppsService.actions.setEnabled(AGENT_APP_ID, true);
-    setIsEnabled(true);
   }
 
   return { isInstalled, isEnabled, installAgent, enableAgent };

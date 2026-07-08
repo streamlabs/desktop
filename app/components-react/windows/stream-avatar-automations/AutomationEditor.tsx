@@ -120,7 +120,7 @@ function ActionEditor({
 }: ActionEditorProps) {
   const agentReady = isAgentInstalled && isAgentEnabled;
 
-  async function requireAgentApp() {
+  async function notifyAgentRequired() {
     if (!isAgentInstalled) {
       await alertAsync({
         type: 'confirm',
@@ -166,11 +166,12 @@ function ActionEditor({
   }
 
   function setType(type: ActionType) {
-    if (requiresAgentApp(type) && !agentReady) {
-      void requireAgentApp();
-      return;
-    }
     onChange(index, withActionDefaults({ type }));
+    // Always apply the selection — this is informational, not a gate, so it
+    // can't leave the Select showing a value that was never actually set.
+    if (requiresAgentApp(type) && !agentReady) {
+      void notifyAgentRequired();
+    }
   }
 
   function setProp(key: string, value: unknown) {
