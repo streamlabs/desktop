@@ -62,6 +62,7 @@ export interface IRecentEvent {
   skill_currency?: string;
   skill_name?: string;
   recurring_donation?: { id: string; months?: number };
+  redeemer_display_name?: string;
   power_up_name?: string;
   power_up_prompt?: string;
 }
@@ -230,8 +231,8 @@ function getHashForRecentEvent(event: IRecentEvent) {
     case 'share':
     case 'support':
       return [event.type, event.name, event._id].join(':');
-    case 'power_up':
-      return [event.type, event.name, event.power_up_name].join(':');
+    case 'powerUp':
+      return [event.type, event.redeemer_display_name, event.power_up_name].join(':');
     case 'prime_sub_gift':
       return [event.type, event.name, event.streamer, event.giftType].join(':');
     case 'sticker':
