@@ -19,17 +19,20 @@ function conditionLabel(automation: TAutomationExport) {
 }
 
 function AutomationsContent() {
-  const { AutomationsService, AutomationsEngineService } = Services;
-  const { automations, loading } = useVuex(() => ({
+  const { AutomationsService, AutomationsEngineService, AgentSocketService, UserService } = Services;
+  const { automations, loaded, error, isLoggedIn } = useVuex(() => ({
     automations: AutomationsService.state.automations,
-    loading: AutomationsService.state.loading,
+    loaded: AutomationsService.state.loaded,
+    error: AutomationsService.state.error,
+    isLoggedIn: UserService.views.isLoggedIn,
   }));
 
   const [simulatingId, setSimulatingId] = useState<number | null>(null);
 
   useEffect(() => {
+    if (!isLoggedIn) return;
     AutomationsService.actions.fetchAll();
-  }, []);
+  }, [isLoggedIn]);
 
   async function simulate(e: React.MouseEvent, id: number) {
     e.stopPropagation();
@@ -54,7 +57,31 @@ function AutomationsContent() {
     AutomationsService.actions.showCreateAutomation();
   }
 
-  if (loading) {
+  function retryNow() {
+    AgentSocketService.actions.reconnect();
+    AutomationsService.actions.fetchAll();
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <div className={styles.empty}>
+        <span>{$t('Log in to use Automations.')}</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.empty}>
+        <span>{$t('Unable to reach the automations server. Retrying…')}</span>
+        <Tooltip title={$t('Retry Now')}>
+          <i className="icon-repeat icon-button" style={{ marginLeft: 6 }} onClick={retryNow} />
+        </Tooltip>
+      </div>
+    );
+  }
+
+  if (!loaded) {
     return (
       <div className={styles.center}>
         <Spin size="small" />
