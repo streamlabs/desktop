@@ -1,5 +1,6 @@
 import { $t } from 'services/i18n';
 import { Conditions } from './conditions';
+import { ActionRegistry } from './actions';
 import type { TAutomationExport } from './automations';
 import type { ExportedAction, ExportedActionProps } from './actions';
 
@@ -13,6 +14,8 @@ export interface IResourceRef {
 export interface IAvailableResources {
   scenes: IResourceRef[];
   sources: IResourceRef[];
+  /** Whether the Intelligent Streaming Agent app is installed AND enabled, gating co-host actions. */
+  agentAppReady?: boolean;
 }
 
 /** Where an issue applies, so the editor can render it next to the right field. */
@@ -57,6 +60,19 @@ function validateAction(
     field,
     message,
   });
+
+  if (
+    action?.type &&
+    ActionRegistry[action.type]?.group === 'co-host' &&
+    resources.agentAppReady === false
+  ) {
+    issues.push(
+      actionIssue(
+        'type',
+        $t('Requires the Intelligent Streaming Agent app to be installed and enabled.'),
+      ),
+    );
+  }
 
   switch (action?.type) {
     case 'common.switch_to_scene': {

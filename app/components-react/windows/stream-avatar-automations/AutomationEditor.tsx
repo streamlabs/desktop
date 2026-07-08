@@ -1,10 +1,12 @@
 import React, { CSSProperties, useEffect, useState } from 'react';
-import { Button, Select, Input, Slider } from 'antd';
+import { Button, Select, Input, Slider, Tag } from 'antd';
 import { Properties } from 'services/stream-avatar/engine/properties';
 import { ReactSortable } from 'react-sortablejs';
 import uuid from 'uuid/v4';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
+import { alertAsync } from 'components-react/modals';
 import { useVuex } from 'components-react/hooks';
+import { useAgentAppInstalled } from 'components-react/hooks/useAgentAppInstalled';
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
 import { Conditions, GAME_NAMES, ConditionType } from 'services/stream-avatar/engine/conditions';
@@ -58,10 +60,25 @@ const trashCellStyle: CSSProperties = {
   fontSize: '14px',
 };
 
-const ACTION_OPTIONS = Object.entries(ActionRegistry).map(([type, def]) => ({
-  label: def.label,
-  value: type as ActionType,
-}));
+function requiresAgentApp(type: ActionType): boolean {
+  return ActionRegistry[type]?.group === 'co-host';
+}
+
+function getActionOptions() {
+  return Object.entries(ActionRegistry).map(([type, def]) => ({
+    label: requiresAgentApp(type as ActionType) ? (
+      <span>
+        {def.label}{' '}
+        <Tag style={{ fontSize: 10, lineHeight: '14px', padding: '0 4px', marginLeft: 2 }}>
+          {$t('Requires ISA App')}
+        </Tag>
+      </span>
+    ) : (
+      def.label
+    ),
+    value: type as ActionType,
+  }));
+}
 
 const GAME_OPTIONS = Object.entries(GAME_NAMES)
   .map(([id, name]) => ({ label: name, value: id }))
@@ -80,6 +97,10 @@ interface ActionEditorProps {
   scenes: { id: string; name: string }[];
   sources: { id: string; name: string }[];
   errors?: Record<string, string>;
+  isAgentInstalled: boolean;
+  isAgentEnabled: boolean;
+  onInstallAgent: () => Promise<void>;
+  onEnableAgent: () => void;
   onChange: (index: number, action: ExportedAction) => void;
   onRemove: (index: number) => void;
 }
@@ -90,10 +111,65 @@ function ActionEditor({
   scenes,
   sources,
   errors,
+  isAgentInstalled,
+  isAgentEnabled,
+  onInstallAgent,
+  onEnableAgent,
   onChange,
   onRemove,
 }: ActionEditorProps) {
+  const agentReady = isAgentInstalled && isAgentEnabled;
+
+  async function requireAgentApp() {
+    if (!isAgentInstalled) {
+      await alertAsync({
+        type: 'confirm',
+        title: $t('Intelligent Streaming Agent Required'),
+        closable: true,
+        content: (
+          <span>
+            {$t(
+              'Co-host actions require the Intelligent Streaming Agent app. Install it to use this action.',
+            )}
+          </span>
+        ),
+        cancelText: $t('Cancel'),
+        okText: $t('Install'),
+        okButtonProps: { type: 'primary' },
+        onOk: () => {
+          void onInstallAgent();
+        },
+        cancelButtonProps: { style: { display: 'inline' } },
+      });
+      return;
+    }
+
+    await alertAsync({
+      type: 'confirm',
+      title: $t('Intelligent Streaming Agent Disabled'),
+      closable: true,
+      content: (
+        <span>
+          {$t(
+            'The Intelligent Streaming Agent app is installed but currently disabled. Enable it to use this action.',
+          )}
+        </span>
+      ),
+      cancelText: $t('Cancel'),
+      okText: $t('Enable'),
+      okButtonProps: { type: 'primary' },
+      onOk: () => {
+        onEnableAgent();
+      },
+      cancelButtonProps: { style: { display: 'inline' } },
+    });
+  }
+
   function setType(type: ActionType) {
+    if (requiresAgentApp(type) && !agentReady) {
+      void requireAgentApp();
+      return;
+    }
     onChange(index, withActionDefaults({ type }));
   }
 
@@ -104,12 +180,52 @@ function ActionEditor({
     });
   }
 
+  const actionOptions = getActionOptions();
+
   const props = (action.props || {}) as ExportedActionProps;
 
   const sceneName = props.scene?.name ?? '';
   const sceneMissing = !!sceneName && !scenes.some(s => s.name === sceneName);
   const sourceName = props.source?.name ?? '';
   const sourceMissing = !!sourceName && !sources.some(s => s.name === sourceName);
+
+  function renderAgentRequiredNotice() {
+    if (!isAgentInstalled) {
+      return (
+        <p
+          style={{
+            margin: 0,
+            minHeight: CONTROL_HEIGHT,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            fontSize: '12px',
+            color: 'var(--red)',
+          }}
+        >
+          {$t('Requires the Intelligent Streaming Agent app.')}
+          <a onClick={() => void onInstallAgent()}>{$t('Install')}</a>
+        </p>
+      );
+    }
+
+    return (
+      <p
+        style={{
+          margin: 0,
+          minHeight: CONTROL_HEIGHT,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          fontSize: '12px',
+          color: 'var(--red)',
+        }}
+      >
+        {$t('The Intelligent Streaming Agent app is disabled.')}
+        <a onClick={() => onEnableAgent()}>{$t('Enable')}</a>
+      </p>
+    );
+  }
 
   function renderControl() {
     switch (action.type) {
@@ -200,6 +316,7 @@ function ActionEditor({
         );
 
       case 'co-host.instruction':
+        if (!agentReady) return renderAgentRequiredNotice();
         return (
           <>
             <Input
@@ -213,6 +330,7 @@ function ActionEditor({
         );
 
       case 'co-host.comment':
+        if (!agentReady) return renderAgentRequiredNotice();
         return (
           <p
             style={{
@@ -256,7 +374,7 @@ function ActionEditor({
         value={action.type || undefined}
         onChange={val => setType(val as ActionType)}
         placeholder={$t('Select an Action...')}
-        options={ACTION_OPTIONS}
+        options={actionOptions}
       />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
@@ -283,6 +401,12 @@ interface Props {
 
 export default function AutomationEditor({ initial, onClose, onViewTemplates }: Props) {
   const { AutomationsService, ScenesService, SourcesService } = Services;
+  const {
+    isInstalled: isAgentInstalled,
+    isEnabled: isAgentEnabled,
+    installAgent,
+    enableAgent,
+  } = useAgentAppInstalled();
 
   const { scenes, sources } = useVuex(() => ({
     scenes: ScenesService.views.scenes.map(s => ({ id: s.id, name: s.name })),
@@ -327,7 +451,11 @@ export default function AutomationEditor({ initial, onClose, onViewTemplates }: 
     actions,
     enabled,
   };
-  const issues = validateAutomation(draft, { scenes, sources });
+  const issues = validateAutomation(draft, {
+    scenes,
+    sources,
+    agentAppReady: isAgentInstalled && isAgentEnabled,
+  });
 
   const descriptionError = attempted
     ? issues.find(i => i.scope === 'description')?.message
@@ -579,6 +707,10 @@ export default function AutomationEditor({ initial, onClose, onViewTemplates }: 
                   scenes={scenes}
                   sources={sources}
                   errors={actionErrors[i]}
+                  isAgentInstalled={isAgentInstalled}
+                  isAgentEnabled={isAgentEnabled}
+                  onInstallAgent={installAgent}
+                  onEnableAgent={enableAgent}
                   onChange={handleActionChange}
                   onRemove={handleActionRemove}
                 />
