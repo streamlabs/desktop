@@ -173,6 +173,7 @@ function EventCell(p: { event: IRecentEvent }) {
   function getName(event: IRecentEvent) {
     if (event.gifter) return event.gifter;
     if (event.from) return event.from;
+    if (event.redeemer_display_name) return event.redeemer_display_name;
     return event.name;
   }
 
