@@ -54,6 +54,16 @@
   "Hide if condition is false": "Hide if condition is false",
   "Show if condition is false": "Show if condition is false",
   "The co-host will automatically comment based on the active game condition.": "The co-host will automatically comment based on the active game condition.",
+  "Requires ISA App": "Requires ISA App",
+  "Intelligent Streaming Agent Required": "Intelligent Streaming Agent Required",
+  "Co-host actions require the Intelligent Streaming Agent app. Install it to use this action.": "Co-host actions require the Intelligent Streaming Agent app. Install it to use this action.",
+  "Intelligent Streaming Agent Disabled": "Intelligent Streaming Agent Disabled",
+  "The Intelligent Streaming Agent app is installed but currently disabled. Enable it to use this action.": "The Intelligent Streaming Agent app is installed but currently disabled. Enable it to use this action.",
+  "Requires the Intelligent Streaming Agent app.": "Requires the Intelligent Streaming Agent app.",
+  "The Intelligent Streaming Agent app is disabled.": "The Intelligent Streaming Agent app is disabled.",
+  "Install": "Install",
+  "Enable": "Enable",
+  "Cancel": "Cancel",
   "Please fix the highlighted fields before saving.": "Please fix the highlighted fields before saving.",
   "Failed to save automation.": "Failed to save automation.",
   "Add a description.": "Add a description.",
@@ -66,5 +76,6 @@
   "Select a source.": "Select a source.",
   "Source \"%{name}\" is unavailable.": "Source \"%{name}\" is unavailable.",
   "Enter an instruction for the co-host.": "Enter an instruction for the co-host.",
-  "Instruction must be %{max} characters or fewer.": "Instruction must be %{max} characters or fewer."
+  "Instruction must be %{max} characters or fewer.": "Instruction must be %{max} characters or fewer.",
+  "Requires the Intelligent Streaming Agent app to be installed and enabled.": "Requires the Intelligent Streaming Agent app to be installed and enabled."
 }
