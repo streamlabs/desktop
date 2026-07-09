@@ -443,6 +443,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
   async installStreamlabsReplay(): Promise<boolean> {
     if (getOS() !== OS.Windows) {
+      Sentry.withScope(scope => {
+        scope.setTag('feature', 'highlighter');
+        scope.setTag('replayInstallPhase', 'os-check');
+        console.error('Streamlabs Replay installation failed: unsupported OS');
+      });
       this.SET_REPLAY_INSTALL({
         step: 'error',
         error: 'Installation is only supported on Windows',
@@ -557,7 +562,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       try {
         remote.shell.openExternal(`${REPLAY_PROTOCOL}://open`);
       } catch (launchError: unknown) {
-        console.error('Failed to auto-launch Streamlabs Replay:', launchError);
+        Sentry.withScope(scope => {
+          scope.setTag('feature', 'highlighter');
+          scope.setTag('replayInstallPhase', 'auto-launch');
+          console.error('Failed to auto-launch Streamlabs Replay:', launchError);
+        });
       }
 
       // Clean up setup file
@@ -583,12 +592,18 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         return false;
       }
       const errorMessage = error instanceof Error ? error.message : 'Unknown installation error';
-      console.error('Streamlabs Replay installation failed:', errorMessage);
+      const failedPhase = this.state.replayInstall.step;
+      Sentry.withScope(scope => {
+        scope.setTag('feature', 'highlighter');
+        scope.setTag('replayInstallPhase', failedPhase);
+        console.error('Streamlabs Replay installation failed:', errorMessage);
+      });
       this.SET_REPLAY_INSTALL({ step: 'error', progress: 0, error: errorMessage });
 
       // Track installation failed
       this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
         type: 'ReplayInstallationFailed',
+        phase: failedPhase,
       });
 
       return false;
@@ -638,12 +653,18 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         await remote.shell.openExternal(`${REPLAY_PROTOCOL}://open`);
         return true;
       } catch (error: unknown) {
-        console.error('Failed to open Streamlabs Replay:', error);
+        Sentry.withScope(scope => {
+          scope.setTag('feature', 'highlighter');
+          console.error('Failed to open Streamlabs Replay:', error);
+        });
         try {
           await remote.shell.openExternal(`${REPLAY_PROTOCOL}:`);
           return true;
         } catch (fallbackError: unknown) {
-          console.error('Failed to open Streamlabs Replay with fallback:', fallbackError);
+          Sentry.withScope(scope => {
+            scope.setTag('feature', 'highlighter');
+            console.error('Failed to open Streamlabs Replay with fallback:', fallbackError);
+          });
           // Protocol is registered but app is missing — start installation
           this.installStreamlabsReplay();
           return false;
