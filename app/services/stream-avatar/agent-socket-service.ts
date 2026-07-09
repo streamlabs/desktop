@@ -5,11 +5,26 @@ import { HostsService } from 'services/hosts';
 import { UserService } from 'services/user';
 import { importSocketIOClient } from 'util/slow-imports';
 import Utils from 'services/utils';
+import type { TAutomationExport } from './engine/automations';
 
 interface SocketAck<T = void> {
   ok: boolean;
   data?: T;
   error?: string;
+}
+
+export interface AutomationTemplateItem {
+  title: string;
+  description: string;
+  videoUrl: string;
+  source?: { name: string; assetKey: string; downloadUrl: string; loop: boolean };
+  automation: Omit<TAutomationExport, 'id'>;
+}
+
+export interface AutomationTemplateGame {
+  game: string;
+  gameName: string;
+  templates: AutomationTemplateItem[];
 }
 
 export type TAgentSocketStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -229,6 +244,10 @@ export class AgentSocketService extends StatefulService<IAgentSocketState> {
 
   getAutomations(): Promise<any[]> {
     return this.call<any[]>('getAutomations');
+  }
+
+  getAutomationTemplates(): Promise<AutomationTemplateGame[]> {
+    return this.call<AutomationTemplateGame[]>('getAutomationTemplates');
   }
 
   createAutomation(automation: any): Promise<any> {
