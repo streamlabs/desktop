@@ -349,9 +349,7 @@ export default function EditAutomations() {
                         okText={$t('Delete')}
                         cancelText={$t('Cancel')}
                       >
-                        <Tooltip title={$t('Delete')}>
-                          <i className="icon-trash" />
-                        </Tooltip>
+                        <i className="icon-trash" />
                       </Popconfirm>
                     </div>
                   </td>

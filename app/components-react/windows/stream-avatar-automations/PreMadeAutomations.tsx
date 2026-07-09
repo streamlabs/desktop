@@ -170,6 +170,11 @@ export default function PreMadeAutomations({ onClose }: Props) {
     onClose();
   }
 
+  const addLabel =
+    totalSelected === 1
+      ? $t('Add %{count} Automation', { count: totalSelected })
+      : $t('Add %{count} Automations', { count: totalSelected });
+
   const footer = (
     <>
       <Button onClick={onClose} disabled={saving}>
@@ -181,9 +186,7 @@ export default function PreMadeAutomations({ onClose }: Props) {
         onClick={handleComplete}
         disabled={saving || totalSelected === 0}
       >
-        {saving
-          ? $t('Adding...')
-          : `Add ${totalSelected} Automation${totalSelected === 1 ? '' : 's'}`}
+        {saving ? $t('Adding...') : addLabel}
       </Button>
     </>
   );
@@ -216,7 +219,7 @@ export default function PreMadeAutomations({ onClose }: Props) {
                   <span className={styles.coverGameName}>{activeGame.gameName}</span>
                 </div>
                 <div className={styles.coverBottomOverlay}>
-                  {activeGame.templates.length} automations
+                  {$t('%{count} automations', { count: activeGame.templates.length })}
                 </div>
               </div>
 
@@ -303,8 +306,11 @@ export default function PreMadeAutomations({ onClose }: Props) {
                           />
                           <div className={styles.gameCardSub}>
                             {selectedCount > 0
-                              ? `${selectedCount} of ${game.templates.length} added`
-                              : `${game.templates.length} automations`}
+                              ? $t('%{count} of %{total} added', {
+                                  count: selectedCount,
+                                  total: game.templates.length,
+                                })
+                              : $t('%{count} automations', { count: game.templates.length })}
                           </div>
                         </div>
                       </div>

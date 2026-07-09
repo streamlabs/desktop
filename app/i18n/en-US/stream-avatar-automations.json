@@ -80,5 +80,12 @@
   "Source \"%{name}\" is unavailable.": "Source \"%{name}\" is unavailable.",
   "Enter an instruction for the co-host.": "Enter an instruction for the co-host.",
   "Instruction must be %{max} characters or fewer.": "Instruction must be %{max} characters or fewer.",
-  "Requires the Intelligent Streaming Agent app to be installed and enabled.": "Requires the Intelligent Streaming Agent app to be installed and enabled."
+  "Requires the Intelligent Streaming Agent app to be installed and enabled.": "Requires the Intelligent Streaming Agent app to be installed and enabled.",
+  "What your co-host will react to": "What your co-host will react to",
+  "Select all": "Select all",
+  "Unselect all": "Unselect all",
+  "%{count} automations": "%{count} automations",
+  "%{count} of %{total} added": "%{count} of %{total} added",
+  "Add %{count} Automation": "Add %{count} Automation",
+  "Add %{count} Automations": "Add %{count} Automations"
 }
