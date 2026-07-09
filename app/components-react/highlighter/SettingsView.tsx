@@ -12,7 +12,9 @@ import Scrollable from 'components-react/shared/Scrollable';
 import styles from './SettingsView.m.less';
 import { $t } from 'services/i18n';
 import { EHighlighterView, IViewState } from 'services/highlighter/models/highlighter.models';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 import SupportedGames from './supportedGames/SupportedGames';
+import PageInstallationFlow from './migration/PageInstallationFlow';
 import { promptAction } from 'components-react/modals';
 
 export default function SettingsView({
@@ -22,9 +24,26 @@ export default function SettingsView({
   emitSetView: (data: IViewState) => void;
   close: () => void;
 }) {
-  const { HotkeysService, SettingsService, StreamingService, HighlighterService } = Services;
+  const {
+    HotkeysService,
+    SettingsService,
+    StreamingService,
+    HighlighterService,
+    IncrementalRolloutService,
+  } = Services;
   const aiHighlighterFeatureEnabled = HighlighterService.aiHighlighterFeatureEnabled;
   const [hotkey, setHotkey] = useState<IHotkey | null>(null);
+
+  const migrationEnabled = IncrementalRolloutService.views.featureIsEnabled(
+    EAvailableFeatures.highlighterMigration,
+  );
+
+  const [isReplayInstalled, setIsReplayInstalled] = useState(false);
+
+  useEffect(() => {
+    if (!migrationEnabled) return;
+    HighlighterService.actions.return.isStreamlabsReplayInstalled().then(setIsReplayInstalled);
+  }, [migrationEnabled]);
   const hotkeyRef = useRef<IHotkey | null>(null);
 
   const v = useVuex(() => ({
@@ -36,6 +55,8 @@ export default function SettingsView({
     isVerticalReplayBuffer: StreamingService.views.isVerticalReplayBuffer,
     outputDisplay: StreamingService.views.outputDisplay,
   }));
+
+  const isInstalled = migrationEnabled ? isReplayInstalled : v.highlighterVersion !== '';
 
   const disableAIHighlighter =
     (v.isVerticalRecording || v.isVerticalReplayBuffer) && v.outputDisplay === 'vertical';
@@ -112,6 +133,30 @@ export default function SettingsView({
     HighlighterService.actions.toggleAiHighlighter();
   }
 
+  function renderInstallSection() {
+    if (isInstalled) {
+      return (
+        <SwitchInput
+          style={{ margin: 0, marginLeft: '-10px' }}
+          size="default"
+          value={disableAIHighlighter ? false : v.useAiHighlighter}
+          onChange={handleToggleHighlighter}
+        />
+      );
+    }
+    return (
+      <Button
+        style={{ width: 'fit-content' }}
+        type="primary"
+        onClick={() => {
+          HighlighterService.actions.installAiHighlighter(true, 'Highlighter-tab');
+        }}
+      >
+        {$t('Install AI Highlighter App')}
+      </Button>
+    );
+  }
+
   function handleToggleHighlighter() {
     if (disableAIHighlighter) {
       const title = v.isVerticalRecording
@@ -175,9 +220,18 @@ export default function SettingsView({
       </div>
 
       <Scrollable style={{ flexGrow: 1, padding: '20px 20px 20px 20px', width: '100%' }}>
-        <div className={styles.innerScrollWrapper}>
+        <div
+          className={styles.innerScrollWrapper}
+          style={migrationEnabled && !isInstalled ? { flexDirection: 'column' } : {}}
+        >
+          {migrationEnabled && !isInstalled && (
+            <PageInstallationFlow
+              onCancel={() => {}}
+              onShowAllClips={() => emitSetView({ view: EHighlighterView.CLIPS, id: undefined })}
+            />
+          )}
           <div className={styles.cardWrapper}>
-            {aiHighlighterFeatureEnabled && (
+            {aiHighlighterFeatureEnabled && !(migrationEnabled && !isInstalled) && (
               <div className={styles.highlighterCard}>
                 <div className={styles.cardHeaderbarWrapper}>
                   <div className={styles.cardHeaderbar}>
@@ -189,7 +243,7 @@ export default function SettingsView({
                     <SupportedGames
                       gamesVisible={6}
                       emitClick={() => {
-                        if (v.highlighterVersion === '') return;
+                        if (!isInstalled) return;
                         emitSetView({ view: EHighlighterView.STREAM });
                       }}
                     />
@@ -200,7 +254,7 @@ export default function SettingsView({
                   {$t(
                     'Automatically capture the best moments from your livestream and turn them into a highlight video.',
                   )}{' '}
-                  {v.highlighterVersion !== '' && (
+                  {isInstalled && (
                     <span>
                       {$t(
                         'The AI Highlighter App can be managed in the Apps Manager tab or in Settings > Installed apps.',
@@ -209,24 +263,7 @@ export default function SettingsView({
                   )}
                 </p>
 
-                {v.highlighterVersion !== '' ? (
-                  <SwitchInput
-                    style={{ margin: 0, marginLeft: '-10px' }}
-                    size="default"
-                    value={disableAIHighlighter ? false : v.useAiHighlighter}
-                    onChange={handleToggleHighlighter}
-                  />
-                ) : (
-                  <Button
-                    style={{ width: 'fit-content' }}
-                    type="primary"
-                    onClick={() => {
-                      HighlighterService.actions.installAiHighlighter(true, 'Highlighter-tab');
-                    }}
-                  >
-                    {$t('Install AI Highlighter App')}
-                  </Button>
-                )}
+                {renderInstallSection()}
                 <div className={styles.recommendedCorner}>{$t('Recommended')}</div>
               </div>
             )}
@@ -306,7 +343,10 @@ export default function SettingsView({
             </div>
           </div>
 
-          <div className={styles.image}></div>
+          <div
+            className={styles.image}
+            style={migrationEnabled && !isInstalled ? { display: 'none' } : {}}
+          ></div>
         </div>
       </Scrollable>
     </div>

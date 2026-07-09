@@ -104,6 +104,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   @Inject() jsonrpcService: JsonrpcService;
   @Inject() navigationService: NavigationService;
   @Inject() sharedStorageService: SharedStorageService;
+  @Inject() incrementalRolloutService: IncrementalRolloutService;
 
   static defaultState: IHighlighterState = {
     clips: {},
@@ -485,12 +486,9 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       const setupPath = path.join(tempDir, REPLAY_SETUP_EXE_NAME);
 
       await downloadFile(setupUrl, setupPath, (progress: IDownloadProgress) => {
-        // Map download progress to 0-75%
-        const downloadPercent = progress.percent * 75;
-        const current = this.state.replayInstall.progress;
-        if (downloadPercent > current) {
-          this.SET_REPLAY_INSTALL({ progress: downloadPercent });
-        }
+        // Map download progress to 0-94%
+        const downloadPercent = progress.percent * 94;
+        this.setReplayDownloadProgress(downloadPercent);
       });
 
       clearProgress();
@@ -503,20 +501,18 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         return false;
       }
 
-      this.SET_REPLAY_INSTALL({ progress: 75 });
-
       // Verify the Authenticode signature before execution
       await this.verifyAuthenticodeSignature(setupPath);
 
       // --- Installing phase ---
-      this.SET_REPLAY_INSTALL({ step: 'installing', progress: 75 });
+      this.SET_REPLAY_INSTALL({ step: 'installing', progress: 94 });
 
       // Fake progress for install phase
       progressInterval = setInterval(() => {
         const current = this.state.replayInstall.progress;
         if (current < 95) {
           const increment = Math.max(0.3, (95 - current) * 0.03);
-          this.SET_REPLAY_INSTALL({ progress: Math.min(95, current + increment) });
+          this.setReplayDownloadProgress(Math.min(95, current + increment));
         }
       }, 500);
 
@@ -533,7 +529,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         return false;
       }
 
-      this.SET_REPLAY_INSTALL({ progress: 95 });
+      this.setReplayDownloadProgress(95);
 
       // --- Verifying phase ---
       this.SET_REPLAY_INSTALL({ step: 'verifying', progress: 96 });
@@ -555,7 +551,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           'Installation could not be verified. The deeplink protocol was not registered.',
         );
       }
-
       this.SET_REPLAY_INSTALL({ step: 'done', progress: 100 });
 
       // Auto-launch Streamlabs Replay
@@ -1683,6 +1678,14 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     return renderingClips;
   }
 
+  @throttle(100)
+  private setReplayDownloadProgress(progress: number) {
+    const current = this.state.replayInstall.progress;
+    if (progress > current) {
+      this.SET_REPLAY_INSTALL({ progress });
+    }
+  }
+
   // We throttle because this can go extremely fast, especially on previews
   @throttle(100)
   private setCurrentFrame(frame: number) {
@@ -1724,19 +1727,27 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     location: 'Highlighter-tab' | 'Go-live-flow',
     game?: string,
   ) {
-    this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
-      type: 'Installation',
-      location,
-      game,
-    });
-
     this.setAiHighlighter(true);
-    if (downloadNow) {
+    if (!downloadNow) {
+      this.SET_HIGHLIGHTER_VERSION('0.0.0');
+      return;
+    }
+
+    const migrationEnabled = this.incrementalRolloutService.views.featureIsEnabled(
+      EAvailableFeatures.highlighterMigration,
+    );
+
+    if (migrationEnabled) {
+      await this.installStreamlabsReplay();
+    } else {
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'Installation',
+        location,
+        game,
+      });
+
       await this.aiHighlighterUpdater.isNewVersionAvailable();
       this.startUpdater();
-    } else {
-      // Only for go live view to immediately show the toggle. For other flows, the updater will set the version
-      this.SET_HIGHLIGHTER_VERSION('0.0.0');
     }
   }
 
