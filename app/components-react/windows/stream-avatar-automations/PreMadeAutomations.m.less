@@ -2,102 +2,228 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 0 8px;
+  padding: 16px;
   overflow: hidden;
 }
 
-.gameIcon {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: var(--icon-active);
+.mainRow {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: #000;
-  margin-bottom: 12px;
-}
-
-.title {
-  margin: 0 0 20px;
-  font-size: 32px;
-  font-weight: 400;
-  color: var(--title);
-  text-align: center;
-}
-
-.featured {
-  display: flex;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.card {
-  border-radius: 8px;
-  overflow: hidden;
+  gap: 16px;
+  width: 100%;
   border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: #353e47;
 }
 
-.preview {
-  width: 539px;
-  height: 300px;
+// Left panel — game cover
+.coverPanel {
+  position: relative;
+  width: 320px;
+  height: 260px;
+  flex-shrink: 0;
+  border-radius: 6px;
   overflow: hidden;
   background: var(--section);
 }
 
-.previewVideo {
+.coverVideo {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.infoRow {
+.coverTopOverlay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #09161d8c;
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+
+.coverBottomOverlay {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.coverGameName {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+// Right panel — checklist
+.checklistPanel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.checklistHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  background: var(--section);
-  gap: 12px;
-}
-
-.itemTitle {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 13px;
   color: var(--title);
-  margin-bottom: 2px;
-}
+  margin-bottom: 8px;
 
-.itemDesc {
-  font-size: 12px;
-  color: var(--paragraph);
-}
-
-.thumbnailStrip {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
-  overflow-x: auto;
-  max-width: 100%;
-}
-
-.thumbnail {
-  width: 175px;
-  height: 86px;
-  border-radius: 4px;
-  border: 2px solid transparent;
-  cursor: pointer;
-  flex-shrink: 0;
-  overflow: hidden;
-  position: relative;
-
-  &:hover {
-    border-color: var(--icon-active);
+  a {
+    color: var(--teal);
+    cursor: pointer;
   }
 }
 
-.thumbnailVideo {
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+}
+
+.checklistRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+
+  &:hover {
+    background: #80f5d21a;
+    border-color: #80f5d2;
+  }
+}
+
+.checklistRowActive {
+  border-color: #80f5d2;
+  background: #80f5d21a;
+}
+
+.rowThumb {
+  width: 64px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.rowText {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--title);
+}
+
+.rowDesc {
+  font-size: 11px;
+  color: var(--paragraph);
+}
+
+.rowCheck {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #ffffff80;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  font-size: 12px;
+}
+
+.rowCheckActive {
+  border-color: #80f5d2;
+  background: #80f5d2;
+}
+
+// Bottom — game carousel
+.gameCards {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 8px;
+}
+
+// ponytail: border-width stays 3px in every state (only border-color
+// toggles) so the box model never changes size — that's what stops the
+// hover jump. background-clip: padding-box keeps `.gameCard`'s own
+// background from painting under the border ring, so a transparent border
+// is genuinely invisible instead of showing as a dark band.
+.gameCard {
+  width: 230px;
+  height: 78px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background: var(--section);
+  background-clip: padding-box;
+  overflow: hidden;
+  cursor: pointer;
+
+  &:hover {
+    border-color: #ffffff;
+  }
+}
+
+.gameCardActive {
+  border-color: #ffffff;
+}
+
+.gameCardThumb {
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      0deg,
+      rgba(9, 22, 29, 0.92) 22.6%,
+      rgba(19, 23, 26, 0.6) 55%,
+      rgba(9, 22, 29, 0) 100%
+    );
+  }
+}
+
+.gameCardVideo {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -105,8 +231,66 @@
   pointer-events: none;
 }
 
-.thumbnailActive {
-  border-color: var(--icon-active);
+.gameCardBadge {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  z-index: 2;
+}
+
+.gameCardName {
+  position: absolute;
+  top: 50%;
+  left: 40px;
+  transform: translateY(-50%);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  z-index: 2;
+}
+
+// ponytail: antd's own `.ant-switch { position: relative }` has the same
+// specificity as a plain `.gameCardSwitch { position: absolute }` and can win
+// depending on stylesheet injection order — which knocks the switch out of
+// flow and lets `.gameCard`'s `overflow: hidden` clip it entirely. Pairing our
+// class with `:global(.ant-switch)` guarantees higher specificity so our
+// positioning always wins; colors are left to the app's default theme.
+.gameCardSwitch {
+  &:global(.ant-switch) {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+    background: rgba(9, 22, 29, 0.7);
+    box-shadow: inset 0 0 0 1px #ffffff80;
+  }
+
+  :global(.ant-switch-handle)::before {
+    background: #ffffff;
+  }
+}
+
+.gameCardSub {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: #e3e8eb;
+  text-align: center;
+  z-index: 2;
 }
 
 .dots {
