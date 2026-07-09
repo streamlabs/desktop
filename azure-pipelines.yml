@@ -20,8 +20,8 @@ jobs:
       - powershell: echo "IP for RDP connections:" $(Invoke-RestMethod ipinfo.io/ip)
         displayName: 'Get RDP address'
 
-      - powershell: Set-DisplayResolution -Width 1920 -Height 1080 -Force
-        displayName: 'Setup Screen Resolution'
+      # - powershell: Set-DisplayResolution -Width 1920 -Height 1080 -Force
+      #   displayName: 'Setup Screen Resolution'
 
       - script: yarn install --immutable 2>&1
         displayName: 'Install Dependencies'
