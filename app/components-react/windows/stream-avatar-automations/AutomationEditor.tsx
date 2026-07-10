@@ -398,10 +398,9 @@ function ActionEditor({
 interface Props {
   initial?: TAutomationExport;
   onClose: () => void;
-  onViewTemplates?: () => void;
 }
 
-export default function AutomationEditor({ initial, onClose, onViewTemplates }: Props) {
+export default function AutomationEditor({ initial, onClose }: Props) {
   const { AutomationsService, ScenesService, SourcesService } = Services;
   const {
     isInstalled: isAgentInstalled,
@@ -591,21 +590,6 @@ export default function AutomationEditor({ initial, onClose, onViewTemplates }: 
         <h2 style={{ margin: 0, color: 'var(--title)', fontWeight: 700 }}>
           {initial ? $t('Edit Automation') : $t('Add New Automation')}
         </h2>
-        {onViewTemplates && (
-          <Button
-            type="link"
-            onClick={onViewTemplates}
-            style={{
-              color: 'var(--paragraph)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-            }}
-          >
-            <i className="fa fa-eye" />
-            {$t('View Automation Templates')}
-          </Button>
-        )}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column' }}>
