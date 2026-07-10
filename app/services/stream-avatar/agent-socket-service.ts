@@ -13,11 +13,32 @@ interface SocketAck<T = void> {
   error?: string;
 }
 
+interface AutomationTemplateSourceBase {
+  name: string;
+  assetKey: string;
+  downloadUrl: string;
+}
+
+export interface FfmpegTemplateSource extends AutomationTemplateSourceBase {
+  type: 'ffmpeg_source';
+  loop: boolean;
+}
+
+export interface ImageTemplateSource extends AutomationTemplateSourceBase {
+  type: 'image_source';
+}
+
+export type AutomationTemplateSource = FfmpegTemplateSource | ImageTemplateSource;
+
 export interface AutomationTemplateItem {
   title: string;
   description: string;
-  videoUrl: string;
-  source?: { name: string; assetKey: string; downloadUrl: string; loop: boolean };
+  /** Static thumbnail shown in lists (checklist rows, game cards). */
+  imageUrl: string;
+  /** Animated preview shown only for the selected/active item. */
+  gifUrl: string;
+  /** Scene sources to provision, of possibly mixed types. */
+  sources?: AutomationTemplateSource[];
   automation: Omit<TAutomationExport, 'id'>;
 }
 
