@@ -7,6 +7,7 @@ import { $t } from 'services/i18n';
 import type {
   AutomationTemplateGame,
   AutomationTemplateItem,
+  AutomationTemplateSource,
 } from 'services/stream-avatar/agent-socket-service';
 import { AutomationsAnalytics } from './AutomationsAnalytics';
 import PreMadeAutomationsFooter from './PreMadeAutomationsFooter';
@@ -18,6 +19,22 @@ const BADGE_COLORS = ['#7c5cff', '#f97316', '#22c55e', '#ef4444', '#06b6d4', '#e
 function badgeColor(name: string): string {
   const hash = name.split('').reduce((h, c) => h + c.charCodeAt(0), 0);
   return BADGE_COLORS[hash % BADGE_COLORS.length];
+}
+
+const VIDEO_EXTENSIONS = ['.webm', '.mp4', '.mov'];
+function isVideoUrl(url?: string): boolean {
+  return !!url && VIDEO_EXTENSIONS.some(ext => url.toLowerCase().endsWith(ext));
+}
+
+// Preview assets can be a static image, a gif, or a video (.webm) — render the
+// right tag for the format instead of assuming one media type for all templates.
+function TemplatePreview({ src, className }: { src?: string; className?: string }) {
+  if (!src) return null;
+  return isVideoUrl(src) ? (
+    <video key={src} src={src} className={className} autoPlay muted loop playsInline />
+  ) : (
+    <img key={src} src={src} className={className} />
+  );
 }
 
 async function downloadAsset(downloadUrl: string, assetKey: string): Promise<string | null> {
@@ -42,43 +59,46 @@ async function downloadAsset(downloadUrl: string, assetKey: string): Promise<str
   }
 }
 
-async function createSourceIfNeeded(
-  sourceName: string,
-  assetKey: string,
-  downloadUrl: string,
-  loop: boolean,
-  assets: string[],
-) {
+function isSourceAlreadyInScene(sourceName: string): boolean {
   const { ScenesService, SourcesService } = Services;
+  const activeScene = ScenesService.views.activeScene;
+  if (!activeScene) return false;
+
+  const existingSource = SourcesService.views.sources.find(s => s.name === sourceName);
+  if (!existingSource) return false;
+
+  return activeScene.getItems().some((item: any) => item.sourceId === existingSource.sourceId);
+}
+
+async function createTemplateSource(source: AutomationTemplateSource, assets: string[]) {
+  if (isSourceAlreadyInScene(source.name)) return;
+
+  const { ScenesService } = Services;
   const activeScene = ScenesService.views.activeScene;
   if (!activeScene) return;
 
-  // Dedup: skip if a source with this name is already in the active scene
-  const existingSource = SourcesService.views.sources.find(s => s.name === sourceName);
-  if (existingSource) {
-    const sceneItems = activeScene.getItems();
-    const inScene = sceneItems.some((item: any) => item.sourceId === existingSource.sourceId);
-    if (inScene) return;
-  }
-
-  let assetPath = assets.find(a => a.includes(assetKey));
+  let assetPath = assets.find(a => a.includes(source.assetKey));
   if (!assetPath) {
-    assetPath = (await downloadAsset(downloadUrl, assetKey)) ?? undefined;
+    assetPath = (await downloadAsset(source.downloadUrl, source.assetKey)) ?? undefined;
     if (!assetPath) return;
   }
 
+  const settings =
+    source.type === 'ffmpeg_source'
+      ? { local_file: assetPath, loop: source.loop }
+      : { file: assetPath };
+
   const sceneItemId = await ScenesService.actions.return.createAndAddSource(
     activeScene.id,
-    sourceName,
-    'ffmpeg_source',
-    { local_file: assetPath, loop },
+    source.name,
+    source.type,
+    settings,
   );
+  if (!sceneItemId) return;
 
-  if (sceneItemId) {
-    const scene = ScenesService.views.getScene(activeScene.id);
-    const sceneItem = scene?.getItem(sceneItemId);
-    sceneItem?.setVisibility(false);
-  }
+  const scene = ScenesService.views.getScene(activeScene.id);
+  const sceneItem = scene?.getItem(sceneItemId);
+  sceneItem?.setVisibility(false);
 }
 
 interface Props {
@@ -155,15 +175,9 @@ export default function PreMadeAutomations({ onCancel, onSaved, embedded, onFoot
         for (const index of indices) {
           const item: AutomationTemplateItem = game.templates[index];
 
-          if (item.source) {
+          for (const src of item.sources ?? []) {
             try {
-              await createSourceIfNeeded(
-                item.source.name,
-                item.source.assetKey,
-                item.source.downloadUrl,
-                item.source.loop,
-                assets,
-              );
+              await createTemplateSource(src, assets);
             } catch {
               // non-fatal — continue creating the automation
             }
@@ -200,14 +214,9 @@ export default function PreMadeAutomations({ onCancel, onSaved, embedded, onFoot
         <>
           <div className={styles.mainRow}>
             <div className={styles.coverPanel}>
-              <video
-                key={activeGame.templates[0]?.videoUrl}
-                src={activeGame.templates[0]?.videoUrl}
+              <TemplatePreview
+                src={activeGame.templates[0]?.gifUrl}
                 className={styles.coverVideo}
-                autoPlay
-                muted
-                loop
-                playsInline
               />
               <div className={styles.coverTopOverlay}>
                 <span
@@ -241,12 +250,8 @@ export default function PreMadeAutomations({ onCancel, onSaved, embedded, onFoot
                     })}
                     onClick={() => toggleTemplate(i)}
                   >
-                    <video
-                      src={item.videoUrl}
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
+                    <TemplatePreview
+                      src={activeSelection.has(i) ? item.gifUrl : item.imageUrl}
                       className={styles.rowThumb}
                     />
                     <div className={styles.rowText}>
@@ -280,12 +285,12 @@ export default function PreMadeAutomations({ onCancel, onSaved, embedded, onFoot
                       onClick={() => setActiveGameIndex(i)}
                     >
                       <div className={styles.gameCardThumb}>
-                        <video
-                          src={game.templates[0]?.videoUrl}
-                          autoPlay
-                          muted
-                          loop
-                          playsInline
+                        <TemplatePreview
+                          src={
+                            i === activeGameIndex
+                              ? game.templates[0]?.gifUrl
+                              : game.templates[0]?.imageUrl
+                          }
                           className={styles.gameCardVideo}
                         />
                         <span
