@@ -31,7 +31,6 @@ const nameMap = () => ({
   facebook_stars: $t('Facebook Stars'),
   facebook_supports: $t('Facebook Supports'),
   facebook_support_gifters: $t('Facebook Support Gifters'),
-
 });
 
 const mediaGalleryInputs = {

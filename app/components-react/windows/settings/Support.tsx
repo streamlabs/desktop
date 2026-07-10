@@ -1,52 +1,217 @@
-import React, { useState } from 'react';
 import * as remote from '@electron/remote';
-import { useVuex } from '../../hooks';
-import { Services } from '../../service-provider';
-import { alertAsync } from '../../modals';
-import { $t } from '../../../services/i18n';
-import { ObsSettingsSection } from './ObsSettings';
-import { CheckboxInput, TextInput } from '../../shared/inputs';
-import { getOS, OS } from 'util/operating-systems';
 import { Button } from 'antd';
 import cx from 'classnames';
-import { CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import React, { useMemo, useState } from 'react';
+import { getOS, OS } from 'util/operating-systems';
+import { $t } from '../../../services/i18n';
+import { useVuex } from '../../hooks';
+import { alertAsync } from '../../modals';
+import { Services } from '../../service-provider';
+import { SwitchInput, TextInput } from '../../shared/inputs';
+import { ObsSettingsSection } from './ObsSettings';
+import styles from './Support.m.less';
 
-export function Support() {
+interface ISupportLink {
+  label: string;
+  disabled?: boolean;
+  icon?: string | React.ReactNode;
+  className?: string;
+}
+
+interface IBasicSupportLink extends ISupportLink {
+  href: string;
+}
+
+interface ICustomSupportLink extends ISupportLink {
+  onClick: () => void;
+}
+
+function isBasicSupportLink(link: ISupportLink): link is IBasicSupportLink {
+  return 'href' in link;
+}
+
+function openLink(link: string) {
+  remote.shell.openExternal(link);
+}
+
+type TSupportLink = IBasicSupportLink | ICustomSupportLink;
+
+function SupportLinks(p: { inline?: boolean; links: TSupportLink[] }) {
   return (
-    <div style={{ paddingBottom: '10px' }}>
-      <SupportLinks />
-      <DiagnosticReport />
-      <CacheSettings />
-      {getOS() === OS.Windows && <CrashReporting />}
+    <div className={cx(styles.supportLinks, { [styles.supportLinksInline]: p.inline })}>
+      {p.links.map(link => (
+        <Button
+          key={link.label}
+          className={link.className}
+          disabled={link.disabled}
+          icon={
+            typeof link.icon === 'string' ? (
+              <i className={link.icon} style={{ marginRight: 8 }} />
+            ) : (
+              link.icon || <i className="icon-pop-out-2" style={{ marginRight: 8 }} />
+            )
+          }
+          onClick={isBasicSupportLink(link) ? () => openLink(link.href) : link.onClick}
+        >
+          {link.label}
+        </Button>
+      ))}
     </div>
   );
 }
 
-function SupportLinks() {
-  const { UrlService } = Services;
-  function openLink(link: string) {
-    remote.shell.openExternal(link);
-  }
+function QuickfixSection() {
+  const { UserService } = Services;
+  const { isPrime } = useVuex(() => ({
+    isPrime: UserService.views.isPrime,
+  }));
 
   return (
-    <ObsSettingsSection title={$t('Support Links')}>
-      <div className="input-container">
-        <a className="link" onClick={() => openLink(UrlService.supportLink)}>
-          <i className="icon-question" /> <span>{$t('Streamlabs Support')}</span>
-        </a>
-      </div>
-      <div className="input-container">
-        <a className="link" onClick={() => openLink('https://discord.gg/stream')}>
-          <i className="icon-discord" /> <span>{$t('Community Discord')}</span>
-        </a>
+    <ObsSettingsSection title={$t('Fix common issues')} style={{ marginBottom: 20 }}>
+      <div className={styles.sectionGrid}>
+        {!isPrime && (
+          <>
+            <h3>{$t('Restore Ultra benefits')}</h3>
+            <p>
+              {$t(
+                'If you subscribed on web, you may need to restore your Ultra membership on desktop.',
+              )}
+            </p>
+            <SupportLinks
+              inline
+              links={[
+                {
+                  label: $t('Restore Ultra'),
+                  icon: 'icon-ultra',
+                  className: styles.restoreUltra,
+                  onClick: () => UserService.actions.startSLAuth(),
+                },
+              ]}
+            />
+          </>
+        )}
+
+        <h3>{$t('Optimize your stream settings')}</h3>
+        <p>{$t('Optimize your stream quality with settings that fit your hardware.')}</p>
+        <SupportLinks
+          inline
+          links={[
+            {
+              label: $t('Stream Settings Guide'),
+              href:
+                'https://streamlabs.com/content-hub/post/how-to-optimize-your-settings-for-streamlabs-desktop',
+            },
+          ]}
+        />
+
+        <h3>{$t('Optimize your game settings')}</h3>
+        <p>{$t('Fine tune your game settings to ensure maximum stream and game performance.')}</p>
+        <SupportLinks
+          inline
+          links={[
+            {
+              label: $t('Game Settings Guide'),
+              href:
+                'https://streamlabs.com/content-hub/post/how-to-optimize-game-settings-for-live-streaming',
+            },
+          ]}
+        />
       </div>
     </ObsSettingsSection>
   );
 }
 
-function DiagnosticReport() {
-  const { DiagnosticsService } = Services;
+function ImportSection() {
+  const { HostsService, OnboardingService, UrlService, WindowsService } = Services;
+  const { obsImported } = useVuex(() => ({
+    obsImported: OnboardingService.state.importedFrom === 'obs',
+  }));
+
+  function importFromObs() {
+    OnboardingService.actions.setImport('obs');
+    OnboardingService.actions.start({ isImport: true });
+    WindowsService.actions.closeChildWindow();
+  }
+
+  return (
+    <ObsSettingsSection title={$t('Import your settings')}>
+      <div className={styles.sectionGrid}>
+        <h3>{$t('OBS Importer')}</h3>
+        {obsImported ? (
+          <p>{$t('Import your native OBS settings and sources.')}</p>
+        ) : (
+          <p>{$t('Import your OBS settings and sources with one click.')}</p>
+        )}
+        {obsImported ? (
+          <SupportLinks
+            inline
+            links={[
+              {
+                label: $t('Imported from OBS'),
+                icon: 'icon-download',
+                disabled: true,
+                className: styles.obsImportSuccess,
+                onClick: () => {},
+              },
+            ]}
+          />
+        ) : (
+          <SupportLinks
+            inline
+            links={[{ label: $t('OBS Import'), icon: 'icon-download', onClick: importFromObs }]}
+          />
+        )}
+
+        <h3>{$t('Streamelements Importer')}</h3>
+        <p>
+          {$t(
+            'Import your Streamelements overlays, widgets, tip settings, chatbot settings, and loyalty points.',
+          )}
+        </p>
+        <SupportLinks
+          inline
+          links={[
+            {
+              label: $t('Streamelements Import'),
+              icon: 'icon-download',
+              href: `${UrlService.protocol}${HostsService.streamlabs}/dashboard#/import/streamelements`,
+            },
+          ]}
+        />
+      </div>
+    </ObsSettingsSection>
+  );
+}
+
+function ContactUsSection() {
+  return (
+    <ObsSettingsSection title={$t('Contact us')}>
+      <p>
+        {$t(
+          'To enable us to best support you, please complete the reporting steps (below) before closing Streamlabs Desktop.',
+        )}
+      </p>
+      <SupportLinks
+        links={[
+          {
+            label: $t('Submit a ticket'),
+            href: 'https://support.streamlabs.com/hc/en-us/requests/new?ticket_form_id=473667',
+          },
+          {
+            label: $t('Community Discord'),
+            icon: 'icon-discord',
+            href: 'https://discord.gg/stream',
+          },
+        ]}
+      />
+    </ObsSettingsSection>
+  );
+}
+
+function ReportingSection() {
+  const { DiagnosticsService, AppService, CacheUploaderService, CustomizationService } = Services;
   const [uploading, setUploading] = useState(false);
+  const [cacheUploading, setCacheUploading] = useState(false);
 
   function uploadReport() {
     setUploading(true);
@@ -55,7 +220,9 @@ function DiagnosticReport() {
       .then(r => {
         remote.clipboard.writeText(r.report_code);
         alertAsync({
-          icon: <CheckCircleOutlined style={{ color: 'var(--teal)' }} />,
+          icon: (
+            <i className={cx('icon-check', styles.diagnosticIcon, styles.diagnosticIconSuccess)} />
+          ),
           width: 550,
           getContainer: '#mainWrapper',
           className: 'react',
@@ -81,9 +248,10 @@ function DiagnosticReport() {
       })
       .catch(e => {
         console.error('Error generating diagnostic report', e);
-
         alertAsync({
-          icon: <ExclamationCircleOutlined style={{ color: 'var(--red)' }} />,
+          icon: (
+            <i className={cx('icon-error', styles.diagnosticIcon, styles.diagnosticIconError)} />
+          ),
           getContainer: '#mainWrapper',
           className: 'react',
           title: $t('Error Uploading Diagnostic Report'),
@@ -95,84 +263,115 @@ function DiagnosticReport() {
       .finally(() => setUploading(false));
   }
 
-  return (
-    <ObsSettingsSection title={$t('Diagnostic Report')}>
-      <div>
-        {$t(
-          'The diagnostic report is an automatically generated report that contains information about your system and configuration. Clicking the upload button below will generate and securely transmit a diagnostic report to the Streamlabs team.',
-        )}
-      </div>
-      <Button style={{ margin: '20px 0' }} onClick={uploadReport} disabled={uploading}>
-        <i
-          className={cx('fa', { 'fa-upload': !uploading, 'fa-spinner fa-pulse': uploading })}
-          style={{ marginRight: 8 }}
-        />
-        {$t('Upload Diagnostic Report')}
-      </Button>
-    </ObsSettingsSection>
-  );
-}
-
-function CacheSettings() {
-  const { AppService, CacheUploaderService } = Services;
-  const [cacheUploading, setCacheUploading] = useState(false);
-
   async function showCacheDir() {
     await remote.shell.openPath(AppService.appDataDirectory);
   }
 
-  function uploadCacheDir() {
+  async function uploadCacheDir() {
     if (cacheUploading) return;
     setCacheUploading(true);
-    CacheUploaderService.uploadCache().then(file => {
+    try {
+      const file = await CacheUploaderService.uploadCache();
       remote.clipboard.writeText(file);
       alert(
         $t(
-          'Your cache directory has been successfully uploaded.  ' +
-            'The file name %{file} has been copied to your clipboard.',
+          'Your cache directory has been successfully uploaded.  The file name %{file} has been copied to your clipboard.',
           { file },
         ),
       );
+    } finally {
       setCacheUploading(false);
-    });
+    }
   }
 
+  const { enableCrashDumps } = useVuex(() => ({
+    enableCrashDumps: CustomizationService.state.enableCrashDumps,
+  }));
+
+  const CrashReportingSection = useMemo(() => {
+    if (getOS() !== OS.Windows) return <></>;
+    return (
+      <>
+        <h3>{$t('Crash Reporting')}</h3>
+        <SwitchInput
+          layout="horizontal"
+          name="enable_dump_upload"
+          label={$t('Enable reporting additional information on a crash (requires restart)')}
+          value={enableCrashDumps}
+          onChange={val => CustomizationService.actions.setSettings({ enableCrashDumps: val })}
+        />
+      </>
+    );
+  }, [enableCrashDumps]);
+
   return (
-    <ObsSettingsSection title={$t('Cache Directory')}>
+    <ObsSettingsSection title={$t('Reporting')}>
+      <p>
+        {$t(
+          'The diagnostic report is an automatically generated report that contains information about your system and configuration. Clicking the upload button below will generate and securely transmit a diagnostic report to the Streamlabs team.',
+        )}
+      </p>
+      {useMemo(
+        () => (
+          <SupportLinks
+            links={[
+              {
+                label: $t('Upload Diagnostic Report'),
+                icon: uploading ? 'fa fa-spinner fa-pulse' : 'fa fa-upload',
+                disabled: uploading,
+                onClick: uploadReport,
+              },
+            ]}
+          />
+        ),
+        [uploading],
+      )}
+
+      <h3>{$t('Cache')}</h3>
       <p>
         {$t(
           'Deleting your cache directory will cause you to lose some settings. Do not delete your cache directory unless instructed to do so by a Streamlabs staff member.',
         )}
       </p>
-      <div className="input-container">
-        <a className="link" onClick={showCacheDir}>
-          <i className="icon-view" /> <span>{$t('Show Cache Directory')}</span>
-        </a>
-      </div>
-      <div className="input-container">
-        <a className="link" onClick={uploadCacheDir}>
-          <i className="fa fa-upload" /> <span>{$t('Upload Cache to Developers')}</span>
-          {cacheUploading && <i className="fa fa-spinner fa-spin" />}
-        </a>
-      </div>
+      <p className={styles.cacheWarning}>
+        <i className="icon-error" style={{ marginRight: 8 }} />
+        {$t(
+          'Do not delete your cache directory unless instructed to do so by a Streamlabs staff member.',
+        )}
+      </p>
+      {useMemo(
+        () => (
+          <SupportLinks
+            links={[
+              {
+                label: $t('Upload Cache to Developers'),
+                icon: cacheUploading ? 'fa fa-spinner fa-spin' : 'fa fa-upload',
+                disabled: cacheUploading,
+                onClick: uploadCacheDir,
+              },
+              {
+                label: $t('Show Cache Directory'),
+                icon: 'icon-view',
+                onClick: showCacheDir,
+              },
+            ]}
+          />
+        ),
+        [cacheUploading],
+      )}
+
+      {CrashReportingSection}
     </ObsSettingsSection>
   );
 }
 
-function CrashReporting() {
-  const { CustomizationService } = Services;
-  const { enableCrashDumps } = useVuex(() => {
-    return { enableCrashDumps: CustomizationService.state.enableCrashDumps };
-  });
-
+export function Support() {
   return (
-    <ObsSettingsSection title={$t('Crash Reporting')}>
-      <CheckboxInput
-        name="enable_dump_upload"
-        label={$t('Enable reporting additional information on a crash (requires restart)')}
-        value={enableCrashDumps}
-        onChange={val => CustomizationService.actions.setSettings({ enableCrashDumps: val })}
-      />
-    </ObsSettingsSection>
+    <div className={styles.support}>
+      <QuickfixSection />
+      <ImportSection />
+      <ContactUsSection />
+      <ReportingSection />
+    </div>
   );
 }
