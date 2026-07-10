@@ -340,5 +340,15 @@ export default function PreMadeAutomations({ onCancel, onSaved, embedded, onFoot
     </div>
   );
 
-  return embedded ? content : <ModalLayout footer={footer}>{content}</ModalLayout>;
+  return embedded ? (
+    content
+  ) : (
+    <ModalLayout footer={footer} scrollable>
+      <div className={styles.brandHeader}>
+        <img className={styles.brandIcon} src={require('../../../../media/images/icon.ico')} />
+        <h1 className={styles.brandTitle}>{$t('Select from Templates')}</h1>
+      </div>
+      {content}
+    </ModalLayout>
+  );
 }
