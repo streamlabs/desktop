@@ -82,5 +82,6 @@
   "%{count} automations": "%{count} automations",
   "%{count} of %{total} added": "%{count} of %{total} added",
   "Add %{count} Automation": "Add %{count} Automation",
-  "Add %{count} Automations": "Add %{count} Automations"
+  "Add %{count} Automations": "Add %{count} Automations",
+  "Select from Templates": "Select from Templates"
 }
