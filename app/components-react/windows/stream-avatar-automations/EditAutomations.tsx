@@ -12,6 +12,7 @@ import { validateAutomation } from 'services/stream-avatar/engine/validation';
 import type { TAutomationExport } from 'services/stream-avatar/engine/automations';
 import AutomationEditor from './AutomationEditor';
 import PreMadeAutomations from './PreMadeAutomations';
+import PreMadeAutomationsFooter from './PreMadeAutomationsFooter';
 import { AutomationsAnalytics } from './AutomationsAnalytics';
 import styles from './EditAutomations.m.less';
 
@@ -42,6 +43,8 @@ const GAME_FILTER_OPTIONS = Object.entries(GAME_NAMES)
   .map(([id, name]) => ({ label: name, value: id }))
   .sort((a, b) => a.label.localeCompare(b.label));
 
+type TPreMadeFooterState = { totalSelected: number; saving: boolean; onComplete: () => void };
+
 export default function EditAutomations() {
   const {
     AutomationsService,
@@ -64,6 +67,7 @@ export default function EditAutomations() {
   const [showPreMade, setShowPreMade] = useState(false);
   const [filterGame, setFilterGame] = useState('');
   const [simulatingId, setSimulatingId] = useState<number | null>(null);
+  const [preMadeFooter, setPreMadeFooter] = useState<TPreMadeFooterState | null>(null);
 
   useEffect(() => {
     AutomationsAnalytics.pageView();
@@ -149,20 +153,16 @@ export default function EditAutomations() {
   }
 
   if (creating || editingAutomation) {
-    return (
-      <AutomationEditor
-        initial={editingAutomation ?? undefined}
-        onClose={closeEditor}
-        onViewTemplates={() => {
-          closeEditor();
-          setShowPreMade(true);
-        }}
-      />
-    );
+    return <AutomationEditor initial={editingAutomation ?? undefined} onClose={closeEditor} />;
   }
 
   if (showPreMade) {
-    return <PreMadeAutomations onClose={() => setShowPreMade(false)} />;
+    return (
+      <PreMadeAutomations
+        onCancel={() => setShowPreMade(false)}
+        onSaved={() => setShowPreMade(false)}
+      />
+    );
   }
 
   const filtered = filterGame
@@ -179,19 +179,27 @@ export default function EditAutomations() {
         {$t('Add New Automation')}
       </Menu.Item>
       <Menu.Item key="premade" onClick={() => setShowPreMade(true)}>
-        {$t('Select from Pre-made')}
+        {$t('Use Template')}
       </Menu.Item>
     </Menu>
   );
 
-  const footer = (
-    <>
-      <Button onClick={closeWindow}>{$t('Cancel')}</Button>
-      <Button type="primary" style={{ marginLeft: '8px' }} onClick={closeWindow}>
-        {$t('Complete')}
-      </Button>
-    </>
-  );
+  const footer =
+    automations.length === 0 && preMadeFooter ? (
+      <PreMadeAutomationsFooter
+        totalSelected={preMadeFooter.totalSelected}
+        saving={preMadeFooter.saving}
+        onCancel={closeWindow}
+        onComplete={preMadeFooter.onComplete}
+      />
+    ) : (
+      <>
+        <Button onClick={closeWindow}>{$t('Cancel')}</Button>
+        <Button type="primary" style={{ marginLeft: '8px' }} onClick={closeWindow}>
+          {$t('Complete')}
+        </Button>
+      </>
+    );
 
   return (
     <ModalLayout footer={footer} scrollable>
@@ -239,32 +247,7 @@ export default function EditAutomations() {
       )}
 
       {loaded && automations.length === 0 && (
-        <div className={styles.emptyCard}>
-          <div
-            className={styles.emptyImage}
-            style={{
-              backgroundImage:
-                'url(https://cdn-avatar-builds.streamlabs.com/assets/ISA-automation-placeholder.png)',
-              backgroundSize: 'contain',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'center',
-            }}
-          />
-          <h3 className={styles.emptyTitle}>{$t("You don't have Automations set up yet.")}</h3>
-          <p className={styles.emptyDesc}>
-            {$t(
-              'Automatically trigger on stream effects including visual effects, transitions, sounds, agent commentary (and more) in response to gameplay events such as kills, wins, knocks, deaths, and much more. See supported games.',
-            )}
-          </p>
-          <div className={styles.emptyActions}>
-            <Button type="primary" onClick={create}>
-              {$t('Create Custom')}
-            </Button>
-            <Button type="primary" onClick={() => setShowPreMade(true)}>
-              {$t('Use Pre-made Automations')}
-            </Button>
-          </div>
-        </div>
+        <PreMadeAutomations embedded onCancel={closeWindow} onFooterChange={setPreMadeFooter} />
       )}
 
       {loaded && automations.length > 0 && filtered.length === 0 && (

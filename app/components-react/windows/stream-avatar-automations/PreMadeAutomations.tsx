@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Spin, Switch } from 'antd';
+import { Spin } from 'antd';
 import cx from 'classnames';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import { Services } from 'components-react/service-provider';
@@ -9,6 +9,7 @@ import type {
   AutomationTemplateItem,
 } from 'services/stream-avatar/agent-socket-service';
 import { AutomationsAnalytics } from './AutomationsAnalytics';
+import PreMadeAutomationsFooter from './PreMadeAutomationsFooter';
 import styles from './PreMadeAutomations.m.less';
 
 // ponytail: badge color is a deterministic hash of the game name, not a server
@@ -81,10 +82,17 @@ async function createSourceIfNeeded(
 }
 
 interface Props {
-  onClose: () => void;
+  onCancel: () => void;
+  onSaved?: () => void;
+  embedded?: boolean;
+  onFooterChange?: (footer: {
+    totalSelected: number;
+    saving: boolean;
+    onComplete: () => void;
+  }) => void;
 }
 
-export default function PreMadeAutomations({ onClose }: Props) {
+export default function PreMadeAutomations({ onCancel, onSaved, embedded, onFooterChange }: Props) {
   const { AutomationsService, AgentSocketService } = Services;
   const [games, setGames] = useState<AutomationTemplateGame[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,12 +130,17 @@ export default function PreMadeAutomations({ onClose }: Props) {
     );
   }
 
-  function toggleGameSwitch(game: AutomationTemplateGame) {
+  function toggleGameSelection(game: AutomationTemplateGame) {
     const current = selections[game.game]?.size ?? 0;
     setGameSelection(game.game, current > 0 ? new Set() : new Set(game.templates.map((_, i) => i)));
   }
 
   const totalSelected = Object.values(selections).reduce((sum, set) => sum + set.size, 0);
+
+  useEffect(() => {
+    onFooterChange?.({ totalSelected, saving, onComplete: handleComplete });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalSelected, saving]);
 
   async function handleComplete() {
     setSaving(true);
@@ -167,170 +180,160 @@ export default function PreMadeAutomations({ onClose }: Props) {
     } finally {
       setSaving(false);
     }
-    onClose();
+    onSaved?.();
   }
 
-  const addLabel =
-    totalSelected === 1
-      ? $t('Add %{count} Automation', { count: totalSelected })
-      : $t('Add %{count} Automations', { count: totalSelected });
-
   const footer = (
-    <>
-      <Button onClick={onClose} disabled={saving}>
-        {$t('Cancel')}
-      </Button>
-      <Button
-        type="primary"
-        style={{ marginLeft: '8px' }}
-        onClick={handleComplete}
-        disabled={saving || totalSelected === 0}
-      >
-        {saving ? $t('Adding...') : addLabel}
-      </Button>
-    </>
+    <PreMadeAutomationsFooter
+      totalSelected={totalSelected}
+      saving={saving}
+      onCancel={onCancel}
+      onComplete={handleComplete}
+    />
   );
 
-  return (
-    <ModalLayout footer={footer}>
-      <div className={styles.container}>
-        {loading || !activeGame ? (
-          <Spin />
-        ) : (
-          <>
-            <div className={styles.mainRow}>
-              <div className={styles.coverPanel}>
-                <video
-                  key={activeGame.templates[0]?.videoUrl}
-                  src={activeGame.templates[0]?.videoUrl}
-                  className={styles.coverVideo}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                />
-                <div className={styles.coverTopOverlay}>
-                  <span
-                    className={styles.badge}
-                    style={{ background: badgeColor(activeGame.gameName) }}
-                  >
-                    {activeGame.gameName[0]}
-                  </span>
-                  <span className={styles.coverGameName}>{activeGame.gameName}</span>
-                </div>
-                <div className={styles.coverBottomOverlay}>
-                  {$t('%{count} automations', { count: activeGame.templates.length })}
-                </div>
+  const content = (
+    <div className={cx(styles.container, { [styles.containerEmbedded]: embedded })}>
+      {loading || !activeGame ? (
+        <Spin />
+      ) : (
+        <>
+          <div className={styles.mainRow}>
+            <div className={styles.coverPanel}>
+              <video
+                key={activeGame.templates[0]?.videoUrl}
+                src={activeGame.templates[0]?.videoUrl}
+                className={styles.coverVideo}
+                autoPlay
+                muted
+                loop
+                playsInline
+              />
+              <div className={styles.coverTopOverlay}>
+                <span
+                  className={styles.badge}
+                  style={{ background: badgeColor(activeGame.gameName) }}
+                >
+                  {activeGame.gameName[0]}
+                </span>
+                <span className={styles.coverGameName}>{activeGame.gameName}</span>
               </div>
-
-              <div className={styles.checklistPanel}>
-                <div className={styles.checklistHeader}>
-                  <span>{$t('What your co-host will react to')}</span>
-                  <a onClick={toggleSelectAll}>
-                    {activeSelection.size === activeGame.templates.length
-                      ? $t('Unselect all')
-                      : $t('Select all')}
-                  </a>
-                </div>
-                <div className={styles.checklist}>
-                  {activeGame.templates.map((item, i) => (
-                    <div
-                      key={i}
-                      className={cx(styles.checklistRow, {
-                        [styles.checklistRowActive]: activeSelection.has(i),
-                      })}
-                      onClick={() => toggleTemplate(i)}
-                    >
-                      <video
-                        src={item.videoUrl}
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        className={styles.rowThumb}
-                      />
-                      <div className={styles.rowText}>
-                        <div className={styles.rowTitle}>{item.title}</div>
-                        <div className={styles.rowDesc}>{item.description}</div>
-                      </div>
-                      <div
-                        className={cx(styles.rowCheck, {
-                          [styles.rowCheckActive]: activeSelection.has(i),
-                        })}
-                      >
-                        {activeSelection.has(i) && <i className="icon-check-mark" />}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              <div className={styles.coverBottomOverlay}>
+                {$t('%{count} automations', { count: activeGame.templates.length })}
               </div>
             </div>
 
-            {games.length > 1 && (
-              <>
-                <div className={styles.gameCards}>
-                  {games.map((game, i) => {
-                    const selectedCount = selections[game.game]?.size ?? 0;
-                    return (
-                      <div
-                        key={game.game}
-                        className={cx(styles.gameCard, {
-                          [styles.gameCardActive]: i === activeGameIndex,
-                        })}
-                        onClick={() => setActiveGameIndex(i)}
-                      >
-                        <div className={styles.gameCardThumb}>
-                          <video
-                            src={game.templates[0]?.videoUrl}
-                            autoPlay
-                            muted
-                            loop
-                            playsInline
-                            className={styles.gameCardVideo}
-                          />
-                          <span
-                            className={styles.gameCardBadge}
-                            style={{ background: badgeColor(game.gameName) }}
-                          >
-                            {game.gameName[0]}
-                          </span>
-                          <span className={styles.gameCardName}>{game.gameName}</span>
-                          <Switch
-                            size="small"
-                            className={styles.gameCardSwitch}
-                            checked={selectedCount > 0}
-                            onClick={(_checked, e) => {
-                              e.stopPropagation();
-                              toggleGameSwitch(game);
-                            }}
-                          />
-                          <div className={styles.gameCardSub}>
-                            {selectedCount > 0
-                              ? $t('%{count} of %{total} added', {
-                                  count: selectedCount,
-                                  total: game.templates.length,
-                                })
-                              : $t('%{count} automations', { count: game.templates.length })}
-                          </div>
+            <div className={styles.checklistPanel}>
+              <div className={styles.checklistHeader}>
+                <span>{$t('What your co-host will react to')}</span>
+                <a onClick={toggleSelectAll}>
+                  {activeSelection.size === activeGame.templates.length
+                    ? $t('De-Select all')
+                    : $t('Select all')}
+                </a>
+              </div>
+              <div className={styles.checklist}>
+                {activeGame.templates.map((item, i) => (
+                  <div
+                    key={i}
+                    className={cx(styles.checklistRow, {
+                      [styles.checklistRowActive]: activeSelection.has(i),
+                    })}
+                    onClick={() => toggleTemplate(i)}
+                  >
+                    <video
+                      src={item.videoUrl}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      className={styles.rowThumb}
+                    />
+                    <div className={styles.rowText}>
+                      <div className={styles.rowTitle}>{item.title}</div>
+                      <div className={styles.rowDesc}>{item.description}</div>
+                    </div>
+                    <div
+                      className={cx(styles.rowCheck, {
+                        [styles.rowCheckActive]: activeSelection.has(i),
+                      })}
+                    >
+                      {activeSelection.has(i) && <i className="icon-check-mark" />}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {games.length > 1 && (
+            <>
+              <div className={styles.gameCards}>
+                {games.map((game, i) => {
+                  const selectedCount = selections[game.game]?.size ?? 0;
+                  return (
+                    <div
+                      key={game.game}
+                      className={cx(styles.gameCard, {
+                        [styles.gameCardActive]: i === activeGameIndex,
+                      })}
+                      onClick={() => setActiveGameIndex(i)}
+                    >
+                      <div className={styles.gameCardThumb}>
+                        <video
+                          src={game.templates[0]?.videoUrl}
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                          className={styles.gameCardVideo}
+                        />
+                        <span
+                          className={styles.gameCardBadge}
+                          style={{ background: badgeColor(game.gameName) }}
+                        >
+                          {game.gameName[0]}
+                        </span>
+                        <span className={styles.gameCardName}>{game.gameName}</span>
+                        <div
+                          className={cx(styles.gameCardCheck, {
+                            [styles.gameCardCheckActive]: selectedCount > 0,
+                          })}
+                          onClick={e => {
+                            e.stopPropagation();
+                            toggleGameSelection(game);
+                          }}
+                        >
+                          {selectedCount > 0 && <i className="icon-check-mark" />}
+                        </div>
+                        <div className={styles.gameCardSub}>
+                          {selectedCount > 0
+                            ? $t('%{count} of %{total} added', {
+                                count: selectedCount,
+                                total: game.templates.length,
+                              })
+                            : $t('%{count} automations', { count: game.templates.length })}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-                <div className={styles.dots}>
-                  {games.map((_, i) => (
-                    <span
-                      key={i}
-                      className={cx(styles.dot, { [styles.dotActive]: i === activeGameIndex })}
-                      onClick={() => setActiveGameIndex(i)}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </>
-        )}
-      </div>
-    </ModalLayout>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className={styles.dots}>
+                {games.map((_, i) => (
+                  <span
+                    key={i}
+                    className={cx(styles.dot, { [styles.dotActive]: i === activeGameIndex })}
+                    onClick={() => setActiveGameIndex(i)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </div>
   );
+
+  return embedded ? content : <ModalLayout footer={footer}>{content}</ModalLayout>;
 }
