@@ -151,13 +151,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   isLive = new Subject<boolean>();
 
-  emitIsLiveForTest(isLive: boolean): void {
-    if (!Utils.isTestMode()) return;
-    this.streamSettingsService.setGoLiveSettings({ streamShift: true });
-    this.SET_STREAM_SWITCHER_STATUS('pending');
-    this.isLive.next(isLive);
-  }
-
   static initialState: IRestreamState = {
     enabled: true,
     grandfathered: false,
@@ -853,6 +846,25 @@ export class RestreamService extends StatefulService<IRestreamState> {
     this.SET_STREAM_SWITCHER_STREAM_ID();
     this.SET_STREAM_SWITCHER_TARGETS([]);
     this.SET_STREAM_SWITCHER_FORCE_GO_LIVE(true);
+  }
+
+  /**
+   * Test helper to emit isLive for testing purposes
+   * @param isLive - Whether the stream is live or not
+   * @remarks This is only used for testing purposes. It should not be used in production code.
+   */
+  emitIsLiveForTest(isLive: boolean): void {
+    if (!Utils.isTestMode()) return;
+
+    if (isLive) {
+      this.streamSettingsService.setGoLiveSettings({ streamShift: true });
+      this.SET_STREAM_SWITCHER_STATUS('pending');
+    } else {
+      this.streamSettingsService.setGoLiveSettings({ streamShift: false });
+      this.SET_STREAM_SWITCHER_STATUS('inactive');
+    }
+
+    this.isLive.next(isLive);
   }
 
   /* Chat Handling

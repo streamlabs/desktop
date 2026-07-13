@@ -90,7 +90,12 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
         updateCustomDestinationDisplayAndSaveSettings(p.index, updatedDisplay as TDisplayType);
       }
     },
-    [p.platform, p.index],
+    [
+      p.platform,
+      p.index,
+      updatePlatformDisplayAndSaveSettings,
+      updateCustomDestinationDisplayAndSaveSettings,
+    ],
   );
 
   // Convert displays array to Dictionary<TInputValue>
