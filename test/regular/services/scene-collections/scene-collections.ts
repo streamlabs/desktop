@@ -49,10 +49,13 @@ function confirmIsCollectionType(
 
     if (dualOutput) {
       // dual output: has sceneNodeMaps prop in manifest, has nodeMap node in collection
-      t.true(root.hasOwnProperty(propName));
+      t.true(root.hasOwnProperty(propName), `Expected ${fileName} to have property ${propName}`);
     } else {
       // single output: no sceneNodeMaps prop in manifest, no nodeMap node in collection
-      t.true(!root.hasOwnProperty(propName));
+      t.true(
+        !root.hasOwnProperty(propName),
+        `Expected ${fileName} to not have property ${propName}`,
+      );
     }
   } catch (e: unknown) {
     console.log('Error: ', e);
