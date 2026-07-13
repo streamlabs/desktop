@@ -1,30 +1,17 @@
 import {
   clickGoLive,
   prepareToGoLive,
-  stopStream,
-  submit,
   waitForSettingsWindowLoaded,
-  waitForStreamStart,
 } from '../../helpers/modules/streaming';
 import {
   clickButton,
-  clickIfDisplayed,
-  focusChild,
+  dismissAlert,
   isDisplayed,
   isTooltipDisplayed,
-  waitForDisplayed,
 } from '../../helpers/modules/core';
-import { logIn } from '../../helpers/modules/user';
-import { toggleDualOutputMode } from '../../helpers/modules/dual-output';
 import { test, TExecutionContext, useWebdriver } from '../../helpers/webdriver';
-import {
-  addDummyAccount,
-  releaseUserInPool,
-  removeDummyAccount,
-  withUser,
-} from '../../helpers/webdriver/user';
+import { addDummyAccount, removeDummyAccount, withUser } from '../../helpers/webdriver/user';
 import { assertFormContains, fillForm } from '../../helpers/modules/forms';
-import { sleep } from '../../helpers/sleep';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -33,101 +20,100 @@ useWebdriver();
 /**
  * Non-prime single platform go live behavior not covered by other cases
  */
-test.skip(
-  'Go Live Non-Ultra',
-  withUser('twitch', { prime: false }),
-  async (t: TExecutionContext) => {
-    try {
-      await prepareToGoLive();
-      await clickGoLive();
-      await waitForSettingsWindowLoaded();
+test('Go Live Non-Ultra', withUser('twitch', { prime: false }), async (t: TExecutionContext) => {
+  try {
+    await prepareToGoLive();
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
 
-      // Ultra banner should be visible for non-prime users
-      t.true(
-        await isDisplayed('[data-name="banner-add-destination"]'),
-        'Ultra banner should be visible for non-prime users',
-      );
+    // Ultra banner should be visible for non-prime users
+    await isDisplayed('[name="banner-add-destination"]');
 
-      // Stream shift should be disabled and tooltip should be visible
-      await isTooltipDisplayed('i.icon-information', '[data-name="non-ultra"]', 1000);
-      await assertFormContains({ streamShift: false });
+    // Add destination button should be below the platform card if there is only one target
+    await isDisplayed('[name="bottom-add-destination"]');
 
-      // Goes live with a single platform
-      await fillForm({
-        title: 'Test Stream',
-        twitchGame: 'Fortnite',
-      });
+    // Stream shift should be disabled and tooltip should be visible
+    await isDisplayed('[data-name="shift-ultra-icon"]');
+    await isTooltipDisplayed('i.icon-information', '[data-name="non-ultra"]', 1000);
+    await assertFormContains({ streamShift: false });
 
-      await submit();
-      await waitForStreamStart();
-      await stopStream();
+    // Last platform cannot be toggled off
+    await fillForm({ twitch: false });
+    await waitForSettingsWindowLoaded();
+    await assertFormContains({ twitch: true });
 
-      // Can toggle max 2 destinations for non-prime
-      await addDummyAccount('instagram');
+    await clickButton('Close');
 
-      await clickGoLive();
-      await waitForSettingsWindowLoaded();
-      await fillForm({
-        instagram: true,
-      });
+    // Can toggle max 2 destinations for non-prime
+    await addDummyAccount('instagram');
+    await addDummyAccount('kick');
 
-      await waitForSettingsWindowLoaded();
-      await clickButton('Close');
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
 
-      await addDummyAccount('kick');
+    // Add destination button should be above the platform card if there are multiple targets
+    await isDisplayed('[name="top-add-destination"]');
 
-      await clickGoLive();
-      await waitForSettingsWindowLoaded();
-      await fillForm({
-        kick: true,
-      });
+    await fillForm({
+      instagram: true,
+    });
 
-      await waitForDisplayed('div.ant-message-notice-content', { timeout: 5000 });
-      await clickIfDisplayed('div.ant-message-notice-content');
+    await waitForSettingsWindowLoaded();
+    await clickButton('Close');
 
-      await fillForm({ twitchDisplay: 'both' });
+    await addDummyAccount('kick');
 
-      await waitForDisplayed('div.ant-message-notice-content', { timeout: 5000 });
-      await clickIfDisplayed('div.ant-message-notice-content');
-      await waitForSettingsWindowLoaded();
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+    await fillForm({
+      kick: true,
+    });
 
-      //     const alertShown = await isDisplayed('div.ant-message-notice-content', { timeout: 5000 });
-      // t.true(alertShown, 'Alert should show when both display disables other platform');
+    await dismissAlert('switcher-info-alert', { timeout: 5000 });
 
-      // assert that the form contains instagram and kick disabled
-      await fillForm({ twitchDisplay: 'vertical' });
-      // assert that the form contains instagram and kick enabled
+    await fillForm({ twitchDisplay: 'both' });
 
-      // can toggle off platforms
-      await fillForm({
-        instagram: false,
-        kick: false,
-      });
+    await dismissAlert('both-display-info-alert', { timeout: 5000 });
+    await waitForSettingsWindowLoaded();
 
-      // must have at least one platform enabled
-      await fillForm({
-        twitch: false,
-      });
-      // assert that the form contains twitch enabled
+    // assert that the form contains instagram and kick disabled
+    await fillForm({ twitchDisplay: 'vertical' });
 
-      // TODO: handle custom destinations
+    // can toggle off platforms
+    await fillForm({
+      instagram: false,
+      kick: false,
+    });
 
-      await clickButton('Close');
-    } catch (e: unknown) {
-      console.log('Error during Go Live Non-Ultra test:', e);
-      t.fail('Error during Go Live Non-Ultra test');
-    } finally {
-      await removeDummyAccount('instagram');
-      await removeDummyAccount('kick');
-    }
+    // must have at least one platform enabled
+    await fillForm({
+      twitch: false,
+    });
 
-    t.pass();
-  },
-);
+    // TODO: handle custom destinations
 
-test.skip('Go Live Ultra', withUser('twitch', { prime: true }), async (t: TExecutionContext) => {
-  // does not show ultra banner for prime users
+    await clickButton('Close');
+  } catch (e: unknown) {
+    console.log('Error during Go Live Non-Ultra test:', e);
+    t.fail('Error during Go Live Non-Ultra test');
+  } finally {
+    // Release dummy accounts
+    await removeDummyAccount('instagram');
+    await removeDummyAccount('kick');
+  }
+
+  t.pass();
+});
+
+test('Go Live Ultra', withUser('twitch', { prime: true }), async (t: TExecutionContext) => {
+  await prepareToGoLive();
   await clickGoLive();
   await waitForSettingsWindowLoaded();
-  t.false(await isDisplayed('[data-name="banner-add-destination"]'));
+
+  // Does not show ultra banner for prime users
+  t.false(await isDisplayed('[name="banner-add-destination"]'));
+
+  // Stream shift explanation tooltip shows
+  await isTooltipDisplayed('i.icon-information', '[data-name="explanation"]', 1000);
+  t.false(await isDisplayed('[data-name="shift-ultra-icon"]'));
 });

@@ -12,15 +12,23 @@ import cx from 'classnames';
 import { useRealmObject } from 'components-react/hooks/realm';
 
 const PlusIcon = PlusOutlined as Function;
-interface IAddDestinationButtonProps {
+interface IAddDestinationGroupProps {
   type?: 'default' | 'ultra' | 'small' | 'banner' | 'header';
   text?: string;
+  name?: string;
   className?: string;
   style?: CSSProperties;
   onClick?: () => void;
 }
 
-export default function AddDestinationButton(p: IAddDestinationButtonProps) {
+interface IAddDestinationButtonProps {
+  name?: string;
+  className?: string;
+  isDualOutputMode?: boolean;
+  onClick: () => void;
+}
+
+export default function AddDestinationButton(p: IAddDestinationGroupProps) {
   const { addDestination, btnType, isDualOutputMode } = useGoLiveSettings().extend(module => {
     const { RestreamService, SettingsService, MagicLinkService } = Services;
 
@@ -66,6 +74,7 @@ export default function AddDestinationButton(p: IAddDestinationButtonProps) {
     >
       {type === 'default' && (
         <DefaultAddDestinationButton
+          name={p?.name}
           className={p?.className}
           onClick={p?.onClick ?? addDestination}
         />
@@ -73,6 +82,7 @@ export default function AddDestinationButton(p: IAddDestinationButtonProps) {
 
       {type === 'ultra' && (
         <UltraAddDestinationButton
+          name={p?.name}
           className={p?.className}
           isDualOutputMode={isDualOutputMode}
           onClick={p?.onClick ?? addDestination}
@@ -81,23 +91,32 @@ export default function AddDestinationButton(p: IAddDestinationButtonProps) {
 
       {type === 'small' && (
         <SmallAddDestinationButton
+          name={p?.name}
           className={p?.className}
           onClick={p?.onClick ?? addDestination}
         />
       )}
 
       {type === 'banner' && (
-        <AddDestinationBanner className={p?.className} onClick={p?.onClick ?? addDestination} />
+        <AddDestinationBanner
+          name={p?.name}
+          className={p?.className}
+          onClick={p?.onClick ?? addDestination}
+        />
       )}
 
       {type === 'header' && (
-        <AddDestinationHeader className={p?.className} onClick={p?.onClick ?? addDestination} />
+        <AddDestinationHeader
+          name={p?.name}
+          className={p?.className}
+          onClick={p?.onClick ?? addDestination}
+        />
       )}
     </ButtonGroup>
   );
 }
 
-function DefaultAddDestinationButton(p: { className?: string; onClick: () => void }) {
+function DefaultAddDestinationButton(p: IAddDestinationButtonProps) {
   return (
     <Button
       name="default-add-destination"
@@ -111,7 +130,7 @@ function DefaultAddDestinationButton(p: { className?: string; onClick: () => voi
   );
 }
 
-function SmallAddDestinationButton(p: { className?: string; onClick: () => void }) {
+function SmallAddDestinationButton(p: IAddDestinationButtonProps) {
   return (
     <Button
       name="default-add-destination"
@@ -125,11 +144,7 @@ function SmallAddDestinationButton(p: { className?: string; onClick: () => void 
   );
 }
 
-function UltraAddDestinationButton(p: {
-  className?: string;
-  isDualOutputMode: boolean;
-  onClick: () => void;
-}) {
+function UltraAddDestinationButton(p: IAddDestinationButtonProps) {
   return (
     <ButtonHighlighted
       name="ultra-add-destination"
@@ -151,7 +166,7 @@ function UltraAddDestinationButton(p: {
   );
 }
 
-function AddDestinationBanner(p: { className?: string; onClick: () => void }) {
+function AddDestinationBanner(p: IAddDestinationButtonProps) {
   const isDarkTheme = useRealmObject(Services.CustomizationService.state).isDarkTheme;
 
   const text = $t('Unlock unlimited multistreaming with Ultra and grow your audience faster');
@@ -175,7 +190,7 @@ function AddDestinationBanner(p: { className?: string; onClick: () => void }) {
   );
 }
 
-function AddDestinationHeader(p: { className?: string; onClick: () => void }) {
+function AddDestinationHeader(p: IAddDestinationButtonProps) {
   const isDarkTheme = useRealmObject(Services.CustomizationService.state).isDarkTheme;
 
   const text = $t(

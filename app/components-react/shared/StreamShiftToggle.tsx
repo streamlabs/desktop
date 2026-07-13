@@ -72,6 +72,7 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
           label={
             !isPrime ? (
               <div
+                data-name="shift-ultra-icon"
                 className={styles.labelUltraBadge}
                 onClick={() => {
                   Services.MagicLinkService.actions.linkToPrime('slobs-streamswitcher', {

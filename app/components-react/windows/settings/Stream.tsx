@@ -254,7 +254,7 @@ export function StreamSettings() {
 
             <CustomDestinationList />
 
-            <IngestServerSetting disabled={!canEditSettings} />
+            {isPrime && <IngestServerSetting disabled={!canEditSettings} />}
 
             {canEditSettings && (
               <Tooltip

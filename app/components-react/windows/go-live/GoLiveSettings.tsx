@@ -102,11 +102,16 @@ export default function GoLiveSettings() {
 
           <Scrollable className={cx(styles.leftColumnScroll, { [styles.nonUltra]: !isPrime })}>
             {showTopAddDestination && (
-              <AddDestinationButton type="small" onClick={addDestination} />
+              <AddDestinationButton
+                name="top-add-destination"
+                type="small"
+                onClick={addDestination}
+              />
             )}
             <DestinationSwitchers />
             {showBottomAddDestination && (
               <AddDestinationButton
+                name="bottom-add-destination"
                 type="small"
                 className={styles.bottom}
                 onClick={addDestination}

@@ -134,6 +134,31 @@ export async function waitForEnabled(selectorOrEl: TSelectorOrEl, options?: Wait
 }
 
 /**
+ * Wait for an antd message alert identified by its data-name attribute
+ */
+export async function waitForAlert(name: string, options?: WaitForOptions) {
+  await waitForDisplayed(`[data-name="${name}"]`, options);
+}
+
+/**
+ * Click an antd message alert identified by its data-name attribute, if displayed
+ */
+export async function clickAlert(name: string) {
+  const selector = `[data-name="${name}"]`;
+  if (await isDisplayed(selector)) {
+    await click(selector);
+  }
+}
+
+/**
+ * Wait for an antd message alert by data-name, then click it to dismiss
+ */
+export async function dismissAlert(name: string, options?: WaitForOptions) {
+  await waitForAlert(name, options);
+  await clickAlert(name);
+}
+
+/**
  * Get number of elements displayed
  * @remark This is needed because arrays of WebdriverIO.Element cannot use array methods and properties
  */

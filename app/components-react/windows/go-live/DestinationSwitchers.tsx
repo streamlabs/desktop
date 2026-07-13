@@ -18,7 +18,7 @@ import PlatformLogo from '../../shared/PlatformLogo';
 import { useDebounce } from '../../hooks';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import DisplaySelector from 'components-react/shared/DisplaySelector';
-import { message } from 'antd';
+import { alertInfo } from '../../modals';
 import { SwitcherCard, ISwitcherCardHandle } from './SwitcherCard';
 import AnimatedWrapper from 'components-react/shared/AnimatedWrapper';
 
@@ -90,20 +90,11 @@ export const DestinationSwitchers = memo(() => {
         if (enabled) {
           const total = enabledPlatformsRef.current.length + enabledDestRef.current.length;
           if (total >= 2) {
-            message.info({
-              key: 'switcher-info-alert',
-              content: (
-                <div className={styles.alertContent}>
-                  <div>
-                    {$t(
-                      "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
-                    )}
-                  </div>
-                  <i className="icon-close" />
-                </div>
+            alertInfo({
+              name: 'switcher-info-alert',
+              text: $t(
+                "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
               ),
-              className: styles.infoAlert,
-              onClick: () => message.destroy('switcher-info-alert'),
             });
             return false;
           }
@@ -144,20 +135,11 @@ export const DestinationSwitchers = memo(() => {
         if (enabled) {
           const total = enabledPlatformsRef.current.length + enabledDestRef.current.length;
           if (total >= 2) {
-            message.info({
-              key: 'switcher-info-alert',
-              content: (
-                <div className={styles.alertContent}>
-                  <div>
-                    {$t(
-                      "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
-                    )}
-                  </div>
-                  <i className="icon-close" />
-                </div>
+            alertInfo({
+              name: 'switcher-info-alert',
+              text: $t(
+                "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
               ),
-              className: styles.infoAlert,
-              onClick: () => message.destroy('switcher-info-alert'),
             });
             return;
           }
@@ -217,48 +199,30 @@ export const DestinationSwitchers = memo(() => {
       if (otherPlatform) {
         setPlatformEnabled(otherPlatform, false);
         disabledByBothRef.current = { type: 'platform', id: otherPlatform };
-        message.info({
-          key: 'both-display-info-alert',
-          content: (
-            <div className={styles.alertContent}>
-              <div>
-                {$t(
-                  '%{otherPlatform} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.',
-                  {
-                    platform: platformLabels(nonPrimeBothDisplayPlatform),
-                    otherPlatform: platformLabels(otherPlatform),
-                  },
-                )}
-              </div>
-              <i className="icon-close" />
-            </div>
+        alertInfo({
+          name: 'both-display-info-alert',
+          text: $t(
+            '%{otherPlatform} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.',
+            {
+              platform: platformLabels(nonPrimeBothDisplayPlatform),
+              otherPlatform: platformLabels(otherPlatform),
+            },
           ),
-          className: styles.infoAlert,
-          onClick: () => message.destroy('both-display-info-alert'),
         });
       } else {
         const destIndex = customDestinationsRef.current.findIndex(d => d.enabled);
         if (destIndex >= 0) {
           setCustomDestinationEnabled(destIndex, false);
           disabledByBothRef.current = { type: 'destination', index: destIndex };
-          message.info({
-            key: 'both-display-info-alert',
-            content: (
-              <div className={styles.alertContent}>
-                <div>
-                  {$t(
-                    '%{destination} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.',
-                    {
-                      platform: platformLabels(nonPrimeBothDisplayPlatform),
-                      destination: customDestinationsRef.current[destIndex].name,
-                    },
-                  )}
-                </div>
-                <i className="icon-close" />
-              </div>
+          alertInfo({
+            name: 'both-display-info-alert',
+            text: $t(
+              '%{destination} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.',
+              {
+                platform: platformLabels(nonPrimeBothDisplayPlatform),
+                destination: customDestinationsRef.current[destIndex].name,
+              },
             ),
-            className: styles.infoAlert,
-            onClick: () => message.destroy('both-display-info-alert'),
           });
         }
       }
@@ -364,21 +328,12 @@ const DestinationSwitcher = memo(
 
         if (!Services.UserService.state.isPrime) {
           if (p.bothDisplayPlatformLabel) {
-            message.info({
-              key: 'switcher-info-alert',
-              content: (
-                <div className={styles.alertContent}>
-                  <div>
-                    {$t(
-                      'Select a different display for %{platform} to toggle on another destination, or upgrade to Ultra to enable multistreaming.',
-                      { platform: p.bothDisplayPlatformLabel },
-                    )}
-                  </div>
-                  <i className="icon-close" />
-                </div>
+            alertInfo({
+              name: 'switcher-info-alert',
+              text: $t(
+                'Select a different display for %{platform} to toggle on another destination, or upgrade to Ultra to enable multistreaming.',
+                { platform: p.bothDisplayPlatformLabel },
               ),
-              className: styles.infoAlert,
-              onClick: () => message.destroy('switcher-info-alert'),
             });
             return enabled;
           }

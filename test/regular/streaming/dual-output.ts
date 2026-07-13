@@ -11,13 +11,13 @@ import {
   clickButton,
   clickIfDisplayed,
   clickWhenDisplayed,
-  closeWindow,
+  dismissAlert,
   focusChild,
   focusMain,
   isDisplayed,
   waitForDisplayed,
 } from '../../helpers/modules/core';
-import { logIn } from '../../helpers/modules/user';
+import { logIn, addCustomDestination } from '../../helpers/modules/user';
 import {
   toggleDisplay,
   toggleDualOutputMode,
@@ -238,7 +238,9 @@ test(
 /**
  * Dual Output Go Live
  */
-
+// TODO: Add non-ultra accounts with multiple accounts linked to pool
+// Note: test cases with multiple merged accounts here and move dual output instagram testing to
+// the instagram test
 test('Dual Output Go Live Non-Ultra', async t => {
   await logIn('twitch', { prime: false });
   await toggleDualOutputMode(true);
@@ -258,10 +260,7 @@ test('Dual Output Go Live Non-Ultra', async t => {
     await submit();
 
     // Cannot go live with more than one platform assigned to the same display
-    await waitForDisplayed('div.ant-message-notice-content', {
-      timeout: 5000,
-    });
-    await clickIfDisplayed('div.ant-message-notice-content');
+    await dismissAlert('dual-output-info-alert', { timeout: 5000 });
 
     await fillForm({
       instagramDisplay: 'vertical',
@@ -272,6 +271,37 @@ test('Dual Output Go Live Non-Ultra', async t => {
     });
 
     await goLiveWithDualOutput('instagram');
+
+    // Swap displays and go live again
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+    await fillForm({
+      instagramDisplay: 'horizontal',
+      twitchDisplay: 'vertical',
+    });
+    await goLiveWithDualOutput('instagram');
+
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+
+    // TODO: Add test for custom destinations
+    // const { name, user } = await addCustomDestination(t);
+    // await fillForm({
+    //   instagram: false,
+    //   [name]: true,
+    //   twitchDisplay: 'horizontal',
+    //   [`${name}Display`]: 'vertical',
+    // });
+    // await goLiveWithDualOutput('twitch');
+
+    // // Swap displays and go live again
+    // await clickGoLive();
+    // await waitForSettingsWindowLoaded();
+    // await fillForm({
+    //   twitchDisplay: 'vertical',
+    //   [`${name}Display`]: 'horizontal',
+    // });
+    // await goLiveWithDualOutput('twitch');
   } catch (e: unknown) {
     console.log('Error during Dual Output Go Live Non-Ultra test:', e);
     t.fail('Error during Dual Output Go Live Non-Ultra test');
@@ -290,6 +320,25 @@ test('Dual Output Go Live Non-Ultra', async t => {
     t.pass();
   }
 });
+
+// TODO: Add test for dual stream with both Twitch and YouTube after adding accounts to pool
+// Note: will need to add `dualStream` ITestUserFeature to the user account(s)
+test.skip(
+  'Dual Stream Non-Ultra',
+  withUser('twitch', { prime: false, dualStream: true }),
+  async t => {
+    await toggleDualOutputMode();
+    await prepareToGoLive();
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+    await fillForm({
+      youtube: true,
+    });
+    // TODO: test Twitch both hides YouTube and satisfies dual output requirement to go live
+    // TODO: test YouTube both hides Twitch and satisfies dual output requirement to go live
+    // TODO: test that the primary chat automatically switches to the platform that is not hidden
+  },
+);
 
 test(
   'Dual Output Go Live Ultra',

@@ -8,6 +8,7 @@ import { message } from 'antd';
 import { $t } from '../../../services/i18n';
 import { injectState, useModule } from 'slap';
 import { useForm } from '../../shared/inputs/Form';
+import { alertInfo } from '../../modals';
 import { getDefined } from '../../../util/properties-type-guards';
 import isEqual from 'lodash/isEqual';
 import { TDisplayType } from 'services/settings-v2';
@@ -313,6 +314,10 @@ export class GoLiveSettingsModule {
    * If platform is enabled then prepopulate its settings
    */
   switchPlatforms(enabledPlatforms: TPlatform[], skipPrepopulate?: boolean) {
+    // Guard against debounced calls arriving after the module state is destroyed
+    // (e.g. the go-live window closed before the debounce timer fired)
+    if (!this.state?.settings) return;
+
     // If Patreon or Instagram is the current primary (merge-only / no chat),
     // promote any other enabled platform to primary so chat & stream-info
     // routing don't resolve to a non-streaming platform.
@@ -478,15 +483,19 @@ export class GoLiveSettingsModule {
       (Services.TikTokService.neverApplied || Services.TikTokService.denied)
     ) {
       // Show this allow users to attempt to go live with rtmp regardless of tiktok status
-      message.info(
-        $t("Couldn't confirm TikTok Live Access. Apply for Live Permissions below"),
-        2,
-        () => true,
-      );
+      alertInfo({
+        name: 'tiktok-access-alert',
+        text: $t("Couldn't confirm TikTok Live Access. Apply for Live Permissions below"),
+        duration: 2,
+      });
     }
 
     if (this.getIsInvalidDualStream()) {
-      message.info($t('Upgrade to Ultra to allow more than two outputs'), 2, () => true);
+      alertInfo({
+        name: 'ultra-required-alert',
+        text: $t('Upgrade to Ultra to allow more than two outputs'),
+        duration: 2,
+      });
       return;
     }
 
@@ -498,13 +507,13 @@ export class GoLiveSettingsModule {
         const hasHorizontal = this.state.horizontalStream.length > 0;
         const hasVertical = this.state.verticalStream.length > 0;
         if (!hasHorizontal || !hasVertical) {
-          message.info(
-            $t(
+          alertInfo({
+            name: 'display-assignment-alert',
+            text: $t(
               'Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming.',
             ),
-            2,
-            () => true,
-          );
+            duration: 2,
+          });
           return;
         }
       }

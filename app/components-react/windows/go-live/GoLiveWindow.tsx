@@ -8,7 +8,8 @@ import {
 } from 'services/settings';
 import { RestreamService } from 'services/restream';
 import { ModalLayout } from '../../shared/ModalLayout';
-import { Button, message } from 'antd';
+import { Button } from 'antd';
+import { alertInfo } from '../../modals';
 import { Services } from '../../service-provider';
 import GoLiveSettings from './GoLiveSettings';
 import { $t } from '../../../services/i18n';
@@ -254,20 +255,11 @@ function ModalFooter() {
     if (!isPrime) {
       // Check to see if the user has a valid display assignment
       if (!hasValidDisplayAssignment) {
-        message.info({
-          key: 'dual-output-info-alert',
-          content: (
-            <div className={styles.alertContent}>
-              <div>
-                {$t(
-                  'To use Dual Output you must stream to at least one horizontal and one vertical platform.',
-                )}
-              </div>
-              <i className="icon-close" />
-            </div>
+        alertInfo({
+          name: 'dual-output-info-alert',
+          text: $t(
+            'To use Dual Output you must stream to at least one horizontal and one vertical platform.',
           ),
-          className: styles.infoAlert,
-          onClick: () => message.destroy('dual-output-info-alert'),
         });
 
         return;

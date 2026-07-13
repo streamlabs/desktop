@@ -33,6 +33,10 @@ export interface ITestUserFeatures {
    */
   streamingIsDisabled?: boolean;
   /**
+   * Has multiple platforms that can dual stream
+   */
+  dualStream?: boolean;
+  /**
    * This account doesn't have facebook pages
    */
   noFacebookPages?: boolean;
