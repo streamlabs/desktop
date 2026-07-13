@@ -18,6 +18,40 @@ export interface IMediaGalleryFile {
   prime?: boolean;
 }
 
+interface IMediaGalleryStockFile {
+  type: string;
+  href: string;
+  filename: string;
+}
+
+interface IMediaGalleryStockImageFile extends IMediaGalleryStockFile {
+  type: 'image';
+  thumb: string;
+  // Game Pulse / Reactive properties
+  tags?: string[];
+  event?: string;
+  style?: string;
+}
+
+interface IMediaGalleryStockAudioFile extends IMediaGalleryStockFile {
+  type: 'audio';
+  duration: string;
+  length?: string;
+  group?: string;
+  tag?: string;
+}
+
+type TMediaGalleryStockFilesResponse =
+  | {
+      success: true;
+      message: string;
+      data: {
+        images: IMediaGalleryStockImageFile[];
+        audios: IMediaGalleryStockAudioFile[];
+      };
+    }
+  | { success: false; message: string };
+
 interface IMediaGalleryLimits {
   maxUsage: number;
   maxFileSize: number;
@@ -144,8 +178,29 @@ export class MediaGalleryService extends Service {
     audios: Array<IMediaGalleryFile>;
     images: Array<IMediaGalleryFile>;
   }> {
-    const req = this.formRequest('api/v5/slobs/widget/alertbox/stock-media?alerts_panels=true');
-    return jfetch(req);
+    const req = this.formRequest('api/v5/media/desktop/gallery/stock-media?alerts_panels=true');
+    const data: TMediaGalleryStockFilesResponse = await jfetch(req);
+    if (data.success) {
+      return {
+        images: data.data.images.map(item => ({
+          href: item.href,
+          filename: item.filename,
+          type: 'image',
+          size: 0,
+          isStock: true,
+        })),
+        audios: data.data.audios.map(item => ({
+          href: item.href,
+          filename: item.filename,
+          type: 'audio',
+          size: 0,
+          isStock: true,
+        })),
+      };
+    }
+
+    console.error('Failed to fetch stock media', data.message);
+    return { images: [], audios: [] };
   }
 
   private async fetchFiles(): Promise<IMediaGalleryFile[]> {

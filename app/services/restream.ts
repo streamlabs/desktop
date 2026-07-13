@@ -28,6 +28,32 @@ import { Subject } from 'rxjs';
 import uuid from 'uuid';
 import Utils from './utils';
 import { $t } from './i18n';
+import { RealmObject } from './realm';
+import { ObjectSchema } from 'realm';
+
+interface IIngestServer {
+  name: string;
+  url: string;
+}
+
+/**
+ * Persisted restream preferences.
+ * @remarks `preferredIngestServer` stores the ingest server region `name`
+ * (see `/api/v1/rst/ingest/servers`). An empty string means "Automatic" — no
+ * manual override, so the backend-selected ingest is used at go-live.
+ */
+class RestreamPreferences extends RealmObject {
+  preferredIngestServer: string;
+
+  static schema: ObjectSchema = {
+    name: 'RestreamPreferences',
+    properties: {
+      preferredIngestServer: { type: 'string', default: '' },
+    },
+  };
+}
+
+RestreamPreferences.register({ persist: true });
 
 export type TOutputOrientation = 'landscape' | 'portrait';
 interface IRestreamTarget {
@@ -120,6 +146,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @Inject() settingsService: SettingsService;
 
   settings: IUserSettingsResponse;
+
+  preferences = RestreamPreferences.inject();
 
   isLive = new Subject<boolean>();
 
@@ -316,6 +344,62 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return jfetch(request);
   }
 
+  /**
+   * Fetch the full list of available ingest servers, ordered by expected
+   * latency (first result is the recommended server).
+   */
+  fetchIngestServers(): Promise<{ servers: IIngestServer[] }> {
+    const headers = authorizedHeaders(this.userService.apiToken);
+    const url = `https://${this.host}/api/v1/rst/ingest/servers`;
+    const request = new Request(url, { headers });
+
+    return jfetch(request);
+  }
+
+  /**
+   * Persist the user's preferred ingest server region `name`.
+   * @param name The server region name, or '' to clear the override (Automatic).
+   */
+  setPreferredIngestServer(name: string) {
+    this.preferences.db.write(() => {
+      this.preferences.deepPatch({ preferredIngestServer: name });
+    });
+  }
+
+  /**
+   * Resolve the ingest server URL to use at go-live.
+   * @remarks Honors the user's manual override if set and still available,
+   * otherwise falls back to the backend-selected ingest.
+   */
+  private async getIngestServer(): Promise<string> {
+    const preferred = this.preferences.preferredIngestServer;
+
+    if (preferred) {
+      try {
+        const { servers } = await this.fetchIngestServers();
+        const match = servers.find(s => s.name === preferred);
+        if (match) return this.normalizeIngestUrl(match.url);
+      } catch (e: unknown) {
+        // Fall through to the backend default on any failure (e.g. the region
+        // was removed or the request failed).
+      }
+    }
+
+    return (await this.fetchIngest()).server;
+  }
+
+  /**
+   * The ingest servers list returns bare hostnames (no protocol, no path).
+   * OBS expects a fully-qualified RTMP URL, so prepend `rtmp://` when no
+   * protocol is present and append the `/ingest` path when missing.
+   */
+  private normalizeIngestUrl(url: string): string {
+    let normalized = /^rtmps?:\/\//i.test(url) ? url : `rtmp://${url}`;
+    normalized = normalized.replace(/\/+$/, '');
+    if (!/\/ingest$/i.test(normalized)) normalized += '/ingest';
+    return normalized;
+  }
+
   setEnabled(enabled: boolean) {
     this.SET_ENABLED(enabled);
 
@@ -365,7 +449,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @param mode - Optional, mode which denotes which context to stream
    */
   async setupIngest() {
-    const ingest = (await this.fetchIngest()).server;
+    const ingest = await this.getIngestServer();
 
     if (this.streamInfo.isStreamShiftMode) {
       // in single output mode, we just set the ingest for the default display
