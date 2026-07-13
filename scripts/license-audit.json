@@ -1,0 +1,5275 @@
+[
+  {
+    "name": "@ant-design/colors",
+    "version": "6.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/ant-design/ant-design-colors",
+    "licenseFile": "node_modules\\@ant-design\\colors\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@ant-design/css-animation",
+    "version": "1.7.3",
+    "license": "MIT",
+    "repository": "git@github.com:ant-design/css-animation",
+    "licenseFile": "node_modules\\@ant-design\\css-animation\\LICENSE.md",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@ant-design/icons",
+    "version": "4.6.2",
+    "license": "MIT",
+    "repository": "https://github.com/ant-design/ant-design-icons/tree/master/packages/icons-react",
+    "licenseFile": "node_modules\\@ant-design\\icons\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@ant-design/icons-svg",
+    "version": "4.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/ant-design/ant-design-icons",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@babel/runtime",
+    "version": "7.28.4",
+    "license": "MIT",
+    "repository": "https://github.com/babel/babel",
+    "licenseFile": "node_modules\\@babel\\runtime\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk",
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@colors/colors",
+    "version": "1.6.0",
+    "license": "MIT",
+    "repository": "http://github.com/DABH/colors.js",
+    "licenseFile": "node_modules\\@colors\\colors\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@ctrl/tinycolor",
+    "version": "3.4.0",
+    "license": "MIT",
+    "repository": "scttcper/tinycolor",
+    "licenseFile": "node_modules\\@ctrl\\tinycolor\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@dabh/diagnostics",
+    "version": "2.0.3",
+    "license": "MIT",
+    "repository": "git://github.com/3rd-Eden/diagnostics",
+    "licenseFile": "node_modules\\@dabh\\diagnostics\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@electron/remote",
+    "version": "2.1.2",
+    "license": "MIT",
+    "repository": "https://github.com/electron/remote",
+    "licenseFile": "node_modules\\@electron\\remote\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@gar/promise-retry",
+    "version": "1.0.3",
+    "license": "MIT",
+    "repository": "git://github.com/wraithgar/node-promise-retry",
+    "licenseFile": "node_modules\\@gar\\promise-retry\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@google-cloud/promisify",
+    "version": "4.0.0",
+    "license": "Apache-2.0",
+    "repository": "googleapis/nodejs-promisify",
+    "licenseFile": "node_modules\\@google-cloud\\promisify\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@google-cloud/vision",
+    "version": "4.3.2",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/googleapis/google-cloud-node",
+    "licenseFile": "node_modules\\@google-cloud\\vision\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@grpc/grpc-js",
+    "version": "1.12.2",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/grpc/grpc-node/tree/master/packages/grpc-js",
+    "licenseFile": "node_modules\\@grpc\\grpc-js\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@grpc/proto-loader",
+    "version": "0.7.13",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/grpc/grpc-node",
+    "licenseFile": "node_modules\\@grpc\\proto-loader\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@img/sharp-win32-x64",
+    "version": "0.33.5",
+    "license": "Apache-2.0 AND LGPL-3.0-or-later",
+    "repository": "https://github.com/lovell/sharp",
+    "licenseFile": "node_modules\\@img\\sharp-win32-x64\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@inworld/nodejs-sdk",
+    "version": "1.16.1-beta.0",
+    "license": "SEE LICENSE IN LICENSE.md",
+    "repository": "https://github.com/inworld-ai/inworld-nodejs-sdk",
+    "licenseFile": "node_modules\\@inworld\\nodejs-sdk\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@isaacs/fs-minipass",
+    "version": "4.0.1",
+    "license": "ISC",
+    "repository": "https://github.com/npm/fs-minipass",
+    "licenseFile": "node_modules\\@isaacs\\fs-minipass\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@js-sdsl/ordered-map",
+    "version": "4.4.2",
+    "license": "MIT",
+    "repository": "https://github.com/js-sdsl/js-sdsl",
+    "licenseFile": "node_modules\\@js-sdsl\\ordered-map\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@npmcli/agent",
+    "version": "4.0.0",
+    "license": "ISC",
+    "repository": "https://github.com/npm/agent",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@npmcli/fs",
+    "version": "5.0.0",
+    "license": "ISC",
+    "repository": "https://github.com/npm/fs",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\@npmcli\\fs\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@npmcli/redact",
+    "version": "4.0.0",
+    "license": "ISC",
+    "repository": "https://github.com/npm/redact",
+    "licenseFile": "node_modules\\@npmcli\\redact\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@protobufjs/aspromise",
+    "version": "1.1.2",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/dcodeIO/protobuf.js",
+    "licenseFile": "node_modules\\@protobufjs\\aspromise\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@protobufjs/base64",
+    "version": "1.1.2",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/dcodeIO/protobuf.js",
+    "licenseFile": "node_modules\\@protobufjs\\base64\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@protobufjs/codegen",
+    "version": "2.0.4",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/dcodeIO/protobuf.js",
+    "licenseFile": "node_modules\\@protobufjs\\codegen\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@protobufjs/eventemitter",
+    "version": "1.1.0",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/dcodeIO/protobuf.js",
+    "licenseFile": "node_modules\\@protobufjs\\eventemitter\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@protobufjs/fetch",
+    "version": "1.1.0",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/dcodeIO/protobuf.js",
+    "licenseFile": "node_modules\\@protobufjs\\fetch\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@protobufjs/float",
+    "version": "1.0.2",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/dcodeIO/protobuf.js",
+    "licenseFile": "node_modules\\@protobufjs\\float\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@protobufjs/inquire",
+    "version": "1.1.0",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/dcodeIO/protobuf.js",
+    "licenseFile": "node_modules\\@protobufjs\\inquire\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@protobufjs/path",
+    "version": "1.1.2",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/dcodeIO/protobuf.js",
+    "licenseFile": "node_modules\\@protobufjs\\path\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@protobufjs/pool",
+    "version": "1.1.0",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/dcodeIO/protobuf.js",
+    "licenseFile": "node_modules\\@protobufjs\\pool\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@protobufjs/utf8",
+    "version": "1.1.0",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/dcodeIO/protobuf.js",
+    "licenseFile": "node_modules\\@protobufjs\\utf8\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@realm/fetch",
+    "version": "0.1.1",
+    "license": "Apache-2.0",
+    "repository": "",
+    "licenseFile": null,
+    "note": "Undeclared in npm metadata; published from the Apache-2.0 realm-js monorepo (dep of realm)",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@sentry/browser",
+    "version": "5.21.4",
+    "license": "BSD-3-Clause",
+    "repository": "git://github.com/getsentry/sentry-javascript",
+    "licenseFile": "node_modules\\@sentry\\browser\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@sentry/core",
+    "version": "5.21.4",
+    "license": "BSD-3-Clause",
+    "repository": "git://github.com/getsentry/sentry-javascript",
+    "licenseFile": "node_modules\\@sentry\\core\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@sentry/hub",
+    "version": "5.21.4",
+    "license": "BSD-3-Clause",
+    "repository": "git://github.com/getsentry/sentry-javascript",
+    "licenseFile": "node_modules\\@sentry\\hub\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@sentry/integrations",
+    "version": "5.21.4",
+    "license": "BSD-3-Clause",
+    "repository": "git://github.com/getsentry/sentry-javascript",
+    "licenseFile": "node_modules\\@sentry\\integrations\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@sentry/minimal",
+    "version": "5.21.4",
+    "license": "BSD-3-Clause",
+    "repository": "git://github.com/getsentry/sentry-javascript",
+    "licenseFile": "node_modules\\@sentry\\minimal\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@sentry/types",
+    "version": "5.21.4",
+    "license": "BSD-3-Clause",
+    "repository": "git://github.com/getsentry/sentry-javascript",
+    "licenseFile": "node_modules\\@sentry\\types\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@sentry/utils",
+    "version": "5.21.4",
+    "license": "BSD-3-Clause",
+    "repository": "git://github.com/getsentry/sentry-javascript",
+    "licenseFile": "node_modules\\@sentry\\utils\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@types/caseless",
+    "version": "0.12.1",
+    "license": "MIT",
+    "repository": "https://www.github.com/DefinitelyTyped/DefinitelyTyped",
+    "licenseFile": "node_modules\\@types\\caseless\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@types/color-name",
+    "version": "1.1.1",
+    "license": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "licenseFile": "node_modules\\@types\\color-name\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@types/long",
+    "version": "4.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "licenseFile": "node_modules\\@types\\long\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@types/node",
+    "version": "12.12.54",
+    "license": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "licenseFile": "node_modules\\openai\\node_modules\\@types\\node-fetch\\node_modules\\@types\\node\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@types/node-fetch",
+    "version": "2.6.12",
+    "license": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "licenseFile": "node_modules\\openai\\node_modules\\@types\\node-fetch\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@types/request",
+    "version": "2.48.12",
+    "license": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "licenseFile": "node_modules\\retry-request\\node_modules\\@types\\request\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@types/semver",
+    "version": "7.7.1",
+    "license": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "licenseFile": "node_modules\\electron-updater\\node_modules\\@types\\semver\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@types/tough-cookie",
+    "version": "2.3.3",
+    "license": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+    "licenseFile": "node_modules\\@types\\tough-cookie\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "@types/triple-beam",
+    "version": "1.3.5",
+    "license": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "licenseFile": "node_modules\\@types\\triple-beam\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "abbrev",
+    "version": "4.0.0",
+    "license": "ISC",
+    "repository": "https://github.com/npm/abbrev-js",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\abbrev\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "abort-controller",
+    "version": "3.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/mysticatea/abort-controller",
+    "licenseFile": "node_modules\\abort-controller\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "after",
+    "version": "0.8.2",
+    "license": "MIT",
+    "repository": "git://github.com/Raynos/after",
+    "licenseFile": "node_modules\\after\\LICENCE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "agent-base",
+    "version": "7.1.4",
+    "license": "MIT",
+    "repository": "https://github.com/TooTallNate/proxy-agents",
+    "licenseFile": "node_modules\\@npmcli\\agent\\node_modules\\agent-base\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "agentkeepalive",
+    "version": "4.6.0",
+    "license": "MIT",
+    "repository": "git://github.com/node-modules/agentkeepalive",
+    "licenseFile": "node_modules\\openai\\node_modules\\agentkeepalive\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "ansi-regex",
+    "version": "5.0.1",
+    "license": "MIT",
+    "repository": "chalk/ansi-regex",
+    "licenseFile": "node_modules\\ansi-regex\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "ansi-styles",
+    "version": "4.2.1",
+    "license": "MIT",
+    "repository": "chalk/ansi-styles",
+    "licenseFile": "node_modules\\ansi-styles\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "antd",
+    "version": "4.16.7",
+    "license": "MIT",
+    "repository": "https://github.com/ant-design/ant-design",
+    "licenseFile": "node_modules\\antd\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "archiver",
+    "version": "2.1.1",
+    "license": "MIT",
+    "repository": "https://github.com/archiverjs/node-archiver",
+    "licenseFile": "node_modules\\archiver\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "archiver-utils",
+    "version": "1.3.0",
+    "license": "MIT",
+    "repository": "https://github.com/archiverjs/archiver-utils",
+    "licenseFile": "node_modules\\archiver-utils\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "argparse",
+    "version": "2.0.1",
+    "license": "Python-2.0",
+    "repository": "nodeca/argparse",
+    "licenseFile": "node_modules\\electron-updater\\node_modules\\argparse\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "arraybuffer.slice",
+    "version": "0.0.7",
+    "license": "MIT",
+    "repository": "git@github.com:rase-/arraybuffer.slice",
+    "licenseFile": "node_modules\\arraybuffer.slice\\LICENCE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "async",
+    "version": "2.6.4",
+    "license": "MIT",
+    "repository": "https://github.com/caolan/async",
+    "licenseFile": "node_modules\\archiver\\node_modules\\async\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "async-function",
+    "version": "1.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/ljharb/async-function",
+    "licenseFile": "node_modules\\async-function\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "async-generator-function",
+    "version": "1.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/ljharb/async-generator-function",
+    "licenseFile": "node_modules\\async-generator-function\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "async-limiter",
+    "version": "1.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/strml/async-limiter",
+    "licenseFile": "node_modules\\async-limiter\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "asynckit",
+    "version": "0.4.0",
+    "license": "MIT",
+    "repository": "https://github.com/alexindigo/asynckit",
+    "licenseFile": "node_modules\\asynckit\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "at-least-node",
+    "version": "1.0.0",
+    "license": "ISC",
+    "repository": "https://github.com/RyanZim/at-least-node",
+    "licenseFile": "node_modules\\at-least-node\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "available-typed-arrays",
+    "version": "1.0.5",
+    "license": "MIT",
+    "repository": "https://github.com/inspect-js/available-typed-arrays",
+    "licenseFile": "node_modules\\available-typed-arrays\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "aws-sdk",
+    "version": "2.1443.0",
+    "license": "Apache-2.0",
+    "repository": "git://github.com/aws/aws-sdk-js",
+    "licenseFile": "node_modules\\aws-sdk\\LICENSE.txt",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "backo2",
+    "version": "1.0.2",
+    "license": "MIT",
+    "repository": "mokesmokes/backo",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "balanced-match",
+    "version": "4.0.4",
+    "license": "MIT",
+    "repository": "git://github.com/juliangruber/balanced-match",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\balanced-match\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk",
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "base64-arraybuffer",
+    "version": "0.1.4",
+    "license": "MIT",
+    "repository": "https://github.com/niklasvh/base64-arraybuffer",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "base64-js",
+    "version": "1.5.1",
+    "license": "MIT",
+    "repository": "git://github.com/beatgammit/base64-js",
+    "licenseFile": "node_modules\\base64-js\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "bignumber.js",
+    "version": "9.1.2",
+    "license": "MIT",
+    "repository": "https://github.com/MikeMcl/bignumber.js",
+    "licenseFile": "node_modules\\bignumber.js\\LICENCE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "bindings",
+    "version": "1.5.0",
+    "license": "MIT",
+    "repository": "git://github.com/TooTallNate/node-bindings",
+    "licenseFile": "node_modules\\bindings\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "bl",
+    "version": "4.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/rvagg/bl",
+    "licenseFile": "node_modules\\bl\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "blob",
+    "version": "0.0.5",
+    "license": "MIT",
+    "repository": "git://github.com/webmodules/blob",
+    "licenseFile": "node_modules\\blob\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "brace-expansion",
+    "version": "5.0.5",
+    "license": "MIT",
+    "repository": "ssh://git@github.com/juliangruber/brace-expansion",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\brace-expansion\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk",
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "bson",
+    "version": "4.7.2",
+    "license": "Apache-2.0",
+    "repository": "mongodb/js-bson",
+    "licenseFile": "node_modules\\bson\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "buffer",
+    "version": "5.7.1",
+    "license": "MIT",
+    "repository": "git://github.com/feross/buffer",
+    "licenseFile": "node_modules\\buffer\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "buffer-alloc",
+    "version": "1.2.0",
+    "license": "MIT",
+    "repository": "LinusU/buffer-alloc",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "buffer-alloc-unsafe",
+    "version": "1.1.0",
+    "license": "MIT",
+    "repository": "LinusU/buffer-alloc-unsafe",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "buffer-crc32",
+    "version": "0.2.13",
+    "license": "MIT",
+    "repository": "git://github.com/brianloveswords/buffer-crc32",
+    "licenseFile": "node_modules\\buffer-crc32\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "buffer-equal-constant-time",
+    "version": "1.0.1",
+    "license": "BSD-3-Clause",
+    "repository": "git@github.com:goinstant/buffer-equal-constant-time",
+    "licenseFile": "node_modules\\buffer-equal-constant-time\\LICENSE.txt",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "buffer-fill",
+    "version": "1.0.0",
+    "license": "MIT",
+    "repository": "LinusU/buffer-fill",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "buffer-from",
+    "version": "1.1.1",
+    "license": "MIT",
+    "repository": "LinusU/buffer-from",
+    "licenseFile": "node_modules\\buffer-from\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "builder-util-runtime",
+    "version": "8.9.2",
+    "license": "MIT",
+    "repository": "https://github.com/electron-userland/electron-builder",
+    "licenseFile": "node_modules\\electron-updater\\node_modules\\builder-util-runtime\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "bytes",
+    "version": "3.1.1",
+    "license": "MIT",
+    "repository": "visionmedia/bytes.js",
+    "licenseFile": "node_modules\\bytes\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "cacache",
+    "version": "20.0.4",
+    "license": "ISC",
+    "repository": "https://github.com/npm/cacache",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\cacache\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "call-bind",
+    "version": "1.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/ljharb/call-bind",
+    "licenseFile": "node_modules\\call-bind\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "call-bind-apply-helpers",
+    "version": "1.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/ljharb/call-bind-apply-helpers",
+    "licenseFile": "node_modules\\call-bind-apply-helpers\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "charenc",
+    "version": "0.0.2",
+    "license": "BSD-3-Clause",
+    "repository": "git://github.com/pvorb/node-charenc",
+    "licenseFile": "node_modules\\charenc\\LICENSE.mkd",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "chownr",
+    "version": "3.0.0",
+    "license": "BlueOak-1.0.0",
+    "repository": "git://github.com/isaacs/chownr",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\chownr\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "classnames",
+    "version": "2.2.6",
+    "license": "MIT",
+    "repository": "https://github.com/JedWatson/classnames",
+    "licenseFile": "node_modules\\classnames\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "cliui",
+    "version": "8.0.1",
+    "license": "ISC",
+    "repository": "yargs/cliui",
+    "licenseFile": "node_modules\\yargs\\node_modules\\cliui\\LICENSE.txt",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "clsx",
+    "version": "1.2.1",
+    "license": "MIT",
+    "repository": "lukeed/clsx",
+    "licenseFile": "node_modules\\clsx\\license",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "codemirror",
+    "version": "5.63.1",
+    "license": "MIT",
+    "repository": "https://github.com/codemirror/CodeMirror",
+    "licenseFile": "node_modules\\codemirror\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "color",
+    "version": "4.2.3",
+    "license": "MIT",
+    "repository": "Qix-/color",
+    "licenseFile": "node_modules\\sharp\\node_modules\\color\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "color-convert",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "Qix-/color-convert",
+    "licenseFile": "node_modules\\color-convert\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "color-name",
+    "version": "1.1.4",
+    "license": "MIT",
+    "repository": "git@github.com:colorjs/color-name",
+    "licenseFile": "node_modules\\color-name\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "color-string",
+    "version": "1.9.1",
+    "license": "MIT",
+    "repository": "Qix-/color-string",
+    "licenseFile": "node_modules\\color-string\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "colorspace",
+    "version": "1.1.4",
+    "license": "MIT",
+    "repository": "https://github.com/3rd-Eden/colorspace",
+    "licenseFile": "node_modules\\colorspace\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "combined-stream",
+    "version": "1.0.8",
+    "license": "MIT",
+    "repository": "git://github.com/felixge/node-combined-stream",
+    "licenseFile": "node_modules\\combined-stream\\License",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "component-bind",
+    "version": "1.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/component/bind",
+    "licenseFile": null,
+    "note": "README states MIT; no license field/file",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "component-emitter",
+    "version": "1.3.0",
+    "license": "MIT",
+    "repository": "https://github.com/component/emitter",
+    "licenseFile": "node_modules\\component-emitter\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "component-inherit",
+    "version": "0.0.3",
+    "license": "MIT",
+    "repository": "https://github.com/component/inherit",
+    "licenseFile": null,
+    "note": "README states MIT; no license field/file",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "compress-commons",
+    "version": "1.2.2",
+    "license": "MIT",
+    "repository": "https://github.com/archiverjs/node-compress-commons",
+    "licenseFile": "node_modules\\compress-commons\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "concat-map",
+    "version": "0.0.1",
+    "license": "MIT",
+    "repository": "git://github.com/substack/node-concat-map",
+    "licenseFile": "node_modules\\concat-map\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "concat-stream",
+    "version": "1.6.2",
+    "license": "MIT",
+    "repository": "http://github.com/maxogden/concat-stream",
+    "licenseFile": "node_modules\\concat-stream\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "content-disposition",
+    "version": "0.5.2",
+    "license": "MIT",
+    "repository": "jshttp/content-disposition",
+    "licenseFile": "node_modules\\content-disposition\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "cookie",
+    "version": "0.3.1",
+    "license": "MIT",
+    "repository": "jshttp/cookie",
+    "licenseFile": "node_modules\\cookie\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "core-util-is",
+    "version": "1.0.2",
+    "license": "MIT",
+    "repository": "git://github.com/isaacs/core-util-is",
+    "licenseFile": "node_modules\\core-util-is\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "crc",
+    "version": "3.5.0",
+    "license": "MIT",
+    "repository": "git://github.com/alexgorbatchev/node-crc",
+    "licenseFile": "node_modules\\crc\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "crc32-stream",
+    "version": "2.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/archiverjs/node-crc32-stream",
+    "licenseFile": "node_modules\\crc32-stream\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "cross-spawn",
+    "version": "7.0.3",
+    "license": "MIT",
+    "repository": "git@github.com:moxystudio/node-cross-spawn",
+    "licenseFile": "node_modules\\cross-spawn\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "crypt",
+    "version": "0.0.2",
+    "license": "BSD-3-Clause",
+    "repository": "git://github.com/pvorb/node-crypt",
+    "licenseFile": "node_modules\\crypt\\LICENSE.mkd",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "crypto-js",
+    "version": "4.2.0",
+    "license": "MIT",
+    "repository": "http://github.com/brix/crypto-js",
+    "licenseFile": "node_modules\\crypto-js\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "css-loader",
+    "version": "2.1.1",
+    "license": "MIT",
+    "repository": "webpack-contrib/css-loader",
+    "licenseFile": "node_modules\\css-loader\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "csstype",
+    "version": "3.0.5",
+    "license": "MIT",
+    "repository": "https://github.com/frenic/csstype",
+    "licenseFile": "node_modules\\csstype\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "csv-parser",
+    "version": "1.12.1",
+    "license": "MIT",
+    "repository": "https://github.com/mafintosh/csv-parser",
+    "licenseFile": "node_modules\\csv-parser\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "deasync",
+    "version": "0.1.31",
+    "license": "MIT",
+    "repository": "https://github.com/abbr/deasync",
+    "licenseFile": "node_modules\\deasync\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "debug",
+    "version": "4.3.4",
+    "license": "MIT",
+    "repository": "git://github.com/debug-js/debug",
+    "licenseFile": "node_modules\\@npmcli\\agent\\node_modules\\socks-proxy-agent\\node_modules\\debug\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "decompress-response",
+    "version": "6.0.0",
+    "license": "MIT",
+    "repository": "sindresorhus/decompress-response",
+    "licenseFile": "node_modules\\decompress-response\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "deep-extend",
+    "version": "0.6.0",
+    "license": "MIT",
+    "repository": "git://github.com/unclechu/node-deep-extend",
+    "licenseFile": "node_modules\\deep-extend\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "delayed-stream",
+    "version": "1.0.0",
+    "license": "MIT",
+    "repository": "git://github.com/felixge/node-delayed-stream",
+    "licenseFile": "node_modules\\delayed-stream\\License",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "detect-libc",
+    "version": "2.0.3",
+    "license": "Apache-2.0",
+    "repository": "git://github.com/lovell/detect-libc",
+    "licenseFile": "node_modules\\detect-libc\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "dom-helpers",
+    "version": "5.2.0",
+    "license": "MIT",
+    "repository": "https://github.com/react-bootstrap/dom-helpers",
+    "licenseFile": "node_modules\\dom-helpers\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "dunder-proto",
+    "version": "1.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/es-shims/dunder-proto",
+    "licenseFile": "node_modules\\dunder-proto\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "duplexify",
+    "version": "4.1.3",
+    "license": "MIT",
+    "repository": "git://github.com/mafintosh/duplexify",
+    "licenseFile": "node_modules\\duplexify\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "ecdsa-sig-formatter",
+    "version": "1.0.11",
+    "license": "Apache-2.0",
+    "repository": "ssh://git@github.com/Brightspace/node-ecdsa-sig-formatter",
+    "licenseFile": "node_modules\\ecdsa-sig-formatter\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "electron-react-devtools",
+    "version": "0.5.3",
+    "license": "MIT",
+    "repository": "https://github.com/firejune/electron-react-devtools",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "electron-updater",
+    "version": "4.6.5",
+    "license": "MIT",
+    "repository": "https://github.com/electron-userland/electron-builder",
+    "licenseFile": "node_modules\\electron-updater\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "electron-window-state",
+    "version": "5.0.3",
+    "license": "MIT",
+    "repository": "mawie81/electron-window-state",
+    "licenseFile": "node_modules\\electron-window-state\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "emittery",
+    "version": "0.8.1",
+    "license": "MIT",
+    "repository": "sindresorhus/emittery",
+    "licenseFile": "node_modules\\emittery\\license",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "emoji-regex",
+    "version": "8.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/mathiasbynens/emoji-regex",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "enabled",
+    "version": "2.0.0",
+    "license": "MIT",
+    "repository": "git://github.com/3rd-Eden/enabled",
+    "licenseFile": "node_modules\\enabled\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "end-of-stream",
+    "version": "1.4.4",
+    "license": "MIT",
+    "repository": "git://github.com/mafintosh/end-of-stream",
+    "licenseFile": "node_modules\\end-of-stream\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "engine.io-client",
+    "version": "3.4.4",
+    "license": "MIT",
+    "repository": "https://github.com/socketio/engine.io-client",
+    "licenseFile": "node_modules\\engine.io-client\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "engine.io-parser",
+    "version": "2.2.1",
+    "license": "MIT",
+    "repository": "git@github.com:socketio/engine.io-parser",
+    "licenseFile": "node_modules\\engine.io-parser\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "env-paths",
+    "version": "2.2.0",
+    "license": "MIT",
+    "repository": "sindresorhus/env-paths",
+    "licenseFile": "node_modules\\env-paths\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "es-define-property",
+    "version": "1.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/ljharb/es-define-property",
+    "licenseFile": "node_modules\\es-define-property\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "es-errors",
+    "version": "1.3.0",
+    "license": "MIT",
+    "repository": "https://github.com/ljharb/es-errors",
+    "licenseFile": "node_modules\\es-errors\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "es-object-atoms",
+    "version": "1.1.1",
+    "license": "MIT",
+    "repository": "https://github.com/ljharb/es-object-atoms",
+    "licenseFile": "node_modules\\es-object-atoms\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "es-set-tostringtag",
+    "version": "2.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/es-shims/es-set-tostringtag",
+    "licenseFile": "node_modules\\es-set-tostringtag\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "escalade",
+    "version": "3.1.1",
+    "license": "MIT",
+    "repository": "lukeed/escalade",
+    "licenseFile": "node_modules\\escalade\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "event-target-shim",
+    "version": "5.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/mysticatea/event-target-shim",
+    "licenseFile": "node_modules\\event-target-shim\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "events",
+    "version": "1.1.1",
+    "license": "MIT",
+    "repository": "git://github.com/Gozala/events",
+    "licenseFile": "node_modules\\aws-sdk\\node_modules\\events\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "execa",
+    "version": "5.0.0",
+    "license": "MIT",
+    "repository": "sindresorhus/execa",
+    "licenseFile": "node_modules\\execa\\license",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "expand-template",
+    "version": "2.0.3",
+    "license": "(MIT OR WTFPL)",
+    "repository": "https://github.com/ralphtheninja/expand-template",
+    "licenseFile": "node_modules\\expand-template\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "exponential-backoff",
+    "version": "3.1.3",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/coveooss/exponential-backoff",
+    "licenseFile": "node_modules\\exponential-backoff\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "extend",
+    "version": "3.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/justmoon/node-extend",
+    "licenseFile": "node_modules\\extend\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "extract-zip",
+    "version": "1.6.7",
+    "license": "BSD-2-Clause",
+    "repository": "maxogden/extract-zip",
+    "licenseFile": "node_modules\\extract-zip\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "fast-url-parser",
+    "version": "1.1.3",
+    "license": "MIT",
+    "repository": "git://github.com/petkaantonov/urlparser",
+    "licenseFile": "node_modules\\fast-url-parser\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "faye-websocket",
+    "version": "0.11.4",
+    "license": "Apache-2.0",
+    "repository": "git://github.com/faye/faye-websocket-node",
+    "licenseFile": "node_modules\\faye-websocket\\LICENSE.md",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "fd-slicer",
+    "version": "1.0.1",
+    "license": "MIT",
+    "repository": "git://github.com/andrewrk/node-fd-slicer",
+    "licenseFile": "node_modules\\extract-zip\\node_modules\\fd-slicer\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "fdir",
+    "version": "6.5.0",
+    "license": "MIT",
+    "repository": "https://github.com/thecodrr/fdir",
+    "licenseFile": "node_modules\\fdir\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "fecha",
+    "version": "4.2.3",
+    "license": "MIT",
+    "repository": "https://taylorhakes@github.com/taylorhakes/fecha",
+    "licenseFile": "node_modules\\fecha\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "file-uri-to-path",
+    "version": "1.0.0",
+    "license": "MIT",
+    "repository": "git://github.com/TooTallNate/file-uri-to-path",
+    "licenseFile": "node_modules\\file-uri-to-path\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "fn.name",
+    "version": "1.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/3rd-Eden/fn.name",
+    "licenseFile": "node_modules\\fn.name\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "for-each",
+    "version": "0.3.3",
+    "license": "MIT",
+    "repository": "git://github.com/Raynos/for-each",
+    "licenseFile": "node_modules\\for-each\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "form-data",
+    "version": "4.0.5",
+    "license": "MIT",
+    "repository": "git://github.com/form-data/form-data",
+    "licenseFile": "node_modules\\form-data\\License",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "form-data-encoder",
+    "version": "1.7.2",
+    "license": "MIT",
+    "repository": "octet-stream/form-data-encoder",
+    "licenseFile": "node_modules\\form-data-encoder\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "formdata-node",
+    "version": "4.4.1",
+    "license": "MIT",
+    "repository": "octet-stream/form-data",
+    "licenseFile": "node_modules\\formdata-node\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "from2",
+    "version": "2.3.0",
+    "license": "MIT",
+    "repository": "git://github.com/hughsk/from2",
+    "licenseFile": "node_modules\\from2\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "fs-constants",
+    "version": "1.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/mafintosh/fs-constants",
+    "licenseFile": "node_modules\\fs-constants\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "fs-extra",
+    "version": "9.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/jprichardson/node-fs-extra",
+    "licenseFile": "node_modules\\fs-extra\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "fs-minipass",
+    "version": "3.0.3",
+    "license": "ISC",
+    "repository": "https://github.com/npm/fs-minipass",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\fs-minipass\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "function-bind",
+    "version": "1.1.2",
+    "license": "MIT",
+    "repository": "https://github.com/Raynos/function-bind",
+    "licenseFile": "node_modules\\hasown\\node_modules\\function-bind\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "fuse.js",
+    "version": "3.4.6",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/krisk/Fuse",
+    "licenseFile": "node_modules\\fuse.js\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "gaxios",
+    "version": "6.7.1",
+    "license": "Apache-2.0",
+    "repository": "googleapis/gaxios",
+    "licenseFile": "node_modules\\gaxios\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "gcp-metadata",
+    "version": "6.1.0",
+    "license": "Apache-2.0",
+    "repository": "googleapis/gcp-metadata",
+    "licenseFile": "node_modules\\gcp-metadata\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "generate-function",
+    "version": "1.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/mafintosh/generate-function",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "generate-object-property",
+    "version": "1.2.0",
+    "license": "MIT",
+    "repository": "https://github.com/mafintosh/generate-object-property",
+    "licenseFile": "node_modules\\generate-object-property\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "generator-function",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/TimothyGu/generator-function",
+    "licenseFile": "node_modules\\generator-function\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "get-caller-file",
+    "version": "2.0.5",
+    "license": "ISC",
+    "repository": "https://github.com/stefanpenner/get-caller-file",
+    "licenseFile": "node_modules\\get-caller-file\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "get-intrinsic",
+    "version": "1.3.1",
+    "license": "MIT",
+    "repository": "https://github.com/ljharb/get-intrinsic",
+    "licenseFile": "node_modules\\get-intrinsic\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "get-proto",
+    "version": "1.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/ljharb/get-proto",
+    "licenseFile": "node_modules\\get-proto\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "get-stream",
+    "version": "2.3.1",
+    "license": "MIT",
+    "repository": "sindresorhus/get-stream",
+    "licenseFile": "node_modules\\neat-csv\\node_modules\\get-stream\\license",
+    "note": "",
+    "source": [
+      "on-disk",
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "github-from-package",
+    "version": "0.0.0",
+    "license": "MIT",
+    "repository": "git://github.com/substack/github-from-package",
+    "licenseFile": "node_modules\\github-from-package\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "gl-transitions",
+    "version": "1.43.0",
+    "license": "MIT",
+    "repository": "https://github.com/gl-transitions/gl-transitions",
+    "licenseFile": null,
+    "note": "Repo LICENSE is MIT; some transitions carry their own header license",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "glob",
+    "version": "13.0.6",
+    "license": "BlueOak-1.0.0",
+    "repository": "git@github.com:isaacs/node-glob",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\glob\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "google-auth-library",
+    "version": "9.15.0",
+    "license": "Apache-2.0",
+    "repository": "googleapis/google-auth-library-nodejs",
+    "licenseFile": "node_modules\\google-auth-library\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "google-gax",
+    "version": "4.4.1",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/googleapis/gax-nodejs",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "google-protobuf",
+    "version": "3.21.4",
+    "license": "(BSD-3-Clause AND Apache-2.0)",
+    "repository": "https://github.com/protocolbuffers/protobuf-javascript",
+    "licenseFile": "node_modules\\google-protobuf\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "gopd",
+    "version": "1.2.0",
+    "license": "MIT",
+    "repository": "https://github.com/ljharb/gopd",
+    "licenseFile": "node_modules\\gopd\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "graceful-fs",
+    "version": "4.2.8",
+    "license": "ISC",
+    "repository": "https://github.com/isaacs/node-graceful-fs",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\graceful-fs\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "gtoken",
+    "version": "7.1.0",
+    "license": "MIT",
+    "repository": "google/node-gtoken",
+    "licenseFile": "node_modules\\gtoken\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "has-binary2",
+    "version": "1.0.2",
+    "license": "MIT",
+    "repository": "",
+    "licenseFile": "node_modules\\has-binary2\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "has-cors",
+    "version": "1.1.0",
+    "license": "MIT",
+    "repository": "git://github.com/component/has-cors",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "has-symbols",
+    "version": "1.0.3",
+    "license": "MIT",
+    "repository": "git://github.com/inspect-js/has-symbols",
+    "licenseFile": "node_modules\\es-set-tostringtag\\node_modules\\has-symbols\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "has-tostringtag",
+    "version": "1.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/inspect-js/has-tostringtag",
+    "licenseFile": "node_modules\\es-set-tostringtag\\node_modules\\has-tostringtag\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "hasown",
+    "version": "2.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/inspect-js/hasOwn",
+    "licenseFile": "node_modules\\hasown\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "http-cache-semantics",
+    "version": "4.2.0",
+    "license": "BSD-2-Clause",
+    "repository": "https://github.com/kornelski/http-cache-semantics",
+    "licenseFile": "node_modules\\http-cache-semantics\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "http-parser-js",
+    "version": "0.4.9",
+    "license": "MIT",
+    "repository": "git://github.com/creationix/http-parser-js",
+    "licenseFile": "node_modules\\http-parser-js\\LICENSE.md",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "http-proxy-agent",
+    "version": "7.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/TooTallNate/proxy-agents",
+    "licenseFile": "node_modules\\@npmcli\\agent\\node_modules\\http-proxy-agent\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "https-proxy-agent",
+    "version": "7.0.5",
+    "license": "MIT",
+    "repository": "https://github.com/TooTallNate/proxy-agents",
+    "licenseFile": "node_modules\\@npmcli\\agent\\node_modules\\https-proxy-agent\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "human-signals",
+    "version": "2.1.0",
+    "license": "Apache-2.0",
+    "repository": "ehmicky/human-signals",
+    "licenseFile": "node_modules\\human-signals\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "humanize-ms",
+    "version": "1.2.1",
+    "license": "MIT",
+    "repository": "https://github.com/node-modules/humanize-ms",
+    "licenseFile": "node_modules\\humanize-ms\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "humps",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "git://github.com/domchristie/humps",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "iconv-lite",
+    "version": "0.7.2",
+    "license": "MIT",
+    "repository": "https://github.com/pillarjs/iconv-lite",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\iconv-lite\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "ieee754",
+    "version": "1.2.1",
+    "license": "BSD-3-Clause",
+    "repository": "git://github.com/feross/ieee754",
+    "licenseFile": "node_modules\\ieee754\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "immer",
+    "version": "9.0.12",
+    "license": "MIT",
+    "repository": "https://github.com/immerjs/immer",
+    "licenseFile": "node_modules\\immer\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "indexof",
+    "version": "0.0.1",
+    "license": "MIT",
+    "repository": "",
+    "licenseFile": null,
+    "note": "README states MIT; no license field/file",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "inherits",
+    "version": "2.0.4",
+    "license": "ISC",
+    "repository": "git://github.com/isaacs/inherits",
+    "licenseFile": "node_modules\\inherits\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "ini",
+    "version": "1.3.7",
+    "license": "ISC",
+    "repository": "git://github.com/isaacs/ini",
+    "licenseFile": "node_modules\\ini\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "into-stream",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "sindresorhus/into-stream",
+    "licenseFile": "node_modules\\into-stream\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "ip-address",
+    "version": "10.1.0",
+    "license": "MIT",
+    "repository": "git://github.com/beaugunderson/ip-address",
+    "licenseFile": "node_modules\\ip-address\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "is",
+    "version": "3.3.0",
+    "license": "MIT",
+    "repository": "git://github.com/enricomarino/is",
+    "licenseFile": "node_modules\\is\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "is-arguments",
+    "version": "1.1.1",
+    "license": "MIT",
+    "repository": "git://github.com/inspect-js/is-arguments",
+    "licenseFile": "node_modules\\is-arguments\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "is-arrayish",
+    "version": "0.3.2",
+    "license": "MIT",
+    "repository": "https://github.com/qix-/node-is-arrayish",
+    "licenseFile": "node_modules\\is-arrayish\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "is-buffer",
+    "version": "1.1.6",
+    "license": "MIT",
+    "repository": "git://github.com/feross/is-buffer",
+    "licenseFile": "node_modules\\is-buffer\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "is-callable",
+    "version": "1.2.7",
+    "license": "MIT",
+    "repository": "git://github.com/inspect-js/is-callable",
+    "licenseFile": "node_modules\\for-each\\node_modules\\is-callable\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "is-fullwidth-code-point",
+    "version": "3.0.0",
+    "license": "MIT",
+    "repository": "sindresorhus/is-fullwidth-code-point",
+    "licenseFile": "node_modules\\is-fullwidth-code-point\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "is-generator-function",
+    "version": "1.0.10",
+    "license": "MIT",
+    "repository": "git://github.com/inspect-js/is-generator-function",
+    "licenseFile": "node_modules\\is-generator-function\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "is-property",
+    "version": "1.0.2",
+    "license": "MIT",
+    "repository": "git://github.com/mikolalysenko/is-property",
+    "licenseFile": "node_modules\\is-property\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "is-stream",
+    "version": "2.0.0",
+    "license": "MIT",
+    "repository": "sindresorhus/is-stream",
+    "licenseFile": "node_modules\\is-stream\\license",
+    "note": "",
+    "source": [
+      "on-disk",
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "is-typed-array",
+    "version": "1.1.12",
+    "license": "MIT",
+    "repository": "git://github.com/inspect-js/is-typed-array",
+    "licenseFile": "node_modules\\is-typed-array\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "isarray",
+    "version": "1.0.0",
+    "license": "MIT",
+    "repository": "git://github.com/juliangruber/isarray",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "isexe",
+    "version": "4.0.0",
+    "license": "BlueOak-1.0.0",
+    "repository": "https://github.com/isaacs/isexe",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\isexe\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk",
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "jmespath",
+    "version": "0.16.0",
+    "license": "Apache-2.0",
+    "repository": "git://github.com/jmespath/jmespath.js",
+    "licenseFile": "node_modules\\jmespath\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "js-tokens",
+    "version": "4.0.0",
+    "license": "MIT",
+    "repository": "lydell/js-tokens",
+    "licenseFile": "node_modules\\js-tokens\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "js-yaml",
+    "version": "4.1.1",
+    "license": "MIT",
+    "repository": "nodeca/js-yaml",
+    "licenseFile": "node_modules\\electron-updater\\node_modules\\js-yaml\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "json-bigint",
+    "version": "1.0.0",
+    "license": "MIT",
+    "repository": "git@github.com:sidorares/json-bigint",
+    "licenseFile": "node_modules\\json-bigint\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "json-stringify-safe",
+    "version": "5.0.1",
+    "license": "ISC",
+    "repository": "git://github.com/isaacs/json-stringify-safe",
+    "licenseFile": "node_modules\\json-stringify-safe\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "jsonfile",
+    "version": "6.0.1",
+    "license": "MIT",
+    "repository": "git@github.com:jprichardson/node-jsonfile",
+    "licenseFile": "node_modules\\jsonfile\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "jwa",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "git://github.com/brianloveswords/node-jwa",
+    "licenseFile": "node_modules\\jwa\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "jws",
+    "version": "4.0.1",
+    "license": "MIT",
+    "repository": "git://github.com/brianloveswords/node-jws",
+    "licenseFile": "node_modules\\jws\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "kuler",
+    "version": "2.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/3rd-Eden/kuler",
+    "licenseFile": "node_modules\\kuler\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "lazy-val",
+    "version": "1.0.5",
+    "license": "MIT",
+    "repository": "develar/lazy-val",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "lazystream",
+    "version": "1.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/jpommerening/node-lazystream",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "lodash",
+    "version": "4.17.23",
+    "license": "MIT",
+    "repository": "lodash/lodash",
+    "licenseFile": "node_modules\\lodash\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk",
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "lodash-decorators",
+    "version": "4.5.0",
+    "license": "MIT",
+    "repository": "http://github.com/steelsojka/lodash-decorators",
+    "licenseFile": "node_modules\\lodash-decorators\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "lodash.camelcase",
+    "version": "4.3.0",
+    "license": "MIT",
+    "repository": "lodash/lodash",
+    "licenseFile": "node_modules\\lodash.camelcase\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "lodash.escaperegexp",
+    "version": "4.1.2",
+    "license": "MIT",
+    "repository": "lodash/lodash",
+    "licenseFile": "node_modules\\lodash.escaperegexp\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "lodash.isequal",
+    "version": "4.5.0",
+    "license": "MIT",
+    "repository": "lodash/lodash",
+    "licenseFile": "node_modules\\lodash.isequal\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "logform",
+    "version": "2.6.1",
+    "license": "MIT",
+    "repository": "https://github.com/winstonjs/logform",
+    "licenseFile": "node_modules\\logform\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "long",
+    "version": "5.2.3",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/dcodeIO/long.js",
+    "licenseFile": "node_modules\\long\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "loose-envify",
+    "version": "1.4.0",
+    "license": "MIT",
+    "repository": "git://github.com/zertosh/loose-envify",
+    "licenseFile": "node_modules\\loose-envify\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "lru-cache",
+    "version": "6.0.0",
+    "license": "ISC",
+    "repository": "git://github.com/isaacs/node-lru-cache",
+    "licenseFile": "node_modules\\lru-cache\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "make-fetch-happen",
+    "version": "15.0.5",
+    "license": "ISC",
+    "repository": "https://github.com/npm/make-fetch-happen",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\make-fetch-happen\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "mark.js",
+    "version": "8.11.1",
+    "license": "MIT",
+    "repository": "julmot/mark.js",
+    "licenseFile": "node_modules\\mark.js\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "math-intrinsics",
+    "version": "1.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/es-shims/math-intrinsics",
+    "licenseFile": "node_modules\\math-intrinsics\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "md5",
+    "version": "2.2.1",
+    "license": "BSD-3-Clause",
+    "repository": "git://github.com/pvorb/node-md5",
+    "licenseFile": "node_modules\\md5\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "merge-stream",
+    "version": "2.0.0",
+    "license": "MIT",
+    "repository": "grncdr/merge-stream",
+    "licenseFile": "node_modules\\merge-stream\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "mime",
+    "version": "2.4.3",
+    "license": "MIT",
+    "repository": "https://github.com/broofa/node-mime",
+    "licenseFile": "node_modules\\mime\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "mime-db",
+    "version": "1.52.0",
+    "license": "MIT",
+    "repository": "jshttp/mime-db",
+    "licenseFile": "node_modules\\mime-db\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk",
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "mime-types",
+    "version": "2.1.35",
+    "license": "MIT",
+    "repository": "jshttp/mime-types",
+    "licenseFile": "node_modules\\mime-types\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk",
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "mimic-fn",
+    "version": "2.1.0",
+    "license": "MIT",
+    "repository": "sindresorhus/mimic-fn",
+    "licenseFile": "node_modules\\mimic-fn\\license",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "mimic-function",
+    "version": "5.0.1",
+    "license": "MIT",
+    "repository": "sindresorhus/mimic-function",
+    "licenseFile": "node_modules\\mimic-function\\license",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "mimic-response",
+    "version": "3.1.0",
+    "license": "MIT",
+    "repository": "sindresorhus/mimic-response",
+    "licenseFile": "node_modules\\decompress-response\\node_modules\\mimic-response\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "minimatch",
+    "version": "10.2.5",
+    "license": "BlueOak-1.0.0",
+    "repository": "git@github.com:isaacs/minimatch",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\minimatch\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk",
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "minimist",
+    "version": "1.2.6",
+    "license": "MIT",
+    "repository": "git://github.com/substack/minimist",
+    "licenseFile": "node_modules\\minimist\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "minipass",
+    "version": "7.1.3",
+    "license": "BlueOak-1.0.0",
+    "repository": "https://github.com/isaacs/minipass",
+    "licenseFile": "node_modules\\minipass\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "minipass-collect",
+    "version": "2.0.1",
+    "license": "ISC",
+    "repository": "https://github.com/isaacs/minipass-collect",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\minipass-collect\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "minipass-fetch",
+    "version": "5.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/npm/minipass-fetch",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\minipass-fetch\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "minipass-flush",
+    "version": "1.0.5",
+    "license": "ISC",
+    "repository": "https://github.com/isaacs/minipass-flush",
+    "licenseFile": "node_modules\\minipass-flush\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "minipass-pipeline",
+    "version": "1.2.4",
+    "license": "ISC",
+    "repository": "",
+    "licenseFile": "node_modules\\minipass-pipeline\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "minipass-sized",
+    "version": "2.0.0",
+    "license": "ISC",
+    "repository": "https://github.com/isaacs/minipass-sized",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\minipass-sized\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "minizlib",
+    "version": "3.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/isaacs/minizlib",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\minizlib\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "mkdirp",
+    "version": "0.5.1",
+    "license": "MIT",
+    "repository": "https://github.com/substack/node-mkdirp",
+    "licenseFile": "node_modules\\extract-zip\\node_modules\\mkdirp\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "mkdirp-classic",
+    "version": "0.5.3",
+    "license": "MIT",
+    "repository": "https://github.com/mafintosh/mkdirp-classic",
+    "licenseFile": "node_modules\\mkdirp-classic\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "module-alias",
+    "version": "2.2.3",
+    "license": "MIT",
+    "repository": "https://github.com/ilearnio/module-alias",
+    "licenseFile": "node_modules\\module-alias\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "moment",
+    "version": "2.29.4",
+    "license": "MIT",
+    "repository": "https://github.com/moment/moment",
+    "licenseFile": "node_modules\\moment\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "ms",
+    "version": "2.1.2",
+    "license": "MIT",
+    "repository": "zeit/ms",
+    "licenseFile": "node_modules\\ms\\license.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "nan",
+    "version": "2.14.1",
+    "license": "MIT",
+    "repository": "git://github.com/nodejs/nan",
+    "licenseFile": "node_modules\\nan\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "napi-build-utils",
+    "version": "2.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/inspiredware/napi-build-utils",
+    "licenseFile": "node_modules\\napi-build-utils\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "ndjson",
+    "version": "1.5.0",
+    "license": "BSD-3-Clause",
+    "repository": "git://github.com/maxogden/ndjson",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "neat-csv",
+    "version": "2.1.0",
+    "license": "MIT",
+    "repository": "sindresorhus/neat-csv",
+    "licenseFile": "node_modules\\neat-csv\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "negotiator",
+    "version": "1.0.0",
+    "license": "MIT",
+    "repository": "jshttp/negotiator",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\negotiator\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "node-abi",
+    "version": "3.45.0",
+    "license": "MIT",
+    "repository": "https://github.com/electron/node-abi",
+    "licenseFile": "node_modules\\node-abi\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "node-addon-api",
+    "version": "1.7.2",
+    "license": "MIT",
+    "repository": "git://github.com/nodejs/node-addon-api",
+    "licenseFile": "node_modules\\node-addon-api\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "node-domexception",
+    "version": "1.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/jimmywarting/node-domexception",
+    "licenseFile": "node_modules\\node-domexception\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "node-fetch",
+    "version": "2.7.0",
+    "license": "MIT",
+    "repository": "https://github.com/bitinn/node-fetch",
+    "licenseFile": "node_modules\\node-fetch\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "node-gyp",
+    "version": "12.2.0",
+    "license": "MIT",
+    "repository": "git://github.com/nodejs/node-gyp",
+    "licenseFile": "node_modules\\node-gyp\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "node-machine-id",
+    "version": "1.1.12",
+    "license": "MIT",
+    "repository": "git@github.com:automation-stack/node-machine-id",
+    "licenseFile": "node_modules\\node-machine-id\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "node-screenshots",
+    "version": "0.2.2",
+    "license": "Apache-2.0",
+    "repository": "",
+    "licenseFile": "node_modules\\node-screenshots\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "node-screenshots-win32-x64-msvc",
+    "version": "0.2.2",
+    "license": "Apache-2.0",
+    "repository": "",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "node-win32-np",
+    "version": "1.0.6",
+    "license": "MIT",
+    "repository": "",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "nopt",
+    "version": "9.0.0",
+    "license": "ISC",
+    "repository": "https://github.com/npm/nopt",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\nopt\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "normalize-path",
+    "version": "2.1.1",
+    "license": "MIT",
+    "repository": "jonschlinkert/normalize-path",
+    "licenseFile": "node_modules\\compress-commons\\node_modules\\normalize-path\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "npm-run-path",
+    "version": "4.0.1",
+    "license": "MIT",
+    "repository": "sindresorhus/npm-run-path",
+    "licenseFile": "node_modules\\npm-run-path\\license",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "object-assign",
+    "version": "4.1.1",
+    "license": "MIT",
+    "repository": "sindresorhus/object-assign",
+    "licenseFile": "node_modules\\object-assign\\license",
+    "note": "",
+    "source": [
+      "on-disk",
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "object-hash",
+    "version": "3.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/puleos/object-hash",
+    "licenseFile": "node_modules\\object-hash\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "once",
+    "version": "1.4.0",
+    "license": "ISC",
+    "repository": "git://github.com/isaacs/once",
+    "licenseFile": "node_modules\\once\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "one-time",
+    "version": "1.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/3rd-Eden/one-time",
+    "licenseFile": "node_modules\\one-time\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "onetime",
+    "version": "5.1.2",
+    "license": "MIT",
+    "repository": "sindresorhus/onetime",
+    "licenseFile": "node_modules\\onetime\\license",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "openai",
+    "version": "4.80.1",
+    "license": "Apache-2.0",
+    "repository": "github:openai/openai-node",
+    "licenseFile": "node_modules\\openai\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "overlayscrollbars",
+    "version": "1.13.0",
+    "license": "MIT",
+    "repository": "https://github.com/KingSora/OverlayScrollbars",
+    "licenseFile": "node_modules\\overlayscrollbars\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "overlayscrollbars-react",
+    "version": "0.2.2",
+    "license": "MIT",
+    "repository": "https://github.com/KingSora/OverlayScrollbars",
+    "licenseFile": "node_modules\\overlayscrollbars-react\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk",
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "overlayscrollbars-vue",
+    "version": "0.2.2",
+    "license": "MIT",
+    "repository": "https://github.com/KingSora/OverlayScrollbars",
+    "licenseFile": "node_modules\\overlayscrollbars-vue\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "p-map",
+    "version": "7.0.4",
+    "license": "MIT",
+    "repository": "sindresorhus/p-map",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\p-map\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "p-memoize",
+    "version": "8.0.0",
+    "license": "MIT",
+    "repository": "sindresorhus/p-memoize",
+    "licenseFile": "node_modules\\p-memoize\\license",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "parseqs",
+    "version": "0.0.6",
+    "license": "MIT",
+    "repository": "https://github.com/get/querystring",
+    "licenseFile": "node_modules\\parseqs\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "parseuri",
+    "version": "0.0.6",
+    "license": "MIT",
+    "repository": "https://github.com/get/parseuri",
+    "licenseFile": "node_modules\\parseuri\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "path-browserify",
+    "version": "1.0.1",
+    "license": "MIT",
+    "repository": "git://github.com/browserify/path-browserify",
+    "licenseFile": "node_modules\\path-browserify\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "path-is-inside",
+    "version": "1.0.2",
+    "license": "(WTFPL OR MIT)",
+    "repository": "domenic/path-is-inside",
+    "licenseFile": "node_modules\\path-is-inside\\LICENSE.txt",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "path-key",
+    "version": "3.1.1",
+    "license": "MIT",
+    "repository": "sindresorhus/path-key",
+    "licenseFile": "node_modules\\path-key\\license",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "path-scurry",
+    "version": "2.0.2",
+    "license": "BlueOak-1.0.0",
+    "repository": "https://github.com/isaacs/path-scurry",
+    "licenseFile": "node_modules\\path-scurry\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "path-to-regexp",
+    "version": "2.2.1",
+    "license": "MIT",
+    "repository": "https://github.com/pillarjs/path-to-regexp",
+    "licenseFile": "node_modules\\path-to-regexp\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "pend",
+    "version": "1.2.0",
+    "license": "MIT",
+    "repository": "git://github.com/andrewrk/node-pend",
+    "licenseFile": "node_modules\\pend\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "picomatch",
+    "version": "4.0.4",
+    "license": "MIT",
+    "repository": "micromatch/picomatch",
+    "licenseFile": "node_modules\\picomatch\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "pify",
+    "version": "2.3.0",
+    "license": "MIT",
+    "repository": "sindresorhus/pify",
+    "licenseFile": "node_modules\\pify\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "pinkie",
+    "version": "2.0.4",
+    "license": "MIT",
+    "repository": "floatdrop/pinkie",
+    "licenseFile": "node_modules\\pinkie\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "pinkie-promise",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "floatdrop/pinkie-promise",
+    "licenseFile": "node_modules\\pinkie-promise\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "popper.js",
+    "version": "1.16.1",
+    "license": "MIT",
+    "repository": "https://github.com/FezVrasta/popper.js",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "prebuild-install",
+    "version": "7.1.2",
+    "license": "MIT",
+    "repository": "https://github.com/prebuild/prebuild-install",
+    "licenseFile": "node_modules\\prebuild-install\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "pretty-bytes",
+    "version": "5.6.0",
+    "license": "MIT",
+    "repository": "sindresorhus/pretty-bytes",
+    "licenseFile": "node_modules\\pretty-bytes\\license",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "proc-log",
+    "version": "6.1.0",
+    "license": "ISC",
+    "repository": "https://github.com/npm/proc-log",
+    "licenseFile": "node_modules\\proc-log\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "process-nextick-args",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/calvinmetcalf/process-nextick-args",
+    "licenseFile": "node_modules\\process-nextick-args\\license.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "prop-types",
+    "version": "15.7.2",
+    "license": "MIT",
+    "repository": "facebook/prop-types",
+    "licenseFile": "node_modules\\prop-types\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk",
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "proto3-json-serializer",
+    "version": "2.0.2",
+    "license": "Apache-2.0",
+    "repository": "googleapis/proto3-json-serializer-nodejs",
+    "licenseFile": "node_modules\\proto3-json-serializer\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "protobufjs",
+    "version": "7.4.0",
+    "license": "BSD-3-Clause",
+    "repository": "protobufjs/protobuf.js",
+    "licenseFile": "node_modules\\protobufjs\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "pump",
+    "version": "3.0.0",
+    "license": "MIT",
+    "repository": "git://github.com/mafintosh/pump",
+    "licenseFile": "node_modules\\pump\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "punycode",
+    "version": "1.3.2",
+    "license": "MIT",
+    "repository": "https://github.com/bestiejs/punycode.js",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "querystring",
+    "version": "0.2.0",
+    "license": "MIT",
+    "repository": "git://github.com/Gozala/querystring",
+    "licenseFile": "node_modules\\querystring\\License.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "range-parser",
+    "version": "1.2.0",
+    "license": "MIT",
+    "repository": "jshttp/range-parser",
+    "licenseFile": "node_modules\\range-parser\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "raven",
+    "version": "2.6.4",
+    "license": "BSD-2-Clause",
+    "repository": "git://github.com/getsentry/raven-js",
+    "licenseFile": "node_modules\\raven\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "rc",
+    "version": "1.2.8",
+    "license": "(BSD-2-Clause OR MIT OR Apache-2.0)",
+    "repository": "https://github.com/dominictarr/rc",
+    "licenseFile": "node_modules\\rc\\LICENSE.APACHE2",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "rc-animate",
+    "version": "3.1.1",
+    "license": "MIT",
+    "repository": "git@github.com:react-component/animate",
+    "licenseFile": "node_modules\\rc-animate\\LICENSE.md",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "rc-util",
+    "version": "5.13.2",
+    "license": "MIT",
+    "repository": "git@github.com:react-component/util",
+    "licenseFile": "node_modules\\rc-util\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "react",
+    "version": "17.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/facebook/react",
+    "licenseFile": "node_modules\\react\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "react-colorful",
+    "version": "5.5.0",
+    "license": "MIT",
+    "repository": "omgovich/react-colorful",
+    "licenseFile": "node_modules\\react-colorful\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk",
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "react-devtools-electron",
+    "version": "4.7.0",
+    "license": "MIT",
+    "repository": "https://dimitarnestorov@github.com/dimitarnestorov/react-devtools-electron",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "react-dom",
+    "version": "17.0.2",
+    "license": "MIT",
+    "repository": "https://github.com/facebook/react",
+    "licenseFile": "node_modules\\react-dom\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "react-draggable",
+    "version": "4.4.6",
+    "license": "MIT",
+    "repository": "https://github.com/react-grid-layout/react-draggable",
+    "licenseFile": "node_modules\\react-draggable\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "react-is",
+    "version": "16.13.1",
+    "license": "MIT",
+    "repository": "https://github.com/facebook/react",
+    "licenseFile": "node_modules\\react-is\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "react-resizable",
+    "version": "3.0.1",
+    "license": "MIT",
+    "repository": "git@github.com:react-grid-layout/react-resizable",
+    "licenseFile": "node_modules\\react-resizable\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "react-sortablejs",
+    "version": "6.0.0",
+    "license": "MIT",
+    "repository": "",
+    "licenseFile": "node_modules\\react-sortablejs\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "react-transition-group",
+    "version": "4.4.1",
+    "license": "BSD-3-Clause",
+    "repository": "https://github.com/reactjs/react-transition-group",
+    "licenseFile": "node_modules\\react-transition-group\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "readable-stream",
+    "version": "2.3.7",
+    "license": "MIT",
+    "repository": "git://github.com/nodejs/readable-stream",
+    "licenseFile": "node_modules\\readable-stream\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "realm",
+    "version": "12.7.1",
+    "license": "apache-2.0",
+    "repository": "https://github.com/realm/realm-js",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "remove-trailing-separator",
+    "version": "1.1.0",
+    "license": "ISC",
+    "repository": "https://github.com/darsain/remove-trailing-separator",
+    "licenseFile": "node_modules\\remove-trailing-separator\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "require-directory",
+    "version": "2.1.1",
+    "license": "MIT",
+    "repository": "git://github.com/troygoode/node-require-directory",
+    "licenseFile": "node_modules\\require-directory\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "resize-observer-polyfill",
+    "version": "1.5.1",
+    "license": "MIT",
+    "repository": "https://github.com/que-etc/resize-observer-polyfill",
+    "licenseFile": "node_modules\\resize-observer-polyfill\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "retry-request",
+    "version": "7.0.2",
+    "license": "MIT",
+    "repository": "stephenplusplus/retry-request",
+    "licenseFile": "node_modules\\retry-request\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "rimraf",
+    "version": "2.7.1",
+    "license": "ISC",
+    "repository": "git://github.com/isaacs/rimraf",
+    "licenseFile": "node_modules\\rimraf\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "rxjs",
+    "version": "6.3.3",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/reactivex/rxjs",
+    "licenseFile": "node_modules\\rxjs\\LICENSE.txt",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "safe-buffer",
+    "version": "5.1.2",
+    "license": "MIT",
+    "repository": "git://github.com/feross/safe-buffer",
+    "licenseFile": "node_modules\\readable-stream\\node_modules\\safe-buffer\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "safe-stable-stringify",
+    "version": "2.5.0",
+    "license": "MIT",
+    "repository": "https://github.com/BridgeAR/safe-stable-stringify",
+    "licenseFile": "node_modules\\safe-stable-stringify\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "safer-buffer",
+    "version": "2.1.2",
+    "license": "MIT",
+    "repository": "https://github.com/ChALkeR/safer-buffer",
+    "licenseFile": "node_modules\\safer-buffer\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "sax",
+    "version": "1.2.4",
+    "license": "ISC",
+    "repository": "git://github.com/isaacs/sax-js",
+    "licenseFile": "node_modules\\sax\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "scheduler",
+    "version": "0.20.2",
+    "license": "MIT",
+    "repository": "https://github.com/facebook/react",
+    "licenseFile": "node_modules\\scheduler\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "sec",
+    "version": "1.0.0",
+    "license": "MIT",
+    "repository": "sindresorhus/sec",
+    "licenseFile": "node_modules\\sec\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "semver",
+    "version": "7.5.4",
+    "license": "ISC",
+    "repository": "https://github.com/npm/node-semver",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\semver\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "serve-handler",
+    "version": "5.0.7",
+    "license": "MIT",
+    "repository": "zeit/serve-handler",
+    "licenseFile": "node_modules\\serve-handler\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "sharp",
+    "version": "0.33.5",
+    "license": "Apache-2.0",
+    "repository": "git://github.com/lovell/sharp",
+    "licenseFile": "node_modules\\sharp\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "shebang-command",
+    "version": "2.0.0",
+    "license": "MIT",
+    "repository": "kevva/shebang-command",
+    "licenseFile": "node_modules\\shebang-command\\license",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "shebang-regex",
+    "version": "3.0.0",
+    "license": "MIT",
+    "repository": "sindresorhus/shebang-regex",
+    "licenseFile": "node_modules\\shebang-regex\\license",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "signal-exit",
+    "version": "3.0.3",
+    "license": "ISC",
+    "repository": "https://github.com/tapjs/signal-exit",
+    "licenseFile": "node_modules\\signal-exit\\LICENSE.txt",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "simple-concat",
+    "version": "1.0.1",
+    "license": "MIT",
+    "repository": "git://github.com/feross/simple-concat",
+    "licenseFile": "node_modules\\simple-concat\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "simple-get",
+    "version": "4.0.1",
+    "license": "MIT",
+    "repository": "git://github.com/feross/simple-get",
+    "licenseFile": "node_modules\\simple-get\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "simple-swizzle",
+    "version": "0.2.2",
+    "license": "MIT",
+    "repository": "qix-/node-simple-swizzle",
+    "licenseFile": "node_modules\\simple-swizzle\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "slap",
+    "version": "0.1.83",
+    "license": "MIT",
+    "repository": "",
+    "licenseFile": "node_modules\\slap\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "smart-buffer",
+    "version": "4.2.0",
+    "license": "MIT",
+    "repository": "https://github.com/JoshGlazebrook/smart-buffer",
+    "licenseFile": "node_modules\\smart-buffer\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "socket.io-client",
+    "version": "2.3.1",
+    "license": "MIT",
+    "repository": "https://github.com/Automattic/socket.io-client",
+    "licenseFile": "node_modules\\socket.io-client\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "socket.io-parser",
+    "version": "3.3.4",
+    "license": "MIT",
+    "repository": "https://github.com/Automattic/socket.io-parser",
+    "licenseFile": "node_modules\\socket.io-parser\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "sockjs",
+    "version": "0.3.20",
+    "license": "MIT",
+    "repository": "https://github.com/sockjs/sockjs-node",
+    "licenseFile": "node_modules\\sockjs\\COPYING",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "socks",
+    "version": "2.8.7",
+    "license": "MIT",
+    "repository": "https://github.com/JoshGlazebrook/socks",
+    "licenseFile": "node_modules\\@npmcli\\agent\\node_modules\\socks\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "socks-proxy-agent",
+    "version": "8.0.5",
+    "license": "MIT",
+    "repository": "https://github.com/TooTallNate/proxy-agents",
+    "licenseFile": "node_modules\\@npmcli\\agent\\node_modules\\socks-proxy-agent\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "sortablejs",
+    "version": "1.13.0",
+    "license": "MIT",
+    "repository": "git://github.com/SortableJS/Sortable",
+    "licenseFile": "node_modules\\sortablejs\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "split2",
+    "version": "2.2.0",
+    "license": "ISC",
+    "repository": "https://github.com/mcollina/split2",
+    "licenseFile": "node_modules\\split2\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "ssri",
+    "version": "13.0.1",
+    "license": "ISC",
+    "repository": "https://github.com/npm/ssri",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\ssri\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "stack-trace",
+    "version": "0.0.10",
+    "license": "MIT",
+    "repository": "git://github.com/felixge/node-stack-trace",
+    "licenseFile": "node_modules\\stack-trace\\License",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "stream-events",
+    "version": "1.0.5",
+    "license": "MIT",
+    "repository": "https://github.com/stephenplusplus/stream-events",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "stream-shift",
+    "version": "1.0.3",
+    "license": "MIT",
+    "repository": "https://github.com/mafintosh/stream-shift",
+    "licenseFile": "node_modules\\stream-shift\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "streamlabs-beaker",
+    "version": "0.9.4",
+    "license": "UNLICENSED (first-party)",
+    "repository": "",
+    "licenseFile": null,
+    "note": "First-party Streamlabs package (maintained @streamlabs.com); no OSS license declared — confirm internally",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "string_decoder",
+    "version": "1.1.1",
+    "license": "MIT",
+    "repository": "git://github.com/nodejs/string_decoder",
+    "licenseFile": "node_modules\\readable-stream\\node_modules\\string_decoder\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "string-width",
+    "version": "4.2.3",
+    "license": "MIT",
+    "repository": "sindresorhus/string-width",
+    "licenseFile": "node_modules\\yargs\\node_modules\\string-width\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "strip-ansi",
+    "version": "6.0.1",
+    "license": "MIT",
+    "repository": "chalk/strip-ansi",
+    "licenseFile": "node_modules\\yargs\\node_modules\\strip-ansi\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "strip-final-newline",
+    "version": "2.0.0",
+    "license": "MIT",
+    "repository": "sindresorhus/strip-final-newline",
+    "licenseFile": "node_modules\\strip-final-newline\\license",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "strip-json-comments",
+    "version": "2.0.1",
+    "license": "MIT",
+    "repository": "sindresorhus/strip-json-comments",
+    "licenseFile": "node_modules\\rc\\node_modules\\strip-json-comments\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "stubs",
+    "version": "3.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/stephenplusplus/stubs",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "style-loader",
+    "version": "2.0.0",
+    "license": "MIT",
+    "repository": "webpack-contrib/style-loader",
+    "licenseFile": "node_modules\\style-loader\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "tar",
+    "version": "7.5.13",
+    "license": "BlueOak-1.0.0",
+    "repository": "https://github.com/isaacs/node-tar",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\tar\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "tar-fs",
+    "version": "2.1.4",
+    "license": "MIT",
+    "repository": "https://github.com/mafintosh/tar-fs",
+    "licenseFile": "node_modules\\prebuild-install\\node_modules\\tar-fs\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "tar-stream",
+    "version": "2.2.0",
+    "license": "MIT",
+    "repository": "https://github.com/mafintosh/tar-stream",
+    "licenseFile": "node_modules\\tar-stream\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "tasklist",
+    "version": "3.1.1",
+    "license": "MIT",
+    "repository": "sindresorhus/tasklist",
+    "licenseFile": "node_modules\\tasklist\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "teeny-request",
+    "version": "9.0.0",
+    "license": "Apache-2.0",
+    "repository": "googleapis/teeny-request",
+    "licenseFile": "node_modules\\teeny-request\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "text-hex",
+    "version": "1.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/3rd-Eden/text-hex",
+    "licenseFile": "node_modules\\text-hex\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "through2",
+    "version": "2.0.5",
+    "license": "MIT",
+    "repository": "https://github.com/rvagg/through2",
+    "licenseFile": "node_modules\\through2\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "timed-out",
+    "version": "4.0.1",
+    "license": "MIT",
+    "repository": "floatdrop/timed-out",
+    "licenseFile": "node_modules\\timed-out\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "tiny-invariant",
+    "version": "1.1.0",
+    "license": "MIT",
+    "repository": "https://github.com/alexreardon/tiny-invariant",
+    "licenseFile": "node_modules\\tiny-invariant\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "tinyglobby",
+    "version": "0.2.15",
+    "license": "MIT",
+    "repository": "https://github.com/SuperchupuDev/tinyglobby",
+    "licenseFile": "node_modules\\tinyglobby\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "to-array",
+    "version": "0.1.4",
+    "license": "MIT",
+    "repository": "git://github.com/Raynos/to-array",
+    "licenseFile": "node_modules\\to-array\\LICENCE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "tr46",
+    "version": "0.0.3",
+    "license": "MIT",
+    "repository": "https://github.com/Sebmaster/tr46.js",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "traverse",
+    "version": "0.6.6",
+    "license": "MIT",
+    "repository": "git://github.com/substack/js-traverse",
+    "licenseFile": "node_modules\\traverse\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "tree-kill",
+    "version": "1.2.2",
+    "license": "MIT",
+    "repository": "git://github.com/pkrumins/node-tree-kill",
+    "licenseFile": "node_modules\\tree-kill\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "triple-beam",
+    "version": "1.4.1",
+    "license": "MIT",
+    "repository": "https://github.com/winstonjs/triple-beam",
+    "licenseFile": "node_modules\\triple-beam\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "tslib",
+    "version": "1.11.1",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/Microsoft/tslib",
+    "licenseFile": "node_modules\\tslib\\LICENSE.txt",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "tunnel-agent",
+    "version": "0.6.0",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/mikeal/tunnel-agent",
+    "licenseFile": "node_modules\\tunnel-agent\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "typedarray",
+    "version": "0.0.6",
+    "license": "MIT",
+    "repository": "git://github.com/substack/typedarray",
+    "licenseFile": "node_modules\\typedarray\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "universalify",
+    "version": "1.0.0",
+    "license": "MIT",
+    "repository": "https://github.com/RyanZim/universalify",
+    "licenseFile": "node_modules\\universalify\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "urijs",
+    "version": "1.19.11",
+    "license": "MIT",
+    "repository": "https://github.com/medialize/URI.js",
+    "licenseFile": "node_modules\\urijs\\LICENSE.txt",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "url",
+    "version": "0.10.3",
+    "license": "MIT",
+    "repository": "https://github.com/defunctzombie/node-url",
+    "licenseFile": "node_modules\\url\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "use-sync-external-store",
+    "version": "1.2.0",
+    "license": "MIT",
+    "repository": "https://github.com/facebook/react",
+    "licenseFile": "node_modules\\use-sync-external-store\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "util",
+    "version": "0.12.5",
+    "license": "MIT",
+    "repository": "git://github.com/browserify/node-util",
+    "licenseFile": "node_modules\\util\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "util-deprecate",
+    "version": "1.0.2",
+    "license": "MIT",
+    "repository": "git://github.com/TooTallNate/util-deprecate",
+    "licenseFile": "node_modules\\util-deprecate\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "uuid",
+    "version": "3.4.0",
+    "license": "MIT",
+    "repository": "https://github.com/uuidjs/uuid",
+    "licenseFile": "node_modules\\uuid\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk",
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "v-tooltip",
+    "version": "2.1.3",
+    "license": "MIT",
+    "repository": "https://github.com/Akryum/vue-tooltip",
+    "licenseFile": "node_modules\\v-tooltip\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "vee-validate",
+    "version": "2.2.0",
+    "license": "MIT",
+    "repository": "https://github.com/baianat/vee-validate",
+    "licenseFile": "node_modules\\vee-validate\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "vue",
+    "version": "2.6.9",
+    "license": "MIT",
+    "repository": "https://github.com/vuejs/vue",
+    "licenseFile": "node_modules\\vue\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "vue-class-component",
+    "version": "6.2.0",
+    "license": "MIT",
+    "repository": "https://github.com/vuejs/vue-class-component",
+    "licenseFile": "node_modules\\vue-class-component\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "vue-color",
+    "version": "2.7.0",
+    "license": "MIT",
+    "repository": "https://github.com/xiaokaike/vue-color",
+    "licenseFile": "node_modules\\vue-color\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "vue-i18n",
+    "version": "7.6.0",
+    "license": "MIT",
+    "repository": "https://github.com/kazupon/vue-i18n",
+    "licenseFile": "node_modules\\vue-i18n\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "vue-js-modal",
+    "version": "1.3.28",
+    "license": "MIT",
+    "repository": "https://github.com/euvl/vue-js-modal",
+    "licenseFile": "node_modules\\vue-js-modal\\LICENSE.md",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "vue-loader",
+    "version": "15.10.2",
+    "license": "MIT",
+    "repository": "https://github.com/vuejs/vue-loader",
+    "licenseFile": "node_modules\\vue-loader\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "vue-multiselect",
+    "version": "2.1.6",
+    "license": "MIT",
+    "repository": "https://github.com/shentao/vue-multiselect",
+    "licenseFile": "node_modules\\vue-multiselect\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "vue-property-decorator",
+    "version": "7.3.0",
+    "license": "MIT",
+    "repository": "https://github.com/kaorun343/vue-property-decorator",
+    "licenseFile": "node_modules\\vue-property-decorator\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "vue-resize",
+    "version": "0.4.4",
+    "license": "MIT",
+    "repository": "https://github.com/Akryum/vue-resize",
+    "licenseFile": null,
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "vue-style-loader",
+    "version": "4.1.3",
+    "license": "MIT",
+    "repository": "git@github.com:vuejs/vue-style-loader",
+    "licenseFile": "node_modules\\vue-style-loader\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "vue-toasted",
+    "version": "1.1.24",
+    "license": "MIT",
+    "repository": "https://github.com/shakee93/vue-toasted",
+    "licenseFile": "node_modules\\vue-toasted\\LICENSE",
+    "note": "LICENSE file is MIT; no package.json field",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "vue-tsx-support",
+    "version": "2.3.3",
+    "license": "MIT",
+    "repository": "https://github.com/wonderful-panda/vue-tsx-support",
+    "licenseFile": "node_modules\\vue-tsx-support\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "vuedraggable",
+    "version": "2.24.3",
+    "license": "MIT",
+    "repository": "https://github.com/SortableJS/Vue.Draggable",
+    "licenseFile": "node_modules\\vuedraggable\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "vuejs-datepicker",
+    "version": "1.6.2",
+    "license": "MIT",
+    "repository": "https://github.com/charliekassel/vuejs-datepicker",
+    "licenseFile": "node_modules\\vuejs-datepicker\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk",
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "vuex",
+    "version": "3.0.1",
+    "license": "MIT",
+    "repository": "https://github.com/vuejs/vuex",
+    "licenseFile": "node_modules\\vuex\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "web-streams-polyfill",
+    "version": "4.0.0-beta.3",
+    "license": "MIT",
+    "repository": "https://github.com/MattiasBuelens/web-streams-polyfill",
+    "licenseFile": "node_modules\\web-streams-polyfill\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "webidl-conversions",
+    "version": "3.0.1",
+    "license": "BSD-2-Clause",
+    "repository": "jsdom/webidl-conversions",
+    "licenseFile": "node_modules\\webidl-conversions\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "websocket-driver",
+    "version": "0.7.0",
+    "license": "MIT",
+    "repository": "git://github.com/faye/websocket-driver-node",
+    "licenseFile": "node_modules\\websocket-driver\\LICENSE.md",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "websocket-extensions",
+    "version": "0.1.4",
+    "license": "Apache-2.0",
+    "repository": "git://github.com/faye/websocket-extensions-node",
+    "licenseFile": "node_modules\\websocket-extensions\\LICENSE.md",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "whatwg-url",
+    "version": "5.0.0",
+    "license": "MIT",
+    "repository": "jsdom/whatwg-url",
+    "licenseFile": "node_modules\\whatwg-url\\LICENSE.txt",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "which",
+    "version": "6.0.1",
+    "license": "ISC",
+    "repository": "https://github.com/npm/node-which",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\which\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk",
+      "bundled"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "which-typed-array",
+    "version": "1.1.11",
+    "license": "MIT",
+    "repository": "git://github.com/inspect-js/which-typed-array",
+    "licenseFile": "node_modules\\which-typed-array\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "winston",
+    "version": "3.16.0",
+    "license": "MIT",
+    "repository": "https://github.com/winstonjs/winston",
+    "licenseFile": "node_modules\\winston\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "winston-transport",
+    "version": "4.8.0",
+    "license": "MIT",
+    "repository": "git@github.com:winstonjs/winston-transport",
+    "licenseFile": "node_modules\\winston-transport\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "wrap-ansi",
+    "version": "7.0.0",
+    "license": "MIT",
+    "repository": "chalk/wrap-ansi",
+    "licenseFile": "node_modules\\wrap-ansi\\license",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "wrappy",
+    "version": "1.0.2",
+    "license": "ISC",
+    "repository": "https://github.com/npm/wrappy",
+    "licenseFile": "node_modules\\wrappy\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "ws",
+    "version": "6.2.2",
+    "license": "MIT",
+    "repository": "websockets/ws",
+    "licenseFile": "node_modules\\ws\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "xml2js",
+    "version": "0.5.0",
+    "license": "MIT",
+    "repository": "https://github.com/Leonidas-from-XIV/node-xml2js",
+    "licenseFile": "node_modules\\xml2js\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "xmlbuilder",
+    "version": "11.0.1",
+    "license": "MIT",
+    "repository": "git://github.com/oozcitak/xmlbuilder-js",
+    "licenseFile": "node_modules\\xmlbuilder\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "xmlhttprequest-ssl",
+    "version": "1.6.2",
+    "license": "MIT",
+    "repository": "git://github.com/mjwwit/node-XMLHttpRequest",
+    "licenseFile": "node_modules\\xmlhttprequest-ssl\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "xtend",
+    "version": "4.0.1",
+    "license": "MIT",
+    "repository": "git://github.com/Raynos/xtend",
+    "licenseFile": "node_modules\\xtend\\LICENCE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "y18n",
+    "version": "5.0.8",
+    "license": "ISC",
+    "repository": "yargs/y18n",
+    "licenseFile": "node_modules\\y18n\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "yallist",
+    "version": "5.0.0",
+    "license": "BlueOak-1.0.0",
+    "repository": "https://github.com/isaacs/yallist",
+    "licenseFile": "node_modules\\node-gyp\\node_modules\\yallist\\LICENSE.md",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "yargs",
+    "version": "17.7.2",
+    "license": "MIT",
+    "repository": "https://github.com/yargs/yargs",
+    "licenseFile": "node_modules\\yargs\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "yargs-parser",
+    "version": "21.1.1",
+    "license": "ISC",
+    "repository": "https://github.com/yargs/yargs-parser",
+    "licenseFile": "node_modules\\yargs\\node_modules\\yargs-parser\\LICENSE.txt",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "yauzl",
+    "version": "2.4.1",
+    "license": "MIT",
+    "repository": "https://github.com/thejoshwolfe/yauzl",
+    "licenseFile": "node_modules\\extract-zip\\node_modules\\yauzl\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "yeast",
+    "version": "0.1.2",
+    "license": "MIT",
+    "repository": "https://github.com/unshiftio/yeast",
+    "licenseFile": "node_modules\\yeast\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "zip-stream",
+    "version": "1.2.0",
+    "license": "MIT",
+    "repository": "https://github.com/archiverjs/node-zip-stream",
+    "licenseFile": "node_modules\\zip-stream\\LICENSE",
+    "note": "",
+    "source": [
+      "on-disk"
+    ],
+    "auditedSeparately": false
+  },
+  {
+    "name": "zustand",
+    "version": "4.4.1",
+    "license": "MIT",
+    "repository": "https://github.com/pmndrs/zustand",
+    "licenseFile": "node_modules\\zustand\\LICENSE",
+    "note": "",
+    "source": [
+      "bundled"
+    ],
+    "auditedSeparately": false
+  }
+]

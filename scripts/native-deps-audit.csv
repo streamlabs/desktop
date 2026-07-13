@@ -1,0 +1,40 @@
+native_module,module_license,dependency,dep_type,linking,license,ships,confidence,evidence,notes
+obs-studio-node,GPL-2.0,OBS Studio / libobs 31.1.2ndi1,prebuilt,dynamic,GPL-2.0,yes,confirmed,"CI main.yml LibOBSVersion=31.1.2ndi1; pulled from obsstudionodes3",Streamlabs OBS build with NDI; bundles the OBS third-party stack below
+obs-studio-node,GPL-2.0,Crashpad,ExternalProject (S3),static,Apache-2.0 (+ mini_chromium MIT/BSD),yes,confirmed,obs-studio-server/CMakeLists crashpad URL,
+obs-studio-node,GPL-2.0,nlohmann/json,FetchContent,static (header),MIT,yes,confirmed,CMakeLists FetchContent nlohmann/json,
+obs-studio-node,GPL-2.0,StackWalker (streamlabs fork),FetchContent,static (win),BSD-2-Clause,yes,confirmed,upstream JochenKalmbach/StackWalker,Windows only
+obs-studio-node,GPL-2.0,lib-streamlabs-ipc,submodule,static,GPL-2.0,yes,confirmed,.gitmodules,First-party Streamlabs
+obs-studio-node,GPL-2.0,NDI SDK,runtime,dynamic,PROPRIETARY (NDI SDK License),if present,FLAG,LibOBS 'ndi' variant; NDI_RUNTIME refs in js/module.js,Redistribution terms - confirm with legal
+obs-studio-node,GPL-2.0,Catch2,FetchContent,n/a,BSL-1.0,no (test only),excluded,test target,Not shipped
+obs-studio-node,GPL-2.0,googletest,ExternalProject,n/a,BSD-3-Clause,no (test only),excluded,test target,Not shipped
+obs-studio-node/libobs,GPL-2.0,FFmpeg,bundled in libobs,dynamic,LGPL-2.1+ / GPL-2.0+,yes,leveraged,OBS bundled stack,Reconcile with libobs 31.1.2ndi1 license folder
+obs-studio-node/libobs,GPL-2.0,x264,bundled in libobs,dynamic,GPL-2.0+,yes,leveraged,OBS bundled stack,
+obs-studio-node/libobs,GPL-2.0,libvpx,bundled in libobs,dynamic,BSD-3-Clause,yes,leveraged,OBS bundled stack,
+obs-studio-node/libobs,GPL-2.0,SVT-AV1,bundled in libobs,dynamic,BSD-3-Clause + patent,maybe,leveraged,OBS bundled stack,Verify presence in this build
+obs-studio-node/libobs,GPL-2.0,libaom,bundled in libobs,dynamic,BSD-2-Clause + patent,maybe,leveraged,OBS bundled stack,Verify presence
+obs-studio-node/libobs,GPL-2.0,opus,bundled in libobs,dynamic,BSD-3-Clause,yes,leveraged,OBS bundled stack,
+obs-studio-node/libobs,GPL-2.0,speexdsp,bundled in libobs,dynamic,BSD-3-Clause,yes,leveraged,OBS bundled stack,
+obs-studio-node/libobs,GPL-2.0,rnnoise,bundled in libobs,dynamic,BSD-3-Clause,yes,leveraged,OBS bundled stack,
+obs-studio-node/libobs,GPL-2.0,libcurl,bundled in libobs,dynamic,curl (MIT-style),yes,leveraged,OBS bundled stack,
+obs-studio-node/libobs,GPL-2.0,mbedTLS,bundled in libobs,dynamic,Apache-2.0,yes,leveraged,OBS bundled stack,
+obs-studio-node/libobs,GPL-2.0,zlib,bundled in libobs,dynamic,Zlib,yes,leveraged,OBS bundled stack,
+obs-studio-node/libobs,GPL-2.0,libpng,bundled in libobs,dynamic,libpng (zlib-style),yes,leveraged,OBS bundled stack,
+obs-studio-node/libobs,GPL-2.0,FreeType,bundled in libobs,dynamic,FTL or GPL-2.0,yes,leveraged,OBS bundled stack,
+obs-studio-node/libobs,GPL-2.0,jansson,bundled in libobs,dynamic,MIT,yes,leveraged,OBS bundled stack,
+obs-studio-node/libobs,GPL-2.0,libsrt,bundled in libobs,dynamic,MPL-2.0,yes,leveraged,OBS bundled stack,
+obs-studio-node/libobs,GPL-2.0,librist,bundled in libobs,dynamic,BSD-2-Clause,yes,leveraged,OBS bundled stack,
+obs-studio-node/libobs,GPL-2.0,uthash,bundled in libobs,static,BSD-1-Clause,yes,leveraged,OBS bundled stack,
+obs-studio-node/libobs,GPL-2.0,Qt6,bundled in libobs,dynamic,LGPL-3.0,maybe,leveraged,OBS bundled stack,Verify - headless server may omit Qt
+obs-studio-node/libobs,GPL-2.0,Python 3,scripting,dynamic,PSF-2.0,maybe,leveraged,OBS bundled stack,Verify presence
+obs-studio-node/libobs,GPL-2.0,LuaJIT,scripting,static,MIT,maybe,leveraged,OBS bundled stack,Verify presence
+obs-studio-node/libobs,GPL-2.0,libdatachannel,bundled in libobs,dynamic,MPL-2.0,maybe,leveraged,OBS bundled stack,WebRTC - verify presence
+node-fontinfo,GPL-3.0,FreeType,ExternalProject,static,FTL or GPL-2.0,yes,confirmed,CMakeLists ExternalProject freetype2,
+node-libuiohook,GPL-2.0,libuiohook (kwhat),external UIOHOOKDIR,static,LGPL-3.0 / GPL-3.0 (GitHub: NOASSERTION),yes,confirmed dep / license spot-check,CMakeLists UIOHOOKDIR,Upstream dual LGPL/GPL v3 - confirm exact
+crash-handler,GPL-2.0,zlib,find_package,dynamic,Zlib,yes,confirmed,CMake find_package ZLIB,
+node-window-rendering,GPL-2.0,OpenGL,find_package,system,system (no obligation),n/a,confirmed,CMake find_package OpenGL,System library
+slobs-virtual-cam,GPL-2.0,FFmpeg,find_package,dynamic,LGPL-2.1+ / GPL-2.0+,yes,confirmed,CMake find_package FFmpeg,
+slobs-virtual-cam,GPL-2.0,obs-virtual-cam (streamlabs fork of CatxFish),submodule,source,GPL-2.0,yes,confirmed,.gitmodules,
+color-picker,GPL-2.0,(none - Win32 system only),-,system,n/a,-,confirmed,dependencies/*.node.txt shows only KERNEL32/USER32/GDI32/SHLWAPI,
+streamlabs-overlay,GPL-2.0,(none - Win32 system only),-,system,n/a,-,confirmed,dependencies/*.node.txt shows only system DLLs incl d2d1/UxTheme,
+font-manager,MIT,(none - system font APIs),-,system,n/a,-,confirmed,DirectWrite/GDI (win) + CoreText (mac),Own MIT inherited from foliojs/font-manager
+lib-streamlabs-ipc,GPL-2.0,googletest,ExternalProject,n/a,BSD-3-Clause,no (test only),excluded,test target,Not shipped
