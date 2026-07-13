@@ -7,6 +7,7 @@ interface IButtonHighlighted extends ButtonProps {
   icon?: SVGProps<SVGElement> | HTMLDivElement;
   className?: string;
   disabled?: boolean;
+  name?: string;
   style?: CSSProperties;
   filled?: boolean;
   filledDark?: boolean;
@@ -20,6 +21,7 @@ interface IButtonHighlighted extends ButtonProps {
 export default function ButtonHighlighted(p: IButtonHighlighted) {
   return (
     <Button
+      name={p.name}
       className={cx(
         styles.highlighted,
         p.className,
