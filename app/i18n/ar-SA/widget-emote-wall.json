@@ -1,11 +1,11 @@
 {
-  "Emote Wall": "Emote Wall",
-  "Display and animate emotes that are seen in chat, improving chat participation via positive feedback.": "Display and animate emotes that are seen in chat, improving chat participation via positive feedback.",
-  "Display and animate emotes from chat, improving chat participation.": "Display and animate emotes from chat, improving chat participation.",
-  "Wall Settings": "Wall Settings",
-  "Emote Scale": "Emote Scale",
-  "Combo Required": "Combo Required",
-  "Combo Count": "Combo Count",
-  "Combo Timeframe": "Combo Timeframe",
-  "Ignore Duplicates": "Ignore Duplicates"
+  "Emote Wall": "جدار الرموز التعبيرية",
+  "Display and animate emotes that are seen in chat, improving chat participation via positive feedback.": "اعرض وحرّك الرموز التعبيرية المستخدمة في الدردشة لتعزيز تفاعل المشاركين من خلال التغذية الراجعة الإيجابية.",
+  "Display and animate emotes from chat, improving chat participation.": "اعرض وحرّك الرموز التعبيرية من الدردشة لتعزيز التفاعل فيها.",
+  "Wall Settings": "إعدادات الجدار",
+  "Emote Scale": "حجم الرموز التعبيرية",
+  "Combo Required": "الحد الأدنى للكومبو",
+  "Combo Count": "عدد الكومبو",
+  "Combo Timeframe": "المدة الزمنية للكومبو",
+  "Ignore Duplicates": "تجاهل التكرارات"
 }
