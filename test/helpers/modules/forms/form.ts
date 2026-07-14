@@ -282,8 +282,7 @@ export async function readFields(...args: unknown[]): Promise<TFormData> {
 
 /**
  * A shortcut for useForm().assertFormContains()
- * The second argument can be an assertion message (a string containing spaces)
- * or the indexKey for field lookup.
+ * Pass `indexKey` and `valueKey` to control field lookup (defaults: 'name', 'displayValue')
  */
 export async function assertFormContains(
   formData: TFormData,

@@ -9,7 +9,6 @@ import {
 import {
   click,
   clickButton,
-  clickIfDisplayed,
   clickWhenDisplayed,
   dismissAlert,
   focusChild,
@@ -17,7 +16,7 @@ import {
   isDisplayed,
   waitForDisplayed,
 } from '../../helpers/modules/core';
-import { logIn, addCustomDestination } from '../../helpers/modules/user';
+import { logIn } from '../../helpers/modules/user';
 import {
   toggleDisplay,
   toggleDualOutputMode,
@@ -34,7 +33,6 @@ import { SceneBuilder } from '../../helpers/scene-builder';
 import { getApiClient } from '../../helpers/api-client';
 import { fillForm } from '../../helpers/modules/forms';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
-import { sleep } from '../../helpers/sleep';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks

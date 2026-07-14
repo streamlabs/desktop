@@ -61,8 +61,6 @@ test('Go Live Non-Ultra', withUser('twitch', { prime: false }), async (t: TExecu
     await waitForSettingsWindowLoaded();
     await clickButton('Close');
 
-    await addDummyAccount('kick');
-
     await clickGoLive();
     await waitForSettingsWindowLoaded();
     await fillForm({
