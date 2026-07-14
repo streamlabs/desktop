@@ -64,8 +64,20 @@ export async function clickButton(buttonText: string) {
   await click($button);
 }
 
-export async function clickTab(tabText: string) {
-  await click(`div[role="tab"]=${tabText}`);
+export async function clickTab(tabText: string, dataName?: string) {
+  const selector = dataName ? `[data-name="${dataName}"]` : `div[role="tab"]=${tabText}`;
+  await click(selector);
+}
+
+/**
+ * Check whether a tab with the given text is currently active
+ */
+export async function isTabActive(tabText: string, dataName?: string): Promise<boolean> {
+  const $tab = dataName
+    ? await select(`[data-name="${dataName}"]`)
+    : await select(`div[role="tab"]=${tabText}`);
+  const ariaSelected = await $tab.getAttribute('aria-selected');
+  return ariaSelected === 'true';
 }
 
 export async function clickCheckbox(dataName: string) {

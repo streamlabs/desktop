@@ -62,7 +62,7 @@ const TikTokLiveAccessForm = memo((p: IPlatformComponentParams<'tiktok'>) => {
   return (
     <>
       {approved ? (
-        <div>
+        <div data-name="tiktokAccessEnabled">
           <InfoBadge
             size="sm"
             color="var(--primary)"
@@ -125,7 +125,7 @@ const TikTokStreamKeyForm = memo((p: IPlatformComponentParams<'tiktok'>) => {
   );
 
   return (
-    <>
+    <div data-name="tiktokStreamForm">
       <Translate
         message={$t(
           'Use your TikTok stream key to stream. Stream Keys are granted by TikTok and renew after each session. <link>See Guide</link>',
@@ -182,13 +182,13 @@ const TikTokStreamKeyForm = memo((p: IPlatformComponentParams<'tiktok'>) => {
           onChange={newSettings => p.onChange({ ...p.value, ...newSettings })}
         />
       </InputWrapper>
-    </>
+    </div>
   );
 });
 
 function TikTokInfo() {
   return (
-    <>
+    <div data-name="tiktokApply">
       <Translate
         message={$t(
           'Request access to stream without a stream key directly through Streamlabs. You must stream at least 50% gaming content continuously. <link>Learn more</link>',
@@ -200,7 +200,7 @@ function TikTokInfo() {
         {$t('Request streaming access through Streamlabs')}
         <i className="icon-pop-out-2" />
       </Button>
-    </>
+    </div>
   );
 }
 
@@ -252,7 +252,7 @@ const TikTokRequired = memo((p: IPlatformComponentParams<'tiktok'>) => {
           {
             label: (
               <>
-                <span>{$t('Streamlabs Access')}</span>
+                <span data-name="tiktokLiveAccess">{$t('Streamlabs Access')}</span>
                 <InfoBadge content={$t('Recommended')} size="sm" className={styles.tiktokBadge} />
               </>
             ),
@@ -260,7 +260,11 @@ const TikTokRequired = memo((p: IPlatformComponentParams<'tiktok'>) => {
             content: <TikTokLiveAccessForm {...p} />,
           },
           {
-            label: $t('Stream with TikTok Stream Key'),
+            label: (
+              <span>
+                <span data-name="tiktokStreamKey">{$t('Stream with TikTok Stream Key')}</span>
+              </span>
+            ),
             id: 'stream-key',
             content: <TikTokStreamKeyForm {...p} />,
           },
