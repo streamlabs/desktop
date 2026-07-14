@@ -5,7 +5,7 @@ import { StreamingService } from 'services/streaming';
 import { WebsocketService } from 'services/websocket';
 import { VisionService, VisionProcess } from 'services/vision';
 import { AutomationsService } from './automations-service';
-import { AgentSocketService } from './agent-socket-service';
+import { StreamAvatarApiService } from './stream-avatar-api-service';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import Utils from 'services/utils';
 import { toUpper } from 'lodash';
@@ -36,7 +36,7 @@ export class AutomationsEngineService extends Service {
   @Inject() private websocketService: WebsocketService;
   @Inject() private visionService: VisionService;
   @Inject() private automationsService: AutomationsService;
-  @Inject() private agentSocketService: AgentSocketService;
+  @Inject() private streamAvatarApiService: StreamAvatarApiService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
 
   private gameState: GameState = { ...defaultGameState, pendingEvents: new Set() };
@@ -89,11 +89,11 @@ export class AutomationsEngineService extends Service {
       },
 
       sendInstruction: (instruction: string) => {
-        this.agentSocketService.sendInstruction(instruction);
+        this.streamAvatarApiService.sendInstruction(instruction);
       },
 
       sendSimulationBark: (conditionType: string) => {
-        this.agentSocketService.sendSimulationBark(conditionType);
+        this.streamAvatarApiService.sendSimulationBark(conditionType);
       },
     };
 
