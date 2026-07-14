@@ -19,7 +19,7 @@ function conditionLabel(automation: TAutomationExport) {
 }
 
 function AutomationsContent() {
-  const { AutomationsService, AutomationsEngineService, AgentSocketService, UserService } = Services;
+  const { AutomationsService, AutomationsEngineService, UserService } = Services;
   const { automations, loaded, error, isLoggedIn } = useVuex(() => ({
     automations: AutomationsService.state.automations,
     loaded: AutomationsService.state.loaded,
@@ -58,7 +58,6 @@ function AutomationsContent() {
   }
 
   function retryNow() {
-    AgentSocketService.actions.reconnect();
     AutomationsService.actions.fetchAll();
   }
 

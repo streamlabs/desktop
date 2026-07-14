@@ -134,7 +134,7 @@ export default class Utils {
   }
 
   static shouldUseAvatarLocalHost(): boolean {
-    return true;
+    return false;
   }
 
   static shouldUseBeta(): boolean {

@@ -1,7 +1,7 @@
 import { InitAfter } from 'services/core';
 import { StatefulService, mutation } from 'services/core/stateful-service';
 import { Inject } from 'services/core/injector';
-import { AgentSocketService } from './agent-socket-service';
+import { StreamAvatarApiService } from './stream-avatar-api-service';
 import { UserService } from 'services/user';
 import { WindowsService } from 'services/windows';
 import { $t } from 'services/i18n';
@@ -27,7 +27,7 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
     error: false,
   };
 
-  @Inject() private agentSocketService: AgentSocketService;
+  @Inject() private streamAvatarApiService: StreamAvatarApiService;
   @Inject() private userService: UserService;
   @Inject() private windowsService: WindowsService;
 
@@ -142,7 +142,7 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
     }
     this.SET_LOADING(true);
     try {
-      const automations = await this.agentSocketService.getAutomations();
+      const automations = await this.streamAvatarApiService.getAutomations();
       console.log('[AutomationsService] fetchAll() got', automations?.length, 'automations');
       this.SET_AUTOMATIONS(automations as TAutomationExport[]);
       this.retryDelay = RETRY_BASE_DELAY_MS;
@@ -164,7 +164,7 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
   }
 
   async create(automation: Omit<TAutomationExport, 'id'>): Promise<TAutomationExport> {
-    const created = await this.agentSocketService.createAutomation(automation);
+    const created = await this.streamAvatarApiService.createAutomation(automation);
     this.ADD_AUTOMATION(created as TAutomationExport);
     return created as TAutomationExport;
   }
@@ -180,13 +180,13 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
       actions: automation.actions,
       enabled: automation.enabled,
     };
-    const updated = await this.agentSocketService.updateAutomation(payload);
+    const updated = await this.streamAvatarApiService.updateAutomation(payload);
     this.UPDATE_AUTOMATION(updated as TAutomationExport);
     return updated as TAutomationExport;
   }
 
   async remove(id: number): Promise<void> {
-    await this.agentSocketService.deleteAutomation(id);
+    await this.streamAvatarApiService.deleteAutomation(id);
     this.REMOVE_AUTOMATION(id);
   }
 }

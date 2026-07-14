@@ -8,7 +8,7 @@ import type {
   AutomationTemplateGame,
   AutomationTemplateItem,
   AutomationTemplateSource,
-} from 'services/stream-avatar/agent-socket-service';
+} from 'services/stream-avatar/stream-avatar-api-service';
 import { AutomationsAnalytics } from './AutomationsAnalytics';
 import PreMadeAutomationsFooter from './PreMadeAutomationsFooter';
 import styles from './PreMadeAutomations.m.less';
@@ -113,7 +113,7 @@ interface Props {
 }
 
 export default function PreMadeAutomations({ onCancel, onSaved, embedded, onFooterChange }: Props) {
-  const { AutomationsService, AgentSocketService } = Services;
+  const { AutomationsService, StreamAvatarApiService } = Services;
   const [games, setGames] = useState<AutomationTemplateGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeGameIndex, setActiveGameIndex] = useState(0);
@@ -121,7 +121,7 @@ export default function PreMadeAutomations({ onCancel, onSaved, embedded, onFoot
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    AgentSocketService.getAutomationTemplates()
+    StreamAvatarApiService.getAutomationTemplates()
       .then(setGames)
       .finally(() => setLoading(false));
   }, []);

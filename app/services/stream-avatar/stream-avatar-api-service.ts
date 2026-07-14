@@ -4,6 +4,40 @@ import { UserService } from 'services/user';
 import { HostsService } from 'services/hosts';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import Util from 'services/utils';
+import type { TAutomationExport } from './engine/automations';
+
+// Types previously in agent-socket-service — moved here as the REST client owns them now
+export interface AutomationTemplateSourceBase {
+  name: string;
+  assetKey: string;
+  downloadUrl: string;
+}
+
+export interface FfmpegTemplateSource extends AutomationTemplateSourceBase {
+  type: 'ffmpeg_source';
+  loop: boolean;
+}
+
+export interface ImageTemplateSource extends AutomationTemplateSourceBase {
+  type: 'image_source';
+}
+
+export type AutomationTemplateSource = FfmpegTemplateSource | ImageTemplateSource;
+
+export interface AutomationTemplateItem {
+  title: string;
+  description: string;
+  imageUrl: string;
+  gifUrl: string;
+  sources?: AutomationTemplateSource[];
+  automation: Omit<TAutomationExport, 'id'>;
+}
+
+export interface AutomationTemplateGame {
+  game: string;
+  gameName: string;
+  templates: AutomationTemplateItem[];
+}
 
 export class StreamAvatarApiService extends Service {
   @Inject() private userService: UserService;
@@ -43,7 +77,6 @@ export class StreamAvatarApiService extends Service {
     );
 
     const jwt = response.token;
-    // Decode the exp from the JWT payload (second base64url segment)
     const payloadB64 = jwt.split('.')[1];
     const payload = JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/')));
     this.cachedJwt = jwt;
@@ -60,12 +93,68 @@ export class StreamAvatarApiService extends Service {
 
     return await jfetch<T>(makeRequest(await this.getToken())).catch(async e => {
       if ((e as any)?.status === 401) {
-        console.warn('[StreamAvatarApi] Token expired, refreshing and retrying...', {
-          path,
-        });
+        console.warn('[StreamAvatarApi] Token expired, refreshing and retrying...', { path });
         return await jfetch<T>(makeRequest(await this.getToken(true)));
       }
       throw e;
+    });
+  }
+
+  // Automation CRUD
+
+  getAutomations(): Promise<TAutomationExport[]> {
+    return this.authedFetch<TAutomationExport[]>('/automations/');
+  }
+
+  getAutomationTemplates(): Promise<AutomationTemplateGame[]> {
+    return this.authedFetch<AutomationTemplateGame[]>('/automations/templates');
+  }
+
+  createAutomation(automation: Omit<TAutomationExport, 'id'>): Promise<TAutomationExport> {
+    return this.authedFetch<TAutomationExport>('/automations/', {
+      method: 'POST',
+      body: JSON.stringify(automation),
+    });
+  }
+
+  updateAutomation(automation: Partial<TAutomationExport> & { id: number }): Promise<TAutomationExport> {
+    const { id, ...body } = automation;
+    return this.authedFetch<TAutomationExport>(`/automations/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async deleteAutomation(id: number): Promise<void> {
+    await this.authedFetch<void>(`/automations/${id}`, { method: 'DELETE' });
+  }
+
+  // Simulation
+
+  async sendSimulationBark(conditionType: string): Promise<void> {
+    await this.authedFetch<void>('/automations/simulate-bark', {
+      method: 'POST',
+      body: JSON.stringify({ conditionType }),
+    });
+  }
+
+  // Agent fire-and-forget (desktop never reads the response — it goes to avatar sources)
+
+  async sendInstruction(instruction: string, response: 'text' | 'tts' = 'tts'): Promise<void> {
+    await this.authedFetch<void>('/agent/instruction', {
+      method: 'POST',
+      body: JSON.stringify({ instruction, response }),
+    });
+  }
+
+  async sendTrigger(
+    name: string,
+    parameters: Record<string, unknown>,
+    response: 'text' | 'tts' = 'tts',
+  ): Promise<void> {
+    await this.authedFetch<void>('/agent/trigger', {
+      method: 'POST',
+      body: JSON.stringify({ trigger: { name, parameters }, response }),
     });
   }
 }

@@ -29,8 +29,9 @@ export function useAgentAppInstalled() {
 
   const { isInstalled, isEnabled } = useVuex(() => {
     if (getOS() !== OS.Windows) return { isInstalled: false, isEnabled: false };
-    const app = PlatformAppsService.views.productionApps.find(a => a.id === AGENT_APP_ID);
-    return { isInstalled: !!app, isEnabled: !!app?.enabled };
+    const app = PlatformAppsService.views.state.loadedApps.find(a => a.id === AGENT_APP_ID);
+    console.log(JSON.stringify(PlatformAppsService.views.state.loadedApps), 'productionApps');
+    return { isInstalled: !!app, isEnabled: !!app?.enabled || !!app?.unpacked };
   });
 
   async function installAgent() {

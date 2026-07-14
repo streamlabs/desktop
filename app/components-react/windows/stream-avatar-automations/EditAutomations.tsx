@@ -46,13 +46,7 @@ const GAME_FILTER_OPTIONS = Object.entries(GAME_NAMES)
 type TPreMadeFooterState = { totalSelected: number; saving: boolean; onComplete: () => void };
 
 export default function EditAutomations() {
-  const {
-    AutomationsService,
-    AutomationsEngineService,
-    AgentSocketService,
-    ScenesService,
-    SourcesService,
-  } = Services;
+  const { AutomationsService, AutomationsEngineService, ScenesService, SourcesService } = Services;
   const { automations, loaded, error, scenes, sources } = useVuex(() => ({
     automations: AutomationsService.state.automations,
     loaded: AutomationsService.state.loaded,
@@ -75,9 +69,6 @@ export default function EditAutomations() {
   }, []);
 
   function retryNow() {
-    // fetchAll() alone can't help if the socket itself never connected — force
-    // a fresh connection attempt too, not just another doomed-to-timeout call.
-    AgentSocketService.actions.reconnect();
     AutomationsService.actions.fetchAll();
   }
 
