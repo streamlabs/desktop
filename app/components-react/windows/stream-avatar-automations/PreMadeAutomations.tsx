@@ -98,6 +98,7 @@ async function createTemplateSource(source: AutomationTemplateSource, assets: st
 
   const scene = ScenesService.views.getScene(activeScene.id);
   const sceneItem = scene?.getItem(sceneItemId);
+  sceneItem?.fitToScreen();
   sceneItem?.setVisibility(false);
 }
 
