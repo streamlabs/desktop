@@ -16,6 +16,7 @@ const nameMap = () => ({
   tips: $t('Tips & Donations'),
   twitch_follows: $t('Twitch Follows'),
   twitch_bits: $t('Twitch Bits'),
+  twitch_power_ups: $t('Twitch Power-Ups'),
   twitch_subs: $t('Twitch Subs'),
   twitch_resubs: $t('Twitch Resubs'),
   youtube_subscribers: $t('YouTube Subscriptions'),
@@ -30,7 +31,6 @@ const nameMap = () => ({
   facebook_stars: $t('Facebook Stars'),
   facebook_supports: $t('Facebook Supports'),
   facebook_support_gifters: $t('Facebook Support Gifters'),
-
 });
 
 const mediaGalleryInputs = {

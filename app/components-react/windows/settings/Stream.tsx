@@ -21,6 +21,9 @@ import { InstagramEditStreamInfo } from '../go-live/platforms/InstagramEditStrea
 import { IInstagramStartStreamOptions } from 'services/platforms/instagram';
 import { metadata } from 'components-react/shared/inputs/metadata';
 import FormFactory, { TInputValue } from 'components-react/shared/inputs/FormFactory';
+import { ListInput } from 'components-react/shared/inputs';
+import Form from 'components-react/shared/inputs/Form';
+import { useRealmObject } from 'components-react/hooks/realm';
 import { useSubscription } from 'components-react/hooks/useSubscription';
 import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import Tooltip from 'components-react/shared/Tooltip';
@@ -251,6 +254,8 @@ export function StreamSettings() {
 
             <CustomDestinationList />
 
+            <IngestServerSetting disabled={!canEditSettings} />
+
             {canEditSettings && (
               <Tooltip
                 title="Stream to a single custom ingest without any linked platforms. Add a custom destination to multistream to a custom RTMP."
@@ -298,6 +303,53 @@ export function StreamSettings() {
         {!protectedModeEnabled && canEditSettings && <ObsGenericSettingsForm page="Stream" />}
       </div>
     </StreamSettingsCtx.Provider>
+  );
+}
+
+// Sentinel for the "Automatic" option. The persisted value is '' (no override),
+// but antd's Select won't display an option whose value is the empty string, so
+// we map '' to this non-empty value for the dropdown only.
+const AUTO_INGEST_SERVER = 'auto';
+
+/**
+ * Lets the user pick a preferred ingest server for multistream. A persisted
+ * value of '' means "Automatic" — no override, so the backend-selected ingest
+ * is used.
+ */
+function IngestServerSetting(p: { disabled?: boolean }) {
+  const { RestreamService } = Services;
+  const preferred = useRealmObject(RestreamService.preferences).preferredIngestServer;
+  const [servers, setServers] = useState<{ name: string; url: string }[]>([]);
+
+  useEffect(() => {
+    RestreamService.actions.return
+      .fetchIngestServers()
+      .then(res => setServers(res.servers))
+      .catch(() => setServers([]));
+  }, []);
+
+  const options = [
+    { value: AUTO_INGEST_SERVER, label: $t('Automatic (Recommended)') },
+    ...servers.map(s => ({ value: s.name, label: s.name })),
+  ];
+
+  return (
+    <div className={styles.section}>
+      <h2>{$t('Preferred Multistream Ingest Server')}</h2>
+      <Form layout="vertical">
+        <ListInput
+          nolabel
+          options={options}
+          value={preferred || AUTO_INGEST_SERVER}
+          onChange={(value: string) =>
+            RestreamService.actions.setPreferredIngestServer(
+              value === AUTO_INGEST_SERVER ? '' : value,
+            )
+          }
+          disabled={p.disabled}
+        />
+      </Form>
+    </div>
   );
 }
 

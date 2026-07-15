@@ -25,6 +25,7 @@
   "Subscription": "Abonnement",
   "Donation": "Don",
   "Bits": "Bits",
+  "Power-Ups": "Power-Ups",
   "Host": "Hôte",
   "The Google Font to use for the text. Visit http://google.com/fonts to find one! Popular Fonts include: Open Sans, Roboto, Oswald, Lato, and Droid Sans.": "La police Google à utiliser pour le texte. Visitez http://google.com/fonts pour trouver celle qui vous convient! Polices populaires: Open Sans, Roboto, Oswald, Lato, Droid Sans.",
   "A hex code for the base text color.": "Un code hexadécimal pour la couleur du texte de base.",

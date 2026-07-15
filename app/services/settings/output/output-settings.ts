@@ -3,7 +3,13 @@ import { ISettingsSubCategory, SettingsService } from 'services/settings';
 import { TDisplayType, VideoSettingsService } from 'services/settings-v2/video';
 import { Inject } from 'services/core/injector';
 import { Dictionary } from 'vuex';
-import { ERecordingQuality, ERecordingFormat, EScaleType, ISettings } from 'obs-studio-node';
+import {
+  ERecordingQuality,
+  ERecordingFormat,
+  EScaleType,
+  ERecSplitType,
+  ISettings,
+} from 'obs-studio-node';
 
 /**
  * list of encoders for simple mode
@@ -96,6 +102,12 @@ export const QUALITY_ORDER = [
   'quality',
 ];
 
+const SPLIT_TYPE_MAP = {
+  Size: ERecSplitType.Size,
+  Manual: ERecSplitType.Manual,
+  Time: ERecSplitType.Time,
+};
+
 export interface IOutputSettings {
   mode: TOutputSettingsMode;
   inputResolution: string;
@@ -149,8 +161,8 @@ interface IAdvancedRecordingOutputSettings extends IRecordingOutputSettings {
   enableFileSplit: boolean;
   splitTime: number;
   splitSize: number;
-  splitType: string;
-  resetTimestamps: boolean;
+  splitType: ERecSplitType;
+  fileResetTimestamps: boolean;
 }
 
 interface IStreamingOutputSettings {
@@ -479,23 +491,23 @@ export class OutputSettingsService extends Service {
         'Recording',
         'RecSplitFile',
       );
-      const splitTime =
-        this.settingsService.findSettingValue(output, 'Recording', 'RecSplitFileTime') * 60; // convert seconds to minutes
-      const splitSize = this.settingsService.findSettingValue(
-        output,
-        'Recording',
-        'RecSplitFileSize',
+      const splitTimeMinutes = Number(
+        this.settingsService.findSettingValue(output, 'Recording', 'RecSplitFileTime') ?? 0,
       );
-      const splitType = this.settingsService.findSettingValue(
+      const splitTime = Number.isFinite(splitTimeMinutes) ? splitTimeMinutes * 60 : 0;
+      const splitSizeValue = Number(
+        this.settingsService.findSettingValue(output, 'Recording', 'RecSplitFileSize') ?? 0,
+      );
+      const splitSize = Number.isFinite(splitSizeValue) ? splitSizeValue : 0;
+      const splitTypeValue: 'Size' | 'Manual' | 'Time' = this.settingsService.findSettingValue(
         output,
         'Recording',
         'RecSplitFileType',
       );
-      const resetTimestamps = this.settingsService.findSettingValue(
-        output,
-        'Recording',
-        'RecSplitFileResetTimestamps',
-      );
+      const splitType = SPLIT_TYPE_MAP[splitTypeValue];
+      const fileResetTimestamps =
+        this.settingsService.findSettingValue(output, 'Recording', 'RecSplitFileResetTimestamps') ??
+        true;
 
       // advanced settings
       return {
@@ -517,7 +529,7 @@ export class OutputSettingsService extends Service {
         splitTime,
         splitSize,
         splitType,
-        resetTimestamps,
+        fileResetTimestamps,
       };
     } else {
       // simple settings

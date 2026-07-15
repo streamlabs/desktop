@@ -311,7 +311,6 @@
   "%{platform} Setup Error: Toggling off %{platform} to bypass and go live.": "%{platform} Kesalahan Penyiapan: Menonaktifkan %{platform} untuk melewati dan menyiarkan langsung.",
   "Recording Audio Encoder": "Merekam Encoder Audio",
   "Record Stream in": "Rekam Streaming dalam",
-  "format": "format",
   "Record Stream": "Rekam Streaming",
   "AI Highlighter is enabled. Recording will start when stream starts.": "AI Highlighter diaktifkan. Perekaman akan dimulai ketika streaming dimulai.",
   "Connection Failed": "Koneksi Gagal",
