@@ -48,7 +48,7 @@ async function waitUntil(predicate: () => boolean) {
   }
 }
 
-test('concurrent flushAll calls wait for the same in-flight write', async t => {
+test('Concurrent flushAll calls wait for the same in-flight write', async t => {
   const file = createFile();
   const { service, pendingWrites } = createControlledService({ file });
 
@@ -66,7 +66,7 @@ test('concurrent flushAll calls wait for the same in-flight write', async t => {
   t.is(file.flushWaiters!.length, 0);
 });
 
-test('flushAll waits for rewrites and new files that race an in-flight flush', async t => {
+test('File manager flushAll waits for rewrites and new files that race an in-flight flush', async t => {
   const firstFile = createFile('first-v1');
   const { service, pendingWrites } = createControlledService({ first: firstFile });
   let settled = false;
@@ -114,7 +114,7 @@ test('flushAll waits for rewrites and new files that race an in-flight flush', a
   t.false(secondFile.dirty);
 });
 
-test('flushAll rejects after write retries are exhausted', async t => {
+test('File manager flushAll rejects after write retries are exhausted', async t => {
   const file = createFile();
   let attempts = 0;
   const service = {

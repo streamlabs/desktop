@@ -52,7 +52,7 @@ function createHarness() {
   return { coordinator, timers, forceReasons, logMessages, relaunchRequests, fireTimer };
 }
 
-test('forces shutdown when the worker does not acknowledge shutdown', t => {
+test('Forces shutdown when the worker does not acknowledge shutdown', t => {
   const { coordinator, timers, forceReasons, fireTimer } = createHarness();
 
   coordinator.beginShutdown();
@@ -65,7 +65,7 @@ test('forces shutdown when the worker does not acknowledge shutdown', t => {
   t.deepEqual(forceReasons, ['worker did not acknowledge shutdown']);
 });
 
-test('forces shutdown when the worker acknowledges shutdown but does not complete it', t => {
+test('Forces shutdown when the worker acknowledges shutdown but does not complete it', t => {
   const { coordinator, timers, forceReasons, fireTimer } = createHarness();
 
   coordinator.beginShutdown();
@@ -80,7 +80,7 @@ test('forces shutdown when the worker acknowledges shutdown but does not complet
   t.deepEqual(forceReasons, ['worker acknowledged shutdown but did not complete']);
 });
 
-test('starts a final exit watchdog when the worker completes shutdown', t => {
+test('Starts a final exit watchdog when the worker completes shutdown', t => {
   const { coordinator, timers, forceReasons } = createHarness();
 
   coordinator.beginShutdown();
@@ -94,7 +94,7 @@ test('starts a final exit watchdog when the worker completes shutdown', t => {
   t.deepEqual(forceReasons, []);
 });
 
-test('forces shutdown when Electron does not exit after worker completion', t => {
+test('Forces shutdown when Electron does not exit after worker completion', t => {
   const { coordinator, forceReasons, fireTimer } = createHarness();
 
   coordinator.beginShutdown();
@@ -106,7 +106,7 @@ test('forces shutdown when Electron does not exit after worker completion', t =>
   t.deepEqual(forceReasons, ['worker completed shutdown but application did not exit']);
 });
 
-test('clears the final exit watchdog when Electron reaches quit', t => {
+test('Clears the final exit watchdog when Electron reaches quit', t => {
   const { coordinator, timers, forceReasons } = createHarness();
 
   coordinator.beginShutdown();
@@ -118,7 +118,7 @@ test('clears the final exit watchdog when Electron reaches quit', t => {
   t.deepEqual(forceReasons, []);
 });
 
-test('does not extend the completion watchdog for duplicate acknowledgements', t => {
+test('Does not extend the completion watchdog for duplicate acknowledgements', t => {
   const { coordinator, timers } = createHarness();
 
   coordinator.beginShutdown();
@@ -131,7 +131,7 @@ test('does not extend the completion watchdog for duplicate acknowledgements', t
   t.false(completionTimer.cleared);
 });
 
-test('does not re-arm a watchdog for an acknowledgement after completion', t => {
+test('Does not re-arm a watchdog for an acknowledgement after completion', t => {
   const { coordinator, timers } = createHarness();
 
   coordinator.beginShutdown();
@@ -143,7 +143,7 @@ test('does not re-arm a watchdog for an acknowledgement after completion', t => 
   t.false(timers[1].cleared);
 });
 
-test('does not replace the final exit watchdog for duplicate completion', t => {
+test('Does not replace the final exit watchdog for duplicate completion', t => {
   const { coordinator, timers } = createHarness();
 
   coordinator.beginShutdown();
@@ -157,7 +157,7 @@ test('does not replace the final exit watchdog for duplicate completion', t => {
   t.false(exitTimer.cleared);
 });
 
-test('schedules exactly one relaunch and preserves its arguments', t => {
+test('Schedules exactly one relaunch and preserves its arguments', t => {
   const { coordinator, relaunchRequests } = createHarness();
   const args = ['--skip-update', 'slobs://connect/account'];
 
@@ -167,7 +167,7 @@ test('schedules exactly one relaunch and preserves its arguments', t => {
   t.deepEqual(relaunchRequests, [args]);
 });
 
-test('scheduling a relaunch does not force or replace the active shutdown watchdog', t => {
+test('Scheduling a relaunch does not force or replace the active shutdown watchdog', t => {
   const { coordinator, timers, forceReasons, relaunchRequests, fireTimer } = createHarness();
 
   coordinator.beginShutdown();

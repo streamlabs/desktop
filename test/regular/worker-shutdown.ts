@@ -10,7 +10,7 @@ const silentLogger: IShutdownLogger = {
   error() {},
 };
 
-test('stops immediate ingress steps synchronously and reports failures', t => {
+test('Stops immediate ingress steps synchronously and reports failures', t => {
   const order: string[] = [];
 
   const report = executeImmediateShutdownSteps(
@@ -40,7 +40,7 @@ test('stops immediate ingress steps synchronously and reports failures', t => {
   );
 });
 
-test('persists before teardown and best-effort work', async t => {
+test('Persists before teardown and best-effort work', async t => {
   const order: string[] = [];
   let releasePersistence: () => void;
   const persistencePending = new Promise<void>(resolve => {
@@ -96,7 +96,7 @@ test('persists before teardown and best-effort work', async t => {
   t.deepEqual(order, ['persist', 'flush', 'teardown', 'analytics', 'clean', 'complete']);
 });
 
-test('required failure runs remaining phases but does not mark a clean exit', async t => {
+test('Required failure runs remaining phases but does not mark a clean exit', async t => {
   const order: string[] = [];
   let completedReportClean: boolean | undefined;
 
@@ -151,7 +151,7 @@ test('required failure runs remaining phases but does not mark a clean exit', as
   );
 });
 
-test('required immediate failure prevents a clean-exit marker', async t => {
+test('Required immediate failure prevents a clean-exit marker', async t => {
   let markedClean = false;
   let completionCount = 0;
   const initialReport = executeImmediateShutdownSteps(
@@ -190,7 +190,7 @@ test('required immediate failure prevents a clean-exit marker', async t => {
   );
 });
 
-test('times out and aborts best-effort work without making shutdown unclean', async t => {
+test('Times out and aborts best-effort work without making shutdown unclean', async t => {
   let timerCallback: () => void;
   let timerDelay = 0;
   let receivedSignal: AbortSignal | undefined;
@@ -249,7 +249,7 @@ test('times out and aborts best-effort work without making shutdown unclean', as
   );
 });
 
-test('clean-exit marker failure is reported and completion still runs', async t => {
+test('Clean-exit marker failure is reported and completion still runs', async t => {
   let completionCount = 0;
 
   const report = await runWorkerShutdown(
