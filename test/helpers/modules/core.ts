@@ -71,6 +71,7 @@ export async function clickTab(tabText: string, dataName?: string) {
 
 /**
  * Check whether a tab with the given text is currently active
+ * Note: to throw an error if the tab is not active, must be used with `t.true`
  */
 export async function isTabActive(tabText: string, dataName?: string): Promise<boolean> {
   const $tab = dataName
@@ -100,21 +101,21 @@ export async function selectAsyncAlert(title: string) {
 
 // OTHER SHORTCUTS
 
-export async function hoverElement(selector: string, duration?: number) {
+export async function hoverElement(selector: string, waitForOptions?: WaitForOptions) {
   const element = await select(`${selector}`);
   await element.moveTo();
-  if (duration) {
-    await getClient().pause(duration);
+  if (waitForOptions?.timeout) {
+    await getClient().pause(waitForOptions.timeout);
   }
 }
 
 export async function isTooltipDisplayed(
   hoverSelector: string,
   tooltipSelector: string,
-  duration?: number,
-): Promise<boolean> {
-  await hoverElement(hoverSelector, duration);
-  return isDisplayed(tooltipSelector);
+  waitForOptions?: WaitForOptions,
+): Promise<void> {
+  await hoverElement(hoverSelector, waitForOptions);
+  await isDisplayed(tooltipSelector, waitForOptions);
 }
 
 export async function isDisplayed(selectorOrEl: TSelectorOrEl, waitForOptions?: WaitForOptions) {

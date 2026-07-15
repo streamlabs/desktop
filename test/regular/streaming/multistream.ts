@@ -351,15 +351,24 @@ test('Stream Shift', withUser('twitch', { prime: true, multistream: true }), asy
 
   // TODO: Enable checking for tooltips after modifying the disableTransitionsCode in webdriver
   // Default tooltip
-  await isTooltipDisplayed('i.icon-information', '[data-name="explanation"]', 1000);
+  await isTooltipDisplayed('i.icon-information', '[data-name="explanation"]', {
+    timeout: 1000,
+    timeoutMsg: 'Default stream shift explanation tooltip did not appear',
+  });
 
   // Default tooltip stays the same when multiple platforms are enabled
   await fillForm({ youtube: true });
-  await isTooltipDisplayed('i.icon-information', '[data-name="explanation"]', 1000);
+  await isTooltipDisplayed('i.icon-information', '[data-name="explanation"]', {
+    timeout: 1000,
+    timeoutMsg: 'Default stream shift explanation tooltip did not appear',
+  });
 
   // Dual output tooltip
   await fillForm({ youtubeDisplay: 'vertical' });
-  await isTooltipDisplayed('i.icon-information', '[data-name="dual-output"]', 1000);
+  await isTooltipDisplayed('i.icon-information', '[data-name="dual-output"]', {
+    timeout: 1000,
+    timeoutMsg: 'Dual output tooltip did not appear',
+  });
   await assertFormContains({ streamShift: false });
   await fillForm({ youtubeDisplay: 'horizontal' });
   await fillForm({ streamShift: true });
@@ -389,12 +398,18 @@ test('Stream Shift', withUser('twitch', { prime: true, multistream: true }), asy
   await clickGoLive();
   await waitForSettingsWindowLoaded();
   await fillForm({ patreon: true });
-  await isTooltipDisplayed('i.icon-information', '[data-name="patreon"]', 1000);
+  await isTooltipDisplayed('i.icon-information', '[data-name="patreon"]', {
+    timeout: 1000,
+    timeoutMsg: 'Patreon tooltip did not appear',
+  });
   await assertFormContains({ streamShift: false });
 
   // Default tooltip shown when Patreon is disabled
   await fillForm({ patreon: false });
-  await isTooltipDisplayed('i.icon-information', '[data-name="explanation"]', 1000);
+  await isTooltipDisplayed('i.icon-information', '[data-name="explanation"]', {
+    timeout: 1000,
+    timeoutMsg: 'Default stream shift explanation tooltip did not appear',
+  });
   await assertFormContains({ streamShift: true });
 
   // Patreon tooltip when stream shift toggle was enabled and then Patreon is enabled
@@ -402,7 +417,10 @@ test('Stream Shift', withUser('twitch', { prime: true, multistream: true }), asy
   // the form from loading again
   // await fillForm({ streamShift: true });
   // await fillForm({ patreon: true });
-  // await isTooltipDisplayed('i.icon-information', '[data-name="patreon"]', 1000);
+  // await isTooltipDisplayed('i.icon-information', '[data-name="patreon"]', {
+  //   timeout: 1000,
+  //   timeoutMsg: 'Patreon tooltip did not appear',
+  // });
   // await assertFormContains({ streamShift: false });
 
   // Toggling off Patreon shows the default tooltip again and re-enables the stream shift toggle

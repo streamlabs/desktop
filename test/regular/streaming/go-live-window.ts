@@ -34,7 +34,10 @@ test('Go Live Non-Ultra', withUser('twitch', { prime: false }), async (t: TExecu
 
     // Stream shift should be disabled and tooltip should be visible
     await isDisplayed('[data-name="shift-ultra-icon"]');
-    await isTooltipDisplayed('i.icon-information', '[data-name="non-ultra"]', 1000);
+    await isTooltipDisplayed('i.icon-information', '[data-name="non-ultra"]', {
+      timeout: 1000,
+      timeoutMsg: 'Non-Ultra stream shift tooltip did not appear',
+    });
     await assertFormContains({ streamShift: false });
 
     // Last platform cannot be toggled off
@@ -112,6 +115,9 @@ test('Go Live Ultra', withUser('twitch', { prime: true }), async (t: TExecutionC
   t.false(await isDisplayed('[name="banner-add-destination"]'));
 
   // Stream shift explanation tooltip shows
-  await isTooltipDisplayed('i.icon-information', '[data-name="explanation"]', 1000);
+  await isTooltipDisplayed('i.icon-information', '[data-name="explanation"]', {
+    timeout: 1000,
+    timeoutMsg: 'Ultra stream shift explanation tooltip did not appear',
+  });
   t.false(await isDisplayed('[data-name="shift-ultra-icon"]'));
 });
