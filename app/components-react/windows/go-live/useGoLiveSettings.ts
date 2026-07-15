@@ -477,19 +477,6 @@ export class GoLiveSettingsModule {
    * Validate the form and show an error message
    */
   async validate() {
-    // tiktok live authorization error
-    if (
-      this.state.isEnabled('tiktok') &&
-      (Services.TikTokService.neverApplied || Services.TikTokService.denied)
-    ) {
-      // Show this allow users to attempt to go live with rtmp regardless of tiktok status
-      alertInfo({
-        name: 'tiktok-access-alert',
-        text: $t("Couldn't confirm TikTok Live Access. Apply for Live Permissions below"),
-        duration: 2,
-      });
-    }
-
     if (this.getIsInvalidDualStream()) {
       alertInfo({
         name: 'ultra-required-alert',

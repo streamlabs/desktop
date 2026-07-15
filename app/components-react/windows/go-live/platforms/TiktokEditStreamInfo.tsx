@@ -30,6 +30,7 @@ export const TikTokEditStreamInfo = InputComponent((p: IPlatformComponentParams<
   function updateSettings(patch: Partial<ITikTokStartStreamOptions>) {
     p.onChange({ ...ttSettings, ...patch });
   }
+
   return (
     <Form name="tiktok-settings">
       <PlatformSettingsLayout

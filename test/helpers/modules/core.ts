@@ -71,12 +71,23 @@ export async function clickTab(tabText: string, dataName?: string) {
 
 /**
  * Check whether a tab with the given text is currently active
- * Note: to throw an error if the tab is not active, must be used with `t.true`
+ * @remark Note: to throw an error if the tab is not active, must be used with `t.true`
+ * @param tabText The text of the tab to check
+ * @param dataName Optional data-name attribute of the tab to check, use if the tab text is not unique
+ * or if the tab contents contain elements other than text
+ * @returns A promise that resolves to true if the tab is active, false otherwise
  */
 export async function isTabActive(tabText: string, dataName?: string): Promise<boolean> {
-  const $tab = dataName
-    ? await select(`[data-name="${dataName}"]`)
-    : await select(`div[role="tab"]=${tabText}`);
+  // Test for active tab with data-name as selector
+  if (dataName) {
+    const $span = await select(`[data-name="${dataName}"]`);
+    const $tabBtn = await $span.parentElement();
+    const ariaSelected = await $tabBtn.getAttribute('aria-selected');
+    return ariaSelected === 'true';
+  }
+
+  // Test for active tab with text as selector
+  const $tab = await select(`div[role="tab"]=${tabText}`);
   const ariaSelected = await $tab.getAttribute('aria-selected');
   return ariaSelected === 'true';
 }

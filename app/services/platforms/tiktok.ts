@@ -741,7 +741,7 @@ export class TikTokService
     const isFrequentUser = this.diagnosticsService.isFrequentUser;
     if (isOldAccount && !isTikTokLinked && isFrequentUser) return true;
 
-    return false;
+    return this.getHasScope('never-applied') || this.getHasScope('denied');
   }
 
   get promptReapply(): boolean {
