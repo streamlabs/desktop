@@ -27,18 +27,24 @@ import uuid from 'uuid/v4';
 
 export type TSourceFilterType =
   | 'mask_filter'
+  | 'mask_filter_v2'
   | 'crop_filter'
   | 'gain_filter'
   | 'color_filter'
+  | 'color_filter_v2'
   | 'scale_filter'
   | 'scroll_filter'
   | 'gpu_delay'
   | 'color_key_filter'
+  | 'color_key_filter_v2'
   | 'clut_filter'
   | 'sharpness_filter'
+  | 'sharpness_filter_v2'
   | 'chroma_key_filter'
+  | 'chroma_key_filter_v2'
   | 'async_delay_filter'
   | 'noise_suppress_filter'
+  | 'noise_suppress_filter_v2'
   | 'noise_gate_filter'
   | 'compressor_filter'
   | 'vst_filter'
@@ -51,7 +57,11 @@ export type TSourceFilterType =
   | 'mediasoupconnector_vfilter'
   | 'mediasoupconnector_vsfilter'
   | 'hdr_tonemap_filter'
-  | 'nv_greenscreen_filter';
+  | 'nv_greenscreen_filter'
+  | 'luma_key_filter'
+  | 'luma_key_filter_v2'
+  | 'upward_compressor_filter'
+  | 'basic_eq_filter';
 
 interface ISourceFilterType {
   type: TSourceFilterType;
@@ -221,18 +231,24 @@ export class SourceFiltersService extends StatefulService<IFiltersServiceState> 
     const obsAvailableTypes = obs.FilterFactory.types();
     const allowlistedTypes: IObsListOption<TSourceFilterType>[] = [
       { description: $t('Image Mask/Blend'), value: 'mask_filter' },
+      { description: $t('Image Mask/Blend'), value: 'mask_filter_v2' },
       { description: $t('Crop/Pad'), value: 'crop_filter' },
       { description: $t('Gain'), value: 'gain_filter' },
       { description: $t('Color Correction'), value: 'color_filter' },
+      { description: $t('Color Correction'), value: 'color_filter_v2' },
       { description: $t('Scaling/Aspect Ratio'), value: 'scale_filter' },
       { description: $t('Scroll'), value: 'scroll_filter' },
       { description: $t('Render Delay'), value: 'gpu_delay' },
       { description: $t('Color Key'), value: 'color_key_filter' },
+      { description: $t('Color Key'), value: 'color_key_filter_v2' },
       { description: $t('Apply LUT'), value: 'clut_filter' },
       { description: $t('Sharpen'), value: 'sharpness_filter' },
+      { description: $t('Sharpen'), value: 'sharpness_filter_v2' },
       { description: $t('Chroma Key'), value: 'chroma_key_filter' },
+      { description: $t('Chroma Key'), value: 'chroma_key_filter_v2' },
       { description: $t('Video Delay (Async)'), value: 'async_delay_filter' },
       { description: $t('Noise Suppression'), value: 'noise_suppress_filter' },
+      { description: $t('Noise Suppression'), value: 'noise_suppress_filter_v2' },
       { description: $t('Noise Gate'), value: 'noise_gate_filter' },
       { description: $t('Compressor'), value: 'compressor_filter' },
       { description: $t('VST 2.x Plugin'), value: 'vst_filter' },
@@ -243,6 +259,9 @@ export class SourceFiltersService extends StatefulService<IFiltersServiceState> 
       { description: $t('Shader'), value: 'shader_filter' },
       { description: $t('HDR Tone Mapping (Override)'), value: 'hdr_tonemap_filter' },
       { description: $t('NVIDIA Background Removal'), value: 'nv_greenscreen_filter' },
+      { description: $t('Luma Key'), value: 'luma_key_filter_v2' },
+      { description: $t('Upward Compressor'), value: 'upward_compressor_filter' },
+      { description: $t('3-Band Equalizer'), value: 'basic_eq_filter' },
     ];
     const allowedAvailableTypes = allowlistedTypes.filter(type =>
       obsAvailableTypes.includes(type.value),
