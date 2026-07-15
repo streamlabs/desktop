@@ -1,0 +1,258 @@
+// GO LIVE WINDOW STYLE
+h2 {
+  color: var(--title);
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  letter-spacing: 0.3px;
+}
+
+h3 {
+  letter-spacing: 0.3px;
+  margin-bottom: 0px;
+}
+
+// ADDITIONAL STYLES
+.ant-modal-footer {
+  background-color: var(--section);
+}
+
+// Form inputs
+.ant-row.ant-form-item {
+  margin-top: 8px;
+  margin-bottom: 0px;
+}
+
+label.ant-form-item-no-colon {
+  font-size: 12px;
+}
+
+label.ant-form-item-required {
+  flex-direction: row-reverse;
+}
+
+label.ant-form-item-required::before {
+  margin-left: 4px;
+}
+
+.ant-form-item-label > label {
+  height: unset;
+}
+
+.ant-input-group-addon {
+  background-color: var(--button);
+}
+
+// Checkbox
+
+label.ant-checkbox-wrapper {
+  font-size: 13px;
+}
+
+.ant-checkbox-inner {
+  background-color: var(--section);
+}
+
+.ant-checkbox-checked .ant-checkbox-inner::after {
+  border: 2px solid @dark-2;
+  border-top: 0;
+  border-left: 0;
+}
+
+.ant-checkbox-checked .ant-checkbox-inner {
+  background-color: var(--secondary-checkbox);
+  border-color: var(--secondary-checkbox);
+}
+
+.ant-checkbox-input:focus + .ant-checkbox-inner {
+  color: var(--secondary-checkbox);
+}
+
+.ant-checkbox-wrapper:hover .ant-checkbox-inner,
+.ant-checkbox:hover .ant-checkbox-inner {
+  border-color: var(--teal) !important;
+}
+
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  color: @dark-2;
+}
+
+.ant-select:not(.ant-select-customize-input) .ant-select-selector {
+  background-color: var(--section-alt);
+}
+
+.ant-select-selection-placeholder {
+  font-size: 14px;
+}
+
+// make button text not disappear on hover
+.ant-btn:hover,
+.ant-btn:focus {
+  color: var(--title);
+  background-color: var(--button-hover);
+}
+.ant-btn-primary:hover,
+.ant-btn-primary:focus {
+  color: @dark-2;
+  background-color: @primary-5;
+  border-color: @primary-5;
+}
+
+// Select component styling
+.ant-select-selection-item {
+  color: var(--title);
+}
+
+.ant-select-lg {
+  font-size: 14px;
+  color: var(--title);
+}
+
+.ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-select-selector {
+  background-color: var(--button);
+}
+
+.ant-select-arrow {
+  color: @light-5;
+}
+
+.ant-select-dropdown {
+  background-color: @btn-primary-color;
+  border: 1px solid @dark-4;
+}
+
+.ant-select-item {
+  color: @light-4;
+}
+
+.ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background-color: @dark-4;
+}
+
+// Switch component styling
+.ant-form-item-control-input-content {
+  color: var(--card-text);
+}
+
+.ant-switch-checked {
+  background-color: var(--title);
+}
+
+.ant-switch-handle::before {
+  background-color: var(--section);
+}
+
+.ant-select-clear {
+  border-radius: 50%;
+}
+
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  color: var(--card-text);
+  font-weight: 500;
+}
+
+// Radio
+.ant-form-item-control-input {
+  min-height: 20px;
+}
+
+.ant-radio-group.ant-radio-group-outline {
+  margin: 0px !important;
+}
+
+// Tabs
+.ant-tabs-nav-list {
+  width: 100%;
+
+  > *:first-child {
+    border-radius: 8px 0px 0px 8px !important;
+  }
+
+  > *:nth-last-child(2) {
+    border-radius: 0px 8px 8px 0px !important;
+  }
+}
+
+.ant-tabs-tab {
+  border: 0px !important;
+  padding: 8px;
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  cursor: pointer;
+  background-color: var(--section-alt);
+  flex: 1;
+  justify-content: center;
+  margin: 0px !important;
+}
+
+.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active {
+  background-color: var(--button);
+}
+
+.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--title) !important;
+  font-weight: 500;
+  text-shadow: unset;
+}
+
+.ant-tabs-nav-operations {
+  display: none !important;
+}
+
+.ant-tabs-ink-bar {
+  display: none !important;
+}
+
+// Modal body
+.ant-modal-body {
+  padding: 16px;
+}
+
+// change color for the search box
+#mainWrapper .ant-select-selector input {
+  color: @light-4; // var(--paragraph)
+}
+
+// scrollbar
+.os-scrollbar,
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+
+  &:hover,
+  &:active {
+    width: 6px;
+  }
+}
+
+.section {
+  background-color: var(--card);
+  padding: 8px;
+  border-radius: 8px;
+  color: var(--paragraph);
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+
+.flex__horizontal {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  flex-wrap: wrap;
+
+  &.margin > * {
+    flex: 1;
+    margin-top: 0px;
+    margin-left: 8px;
+    margin-right: 8px;
+  }
+
+  &.margin > *:last-child {
+    margin-top: 0px;
+    margin-right: 0px;
+  }
+
+  &.margin > *:first-child {
+    margin-top: 0px;
+    margin-left: 0px;
+  }
+}
