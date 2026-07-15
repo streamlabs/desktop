@@ -144,7 +144,17 @@ export default function PlatformSettings() {
         },
       };
     },
-    [settings, updatePlatform],
+    [
+      settings,
+      updatePlatform,
+      isUpdateMode,
+      layoutMode,
+      isDualOutputMode,
+      isStreamShiftMode,
+      isAiHighlighterEnabled,
+      isMidStreamMode,
+      enabledPlatformsCount,
+    ],
   );
 
   const handleChange = useCallback(

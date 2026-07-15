@@ -119,7 +119,7 @@ export default function AddDestinationButton(p: IAddDestinationGroupProps) {
 function DefaultAddDestinationButton(p: IAddDestinationButtonProps) {
   return (
     <Button
-      name="default-add-destination"
+      name={p?.name ?? 'default-add-destination'}
       className={cx(styles.addDestinationBtn, styles.defaultOutputBtn, p.className)}
       onClick={p.onClick}
       block
@@ -133,7 +133,7 @@ function DefaultAddDestinationButton(p: IAddDestinationButtonProps) {
 function SmallAddDestinationButton(p: IAddDestinationButtonProps) {
   return (
     <Button
-      name="default-add-destination"
+      name={p?.name ?? 'default-add-destination'}
       className={cx(styles.smallBtn, p.className)}
       onClick={p.onClick}
       block
@@ -147,7 +147,7 @@ function SmallAddDestinationButton(p: IAddDestinationButtonProps) {
 function UltraAddDestinationButton(p: IAddDestinationButtonProps) {
   return (
     <ButtonHighlighted
-      name="ultra-add-destination"
+      name={p?.name ?? 'ultra-add-destination'}
       faded
       className={cx(
         styles.addDestinationBtn,
@@ -173,7 +173,7 @@ function AddDestinationBanner(p: IAddDestinationButtonProps) {
 
   return (
     <ButtonHighlighted
-      name="banner-add-destination"
+      name={p?.name ?? 'banner-add-destination'}
       faded={isDarkTheme}
       className={cx(styles.infoBanner, p?.className)}
       onClick={p.onClick}
@@ -199,7 +199,7 @@ function AddDestinationHeader(p: IAddDestinationButtonProps) {
 
   return (
     <ButtonHighlighted
-      name="header-add-destination"
+      name={p?.name ?? 'header-add-destination'}
       faded={isDarkTheme}
       filledLight={!isDarkTheme}
       noMargin
