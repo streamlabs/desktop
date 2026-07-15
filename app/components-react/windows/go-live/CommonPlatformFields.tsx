@@ -83,6 +83,8 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
     maxCharacters = 140;
   }
 
+  // Patreon requires both a title and description of at least 3 characters,
+  // but other platforms do not have a minimum character requirement for title or description
   const hasPatreon = p.platform === 'patreon' || enabledPlatforms.includes('patreon');
   const minCharacters = hasPatreon ? 3 : undefined;
 
