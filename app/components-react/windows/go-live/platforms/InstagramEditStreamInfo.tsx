@@ -23,6 +23,7 @@ export const InstagramEditStreamInfo = InputComponent((p: Props) => {
     <Form name="instagram-settings">
       <TextInput
         {...bind.streamUrl}
+        name="instagramStreamUrl"
         required
         label={streamUrlLabel}
         addonAfter={<PasteButton onPaste={bind.streamUrl.onChange} />}
@@ -32,6 +33,7 @@ export const InstagramEditStreamInfo = InputComponent((p: Props) => {
 
       <TextInput
         {...bind.streamKey}
+        name="instagramStreamKey"
         required
         label={streamKeyLabel}
         isPassword

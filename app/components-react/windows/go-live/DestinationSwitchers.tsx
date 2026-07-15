@@ -385,6 +385,16 @@ const DestinationSwitcher = memo(
       return <i className={cx(styles.destinationLogo, 'fa fa-globe')} />;
     }, [platform]);
 
+    const name = useMemo(() => {
+      if (platform) {
+        return platform;
+      }
+      if (p.destination && typeof p.destination !== 'string') {
+        return (p.destination as ICustomStreamDestination).name.replace(/\s+/g, '');
+      }
+      return `destination${p.index}`;
+    }, [platform, p.destination, p.index]);
+
     return (
       <SwitcherCard
         ref={cardRef}
@@ -392,7 +402,7 @@ const DestinationSwitcher = memo(
         value={p.enabled}
         switchClassName={platform ? 'platform-switch' : 'destination-switch'}
         icon={icon}
-        name={platform ?? `destination${p?.index}`}
+        name={name}
         label={label}
         title={title}
         description={description}
@@ -407,7 +417,7 @@ const DestinationSwitcher = memo(
           height="35px"
         >
           <DisplaySelector
-            data-name="display-selector"
+            destinationName={!platform ? name : undefined}
             title={title}
             nolabel
             className={styles.displaySelector}

@@ -11,6 +11,7 @@ interface IDisplaySelectorProps {
   title: string;
   index: number;
   platform: TPlatform | null;
+  destinationName?: string;
   className?: string;
   style?: CSSProperties;
   nolabel?: boolean;
@@ -106,7 +107,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     }, {} as Dictionary<ICustomRadioOption>);
   }, [displays]);
 
-  const name = `${p.platform || `destination${p.index}`}Display`;
+  const name = `${p.platform || p.destinationName}Display`;
   const value = displayDict[display]?.value || 'horizontal';
 
   return (

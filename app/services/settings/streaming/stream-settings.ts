@@ -213,6 +213,8 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
   }
 
   setGoLiveSettings(settingsPatch: Partial<IGoLiveSettings>) {
+    if (!settingsPatch) return;
+
     // transform IGoLiveSettings to ISavedGoLiveSettings
     const patch: Partial<ISavedGoLiveSettings> = settingsPatch;
     if (settingsPatch.platforms) {

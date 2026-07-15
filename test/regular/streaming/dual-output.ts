@@ -16,7 +16,7 @@ import {
   isDisplayed,
   waitForDisplayed,
 } from '../../helpers/modules/core';
-import { logIn } from '../../helpers/modules/user';
+import { addCustomDestination, logIn } from '../../helpers/modules/user';
 import {
   toggleDisplay,
   toggleDualOutputMode,
@@ -28,10 +28,16 @@ import {
   TExecutionContext,
   useWebdriver,
 } from '../../helpers/webdriver';
-import { addDummyAccount, logOut, releaseUserInPool, withUser } from '../../helpers/webdriver/user';
+import {
+  addDummyAccount,
+  logOut,
+  releaseUserInPool,
+  removeDummyAccount,
+  withUser,
+} from '../../helpers/webdriver/user';
 import { SceneBuilder } from '../../helpers/scene-builder';
 import { getApiClient } from '../../helpers/api-client';
-import { fillForm } from '../../helpers/modules/forms';
+import { fillForm, readFields } from '../../helpers/modules/forms';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 
 // not a react hook
@@ -264,8 +270,8 @@ test('Dual Output Go Live Non-Ultra', async t => {
       instagramDisplay: 'vertical',
       title: 'Test stream',
       twitchGame: 'Fortnite',
-      streamUrl: dummy.streamUrl,
-      streamKey: dummy.streamKey,
+      instagramStreamUrl: dummy.streamUrl,
+      instagramStreamKey: dummy.streamKey,
     });
 
     await goLiveWithDualOutput('instagram');
@@ -278,31 +284,48 @@ test('Dual Output Go Live Non-Ultra', async t => {
       twitchDisplay: 'vertical',
     });
     await goLiveWithDualOutput('instagram');
+  } catch (e: unknown) {
+    t.fail('Dual Output Go Live Non-Ultra error with platforms');
 
+    await removeDummyAccount('instagram');
+    return;
+  }
+
+  // Custom destination in non-ultra dual output
+  const { user, name } = await addCustomDestination(t);
+
+  try {
     await clickGoLive();
     await waitForSettingsWindowLoaded();
+    await fillForm({ instagram: false });
+    await waitForSettingsWindowLoaded();
 
-    // TODO: Add test for custom destinations
-    // const { name, user } = await addCustomDestination(t);
-    // await fillForm({
-    //   instagram: false,
-    //   [name]: true,
-    //   twitchDisplay: 'horizontal',
-    //   [`${name}Display`]: 'vertical',
-    // });
-    // await goLiveWithDualOutput('twitch');
+    await fillForm({ [name]: true });
+    await waitForSettingsWindowLoaded();
 
-    // // Swap displays and go live again
-    // await clickGoLive();
-    // await waitForSettingsWindowLoaded();
-    // await fillForm({
-    //   twitchDisplay: 'vertical',
-    //   [`${name}Display`]: 'horizontal',
-    // });
-    // await goLiveWithDualOutput('twitch');
+    await fillForm({
+      twitchDisplay: 'horizontal',
+      [`${name}Display`]: 'vertical',
+    });
+    await goLiveWithDualOutput('twitch');
+
+    // Swap displays and go live again
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+    await fillForm({
+      twitchDisplay: 'vertical',
+      [`${name}Display`]: 'horizontal',
+    });
+    await goLiveWithDualOutput('twitch');
+
+    // Clean up custom destination
+    await showSettingsWindow('Stream', async () => {
+      await click('i.fa-trash');
+      await clickButton('Close');
+    });
+    await releaseUserInPool(user);
   } catch (e: unknown) {
-    console.log('Error during Dual Output Go Live Non-Ultra test:', e);
-    t.fail('Error during Dual Output Go Live Non-Ultra test');
+    t.fail('Dual Output Go Live Non-Ultra error with custom destination');
   } finally {
     // Clean up the dummy account
     await showSettingsWindow('Stream', async () => {
@@ -311,12 +334,14 @@ test('Dual Output Go Live Non-Ultra', async t => {
       await clickButton('Close');
     });
 
-    // Vertical display is hidden after logging out
-    await logOut(t);
-    t.false(await isDisplayed('div#vertical-display'));
-
-    t.pass();
+    await releaseUserInPool(user);
   }
+
+  // Vertical display is hidden after logging out
+  await logOut(t);
+  t.false(await isDisplayed('div#vertical-display'));
+
+  t.pass();
 });
 
 // TODO: Add test for dual stream with both Twitch and YouTube after adding accounts to pool
@@ -353,11 +378,7 @@ test(
         twitchDisplay: 'vertical',
         primaryChat: 'Twitch',
       });
-      await waitForSettingsWindowLoaded();
-      await submit();
-
-      await waitForStreamStart();
-      await stopStream();
+      await goLiveWithDualOutput('twitch');
 
       await clickGoLive();
       await waitForSettingsWindowLoaded();
@@ -368,12 +389,42 @@ test(
       });
       await goLiveWithDualOutput('twitch');
     } catch (e: unknown) {
-      console.log('Error during Dual Output Go Live Ultra test:', e);
-    } finally {
-      // Vertical display is hidden after logging out
-      await logOut(t);
-      t.false(await isDisplayed('div#vertical-display'));
+      t.fail('Error going live with platforms during Dual Output Go Live Ultra test');
+      return;
     }
+
+    // Custom destination in ultra dual output
+    const { user, name } = await addCustomDestination(t);
+
+    try {
+      await clickGoLive();
+      await waitForSettingsWindowLoaded();
+      await fillForm({
+        youtube: false,
+        [name]: true,
+      });
+      await waitForSettingsWindowLoaded();
+      await fillForm({
+        [`${name}Display`]: 'vertical',
+      });
+
+      await goLiveWithDualOutput('twitch');
+    } catch (e: unknown) {
+      t.fail(
+        'Error going live with platform and destination during Dual Output Go Live Ultra test',
+      );
+    } finally {
+      // Clean up custom destination
+      await showSettingsWindow('Stream', async () => {
+        await click('i.fa-trash');
+        await clickButton('Close');
+      });
+      await releaseUserInPool(user);
+    }
+
+    // Vertical display is hidden after logging out
+    await logOut(t);
+    t.false(await isDisplayed('div#vertical-display'));
 
     t.pass();
   },
