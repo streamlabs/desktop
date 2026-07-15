@@ -149,7 +149,6 @@
   "Twitch": "Twitch",
   "Facebook": "Facebook",
   "YouTube": "YouTube",
-  "Trovo": "Trovo",
   "TikTok": "TikTok",
   "Instagram": "Instagram",
   "Instagram Live": "Instagram Live",
@@ -176,5 +175,6 @@
   "Upgrade": "Ulepsz",
   "Edit Data": "Edit Data",
   "Edit Reactive Data": "Edit Reactive Data",
-  "Reactive Data Editor": "Reactive Data Editor"
+  "Reactive Data Editor": "Reactive Data Editor",
+  "Not enabled": "Not enabled"
 }

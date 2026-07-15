@@ -311,7 +311,6 @@
   "%{platform} Setup Error: Toggling off %{platform} to bypass and go live.": "{platform} installatiefout: Schakel '{platform} ' uit om dit te omzeilen en live te gaan.",
   "Recording Audio Encoder": "Audio-encoder opnemen",
   "Record Stream in": "Stream opnemen in",
-  "format": "formaat",
   "Record Stream": "Stroom opnemen",
   "AI Highlighter is enabled. Recording will start when stream starts.": "AI-markeerstift is aan. De opname begint zodra de stream start.",
   "Connection Failed": "Verbinding mislukt",

@@ -25,6 +25,7 @@
   "Subscription": "サブスクリプション",
   "Donation": "ドネーション",
   "Bits": "ビット",
+  "Power-Ups": "Power-Ups",
   "Host": "ホスト",
   "The Google Font to use for the text. Visit http://google.com/fonts to find one! Popular Fonts include: Open Sans, Roboto, Oswald, Lato, and Droid Sans.": "テキストに使用する Google フォント。http://google.com/fonts にアクセスしてフォントを検索しましょう！人気のあるフォント：Open Sans、Roboto、Oswald、Lato、および Droid Sans",
   "A hex code for the base text color.": "ベーステキスト色用の 16 進コード。",
