@@ -76,7 +76,9 @@ if (process.argv.includes('--clearCacheDir')) {
 }
 
 // This ensures that only one copy of our app can run at once.
-const gotTheLock = app.requestSingleInstanceLock();
+// additionalData preserves the secondary process arguments exactly; Electron's argv event may
+// reorder them or append Chromium switches.
+const gotTheLock = app.requestSingleInstanceLock({ relaunchArgs: process.argv.slice(1) });
 
 if (!gotTheLock) {
   app.quit();
@@ -307,6 +309,13 @@ async function startApp() {
   shutdownCoordinator = createShutdownCoordinator({
     logger: console,
     onForceShutdown: forceShutdown,
+    onRelaunch: args => {
+      if (args) {
+        app.relaunch({ args });
+      } else {
+        app.relaunch();
+      }
+    },
   });
 
   if (process.platform === 'win32') {
@@ -472,12 +481,24 @@ async function startApp() {
     }
   });
 
+  app.on('quit', () => {
+    shutdownCoordinator.finishShutdown();
+  });
+
   ipcMain.on('acknowledgeShutdown', () => {
     shutdownCoordinator.acknowledgeShutdown();
   });
 
   ipcMain.on('shutdownComplete', () => {
-    shutdownCoordinator.completeShutdown();
+    // OBS initialization can fail before the normal close path starts shutdown.
+    // Enter the coordinator state before recording completion so the final exit is bounded too.
+    if (!shutdownStarted) {
+      shutdownStarted = true;
+      shutdownCoordinator.beginShutdown();
+    }
+
+    if (!shutdownCoordinator.completeShutdown()) return;
+
     allowMainWindowClose = true;
     mainWindow.close();
     workerWindow.close();
@@ -485,7 +506,10 @@ async function startApp() {
 
   workerWindow.on('closed', () => {
     session.defaultSession.flushStorageData();
-    session.defaultSession.cookies.flushStore().then(() => app.quit());
+    session.defaultSession.cookies
+      .flushStore()
+      .catch(error => console.log('[Shutdown] Failed to flush cookie store', error))
+      .finally(() => app.quit());
   });
 
   // Pre-initialize the child window
@@ -608,9 +632,17 @@ if (fs.existsSync(haDisableFile)) app.disableHardwareAcceleration();
 
 app.setAsDefaultProtocolClient('slobs');
 
-app.on('second-instance', (event, argv, cwd) => {
-  // During shutdown, a second launch means this instance is still holding the single-instance lock.
-  if (shutdownStarted && shutdownCoordinator && shutdownCoordinator.handleSecondInstance()) return;
+app.on('second-instance', (event, argv, cwd, additionalData) => {
+  if (shutdownStarted) {
+    // The triggering process has already failed to acquire the single-instance lock and will exit.
+    // Schedule one replacement with its arguments, then let the watchdog arbitrate this shutdown.
+    const relaunchArgs =
+      additionalData && Array.isArray(additionalData.relaunchArgs)
+        ? additionalData.relaunchArgs
+        : argv.slice(1);
+    if (shutdownCoordinator) shutdownCoordinator.scheduleRelaunch(relaunchArgs);
+    return;
+  }
 
   // Check for protocol links in the argv of the other process
   argv.forEach(arg => {
@@ -741,7 +773,7 @@ ipcMain.on('vuex-mutation', (event, mutation) => {
 });
 
 ipcMain.on('restartApp', () => {
-  app.relaunch();
+  shutdownCoordinator.scheduleRelaunch();
   // Closing the main window starts the shut down sequence
   mainWindow.close();
 });

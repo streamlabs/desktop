@@ -49,6 +49,13 @@ import { NavigationService } from 'services/navigation';
 import { StreamingService } from 'services/streaming';
 import { VirtualWebcamService } from 'services/virtual-webcam';
 import { WebsocketService } from 'services/websocket';
+import {
+  executeImmediateShutdownSteps,
+  IWorkerShutdownPlan,
+  runWorkerShutdown,
+} from 'util/worker-shutdown';
+
+const SHUTDOWN_ANALYTICS_TIMEOUT_MS = 3 * 1000;
 
 interface IAppState {
   loading: boolean;
@@ -205,98 +212,172 @@ export class AppService extends StatefulService<IAppState> {
 
   shutdownStarted = new Subject();
 
-  private async runShutdownStep(name: string, fn: () => Promise<unknown> | unknown) {
-    console.log(`[Shutdown] Starting ${name}`);
-
-    try {
-      await fn();
-      console.log(`[Shutdown] Completed ${name}`);
-    } catch (e) {
-      console.error(`[Shutdown] Failed ${name}`, e);
-    }
-  }
-
   @track('app_close')
   private shutdownHandler() {
     this.START_LOADING();
     this.loadingChanged.next(true);
+
+    // Stop external callers before yielding or starting the delayed teardown. This prevents API
+    // mutations from racing the final scene snapshot.
+    const ingressReport = executeImmediateShutdownSteps([
+      {
+        name: 'TcpServerService.stopListening',
+        criticality: 'required',
+        run: () => this.tcpServerService.stopListening(),
+      },
+      {
+        name: 'IpcServerService.stopListening',
+        criticality: 'required',
+        run: () => this.ipcServerService.stopListening(),
+      },
+    ]);
+
     window.setTimeout(async () => {
-      try {
-        await this.runShutdownStep('TcpServerService.stopListening', () =>
-          this.tcpServerService.stopListening(),
-        );
-        await this.runShutdownStep('NodeObs.InitShutdownSequence', () =>
-          obs.NodeObs.InitShutdownSequence(),
-        );
-        await this.runShutdownStep('StreamAvatarService.stopAvatarProcess', () =>
-          this.streamAvatarService.stopAvatarProcess(),
-        );
-        await this.runShutdownStep('CrashReporterService.beginShutdown', () =>
-          this.crashReporterService.beginShutdown(),
-        );
-        await this.runShutdownStep('AppService.shutdownStarted', () => this.shutdownStarted.next());
-        await this.runShutdownStep('RecentEventsService.shutdown', () =>
-          this.recentEventsService.shutdown(),
-        );
-        await this.runShutdownStep('WebsocketService.disconnect', () =>
-          this.websocketService.disconnect(),
-        );
-        await this.runShutdownStep('KeyListenerService.shutdown', () =>
-          this.keyListenerService.shutdown(),
-        );
-        await this.runShutdownStep('PlatformAppsService.unloadAllApps', () =>
-          this.platformAppsService.unloadAllApps(),
-        );
-        await this.runShutdownStep('UsageStatisticsService.flushEvents', () =>
-          this.usageStatisticsService.flushEvents(),
-        );
-        await this.runShutdownStep('StreamingService.shutdown', () =>
-          this.streamingService.shutdown(),
-        );
-        await this.runShutdownStep('WindowsService.shutdown', () => this.windowsService.shutdown());
-        await this.runShutdownStep('IpcServerService.stopListening', () =>
-          this.ipcServerService.stopListening(),
-        );
-        await this.runShutdownStep('UserService.flushUserSession', () =>
-          this.userService.flushUserSession(),
-        );
-        await this.runShutdownStep('SceneCollectionsService.deinitialize', () =>
-          this.sceneCollectionsService.deinitialize(),
-        );
-        await this.runShutdownStep('PerformanceService.stop', () => this.performanceService.stop());
-        await this.runShutdownStep('TransitionsService.shutdown', () =>
-          this.transitionsService.shutdown(),
-        );
-        await this.runShutdownStep('VideoSettingsService.shutdown', () =>
-          this.videoSettingsService.shutdown(),
-        );
-        await this.runShutdownStep('GameOverlayService.destroy', () =>
-          this.gameOverlayService.destroy(),
-        );
-        await this.runShutdownStep('FileManagerService.flushAll', () =>
-          this.fileManagerService.flushAll(),
-        );
-        await this.runShutdownStep('NodeObs.RemoveSourceCallback', () =>
-          obs.NodeObs.RemoveSourceCallback(),
-        );
-        await this.runShutdownStep('NodeObs.RemoveTransitionCallback', () =>
-          obs.NodeObs.RemoveTransitionCallback(),
-        );
-        await this.runShutdownStep('NodeObs.RemoveVolmeterCallback', () =>
-          obs.NodeObs.RemoveVolmeterCallback(),
-        );
-        await this.runShutdownStep('NodeObs.OBS_service_removeCallback', () =>
-          obs.NodeObs.OBS_service_removeCallback(),
-        );
-        await this.runShutdownStep('OBS IPC disconnect', () => obs.IPC.disconnect());
-        await this.runShutdownStep('CrashReporterService.endShutdown', () =>
-          this.crashReporterService.endShutdown(),
-        );
-      } catch (e) {
-        console.error('[Shutdown] Unexpected shutdown failure', e);
-      } finally {
-        electron.ipcRenderer.send('shutdownComplete');
-      }
+      const plan: IWorkerShutdownPlan = {
+        persistence: [
+          {
+            name: 'CrashReporterService.beginShutdown',
+            criticality: 'required',
+            run: () => this.crashReporterService.beginShutdown(),
+          },
+          {
+            name: 'SceneCollectionsService.persistForShutdown',
+            criticality: 'required',
+            run: () => this.sceneCollectionsService.persistForShutdown(),
+          },
+          {
+            name: 'UserService.flushUserSession',
+            criticality: 'required',
+            run: () => this.userService.flushUserSession(),
+          },
+          {
+            name: 'FileManagerService.flushAllBeforeTeardown',
+            criticality: 'required',
+            run: () => this.fileManagerService.flushAll(),
+          },
+        ],
+        teardown: [
+          {
+            name: 'AppService.shutdownStarted',
+            criticality: 'required',
+            run: () => this.shutdownStarted.next(),
+          },
+          {
+            name: 'NodeObs.InitShutdownSequence',
+            criticality: 'required',
+            run: () => obs.NodeObs.InitShutdownSequence(),
+          },
+          {
+            name: 'StreamAvatarService.stopAvatarProcess',
+            criticality: 'best-effort',
+            run: () => this.streamAvatarService.stopAvatarProcess(),
+          },
+          {
+            name: 'RecentEventsService.shutdown',
+            criticality: 'best-effort',
+            run: () => this.recentEventsService.shutdown(),
+          },
+          {
+            name: 'WebsocketService.disconnect',
+            criticality: 'best-effort',
+            run: () => this.websocketService.disconnect(),
+          },
+          {
+            name: 'KeyListenerService.shutdown',
+            criticality: 'best-effort',
+            run: () => this.keyListenerService.shutdown(),
+          },
+          {
+            name: 'PlatformAppsService.unloadAllApps',
+            criticality: 'best-effort',
+            run: () => this.platformAppsService.unloadAllApps(),
+          },
+          {
+            name: 'StreamingService.shutdown',
+            criticality: 'required',
+            run: () => this.streamingService.shutdown(),
+          },
+          {
+            name: 'WindowsService.shutdown',
+            criticality: 'best-effort',
+            run: () => this.windowsService.shutdown(),
+          },
+          {
+            name: 'SceneCollectionsService.deinitialize',
+            criticality: 'required',
+            run: () => this.sceneCollectionsService.deinitialize({ persist: false }),
+          },
+          {
+            name: 'PerformanceService.stop',
+            criticality: 'best-effort',
+            run: () => this.performanceService.stop(),
+          },
+          {
+            name: 'TransitionsService.shutdown',
+            criticality: 'required',
+            run: () => this.transitionsService.shutdown(),
+          },
+          {
+            name: 'VideoSettingsService.shutdown',
+            criticality: 'required',
+            run: () => this.videoSettingsService.shutdown(),
+          },
+          {
+            name: 'GameOverlayService.destroy',
+            criticality: 'required',
+            run: () => this.gameOverlayService.destroy(),
+          },
+          {
+            name: 'FileManagerService.flushAllAfterTeardown',
+            criticality: 'required',
+            run: () => this.fileManagerService.flushAll(),
+          },
+          {
+            name: 'NodeObs.RemoveSourceCallback',
+            criticality: 'required',
+            run: () => obs.NodeObs.RemoveSourceCallback(),
+          },
+          {
+            name: 'NodeObs.RemoveTransitionCallback',
+            criticality: 'required',
+            run: () => obs.NodeObs.RemoveTransitionCallback(),
+          },
+          {
+            name: 'NodeObs.RemoveVolmeterCallback',
+            criticality: 'required',
+            run: () => obs.NodeObs.RemoveVolmeterCallback(),
+          },
+          {
+            name: 'NodeObs.OBS_service_removeCallback',
+            criticality: 'required',
+            run: () => obs.NodeObs.OBS_service_removeCallback(),
+          },
+          {
+            name: 'OBS IPC disconnect',
+            criticality: 'required',
+            run: () => obs.IPC.disconnect(),
+          },
+        ],
+        bestEffort: [
+          {
+            name: 'UsageStatisticsService.flushEvents',
+            criticality: 'best-effort',
+            timeoutMs: SHUTDOWN_ANALYTICS_TIMEOUT_MS,
+            run: signal => this.usageStatisticsService.flushEvents(signal),
+          },
+        ],
+      };
+
+      await runWorkerShutdown(plan, {
+        initialReport: ingressReport,
+        markClean: () => this.crashReporterService.endShutdown(),
+        onComplete: report => {
+          electron.ipcRenderer.send('shutdownComplete', {
+            clean: report.clean,
+            failedSteps: report.failures.map(failure => failure.name),
+          });
+        },
+      });
     }, 300);
   }
 
