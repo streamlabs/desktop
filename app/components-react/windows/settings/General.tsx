@@ -42,41 +42,24 @@ function LanguageSettings() {
 function ExtraSettings() {
   const {
     UserService,
-    StreamingService,
-    StreamSettingsService,
     CustomizationService,
     AppService,
     OnboardingService,
     WindowsService,
     StreamlabelsService,
     RecordingModeService,
-    SettingsService,
   } = Services;
   const isLoggedIn = UserService.isLoggedIn;
-  const isTwitch = isLoggedIn && getDefined(UserService.platform).type === 'twitch';
   const isFacebook = isLoggedIn && getDefined(UserService.platform).type === 'facebook';
   const isYoutube = isLoggedIn && getDefined(UserService.platform).type === 'youtube';
-  const protectedMode = StreamSettingsService.state.protectedModeEnabled;
   const disableHAFilePath = path.join(AppService.appDataDirectory, 'HADisable');
   const [disableHA, setDisableHA] = useState(() => fs.existsSync(disableHAFilePath));
 
-  // TODO: unused fields
-  const { isRecordingOrStreaming, recordingMode, isSimpleOutputMode } = useVuex(() => ({
-    isRecordingOrStreaming: StreamingService.isStreaming || StreamingService.isRecording,
+  const { recordingMode } = useVuex(() => ({
     recordingMode: RecordingModeService.views.isRecordingModeEnabled,
-    isSimpleOutputMode: SettingsService.views.isSimpleOutputMode,
   }));
 
   const updateStreamInfoOnLive = useRealmObject(CustomizationService.state).updateStreamInfoOnLive;
-
-  // HDR Settings are not compliant with the auto-optimizer
-  // temporarily disable auto config until migrate to new api
-  const canRunOptimizer = false;
-  // !SettingsService.views.hasHDRSettings &&
-  // isTwitch &&
-  // !isRecordingOrStreaming &&
-  // protectedMode &&
-  // isSimpleOutputMode;
 
   function restartStreamlabelsSession() {
     StreamlabelsService.restartSession().then(result => {
@@ -84,11 +67,6 @@ function ExtraSettings() {
         alertAsync($t('Stream Labels session has been successfully restarted!'));
       }
     });
-  }
-
-  function runAutoOptimizer() {
-    OnboardingService.actions.start({ isOptimize: true });
-    WindowsService.actions.closeChildWindow();
   }
 
   function configureDefaults() {
@@ -157,14 +135,6 @@ function ExtraSettings() {
               {$t('Configure Default Devices')}
             </button>
           </div>
-          {canRunOptimizer && (
-            <div className="input-container">
-              <button className="button button--default" onClick={runAutoOptimizer}>
-                {$t('Auto Optimize')}
-              </button>
-            </div>
-          )}
-
           <div className="input-container">
             <button className="button button--default" onClick={importFromObs}>
               {$t('OBS Import')}

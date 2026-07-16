@@ -21,10 +21,13 @@ import { inject } from 'slap';
 import RecordingSwitcher from './RecordingSwitcher';
 import { promptAction } from 'components-react/modals';
 import TwitterInput from './Twitter';
+import { useVuex } from 'components-react/hooks';
+import GoLiveAutoOptimizer from './GoLiveAutoOptimizer';
 
 export default function GoLiveWindow() {
   const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
     destroy() {
+      void Services.AutoConfigService.actions.return.closeFromHost();
       // clear failed checks and warnings on window close
       if (module.checklist.startVideoTransmission !== 'done') {
         Services.StreamingService.actions.resetInfo();
@@ -34,23 +37,33 @@ export default function GoLiveWindow() {
 
   const shouldShowSettings = ['empty', 'prepopulate', 'waitForNewSettings'].includes(lifecycle);
   const shouldShowChecklist = ['runChecklist', 'live'].includes(lifecycle);
+  const optimizerOpen = useVuex(() => Services.AutoConfigService.views.isOpen);
 
   return (
-    <ModalLayout footer={<ModalFooter />} className={styles.goLiveSettings}>
-      <Form
-        form={form!}
-        style={{ position: 'relative', height: '100%' }}
-        layout="horizontal"
-        name="editStreamForm"
-      >
-        <Animation transitionName={shouldShowChecklist ? 'slideright' : ''}>
-          {/* STEP 1 - FILL OUT THE SETTINGS FORM */}
-          {shouldShowSettings && <GoLiveSettings key={'settings'} />}
+    <ModalLayout
+      footer={<ModalFooter />}
+      hideFooter={optimizerOpen}
+      bodyStyle={{ position: 'relative' }}
+      className={styles.goLiveSettings}
+    >
+      {optimizerOpen ? (
+        <GoLiveAutoOptimizer />
+      ) : (
+        <Form
+          form={form!}
+          style={{ position: 'relative', height: '100%' }}
+          layout="horizontal"
+          name="editStreamForm"
+        >
+          <Animation transitionName={shouldShowChecklist ? 'slideright' : ''}>
+            {/* STEP 1 - FILL OUT THE SETTINGS FORM */}
+            {shouldShowSettings && <GoLiveSettings key={'settings'} />}
 
-          {/* STEP 2 - RUN THE CHECKLIST */}
-          {shouldShowChecklist && <GoLiveChecklist className={styles.page} key={'checklist'} />}
-        </Animation>
-      </Form>
+            {/* STEP 2 - RUN THE CHECKLIST */}
+            {shouldShowChecklist && <GoLiveChecklist className={styles.page} key={'checklist'} />}
+          </Animation>
+        </Form>
+      )}
     </ModalLayout>
   );
 }
@@ -59,6 +72,7 @@ function ModalFooter() {
   const {
     error,
     goLive,
+    confirmGoLive,
     close,
     goBackToSettings,
     isLoading,
@@ -129,9 +143,9 @@ function ModalFooter() {
       return ['empty', 'prepopulate', 'waitForNewSettings'].includes(module.lifecycle);
     },
 
-    goLiveWithDefaultCodec() {
+    async goLiveWithDefaultCodec() {
       this.settingsService.actions.setDefaultVideoEncoder();
-      module.goLive();
+      return module.confirmGoLive();
     },
 
     showSettings() {
@@ -185,7 +199,7 @@ function ModalFooter() {
       title: $t('Incompatible Codec Detected'),
       message,
       btnText: $t('Use H.264 Codec'),
-      fn: goLiveWithDefaultCodec,
+      fn: () => void goLiveWithDefaultCodec(),
       cancelBtnText: $t('Cancel'),
       cancelBtnPosition: 'left',
       secondaryActionText: $t('Select Codec'),
@@ -282,9 +296,16 @@ function ModalFooter() {
       return;
     }
 
-    // The streaming service handles the stream shift check internally
-    goLive();
-  }, [isPrime, hasValidDisplayAssignment, hasIncompatibleCodec, promptUseDefaultCodec, goLive]);
+    // The streaming service handles the stream shift check internally. This
+    // confirmation path may first open Auto Optimizer when the attempt is eligible.
+    await confirmGoLive();
+  }, [
+    isPrime,
+    hasValidDisplayAssignment,
+    hasIncompatibleCodec,
+    promptUseDefaultCodec,
+    confirmGoLive,
+  ]);
 
   return (
     <Form layout={'inline'}>
