@@ -5,6 +5,7 @@ import { metadata } from 'components/widgets/inputs';
 
 export const API_NAME_MAP = {
   bit: 'bits',
+  power_up: 'power_ups',
   donation: 'donations',
   donordrivedonation: 'donordrive',
   pledge: 'patreon',
@@ -29,13 +30,11 @@ export const API_NAME_MAP = {
   facebook_share: 'shares',
   facebook_follow: 'fbfollows',
   loyalty_store_redemption: 'loyaltystore',
-  trovo_follow: 'trovo_follow',
-  trovo_sub: 'trovo_sub',
-  trovo_raid: 'trovo_raid',
 };
 
 export const alertNameMap = () => ({
   bits: $t('Bits'),
+  power_ups: $t('Power-Ups'),
   donations: $t('Donations'),
   donordrive: $t('Charity Streaming Donations'),
   patreon: $t('Patreon Pledges'),
@@ -62,9 +61,6 @@ export const alertNameMap = () => ({
   loyaltystore: $t('Cloudbot Store'),
   stickers: $t('Stickers'),
   effects: $t('Effects/Rallies'),
-  trovo_follow: $t('Trovo Follow'),
-  trovo_sub: $t('Trovo Subscription'),
-  trovo_raid: $t('Trovo Raid'),
 });
 
 // different tests are required due to api idiosyncracies

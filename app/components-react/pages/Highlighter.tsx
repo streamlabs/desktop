@@ -11,7 +11,6 @@ import { Services } from 'components-react/service-provider';
 import StreamView from 'components-react/highlighter/StreamView';
 import ClipsView from 'components-react/highlighter/ClipsView';
 import UpdateModal from 'components-react/highlighter/UpdateModal';
-import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function Highlighter(props: { params?: { view: string } }) {
   const { HighlighterService, UsageStatisticsService } = Services;

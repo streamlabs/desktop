@@ -164,7 +164,6 @@ test('Go through onboarding', async t => {
   t.true(await isDisplayed('button=Log in with TikTok'), 'Shows TikTok button');
 
   // Check for all the login icons
-  t.true(await isDisplayed('[data-testid=platform-icon-button-trovo]'), 'Shows Trovo button');
   t.true(await isDisplayed('[data-testid=platform-icon-button-dlive]'), 'Shows Dlive button');
   t.true(await isDisplayed('[data-testid=platform-icon-button-nimotv]'), 'Shows NimoTV button');
 

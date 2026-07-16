@@ -118,6 +118,8 @@
   "Cheer (Bits)": "Cheer (bit)",
   "Plays an alert when a viewer sends a Cheer": "Emette un avviso quando uno spettatore invia un cheer",
   "Plays an alert when another streamer raids your channel": "Emette un avviso quando un altro streamer esegue un raid verso il tuo canale",
+  "Use Power-Up Image": "Use Power-Up Image",
+  "Plays an alert when a viewer uses a Power-Up": "Plays an alert when a viewer uses a Power-Up",
   "YouTube Super Chat": "Super Chat YouTube",
   "Facebook Support": "Supporto su Facebook",
   "Plays an alert for new Facebook Supporters": "Emette un avviso per i nuovi supporter Facebook",
@@ -155,5 +157,5 @@
   "Use unlimited delay": "Usa ritardo illimitato",
   "When enabled new alerts will interrupt the on screen alert": "Se abilitato, i nuovi avvisi interromperanno l'avviso sullo schermo",
   "Text Highlight Color": "Colore del testo in evidenza",
-  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "Piattaforme: Twitch, YouTube, Facebook, Trovo e integrazioni"
+  "Platforms: Twitch, YouTube, Facebook & integrations": "Platforms: Twitch, YouTube, Facebook & integrations"
 }

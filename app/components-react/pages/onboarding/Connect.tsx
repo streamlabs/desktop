@@ -66,12 +66,9 @@ export function Connect() {
     next();
   }
 
-  // streamlabs and trovo are added separarely on markup below
   const platforms: TPlatform[] = RecordingModeService.views.isRecordingModeEnabled
     ? ['youtube']
     : ['twitch', 'youtube', 'tiktok', 'kick', 'facebook'];
-
-  const shouldAddTrovo = !RecordingModeService.views.isRecordingModeEnabled;
 
   const extraPlatforms: {
     value: TExtraPlatform;
@@ -164,18 +161,6 @@ export function Connect() {
                   })}
                   style={{ marginLeft: '15px' }}
                 />
-                {shouldAddTrovo && (
-                  <PlatformIconButton
-                    name={EPlatform.Trovo}
-                    platform={EPlatform.Trovo}
-                    disabled={loading || authInProgress}
-                    loading={loading}
-                    onClick={() => authPlatform(EPlatform.Trovo, afterLogin)}
-                    title={$t('Log in with %{platform}', {
-                      platform: platformLabels(EPlatform.Trovo),
-                    })}
-                  />
-                )}
                 {extraPlatforms.map(platform => (
                   <PlatformIconButton
                     name={platform.value}

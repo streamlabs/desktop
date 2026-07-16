@@ -54,7 +54,7 @@ export async function toggleDisplay(display: 'horizontal' | 'vertical', wait: bo
  * Toggle an account and assign it to a display
  */
 export async function toggleAccountForDisplay(display: 'horizontal' | 'vertical') {
-  const platforms = ['trovo', 'youtube', 'instagram'];
+  const platforms = ['youtube', 'instagram'];
 
   try {
     for (const platform of platforms) {
@@ -75,10 +75,6 @@ export async function toggleAccountForDisplay(display: 'horizontal' | 'vertical'
             youtubeDisplay: display,
             primaryChat: 'YouTube',
           });
-        }
-
-        if (platform === 'trovo') {
-          await fillForm({ trovoGame: 'Doom', trovoDisplay: display, primaryChat: 'Trovo' });
         }
 
         return platform;

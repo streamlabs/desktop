@@ -118,6 +118,8 @@
   "Cheer (Bits)": "欢呼（小奇点）",
   "Plays an alert when a viewer sends a Cheer": "当观众发送欢呼时播放提醒",
   "Plays an alert when another streamer raids your channel": "当其他主播突袭您的频道时播放提醒",
+  "Use Power-Up Image": "Use Power-Up Image",
+  "Plays an alert when a viewer uses a Power-Up": "Plays an alert when a viewer uses a Power-Up",
   "YouTube Super Chat": "YouTube 超级留言",
   "Facebook Support": "Facebook 支持",
   "Plays an alert for new Facebook Supporters": "为新 Facebook 支持者播放提醒",
@@ -155,5 +157,5 @@
   "Use unlimited delay": "使用无限延迟",
   "When enabled new alerts will interrupt the on screen alert": "启用后，新提醒将中断屏幕提醒",
   "Text Highlight Color": "文本突出显示颜色",
-  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "平台：Twitch、YouTube、Facebook、Trovo 以及集成"
+  "Platforms: Twitch, YouTube, Facebook & integrations": "Platforms: Twitch, YouTube, Facebook & integrations"
 }

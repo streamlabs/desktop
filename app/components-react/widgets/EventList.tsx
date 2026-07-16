@@ -30,6 +30,7 @@ interface IEventListState extends IWidgetCommonState {
       saturation: number;
       show_animation: string;
       show_bits: boolean;
+      show_power_ups: boolean;
       show_donations: boolean;
       show_eldonations: boolean;
       show_follows: boolean;
@@ -108,6 +109,7 @@ export class EventListModule extends WidgetModule<IEventListState> {
         show_resubs: metadata.bool({ label: $t('Show Resubs') }),
         show_sub_tiers: metadata.bool({ label: $t('Show Sub Tiers') }),
         show_bits: metadata.bool({ label: $t('Bits') }),
+        show_power_ups: metadata.bool({ label: $t('Power-Ups') }),
         show_raids: metadata.bool({ label: $t('Raids') }),
       },
       facebook: {
@@ -121,14 +123,6 @@ export class EventListModule extends WidgetModule<IEventListState> {
         show_subscribers: metadata.bool({ label: $t('Subscriptions') }),
         show_sponsors: metadata.bool({ label: $t('Members') }),
         show_fanfundings: metadata.bool({ label: $t('Super Chats') }),
-      },
-      trovo: {
-        show_follows: metadata.bool({ label: $t('Follows') }),
-        show_raids: metadata.bool({ label: $t('Raids') }),
-        show_subscriptions: metadata.bool({ label: $t('Subscriptions') }),
-        show_resubs: metadata.bool({ label: $t('Show Resubs') }),
-        show_sub_gifts: metadata.bool({ label: $t('Show Gift Subs') }),
-        show_sub_tiers: metadata.bool({ label: $t('Show Sub Tiers') }),
       },
     };
     if (!platform) return baseEvents;

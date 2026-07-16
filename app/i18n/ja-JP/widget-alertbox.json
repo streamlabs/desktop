@@ -118,6 +118,8 @@
   "Cheer (Bits)": "チアー（ビット）",
   "Plays an alert when a viewer sends a Cheer": "視聴者がチアーを送信した時にアラートを再生",
   "Plays an alert when another streamer raids your channel": "別のストリーマーが自分のチャネルをレイドした時にアラートを再生",
+  "Use Power-Up Image": "Use Power-Up Image",
+  "Plays an alert when a viewer uses a Power-Up": "Plays an alert when a viewer uses a Power-Up",
   "YouTube Super Chat": "YouTube スーパーチャット",
   "Facebook Support": "Facebook サポート",
   "Plays an alert for new Facebook Supporters": "新しい Facebook サポーターに対してアラートを再生",
@@ -155,5 +157,5 @@
   "Use unlimited delay": "無制限の遅延を使用",
   "When enabled new alerts will interrupt the on screen alert": "有効化した新しいアラートがオンスクリーンアラートを妨害する場合",
   "Text Highlight Color": "テキストハイライトカラー",
-  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "プラットフォーム：Twitch、YouTube、Facebook、Trovo および統合"
+  "Platforms: Twitch, YouTube, Facebook & integrations": "Platforms: Twitch, YouTube, Facebook & integrations"
 }

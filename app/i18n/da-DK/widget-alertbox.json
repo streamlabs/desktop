@@ -118,6 +118,8 @@
   "Cheer (Bits)": "Hurra (bits)",
   "Plays an alert when a viewer sends a Cheer": "Viser en notifikation, når en seer sender et Hurra",
   "Plays an alert when another streamer raids your channel": "Viser en notifikation, når en anden streamer laver et raid på din kanal",
+  "Use Power-Up Image": "Use Power-Up Image",
+  "Plays an alert when a viewer uses a Power-Up": "Plays an alert when a viewer uses a Power-Up",
   "YouTube Super Chat": "YouTube-superchat",
   "Facebook Support": "Facebook-support",
   "Plays an alert for new Facebook Supporters": "Viser en notifikation, når der er nye supportere på Facebook",
@@ -155,5 +157,5 @@
   "Use unlimited delay": "Brug ubegrænset forsinkelse",
   "When enabled new alerts will interrupt the on screen alert": "Når denne indstilling er aktiveret, vil nye notifikationer overskrive den aktuelle notifikation på skærmen",
   "Text Highlight Color": "Tekstfarve",
-  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "Platforme: Twitch, YouTube, Facebook, Trovo og integrationer"
+  "Platforms: Twitch, YouTube, Facebook & integrations": "Platforms: Twitch, YouTube, Facebook & integrations"
 }

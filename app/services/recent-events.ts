@@ -62,6 +62,9 @@ export interface IRecentEvent {
   skill_currency?: string;
   skill_name?: string;
   recurring_donation?: { id: string; months?: number };
+  redeemer_display_name?: string;
+  power_up_name?: string;
+  power_up_prompt?: string;
 }
 
 interface IRecentEventsConfig {
@@ -96,6 +99,7 @@ interface IRecentEventFilterConfig {
   gifted_sub_tier_3?: boolean;
   host?: boolean;
   bits?: boolean;
+  power_up?: boolean;
   raid?: boolean;
   // YouTube
   subscriber?: boolean;
@@ -186,6 +190,7 @@ const filterName = (key: string): string => {
     resub_prime: $t('Prime'),
     gifted_sub: $t('Gifted'),
     bits: $t('Bits'),
+    power_up: $t('Power-Ups'),
     raid: $t('Raids'),
     subscriber: $t('Subscribers'),
     sponsor: $t('Members'),
@@ -208,47 +213,36 @@ const filterName = (key: string): string => {
 function getHashForRecentEvent(event: IRecentEvent) {
   switch (event.type) {
     case 'donation':
-      return [event.type, event.name, event.message, parseInt(event.amount, 10)].join(':');
     case 'bits':
-      return [event.type, event.name, event.message, parseInt(event.amount, 10)].join(':');
     case 'donordrivedonation':
-      return [event.type, event.name, event.message, parseInt(event.amount, 10)].join(':');
     case 'eldonation':
+    case 'justgivingdonation':
+    case 'pledge':
+    case 'superheart':
+    case 'tiltifydonation':
+    case 'stars':
       return [event.type, event.name, event.message, parseInt(event.amount, 10)].join(':');
     case 'follow':
-      return [event.type, event.name, event.message].join(':');
-    case 'justgivingdonation':
-      return [event.type, event.name, event.message, parseInt(event.amount, 10)].join(':');
     case 'loyalty_store_redemption':
+    case 'redemption':
+    case 'superchat':
       return [event.type, event.from, event.message].join(':');
-    case 'pledge':
-      return [event.type, event.name, parseInt(event.amount, 10), event.from].join(':');
+    case 'like':
+    case 'share':
+    case 'support':
+      return [event.type, event.name, event._id].join(':');
+    case 'powerUp':
+      return [event.type, event.redeemer_display_name, event.power_up_name].join(':');
     case 'prime_sub_gift':
       return [event.type, event.name, event.streamer, event.giftType].join(':');
-    case 'redemption':
-      return [event.type, event.name, event.message].join(':');
     case 'sticker':
       return [event.name, event.type, event.currency].join(':');
     case 'raid':
       return [event.type, event.name, event.from].join(':');
     case 'subscription':
       return [event.type, event.name.toLowerCase(), event.message].join(':');
-    case 'superchat':
-      return [event.type, event.name, event.message].join(':');
-    case 'superheart':
-      return [event.type, event.name, event.message, parseInt(event.amount, 10)].join(':');
-    case 'tiltifydonation':
-      return [event.type, event.name, event.message, parseInt(event.amount, 10)].join(':');
     case 'treat':
       return [event.type, event.name, event.title, event.message, event.createdAt].join(':');
-    case 'like':
-      return [event.type, event.name, event._id].join(':');
-    case 'share':
-      return [event.type, event.name, event._id].join(':');
-    case 'stars':
-      return [event.type, event.name, event.message, parseInt(event.amount, 10)].join(':');
-    case 'support':
-      return [event.type, event.name, event._id].join(':');
     case 'merch':
       return [event.type, event.message, event.createdAt].join(':');
     default:
@@ -263,6 +257,7 @@ const SUPPORTED_EVENTS = [
   'follow',
   'subscription',
   'bits',
+  'powerUp',
   'sticker',
   'effect',
   'like',
@@ -290,6 +285,7 @@ class RecentEventsViews extends ViewHandler<IRecentEventsState> {
       subscription: this.getSubString(event),
       // Twitch
       bits: $t('has used'),
+      power_up: $t('has redeemed'),
       raid: $t('has raided you with a party of %{viewers}', { viewers: event.raiders }),
       // Mixer
       sticker: $t('has used %{skill} for', { skill: event.skill }),
@@ -338,24 +334,6 @@ class RecentEventsViews extends ViewHandler<IRecentEventsState> {
         return $t('has been a member for %{months} months', { months: event.months });
       }
       return $t('has become a member');
-    }
-
-    if (event.platform === 'trovo_account') {
-      if (event.gifter) {
-        return $t('has gifted a sub to');
-      }
-      if (event.months > 1 && event.streak_months && event.streak_months > 1) {
-        return $t('has resubscribed for %{streak} months in a row! (%{months} total)', {
-          streak: event.streak_months,
-          months: event.months,
-        });
-      }
-      if (event.months > 1) {
-        return $t('has resubscribed for %{months} months', {
-          months: event.months,
-        });
-      }
-      return $t('has subscribed');
     }
 
     if (event.gifter) {
@@ -559,6 +537,8 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
           'read',
           'hash',
           'uuid',
+          'power_up_name',
+          'power_up_prompt',
         ]);
       });
 
@@ -672,6 +652,7 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
       'follow',
       'host',
       'bits',
+      'power_up',
       'raid',
       'subscriber',
       'sponsor',
@@ -807,8 +788,6 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
       return false;
     }
 
-    if (this.userService.platform.type === 'trovo') return true;
-
     if (!this.state.filterConfig.subscription_tier_1 && event.sub_plan.toString() === '1000') {
       return false;
     }
@@ -836,8 +815,6 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
     if (!this.state.filterConfig.resub) {
       return false;
     }
-
-    if (this.userService.platform.type === 'trovo') return true;
 
     if (!this.state.filterConfig.resub_tier_1 && event.sub_plan.toString() === '1000') {
       return false;
@@ -918,6 +895,9 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
         msg.uuid = uuid();
         msg.read = false;
         msg.iso8601Created = new Date().toISOString();
+        if (msg.type === 'powerUp') {
+          msg.type = 'power_up';
+        }
         if (msg.type === 'sticker' || msg.type === 'effect') {
           msg.amount = msg.skill_amount;
           msg.name = msg.sender_name;

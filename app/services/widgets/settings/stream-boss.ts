@@ -66,7 +66,7 @@ export class StreamBossService extends BaseGoalService<IStreamBossData, IStreamB
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/streamboss/settings`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/streamboss/settings`,
       goalUrl: `https://${host}/api/v5/slobs/widget/streamboss`,
-      testers: ['Follow', 'Subscription', 'Donation', 'Bits'],
+      testers: ['Follow', 'Subscription', 'Donation', 'Bits', 'Power-Up'],
       customCodeAllowed: true,
       customFieldsAllowed: true,
     };
@@ -187,10 +187,6 @@ export class StreamBossService extends BaseGoalService<IStreamBossData, IStreamB
         { key: 'sub_multiplier', title: $t('Damage Per Membership'), isInteger: true },
         { key: 'superchat_multiplier', title: $t('Damage Per Superchat Dollar'), isInteger: true },
         { key: 'follow_multiplier', title: $t('Damage Per Subscriber'), isInteger: true },
-      ],
-      trovo: [
-        { key: 'sub_multiplier', title: $t('Damage Per Subscriber'), isInteger: true },
-        { key: 'follow_multiplier', title: $t('Damage Per Follower'), isInteger: true },
       ],
     }[platform];
   }
