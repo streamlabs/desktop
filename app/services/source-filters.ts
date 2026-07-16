@@ -58,7 +58,6 @@ export type TSourceFilterType =
   | 'mediasoupconnector_vsfilter'
   | 'hdr_tonemap_filter'
   | 'nv_greenscreen_filter'
-  | 'luma_key_filter'
   | 'luma_key_filter_v2'
   | 'upward_compressor_filter'
   | 'basic_eq_filter';
