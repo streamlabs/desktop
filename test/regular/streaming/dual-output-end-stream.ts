@@ -1,6 +1,7 @@
 import {
   clickGoLive,
   prepareToGoLive,
+  stopStream,
   submit,
   waitForSettingsWindowLoaded,
   waitForStreamStart,

@@ -5,7 +5,7 @@ import cx from 'classnames';
 import { Button, Calendar, Modal, Row, Col, Spin } from 'antd';
 import { YoutubeEditStreamInfo } from '../../windows/go-live/platforms/YoutubeEditStreamInfo';
 import { $t } from '../../../services/i18n';
-import FacebookEditStreamInfo from '../../windows/go-live/platforms/FacebookEditStreamInfo';
+import { FacebookEditStreamInfo } from '../../windows/go-live/platforms/FacebookEditStreamInfo';
 import { ListInput, TimeInput } from '../../shared/inputs';
 import Form, { useForm } from '../../shared/inputs/Form';
 import { confirmAsync } from '../../modals';
@@ -17,6 +17,7 @@ import {
 } from './useStreamScheduler';
 import Scrollable from '../../shared/Scrollable';
 import { getDefined } from '../../../util/properties-type-guards';
+import { IFacebookStartStreamOptions } from 'services/platforms/facebook';
 
 /**
  * StreamScheduler page layout
@@ -113,7 +114,10 @@ function SchedulerCalendar() {
   // replace the "DD" cells format to a "D" format
   useEffect(() => {
     const $dayCells = document.querySelectorAll('.ant-picker-calendar-date-value');
-    $dayCells.forEach(($cell: HTMLElement) => ($cell.innerText = String(Number($cell.innerText))));
+    $dayCells.forEach($cell => {
+      const $htmlCell = $cell as HTMLElement;
+      $htmlCell.innerText = String(Number($htmlCell.innerText));
+    });
   });
 
   return (
@@ -228,7 +232,9 @@ function EventSettingsModal() {
               isUpdateMode={isUpdateMode}
               isScheduleMode={true}
               value={fbSettings}
-              onChange={newSettings => updatePlatform('facebook', newSettings)}
+              onChange={(newSettings: IFacebookStartStreamOptions | undefined) =>
+                updatePlatform('facebook', newSettings)
+              }
             />
           )}
         </Spin>

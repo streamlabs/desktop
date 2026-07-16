@@ -255,7 +255,7 @@ export function StreamSettings() {
 
             <CustomDestinationList />
 
-            <IngestServerSetting disabled={!canEditSettings} />
+            {isPrime && <IngestServerSetting disabled={!canEditSettings} />}
 
             {canEditSettings && (
               <Tooltip
@@ -565,7 +565,6 @@ function CustomDestinationList() {
     isPrime: Services.UserService.isPrime,
     customDestinations: Services.StreamingService.views.savedSettings.customDestinations,
   }));
-
   const destinations = customDestinations;
   const isEditMode = editCustomDestMode !== false;
   const shouldShowAddForm = editCustomDestMode === true;
@@ -590,6 +589,7 @@ function CustomDestinationList() {
               filled
               text={$t('Ultra')}
               icon={<UltraIcon type="simple" />}
+              className={styles.ultraText}
             />
           ) : (
             <div className={styles.ultra} />

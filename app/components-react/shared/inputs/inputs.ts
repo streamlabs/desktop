@@ -51,6 +51,7 @@ export interface IInputCommonProps<TValue> {
   onInput?: (val: TValue, ev?: ChangeEvent | CheckboxChangeEvent) => unknown;
   required?: boolean;
   max?: number;
+  min?: number;
   placeholder?: string;
   disabled?: boolean;
   readOnly?: boolean;
@@ -397,11 +398,20 @@ function createValidationRules(type: TInputType, inputProps: IInputCommonProps<u
   if (inputProps.required) {
     rules.push({ required: true, message: $t('The field is required') });
   }
-  if (type === 'text' && inputProps.max) {
+  if ((type === 'text' || type === 'textarea') && inputProps.max) {
     rules.push({
       max: inputProps.max,
       message: $t('This field may not be greater than %{value} characters.', {
         value: inputProps.max,
+      }),
+    });
+  }
+  if ((type === 'text' || type === 'textarea') && inputProps.min) {
+    rules.push({
+      type: 'string',
+      min: inputProps.min,
+      message: $t('This field must be at least %{value} characters.', {
+        value: inputProps.min,
       }),
     });
   }

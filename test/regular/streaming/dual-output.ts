@@ -1,21 +1,22 @@
 import {
   clickGoLive,
   prepareToGoLive,
+  stopStream,
   submit,
   waitForSettingsWindowLoaded,
+  waitForStreamStart,
 } from '../../helpers/modules/streaming';
 import {
   click,
   clickButton,
-  clickIfDisplayed,
   clickWhenDisplayed,
-  closeWindow,
+  dismissAlert,
   focusChild,
   focusMain,
   isDisplayed,
   waitForDisplayed,
 } from '../../helpers/modules/core';
-import { logIn } from '../../helpers/modules/user';
+import { addCustomDestination, logIn } from '../../helpers/modules/user';
 import {
   toggleDisplay,
   toggleDualOutputMode,
@@ -27,12 +28,17 @@ import {
   TExecutionContext,
   useWebdriver,
 } from '../../helpers/webdriver';
-import { addDummyAccount, logOut, releaseUserInPool, withUser } from '../../helpers/webdriver/user';
+import {
+  addDummyAccount,
+  logOut,
+  releaseUserInPool,
+  removeDummyAccount,
+  withUser,
+} from '../../helpers/webdriver/user';
 import { SceneBuilder } from '../../helpers/scene-builder';
 import { getApiClient } from '../../helpers/api-client';
-import { fillForm } from '../../helpers/modules/forms';
+import { fillForm, readFields } from '../../helpers/modules/forms';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
-import { sleep } from '../../helpers/sleep';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -236,70 +242,126 @@ test(
 /**
  * Dual Output Go Live
  */
-
+// TODO: Add non-ultra accounts with multiple accounts linked to pool
+// Note: test cases with multiple merged accounts here and move dual output instagram testing to
+// the instagram test
 test('Dual Output Go Live Non-Ultra', async t => {
   await logIn('twitch', { prime: false });
   await toggleDualOutputMode(true);
   await prepareToGoLive();
 
-  await clickGoLive();
-  await waitForSettingsWindowLoaded();
-  await submit();
-
-  // Cannot go live in dual output mode with only one target linked
-  await waitForDisplayed('div.ant-message-notice-content', {
-    timeout: 10000,
-  });
-  await clickIfDisplayed('div.ant-message-notice-content');
-  await sleep(200);
-
-  await closeWindow('child');
   const dummy = await addDummyAccount('instagram');
 
   try {
     await clickGoLive();
-    await submit();
 
-    // Cannot go live in dual output mode with all targets assigned to one display
-    await waitForDisplayed('div.ant-message-notice-content', {
-      timeout: 5000,
-    });
-    await clickIfDisplayed('div.ant-message-notice-content');
-    await sleep(200);
-
+    await waitForSettingsWindowLoaded();
     await fillForm({
       instagram: true,
-      instagramDisplay: 'vertical',
     });
 
     await waitForSettingsWindowLoaded();
+    await submit();
+
+    // Cannot go live with more than one platform assigned to the same display
+    await dismissAlert('dual-output-info-alert', { timeout: 5000 });
 
     await fillForm({
+      instagramDisplay: 'vertical',
       title: 'Test stream',
       twitchGame: 'Fortnite',
-      streamUrl: dummy.streamUrl,
-      streamKey: dummy.streamKey,
+      instagramStreamUrl: dummy.streamUrl,
+      instagramStreamKey: dummy.streamKey,
     });
 
     await goLiveWithDualOutput('instagram');
+
+    // Swap displays and go live again
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+    await fillForm({
+      instagramDisplay: 'horizontal',
+      twitchDisplay: 'vertical',
+    });
+    await goLiveWithDualOutput('instagram');
   } catch (e: unknown) {
-    console.log('Error during Dual Output Go Live Non-Ultra test:', e);
-    t.fail('Error during Dual Output Go Live Non-Ultra test');
+    t.fail('Dual Output Go Live Non-Ultra error with platforms');
+
+    await removeDummyAccount('instagram');
+    return;
+  }
+
+  // Custom destination in non-ultra dual output
+  const { user, name } = await addCustomDestination(t);
+
+  try {
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+    await fillForm({ instagram: false });
+    await waitForSettingsWindowLoaded();
+
+    await fillForm({ [name]: true });
+    await waitForSettingsWindowLoaded();
+
+    await fillForm({
+      twitchDisplay: 'horizontal',
+      [`${name}Display`]: 'vertical',
+    });
+    await goLiveWithDualOutput('twitch');
+
+    // Swap displays and go live again
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+    await fillForm({
+      twitchDisplay: 'vertical',
+      [`${name}Display`]: 'horizontal',
+    });
+    await goLiveWithDualOutput('twitch');
+
+    // Clean up custom destination
+    await showSettingsWindow('Stream', async () => {
+      await click('i.fa-trash');
+      await clickButton('Close');
+    });
+    await releaseUserInPool(user);
+  } catch (e: unknown) {
+    t.fail('Dual Output Go Live Non-Ultra error with custom destination');
   } finally {
     // Clean up the dummy account
     await showSettingsWindow('Stream', async () => {
       await waitForDisplayed('h2=Stream Destinations');
-      await clickWhenDisplayed('[data-name="instagramUnlink"]');
+      await clickWhenDisplayed('[data-name="instagramUnlink"]', { timeout: 3000 });
       await clickButton('Close');
     });
 
-    // Vertical display is hidden after logging out
-    await logOut(t);
-    t.false(await isDisplayed('div#vertical-display'));
-
-    t.pass();
+    await releaseUserInPool(user);
   }
+
+  // Vertical display is hidden after logging out
+  await logOut(t);
+  t.false(await isDisplayed('div#vertical-display'));
+
+  t.pass();
 });
+
+// TODO: Add test for dual stream with both Twitch and YouTube after adding accounts to pool
+// Note: will need to add `dualStream` ITestUserFeature to the user account(s)
+test.skip(
+  'Dual Stream Non-Ultra',
+  withUser('twitch', { prime: false, dualStream: true }),
+  async t => {
+    await toggleDualOutputMode();
+    await prepareToGoLive();
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+    await fillForm({
+      youtube: true,
+    });
+    // TODO: test Twitch both hides YouTube and satisfies dual output requirement to go live
+    // TODO: test YouTube both hides Twitch and satisfies dual output requirement to go live
+    // TODO: test that the primary chat automatically switches to the platform that is not hidden
+  },
+);
 
 test(
   'Dual Output Go Live Ultra',
@@ -311,27 +373,58 @@ test(
 
       await clickGoLive();
       await waitForSettingsWindowLoaded();
-      await submit();
-
-      // Cannot go live in dual output mode with all targets assigned to one display
-      await waitForDisplayed('div.ant-message-notice-content', {
-        timeout: 10000,
-      });
-      await clickIfDisplayed('div.ant-message-notice-content');
-      await sleep(500);
-
-      // Dual output with one platform for each display
       await fillForm({
+        youtube: true,
         twitchDisplay: 'vertical',
+        primaryChat: 'Twitch',
+      });
+      await goLiveWithDualOutput('twitch');
+
+      await clickGoLive();
+      await waitForSettingsWindowLoaded();
+      await fillForm({
+        twitchDisplay: 'horizontal',
+        youtubeDisplay: 'vertical',
+        primaryChat: 'YouTube',
       });
       await goLiveWithDualOutput('twitch');
     } catch (e: unknown) {
-      console.log('Error during Dual Output Go Live Ultra test:', e);
-    } finally {
-      // Vertical display is hidden after logging out
-      await logOut(t);
-      t.false(await isDisplayed('div#vertical-display'));
+      t.fail('Error going live with platforms during Dual Output Go Live Ultra test');
+      return;
     }
+
+    // Custom destination in ultra dual output
+    const { user, name } = await addCustomDestination(t);
+
+    try {
+      await clickGoLive();
+      await waitForSettingsWindowLoaded();
+      await fillForm({
+        youtube: false,
+        [name]: true,
+      });
+      await waitForSettingsWindowLoaded();
+      await fillForm({
+        [`${name}Display`]: 'vertical',
+      });
+
+      await goLiveWithDualOutput('twitch');
+    } catch (e: unknown) {
+      t.fail(
+        'Error going live with platform and destination during Dual Output Go Live Ultra test',
+      );
+    } finally {
+      // Clean up custom destination
+      await showSettingsWindow('Stream', async () => {
+        await click('i.fa-trash');
+        await clickButton('Close');
+      });
+      await releaseUserInPool(user);
+    }
+
+    // Vertical display is hidden after logging out
+    await logOut(t);
+    t.false(await isDisplayed('div#vertical-display'));
 
     t.pass();
   },

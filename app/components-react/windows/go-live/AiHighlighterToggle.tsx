@@ -1,11 +1,11 @@
 import { SwitchInput } from 'components-react/shared/inputs/SwitchInput';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import styles from './AiHighlighterToggle.m.less';
 import { Services } from 'components-react/service-provider';
 import * as remote from '@electron/remote';
 import { useDebounce, useVuex } from 'components-react/hooks';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
+import { Alert, Button } from 'antd';
 import { getConfigByGame, isGameSupported } from 'services/highlighter/models/game-config.models';
 import { $t } from 'services/i18n';
 import { DiscordLogo } from 'components-react/highlighter/HypeWrapper';
@@ -13,6 +13,8 @@ import PlatformLogo from 'components-react/shared/PlatformLogo';
 import { REPLAY_APP_NAME } from 'services/highlighter/constants';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 import { promptAction } from 'components-react/modals';
+import InputWrapper from 'components-react/shared/inputs/InputWrapper';
+import Translate from 'components-react/shared/Translate';
 
 export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded: boolean }) {
   //TODO M: Probably good way to integrate the highlighter in to GoLiveSettings
@@ -161,7 +163,9 @@ export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded
       {gameIsSupported ? (
         <div
           key={'aiSelector'}
+          data-name="ai-highlighter-selector"
           style={{
+            marginTop: '12px',
             marginBottom: '24px',
             display: 'flex',
             justifyContent: 'flex-end',
@@ -191,6 +195,7 @@ export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded
 
                   {highlighterVersion !== '' ? (
                     <SwitchInput
+                      name="replay"
                       style={{ width: '80px', margin: 0, marginTop: '-2px' }}
                       value={disableAIHighlighter ? false : useHighlighter}
                       label=""
@@ -365,3 +370,45 @@ export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded
     </div>
   );
 }
+
+const AIHighlighterBanner = memo(
+  (p: { game: string | undefined; toggleHighlighter: () => void }) => {
+    const { HighlighterService } = Services;
+    const { useHighlighter } = useVuex(
+      () => ({
+        useHighlighter: HighlighterService.views.useAiHighlighter,
+      }),
+      false,
+    );
+
+    const installAiHighlighter = useDebounce(300, () => {
+      HighlighterService.actions.installAiHighlighter(false, 'Go-live-flow', p.game);
+    });
+
+    return (
+      <InputWrapper layout="vertical" nolabel className={styles.highlighterBannerWrapper}>
+        <div className={styles.highlighterBanner}>
+          <SwitchInput
+            value={useHighlighter}
+            label={$t('AI Highlighter')}
+            onChange={p.toggleHighlighter}
+            nolabel
+          />
+          <Alert
+            message={
+              <Translate
+                message={$t(
+                  'Automatically capture highlights of your game with <replay>Replay</replay>',
+                )}
+              >
+                <a slot="replay" onClick={installAiHighlighter}>
+                  <b>{'Replay'}</b>
+                </a>
+              </Translate>
+            }
+          />
+        </div>
+      </InputWrapper>
+    );
+  },
+);

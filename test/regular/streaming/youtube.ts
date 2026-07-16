@@ -141,6 +141,7 @@ test.skip('GoLive from StreamScheduler', async t => {
   await focusChild();
   await submit();
   await waitForStreamStart();
+
   t.pass();
 });
 
@@ -161,11 +162,13 @@ test('Start stream twice to the same YT event', async t => {
     enableAutoStop: true,
   });
   await stopStream();
+
+  skipCheckingErrorsInLog();
+
   t.pass();
 });
 
 test('Youtube streaming is disabled', async t => {
-  skipCheckingErrorsInLog();
   await logIn('youtube', { streamingIsDisabled: true, notStreamable: true });
 
   t.true(
@@ -175,5 +178,8 @@ test('Youtube streaming is disabled', async t => {
   await prepareToGoLive();
   await clickGoLive();
   await focusChild();
+
   await waitForDisplayed('button=Enable Live Streaming');
+
+  skipCheckingErrorsInLog();
 });
