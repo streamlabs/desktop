@@ -480,14 +480,50 @@ export class GoLiveSettingsModule {
     }
   }
 
+  private async startGoLive() {
+    const autoOptimizerProfile = await Services.AutoConfigService.actions.return.consumePendingGoLiveProfile(
+      this.state.settings,
+    );
+    Services.StreamingService.actions.goLive({
+      ...this.state.settings,
+      autoOptimizerProfile: autoOptimizerProfile || undefined,
+    });
+  }
+
   /**
-   * Validate the form and start streaming
+   * Validate the form and start streaming without opening a new optimizer flow.
+   * Error retry and bypass actions use this path after the initial confirmation.
    */
   async goLive() {
-    if (await this.validate()) {
-      Services.StreamingService.actions.goLive(this.state.settings);
-    }
+    if (!(await this.validate())) return;
+    await this.startGoLive();
   }
+
+  /**
+   * Validate the final Go Live selections and offer Auto Optimizer before the
+   * streaming checklist starts. Eligibility failures fail open to normal Go Live.
+   * Returns true only when streaming was started immediately.
+   */
+  async confirmGoLive(): Promise<boolean> {
+    if (!(await this.validate())) return false;
+
+    try {
+      if (await Services.AutoConfigService.actions.return.interceptGoLive(this.state.settings)) {
+        return false;
+      }
+    } catch (e: unknown) {
+      console.warn('[Auto Optimizer] Eligibility check failed; continuing normal Go Live', e);
+    }
+
+    await this.startGoLive();
+    return true;
+  }
+
+  /** Continue the already validated and frozen confirmation after the optimizer. */
+  async continueGoLiveAfterOptimizer() {
+    await this.startGoLive();
+  }
+
   /**
    * Validate the form and send new settings for each eligible platform
    */
