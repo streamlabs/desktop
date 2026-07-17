@@ -212,8 +212,6 @@ export class ReactiveDataService extends Service {
               sourceId: key,
             });
 
-            this.ensureVisionRunning();
-
             this.sourceStateKeyInterest.set(
               key,
               new Set([...(this.sourceStateKeyInterest.get(key) ?? []), ...parsed.keys]),
