@@ -73,7 +73,6 @@ export default function EditAutomations() {
     AutomationsService.actions.fetchAll();
   }, []);
 
-  // ponytail: latched so the async automations.length load doesn't flash
   // the welcome screen for returning users before fetchAll() resolves.
   useEffect(() => {
     if (showWelcome !== null || !loaded) return;
@@ -82,6 +81,7 @@ export default function EditAutomations() {
         DismissablesService.views.shouldShow(EDismissable.StreamAvatarAutomationsWelcome),
     );
 
+    // Uncomment when going to prod
     // setShowWelcome(
     //   automations.length === 0 &&
     //     DismissablesService.views.shouldShow(EDismissable.StreamAvatarAutomationsWelcome),

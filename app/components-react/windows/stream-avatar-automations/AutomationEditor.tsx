@@ -556,7 +556,6 @@ export default function AutomationEditor({ initial, onClose }: Props) {
     color: 'var(--paragraph)',
   };
 
-  // ponytail: var avoids no-nested-ternary lint rule
   let saveLabel = initial ? $t('Save Automation') : $t('Create Automation');
   if (saving) saveLabel = $t('Saving...');
 
