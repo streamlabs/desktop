@@ -6,8 +6,7 @@ import { useVuex } from 'components-react/hooks';
 import { useAgentAppInstalled } from 'components-react/hooks/useAgentAppInstalled';
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
-import { Conditions, GAME_NAMES } from 'services/stream-avatar/engine/conditions';
-import { ActionRegistry } from 'services/stream-avatar/engine/actions';
+import { Conditions } from 'services/stream-avatar/engine/conditions';
 import { validateAutomation } from 'services/stream-avatar/engine/validation';
 import type { TAutomationExport } from 'services/stream-avatar/engine/automations';
 import { EDismissable } from 'services/dismissables';
@@ -15,34 +14,8 @@ import AutomationEditor from './AutomationEditor';
 import AutomationsEmptyState from './AutomationsEmptyState';
 import PreMadeAutomations from './PreMadeAutomations';
 import { AutomationsAnalytics } from './AutomationsAnalytics';
+import { conditionLabel, conditionGame, summarizeActions, GAME_OPTIONS } from './automations-utils';
 import styles from './EditAutomations.m.less';
-
-function conditionLabel(condition: { type: string } | null) {
-  if (!condition?.type) return $t('(unknown)');
-  const def = Conditions[condition.type as keyof typeof Conditions];
-  return def ? def.label : condition.type;
-}
-
-function conditionGame(condition: { type: string } | null) {
-  if (!condition?.type) return '';
-  const def = Conditions[condition.type as keyof typeof Conditions];
-  if (!def) return '';
-  return GAME_NAMES[def.group] ?? def.group;
-}
-
-function summarizeActions(actions: TAutomationExport['actions']) {
-  return actions
-    .filter(a => a?.type)
-    .map(a => {
-      const def = ActionRegistry[a.type as keyof typeof ActionRegistry];
-      return def ? def.label : a.type;
-    })
-    .join(', ');
-}
-
-const GAME_FILTER_OPTIONS = Object.entries(GAME_NAMES)
-  .map(([id, name]) => ({ label: name, value: id }))
-  .sort((a, b) => a.label.localeCompare(b.label));
 
 export default function EditAutomations() {
   const {
@@ -76,13 +49,10 @@ export default function EditAutomations() {
   // the welcome screen for returning users before fetchAll() resolves.
   useEffect(() => {
     if (showWelcome !== null || !loaded) return;
-    setShowWelcome(automations.length === 0);
-
-    // Uncomment when going to prod
-    // setShowWelcome(
-    //   automations.length === 0 &&
-    //     DismissablesService.views.shouldShow(EDismissable.StreamAvatarAutomationsWelcome),
-    // );
+    setShowWelcome(
+      automations.length === 0,
+      // && DismissablesService.views.shouldShow(EDismissable.StreamAvatarAutomationsWelcome),
+    );
   }, [loaded, automations.length, showWelcome]);
 
   function dismissWelcome() {
@@ -217,7 +187,7 @@ export default function EditAutomations() {
               <Select
                 value={filterGame}
                 onChange={val => setFilterGame(val)}
-                options={[{ label: $t('All game automations'), value: '' }, ...GAME_FILTER_OPTIONS]}
+                options={[{ label: $t('All game automations'), value: '' }, ...GAME_OPTIONS]}
                 style={{ width: 200 }}
               />
             </>

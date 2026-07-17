@@ -4,173 +4,21 @@ import cx from 'classnames';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
-import type {
-  AutomationTemplateGame,
-  AutomationTemplateItem,
-  AutomationTemplateSource,
-} from 'services/stream-avatar/stream-avatar-api-service';
-import { AutomationsAnalytics } from './AutomationsAnalytics';
+import type { AutomationTemplateGame } from 'services/stream-avatar/stream-avatar-api-service';
 import PreMadeAutomationsFooter from './PreMadeAutomationsFooter';
+import TemplatePreview from './TemplatePreview';
+import { badgeColor } from './automations-utils';
+import { applyTemplates } from './automationTemplates';
 import styles from './PreMadeAutomations.m.less';
-
-// field — good enough for a letter badge without inventing a color-config surface.
-const BADGE_COLORS = ['#7c5cff', '#f97316', '#22c55e', '#ef4444', '#06b6d4', '#eab308'];
-function badgeColor(name: string): string {
-  const hash = name.split('').reduce((h, c) => h + c.charCodeAt(0), 0);
-  return BADGE_COLORS[hash % BADGE_COLORS.length];
-}
-
-const VIDEO_EXTENSIONS = ['.webm', '.mp4', '.mov'];
-function isVideoUrl(url?: string): boolean {
-  return !!url && VIDEO_EXTENSIONS.some(ext => url.toLowerCase().endsWith(ext));
-}
-
-// Preview assets can be a static image, a gif, or a video (.webm) — render the
-// right tag for the format instead of assuming one media type for all templates.
-function TemplatePreview({
-  src,
-  className,
-  muted = true,
-  loop = true,
-  onEnded,
-  playToken,
-}: {
-  src?: string;
-  className?: string;
-  muted?: boolean;
-  loop?: boolean;
-  onEnded?: () => void;
-  // Bump this to (re)start playback from 0, even when src/muted/loop are
-  // unchanged (e.g. replaying the row that matches the default preview).
-  playToken?: number;
-}) {
-  const videoRef = React.useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    const el = videoRef.current;
-    if (!el) return;
-    el.muted = muted;
-    el.loop = loop;
-    el.currentTime = 0;
-    el.play().catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [src, playToken]);
-
-  if (!src) return null;
-  return isVideoUrl(src) ? (
-    <video key={src} ref={videoRef} src={src} className={className} playsInline onEnded={onEnded} />
-  ) : (
-    <img key={src} src={src} className={className} />
-  );
-}
-
-async function downloadAsset(downloadUrl: string, assetKey: string): Promise<string | null> {
-  try {
-    const os = require('os') as typeof import('os');
-    const fs = require('fs') as typeof import('fs');
-    const path = require('path') as typeof import('path');
-
-    const dir = path.join(os.tmpdir(), 'slobs-avatar-assets');
-    fs.mkdirSync(dir, { recursive: true });
-    const savePath = path.join(dir, path.basename(assetKey));
-
-    const response = await fetch(downloadUrl);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const buffer = await response.arrayBuffer();
-    fs.writeFileSync(savePath, new Uint8Array(buffer));
-    return savePath;
-  } catch (e: unknown) {
-    console.error('[downloadAsset] failed:', e);
-    return null;
-  }
-}
-
-function isSourceAlreadyInScene(sourceName: string): boolean {
-  const { ScenesService, SourcesService } = Services;
-  const activeScene = ScenesService.views.activeScene;
-  if (!activeScene) return false;
-
-  const existingSource = SourcesService.views.sources.find(s => s.name === sourceName);
-  if (!existingSource) return false;
-
-  return activeScene.getItems().some((item: any) => item.sourceId === existingSource.sourceId);
-}
-
-async function createTemplateSource(source: AutomationTemplateSource, assets: string[]) {
-  if (isSourceAlreadyInScene(source.name)) return;
-
-  const { ScenesService } = Services;
-  const activeScene = ScenesService.views.activeScene;
-  if (!activeScene) return;
-
-  let assetPath = assets.find(a => a.includes(source.assetKey));
-  if (!assetPath) {
-    assetPath = (await downloadAsset(source.downloadUrl, source.assetKey)) ?? undefined;
-    if (!assetPath) return;
-  }
-
-  const settings =
-    source.type === 'ffmpeg_source'
-      ? { local_file: assetPath, loop: source.loop }
-      : { file: assetPath };
-
-  const sceneItemId = await ScenesService.actions.return.createAndAddSource(
-    activeScene.id,
-    source.name,
-    source.type,
-    settings,
-  );
-  if (!sceneItemId) return;
-
-  const scene = ScenesService.views.getScene(activeScene.id);
-  const sceneItem = scene?.getItem(sceneItemId);
-  const { AudioService, SourcesService } = Services;
-
-  if (sceneItem) {
-    sceneItem.setVisibility(false);
-
-    const src = SourcesService.views.getSource(sceneItem.sourceId);
-    if (src && src.width > 0 && src.height > 0) {
-      sceneItem.fitToScreen(sceneItem.display);
-      sceneItem.centerOnScreen(sceneItem.display);
-    } else {
-      const sub = SourcesService.sourceUpdated.subscribe(s => {
-        if (s.sourceId === sceneItem.sourceId && s.width > 0 && s.height > 0) {
-          sub.unsubscribe();
-          sceneItem.fitToScreen(sceneItem.display);
-          sceneItem.centerOnScreen(sceneItem.display);
-        }
-      });
-      setTimeout(() => sub.unsubscribe(), 5000);
-    }
-  }
-  if (source.type === 'ffmpeg_source' && sceneItem?.sourceId) {
-    AudioService.actions.setSettings(sceneItem.sourceId, { monitoringType: 2 });
-  }
-}
 
 interface Props {
   onCancel: () => void;
   onSaved?: () => void;
-  variant?: 'welcome' | 'templatePicker' | 'inlineEmpty';
-  onFooterChange?: (footer: {
-    totalSelected: number;
-    saving: boolean;
-    onComplete: () => void;
-  }) => void;
+  variant: 'welcome' | 'templatePicker';
 }
 
-export default function PreMadeAutomations({
-  onCancel,
-  onSaved,
-  variant = 'inlineEmpty',
-  onFooterChange,
-}: Props) {
-  const chrome = variant === 'inlineEmpty' ? 'bare' : 'modal';
-  // variants (welcome, templatePicker) instead of the old embedded flag.
-  const refined = variant !== 'inlineEmpty';
-  const { AutomationsService, StreamAvatarApiService } = Services;
+export default function PreMadeAutomations({ onCancel, onSaved, variant }: Props) {
+  const { StreamAvatarApiService } = Services;
   const [games, setGames] = useState<AutomationTemplateGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeGameIndex, setActiveGameIndex] = useState(0);
@@ -185,7 +33,7 @@ export default function PreMadeAutomations({
       .finally(() => setLoading(false));
   }, []);
 
-  const carouselGames = refined ? games.slice(0, 3) : games;
+  const carouselGames = games.slice(0, 3);
 
   const activeGame: AutomationTemplateGame | undefined = games[activeGameIndex];
   const activeSelection = (activeGame && selections[activeGame.game]) ?? new Set<number>();
@@ -218,40 +66,10 @@ export default function PreMadeAutomations({
 
   const totalSelected = Object.values(selections).reduce((sum, set) => sum + set.size, 0);
 
-  useEffect(() => {
-    onFooterChange?.({ totalSelected, saving, onComplete: handleComplete });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalSelected, saving]);
-
   async function handleComplete() {
     setSaving(true);
     try {
-      const assets: string[] =
-        (await (window as any)?.streamlabsOBS?.v1?.NativeComponents?.getAssets?.()) ?? [];
-
-      for (const game of games) {
-        const indices = selections[game.game];
-        if (!indices || indices.size === 0) continue;
-
-        for (const index of indices) {
-          const item: AutomationTemplateItem = game.templates[index];
-
-          for (const src of item.sources ?? []) {
-            try {
-              await createTemplateSource(src, assets);
-            } catch {
-              // non-fatal — continue creating the automation
-            }
-          }
-
-          await AutomationsService.actions.create(item.automation);
-          AutomationsAnalytics.templateAdded(
-            game.game,
-            item.automation.conditions[0]?.type ?? 'unknown',
-            item.automation.actions.map(a => a.type),
-          );
-        }
-      }
+      await applyTemplates(selections, games);
     } finally {
       setSaving(false);
     }
@@ -269,7 +87,7 @@ export default function PreMadeAutomations({
   );
 
   const content = (
-    <div className={cx(styles.container, { [styles.containerEmbedded]: chrome === 'bare' })}>
+    <div className={styles.container}>
       {loading || !activeGame ? (
         <Spin />
       ) : (
@@ -327,17 +145,6 @@ export default function PreMadeAutomations({
                   );
                 })}
               </div>
-              {!refined && (
-                <div className={styles.dots}>
-                  {games.map((_, i) => (
-                    <span
-                      key={i}
-                      className={cx(styles.dot, { [styles.dotActive]: i === activeGameIndex })}
-                      onClick={() => setActiveGameIndex(i)}
-                    />
-                  ))}
-                </div>
-              )}
             </>
           )}
 
@@ -427,9 +234,7 @@ export default function PreMadeAutomations({
     </div>
   );
 
-  return chrome === 'bare' ? (
-    content
-  ) : (
+  return (
     <ModalLayout footer={footer} scrollable>
       <div className={styles.brandHeader}>
         <h1 className={styles.brandTitle}>

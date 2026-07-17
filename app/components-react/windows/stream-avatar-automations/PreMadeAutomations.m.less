@@ -29,13 +29,6 @@
   overflow: hidden;
 }
 
-// Embedded in EditAutomations, which already applies its own body/header
-// spacing — the standalone padding above would just stack on top of that
-// and push the modal past its fixed scrollable height.
-.containerEmbedded {
-  padding: 0;
-}
-
 .mainRow {
   display: flex;
   gap: 16px;
@@ -345,24 +338,3 @@
   z-index: 2;
 }
 
-.dots {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--border);
-  cursor: pointer;
-
-  &:hover {
-    background: var(--paragraph);
-  }
-}
-
-.dotActive {
-  background: var(--icon-active);
-}

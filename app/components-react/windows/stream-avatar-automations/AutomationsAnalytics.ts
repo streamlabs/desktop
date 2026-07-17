@@ -4,8 +4,7 @@ type TAutomationsAction =
   | 'page_view'
   | 'template_added'
   | 'automation_created'
-  | 'automation_updated'
-  | 'automation_fired';
+  | 'automation_updated';
 
 export const AutomationsAnalytics = {
   track(action: TAutomationsAction, payload?: Record<string, unknown>) {
