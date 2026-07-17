@@ -9,13 +9,23 @@ export type TAutoOptimizerStage =
   | 'error';
 
 export type TAutoOptimizerMeasurementMode = 'active' | 'estimated';
+export type TAutoOptimizerPresentationProbeProvider = 'twitch' | 'youtube';
+
+export interface IAutoOptimizerPresentationProbeEvidence {
+  provider: TAutoOptimizerPresentationProbeProvider;
+  success: boolean;
+}
 
 export interface IAutoOptimizerPresentationLeg {
   legId: string;
   label: string;
   platforms?: Array<{ id: string; label: string }>;
+  measuredPlatforms?: Array<{ id: string; label: string }>;
+  probeEvidence?: IAutoOptimizerPresentationProbeEvidence[];
   display?: 'horizontal' | 'vertical' | 'shared';
   measurementMode: TAutoOptimizerMeasurementMode;
+  measurementConfidence?: 'high' | 'medium' | 'low';
+  route?: 'direct' | 'cloud-restream';
   estimateReason?: string;
   managedByProvider?: boolean;
   width: number;

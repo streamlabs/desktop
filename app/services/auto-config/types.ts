@@ -23,6 +23,9 @@ export type TAutoOptimizerTopologyType =
 export type TAutoOptimizerMeasurementMode = 'active' | 'estimated';
 export type TAutoOptimizerConfidence = 'high' | 'medium' | 'low';
 export type TAutoOptimizerPromptState = 'unseen' | 'declined' | 'completed';
+export type TAutoOptimizerUploadRoute = 'direct' | 'cloud-restream';
+export type TAutoOptimizerProbeProvider = 'twitch' | 'youtube';
+export type TAutoOptimizerProbeKind = 'twitch-standard-v1' | 'youtube-unbound-v1';
 
 export type TAutoOptimizerPlatform =
   | 'twitch'
@@ -37,18 +40,43 @@ export interface IAutoOptimizerDestination {
   platform: TAutoOptimizerPlatform;
 }
 
+/**
+ * Credential-free description of an active probe Desktop may acquire for an
+ * upload leg. The array order is the execution order. Credentials are added
+ * only to the attempt-scoped native request in the worker renderer.
+ */
+export interface IAutoOptimizerProbeCandidate {
+  probeId: string;
+  kind: TAutoOptimizerProbeKind;
+  legId: string;
+  provider: TAutoOptimizerProbeProvider;
+}
+
+export interface IAutoOptimizerProbeEvidence {
+  provider: TAutoOptimizerProbeProvider;
+  method: string;
+  measuredKbps?: number;
+  safeKbps?: number;
+  headroomPercent?: number;
+  success: boolean;
+  ceilingReached?: boolean;
+}
+
 export interface IAutoOptimizerTopologyLeg {
   legId: string;
   display: TDisplayType | 'both';
   destinations: IAutoOptimizerDestination[];
+  route: TAutoOptimizerUploadRoute;
+  probeCandidates: IAutoOptimizerProbeCandidate[];
   measurement: TAutoOptimizerMeasurementMode;
   estimateReason?: string;
 }
 
 export interface IAutoOptimizerTopology {
   type: TAutoOptimizerTopologyType;
-  activeBandwidthTest: boolean;
   legs: IAutoOptimizerTopologyLeg[];
+  /** All leg candidates in deterministic execution order. */
+  probeCandidates: IAutoOptimizerProbeCandidate[];
 }
 
 export interface IAutoOptimizerEncoderRecommendation {
@@ -63,6 +91,8 @@ export interface IAutoOptimizerLegResult {
   destinations: IAutoOptimizerDestination[];
   measurement: TAutoOptimizerMeasurementMode;
   confidence: TAutoOptimizerConfidence;
+  route?: TAutoOptimizerUploadRoute;
+  probes?: IAutoOptimizerProbeEvidence[];
   estimateReason?: string;
   resolution: { width: number; height: number };
   fps: number;
@@ -98,6 +128,10 @@ export interface IAutoOptimizerState {
   topology: IAutoOptimizerTopology | null;
   result: IAutoOptimizerResult | null;
   error: IAutoOptimizerError | null;
+  /** Provider currently being probed; omitted by older native sessions. */
+  activeProbeProvider?: TAutoOptimizerProbeProvider | null;
+  /** Applied video bitrate for the active probe substep; audio is additional. */
+  activeProbeTargetBitrateKbps?: number | null;
   promptStates: Record<string, TAutoOptimizerPromptState>;
 }
 
@@ -108,6 +142,7 @@ export interface IAutoConfigCapabilities {
   awaitableCancel: boolean;
   perUploadLegResults: boolean;
   desktopOwnedApply: boolean;
+  multipleActiveProbes?: boolean;
   bandwidthModes: string[];
 }
 
@@ -149,14 +184,26 @@ export interface IAutoConfigRequest {
   schemaVersion: 1;
   topology: TAutoOptimizerTopologyType;
   legs: IAutoConfigRequestLeg[];
-  activeProbe?: {
-    kind: 'twitch-standard-v1';
-    legId: string;
-    serviceName: 'Twitch';
-    server: 'auto';
-    streamKey: string;
-  };
+  activeProbes?: IAutoConfigActiveProbe[];
 }
+
+export type IAutoConfigActiveProbe =
+  | {
+      probeId: string;
+      kind: 'twitch-standard-v1';
+      legId: string;
+      serviceName: 'Twitch';
+      server: 'auto';
+      streamKey: string;
+    }
+  | {
+      probeId: string;
+      kind: 'youtube-unbound-v1';
+      legId: string;
+      serviceName: 'YouTube - RTMPS';
+      server: string;
+      streamKey: string;
+    };
 
 export interface IAutoConfigEvent {
   schemaVersion: number;
@@ -168,6 +215,9 @@ export interface IAutoConfigEvent {
   code?: string;
   legId?: string;
   measurementMode?: TAutoOptimizerMeasurementMode;
+  probeId?: string;
+  provider?: TAutoOptimizerProbeProvider;
+  targetBitrateKbps?: number;
 }
 
 export interface IAutoConfigNativeResult {
@@ -183,6 +233,15 @@ export interface IAutoConfigNativeResult {
       mode: TAutoOptimizerMeasurementMode;
       confidence: TAutoOptimizerConfidence;
       reason?: string;
+      probes?: Array<{
+        provider: TAutoOptimizerProbeProvider;
+        method: string;
+        measuredKbps?: number;
+        safeKbps?: number;
+        headroomPercent?: number;
+        success: boolean;
+        ceilingReached?: boolean;
+      }>;
     };
     recommendation: {
       width: number;

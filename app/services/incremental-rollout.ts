@@ -29,6 +29,7 @@ export enum EAvailableFeatures {
   autoOptimizerV1 = 'slobs--auto-optimizer-v1-ui',
   autoOptimizerV1Apply = 'slobs--auto-optimizer-v1-apply',
   autoOptimizerV1TwitchProbe = 'slobs--auto-optimizer-v1-twitch-probe',
+  autoOptimizerV1YoutubeProbe = 'slobs--auto-optimizer-v1-youtube-probe',
   patreon = 'slobs--patreon',
 
   /**

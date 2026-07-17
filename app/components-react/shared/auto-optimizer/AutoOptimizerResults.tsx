@@ -20,22 +20,28 @@ function settingsKey(leg: IAutoOptimizerPresentationLeg) {
 }
 
 function MeasurementProvenance(p: { leg: IAutoOptimizerPresentationLeg }) {
-  if (!p.leg.platforms?.length) return null;
+  const platforms =
+    p.leg.measurementMode === 'active' && p.leg.measuredPlatforms?.length
+      ? p.leg.measuredPlatforms
+      : p.leg.platforms;
+  if (!platforms?.length) return null;
 
   const label = p.leg.measurementMode === 'active' ? $t('Measured on') : $t('Estimated for');
   return (
     <span className={styles.measurementInline}>
       {' '}
       ({label}{' '}
-      {p.leg.platforms.map(platform => (
-        <span
-          key={platform.id}
-          className={`${styles.platformChip} ${
-            styles[`platform-chip--${platform.id}`] || styles.platformChipFallback
-          }`}
-        >
-          {platform.label}
-        </span>
+      {platforms.map((platform, index) => (
+        <React.Fragment key={platform.id}>
+          {index > 0 && <span className={styles.platformJoin}>+</span>}
+          <span
+            className={`${styles.platformChip} ${
+              styles[`platform-chip--${platform.id}`] || styles.platformChipFallback
+            }`}
+          >
+            {platform.label}
+          </span>
+        </React.Fragment>
       ))}
       )
     </span>
@@ -43,8 +49,23 @@ function MeasurementProvenance(p: { leg: IAutoOptimizerPresentationLeg }) {
 }
 
 function EstimateExplanation(p: { leg: IAutoOptimizerPresentationLeg }) {
-  if (p.leg.measurementMode !== 'estimated' || !p.leg.estimateReason) return null;
+  if (!p.leg.estimateReason) return null;
+  if (p.leg.measurementMode !== 'estimated' && p.leg.measurementConfidence !== 'low') return null;
   return <p className={styles.estimateExplanation}>{p.leg.estimateReason}</p>;
+}
+
+function ActiveMeasurementExplanation(p: { leg: IAutoOptimizerPresentationLeg }) {
+  if (p.leg.measurementMode !== 'active' || p.leg.route !== 'cloud-restream') return null;
+  let message =
+    'This shared cloud-restream upload was measured indirectly, so the result has medium confidence.';
+  if (p.leg.measurementConfidence === 'low') {
+    message =
+      'This shared cloud-restream upload was measured indirectly, so the result has low confidence.';
+  } else if (p.leg.measurementConfidence === 'high') {
+    message =
+      'This shared cloud-restream upload was measured indirectly. The result has high confidence.';
+  }
+  return <p className={styles.estimateExplanation}>{$t(message)}</p>;
 }
 
 function SettingsList(p: { leg: IAutoOptimizerPresentationLeg }) {
@@ -58,6 +79,7 @@ function SettingsList(p: { leg: IAutoOptimizerPresentationLeg }) {
           <MeasurementProvenance leg={leg} />
         </p>
         <EstimateExplanation leg={leg} />
+        <ActiveMeasurementExplanation leg={leg} />
       </>
     );
   }
@@ -87,6 +109,7 @@ function SettingsList(p: { leg: IAutoOptimizerPresentationLeg }) {
         )}
       </ul>
       <EstimateExplanation leg={leg} />
+      <ActiveMeasurementExplanation leg={leg} />
     </>
   );
 }
