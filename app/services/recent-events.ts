@@ -108,6 +108,11 @@ interface IRecentEventFilterConfig {
   // Mixer
   sticker?: boolean;
   effect?: boolean;
+  // Kick
+  kick_follow?: boolean;
+  kick_kicks?: boolean;
+  kick_subscription?: boolean;
+  kick_subscription_gifts?: boolean;
   // Facebook Live
   facebook_support?: boolean;
   facebook_like?: boolean;
@@ -197,12 +202,26 @@ const filterName = (key: string): string => {
     superchat: $t('Super Chats'),
     sticker: $t('Stickers'),
     effect: $t('Effects'),
+    kick_kicks: $t('Kicks'),
+    kick_follow: $t('Follows'),
+    kick_subscription: $t('Subs'),
+    kick_subscription_gifts: $t('Gifted'),
     facebook_support: $t('Supports'),
     facebook_like: $t('Likes'),
     facebook_share: $t('Shares'),
     facebook_stars: $t('Stars'),
   }[key];
 };
+
+function getRecentEventType(event: IEventSocketEvent): string {
+  if (event.for === 'kick_account') {
+    return `kick_${event.type}`;
+  }
+  if (event.type === 'powerUp') {
+    return 'power_up';
+  }
+  return event.type;
+}
 
 /**
  * This function duplicates per-event logic from streamlabs.com for
@@ -217,12 +236,14 @@ function getHashForRecentEvent(event: IRecentEvent) {
     case 'donordrivedonation':
     case 'eldonation':
     case 'justgivingdonation':
+    case 'kick_kicks':
     case 'pledge':
     case 'superheart':
     case 'tiltifydonation':
     case 'stars':
       return [event.type, event.name, event.message, parseInt(event.amount, 10)].join(':');
     case 'follow':
+    case 'kick_follow':
     case 'loyalty_store_redemption':
     case 'redemption':
     case 'superchat':
@@ -231,7 +252,7 @@ function getHashForRecentEvent(event: IRecentEvent) {
     case 'share':
     case 'support':
       return [event.type, event.name, event._id].join(':');
-    case 'powerUp':
+    case 'power_up':
       return [event.type, event.redeemer_display_name, event.power_up_name].join(':');
     case 'prime_sub_gift':
       return [event.type, event.name, event.streamer, event.giftType].join(':');
@@ -240,6 +261,8 @@ function getHashForRecentEvent(event: IRecentEvent) {
     case 'raid':
       return [event.type, event.name, event.from].join(':');
     case 'subscription':
+    case 'kick_subscription':
+    case 'kick_subscription_gifts':
       return [event.type, event.name.toLowerCase(), event.message].join(':');
     case 'treat':
       return [event.type, event.name, event.title, event.message, event.createdAt].join(':');
@@ -266,6 +289,7 @@ const SUPPORTED_EVENTS = [
   'support',
   'share',
   'superchat',
+  'kicks',
   'pledge',
   'eldonation',
   'tiltifydonation',
@@ -290,6 +314,11 @@ class RecentEventsViews extends ViewHandler<IRecentEventsState> {
       // Mixer
       sticker: $t('has used %{skill} for', { skill: event.skill }),
       effect: $t('has used %{skill} for', { skill: event.skill }),
+      // Kick
+      kick_follow: $t('has followed'),
+      kick_kicks: $t('has used'),
+      kick_subscription: this.getSubString(event),
+      kick_subscription_gifts: this.getSubString(event),
       // Facebook
       like: $t('has liked'),
       stars: $t('has used'),
@@ -328,12 +357,19 @@ class RecentEventsViews extends ViewHandler<IRecentEventsState> {
         return $t('has been a supporter for %{months} months', { months: event.months });
       }
       return $t('has become a supporter');
-    }
-    if (event.platform === 'youtube_account') {
+    } else if (event.platform === 'youtube_account') {
       if (event.months > 1) {
         return $t('has been a member for %{months} months', { months: event.months });
       }
       return $t('has become a member');
+    } else if (event.platform === 'kick_account') {
+      if (event.months > 1) {
+        return $t('has resubscribed for %{months} months', { months: event.months });
+      }
+      if (event.gifter) {
+        return $t('has gifted a sub to');
+      }
+      return $t('has subscribed');
     }
 
     if (event.gifter) {
@@ -659,6 +695,9 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
       'superchat',
       'sticker',
       'effect',
+      'kick_follow',
+      'kick_kicks',
+      'kick_subscription',
       'facebook_support',
       'facebook_like',
       'facebook_share',
@@ -672,6 +711,7 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
       'subscription_tier_3',
       'primesub',
       'gifted_sub',
+      'kick_subscription_gifts',
     ]);
 
     const resubFilters = pick(this.state.filterConfig, [
@@ -890,14 +930,11 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
       .filter(msg => !msg.isTest && !msg.isPreview && !msg.repeat)
       .map(msg => {
         msg.platform = e.for;
-        msg.type = e.type;
+        msg.type = getRecentEventType(e);
         msg.hash = getHashForRecentEvent(msg);
         msg.uuid = uuid();
         msg.read = false;
         msg.iso8601Created = new Date().toISOString();
-        if (msg.type === 'powerUp') {
-          msg.type = 'power_up';
-        }
         if (msg.type === 'sticker' || msg.type === 'effect') {
           msg.amount = msg.skill_amount;
           msg.name = msg.sender_name;

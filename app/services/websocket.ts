@@ -63,6 +63,7 @@ export interface IEventSocketEvent {
     | 'justgivingdonation'
     | 'treat'
     | 'powerUp'
+    | 'kicks'
     | 'account_permissions_required'
     | 'visionEvent'
     | 'userStateUpdated';
