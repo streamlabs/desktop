@@ -49,5 +49,5 @@
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube 缩略图过大。最大为 2 MB。",
   "Please upload thumbnail manually on YouTube.": "请在 YouTube 上手动上传缩略图。",
   "Stream Shift Error: YouTube is not live": "Stream Shift 错误：YouTube 当前没有直播",
-  "Error starting vertical stream in YouTube dual streaming": "Error starting vertical stream in YouTube dual streaming"
+  "Error starting vertical stream in YouTube dual streaming": "在 YouTube 双流中启动垂直流时出错"
 }
