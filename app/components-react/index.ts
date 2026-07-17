@@ -13,6 +13,7 @@ import PlatformLogo from './shared/PlatformLogo';
 import AdvancedStatistics from './windows/AdvancedStatistics';
 import { createRoot } from './root/ReactRoot';
 import SourceProperties from './windows/SourceProperties';
+import WidgetSettingsEmbed from './windows/WidgetSettingsEmbed';
 import RenameSource from './windows/RenameSource';
 import SharedComponentsLibrary from './windows/sharedComponentsLibrary/SharedComponentsLibrary';
 import ManageSceneCollections from './windows/ManageSceneCollections';
@@ -69,6 +70,7 @@ export const components = {
   Projector,
   AdvancedStatistics,
   SourceProperties: createRoot(SourceProperties),
+  WidgetSettingsEmbed: createRoot(WidgetSettingsEmbed),
   SharedComponentsLibrary: createRoot(SharedComponentsLibrary),
   RenameSource,
   WidgetWindow: createRoot(WidgetWindow),

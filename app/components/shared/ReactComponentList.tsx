@@ -361,6 +361,14 @@ export class WidgetWindow extends ReactComponent {}
 
 @Component({
   props: {
+    name: { default: 'WidgetSettingsEmbed' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+  },
+})
+export class WidgetSettingsEmbed extends ReactComponent {}
+
+@Component({
+  props: {
     name: { default: 'CustomCodeWindow' },
     wrapperStyles: { default: () => ({ height: '100%' }) },
   },

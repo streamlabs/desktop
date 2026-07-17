@@ -15,7 +15,12 @@ import { VideoSettingsService } from 'services/settings-v2';
 import { SourceFiltersService } from 'services/source-filters';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { UserService } from 'services/user';
-import { WidgetDisplayData, WidgetsService, WidgetType } from 'services/widgets';
+import {
+  WidgetDisplayData,
+  WidgetEmbedProducts,
+  WidgetsService,
+  WidgetType,
+} from 'services/widgets';
 import { WindowsService } from 'services/windows';
 import namingHelpers from 'util/NamingHelpers';
 import { assertIsDefined } from 'util/properties-type-guards';
@@ -807,6 +812,27 @@ export class SourcesService extends StatefulService<ISourcesState> {
     const platform = this.userService.views.platform;
     assertIsDefined(platform);
     const widgetType = source.getPropertiesManagerSettings().widgetType;
+
+    // If this widget type has a streamlabs.com dashboard settings page, embed it in the
+    // Properties window (a single top-level BrowserView, destroyed on close) instead of the
+    // native form. Types without a mapping fall through to the native Properties below.
+    // @see WidgetEmbedProducts / UserService.widgetEmbedUrl
+    const embedProduct = WidgetEmbedProducts[widgetType as WidgetType];
+    if (embedProduct) {
+      this.windowsService.showWindow({
+        componentName: 'WidgetSettingsEmbed',
+        title: $t('Settings for %{sourceName}', {
+          sourceName: WidgetDisplayData(platform.type)[widgetType]?.name || WidgetType[widgetType],
+        }),
+        queryParams: { sourceId: source.sourceId, product: embedProduct },
+        size: {
+          width: 900,
+          height: 800,
+        },
+      });
+      return;
+    }
+
     const componentName = this.widgetsService.getWidgetComponent(widgetType);
 
     // React widgets are in the WidgetsWindow component

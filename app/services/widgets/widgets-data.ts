@@ -4,6 +4,7 @@ import { $t } from 'services/i18n';
 import { TAlertType } from './alerts-config';
 import { TPlatform } from '../platforms';
 import { OS } from 'util/operating-systems';
+import type { TWidgetEmbedProduct } from 'services/user';
 
 export interface IWidgetDisplayData {
   name: string;
@@ -559,6 +560,47 @@ export const WidgetDefinitions: { [x: number]: IWidget } = {
       return `https://${host}/widgets/game-pulse/v1/${token}`;
     },
   },
+};
+
+/**
+ * Maps a widget source's {@link WidgetType} to the streamlabs.com dashboard settings page
+ * that Desktop embeds in its source Properties window (@see UserService.widgetEmbedUrl).
+ *
+ * The value is the dashboard hash-route path — NOT the underscored `humanType`, and NOT the
+ * overlay `url()` above (those point at the rendered overlay, e.g. `/widgets/donation-goal`,
+ * whereas the settings route is `widgets/tip-goal`). Source of truth for the slugs is the
+ * dashboard router in streamlabs.com `resources/assets/dashboard/js/app.js`.
+ *
+ * Widget types absent from this map fall back to the native Properties form.
+ */
+export const WidgetEmbedProducts: { [type in WidgetType]?: TWidgetEmbedProduct } = {
+  [WidgetType.AlertBox]: 'alertbox',
+  [WidgetType.DonationGoal]: 'widgets/tip-goal',
+  [WidgetType.FollowerGoal]: 'widgets/followergoal',
+  // SubscriberGoal historically points at the follower-goal page (see WidgetDefinitions).
+  [WidgetType.SubscriberGoal]: 'widgets/followergoal',
+  [WidgetType.SubGoal]: 'widgets/subgoal',
+  [WidgetType.BitGoal]: 'widgets/bitgoal',
+  [WidgetType.StarsGoal]: 'widgets/starsgoal',
+  [WidgetType.SupporterGoal]: 'widgets/supportergoal',
+  [WidgetType.SuperchatGoal]: 'widgets/super-chat-goal',
+  [WidgetType.CharityGoal]: 'widgets/streamlabs-charity-donation-goal',
+  [WidgetType.DonationTicker]: 'widgets/tipticker',
+  [WidgetType.ChatBox]: 'widgets/chat-box',
+  [WidgetType.EventList]: 'widgets/eventlist',
+  [WidgetType.TipJar]: 'widgets/jar',
+  [WidgetType.ViewerCount]: 'widgets/viewercount',
+  [WidgetType.StreamBoss]: 'widgets/streamboss',
+  [WidgetType.Credits]: 'widgets/credits',
+  [WidgetType.SpinWheel]: 'widgets/wheel',
+  [WidgetType.SponsorBanner]: 'widgets/sponsorbanner',
+  [WidgetType.MediaShare]: 'widgets/mediashare',
+  [WidgetType.Poll]: 'widgets/poll',
+  [WidgetType.EmoteWall]: 'widgets/emote-wall',
+  [WidgetType.ChatHighlight]: 'widgets/chat-highlight',
+  [WidgetType.GameWidget]: 'widgets/game-widget',
+  [WidgetType.CustomWidget]: 'widgets/customwidget',
+  [WidgetType.GamePulseWidget]: 'widgets/game-pulse',
 };
 
 export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisplayData } => ({
