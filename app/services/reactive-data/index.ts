@@ -118,11 +118,6 @@ export class ReactiveDataService extends Service {
         this.writeState({ schemaFlatJson: JSON.stringify(schemaFlat) });
       });
 
-      // If the active scene collection has smart sources, ensure Vision (aka Streamlabs AI) is active on login
-      if (this.sourcesService.hasSmartSources()) {
-        this.ensureVisionRunning();
-      }
-
       // load everything into our initial state
       this.fetchAndApplyFullState();
     });
@@ -253,20 +248,6 @@ export class ReactiveDataService extends Service {
       this.log(`unhandled source message from ${sourceName}:`, parsed);
     }
   };
-
-  /**
-   * Check if Vision is running
-   * @remark the call to the vision service is wrapped here so that unnecessary calls to check
-   * if vision is running are not made.
-   */
-  private ensureVisionRunning() {
-    if (!this.visionService.state.isRunning && !this.visionService.state.isStarting) {
-      // Don't await the `ensureRunning` promise since we don't need to wait for it to finish here
-      this.visionService.ensureRunning().catch(e => {
-        console.error('Error validating if Vision (aka Streamlabs AI) is running:', e);
-      });
-    }
-  }
 
   /**
    * Forward a websocket event to all smart sources to update their state
