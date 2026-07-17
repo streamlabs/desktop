@@ -130,6 +130,10 @@
 .progress-bar {
   width: min(420px, 75%);
   margin: -4px 0 18px;
+
+  &:global(.ant-progress) {
+    margin-bottom: 18px;
+  }
 }
 
 .results-screen {
@@ -246,6 +250,11 @@
   font-weight: 600;
   line-height: 18px;
   vertical-align: 1px;
+}
+
+.platform-join {
+  margin: 0 1px;
+  color: var(--paragraph);
 }
 
 .platform-chip--twitch {

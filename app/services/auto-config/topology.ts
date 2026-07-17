@@ -2,10 +2,13 @@ import { IGoLiveSettings } from 'services/streaming';
 import { TPlatform } from 'services/platforms';
 import {
   IAutoOptimizerDestination,
+  IAutoOptimizerProbeCandidate,
   IAutoOptimizerProfile,
   IAutoOptimizerTopology,
   IAutoOptimizerTopologyLeg,
   TAutoOptimizerPlatform,
+  TAutoOptimizerProbeProvider,
+  TAutoOptimizerUploadRoute,
   TAutoOptimizerTopologyType,
 } from './types';
 
@@ -53,6 +56,48 @@ function getEstimateReason(type: TAutoOptimizerTopologyType): string {
   }
 }
 
+const probeProviderOrder: TAutoOptimizerProbeProvider[] = ['twitch', 'youtube'];
+
+function probeCandidates(
+  legId: string,
+  destinations: IAutoOptimizerDestination[],
+  allowed: boolean,
+): IAutoOptimizerProbeCandidate[] {
+  if (!allowed) return [];
+
+  const platforms = new Set(destinations.map(item => item.platform));
+  return probeProviderOrder
+    .filter(platform => platforms.has(platform))
+    .map(provider => ({
+      probeId: `${legId}-${provider}`,
+      kind: provider === 'twitch' ? 'twitch-standard-v1' : 'youtube-unbound-v1',
+      legId,
+      provider,
+    }));
+}
+
+function uploadRoute(destinations: IAutoOptimizerDestination[]): TAutoOptimizerUploadRoute {
+  return destinations.length > 1 ? 'cloud-restream' : 'direct';
+}
+
+function completeLeg(
+  leg: Omit<
+    IAutoOptimizerTopologyLeg,
+    'route' | 'probeCandidates' | 'measurement' | 'estimateReason'
+  >,
+  type: TAutoOptimizerTopologyType,
+  allowProbes: boolean,
+): IAutoOptimizerTopologyLeg {
+  const candidates = probeCandidates(leg.legId, leg.destinations, allowProbes);
+  return {
+    ...leg,
+    route: uploadRoute(leg.destinations),
+    probeCandidates: candidates,
+    measurement: candidates.length ? 'active' : 'estimated',
+    estimateReason: candidates.length ? undefined : getEstimateReason(type),
+  };
+}
+
 /**
  * Describe the upload legs that Desktop will actually create. This function is
  * deliberately credential-free and is safe to call in any renderer.
@@ -94,11 +139,11 @@ export function classifyAutoOptimizerTopology(
     type = 'direct-single';
   }
 
-  const activeBandwidthTest =
-    type === 'direct-single' &&
-    platforms.length === 1 &&
-    platforms[0] === 'twitch' &&
-    customDestinations.length === 0;
+  // Custom RTMP credentials must never be used for active testing, and the
+  // specialized Twitch output modes do not use the standard ingest path.
+  const allowProbes = !['custom-rtmp', 'mixed', 'enhanced-broadcasting', 'stream-shift'].includes(
+    type,
+  );
 
   const allDestinations: IAutoOptimizerDestination[] = [
     ...platforms.map(destination),
@@ -116,23 +161,27 @@ export function classifyAutoOptimizerTopology(
 
   if (isSingleConnectionTwitchDual) {
     legs = [
-      {
-        legId: 'twitch-dual',
-        display: 'both',
-        destinations: [destination('twitch')],
-        measurement: 'estimated',
-        estimateReason: getEstimateReason(type),
-      },
+      completeLeg(
+        {
+          legId: 'twitch-dual',
+          display: 'both',
+          destinations: [destination('twitch')],
+        },
+        type,
+        allowProbes,
+      ),
     ];
   } else if (!dualOutputMode) {
     legs = [
-      {
-        legId: 'horizontal',
-        display: 'horizontal',
-        destinations: allDestinations,
-        measurement: activeBandwidthTest ? 'active' : 'estimated',
-        estimateReason: activeBandwidthTest ? undefined : getEstimateReason(type),
-      },
+      completeLeg(
+        {
+          legId: 'horizontal',
+          display: 'horizontal',
+          destinations: allDestinations,
+        },
+        type,
+        allowProbes,
+      ),
     ];
   } else {
     const byDisplay = {
@@ -156,13 +205,17 @@ export function classifyAutoOptimizerTopology(
 
     legs = (['horizontal', 'vertical'] as const)
       .filter(display => byDisplay[display].length > 0)
-      .map(display => ({
-        legId: display,
-        display,
-        destinations: byDisplay[display],
-        measurement: 'estimated' as const,
-        estimateReason: getEstimateReason(type),
-      }));
+      .map(display =>
+        completeLeg(
+          {
+            legId: display,
+            display,
+            destinations: byDisplay[display],
+          },
+          type,
+          allowProbes,
+        ),
+      );
   }
 
   // Invalid/empty destination states are rejected by Go Live validation. Keep
@@ -170,17 +223,26 @@ export function classifyAutoOptimizerTopology(
   // undefined topology.
   if (!legs.length) {
     legs = [
-      {
-        legId: 'horizontal',
-        display: 'horizontal',
-        destinations: [],
-        measurement: 'estimated',
-        estimateReason: getEstimateReason(type),
-      },
+      completeLeg(
+        {
+          legId: 'horizontal',
+          display: 'horizontal',
+          destinations: [],
+        },
+        type,
+        false,
+      ),
     ];
   }
 
-  return { type, activeBandwidthTest, legs };
+  return {
+    type,
+    legs,
+    probeCandidates: legs.reduce<IAutoOptimizerProbeCandidate[]>(
+      (candidates, leg) => candidates.concat(leg.probeCandidates),
+      [],
+    ),
+  };
 }
 
 /**
@@ -196,11 +258,7 @@ export function isAutoOptimizerProfileCompatible(
 ): boolean {
   if (profile.schemaVersion !== 1) return false;
 
-  const topology = classifyAutoOptimizerTopology(
-    settings,
-    dualOutputMode,
-    twitchDualStreamAccess,
-  );
+  const topology = classifyAutoOptimizerTopology(settings, dualOutputMode, twitchDualStreamAccess);
   if (profile.topology !== topology.type || profile.legs.length !== topology.legs.length) {
     return false;
   }
@@ -218,9 +276,7 @@ export function isAutoOptimizerProfileCompatible(
 
     return (
       topologyDestinations.length === profileDestinations.length &&
-      topologyDestinations.every(
-        (destination, index) => destination === profileDestinations[index],
-      )
+      topologyDestinations.every((destination, index) => destination === profileDestinations[index])
     );
   });
 }

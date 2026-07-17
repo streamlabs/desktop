@@ -9,7 +9,7 @@ import {
 } from '.';
 import { Inject } from 'services/core/injector';
 import { authorizedHeaders, jfetch } from 'util/requests';
-import { platformAuthorizedRequest } from './utils';
+import { platformAuthorizedRequest, platformRequest } from './utils';
 import { CustomizationService } from 'services/customization';
 import { IGoLiveSettings, TDisplayOutput } from 'services/streaming';
 import { $t, I18nService } from 'services/i18n';
@@ -28,6 +28,25 @@ import { UsageStatisticsService } from 'app-services';
 import cloneDeep from 'lodash/cloneDeep';
 import { ICustomStreamDestination } from 'services/settings/streaming';
 import { ENotificationType } from 'services/notifications';
+import uuid from 'uuid';
+import {
+  IYoutubeAutoOptimizerProbeAcquireOptions,
+  IYoutubeAutoOptimizerProbeLease,
+  IYoutubeAutoOptimizerProbeWaitOptions,
+  TYoutubeAutoOptimizerProbeDeleteResult,
+  TYoutubeAutoOptimizerProbeRecoveryResult,
+  TYoutubeAutoOptimizerProbeStreamStatus,
+  YoutubeAutoOptimizerProbeError,
+  YoutubeAutoOptimizerProbeManager,
+} from './youtube/auto-optimizer-probe';
+
+export {
+  IYoutubeAutoOptimizerProbeAcquireOptions,
+  IYoutubeAutoOptimizerProbeLease,
+  IYoutubeAutoOptimizerProbeWaitOptions,
+  TYoutubeAutoOptimizerProbeRecoveryResult,
+  YoutubeAutoOptimizerProbeError,
+} from './youtube/auto-optimizer-probe';
 
 interface IYoutubeServiceState extends IPlatformState {
   liveStreamingEnabled: boolean;
@@ -67,6 +86,7 @@ export interface IYoutubeStartStreamOptions extends IExtraBroadcastSettings {
 interface IYoutubeCollection<T> {
   items: T[];
   pageInfo: { totalResults: number; resultsPerPage: number };
+  nextPageToken?: string;
 }
 
 /**
@@ -140,7 +160,10 @@ interface IYoutubeLiveStream {
   id: string;
   snippet: {
     isDefaultStream: boolean;
+    title?: string;
+    description?: string;
   };
+  contentDetails?: { isReusable?: boolean };
   cdn: {
     ingestionInfo: {
       /**
@@ -215,6 +238,10 @@ export class YoutubeService
 
   @lazyModule(YoutubeUploader) uploader: YoutubeUploader;
 
+  private autoOptimizerProbeManager?: YoutubeAutoOptimizerProbeManager;
+  private autoOptimizerRecoveryTimer?: ReturnType<typeof setTimeout>;
+  private pendingAutoOptimizerProbeReleases = new Map<string, IYoutubeAutoOptimizerProbeLease>();
+
   readonly capabilities = new Set<TPlatformCapability>([
     'title',
     'description',
@@ -284,6 +311,17 @@ export class YoutubeService
   protected init() {
     this.syncSettingsWithLocalStorage();
 
+    // Cleanup is independent of whether the optimizer prompt or rollout flag
+    // is ever used again. A crash-journaled stream is recovered as soon as the
+    // linked YouTube account is ready, and transient/ambiguous cleanup is
+    // retried in the background.
+    this.userService.userLoginFinished.subscribe(() => this.scheduleAutoOptimizerProbeRecovery());
+    this.userService.platformAuthUpdated.subscribe(platform => {
+      if (platform === 'youtube') this.scheduleAutoOptimizerProbeRecovery();
+    });
+    this.userService.userLogout.subscribe(() => this.cancelAutoOptimizerProbeRecovery());
+    if (this.oauthToken) this.scheduleAutoOptimizerProbeRecovery();
+
     this.streamingService.streamErrorCreated.subscribe(e => {
       if (this.state.verticalStreamKey || this.state.verticalBroadcast.id) {
         this.afterStopStream();
@@ -301,6 +339,226 @@ export class YoutubeService
 
   get oauthToken() {
     return this.userService.state.auth?.platforms?.youtube?.token;
+  }
+
+  /**
+   * Create a temporary reusable, unbound YouTube liveStream for an isolated
+   * Auto Optimizer bandwidth measurement. Reusability is required only so an
+   * ambiguous insert can be recovered through liveStreams.list; the stream is
+   * never bound to a broadcast and is deleted after the probe. The returned
+   * RTMPS credentials only live in memory and are never copied into state.
+   */
+  acquireAutoOptimizerProbe(
+    options: IYoutubeAutoOptimizerProbeAcquireOptions = {},
+  ): Promise<IYoutubeAutoOptimizerProbeLease> {
+    return this.getAutoOptimizerProbeManager().acquire(options);
+  }
+
+  /**
+   * Wait until YouTube confirms that bytes from the native probe reached its
+   * ingest. A bounded timeout returns false; cancellation rejects with an
+   * AbortError.
+   */
+  waitForAutoOptimizerProbeActive(
+    lease: IYoutubeAutoOptimizerProbeLease,
+    options: IYoutubeAutoOptimizerProbeWaitOptions = {},
+  ): Promise<boolean> {
+    return this.getAutoOptimizerProbeManager().waitForActive(lease, options);
+  }
+
+  /**
+   * Delete the temporary liveStream after native output has stopped. This
+   * waits for YouTube to report a non-active state and verifies deletion.
+   */
+  async releaseAutoOptimizerProbe(lease: IYoutubeAutoOptimizerProbeLease): Promise<void> {
+    try {
+      await this.getAutoOptimizerProbeManager().release(lease);
+      this.pendingAutoOptimizerProbeReleases.delete(lease.probeId);
+    } catch (error: unknown) {
+      // Retain identifiers only and retry independently of the optimizer UI.
+      // This matters when the prompt is completed and will never open again.
+      lease.server = '';
+      lease.streamKey = '';
+      this.pendingAutoOptimizerProbeReleases.set(lease.probeId, lease);
+      this.scheduleAutoOptimizerProbeRecovery(30_000);
+      throw error;
+    }
+  }
+
+  /**
+   * Retry cleanup of a journaled stream left by an interrupted application
+   * run. A resource belonging to another linked account is retained and the
+   * operation rejects rather than creating or deleting anything.
+   */
+  async recoverAutoOptimizerProbe(): Promise<TYoutubeAutoOptimizerProbeRecoveryResult> {
+    let releaseError: unknown;
+    for (const [probeId, lease] of [...this.pendingAutoOptimizerProbeReleases]) {
+      try {
+        await this.getAutoOptimizerProbeManager().release(lease);
+        this.pendingAutoOptimizerProbeReleases.delete(probeId);
+      } catch (error: unknown) {
+        releaseError = error;
+      }
+    }
+    if (releaseError) throw releaseError;
+    return this.getAutoOptimizerProbeManager().recover();
+  }
+
+  private getAutoOptimizerProbeManager(): YoutubeAutoOptimizerProbeManager {
+    if (!this.autoOptimizerProbeManager) {
+      this.autoOptimizerProbeManager = new YoutubeAutoOptimizerProbeManager({
+        getAccountId: () => {
+          const auth = this.userService.state.auth?.platforms?.youtube;
+          // `id` is the stable linked-platform account identifier. channelId
+          // may be refreshed with a display name by UserService.
+          return auth?.id || auth?.channelId || '';
+        },
+        createStream: async (probeId, signal) => {
+          const stream = await this.createAutoOptimizerProbeStream(probeId, signal);
+          return {
+            id: stream.id,
+            server: stream.cdn?.ingestionInfo?.rtmpsIngestionAddress,
+            streamKey: stream.cdn?.ingestionInfo?.streamName,
+            isReusable: stream.contentDetails?.isReusable === true,
+            status: stream.status?.streamStatus || 'created',
+          };
+        },
+        fetchStreamStatus: (streamId, signal) =>
+          this.fetchAutoOptimizerProbeStatus(streamId, signal),
+        findStreamIds: (probeId, signal) => this.findAutoOptimizerProbeStreamIds(probeId, signal),
+        deleteStream: streamId => this.deleteAutoOptimizerProbeStream(streamId),
+        storage: localStorage,
+        createProbeId: () => uuid(),
+        now: () => Date.now(),
+      });
+    }
+
+    return this.autoOptimizerProbeManager;
+  }
+
+  private createAutoOptimizerProbeStream(
+    probeId: string,
+    signal?: AbortSignal,
+  ): Promise<IYoutubeLiveStream> {
+    const endpoint = 'liveStreams?part=cdn,snippet,contentDetails,status';
+    return platformAuthorizedRequest<IYoutubeLiveStream>('youtube', {
+      url: `${this.apiBase}/${endpoint}`,
+      method: 'POST',
+      signal,
+      body: JSON.stringify({
+        snippet: {
+          title: this.autoOptimizerProbeTitle(probeId),
+          description: this.autoOptimizerProbeDescription(probeId),
+        },
+        cdn: {
+          frameRate: 'variable',
+          ingestionType: 'rtmp',
+          resolution: 'variable',
+        },
+        contentDetails: { isReusable: true },
+      }),
+    });
+  }
+
+  private async fetchAutoOptimizerProbeStatus(
+    streamId: string,
+    signal?: AbortSignal,
+  ): Promise<TYoutubeAutoOptimizerProbeStreamStatus | null> {
+    const response = await platformAuthorizedRequest<IYoutubeCollection<IYoutubeLiveStream>>(
+      'youtube',
+      {
+        url: `${this.apiBase}/liveStreams?part=status&id=${encodeURIComponent(streamId)}`,
+        signal,
+      },
+    );
+    return response.items[0]?.status?.streamStatus || null;
+  }
+
+  private async findAutoOptimizerProbeStreamIds(
+    probeId: string,
+    signal?: AbortSignal,
+  ): Promise<string[]> {
+    const title = this.autoOptimizerProbeTitle(probeId);
+    const description = this.autoOptimizerProbeDescription(probeId);
+    const streamIds: string[] = [];
+    let pageToken = '';
+
+    do {
+      const query =
+        'liveStreams?part=id,snippet&mine=true&maxResults=50' +
+        (pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : '');
+      const response = await platformAuthorizedRequest<IYoutubeCollection<IYoutubeLiveStream>>(
+        'youtube',
+        { url: `${this.apiBase}/${query}`, signal },
+      );
+      (response.items || []).forEach(stream => {
+        if (stream.snippet?.title === title && stream.snippet?.description === description) {
+          streamIds.push(stream.id);
+        }
+      });
+      pageToken = response.nextPageToken || '';
+    } while (pageToken);
+
+    return streamIds;
+  }
+
+  private autoOptimizerProbeTitle(probeId: string): string {
+    return `Streamlabs Auto Optimizer ${probeId}`;
+  }
+
+  private autoOptimizerProbeDescription(probeId: string): string {
+    return `Temporary unbound Streamlabs Auto Optimizer probe ${probeId}`;
+  }
+
+  private scheduleAutoOptimizerProbeRecovery(delayMs = 0) {
+    this.cancelAutoOptimizerProbeRecovery();
+    const recover = async () => {
+      this.autoOptimizerRecoveryTimer = undefined;
+      if (!this.oauthToken) return;
+      try {
+        await this.recoverAutoOptimizerProbe();
+      } catch (error: unknown) {
+        console.warn('[Auto Optimizer] Deferred startup YouTube probe recovery', error);
+        const code =
+          error instanceof YoutubeAutoOptimizerProbeError ? error.code : 'cleanup_failed';
+        if (code !== 'account_mismatch' && code !== 'not_authenticated') {
+          this.scheduleAutoOptimizerProbeRecovery(30_000);
+        }
+      }
+    };
+
+    if (delayMs > 0) this.autoOptimizerRecoveryTimer = setTimeout(() => void recover(), delayMs);
+    else void recover();
+  }
+
+  private cancelAutoOptimizerProbeRecovery() {
+    if (this.autoOptimizerRecoveryTimer) clearTimeout(this.autoOptimizerRecoveryTimer);
+    this.autoOptimizerRecoveryTimer = undefined;
+  }
+
+  private async deleteAutoOptimizerProbeStream(
+    streamId: string,
+  ): Promise<TYoutubeAutoOptimizerProbeDeleteResult> {
+    try {
+      // YouTube returns an empty HTTP 204 for a successful DELETE. Bypass
+      // jfetch so the empty body cannot be mistaken for a failed JSON parse.
+      await platformRequest(
+        'youtube',
+        {
+          url: `${this.apiBase}/liveStreams?id=${encodeURIComponent(streamId)}`,
+          method: 'DELETE',
+        },
+        true,
+        false,
+      );
+      return 'deleted';
+    } catch (error: unknown) {
+      // Cleanup is idempotent. A missing resource has already reached the
+      // desired state, but a fresh 404 can also be YouTube propagation delay.
+      // The manager retains a recent unobserved journal and retries it.
+      if ((error as { status?: number } | null)?.status === 404) return 'absent';
+      throw error;
+    }
   }
 
   /**

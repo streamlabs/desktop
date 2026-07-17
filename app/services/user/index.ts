@@ -445,6 +445,8 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   userLogout = new Subject();
   scopeAdded = new Subject();
   primaryPlatformChanged = new Subject<TPlatform>();
+  /** Fires when a linked platform credential becomes available or changes. */
+  platformAuthUpdated = new Subject<TPlatform>();
 
   /**
    * Will fire on every login, similar to userLogin, but will
@@ -790,6 +792,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
         id: linkedPlatforms.youtube_account.platform_id,
         token: linkedPlatforms.youtube_account.access_token,
       });
+      this.platformAuthUpdated.next('youtube');
     } else if (this.state.auth.primaryPlatform !== 'youtube') {
       this.UNLINK_PLATFORM('youtube');
     }
@@ -1429,7 +1432,9 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       result = await this.login(service, auth);
     } else {
       if (auth) {
-        this.UPDATE_PLATFORM(auth.platforms[auth.primaryPlatform]);
+        const linkedPlatform = auth.platforms[auth.primaryPlatform];
+        this.UPDATE_PLATFORM(linkedPlatform);
+        this.platformAuthUpdated.next(linkedPlatform.type);
         result = EPlatformCallResult.Success;
       } else {
         result = EPlatformCallResult.Error;
@@ -1442,6 +1447,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
 
   updatePlatformToken(platform: TPlatform, token: string) {
     this.SET_PLATFORM_TOKEN(platform, token);
+    this.platformAuthUpdated.next(platform);
   }
 
   updatePlatformChannelId(platform: TPlatform, id: string) {
