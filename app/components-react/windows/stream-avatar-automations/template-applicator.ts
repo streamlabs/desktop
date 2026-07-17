@@ -4,7 +4,7 @@ import type {
   AutomationTemplateItem,
   AutomationTemplateSource,
 } from 'services/stream-avatar/stream-avatar-api-service';
-import { AutomationsAnalytics } from './AutomationsAnalytics';
+import { AutomationsAnalytics } from './automations-analytics';
 
 export async function downloadAsset(downloadUrl: string, assetKey: string): Promise<string | null> {
   try {

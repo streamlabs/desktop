@@ -5,11 +5,11 @@ import { ModalLayout } from 'components-react/shared/ModalLayout';
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
 import type { AutomationTemplateGame } from 'services/stream-avatar/stream-avatar-api-service';
-import PreMadeAutomationsFooter from './PreMadeAutomationsFooter';
+import AutomationTemplatesFooter from './AutomationTemplatesFooter';
 import TemplatePreview from './TemplatePreview';
 import { badgeColor } from './automations-utils';
-import { applyTemplates } from './automationTemplates';
-import styles from './PreMadeAutomations.m.less';
+import { applyTemplates } from './template-applicator';
+import styles from './AutomationTemplates.m.less';
 
 interface Props {
   onCancel: () => void;
@@ -17,7 +17,7 @@ interface Props {
   variant: 'welcome' | 'templatePicker';
 }
 
-export default function PreMadeAutomations({ onCancel, onSaved, variant }: Props) {
+export default function AutomationTemplates({ onCancel, onSaved, variant }: Props) {
   const { StreamAvatarApiService } = Services;
   const [games, setGames] = useState<AutomationTemplateGame[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,7 +77,7 @@ export default function PreMadeAutomations({ onCancel, onSaved, variant }: Props
   }
 
   const footer = (
-    <PreMadeAutomationsFooter
+    <AutomationTemplatesFooter
       totalSelected={totalSelected}
       saving={saving}
       onCancel={onCancel}

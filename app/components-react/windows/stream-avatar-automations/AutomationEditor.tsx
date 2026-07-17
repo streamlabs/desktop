@@ -12,7 +12,7 @@ import { Conditions, ConditionType } from 'services/stream-avatar/engine/conditi
 import { withActionDefaults } from 'services/stream-avatar/engine/actions';
 import { validateAutomation } from 'services/stream-avatar/engine/validation';
 import type { TAutomationExport } from 'services/stream-avatar/engine/automations';
-import { AutomationsAnalytics } from './AutomationsAnalytics';
+import { AutomationsAnalytics } from './automations-analytics';
 import type { ActionType, ExportedAction } from 'services/stream-avatar/engine/actions';
 import { TextInput } from 'components-react/shared/inputs';
 import ActionEditor from './ActionEditor';

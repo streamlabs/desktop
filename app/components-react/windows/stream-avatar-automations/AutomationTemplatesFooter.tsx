@@ -10,7 +10,7 @@ interface Props {
   cancelLabel?: string;
 }
 
-export default function PreMadeAutomationsFooter({
+export default function AutomationTemplatesFooter({
   totalSelected,
   saving,
   onCancel,

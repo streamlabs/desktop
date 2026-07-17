@@ -12,8 +12,8 @@ import type { TAutomationExport } from 'services/stream-avatar/engine/automation
 import { EDismissable } from 'services/dismissables';
 import AutomationEditor from './AutomationEditor';
 import AutomationsEmptyState from './AutomationsEmptyState';
-import PreMadeAutomations from './PreMadeAutomations';
-import { AutomationsAnalytics } from './AutomationsAnalytics';
+import AutomationTemplates from './AutomationTemplates';
+import { AutomationsAnalytics } from './automations-analytics';
 import { conditionLabel, conditionGame, summarizeActions, GAME_OPTIONS } from './automations-utils';
 import styles from './EditAutomations.m.less';
 
@@ -137,13 +137,13 @@ export default function EditAutomations() {
 
   if (showWelcome) {
     return (
-      <PreMadeAutomations variant="welcome" onCancel={dismissWelcome} onSaved={dismissWelcome} />
+      <AutomationTemplates variant="welcome" onCancel={dismissWelcome} onSaved={dismissWelcome} />
     );
   }
 
   if (showPreMade) {
     return (
-      <PreMadeAutomations
+      <AutomationTemplates
         variant="templatePicker"
         onCancel={() => setShowPreMade(false)}
         onSaved={() => setShowPreMade(false)}
