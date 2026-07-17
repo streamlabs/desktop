@@ -171,10 +171,10 @@
   "Alert Box Settings": "Ajustes de cuadro de alertas",
   "Alerts and Widgets": "Alertas y widgets",
   "AI": "IA",
-  "Between": "Between",
+  "Between": "Entre",
   "Upgrade": "Mejorar plan",
-  "Edit Data": "Edit Data",
-  "Edit Reactive Data": "Edit Reactive Data",
-  "Reactive Data Editor": "Reactive Data Editor",
-  "Not enabled": "Not enabled"
+  "Edit Data": "Editar datos",
+  "Edit Reactive Data": "Editar datos reactivos",
+  "Reactive Data Editor": "Editor de datos reactivos",
+  "Not enabled": "No habilitado"
 }
