@@ -1084,10 +1084,12 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   /**
    * Builds a magic-session URL for a dashboard widget-settings page embedded inside Desktop.
    *
-   * The `origin=desktop&embed=true` flags live in the hash, so core hides its global chrome
-   * (top header + left nav) and renders the page inline. We hand the fully-formed URL
-   * (fragment included) to `getMagicSessionUrl`, which `encodeURIComponent`s it so the `#`
-   * survives the redirect; never build this URL without encoding the fragment.
+   * The bare `slobs` flag lives in the hash — the same marker we append when embedding other
+   * streamlabs.com pages (see `alertboxLibraryUrl`/`overlaysUrl`) — so core recognizes the
+   * page as a Desktop embed, hides its global chrome (top header + left nav), and renders it
+   * inline. We hand the fully-formed URL (fragment included) to `getMagicSessionUrl`, which
+   * `encodeURIComponent`s it so the `#` survives the redirect; never build this URL without
+   * encoding the fragment.
    *
    * @param product - the embeddable dashboard product to open
    * @returns the magic-session URL, or undefined if token minting fails
@@ -1095,8 +1097,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   async widgetEmbedUrl(product: TWidgetEmbedProduct) {
     const uiTheme = this.customizationService.isDarkTheme ? 'night' : 'day';
     const target =
-      `https://${this.hostsService.streamlabs}/dashboard?mode=${uiTheme}` +
-      `#/${product}?origin=desktop&embed=true`;
+      `https://${this.hostsService.streamlabs}/dashboard?mode=${uiTheme}` + `#/${product}?slobs`;
 
     return await this.magicLinkService.actions.return.getMagicSessionUrl(target);
   }
