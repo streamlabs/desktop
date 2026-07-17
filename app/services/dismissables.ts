@@ -19,6 +19,7 @@ export enum EDismissable {
   TikTokEligible = 'tiktok_eligible',
   TikTokReapply = 'tiktok_reapply',
   EnhancedBroadcasting = 'enhanced_broadcasting',
+  StreamAvatarAutomationsWelcome = 'stream_avatar_automations_welcome',
 }
 
 interface IDismissablesServiceState {

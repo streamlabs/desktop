@@ -7,6 +7,7 @@ interface Props {
   saving: boolean;
   onCancel: () => void;
   onComplete: () => void;
+  cancelLabel?: string;
 }
 
 export default function PreMadeAutomationsFooter({
@@ -14,6 +15,7 @@ export default function PreMadeAutomationsFooter({
   saving,
   onCancel,
   onComplete,
+  cancelLabel,
 }: Props) {
   const addLabel =
     totalSelected === 1
@@ -23,7 +25,7 @@ export default function PreMadeAutomationsFooter({
   return (
     <>
       <Button onClick={onCancel} disabled={saving}>
-        {$t('Cancel')}
+        {cancelLabel ?? $t('Cancel')}
       </Button>
       <Button
         type="primary"

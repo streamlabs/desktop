@@ -13,7 +13,6 @@ import { AutomationsAnalytics } from './AutomationsAnalytics';
 import PreMadeAutomationsFooter from './PreMadeAutomationsFooter';
 import styles from './PreMadeAutomations.m.less';
 
-// ponytail: badge color is a deterministic hash of the game name, not a server
 // field — good enough for a letter badge without inventing a color-config surface.
 const BADGE_COLORS = ['#7c5cff', '#f97316', '#22c55e', '#ef4444', '#06b6d4', '#eab308'];
 function badgeColor(name: string): string {
@@ -28,10 +27,38 @@ function isVideoUrl(url?: string): boolean {
 
 // Preview assets can be a static image, a gif, or a video (.webm) — render the
 // right tag for the format instead of assuming one media type for all templates.
-function TemplatePreview({ src, className }: { src?: string; className?: string }) {
+function TemplatePreview({
+  src,
+  className,
+  muted = true,
+  loop = true,
+  onEnded,
+  playToken,
+}: {
+  src?: string;
+  className?: string;
+  muted?: boolean;
+  loop?: boolean;
+  onEnded?: () => void;
+  // Bump this to (re)start playback from 0, even when src/muted/loop are
+  // unchanged (e.g. replaying the row that matches the default preview).
+  playToken?: number;
+}) {
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = muted;
+    el.loop = loop;
+    el.currentTime = 0;
+    el.play().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [src, playToken]);
+
   if (!src) return null;
   return isVideoUrl(src) ? (
-    <video key={src} src={src} className={className} autoPlay muted loop playsInline />
+    <video key={src} ref={videoRef} src={src} className={className} playsInline onEnded={onEnded} />
   ) : (
     <img key={src} src={src} className={className} />
   );
@@ -98,14 +125,35 @@ async function createTemplateSource(source: AutomationTemplateSource, assets: st
 
   const scene = ScenesService.views.getScene(activeScene.id);
   const sceneItem = scene?.getItem(sceneItemId);
-  sceneItem?.fitToScreen();
-  sceneItem?.setVisibility(false);
+  const { AudioService, SourcesService } = Services;
+
+  if (sceneItem) {
+    sceneItem.setVisibility(false);
+
+    const src = SourcesService.views.getSource(sceneItem.sourceId);
+    if (src && src.width > 0 && src.height > 0) {
+      sceneItem.fitToScreen(sceneItem.display);
+      sceneItem.centerOnScreen(sceneItem.display);
+    } else {
+      const sub = SourcesService.sourceUpdated.subscribe(s => {
+        if (s.sourceId === sceneItem.sourceId && s.width > 0 && s.height > 0) {
+          sub.unsubscribe();
+          sceneItem.fitToScreen(sceneItem.display);
+          sceneItem.centerOnScreen(sceneItem.display);
+        }
+      });
+      setTimeout(() => sub.unsubscribe(), 5000);
+    }
+  }
+  if (source.type === 'ffmpeg_source' && sceneItem?.sourceId) {
+    AudioService.actions.setSettings(sceneItem.sourceId, { monitoringType: 2 });
+  }
 }
 
 interface Props {
   onCancel: () => void;
   onSaved?: () => void;
-  embedded?: boolean;
+  variant?: 'welcome' | 'templatePicker' | 'inlineEmpty';
   onFooterChange?: (footer: {
     totalSelected: number;
     saving: boolean;
@@ -113,19 +161,31 @@ interface Props {
   }) => void;
 }
 
-export default function PreMadeAutomations({ onCancel, onSaved, embedded, onFooterChange }: Props) {
+export default function PreMadeAutomations({
+  onCancel,
+  onSaved,
+  variant = 'inlineEmpty',
+  onFooterChange,
+}: Props) {
+  const chrome = variant === 'inlineEmpty' ? 'bare' : 'modal';
+  // variants (welcome, templatePicker) instead of the old embedded flag.
+  const refined = variant !== 'inlineEmpty';
   const { AutomationsService, StreamAvatarApiService } = Services;
   const [games, setGames] = useState<AutomationTemplateGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeGameIndex, setActiveGameIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, Set<number>>>({});
   const [saving, setSaving] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState<number | null>(null);
+  const [previewNonce, setPreviewNonce] = useState(0);
 
   useEffect(() => {
     StreamAvatarApiService.getAutomationTemplates()
       .then(setGames)
       .finally(() => setLoading(false));
   }, []);
+
+  const carouselGames = refined ? games.slice(0, 3) : games;
 
   const activeGame: AutomationTemplateGame | undefined = games[activeGameIndex];
   const activeSelection = (activeGame && selections[activeGame.game]) ?? new Set<number>();
@@ -204,78 +264,20 @@ export default function PreMadeAutomations({ onCancel, onSaved, embedded, onFoot
       saving={saving}
       onCancel={onCancel}
       onComplete={handleComplete}
+      cancelLabel={variant === 'welcome' ? $t('Skip') : undefined}
     />
   );
 
   const content = (
-    <div className={cx(styles.container, { [styles.containerEmbedded]: embedded })}>
+    <div className={cx(styles.container, { [styles.containerEmbedded]: chrome === 'bare' })}>
       {loading || !activeGame ? (
         <Spin />
       ) : (
         <>
-          <div className={styles.mainRow}>
-            <div className={styles.coverPanel}>
-              <TemplatePreview
-                src={activeGame.templates[0]?.gifUrl}
-                className={styles.coverVideo}
-              />
-              <div className={styles.coverTopOverlay}>
-                <span
-                  className={styles.badge}
-                  style={{ background: badgeColor(activeGame.gameName) }}
-                >
-                  {activeGame.gameName[0]}
-                </span>
-                <span className={styles.coverGameName}>{activeGame.gameName}</span>
-              </div>
-              <div className={styles.coverBottomOverlay}>
-                {$t('%{count} automations', { count: activeGame.templates.length })}
-              </div>
-            </div>
-
-            <div className={styles.checklistPanel}>
-              <div className={styles.checklistHeader}>
-                <span>{$t('What your co-host will react to')}</span>
-                <a onClick={toggleSelectAll}>
-                  {activeSelection.size === activeGame.templates.length
-                    ? $t('De-Select all')
-                    : $t('Select all')}
-                </a>
-              </div>
-              <div className={styles.checklist}>
-                {activeGame.templates.map((item, i) => (
-                  <div
-                    key={i}
-                    className={cx(styles.checklistRow, {
-                      [styles.checklistRowActive]: activeSelection.has(i),
-                    })}
-                    onClick={() => toggleTemplate(i)}
-                  >
-                    <TemplatePreview
-                      src={activeSelection.has(i) ? item.gifUrl : item.imageUrl}
-                      className={styles.rowThumb}
-                    />
-                    <div className={styles.rowText}>
-                      <div className={styles.rowTitle}>{item.title}</div>
-                      <div className={styles.rowDesc}>{item.description}</div>
-                    </div>
-                    <div
-                      className={cx(styles.rowCheck, {
-                        [styles.rowCheckActive]: activeSelection.has(i),
-                      })}
-                    >
-                      {activeSelection.has(i) && <i className="icon-check-mark" />}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {games.length > 1 && (
+          {carouselGames.length > 1 && (
             <>
               <div className={styles.gameCards}>
-                {games.map((game, i) => {
+                {carouselGames.map((game, i) => {
                   const selectedCount = selections[game.game]?.size ?? 0;
                   return (
                     <div
@@ -325,28 +327,121 @@ export default function PreMadeAutomations({ onCancel, onSaved, embedded, onFoot
                   );
                 })}
               </div>
-              <div className={styles.dots}>
-                {games.map((_, i) => (
-                  <span
-                    key={i}
-                    className={cx(styles.dot, { [styles.dotActive]: i === activeGameIndex })}
-                    onClick={() => setActiveGameIndex(i)}
-                  />
-                ))}
-              </div>
+              {!refined && (
+                <div className={styles.dots}>
+                  {games.map((_, i) => (
+                    <span
+                      key={i}
+                      className={cx(styles.dot, { [styles.dotActive]: i === activeGameIndex })}
+                      onClick={() => setActiveGameIndex(i)}
+                    />
+                  ))}
+                </div>
+              )}
             </>
           )}
+
+          <div className={styles.mainRow}>
+            <div className={styles.coverPanel}>
+              <TemplatePreview
+                src={
+                  previewTemplate !== null
+                    ? activeGame.templates[previewTemplate]?.gifUrl
+                    : activeGame.templates[0]?.gifUrl
+                }
+                className={styles.coverVideo}
+                muted={previewTemplate === null}
+                loop={previewTemplate === null}
+                onEnded={() => {
+                  setPreviewTemplate(null);
+                  setPreviewNonce(n => n + 1);
+                }}
+                playToken={previewNonce}
+              />
+              <div className={styles.coverTopOverlay}>
+                <span
+                  className={styles.badge}
+                  style={{ background: badgeColor(activeGame.gameName) }}
+                >
+                  {activeGame.gameName[0]}
+                </span>
+                <span className={styles.coverGameName}>{activeGame.gameName}</span>
+              </div>
+              <div className={styles.coverBottomOverlay}>
+                {$t('%{count} automations', { count: activeGame.templates.length })}
+              </div>
+            </div>
+
+            <div className={styles.checklistPanel}>
+              <div className={styles.checklistHeader}>
+                <span>{$t('Events that will trigger automations')}</span>
+                <a onClick={toggleSelectAll}>
+                  {activeSelection.size === activeGame.templates.length
+                    ? $t('De-Select all')
+                    : $t('Select all')}
+                </a>
+              </div>
+              <div className={styles.checklist}>
+                {activeGame.templates.map((item, i) => (
+                  <div
+                    key={i}
+                    className={cx(styles.checklistRow, {
+                      [styles.checklistRowActive]: activeSelection.has(i),
+                    })}
+                    onClick={() => toggleTemplate(i)}
+                  >
+                    <TemplatePreview
+                      src={activeSelection.has(i) ? item.gifUrl : item.imageUrl}
+                      className={styles.rowThumb}
+                    />
+                    <div className={styles.rowText}>
+                      <div className={styles.rowTitle}>{item.title}</div>
+                      <div className={styles.rowDesc}>{item.description}</div>
+                    </div>
+                    {previewTemplate !== i && (
+                      <div
+                        className={styles.rowPlay}
+                        onClick={e => {
+                          e.stopPropagation();
+                          setPreviewTemplate(i);
+                          setPreviewNonce(n => n + 1);
+                        }}
+                      >
+                        <i className="icon-play-round" />
+                      </div>
+                    )}
+                    <div
+                      className={cx(styles.rowCheck, {
+                        [styles.rowCheckActive]: activeSelection.has(i),
+                      })}
+                    >
+                      {activeSelection.has(i) && <i className="icon-check-mark" />}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </>
       )}
     </div>
   );
 
-  return embedded ? (
+  return chrome === 'bare' ? (
     content
   ) : (
     <ModalLayout footer={footer} scrollable>
       <div className={styles.brandHeader}>
-        <h1 className={styles.brandTitle}>{$t('Select from Templates')}</h1>
+        <h1 className={styles.brandTitle}>
+          {variant === 'welcome' ? $t('Welcome to Automations') : $t('Select from Templates')}
+        </h1>
+        {variant === 'welcome' && (
+          <p className={styles.brandSubtitle}>
+            {$t(
+              'Automatically trigger stream effects in response to game events. Select from templates or skip to start from scratch.',
+            )}
+          </p>
+        )}
       </div>
       {content}
     </ModalLayout>

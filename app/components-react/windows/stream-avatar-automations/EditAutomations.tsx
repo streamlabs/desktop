@@ -10,9 +10,10 @@ import { Conditions, GAME_NAMES } from 'services/stream-avatar/engine/conditions
 import { ActionRegistry } from 'services/stream-avatar/engine/actions';
 import { validateAutomation } from 'services/stream-avatar/engine/validation';
 import type { TAutomationExport } from 'services/stream-avatar/engine/automations';
+import { EDismissable } from 'services/dismissables';
 import AutomationEditor from './AutomationEditor';
+import AutomationsEmptyState from './AutomationsEmptyState';
 import PreMadeAutomations from './PreMadeAutomations';
-import PreMadeAutomationsFooter from './PreMadeAutomationsFooter';
 import { AutomationsAnalytics } from './AutomationsAnalytics';
 import styles from './EditAutomations.m.less';
 
@@ -43,10 +44,14 @@ const GAME_FILTER_OPTIONS = Object.entries(GAME_NAMES)
   .map(([id, name]) => ({ label: name, value: id }))
   .sort((a, b) => a.label.localeCompare(b.label));
 
-type TPreMadeFooterState = { totalSelected: number; saving: boolean; onComplete: () => void };
-
 export default function EditAutomations() {
-  const { AutomationsService, AutomationsEngineService, ScenesService, SourcesService } = Services;
+  const {
+    AutomationsService,
+    AutomationsEngineService,
+    ScenesService,
+    SourcesService,
+    DismissablesService,
+  } = Services;
   const { automations, loaded, error, scenes, sources } = useVuex(() => ({
     automations: AutomationsService.state.automations,
     loaded: AutomationsService.state.loaded,
@@ -61,12 +66,32 @@ export default function EditAutomations() {
   const [showPreMade, setShowPreMade] = useState(false);
   const [filterGame, setFilterGame] = useState('');
   const [simulatingId, setSimulatingId] = useState<number | null>(null);
-  const [preMadeFooter, setPreMadeFooter] = useState<TPreMadeFooterState | null>(null);
+  const [showWelcome, setShowWelcome] = useState<boolean | null>(null);
 
   useEffect(() => {
     AutomationsAnalytics.pageView();
     AutomationsService.actions.fetchAll();
   }, []);
+
+  // ponytail: latched so the async automations.length load doesn't flash
+  // the welcome screen for returning users before fetchAll() resolves.
+  useEffect(() => {
+    if (showWelcome !== null || !loaded) return;
+    setShowWelcome(
+      automations.length === 0 &&
+        DismissablesService.views.shouldShow(EDismissable.StreamAvatarAutomationsWelcome),
+    );
+
+    // setShowWelcome(
+    //   automations.length === 0 &&
+    //     DismissablesService.views.shouldShow(EDismissable.StreamAvatarAutomationsWelcome),
+    // );
+  }, [loaded, automations.length, showWelcome]);
+
+  function dismissWelcome() {
+    DismissablesService.actions.dismiss(EDismissable.StreamAvatarAutomationsWelcome);
+    setShowWelcome(false);
+  }
 
   function retryNow() {
     AutomationsService.actions.fetchAll();
@@ -139,17 +164,20 @@ export default function EditAutomations() {
     }
   }
 
-  function closeWindow() {
-    WindowsService.actions.closeChildWindow();
-  }
-
   if (creating || editingAutomation) {
     return <AutomationEditor initial={editingAutomation ?? undefined} onClose={closeEditor} />;
+  }
+
+  if (showWelcome) {
+    return (
+      <PreMadeAutomations variant="welcome" onCancel={dismissWelcome} onSaved={dismissWelcome} />
+    );
   }
 
   if (showPreMade) {
     return (
       <PreMadeAutomations
+        variant="templatePicker"
         onCancel={() => setShowPreMade(false)}
         onSaved={() => setShowPreMade(false)}
       />
@@ -167,7 +195,7 @@ export default function EditAutomations() {
   const addNewMenu = (
     <Menu>
       <Menu.Item key="new" onClick={create}>
-        {$t('Add New Automation')}
+        {$t('Create Custom')}
       </Menu.Item>
       <Menu.Item key="premade" onClick={() => setShowPreMade(true)}>
         {$t('Use Template')}
@@ -175,55 +203,35 @@ export default function EditAutomations() {
     </Menu>
   );
 
-  const footer =
-    automations.length === 0 && preMadeFooter ? (
-      <PreMadeAutomationsFooter
-        totalSelected={preMadeFooter.totalSelected}
-        saving={preMadeFooter.saving}
-        onCancel={closeWindow}
-        onComplete={preMadeFooter.onComplete}
-      />
-    ) : (
-      <>
-        <Button onClick={closeWindow}>{$t('Cancel')}</Button>
-        <Button type="primary" style={{ marginLeft: '8px' }} onClick={closeWindow}>
-          {$t('Complete')}
-        </Button>
-      </>
-    );
-
   return (
-    <ModalLayout footer={footer} scrollable>
+    <ModalLayout hideFooter scrollable>
       <div className={styles.pageHeader}>
-        <div className={styles.titleBlock}>
-          <h1 className={styles.pageTitle}>
-            {$t('Automations')}
-            <Tooltip
-              title={$t('Automatically trigger stream effects in response to gameplay events')}
-            >
-              <i className={`fa fa-info-circle ${styles.infoIcon}`} />
-            </Tooltip>
-          </h1>
-          <p className={styles.pageSubtitle}>
-            {$t('Automatically trigger on stream effects in response to gameplay events.')}
-          </p>
-        </div>
+        <h1 className={styles.pageTitle}>{$t('Automations')}</h1>
+        <p className={styles.pageSubtitle}>
+          {$t('Automatically trigger on stream effects in response to gameplay events.')}
+        </p>
+      </div>
 
-        <div className={styles.controls}>
-          <span className={styles.filterLabel}>{$t('Filter by')}</span>
-          <Select
-            value={filterGame}
-            onChange={val => setFilterGame(val)}
-            options={[{ label: $t('All game automations'), value: '' }, ...GAME_FILTER_OPTIONS]}
-            style={{ width: 200 }}
-          />
-          <Dropdown overlay={addNewMenu} trigger={['click']}>
-            <Button type="primary" className={styles.addNewBtn}>
-              <i className="icon-add-circle" style={{ marginRight: 6 }} />
-              {$t('Add New')}
-            </Button>
-          </Dropdown>
+      <div className={styles.filterBar}>
+        <div className={styles.filterSection}>
+          {automations.length > 0 && (
+            <>
+              <span className={styles.filterLabel}>{$t('Filter by')}</span>
+              <Select
+                value={filterGame}
+                onChange={val => setFilterGame(val)}
+                options={[{ label: $t('All game automations'), value: '' }, ...GAME_FILTER_OPTIONS]}
+                style={{ width: 200 }}
+              />
+            </>
+          )}
         </div>
+        <Dropdown overlay={addNewMenu} trigger={['click']}>
+          <Button type="primary" className={styles.addNewBtn}>
+            <i className="icon-add-circle" style={{ marginRight: 6 }} />
+            {$t('Add Automation')}
+          </Button>
+        </Dropdown>
       </div>
 
       {!loaded && !error && <Spinner visible relative />}
@@ -237,9 +245,7 @@ export default function EditAutomations() {
         </div>
       )}
 
-      {loaded && automations.length === 0 && (
-        <PreMadeAutomations embedded onCancel={closeWindow} onFooterChange={setPreMadeFooter} />
-      )}
+      {loaded && automations.length === 0 && <AutomationsEmptyState />}
 
       {loaded && automations.length > 0 && filtered.length === 0 && (
         <div className={styles.message}>{$t('No automations match the selected filter.')}</div>

@@ -1,5 +1,3 @@
-@import '../../../styles/colors';
-
 // ── Table ─────────────────────────────────────────────
 
 .table {
@@ -47,7 +45,7 @@
 }
 
 .badge {
-  background: @dark-5 !important;
+  background: var(--button) !important;
   border-color: transparent !important;
   border-radius: 6px !important;
   color: #fff !important;
@@ -70,7 +68,7 @@
 
 .rowActions i {
   cursor: pointer;
-  color: @light-5;
+  color: var(--icon);
   font-size: 14px;
 }
 
@@ -102,16 +100,7 @@
 // ── Page header ───────────────────────────────────────
 
 .pageHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.titleBlock {
-  flex: 1;
-  min-width: 0;
+  margin-bottom: 12px;
 }
 
 .pageTitle {
@@ -119,15 +108,6 @@
   font-size: 20px;
   font-weight: 700;
   color: var(--title);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.infoIcon {
-  font-size: 14px;
-  color: var(--paragraph);
-  cursor: default;
 }
 
 .pageSubtitle {
@@ -136,11 +116,17 @@
   color: var(--paragraph);
 }
 
-.controls {
+.filterBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.filterSection {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-shrink: 0;
 }
 
 .filterLabel {

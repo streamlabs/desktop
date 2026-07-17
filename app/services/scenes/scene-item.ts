@@ -413,12 +413,14 @@ export class SceneItem extends SceneItemNode {
     this.setRect(rect);
   }
 
+  @ExecuteInWorkerProcess()
   fitToScreen(display?: TDisplayType) {
     const rect = new ScalableRectangle(this.rectangle);
     rect.fitTo(this.videoService.getScreenRectangle(display));
     this.setRect(rect);
   }
 
+  @ExecuteInWorkerProcess()
   centerOnScreen(display?: TDisplayType) {
     const rect = new ScalableRectangle(this.rectangle);
     rect.centerOn(this.videoService.getScreenRectangle(display));
