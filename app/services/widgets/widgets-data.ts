@@ -112,6 +112,12 @@ export const makeWidgetTesters = (host: string): IWidgetTester[] => {
       platforms: ['twitch'],
     },
     {
+      type: 'power_up',
+      name: 'Power-Up',
+      url: testUrl('power_up'),
+      platforms: ['twitch'],
+    },
+    {
       name: 'Super Chat',
       url: testUrl('fanfunding'),
       platforms: ['youtube'],
@@ -589,11 +595,7 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
     demoVideo: false,
     demoFilename: 'source-follower-goal.png',
     platforms: new Set(['twitch', 'facebook', 'youtube']),
-    supportList: [
-      $t('Twitch Followers'),
-      $t('YouTube Subscribers'),
-      $t('Facebook Followers'),
-    ],
+    supportList: [$t('Twitch Followers'), $t('YouTube Subscribers'), $t('Facebook Followers')],
     icon: 'fas fa-calendar',
     group: 'goals',
   },
@@ -602,11 +604,7 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
     description: $t('Set a subscriber goal for your viewers to help you reach.'),
     demoVideo: false,
     demoFilename: 'source-follower-goal.png',
-    supportList: [
-      $t('Twitch Subscribers'),
-      $t('YouTube Members'),
-      $t('Facebook Supporters'),
-    ],
+    supportList: [$t('Twitch Subscribers'), $t('YouTube Members'), $t('Facebook Supporters')],
     platforms: new Set(['twitch', 'youtube']),
     icon: 'fas fa-calendar',
     group: 'goals',

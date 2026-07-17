@@ -34,9 +34,9 @@ export default function PageInstallationFlow(props: IPageInstallationFlowProps) 
   return (
     <>
       <FeatureCarousel
-        title={$t('AI Highlighter is now %{appName}', { appName: REPLAY_APP_NAME })}
+        title={REPLAY_APP_NAME}
         description={$t(
-          'Supercharge your workflow with our standalone tool %{appName}. Faster edits, more output in less time. Try it now',
+          'Turn your streams into TikTok and YouTube videos with the click of a button.',
           { appName: REPLAY_APP_NAME },
         )}
         features={CAROUSEL_FEATURES}

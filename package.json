@@ -4,7 +4,7 @@
   "description": "Streamlabs streaming software",
   "author": "General Workings, Inc.",
   "license": "GPL-3.0",
-  "version": "1.21.4",
+  "version": "1.21.7",
   "main": "main.js",
   "macVirtualCamUrl": "https://obs-studio-deployment.s3.us-west-2.amazonaws.com/slobs-vcam-installer-1.0.16-release-osx-[ARCH].tar.gz",
   "scripts": {
@@ -28,6 +28,9 @@
     "package:highlighter": "cross-env HIGHLIGHTER_ENV=staging yarn compile && cross-env SLOBS_NO_SIGN=true yarn package",
     "package:nosign": "yarn compile && cross-env SLOBS_NO_SIGN=true yarn package",
     "eslint": "eslint \"{app,guest-api,obs-api,updater}/**/*.ts\" main.js",
+    "typecheck": "yarn typecheck:app && yarn typecheck:react",
+    "typecheck:app": "tsc --noEmit -p tsconfig.json",
+    "typecheck:react": "node scripts/typecheck-react.js",
     "test": "tsc -p test && ava -v --timeout=3m ./test-dist/test/regular/**/*.js",
     "test:file": "tsc -p test && ava -v --timeout=60m",
     "test:stress": "yarn test test-dist/test/stress/index.js",

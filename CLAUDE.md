@@ -16,15 +16,18 @@ Package manager is **Yarn Berry (3.1.1)** — never use `npm`.
 | Task | Command | Notes |
 | --- | --- | --- |
 | Lint + format | `yarn eslint` | Prettier runs *through* ESLint (`eslint-plugin-prettier`). `eslint --fix` formats. |
+| Typecheck | `yarn typecheck` | **Fast self-verify.** `tsc --noEmit` for the app + React. Use this to check changes instead of a full build or the e2e suite. |
 | Iterative dev build | `yarn watch` | Webpack watch; use this while developing. |
 | One‑shot dev build | `yarn compile` | Slow: clears `bundles/media` and rebuilds everything. Don't run casually. |
 | Run the app | `yarn start` | Launches Electron against the last build. |
 | Single test file | `yarn test:file <path>` | Compiles tests, runs one file. |
 | Full test suite | `yarn test` | **Heavy/slow e2e** — see Testing below. Don't run unless asked. |
 
-There is **no standalone typecheck script**; types are checked by `ts-loader`
-during `yarn compile`/`yarn watch` (tests via `tsc -p test`). For correctness,
-reason about types locally and run `yarn eslint` rather than triggering a full build.
+For a fast type check without a full build, run **`yarn typecheck`** — it runs
+`tsc --noEmit` for the non‑React app (`tsconfig.json`) and for `app/components-react`
+(its stricter config, `strictNullChecks: true`). This is the quickest way to verify
+your changes; reserve `yarn compile` and the e2e suite for when you actually need
+them. (The build still typechecks via `ts-loader`; tests compile via `tsc -p test`.)
 
 ## Code style
 
