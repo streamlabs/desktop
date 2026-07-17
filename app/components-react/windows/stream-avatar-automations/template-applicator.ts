@@ -73,18 +73,20 @@ export async function createTemplateSource(
   const { AudioService, SourcesService } = Services;
 
   if (sceneItem) {
-    sceneItem.setVisibility(false);
-
     const src = SourcesService.views.getSource(sceneItem.sourceId);
     if (src && src.width > 0 && src.height > 0) {
+      sceneItem.setVisibility(true);
       sceneItem.fitToScreen(sceneItem.display);
       sceneItem.centerOnScreen(sceneItem.display);
+      sceneItem.setVisibility(false);
     } else {
       const sub = SourcesService.sourceUpdated.subscribe(s => {
         if (s.sourceId === sceneItem.sourceId && s.width > 0 && s.height > 0) {
           sub.unsubscribe();
+          sceneItem.setVisibility(true);
           sceneItem.fitToScreen(sceneItem.display);
           sceneItem.centerOnScreen(sceneItem.display);
+          sceneItem.setVisibility(false);
         }
       });
       setTimeout(() => sub.unsubscribe(), 5000);
