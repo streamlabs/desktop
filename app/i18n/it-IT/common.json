@@ -171,10 +171,10 @@
   "Alert Box Settings": "Impostazioni finestra di avviso",
   "Alerts and Widgets": "Avvisi e widget",
   "AI": "IA",
-  "Between": "Between",
+  "Between": "Tra",
   "Upgrade": "Esegui l’upgrade",
-  "Edit Data": "Edit Data",
-  "Edit Reactive Data": "Edit Reactive Data",
-  "Reactive Data Editor": "Reactive Data Editor",
-  "Not enabled": "Not enabled"
+  "Edit Data": "Modifica dati",
+  "Edit Reactive Data": "Modifica dati reattivi",
+  "Reactive Data Editor": "Editor dati reattivi",
+  "Not enabled": "Non abilitato"
 }
