@@ -76,10 +76,7 @@ export default function EditAutomations() {
   // the welcome screen for returning users before fetchAll() resolves.
   useEffect(() => {
     if (showWelcome !== null || !loaded) return;
-    setShowWelcome(
-      automations.length === 0 &&
-        DismissablesService.views.shouldShow(EDismissable.StreamAvatarAutomationsWelcome),
-    );
+    setShowWelcome(automations.length === 0);
 
     // Uncomment when going to prod
     // setShowWelcome(
