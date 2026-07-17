@@ -49,5 +49,5 @@
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube 썸네일 이미지가 너무 큽니다. 최대 크기는 2MB입니다.",
   "Please upload thumbnail manually on YouTube.": "수동으로 YouTube에 썸네일을 업로드하세요.",
   "Stream Shift Error: YouTube is not live": "Stream Shift 오류: YouTube가 라이브 상태가 아님",
-  "Error starting vertical stream in YouTube dual streaming": "Error starting vertical stream in YouTube dual streaming"
+  "Error starting vertical stream in YouTube dual streaming": "YouTube 듀얼 스트리밍에서 세로 스트림을 시작하는 중 오류 발생"
 }
