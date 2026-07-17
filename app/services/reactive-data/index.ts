@@ -93,7 +93,6 @@ export class ReactiveDataService extends Service {
   @Inject() websocketService: WebsocketService;
   @Inject() sourcesService: SourcesService;
   @Inject() sceneCollectionsService: SceneCollectionsService;
-  @Inject() visionService: VisionService;
 
   state = ReactiveDataState.inject();
 
