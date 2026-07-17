@@ -1,39 +1,43 @@
-import React, { CSSProperties } from 'react';
-import { Select, Input, Tag } from 'antd';
+import React from 'react';
+import { Select, Tag } from 'antd';
 import { alertAsync } from 'components-react/modals';
 import { $t } from 'services/i18n';
 import { ActionRegistry, withActionDefaults } from 'services/stream-avatar/engine/actions';
-import { MAX_INSTRUCTION_LENGTH } from 'services/stream-avatar/engine/validation';
-import { CheckboxInput, SliderInput } from 'components-react/shared/inputs';
-import type { ActionType, ExportedAction, ExportedActionProps } from 'services/stream-avatar/engine/actions';
+import type {
+  ActionType,
+  ExportedAction,
+  ExportedActionProps,
+} from 'services/stream-avatar/engine/actions';
+import {
+  AgentRequiredNotice,
+  SceneSwitchControl,
+  SourceVisibilityControl,
+  WaitControl,
+  InstructionControl,
+  CoHostCommentControl,
+  errorTextStyle,
+  CONTROL_HEIGHT,
+} from './ActionControls';
 import styles from './AutomationEditor.m.less';
 
-const errorTextStyle: CSSProperties = {
-  margin: '4px 0 0',
-  color: 'var(--red)',
-  fontSize: '12px',
-};
-
-const CONTROL_HEIGHT = '32px';
-
-const dragHandleStyle: CSSProperties = {
+const dragHandleStyle = {
   cursor: 'grab',
   color: 'var(--paragraph)',
   fontSize: '16px',
-};
+} as const;
 
-const gripCellStyle: CSSProperties = {
+const gripCellStyle = {
   display: 'flex',
   alignItems: 'center',
   height: CONTROL_HEIGHT,
-};
+} as const;
 
-const trashCellStyle: CSSProperties = {
+const trashCellStyle = {
   display: 'flex',
   alignItems: 'center',
   height: CONTROL_HEIGHT,
   fontSize: '14px',
-};
+} as const;
 
 function requiresAgentApp(type: ActionType): boolean {
   return ActionRegistry[type]?.group === 'co-host';
@@ -107,7 +111,6 @@ export default function ActionEditor({
       });
       return;
     }
-
     await alertAsync({
       type: 'confirm',
       title: $t('Intelligent Streaming Agent Disabled'),
@@ -145,169 +148,60 @@ export default function ActionEditor({
 
   const actionOptions = getActionOptions();
   const props = (action.props || {}) as ExportedActionProps;
-
   const sceneName = props.scene?.name ?? '';
   const sceneMissing = !!sceneName && !scenes.some(s => s.name === sceneName);
   const sourceName = props.source?.name ?? '';
   const sourceMissing = !!sourceName && !sources.some(s => s.name === sourceName);
 
-  function renderAgentRequiredNotice() {
-    if (!isAgentInstalled) {
-      return (
-        <p
-          style={{
-            margin: 0,
-            minHeight: CONTROL_HEIGHT,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            fontSize: '12px',
-            color: 'var(--red)',
-          }}
-        >
-          {$t('Requires the Intelligent Streaming Agent app.')}
-          <a onClick={() => void onInstallAgent()}>{$t('Install')}</a>
-        </p>
-      );
-    }
-
-    return (
-      <p
-        style={{
-          margin: 0,
-          minHeight: CONTROL_HEIGHT,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          fontSize: '12px',
-          color: 'var(--red)',
-        }}
-      >
-        {$t('The Intelligent Streaming Agent app is disabled.')}
-        <a onClick={() => onEnableAgent()}>{$t('Enable')}</a>
-      </p>
-    );
-  }
-
   function renderControl() {
     switch (action.type) {
-      case 'common.switch_to_scene': {
-        const sceneOptions = [
-          ...(sceneMissing
-            ? [{ label: `${sceneName} (${$t('unavailable')})`, value: sceneName }]
-            : []),
-          ...scenes.map(s => ({ label: s.name, value: s.name })),
-        ];
+      case 'common.switch_to_scene':
         return (
-          <>
-            <Select
-              value={sceneName || undefined}
-              onChange={val => setProp('scene', { name: val })}
-              style={{ width: '100%' }}
-              placeholder={$t('— select scene —')}
-              options={sceneOptions}
-            />
-            {errors?.scene && <p style={errorTextStyle}>{errors.scene}</p>}
-          </>
+          <SceneSwitchControl
+            sceneName={sceneName}
+            sceneMissing={sceneMissing}
+            scenes={scenes}
+            errors={errors}
+            setProp={setProp}
+          />
         );
-      }
-
       case 'common.show_source':
-      case 'common.hide_source': {
-        const sourceOptions = [
-          ...(sourceMissing
-            ? [{ label: `${sourceName} (${$t('unavailable')})`, value: sourceName }]
-            : []),
-          ...sources.map(s => ({ label: s.name, value: s.name })),
-        ];
+      case 'common.hide_source':
         return (
-          <>
-            <Select
-              value={sourceName || undefined}
-              onChange={val => setProp('source', { name: val })}
-              style={{ width: '100%' }}
-              placeholder={$t('— select source —')}
-              options={sourceOptions}
-            />
-            {errors?.source && <p style={errorTextStyle}>{errors.source}</p>}
-            {action.type === 'common.show_source' && (
-              <CheckboxInput
-                value={!!props.hide_if_condition_false}
-                onChange={val => setProp('hide_if_condition_false', val)}
-                label={$t('Hide if condition is false')}
-              />
-            )}
-            {action.type === 'common.hide_source' && (
-              <CheckboxInput
-                value={!!props.show_if_condition_false}
-                onChange={val => setProp('show_if_condition_false', val)}
-                label={$t('Show if condition is false')}
-              />
-            )}
-          </>
+          <SourceVisibilityControl
+            actionType={action.type}
+            sourceName={sourceName}
+            sourceMissing={sourceMissing}
+            sources={sources}
+            props={props}
+            errors={errors}
+            setProp={setProp}
+          />
         );
-      }
-
       case 'common.wait_for_ms':
-        return (
-          <>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                height: CONTROL_HEIGHT,
-                fontSize: '12px',
-              }}
-            >
-              <span style={{ fontWeight: 600, color: 'var(--title)' }}>{$t('Duration')}</span>
-              <span style={{ color: 'var(--paragraph)' }}>
-                {((props.duration ?? 5000) / 1000).toFixed(1)} {$t('seconds')}
-              </span>
-            </div>
-            <SliderInput
-              nowrap
-              value={props.duration ?? 5000}
-              onChange={val => setProp('duration', val)}
-              min={500}
-              max={60000}
-              step={500}
-              tipFormatter={(val: number) => `${(val / 1000).toFixed(1)}s`}
-            />
-          </>
-        );
-
+        return <WaitControl props={props} setProp={setProp} />;
       case 'co-host.instruction':
-        if (!agentReady) return renderAgentRequiredNotice();
-        return (
-          <>
-            <Input
-              value={props.instruction ?? ''}
-              onChange={e => setProp('instruction', e.target.value)}
-              placeholder={$t('Instruction')}
-              maxLength={MAX_INSTRUCTION_LENGTH}
+        if (!agentReady) {
+          return (
+            <AgentRequiredNotice
+              isAgentInstalled={isAgentInstalled}
+              onInstallAgent={() => void onInstallAgent()}
+              onEnableAgent={onEnableAgent}
             />
-            {errors?.instruction && <p style={errorTextStyle}>{errors.instruction}</p>}
-          </>
-        );
-
+          );
+        }
+        return <InstructionControl props={props} errors={errors} setProp={setProp} />;
       case 'co-host.comment':
-        if (!agentReady) return renderAgentRequiredNotice();
-        return (
-          <p
-            style={{
-              margin: 0,
-              minHeight: CONTROL_HEIGHT,
-              display: 'flex',
-              alignItems: 'center',
-              fontSize: '12px',
-              color: 'var(--paragraph)',
-            }}
-          >
-            {$t('The co-host will automatically comment based on the active game condition.')}
-          </p>
-        );
-
+        if (!agentReady) {
+          return (
+            <AgentRequiredNotice
+              isAgentInstalled={isAgentInstalled}
+              onInstallAgent={() => void onInstallAgent()}
+              onEnableAgent={onEnableAgent}
+            />
+          );
+        }
+        return <CoHostCommentControl />;
       default:
         return null;
     }

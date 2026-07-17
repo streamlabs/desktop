@@ -24,13 +24,14 @@ export function useAgentAppInstalled() {
 
   useEffect(() => {
     if (getOS() !== OS.Windows) return;
+    // No cleanup needed: loadProductionApps() is fire-and-forget; results are
+    // read reactively via useVuex and not held in local component state.
     void PlatformAppsService.actions.return.loadProductionApps();
   }, []);
 
   const { isInstalled, isEnabled } = useVuex(() => {
     if (getOS() !== OS.Windows) return { isInstalled: false, isEnabled: false };
     const app = PlatformAppsService.views.state.loadedApps.find(a => a.id === AGENT_APP_ID);
-    console.log(JSON.stringify(PlatformAppsService.views.state.loadedApps), 'productionApps');
     return { isInstalled: !!app, isEnabled: !!app?.enabled || !!app?.unpacked };
   });
 
