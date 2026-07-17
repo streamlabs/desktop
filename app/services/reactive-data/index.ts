@@ -119,7 +119,7 @@ export class ReactiveDataService extends Service {
       });
 
       // If the active scene collection has smart sources, ensure Vision (aka Streamlabs AI) is active on login
-      if (this.sourcesService.getSmartSources().length > 0) {
+      if (this.sourcesService.hasSmartSources()) {
         this.ensureVisionRunning();
       }
 
@@ -142,7 +142,7 @@ export class ReactiveDataService extends Service {
 
       if (!this.userService.isLoggedIn) return;
 
-      if (this.sourcesService.getSmartSources().length > 0) {
+      if (this.sourcesService.hasSmartSources()) {
         this.ensureVisionRunning();
       }
 

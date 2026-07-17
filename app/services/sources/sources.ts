@@ -683,6 +683,19 @@ export class SourcesService extends StatefulService<ISourcesState> {
       .map(sourceModel => new Source(sourceModel.sourceId));
   }
 
+  /**
+   * Confirm if a smart source exists
+   * @remark Primarily used for updating the smart browser sources for forwarding socket events
+   * from the reactive data service. For performance optimization, check for the existence of any
+   * smart sources.
+   * @returns A boolean indicating whether there are any smart sources in the scene collection
+   */
+  hasSmartSources() {
+    return Object.values(this.state.sources).some(
+      s => s.propertiesManagerType === 'smartBrowserSource',
+    );
+  }
+
   private handleSourceCallback(objs: IObsSourceCallbackInfo[]) {
     objs.forEach(info => {
       const source = this.views.getSource(info.name);
