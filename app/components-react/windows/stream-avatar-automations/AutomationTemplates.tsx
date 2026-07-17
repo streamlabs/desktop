@@ -132,14 +132,14 @@ export default function AutomationTemplates({ onCancel, onSaved, variant }: Prop
                         >
                           {selectedCount > 0 && <i className="icon-check-mark" />}
                         </div>
-                        <div className={styles.gameCardSub}>
-                          {selectedCount > 0
-                            ? $t('%{count} of %{total} added', {
-                                count: selectedCount,
-                                total: game.templates.length,
-                              })
-                            : $t('%{count} automations', { count: game.templates.length })}
-                        </div>
+                        {selectedCount > 0 && (
+                          <div className={styles.gameCardSub}>
+                            {$t('%{count} of %{total} added', {
+                              count: selectedCount,
+                              total: game.templates.length,
+                            })}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -173,9 +173,6 @@ export default function AutomationTemplates({ onCancel, onSaved, variant }: Prop
                   {activeGame.gameName[0]}
                 </span>
                 <span className={styles.coverGameName}>{activeGame.gameName}</span>
-              </div>
-              <div className={styles.coverBottomOverlay}>
-                {$t('%{count} automations', { count: activeGame.templates.length })}
               </div>
             </div>
 
