@@ -364,5 +364,6 @@
   "recording settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "録画設定が正しくありません。ストリーミングと録画の両方の録画パスとエンコーダー設定を確認してください。",
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "リプレイバッファの作成に失敗しました。ストリーミング設定、録画設定、および録画ファイルパスを確認して、再試行してください。",
   "Unknown replay buffer error, please contact support": "不明なリプレイバッファエラーが発生しました。サポートに連絡してください",
-  "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "リプレイバッファ設定が正しくありません。ストリーミングと録画の両方の録画パスとエンコーダー設定を確認してください。"
+  "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "リプレイバッファ設定が正しくありません。ストリーミングと録画の両方の録画パスとエンコーダー設定を確認してください。",
+  "Streaming Started Without Recording/Replay Buffer": "Streaming Started Without Recording/Replay Buffer"
 }
