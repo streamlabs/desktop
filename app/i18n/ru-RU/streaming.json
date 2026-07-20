@@ -364,5 +364,6 @@
   "recording settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "настройки записи указаны неправильно. Проверьте путь записи и настройки кодировщика для трансляции и записи.",
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "Не удалось создать буфер повтора. Проверьте настройки трансляции, настройки записи и путь к файлу записи, затем повторите попытку.",
   "Unknown replay buffer error, please contact support": "Произошла неизвестная ошибка буфера повтора. Обратитесь в службу поддержки",
-  "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "настройки буфера повтора указаны неправильно. Проверьте путь записи и настройки кодировщика для трансляции и записи."
+  "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "настройки буфера повтора указаны неправильно. Проверьте путь записи и настройки кодировщика для трансляции и записи.",
+  "Streaming Started Without Recording/Replay Buffer": "Streaming Started Without Recording/Replay Buffer"
 }
