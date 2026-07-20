@@ -364,5 +364,6 @@
   "recording settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "녹화 설정이 올바르지 않습니다. 스트리밍 및 녹화에 대한 녹화 경로와 인코더 설정을 확인하세요.",
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "리플레이 버퍼 생성에 실패했습니다. 스트리밍 설정, 녹화 설정, 녹화 파일 경로를 확인한 뒤 다시 시도하세요.",
   "Unknown replay buffer error, please contact support": "알 수 없는 리플레이 버퍼 오류입니다. 고객 지원에 문의하세요.",
-  "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "리플레이 버퍼 설정이 올바르지 않습니다. 스트리밍 및 녹화에 대한 녹화 경로와 인코더 설정을 확인하세요."
+  "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "리플레이 버퍼 설정이 올바르지 않습니다. 스트리밍 및 녹화에 대한 녹화 경로와 인코더 설정을 확인하세요.",
+  "Streaming Started Without Recording/Replay Buffer": "Streaming Started Without Recording/Replay Buffer"
 }
