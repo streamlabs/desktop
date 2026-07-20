@@ -1,6 +1,6 @@
 import uuid from 'uuid/v4';
 import { Properties, PropertyInstance, PropertyMap } from './properties';
-import { Instructions, interpolateInstruction } from './instructions';
+import { getInstruction, interpolateInstruction } from './instructions';
 import type { TCondition } from './conditions';
 import type { GameState } from './game-state';
 
@@ -156,7 +156,7 @@ export const ActionRegistry = {
         if (props?.simulating) {
           context.sendSimulationBark(c.type);
         } else {
-          const template = Instructions[c.type as keyof typeof Instructions];
+          const template = getInstruction(c.type);
           if (!template) continue;
           const instruction = interpolateInstruction(template, state);
           console.log('[AutomationsEngine] co-host.comment', { condition: c.type, instruction });

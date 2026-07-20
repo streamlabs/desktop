@@ -110,6 +110,10 @@ export class StreamAvatarApiService extends Service {
     return this.authedFetch<AutomationTemplateGame[]>('/automations/templates');
   }
 
+  getInstructions(): Promise<Record<string, string>> {
+    return this.authedFetch<Record<string, string>>('/instructions/');
+  }
+
   createAutomation(automation: Omit<TAutomationExport, 'id'>): Promise<TAutomationExport> {
     return this.authedFetch<TAutomationExport>('/automations/', {
       method: 'POST',

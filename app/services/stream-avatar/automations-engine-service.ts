@@ -17,6 +17,7 @@ import {
 } from './engine/conditions';
 import { Actions, ActionContext } from './engine/actions';
 import { GameState, defaultGameState } from './engine/game-state';
+import { setInstructions } from './engine/instructions';
 
 interface VisionEventItem {
   name: string;
@@ -49,6 +50,11 @@ export class AutomationsEngineService extends Service {
   init() {
     // Engine runs only in the worker window to prevent double-firing.
     if (!Utils.isWorkerWindow()) return;
+
+    this.streamAvatarApiService
+      .getInstructions()
+      .then(setInstructions)
+      .catch(() => {});
 
     this.actionContext = {
       resolveSceneId: async ref => {
