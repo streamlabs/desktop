@@ -412,6 +412,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   async beforeGoLive() {
     if (!this.streamInfo.getIsValidRestreamConfig()) {
+      console.log('Invalid restream config, cannot go live with restream');
       throwStreamError('RESTREAM_SETUP_FAILED');
     }
 
