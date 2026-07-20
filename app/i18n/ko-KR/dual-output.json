@@ -1,5 +1,5 @@
 {
-  "Horizontal canvas": "Horizontal canvas",
-  "Vertical canvas": "Vertical canvas",
-  "Error stopping stream: default streams do not exist.": "Error stopping stream: default streams do not exist."
+  "Horizontal canvas": "가로 캔버스",
+  "Vertical canvas": "세로 캔버스",
+  "Error stopping stream: default streams do not exist.": "스트림 중지 오류: 기본 스트림이 존재하지 않습니다."
 }

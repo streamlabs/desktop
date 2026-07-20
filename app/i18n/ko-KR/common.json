@@ -171,10 +171,10 @@
   "Alert Box Settings": "알림 상자 설정",
   "Alerts and Widgets": "알림 및 위젯",
   "AI": "AI",
-  "Between": "Between",
+  "Between": "사이",
   "Upgrade": "업그레이드",
-  "Edit Data": "Edit Data",
-  "Edit Reactive Data": "Edit Reactive Data",
-  "Reactive Data Editor": "Reactive Data Editor",
-  "Not enabled": "Not enabled"
+  "Edit Data": "데이터 편집",
+  "Edit Reactive Data": "반응형 데이터 편집",
+  "Reactive Data Editor": "반응형 데이터 편집기",
+  "Not enabled": "활성화되지 않음"
 }

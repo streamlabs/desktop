@@ -20,7 +20,7 @@
   "This app is currently popped out in another window.": "이 앱은 현재 다른 창에 팝업되어 있습니다.",
   "Error granting chat permissions.": "채팅 권한을 부여하는 동안 오류가 발생했습니다.",
   "Authentication Error": "인증 오류",
-  "Diagnostic Report Uploaded Successfully": "Diagnostic Report Uploaded Successfully",
-  "Copy Report ID": "Copy Report ID",
-  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team."
+  "Diagnostic Report Uploaded Successfully": "진단 보고서 업로드 완료",
+  "Copy Report ID": "보고서 ID 복사",
+  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "진단 보고서가 안전하게 업로드되었으며 아래 보고서 ID가 클립보드에 복사되었습니다. Streamlabs 스트리머 성공팀에 보고서 ID를 알려주세요."
 }
