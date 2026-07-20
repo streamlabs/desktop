@@ -1,0 +1,9 @@
+// Test Widgets renders an inner `.link` (mint text). Inside the `.button--action`
+// wrapper that would be mint-on-mint, so force the link to the action-button text
+// color — mirrors the legacy WidgetEditor's `.test-button .link` rule.
+.testButton {
+  :global(.slide-open__open),
+  :global(.link) {
+    color: var(--action-button-text);
+  }
+}

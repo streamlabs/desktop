@@ -826,7 +826,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
         }),
         queryParams: { sourceId: source.sourceId, product: embedProduct },
         size: {
-          width: 900,
+          width: 1080,
           height: 800,
         },
       });

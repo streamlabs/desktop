@@ -12,6 +12,12 @@ interface WidgetEmbedProps {
   product?: TWidgetEmbedProduct;
   className?: string;
   style?: React.CSSProperties;
+  /**
+   * Fired when the underlying Electron `BrowserView` is created, exposing it to the parent
+   * (e.g. so a native window footer can trigger the embedded page's save via
+   * `webContents.executeJavaScript`). Also fired with `null` when the view is torn down.
+   */
+  onViewReady?: (view: Electron.BrowserView | null) => void;
 }
 
 /**
@@ -43,6 +49,7 @@ export default function WidgetEmbed(p: WidgetEmbedProps) {
     async function loadUrl() {
       // Unmount any existing BrowserView first so we never reload a stale magic token.
       setSrc('');
+      p.onViewReady?.(null);
 
       if (!product || !UserService.views.isLoggedIn) return;
 
@@ -58,6 +65,9 @@ export default function WidgetEmbed(p: WidgetEmbedProps) {
   }, [product, theme]);
 
   function onBrowserViewReady(view: Electron.BrowserView) {
+    // Expose the view to the parent (e.g. to trigger the embedded page's save).
+    p.onViewReady?.(view);
+
     // Open outbound http(s) links in the system browser; keep everything else in the embed.
     view.webContents.setWindowOpenHandler(details => {
       const protocol = urlLib.parse(details.url).protocol;
