@@ -364,5 +364,6 @@
   "recording settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "kayıt ayarları hatalı. Hem yayın hem de kayıt için kayıt yolunu ve kodlayıcı ayarlarını kontrol edin.",
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "Tekrar arabelleği oluşturulamadı. Lütfen yayın ayarlarınızı, kayıt ayarlarınızı ve kayıt dosya yolunu kontrol edip tekrar deneyin.",
   "Unknown replay buffer error, please contact support": "Bilinmeyen tekrar arabelleği hatası, lütfen destek ekibiyle iletişime geçin",
-  "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "tekrar arabelleği ayarları hatalı. Hem yayın hem de kayıt için kayıt yolunu ve kodlayıcı ayarlarını kontrol edin."
+  "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "tekrar arabelleği ayarları hatalı. Hem yayın hem de kayıt için kayıt yolunu ve kodlayıcı ayarlarını kontrol edin.",
+  "Streaming Started Without Recording/Replay Buffer": "Streaming Started Without Recording/Replay Buffer"
 }
