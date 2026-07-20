@@ -31,8 +31,8 @@ test('Streaming to Instagram', withUser('twitch', { prime: true, multistream: fa
   await fillForm({
     title: 'Test stream',
     twitchGame: 'Fortnite',
-    streamUrl: dummy.streamUrl,
-    streamKey: dummy.streamKey,
+    instagramStreamUrl: dummy.streamUrl,
+    instagramStreamKey: dummy.streamKey,
   });
   await submit();
   await waitForDisplayed('span=Update settings for Instagram', { timeout: 10000 });
