@@ -49,7 +49,13 @@ export function DestinationSwitchers() {
     return unlinkedAlwaysShownPlatforms.length
       ? linkedPlatforms.concat(unlinkedAlwaysShownPlatforms)
       : linkedPlatforms;
-  }, [linkedPlatforms, enabledPlatformsRef.current, isDualOutputMode, isPrime]);
+  }, [
+    linkedPlatforms,
+    enabledPlatformsRef.current,
+    isDualOutputMode,
+    isPrime,
+    alwaysShownPlatforms,
+  ]);
 
   // Disable custom destination switchers when restream is not available
   // or for a non-ultra user is in single output mode. The one exception

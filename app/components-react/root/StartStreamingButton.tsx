@@ -227,7 +227,7 @@ function StartStreamingButton(p: { disabled?: boolean }) {
               secondaryActionText: $t('Force Start'),
               secondaryActionFn: async () => {
                 // FIXME: this should actually do something server-side
-                RestreamService.actions.return.forceStreamShiftGoLive(true);
+                RestreamService.actions.return.forceStreamShiftGoLive();
                 shouldForceGoLive = true;
               },
             });
