@@ -24,6 +24,7 @@ const ANT_SELECT_FEATURES = [
   'suffixIcon',
   'size',
   'dropdownMatchSelectWidth',
+  'bordered',
 ] as const;
 
 export interface IListGroup<TValue> {
@@ -39,7 +40,7 @@ export interface ICustomListProps<TValue> {
   labelRender?: (opt: IListOption<TValue>) => ReactNode;
   onBeforeSearch?: (searchStr: string) => unknown;
   options?: IListOption<TValue>[] | IListGroup<TValue>[];
-  description?: string;
+  description?: string | ReactNode;
   nolabel?: boolean;
   filter?: string;
 }
