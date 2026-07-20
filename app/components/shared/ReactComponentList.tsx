@@ -75,6 +75,14 @@ export class EditTransform extends ReactComponent {}
 
 @Component({
   props: {
+    name: { default: 'EditAutomations' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+  },
+})
+export class EditAutomations extends ReactComponent {}
+
+@Component({
+  props: {
     name: { default: 'GoLiveWindow' },
     wrapperStyles: { default: () => ({ height: '100%' }) },
   },

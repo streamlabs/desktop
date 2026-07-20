@@ -1,0 +1,340 @@
+.brandHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.brandTitle {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--title);
+  text-align: center;
+}
+
+.brandSubtitle {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--paragraph);
+  text-align: center;
+  max-width: 513px;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  overflow: hidden;
+}
+
+.mainRow {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: #353e47;
+}
+
+// Left panel — game cover
+.coverPanel {
+  position: relative;
+  width: 348px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--section);
+}
+
+.coverVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.coverTopOverlay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #09161d8c;
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+
+.coverBottomOverlay {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.coverGameName {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+// Right panel — checklist
+.checklistPanel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.checklistHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--paragraph);
+  margin-bottom: 6px;
+
+  a {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--teal);
+    cursor: pointer;
+  }
+}
+
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.checklistRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+
+  &:hover {
+    background: #4f5e65;
+  }
+}
+
+.checklistRowActive {
+  padding: 7px 11px;
+  border-color: transparent;
+  background: #4f5e65;
+}
+
+.rowThumb {
+  width: 64px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.rowText {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowTitle {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18.2px;
+  color: var(--title);
+}
+
+.rowDesc {
+  font-size: 12.5px;
+  line-height: 16.88px;
+  color: var(--paragraph);
+}
+
+.rowCheck {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #ffffff80;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  font-size: 12px;
+}
+
+.rowCheckActive {
+  border-color: var(--teal);
+  background: var(--teal);
+}
+
+.rowPlay {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #91979a;
+  font-size: 22px;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--paragraph);
+  }
+}
+
+// Bottom — game carousel
+.gameCards {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 8px;
+}
+
+// toggles) so the box model never changes size — that's what stops the
+// hover jump. background-clip: padding-box keeps `.gameCard`'s own
+// background from painting under the border ring, so a transparent border
+// is genuinely invisible instead of showing as a dark band.
+.gameCard {
+  width: 236px;
+  height: 84px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background: var(--section);
+  background-clip: padding-box;
+  overflow: hidden;
+  cursor: pointer;
+
+  &:hover {
+    border-color: #ffffff;
+  }
+}
+
+.gameCardActive {
+  border-color: #ffffff;
+}
+
+.gameCardThumb {
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      0deg,
+      rgba(9, 22, 29, 0.92) 22.6%,
+      rgba(19, 23, 26, 0.6) 55%,
+      rgba(9, 22, 29, 0) 100%
+    );
+  }
+}
+
+.gameCardVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.gameCardBadge {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  z-index: 2;
+}
+
+.gameCardName {
+  position: absolute;
+  top: 50%;
+  left: 40px;
+  transform: translateY(-50%);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  z-index: 2;
+}
+
+.gameCardCheck {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.gameCardCheckActive {
+  border-color: #ffffff;
+  background: #ffffff;
+}
+
+.gameCardSub {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: #e3e8eb;
+  text-align: center;
+  z-index: 2;
+}
+

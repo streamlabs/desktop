@@ -1,0 +1,143 @@
+// ── Table ─────────────────────────────────────────────
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+}
+
+.table th {
+  text-align: left;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--paragraph);
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 12px;
+  color: var(--title);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+
+.table th:first-child {
+  padding-left: 0;
+}
+
+.table tbody td:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.table tbody td:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.mutedCell {
+  color: var(--paragraph);
+}
+
+.badge {
+  background: var(--button) !important;
+  border-color: transparent !important;
+  border-radius: 6px !important;
+  color: #fff !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 3px 6px !important;
+  margin-right: 4px;
+}
+
+.actionsCol {
+  width: 1%;
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: flex-end;
+}
+
+.rowActions i {
+  cursor: pointer;
+  color: var(--icon);
+  font-size: 14px;
+}
+
+.rowActions i:hover {
+  color: var(--title);
+}
+
+.errorIcon,
+.rowActions i.errorIcon,
+.rowActions i.errorIcon:hover {
+  color: var(--red);
+  cursor: default;
+}
+
+.disabledIcon,
+.rowActions i.disabledIcon,
+.rowActions i.disabledIcon:hover {
+  opacity: 0.4;
+  pointer-events: none;
+  color: var(--icon-active);
+}
+
+.message {
+  padding: 24px;
+  color: var(--paragraph);
+  text-align: center;
+}
+
+// ── Page header ───────────────────────────────────────
+
+.pageHeader {
+  margin-bottom: 12px;
+}
+
+.pageTitle {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--title);
+}
+
+.pageSubtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--paragraph);
+}
+
+.filterBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.filterSection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filterLabel {
+  font-size: 13px;
+  color: var(--paragraph);
+  white-space: nowrap;
+}
+
+.addNewBtn {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+

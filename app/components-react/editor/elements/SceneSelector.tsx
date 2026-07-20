@@ -25,23 +25,28 @@ function SceneSelector() {
     SourceFiltersService,
     ProjectorService,
     EditorCommandsService,
+    AutomationsService,
+    UserService,
   } = Services;
 
   const { treeSort } = useTree(true);
 
   const [showDropdown, setShowDropdown] = useState(false);
-  const { scenes, activeSceneId, activeScene, collections, activeCollection } = useVuex(() => ({
-    scenes: ScenesService.views.scenes.map(scene => ({
-      title: <TreeNode scene={scene} removeScene={removeScene} />,
-      key: scene.id,
-      selectable: true,
-      isLeaf: true,
-    })),
-    activeScene: ScenesService.views.activeScene,
-    activeSceneId: ScenesService.views.activeSceneId,
-    activeCollection: SceneCollectionsService.activeCollection,
-    collections: SceneCollectionsService.collections,
-  }));
+  const { scenes, activeSceneId, activeScene, collections, activeCollection, isLoggedIn } = useVuex(
+    () => ({
+      scenes: ScenesService.views.scenes.map(scene => ({
+        title: <TreeNode scene={scene} removeScene={removeScene} />,
+        key: scene.id,
+        selectable: true,
+        isLeaf: true,
+      })),
+      activeScene: ScenesService.views.activeScene,
+      activeSceneId: ScenesService.views.activeSceneId,
+      activeCollection: SceneCollectionsService.activeCollection,
+      collections: SceneCollectionsService.collections,
+      isLoggedIn: UserService.views.isLoggedIn,
+    }),
+  );
 
   function showContextMenu(info: { event: React.MouseEvent }) {
     info.event.preventDefault();
@@ -177,6 +182,14 @@ function SceneSelector() {
         <Tooltip title={$t('Edit Scene Transitions.')} placement="bottomRight">
           <i className="icon-transition icon-button icon-button--lg" onClick={showTransitions} />
         </Tooltip>
+        {isLoggedIn && (
+          <Tooltip title={$t('Edit Automations.')} placement="bottomRight">
+            <i
+              className="icon-smart-record icon-button icon-button--lg"
+              onClick={() => AutomationsService.actions.showAutomations()}
+            />
+          </Tooltip>
+        )}
       </div>
       <Scrollable style={{ height: '100%' }} className={styles.scenesContainer}>
         <Tree

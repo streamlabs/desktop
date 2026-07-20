@@ -1,5 +1,6 @@
 import cx from 'classnames';
 import { useVuex } from 'components-react/hooks';
+import { AGENT_APP_ID, useAgentAppInstalled } from 'components-react/hooks/useAgentAppInstalled';
 import { useRealmObject } from 'components-react/hooks/realm';
 import { Services } from 'components-react/service-provider';
 import { SwitchInput } from 'components-react/shared/inputs';
@@ -14,7 +15,6 @@ import { IOverlayCollectionParams, TOverlayType } from 'services/user';
 import { $i } from 'services/utils';
 import { WidgetDisplayData } from 'services/widgets';
 import { WidgetType } from 'services/widgets/widgets-data';
-import { getOS, OS } from 'util/operating-systems';
 import styles from './AILanding.m.less';
 
 interface FeatureAction {
@@ -31,9 +31,6 @@ interface FeatureProps {
   disabled?: boolean;
   actions?: FeatureAction | FeatureAction[];
 }
-
-const AGENT_APP_STORE_ID = '7643';
-const AGENT_APP_ID = '93125d1c33';
 
 function AIFeature(props: FeatureProps) {
   const actionsObj = props.actions ?? [];
@@ -103,33 +100,9 @@ export default function AILanding() {
     [sources],
   );
 
-  const [isAgentAppInstalled, setIsAgentAppInstalled] = useState(false);
+  const { isInstalled: isAgentAppInstalled, installAgent } = useAgentAppInstalled();
   useEffect(() => {
-    let active = true;
-    let processing = false;
-
-    void loadProductionApps();
     trackEvent('impression');
-
-    return () => {
-      active = false;
-    };
-
-    async function loadProductionApps() {
-      if (getOS() !== OS.Windows) return;
-      if (processing) return;
-
-      processing = true;
-      setIsAgentAppInstalled(false);
-      await PlatformAppsService.actions.return.loadProductionApps();
-
-      // Bail early if the component unmounted while we were loading.
-      if (!active) return;
-
-      const installed = PlatformAppsService.views.productionApps.some(a => a.id === AGENT_APP_ID);
-      setIsAgentAppInstalled(installed);
-      processing = false;
-    }
   }, []);
 
   function onToggleAiClick(isEnabled?: boolean) {
@@ -190,9 +163,7 @@ export default function AILanding() {
 
   async function onInstallAgentClick() {
     trackEvent('install-agent');
-    await PlatformAppsService.actions.return.refreshProductionApps();
-    NavigationService.actions.navigate('PlatformAppStore', { appId: AGENT_APP_STORE_ID });
-    SideNavService.actions.setCurrentMenuItem(EMenuItemKey.AppStore);
+    await installAgent();
   }
 
   async function onLaunchAgentClick() {
