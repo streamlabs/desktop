@@ -364,5 +364,6 @@
   "recording settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "录制设置不正确。请检查流媒体和录制的录制路径及编码器设置。",
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "创建重放缓存失败。请检查您的流媒体设置、录制设置和录制文件路径，然后再试一次。",
   "Unknown replay buffer error, please contact support": "未知重放缓存错误，请联系支持人员。",
-  "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "重放缓存设置不正确。请检查流媒体和录制的录制路径及编码器设置。"
+  "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "重放缓存设置不正确。请检查流媒体和录制的录制路径及编码器设置。",
+  "Streaming Started Without Recording/Replay Buffer": "Streaming Started Without Recording/Replay Buffer"
 }
