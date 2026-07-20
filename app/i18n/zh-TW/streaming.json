@@ -364,5 +364,6 @@
   "recording settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "錄影設定不正確。請檢查直播與錄影的錄影路徑和編碼器設定。",
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "無法建立重播緩衝區。請檢查您的直播設定、錄影設定和錄影檔案路徑，然後再試一次。",
   "Unknown replay buffer error, please contact support": "不明重播緩衝區錯誤，請聯絡支援人員",
-  "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "重播緩衝區設定不正確。請檢查直播與錄影的錄影路徑和編碼器設定。"
+  "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "重播緩衝區設定不正確。請檢查直播與錄影的錄影路徑和編碼器設定。",
+  "Streaming Started Without Recording/Replay Buffer": "Streaming Started Without Recording/Replay Buffer"
 }
