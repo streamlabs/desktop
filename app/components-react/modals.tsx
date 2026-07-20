@@ -1,5 +1,5 @@
 import { Services } from './service-provider';
-import { Modal, Button } from 'antd';
+import { Modal, Button, message } from 'antd';
 import Utils from '../services/utils';
 import { ModalFuncProps } from 'antd/lib/modal';
 import { $t } from '../services/i18n';
@@ -172,6 +172,33 @@ export function promptAction(p: {
     ),
     width: 600,
   });
+}
+
+export function alertInfo({
+  name,
+  text,
+  duration,
+}: {
+  name: string;
+  text: string;
+  duration?: number;
+}) {
+  message.info({
+    key: name,
+    content: <AlertContent name={name} message={text} />,
+    className: styles.infoAlert,
+    onClick: () => message.destroy(name),
+    duration,
+  });
+}
+
+export function AlertContent(p: { name: string; message: string }) {
+  return (
+    <div className={styles.alertContent} data-name={p.name}>
+      <div>{p.message}</div>
+      <i className="icon-close" />
+    </div>
+  );
 }
 
 export function DefaultPromptForm(
