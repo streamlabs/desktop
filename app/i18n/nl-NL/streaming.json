@@ -364,5 +364,6 @@
   "recording settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "opname-instellingen zijn onjuist. Controleer het opnamepad en de encoderinstellingen voor zowel streamen als opnemen.",
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "Kon replay-buffer niet aanmaken. Controleer je streaming-instellingen, opname-instellingen en het bestandspad voor opnames en probeer het opnieuw.",
   "Unknown replay buffer error, please contact support": "Onbekende fout in replaybuffer, neem contact op met ondersteuning",
-  "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "instellingen voor replaybuffer zijn onjuist. Controleer het opnamepad en de encoderinstellingen voor zowel streamen als opnemen."
+  "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "instellingen voor replaybuffer zijn onjuist. Controleer het opnamepad en de encoderinstellingen voor zowel streamen als opnemen.",
+  "Streaming Started Without Recording/Replay Buffer": "Streaming Started Without Recording/Replay Buffer"
 }
