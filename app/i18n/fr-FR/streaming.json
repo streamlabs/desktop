@@ -364,5 +364,6 @@
   "recording settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "les paramètres d’enregistrement sont incorrects. Vérifie le chemin d’enregistrement et les paramètres de l’encodeur pour le streaming et l’enregistrement.",
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "Échec de création du tampon de relecture. Vérifie tes paramètres de streaming, tes paramètres d’enregistrement et le chemin d’accès au fichier d’enregistrement, puis réessaie.",
   "Unknown replay buffer error, please contact support": "Erreur inconnue du tampon de relecture, contacte l’assistance",
-  "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "les paramètres du tampon de relecture sont incorrects. Vérifie le chemin d’enregistrement et les paramètres de l’encodeur pour le streaming et l’enregistrement."
+  "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "les paramètres du tampon de relecture sont incorrects. Vérifie le chemin d’enregistrement et les paramètres de l’encodeur pour le streaming et l’enregistrement.",
+  "Streaming Started Without Recording/Replay Buffer": "Streaming Started Without Recording/Replay Buffer"
 }
