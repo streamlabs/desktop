@@ -178,7 +178,7 @@ export class MediaGalleryService extends Service {
     audios: Array<IMediaGalleryFile>;
     images: Array<IMediaGalleryFile>;
   }> {
-    const req = this.formRequest('api/v5/media/desktop/gallery/stock-media?alerts_panels=true');
+    const req = this.formRequest('api/v5/media/desktop/gallery/stock-media?alert_panels=true');
     const data: TMediaGalleryStockFilesResponse = await jfetch(req);
     if (data.success) {
       return {
