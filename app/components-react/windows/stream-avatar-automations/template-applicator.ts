@@ -1,4 +1,8 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import * as remote from '@electron/remote';
 import { Services } from 'components-react/service-provider';
+import { downloadFile } from 'util/requests';
 import type {
   AutomationTemplateGame,
   AutomationTemplateItem,
@@ -8,19 +12,12 @@ import { AutomationsAnalytics } from './automations-analytics';
 
 export async function downloadAsset(downloadUrl: string, assetKey: string): Promise<string | null> {
   try {
-    const os = require('os') as typeof import('os');
-    const fs = require('fs') as typeof import('fs');
-    const path = require('path') as typeof import('path');
-
-    const dir = path.join(os.tmpdir(), 'slobs-avatar-assets');
+    const dir = path.join(remote.app.getPath('userData'), 'Media');
     fs.mkdirSync(dir, { recursive: true });
     const savePath = path.join(dir, path.basename(assetKey));
 
-    const response = await fetch(downloadUrl);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const buffer = await response.arrayBuffer();
-    fs.writeFileSync(savePath, new Uint8Array(buffer));
+    // Stream the asset to disk via the same primitive Desktop uses everywhere else.
+    await downloadFile(downloadUrl, savePath);
     return savePath;
   } catch (e: unknown) {
     console.error('[downloadAsset] failed:', e);
