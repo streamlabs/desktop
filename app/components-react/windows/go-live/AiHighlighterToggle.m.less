@@ -5,6 +5,55 @@
 @paddingRight: 24px;
 @paddingBottom: 20px;
 
+.highlighter-banner {
+  display: flex;
+  align-items: center;
+  background-color: var(--callout);
+  border-radius: 4px;
+
+  :global(.ant-alert-message) {
+    color: var(--section);
+    font-weight: 500;
+
+    span {
+      vertical-align: text-top;
+    }
+
+    a {
+      color: var(--section);
+    }
+  }
+
+  :global(.ant-alert-info) {
+    background-color: unset;
+    border: 0px;
+  }
+
+  :global(.ant-row.ant-form-item) {
+    margin-top: 0px;
+    margin-left: 8px;
+  }
+
+  :global(.ant-switch:not(.ant-switch-checked)) {
+    background-color: var(--icon-toggle);
+  }
+
+  // :global(.ant-switch-checked) {
+  //   background-color: unset !important;
+  // }
+
+  //   background-color: var(--button);
+  // }
+
+  // :global(.ant-switch-handle::before) {
+  //   background-color: var(--title);
+  // }
+
+  // :global(.ant-switch-checked) {
+  //   background-color: var(--button-hover) !important;
+  // }
+}
+
 .ai-highlighter-box {
   position: relative;
   overflow: hidden;
@@ -178,3 +227,15 @@
   align-items: center;
   justify-content: space-between;
 }
+
+.highlighter-card {
+  margin: 16px 0px;
+  display: flex;
+  justify-content: flex-end;
+  flex-flow: row-wrap;
+  width: 100%;
+  background-color: var(--dark-background);
+  border-radius: 8px;
+}
+
+// .highlighter-banner___36EFl .ant-switch-handle::before
