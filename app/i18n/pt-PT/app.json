@@ -20,7 +20,7 @@
   "This app is currently popped out in another window.": "Esta aplicação está atualmente aberta noutra janela.",
   "Error granting chat permissions.": "Erro ao conceder permissões de chat.",
   "Authentication Error": "Erro de autenticação",
-  "Diagnostic Report Uploaded Successfully": "Diagnostic Report Uploaded Successfully",
-  "Copy Report ID": "Copy Report ID",
-  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team."
+  "Diagnostic Report Uploaded Successfully": "Relatório de diagnósticos carregado com êxito",
+  "Copy Report ID": "Copiar ID de relatório",
+  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "O relatório de diagnósticos foi carregado em segurança e a ID de relatório abaixo foi copiada para a tua área de transferência. Indica a ID de relatório à equipa do Streamlabs Streamer Success."
 }

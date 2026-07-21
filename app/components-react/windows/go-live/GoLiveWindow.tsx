@@ -99,7 +99,7 @@ function ModalFooter() {
     },
 
     async forceStreamShiftGoLive() {
-      this.restreamService.actions.forceStreamShiftGoLive(true);
+      this.restreamService.actions.forceStreamShiftGoLive();
     },
 
     get hasIncompatibleCodec() {

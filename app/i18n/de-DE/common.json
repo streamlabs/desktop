@@ -171,10 +171,10 @@
   "Alert Box Settings": "Benachrichtigungsbox-Einstellungen",
   "Alerts and Widgets": "Alerts und Widgets",
   "AI": "KI",
-  "Between": "Between",
+  "Between": "Zwischen",
   "Upgrade": "Upgrade",
-  "Edit Data": "Edit Data",
-  "Edit Reactive Data": "Edit Reactive Data",
-  "Reactive Data Editor": "Reactive Data Editor",
-  "Not enabled": "Not enabled"
+  "Edit Data": "Daten bearbeiten",
+  "Edit Reactive Data": "Reaktive Daten bearbeiten",
+  "Reactive Data Editor": "Editor für reaktive Daten",
+  "Not enabled": "Nicht aktiviert"
 }

@@ -28,8 +28,8 @@
   "Global Transition": "全局过渡",
   "Edit": "编辑",
   "Live": "直播",
-  "Transitions": "Transitions",
-  "Connections": "Connections",
-  "Softness": "Softness",
-  "Invert": "Invert"
+  "Transitions": "过渡",
+  "Connections": "连接",
+  "Softness": "柔和度",
+  "Invert": "反转"
 }

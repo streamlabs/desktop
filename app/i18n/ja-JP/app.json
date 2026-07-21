@@ -20,7 +20,7 @@
   "This app is currently popped out in another window.": "このアプリは現在、別のウィンドウで表示されています。",
   "Error granting chat permissions.": "チャット権限の付与エラーが発生しました。",
   "Authentication Error": "認証エラー",
-  "Diagnostic Report Uploaded Successfully": "Diagnostic Report Uploaded Successfully",
-  "Copy Report ID": "Copy Report ID",
-  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team."
+  "Diagnostic Report Uploaded Successfully": "診断レポートが正常にアップロードされました",
+  "Copy Report ID": "レポートIDをコピー",
+  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "診断レポートがアップロードされ、以下のレポート ID がクリップボードにコピーされました。レポート ID を Streamlabs ストリーマーサクセスチームに提供してください。"
 }
