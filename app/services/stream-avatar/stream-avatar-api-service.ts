@@ -48,7 +48,8 @@ export class StreamAvatarApiService extends Service {
   private inflight: Promise<string> | null = null;
 
   private get apiBase(): string {
-    return `https://${this.hostsService.streamAvatarApi}`;
+    const protocol = Util.getAvatarEnvironment() === 'local' ? 'http://' : 'https://';
+    return `${protocol}${this.hostsService.streamAvatarApi}`;
   }
 
   async getToken(forceRefresh = false): Promise<string> {

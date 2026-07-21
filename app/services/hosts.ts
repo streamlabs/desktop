@@ -57,7 +57,11 @@ export class HostsService extends Service {
   }
 
   get streamAvatarApi() {
-    if (Util.shouldUseAvatarBetaHost()) {
+    if (Util.getAvatarEnvironment() === 'local') {
+      return 'localhost:3000';
+    }
+
+    if (Util.getAvatarEnvironment() === 'staging') {
       return 'ai-agent.streamlabs.com';
     }
 

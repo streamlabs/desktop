@@ -27,7 +27,7 @@ export interface IEnv {
   CI: boolean;
   HIGHLIGHTER_ENV: 'production' | 'staging' | 'local';
   PRODUCT_UPDATES: boolean;
-  AVATAR_USE_BETA_HOST: boolean;
+  AVATAR_ENV: 'production' | 'staging' | 'local';
 }
 
 export default class Utils {
@@ -118,6 +118,17 @@ export default class Utils {
     return process.env.HIGHLIGHTER_ENV as 'production' | 'staging' | 'local';
   }
 
+  static getAvatarEnvironment(): 'production' | 'staging' | 'local' {
+    if (remote.process.argv.includes('--bundle-qa')) {
+      return 'staging';
+    }
+
+    console.log('[Utils] Avatar Environment:', process.env.AVATAR_ENV);
+    console.log('[Utils] Avatar Environment (remote):', Utils.env.AVATAR_ENV);
+
+    return Utils.env.AVATAR_ENV || (process.env.AVATAR_ENV as 'production' | 'staging' | 'local');
+  }
+
   static isTestMode() {
     return Utils.env.NODE_ENV === 'test';
   }
@@ -132,10 +143,6 @@ export default class Utils {
 
   static shouldUseLocalHost(): boolean {
     return Utils.env.SLOBS_USE_LOCAL_HOST as boolean;
-  }
-
-  static shouldUseAvatarBetaHost(): boolean {
-    return Utils.env.AVATAR_USE_BETA_HOST as boolean;
   }
 
   static shouldUseBeta(): boolean {
