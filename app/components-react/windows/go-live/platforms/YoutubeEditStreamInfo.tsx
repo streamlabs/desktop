@@ -101,7 +101,7 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
 
   function renderBroadcastInput() {
     return (
-      <div key={'youtube-essential'}>
+      <div key="youtube-essential">
         {!isScheduleMode && (
           <BroadcastInput
             label={$t('Event')}
@@ -241,7 +241,7 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
       <PlatformSettingsLayout
         layoutMode={p.layoutMode}
         commonFields={renderCommonFields()}
-        requiredFields={<div key={'empty-youtube'} />}
+        requiredFields={<div key="youtube-required" />}
         optionalFields={renderOptionalFields()}
         essentialOptionalFields={renderBroadcastInput()}
       />

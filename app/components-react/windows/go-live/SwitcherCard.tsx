@@ -60,21 +60,25 @@ export const SwitcherCard = forwardRef<ISwitcherCardHandle, ISwitcherCardProps>(
   const valueRef = useRef<boolean | null>(null);
   const [displayValue, setDisplayValue] = useState(p.value);
 
-  useImperativeHandle(ref, () => ({
-    toggle: () => animateSwitch(!displayValue),
-    enable: () => animateSwitch(true),
-    disable: () => animateSwitch(false),
-  }));
+  const animateSwitch = useCallback((nextValue: boolean, resolvedValue = nextValue) => {
+    valueRef.current = resolvedValue !== nextValue ? resolvedValue : null;
+    setDisplayValue(nextValue);
+  }, []);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      toggle: () => animateSwitch(!displayValue),
+      enable: () => animateSwitch(true),
+      disable: () => animateSwitch(false),
+    }),
+    [displayValue, animateSwitch],
+  );
 
   useEffect(() => {
     valueRef.current = null;
     setDisplayValue(p.value);
   }, [p.value]);
-
-  const animateSwitch = useCallback((nextValue: boolean, resolvedValue = nextValue) => {
-    valueRef.current = resolvedValue !== nextValue ? resolvedValue : null;
-    setDisplayValue(nextValue);
-  }, []);
 
   const handleTransitionEnd = useCallback((e: React.TransitionEvent<HTMLDivElement>) => {
     const target = e.target;
