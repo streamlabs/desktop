@@ -48,8 +48,7 @@ export class StreamAvatarApiService extends Service {
   private inflight: Promise<string> | null = null;
 
   private get apiBase(): string {
-    const protocol = Util.shouldUseAvatarLocalHost() ? 'http://' : 'https://';
-    return `${protocol}${this.hostsService.streamAvatarApi}`;
+    return `https://${this.hostsService.streamAvatarApi}`;
   }
 
   async getToken(forceRefresh = false): Promise<string> {
@@ -121,7 +120,9 @@ export class StreamAvatarApiService extends Service {
     });
   }
 
-  updateAutomation(automation: Partial<TAutomationExport> & { id: number }): Promise<TAutomationExport> {
+  updateAutomation(
+    automation: Partial<TAutomationExport> & { id: number },
+  ): Promise<TAutomationExport> {
     const { id, ...body } = automation;
     return this.authedFetch<TAutomationExport>(`/automations/${id}`, {
       method: 'PATCH',

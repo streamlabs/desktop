@@ -27,6 +27,7 @@ export interface IEnv {
   CI: boolean;
   HIGHLIGHTER_ENV: 'production' | 'staging' | 'local';
   PRODUCT_UPDATES: boolean;
+  AVATAR_USE_BETA_HOST: boolean;
 }
 
 export default class Utils {
@@ -133,8 +134,8 @@ export default class Utils {
     return Utils.env.SLOBS_USE_LOCAL_HOST as boolean;
   }
 
-  static shouldUseAvatarLocalHost(): boolean {
-    return false;
+  static shouldUseAvatarBetaHost(): boolean {
+    return Utils.env.AVATAR_USE_BETA_HOST as boolean;
   }
 
   static shouldUseBeta(): boolean {
