@@ -9,6 +9,7 @@ import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
 import HelpTip from 'components-react/shared/HelpTip';
 import Scrollable from 'components-react/shared/Scrollable';
+import { AutomationsIcon } from 'components-react/shared/icons';
 import { useTree, IOnDropInfo } from 'components-react/hooks/useTree';
 import { $t } from 'services/i18n';
 import { EDismissable } from 'services/dismissables';
@@ -179,17 +180,19 @@ function SceneSelector() {
           <i className="icon-add-circle icon-button icon-button--lg" onClick={addScene} />
         </Tooltip>
 
+        {isLoggedIn && (
+          <Tooltip title={$t('Edit Automations.')} placement="bottomRight">
+            <span
+              className="icon-button icon-button--lg"
+              onClick={() => AutomationsService.actions.showAutomations()}
+            >
+              <AutomationsIcon style={{ width: '15px', height: '15px' }} />
+            </span>
+          </Tooltip>
+        )}
         <Tooltip title={$t('Edit Scene Transitions.')} placement="bottomRight">
           <i className="icon-transition icon-button icon-button--lg" onClick={showTransitions} />
         </Tooltip>
-        {isLoggedIn && (
-          <Tooltip title={$t('Edit Automations.')} placement="bottomRight">
-            <i
-              className="icon-smart-record icon-button icon-button--lg"
-              onClick={() => AutomationsService.actions.showAutomations()}
-            />
-          </Tooltip>
-        )}
       </div>
       <Scrollable style={{ height: '100%' }} className={styles.scenesContainer}>
         <Tree
