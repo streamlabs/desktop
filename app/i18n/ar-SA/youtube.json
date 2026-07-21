@@ -35,7 +35,7 @@
   "Enable Auto-stop": "تمكين الإيقاف التلقائي",
   "latencyTooltip": "يساعد تقليل زمن انتقال البث على وصول الفيديو إلى المشاهدين بسرعة أكبر، لكنه قد يؤثر في سلاسة التشغيل.",
   "Enabling auto-start will automatically start the stream when you start sending data from your streaming software": "يبدأ البث تلقائيًا عند بدء إرسال البيانات من برنامج البث.",
-  "Enabling auto-stop will automatically stop the stream when you تتوقف عن إرسال البيانات من برنامج البث.": "يتوقف البث تلقائيًا عند التوقف عن إرسال البيانات من برنامج البث.",
+  "Enabling auto-stop will automatically stop the stream when you stop sending data from your streaming software": "يتوقف البث تلقائيًا عند التوقف عن إرسال البيانات من برنامج البث.",
   "DVR controls enable the viewer to control the video playback experience by pausing, rewinding, or fast forwarding content": "تسمح عناصر التحكم في DVR للمشاهد بإيقاف الفيديو مؤقتًا أو الرجوع للخلف أو التقديم السريع.",
   "Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio": "البدء التلقائي معطل لهذا البث. يجب نشر البث يدويًا من YouTube Studio.",
   "Made for kids": "مخصص للأطفال",
