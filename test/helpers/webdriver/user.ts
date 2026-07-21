@@ -33,6 +33,10 @@ export interface ITestUserFeatures {
    */
   streamingIsDisabled?: boolean;
   /**
+   * Has multiple platforms that can dual stream
+   */
+  dualStream?: boolean;
+  /**
    * This account doesn't have facebook pages
    */
   noFacebookPages?: boolean;
@@ -158,6 +162,15 @@ export async function addDummyAccount(
   await api.getResource<UserService>('UserService').addDummyAccount(userInfo, settings);
 
   return user;
+}
+
+/**
+ * Remove a dummy account that was previously added
+ * @param platform - platform to unlink
+ */
+export async function removeDummyAccount(platform: TTestDummyUserPlatforms): Promise<void> {
+  const api = await getApiClient();
+  await api.getResource<UserService>('UserService').removeDummyAccount(platform);
 }
 
 export async function loginWithAuthInfo(
