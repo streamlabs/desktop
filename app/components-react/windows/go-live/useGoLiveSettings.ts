@@ -1,5 +1,10 @@
 import { IGoLiveSettings, StreamInfoView, TDisplayOutput } from '../../../services/streaming';
-import { maxNumPlatforms, platformList, TPlatform } from '../../../services/platforms';
+import {
+  maxNumPlatforms,
+  platformLabels,
+  platformList,
+  TPlatform,
+} from '../../../services/platforms';
 import { ICustomStreamDestination } from 'services/settings/streaming';
 import { Services } from '../../service-provider';
 import cloneDeep from 'lodash/cloneDeep';
@@ -30,6 +35,7 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
   };
 
   isUpdating: boolean = false;
+  disabledByDualStream: { type: 'platform' | 'customDestination'; id: string } | null = null;
 
   get settings(): IGoLiveSettingsState {
     return this.state;
@@ -49,12 +55,109 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
    * Update settings for a specific platform
    */
   updatePlatform(platform: TPlatform, patch: Partial<IGoLiveSettings['platforms'][TPlatform]>) {
-    const updated = {
+    let updated = {
       platforms: {
         ...this.state.platforms,
         [platform]: { ...this.state.platforms[platform], ...patch },
       },
     };
+
+    // Non-ultra dual stream handling to toggle off other targets if the user has selected dual streaming for Twitch or YouTube
+    if (!Services.UserService.views.isPrime) {
+      // If a target was disabled because of the non-ultra user selecting the `both` display to dual stream, re-enable it
+      if (this.disabledByDualStream) {
+        if (this.disabledByDualStream.type === 'platform') {
+          // Handle re-enabling the other platform that was disabled due to dual streaming
+          const otherEnabledPlatform = this.disabledByDualStream.id as TPlatform;
+          updated = {
+            platforms: {
+              ...updated.platforms,
+              [otherEnabledPlatform]: {
+                ...updated.platforms[otherEnabledPlatform],
+                enabled: true,
+              },
+            },
+          };
+          this.disabledByDualStream = null;
+        } else if (this.disabledByDualStream.type === 'customDestination') {
+          // Handle re-enabling the other custom destination that was disabled due to dual streaming
+          const otherEnabledDestination = this.disabledByDualStream.id as string;
+          this.switchCustomDestination(parseInt(otherEnabledDestination, 10), true);
+          this.disabledByDualStream = null;
+        } else {
+          // This should never happen, but if it does, clear the `disabledByDualStream` state to avoid leaving a target disabled
+          console.error('Unexpected disabled by dual stream state:', this.disabledByDualStream);
+          this.disabledByDualStream = null;
+        }
+      }
+
+      // If the user has selected dual streaming for Twitch or YouTube, disable any other enabled targets
+      // because the two target maximum for non-ultra users is reached by dual stream alone
+      if (patch?.display === 'both') {
+        // Check for another enabled platform
+        const otherEnabledTarget = (Object.keys(updated.platforms) as TPlatform[]).find(
+          p => updated.platforms[p]?.enabled && p !== platform,
+        );
+
+        // If another platform is enabled, disable it and show an alert to the user
+        if (otherEnabledTarget) {
+          this.disabledByDualStream = { type: 'platform', id: otherEnabledTarget };
+
+          alertInfo({
+            name: 'both-display-info-alert',
+            text: $t(
+              '%{otherPlatform} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.',
+              {
+                platform: platformLabels(platform),
+                otherPlatform: platformLabels(otherEnabledTarget),
+              },
+            ),
+          });
+
+          console.log('updating ', otherEnabledTarget, ' to disabled');
+          // Update the settings to disable the other enabled platform
+          updated = {
+            platforms: {
+              ...updated.platforms,
+              [otherEnabledTarget]: {
+                ...updated.platforms[otherEnabledTarget],
+                enabled: false,
+              },
+            },
+          };
+        }
+
+        // Check for another enabled custom destination
+        const otherEnabledTargetIndex = this.state.customDestinations.findIndex(d => d.enabled);
+
+        // If another custom destination is enabled, disable it and show an alert to the user
+        if (otherEnabledTargetIndex !== -1) {
+          this.disabledByDualStream = {
+            type: 'customDestination',
+            id: otherEnabledTargetIndex.toString(),
+          };
+
+          console.log(
+            'updating ',
+            this.state.customDestinations[otherEnabledTargetIndex]?.name,
+            ' to disabled',
+          );
+          alertInfo({
+            name: 'both-display-info-alert',
+            text: $t(
+              '%{destination} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.',
+              {
+                platform: platformLabels(platform),
+                destination: this.state.customDestinations[otherEnabledTargetIndex]?.name,
+              },
+            ),
+          });
+
+          // Toggle the custom destination
+          this.switchCustomDestination(otherEnabledTargetIndex, false);
+        }
+      }
+    }
 
     // In order for the enhanced broadcasting setting value to persist in the go live window when switching between
     // single output and dual output modes, explicitly set enhanced broadcasting setting
@@ -295,6 +398,10 @@ export class GoLiveSettingsModule {
     return Services.UserService.isPrime;
   }
 
+  getUsername(platform: TPlatform) {
+    return Services.UserService.state.auth?.platforms[platform]?.username ?? '';
+  }
+
   /**
    * Get go live settings
    */
@@ -379,16 +486,6 @@ export class GoLiveSettingsModule {
    */
   updatePlatformDisplayAndSaveSettings(platform: TPlatform, display: TDisplayOutput) {
     this.state.updatePlatform(platform, { display });
-    this.save(this.state.settings);
-  }
-
-  setPlatformEnabled(platform: TPlatform, enabled: boolean) {
-    this.state.updatePlatform(platform, { enabled });
-    this.save(this.state.settings);
-  }
-
-  setCustomDestinationEnabled(index: number, enabled: boolean) {
-    this.state.switchCustomDestination(index, enabled);
     this.save(this.state.settings);
   }
 
