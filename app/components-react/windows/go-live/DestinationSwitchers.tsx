@@ -6,7 +6,6 @@ import React, {
   MouseEvent,
   memo,
   useCallback,
-  useEffect,
 } from 'react';
 import { getPlatformService, platformLabels, TPlatform } from '../../../services/platforms';
 import cx from 'classnames';
@@ -39,6 +38,7 @@ export const DestinationSwitchers = memo(() => {
     disableCustomDestinationSwitchers,
     disableNonUltraSwitchers,
     nonPrimeBothDisplayPlatform,
+    getUsername,
   } = useGoLiveSettings().extend(module => ({
     get renderedPlatforms() {
       // Some platforms are always shown, even if not linked so add them to the list of platforms to display
@@ -181,24 +181,26 @@ export const DestinationSwitchers = memo(() => {
   return (
     <div className={cx(styles.switchWrapper)}>
       {renderedPlatforms.map((platform, ind) => {
+        const enabled = isEnabled(platform);
         const disabledByBoth =
-          !!nonPrimeBothDisplayPlatform &&
-          !isEnabled(platform) &&
-          platform !== nonPrimeBothDisplayPlatform;
-        const switchDisabled = (!isEnabled(platform) && disableNonUltraSwitchers) || disabledByBoth;
+          !!nonPrimeBothDisplayPlatform && !enabled && platform !== nonPrimeBothDisplayPlatform;
+        const switchDisabled = (!enabled && disableNonUltraSwitchers) || disabledByBoth;
         const bothDisplayPlatformLabel = disabledByBoth
           ? platformLabels(nonPrimeBothDisplayPlatform!)
           : undefined;
+        const visible = enabled && !hideDisplaySelector;
 
         return (
           <DestinationSwitcher
             key={platform}
             destination={platform}
-            enabled={isEnabled(platform)}
-            onChange={val => togglePlatform(platform, val)}
+            enabled={enabled}
+            togglePlatform={togglePlatform}
             switchDisabled={switchDisabled}
             bothDisplayPlatformLabel={bothDisplayPlatformLabel}
-            hideDisplaySelector={hideDisplaySelector}
+            showDisplaySelector={visible}
+            isPrime={isPrime}
+            username={getUsername(platform)}
             index={ind}
           />
         );
@@ -213,16 +215,18 @@ export const DestinationSwitchers = memo(() => {
         const bothDisplayPlatformLabel = disabledByBoth
           ? platformLabels(nonPrimeBothDisplayPlatform!)
           : undefined;
+        const visible = dest.enabled && !hideDisplaySelector;
 
         return (
           <DestinationSwitcher
             key={ind}
             destination={dest}
             enabled={dest.enabled && !disableCustomDestinationSwitchers}
-            onChange={val => toggleDestination(ind, val)}
+            toggleDestination={toggleDestination}
             switchDisabled={switchDisabled}
             bothDisplayPlatformLabel={bothDisplayPlatformLabel}
-            hideDisplaySelector={hideDisplaySelector}
+            showDisplaySelector={visible}
+            isPrime={isPrime}
             index={ind}
           />
         );
@@ -234,11 +238,14 @@ export const DestinationSwitchers = memo(() => {
 interface IDestinationSwitcherProps {
   destination: TPlatform | ICustomStreamDestination;
   enabled: boolean;
-  onChange: (enabled: boolean) => unknown;
+  togglePlatform?: (platform: TPlatform, enabled: boolean) => unknown;
+  toggleDestination?: (index: number, enabled: boolean) => unknown;
   switchDisabled?: boolean;
   bothDisplayPlatformLabel?: string;
   index: number;
-  hideDisplaySelector: boolean;
+  showDisplaySelector: boolean;
+  isPrime: boolean;
+  username?: string;
   isUnlinked?: boolean;
 }
 
@@ -251,7 +258,6 @@ interface IDestinationSwitcherProps {
 const DestinationSwitcher = memo(
   forwardRef<ISwitcherCardHandle, IDestinationSwitcherProps>((p, ref) => {
     const cardRef = useRef<ISwitcherCardHandle>(null);
-    const { isPrime, getUsername } = useGoLiveSettings();
 
     useImperativeHandle(
       ref,
@@ -269,11 +275,22 @@ const DestinationSwitcher = memo(
       ? $t('Toggle %{platform}', { platform: platformLabels(platform) })
       : $t('Toggle Destination');
 
+    const onChange = useCallback(
+      (enabled: boolean) => {
+        if (platform && p.togglePlatform) {
+          return p.togglePlatform(platform, enabled);
+        } else if (p.toggleDestination) {
+          return p.toggleDestination(p.index, enabled);
+        }
+      },
+      [platform, p.index, p.togglePlatform, p.toggleDestination],
+    );
+
     const onClickHandler = useCallback(
       (e: MouseEvent) => {
         const enabled = p.enabled;
 
-        if (!isPrime) {
+        if (!p.isPrime) {
           if (p.bothDisplayPlatformLabel) {
             alertInfo({
               name: 'switcher-info-alert',
@@ -284,19 +301,17 @@ const DestinationSwitcher = memo(
             });
             return enabled;
           }
+
           // Max-2 check is done inside togglePlatform/toggleDestination using current refs,
           // so always pass through — the handler shows the message if needed.
-          return p.onChange(!enabled);
+          return onChange(!enabled);
         }
 
         if (disabled) return enabled;
-        return p.onChange(!enabled);
+        return onChange(!enabled);
       },
-      [p.enabled, p.onChange, p.bothDisplayPlatformLabel, disabled],
+      [p.enabled, onChange, p.bothDisplayPlatformLabel, disabled],
     );
-
-    // Read the platform username (non-reactive, same as before) so it can key the memo below
-    const username = platform ? getUsername(platform) : '';
 
     const { title, description } = useMemo(() => {
       if (platform) {
@@ -304,7 +319,7 @@ const DestinationSwitcher = memo(
         const service = getPlatformService(platform);
         return {
           title: service.displayName,
-          description: username,
+          description: p.username ?? '',
         };
       } else {
         // define slots for a custom destination switcher
@@ -314,7 +329,7 @@ const DestinationSwitcher = memo(
           description: destination.url,
         };
       }
-    }, [platform, username, p.destination]);
+    }, [platform, p.username, p.destination]);
 
     // Memoize the icon as an element (not a component type) so PlatformLogo is
     // reconciled as the same element across renders instead of being remounted
@@ -356,7 +371,7 @@ const DestinationSwitcher = memo(
       >
         {/* DISPLAY TOGGLES */}
         <AnimatedWrapper
-          visible={p.enabled && !p.hideDisplaySelector}
+          visible={p.showDisplaySelector}
           className={styles.displaySelectorWrapper}
           onClick={e => e.stopPropagation()}
           height="35px"
@@ -369,7 +384,7 @@ const DestinationSwitcher = memo(
             platform={platform}
             index={p.index}
             alignIcons="left"
-            visible={p.enabled && !p.hideDisplaySelector}
+            visible={p.showDisplaySelector}
           />
         </AnimatedWrapper>
       </SwitcherCard>
