@@ -98,6 +98,13 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
   function onChangeHandler(...args: any[]) {
     const newVal = cloneDeep(p.value);
     newVal.value = args[0] as TObsValue;
+    // [recording-path-diag] revert before merge: trace each value the recording-path
+    // fields receive, to see exactly when the drive-colon is dropped.
+    if (p.value.name === 'RecFilePath' || p.value.name === 'FilePath') {
+      console.log(
+        `[recording-path-diag][onChange] name=${p.value.name} value=${JSON.stringify(args[0])}`,
+      );
+    }
     p.onChange(newVal, p.inputIndex);
   }
 

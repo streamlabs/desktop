@@ -58,11 +58,14 @@ export abstract class BaseInputController<TValue> {
 
 /**
  * Type text in text input
+ * @param bufferInput - if `true`, wait 100ms between keystrokes; if a number,
+ *   wait that many ms between keystrokes (diagnostic knob for the dropped
+ *   drive-colon investigation).
  */
 export async function setInputValue(
   selectorOrEl: TSelectorOrEl,
   value: string | number,
-  bufferInput?: boolean,
+  bufferInput?: boolean | number,
 ) {
   // find element
   const $el = await select(selectorOrEl);
@@ -88,13 +91,44 @@ export async function setInputValue(
   await sendKeys(String(value), bufferInput); // type text
 }
 
-async function sendKeys(keys: string, bufferInput?: boolean) {
+async function sendKeys(keys: string, bufferInput?: boolean | number) {
   const client = getClient();
+  let delayMs = 0;
+  if (typeof bufferInput === 'number') delayMs = bufferInput;
+  else if (bufferInput) delayMs = 100;
   const keyList = keys.split('');
   for (const key of keyList) {
     await ((client.keys(key) as any) as Promise<any>);
-    if (bufferInput) await sleep(100);
+    if (delayMs) await sleep(delayMs);
   }
+}
+
+/**
+ * Set an input's value in a single DOM operation, without simulating any
+ * keystrokes. Bypasses the WebDriver key-injection path entirely so the value
+ * (including a drive-letter colon) cannot be dropped character-by-character.
+ * Dispatches the native input/change/blur events so React controlled inputs pick it up.
+ * @param selector - a CSS selector string for an <input> element
+ */
+export async function setInputValueDirect(selector: string, value: string) {
+  const $el = await select(selector);
+  await $el.waitForDisplayed();
+  const client = getClient();
+  await client.execute(
+    (sel: string, val: string) => {
+      const el = document.querySelector(sel) as HTMLInputElement | null;
+      if (!el) throw new Error(`setInputValueDirect: no element for selector "${sel}"`);
+      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')
+        ?.set;
+      if (!setter) throw new Error('setInputValueDirect: cannot access value setter');
+      setter.call(el, val);
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      el.dispatchEvent(new Event('blur', { bubbles: true }));
+    },
+    selector,
+    value,
+  );
 }
 
 export type TFiledSetterFn<TControllerType extends BaseInputController<any>> = (
