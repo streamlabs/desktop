@@ -138,29 +138,29 @@ export function ImportStreamModal({
     }
 
     try {
-      // Check if Replay is installed, auto-install for after-stream flow
+      // Make sure a video is selected before we do anything else so that game + title
+      // (and the file) are all known before an install is ever triggered.
+      if (!filePath || filePath.length === 0) {
+        filePath = await importStreamFromDevice();
+      }
+      if (!filePath || filePath.length === 0) {
+        return;
+      }
+
+      // If Replay isn't installed yet, defer the import: stash the details, kick off the
+      // install, and replay it via onInstallComplete. This keeps every entry point (Go-live
+      // and the Highlighter page) on the same flow — game + title first, install second,
+      // then Replay opens directly on the import screen with the game and video.
       const isInstalled = await HighlighterService.isStreamlabsReplayInstalled();
-      if (!isInstalled && openedFrom === 'after-stream') {
-        // Store import details and start installation
-        if (filePath && filePath.length > 0) {
-          setPendingImport({ game, filePath: filePath[0], streamId: id });
-          setShowingInstallFlow(true);
-          HighlighterService.installStreamlabsReplay();
-        }
+      if (!isInstalled) {
+        setPendingImport({ game, filePath: filePath[0], streamId: id });
+        setShowingInstallFlow(true);
+        HighlighterService.installStreamlabsReplay();
         return;
       }
 
-      if (game && filePath && filePath.length > 0) {
-        HighlighterService.actions.openReplayImport(filePath[0], game, openedFrom, id, inputValue);
-        closeModal(false);
-        return;
-      }
-
-      filePath = await importStreamFromDevice();
-      if (filePath && filePath.length > 0) {
-        HighlighterService.actions.openReplayImport(filePath[0], game, openedFrom, id, inputValue);
-        closeModal(false);
-      }
+      HighlighterService.actions.openReplayImport(filePath[0], game, openedFrom, id, inputValue);
+      closeModal(false);
     } catch (error: unknown) {
       console.error('Error importing file via Replay deeplink', error);
     }
@@ -208,14 +208,10 @@ export function ImportStreamModal({
     );
   }
 
-  // Show MigrationNotice if Replay is not installed
-  // For non-after-stream flows (Highlighter component), show install UI immediately
-  // For after-stream flow, only show when user triggers installation
-  if (
-    migrationEnabled &&
-    replayInstalled === false &&
-    (openedFrom !== 'after-stream' || showingInstallFlow)
-  ) {
+  // Show the install UI only once the user has committed to importing (game + title
+  // selected, then startImport triggers the install). Applies to every entry point so
+  // the import form is always shown first, never the install flow.
+  if (migrationEnabled && replayInstalled === false && showingInstallFlow) {
     return (
       <HypeWrapper gameConfig={gameConfig} isAnimating={false} artwork={artwork}>
         {renderMigrationNotice()}
@@ -304,7 +300,7 @@ export function ImportStreamModal({
           </div>
         )}
       </div>
-      <Form>
+      <Form layout="vertical">
         <p
           style={{
             marginBottom: '8px',
