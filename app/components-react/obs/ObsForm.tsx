@@ -168,6 +168,8 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
         return (
           <ObsTextInput
             {...inputProps}
+            // commit on blur, not per keystroke (see OBS_PROPERTY_PATH note)
+            uncontrolled
             isPassword={inputProps.masked}
             ref={ref}
             data-name={p.value.name}
@@ -316,6 +318,10 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
       return (
         <ObsTextInput
           {...inputProps}
+          // commit the path to OBS on blur instead of on every keystroke:
+          // a per-keystroke setSettings round-trip made typing laggy and, on slow
+          // CI, raced the controlled value back over the field and dropped characters.
+          uncontrolled
           style={{ marginBottom: '8px' }}
           addonAfter={
             <Button onClick={() => showFileDialog({ ...inputProps, directory: true })}>
