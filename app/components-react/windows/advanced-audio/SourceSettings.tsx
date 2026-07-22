@@ -1,4 +1,5 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
+import { shell } from '@electron/remote';
 import { Button, Collapse, Tooltip } from 'antd';
 import {
   SliderInput,
@@ -17,6 +18,9 @@ import { Source } from 'services/sources';
 import { $t } from 'services/i18n';
 import Utils from 'services/utils';
 import styles from './AdvancedAudio.m.less';
+import { parseId } from 'components-react/windows/SourceProperties';
+
+const SUPPORTED_MICS: Set<string> = new Set(['0x046d-0x0afc']);
 
 const { Panel } = Collapse;
 
@@ -247,13 +251,17 @@ function PanelForm(p: { source: AudioSource }) {
         max={5000}
         uncontrolled={false}
       />
-      {!isProcessCapture && <SwitchInput
-        label={$t('Downmix to Mono')}
-        value={forceMono}
-        name="forceMono"
-        onChange={value => handleSettingsChange('forceMono', value)}
-        tooltip={$t('Route audio to the central channel instead of left or right stereo channels')}
-      />}
+      {!isProcessCapture && (
+        <SwitchInput
+          label={$t('Downmix to Mono')}
+          value={forceMono}
+          name="forceMono"
+          onChange={value => handleSettingsChange('forceMono', value)}
+          tooltip={$t(
+            'Route audio to the central channel instead of left or right stereo channels',
+          )}
+        />
+      )}
       <ListInput
         label={$t('Audio Monitoring')}
         options={p.source.monitoringOptions}
@@ -298,11 +306,14 @@ function DeviceInputs(p: { source: Source }) {
     });
     setStatefulSettings({ ...statefulSettings, [name]: value });
   }
+
   const isOutputCapture: boolean = p.source.type === 'wasapi_process_output_capture';
   let windowMatchPriorityOptions = null;
   if (isOutputCapture) {
     const priorityProperty = sourceProperties.find(prop => prop.name === 'priority');
-    windowMatchPriorityOptions = (priorityProperty as IObsListInput<TObsValue> | undefined)?.options.map(option => ({
+    windowMatchPriorityOptions = (priorityProperty as
+      | IObsListInput<TObsValue>
+      | undefined)?.options.map(option => ({
       label: option.description,
       value: option.value,
     }));
@@ -312,9 +323,14 @@ function DeviceInputs(p: { source: Source }) {
   const inputLabel = isOutputCapture ? 'Window' : 'Device';
   const foundDevice: boolean = deviceOptions.some(option => option.value === settingId);
 
+  const isSupportedMic = SUPPORTED_MICS.has(parseId(settingId));
+
+  function configureInGHub() {
+    shell.openExternal(`lghubapp://devices/${parseId(settingId)}/default`);
+  }
+
   // Ensure the input is still valid. If not, reset to Default device which should be at index 0.
-  const inputId =
-    foundDevice || deviceOptions.length === 0 ? settingId : deviceOptions[0].value;
+  const inputId = foundDevice || deviceOptions.length === 0 ? settingId : deviceOptions[0].value;
   if (!foundDevice && deviceOptions.length > 0) {
     handleInput(inputField, deviceOptions[0].value);
   }
@@ -329,21 +345,26 @@ function DeviceInputs(p: { source: Source }) {
           onChange={value => handleInput(inputField, value)}
         />
       }
-      {
-        windowMatchPriorityOptions && (
-          <ListInput
-            label={$t('Window Match Priority')}
-            options={windowMatchPriorityOptions}
-            value={statefulSettings.priority}
-            onChange={value => handleInput('priority', value)}
-          />
-        )
-      }
-      {!isOutputCapture && <SwitchInput
-        label={$t('Use Device Timestamps')}
-        value={statefulSettings.use_device_timing}
-        onChange={value => handleInput('use_device_timing', value)}
-      />}
+      {windowMatchPriorityOptions && (
+        <ListInput
+          label={$t('Window Match Priority')}
+          options={windowMatchPriorityOptions}
+          value={statefulSettings.priority}
+          onChange={value => handleInput('priority', value)}
+        />
+      )}
+      {!isOutputCapture && (
+        <SwitchInput
+          label={$t('Use Device Timestamps')}
+          value={statefulSettings.use_device_timing}
+          onChange={value => handleInput('use_device_timing', value)}
+        />
+      )}
+      {isSupportedMic && (
+        <a onClick={configureInGHub} style={{ marginLeft: 184 }}>
+          {$t('Configure on G HUB')}
+        </a>
+      )}
     </>
   );
 }
