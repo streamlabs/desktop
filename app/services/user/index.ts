@@ -1096,8 +1096,14 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
    */
   async widgetEmbedUrl(product: TWidgetEmbedProduct) {
     const uiTheme = this.customizationService.isDarkTheme ? 'night' : 'day';
+    // `slobs=1` is duplicated into the QUERY (not just the hash): the hash `?slobs` drives the
+    // in-app client detection (core `isDesktopEmbed` reads the vue-router query), but the server
+    // never receives the hash — so core needs the query flag to skip embed-irrelevant dashboard
+    // weight (payment SDKs, support bot, Intercom/Zendesk JWT minting, the Twitch credential
+    // check) and speed up the first load.
     const target =
-      `https://${this.hostsService.streamlabs}/dashboard?mode=${uiTheme}` + `#/${product}?slobs`;
+      `https://${this.hostsService.streamlabs}/dashboard?mode=${uiTheme}&slobs=1` +
+      `#/${product}?slobs`;
 
     return await this.magicLinkService.actions.return.getMagicSessionUrl(target);
   }
