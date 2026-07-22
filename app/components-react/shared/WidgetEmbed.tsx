@@ -12,6 +12,8 @@ interface WidgetEmbedProps {
   product?: TWidgetEmbedProduct;
   className?: string;
   style?: React.CSSProperties;
+  /** When true, hides the wrapper (display:none) and collapses the BrowserView to 0x0 bounds — keeping webContents alive for instant restore. */
+  hidden?: boolean;
   /**
    * Fired when the underlying Electron `BrowserView` is created, exposing it to the parent
    * (e.g. so a native window footer can trigger the embedded page's save via
@@ -83,12 +85,19 @@ export default function WidgetEmbed(p: WidgetEmbedProps) {
   return (
     <div
       className={p.className}
-      style={{ position: 'relative', height: '100%', width: '100%', ...p.style }}
+      style={{
+        position: 'relative',
+        height: '100%',
+        width: '100%',
+        ...p.style,
+        display: p.hidden ? 'none' : undefined,
+      }}
     >
       {src ? (
         <BrowserView
           style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
           src={src}
+          hidden={p.hidden}
           setLocale
           onReady={onBrowserViewReady}
         />

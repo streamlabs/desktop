@@ -50,10 +50,9 @@ export default function WidgetSettingsEmbed() {
   const widget = useMemo(() => WidgetsService.getWidgetSource(sourceId), [sourceId]);
 
   // Static widget config (webSettingsUrl, testers, previewUrl) — no data fetch.
-  const apiSettings = useMemo(
-    () => (widget ? widget.getSettingsService().getApiSettings() : null),
-    [widget],
-  );
+  const apiSettings = useMemo(() => widget?.getSettingsService()?.getApiSettings() ?? null, [
+    widget,
+  ]);
 
   const [properties, setProperties] = useState<TObsFormData>(() =>
     source ? source.getPropertiesFormData() : [],

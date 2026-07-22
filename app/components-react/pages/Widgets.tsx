@@ -6,6 +6,6 @@ import WidgetEmbed from 'components-react/shared/WidgetEmbed';
  * navigation to individual widget settings happens inside the embed (core keeps the embed
  * params across vue-router navigation). Reached from the top-level side-nav.
  */
-export default function Widgets(p: { params?: unknown; className?: string }) {
-  return <WidgetEmbed product="widgets/gallery" className={p.className} />;
+export default function Widgets(p: { params?: unknown; className?: string; hidden?: boolean }) {
+  return <WidgetEmbed product="widgets/gallery" className={p.className} hidden={p.hidden} />;
 }
