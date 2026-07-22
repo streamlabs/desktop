@@ -160,6 +160,7 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
         return (
           <ObsTextInput
             {...inputProps}
+            uncontrolled
             isPassword={inputProps.masked}
             ref={ref}
             data-name={p.value.name}
@@ -308,6 +309,7 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
       return (
         <ObsTextInput
           {...inputProps}
+          uncontrolled
           style={{ marginBottom: '8px' }}
           addonAfter={
             <Button onClick={() => showFileDialog({ ...inputProps, directory: true })}>
