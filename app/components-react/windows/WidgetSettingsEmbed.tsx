@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button, InputNumber } from 'antd';
 import * as remote from '@electron/remote';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import Display from 'components-react/shared/Display';
 import TestWidgets from 'components-react/root/TestWidgets';
-import WidgetEmbed from 'components-react/shared/WidgetEmbed';
+import WidgetEmbedWarm from 'components-react/shared/WidgetEmbedWarm';
 import { Services } from 'components-react/service-provider';
 import { useSubscription } from 'components-react/hooks/useSubscription';
 import { TObsFormData } from 'components/obs/inputs/ObsInput';
@@ -37,11 +37,19 @@ const PREVIEW_MIN_WIDTH = 400;
  * Save bridge: the embedded page's own "Save Settings" tray is hidden in embed mode (core
  * `.widget-settings--embed .widget-settings__footer { display: none }`) and instead exposes a
  * `window.__slobsWidgetSave()` entrypoint. The native Save button awaits that via
- * `webContents.executeJavaScript` (saving only when there are changes) and closes the window on
- * success — so Save sits inline with Close while the actual save still runs on the web page.
+ * `WidgetEmbedViewService.triggerSave()` (saving only when there are changes) and closes the
+ * window on success — so Save sits inline with Close while the actual save still runs on the web
+ * page. The warm view lives in the worker process, so the save is triggered through the service
+ * rather than a raw view reference held here.
  */
 export default function WidgetSettingsEmbed() {
-  const { WindowsService, SourcesService, WidgetsService, EditorCommandsService } = Services;
+  const {
+    WindowsService,
+    SourcesService,
+    WidgetsService,
+    EditorCommandsService,
+    WidgetEmbedViewService,
+  } = Services;
 
   const { sourceId } = WindowsService.getChildWindowQueryParams();
 
@@ -72,9 +80,6 @@ export default function WidgetSettingsEmbed() {
     };
   }, [widget]);
 
-  // The embed's BrowserView, exposed by WidgetEmbed so we can trigger the page's save.
-  const viewRef = useRef<Electron.BrowserView | null>(null);
-
   // Close the window if this source is deleted; refresh props if it changes elsewhere.
   useSubscription(SourcesService.sourceRemoved, removed => {
     if (source && removed.sourceId === source.sourceId) {
@@ -98,15 +103,11 @@ export default function WidgetSettingsEmbed() {
   }
 
   async function saveWebSettings() {
-    const view = viewRef.current;
-    if (!view) return;
     // Trigger the embedded page's save via the bridge it exposes in embed mode. It saves only
     // when there are unsaved changes and resolves once the save settles. Close on success;
     // on failure keep the window open so the embed can surface the error.
     try {
-      await view.webContents.executeJavaScript(
-        'window.__slobsWidgetSave ? window.__slobsWidgetSave() : Promise.resolve(true)',
-      );
+      await WidgetEmbedViewService.actions.return.triggerSave();
       WindowsService.actions.closeChildWindow();
     } catch {
       // Save failed — leave the window open; the embedded page shows the error.
@@ -196,11 +197,7 @@ export default function WidgetSettingsEmbed() {
         )}
         {/* The embed (BrowserView) needs a sized, positioned box. */}
         <div style={{ flex: `0 0 ${SETTINGS_WIDTH}px`, position: 'relative', minHeight: 0 }}>
-          <WidgetEmbed
-            onViewReady={view => {
-              viewRef.current = view;
-            }}
-          />
+          <WidgetEmbedWarm />
         </div>
       </div>
     </ModalLayout>

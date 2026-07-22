@@ -103,6 +103,7 @@ export { PlatformAppsService } from 'services/platform-apps';
 export { PlatformAppStoreService } from 'services/platform-app-store';
 export { PlatformAppAssetsService } from 'services/platform-apps/platform-app-assets-service';
 export { ChatService } from 'services/chat';
+export { WidgetEmbedViewService } from 'services/widget-embed-view';
 export { RecentEventsService } from 'services/recent-events';
 export { MagicLinkService } from 'services/magic-link';
 export { GrowService } from 'services/grow/grow';
@@ -154,6 +155,7 @@ import { AnnouncementsService } from './services/announcements';
 import { PatchNotesService } from './services/patch-notes';
 import { VideoService } from './services/video';
 import { ChatService } from './services/chat';
+import { WidgetEmbedViewService } from './services/widget-embed-view';
 import { HighlighterService } from './services/highlighter';
 import { GrowService } from './services/grow/grow';
 import { TransitionsService } from './services/transitions';
@@ -228,6 +230,7 @@ export const AppServices = {
   PatchNotesService,
   VideoService,
   ChatService,
+  WidgetEmbedViewService,
   SignalsService,
   StreamingService,
   StreamSettingsService,
