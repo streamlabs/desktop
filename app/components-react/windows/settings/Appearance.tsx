@@ -309,17 +309,6 @@ export function AppearanceSettings() {
         </Row>
       </ObsSettingsSection>
 
-      <ObsSettingsSection title={$t('Dashboard Tabs')}>
-        <SliderInput
-          {...bind.embedDiscardMinutes}
-          label={$t('Discard inactive tabs after')}
-          tipFormatter={(val: number) => `${val} min`}
-          min={1}
-          max={120}
-          step={5}
-        />
-      </ObsSettingsSection>
-
       <ObsSettingsSection>
         <CheckboxInput
           {...bind.enableAnnouncements}

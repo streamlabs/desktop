@@ -62,11 +62,15 @@ export class WidgetEmbedCacheManager {
       // The magic URL's r= param carries the route; extract it so we navigate directly
       // (avoids re-running the auth redirect on an already-authenticated session).
       const routeUrl = this.extractRouteUrl(url) ?? url;
-      console.log(`[WidgetEmbedCache] HIT  "${key}" → navigate to ${routeUrl} (${this.cache.size} in cache)`);
+      console.log(
+        `[WidgetEmbedCache] HIT  "${key}" → navigate to ${routeUrl} (${this.cache.size} in cache)`,
+      );
       // JS navigation so Chromium treats it as a same-document hash change, not a full reload.
       entry.view.webContents
         .executeJavaScript(`window.location.href = ${JSON.stringify(routeUrl)}`)
-        .catch(() => { /* ignore if webContents dies during navigation */ });
+        .catch(() => {
+          /* ignore if webContents dies during navigation */
+        });
     } else {
       // Cache miss (or stale entry): cold create.
       if (entry) this.cache.delete(key);
@@ -103,7 +107,9 @@ export class WidgetEmbedCacheManager {
         windowId: electronWindowId,
       });
 
-      console.log(`[WidgetEmbedCache] LOAD "${key}" → cold create, loading ${url} (${this.cache.size} in cache)`);
+      console.log(
+        `[WidgetEmbedCache] LOAD "${key}" → cold create, loading ${url} (${this.cache.size} in cache)`,
+      );
     }
   }
 
@@ -130,12 +136,18 @@ export class WidgetEmbedCacheManager {
     // The view stays physically attached; evictEmbed does the actual removeBrowserView.
     entry.view.setBounds({ x: 0, y: 0, width: 0, height: 0 });
 
-    const discardMs = this.customizationService.state.embedDiscardMinutes * 60_000;
-    console.log(`[WidgetEmbedCache] HIDE "${key}" → collapsed to 0x0, discard in ${discardMs / 1000}s (${this.cache.size} in cache)`);
+    const discardMs = 1 * 60_000;
+    console.log(
+      `[WidgetEmbedCache] HIDE "${key}" → collapsed to 0x0, discard in ${discardMs / 1000}s (${
+        this.cache.size
+      } in cache)`,
+    );
 
     entry.discardTimer = setTimeout(() => {
       entry.discardTimer = null; // clear so evictEmbed doesn't log "manually evicted"
-      console.log(`[WidgetEmbedCache] DISCARD "${key}" → TTL expired, evicting (${this.cache.size} in cache)`);
+      console.log(
+        `[WidgetEmbedCache] DISCARD "${key}" → TTL expired, evicting (${this.cache.size} in cache)`,
+      );
       this.evictEmbed(key);
     }, discardMs);
   }
@@ -149,7 +161,9 @@ export class WidgetEmbedCacheManager {
     if (entry.discardTimer) {
       clearTimeout(entry.discardTimer);
       // Only log here if evicted externally (timer evictions log before calling evictEmbed).
-      console.log(`[WidgetEmbedCache] EVICT "${key}" → manually evicted (${this.cache.size} remaining)`);
+      console.log(
+        `[WidgetEmbedCache] EVICT "${key}" → manually evicted (${this.cache.size} remaining)`,
+      );
     }
 
     if (!entry.view.webContents || entry.view.webContents.isDestroyed()) return;
@@ -161,7 +175,11 @@ export class WidgetEmbedCacheManager {
     if (entry.windowId != null) {
       const win = remote.BrowserWindow.fromId(entry.windowId);
       if (win && !win.isDestroyed()) {
-        try { win.removeBrowserView(entry.view); } catch { /* ignore */ }
+        try {
+          win.removeBrowserView(entry.view);
+        } catch {
+          /* ignore */
+        }
       }
       entry.windowId = null;
     }

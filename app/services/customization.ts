@@ -71,7 +71,6 @@ export interface ICustomizationServiceState {
   pinnedStatistics: IPinnedStatistics;
   enableCrashDumps: boolean;
   enableAnnouncements: boolean;
-  embedDiscardMinutes: number;
 }
 
 class PinnedStatistics extends RealmObject implements IPinnedStatistics {
@@ -117,7 +116,6 @@ export class CustomizationState extends RealmObject {
   pinnedStatistics: PinnedStatistics;
   enableCrashDumps: boolean;
   enableAnnouncements: boolean;
-  embedDiscardMinutes: number;
 
   static schema: ObjectSchema = {
     name: 'CustomizationState',
@@ -144,7 +142,6 @@ export class CustomizationState extends RealmObject {
       pinnedStatistics: { type: 'object', objectType: 'PinnedStatistics', default: {} },
       enableCrashDumps: { type: 'bool', default: true },
       enableAnnouncements: { type: 'bool', default: true },
-      embedDiscardMinutes: { type: 'double', default: 30 },
     },
   };
 
