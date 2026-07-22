@@ -10,17 +10,12 @@ import {
   clickIfDisplayed,
   clickWhenDisplayed,
   closeWindow,
-  focusChild,
   focusMain,
   isDisplayed,
   waitForDisplayed,
 } from '../../helpers/modules/core';
 import { logIn } from '../../helpers/modules/user';
-import {
-  toggleDisplay,
-  toggleDualOutputMode,
-  goLiveWithDualOutput,
-} from '../../helpers/modules/dual-output';
+import { toggleDisplay, goLiveWithDualOutput } from '../../helpers/modules/dual-output';
 import {
   skipCheckingErrorsInLog,
   test,
@@ -39,22 +34,11 @@ import { sleep } from '../../helpers/sleep';
 useWebdriver();
 
 /**
- * Toggle Dual Output Video Settings
- * @remark to prevent errors from accounts in the user pool not
- * being available, test multiple aspects of dual output in a single test
+ * Dual Output Scene Building and Display Controls
+ * @remark Dual output is always on. Single output scene collections are
+ * automatically converted to dual output when loaded.
  */
-test('Dual Output', async (t: TExecutionContext) => {
-  // user must be logged in to toggle dual output
-  await toggleDualOutputMode(false);
-  await focusChild();
-  t.true(
-    await isDisplayed('form#login-modal', { timeout: 1000 }),
-    'User must be logged in to toggle dual output',
-  );
-
-  // dual output duplicates the scene collection and heirarchy
-  const user = await logIn();
-
+test('Dual Output', withUser(), async (t: TExecutionContext) => {
   const sceneBuilder = new SceneBuilder(await getApiClient());
 
   // Build a complex item and folder hierarchy
@@ -98,11 +82,15 @@ test('Dual Output', async (t: TExecutionContext) => {
       Item11:
   `,
     ),
-    'Single Output scene collection built correctly',
+    'Single output scene collection built correctly',
   );
 
-  // toggle dual output on and convert dual output scene collection
-  await toggleDualOutputMode();
+  // Convert the single output scene collection to dual output
+  const client = await getApiClient();
+  const dualOutputService = client.getResource<any>('DualOutputService');
+  dualOutputService.convertSingleOutputToDualOutputCollection();
+  await sleep(500);
+
   t.true(
     sceneBuilder.isEqualTo(
       `
@@ -141,62 +129,66 @@ test('Dual Output', async (t: TExecutionContext) => {
     'Dual output scene collection duplicated correctly',
   );
 
-  // toggling dual output shows/hides the vertical display
+  // Dual output is always on, so both displays should be toggleable
   await focusMain();
-  t.true(await isDisplayed('#vertical-display'), 'Toggling on dual output shows vertical display');
-
-  await toggleDualOutputMode();
-  await focusMain();
+  t.true(await isDisplayed('#dual-output-header'), 'Case 1: Dual output header exists');
+  t.true(
+    await isDisplayed('#horizontal-display'),
+    'Case 1: Horizontal display is visible on app start',
+  );
   t.false(
     await isDisplayed('#vertical-display'),
-    'Toggling off dual output hides vertical display',
+    'Case 1: Vertical display is hidden on app start',
   );
 
-  // dual output display toggles show/hide displays
-  await toggleDualOutputMode();
-  await focusMain();
-
-  t.true(await isDisplayed('#dual-output-header'), 'Dual output header exists');
+  // Toggle vertical display on, both displays should be visible
+  await toggleDisplay('vertical', true);
+  t.true(await isDisplayed('#horizontal-display'), 'Case 2: Horizontal display is visible');
+  t.true(await isDisplayed('#vertical-display'), 'Case 2: Vertical display is visible');
 
   // check permutations of toggling on and off the displays
   await toggleDisplay('horizontal', true);
-  t.false(await isDisplayed('#horizontal-display'));
+  t.false(await isDisplayed('#horizontal-display'), 'Case 3: Horizontal display is hidden');
   t.true(
     await isDisplayed('#vertical-display'),
-    'Horizontal display toggled off, vertical display still on',
+    'Case 3: Horizontal display toggled off, vertical display still on',
   );
 
   await toggleDisplay('vertical', true);
-  t.false(await isDisplayed('#horizontal-display'));
-  t.false(await isDisplayed('#vertical-display'));
+  t.false(await isDisplayed('#horizontal-display'), 'Case 4: Horizontal display is hidden');
+  t.false(await isDisplayed('#vertical-display'), 'Case 4: Vertical display is hidden');
   t.true(
     await isDisplayed('div=Disable Performance Mode'),
-    'Toggling off both displays by vertical display shows performance mode',
+    'Case 4: Toggling off both displays by vertical display shows performance mode',
   );
 
   await click('div=Disable Performance Mode');
-  t.true(await isDisplayed('#horizontal-display'));
+  t.true(
+    await isDisplayed('#horizontal-display'),
+    'Case 5: Clicking performance mode button shows both displays',
+  );
   t.true(
     await isDisplayed('#vertical-display'),
-    'Clicking performance mode button shows both displays, performance mode off',
+    'Case 6: Clicking performance mode button shows both displays, performance mode off',
   );
 
   await toggleDisplay('horizontal', true);
-  t.false(await isDisplayed('#horizontal-display'));
+  t.false(await isDisplayed('#horizontal-display'), 'Case 6: Horizontal display is hidden');
   t.true(
     await isDisplayed('#vertical-display'),
-    'Horizontal display toggled off, vertical display still on, performance mode off',
+    'Case 6: Horizontal display toggled off, vertical display still on, performance mode off',
   );
 
   await toggleDisplay('vertical', true);
   await clickWhenDisplayed('div=Disable Performance Mode');
-  t.true(await isDisplayed('#horizontal-display'));
+  t.true(
+    await isDisplayed('#horizontal-display'),
+    'Case 7: Clicking performance mode button shows both displays',
+  );
   t.true(
     await isDisplayed('#vertical-display'),
-    'Clicking performance mode button shows both displays, performance mode off',
+    'Case 7: Clicking performance mode button shows both displays, performance mode off',
   );
-
-  await releaseUserInPool(user);
 
   t.pass();
 });
@@ -207,7 +199,7 @@ test(
   async (t: TExecutionContext) => {
     const { app } = t.context;
 
-    await toggleDualOutputMode();
+    await toggleDisplay('vertical', true);
 
     // Studio Mode
     await focusMain();
@@ -239,33 +231,12 @@ test(
 
 test('Dual Output Go Live Non-Ultra', async t => {
   await logIn('twitch', { prime: false });
-  await toggleDualOutputMode(true);
   await prepareToGoLive();
-
-  await clickGoLive();
-  await waitForSettingsWindowLoaded();
-  await submit();
-
-  // Cannot go live in dual output mode with only one target linked
-  await waitForDisplayed('div.ant-message-notice-content', {
-    timeout: 10000,
-  });
-  await clickIfDisplayed('div.ant-message-notice-content');
-  await sleep(200);
-
-  await closeWindow('child');
   const dummy = await addDummyAccount('instagram');
 
   try {
     await clickGoLive();
-    await submit();
-
-    // Cannot go live in dual output mode with all targets assigned to one display
-    await waitForDisplayed('div.ant-message-notice-content', {
-      timeout: 5000,
-    });
-    await clickIfDisplayed('div.ant-message-notice-content');
-    await sleep(200);
+    await waitForSettingsWindowLoaded();
 
     await fillForm({
       instagram: true,
@@ -306,19 +277,11 @@ test(
   withUser('twitch', { prime: true, multistream: true }),
   async (t: TExecutionContext) => {
     try {
-      await toggleDualOutputMode();
       await prepareToGoLive();
 
       await clickGoLive();
       await waitForSettingsWindowLoaded();
       await submit();
-
-      // Cannot go live in dual output mode with all targets assigned to one display
-      await waitForDisplayed('div.ant-message-notice-content', {
-        timeout: 10000,
-      });
-      await clickIfDisplayed('div.ant-message-notice-content');
-      await sleep(500);
 
       // Dual output with one platform for each display
       await fillForm({
