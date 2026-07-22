@@ -57,66 +57,60 @@ const TikTokLiveAccessForm = memo((p: IPlatformComponentParams<'tiktok'>) => {
     p.onChange({ ...p.value, ...updatedSettings }),
   );
 
+  if (TikTokService.scope !== 'approved') return <TikTokInfo />;
   const controls = TikTokService.audienceControls;
-  const approved = TikTokService.scope === 'approved';
 
   return (
-    <>
-      {approved ? (
-        <div data-name="tiktokAccessEnabled">
-          <InfoBadge
-            size="sm"
-            color="var(--primary)"
-            bgColor="lighten(--primary, 8%)"
-            content={
-              <>
-                <i className="icon-check" />
-                <span>{$t('Streamlabs access enabled')}</span>
-              </>
-            }
-          />
-          <GameSelector
-            platform={'tiktok'}
-            {...bind.game}
-            layout="vertical"
-            labelAlign="left"
-            style={{ marginBottom: '4px' }}
-            description={
-              <Translate
-                message={$t(
-                  'Stream at least 50% gaming content to maintain TikTok streaming access. <link>Learn more</link>',
-                )}
-                style={{ fontSize: '14px', fontStyle: 'normal' }}
-              >
-                <a onClick={openInfoPage} slot="link" style={{ textDecoration: 'underline' }} />
-              </Translate>
-            }
-          />
+    <div data-name="tiktokAccessEnabled">
+      <InfoBadge
+        size="sm"
+        color="var(--primary)"
+        bgColor="lighten(--primary, 8%)"
+        content={
+          <>
+            <i className="icon-check" />
+            <span>{$t('Streamlabs access enabled')}</span>
+          </>
+        }
+      />
+      <GameSelector
+        platform={'tiktok'}
+        {...bind.game}
+        layout="vertical"
+        labelAlign="left"
+        style={{ marginBottom: '4px' }}
+        description={
+          <Translate
+            message={$t(
+              'Stream at least 50% gaming content to maintain TikTok streaming access. <link>Learn more</link>',
+            )}
+            style={{ fontSize: '14px', fontStyle: 'normal' }}
+          >
+            <a onClick={openInfoPage} slot="link" style={{ textDecoration: 'underline' }} />
+          </Translate>
+        }
+      />
 
-          {!controls.disable && (
-            <RadioInput
-              options={controls.types}
-              defaultValue={controls.audienceType}
-              value={controls.audienceType}
-              label={$t('TikTok Audience')}
-              direction="horizontal"
-              colon
-              {...bind.audienceType}
-              layout="vertical"
-              style={{ marginTop: '10px' }}
-              labelAlign="left"
-            />
-          )}
-          <CustomFieldsCheckbox
-            {...p}
-            platform="tiktok"
-            onChange={newSettings => p.onChange({ ...p.value, ...newSettings })}
-          />
-        </div>
-      ) : (
-        <TikTokInfo />
+      {!controls.disable && (
+        <RadioInput
+          options={controls.types}
+          defaultValue={controls.audienceType}
+          value={controls.audienceType}
+          label={$t('TikTok Audience')}
+          direction="horizontal"
+          colon
+          {...bind.audienceType}
+          layout="vertical"
+          style={{ marginTop: '10px' }}
+          labelAlign="left"
+        />
       )}
-    </>
+      <CustomFieldsCheckbox
+        {...p}
+        platform="tiktok"
+        onChange={newSettings => p.onChange({ ...p.value, ...newSettings })}
+      />
+    </div>
   );
 });
 
@@ -243,35 +237,29 @@ function TikTokButtons(p: { denied: boolean }) {
 
 const TikTokRequired = memo((p: IPlatformComponentParams<'tiktok'>) => {
   return (
-    <>
-      <Tabs
-        type="card"
-        moreIcon={null}
-        tabBarGutter={0}
-        subType="filled"
-        tabs={[
-          {
-            label: (
-              <>
-                <span data-name="tiktokLiveAccess">{$t('Streamlabs Access')}</span>
-                <InfoBadge content={$t('Recommended')} size="sm" className={styles.tiktokBadge} />
-              </>
-            ),
-            id: 'live-access',
-            content: <TikTokLiveAccessForm {...p} />,
-          },
-          {
-            label: (
-              <span>
-                <span data-name="tiktokStreamKey">{$t('Stream with TikTok Stream Key')}</span>
-              </span>
-            ),
-            id: 'stream-key',
-            content: <TikTokStreamKeyForm {...p} />,
-          },
-        ]}
-      />
-    </>
+    <Tabs
+      type="card"
+      moreIcon={null}
+      tabBarGutter={0}
+      subType="filled"
+      tabs={[
+        {
+          label: (
+            <>
+              <span data-name="tiktokLiveAccess">{$t('Streamlabs Access')}</span>
+              <InfoBadge content={$t('Recommended')} size="sm" className={styles.tiktokBadge} />
+            </>
+          ),
+          id: 'live-access',
+          content: <TikTokLiveAccessForm {...p} />,
+        },
+        {
+          label: <span data-name="tiktokStreamKey">{$t('Stream with TikTok Stream Key')}</span>,
+          id: 'stream-key',
+          content: <TikTokStreamKeyForm {...p} />,
+        },
+      ]}
+    />
   );
 });
 

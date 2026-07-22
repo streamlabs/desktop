@@ -113,10 +113,9 @@ function SchedulerCalendar() {
 
   // replace the "DD" cells format to a "D" format
   useEffect(() => {
-    const $dayCells = document.querySelectorAll('.ant-picker-calendar-date-value');
+    const $dayCells = document.querySelectorAll<HTMLElement>('.ant-picker-calendar-date-value');
     $dayCells.forEach($cell => {
-      const $htmlCell = $cell as HTMLElement;
-      $htmlCell.innerText = String(Number($htmlCell.innerText));
+      $cell.innerText = String(Number($cell.innerText));
     });
   });
 
