@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button, InputNumber } from 'antd';
 import * as remote from '@electron/remote';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
@@ -27,18 +27,16 @@ const PREVIEW_MIN_WIDTH = 400;
  *                      so it always renders (the real source is black when idle), and is kept
  *                      in sync with the real source's settings. Test Widgets shows here.
  *   - Test Widgets   → fires a test event into the preview.
- *   - Save Settings  → triggers the embedded page's own save via the BrowserView (see below).
+ *   - Save Settings  → triggers the embedded page's own save via WidgetsService (see below).
  *   - Manage on Web  → opens the full web settings page in the external browser.
  *
  * Layout: a full-width header (Width/Height + Test Widgets), then a row with the native
  * `Display` preview on the left and the embed on the right, then a footer. The two OS overlays
  * (Display + BrowserView) live in separate left/right columns so they never share a rect.
  *
- * Save bridge: the embedded page's own "Save Settings" tray is hidden in embed mode (core
- * `.widget-settings--embed .widget-settings__footer { display: none }`) and instead exposes a
- * `window.__slobsWidgetSave()` entrypoint. The native Save button awaits that via
- * `webContents.executeJavaScript` (saving only when there are changes) and closes the window on
- * success — so Save sits inline with Close while the actual save still runs on the web page.
+ * Save bridge: the embedded page exposes `window.__slobsWidgetSave()` in embed mode. The
+ * native Save button calls WidgetsService.executeWidgetEmbedScript to invoke it without
+ * holding a direct BrowserView reference — the manager owns all BrowserView refs.
  */
 export default function WidgetSettingsEmbed() {
   const { WindowsService, SourcesService, WidgetsService, EditorCommandsService } = Services;
@@ -71,12 +69,11 @@ export default function WidgetSettingsEmbed() {
     };
   }, [widget]);
 
-  // The embed's BrowserView, exposed by WidgetEmbed so we can trigger the page's save.
-  const viewRef = useRef<Electron.BrowserView | null>(null);
-
   // Close the window if this source is deleted; refresh props if it changes elsewhere.
   useSubscription(SourcesService.sourceRemoved, removed => {
     if (source && removed.sourceId === source.sourceId) {
+      // Shared domain BrowserView — don't evict on single source delete.
+      // The discard timer will clean it up after the TTL.
       WindowsService.actions.closeChildWindow();
     }
   });
@@ -97,13 +94,12 @@ export default function WidgetSettingsEmbed() {
   }
 
   async function saveWebSettings() {
-    const view = viewRef.current;
-    if (!view) return;
     // Trigger the embedded page's save via the bridge it exposes in embed mode. It saves only
     // when there are unsaved changes and resolves once the save settles. Close on success;
     // on failure keep the window open so the embed can surface the error.
     try {
-      await view.webContents.executeJavaScript(
+      await WidgetsService.actions.return.executeWidgetEmbedScript(
+        'streamlabs.com/dashboard:child',
         'window.__slobsWidgetSave ? window.__slobsWidgetSave() : Promise.resolve(true)',
       );
       WindowsService.actions.closeChildWindow();
@@ -193,13 +189,9 @@ export default function WidgetSettingsEmbed() {
             <Display sourceId={previewSourceId} style={{ position: 'relative', height: '100%' }} />
           </div>
         )}
-        {/* The embed (BrowserView) needs a sized, positioned box. */}
+        {/* The embed (WidgetEmbedView) needs a sized, positioned box. */}
         <div style={{ flex: `0 0 ${SETTINGS_WIDTH}px`, position: 'relative', minHeight: 0 }}>
-          <WidgetEmbed
-            onViewReady={view => {
-              viewRef.current = view;
-            }}
-          />
+          <WidgetEmbed cacheKey="streamlabs.com/dashboard:child" />
         </div>
       </div>
     </ModalLayout>

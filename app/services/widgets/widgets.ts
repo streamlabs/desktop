@@ -29,6 +29,8 @@ import { TDisplayType, VideoSettingsService } from 'services/settings-v2';
 import { IncrementalRolloutService } from 'app-services';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 import { UsageStatisticsService } from 'services/usage-statistics';
+import { lazyModule } from 'util/lazy-module';
+import { WidgetEmbedCacheManager } from './widget-embed-cache-manager';
 
 export interface IWidgetSourcesState {
   widgetSources: Dictionary<IWidgetSource>;
@@ -88,6 +90,8 @@ export class WidgetsService
   @Inject() videoSettingsService: VideoSettingsService;
   @Inject() incrementalRolloutService: IncrementalRolloutService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
+
+  @lazyModule(WidgetEmbedCacheManager) private embedCacheManager: WidgetEmbedCacheManager;
 
   widgetCreated = new Subject<{
     type: WidgetType;
@@ -554,6 +558,30 @@ export class WidgetsService
     this.settingsInvalidated.next();
   }
 
+  // ── Widget embed cache (mirrors PlatformAppsService / PlatformContainerManager) ──────────────
+
+  mountWidgetEmbed(key: string, url: string, electronWindowId: number): void {
+    this.embedCacheManager.mountEmbed(key, url, electronWindowId);
+  }
+
+  unmountWidgetEmbed(key: string, electronWindowId: number): void {
+    this.embedCacheManager.unmountEmbed(key, electronWindowId);
+  }
+
+  setWidgetEmbedBounds(key: string, pos: IVec2, size: IVec2): void {
+    this.embedCacheManager.setEmbedBounds(key, pos, size);
+  }
+
+  evictWidgetEmbed(key: string): void {
+    this.embedCacheManager.evictEmbed(key);
+  }
+
+  executeWidgetEmbedScript(key: string, script: string): Promise<any> {
+    return this.embedCacheManager.executeScript(key, script);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────────────────────
+
   @mutation()
   private ADD_WIDGET_SOURCE(widgetSource: IWidgetSource) {
     Vue.set(this.state.widgetSources, widgetSource.sourceId, widgetSource);
@@ -563,4 +591,5 @@ export class WidgetsService
   private REMOVE_WIDGET_SOURCE(sourceId: string) {
     Vue.delete(this.state.widgetSources, sourceId);
   }
+
 }

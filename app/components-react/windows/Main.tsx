@@ -20,7 +20,7 @@ import { TApplicationTheme } from 'services/customization';
 import styles from './Main.m.less';
 import { StatefulService } from 'services';
 import { useRealmObject } from 'components-react/hooks/realm';
-import { useEmbedKeepalive } from 'components-react/hooks/useEmbedKeepalive';
+
 import Onboarding from 'components-react/modals/onboarding/Onboarding';
 
 // TODO: this is technically deprecated as we have moved customizationService to Realm
@@ -74,9 +74,7 @@ export default function Main() {
     livedockCollapsed: isDockCollapsed,
     theme: realmTheme,
     leftDock,
-    embedDiscardMinutes,
   } = useRealmObject(Services.CustomizationService.state);
-  const { persistedEmbeds, isEmbedPage } = useEmbedKeepalive(page, embedDiscardMinutes * 60 * 1000);
 
   // Provides smooth chat resizing instead of writing to realm every tick while resizing
   const [dockWidth, setDockWidth] = useState(realmDockWidth);
@@ -312,16 +310,10 @@ export default function Main() {
         >
           {!showLoadingSpinner && (
             <div className={styles.mainPageContainer}>
-              {!isEmbedPage && (
-                <Component
-                  params={params}
-                  onTotalWidth={(width: number) => handleEditorWidth(width)}
-                />
-              )}
-              {persistedEmbeds.map(name => {
-                const Embed = appPages[name as keyof typeof appPages] as React.FC<any>;
-                return <Embed key={name} params={params} hidden={page !== name} />;
-              })}
+              <Component
+                params={params}
+                onTotalWidth={(width: number) => handleEditorWidth(width)}
+              />
             </div>
           )}
           {!applicationLoading && page !== 'Onboarding' && (
