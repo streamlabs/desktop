@@ -9,18 +9,15 @@
   ${If} ${FileExists} `$PLUGINSDIR\vc_redist.x64.exe`
     ExecWait '$PLUGINSDIR\vc_redist.x64.exe /passive /norestart' $1
 
-    ${If} $1 != '0'
-      ${If} $1 != '3010'
-        MessageBox MB_OK|MB_ICONEXCLAMATION 'WARNING: Streamlabs was unable to install the latest Visual C++ Redistributable package from Microsoft.'
-      ${EndIf}
+    ; Benign codes - do NOT warn: 0 ok | 3010 ok+reboot | 1638 same-or-newer already installed | 1641 ok+reboot started
+    ${If}    $1 != '0'
+    ${AndIf} $1 != '3010'
+    ${AndIf} $1 != '1638'
+    ${AndIf} $1 != '1641'
+      MessageBox MB_OK|MB_ICONEXCLAMATION 'WARNING: Streamlabs could not install the Microsoft Visual C++ v14 Redistributable (x64), for Visual Studio 2017-2026 [error code $1].$\r$\n$\r$\nPlease install it manually from:$\r$\nhttps://aka.ms/vs/17/release/vc_redist.x64.exe'
     ${EndIf}
-
-    # ${If} $1 == '3010'
-    #     MessageBox MB_OK|MB_ICONEXCLAMATION 'You must restart your computer to complete the installation.'
-    # ${EndIf}
-
   ${Else}
-      MessageBox MB_OK|MB_ICONEXCLAMATION 'WARNING: Streamlabs was unable to download the latest Visual C++ Redistributable package from Microsoft.'
+    MessageBox MB_OK|MB_ICONEXCLAMATION 'WARNING: Streamlabs could not download the Microsoft Visual C++ v14 Redistributable (x64), for Visual Studio 2017-2026, from Microsoft.$\r$\n$\r$\nCheck your internet connection, then install it manually from:$\r$\nhttps://aka.ms/vs/17/release/vc_redist.x64.exe'
   ${EndIf}
 
   FileOpen $0 "$INSTDIR\installername" w

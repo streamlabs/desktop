@@ -1,10 +1,10 @@
 {
-  "Campaign ID": "Campaign ID",
-  "Audience": "Audience",
-  "Select Tier": "Select Tier",
-  "Stream Shift cannot be used with Patreon": "Stream Shift cannot be used with Patreon",
-  "All Members": "All Members",
-  "Paid": "Paid",
-  "All Tiers": "All Tiers",
-  "Patreon Audience": "Patreon Audience"
+  "Campaign ID": "活动 ID",
+  "Audience": "受众",
+  "Select Tier": "选择层级",
+  "Stream Shift cannot be used with Patreon": "Stream Shift 不能与 Patreon 一起使用",
+  "All Members": "所有成员",
+  "Paid": "支付",
+  "All Tiers": "所有层级",
+  "Patreon Audience": "Patreon 受众"
 }

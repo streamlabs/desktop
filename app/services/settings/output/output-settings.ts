@@ -102,6 +102,12 @@ export const QUALITY_ORDER = [
   'quality',
 ];
 
+const SPLIT_TYPE_MAP = {
+  Size: ERecSplitType.Size,
+  Manual: ERecSplitType.Manual,
+  Time: ERecSplitType.Time,
+};
+
 export interface IOutputSettings {
   mode: TOutputSettingsMode;
   inputResolution: string;
@@ -493,23 +499,15 @@ export class OutputSettingsService extends Service {
         this.settingsService.findSettingValue(output, 'Recording', 'RecSplitFileSize') ?? 0,
       );
       const splitSize = Number.isFinite(splitSizeValue) ? splitSizeValue : 0;
-      const splitTypeValue = this.settingsService.findSettingValue(
+      const splitTypeValue: 'Size' | 'Manual' | 'Time' = this.settingsService.findSettingValue(
         output,
         'Recording',
         'RecSplitFileType',
       );
-      const splitType =
-        splitTypeValue === 'Size'
-          ? ERecSplitType.Size
-          : splitTypeValue === 'Manual'
-            ? ERecSplitType.Manual
-            : ERecSplitType.Time;
+      const splitType = SPLIT_TYPE_MAP[splitTypeValue];
       const fileResetTimestamps =
-        this.settingsService.findSettingValue(
-          output,
-          'Recording',
-          'RecSplitFileResetTimestamps',
-        ) ?? true;
+        this.settingsService.findSettingValue(output, 'Recording', 'RecSplitFileResetTimestamps') ??
+        true;
 
       // advanced settings
       return {

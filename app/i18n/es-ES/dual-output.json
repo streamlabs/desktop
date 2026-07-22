@@ -1,5 +1,5 @@
 {
-  "Horizontal canvas": "Horizontal canvas",
-  "Vertical canvas": "Vertical canvas",
-  "Error stopping stream: default streams do not exist.": "Error stopping stream: default streams do not exist."
+  "Horizontal canvas": "Espacio de trabajo horizontal",
+  "Vertical canvas": "Espacio de trabajo vertical",
+  "Error stopping stream: default streams do not exist.": "Error al detener el stream: los streams predeterminados no existen."
 }

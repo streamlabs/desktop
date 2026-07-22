@@ -24,8 +24,8 @@
   "Streamlabs Charity Goal": "Streamlabs チャリティ目標",
   "Streamlabs Charity Donations": "Streamlabs チャリティドネーション",
   "Charity donations": "チャリティドネーション",
-  "Goal Settings": "Goal Settings",
-  "Must be in MM/DD/YYYY format.": "Must be in MM/DD/YYYY format.",
-  "Condensed": "Condensed",
+  "Goal Settings": "ゴールの設定",
+  "Must be in MM/DD/YYYY format.": "MM/DD/YYYY形式である必要があります。",
+  "Condensed": "凝縮",
   "Count Power-Ups": "Count Power-Ups"
 }

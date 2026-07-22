@@ -49,5 +49,5 @@
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube のサムネイルの画像サイズが大きすぎます。最大サイズは2MB です。",
   "Please upload thumbnail manually on YouTube.": "サムネイルを手動で YouTube にアップロードしてください。",
   "Stream Shift Error: YouTube is not live": "Stream Shift エラー：YouTube はライブ配信されていません",
-  "Error starting vertical stream in YouTube dual streaming": "Error starting vertical stream in YouTube dual streaming"
+  "Error starting vertical stream in YouTube dual streaming": "YouTubeデュアルストリーミングでの縦型ストリーム開始エラー"
 }

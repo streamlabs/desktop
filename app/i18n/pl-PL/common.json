@@ -171,10 +171,10 @@
   "Alert Box Settings": "Ustawienia pola powiadomień",
   "Alerts and Widgets": "Powiadomienia i widżety",
   "AI": "AI",
-  "Between": "Between",
+  "Between": "Pomiędzy",
   "Upgrade": "Ulepsz",
-  "Edit Data": "Edit Data",
-  "Edit Reactive Data": "Edit Reactive Data",
-  "Reactive Data Editor": "Reactive Data Editor",
-  "Not enabled": "Not enabled"
+  "Edit Data": "Edytuj dane",
+  "Edit Reactive Data": "Edytuj dane reaktywne",
+  "Reactive Data Editor": "Edytor danych reaktywnych",
+  "Not enabled": "Nie włączono"
 }

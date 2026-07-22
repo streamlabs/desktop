@@ -48,5 +48,5 @@
   "At least one Collab Cam source is required to use Collab Cam. Would you like to add one now?": "至少需要一个 Collab Cam 源才能使用 Collab Cam。是否立即添加？",
   "You now have access to Collab Cam!": "您现在可以访问 Collab Cam！",
   "You must be logged in to use Collab Cam.": "要使用 Collab Cam 必须先登录。",
-  "There was an error setting the Collab Cam source. Please confirm the source exists and try again.": "There was an error setting the Collab Cam source. Please confirm the source exists and try again."
+  "There was an error setting the Collab Cam source. Please confirm the source exists and try again.": "设置 Collab Cam 源时出错。请确认该源存在并重试。"
 }
