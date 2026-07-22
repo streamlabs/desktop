@@ -30,7 +30,6 @@ import { SettingsService } from 'services/settings';
  **/
 export default function GoLiveSettings() {
   const {
-    error,
     isLoading,
     canUseOptimizedProfile,
     hasMultiplePlatforms,
