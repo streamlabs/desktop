@@ -12,7 +12,6 @@ import cx from 'classnames';
 import { $t } from '../../../services/i18n';
 import styles from './DestinationSwitchers.m.less';
 import { ICustomStreamDestination } from '../../../services/settings/streaming';
-import { Services } from '../../service-provider';
 import PlatformLogo from '../../shared/PlatformLogo';
 import { useDebounce } from '../../hooks';
 import { useGoLiveSettings } from './useGoLiveSettings';

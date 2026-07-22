@@ -48,6 +48,9 @@ export default function PlatformSettings() {
     setStreamShift,
     setLiveOutputEditingEnabled,
     canEditLiveOutputs,
+    liveOutputTooltip,
+    streamShiftTooltip,
+    disableStreamShiftTooltip,
   } = useGoLiveSettings().extend(settings => ({
     get descriptionIsRequired() {
       const fbSettings = settings.state.platforms['facebook'];
@@ -57,38 +60,37 @@ export default function PlatformSettings() {
     get layout(): TInputLayout {
       return 'vertical';
     },
+
+    get liveOutputTooltip() {
+      if (!isPrime) {
+        return $t('Upgrade to Ultra to manage live outputs mid-stream.');
+      }
+
+      return '';
+    },
+
+    get streamShiftTooltip() {
+      if (isPatreonEnabled) {
+        return $t('Stream Shift cannot be used with Patreon');
+      }
+
+      if (!isPrime) {
+        return $t('Upgrade to Ultra to switch streams between devices.');
+      }
+
+      if (isDualOutputMode) {
+        return $t('Stream Shift cannot be used with Dual Output');
+      }
+
+      return '';
+    },
+
+    get disableStreamShiftTooltip() {
+      return settings.isPrime && !settings.isStreamShiftDisabled;
+    },
   }));
 
   const layoutMode = 'multiplatformAdvanced';
-
-  const liveOutputTooltip = useMemo(() => {
-    if (!isPrime) {
-      return $t('Upgrade to Ultra to manage live outputs mid-stream.');
-    }
-
-    return '';
-  }, [isPrime]);
-
-  const streamShiftTooltip = useMemo(() => {
-    if (isPatreonEnabled) {
-      return $t('Stream Shift cannot be used with Patreon');
-    }
-
-    if (!isPrime) {
-      return $t('Upgrade to Ultra to switch streams between devices.');
-    }
-
-    if (isDualOutputMode) {
-      return $t('Stream Shift cannot be used with Dual Output');
-    }
-
-    return '';
-  }, [isPrime, isPatreonEnabled, isDualOutputMode]);
-
-  const disableStreamShiftTooltip = useMemo(() => isPrime && !isStreamShiftDisabled, [
-    isPrime,
-    isStreamShiftDisabled,
-  ]);
 
   const handleToggleStreamShift = useCallback(
     (status?: boolean) => {

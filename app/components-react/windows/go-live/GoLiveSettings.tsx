@@ -30,7 +30,6 @@ import { SettingsService } from 'services/settings';
  **/
 export default function GoLiveSettings() {
   const {
-    protectedModeEnabled,
     error,
     isLoading,
     canUseOptimizedProfile,
@@ -39,12 +38,13 @@ export default function GoLiveSettings() {
     primaryChat,
     recommendedColorSpaceWarnings,
     isPrime,
-    isStreamShiftMode,
+    shouldShowLeftCol,
     isStreamShiftDisabled,
     isUpdateMode,
     addDestination,
     showTopAddDestination,
     showBottomAddDestination,
+    shouldShowSettings,
     setPrimaryChat,
   } = useGoLiveSettings().extend(module => {
     return {
@@ -65,6 +65,15 @@ export default function GoLiveSettings() {
         );
       },
 
+      get shouldShowSettings() {
+        return !module.error && !module.isLoading;
+      },
+
+      get shouldShowLeftCol() {
+        if (module.isUpdateMode) return false;
+        return module.isStreamShiftMode ? true : module.protectedModeEnabled;
+      },
+
       async openPlatformSettings() {
         try {
           const link = await this.magicLinkService.getDashboardMagicLink(
@@ -77,14 +86,6 @@ export default function GoLiveSettings() {
       },
     };
   });
-
-  const shouldShowSettings = !error && !isLoading;
-  const shouldShowLeftCol = useMemo(() => {
-    if (isUpdateMode) return false;
-    return isStreamShiftMode ? true : protectedModeEnabled;
-  }, [isUpdateMode, isStreamShiftMode, protectedModeEnabled]);
-
-  const shouldShowPrimaryChatSwitcher = hasMultiplePlatforms;
 
   const headerText = $t('Destinations');
 
@@ -120,7 +121,7 @@ export default function GoLiveSettings() {
             <div className={styles.leftFooter}>
               <PrimaryChatSwitcher
                 className={cx(styles.primaryChat, {
-                  [styles.disabled]: !shouldShowPrimaryChatSwitcher,
+                  [styles.disabled]: !hasMultiplePlatforms,
                 })}
                 enabledPlatforms={enabledPlatforms}
                 onSetPrimaryChat={setPrimaryChat}
@@ -129,7 +130,7 @@ export default function GoLiveSettings() {
                 layout="horizontal"
                 logo={false}
                 border={false}
-                disabled={!shouldShowPrimaryChatSwitcher}
+                disabled={!hasMultiplePlatforms}
               />
               <StreamShiftToggle
                 style={{ width: featureCheckboxWidth }}

@@ -9,6 +9,7 @@ import { Services } from 'components-react/service-provider';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import styles from './GoLive.m.less';
 import cx from 'classnames';
+import { useVuex } from 'components-react/hooks';
 
 interface IPrimaryChatSwitcherProps {
   enabledPlatforms: TPlatform[];
@@ -54,6 +55,11 @@ export default function PrimaryChatSwitcher({
     [enabledPlatforms],
   );
 
+  const v = useVuex(() => ({
+    isPrime: Services.UserService.views.isPrime,
+    dualOutputMode: Services.DualOutputService.views.dualOutputMode,
+  }));
+
   const value = useMemo(() => {
     const hasChatOption = primaryChatOptions.some(option => option.value === primaryChat);
     if (hasChatOption) {
@@ -82,8 +88,7 @@ export default function PrimaryChatSwitcher({
           tooltip ? (
             <div style={{ display: 'flex', alignItems: 'center' }}>
               {`${$t('Primary Chat')}:`}
-              {!Services.UserService.views.isPrime &&
-              !Services.DualOutputService.views.dualOutputMode ? (
+              {!v.isPrime && !v.dualOutputMode ? (
                 <UltraIcon type="badge" style={{ marginLeft: '10px' }} />
               ) : (
                 <Tooltip title={tooltip} placement="top" lightShadow={true}>

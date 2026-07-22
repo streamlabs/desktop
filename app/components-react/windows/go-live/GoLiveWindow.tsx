@@ -58,8 +58,6 @@ export default function GoLiveWindow() {
 function ModalFooter() {
   const {
     error,
-    lifecycle,
-    checklist,
     goLive,
     close,
     goBackToSettings,
@@ -77,6 +75,9 @@ function ModalFooter() {
     setStreamShift,
     clearStreamShiftPending,
     hasValidDisplayAssignment,
+    shouldShowConfirm,
+    shouldShowGoBackButton,
+    shouldShowRecordingSwitcher,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
     settingsService: inject(SettingsService),
@@ -110,6 +111,22 @@ function ModalFooter() {
         ) &&
         module.shouldSetupRestream
       );
+    },
+
+    get shouldShowConfirm() {
+      return ['prepopulate', 'waitForNewSettings'].includes(module.lifecycle);
+    },
+
+    get shouldShowGoBackButton() {
+      return (
+        module.lifecycle === 'runChecklist' &&
+        module.error &&
+        module.checklist.startVideoTransmission !== 'done'
+      );
+    },
+
+    get shouldShowRecordingSwitcher() {
+      return ['empty', 'prepopulate', 'waitForNewSettings'].includes(module.lifecycle);
     },
 
     goLiveWithDefaultCodec() {
@@ -243,13 +260,6 @@ function ModalFooter() {
 
     return () => clearTimeout(timer);
   }, [isCoolingDown]);
-
-  const shouldShowConfirm = ['prepopulate', 'waitForNewSettings'].includes(lifecycle);
-  const shouldShowGoBackButton =
-    lifecycle === 'runChecklist' && error && checklist.startVideoTransmission !== 'done';
-  const shouldShowRecordingSwitcher = ['empty', 'prepopulate', 'waitForNewSettings'].includes(
-    lifecycle,
-  );
 
   const handleGoLive = useCallback(async () => {
     if (!isPrime) {
