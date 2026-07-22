@@ -35,100 +35,12 @@ useWebdriver();
 
 /**
  * Dual Output Scene Building and Display Controls
- * @remark Dual output is always on. Single output scene collections are
- * automatically converted to dual output when loaded.
+ * @remark Dual output is always on. Test the toggles for the horizontal and vertical displays, and the performance mode button.
+ * Single output scene collections are automatically converted to dual output when loaded. This is tested with:
+ *  - `Convert single output collection to dual output` test in `test/regular/api/dual-output.ts`
+ *  - `Loading single & dual output scene collections` test in `test/regular/services/scene-collections/scene-collections.ts`.
  */
 test('Dual Output', withUser(), async (t: TExecutionContext) => {
-  const sceneBuilder = new SceneBuilder(await getApiClient());
-
-  // Build a complex item and folder hierarchy
-  const sketch = `
-  Item1:
-  Item2:
-  Folder1
-    Item3:
-    Item4:
-  Item5:
-  Folder2
-    Item6:
-    Folder3
-      Item7:
-      Item8:
-    Item9:
-    Folder4
-      Item10:
-  Item11:
-`;
-
-  sceneBuilder.build(sketch);
-
-  t.true(
-    sceneBuilder.isEqualTo(
-      `
-      Item1:
-      Item2:
-      Folder1
-        Item3:
-        Item4:
-      Item5:
-      Folder2
-        Item6:
-        Folder3
-          Item7:
-          Item8:
-        Item9:
-        Folder4
-          Item10:
-      Item11:
-  `,
-    ),
-    'Single output scene collection built correctly',
-  );
-
-  // Convert the single output scene collection to dual output
-  const client = await getApiClient();
-  const dualOutputService = client.getResource<any>('DualOutputService');
-  dualOutputService.convertSingleOutputToDualOutputCollection();
-  await sleep(500);
-
-  t.true(
-    sceneBuilder.isEqualTo(
-      `
-      Item1: color_source
-      Item2: color_source
-      Folder1
-        Item3: color_source
-        Item4: color_source
-      Item5: color_source
-      Folder2
-        Item6: color_source
-        Folder3
-          Item7: color_source
-          Item8: color_source
-        Item9: color_source
-        Folder4
-          Item10: color_source
-      Item11: color_source
-      Item1: color_source
-      Item2: color_source
-      Folder1
-        Item3: color_source
-        Item4: color_source
-      Item5: color_source
-      Folder2
-        Item6: color_source
-        Folder3
-          Item7: color_source
-          Item8: color_source
-        Item9: color_source
-        Folder4
-          Item10: color_source
-      Item11: color_source
-    `,
-    ),
-    'Dual output scene collection duplicated correctly',
-  );
-
   // Dual output is always on, so both displays should be toggleable
   await focusMain();
   t.true(await isDisplayed('#dual-output-header'), 'Case 1: Dual output header exists');
