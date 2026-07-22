@@ -265,7 +265,26 @@ export default function SettingsView({
                   )}
                 </p>
 
-                {renderInstallSection()}
+                {v.highlighterVersion !== '' ? (
+                  <SwitchInput
+                    name="useHighlighter"
+                    style={{ margin: 0, marginLeft: '-10px' }}
+                    size="default"
+                    value={disableAIHighlighter ? false : v.useAiHighlighter}
+                    onChange={handleToggleHighlighter}
+                  />
+                ) : (
+                  <Button
+                    name="installHighlighter"
+                    style={{ width: 'fit-content' }}
+                    type="primary"
+                    onClick={() => {
+                      HighlighterService.actions.installAiHighlighter(true, 'Highlighter-tab');
+                    }}
+                  >
+                    {$t('Install AI Highlighter App')}
+                  </Button>
+                )}
                 <div className={styles.recommendedCorner}>{$t('Recommended')}</div>
               </div>
             )}
