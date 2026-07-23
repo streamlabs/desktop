@@ -292,6 +292,8 @@
   "%{videoCodec} codec is not supported for Dual Output. Would you like to proceed with the H.264 codec or select another codec?": "Il codec %{videoCodec} non è supportato per Dual Output. Vuoi procedere con il codec H.264 o selezionarne un altro?",
   "Your stream encoder has been reset to Software (x264). This can be caused by out of date graphics drivers. Please update your graphics drivers to continue using hardware encoding.": "Il tuo encoder di streaming è stato reimpostato su Software (x264). Ciò può essere causato da driver grafici non aggiornati. Aggiorna i tuoi driver grafici per continuare a utilizzare la codifica hardware.",
   "Your stream encoder has been reset to Software (x264). This can be caused by an invalid encoder setting.": "Il tuo encoder di streaming è stato reimpostato su Software (x264). Ciò può essere causato da un'impostazione dell'encoder non valida.",
+  "Live Settings": "Live Settings",
+  "Channel Settings": "Channel Settings",
   "Fix common issues": "Fix common issues",
   "Restore Ultra benefits": "Restore Ultra benefits",
   "If you subscribed on web, you may need to restore your Ultra membership on desktop.": "If you subscribed on web, you may need to restore your Ultra membership on desktop.",
@@ -317,5 +319,6 @@
   "Cache": "Cache",
   "Deleting your cache directory will cause you to lose some settings.": "Deleting your cache directory will cause you to lose some settings.",
   "Do not delete your cache directory unless instructed to do so by a Streamlabs staff member.": "Do not delete your cache directory unless instructed to do so by a Streamlabs staff member.",
-  "Enable reporting additional information on a crash (requires restart).": "Enable reporting additional information on a crash (requires restart)."
+  "Enable reporting additional information on a crash (requires restart).": "Enable reporting additional information on a crash (requires restart).",
+  "Use stream output": "Use stream output"
 }
