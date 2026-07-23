@@ -124,6 +124,7 @@
   "Show Advanced Settings": "Mostrar definições avançadas",
   "Configure the Multistream service": "Configurar o serviço de multitransmissão",
   "Configure the Dual Output service": "Configurar o serviço Dual Output",
+  "Configure the Stream Shift service": "Configure the Stream Shift service",
   "Apply optimized settings": "Aplicar definições otimizadas",
   "Start video transmission": "Iniciar transmissão de vídeo",
   "Publish Youtube broadcast": "Publicar transmissão no YouTube",
@@ -358,6 +359,7 @@
   "switch to a supported encoder such as x264": "muda para um codificador suportado, como o x264",
   "An unknown error occurred while starting the stream. Please try again.": "Ocorreu um erro desconhecido ao iniciar a transmissão. Tenta novamente.",
   "Failed to fetch encoder settings": "Falha ao obter as definições do codificador",
+  "Failed to start video transmission": "Failed to start video transmission",
   "Failed to create stream. Please check your settings and try again.": "Falha ao criar a transmissão. Verifica as tuas definições e tenta novamente.",
   "Failed to create recording. Please check your settings and file path and try again.": "Falha ao criar a gravação. Verifica as tuas definições e o caminho do ficheiro e tenta novamente.",
   "Unknown recording error, please contact support": "Erro de gravação desconhecido, contacta o suporte",
@@ -365,5 +367,14 @@
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "Falha ao criar o buffer de repetição. Verifica as tuas definições de transmissão, definições de gravação e o caminho do ficheiro de gravação e tenta novamente.",
   "Unknown replay buffer error, please contact support": "Erro de buffer de repetição desconhecido, contacta o suporte",
   "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "as definições do buffer de repetição estão incorretas. Verifica o caminho de gravação e as definições do codificador para a transmissão e para a gravação.",
-  "Streaming Started Without Recording/Replay Buffer": "Streaming Started Without Recording/Replay Buffer"
+  "Streaming Started Without Recording/Replay Buffer": "Streaming Started Without Recording/Replay Buffer",
+  "Manage output destinations mid-stream.": "Manage output destinations mid-stream.",
+  "Switch between devices while live.": "Switch between devices while live.",
+  "Live output editing": "Live output editing",
+  "%{otherPlatform} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.": "%{otherPlatform} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.",
+  "%{destination} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.": "%{destination} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.",
+  "Select a different display for %{platform} to toggle on another destination, or upgrade to Ultra to enable multistreaming.": "Select a different display for %{platform} to toggle on another destination, or upgrade to Ultra to enable multistreaming.",
+  "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.": "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
+  "Automatic (Recommended)": "Automatic (Recommended)",
+  "Preferred Multistream Ingest Server": "Preferred Multistream Ingest Server"
 }
