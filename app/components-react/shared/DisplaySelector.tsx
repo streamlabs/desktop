@@ -17,6 +17,7 @@ interface IDisplaySelectorProps {
   nolabel?: boolean;
   alignIcons?: 'left' | 'center' | 'right';
   visible?: boolean;
+  disabled?: boolean;
 }
 
 export default function DisplaySelector(p: IDisplaySelectorProps) {
@@ -134,6 +135,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       gapsize={0}
       nowrap
       optionType="button"
+      disabled={p?.disabled}
     />
   );
 }
