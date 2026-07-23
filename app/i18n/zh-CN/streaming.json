@@ -124,6 +124,7 @@
   "Show Advanced Settings": "显示高级设置",
   "Configure the Multistream service": "配置多重直播服务",
   "Configure the Dual Output service": "配置 Dual Output 服务",
+  "Configure the Stream Shift service": "Configure the Stream Shift service",
   "Apply optimized settings": "应用优化设置",
   "Start video transmission": "开始视频传输",
   "Publish Youtube broadcast": "发布 YouTube 广播",
@@ -358,6 +359,7 @@
   "switch to a supported encoder such as x264": "切换到受支持的编码器（例如 x264）",
   "An unknown error occurred while starting the stream. Please try again.": "启动流时发生未知错误。请重试。",
   "Failed to fetch encoder settings": "获取编码器设置失败",
+  "Failed to start video transmission": "Failed to start video transmission",
   "Failed to create stream. Please check your settings and try again.": "创建流失败。请检查您的设置，然后再试一次。",
   "Failed to create recording. Please check your settings and file path and try again.": "创建录制失败。请检查您的设置和文件路径，然后再试一次。",
   "Unknown recording error, please contact support": "未知录制错误，请联系支持人员。",
@@ -365,5 +367,14 @@
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "创建重放缓存失败。请检查您的流媒体设置、录制设置和录制文件路径，然后再试一次。",
   "Unknown replay buffer error, please contact support": "未知重放缓存错误，请联系支持人员。",
   "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "重放缓存设置不正确。请检查流媒体和录制的录制路径及编码器设置。",
-  "Streaming Started Without Recording/Replay Buffer": "Streaming Started Without Recording/Replay Buffer"
+  "Streaming Started Without Recording/Replay Buffer": "Streaming Started Without Recording/Replay Buffer",
+  "Manage output destinations mid-stream.": "Manage output destinations mid-stream.",
+  "Switch between devices while live.": "Switch between devices while live.",
+  "Live output editing": "Live output editing",
+  "%{otherPlatform} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.": "%{otherPlatform} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.",
+  "%{destination} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.": "%{destination} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.",
+  "Select a different display for %{platform} to toggle on another destination, or upgrade to Ultra to enable multistreaming.": "Select a different display for %{platform} to toggle on another destination, or upgrade to Ultra to enable multistreaming.",
+  "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.": "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
+  "Automatic (Recommended)": "Automatic (Recommended)",
+  "Preferred Multistream Ingest Server": "Preferred Multistream Ingest Server"
 }
