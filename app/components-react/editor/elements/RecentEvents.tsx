@@ -153,6 +153,7 @@ function EventCell(p: { event: IRecentEvent }) {
       twitch_account: <PlatformLogo platform="twitch" />,
       youtube_account: <PlatformLogo platform="youtube" size={16} />,
       facebook_account: <PlatformLogo platform="facebook" />,
+      kick_account: <PlatformLogo platform="kick" size={16} />,
       streamlabs: <PlatformLogo platform="streamlabs" size={16} />,
       streamlabscharity: <PlatformLogo platform="streamlabs" size={16} />,
     }[platform];
@@ -184,6 +185,7 @@ function EventCell(p: { event: IRecentEvent }) {
     if (event.type === 'superchat' || event.formatted_amount || event.formattedAmount) {
       return 'donation';
     }
+    if (event.type === 'kick_kicks') return 'kicks';
     if (event.type === 'power_up') return 'bits';
     return event.type;
   }
@@ -194,6 +196,9 @@ function EventCell(p: { event: IRecentEvent }) {
     if (event.type === 'superchat') return event.displayString;
     if (event.type === 'sticker' || event.type === 'effect') {
       return `${event.amount} ${event.currency}`;
+    }
+    if (event.type === 'kick_kicks') {
+      return `${event.amount} kicks`;
     }
     if (event.type === 'power_up') {
       if (event.power_up_name && event.amount) {
