@@ -124,6 +124,7 @@
   "Show Advanced Settings": "Erweiterte Einstellungen anzeigen",
   "Configure the Multistream service": "Multistream-Dienst konfigurieren",
   "Configure the Dual Output service": "Konfigurieren des Dual Output Dienstes",
+  "Configure the Stream Shift service": "Configure the Stream Shift service",
   "Apply optimized settings": "Optimierte Einstellungen übernehmen",
   "Start video transmission": "Videoübertragung starten",
   "Publish Youtube broadcast": "YouTube-Broadcast veröffentlichen",
@@ -358,6 +359,7 @@
   "switch to a supported encoder such as x264": "wechsle zu einem unterstützten Encoder wie x264",
   "An unknown error occurred while starting the stream. Please try again.": "Beim Starten des Streams ist ein unbekannter Fehler aufgetreten. Bitte versuche es erneut.",
   "Failed to fetch encoder settings": "Encoder-Einstellungen konnten nicht abgerufen werden",
+  "Failed to start video transmission": "Failed to start video transmission",
   "Failed to create stream. Please check your settings and try again.": "Stream konnte nicht erstellt werden. Bitte überprüfe deine Einstellungen und versuche es erneut.",
   "Failed to create recording. Please check your settings and file path and try again.": "Aufnahme konnte nicht erstellt werden. Bitte überprüfe deine Einstellungen und den Dateipfad und versuche es erneut.",
   "Unknown recording error, please contact support": "Unbekannter Aufnahmefehler; bitte kontaktiere den Support",
@@ -365,5 +367,14 @@
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "Replay-Puffer konnte nicht erstellt werden. Bitte überprüfe deine Streaming-Einstellungen, Aufnahmeeinstellungen und den Aufnahme-Dateipfad und versuche es erneut.",
   "Unknown replay buffer error, please contact support": "Unbekannter Replay-Puffer-Fehler; bitte kontaktiere den Support",
   "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "Die Einstellungen für den Replay-Puffer sind inkorrekt. Überprüfe den Aufnahmepfad und die Encoder-Einstellungen für Streaming und Aufnahme.",
-  "Streaming Started Without Recording/Replay Buffer": "Streaming Started Without Recording/Replay Buffer"
+  "Streaming Started Without Recording/Replay Buffer": "Streaming Started Without Recording/Replay Buffer",
+  "Manage output destinations mid-stream.": "Manage output destinations mid-stream.",
+  "Switch between devices while live.": "Switch between devices while live.",
+  "Live output editing": "Live output editing",
+  "%{otherPlatform} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.": "%{otherPlatform} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.",
+  "%{destination} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.": "%{destination} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.",
+  "Select a different display for %{platform} to toggle on another destination, or upgrade to Ultra to enable multistreaming.": "Select a different display for %{platform} to toggle on another destination, or upgrade to Ultra to enable multistreaming.",
+  "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.": "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
+  "Automatic (Recommended)": "Automatic (Recommended)",
+  "Preferred Multistream Ingest Server": "Preferred Multistream Ingest Server"
 }
