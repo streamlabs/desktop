@@ -242,11 +242,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     if (this.userView.isPrime) return true;
 
     const numEnabledPlatforms = this.enabledPlatforms.length;
-
-    // Users can always stream to one platform
-    if (numEnabledPlatforms === 1) return true;
-
     const numEnabledDestinations = this.customDestinations.filter(dest => dest.enabled).length;
+
+    // One enabled platform with no custom destinations can always stream
+    if (numEnabledPlatforms === 1 && numEnabledDestinations === 0) return true;
 
     // Users can stream to two targets when in dual output mode if
     //  1. 2 Platforms: 1 Horizontal, 1 Vertical
