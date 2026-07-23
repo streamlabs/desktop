@@ -863,6 +863,12 @@ export class StreamingService
         throwStreamError('KICK_STREAM_KEY_MISSING', { platform: 'kick' });
       }
 
+      // YouTube service unavailable due to a backend error returned from YouTube. Because this is a backend error
+      // from the YouTube API itself, the user needs to toggle off YouTube in order to go live
+      if (errorType === 'YOUTUBE_UNAVAILABLE') {
+        throwStreamError('YOUTUBE_UNAVAILABLE', { platform: 'youtube' });
+      }
+
       // To prevent users from being blocked by livestreaming from a single platform failing to
       // set up. Users can elect to bypass the error and go live anyways. To prevent the go live
       // checklist from being stopped too soon, only stop if no displays are multistreaming.
