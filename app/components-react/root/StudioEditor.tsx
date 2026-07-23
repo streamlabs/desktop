@@ -406,12 +406,15 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
   const v = useVuex(() => ({ toggleDisplay: Services.DualOutputService.actions.toggleDisplay }));
 
   const showRecordingIcons = useMemo(() => {
-    return (
-      p.isRecording &&
-      Services.IncrementalRolloutService.views.featureIsEnabled(
-        EAvailableFeatures.dualOutputRecording,
-      )
-    );
+    return false;
+    // TODO: Comment in when ready for testing
+
+    // return (
+    //   p.isRecording &&
+    //   Services.IncrementalRolloutService.views.featureIsEnabled(
+    //     EAvailableFeatures.dualOutputRecording,
+    //   )
+    // );
   }, [p.isRecording]);
 
   return (
