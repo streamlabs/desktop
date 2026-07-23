@@ -393,6 +393,7 @@ const DestinationSwitcher = memo(
             index={p.index}
             alignIcons="left"
             visible={p.showDisplaySelector}
+            disabled={p.isLoading}
           />
         </AnimatedWrapper>
       </SwitcherCard>
