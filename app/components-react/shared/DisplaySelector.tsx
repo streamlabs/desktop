@@ -25,6 +25,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     canDualStream,
     updateCustomDestinationDisplayAndSaveSettings,
     updatePlatformDisplayAndSaveSettings,
+    toggleVerticalDisplay,
   } = useGoLiveSettings().extend(module => ({
     get canDualStream() {
       if (!p.platform) return false;
@@ -89,6 +90,12 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
           throw new Error('Attempted to update custom display for dual stream, this is impossible');
         }
         updateCustomDestinationDisplayAndSaveSettings(p.index, updatedDisplay as TDisplayType);
+      }
+
+      // When the user selects either of these displays it indicates that they will stream in dual output mode,
+      // so if they do not already have the vertical display visible in the editor, show it
+      if (updatedDisplay === 'both' || updatedDisplay === 'vertical') {
+        toggleVerticalDisplay();
       }
     },
     [
