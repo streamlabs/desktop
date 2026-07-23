@@ -124,6 +124,7 @@
   "Show Advanced Settings": "Показать расширенные настройки",
   "Configure the Multistream service": "Настроить сервис многопоточных трансляций",
   "Configure the Dual Output service": "Настройка службы Dual Output",
+  "Configure the Stream Shift service": "Configure the Stream Shift service",
   "Apply optimized settings": "Применить оптимизированные настройки",
   "Start video transmission": "Начать передачу видео",
   "Publish Youtube broadcast": "Опубликовать прямой эфир на YouTube",
@@ -358,6 +359,7 @@
   "switch to a supported encoder such as x264": "переключитесь на поддерживаемый кодировщик, например x264",
   "An unknown error occurred while starting the stream. Please try again.": "При запуске трансляции произошла неизвестная ошибка. Попробуйте еще раз.",
   "Failed to fetch encoder settings": "Не удалось получить настройки кодировщика",
+  "Failed to start video transmission": "Failed to start video transmission",
   "Failed to create stream. Please check your settings and try again.": "Не удалось создать трансляцию. Проверьте настройки и попробуйте снова.",
   "Failed to create recording. Please check your settings and file path and try again.": "Не удалось создать запись. Проверьте настройки, путь сохранения и повторите попытку.",
   "Unknown recording error, please contact support": "Произошла неизвестная ошибка записи. Обратитесь в службу поддержки",
@@ -365,5 +367,14 @@
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "Не удалось создать буфер повтора. Проверьте настройки трансляции, настройки записи и путь к файлу записи, затем повторите попытку.",
   "Unknown replay buffer error, please contact support": "Произошла неизвестная ошибка буфера повтора. Обратитесь в службу поддержки",
   "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "настройки буфера повтора указаны неправильно. Проверьте путь записи и настройки кодировщика для трансляции и записи.",
-  "Streaming Started Without Recording/Replay Buffer": "Streaming Started Without Recording/Replay Buffer"
+  "Streaming Started Without Recording/Replay Buffer": "Streaming Started Without Recording/Replay Buffer",
+  "Manage output destinations mid-stream.": "Manage output destinations mid-stream.",
+  "Switch between devices while live.": "Switch between devices while live.",
+  "Live output editing": "Live output editing",
+  "%{otherPlatform} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.": "%{otherPlatform} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.",
+  "%{destination} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.": "%{destination} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.",
+  "Select a different display for %{platform} to toggle on another destination, or upgrade to Ultra to enable multistreaming.": "Select a different display for %{platform} to toggle on another destination, or upgrade to Ultra to enable multistreaming.",
+  "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.": "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
+  "Automatic (Recommended)": "Automatic (Recommended)",
+  "Preferred Multistream Ingest Server": "Preferred Multistream Ingest Server"
 }
