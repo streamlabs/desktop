@@ -292,6 +292,8 @@
   "%{videoCodec} codec is not supported for Dual Output. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec}-Codec wird für Dual Output nicht unterstützt. Möchtest du mit dem H.264-Codec fortfahren oder einen anderen Codec auswählen?",
   "Your stream encoder has been reset to Software (x264). This can be caused by out of date graphics drivers. Please update your graphics drivers to continue using hardware encoding.": "Dein Stream-Encoder wurde auf Software (x264) zurückgesetzt. Dies kann durch veraltete Grafiktreiber verursacht werden. Bitte aktualisiere deine Grafiktreiber, um weiterhin Hardware-Encoding zu verwenden.",
   "Your stream encoder has been reset to Software (x264). This can be caused by an invalid encoder setting.": "Dein Stream-Encoder wurde auf Software (x264) zurückgesetzt. Dies kann durch eine ungültige Encoder-Einstellung verursacht werden.",
+  "Live Settings": "Live Settings",
+  "Channel Settings": "Channel Settings",
   "Fix common issues": "Fix common issues",
   "Restore Ultra benefits": "Restore Ultra benefits",
   "If you subscribed on web, you may need to restore your Ultra membership on desktop.": "If you subscribed on web, you may need to restore your Ultra membership on desktop.",
