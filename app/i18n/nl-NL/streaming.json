@@ -124,6 +124,7 @@
   "Show Advanced Settings": "Geavanceerde instellingen weergeven",
   "Configure the Multistream service": "De multi-streamingservice configureren",
   "Configure the Dual Output service": "De Dual Output-service configureren",
+  "Configure the Stream Shift service": "Configure the Stream Shift service",
   "Apply optimized settings": "Geoptimaliseerde instellingen toepassen",
   "Start video transmission": "Videotransmissie starten",
   "Publish Youtube broadcast": "YouTube-uitzending publiceren",
@@ -358,6 +359,7 @@
   "switch to a supported encoder such as x264": "schakel over naar een ondersteunde encoder zoals x264",
   "An unknown error occurred while starting the stream. Please try again.": "Er is een onbekende fout opgetreden bij het starten van de stream. Probeer het later opnieuw.",
   "Failed to fetch encoder settings": "Kon encoderinstellingen niet ophalen",
+  "Failed to start video transmission": "Failed to start video transmission",
   "Failed to create stream. Please check your settings and try again.": "Kon stream niet aanmaken. Controleer je instellingen en probeer het opnieuw.",
   "Failed to create recording. Please check your settings and file path and try again.": "Kon opname niet aanmaken. Controleer je instellingen en bestandspad en probeer het opnieuw.",
   "Unknown recording error, please contact support": "Onbekende opnamefout, neem contact op met support",
@@ -365,5 +367,14 @@
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "Kon replay-buffer niet aanmaken. Controleer je streaming-instellingen, opname-instellingen en het bestandspad voor opnames en probeer het opnieuw.",
   "Unknown replay buffer error, please contact support": "Onbekende fout in replaybuffer, neem contact op met ondersteuning",
   "replay buffer settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "instellingen voor replaybuffer zijn onjuist. Controleer het opnamepad en de encoderinstellingen voor zowel streamen als opnemen.",
-  "Streaming Started Without Recording/Replay Buffer": "Streaming Started Without Recording/Replay Buffer"
+  "Streaming Started Without Recording/Replay Buffer": "Streaming Started Without Recording/Replay Buffer",
+  "Manage output destinations mid-stream.": "Manage output destinations mid-stream.",
+  "Switch between devices while live.": "Switch between devices while live.",
+  "Live output editing": "Live output editing",
+  "%{otherPlatform} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.": "%{otherPlatform} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.",
+  "%{destination} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.": "%{destination} was disabled because %{platform} dual streaming was selected. Upgrade to Ultra to enable multistreaming.",
+  "Select a different display for %{platform} to toggle on another destination, or upgrade to Ultra to enable multistreaming.": "Select a different display for %{platform} to toggle on another destination, or upgrade to Ultra to enable multistreaming.",
+  "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.": "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
+  "Automatic (Recommended)": "Automatic (Recommended)",
+  "Preferred Multistream Ingest Server": "Preferred Multistream Ingest Server"
 }
