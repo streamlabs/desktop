@@ -565,6 +565,7 @@ function CustomDestinationList() {
     isPrime: Services.UserService.isPrime,
     customDestinations: Services.StreamingService.views.savedSettings.customDestinations,
   }));
+
   const destinations = customDestinations;
   const isEditMode = editCustomDestMode !== false;
   const shouldShowAddForm = editCustomDestMode === true;

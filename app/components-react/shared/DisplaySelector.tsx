@@ -1,4 +1,4 @@
-import React, { CSSProperties, useMemo } from 'react';
+import React, { CSSProperties, useCallback, useMemo } from 'react';
 import { $t } from 'services/i18n';
 import { RadioInput } from './inputs';
 import { TDisplayType } from 'services/settings-v2';
@@ -11,9 +11,12 @@ interface IDisplaySelectorProps {
   title: string;
   index: number;
   platform: TPlatform | null;
+  destinationName?: string;
   className?: string;
   style?: CSSProperties;
   nolabel?: boolean;
+  alignIcons?: 'left' | 'center' | 'right';
+  visible?: boolean;
 }
 
 export default function DisplaySelector(p: IDisplaySelectorProps) {
@@ -54,12 +57,6 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       },
     ];
 
-    // This debugging log is intentional to verify that the Both option is showing for Twitch when dual stream is available,
-    // and hidden if the user does not have access to dual stream. This is to confirm that the issue is not access.
-    if (p?.platform === 'twitch' && canDualStream) {
-      console.log('Dual stream is available for Twitch, showing Both option');
-    }
-
     if (canDualStream) {
       const tooltip = p?.platform
         ? $t('Stream both horizontally and vertically to %{platform}', {
@@ -81,17 +78,26 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     return defaultDisplays;
   }, [canDualStream]);
 
-  const onChange = (val: TDisplayOutput) => {
-    if (p.platform) {
-      updatePlatformDisplayAndSaveSettings(p.platform, val);
-    } else {
-      if (val === 'both') {
-        // There's no UI that would allow for this, but just in case
-        throw new Error('Attempted to update custom display for dual stream, this is impossible');
+  const onChange = useCallback(
+    (val: string) => {
+      const updatedDisplay = val as TDisplayOutput;
+      if (p.platform) {
+        updatePlatformDisplayAndSaveSettings(p.platform, updatedDisplay);
+      } else {
+        if (updatedDisplay === 'both') {
+          // There's no UI that would allow for this, but just in case
+          throw new Error('Attempted to update custom display for dual stream, this is impossible');
+        }
+        updateCustomDestinationDisplayAndSaveSettings(p.index, updatedDisplay as TDisplayType);
       }
-      updateCustomDestinationDisplayAndSaveSettings(p.index, val as TDisplayType);
-    }
-  };
+    },
+    [
+      p.platform,
+      p.index,
+      updatePlatformDisplayAndSaveSettings,
+      updateCustomDestinationDisplayAndSaveSettings,
+    ],
+  );
 
   // Convert displays array to Dictionary<TInputValue>
   const displayDict = useMemo(() => {
@@ -101,7 +107,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     }, {} as Dictionary<ICustomRadioOption>);
   }, [displays]);
 
-  const name = `${p.platform || `destination${p.index}`}Display`;
+  const name = `${p.platform || p.destinationName}Display`;
   const value = displayDict[display]?.value || 'horizontal';
 
   return (
@@ -112,6 +118,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       value={value}
       defaultValue="horizontal"
       options={displays}
+      alignIcons={p?.alignIcons}
       onChange={onChange}
       icons={true}
       className={p?.className}
@@ -119,6 +126,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       direction="horizontal"
       gapsize={0}
       nowrap
+      optionType="button"
     />
   );
 }

@@ -174,6 +174,7 @@ export class StreamingService
   @Inject() private settingsService: SettingsService;
   @Inject() private signalsService: SignalsService;
   @Inject() private highlighterService: HighlighterService;
+
   streamingStatusChange = new Subject<EStreamingState>();
   recordingStatusChange = new Subject<ERecordingState>();
   replayBufferStatusChange = new Subject<EReplayBufferState>();
@@ -336,7 +337,7 @@ export class StreamingService
         // prime users are eligible for streaming to any platform
         const primeRequired = this.isPrimeRequired(platform);
 
-        if (primeRequired && !this.views.isDualOutputMode) {
+        if (primeRequired) {
           this.setError('PRIME_REQUIRED');
           this.UPDATE_STREAM_INFO({ lifecycle: 'empty' });
           return;
@@ -399,6 +400,10 @@ export class StreamingService
       }
     }
 
+    if (!isPrime && this.views.enabledPlatforms.length <= 2) {
+      return false;
+    }
+
     return true;
   }
 
@@ -447,7 +452,11 @@ export class StreamingService
     const settings = newSettings || cloneDeep(this.views.savedSettings);
 
     // For the Stream Shift, match remote targets to local targets
-    if (settings.streamShift && this.restreamService.views.hasStreamShiftTargets) {
+    if (
+      settings.streamShift &&
+      this.restreamService.views.hasStreamShiftTargets &&
+      !this.restreamService.views.streamShiftForceGoLive
+    ) {
       await this.restreamService.fetchTargetData();
 
       const targets: TPlatform[] = this.restreamService.views.streamShiftTargets.reduce(
@@ -666,8 +675,6 @@ export class StreamingService
     /**
      * SET MULTISTREAM SETTINGS
      */
-    // TODO: remove after server-side impl
-    this.restreamService.actions.forceStreamShiftGoLive();
     if (this.views.shouldSetupRestream) {
       // In single output mode, this sets up multistreaming
       // In dual output mode, this sets up streaming displays to multiple targets
@@ -736,6 +743,7 @@ export class StreamingService
           await this.restreamService.beforeGoLive();
         });
       } catch (e: unknown) {
+        console.log('Restream setup failed', e);
         const errorType = this.handleTypedStreamError(
           e,
           failureType,
@@ -1373,16 +1381,6 @@ export class StreamingService
   }
 
   async toggleStreaming(options?: TStartStreamOptions, force = false) {
-    if (this.views.isDualOutputMode && !this.views.getCanStreamDualOutput() && this.isIdle) {
-      this.notificationsService.actions.push({
-        message: $t('Set up Go Live Settings for Dual Output Mode in the Go Live window.'),
-        type: ENotificationType.WARNING,
-        lifeTime: 2000,
-      });
-      this.showGoLiveWindow();
-      return;
-    }
-
     if (
       this.state.status.horizontal.streaming === EStreamingState.Offline &&
       this.state.status.vertical.streaming === EStreamingState.Offline
@@ -1504,7 +1502,7 @@ export class StreamingService
     } catch (e: unknown) {
       console.error('Error fetching stream encoder info: ', e);
 
-      const message = (e as any).message ?? $t('Failed to fetch encoder settings');
+      const message = (e as any)?.message ?? $t('Failed to fetch encoder settings');
       this.handleTypedStreamError(e, 'INVALID_ENCODER', message);
     }
 
@@ -1576,6 +1574,9 @@ export class StreamingService
       await this.handleStartEnhancedBroadcastingDualOutput(code, context, time);
     } else if (this.views.isYouTubeDualStreaming) {
       // For YouTube dual streaming without enhanced broadcasting, the horizontal stream needs to be started before the vertical stream.
+      // Don't set horizontal to Live here. Wait until the vertical Start signal arrives so that
+      // streamingStatus only reports Live once both streams are actually running. Setting it early
+      // causes a race where the UI shows "End Stream" before the vertical instance existed.
       if (context === 'horizontal') {
         try {
           await this.validateOrCreateOutputInstance({
@@ -1586,10 +1587,6 @@ export class StreamingService
             start: true,
             isEnhancedBroadcasting: false,
           });
-
-          // Update the horizontal stream status to live for the UI
-          this.SET_STREAMING_STATUS(EStreamingState.Live, context, time);
-          this.streamingStatusChange.next(EStreamingState.Live);
         } catch (e: unknown) {
           // Error will be surfaced from `createStreaming` for YouTube dual streaming only if
           // the vertical stream fails to start.
@@ -1612,6 +1609,9 @@ export class StreamingService
       }
 
       if (context === 'vertical') {
+        // Both streams have now started so set horizontal to Live first, then handleStartStreaming
+        // sets vertical to Live and resolves the start streaming promise.
+        this.SET_STREAMING_STATUS(EStreamingState.Live, 'horizontal', time);
         await this.handleStartStreaming(code, context);
       }
     } else {
@@ -2168,7 +2168,7 @@ export class StreamingService
         }
 
         const message =
-          (e as any).message ??
+          (e as any)?.message ??
           $t('An unknown error occurred while starting the stream. Please try again.');
 
         this.createOBSError(
@@ -3388,8 +3388,8 @@ export class StreamingService
    * Prefill fields with data if `prepopulateOptions` provided
    */
   showGoLiveWindow(prepopulateOptions?: IGoLiveSettings['prepopulateOptions']) {
-    const height = 750;
-    const width = 800;
+    const height = 800;
+    const width = 910;
 
     this.windowsService.showWindow({
       componentName: 'GoLiveWindow',
@@ -3403,6 +3403,9 @@ export class StreamingService
   }
 
   showEditStream() {
+    // TODO: Update when add edit
+    // const height = 800;
+    // const width = 910;
     const height = 750;
     const width = 800;
 

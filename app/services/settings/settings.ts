@@ -36,6 +36,7 @@ import fs from 'fs';
 import path from 'path';
 import { Services } from 'components-react/service-provider';
 import { UserService } from 'app-services';
+import { HighlighterService } from 'services/highlighter';
 import { EScaleType } from '../../../obs-api';
 
 export enum ESettingsCategory {
@@ -458,7 +459,10 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       categories = categories.concat([ESettingsCategory.Developer, ESettingsCategory.Experimental]);
     }
 
-    if (this.views.platformAppsState.loadedApps.filter(app => !app.unpacked).length > 0) {
+    const hasInstalledApps =
+      this.views.platformAppsState.loadedApps.filter(app => !app.unpacked).length > 0;
+    const hasHighlighter = (HighlighterService.instance?.views.highlighterVersion ?? '') !== '';
+    if (hasInstalledApps || hasHighlighter) {
       categories.push(ESettingsCategory.InstalledApps);
     }
 
@@ -972,6 +976,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
    * @remark For debugging purposes only
    */
   private listSettingsByCategory() {
+    if (!Utils.isDevMode()) return;
     const settings = {} as any;
 
     for (const category in this.state) {

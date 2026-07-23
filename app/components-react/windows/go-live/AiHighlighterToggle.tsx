@@ -203,6 +203,7 @@ export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded
                     />
                   ) : (
                     <Button
+                      name="install-highlighter"
                       style={{ width: 'fit-content', marginLeft: '18px' }}
                       size="small"
                       type="primary"

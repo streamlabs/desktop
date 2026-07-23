@@ -1,4 +1,4 @@
-import { Button, Select } from 'antd';
+import { Button } from 'antd';
 import { Services } from 'components-react/service-provider';
 import { ListInput, TextInput } from 'components-react/shared/inputs';
 import Form from 'components-react/shared/inputs/Form';
