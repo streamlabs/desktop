@@ -162,7 +162,7 @@ export class SponsorBannerModule extends WidgetModule<ISponsorBannerState> {
           { label: $t('Double'), value: 'double' },
         ],
         children: {
-          layout: {
+          layout: metadata.any({
             type: 'imagepicker',
             label: $t('Image Layout'),
             options: [
@@ -170,7 +170,7 @@ export class SponsorBannerModule extends WidgetModule<ISponsorBannerState> {
               { label: '', value: 'above', image: $i('images/layout-image-above.png') },
             ],
             displayed: this.settings.placement_options === 'double',
-          },
+          }),
         },
       }),
     };
