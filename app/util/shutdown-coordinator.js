@@ -8,13 +8,17 @@ const SHUTDOWN_COMPLETE_TIMEOUT_MS = 30 * 1000;
 const SHUTDOWN_EXIT_TIMEOUT_MS = 10 * 1000;
 
 function writeLog(logger, level, message) {
-  if (logger && typeof logger[level] === 'function') {
-    logger[level](message);
-    return;
-  }
+  try {
+    if (logger && typeof logger[level] === 'function') {
+      logger[level](message);
+      return;
+    }
 
-  if (logger && typeof logger.log === 'function') {
-    logger.log(message);
+    if (logger && typeof logger.log === 'function') {
+      logger.log(message);
+    }
+  } catch (e) {
+    // Logging must never interrupt application teardown.
   }
 }
 
