@@ -1,11 +1,11 @@
 {
   "Vers": "Vers",
-  "Reload": "Reload",
-  "Unpacked vers loaded": "Unpacked vers loaded",
-  "You must unload unpacked version before enabling this app.": "You must unload unpacked version before enabling this app.",
-  "Pop Out": "Pop Out",
-  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.",
-  "Uninstall": "Uninstall",
-  "Other installed apps:": "Other installed apps:",
-  "Open": "Open"
+  "Reload": "إعادة التحميل",
+  "Unpacked vers loaded": "تم تحميل نسخة Vers غير المجمعة",
+  "You must unload unpacked version before enabling this app.": "يجب إلغاء تحميل النسخة غير المجمعة قبل تمكين هذا التطبيق.",
+  "Pop Out": "فتح في نافذة مستقلة",
+  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "أوقف المطور دعم هذا التطبيق. قد يستمر في العمل، لكنه لن يتلقى أي تحديثات. إذا كنت ترغب في إلغاء تثبيته، فيُرجى اتباع الإرشادات هنا.",
+  "Uninstall": "إلغاء التثبيت",
+  "Other installed apps:": "التطبيقات الأخرى المثبتة:",
+  "Open": "فتح"
 }
