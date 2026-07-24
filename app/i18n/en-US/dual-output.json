@@ -1,5 +1,7 @@
 {
   "Horizontal canvas": "Horizontal canvas",
   "Vertical canvas": "Vertical canvas",
-  "Error stopping stream: default streams do not exist.": "Error stopping stream: default streams do not exist."
+  "Error stopping stream: default streams do not exist.": "Error stopping stream: default streams do not exist.",
+  "Cannot toggle Studio Mode when both displays are active.": "Cannot toggle Studio Mode when both displays are active.",
+  "Studio Mode is only supported for the horizontal display.": "Studio Mode is only supported for the horizontal display."
 }

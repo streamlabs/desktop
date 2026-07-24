@@ -359,9 +359,10 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
      */
     this.sceneCollectionsService.collectionSwitched.subscribe(collection => {
       const hasNodeMap =
-        collection?.sceneNodeMaps && Object.entries(collection?.sceneNodeMaps).length > 0;
+        !!collection?.sceneNodeMaps && Object.keys(collection?.sceneNodeMaps).length > 0;
 
-      if (this.state.dualOutputMode && !hasNodeMap) {
+      if (!hasNodeMap) {
+        console.log('[DUAL OUTPUT: Convert single output collection to dual output]');
         this.convertSingleOutputToDualOutputCollection();
       } else if (hasNodeMap) {
         this.validateDualOutputCollection();
@@ -490,6 +491,10 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     this.SET_SHOW_DUAL_OUTPUT(status);
   }
 
+  /**
+   * Convert a single output scene collection to a dual output scene collection
+   * @remark This functionality will be moved into the nodes system in a future PR
+   */
   convertSingleOutputToDualOutputCollection() {
     this.SET_IS_LOADING(true);
 
@@ -506,6 +511,8 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
       this.collectionHandled.next();
     }
 
+    this.sceneCollectionsService.save();
+    this.sceneCollectionsService.stateService.flushManifestFile();
     this.collectionHandled.next(this.sceneCollectionsService.sceneNodeMaps);
   }
 
@@ -647,6 +654,8 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
       this.collectionHandled.next();
     }
 
+    this.sceneCollectionsService.save();
+    this.sceneCollectionsService.stateService.flushManifestFile();
     this.collectionHandled.next(this.sceneCollectionsService.sceneNodeMaps);
   }
 

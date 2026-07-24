@@ -1,17 +1,13 @@
 import { restartApp, test, TExecutionContext, useWebdriver } from '../../helpers/webdriver';
 import {
-  click,
-  clickCheckbox,
-  clickIfDisplayed,
+  clickWhenDisplayed,
   clickTab,
   focusChild,
   focusMain,
   getNumElements,
   isDisplayed,
-  selectElements,
   waitForDisplayed,
 } from '../../helpers/modules/core';
-import { toggleDualOutputMode } from '../../helpers/modules/dual-output';
 import { logIn } from '../../helpers/modules/user';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import { getApiClient } from '../../helpers/api-client';
@@ -123,22 +119,7 @@ test('Shows and filters scene item hotkeys', async t => {
 
   await showSettingsWindow('Hotkeys');
 
-  await clickIfDisplayed('div.ant-collapse-item');
-
-  let numHorizontalIcons = (await selectElements('i.icon-desktop')).values.length;
-  let numVerticalIcons = (await selectElements('i.icon-phone-case')).values.length;
-
-  t.true(
-    numHorizontalIcons === 0,
-    'Single output scene collection should have no horizontal icons',
-  );
-  t.true(numVerticalIcons === 0, 'Single output scene collection should have no vertical icons');
-
-  // confirm dual output scene collection scene item hotkeys
-  await toggleDualOutputMode(false);
-  await focusChild();
-  await click('[data-name="settings-nav-item"]=Hotkeys');
-  await clickIfDisplayed('div.ant-collapse-item');
+  await clickWhenDisplayed('div.ant-collapse-item');
   await waitForDisplayed('div.section-content--opened');
 
   // wait for icons to load
@@ -162,8 +143,8 @@ test('Shows and filters scene item hotkeys', async t => {
   // confirm only horizontal icons show in the horizontal tab
   // subtract 1 from horizontal because an icon is shown in the tab
   // subract 2 from vertical due to the mobile settings tab using this icon
-  numHorizontalIcons = (await getNumElements('.icon-desktop')) - 1;
-  numVerticalIcons = (await getNumElements('.icon-phone-case')) - 2;
+  let numHorizontalIcons = (await getNumElements('.icon-desktop')) - 1;
+  let numVerticalIcons = (await getNumElements('.icon-phone-case')) - 2;
 
   // confirm only horizontal icons show in the horizontal tab
   t.is(
@@ -183,44 +164,4 @@ test('Shows and filters scene item hotkeys', async t => {
     'Dual output scene collection vertical icons should equal vertical hotkeys',
   );
   t.is(numHorizontalIcons, 0, 'Dual output scene collection hides horizontal icon in vertical tab');
-
-  // confirm horizontal and vertical scene items show when dual output is toggled off
-  // on a dual output scene collection
-  await click('[data-name="settings-nav-item"]=Video');
-  await clickCheckbox('dual-output-checkbox');
-  await click('[data-name="settings-nav-item"]=Hotkeys');
-  await clickIfDisplayed('div.ant-collapse-item');
-  await waitForDisplayed('div.section-content--opened');
-
-  // subtract 1 because the SWITCH_TO_SCENE hotkey is not a scene item but is a scenes hotkey
-  numHorizontalIcons = (await getNumElements('.icon-desktop')) - 1;
-  numVerticalIcons = (await getNumElements('.icon-phone-case')) - 2;
-
-  // confirm only horizontal icons show in the horizontal tab
-  t.is(
-    numHorizontalIcons,
-    numHorizontalHotkeys,
-    'Dual output scene collection in single output mode shows horizontal hotkeys in horizontal tab',
-  );
-  t.is(
-    numVerticalIcons,
-    0,
-    'Dual output scene collection hides vertical hotkeys in horizontal tab',
-  );
-
-  await clickTab('Vertical');
-  numHorizontalIcons = (await getNumElements('.icon-desktop')) - 1;
-  numVerticalIcons = (await getNumElements('.icon-phone-case')) - 2;
-
-  // confirm only vertical icons show in the vertical tab
-  t.is(
-    numHorizontalIcons,
-    0,
-    'Dual output scene collection hides horizontal hotkeys in vertical tab',
-  );
-  t.is(
-    numVerticalIcons,
-    numVerticalHotkeys,
-    'Dual output scene collection shows vertical hotkeys in vertical tab',
-  );
 });

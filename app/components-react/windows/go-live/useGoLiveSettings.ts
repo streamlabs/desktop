@@ -361,10 +361,9 @@ export class GoLiveSettingsModule {
     }
 
     /**
-     * If the user is in dual output mode, we need to ensure the stream switcher is disabled
+     * If the user will stream with dual output, ensure the stream switcher is disabled
      */
-    const { dualOutputMode } = DualOutputService.state;
-    if (dualOutputMode && settings.streamShift) {
+    if (this.state.isDualOutputMode && settings.streamShift) {
       settings.streamShift = false;
     }
 
