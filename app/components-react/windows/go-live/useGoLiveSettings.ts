@@ -499,6 +499,12 @@ export class GoLiveSettingsModule {
     this.save(this.state.settings);
   }
 
+  toggleVerticalDisplay() {
+    if (Services.DualOutputService.views.showVerticalDisplay) return;
+    Services.DualOutputService.actions.toggleDualOutputMode(true);
+    Services.DualOutputService.actions.toggleDisplay(true, 'vertical');
+  }
+
   get enabledDestinations() {
     return this.state.customDestinations.reduce(
       (enabled: number[], dest: ICustomStreamDestination, index: number) => {

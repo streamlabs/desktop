@@ -38,6 +38,7 @@ export const DestinationSwitchers = memo(() => {
     disableNonUltraSwitchers,
     nonPrimeBothDisplayPlatform,
     getUsername,
+    isLoading,
   } = useGoLiveSettings().extend(module => ({
     get renderedPlatforms() {
       // Some platforms are always shown, even if not linked so add them to the list of platforms to display
@@ -201,6 +202,7 @@ export const DestinationSwitchers = memo(() => {
             isPrime={isPrime}
             username={getUsername(platform)}
             index={ind}
+            isLoading={isLoading}
           />
         );
       })}
@@ -227,6 +229,7 @@ export const DestinationSwitchers = memo(() => {
             showDisplaySelector={visible}
             isPrime={isPrime}
             index={ind}
+            isLoading={isLoading}
           />
         );
       })}
@@ -246,6 +249,8 @@ interface IDestinationSwitcherProps {
   isPrime: boolean;
   username?: string;
   isUnlinked?: boolean;
+  /** Disable the switch while the go live window is loading/refreshing settings */
+  isLoading?: boolean;
 }
 
 /**
@@ -289,6 +294,9 @@ const DestinationSwitcher = memo(
       (e: MouseEvent) => {
         const enabled = p.enabled;
 
+        // Ignore toggles while the go live window is loading/refreshing settings
+        if (p.isLoading) return enabled;
+
         if (!p.isPrime) {
           if (p.bothDisplayPlatformLabel) {
             alertInfo({
@@ -309,7 +317,7 @@ const DestinationSwitcher = memo(
         if (disabled) return enabled;
         return onChange(!enabled);
       },
-      [p.enabled, onChange, p.bothDisplayPlatformLabel, disabled],
+      [p.enabled, p.isLoading, onChange, p.bothDisplayPlatformLabel, disabled],
     );
 
     const { title, description } = useMemo(() => {
@@ -365,6 +373,7 @@ const DestinationSwitcher = memo(
         label={label}
         title={title}
         description={description}
+        switchDisabled={p.isLoading}
         className={cx({ [styles.disabled]: disabled })}
         tooltipClassName={styles.switcherTooltip}
       >
@@ -384,6 +393,7 @@ const DestinationSwitcher = memo(
             index={p.index}
             alignIcons="left"
             visible={p.showDisplaySelector}
+            disabled={p.isLoading}
           />
         </AnimatedWrapper>
       </SwitcherCard>
