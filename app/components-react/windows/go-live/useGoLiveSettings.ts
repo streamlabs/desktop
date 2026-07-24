@@ -18,6 +18,8 @@ import { getDefined } from '../../../util/properties-type-guards';
 import isEqual from 'lodash/isEqual';
 import { TDisplayType } from 'services/settings-v2';
 import partition from 'lodash/partition';
+import xorWith from 'lodash/xorWith';
+import { Subject } from 'rxjs';
 
 type TCommonFieldName = 'title' | 'description';
 
@@ -295,7 +297,14 @@ export class GoLiveSettingsModule {
   // define initial state
   state = injectState(GoLiveSettingsState);
 
-  constructor(public form: FormInstance, public isUpdateMode: boolean) {}
+  cooldownTimer = new Subject<boolean>();
+
+  constructor(
+    public form: FormInstance,
+    public isUpdateMode: boolean,
+    public activePlatforms?: TPlatform[],
+    public activeDestinations?: ICustomStreamDestination[],
+  ) {}
 
   // initial setup
   async init() {
@@ -544,6 +553,33 @@ export class GoLiveSettingsModule {
     Services.UserService.actions.setPrimaryPlatform(platform);
   }
 
+  get isUpdatingTargets() {
+    return (
+      xorWith(this.activePlatforms, this.state.enabledPlatforms, isEqual).length > 0 ||
+      xorWith(
+        this.activeDestinations?.map(dest => dest.streamKey),
+        this.state.customDestinations.filter(dest => dest.enabled).map(dest => dest.streamKey),
+        isEqual,
+      ).length > 0
+    );
+  }
+
+  /**
+   * Get platform/destination live status
+   * @param target - platform or index of custom destination
+   * @returns whether the target is currently live
+   */
+  isTargetLive(target: TPlatform | number) {
+    if (typeof target === 'number') {
+      const dest = this.state.customDestinations[target];
+      return this.activeDestinations?.some(
+        d => `{${d.url}${d.streamKey}` === `{${dest.url}${dest.streamKey}`,
+      );
+    } else {
+      return this.activePlatforms?.includes(target);
+    }
+  }
+
   setStreamShift(status: boolean) {
     this.state.toggleStreamShift(status);
     this.save(this.state.settings);
@@ -640,9 +676,23 @@ export class GoLiveSettingsModule {
   async updateStream() {
     if (
       (await this.validate()) &&
-      (await Services.StreamingService.actions.return.updateStreamSettings(this.state.settings))
+      (await Services.StreamingService.actions.return.updateStreamSettings(
+        this.state.settings,
+        this.activePlatforms,
+        this.activeDestinations,
+      ))
     ) {
       message.success($t('Successfully updated'));
+
+      // Handle add/remove targets when updating a stream while live
+      if (this.isUpdateMode) {
+        if (this.isUpdatingTargets) {
+          this.cooldownTimer.next(true);
+        }
+
+        this.activePlatforms = this.state.enabledPlatforms;
+        this.activeDestinations = this.state.customDestinations.filter(dest => dest.enabled);
+      }
     }
   }
 
@@ -753,6 +803,19 @@ export function useGoLiveSettings() {
 export function useGoLiveSettingsRoot(params?: { isUpdateMode: boolean }) {
   const form = useForm();
 
-  const useModuleResult = useModule(GoLiveSettingsModule, [form, !!params?.isUpdateMode]);
+  const activePlatforms = params?.isUpdateMode
+    ? Services.StreamingService.views.enabledPlatforms
+    : undefined;
+
+  const activeDestinations = params?.isUpdateMode
+    ? Services.StreamingService.views.customDestinations.filter(dest => dest.enabled)
+    : undefined;
+
+  const useModuleResult = useModule(GoLiveSettingsModule, [
+    form,
+    !!params?.isUpdateMode,
+    activePlatforms,
+    activeDestinations,
+  ]);
   return useModuleResult;
 }
