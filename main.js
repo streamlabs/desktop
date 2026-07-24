@@ -76,7 +76,9 @@ if (process.argv.includes('--clearCacheDir')) {
 }
 
 // This ensures that only one copy of our app can run at once.
-const gotTheLock = app.requestSingleInstanceLock();
+// additionalData preserves the secondary process arguments exactly; Electron's argv event may
+// reorder them or append Chromium switches.
+const gotTheLock = app.requestSingleInstanceLock({ relaunchArgs: process.argv.slice(1) });
 
 if (!gotTheLock) {
   app.quit();
@@ -85,6 +87,7 @@ if (!gotTheLock) {
 
 const bootstrap = require('./updater/build/bootstrap.js');
 const bundleUpdater = require('./updater/build/bundle-updater.js');
+const { createShutdownCoordinator } = require('./app/util/shutdown-coordinator');
 const uuid = require('uuid/v4');
 const semver = require('semver');
 const windowStateKeeper = require('electron-window-state');
@@ -272,9 +275,20 @@ app.on('ready', () => {
 // closing the windows before exit.
 let allowMainWindowClose = false;
 let shutdownStarted = false;
-let appShutdownTimeout;
+let shutdownCoordinator;
 
 global.indexUrl = `file://${__dirname}/index.html`;
+
+function forceShutdown(reason) {
+  console.warn(`[Shutdown] Force exiting application: ${reason}`);
+  allowMainWindowClose = true;
+
+  BrowserWindow.getAllWindows().forEach(window => {
+    if (!window.isDestroyed()) window.destroy();
+  });
+
+  app.exit(0);
+}
 
 function openDevTools() {
   childWindow.webContents.openDevTools({ mode: 'detach' });
@@ -291,6 +305,18 @@ async function startApp() {
   const crashHandler = require('crash-handler');
   const isDevMode = process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test';
   const crashHandlerLogPath = app.getPath('userData');
+
+  shutdownCoordinator = createShutdownCoordinator({
+    logger: console,
+    onForceShutdown: forceShutdown,
+    onRelaunch: args => {
+      if (args) {
+        app.relaunch({ args });
+      } else {
+        app.relaunch();
+      }
+    },
+  });
 
   if (process.platform === 'win32') {
     overlay = require('game_overlay');
@@ -430,15 +456,8 @@ async function startApp() {
   mainWindow.on('close', e => {
     if (!shutdownStarted) {
       shutdownStarted = true;
+      shutdownCoordinator.beginShutdown();
       workerWindow.send('shutdown');
-
-      // We give the worker window 10 seconds to acknowledge a request
-      // to shut down.  Otherwise, we just close it.
-      appShutdownTimeout = setTimeout(() => {
-        allowMainWindowClose = true;
-        if (!mainWindow.isDestroyed()) mainWindow.close();
-        if (!workerWindow.isDestroyed()) workerWindow.close();
-      }, 10 * 1000);
     }
 
     if (!allowMainWindowClose) e.preventDefault();
@@ -462,11 +481,24 @@ async function startApp() {
     }
   });
 
+  app.on('quit', () => {
+    shutdownCoordinator.finishShutdown();
+  });
+
   ipcMain.on('acknowledgeShutdown', () => {
-    if (appShutdownTimeout) clearTimeout(appShutdownTimeout);
+    shutdownCoordinator.acknowledgeShutdown();
   });
 
   ipcMain.on('shutdownComplete', () => {
+    // OBS initialization can fail before the normal close path starts shutdown.
+    // Enter the coordinator state before recording completion so the final exit is bounded too.
+    if (!shutdownStarted) {
+      shutdownStarted = true;
+      shutdownCoordinator.beginShutdown();
+    }
+
+    if (!shutdownCoordinator.completeShutdown()) return;
+
     allowMainWindowClose = true;
     mainWindow.close();
     workerWindow.close();
@@ -474,7 +506,10 @@ async function startApp() {
 
   workerWindow.on('closed', () => {
     session.defaultSession.flushStorageData();
-    session.defaultSession.cookies.flushStore().then(() => app.quit());
+    session.defaultSession.cookies
+      .flushStore()
+      .catch(error => console.log('[Shutdown] Failed to flush cookie store', error))
+      .finally(() => app.quit());
   });
 
   // Pre-initialize the child window
@@ -597,7 +632,18 @@ if (fs.existsSync(haDisableFile)) app.disableHardwareAcceleration();
 
 app.setAsDefaultProtocolClient('slobs');
 
-app.on('second-instance', (event, argv, cwd) => {
+app.on('second-instance', (event, argv, cwd, additionalData) => {
+  if (shutdownStarted) {
+    // The triggering process has already failed to acquire the single-instance lock and will exit.
+    // Schedule one replacement with its arguments, then let the watchdog arbitrate this shutdown.
+    const relaunchArgs =
+      additionalData && Array.isArray(additionalData.relaunchArgs)
+        ? additionalData.relaunchArgs
+        : argv.slice(1);
+    if (shutdownCoordinator) shutdownCoordinator.scheduleRelaunch(relaunchArgs);
+    return;
+  }
+
   // Check for protocol links in the argv of the other process
   argv.forEach(arg => {
     if (arg.match(/^slobs:\/\//)) {
@@ -727,7 +773,7 @@ ipcMain.on('vuex-mutation', (event, mutation) => {
 });
 
 ipcMain.on('restartApp', () => {
-  app.relaunch();
+  shutdownCoordinator.scheduleRelaunch();
   // Closing the main window starts the shut down sequence
   mainWindow.close();
 });
