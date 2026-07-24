@@ -376,5 +376,6 @@
   "Select a different display for %{platform} to toggle on another destination, or upgrade to Ultra to enable multistreaming.": "Select a different display for %{platform} to toggle on another destination, or upgrade to Ultra to enable multistreaming.",
   "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.": "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
   "Automatic (Recommended)": "Automatic (Recommended)",
-  "Preferred Multistream Ingest Server": "Preferred Multistream Ingest Server"
+  "Preferred Multistream Ingest Server": "Preferred Multistream Ingest Server",
+  "Failed to update Multistream platforms and destinations while live": "Failed to update Multistream platforms and destinations while live"
 }

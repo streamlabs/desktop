@@ -46,6 +46,11 @@ export const errorTypes = {
       return $t('Failed to configure the Multistream server');
     },
   },
+  RESTREAM_UPDATE_FAILED: {
+    get message() {
+      return $t('Failed to update Multistream platforms and destinations while live');
+    },
+  },
   RESTREAM_ENHANCED_BROADCASTING_FAILED: {
     get message() {
       return $t('Failed to configure the Multistream server for Enhanced Broadcasting');
