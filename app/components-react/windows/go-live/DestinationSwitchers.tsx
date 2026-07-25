@@ -39,8 +39,6 @@ export const DestinationSwitchers = memo(() => {
     nonPrimeBothDisplayPlatform,
     getUsername,
     isLoading,
-    isFacebookGrandfathered,
-    isTikTokGrandfathered,
   } = useGoLiveSettings().extend(module => ({
     get renderedPlatforms() {
       // Some platforms are always shown, even if not linked so add them to the list of platforms to display
@@ -100,46 +98,19 @@ export const DestinationSwitchers = memo(() => {
       emitSwitch();
       return enabledPlatformsRef.current.includes(platform);
     },
-    [emitSwitch, isPrime],
+    [emitSwitch],
   );
 
   const toggleNonUltraPlatform = useCallback(
     (platform: TPlatform, enabled: boolean) => {
-      // TikTok and Facebook users can always go live with those platforms
-      let maxPlatforms = 2;
-
-      // Expand the maximum allowed platforms for TikTok and Facebook grandfathered users.
-      if (
-        enabled &&
-        isFacebookGrandfathered &&
-        (platform === 'facebook' || enabledPlatformsRef.current.includes('facebook'))
-      ) {
-        maxPlatforms++;
-      }
-
-      if (
-        enabled &&
-        isTikTokGrandfathered &&
-        (platform === 'tiktok' || enabledPlatformsRef.current.includes('tiktok'))
-      ) {
-        maxPlatforms++;
-      }
-
       if (enabled) {
         const total = enabledPlatformsRef.current.length + enabledDestRef.current.length;
-        if (total >= maxPlatforms) {
-          const text =
-            maxPlatforms > 2
-              ? $t(
-                  "You've reached the maximum number of streaming destinations. Upgrade to Ultra to enable multistreaming.",
-                )
-              : $t(
-                  "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
-                );
-
+        if (total >= 2) {
           alertInfo({
             name: 'switcher-info-alert',
-            text,
+            text: $t(
+              "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
+            ),
           });
           return false;
         }
@@ -156,7 +127,7 @@ export const DestinationSwitchers = memo(() => {
 
       return enabledPlatformsRef.current.includes(platform);
     },
-    [enabledPlatformsRef, emitSwitch, isFacebookGrandfathered, isTikTokGrandfathered],
+    [enabledPlatformsRef, emitSwitch],
   );
 
   const toggleDestination = useCallback(
