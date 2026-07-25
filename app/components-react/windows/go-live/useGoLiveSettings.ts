@@ -661,6 +661,14 @@ export class GoLiveSettingsModule {
     return Services.RestreamService.views.canEnableRestream;
   }
 
+  get isFacebookGrandfathered() {
+    return Services.RestreamService.views.isFacebookGrandfathered;
+  }
+
+  get isTikTokGrandfathered() {
+    return Services.RestreamService.views.isTikTokGrandfathered;
+  }
+
   get recommendedColorSpaceWarnings() {
     return Services.SettingsService.views.recommendedColorSpaceWarnings;
   }
