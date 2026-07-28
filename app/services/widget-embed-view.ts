@@ -30,6 +30,8 @@ import { I18nService } from 'services/i18n';
 // How long the warm view may sit unmounted before we release its renderer.
 const IDLE_EVICTION_MS = 5 * 60 * 1000;
 const NAVIGATE_TIMEOUT_MS = 10 * 1000;
+const BOOT_TIMEOUT_MS = 40 * 1000;
+const READY_POLL_MS = 150;
 
 export class WidgetEmbedViewService extends Service {
   @Inject() userService: UserService;
@@ -147,6 +149,33 @@ export class WidgetEmbedViewService extends Service {
     this.booted = this.isAlive() && this.view!.webContents.getURL().includes('/dashboard');
     this.loadedTheme = theme;
     this.loadedProduct = product;
+
+    // `loadUrl` only means the document arrived — the SPA still has to boot and the product
+    // still has to fetch. Stay hidden until it reports a loaded page so the cold open shows our
+    // spinner the whole way through rather than handing off to core's.
+    await this.withTimeout(this.waitForReady(), BOOT_TIMEOUT_MS);
+  }
+
+  /**
+   * Resolve once the embedded page reports a rendered, finished-loading product.
+   *
+   * `window.__slobsEmbedWhenReady` only exists once the SPA has mounted, so poll for it and then
+   * await the promise it hands back. Errors are retried rather than thrown: `executeJavaScript`
+   * rejects if it lands mid-navigation, which is expected while a magic-session redirect settles.
+   */
+  private async waitForReady(): Promise<void> {
+    for (;;) {
+      if (!this.isAlive()) return;
+      try {
+        const ready = await this.view!.webContents.executeJavaScript(
+          'window.__slobsEmbedWhenReady ? window.__slobsEmbedWhenReady() : false',
+        );
+        if (ready) return;
+      } catch {
+        // Page swapped under us — fall through and retry until the caller's timeout fires.
+      }
+      await new Promise(resolve => setTimeout(resolve, READY_POLL_MS));
+    }
   }
 
   /**
