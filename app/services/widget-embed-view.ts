@@ -29,6 +29,7 @@ import { I18nService } from 'services/i18n';
 
 // How long the warm view may sit unmounted before we release its renderer.
 const IDLE_EVICTION_MS = 5 * 60 * 1000;
+const NAVIGATE_TIMEOUT_MS = 10 * 1000;
 
 export class WidgetEmbedViewService extends Service {
   @Inject() userService: UserService;
@@ -57,6 +58,8 @@ export class WidgetEmbedViewService extends Service {
     this.clearIdleEviction();
     this.ensureView();
     if (!this.isAlive()) return;
+
+    this.hide();
 
     // (Re)attach to the requested window. Skip if already attached there (e.g. a theme-change
     // re-navigation within the same open) to avoid adding the same view twice.
@@ -128,9 +131,7 @@ export class WidgetEmbedViewService extends Service {
       if (this.loadedProduct !== product) {
         // Client-side route change — no reload, no re-auth redirect, no SPA re-boot. This is the
         // whole point: it's what turns a ~9s re-open into a sub-second widget switch.
-        await this.view!.webContents.executeJavaScript(
-          `location.hash = ${JSON.stringify(`#/${product}?slobs`)}; void 0;`,
-        );
+        await this.withTimeout(this.pushRoute(product), NAVIGATE_TIMEOUT_MS);
         this.loadedProduct = product;
       }
       return;
@@ -146,6 +147,42 @@ export class WidgetEmbedViewService extends Service {
     this.booted = this.isAlive() && this.view!.webContents.getURL().includes('/dashboard');
     this.loadedTheme = theme;
     this.loadedProduct = product;
+  }
+
+  /**
+   * Drive the embedded SPA to `product` through core's `window.__slobsEmbedNavigate` bridge. The
+   * bridge unmounts the outgoing widget in the same tick it is called and resolves once the new
+   * route is mounting, which is what lets us keep the view hidden across the swap instead of
+   * flashing the previous widget's settings.
+   */
+  private async pushRoute(product: TWidgetEmbedProduct): Promise<void> {
+    if (!this.isAlive()) return;
+    await this.view!.webContents.executeJavaScript(
+      `window.__slobsEmbedNavigate(${JSON.stringify(`/${product}`)})`,
+    );
+  }
+
+  /** Park the view at a zero rect so it cannot paint until someone gives it real bounds. */
+  private hide() {
+    if (!this.isAlive()) return;
+    this.view!.setBounds({ x: 0, y: 0, width: 0, height: 0 });
+  }
+
+  /**
+   * Resolve when `promise` settles or `ms` elapses, whichever comes first. The view stays hidden
+   * for the duration, so a page that never answers must not hold it hidden forever.
+   */
+  private async withTimeout(promise: Promise<unknown>, ms: number): Promise<void> {
+    let timer: number | undefined;
+    const expiry = new Promise<void>((resolve: () => void) => {
+      timer = window.setTimeout(resolve, ms);
+    });
+    try {
+      // Swallow page-side rejections: a failed navigation should still hand the view back.
+      await Promise.race([promise.catch(() => undefined), expiry]);
+    } finally {
+      if (timer != null) clearTimeout(timer);
+    }
   }
 
   private ensureView() {

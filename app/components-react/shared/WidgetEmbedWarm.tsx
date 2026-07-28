@@ -70,7 +70,7 @@ export default function WidgetEmbedWarm(p: WidgetEmbedWarmProps) {
   useEffect(() => {
     if (loading) return undefined;
 
-    const interval = window.setInterval(() => {
+    function syncBounds() {
       if (!sizeContainer.current) return;
       const r = hideStyleBlockers
         ? { left: 0, top: 0, width: 0, height: 0 }
@@ -90,7 +90,11 @@ export default function WidgetEmbedWarm(p: WidgetEmbedWarmProps) {
           { x: next.width, y: next.height },
         );
       }
-    }, 100);
+    }
+
+    syncBounds();
+
+    const interval = window.setInterval(syncBounds, 100);
 
     return () => clearInterval(interval);
   }, [loading, hideStyleBlockers]);
