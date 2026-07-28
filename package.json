@@ -47,8 +47,9 @@
     "commit": "commit",
     "postinstall": "node ./scripts/postinstall.js",
     "tail-obs-logs": "node bin/tail-obs-logs.js",
-    "generate-agreement": "cat BASEAGREEMENT > AGREEMENT && yarn licenses generate-disclaimer >> AGREEMENT",
-    "generate-agreement:mac": "cat BASEAGREEMENT > license_en.txt && yarn licenses generate-disclaimer >> license_en.txt",
+    "generate-licenses": "yarn licenses generate-disclaimer > LICENSES",
+    "generate-agreement": "yarn generate-licenses && cat BASEAGREEMENT LICENSES > AGREEMENT",
+    "generate-agreement:mac": "yarn generate-licenses && cat BASEAGREEMENT LICENSES > license_en.txt",
     "beta": "SLD_USE_BETA=true electron .",
     "qa": "rm -rf node_modules/ && yarn install && yarn compile && yarn start",
     "qa:beta": "rm -rf node_modules/ && yarn install && yarn compile && yarn beta"
