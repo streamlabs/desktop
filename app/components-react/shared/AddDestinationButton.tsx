@@ -12,15 +12,23 @@ import cx from 'classnames';
 import { useRealmObject } from 'components-react/hooks/realm';
 
 const PlusIcon = PlusOutlined as Function;
-interface IAddDestinationButtonProps {
+interface IAddDestinationGroupProps {
   type?: 'default' | 'ultra' | 'small' | 'banner' | 'header';
   text?: string;
+  name?: string;
   className?: string;
   style?: CSSProperties;
   onClick?: () => void;
 }
 
-export default function AddDestinationButton(p: IAddDestinationButtonProps) {
+interface IAddDestinationButtonProps {
+  name?: string;
+  className?: string;
+  isDualOutputMode?: boolean;
+  onClick: () => void;
+}
+
+export default function AddDestinationButton(p: IAddDestinationGroupProps) {
   const { addDestination, btnType, isDualOutputMode } = useGoLiveSettings().extend(module => {
     const { RestreamService, SettingsService, MagicLinkService } = Services;
 
@@ -66,6 +74,7 @@ export default function AddDestinationButton(p: IAddDestinationButtonProps) {
     >
       {type === 'default' && (
         <DefaultAddDestinationButton
+          name={p?.name}
           className={p?.className}
           onClick={p?.onClick ?? addDestination}
         />
@@ -73,6 +82,7 @@ export default function AddDestinationButton(p: IAddDestinationButtonProps) {
 
       {type === 'ultra' && (
         <UltraAddDestinationButton
+          name={p?.name}
           className={p?.className}
           isDualOutputMode={isDualOutputMode}
           onClick={p?.onClick ?? addDestination}
@@ -81,26 +91,35 @@ export default function AddDestinationButton(p: IAddDestinationButtonProps) {
 
       {type === 'small' && (
         <SmallAddDestinationButton
+          name={p?.name}
           className={p?.className}
           onClick={p?.onClick ?? addDestination}
         />
       )}
 
       {type === 'banner' && (
-        <AddDestinationBanner className={p?.className} onClick={p?.onClick ?? addDestination} />
+        <AddDestinationBanner
+          name={p?.name}
+          className={p?.className}
+          onClick={p?.onClick ?? addDestination}
+        />
       )}
 
       {type === 'header' && (
-        <AddDestinationHeader className={p?.className} onClick={p?.onClick ?? addDestination} />
+        <AddDestinationHeader
+          name={p?.name}
+          className={p?.className}
+          onClick={p?.onClick ?? addDestination}
+        />
       )}
     </ButtonGroup>
   );
 }
 
-function DefaultAddDestinationButton(p: { className?: string; onClick: () => void }) {
+function DefaultAddDestinationButton(p: IAddDestinationButtonProps) {
   return (
     <Button
-      data-name="default-add-destination"
+      name={p?.name ?? 'default-add-destination'}
       className={cx(styles.addDestinationBtn, styles.defaultOutputBtn, p.className)}
       onClick={p.onClick}
       block
@@ -111,28 +130,24 @@ function DefaultAddDestinationButton(p: { className?: string; onClick: () => voi
   );
 }
 
-function SmallAddDestinationButton(p: { className?: string; onClick: () => void }) {
+function SmallAddDestinationButton(p: IAddDestinationButtonProps) {
   return (
     <Button
-      data-name="default-add-destination"
-      className={cx(styles.addDestinationBtn, styles.smallBtn, p.className)}
+      name={p?.name ?? 'default-add-destination'}
+      className={cx(styles.smallBtn, p.className)}
       onClick={p.onClick}
       block
     >
-      <PlusIcon style={{ paddingLeft: '17px', fontSize: '24px' }} />
-      <span style={{ flex: 1 }}>{$t('Add Destination')}</span>
+      <PlusIcon style={{ color: 'var(--title)' }} />
+      <span>{$t('Add Destination')}</span>
     </Button>
   );
 }
 
-function UltraAddDestinationButton(p: {
-  className?: string;
-  isDualOutputMode: boolean;
-  onClick: () => void;
-}) {
+function UltraAddDestinationButton(p: IAddDestinationButtonProps) {
   return (
     <ButtonHighlighted
-      data-name="ultra-add-destination"
+      name={p?.name ?? 'ultra-add-destination'}
       faded
       className={cx(
         styles.addDestinationBtn,
@@ -151,17 +166,18 @@ function UltraAddDestinationButton(p: {
   );
 }
 
-function AddDestinationBanner(p: { className?: string; onClick: () => void }) {
+function AddDestinationBanner(p: IAddDestinationButtonProps) {
   const isDarkTheme = useRealmObject(Services.CustomizationService.state).isDarkTheme;
 
   const text = $t('Unlock unlimited multistreaming with Ultra and grow your audience faster');
 
   return (
     <ButtonHighlighted
-      data-name="banner-add-destination"
-      faded
-      className={cx(styles.infoBanner, { [styles.night]: isDarkTheme }, p?.className)}
+      name={p?.name ?? 'banner-add-destination'}
+      faded={isDarkTheme}
+      className={cx(styles.infoBanner, p?.className)}
       onClick={p.onClick}
+      filledLight={!isDarkTheme}
     >
       <UltraIcon type="badge" className={styles.ultraIcon} />
       <div className={styles.ultraText}>
@@ -174,7 +190,7 @@ function AddDestinationBanner(p: { className?: string; onClick: () => void }) {
   );
 }
 
-function AddDestinationHeader(p: { className?: string; onClick: () => void }) {
+function AddDestinationHeader(p: IAddDestinationButtonProps) {
   const isDarkTheme = useRealmObject(Services.CustomizationService.state).isDarkTheme;
 
   const text = $t(
@@ -183,10 +199,11 @@ function AddDestinationHeader(p: { className?: string; onClick: () => void }) {
 
   return (
     <ButtonHighlighted
-      data-name="header-add-destination"
-      faded
+      name={p?.name ?? 'header-add-destination'}
+      faded={isDarkTheme}
+      filledLight={!isDarkTheme}
       noMargin
-      className={cx(styles.addDestinationHeader, { [styles.night]: isDarkTheme }, p?.className)}
+      className={cx(styles.addDestinationHeader, p?.className)}
       onClick={p.onClick}
     >
       <UltraIcon type="badge" className={styles.ultraIconLg} />

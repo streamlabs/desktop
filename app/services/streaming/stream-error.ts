@@ -79,6 +79,16 @@ export const errorTypes = {
       return $t('YouTube token has expired, re-login or re-merge YouTube account');
     },
   },
+  YOUTUBE_UNAVAILABLE: {
+    get message() {
+      return $t('YouTube service is temporarily unavailable');
+    },
+    get action() {
+      return $t(
+        'YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support',
+      );
+    },
+  },
   FACEBOOK_STREAMING_DISABLED: {
     get message() {
       return $t(

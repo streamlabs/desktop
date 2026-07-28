@@ -24,8 +24,8 @@
   "Streamlabs Charity Goal": "Streamlabs Charity-Ziel",
   "Streamlabs Charity Donations": "Streamlabs Charity-Spenden",
   "Charity donations": "Charity-Spenden",
-  "Goal Settings": "Goal Settings",
-  "Must be in MM/DD/YYYY format.": "Must be in MM/DD/YYYY format.",
-  "Condensed": "Condensed",
+  "Goal Settings": "Zieleinstellungen",
+  "Must be in MM/DD/YYYY format.": "Muss im Format MM/TT/JJJJ sein.",
+  "Condensed": "Zusammengefasst",
   "Count Power-Ups": "Count Power-Ups"
 }

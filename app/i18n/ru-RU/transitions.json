@@ -28,8 +28,8 @@
   "Global Transition": "Глобальный переход",
   "Edit": "Изменить",
   "Live": "Трансляция",
-  "Transitions": "Transitions",
-  "Connections": "Connections",
-  "Softness": "Softness",
-  "Invert": "Invert"
+  "Transitions": "Переходы",
+  "Connections": "Подключения",
+  "Softness": "Плавность",
+  "Invert": "Инвертировать"
 }

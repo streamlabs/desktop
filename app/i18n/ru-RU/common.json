@@ -171,10 +171,10 @@
   "Alert Box Settings": "Настройки оповещений",
   "Alerts and Widgets": "Оповещения и виджеты",
   "AI": "ИИ",
-  "Between": "Between",
+  "Between": "Между",
   "Upgrade": "Обновить",
-  "Edit Data": "Edit Data",
-  "Edit Reactive Data": "Edit Reactive Data",
-  "Reactive Data Editor": "Reactive Data Editor",
-  "Not enabled": "Not enabled"
+  "Edit Data": "Редактировать данные",
+  "Edit Reactive Data": "Редактировать реактивные данные",
+  "Reactive Data Editor": "Редактор реактивных данных",
+  "Not enabled": "Не включено"
 }

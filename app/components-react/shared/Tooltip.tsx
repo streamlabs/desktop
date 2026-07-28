@@ -30,10 +30,13 @@ interface ITooltipTipProps {
   disabled?: boolean;
   autoAdjustOverflow?: boolean;
   visible?: boolean;
+  overlayClassName?: string;
+  tooltipClassName?: string;
   onClick?: () => void;
+  name?: string;
 }
 
-export default function Tooltip(props: PropsWithChildren<ITooltipTipProps>) {
+export default function Tooltip(p: PropsWithChildren<ITooltipTipProps>) {
   const {
     title,
     id,
@@ -48,10 +51,13 @@ export default function Tooltip(props: PropsWithChildren<ITooltipTipProps>) {
     autoAdjustOverflow = true,
     visible,
     onClick,
-  } = props;
+    overlayClassName,
+    tooltipClassName,
+  } = p;
 
   return (
     <div
+      data-name={p.name}
       id={id}
       className={cx(className, styles.tooltipWrapper)}
       style={wrapperStyle}
@@ -60,11 +66,11 @@ export default function Tooltip(props: PropsWithChildren<ITooltipTipProps>) {
       {disabled ? (
         <>
           {content}
-          {{ ...props }.children}
+          {{ ...p }.children}
         </>
       ) : (
         <AntdTooltip
-          className={cx({
+          className={cx(tooltipClassName, {
             [styles.tooltipContent]: styleContent,
             [styles.lightShadow]: lightShadow,
           })}
@@ -76,9 +82,10 @@ export default function Tooltip(props: PropsWithChildren<ITooltipTipProps>) {
           trigger={['hover', 'focus', 'click']}
           autoAdjustOverflow={autoAdjustOverflow}
           visible={visible}
+          overlayClassName={overlayClassName}
         >
           {content}
-          {{ ...props }.children}
+          {{ ...p }.children}
         </AntdTooltip>
       )}
     </div>

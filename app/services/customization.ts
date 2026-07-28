@@ -11,7 +11,25 @@ import { RealmObject } from './realm';
 import { ObjectSchema } from 'realm';
 import { Theme } from 'styles/antd';
 
-export type TApplicationTheme = 'night-theme' | 'day-theme' | 'prime-dark' | 'prime-light';
+export type TGoLiveTheme =
+  | 'golive-night-theme'
+  | 'golive-day-theme'
+  | 'golive-prime-dark'
+  | 'golive-prime-light';
+
+export type TApplicationTheme =
+  | 'night-theme'
+  | 'day-theme'
+  | 'prime-dark'
+  | 'prime-light'
+  | TGoLiveTheme;
+
+const GO_LIVE_THEME_BACKGROUNDS = {
+  'golive-night-theme': { r: 0, g: 0, b: 0 },
+  'golive-day-theme': { r: 255, g: 255, b: 255 },
+  'golive-prime-dark': { r: 17, g: 17, b: 17 },
+  'golive-prime-light': { r: 243, g: 243, b: 243 },
+};
 
 // Maps to --background
 const THEME_BACKGROUNDS = {
@@ -19,6 +37,14 @@ const THEME_BACKGROUNDS = {
   'prime-dark': { r: 17, g: 17, b: 17 },
   'day-theme': { r: 245, g: 248, b: 250 },
   'prime-light': { r: 243, g: 243, b: 243 },
+  ...GO_LIVE_THEME_BACKGROUNDS,
+};
+
+const GO_LIVE_SECTION_BACKGROUNDS = {
+  'golive-night-theme': { r: 0, g: 0, b: 0 },
+  'golive-day-theme': { r: 255, g: 255, b: 255 },
+  'golive-prime-dark': { r: 37, g: 37, b: 37 },
+  'golive-prime-light': { r: 255, g: 255, b: 255 },
 };
 
 // Maps to --section
@@ -27,6 +53,14 @@ const SECTION_BACKGROUNDS = {
   'prime-dark': { r: 0, g: 0, b: 0 },
   'day-theme': { r: 227, g: 232, b: 235 },
   'prime-light': { r: 255, g: 255, b: 255 },
+  ...GO_LIVE_SECTION_BACKGROUNDS,
+};
+
+const GO_LIVE_DISPLAY_BACKGROUNDS = {
+  'golive-night-theme': { r: 0, g: 0, b: 0 },
+  'golive-day-theme': { r: 255, g: 255, b: 255 },
+  'golive-prime-dark': { r: 17, g: 17, b: 17 },
+  'golive-prime-light': { r: 243, g: 243, b: 243 },
 };
 
 // Doesn't map 1:1
@@ -35,6 +69,7 @@ const DISPLAY_BACKGROUNDS = {
   'prime-dark': { r: 37, g: 37, b: 37 },
   'day-theme': { r: 227, g: 232, b: 235 },
   'prime-light': { r: 255, g: 255, b: 255 },
+  ...GO_LIVE_DISPLAY_BACKGROUNDS,
 };
 
 export interface IPinnedStatistics {

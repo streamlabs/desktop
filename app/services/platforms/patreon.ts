@@ -22,6 +22,7 @@ export interface IPatreonStartStreamOptions {
   title: string;
   description: string;
   accessRules: string[];
+  campaignId: string;
 }
 
 interface IPatreonStartStreamSettings {
@@ -94,7 +95,6 @@ interface IPatreonError {
 interface IPatreonServiceState extends IPlatformState {
   settings: IPatreonStartStreamSettings;
   ingest: string;
-  campaignId: string;
   accessRules: { key: string; value: string }[];
   broadcastId: string;
   platformId: string;
@@ -109,7 +109,6 @@ export class PatreonService
     ...BasePlatformService.initialState,
     settings: { title: '', description: '', campaignId: '', accessRules: [], mode: 'landscape' },
     ingest: '',
-    campaignId: '',
     accessRules: [],
     broadcastId: '',
     platformId: '',
@@ -172,7 +171,7 @@ export class PatreonService
     }
 
     const streamInfo = (await this.startStream(
-      goLiveSettings.platforms.patreon ?? this.state.settings,
+      patreonSettings ?? this.state.settings,
     )) as IPatreonStartStreamResponse;
 
     this.SET_INGEST(streamInfo.rtmp);
@@ -247,13 +246,22 @@ export class PatreonService
         const info = res as IPatreonStreamInfoResponse;
 
         if (info.campaigns.length) {
-          this.SET_CAMPAIGN_ID(info.campaigns[0].key.toString());
-          this.SET_CHANNEL_NAME(info.campaigns[0].value);
+          const campaigns = await Promise.all(info.campaigns.map(campaign => campaign));
+
+          // Set campaign id in stream settings and channel name in state
+          const streamSettings = {
+            ...this.state.settings,
+            campaignId: campaigns[0].key.toString(),
+          };
+          this.SET_STREAM_SETTINGS(streamSettings);
+          this.SET_CHANNEL_NAME(campaigns[0].value);
         }
 
         if (info.accessRules.length) {
-          this.SET_ACCESS_RULES(info.accessRules);
+          const accessRules = await Promise.all(info.accessRules.map(rule => rule));
+          this.SET_ACCESS_RULES(accessRules);
         }
+
         return EPlatformCallResult.Success;
       })
       .catch((e: unknown) => {
@@ -272,29 +280,34 @@ export class PatreonService
     const body = new FormData();
     body.append('title', opts.title);
     body.append('description', opts.description);
-    body.append('campaign_id', this.state.campaignId);
+    body.append('campaign_id', opts.campaignId);
     opts.accessRules.forEach(rule => body.append('access_rules[]', rule));
     body.append('state', 'live');
 
     const request = new Request(url, { headers, method: 'POST', body });
 
     return jfetch<IPatreonStartStreamResponse | IPatreonError>(request)
-      .then(async res => res)
+      .then(async res => {
+        return res;
+      })
       .catch(e => {
         console.warn('Error starting Patreon stream: ', e);
 
+        let message = e.message ?? 'Unknown error starting Patreon stream';
         if (e.result) {
-          const message = e.statusText !== '' ? e.statusText : e.result.data.message;
-          throwStreamError(
-            'PLATFORM_REQUEST_FAILED',
-            {
-              status: e.status,
-              statusText: message,
-              platform: 'patreon',
-            },
-            e.result.data.message,
-          );
+          message = e.statusText || e.result.data.message;
         }
+        const details = e.result?.data?.message ?? message;
+
+        throwStreamError(
+          'PLATFORM_REQUEST_FAILED',
+          {
+            status: e.status,
+            statusText: message,
+            platform: 'patreon',
+          },
+          details,
+        );
       });
   }
 
@@ -311,22 +324,27 @@ export class PatreonService
     const request = new Request(url, { method: 'POST', headers });
 
     return jfetch<IPatreonEndStreamResponse | IPatreonError>(request)
-      .then(async res => res)
+      .then(async res => {
+        return res;
+      })
       .catch(e => {
         console.warn('Error ending Patreon stream: ', e);
 
+        let message = e.message ?? 'Unknown error ending Patreon stream';
         if (e.result) {
-          const message = e.statusText !== '' ? e.statusText : e.result.data.message;
-          throwStreamError(
-            'PLATFORM_REQUEST_FAILED',
-            {
-              status: e.status,
-              statusText: message,
-              platform: 'patreon',
-            },
-            e.result.data.message,
-          );
+          message = e.statusText || e.result.data.message;
         }
+        const details = e.result?.data?.message ?? message;
+
+        throwStreamError(
+          'PLATFORM_REQUEST_FAILED',
+          {
+            status: e.status,
+            statusText: message,
+            platform: 'patreon',
+          },
+          details,
+        );
       });
   }
 
@@ -381,11 +399,6 @@ export class PatreonService
   @mutation()
   SET_INGEST(ingest: string) {
     this.state.ingest = ingest;
-  }
-
-  @mutation()
-  SET_CAMPAIGN_ID(campaignId: string) {
-    this.state.campaignId = campaignId;
   }
 
   @mutation()

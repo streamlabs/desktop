@@ -28,8 +28,8 @@
   "Global Transition": "グローバル トランジション",
   "Edit": "編集",
   "Live": "ライブ",
-  "Transitions": "Transitions",
-  "Connections": "Connections",
-  "Softness": "Softness",
-  "Invert": "Invert"
+  "Transitions": "トランジション",
+  "Connections": "接続",
+  "Softness": "ソフトネス",
+  "Invert": "反転"
 }

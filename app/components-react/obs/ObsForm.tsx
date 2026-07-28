@@ -115,7 +115,6 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
   };
 
   switch (type) {
-    case 'OBS_PROPERTY_FLOAT':
     case 'OBS_PROPERTY_DOUBLE':
       return <ObsNumberInput {...inputProps} ref={ref} data-name={p.value.name} />;
     case 'OBS_PROPERTY_INT':
