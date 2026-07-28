@@ -181,7 +181,7 @@ test('Recording from Go Live window', async t => {
   await clickGoLive();
   await waitForSettingsWindowLoaded();
 
-  await clickToggle('recording-toggle');
+  await clickToggle('recording');
 
   if (user.type === 'twitch') {
     await fillForm({
