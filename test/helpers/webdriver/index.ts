@@ -11,6 +11,7 @@ import fetch from 'node-fetch';
 
 import {
   ITestStats,
+  killChromedriverOnPort,
   killElectronInstances,
   removeFailedTestFromFile,
   saveFailedTestsToFile,
@@ -239,6 +240,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     if (options.networkLogging) appArgs.push('--network-logging');
     if (options.noSync) appArgs.push('--nosync');
 
+    killChromedriverOnPort(CHROMEDRIVER_PORT);
     await killElectronInstances();
 
     app = t.context.app = new Application({
