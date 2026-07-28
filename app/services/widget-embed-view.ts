@@ -95,16 +95,20 @@ export class WidgetEmbedViewService extends Service {
   }
 
   /**
-   * Trigger the embedded page's own save (exposed as `window.__slobsWidgetSave` in embed mode) and
-   * resolve with its result. Rejects if the save fails so the caller can keep the window open.
+   * Trigger the embedded page's own save (exposed as `window.__slobsWidgetSave` in embed mode).
    * Lives here rather than in the child renderer because the view now belongs to the worker
    * process and can't be handed across the process boundary.
+   *
+   * Resolves false when the page reports the save failed. The page does NOT throw on failure — it
+   * shows its own error toast — so the caller must branch on this value and leave the window open,
+   * or that toast gets closed along with the window before the user can read it.
    */
-  async triggerSave(): Promise<unknown> {
+  async triggerSave(): Promise<boolean> {
     if (!this.isAlive()) return true;
-    return this.view!.webContents.executeJavaScript(
+    const result = await this.view!.webContents.executeJavaScript(
       'window.__slobsWidgetSave ? window.__slobsWidgetSave() : Promise.resolve(true)',
     );
+    return result !== false;
   }
 
   /**
@@ -135,6 +139,8 @@ export class WidgetEmbedViewService extends Service {
         // whole point: it's what turns a ~9s re-open into a sub-second widget switch.
         await this.withTimeout(this.pushRoute(product), NAVIGATE_TIMEOUT_MS);
         this.loadedProduct = product;
+      } else {
+        await this.withTimeout(this.waitForReady(), NAVIGATE_TIMEOUT_MS);
       }
       return;
     }

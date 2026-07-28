@@ -102,16 +102,18 @@ export default function WidgetSettingsEmbed() {
     setProperties(source.getPropertiesFormData());
   }
 
+  const [saving, setSaving] = useState(false);
+
   async function saveWebSettings() {
     // Trigger the embedded page's save via the bridge it exposes in embed mode. It saves only
-    // when there are unsaved changes and resolves once the save settles. Close on success;
-    // on failure keep the window open so the embed can surface the error.
-    try {
-      await WidgetEmbedViewService.actions.return.triggerSave();
-      WindowsService.actions.closeChildWindow();
-    } catch {
-      // Save failed — leave the window open; the embedded page shows the error.
-    }
+    // when there are unsaved changes and resolves once the save settles.
+    // Close ONLY on a confirmed save. The embed signals failure by resolving false — it renders
+    // its own error toast rather than throwing.
+    setSaving(true);
+    const saved = await WidgetEmbedViewService.actions.return.triggerSave().catch(() => false);
+    setSaving(false);
+
+    if (saved) WindowsService.actions.closeChildWindow();
   }
 
   function openWebSettings() {
@@ -137,8 +139,10 @@ export default function WidgetSettingsEmbed() {
         <span />
       )}
       <div style={{ display: 'flex', gap: 8 }}>
-        <Button onClick={() => WindowsService.actions.closeChildWindow()}>{$t('Close')}</Button>
-        <Button type="primary" onClick={saveWebSettings}>
+        <Button disabled={saving} onClick={() => WindowsService.actions.closeChildWindow()}>
+          {$t('Close')}
+        </Button>
+        <Button type="primary" loading={saving} onClick={saveWebSettings}>
           {$t('Save Settings')}
         </Button>
       </div>
