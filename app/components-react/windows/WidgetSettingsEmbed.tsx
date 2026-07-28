@@ -110,7 +110,9 @@ export default function WidgetSettingsEmbed() {
     // Close ONLY on a confirmed save. The embed signals failure by resolving false — it renders
     // its own error toast rather than throwing.
     setSaving(true);
-    const saved = await WidgetEmbedViewService.actions.return.triggerSave().catch(() => false);
+    const saved = await WidgetEmbedViewService.actions.return
+      .triggerSave('properties')
+      .catch(() => false);
     setSaving(false);
 
     if (saved) WindowsService.actions.closeChildWindow();
@@ -201,7 +203,7 @@ export default function WidgetSettingsEmbed() {
         )}
         {/* The embed (BrowserView) needs a sized, positioned box. */}
         <div style={{ flex: `0 0 ${SETTINGS_WIDTH}px`, position: 'relative', minHeight: 0 }}>
-          <WidgetEmbedWarm />
+          <WidgetEmbedWarm slot="properties" />
         </div>
       </div>
     </ModalLayout>

@@ -5,26 +5,32 @@ import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
 import Utils from 'services/utils';
 import { TWidgetEmbedProduct } from 'services/user';
+import { TWidgetEmbedSlot } from 'services/widget-embed-view';
 
 interface WidgetEmbedWarmProps {
   /** The dashboard product to embed. When omitted, read from the window's queryParams. */
   product?: TWidgetEmbedProduct;
+  /**
+   * Which warm view to drive. Surfaces that can be on screen simultaneously need different
+   * slots; surfaces that are mutually exclusive should share one. See {@link TWidgetEmbedSlot}.
+   */
+  slot: TWidgetEmbedSlot;
   className?: string;
   style?: React.CSSProperties;
 }
 
 /**
- * Warm variant of {@link WidgetEmbed} used ONLY by the source Properties child window
- * ({@link WidgetSettingsEmbed}). Instead of creating and destroying a BrowserView on every open,
- * it drives {@link WidgetEmbedViewService}, which keeps a single dashboard-SPA view booted and
- * switches widgets via a client-side hash route — so re-opens are near-instant instead of ~9s.
+ * Host for a streamlabs.com dashboard embed, used by every embed surface: the source Properties
+ * child window ({@link WidgetSettingsEmbed}) and the full-page nav destinations (Cloudbot).
+ * Rather than creating and destroying a BrowserView per mount, it drives
+ * {@link WidgetEmbedViewService}, which keeps the dashboard SPA booted and switches products via
+ * a client-side route change — so re-opens are near-instant instead of ~9s.
  *
- * This component owns none of the view's lifetime: it asks the service to mount the view onto this
- * (persistent child) window, feeds it the container's pixel rect, and on unmount tells the service
- * to detach (NOT destroy) so the view stays warm and is evicted only after an idle timeout.
- *
- * The full-page embeds (AlertBox/Cloudbot/Widgets) deliberately keep using `WidgetEmbed` — see the
- * scope note in {@link WidgetEmbedViewService}.
+ * This component owns none of the view's lifetime: it asks the service to mount the view for its
+ * `slot` onto the current window, feeds it the container's pixel rect, and on unmount tells the
+ * service to detach (NOT destroy) so the view stays warm and is evicted only after an idle
+ * timeout. That detach matters most for the full-page tabs — they live in the long-lived main
+ * window, where a view left attached would paint over the Editor.
  */
 export default function WidgetEmbedWarm(p: WidgetEmbedWarmProps) {
   const { UserService, WidgetEmbedViewService, WindowsService, CustomizationService } = Services;
@@ -52,7 +58,11 @@ export default function WidgetEmbedWarm(p: WidgetEmbedWarmProps) {
       setLoading(true);
       lastRect.current = null;
       const electronWindowId = remote.getCurrentWindow().id;
-      await WidgetEmbedViewService.actions.return.mountAndNavigate(electronWindowId, product);
+      await WidgetEmbedViewService.actions.return.mountAndNavigate(
+        p.slot,
+        electronWindowId,
+        product,
+      );
       if (!cancelled) setLoading(false);
     }
 
@@ -61,9 +71,9 @@ export default function WidgetEmbedWarm(p: WidgetEmbedWarmProps) {
     return () => {
       cancelled = true;
       // Detach only — the service keeps the view warm and evicts it after an idle timeout.
-      WidgetEmbedViewService.actions.unmount();
+      WidgetEmbedViewService.actions.unmount(p.slot);
     };
-  }, [product, theme]);
+  }, [product, theme, p.slot]);
 
   // Position the OS-level BrowserView over our sized container; zero-rect it while blockers are up
   // (modals/transitions) so it never paints over them.
@@ -86,6 +96,7 @@ export default function WidgetEmbedWarm(p: WidgetEmbedWarmProps) {
       ) {
         lastRect.current = next;
         WidgetEmbedViewService.actions.setBounds(
+          p.slot,
           { x: next.x, y: next.y },
           { x: next.width, y: next.height },
         );
@@ -97,7 +108,7 @@ export default function WidgetEmbedWarm(p: WidgetEmbedWarmProps) {
     const interval = window.setInterval(syncBounds, 100);
 
     return () => clearInterval(interval);
-  }, [loading, hideStyleBlockers]);
+  }, [loading, hideStyleBlockers, p.slot]);
 
   return (
     <div
