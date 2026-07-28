@@ -1797,6 +1797,15 @@ export class StreamingService
    * @param force - boolean, whether to force stop the stream
    */
   private async handleStopStreaming(force?: boolean) {
+    // Twitch dual streaming uses the `enhancedBroadcasting` instance but most of the
+    // streaming signal handling work with the `horizontal` instance. Because the `horizontal`
+    // instance is not streaming, but may exist to be used with the recording and replay buffer,
+    // handle this case on its own.
+    if (this.views.isTwitchDualStreaming) {
+      await this.stopTwitchDualStreamOutputs();
+      return;
+    }
+
     // Recording must be stopped before stopping the replay buffer
     // for the correct order of destruction of the context instances
     const keepRecording = this.streamSettingsService.settings.keepRecordingWhenStreamStops;
@@ -1849,6 +1858,33 @@ export class StreamingService
           $t('Error stopping stream: default streams do not exist.'),
         );
       }
+    }
+  }
+
+  /**
+   * Stop a Twitch Dual Stream
+   * @remark Twitch dual stream uses the `enhancedBroadcasting` instance. Because a streaming instance
+   * may exist for recording and replay buffer, handle dual streaming with Twitch on its own.
+   */
+  private async stopTwitchDualStreamOutputs() {
+    // Recording must be stopped before the replay buffer
+    const keepRecording = this.streamSettingsService.settings.keepRecordingWhenStreamStops;
+    if (!keepRecording && this.getIsRecordingStatus(ERecordingState.Recording)) {
+      await this.toggleRecording();
+    }
+
+    // Replay buffer must be stopped after the recording
+    const keepReplaying = this.streamSettingsService.settings.keepReplayBufferStreamStops;
+    if (!keepReplaying && this.getIsReplayBufferStatus(EReplayBufferState.Running)) {
+      this.stopReplayBuffer();
+    }
+
+    // Stop the Twitch dual stream (enhanced broadcasting instance)
+    if (this.contexts.enhancedBroadcasting.streaming) {
+      this.contexts.enhancedBroadcasting.streaming.stop(true);
+    } else {
+      // This should never happen but to ensure that the stream does actually stop, cleanup here
+      this.handleCleanupStreamingInstances({ skipHorizontal: false });
     }
   }
 
@@ -2725,6 +2761,18 @@ export class StreamingService
         if (this.isReplayBufferActive) {
           this.stopReplayBuffer();
         }
+      }
+
+      // Handle Twitch dual streaming separately because it does use the horizontal streaming instance
+      // so we can't rely on the horizontal streaming instance signals
+      if (context === 'enhancedBroadcasting' && this.views.isTwitchDualStreaming) {
+        this.SET_STREAMING_STATUS(EStreamingState.Offline, 'horizontal', new Date().toISOString());
+        this.streamingStatusChange.next(EStreamingState.Offline);
+
+        await this.handleDestroyOutputContexts('enhancedBroadcasting');
+        await this.handleDestroyOutputContexts('horizontal');
+        await this.handleDestroyOutputContexts('vertical');
+        return;
       }
 
       // For the UI, set the streaming status to offline on the `deactivate` signal

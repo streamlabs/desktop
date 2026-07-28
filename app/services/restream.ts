@@ -965,6 +965,17 @@ class RestreamView extends ViewHandler<IRestreamState> {
   get isGrandfathered() {
     return this.state.grandfathered || this.state.tiktokGrandfathered;
   }
+
+  // includes both multistream and Facebook grandfathered statuses
+  get isFacebookGrandfathered() {
+    return this.state.grandfathered;
+  }
+
+  // includes only the TikTok grandfathered status
+  get isTikTokGrandfathered() {
+    return this.state.tiktokGrandfathered;
+  }
+
   /**
    * This determines whether the user can enable restream
    * Requirements:

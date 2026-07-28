@@ -221,17 +221,19 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
               </InputWrapper>
               <InputWrapper label={$t('Made for kids')} layout="vertical" nolabel>
                 <CheckboxInput label={$t('Made for kids')} {...bind.selfDeclaredMadeForKids} />
-                {shouldShowSafeForKidsWarn && (
-                  <p>
-                    {$t(
-                      "Features like personalized ads and live chat won't be available on live streams made for kids.",
-                    )}
-                  </p>
-                )}
               </InputWrapper>
             </>
           )}
         </div>
+        {/* Render the warning below the checkbox row so checking "Made for kids" doesn't
+            reflow the wrapping flex row and push the field to the next line. */}
+        {!isMidStreamMode && shouldShowSafeForKidsWarn && (
+          <p>
+            {$t(
+              "Features like personalized ads and live chat won't be available on live streams made for kids.",
+            )}
+          </p>
+        )}
       </div>
     );
   }

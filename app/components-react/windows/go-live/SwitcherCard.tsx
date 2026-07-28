@@ -34,6 +34,7 @@ interface ISwitcherCardProps {
   switchClassName?: string;
   tooltipClassName?: string;
   disabled?: boolean;
+  switchDisabled?: boolean;
 }
 
 interface ISwitcherCardContentsProps {
@@ -49,6 +50,7 @@ interface ISwitcherCardContentsProps {
   icon?: string | ReactNode;
   description: string;
   children?: ReactNode;
+  switchDisabled?: boolean;
 }
 
 /**
@@ -122,7 +124,7 @@ export const SwitcherCard = forwardRef<ISwitcherCardHandle, ISwitcherCardProps>(
         onTransitionEnd={handleTransitionEnd}
         value={displayValue}
         name={p.name}
-        disabled={p.disabled}
+        disabled={p.disabled || p.switchDisabled}
         label={p.label}
         title={p.title}
         icon={p.icon}

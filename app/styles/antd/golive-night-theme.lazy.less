@@ -124,3 +124,16 @@
 
 @border-radius-base: 4px;
 @font-family: 'Roboto', sans-serif;
+
+// Checkbox check icon color
+.ant-checkbox-checked .ant-checkbox-inner::after {
+  border: 2px solid @dark-2;
+  border-top: 0;
+  border-left: 0;
+}
+
+// Checkbox check icon color
+.ant-checkbox-checked .ant-checkbox-inner {
+  background-color: var(--secondary-checkbox);
+  border-color: var(--secondary-checkbox);
+}

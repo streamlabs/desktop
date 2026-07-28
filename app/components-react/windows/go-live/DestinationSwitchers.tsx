@@ -38,6 +38,9 @@ export const DestinationSwitchers = memo(() => {
     disableNonUltraSwitchers,
     nonPrimeBothDisplayPlatform,
     getUsername,
+    isLoading,
+    isFacebookGrandfathered,
+    isTikTokGrandfathered,
   } = useGoLiveSettings().extend(module => ({
     get renderedPlatforms() {
       // Some platforms are always shown, even if not linked so add them to the list of platforms to display
@@ -97,19 +100,46 @@ export const DestinationSwitchers = memo(() => {
       emitSwitch();
       return enabledPlatformsRef.current.includes(platform);
     },
-    [emitSwitch],
+    [emitSwitch, isPrime],
   );
 
   const toggleNonUltraPlatform = useCallback(
     (platform: TPlatform, enabled: boolean) => {
+      // TikTok and Facebook users can always go live with those platforms
+      let maxPlatforms = 2;
+
+      // Expand the maximum allowed platforms for TikTok and Facebook grandfathered users.
+      if (
+        enabled &&
+        isFacebookGrandfathered &&
+        (platform === 'facebook' || enabledPlatformsRef.current.includes('facebook'))
+      ) {
+        maxPlatforms++;
+      }
+
+      if (
+        enabled &&
+        isTikTokGrandfathered &&
+        (platform === 'tiktok' || enabledPlatformsRef.current.includes('tiktok'))
+      ) {
+        maxPlatforms++;
+      }
+
       if (enabled) {
         const total = enabledPlatformsRef.current.length + enabledDestRef.current.length;
-        if (total >= 2) {
+        if (total >= maxPlatforms) {
+          const text =
+            maxPlatforms > 2
+              ? $t(
+                  "You've reached the maximum number of streaming destinations. Upgrade to Ultra to enable multistreaming.",
+                )
+              : $t(
+                  "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
+                );
+
           alertInfo({
             name: 'switcher-info-alert',
-            text: $t(
-              "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
-            ),
+            text,
           });
           return false;
         }
@@ -126,7 +156,7 @@ export const DestinationSwitchers = memo(() => {
 
       return enabledPlatformsRef.current.includes(platform);
     },
-    [enabledPlatformsRef, emitSwitch],
+    [enabledPlatformsRef, emitSwitch, isFacebookGrandfathered, isTikTokGrandfathered],
   );
 
   const toggleDestination = useCallback(
@@ -201,6 +231,7 @@ export const DestinationSwitchers = memo(() => {
             isPrime={isPrime}
             username={getUsername(platform)}
             index={ind}
+            isLoading={isLoading}
           />
         );
       })}
@@ -227,6 +258,7 @@ export const DestinationSwitchers = memo(() => {
             showDisplaySelector={visible}
             isPrime={isPrime}
             index={ind}
+            isLoading={isLoading}
           />
         );
       })}
@@ -246,6 +278,8 @@ interface IDestinationSwitcherProps {
   isPrime: boolean;
   username?: string;
   isUnlinked?: boolean;
+  /** Disable the switch while the go live window is loading/refreshing settings */
+  isLoading?: boolean;
 }
 
 /**
@@ -289,6 +323,9 @@ const DestinationSwitcher = memo(
       (e: MouseEvent) => {
         const enabled = p.enabled;
 
+        // Ignore toggles while the go live window is loading/refreshing settings
+        if (p.isLoading) return enabled;
+
         if (!p.isPrime) {
           if (p.bothDisplayPlatformLabel) {
             alertInfo({
@@ -309,7 +346,7 @@ const DestinationSwitcher = memo(
         if (disabled) return enabled;
         return onChange(!enabled);
       },
-      [p.enabled, onChange, p.bothDisplayPlatformLabel, disabled],
+      [p.enabled, p.isLoading, onChange, p.bothDisplayPlatformLabel, disabled],
     );
 
     const { title, description } = useMemo(() => {
@@ -365,6 +402,7 @@ const DestinationSwitcher = memo(
         label={label}
         title={title}
         description={description}
+        switchDisabled={p.isLoading}
         className={cx({ [styles.disabled]: disabled })}
         tooltipClassName={styles.switcherTooltip}
       >
@@ -384,6 +422,7 @@ const DestinationSwitcher = memo(
             index={p.index}
             alignIcons="left"
             visible={p.showDisplaySelector}
+            disabled={p.isLoading}
           />
         </AnimatedWrapper>
       </SwitcherCard>

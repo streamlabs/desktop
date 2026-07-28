@@ -59,9 +59,10 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
   ]);
 
   const showRecordingIcons = useMemo(() => {
-    if (v.canRecordVertical) {
-      return v.isDualOutputMode;
-    }
+    // TODO: Comment in when ready for testing
+    // if (v.canRecordVertical) {
+    //   return v.isDualOutputMode;
+    // }
 
     return false;
   }, [v.isDualOutputMode, v.canRecordVertical]);
