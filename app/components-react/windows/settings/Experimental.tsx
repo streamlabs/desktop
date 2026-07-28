@@ -87,12 +87,12 @@ export function ExperimentalSettings() {
           )}
         </span>
         <div style={{ marginTop: '10px' }}>
-          <h4>{$t('Convert to Vanilla Scene')}</h4>
+          <h4>{$t('Scene Collection Repair')}</h4>
           <Button
             className="convert-collection button button--soft-warning"
             onClick={async () => await convertDualOutputCollection()}
           >
-            {$t('Convert')}
+            {$t('Repair')}
           </Button>
         </div>
         {/* <div style={{ marginTop: '10px' }}>
