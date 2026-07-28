@@ -33,6 +33,7 @@ interface ISwitcherCardProps {
   className?: string;
   switchClassName?: string;
   tooltipClassName?: string;
+  iconClassName?: string;
   disabled?: boolean;
   switchDisabled?: boolean;
 }
@@ -40,6 +41,7 @@ interface ISwitcherCardProps {
 interface ISwitcherCardContentsProps {
   className?: string;
   switchClassName?: string;
+  iconClassName?: string;
   onClick: (e: MouseEvent) => void;
   onTransitionEnd: (e: React.TransitionEvent<HTMLDivElement>) => void;
   value: boolean;
@@ -128,6 +130,7 @@ export const SwitcherCard = forwardRef<ISwitcherCardHandle, ISwitcherCardProps>(
         label={p.label}
         title={p.title}
         icon={p.icon}
+        iconClassName={p.iconClassName}
         description={p.description}
       >
         {p.children}
@@ -156,7 +159,10 @@ function SwitcherCardContents(p: ISwitcherCardContentsProps) {
           <div className={styles.colAccount}>
             {/* PLATFORM LOGO AND NAME*/}
             {typeof p.icon === 'string' ? (
-              <i className={p.icon} style={{ color: 'var(--title)', marginRight: '8px' }} />
+              <i
+                className={cx(p.icon, p.iconClassName)}
+                style={{ color: 'var(--title)', marginRight: '8px' }}
+              />
             ) : (
               p.icon
             )}

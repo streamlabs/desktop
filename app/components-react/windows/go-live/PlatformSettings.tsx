@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { CommonPlatformFields } from './CommonPlatformFields';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import { $t } from '../../../services/i18n';
@@ -20,6 +20,7 @@ import UltraIcon from 'components-react/shared/UltraIcon';
 import PrimaryChatSwitcher from './PrimaryChatSwitcher';
 import { CaretDownOutlined } from '@ant-design/icons';
 import { Services } from 'components-react/service-provider';
+import styles from './GoLive.m.less';
 
 export default function PlatformSettings() {
   const {
@@ -47,7 +48,7 @@ export default function PlatformSettings() {
     setPrimaryChat,
     setStreamShift,
     setLiveOutputEditingEnabled,
-    canEditLiveOutputs,
+    showFeatureToggleCards,
     liveOutputTooltip,
     streamShiftTooltip,
     disableStreamShiftTooltip,
@@ -95,10 +96,9 @@ export default function PlatformSettings() {
   const handleToggleStreamShift = useCallback(
     (status?: boolean) => {
       if (!isPrime) {
-        // TODO: Comment in when ready
-        // Services.MagicLinkService.actions.linkToPrime('slobs-streamswitcher', {
-        //   event: 'StreamShift',
-        // });
+        Services.MagicLinkService.actions.linkToPrime('slobs-streamswitcher', {
+          event: 'StreamShift',
+        });
         return;
       }
 
@@ -113,10 +113,9 @@ export default function PlatformSettings() {
   const handleToggleLiveOutputEditing = useCallback(
     (status?: boolean) => {
       if (!isPrime) {
-        // TODO: Comment in when ready
-        // Services.MagicLinkService.actions.linkToPrime('slobs-live-output-editing', {
-        //   event: 'LiveOutputEditing',
-        // });
+        Services.MagicLinkService.actions.linkToPrime('slobs-live-output-editing', {
+          event: 'LiveOutputEditing',
+        });
         return;
       }
 
@@ -137,6 +136,7 @@ export default function PlatformSettings() {
         isStreamShiftMode,
         isAiHighlighterEnabled,
         isMidStreamMode,
+        isLiveOutputEditingEnabled,
         enabledPlatformsCount,
         get value() {
           return getDefined(settings.platforms[platform]);
@@ -155,6 +155,7 @@ export default function PlatformSettings() {
       isStreamShiftMode,
       isAiHighlighterEnabled,
       isMidStreamMode,
+      isLiveOutputEditingEnabled,
       enabledPlatformsCount,
     ],
   );
@@ -169,7 +170,7 @@ export default function PlatformSettings() {
   return (
     // minHeight is required for the loading spinner
     <div style={{ minHeight: '150px', height: '100%', flex: 1 }}>
-      {canEditLiveOutputs && (
+      {showFeatureToggleCards && (
         <>
           <h2>{$t('Live Settings')}</h2>
           <div className="flex__horizontal margin">
@@ -188,6 +189,7 @@ export default function PlatformSettings() {
               disabled={isLiveOutputEditingDisabled}
               tooltip={liveOutputTooltip}
               tooltipDisabled={isPrime}
+              iconClassName={!isPrime ? styles.ultraIcon : undefined}
             />
             <SwitcherCard
               onClick={() => handleToggleStreamShift()}
@@ -203,6 +205,7 @@ export default function PlatformSettings() {
               icon="icon-repeat-2"
               disabled={isStreamShiftDisabled}
               tooltip={streamShiftTooltip}
+              iconClassName={!isPrime ? styles.ultraIcon : undefined}
               tooltipDisabled={disableStreamShiftTooltip}
             />
           </div>
