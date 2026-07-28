@@ -16,6 +16,9 @@ interface IStreamShiftToggle {
   disabled?: boolean;
 }
 
+/**
+ * @deprecated This checkbox is currently no longer used but kept for legacy purposes.
+ */
 export default function StreamShiftToggle(p: IStreamShiftToggle) {
   const {
     isPrime,

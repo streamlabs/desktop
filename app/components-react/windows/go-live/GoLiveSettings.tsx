@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import styles from './GoLive.m.less';
 import Scrollable from 'components-react/shared/Scrollable';
 import { useGoLiveSettings } from './useGoLiveSettings';
@@ -14,7 +14,6 @@ import ColorSpaceWarnings from './ColorSpaceWarnings';
 import { DestinationSwitchers } from './DestinationSwitchers';
 import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import cx from 'classnames';
-import StreamShiftToggle from 'components-react/shared/StreamShiftToggle';
 import { CaretDownOutlined } from '@ant-design/icons';
 import * as remote from '@electron/remote';
 import { inject } from 'slap';
@@ -38,8 +37,6 @@ export default function GoLiveSettings() {
     recommendedColorSpaceWarnings,
     isPrime,
     shouldShowLeftCol,
-    isStreamShiftDisabled,
-    isUpdateMode,
     addDestination,
     showTopAddDestination,
     showBottomAddDestination,
@@ -69,7 +66,6 @@ export default function GoLiveSettings() {
       },
 
       get shouldShowLeftCol() {
-        if (module.isUpdateMode) return false;
         return module.isStreamShiftMode ? true : module.protectedModeEnabled;
       },
 
@@ -87,8 +83,6 @@ export default function GoLiveSettings() {
   });
 
   const headerText = $t('Destinations');
-
-  const featureCheckboxWidth = isPrime ? 130 : 135;
 
   return (
     <Row gutter={8} className={styles.goLiveSettings}>
@@ -131,10 +125,6 @@ export default function GoLiveSettings() {
                 border={false}
                 disabled={!hasMultiplePlatforms}
               />
-              <StreamShiftToggle
-                style={{ width: featureCheckboxWidth }}
-                disabled={isStreamShiftDisabled}
-              />
             </div>
           </Scrollable>
         </Col>
@@ -144,8 +134,7 @@ export default function GoLiveSettings() {
       <Col
         span={shouldShowLeftCol ? 17 : 24}
         className={cx(styles.rightColumn, {
-          [styles.destinationMode]: !shouldShowLeftCol && !isUpdateMode,
-          [styles.updateMode]: isUpdateMode,
+          [styles.destinationMode]: !shouldShowLeftCol,
         })}
       >
         <Spinner visible={isLoading} relative />
@@ -158,7 +147,7 @@ export default function GoLiveSettings() {
             {/*PLATFORM SETTINGS*/}
             <PlatformSettings />
             {/*EXTRAS*/}
-            {!!canUseOptimizedProfile && !isUpdateMode && (
+            {!!canUseOptimizedProfile && (
               <Section title={$t('Extras')}>
                 <OptimizedProfileSwitcher />
               </Section>
