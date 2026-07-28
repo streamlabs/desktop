@@ -275,6 +275,10 @@ export class TwitchService
           } catch (e: unknown) {
             console.error('Error setting up dual stream:', e);
           }
+        } else if (this.streamingService.views.isLiveOutputEditingEnabled) {
+          // When live output editing is enabled enhanced broadcasting won't work because it
+          // uses restream, which is incompatible with enhanced broadcasting.
+          this.settingsService.setEnhancedBroadcasting(false);
         } else {
           // Update enhanced broadcasting setting based on go live settings
           this.settingsService.setEnhancedBroadcasting(channelInfo.isEnhancedBroadcasting);
