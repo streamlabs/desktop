@@ -295,7 +295,7 @@ async function validateTitleContainsNoSpaces(t: TExecutionContext, tmpDir: strin
   const files = await readdir(tmpDir);
   t.true(files.length >= 1, `Files that were created:\n${files.join('\n')}`);
   const videoFile = files.find(f => f.endsWith('.mkv'));
-  t.truthy(videoFile, 'Expected a .mkv recording file');
+  t.truthy(videoFile, `Expected a .mkv recording file but got ${videoFile}`);
   if (!videoFile) return;
   t.false(videoFile.includes(' '), `Recording filename should not contain spaces: "${videoFile}"`);
 }
