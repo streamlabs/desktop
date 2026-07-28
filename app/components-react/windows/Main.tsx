@@ -101,9 +101,7 @@ export default function Main() {
       applicationLoading &&
       page !== 'Onboarding' &&
       page !== 'BrowseOverlays' &&
-      page !== 'AlertBox' &&
-      page !== 'Cloudbot' &&
-      page !== 'Widgets',
+      page !== 'Cloudbot',
     [applicationLoading, page],
   );
 

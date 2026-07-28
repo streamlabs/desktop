@@ -8,7 +8,6 @@ import { TCategoryName } from './settings';
 
 export type TAppPage =
   | 'AILanding'
-  | 'AlertBox'
   | 'AlertboxLibrary'
   | 'BrowseOverlays'
   | 'Cloudbot'
@@ -24,8 +23,7 @@ export type TAppPage =
   | 'RecordingHistory'
   | 'StreamScheduler'
   | 'Studio'
-  | 'ThemeAudit'
-  | 'Widgets';
+  | 'ThemeAudit';
 
 interface INavigationState {
   currentPage: TAppPage;
