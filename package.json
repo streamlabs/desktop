@@ -46,6 +46,7 @@
     "ci:performance": "node test/performance/performance-test-runner.js",
     "commit": "commit",
     "postinstall": "node ./scripts/postinstall.js",
+    "pr-report": "node scripts/pr-report.js",
     "tail-obs-logs": "node bin/tail-obs-logs.js",
     "generate-agreement": "cat BASEAGREEMENT > AGREEMENT && yarn licenses generate-disclaimer >> AGREEMENT",
     "generate-agreement:mac": "cat BASEAGREEMENT > license_en.txt && yarn licenses generate-disclaimer >> license_en.txt",

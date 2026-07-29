@@ -1,0 +1,119 @@
+name: PR Report
+
+# Schedules are in PT, but GitHub Actions cron only understands UTC and does not
+# observe daylight saving. These are set for PDT (UTC-7). Between early November
+# and mid-March they will fire an hour later in local time (5am PT / 11am PT)
+# unless the cron lines are shifted back by one hour.
+#
+# GitHub also delays scheduled runs during peak load, which is worst on the hour,
+# so each is offset a few minutes.
+
+on:
+  schedule:
+    # staging — daily, 6:07am PT
+    - cron: '7 13 * * *'
+    # master — daily, 6:22am PT
+    - cron: '22 13 * * *'
+    # staging blocked & on hold — Thursdays, 12:12pm PT
+    - cron: '12 19 * * 4'
+    # master blocked & on hold — Thursdays, 12:42pm PT
+    - cron: '42 19 * * 4'
+    # dependency bots — Thursdays, 12:27pm PT
+    - cron: '27 19 * * 4'
+  workflow_dispatch:
+    inputs:
+      report:
+        description: 'Which report to generate'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging # open PRs targeting staging, active categories
+          - master # open PRs targeting master, active categories
+          - staging-blocked # the blocked + on-hold slice of staging
+          - master-blocked # the blocked + on-hold slice of master
+          - bots # open Renovate + Dependabot PRs
+          - status # grouped status across all branches
+      tests:
+        description: 'List individual failing tests (status only; downloads Azure build logs)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # No `yarn install` — scripts/pr-report.js has no dependencies and shells out
+      # to `gh`, which is preinstalled on GitHub runners.
+      - name: Generate report
+        id: report
+        run: |
+          # Map the firing schedule to its report. Manual runs use the input.
+          case "${{ github.event.schedule }}" in
+            '7 13 * * *')  REPORT=staging ;;
+            '22 13 * * *') REPORT=master ;;
+            '12 19 * * 4') REPORT=staging-blocked ;;
+            '42 19 * * 4') REPORT=master-blocked ;;
+            '27 19 * * 4') REPORT=bots ;;
+            *)             REPORT="${{ github.event.inputs.report }}" ;;
+          esac
+          echo "report=$REPORT" >> "$GITHUB_OUTPUT"
+
+          FLAGS=""
+          # The drill-down costs a few hundred KB of Azure log per failing job,
+          # and only the status report renders it.
+          if [ "${{ github.event.inputs.tests }}" = "true" ] && [ "$REPORT" = "status" ]; then
+            FLAGS="--tests"
+          fi
+
+          node scripts/pr-report.js --report "$REPORT" $FLAGS --format text > pr-report.txt
+          node scripts/pr-report.js --report "$REPORT" $FLAGS --format blocks > pr-report.blocks.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Write job summary
+        run: |
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat pr-report.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-report-${{ steps.report.outputs.report }}
+          path: |
+            pr-report.txt
+            pr-report.blocks.json
+
+      # Slack delivery is intentionally not wired up yet. To turn it on:
+      #   1. Create a Slack incoming webhook for the target channel.
+      #   2. Add it as the repo secret SLACK_WEBHOOK_URL.
+      #   3. Uncomment the step below.
+      # pr-report.blocks.json is an array of message payloads (a long backlog is
+      # split across several messages to stay under Slack's 50-block limit), so
+      # this posts each one in turn.
+      #
+      # - name: Post to Slack
+      #   run: |
+      #     node -e "
+      #       const messages = require('./pr-report.blocks.json');
+      #       (async () => {
+      #         for (const message of messages) {
+      #           const res = await fetch(process.env.SLACK_WEBHOOK_URL, {
+      #             method: 'POST',
+      #             headers: { 'Content-Type': 'application/json' },
+      #             body: JSON.stringify(message),
+      #           });
+      #           if (!res.ok) throw new Error(res.status + ' ' + (await res.text()));
+      #         }
+      #       })().catch(err => { console.error(err); process.exit(1); });
+      #     "
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
