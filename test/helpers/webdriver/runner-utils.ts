@@ -183,6 +183,40 @@ export async function killElectronInstances() {
   tasks.forEach((task: any) => kill(task.pid));
 }
 
+export function killChromedriverOnPort(port: number) {
+  const { execSync } = require('child_process');
+
+  const p = Number(port);
+  if (!Number.isInteger(p) || p <= 0 || p > 65535) return;
+
+  try {
+    if (process.platform === 'win32') {
+      const output = execSync(`netstat -ano -p tcp | findstr LISTENING | findstr :${p}`).toString();
+      const pids = new Set<number>();
+      output.split('\n').forEach((line: string) => {
+        const parts = line.trim().split(/\s+/);
+        // Proto LocalAddress ForeignAddress State PID
+        if (parts.length >= 5 && parts[1].endsWith(`:${p}`) && parts[3] === 'LISTENING') {
+          const pid = parseInt(parts[4], 10);
+          if (Number.isFinite(pid)) pids.add(pid);
+        }
+      });
+      pids.forEach(pid => kill(pid));
+    } else {
+      const output = execSync(`lsof -nP -iTCP:${p} -sTCP:LISTEN -t`).toString().trim();
+      if (output) {
+        output
+          .split('\n')
+          .map((pidStr: string) => parseInt(pidStr, 10))
+          .filter((pid: number) => Number.isFinite(pid))
+          .forEach((pid: number) => kill(pid));
+      }
+    }
+  } catch (e: unknown) {
+    // Nothing is found
+  }
+}
+
 export async function waitForElectronInstancesExist() {
   const interval = 1000;
   const timeout = 10000;
