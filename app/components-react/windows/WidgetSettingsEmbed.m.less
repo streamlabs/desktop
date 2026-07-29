@@ -1,3 +1,44 @@
+// The settings embed gets a fixed, comfortable width; the preview takes the rest and grows
+// with the window (mirrors the legacy WidgetEditor, where the preview is the large area).
+@settings-width: 540px;
+@preview-min-width: 400px;
+
+.body {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+// Header: Width/Height (left, inline) + Test Widgets (right).
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+
+.dimensions {
+  display: flex;
+  gap: 16px;
+}
+
+.dimension {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dimensionLabel {
+  font-size: 12px;
+  color: var(--paragraph);
+}
+
+.dimensionInput {
+  width: 88px;
+}
+
 // Test Widgets renders an inner `.link` (mint text). Inside the `.button--action`
 // wrapper that would be mint-on-mint, so force the link to the action-button text
 // color — mirrors the legacy WidgetEditor's `.test-button .link` rule.
@@ -6,4 +47,48 @@
   :global(.link) {
     color: var(--action-button-text);
   }
+}
+
+// Row: native Display preview (left, grows) + embedded settings form (right, fixed).
+// The two OS overlays (Display + BrowserView) live in separate columns so they never
+// share a rect.
+.row {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.preview {
+  flex: 1 1 auto;
+  min-width: @preview-min-width;
+  background: var(--section);
+  border-right: 1px solid var(--border);
+}
+
+.display {
+  position: relative;
+  height: 100%;
+}
+
+// The embed (BrowserView) needs a sized, positioned box.
+.embed {
+  flex: 0 0 @settings-width;
+  position: relative;
+  min-height: 0;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.footerActions {
+  display: flex;
+  gap: 8px;
+}
+
+.footerIcon {
+  margin-right: 8px;
 }

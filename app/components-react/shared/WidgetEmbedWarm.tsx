@@ -15,6 +15,12 @@ interface WidgetEmbedWarmProps {
    * slots; surfaces that are mutually exclusive should share one. See {@link TWidgetEmbedSlot}.
    */
   slot: TWidgetEmbedSlot;
+  /**
+   * Called once the embedded product has finished loading and the view has been handed back.
+   * Lets a host shell inspect the loaded page — e.g. {@link WidgetSettingsEmbed} probes for a
+   * save bridge before deciding whether to offer a native Save button.
+   */
+  onReady?: () => void;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -48,6 +54,11 @@ export default function WidgetEmbedWarm(p: WidgetEmbedWarmProps) {
   const sizeContainer = useRef<HTMLDivElement>(null);
   const lastRect = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
 
+  // Held in a ref so a caller passing an inline arrow doesn't re-run the mount effect (which
+  // would re-navigate the warm view on every render).
+  const onReady = useRef(p.onReady);
+  onReady.current = p.onReady;
+
   // Mount the warm view onto this window and navigate to the product. Re-runs on theme change:
   // the theme is baked into the query, so the service turns that into a full reload.
   useEffect(() => {
@@ -63,7 +74,9 @@ export default function WidgetEmbedWarm(p: WidgetEmbedWarmProps) {
         electronWindowId,
         product,
       );
-      if (!cancelled) setLoading(false);
+      if (cancelled) return;
+      setLoading(false);
+      onReady.current?.();
     }
 
     go();
@@ -105,9 +118,20 @@ export default function WidgetEmbedWarm(p: WidgetEmbedWarmProps) {
 
     syncBounds();
 
-    const interval = window.setInterval(syncBounds, 100);
+    // Observe rather than poll. Two observers are needed: the container's own box catches it
+    // being resized, and the body catches layout shifts elsewhere (livedock expanding, the side
+    // nav collapsing) that move the container without changing its size. `syncBounds` already
+    // no-ops when the rect is unchanged, so overlapping notifications are cheap.
+    const observer = new ResizeObserver(syncBounds);
+    if (sizeContainer.current) observer.observe(sizeContainer.current);
+    observer.observe(document.body);
 
-    return () => clearInterval(interval);
+    window.addEventListener('resize', syncBounds);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', syncBounds);
+    };
   }, [loading, hideStyleBlockers, p.slot]);
 
   return (

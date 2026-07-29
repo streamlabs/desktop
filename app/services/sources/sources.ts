@@ -814,8 +814,9 @@ export class SourcesService extends StatefulService<ISourcesState> {
     const widgetType = source.getPropertiesManagerSettings().widgetType;
 
     // If this widget type has a streamlabs.com dashboard settings page, embed it in the
-    // Properties window (a single top-level BrowserView, destroyed on close) instead of the
-    // native form. Types without a mapping fall through to the native Properties below.
+    // Properties window instead of the native form. The BrowserView behind it is kept warm
+    // across opens and idle-evicted by WidgetEmbedViewService, so it outlives this window.
+    // Types without a mapping fall through to the native Properties below.
     // @see WidgetEmbedProducts / UserService.widgetEmbedUrl
     const embedProduct = WidgetEmbedProducts[widgetType as WidgetType];
     if (embedProduct) {

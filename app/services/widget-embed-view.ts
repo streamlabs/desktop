@@ -39,10 +39,21 @@ const READY_POLL_MS = 150;
  */
 export type TWidgetEmbedSlot = 'properties' | 'page';
 
+/**
+ * Outcome of {@link WidgetEmbedViewService.triggerSave}.
+ *
+ * `saved`       — the page confirmed the save; safe to close the window.
+ * `failed`      — the save was attempted and did not succeed, or the view is gone. The page is
+ *                 showing its own error toast, so keep the window open.
+ * `unsupported` — the page exposes no save bridge (a legacy settings page). It owns its own
+ *                 in-page Save; a native Save must not pretend to have saved anything.
+ */
+export type TWidgetSaveResult = 'saved' | 'failed' | 'unsupported';
+
 interface IWarmView {
   view: Electron.BrowserView | null;
   electronWindowId: number | null;
-  loadedProduct: string | null;
+  loadedProduct: TWidgetEmbedProduct | null;
   loadedTheme: 'night' | 'day' | null;
   booted: boolean;
   idleTimer: number | null;
@@ -69,11 +80,11 @@ export class WidgetEmbedViewService extends Service {
     page: blankSlot(),
   };
 
-  private shutdownSub: { unsubscribe(): void } | null = null;
-
   init() {
-    // Drop every view (and its cookie'd session references) when the user signs out.
+    // Drop every view (and its cookie'd session references) when the user signs out, and
+    // release the renderers on the way down so a warm view can't outlive the app.
     this.userService.userLogout.subscribe(() => this.destroyAll());
+    this.appService.shutdownStarted.subscribe(() => this.destroyAll());
   }
 
   /**
@@ -125,33 +136,43 @@ export class WidgetEmbedViewService extends Service {
   }
 
   /**
+   * Whether the embedded page exposes a save bridge.
+   *
+   * Only the revamped settings pages do. Widget types that still route to a legacy dashboard
+   * page (and the revamped ones whose rollout flag is off) render their own in-page Save
+   * instead, and never define `window.__slobsWidgetSave`. Callers use this to decide whether
+   * to offer a native Save button at all — offering one that no page is listening for would
+   * silently discard the user's edits.
+   */
+  async hasSaveBridge(slot: TWidgetEmbedSlot): Promise<boolean> {
+    if (!this.isAlive(slot)) return false;
+    try {
+      return await this.slots[slot].view!.webContents.executeJavaScript(
+        'typeof window.__slobsWidgetSave === "function"',
+      );
+    } catch {
+      // Landed mid-navigation; treat as absent rather than claiming a bridge we can't reach.
+      return false;
+    }
+  }
+
+  /**
    * Trigger the embedded page's own save (exposed as `window.__slobsWidgetSave` in embed mode).
    * Lives here rather than in the child renderer because the view belongs to the worker process
    * and can't be handed across the process boundary.
    *
-   * Resolves false when the page reports the save failed. The page does NOT throw on failure — it
-   * shows its own error toast — so the caller must branch on this value and leave the window open,
-   * or that toast gets closed along with the window before the user can read it.
+   * Only `'saved'` means it is safe to close the window. The page does NOT throw on failure — it
+   * renders its own error toast — so a caller that closes on anything else takes that toast down
+   * with the window before the user can read it. `'unsupported'` means the page has no bridge
+   * (see {@link hasSaveBridge}); closing there would discard the edits outright.
    */
-  async triggerSave(slot: TWidgetEmbedSlot): Promise<boolean> {
-    if (!this.isAlive(slot)) return true;
-    const result = await this.slots[slot].view!.webContents.executeJavaScript(
-      'window.__slobsWidgetSave ? window.__slobsWidgetSave() : Promise.resolve(true)',
+  async triggerSave(slot: TWidgetEmbedSlot): Promise<TWidgetSaveResult> {
+    if (!this.isAlive(slot)) return 'failed';
+    return await this.slots[slot].view!.webContents.executeJavaScript(
+      `window.__slobsWidgetSave
+        ? Promise.resolve(window.__slobsWidgetSave()).then(ok => (ok === true ? 'saved' : 'failed'))
+        : Promise.resolve('unsupported')`,
     );
-    return result !== false;
-  }
-
-  /**
-   * Boot a slot for `product` without attaching it to a window, so a subsequent open is instant.
-   * Hook for a future on-select prewarm (e.g. when a widget source is selected). Unused today.
-   */
-  async prewarmForProduct(slot: TWidgetEmbedSlot, product: TWidgetEmbedProduct): Promise<void> {
-    this.clearIdleEviction(slot);
-    this.ensureView(slot);
-    if (!this.isAlive(slot)) return;
-    await this.navigate(slot, product);
-    // Nothing is holding the view yet; arm eviction so an untouched prewarm can't leak.
-    this.startIdleEviction(slot);
   }
 
   private async navigate(slot: TWidgetEmbedSlot, product: TWidgetEmbedProduct): Promise<void> {
@@ -252,11 +273,10 @@ export class WidgetEmbedViewService extends Service {
   private ensureView(slot: TWidgetEmbedSlot) {
     if (this.isAlive(slot)) return;
     const s = this.slots[slot];
-    // A previous webContents may have been torn down under us; clear the dead handle first.
-    s.view = null;
 
-    // Match the previous embed's session (Electron's default persistent session, no partition) so
-    // the magic-session cookie set on earlier opens is reused. nodeIntegration stays off.
+    // Replaces any dead handle left by a webContents torn down under us. Matches the previous
+    // embed's session (Electron's default persistent session, no partition) so the magic-session
+    // cookie set on earlier opens is reused. nodeIntegration stays off.
     s.view = new remote.BrowserView({ webPreferences: { nodeIntegration: false } });
 
     I18nService.setBrowserViewLocale(s.view);
@@ -267,10 +287,6 @@ export class WidgetEmbedViewService extends Service {
       if (protocol === 'http:' || protocol === 'https:') remote.shell.openExternal(details.url);
       return { action: 'deny' };
     });
-
-    if (!this.shutdownSub) {
-      this.shutdownSub = this.appService.shutdownStarted.subscribe(() => this.destroyAll());
-    }
   }
 
   private async loadUrl(slot: TWidgetEmbedSlot, target: string) {

@@ -11,11 +11,6 @@ import { TObsFormData } from 'components/obs/inputs/ObsInput';
 import { $t } from 'services/i18n';
 import css from './WidgetSettingsEmbed.m.less';
 
-// The settings embed gets a fixed, comfortable width; the preview takes the rest and grows
-// with the window (mirrors the legacy WidgetEditor, where the preview is the large area).
-const SETTINGS_WIDTH = 540;
-const PREVIEW_MIN_WIDTH = 400;
-
 /**
  * Child-window host for a widget's streamlabs.com dashboard settings, embedded in the source
  * Properties window (opened from {@link SourcesService.showWidgetProperties}). The embedded
@@ -30,17 +25,22 @@ const PREVIEW_MIN_WIDTH = 400;
  *   - Save Settings  → triggers the embedded page's own save via the BrowserView (see below).
  *   - Manage on Web  → opens the full web settings page in the external browser.
  *
- * Layout: a full-width header (Width/Height + Test Widgets), then a row with the native
- * `Display` preview on the left and the embed on the right, then a footer. The two OS overlays
- * (Display + BrowserView) live in separate left/right columns so they never share a rect.
+ * Layout lives in WidgetSettingsEmbed.m.less: a full-width header (Width/Height + Test Widgets),
+ * then a row with the native `Display` preview on the left and the embed on the right, then a
+ * footer. The two OS overlays (Display + BrowserView) sit in separate left/right columns so they
+ * never share a rect.
  *
- * Save bridge: the embedded page's own "Save Settings" tray is hidden in embed mode (core
- * `.widget-settings--embed .widget-settings__footer { display: none }`) and instead exposes a
- * `window.__slobsWidgetSave()` entrypoint. The native Save button awaits that via
- * `WidgetEmbedViewService.triggerSave()` (saving only when there are changes) and closes the
- * window on success — so Save sits inline with Close while the actual save still runs on the web
- * page. The warm view lives in the worker process, so the save is triggered through the service
- * rather than a raw view reference held here.
+ * Save bridge: on the revamped settings pages the in-page "Save Settings" tray is hidden in embed
+ * mode (core `.widget-settings--embed .widget-settings__footer { display: none }`) and the page
+ * exposes a `window.__slobsWidgetSave()` entrypoint instead. The native Save button awaits that
+ * via `WidgetEmbedViewService.triggerSave()` (saving only when there are changes) and closes the
+ * window only on a confirmed save. The warm view lives in the worker process, so the save goes
+ * through the service rather than a raw view reference held here.
+ *
+ * Not every widget type has a revamped page — some still route to a legacy dashboard page, as do
+ * revamped ones whose rollout flag is off. Those expose no bridge and keep their own in-page Save,
+ * so we probe for the bridge once the embed is ready and simply omit the native Save button when
+ * it is absent; offering one there would silently discard the user's edits.
  */
 export default function WidgetSettingsEmbed() {
   const {
@@ -104,18 +104,27 @@ export default function WidgetSettingsEmbed() {
 
   const [saving, setSaving] = useState(false);
 
+  // Whether the loaded page exposes `window.__slobsWidgetSave`. Only the revamped settings pages
+  // do; widget types still served by a legacy dashboard page render their own in-page Save. We
+  // hide the native Save for those rather than offer a button that would discard their edits.
+  const [canSave, setCanSave] = useState(false);
+
+  async function probeSaveBridge() {
+    setCanSave(await WidgetEmbedViewService.actions.return.hasSaveBridge('properties'));
+  }
+
   async function saveWebSettings() {
     // Trigger the embedded page's save via the bridge it exposes in embed mode. It saves only
-    // when there are unsaved changes and resolves once the save settles.
-    // Close ONLY on a confirmed save. The embed signals failure by resolving false — it renders
-    // its own error toast rather than throwing.
+    // when there are unsaved changes and resolves once the save settles. Close ONLY on a
+    // confirmed save — the page renders its own error toast rather than throwing, and closing
+    // takes that toast down with the window before the user can read it.
     setSaving(true);
-    const saved = await WidgetEmbedViewService.actions.return
+    const result = await WidgetEmbedViewService.actions.return
       .triggerSave('properties')
-      .catch(() => false);
+      .catch(() => 'failed' as const);
     setSaving(false);
 
-    if (saved) WindowsService.actions.closeChildWindow();
+    if (result === 'saved') WindowsService.actions.closeChildWindow();
   }
 
   function openWebSettings() {
@@ -124,55 +133,37 @@ export default function WidgetSettingsEmbed() {
   }
 
   const footer = (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        width: '100%',
-      }}
-    >
+    <div className={css.footer}>
       {apiSettings?.webSettingsUrl ? (
         <Button type="ghost" onClick={openWebSettings}>
-          <i className="icon-pop-out-2" style={{ marginRight: 8 }} />
+          <i className={`icon-pop-out-2 ${css.footerIcon}`} />
           {$t('Manage on Web')}
         </Button>
       ) : (
         <span />
       )}
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div className={css.footerActions}>
         <Button disabled={saving} onClick={() => WindowsService.actions.closeChildWindow()}>
           {$t('Close')}
         </Button>
-        <Button type="primary" loading={saving} onClick={saveWebSettings}>
-          {$t('Save Settings')}
-        </Button>
+        {canSave && (
+          <Button type="primary" loading={saving} onClick={saveWebSettings}>
+            {$t('Save Settings')}
+          </Button>
+        )}
       </div>
     </div>
   );
 
   return (
-    <ModalLayout
-      footer={footer}
-      bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column' }}
-    >
-      {/* Header: Width/Height (left, inline) + Test Widgets (right) */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-end',
-          padding: '8px 16px',
-          borderBottom: '1px solid var(--border)',
-          flex: '0 0 auto',
-        }}
-      >
-        <div style={{ display: 'flex', gap: 16 }}>
+    <ModalLayout footer={footer} bodyClassName={css.body}>
+      <div className={css.header}>
+        <div className={css.dimensions}>
           {dimensionProps.map(prop => (
-            <div key={prop.name} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontSize: 12, color: 'var(--paragraph)' }}>{prop.description}</span>
+            <div key={prop.name} className={css.dimension}>
+              <span className={css.dimensionLabel}>{prop.description}</span>
               <InputNumber
-                style={{ width: 88 }}
+                className={css.dimensionInput}
                 min={0}
                 value={prop.value as number}
                 onChange={val => commitDimension(prop, val as number | null)}
@@ -187,23 +178,14 @@ export default function WidgetSettingsEmbed() {
         )}
       </div>
 
-      {/* Row: native Display preview (left, grows) + embedded settings form (right, fixed) */}
-      <div style={{ display: 'flex', flex: '1 1 auto', minHeight: 0 }}>
+      <div className={css.row}>
         {previewSourceId && (
-          <div
-            style={{
-              flex: '1 1 auto',
-              minWidth: PREVIEW_MIN_WIDTH,
-              background: 'var(--section)',
-              borderRight: '1px solid var(--border)',
-            }}
-          >
+          <div className={css.preview}>
             <Display sourceId={previewSourceId} style={{ position: 'relative', height: '100%' }} />
           </div>
         )}
-        {/* The embed (BrowserView) needs a sized, positioned box. */}
-        <div style={{ flex: `0 0 ${SETTINGS_WIDTH}px`, position: 'relative', minHeight: 0 }}>
-          <WidgetEmbedWarm slot="properties" />
+        <div className={css.embed}>
+          <WidgetEmbedWarm slot="properties" onReady={probeSaveBridge} />
         </div>
       </div>
     </ModalLayout>
