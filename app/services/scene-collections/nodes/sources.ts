@@ -76,7 +76,7 @@ export class SourcesNode extends Node<ISchema, {}> {
   }
 
   save(context: {}): Promise<void> {
-    const promises: Promise<ISourceInfo>[] = this.getItems().map(source => {
+    const promises: Promise<ISourceInfo | null>[] = this.getItems().map(source => {
       return new Promise(resolve => {
         const hotkeys = new HotkeysNode();
 
@@ -84,6 +84,12 @@ export class SourcesNode extends Node<ISchema, {}> {
           const audioSource = this.audioService.views.getSource(source.sourceId);
 
           const obsInput = source.getObsInput();
+          if (!obsInput) {
+            console.warn(
+              `[SourcesNode] OBS input not found for source ${source.sourceId} (${source.name}), skipping save`,
+            );
+            return resolve(null);
+          }
 
           /* Signal to the source that it needs to save settings as
            * we're about to cache them to disk. */
@@ -95,6 +101,12 @@ export class SourcesNode extends Node<ISchema, {}> {
             .filter(f => f.displayType !== EFilterDisplayType.Hidden)
             .map(f => {
               const filterInput = this.sourceFiltersService.getObsFilter(source.sourceId, f.name);
+              if (!filterInput) {
+                console.warn(
+                  `[SourcesNode] OBS filter not found for filter ${f.name} on source ${source.sourceId} (${source.name}), skipping`,
+                );
+                return null;
+              }
 
               filterInput.save();
 
@@ -106,7 +118,8 @@ export class SourcesNode extends Node<ISchema, {}> {
                 visible: f.visible,
                 displayType: f.displayType,
               };
-            });
+            })
+            .filter(Boolean);
 
           let data: ISourceInfo = {
             hotkeys,
@@ -155,7 +168,7 @@ export class SourcesNode extends Node<ISchema, {}> {
 
     return new Promise(resolve => {
       Promise.all(promises).then(items => {
-        this.data = { items };
+        this.data = { items: items.filter(Boolean) as ISourceInfo[] };
         resolve();
       });
     });
