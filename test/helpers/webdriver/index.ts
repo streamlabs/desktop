@@ -11,6 +11,7 @@ import fetch from 'node-fetch';
 
 import {
   ITestStats,
+  killChromedriverOnPort,
   killElectronInstances,
   removeFailedTestFromFile,
   saveFailedTestsToFile,
@@ -25,6 +26,7 @@ import {
   focusChild,
   focusMain,
   getClient,
+  isDisplayed,
   waitForLoader,
 } from '../modules/core';
 import { clearCollections } from '../modules/api/scenes';
@@ -238,6 +240,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     if (options.networkLogging) appArgs.push('--network-logging');
     if (options.noSync) appArgs.push('--nosync');
 
+    killChromedriverOnPort(CHROMEDRIVER_PORT);
     await killElectronInstances();
 
     app = t.context.app = new Application({
@@ -297,9 +300,13 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     await t.context.app.client.setTimeout({ implicit: options.implicitTimeout });
 
     if (platform() === 'darwin') {
-      // Select the "Continue" button on the macOS permissions page (MacPermissions.tsx), if it exists.
-      await clickButton('Continue');
+      // Only click Continue if the MacPermissions page is showing.
+      // Using 'h1=Grant Permissions' as the unique marker for that page.
+      if (await isDisplayed('h1=Grant Permissions', { timeout: 5000 })) {
+        await clickButton('Continue');
+      }
     }
+
     // Pretty much all tests except for onboarding-specific
     // tests will want to skip this flow, so we do it automatically.
     await waitForLoader();

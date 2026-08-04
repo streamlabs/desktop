@@ -1,0 +1,66 @@
+.support {
+  padding-bottom: 10px;
+}
+
+.support-links {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 16px;
+  align-items: stretch;
+  margin-bottom: 16px;
+
+  &:not(&--inline) {
+    margin-bottom: 16px;
+  }
+
+  &--inline > * {
+    flex: 1;
+  }
+}
+
+.section-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 16px;
+  align-items: start;
+
+  > h3 {
+    grid-column: 1 / -1;
+  }
+}
+
+.restore-ultra {
+  &:global(.ant-btn) {
+    &, &:hover, &:focus, &:active {
+      color: var(--black);
+      background-color: unset;
+      background: var(--ultra);
+    }
+  }
+}
+
+.obs-import {
+  &--success:global(.ant-btn[disabled]) {
+    color: var(--teal);
+    background-color: var(--teal-semi);
+    border-color: transparent;
+  }
+}
+
+.diagnostic-icon {
+  float: left;
+  margin-right: 16px;
+  font-size: 22px;
+
+  &--success {
+    color: var(--teal);
+  }
+
+  &--error {
+    color: var(--warning);
+  }
+}
+
+.cache-warning {
+  color: var(--warning);
+}

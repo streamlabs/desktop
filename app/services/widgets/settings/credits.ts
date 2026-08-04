@@ -26,6 +26,7 @@ export interface ICreditsSettings extends IWidgetSettings {
   donations: boolean;
   followers: boolean;
   bits_change: string;
+  power_ups_change: string;
   donor_change: string;
   followers_change: string;
   mods_change: string;

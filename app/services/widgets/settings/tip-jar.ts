@@ -23,6 +23,7 @@ interface ITipJarSettings extends IWidgetSettings {
   types: {
     tips: { enabled: boolean; minimum_amount?: number; tiers: ITipDarTierData[] };
     twitch_bits: { enabled: boolean; minimum_amount?: number };
+    twitch_power_ups: { enabled: boolean; minimum_amount?: number };
     twitch_follows: { enabled: boolean; image_src?: string };
     twitch_resubs: { enabled: boolean; minimum_amount?: number };
     twitch_subs: { enabled: boolean; minimum_amount?: number };

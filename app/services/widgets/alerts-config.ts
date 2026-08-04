@@ -7,6 +7,7 @@ export type TAlertType =
   | 'sub'
   | 'resub'
   | 'bits'
+  | 'power_up'
   | 'raid'
   | 'subscriber'
   | 'sponsor'
@@ -81,6 +82,15 @@ export function getAlertsConfig(
       platforms: ['twitch'],
       tooltip: $t('Plays an alert when a viewer sends a Cheer'),
       tooltipLink: 'https://help.twitch.tv/s/article/guide-to-cheering-with-bits',
+    },
+
+    power_up: {
+      type: 'power_up',
+      apiKey: 'power_up',
+      name: $t('Power-Ups'),
+      platforms: ['twitch'],
+      tooltip: $t('Plays an alert when a viewer uses a Power-Up'),
+      tooltipLink: 'https://help.twitch.tv/s/article/power-ups',
     },
 
     raid: {

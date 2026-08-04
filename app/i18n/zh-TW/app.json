@@ -20,7 +20,7 @@
   "This app is currently popped out in another window.": "此應用程式目前在另一個視窗中彈出。",
   "Error granting chat permissions.": "授予聊天室權限時發生錯誤。",
   "Authentication Error": "驗證錯誤",
-  "Diagnostic Report Uploaded Successfully": "Diagnostic Report Uploaded Successfully",
-  "Copy Report ID": "Copy Report ID",
-  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team."
+  "Diagnostic Report Uploaded Successfully": "診斷報告已成功上傳",
+  "Copy Report ID": "複製報告 ID",
+  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "診斷報告已成功上傳，下方的報告 ID 已複製到您的剪貼簿。請將報告 ID 提供給 Streamlabs Streamer Success 團隊。"
 }

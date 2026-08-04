@@ -7,7 +7,7 @@ import { DismissablesService, EDismissable } from 'services/dismissables';
 import { StreamingService } from 'services/streaming';
 import { UserService } from 'services/user';
 import { NavigationService } from 'services/navigation';
-import { ListInput } from '../../../shared/inputs';
+import { InputComponent, ListInput } from '../../../shared/inputs';
 import GameSelector from '../GameSelector';
 import {
   FacebookService,
@@ -25,6 +25,7 @@ import { assertIsDefined } from '../../../../util/properties-type-guards';
 import * as remote from '@electron/remote';
 import { $t } from 'services/i18n';
 import { Services } from '../../../service-provider';
+import { CustomFieldsCheckbox } from '../CustomFieldsCheckbox';
 
 class FacebookEditStreamInfoModule {
   fbService = inject(FacebookService);
@@ -42,7 +43,7 @@ class FacebookEditStreamInfoModule {
   groups = this.fbState.facebookGroups;
   isPrimary = this.streamingService.views.isPrimaryPlatform('facebook');
   isScheduleMode = false;
-  props: IPlatformComponentParams<'facebook'>;
+  props!: IPlatformComponentParams<'facebook'>;
 
   get settings() {
     return this.props.value;
@@ -248,7 +249,7 @@ class FacebookEditStreamInfoModule {
   }
 }
 
-export default function FacebookEditStreamInfo(p: IPlatformComponentParams<'facebook'>) {
+export const FacebookEditStreamInfo = InputComponent((p: IPlatformComponentParams<'facebook'>) => {
   const { shouldShowPermissionWarn, setProps } = useModule(FacebookEditStreamInfoModule, true);
   setProps(p);
   return (
@@ -257,21 +258,20 @@ export default function FacebookEditStreamInfo(p: IPlatformComponentParams<'face
 
       <PlatformSettingsLayout
         layoutMode={p.layoutMode}
-        commonFields={<CommonFields key="common" />}
-        requiredFields={<RequiredFields key="required" />}
-        optionalFields={<OptionalFields key="optional" />}
-        essentialOptionalFields={<Events key="events" />}
+        commonFields={<CommonFields key="facebook-common" />}
+        requiredFields={<RequiredFields key="facebook-required" />}
+        optionalFields={<OptionalFields key="facebook-optional" />}
+        essentialOptionalFields={<Events key="facebook-events" {...p} />}
       />
     </Form>
   );
-}
+});
 
 function CommonFields() {
   const { settings, updateSettings, layoutMode, layout } = useFacebook();
 
   return (
     <CommonPlatformFields
-      key="common"
       platform="facebook"
       layoutMode={layoutMode}
       value={settings}
@@ -298,7 +298,7 @@ function RequiredFields() {
   } = useFacebook();
 
   return (
-    <div key="required">
+    <div>
       {!isUpdateMode && (
         <>
           {shouldShowDestinationType && (
@@ -421,7 +421,7 @@ function OptionalFields() {
   );
 }
 
-function Events() {
+function Events(p: IPlatformComponentParams<'facebook'>) {
   const {
     bind,
     shouldShowEvents,
@@ -454,6 +454,11 @@ function Events() {
           size="large"
         />
       )}
+      <CustomFieldsCheckbox
+        {...p}
+        platform="facebook"
+        onChange={newSettings => p.onChange({ ...p.value, ...newSettings })}
+      />
     </div>
   );
 }

@@ -49,5 +49,5 @@
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "Das Vorschaubild auf YouTube ist zu groß. Die maximale Größe ist 2 MB.",
   "Please upload thumbnail manually on YouTube.": "Lade das Vorschaubild manuell auf YouTube hoch.",
   "Stream Shift Error: YouTube is not live": "Stream Shift-Fehler: YouTube ist offline",
-  "Error starting vertical stream in YouTube dual streaming": "Error starting vertical stream in YouTube dual streaming"
+  "Error starting vertical stream in YouTube dual streaming": "Fehler beim Starten des vertikalen Streams beim YouTube-Dual-Streaming"
 }

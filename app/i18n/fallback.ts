@@ -22,6 +22,7 @@ const fallbackDictionary = {
   ...require('./en-US/filters.json'),
   ...require('./en-US/game-overlay.json'),
   ...require('./en-US/hotkeys.json'),
+  ...require('./en-US/live-outputs.json'),
   ...require('./en-US/media-gallery.json'),
   ...require('./en-US/notifications.json'),
   ...require('./en-US/onboarding.json'),

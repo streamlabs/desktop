@@ -174,6 +174,7 @@ export class StreamingService
   @Inject() private settingsService: SettingsService;
   @Inject() private signalsService: SignalsService;
   @Inject() private highlighterService: HighlighterService;
+
   streamingStatusChange = new Subject<EStreamingState>();
   recordingStatusChange = new Subject<ERecordingState>();
   replayBufferStatusChange = new Subject<EReplayBufferState>();
@@ -336,7 +337,7 @@ export class StreamingService
         // prime users are eligible for streaming to any platform
         const primeRequired = this.isPrimeRequired(platform);
 
-        if (primeRequired && !this.views.isDualOutputMode) {
+        if (primeRequired) {
           this.setError('PRIME_REQUIRED');
           this.UPDATE_STREAM_INFO({ lifecycle: 'empty' });
           return;
@@ -399,6 +400,10 @@ export class StreamingService
       }
     }
 
+    if (!isPrime && this.views.enabledPlatforms.length <= 2) {
+      return false;
+    }
+
     return true;
   }
 
@@ -447,7 +452,11 @@ export class StreamingService
     const settings = newSettings || cloneDeep(this.views.savedSettings);
 
     // For the Stream Shift, match remote targets to local targets
-    if (settings.streamShift && this.restreamService.views.hasStreamShiftTargets) {
+    if (
+      settings.streamShift &&
+      this.restreamService.views.hasStreamShiftTargets &&
+      !this.restreamService.views.streamShiftForceGoLive
+    ) {
       await this.restreamService.fetchTargetData();
 
       const targets: TPlatform[] = this.restreamService.views.streamShiftTargets.reduce(
@@ -666,8 +675,6 @@ export class StreamingService
     /**
      * SET MULTISTREAM SETTINGS
      */
-    // TODO: remove after server-side impl
-    this.restreamService.actions.forceStreamShiftGoLive(false);
     if (this.views.shouldSetupRestream) {
       // In single output mode, this sets up multistreaming
       // In dual output mode, this sets up streaming displays to multiple targets
@@ -736,6 +743,7 @@ export class StreamingService
           await this.restreamService.beforeGoLive();
         });
       } catch (e: unknown) {
+        console.log('Restream setup failed', e);
         const errorType = this.handleTypedStreamError(
           e,
           failureType,
@@ -853,6 +861,12 @@ export class StreamingService
       // Handle rendering a prompt for enabling permissions to generate a stream key for Kick
       if (errorType === 'KICK_STREAM_KEY_MISSING') {
         throwStreamError('KICK_STREAM_KEY_MISSING', { platform: 'kick' });
+      }
+
+      // YouTube service unavailable due to a backend error returned from YouTube. Because this is a backend error
+      // from the YouTube API itself, the user needs to toggle off YouTube in order to go live
+      if (errorType === 'YOUTUBE_UNAVAILABLE') {
+        throwStreamError('YOUTUBE_UNAVAILABLE', { platform: 'youtube' });
       }
 
       // To prevent users from being blocked by livestreaming from a single platform failing to
@@ -1373,16 +1387,6 @@ export class StreamingService
   }
 
   async toggleStreaming(options?: TStartStreamOptions, force = false) {
-    if (this.views.isDualOutputMode && !this.views.getCanStreamDualOutput() && this.isIdle) {
-      this.notificationsService.actions.push({
-        message: $t('Set up Go Live Settings for Dual Output Mode in the Go Live window.'),
-        type: ENotificationType.WARNING,
-        lifeTime: 2000,
-      });
-      this.showGoLiveWindow();
-      return;
-    }
-
     if (
       this.state.status.horizontal.streaming === EStreamingState.Offline &&
       this.state.status.vertical.streaming === EStreamingState.Offline
@@ -1504,7 +1508,7 @@ export class StreamingService
     } catch (e: unknown) {
       console.error('Error fetching stream encoder info: ', e);
 
-      const message = (e as any).message ?? $t('Failed to fetch encoder settings');
+      const message = (e as any)?.message ?? $t('Failed to fetch encoder settings');
       this.handleTypedStreamError(e, 'INVALID_ENCODER', message);
     }
 
@@ -1576,6 +1580,9 @@ export class StreamingService
       await this.handleStartEnhancedBroadcastingDualOutput(code, context, time);
     } else if (this.views.isYouTubeDualStreaming) {
       // For YouTube dual streaming without enhanced broadcasting, the horizontal stream needs to be started before the vertical stream.
+      // Don't set horizontal to Live here. Wait until the vertical Start signal arrives so that
+      // streamingStatus only reports Live once both streams are actually running. Setting it early
+      // causes a race where the UI shows "End Stream" before the vertical instance existed.
       if (context === 'horizontal') {
         try {
           await this.validateOrCreateOutputInstance({
@@ -1586,10 +1593,6 @@ export class StreamingService
             start: true,
             isEnhancedBroadcasting: false,
           });
-
-          // Update the horizontal stream status to live for the UI
-          this.SET_STREAMING_STATUS(EStreamingState.Live, context, time);
-          this.streamingStatusChange.next(EStreamingState.Live);
         } catch (e: unknown) {
           // Error will be surfaced from `createStreaming` for YouTube dual streaming only if
           // the vertical stream fails to start.
@@ -1612,11 +1615,14 @@ export class StreamingService
       }
 
       if (context === 'vertical') {
+        // Both streams have now started so set horizontal to Live first, then handleStartStreaming
+        // sets vertical to Live and resolves the start streaming promise.
+        this.SET_STREAMING_STATUS(EStreamingState.Live, 'horizontal', time);
         await this.handleStartStreaming(code, context);
       }
     } else {
       // In dual output mode without enhanced broadcasting, create the horizontal streaming instance after the vertical stream
-      // has started. The start streaming promise resolves when the vertical stream starts because the vertical stream is the
+      // has started. The start streaming promise resolves when the horizontal stream starts because the horizontal stream is the
       // last streaming instance created
       if (context === 'vertical') {
         await this.validateOrCreateOutputInstance({
@@ -1633,6 +1639,13 @@ export class StreamingService
         // Only resolve the start streaming promise after the horizontal stream has started to prevent unintended side effects of duplicate
         // actions taken after starting the stream
         await this.handleStartStreaming(code, context);
+
+        if (this.state.status.vertical.streaming === EStreamingState.Starting) {
+          // The horizontal stream has started but the vertical stream status is still `Starting`. Update the vertical streaming status here,
+          // instead of when the vertical stream actually starts, to prevent a race condition where the UI might show all streams as `Live`
+          // when some streams may be still in the process of starting.
+          this.SET_STREAMING_STATUS(EStreamingState.Live, 'vertical', time);
+        }
       }
     }
   }
@@ -1784,6 +1797,15 @@ export class StreamingService
    * @param force - boolean, whether to force stop the stream
    */
   private async handleStopStreaming(force?: boolean) {
+    // Twitch dual streaming uses the `enhancedBroadcasting` instance but most of the
+    // streaming signal handling work with the `horizontal` instance. Because the `horizontal`
+    // instance is not streaming, but may exist to be used with the recording and replay buffer,
+    // handle this case on its own.
+    if (this.views.isTwitchDualStreaming) {
+      await this.stopTwitchDualStreamOutputs();
+      return;
+    }
+
     // Recording must be stopped before stopping the replay buffer
     // for the correct order of destruction of the context instances
     const keepRecording = this.streamSettingsService.settings.keepRecordingWhenStreamStops;
@@ -1836,6 +1858,33 @@ export class StreamingService
           $t('Error stopping stream: default streams do not exist.'),
         );
       }
+    }
+  }
+
+  /**
+   * Stop a Twitch Dual Stream
+   * @remark Twitch dual stream uses the `enhancedBroadcasting` instance. Because a streaming instance
+   * may exist for recording and replay buffer, handle dual streaming with Twitch on its own.
+   */
+  private async stopTwitchDualStreamOutputs() {
+    // Recording must be stopped before the replay buffer
+    const keepRecording = this.streamSettingsService.settings.keepRecordingWhenStreamStops;
+    if (!keepRecording && this.getIsRecordingStatus(ERecordingState.Recording)) {
+      await this.toggleRecording();
+    }
+
+    // Replay buffer must be stopped after the recording
+    const keepReplaying = this.streamSettingsService.settings.keepReplayBufferStreamStops;
+    if (!keepReplaying && this.getIsReplayBufferStatus(EReplayBufferState.Running)) {
+      this.stopReplayBuffer();
+    }
+
+    // Stop the Twitch dual stream (enhanced broadcasting instance)
+    if (this.contexts.enhancedBroadcasting.streaming) {
+      this.contexts.enhancedBroadcasting.streaming.stop(true);
+    } else {
+      // This should never happen but to ensure that the stream does actually stop, cleanup here
+      this.handleCleanupStreamingInstances({ skipHorizontal: false });
     }
   }
 
@@ -2161,7 +2210,7 @@ export class StreamingService
         }
 
         const message =
-          (e as any).message ??
+          (e as any)?.message ??
           $t('An unknown error occurred while starting the stream. Please try again.');
 
         this.createOBSError(
@@ -2712,6 +2761,18 @@ export class StreamingService
         if (this.isReplayBufferActive) {
           this.stopReplayBuffer();
         }
+      }
+
+      // Handle Twitch dual streaming separately because it does use the horizontal streaming instance
+      // so we can't rely on the horizontal streaming instance signals
+      if (context === 'enhancedBroadcasting' && this.views.isTwitchDualStreaming) {
+        this.SET_STREAMING_STATUS(EStreamingState.Offline, 'horizontal', new Date().toISOString());
+        this.streamingStatusChange.next(EStreamingState.Offline);
+
+        await this.handleDestroyOutputContexts('enhancedBroadcasting');
+        await this.handleDestroyOutputContexts('horizontal');
+        await this.handleDestroyOutputContexts('vertical');
+        return;
       }
 
       // For the UI, set the streaming status to offline on the `deactivate` signal
@@ -3381,8 +3442,8 @@ export class StreamingService
    * Prefill fields with data if `prepopulateOptions` provided
    */
   showGoLiveWindow(prepopulateOptions?: IGoLiveSettings['prepopulateOptions']) {
-    const height = 750;
-    const width = 800;
+    const height = 800;
+    const width = 910;
 
     this.windowsService.showWindow({
       componentName: 'GoLiveWindow',
@@ -3396,6 +3457,9 @@ export class StreamingService
   }
 
   showEditStream() {
+    // TODO: Update when add edit
+    // const height = 800;
+    // const width = 910;
     const height = 750;
     const width = 800;
 
@@ -3917,6 +3981,8 @@ export class StreamingService
    * even if one fails. This prevents orphan contexts that can leave phantom processes or create errors on next startup.
    */
   async shutdown() {
+    const failures: string[] = [];
+
     // InitShutdownSequence is called before this method, so OBS outputs are
     // already being torn down. Skip .stop() calls and directly destroy factory
     // instances to avoid blocking on native calls that may never return.
@@ -3933,10 +3999,15 @@ export class StreamingService
           this.destroyFactoryInstance(type, instance);
         } catch (e: unknown) {
           console.error(`Error destroying ${type} for ${context} during shutdown:`, e);
+          failures.push(`${context}.${type}`);
         }
 
         this.contexts[context][type] = null;
       }
+    }
+
+    if (failures.length) {
+      throw new Error(`Failed to destroy output contexts during shutdown: ${failures.join(', ')}`);
     }
   }
 

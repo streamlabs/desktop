@@ -17,6 +17,7 @@ interface IAlertBoxGeneralSettings extends IWidgetSettings {
 
   // SHOW MESSAGES
   show_bits_message: boolean;
+  show_power_up_message: boolean;
   show_donation_message: boolean;
   show_donordrivedonation_message: boolean;
   show_eldonation_message: boolean;
@@ -30,6 +31,7 @@ interface IAlertBoxGeneralSettings extends IWidgetSettings {
 
   // WHITE-LISTED SETTINGS
   bits_alert_min_amount: number;
+  power_up_alert_min_amount: number;
   donation_alert_min_amount: number;
   host_viewer_minimum: number;
   raid_raider_minimum: number;
@@ -179,6 +181,53 @@ interface IAlertBoxBitsSettings {
   bits_tts_min_amount: number;
   bits_tts_security: number;
   bits_tts_volume: number;
+}
+
+// POWER-UPS
+interface IAlertBoxPowerUpsSettings {
+  power_up_alert_duration: number;
+  power_up_alert_message_min_amount: number;
+  power_up_custom_css: string;
+  power_up_custom_html: string;
+  power_up_custom_html_enabled: boolean;
+  power_up_custom_js: string;
+  power_up_custom_json: string;
+  power_up_enabled: boolean;
+  power_up_font: string;
+  power_up_font_color2: string;
+  power_up_font_color: string;
+  power_up_font_size: string;
+  power_up_font_weight: number;
+  power_up_hide_animation: string;
+  power_up_image_href: string;
+  power_up_image_x: number;
+  power_up_image_y: number;
+  power_up_layout: string;
+  power_up_message_allow_emotes: boolean;
+  power_up_message_font: string;
+  power_up_message_font_color: string;
+  power_up_message_font_size: string;
+  power_up_message_font_weight: string;
+  power_up_message_template: string;
+  power_up_positioning_mode: string;
+  power_up_show_animation: string;
+  power_up_sound_href: string;
+  power_up_sound_volume: number;
+  power_up_text_animation: string;
+  power_up_text_delay: number;
+  power_up_text_intro_animation: string;
+  power_up_text_outro_animation: string;
+  power_up_text_x: number;
+  power_up_text_y: number;
+  power_up_tts_enabled: boolean;
+  power_up_tts_include_message_template: boolean;
+  power_up_tts_language: string;
+  power_up_tts_min_amount: number;
+  power_up_tts_repetition_block_length: number;
+  power_up_tts_security: number;
+  power_up_tts_volume: number;
+  power_up_use_event_image: boolean;
+  power_up_variations: IAlertBoxVariation[];
 }
 
 // NORMAL DONATIONS
@@ -621,6 +670,7 @@ export interface IAlertBoxApiSettings
   extends IAlertBoxGeneralSettings,
     IAlertBoxSubSettings,
     IAlertBoxBitsSettings,
+    IAlertBoxPowerUpsSettings,
     IAlertBoxDonationSettings,
     IAlertBoxFollowSettings,
     IAlertBoxHostSettings,

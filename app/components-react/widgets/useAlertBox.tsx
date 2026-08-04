@@ -1,5 +1,4 @@
 import {
-  createAlertsMap,
   ICustomCode,
   IWidgetState,
   useWidget,
@@ -18,6 +17,7 @@ import { TPlatform } from '../../services/platforms';
 import * as remote from '@electron/remote';
 import { IListOption } from '../shared/inputs/ListInput';
 import { injectFormBinding, mutation } from 'slap';
+import React from 'react';
 
 interface IAlertBoxState extends IWidgetState {
   data: {
@@ -450,6 +450,14 @@ function getGeneralSettingsMetadata() {
 }
 
 /**
+ * This function ensures that given object have a key for each alert type
+ * Also it provides better experience for Typescript types related to widgets
+ */
+function createAlertsMap<T extends Record<TAlertType, Record<string, ReturnType<typeof metadata.any>>>>(obj: T): T {
+  return obj;
+}
+
+/**
  * Returns metadata for the variation settings form
  */
 function getVariationsMetadata() {
@@ -498,18 +506,23 @@ function getVariationsMetadata() {
         min: 0,
       }),
     },
-    follow: {},
-    facebook_follow: {},
     raid: {
       message_template: getMessageTemplateMetadata('raid'),
     },
-    sub: {},
     bits: {
       message_template: getMessageTemplateMetadata('bits'),
       alert_message_min_amount: metadata.number({
         label: $t('Min. Amount to Trigger Alert'),
         min: 0,
       }),
+    },
+    power_up: {
+      message_template: getMessageTemplateMetadata('power_up'),
+      alert_message_min_amount: metadata.number({
+        label: $t('Min. Amount to Trigger Alert'),
+        min: 0,
+      }),
+      use_event_image: metadata.bool({ label: $t('Use Power-Up Image') }),
     },
     fanfunding: {
       alert_message_min_amount: metadata.number({
@@ -527,28 +540,31 @@ function getVariationsMetadata() {
     facebook_support: {
       message_template: getMessageTemplateMetadata('facebook_support'),
     },
-    facebook_support_gifter: {},
-    facebook_share: {},
-    facebook_like: {},
     merch: {
       message_template: getMessageTemplateMetadata('merch'),
       use_custom_image: metadata.bool({
         label: $t('Replace product image with custom image'),
       }),
     },
-    subscriber: {},
+    donordrive_donation: {},
+    eldonation: {},
+    facebook_follow: {},
+    facebook_like: {},
+    facebook_share: {},
+    facebook_support_gifter: {},
+    follow: {},
+    justgiving_donation: {},
+    loyalty_store_redemption: {},
+    membershipGift: {},
+    pledge: {},
+    resub: {},
     sponsor: {},
-    donordrive_donation: undefined,
-    eldonation: undefined,
-    justgiving_donation: undefined,
-    loyalty_store_redemption: undefined,
-    membershipGift: undefined,
-    pledge: undefined,
-    resub: undefined,
-    streamlabscharitydonation: undefined,
-    tiltify_donation: undefined,
-    treat: undefined,
-    twitchcharitydonation: undefined,
+    streamlabscharitydonation: {},
+    sub: {},
+    subscriber: {},
+    tiltify_donation: {},
+    treat: {},
+    twitchcharitydonation: {},
   });
 
   // mix common and specific metadata and return it
@@ -567,41 +583,54 @@ function getVariationsMetadata() {
  * @param alert
  */
 function getMessageTemplateMetadata(alert?: TAlertType) {
-  const tooltipTextHeader =
-    $t('When an alert shows up, this will be the format of the message.') +
-    '\n' +
-    $t('Available Tokens: ') +
-    '\n';
-  let tooltipTokens = ' {name} ';
+  let basicTokens = '';
+  const tokenLines: [string, string][] = [];
 
   switch (alert) {
     case 'donation':
     case 'bits':
     case 'facebook_stars':
     case 'facebook_support':
-      tooltipTokens =
-        ' {name} ' +
-        $t('The name of the donator') +
-        ', {amount} ' +
-        $t('The amount that was donated');
+      tokenLines.push(
+        ['{name}', $t('The name of the donator')],
+        ['{amount}', $t('The amount that was donated')],
+      );
+      break;
+    case 'power_up':
+      tokenLines.push(
+        ['{name} ', $t('The display name of the viewer who redeemed the Power-Up')],
+        ['{powerUpName} ', $t('The title of the Power-Up that was redeemed')],
+        ['{bitsSpent} ', $t('The number of Bits the viewer spent on the redemption')],
+        ['{message} ', $t('Any text the viewer provided when redeeming the Power-Up')],
+      );
       break;
     case 'merch':
-      tooltipTokens = '{name}, {product}';
+      basicTokens = '{name}, {product}';
       break;
     case 'raid':
-      tooltipTokens =
-        ' {name} ' +
-        $t('The name of the streamer raiding you') +
-        ', {amount} ' +
-        $t('The number of viewers who joined the raid');
+      tokenLines.push(
+        ['{name}', $t('The name of the streamer raiding you')],
+        ['{amount}', $t('The number of viewers who joined the raid')],
+      );
+      break;
+    default:
+      basicTokens = '{name}';
       break;
   }
 
-  const tooltip = tooltipTextHeader + tooltipTokens;
-
   return metadata.text({
     label: $t('Message Template'),
-    tooltip,
+    tooltip: (<div>
+      <div>{$t('When an alert shows up, this will be the format of the message.')}</div>
+      <div>{$t('Available Tokens:')} {basicTokens}</div>
+      {!!tokenLines.length && (
+        <ul style={{ paddingLeft: 0, listStylePosition: 'inside' }}>
+          {tokenLines.map(([token, desc]) => (
+            <li key={token}>{token}: {desc}</li>
+          ))}
+        </ul>
+      )}
+    </div>),
   });
 }
 

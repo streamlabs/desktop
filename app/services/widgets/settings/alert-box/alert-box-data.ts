@@ -5,6 +5,7 @@ import { metadata } from 'components/widgets/inputs';
 
 export const API_NAME_MAP = {
   bit: 'bits',
+  power_up: 'power_ups',
   donation: 'donations',
   donordrivedonation: 'donordrive',
   pledge: 'patreon',
@@ -33,6 +34,7 @@ export const API_NAME_MAP = {
 
 export const alertNameMap = () => ({
   bits: $t('Bits'),
+  power_ups: $t('Power-Ups'),
   donations: $t('Donations'),
   donordrive: $t('Charity Streaming Donations'),
   patreon: $t('Patreon Pledges'),

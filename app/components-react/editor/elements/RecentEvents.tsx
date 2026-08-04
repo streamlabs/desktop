@@ -173,6 +173,7 @@ function EventCell(p: { event: IRecentEvent }) {
   function getName(event: IRecentEvent) {
     if (event.gifter) return event.gifter;
     if (event.from) return event.from;
+    if (event.redeemer_display_name) return event.redeemer_display_name;
     return event.name;
   }
 
@@ -183,6 +184,7 @@ function EventCell(p: { event: IRecentEvent }) {
     if (event.type === 'superchat' || event.formatted_amount || event.formattedAmount) {
       return 'donation';
     }
+    if (event.type === 'power_up') return 'bits';
     return event.type;
   }
 
@@ -192,6 +194,13 @@ function EventCell(p: { event: IRecentEvent }) {
     if (event.type === 'superchat') return event.displayString;
     if (event.type === 'sticker' || event.type === 'effect') {
       return `${event.amount} ${event.currency}`;
+    }
+    if (event.type === 'power_up') {
+      if (event.power_up_name && event.amount) {
+        return `${event.power_up_name} (${event.amount} bits)`;
+      }
+      if (event.power_up_name) return event.power_up_name;
+      return `${event.amount} bits`;
     }
     return `${event.amount} ${event.type}`;
   }

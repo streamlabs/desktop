@@ -1,21 +1,14 @@
-import { click, clickIfDisplayed, useMainWindow, isDisplayed } from './core';
+import { useMainWindow, clickWhenDisplayed, isDisplayed } from './core';
 
 export async function skipOnboarding() {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
-    if (!(await isDisplayed('h2=Live Streaming', { timeout: 5000 }))) return;
-    // Uses advanced onboarding
-    await click('h2=Live Streaming');
-    await click('button=Continue');
-    // Auth
-    await click('button=Skip');
-    // OBS import
-    await clickIfDisplayed('div=Start Fresh');
-    // Hardware setup
-    await click('button=Skip');
-    // Themes
-    await click('button=Skip');
-    // Ultra
-    await clickIfDisplayed('div[data-testid=choose-free-plan-btn]');
+    // Onboarding doesn't reappear on app restarts, which some tests require
+    const onboardingAppeared = await isDisplayed('a=Log In', { timeout: 10000 });
+    if (onboardingAppeared) {
+      await clickWhenDisplayed('a=Log In', { timeout: 5000 });
+      await clickWhenDisplayed('button=Skip', { timeout: 5000 });
+      await clickWhenDisplayed('button=Skip', { timeout: 5000 });
+    }
   });
 }

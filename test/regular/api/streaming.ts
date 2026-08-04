@@ -1,5 +1,7 @@
 import { TExecutionContext, useWebdriver, test } from '../../helpers/webdriver';
 import { getApiClient } from '../../helpers/api-client';
+import * as fs from 'fs-extra';
+import { sleep } from '../../helpers/sleep';
 import {
   IStreamingServiceApi,
   EStreamingState,
@@ -85,6 +87,56 @@ test('Recording via API', async (t: TExecutionContext) => {
 
   recordingStatus = (await client.fetchNextEvent()).data;
   t.is(recordingStatus, ERecordingState.Offline, 'Recording status should be Offline');
+});
+
+test('Advanced recording splits files by size via API', async (t: TExecutionContext) => {
+  t.timeout(2 * 60 * 1000, 'Advanced recording size split test timed out');
+
+  const client = await getApiClient();
+  const streamingService = client.getResource<IStreamingServiceApi>('StreamingService');
+  const settingsService = client.getResource<SettingsService>('SettingsService');
+
+  settingsService.setSettingValue('Output', 'Mode', 'Advanced');
+  settingsService.setSettingValue('Output', 'RecFilePath', t.context.cacheDir);
+  settingsService.setSettingValue('Output', 'RecFormat', 'mkv');
+  settingsService.setSettingValue('Output', 'RecEncoder', 'obs_x264');
+  settingsService.setSettingValue('Output', 'Recrate_control', 'CBR');
+  settingsService.setSettingValue('Output', 'Recbitrate', 60000);
+  settingsService.setSettingValue('Output', 'RecSplitFile', true);
+  settingsService.setSettingValue('Output', 'RecSplitFileType', 'Size');
+  settingsService.setSettingValue('Output', 'RecSplitFileSize', 2);
+
+  let recordingStatus = streamingService.getModel().recordingStatus;
+
+  streamingService.recordingStatusChange.subscribe(() => void 0);
+
+  t.is(recordingStatus, ERecordingState.Offline, 'Recording status should be Offline');
+
+  streamingService.toggleRecording();
+
+  recordingStatus = (await client.fetchNextEvent()).data;
+  t.is(recordingStatus, ERecordingState.Recording, 'Recording status should be Recording');
+
+  await sleep(12000);
+
+  streamingService.toggleRecording();
+
+  recordingStatus = (await client.fetchNextEvent()).data;
+  t.is(recordingStatus, ERecordingState.Stopping, 'Recording status should be Stopping');
+
+  recordingStatus = (await client.fetchNextEvent()).data;
+  t.is(recordingStatus, ERecordingState.Writing, 'Recording status should be Writing');
+
+  recordingStatus = (await client.fetchNextEvent()).data;
+  t.is(recordingStatus, ERecordingState.Offline, 'Recording status should be Offline');
+
+  const files = await fs.readdir(t.context.cacheDir);
+  const recordingFiles = files.filter(file => file.endsWith('.mkv'));
+
+  t.true(
+    recordingFiles.length > 1,
+    `Expected size-split recording to create multiple files, got:\n${files.join('\n')}`,
+  );
 });
 
 test('Recording filename formatting is read from advanced recording settings', async t => {

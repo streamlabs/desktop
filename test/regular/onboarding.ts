@@ -85,16 +85,13 @@ async function goThroughOnboarding(
 ) {
   await focusMain();
 
+  // TODO: This page is no longer shown in the new onboarding flow. We should remove this.
   if (!(await isDisplayed('h2=Live Streaming'))) return;
-
-  await click('h2=Live Streaming');
-  await click('button=Continue');
-
-  await click('a=Login');
+  await clickWhenDisplayed('a=Log In', { timeout: 5000 });
 
   // Complete login
   if (login) {
-    await isDisplayed('button=Log in with Twitch');
+    await isDisplayed('button=Twitch');
     const user = await logIn(t, 'twitch', { prime: false }, false, true, newUser);
     await sleep(1000);
 
@@ -122,7 +119,7 @@ async function goThroughOnboarding(
  */
 async function finishOnboarding(installTheme = false) {
   // Skip hardware config
-  await waitForDisplayed('h1=Set up your mic & webcam');
+  await waitForDisplayed('h1=Set Up Your Mic & Webcam');
   await clickIfDisplayed('button=Skip');
 
   // Theme install
@@ -145,32 +142,39 @@ async function finishOnboarding(installTheme = false) {
 test('Go through onboarding', async t => {
   await focusMain();
 
-  if (!(await isDisplayed('h2=Live Streaming'))) return;
-
-  await click('h2=Live Streaming');
-  await click('button=Continue');
+  if (!(await isDisplayed('h1=Welcome to Streamlabs Desktop'))) {
+    t.fail('Onboarding welcome page not shown');
+    return;
+  }
+  // Click on Login on the signup page, then wait for the auth screen to appear
+  await clickWhenDisplayed('a=Log In', { timeout: 5000 });
 
   // Signup page
-  t.true(await isDisplayed('h1=Sign Up'), 'Shows signup page by default');
-  t.true(await isDisplayed('button=Create a Streamlabs ID'), 'Has a create Streamlabs ID button');
+  t.true(await isDisplayed('h1=Log In'), 'Shows login page by default');
+  t.true(
+    await isDisplayed('button*=Log in with Streamlabs ID'),
+    'Has a log in with Streamlabs ID button',
+  );
+  // "Or log in with a platform" is a <span>, not a <button>
+  t.true(
+    await isDisplayed('span=Or log in with a platform'),
+    'Has an "Or log in with a platform" label',
+  );
 
-  // Click on Login on the signup page, then wait for the auth screen to appear
-  await click('a=Login');
+  t.true(await isDisplayed('button=Twitch'), 'Shows Twitch button');
+  t.true(await isDisplayed('button=YouTube'), 'Shows YouTube button');
+  t.true(await isDisplayed('button=Facebook'), 'Shows Facebook button');
+  t.true(await isDisplayed('button=TikTok'), 'Shows TikTok button');
+  t.true(await isDisplayed('button=Instagram'), 'Shows Instagram button');
+  t.true(await isDisplayed('button=X'), 'Shows X (Twitter) button');
+  t.true(await isDisplayed('button=Kick'), 'Shows Kick button');
+  t.true(await isDisplayed('button=dlive'), 'Shows Dlive button');
+  t.true(await isDisplayed('button=NimoTV'), 'Shows NimoTV button');
 
-  // Check for all the login buttons
-  t.true(await isDisplayed('button=Log in with Twitch'), 'Shows Twitch button');
-  t.true(await isDisplayed('button=Log in with YouTube'), 'Shows YouTube button');
-  t.true(await isDisplayed('button=Log in with Facebook'), 'Shows Facebook button');
-  t.true(await isDisplayed('button=Log in with TikTok'), 'Shows TikTok button');
-
-  // Check for all the login icons
-  t.true(await isDisplayed('[data-testid=platform-icon-button-dlive]'), 'Shows Dlive button');
-  t.true(await isDisplayed('[data-testid=platform-icon-button-nimotv]'), 'Shows NimoTV button');
-
-  t.true(await isDisplayed('a=Sign up'), 'Has a link to go back to Sign Up');
+  t.true(await isDisplayed('button=Back'), 'Has a link to go back to Sign Up');
 
   // Complete login
-  await isDisplayed('button=Log in with Twitch');
+  await waitForDisplayed('button=Twitch');
   const user = await logIn(t, 'twitch', { prime: false }, false, true);
   await sleep(1000);
   // We seem to skip the login step after login internally
@@ -178,16 +182,13 @@ test('Go through onboarding', async t => {
 
   // Finish onboarding flow
   await withPoolUser(user, async () => {
-    // Skip hardware config
-    await waitForDisplayed('h1=Set up your mic & webcam');
+    await waitForDisplayed('h1=Connect Platforms');
     await clickIfDisplayed('button=Skip');
 
-    // Skip picking a theme
-    await waitForDisplayed('h1=Add your first theme');
+    await waitForDisplayed('h1=Choose Your Plan');
     await clickIfDisplayed('button=Skip');
 
-    // Skip purchasing prime
-    await clickWhenDisplayed('div[data-testid=choose-free-plan-btn]', { timeout: 60000 });
+    await waitForDisplayed('h1=Set Up Your Mic & Webcam');
 
     t.true(await isDisplayed('span=Sources'), 'Sources selector is visible');
 
