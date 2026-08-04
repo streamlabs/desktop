@@ -9,7 +9,7 @@ import { useWidgetRoot, WidgetModule } from './useWidget';
 import { GenericGoal, GenericGoalModule } from '../GenericGoal';
 import { ChatBox, ChatBoxModule } from '../ChatBox';
 // ChatHighlight
-// Credits
+import { Credits, CreditsModule } from '../Credits';
 import { DonationTicker, DonationTickerModule } from '../DonationTicker';
 import { EmoteWall, EmoteWallModule } from '../EmoteWall';
 import { EventList, EventListModule } from '../EventList';
@@ -40,7 +40,7 @@ export const components = {
   SuperchatGoal: [GenericGoal, GenericGoalModule],
   ChatBox: [ChatBox, ChatBoxModule],
   // ChatHighlight
-  // Credits
+  Credits: [Credits, CreditsModule],
   DonationTicker: [DonationTicker, DonationTickerModule],
   EmoteWall: [EmoteWall, EmoteWallModule],
   EventList: [EventList, EventListModule],

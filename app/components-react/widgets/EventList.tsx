@@ -1,14 +1,13 @@
-import React from 'react';
 import { Menu } from 'antd';
-import { IWidgetCommonState, useWidget, WidgetModule } from './common/useWidget';
-import { WidgetLayout } from './common/WidgetLayout';
+import { Services } from 'components-react/service-provider';
+import Form from 'components-react/shared/inputs/Form';
+import FormFactory from 'components-react/shared/inputs/FormFactory';
+import React from 'react';
+import { TPlatform } from 'services/platforms';
 import { $t } from '../../services/i18n';
 import { metadata } from '../shared/inputs/metadata';
-import FormFactory from 'components-react/shared/inputs/FormFactory';
-import { UserService } from 'app-services';
-import { Services } from 'components-react/service-provider';
-import { TPlatform } from 'services/platforms';
-import Form from 'components-react/shared/inputs/Form';
+import { IWidgetCommonState, useWidget, WidgetModule } from './common/useWidget';
+import { WidgetLayout } from './common/WidgetLayout';
 
 interface IEventListState extends IWidgetCommonState {
   data: {
@@ -125,7 +124,7 @@ export class EventListModule extends WidgetModule<IEventListState> {
         show_fanfundings: metadata.bool({ label: $t('Super Chats') }),
       },
     };
-    if (!platform) return baseEvents;
+    if (!platform || !platformEvents[platform]) return baseEvents;
     return { ...platformEvents[platform], ...baseEvents };
   }
 
@@ -175,7 +174,7 @@ export class EventListModule extends WidgetModule<IEventListState> {
     return {
       theme: metadata.list({
         label: $t('Theme'),
-        options: Object.entries(this.widgetData?.themes || []).map(([theme, val]) => ({
+        options: Object.entries(this.widgetData?.themes || {}).map(([theme, val]) => ({
           label: val.label,
           value: theme,
         })),

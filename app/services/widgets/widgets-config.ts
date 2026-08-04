@@ -8,6 +8,7 @@ export type TWidgetType =
   | WidgetType.GameWidget
   | WidgetType.EmoteWall
   | WidgetType.DonationTicker
+  | WidgetType.Credits
   | WidgetType.CustomWidget
   | WidgetType.ChatBox
   | WidgetType.SponsorBanner
@@ -476,9 +477,31 @@ export function getWidgetsConfig(
     //
     // },
 
-    // Credits: {
-    //
-    // },
+    [WidgetType.Credits]: {
+      type: WidgetType.DonationTicker,
+
+      defaultTransform: {
+        width: 600,
+        height: 200,
+        x: 1,
+        y: 1,
+        anchor: AnchorPoint.North,
+      },
+
+      settingsWindowSize: {
+        width: 850,
+        height: 700,
+      },
+
+      url: `https://${host}/widgets/end-credits?token=${token}`,
+      previewUrl: `https://${host}/widgets/end-credits?token=${token}&simulate=1`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/credits`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/endcredits`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/endcredits`,
+      settingsUpdateEvent: 'endCreditsSettingsUpdate',
+      customCodeAllowed: true,
+      customFieldsAllowed: true,
+    },
 
     [WidgetType.DonationTicker]: {
       type: WidgetType.DonationTicker,
