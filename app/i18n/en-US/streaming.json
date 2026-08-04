@@ -377,5 +377,6 @@
   "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.": "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.",
   "Automatic (Recommended)": "Automatic (Recommended)",
   "Preferred Multistream Ingest Server": "Preferred Multistream Ingest Server",
+  "You've reached the maximum number of streaming destinations. Upgrade to Ultra to enable multistreaming.": "You've reached the maximum number of streaming destinations. Upgrade to Ultra to enable multistreaming.",
   "Failed to update Multistream platforms and destinations while live": "Failed to update Multistream platforms and destinations while live"
 }

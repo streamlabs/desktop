@@ -114,7 +114,6 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
             ),
           });
 
-          console.log('updating ', otherEnabledTarget, ' to disabled');
           // Update the settings to disable the other enabled platform
           updated = {
             platforms: {
@@ -659,6 +658,14 @@ export class GoLiveSettingsModule {
 
   get isRestreamEnabled() {
     return Services.RestreamService.views.canEnableRestream;
+  }
+
+  get isFacebookGrandfathered() {
+    return Services.RestreamService.views.isFacebookGrandfathered;
+  }
+
+  get isTikTokGrandfathered() {
+    return Services.RestreamService.views.isTikTokGrandfathered;
   }
 
   get recommendedColorSpaceWarnings() {
