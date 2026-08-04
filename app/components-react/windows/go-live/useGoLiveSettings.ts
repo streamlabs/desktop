@@ -114,7 +114,6 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
             ),
           });
 
-          console.log('updating ', otherEnabledTarget, ' to disabled');
           // Update the settings to disable the other enabled platform
           updated = {
             platforms: {
