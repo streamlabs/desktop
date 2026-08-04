@@ -1,11 +1,9 @@
 !include MUI2.nsh
 
-; Ownership and the DACL are reset only for a file we actually wrote. Doing it
-; for one we merely found would take somebody else's file and make it look
-; administrator-installed to the app, which decides what to trust on exactly
-; that basis. CopyFileW can carry explicit ACEs from the source, so changing
-; only the owner is not enough: /reset makes the file inherit the protected
-; directory descriptor.
+; Only ever for a file we just wrote. On one we merely found, this would make
+; somebody else's file look administrator-installed to the app, which decides
+; what to trust on exactly that basis. /reset as well as /setowner, because
+; CopyFileW can carry explicit ACEs over from the source.
 !macro SecureHookFile FileName
   nsExec::ExecToLog '"$SYSDIR\icacls.exe" "$R7\${FileName}" /setowner "*S-1-5-32-544" /Q'
   Pop $R8
@@ -22,29 +20,21 @@
   ${EndIf}
 !macroend
 
-; Copies one graphics hook file into the locked-down shared directory ($R7)
-; from the install directory ($R9), setting $R6 if the file could not be put in
-; place right now.
+; Copies one graphics hook file from $R9 into the locked-down shared directory
+; $R7, setting $R6 if it could not be put in place right now.
 ;
-; Each destination is deleted before it is written, and the copy refuses to
-; overwrite. An entry left there while the directory was writable may be a hard
-; link sharing its data with some other file, and copying onto it would put our
-; bytes into that file - an arbitrary write, since the installer is elevated.
-; Deleting removes the directory entry, not the link target.
+; $R9 is the installer's own plugin directory, extracted from the signed
+; installer. Do not copy these out of $INSTDIR: the user chooses that path, so
+; a standard user may be able to rewrite it while we are running elevated.
 ;
-; CopyFiles takes a destination directory rather than a destination file, which
-; the staged path needs, so this goes through CopyFileW directly for a real
-; return value. The target can be loaded by another process at this very moment
-; - the vulkan layer pulls the hook into anything that renders - so a locked
-; file is staged beside it and swapped in by Windows on the next reboot. That
-; swap is link-safe: it replaces the directory entry rather than writing
-; through it, and the file we leave behind until then keeps whoever put it
-; there as its owner, so the app will not use it.
+; Delete first, then copy without overwrite. An entry left there while the
+; directory was writable may be a hard link, and writing through it would put
+; our bytes into the link target - an arbitrary write, since we are elevated.
+; CopyFileW rather than CopyFiles, which takes a destination directory and
+; gives no usable return value.
 ;
-; The source is embedded in the signed installer and extracted to its private
-; plugin directory. Do not copy these files out of $INSTDIR: the installer lets
-; the user choose that path, so a standard user may be able to rewrite it while
-; this elevated process is running.
+; The vulkan layer pulls the hook into anything that renders, so the target may
+; be loaded right now; a locked file is staged beside it and swapped on reboot.
 !macro InstallHookFile FileName
   Delete "$R7\${FileName}"
   System::Call 'kernel32::CopyFileW(w "$R9\${FileName}", w "$R7\${FileName}", i 1) i .s'
@@ -69,19 +59,15 @@
 ; Moves an existing hook directory aside instead of repairing it where it
 ; stands, and records the result in $R4 (empty if nothing was moved) and $R6.
 ;
-; Rewriting a DACL does not revoke handles that are already open. Whoever
-; created the directory can hold one with delete access, let us harden it, and
-; rename it away afterwards - then put their own back at the same path. The app
-; would reject what it finds there, but the vulkan loader does not repeat its
-; checks. A directory that did not exist when they opened their handle is not
-; reachable that way.
+; An ACL change does not revoke handles opened before it, so whoever created
+; the directory could rename the hardened one away afterwards and put their own
+; back at the same path.
 ;
-; Unlike the app and the updater we cannot tell an administrator-provisioned
-; directory from a planted one - that needs an ownership check, and NSIS has no
-; plugin for it here - so this happens whenever one exists. It does mean the
+; This happens whenever a directory exists, because unlike the app and the
+; updater we cannot tell an administrator-provisioned one from a planted one -
+; that needs an ownership check and NSIS has no plugin for it here. So the
 ; installer cannot take part in the newest-hook-wins arbitration the other two
-; do: nothing survives to arbitrate against. The updater sorts that out on its
-; next run, and it runs far more often than this does.
+; do; the updater settles that on its next run.
 !macro QuarantineHookDir
   StrCpy $R4 ""
   System::Call 'kernel32::GetFileAttributesW(w "$R7") i .s'
@@ -104,9 +90,8 @@
       StrCpy $R6 "unverified"
     ${Else}
       DetailPrint "Moved the existing hook directory to $R4"
-      ; Only the names we know. RMDir /r would follow a junction left inside
-      ; and delete whatever is on the other side of it. Anything else in there
-      ; keeps the directory alive, which is untidy but harmless.
+      ; Only names we own. RMDir /r would follow a junction left inside and
+      ; delete whatever is on the other side of it.
       Delete /REBOOTOK "$R4\graphics-hook32.dll"
       Delete /REBOOTOK "$R4\graphics-hook64.dll"
       Delete /REBOOTOK "$R4\obs-vulkan32.json"
@@ -141,11 +126,10 @@
   ${EndIf}
 
   ; The graphics hook is injected into other processes out of a shared
-  ; directory, so only administrators may write to it. We are the elevated
-  ; part of the install; the app itself runs unelevated and cannot provision
-  ; this. Releases up to 1.21 granted BUILTIN\Users write access here, so an
-  ; existing directory may be owned by, and full of files planted by, a
-  ; standard user.
+  ; directory, so only administrators may write to it. We are the elevated part
+  ; of the install; the app runs unelevated and cannot provision this. Releases
+  ; up to 1.21 granted BUILTIN\Users write access here, so an existing
+  ; directory may be owned by, and full of files planted by, a standard user.
   Push $R1
   Push $R2
   Push $R3
@@ -158,16 +142,15 @@
 
   StrCpy $R6 ""
 
-  ; Not the ProgramData environment variable: that is inherited from whoever
-  ; launched us, so a standard user could point this at a directory of their
-  ; choosing and have an elevated process provision it. Under the all-users
-  ; context $APPDATA is CSIDL_COMMON_APPDATA, which comes from the shell.
+  ; Not the ProgramData environment variable, which is inherited from whoever
+  ; launched us. Under the all-users context $APPDATA is CSIDL_COMMON_APPDATA,
+  ; which comes from the shell.
   SetShellVarContext all
   StrCpy $R7 "$APPDATA\obs-studio-hook"
 
   ; A junction left behind by whoever owned this directory before us would send
-  ; the icacls calls and the copies below to its target instead. RMDir without
-  ; /r unlinks the junction itself and leaves whatever it pointed at alone.
+  ; every step below to its target instead. RMDir without /r unlinks the
+  ; junction and leaves whatever it pointed at alone.
   System::Call 'kernel32::GetFileAttributesW(w "$R7") i .s'
   Pop $R8
   ${If} $R8 <> -1
@@ -192,15 +175,12 @@
   ${EndIf}
 
   ${If} $R6 == ""
-    ; Only accept a directory created by this call. If a standard user wins
-    ; the name after quarantine, hardening their directory would leave any
-    ; delete-capable handle they already opened alive.
-    ;
-    ; The descriptor goes on at creation rather than being fixed up by the
-    ; icacls calls below. A directory created under %ProgramData% inherits an
-    ; entry letting users create files in it, and that would stand for as long
-    ; as it takes to spawn icacls. This is the same descriptor, and the same
-    ; reasoning, as hook_dir_create() in obs-studio's hook-dir-security.h.
+    ; Same descriptor, and the same reasoning, as hook_dir_create() in
+    ; obs-studio's hook-dir-security.h. It goes on at creation rather than being
+    ; fixed up by the icacls calls below: a directory created under
+    ; %ProgramData% inherits an entry letting users create files in it, and that
+    ; would stand for as long as it takes to spawn icacls. A failure here means
+    ; somebody won the name after quarantine, and must not be repaired in place.
     System::Call 'advapi32::ConvertStringSecurityDescriptorToSecurityDescriptorW(w "O:BAD:PAI(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICI;FRFX;;;BU)(A;OICI;FRFX;;;AC)(A;OICI;FRFX;;;S-1-15-2-2)", i 1, *p .r13, p 0) i .s'
     Pop $R8
     ${If} $R8 == 0
@@ -227,9 +207,8 @@
     ;
     ; No /T anywhere. Recursing through a directory that standard users could
     ; write until a moment ago means walking whatever links they left, and
-    ; icacls follows link targets by default. Only the directory itself is
-    ; touched here; the four files are handled individually once we have
-    ; written them.
+    ; icacls follows link targets. The four files are handled individually once
+    ; we have written them.
     ;
     ; SIDs rather than account names, which are localized:
     ;   S-1-5-18       SYSTEM
@@ -272,11 +251,9 @@
 
   ${If} $R6 != ""
     ; A file we could not replace is still whatever was on disk, which on an
-    ; already-compromised machine is the planted hook. The directory is locked
-    ; down now so nobody can refresh the plant, but we must not keep pointing
-    ; the vulkan loader at it - it hands this directory to every vulkan
-    ; process on the machine. The app re-registers the layer once it sees a
-    ; directory it trusts.
+    ; already-compromised machine is the planted hook. The loader hands this
+    ; directory to every vulkan process on the machine, so it must not point
+    ; here. The app re-registers the layer once it sees a directory it trusts.
     SetRegView 64
     DeleteRegValue HKLM "SOFTWARE\Khronos\Vulkan\ImplicitLayers" "$R7\obs-vulkan64.json"
     DeleteRegValue HKCU "SOFTWARE\Khronos\Vulkan\ImplicitLayers" "$R7\obs-vulkan64.json"
@@ -323,8 +300,26 @@ Function un.LeaveUnWelcome
     RMDir /r "$PROFILE\\AppData\\Roaming\\slobs-plugins"
     RMDir /r "$PROFILE\\AppData\\Roaming\\streamlabs-highlighter"
     RMDir /r "$PROFILE\\.cache\\streamlabs-vision"
+
+    ; The same shell-resolved path customInstall provisions, not a literal
+    ; C:\ProgramData - that can be relocated.
+    SetShellVarContext all
+
     ; REBOOTOK flag is required, because files might get injected into a game process and system may prevent their removal
     ; see: https://nsis.sourceforge.io/Reference/RMDir
-    RMDir /r /REBOOTOK "C:\\ProgramData\\obs-studio-hook"
+    ;
+    ; RMDir /r follows a junction and deletes what is on the other side, and we
+    ; are elevated here. A directory left behind by a release that let standard
+    ; users write to it may be one.
+    System::Call 'kernel32::GetFileAttributesW(w "$APPDATA\obs-studio-hook") i .s'
+    Pop $1
+    ${If} $1 <> -1
+      IntOp $1 $1 & 0x400 ; FILE_ATTRIBUTE_REPARSE_POINT
+      ${If} $1 <> 0
+        RMDir "$APPDATA\obs-studio-hook"
+      ${Else}
+        RMDir /r /REBOOTOK "$APPDATA\obs-studio-hook"
+      ${EndIf}
+    ${EndIf}
   ${EndIf}
 FunctionEnd
