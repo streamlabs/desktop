@@ -1,3 +1,4 @@
+import * as remote from '@electron/remote';
 import { IObsListInput, IObsListOption, TObsValue } from 'components/obs/inputs/ObsInput';
 import * as fs from 'fs';
 import cloneDeep from 'lodash/cloneDeep';
@@ -53,6 +54,16 @@ const VideoFlag = obs.ESourceOutputFlags.Video;
 const AsyncFlag = obs.ESourceOutputFlags.Async;
 const DoNotDuplicateFlag = obs.ESourceOutputFlags.DoNotDuplicate;
 const ForceUiRefresh = obs.ESourceOutputFlags.ForceUiRefresh;
+
+/**
+ * Sunset widgets. The enum values stay reserved because they are persisted in user
+ * scene collections, but these widgets have no settings window anymore.
+ */
+const RETIRED_WIDGETS: WidgetType[] = [
+  WidgetType.StarsGoal,
+  WidgetType.SupporterGoal,
+  WidgetType.GameWidget,
+];
 
 export const PROPERTIES_MANAGER_TYPES = {
   default: DefaultManager,
@@ -807,6 +818,19 @@ export class SourcesService extends StatefulService<ISourcesState> {
     const platform = this.userService.views.platform;
     assertIsDefined(platform);
     const widgetType = source.getPropertiesManagerSettings().widgetType;
+
+    // Retired widgets still exist in saved scene collections but no longer have a
+    // settings window. Tell the user instead of opening a broken/empty one.
+    if (RETIRED_WIDGETS.includes(widgetType)) {
+      remote.dialog.showMessageBox(this.windowsService.windows.main, {
+        type: 'info',
+        message: $t(
+          'This widget is no longer supported and can no longer be configured. You can safely remove it from your scene.',
+        ),
+      });
+      return;
+    }
+
     const componentName = this.widgetsService.getWidgetComponent(widgetType);
 
     // React widgets are in the WidgetsWindow component
@@ -816,7 +840,6 @@ export class SourcesService extends StatefulService<ISourcesState> {
       'DonationGoal',
       'CharityGoal',
       'FollowerGoal',
-      'StarsGoal',
       'SubGoal',
       'SubscriberGoal',
       'SuperchatGoal',
@@ -834,7 +857,6 @@ export class SourcesService extends StatefulService<ISourcesState> {
       // 'StreamBoss',
       // 'TipJar',
       'ViewerCount',
-      'GameWidget',
       'CustomWidget',
       'GamePulseWidget',
     ];
