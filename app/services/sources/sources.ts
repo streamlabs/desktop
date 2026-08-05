@@ -1,4 +1,3 @@
-import * as remote from '@electron/remote';
 import { IObsListInput, IObsListOption, TObsValue } from 'components/obs/inputs/ObsInput';
 import * as fs from 'fs';
 import cloneDeep from 'lodash/cloneDeep';
@@ -176,6 +175,13 @@ class SourcesViews extends ViewHandler<ISourcesState> {
 
   getSourcesByType(type: TSourceType) {
     return this.sources.filter(s => s.type === type);
+  }
+
+  isRetiredWidget(id: string): boolean {
+    const source = this.getSource(id);
+    if (!source || source.getPropertiesManagerType() !== 'widget') return false;
+
+    return RETIRED_WIDGETS.includes(source.getPropertiesManagerSettings().widgetType);
   }
 
   suggestName(name?: string): string {
@@ -820,16 +826,8 @@ export class SourcesService extends StatefulService<ISourcesState> {
     const widgetType = source.getPropertiesManagerSettings().widgetType;
 
     // Retired widgets still exist in saved scene collections but no longer have a
-    // settings window. Tell the user instead of opening a broken/empty one.
-    if (RETIRED_WIDGETS.includes(widgetType)) {
-      remote.dialog.showMessageBox(this.windowsService.windows.main, {
-        type: 'info',
-        message: $t(
-          'This widget is no longer supported and can no longer be configured. You can safely remove it from your scene.',
-        ),
-      });
-      return;
-    }
+    // settings window.
+    if (RETIRED_WIDGETS.includes(widgetType)) return;
 
     const componentName = this.widgetsService.getWidgetComponent(widgetType);
 
