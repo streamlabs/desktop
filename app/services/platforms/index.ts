@@ -308,7 +308,6 @@ export const platformLabels = (platform: TPlatform | string) =>
     [EPlatform.Instagram]: $t('Instagram'),
     [EPlatform.Kick]: $t('Kick'),
     [EPlatform.Patreon]: $t('Patreon'),
-    dlive: 'dlive',
     nimotv: 'NimoTV',
   }[platform] || '');
 
