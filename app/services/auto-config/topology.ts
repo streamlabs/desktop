@@ -70,7 +70,7 @@ function probeCandidates(
     .filter(platform => platforms.has(platform))
     .map(provider => ({
       probeId: `${legId}-${provider}`,
-      kind: provider === 'twitch' ? 'twitch-standard-v1' : 'youtube-unbound-v1',
+      kind: provider === 'twitch' ? 'twitch-standard' : 'youtube-unbound',
       legId,
       provider,
     }));

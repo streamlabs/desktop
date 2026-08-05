@@ -27,10 +27,10 @@ export enum EAvailableFeatures {
   twitchDualStream = 'slobs--twitch-dual-stream',
   twitchDualStreamPreview = 'slobs--twitch-dual-stream-preview',
   liveOutputEditing = 'slobs--live-output-editing',
-  autoOptimizerV1 = 'slobs--auto-optimizer-v1-ui',
-  autoOptimizerV1Apply = 'slobs--auto-optimizer-v1-apply',
-  autoOptimizerV1TwitchProbe = 'slobs--auto-optimizer-v1-twitch-probe',
-  autoOptimizerV1YoutubeProbe = 'slobs--auto-optimizer-v1-youtube-probe',
+  autoOptimizer = 'slobs--auto-optimizer-v1-ui',
+  autoOptimizerApply = 'slobs--auto-optimizer-v1-apply',
+  autoOptimizerTwitchProbe = 'slobs--auto-optimizer-v1-twitch-probe',
+  autoOptimizerYoutubeProbe = 'slobs--auto-optimizer-v1-youtube-probe',
   patreon = 'slobs--patreon',
 
   /**

@@ -58,7 +58,7 @@ const YOUTUBE_INGEST_CONFIRMATION_TIMEOUT_MS = 12000;
 
 // OBS service metadata supplies caps for Twitch, YouTube and Facebook in the
 // native estimator. These two custom-RTMP integrations do not have rtmp_common
-// metadata, so Desktop supplies their published V1 ceilings. Unknown/custom
+// metadata, so Desktop supplies their published ceilings. Unknown/custom
 // providers intentionally remain uncapped rather than guessing.
 const PLATFORM_MAX_BITRATE_KBPS: Partial<Record<TAutoOptimizerPlatform, number>> = {
   kick: 8000,
@@ -258,8 +258,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     if (!this.userService.isLoggedIn) return false;
     if (this.settingsService.views.hasHDRSettings) return false;
     await this.waitForFeatureFlags();
-    if (!this.featureEnabled(EAvailableFeatures.autoOptimizerV1)) return false;
-    if (!this.featureEnabled(EAvailableFeatures.autoOptimizerV1Apply)) return false;
+    if (!this.featureEnabled(EAvailableFeatures.autoOptimizer)) return false;
+    if (!this.featureEnabled(EAvailableFeatures.autoOptimizerApply)) return false;
     if (this.getPromptState() !== 'unseen') return false;
     const capabilities = this.getNativeCapabilities();
     if (!hasRequiredAutoConfigCapabilities(capabilities)) return false;
@@ -272,8 +272,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         this.twitchService.views.hasTwitchDualStreamAccess,
       ),
       supportedAutoConfigProbeProviders(capabilities!, {
-        twitchFeatureEnabled: this.featureEnabled(EAvailableFeatures.autoOptimizerV1TwitchProbe),
-        youtubeFeatureEnabled: this.featureEnabled(EAvailableFeatures.autoOptimizerV1YoutubeProbe),
+        twitchFeatureEnabled: this.featureEnabled(EAvailableFeatures.autoOptimizerTwitchProbe),
+        youtubeFeatureEnabled: this.featureEnabled(EAvailableFeatures.autoOptimizerYoutubeProbe),
         canConfirmYoutubeIngest:
           typeof this.nativeApi().ConfirmAutoConfigProbeIngest === 'function',
       }),
@@ -388,9 +388,9 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           this.twitchService.views.hasTwitchDualStreamAccess,
         ),
         supportedAutoConfigProbeProviders(capabilities!, {
-          twitchFeatureEnabled: this.featureEnabled(EAvailableFeatures.autoOptimizerV1TwitchProbe),
+          twitchFeatureEnabled: this.featureEnabled(EAvailableFeatures.autoOptimizerTwitchProbe),
           youtubeFeatureEnabled: this.featureEnabled(
-            EAvailableFeatures.autoOptimizerV1YoutubeProbe,
+            EAvailableFeatures.autoOptimizerYoutubeProbe,
           ),
           canConfirmYoutubeIngest:
             typeof this.nativeApi().ConfirmAutoConfigProbeIngest === 'function',
@@ -450,7 +450,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     if (!this.frozenGoLiveSettings || !this.state.result || this.state.stage !== 'review') {
       return false;
     }
-    if (!this.featureEnabled(EAvailableFeatures.autoOptimizerV1Apply)) {
+    if (!this.featureEnabled(EAvailableFeatures.autoOptimizerApply)) {
       return this.continueWithoutOptimization();
     }
 
@@ -602,7 +602,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
       for (const candidate of leg.probeCandidates) {
         try {
-          if (candidate.kind === 'twitch-standard-v1') {
+          if (candidate.kind === 'twitch-standard') {
             const streamKey = await this.twitchService.fetchStreamKey();
             if (!streamKey) throw new Error('Twitch did not return a stream key');
             const probe: IAutoConfigActiveProbe = {
@@ -654,7 +654,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       if (acquired.length !== leg.probeCandidates.length) {
         for (const { probe } of acquired) {
           try {
-            if (probe.kind !== 'youtube-unbound-v1') continue;
+            if (probe.kind !== 'youtube-unbound') continue;
             const lease = this.youtubeProbeLeases.get(probe.probeId);
             if (!lease) continue;
             await this.youtubeService.releaseAutoOptimizerProbe(lease);
@@ -1262,7 +1262,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
   private featureEnabled(feature: EAvailableFeatures): boolean {
     // Account rollout flags are the kill switches. Signed-out sessions have no
-    // authenticated rollout source, so V1 fails closed to the normal Go Live.
+    // authenticated rollout source, so the optimizer fails closed to the normal Go Live.
     if (!this.userService.isLoggedIn) return false;
     return this.incrementalRolloutService.views.featureIsEnabled(feature);
   }

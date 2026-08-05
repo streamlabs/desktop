@@ -31,13 +31,13 @@ function sharedCloudTopology(): IAutoOptimizerTopology {
   const probeCandidates = [
     {
       probeId: 'horizontal-twitch',
-      kind: 'twitch-standard-v1' as const,
+      kind: 'twitch-standard' as const,
       legId: 'horizontal',
       provider: 'twitch' as const,
     },
     {
       probeId: 'horizontal-youtube',
-      kind: 'youtube-unbound-v1' as const,
+      kind: 'youtube-unbound' as const,
       legId: 'horizontal',
       provider: 'youtube' as const,
     },
@@ -166,8 +166,8 @@ test('multi-leg Dual Output remains estimate-only without an aggregate uplink al
           probeId: `${index ? 'vertical' : 'horizontal'}-${provider}`,
           kind:
             provider === 'twitch'
-              ? ('twitch-standard-v1' as const)
-              : ('youtube-unbound-v1' as const),
+              ? ('twitch-standard' as const)
+              : ('youtube-unbound' as const),
           legId: index ? 'vertical' : 'horizontal',
           provider: provider as 'twitch' | 'youtube',
         },
@@ -202,7 +202,7 @@ test('a multi-destination leg nested under Dual Output is estimate-only', t => {
   t.deepEqual(filtered.probeCandidates, []);
 });
 
-test('YouTube display both cannot create two active probe leases in V1', t => {
+test('YouTube display both cannot create two active probe leases', t => {
   const legs = ['horizontal', 'vertical'].map(display => ({
     legId: display,
     display: display as 'horizontal' | 'vertical',
@@ -211,7 +211,7 @@ test('YouTube display both cannot create two active probe leases in V1', t => {
     probeCandidates: [
       {
         probeId: `${display}-youtube`,
-        kind: 'youtube-unbound-v1' as const,
+        kind: 'youtube-unbound' as const,
         legId: display,
         provider: 'youtube' as const,
       },
@@ -259,7 +259,7 @@ test('probe evidence is validated and strips attempt-local or unknown fields', t
       {
         probeId: 'horizontal-twitch',
         provider: 'twitch',
-        method: 'twitch-standard-active',
+        method: 'twitch-bandwidth-test',
         measuredKbps: 6000,
         safeKbps: 4200,
         headroomPercent: 30,
@@ -269,7 +269,7 @@ test('probe evidence is validated and strips attempt-local or unknown fields', t
       },
       {
         provider: 'youtube',
-        method: 'youtube-unbound-active',
+        method: 'youtube-unbound-ramp',
         measuredKbps: 9000,
         safeKbps: 7200,
         headroomPercent: 20,
@@ -293,14 +293,14 @@ test('probe evidence is validated and strips attempt-local or unknown fields', t
       },
       {
         provider: 'youtube',
-        method: 'youtube-unbound-active',
+        method: 'youtube-unbound-ramp',
         success: false,
       },
     ]),
     [
       {
         provider: 'twitch',
-        method: 'twitch-standard-active',
+        method: 'twitch-bandwidth-test',
         measuredKbps: 6000,
         safeKbps: 4200,
         headroomPercent: 30,
@@ -309,7 +309,7 @@ test('probe evidence is validated and strips attempt-local or unknown fields', t
       },
       {
         provider: 'youtube',
-        method: 'youtube-unbound-active',
+        method: 'youtube-unbound-ramp',
         measuredKbps: 9000,
         safeKbps: 7200,
         headroomPercent: 20,
@@ -317,7 +317,7 @@ test('probe evidence is validated and strips attempt-local or unknown fields', t
       },
       {
         provider: 'youtube',
-        method: 'youtube-unbound-active',
+        method: 'youtube-unbound-ramp',
         success: false,
       },
     ],
@@ -340,11 +340,21 @@ test('malformed probe evidence is discarded at the renderer boundary', t => {
       },
       {
         provider: 'youtube',
-        method: 'youtube-unbound-active',
+        method: 'youtube-unbound-ramp',
         measuredKbps: Number.POSITIVE_INFINITY,
         safeKbps: 1,
         headroomPercent: 101,
         success: true,
+      },
+      {
+        provider: 'youtube',
+        method: 'unsupported-youtube-method',
+        success: false,
+      },
+      {
+        provider: 'youtube',
+        method: 'twitch-bandwidth-test',
+        success: false,
       },
     ]),
     [],

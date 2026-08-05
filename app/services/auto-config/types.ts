@@ -25,7 +25,8 @@ export type TAutoOptimizerConfidence = 'high' | 'medium' | 'low';
 export type TAutoOptimizerPromptState = 'unseen' | 'declined' | 'completed';
 export type TAutoOptimizerUploadRoute = 'direct' | 'cloud-restream';
 export type TAutoOptimizerProbeProvider = 'twitch' | 'youtube';
-export type TAutoOptimizerProbeKind = 'twitch-standard-v1' | 'youtube-unbound-v1';
+export type TAutoOptimizerProbeKind = 'twitch-standard' | 'youtube-unbound';
+export type TAutoOptimizerProbeMethod = 'twitch-bandwidth-test' | 'youtube-unbound-ramp';
 
 export type TAutoOptimizerPlatform =
   | 'twitch'
@@ -54,7 +55,7 @@ export interface IAutoOptimizerProbeCandidate {
 
 export interface IAutoOptimizerProbeEvidence {
   provider: TAutoOptimizerProbeProvider;
-  method: string;
+  method: TAutoOptimizerProbeMethod;
   measuredKbps?: number;
   safeKbps?: number;
   headroomPercent?: number;
@@ -190,7 +191,7 @@ export interface IAutoConfigRequest {
 export type IAutoConfigActiveProbe =
   | {
       probeId: string;
-      kind: 'twitch-standard-v1';
+      kind: 'twitch-standard';
       legId: string;
       serviceName: 'Twitch';
       server: 'auto';
@@ -198,7 +199,7 @@ export type IAutoConfigActiveProbe =
     }
   | {
       probeId: string;
-      kind: 'youtube-unbound-v1';
+      kind: 'youtube-unbound';
       legId: string;
       serviceName: 'YouTube - RTMPS';
       server: string;
@@ -235,7 +236,7 @@ export interface IAutoConfigNativeResult {
       reason?: string;
       probes?: Array<{
         provider: TAutoOptimizerProbeProvider;
-        method: string;
+        method: TAutoOptimizerProbeMethod;
         measuredKbps?: number;
         safeKbps?: number;
         headroomPercent?: number;

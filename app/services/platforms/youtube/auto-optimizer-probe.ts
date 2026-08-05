@@ -89,7 +89,7 @@ interface IYoutubeAutoOptimizerProbeJournal {
   createdAt: number;
 }
 
-const JOURNAL_KEY = 'YoutubeAutoOptimizerProbe-v1';
+const JOURNAL_KEY = 'YoutubeAutoOptimizerProbe';
 const DEFAULT_ACTIVE_TIMEOUT_MS = 30_000;
 const DEFAULT_INACTIVE_TIMEOUT_MS = 30_000;
 const DEFAULT_DELETE_TIMEOUT_MS = 10_000;

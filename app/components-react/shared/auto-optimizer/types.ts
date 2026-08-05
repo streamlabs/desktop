@@ -27,6 +27,7 @@ export interface IAutoOptimizerPresentationLeg {
   measurementConfidence?: 'high' | 'medium' | 'low';
   route?: 'direct' | 'cloud-restream';
   estimateReason?: string;
+  showMeasurementReason?: boolean;
   managedByProvider?: boolean;
   width: number;
   height: number;

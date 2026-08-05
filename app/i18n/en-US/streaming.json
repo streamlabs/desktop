@@ -427,6 +427,8 @@
   "Estimated because the Twitch bandwidth test could not be completed.": "Estimated because the Twitch bandwidth test could not be completed.",
   "Estimated because active bandwidth testing was unavailable.": "Estimated because active bandwidth testing was unavailable.",
   "Estimated because active bandwidth testing could not be completed.": "Estimated because active bandwidth testing could not be completed.",
+  "Your connection was unstable during bandwidth testing, so this recommendation has low confidence.": "Your connection was unstable during bandwidth testing, so this recommendation has low confidence.",
+  "Temporary connection variability was detected during bandwidth testing, so this recommendation has medium confidence.": "Temporary connection variability was detected during bandwidth testing, so this recommendation has medium confidence.",
   "The measured upload bandwidth is below the recommended minimum for streaming.": "The measured upload bandwidth is below the recommended minimum for streaming.",
   "Estimated because at least one provider bandwidth test could not be completed.": "Estimated because at least one provider bandwidth test could not be completed.",
   "This shared cloud-restream upload was measured indirectly, so the result has medium confidence.": "This shared cloud-restream upload was measured indirectly, so the result has medium confidence.",

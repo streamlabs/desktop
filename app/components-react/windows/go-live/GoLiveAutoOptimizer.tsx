@@ -30,6 +30,10 @@ const estimateReasonLabels: Record<string, string> = {
   mixed_topology: 'Estimated for this combination of stream destinations.',
   probe_disabled: 'Estimated because active bandwidth testing was unavailable.',
   probe_failed: 'Estimated because active bandwidth testing could not be completed.',
+  unstable_connection:
+    'Your connection was unstable during bandwidth testing, so this recommendation has low confidence.',
+  connection_variability_detected:
+    'Temporary connection variability was detected during bandwidth testing, so this recommendation has medium confidence.',
   insufficient_bandwidth:
     'The measured upload bandwidth is below the recommended minimum for streaming.',
   indirect_provider_probe_failed:
@@ -133,6 +137,7 @@ export default function GoLiveAutoOptimizer() {
       estimateReason: leg.estimateReason
         ? $t(estimateReasonLabels[leg.estimateReason] || leg.estimateReason)
         : undefined,
+      showMeasurementReason: leg.estimateReason === 'connection_variability_detected',
       managedByProvider:
         leg.display === 'both' || state.result?.topology === 'enhanced-broadcasting',
       width: leg.resolution.width,

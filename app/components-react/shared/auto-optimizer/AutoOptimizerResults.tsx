@@ -50,11 +50,18 @@ function MeasurementProvenance(p: { leg: IAutoOptimizerPresentationLeg }) {
 
 function EstimateExplanation(p: { leg: IAutoOptimizerPresentationLeg }) {
   if (!p.leg.estimateReason) return null;
-  if (p.leg.measurementMode !== 'estimated' && p.leg.measurementConfidence !== 'low') return null;
+  if (
+    p.leg.measurementMode !== 'estimated' &&
+    p.leg.measurementConfidence !== 'low' &&
+    !p.leg.showMeasurementReason
+  ) {
+    return null;
+  }
   return <p className={styles.estimateExplanation}>{p.leg.estimateReason}</p>;
 }
 
 function ActiveMeasurementExplanation(p: { leg: IAutoOptimizerPresentationLeg }) {
+  if (p.leg.showMeasurementReason) return null;
   if (p.leg.measurementMode !== 'active' || p.leg.route !== 'cloud-restream') return null;
   let message =
     'This shared cloud-restream upload was measured indirectly, so the result has medium confidence.';

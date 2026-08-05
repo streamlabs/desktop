@@ -3,6 +3,7 @@ import {
   IAutoOptimizerProbeEvidence,
   IAutoOptimizerTopology,
   TAutoOptimizerPhase,
+  TAutoOptimizerProbeMethod,
   TAutoOptimizerProbeProvider,
 } from './types';
 
@@ -70,11 +71,11 @@ export function filterAutoConfigTopologyProbes(
     probeCandidates: [],
   };
   const populatedLegs = filtered.legs.filter(leg => leg.destinations.length > 0);
-  // V1 has no aggregate uplink allocator for multiple simultaneous outputs.
+  // There is no aggregate uplink allocator for multiple simultaneous outputs.
   // Sequentially giving each leg the full measured uplink would overcommit the
   // connection, so every multi-leg Dual Output topology remains estimate-only.
   // A multi-destination leg nested under Dual Output is also excluded because
-  // the native V1 contract only supports its single direct upload form.
+  // the native contract only supports its single direct upload form.
   const unsafeDualOutput =
     filtered.type === 'dual-output' &&
     (populatedLegs.length !== 1 ||
@@ -120,6 +121,16 @@ function isFiniteNonNegative(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0;
 }
 
+function isAutoOptimizerProbeMethod(
+  provider: TAutoOptimizerProbeProvider,
+  method: unknown,
+): method is TAutoOptimizerProbeMethod {
+  return (
+    (provider === 'twitch' && method === 'twitch-bandwidth-test') ||
+    (provider === 'youtube' && method === 'youtube-unbound-ramp')
+  );
+}
+
 /**
  * Treat native output as untrusted at the renderer boundary. Probe IDs and any
  * unknown fields remain attempt-local and are intentionally not mirrored.
@@ -132,9 +143,7 @@ export function sanitizeAutoConfigProbeEvidence(value: unknown): IAutoOptimizerP
     const evidence = item as Record<string, unknown>;
     if (evidence.provider !== 'twitch' && evidence.provider !== 'youtube') return [];
     if (
-      typeof evidence.method !== 'string' ||
-      evidence.method.length === 0 ||
-      evidence.method.length > 64 ||
+      !isAutoOptimizerProbeMethod(evidence.provider, evidence.method) ||
       typeof evidence.success !== 'boolean'
     ) {
       return [];

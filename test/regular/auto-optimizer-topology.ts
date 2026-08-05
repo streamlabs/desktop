@@ -32,7 +32,7 @@ test('direct standard Twitch has one direct active probe candidate', t => {
   t.deepEqual(topology.probeCandidates, [
     {
       probeId: 'horizontal-twitch',
-      kind: 'twitch-standard-v1',
+      kind: 'twitch-standard',
       legId: 'horizontal',
       provider: 'twitch',
     },
