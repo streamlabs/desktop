@@ -376,5 +376,6 @@
   "Select a different display for %{platform} to toggle on another destination, or upgrade to Ultra to enable multistreaming.": "حدد شاشة مختلفة لـ %{platform} لتفعيل وجهة أخرى، أو قم بالترقية إلى Ultra لتمكين البث المتعدد.",
   "You've reached the maximum of 2 streaming destinations. Upgrade to Ultra to enable multistreaming.": "لقد وصلت إلى الحد الأقصى البالغ وجهتين للبث. قم بالترقية إلى Ultra لتمكين البث المتعدد.",
   "Automatic (Recommended)": "تلقائي (موصى به)",
-  "Preferred Multistream Ingest Server": "خادم استقبال البث المتعدد المفضل"
+  "Preferred Multistream Ingest Server": "خادم استقبال البث المتعدد المفضل",
+  "You've reached the maximum number of streaming destinations. Upgrade to Ultra to enable multistreaming.": "لقد وصلت إلى الحد الأقصى لعدد وجهات البث. قم بالترقية إلى Ultra لتمكين البث المتعدد."
 }
