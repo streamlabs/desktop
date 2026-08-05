@@ -69,7 +69,13 @@ export async function createTemplateSource(
   const sceneItem = scene?.getItem(sceneItemId);
   const { AudioService, SourcesService } = Services;
 
-  if (sceneItem) {
+  // Audio-only assets never report dimensions, so the fit/center branches below never fire
+  // for them — hide them directly instead of waiting on a sourceUpdated that never comes.
+  const isAudioOnly = /\.(mp3|wav|ogg|aac|flac|m4a)$/i.test(assetPath);
+
+  if (sceneItem && isAudioOnly) {
+    sceneItem.setVisibility(false);
+  } else if (sceneItem) {
     const src = SourcesService.views.getSource(sceneItem.sourceId);
     if (src && src.width > 0 && src.height > 0) {
       sceneItem.setVisibility(true);
