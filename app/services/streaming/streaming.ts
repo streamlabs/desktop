@@ -3179,8 +3179,6 @@ export class StreamingService
     }
 
     if (info.signal === EOBSOutputSignal.Wrote) {
-      this.SET_RECORDING_STATUS(nextState, display, new Date().toISOString());
-
       const fileName = this.contexts[display].recording?.lastFile() ?? '';
 
       const parsedName = byOS({
@@ -3197,6 +3195,10 @@ export class StreamingService
       // }
       this.recordingModeService.addRecordingEntry(parsedName);
       await this.markersService.exportCsv(parsedName);
+
+      // Update the recording status to offline after adding the recording entry to ensure that the
+      // recording entry is added to the recording history before trying to access the history
+      this.SET_RECORDING_STATUS(nextState, display, new Date().toISOString());
 
       this.latestRecordingPath.next(fileName);
 

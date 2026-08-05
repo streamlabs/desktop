@@ -93,11 +93,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
   );
 
   return (
-    <div
-      data-name="recording-switcher"
-      style={p?.style}
-      className={cx(p?.className, styles.recordingSwitcher)}
-    >
+    <div style={p?.style} className={cx(p?.className, styles.recordingSwitcher)}>
       <Tooltip
         name="recording-toggle-tooltip"
         title={message}
@@ -108,7 +104,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
       >
         {showRecordingToggle && (
           <SwitchInput
-            name="recording"
+            name="recording-switcher"
             value={recordWhenStartStream}
             onChange={val => {
               SettingsService.actions.setSettingValue('General', 'RecordWhenStreaming', val);

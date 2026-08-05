@@ -66,22 +66,25 @@ async function createRecordingFiles(advanced: boolean = false): Promise<number> 
       await setDropdownInputValue('RecFormat', format);
       await clickButton('Close');
     });
-
-    await focusMain();
-    await startRecording();
-    await sleep(500);
-    await stopRecording();
-    await sleep(2000);
-
-    // Confirm notification has been shown and navigate to the recording history
-    await focusMain();
-    await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
-    await waitForDisplayed('h1=Recordings', { timeout: 1000 });
-    await sleep(500);
-    await showPage('Editor');
+    await recordFile();
   }
 
   return Promise.resolve(formats.length);
+}
+
+async function recordFile() {
+  await focusMain();
+  await startRecording();
+  await sleep(500);
+  await stopRecording();
+  await sleep(2000);
+
+  // Confirm notification has been shown and navigate to the recording history
+  await focusMain();
+  await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
+  await waitForDisplayed('h1=Recordings', { timeout: 1000 });
+  await sleep(500);
+  await showPage('Editor');
 }
 
 /**
@@ -94,27 +97,37 @@ async function validateRecordingFiles(
   t: TExecutionContext,
   tmpDir: string,
   numFormats: number,
-  advanced: boolean = false,
+  opts?: {
+    advanced?: boolean;
+    waitForUI?: boolean;
+  },
 ) {
+  // Wait for the notification to appear before checking for the recording file because this indicates
+  // that the recording has completed and the file is ready to be accessed.
+  if (opts?.waitForUI) {
+    await focusMain();
+    await waitForDisplayed('span=A new Recording has been completed. Click for more info');
+  }
+
   // Check that every file was created
   const files = await readdir(tmpDir);
 
   // M3U8 creates multiple TS files in addition to the catalog itself.
   // The additional TS files created by M3U8 in advanced mode are not displayed in the recording history
-  const numFiles = advanced ? files.length - 1 : files.length;
+  const numFiles = opts?.advanced ? files.length - 1 : files.length;
 
   t.true(numFiles >= numFormats, `Files that were created:\n${files.join('\n')}`);
 
   // Check that the recordings are displayed in the recording history
   await showPage('Recordings');
-  waitForDisplayed('h1=Recordings');
+  await waitForDisplayed('h1=Recordings');
 
   const numRecordings = await getNumElements('[data-test=filename]');
   t.is(
     numRecordings,
     numFiles,
     `All recordings from ${
-      advanced ? 'Advanced' : 'Simple'
+      opts?.advanced ? 'Advanced' : 'Simple'
     } mode in history matches number of files recorded`,
   );
 }
@@ -134,7 +147,9 @@ test('Recording', async t => {
   // Advanced Recording
   await setTemporaryRecordingPath(true, tmpDir);
   const numAdvancedFormats = await createRecordingFiles(true);
-  await validateRecordingFiles(t, tmpDir, numSimpleFormats + numAdvancedFormats, true);
+  await validateRecordingFiles(t, tmpDir, numSimpleFormats + numAdvancedFormats, {
+    advanced: true,
+  });
 
   // Switches between Advanced and Simple Recording
   // Note: The recording path for Simple Recording should have persisted from before
@@ -150,7 +165,9 @@ test('Recording', async t => {
   await sleep(2000);
   await stopRecording();
   await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
-  await validateRecordingFiles(t, tmpDir, numSimpleFormats + numAdvancedFormats + 1, true);
+  await validateRecordingFiles(t, tmpDir, numSimpleFormats + numAdvancedFormats + 1, {
+    advanced: true,
+  });
 
   t.pass();
 });
@@ -165,10 +182,18 @@ test('Recording with two contexts active', async t => {
 
   // low resolution reduces CPU usage
   await setOutputResolution('100x100');
-  const tmpDir = await setTemporaryRecordingPath(true);
 
-  const numFiles = await createRecordingFiles(true);
-  await validateRecordingFiles(t, tmpDir, numFiles, true);
+  // Simple Recording
+  const tmpDir = await setTemporaryRecordingPath();
+  const numSimpleFormats = await createRecordingFiles();
+  await validateRecordingFiles(t, tmpDir, numSimpleFormats);
+
+  // Advanced Recording
+  await setTemporaryRecordingPath(true, tmpDir);
+  const numAdvancedFormats = await createRecordingFiles(true);
+  await validateRecordingFiles(t, tmpDir, numSimpleFormats + numAdvancedFormats, {
+    advanced: true,
+  });
 
   await logOut(t, true);
 });
@@ -181,7 +206,7 @@ test('Recording from Go Live window', async t => {
   await clickGoLive();
   await waitForSettingsWindowLoaded();
 
-  await clickToggle('recording');
+  await clickToggle('recording-switcher');
 
   if (user.type === 'twitch') {
     await fillForm({
@@ -203,7 +228,7 @@ test('Recording from Go Live window', async t => {
   await stopRecording();
   await stopStream();
 
-  await validateRecordingFiles(t, tmpDir, 1);
+  await validateRecordingFiles(t, tmpDir, 1, { waitForUI: true });
 
   await logOut(t, true);
 });
@@ -229,18 +254,7 @@ async function createRecordingWithFormParms(
     await clickButton('Close');
   });
 
-  await focusMain();
-  await startRecording();
-  await sleep(500);
-  await stopRecording();
-  await sleep(2000);
-
-  // Confirm notification has been shown and navigate to the recording history
-  await focusMain();
-  await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
-  await waitForDisplayed('h1=Recordings', { timeout: 1000 });
-  await sleep(500);
-  await showPage('Editor');
+  await recordFile();
 }
 
 async function validateRescaleRecording(
