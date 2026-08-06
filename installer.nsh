@@ -48,7 +48,7 @@
     ${Else}
       !insertmacro SecureHookFile "${FileName}.new"
       Rename /REBOOTOK "$R7\${FileName}.new" "$R7\${FileName}"
-      DetailPrint "${FileName} is in use; it will be replaced on the next reboot"
+      DetailPrint "${FileName} could not be replaced now; it is staged for the next reboot"
     ${EndIf}
     StrCpy $R6 "unverified"
   ${Else}
@@ -305,20 +305,46 @@ Function un.LeaveUnWelcome
     ; C:\ProgramData - that can be relocated.
     SetShellVarContext all
 
-    ; REBOOTOK flag is required, because files might get injected into a game process and system may prevent their removal
-    ; see: https://nsis.sourceforge.io/Reference/RMDir
-    ;
-    ; RMDir /r follows a junction and deletes what is on the other side, and we
-    ; are elevated here. A directory left behind by a release that let standard
-    ; users write to it may be one.
+    ; The layer registration outlives whatever it names, and the loader hands
+    ; that directory to every vulkan process on the machine, elevated ones
+    ; included. So it goes before the files do, never after: at no point may an
+    ; enabled entry point somewhere we no longer stand behind.
+    SetRegView 64
+    DeleteRegValue HKLM "SOFTWARE\Khronos\Vulkan\ImplicitLayers" "$APPDATA\obs-studio-hook\obs-vulkan64.json"
+    DeleteRegValue HKCU "SOFTWARE\Khronos\Vulkan\ImplicitLayers" "$APPDATA\obs-studio-hook\obs-vulkan64.json"
+    SetRegView 32
+    DeleteRegValue HKLM "SOFTWARE\Khronos\Vulkan\ImplicitLayers" "$APPDATA\obs-studio-hook\obs-vulkan32.json"
+    DeleteRegValue HKCU "SOFTWARE\Khronos\Vulkan\ImplicitLayers" "$APPDATA\obs-studio-hook\obs-vulkan32.json"
+    SetRegView lastused
+
     System::Call 'kernel32::GetFileAttributesW(w "$APPDATA\obs-studio-hook") i .s'
     Pop $1
     ${If} $1 <> -1
       IntOp $1 $1 & 0x400 ; FILE_ATTRIBUTE_REPARSE_POINT
       ${If} $1 <> 0
+        ; Nothing under this path is ours - it all resolves somewhere else.
+        ; RMDir without /r unlinks the junction and leaves the target alone.
         RMDir "$APPDATA\obs-studio-hook"
       ${Else}
-        RMDir /r /REBOOTOK "$APPDATA\obs-studio-hook"
+        ; Only the names we installed, and no RMDir /r: that follows a junction
+        ; left inside the directory and deletes what is on the other side of
+        ; it, and we are elevated. The directory not being a reparse point says
+        ; nothing about what is under it.
+        ;
+        ; REBOOTOK because the hook may be loaded into a game right now.
+        ; see: https://nsis.sourceforge.io/Reference/Delete
+        Delete /REBOOTOK "$APPDATA\obs-studio-hook\graphics-hook32.dll"
+        Delete /REBOOTOK "$APPDATA\obs-studio-hook\graphics-hook64.dll"
+        Delete /REBOOTOK "$APPDATA\obs-studio-hook\obs-vulkan32.json"
+        Delete /REBOOTOK "$APPDATA\obs-studio-hook\obs-vulkan64.json"
+        Delete /REBOOTOK "$APPDATA\obs-studio-hook\graphics-hook32.dll.new"
+        Delete /REBOOTOK "$APPDATA\obs-studio-hook\graphics-hook64.dll.new"
+        Delete /REBOOTOK "$APPDATA\obs-studio-hook\obs-vulkan32.json.new"
+        Delete /REBOOTOK "$APPDATA\obs-studio-hook\obs-vulkan64.json.new"
+
+        ; The directory itself stays, emptied. It is administrator-owned and
+        ; read-only to standard users; releasing the name lets one recreate it
+        ; and own whatever the next OBS-derived application installs there.
       ${EndIf}
     ${EndIf}
   ${EndIf}
