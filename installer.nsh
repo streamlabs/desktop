@@ -2,8 +2,10 @@
 
 ; Only ever for a file we just wrote. On one we merely found, this would make
 ; somebody else's file look administrator-installed to the app, which decides
-; what to trust on exactly that basis. /reset as well as /setowner, because
-; CopyFileW can carry explicit ACEs over from the source.
+; what to trust on exactly that basis. /setowner is the one that matters:
+; CopyFileW leaves the copy inheriting from the destination rather than
+; carrying the source's ACEs, so /reset only restates what the directory
+; already grants.
 !macro SecureHookFile FileName
   nsExec::ExecToLog '"$SYSDIR\icacls.exe" "$R7\${FileName}" /setowner "*S-1-5-32-544" /Q'
   Pop $R8
