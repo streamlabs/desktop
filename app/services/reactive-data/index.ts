@@ -6,7 +6,6 @@ import {
   UserService,
   WebsocketService,
 } from 'app-services';
-import { VisionService } from 'services/vision';
 import { SceneCollectionsService } from 'services/scene-collections';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import { Subscription } from 'rxjs';
