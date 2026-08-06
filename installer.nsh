@@ -342,9 +342,15 @@ Function un.LeaveUnWelcome
         Delete /REBOOTOK "$APPDATA\obs-studio-hook\obs-vulkan32.json.new"
         Delete /REBOOTOK "$APPDATA\obs-studio-hook\obs-vulkan64.json.new"
 
-        ; The directory itself stays, emptied. It is administrator-owned and
-        ; read-only to standard users; releasing the name lets one recreate it
-        ; and own whatever the next OBS-derived application installs there.
+        ; And the container, if those were the last things in it - still no /r.
+        ; Keeping it would be the hostile choice: the directory is ours only
+        ; while we are installed, and an unelevated OBS-derived application
+        ; cannot write into an administrator-owned one. Upstream's
+        ; update_hook_file() fails the copy and then never reaches
+        ; init_vulkan_registry(), so a hardened leftover costs the next
+        ; application vulkan capture for good. Nothing points at the name we
+        ; are releasing; the registrations went first.
+        RMDir /REBOOTOK "$APPDATA\obs-studio-hook"
       ${EndIf}
     ${EndIf}
   ${EndIf}
