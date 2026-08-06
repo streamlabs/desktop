@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, InputNumber } from 'antd';
 import * as remote from '@electron/remote';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
@@ -11,6 +11,10 @@ import { TObsFormData } from 'components/obs/inputs/ObsInput';
 import { IWidgetConfig } from 'services/widgets/widgets-config';
 import { $t } from 'services/i18n';
 import css from './WidgetSettingsEmbed.m.less';
+
+/** How long to keep looking for the page's save bridge before deciding it has none. */
+const SAVE_BRIDGE_TIMEOUT_MS = 8000;
+const SAVE_BRIDGE_POLL_MS = 300;
 
 /**
  * Child-window host for a widget's streamlabs.com dashboard settings, embedded in the source
@@ -41,7 +45,8 @@ import css from './WidgetSettingsEmbed.m.less';
  * Not every widget type has a revamped page — some still route to a legacy dashboard page, as do
  * revamped ones whose rollout flag is off. Those expose no bridge and keep their own in-page Save,
  * so we probe for the bridge once the embed is ready and simply omit the native Save button when
- * it is absent; offering one there would silently discard the user's edits.
+ * it is absent; offering one there would silently discard the user's edits. The probe retries for
+ * a few seconds rather than asking once — see {@link SAVE_BRIDGE_TIMEOUT_MS}.
  */
 export default function WidgetSettingsEmbed() {
   const {
@@ -120,8 +125,37 @@ export default function WidgetSettingsEmbed() {
   // hide the native Save for those rather than offer a button that would discard their edits.
   const [canSave, setCanSave] = useState(false);
 
+  // Unmount guard for the retry loop below, so a window closed mid-probe stops polling a view
+  // it no longer owns.
+  const probing = useRef(false);
+  useEffect(
+    () => () => {
+      probing.current = false;
+    },
+    [],
+  );
+
   async function probeSaveBridge() {
-    setCanSave(await WidgetEmbedViewService.actions.return.hasSaveBridge('properties'));
+    // Retry rather than probe once. The page binds the bridge when its settings component
+    // mounts, which can land *after* the view reports ready: the widgets behind an
+    // IncrementalRollout flag (poll, spin-wheel, stream-boss, ...) resolve their real component
+    // in a second async hop, and the ready signal doesn't wait for it — core's `whenContentSettled`
+    // sees a rendered `.widget-view` with no loader in between and calls it done. A single probe
+    // loses that race and hides Save for the life of the window.
+    probing.current = true;
+    const deadline = Date.now() + SAVE_BRIDGE_TIMEOUT_MS;
+
+    for (;;) {
+      if (!probing.current) return;
+      if (await WidgetEmbedViewService.actions.return.hasSaveBridge('properties')) {
+        setCanSave(true);
+        return;
+      }
+      // Genuinely bridge-less pages (legacy settings with their own in-page Save) just run out
+      // the clock here and keep the native button hidden, which is the correct outcome for them.
+      if (Date.now() >= deadline) return;
+      await new Promise(resolve => setTimeout(resolve, SAVE_BRIDGE_POLL_MS));
+    }
   }
 
   async function saveWebSettings() {
