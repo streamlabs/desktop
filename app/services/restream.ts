@@ -78,10 +78,6 @@ interface IRestreamRuntimeTarget extends IRestreamTargetData {
 
 type TRestreamTarget = IRestreamTarget | IRestreamTargetData | IRestreamRuntimeTarget;
 
-interface IRestreamResponse {
-  status: 'success' | 'error';
-}
-
 export interface IStreamShiftTarget {
   platform: TPlatform | 'relay';
   key?: string;
@@ -365,7 +361,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @param streamKey - The stream key for the restream session
    * @param targets - The updated list of targets on the stream
    */
-  async addRuntimeTargets(streamKey: string, targets: IRestreamRuntimeTarget[]) {
+  async addRuntimeTargets(streamKey: string, targets: TRestreamTarget[]) {
     const headers = authorizedHeaders(
       this.userService.apiToken,
       new Headers({ 'Content-Type': 'application/json' }),
@@ -460,7 +456,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       await this.removeRuntimeTargets(streamKey, stopTargets);
     } else {
       // Otherwise use the `update` endpoint to remove specific targets
-      const targetsToRemove: IRestreamTargetData[] = [
+      const targetsToRemove: IRestreamRuntimeTarget[] = [
         ...platforms.map(target => this.formatRuntimePlatformData(target)),
         ...customDestinations.map(dest => this.formatRuntimeCustomDestinationData(dest)),
       ];
@@ -478,14 +474,15 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   /**
-   * Update targets in the restream session
-   * @remark This is a wrapper that formats the target data for the api call before updating
-   * @param targets - The list of targets to update
-   * @param streamKey - The stream key for the restream session
+   * Update runtime targets in the restream session
+   * @remark This is a wrapper for updating the stream targets, distinguishing by
+   * single or dual output mode
+   * @param targets - The list of targets to update, already formatted
+   * @param streamKey - The base stream key for the restream session
    * @param remoteTargetIds - Optional mapping of remote target IDs
    */
   async updateTargets(
-    targets: TRestreamTarget[],
+    targets: IRestreamRuntimeTarget[],
     streamKey: string,
     remoteTargetIds?: { [streamKey: string]: number },
   ) {
@@ -532,20 +529,33 @@ export class RestreamService extends StatefulService<IRestreamState> {
     if (!targets.length) return;
 
     try {
-      const key =
-        orientation === 'landscape' ? streamKey : streamKey.replace(/_[^_]*$/, '_portrait');
+      const key = await this.formatUpdateStreamKey(orientation, streamKey);
+
+      if (!key) {
+        throwStreamError('RESTREAM_UPDATE_FAILED', {}, 'Stream key missing.');
+      }
 
       // If remoteTargetIds is provided, this is a call to remove the targets
       if (remoteTargetIds) {
         const stopTargets = targets.map(t => ({ id: remoteTargetIds[t.streamKey] }));
         await this.removeRuntimeTargets(key, stopTargets);
       } else {
-        await this.addRuntimeTargets(key, targets as IRestreamRuntimeTarget[]);
+        await this.addRuntimeTargets(key, targets);
       }
     } catch (e: unknown) {
       console.error('Restream Error: Error updating restream targets', e);
       throwStreamError('RESTREAM_UPDATE_FAILED');
     }
+  }
+
+  async formatUpdateStreamKey(orientation: TOutputOrientation, streamKey: string) {
+    if (orientation === 'portrait') {
+      const key = await this.fetchUserSettings('portrait').then(s => s.streamKey);
+
+      return key ?? streamKey.replace(/_[^_]*$/, '_portrait');
+    }
+
+    return streamKey;
   }
 
   /**
@@ -556,7 +566,9 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @param targets - The targets in the stream
    * @returns An object containing the targets grouped by their mode (landscape or portrait)
    */
-  filterTargetsByMode(targets: TRestreamTarget[]) {
+  filterTargetsByMode(
+    targets: TRestreamTarget[],
+  ): { landscape: TRestreamTarget[]; portrait: TRestreamTarget[] } {
     return targets.reduce(
       (acc, target) => {
         if (target.mode === 'landscape') {
@@ -866,13 +878,15 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @param platform - The platform to format stream data for
    * @returns The formatted restream platform data
    */
-  formatRuntimePlatformData(platform: TPlatform): IRestreamTargetData {
+  formatRuntimePlatformData(platform: TPlatform): IRestreamRuntimeTarget {
     const isDualOutputMode = this.streamingService.views.isDualOutputMode;
     const platformData = {
       platform: 'relay' as 'relay',
       streamKey: getPlatformService(platform).state.streamKey,
       label: `${platform} target`,
       mode: isDualOutputMode ? this.getPlatformMode(platform) : 'landscape',
+      dcProtection: false,
+      enabled: true,
     };
 
     switch (platform) {
@@ -917,13 +931,17 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @param destination - The custom destination to format stream data for
    * @returns The formatted restream custom destination data
    */
-  formatRuntimeCustomDestinationData(destination: ICustomStreamDestination): IRestreamTargetData {
+  formatRuntimeCustomDestinationData(
+    destination: ICustomStreamDestination,
+  ): IRestreamRuntimeTarget {
     return {
       platform: 'relay' as 'relay',
       streamKey: `${this.formatUrl(destination.url)}${destination.streamKey}`,
       mode: this.streamingService.views.isDualOutputMode
         ? this.getMode(destination.display)
         : 'landscape',
+      dcProtection: false,
+      enabled: true,
     };
   }
 
