@@ -97,6 +97,7 @@ test('refuses to write through a link and leaves the victim untouched', async t 
     t.is(fs.readFileSync(victimFile, 'utf8'), 'DO NOT OVERWRITE');
 
     // The link itself must survive: deleting it would be a surprise of its own.
+    // lstat reports a Windows junction as a symlink, same as a POSIX one.
     t.true(fs.lstatSync(link).isSymbolicLink());
   } finally {
     cleanup(root, [link]);
