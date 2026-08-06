@@ -352,7 +352,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * @returns String filepath for new collection
    */
   @RunInLoadingMode()
-  async convertDualOutputCollection(
+  async repairDualOutputCollection(
     assignToHorizontal: boolean = false,
     collectionId?: string,
   ): Promise<string | undefined> {

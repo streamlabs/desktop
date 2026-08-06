@@ -63,6 +63,7 @@ export function confirmIsCollectionType(
     }
   } catch (e: unknown) {
     console.log('Error: ', e);
+    t.fail(`Failed to read or parse ${fileName}: ${opts.message}`);
   }
 }
 

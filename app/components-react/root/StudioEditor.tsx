@@ -40,7 +40,6 @@ export default function StudioEditor() {
     activeSceneId: ScenesService.views.activeSceneId,
     isLoading: DualOutputService.views.isLoading,
   }));
-  const displayEnabled = !performanceMode;
   const placeholderRef = useRef<HTMLDivElement>(null);
   const studioModeRef = useRef<HTMLDivElement>(null);
   const [studioModeStacked, setStudioModeStacked] = useState(false);
@@ -102,7 +101,7 @@ export default function StudioEditor() {
   useEffect(() => {
     let timeout: number;
 
-    if (displayEnabled || performanceMode) return;
+    if (performanceMode) return;
 
     function checkVerticalOrientation() {
       if (placeholderRef.current) {
@@ -118,7 +117,7 @@ export default function StudioEditor() {
     return () => {
       if (timeout) clearTimeout(timeout);
     };
-  }, [displayEnabled, performanceMode]);
+  }, [performanceMode]);
 
   // Track orientation for studio mode
   useEffect(() => {
@@ -239,7 +238,7 @@ export default function StudioEditor() {
 
   return (
     <div className={styles.mainContainer} ref={studioModeRef}>
-      {displayEnabled && (
+      {!performanceMode && (
         <div className={cx(styles.studioModeContainer, { [styles.stacked]: studioModeStacked })}>
           {v.studioMode ? (
             <StudioModeControls stacked={studioModeStacked} />
@@ -329,7 +328,7 @@ export default function StudioEditor() {
         </div>
       )}
       {v.isLoading && <DualOutputProgressBar sceneId={v.activeSceneId} />}
-      {!displayEnabled && (
+      {performanceMode && (
         <div className={styles.noPreview}>
           {performanceMode && (
             <div className={styles.message}>
