@@ -65,7 +65,10 @@ export default function WidgetEmbedWarm(p: WidgetEmbedWarmProps) {
     let cancelled = false;
 
     async function go() {
-      if (!product || !UserService.views.isLoggedIn) return;
+      if (!product || !UserService.views.isLoggedIn) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       lastRect.current = null;
       const electronWindowId = remote.getCurrentWindow().id;

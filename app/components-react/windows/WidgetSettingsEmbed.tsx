@@ -8,6 +8,7 @@ import WidgetEmbedWarm from 'components-react/shared/WidgetEmbedWarm';
 import { Services } from 'components-react/service-provider';
 import { useSubscription } from 'components-react/hooks/useSubscription';
 import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { IWidgetConfig } from 'services/widgets/widgets-config';
 import { $t } from 'services/i18n';
 import css from './WidgetSettingsEmbed.m.less';
 
@@ -58,10 +59,20 @@ export default function WidgetSettingsEmbed() {
   const widget = useMemo(() => WidgetsService.getWidgetSource(sourceId), [sourceId]);
 
   // Static widget config (webSettingsUrl, testers, previewUrl) — no data fetch.
-  const apiSettings = useMemo(
-    () => (widget ? widget.getSettingsService().getApiSettings() : null),
-    [widget],
-  );
+  //
+  // Prefer the new-style `widgetsConfig` entry and fall back to the legacy per-widget settings
+  // service. Not every widget still has one: the native settings services for the types this
+  // embed replaces (ChatBox, EventList, ...) have been deleted, so `getSettingsService()`
+  // returns null for them.
+  const apiSettings = useMemo(() => {
+    if (!widget) return null;
+    // Keyed by the subset of widget types ported to the new config, so a miss is expected.
+    const configs: Partial<Record<number, IWidgetConfig>> = WidgetsService.widgetsConfig;
+    const config = configs[widget.type];
+    if (config) return config;
+    const settingsService = widget.getSettingsService();
+    return settingsService ? settingsService.getApiSettings() : null;
+  }, [widget]);
 
   const [properties, setProperties] = useState<TObsFormData>(() =>
     source ? source.getPropertiesFormData() : [],
