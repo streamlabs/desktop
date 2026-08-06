@@ -6,7 +6,6 @@ import {
   waitForStreamStart,
 } from '../../helpers/modules/streaming';
 import { clickButton, focusMain, waitForDisplayed } from '../../helpers/modules/core';
-import { toggleDualOutputMode } from '../../helpers/modules/dual-output';
 import { test, TExecutionContext, useWebdriver } from '../../helpers/webdriver';
 import { logOut, withUser } from '../../helpers/webdriver/user';
 import { getApiClient } from '../../helpers/api-client';
@@ -33,7 +32,6 @@ test(
     const { streamingService } = await configureVerticalRecordingOnStreamStart(t);
 
     try {
-      await toggleDualOutputMode();
       await prepareToGoLive();
 
       await clickGoLive();

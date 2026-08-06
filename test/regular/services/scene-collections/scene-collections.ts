@@ -5,63 +5,18 @@ import {
   test,
   useWebdriver,
 } from '../../../helpers/webdriver';
-import { logIn } from '../../../helpers/webdriver/user';
-import { toggleDualOutputMode } from '../../../helpers/modules/dual-output';
-import { sleep } from '../../../helpers/sleep';
+import { logIn, logOut } from '../../../helpers/webdriver/user';
+import {
+  copyFile,
+  confirmIsCollectionType,
+  validateSceneNodeMapsAndNodes,
+} from '../../../helpers/modules/scene-collections';
 
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
 
-function copyFile(src: string, dest: string) {
-  return new Promise<void>((resolve, reject) => {
-    const read = fs.createReadStream(src);
-    const write = fs.createWriteStream(dest);
-
-    read.on('error', (e: any) => reject(e));
-    write.on('error', (e: any) => reject(e));
-    write.on('finish', () => resolve());
-
-    read.pipe(write);
-  });
-}
-
-/**
- * Confirm if the scene collection is a vanilla or dual output collection
- * @remark - The identifiers of a dual output scene collection is the existence of
- * the sceneNodeMaps property in the scene collections manifest, and the nodeMaps
- * property in the scene collection json.
- * @param t - execution context
- * @param fileName - name of the json file to read
- * @param propName - property name to confirm
- * @param dualOutput - true if confirming that the collection is a dual output collection, false if confirming it's a vanilla collection
- */
-function confirmIsCollectionType(
-  t: TExecutionContext,
-  fileName: string,
-  propName: string,
-  dualOutput?: boolean,
-) {
-  const filePath = path.join(t.context.cacheDir, 'slobs-client', 'SceneCollections', fileName);
-
-  try {
-    const data = JSON.parse(fs.readFileSync(filePath).toString());
-    const root = fileName === 'manifest.json' && data?.collections ? data?.collections[0] : data;
-
-    if (dualOutput) {
-      // dual output: has sceneNodeMaps prop in manifest, has nodeMap node in collection
-      t.true(root.hasOwnProperty(propName), `Expected ${fileName} to have property ${propName}`);
-    } else {
-      // single output: no sceneNodeMaps prop in manifest, no nodeMap node in collection
-      t.true(
-        !root.hasOwnProperty(propName),
-        `Expected ${fileName} to not have property ${propName}`,
-      );
-    }
-  } catch (e: unknown) {
-    console.log('Error: ', e);
-  }
-}
-
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver({
   skipOnboarding: true,
   clearCollectionAfterEachTest: false,
@@ -70,6 +25,7 @@ useWebdriver({
 
     if (fs.existsSync(sceneCollectionsPath)) return;
 
+    // Intentionally load a single output scene collection to confirm that it is automatically converted to dual output on load.
     const dataDir = path.resolve(
       __dirname,
       '..',
@@ -98,29 +54,49 @@ useWebdriver({
   },
 });
 
+/**
+ * Test loading scene collections
+ * @remark A single output collection should be loaded before app start
+ */
 test('Loading single & dual output scene collections', async (t: TExecutionContext) => {
-  // confirm no scene node map for single output collection
-  confirmIsCollectionType(t, 'manifest.json', 'sceneNodeMaps');
-  confirmIsCollectionType(t, '3c6cf522-6b85-4d64-a152-236939c63686.json', 'nodeMap');
-  await sleep(500);
+  // Confirm that a single output collection was converted to a dual output collection on load
+  confirmIsCollectionType(t, {
+    fileName: 'manifest.json',
+    propName: 'sceneNodeMaps',
+    type: 'dual-output',
+    message: 'converted on load',
+  });
+  confirmIsCollectionType(t, {
+    fileName: '3c6cf522-6b85-4d64-a152-236939c63686.json',
+    propName: 'nodeMap',
+    type: 'dual-output',
+    message: 'converted on load',
+  });
 
-  // confirm save/load single output collection
+  // Validate scene nodes and scene node maps converted correctly on load
+  await validateSceneNodeMapsAndNodes(t, '3c6cf522-6b85-4d64-a152-236939c63686.json');
+
+  // Restart app and login to confirm that the dual output collection is still present after app restart
   await stopApp(t, false);
   await startApp(t);
-  confirmIsCollectionType(t, 'manifest.json', 'sceneNodeMaps');
-  confirmIsCollectionType(t, '3c6cf522-6b85-4d64-a152-236939c63686.json', 'nodeMap');
-
-  // confirm save/load dual output collection
-  await sleep(500);
   await logIn(t);
-  await toggleDualOutputMode();
-  await sleep(500);
-  await stopApp(t, false);
-  await startApp(t, true);
-  confirmIsCollectionType(t, 'manifest.json', 'sceneNodeMaps', true);
-  confirmIsCollectionType(t, '3c6cf522-6b85-4d64-a152-236939c63686.json', 'nodeMap', true);
 
-  // await logOut(t);
+  confirmIsCollectionType(t, {
+    fileName: 'manifest.json',
+    propName: 'sceneNodeMaps',
+    type: 'dual-output',
+    message: 'load on app start',
+  });
+  confirmIsCollectionType(t, {
+    fileName: '3c6cf522-6b85-4d64-a152-236939c63686.json',
+    propName: 'nodeMap',
+    type: 'dual-output',
+    message: 'load on app start',
+  });
+
+  // Validate scene nodes and scene node maps are the same after app restart
+  await validateSceneNodeMapsAndNodes(t, '3c6cf522-6b85-4d64-a152-236939c63686.json');
+
+  await logOut(t);
   await stopApp(t, false);
-  t.pass();
 });

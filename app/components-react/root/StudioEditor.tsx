@@ -35,12 +35,11 @@ export default function StudioEditor() {
     studioMode: TransitionsService.state.studioMode,
     showHorizontalDisplay: DualOutputService.views.showHorizontalDisplay,
     showVerticalDisplay: DualOutputService.views.showVerticalDisplay,
+    showBothDisplays: DualOutputService.views.showBothDisplays,
     isRecording: StreamingService.views.isRecording,
     activeSceneId: ScenesService.views.activeSceneId,
     isLoading: DualOutputService.views.isLoading,
-    dualOutputMode: DualOutputService.views.dualOutputMode,
   }));
-  const displayEnabled = !performanceMode && !v.isLoading;
   const placeholderRef = useRef<HTMLDivElement>(null);
   const studioModeRef = useRef<HTMLDivElement>(null);
   const [studioModeStacked, setStudioModeStacked] = useState(false);
@@ -51,9 +50,8 @@ export default function StudioEditor() {
   ]);
 
   const sourceId = useMemo(() => {
-    const dualOutputMode = v.showHorizontalDisplay && v.showVerticalDisplay;
-    return v.studioMode && !dualOutputMode ? studioModeTransitionName : undefined;
-  }, [v.showHorizontalDisplay, v.showVerticalDisplay, v.studioMode]);
+    return v.studioMode && !v.showBothDisplays ? studioModeTransitionName : undefined;
+  }, [v.showBothDisplays, v.studioMode]);
 
   useEffect(() => {
     const timeoutHandles: { [key: number]: NodeJS.Timeout | undefined } = {};
@@ -103,7 +101,7 @@ export default function StudioEditor() {
   useEffect(() => {
     let timeout: number;
 
-    if (displayEnabled || performanceMode) return;
+    if (performanceMode) return;
 
     function checkVerticalOrientation() {
       if (placeholderRef.current) {
@@ -119,7 +117,7 @@ export default function StudioEditor() {
     return () => {
       if (timeout) clearTimeout(timeout);
     };
-  }, [displayEnabled, performanceMode]);
+  }, [performanceMode]);
 
   // Track orientation for studio mode
   useEffect(() => {
@@ -240,10 +238,11 @@ export default function StudioEditor() {
 
   return (
     <div className={styles.mainContainer} ref={studioModeRef}>
-      {displayEnabled && (
+      {!performanceMode && (
         <div className={cx(styles.studioModeContainer, { [styles.stacked]: studioModeStacked })}>
-          {v.studioMode && <StudioModeControls stacked={studioModeStacked} />}
-          {v.dualOutputMode && (
+          {v.studioMode ? (
+            <StudioModeControls stacked={studioModeStacked} />
+          ) : (
             <DualOutputControls stacked={studioModeStacked} isRecording={v.isRecording} />
           )}
           <div
@@ -329,7 +328,7 @@ export default function StudioEditor() {
         </div>
       )}
       {v.isLoading && <DualOutputProgressBar sceneId={v.activeSceneId} />}
-      {!displayEnabled && (
+      {performanceMode && (
         <div className={styles.noPreview}>
           {performanceMode && (
             <div className={styles.message}>

@@ -109,7 +109,8 @@ export default memo(function NavTools() {
 
   const handleAuth = () => {
     if (isLoggedIn) {
-      Services.DualOutputService.actions.setDualOutputModeIfPossible(false, true);
+      // Subscription in dual output service will handle toggling off the vertical display when logging out,
+      // because logged out users cannot use dual output.
       UserService.actions.logOut();
     } else {
       WindowsService.actions.closeChildWindow();

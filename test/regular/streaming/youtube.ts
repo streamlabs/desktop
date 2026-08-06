@@ -30,7 +30,6 @@ import * as moment from 'moment';
 import { fillForm, useForm } from '../../helpers/modules/forms';
 import { ListInputController } from '../../helpers/modules/forms/list';
 import { logOut } from '../../helpers/webdriver/user';
-import { toggleDualOutputMode } from '../../helpers/modules/dual-output';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -85,7 +84,6 @@ test('Streaming to Youtube', async t => {
   t.true(await chatIsVisible(), 'Chat should be visible');
   await stopStream();
 
-  await toggleDualOutputMode(true);
   await clickGoLive();
   await waitForSettingsWindowLoaded();
   await fillForm({

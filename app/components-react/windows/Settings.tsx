@@ -125,9 +125,9 @@ export default function Settings() {
         })
         .then(({ response }) => {
           if (response === 0) {
-            DualOutputService.actions.return.setDualOutputModeIfPossible(false, true).then(() => {
-              UserService.actions.logOut();
-            });
+            // Subscription in dual output service will handle toggling off the vertical display when logging out,
+            // because logged out users cannot use dual output.
+            UserService.actions.logOut();
           }
         });
     } else {

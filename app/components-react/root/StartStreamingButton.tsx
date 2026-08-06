@@ -31,7 +31,6 @@ function StartStreamingButton(p: { disabled?: boolean }) {
     delaySeconds,
     streamShiftStatus,
     streamShiftForceGoLive,
-    isDualOutputMode,
     isLoggedIn,
     isPrime,
     primaryPlatform,
@@ -43,7 +42,6 @@ function StartStreamingButton(p: { disabled?: boolean }) {
       delaySeconds: StreamingService.views.delaySeconds,
       streamShiftStatus: RestreamService.state.streamShiftStatus,
       streamShiftForceGoLive: RestreamService.state.streamShiftForceGoLive,
-      isDualOutputMode: StreamingService.views.isDualOutputMode,
       isLoggedIn: UserService.isLoggedIn,
       isPrime: UserService.state.isPrime,
       primaryPlatform: UserService.state.auth?.primaryPlatform,
@@ -216,7 +214,7 @@ function StartStreamingButton(p: { disabled?: boolean }) {
         StreamingService.actions.goLive();
       }
     }
-  }, [streamingStatus, streamShiftStatus, isDualOutputMode, isLoggedIn, isPrime]);
+  }, [streamingStatus, streamShiftStatus, isLoggedIn, isPrime]);
 
   // Wrap the toggleStreaming function in a debounce to prevent multiple rapid clicks
   // and also to cancel the action on unmount to prevent memory leaks and state updates on unmounted components
@@ -254,6 +252,8 @@ function StartStreamingButton(p: { disabled?: boolean }) {
 
     if (!primaryPlatform) return false;
 
+    // Show the Go Live window if the user has targets assigned to multiple displays,
+    // which indicates that they are using dual output mode.
     if (StreamingService.views.isDualOutputMode) {
       return true;
     }

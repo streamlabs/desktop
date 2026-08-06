@@ -219,8 +219,9 @@ export function StreamSettings() {
       streamType: 'rtmp_common',
     });
 
-    if (DualOutputService.views.dualOutputMode) {
-      DualOutputService.actions.setDualOutputModeIfPossible(false, true);
+    // Hide the vertical display when protected mode disabled because it is only supported for protected mode
+    if (DualOutputService.views.showVerticalDisplay) {
+      DualOutputService.actions.toggleDisplay(false, 'vertical');
     }
   }
 

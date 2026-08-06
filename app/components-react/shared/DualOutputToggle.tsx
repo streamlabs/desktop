@@ -8,6 +8,10 @@ import { CheckboxInput } from 'components-react/shared/inputs';
 import { alertAsync } from 'components-react/modals';
 import cx from 'classnames';
 
+/**
+ * @deprecated This component is not currently used. It is left over from when dual output was its own mode.
+ * Leaving for now for legacy reasons, but it should be removed in the future.
+ */
 interface IDualOutputToggleProps {
   type?: 'dual' | 'single';
   value?: boolean;

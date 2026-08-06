@@ -1,54 +1,16 @@
 import { DualOutputService } from 'services/dual-output';
 import { getApiClient } from '../../helpers/api-client';
 import { test, useWebdriver, TExecutionContext } from '../../helpers/webdriver';
-import { ScenesService, Scene, SceneItem } from 'services/scenes';
+import { ScenesService } from 'services/api/external-api/scenes/scenes';
 import { VideoSettingsService } from 'services/settings-v2/video';
+import {
+  confirmDualOutputSources,
+  confirmVerticalSceneItem,
+} from '../../helpers/modules/scene-collections';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
-
-function confirmDualOutputSources(t: TExecutionContext, scene: Scene) {
-  const numSceneItems = scene
-    .getItems()
-    .map(item => item.getModel())
-    .reduce((sources, item) => {
-      // only track number of sources that should be
-      if (sources[item.sourceId]) {
-        sources[item.sourceId] += 1;
-      } else {
-        sources[item.sourceId] = 1;
-      }
-      return sources;
-    }, {} as { [sourceId: string]: number });
-
-  // dual output scene collections should have and even number of scene items
-  // because a dual output scene item scene item is a pair of horizontal and vertical
-  // nodes that share a single source.
-  for (const [sourceId, count] of Object.entries(numSceneItems)) {
-    t.is(count % 2, 0, `Scene does not have dual output source ${sourceId}`);
-  }
-}
-
-function confirmVerticalSceneItem(
-  t: TExecutionContext,
-  scene: Scene,
-  horizontalSceneItem: SceneItem,
-  verticalSceneItemId: string,
-) {
-  const verticalSceneItem = scene.getItem(verticalSceneItemId);
-  t.is(
-    verticalSceneItem?.display,
-    'vertical',
-    `Vertical scene item ${verticalSceneItem.id} display is correct`,
-  );
-
-  t.is(
-    verticalSceneItem?.sourceId,
-    horizontalSceneItem.sourceId,
-    `Vertical scene item ${verticalSceneItem.id} and horizontal scene item ${horizontalSceneItem.id} share the same source`,
-  );
-}
 
 test('Convert single output collection to dual output', async (t: TExecutionContext) => {
   const client = await getApiClient();
