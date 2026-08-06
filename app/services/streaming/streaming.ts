@@ -989,89 +989,112 @@ export class StreamingService
     // save current settings in store so we can re-use them if something will go wrong
     this.SET_GO_LIVE_SETTINGS(settings);
 
-    // call putChannelInfo for each platform
-    const platforms = this.views.getEnabledPlatforms(settings.platforms);
-    const updatePlatforms = this.parseUpdatePlatforms(platforms, activePlatforms);
+    if (this.views.isLiveOutputEditingEnabled) {
+      // call putChannelInfo for each platform
+      const platforms = this.views.getEnabledPlatforms(settings.platforms);
+      const updatePlatforms = this.parseUpdatePlatforms(platforms, activePlatforms);
 
-    // Compare active custom destinations by URL+streamKey to uniquely identify them
-    const updateDestinations = this.parseUpdateCustomDestinations(
-      settings.customDestinations.filter(dest => dest.enabled),
-      activeDestinations,
-    );
+      // Compare active custom destinations by URL+streamKey to uniquely identify them
+      const updateDestinations = this.parseUpdateCustomDestinations(
+        settings.customDestinations.filter(dest => dest.enabled),
+        activeDestinations,
+      );
 
-    // If there is a difference in the active platforms/destinations vs the ones in the go live window,
-    // update the restream targets
-    const shouldUpdateRestream =
-      updatePlatforms.start.length > 0 ||
-      updatePlatforms.stop.length > 0 ||
-      updateDestinations.start.length > 0 ||
-      updateDestinations.stop.length > 0;
+      // If there is a difference in the active platforms/destinations vs the ones in the go live window,
+      // update the restream targets
+      const shouldUpdateRestream =
+        updatePlatforms.start.length > 0 ||
+        updatePlatforms.stop.length > 0 ||
+        updateDestinations.start.length > 0 ||
+        updateDestinations.stop.length > 0;
 
-    if (this.userService.isPrime && shouldUpdateRestream) {
-      updatePlatforms.stop.forEach(platform => {
-        this.UPDATE_STREAM_INFO({
-          checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
+      if (this.userService.isPrime && shouldUpdateRestream) {
+        updatePlatforms.stop.forEach(platform => {
+          this.UPDATE_STREAM_INFO({
+            checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
+          });
         });
-      });
 
-      updatePlatforms.start.forEach(platform => {
-        this.UPDATE_STREAM_INFO({
-          checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
+        updatePlatforms.start.forEach(platform => {
+          this.UPDATE_STREAM_INFO({
+            checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
+          });
         });
-      });
 
-      updatePlatforms.continue.forEach(platform => {
-        this.UPDATE_STREAM_INFO({
-          checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
+        updatePlatforms.continue.forEach(platform => {
+          this.UPDATE_STREAM_INFO({
+            checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
+          });
         });
-      });
 
-      if (shouldUpdateRestream) {
-        this.UPDATE_STREAM_INFO({
-          checklist: { ...this.state.info.checklist, ['setupMultistream']: 'not-started' },
+        if (shouldUpdateRestream) {
+          this.UPDATE_STREAM_INFO({
+            checklist: { ...this.state.info.checklist, ['setupMultistream']: 'not-started' },
+          });
+        }
+
+        // Run checklist
+        this.UPDATE_STREAM_INFO({ lifecycle: 'runChecklist' });
+
+        // Remove targets from restream in a single request
+        if (updatePlatforms.stop.length > 0 || updateDestinations.stop.length > 0) {
+          await this.removeTargetsFromStream(updatePlatforms.stop, updateDestinations.stop);
+        }
+
+        // Update checklist for added platforms and run `beforeGoLive` to set up the new platforms
+        for (const platform of updatePlatforms.start) {
+          await this.setPlatformSettings(platform, settings, false);
+        }
+
+        // Save any settings updated during the `beforeGoLive` process for the platforms.
+        // This is important for dual streaming and multistreaming.
+        this.SET_GO_LIVE_SETTINGS(this.views.savedSettings);
+
+        // Update settings for the persisted targets
+        for (const platform of updatePlatforms.continue) {
+          await this.updatePlatformSettings(platform, settings);
+        }
+
+        // Add targets to restream in a single request
+        if (updatePlatforms.start.length > 0 || updateDestinations.start.length > 0) {
+          await this.addTargetsToStream(updatePlatforms.start, updateDestinations.start);
+        }
+      } else {
+        // If not a prime user or not adding/removing targets, just update settings for enabled platforms
+        platforms.forEach(platform => {
+          this.UPDATE_STREAM_INFO({
+            checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
+          });
         });
-      }
 
-      // Run checklist
-      this.UPDATE_STREAM_INFO({ lifecycle: 'runChecklist' });
+        // Run checklist
+        this.UPDATE_STREAM_INFO({ lifecycle: 'runChecklist' });
 
-      // Remove targets from restream in a single request
-      if (updatePlatforms.stop.length > 0 || updateDestinations.stop.length > 0) {
-        await this.removeTargetsFromStream(updatePlatforms.stop, updateDestinations.stop);
-      }
-
-      // Update checklist for added platforms and run `beforeGoLive` to set up the new platforms
-      for (const platform of updatePlatforms.start) {
-        await this.setPlatformSettings(platform, settings, false);
-      }
-
-      // Save any settings updated during the `beforeGoLive` process for the platforms.
-      // This is important for dual streaming and multistreaming.
-      this.SET_GO_LIVE_SETTINGS(this.views.savedSettings);
-
-      // Update settings for the persisted targets
-      for (const platform of updatePlatforms.continue) {
-        await this.updatePlatformSettings(platform, settings);
-      }
-
-      // Add targets to restream in a single request
-      if (updatePlatforms.start.length > 0 || updateDestinations.start.length > 0) {
-        await this.addTargetsToStream(updatePlatforms.start, updateDestinations.start);
+        // Update settings for all enabled platforms
+        for (const platform of platforms) {
+          await this.updatePlatformSettings(platform, settings);
+        }
       }
     } else {
-      // If not a prime user or not adding/removing targets, just update settings for enabled platforms
+      this.UPDATE_STREAM_INFO({ lifecycle: 'runChecklist' });
+
+      const platforms = this.views.getEnabledPlatforms(settings.platforms);
+
       platforms.forEach(platform => {
         this.UPDATE_STREAM_INFO({
           checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
         });
       });
 
-      // Run checklist
-      this.UPDATE_STREAM_INFO({ lifecycle: 'runChecklist' });
-
-      // Update settings for all enabled platforms
       for (const platform of platforms) {
-        await this.updatePlatformSettings(platform, settings);
+        const service = getPlatformService(platform);
+        const newSettings = getDefined(settings.platforms[platform]);
+        try {
+          await this.runCheck(platform, () => service.putChannelInfo(newSettings));
+        } catch (e: unknown) {
+          this.handleUpdatePlatformError(e, platform);
+          return false;
+        }
       }
     }
 
