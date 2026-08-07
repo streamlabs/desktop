@@ -3,6 +3,7 @@
   "Successfully converted %{filename}": "Successfully converted %{filename}",
   "Successfully saved %{filename} to %{filepath}": "Successfully saved %{filename} to %{filepath}",
   "Successfully loaded %{filename}.overlay": "%{filename}.overlay sikeresen betöltve",
+  "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
   "This is an experimental feature.  Use at your own risk.": "Ez egy kísérleti funkció. Csak saját felelősségedre használd.",
   "Export Overlay File": "Fedvény-fájl exportálása",
   "Import Overlay File": "Fedvény-fájl Importálása",

@@ -3,6 +3,7 @@
   "Successfully converted %{filename}": "Convertido com sucesso %{filename}",
   "Successfully saved %{filename} to %{filepath}": "%{filename} salvo com sucesso para %{filepath}",
   "Successfully loaded %{filename}.overlay": "%{filename} carregado com sucesso",
+  "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
   "This is an experimental feature.  Use at your own risk.": "Este é um recurso experimental. Use por sua conta e risco.",
   "Export Overlay File": "Exportar Arquivo de Overlay",
   "Import Overlay File": "Importar Arquivo de Overlay",

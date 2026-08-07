@@ -3,6 +3,7 @@
   "Successfully converted %{filename}": "Úspěšně převedeno %{filename}",
   "Successfully saved %{filename} to %{filepath}": "Úspěšně uloženo %{filename} do %{filepath}",
   "Successfully loaded %{filename}.overlay": "Soubor %{filename}.overlay byl úspěšně načten",
+  "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
   "This is an experimental feature.  Use at your own risk.": "Toto je experimentální funkce. Její použití je na vlastní nebezpečí.",
   "Export Overlay File": "Exportovat soubor s překrytím",
   "Import Overlay File": "Importovat soubor s překrytím",
