@@ -358,6 +358,13 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
      * @remark Optimize by only confirming when the collection is switched
      */
     this.sceneCollectionsService.collectionSwitched.subscribe(collection => {
+      // Skip validating a collection that is being converted to a single output collection
+      // to prevent recreating the partner nodes
+      if (this.sceneCollectionsService.isConvertingCollection) {
+        this.collectionHandled.next(null);
+        return;
+      }
+
       const hasNodeMap =
         collection?.sceneNodeMaps && Object.entries(collection?.sceneNodeMaps).length > 0;
 
@@ -404,7 +411,25 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     status: boolean = true,
     skipShowVideoSettings: boolean = false,
     showGoLiveWindow?: boolean,
+    force?: boolean,
   ) {
+    if (!status && force) {
+      if (!this.views.showHorizontalDisplay) {
+        this.toggleDisplay(true, 'horizontal');
+      }
+
+      if (this.views.showVerticalDisplay) {
+        this.toggleDisplay(false, 'vertical');
+      }
+
+      this.SET_SHOW_DUAL_OUTPUT(false);
+      this.selectionService.views.globalSelection.reset();
+
+      this.SET_IS_LOADING(false);
+      this.dualOutputModeChanged.next(status);
+      return;
+    }
+
     if (!this.userService.isLoggedIn) return;
 
     // If a user is not in protected mode (ie using "Stream to a Custom Ingest")
