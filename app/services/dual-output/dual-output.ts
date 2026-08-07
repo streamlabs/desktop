@@ -360,7 +360,6 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     this.sceneCollectionsService.collectionSwitched.subscribe(collection => {
       const hasNodeMap =
         collection?.sceneNodeMaps && Object.entries(collection?.sceneNodeMaps).length > 0;
-      console.log('Collection switched has nodemap');
 
       if (this.state.dualOutputMode && !hasNodeMap) {
         this.convertSingleOutputToDualOutputCollection();
