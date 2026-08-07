@@ -3,6 +3,7 @@
   "Successfully converted %{filename}": "已成功轉換 %{filename}",
   "Successfully saved %{filename} to %{filepath}": "已成功將 %{filename} 儲存到 %{filepath}",
   "Successfully loaded %{filename}.overlay": "已成功載入 %{filename}.疊層",
+  "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
   "This is an experimental feature.  Use at your own risk.": "這是實驗性功能。使用時需自行承擔風險。",
   "Export Overlay File": "匯出疊層檔案",
   "Import Overlay File": "匯入疊層檔案",
