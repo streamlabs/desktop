@@ -360,6 +360,7 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     this.sceneCollectionsService.collectionSwitched.subscribe(collection => {
       const hasNodeMap =
         collection?.sceneNodeMaps && Object.entries(collection?.sceneNodeMaps).length > 0;
+      console.log('Collection switched has nodemap');
 
       if (this.state.dualOutputMode && !hasNodeMap) {
         this.convertSingleOutputToDualOutputCollection();
@@ -404,7 +405,24 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     status: boolean = true,
     skipShowVideoSettings: boolean = false,
     showGoLiveWindow?: boolean,
+    force?: boolean,
   ) {
+    if (!status && force) {
+      if (!this.state.videoSettings.horizontal) {
+        this.toggleDisplay(true, 'horizontal');
+      }
+
+      if (this.state.videoSettings.vertical) {
+        this.toggleDisplay(false, 'vertical');
+      }
+
+      this.SET_SHOW_DUAL_OUTPUT(false);
+
+      this.SET_IS_LOADING(false);
+      this.dualOutputModeChanged.next(status);
+      return;
+    }
+
     if (!this.userService.isLoggedIn) return;
 
     // If a user is not in protected mode (ie using "Stream to a Custom Ingest")

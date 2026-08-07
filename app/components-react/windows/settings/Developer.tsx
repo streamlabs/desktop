@@ -156,6 +156,7 @@ export function DualOutputDeveloperSettings(p: { collection?: string }) {
       // convert collection
       const filePath = await SceneCollectionsService.actions.return.convertDualOutputCollection(
         assignToHorizontal,
+        p.collection,
       );
 
       if (filePath) {
@@ -181,7 +182,7 @@ export function DualOutputDeveloperSettings(p: { collection?: string }) {
         )}
       </span>
       <div>
-        <h4>{$t('Convert to Vanilla Scene')}</h4>
+        <h4>{$t('Convert to Single Output')}</h4>
         <div style={{ display: 'flex', justifyContent: 'space-evenly', paddingBottom: '16px' }}>
           <Button
             className="button--soft-warning"

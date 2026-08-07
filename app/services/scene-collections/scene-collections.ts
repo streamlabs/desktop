@@ -363,9 +363,11 @@ export class SceneCollectionsService extends Service implements ISceneCollection
 
     if (!newCollectionId) return;
 
-    this.dualOutputService.setDualOutputModeIfPossible(false);
-
     await this.load(newCollectionId);
+
+    // Disable dual output mode after loading the duplicate to prevent the converted collection
+    // from being saved as a dual output collection.
+    this.dualOutputService.setDualOutputModeIfPossible(false, true, false, true);
 
     await this.convertToVanillaSceneCollection(assignToHorizontal);
 
