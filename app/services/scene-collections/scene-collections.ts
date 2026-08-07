@@ -1340,7 +1340,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * display instead of removing them
    */
   async convertToSingleOutputSceneCollection(assignToHorizontal?: boolean) {
-    if (!this.activeCollection) return;
+    if (!this.activeCollection || !this.activeCollection?.sceneNodeMaps) return;
 
     const allSceneIds: string[] = this.scenesService.getSceneIds();
 
