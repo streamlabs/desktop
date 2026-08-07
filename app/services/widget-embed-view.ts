@@ -23,6 +23,7 @@ const IDLE_EVICTION_MS = 5 * 60 * 1000;
 const NAVIGATE_TIMEOUT_MS = 10 * 1000;
 const BOOT_TIMEOUT_MS = 40 * 1000;
 const READY_POLL_MS = 150;
+const PENDING_SAVE_TIMEOUT_MS = 3 * 1000;
 
 /**
  * Which surface a warm view serves. Slots are fully independent — own BrowserView, own boot, own
@@ -58,6 +59,7 @@ interface IWarmView {
   loadedTheme: 'night' | 'day' | null;
   booted: boolean;
   idleTimer: number | null;
+  pendingSave: Promise<unknown> | null;
 }
 
 function blankSlot(): IWarmView {
@@ -68,6 +70,7 @@ function blankSlot(): IWarmView {
     loadedTheme: null,
     booted: false,
     idleTimer: null,
+    pendingSave: null,
   };
 }
 
@@ -116,7 +119,22 @@ export class WidgetEmbedViewService extends Service {
       }
     }
 
+    await this.settlePendingSave(slot);
     await this.navigate(slot, product);
+  }
+
+  /**
+   * Wait out the flush save {@link unmount} fired on the way out of the previous open.
+   *
+   * Every open now re-routes, and re-routing refetches. Without this, a close-then-immediately-
+   * reopen could read the settings back before that flush landed and show the user their own
+   * edit reverted. Bounded, because a save that never answers must not hold the window shut.
+   */
+  private async settlePendingSave(slot: TWidgetEmbedSlot) {
+    const s = this.slots[slot];
+    if (!s.pendingSave) return;
+    await this.withTimeout(s.pendingSave, PENDING_SAVE_TIMEOUT_MS);
+    s.pendingSave = null;
   }
 
   /** Position the OS-level view over the caller's container (in that window's coordinates). */
@@ -134,11 +152,13 @@ export class WidgetEmbedViewService extends Service {
   unmount(slot: TWidgetEmbedSlot) {
     // Flush whatever the page's auto-save still has debounced. This is the only close path that
     // catches every way out of the window — the titlebar X and Escape never reach the footer's
-    // Close button. Deliberately not awaited: detaching should not wait on the network, and it
-    // doesn't need to. Detaching only removes the BrowserView from the window; the webContents
+    // Close button. Deliberately not awaited here: detaching should not wait on the network, and
+    // it doesn't need to. Detaching only removes the BrowserView from the window; the webContents
     // stays alive in this process (the whole point of staying warm) until idle eviction, which
     // is orders of magnitude longer than a save.
-    this.triggerSave(slot).catch(() => {});
+    //
+    // The promise is kept so the next open can wait it out — see `settlePendingSave`.
+    this.slots[slot].pendingSave = this.triggerSave(slot).catch(() => {});
     this.detachFromWindow(slot);
     this.startIdleEviction(slot);
   }
@@ -171,14 +191,17 @@ export class WidgetEmbedViewService extends Service {
       s.booted && s.loadedTheme === theme && s.view!.webContents.getURL().includes('/dashboard');
 
     if (canHashSwap) {
-      if (s.loadedProduct !== product) {
-        // Client-side route change — no reload, no re-auth redirect, no SPA re-boot. This is the
-        // whole point: it's what turns a ~9s re-open into a sub-second product switch.
-        await this.withTimeout(this.pushRoute(slot, product), NAVIGATE_TIMEOUT_MS);
-        s.loadedProduct = product;
-      } else {
-        await this.withTimeout(this.waitForReady(slot), NAVIGATE_TIMEOUT_MS);
-      }
+      // Client-side route change — no reload, no re-auth redirect, no SPA re-boot. This is the
+      // whole point: it's what turns a ~9s re-open into a sub-second product switch.
+      //
+      // Routed unconditionally, including when `product` is the one already on screen. A warm
+      // view is still showing whatever it fetched on its last open, and those settings go stale
+      // the moment the user edits the same widget through "Edit on web" (or on another device) —
+      // so re-opening without a push would hand back values the server no longer has. Core's
+      // bridge remounts the route component even on a same-path push, which re-runs the page's
+      // load. See `hostNavigate` in `resources/components/vue/dashboard/embed-app.vue`.
+      await this.withTimeout(this.pushRoute(slot, product), NAVIGATE_TIMEOUT_MS);
+      s.loadedProduct = product;
       return;
     }
 
@@ -226,11 +249,17 @@ export class WidgetEmbedViewService extends Service {
    * bridge unmounts the outgoing product in the same tick it is called and resolves once the new
    * route is mounting, which is what lets us keep the view hidden across the swap instead of
    * flashing the previous product's settings.
+   *
+   * Falls back to the ready signal if the page exposes no navigation bridge — a dashboard old
+   * enough to predate it still needs the view handed back once its content has settled, rather
+   * than revealed on a throw.
    */
   private async pushRoute(slot: TWidgetEmbedSlot, product: TWidgetEmbedProduct): Promise<void> {
     if (!this.isAlive(slot)) return;
     await this.slots[slot].view!.webContents.executeJavaScript(
-      `window.__slobsEmbedNavigate(${JSON.stringify(`/${product}`)})`,
+      `window.__slobsEmbedNavigate
+        ? window.__slobsEmbedNavigate(${JSON.stringify(`/${product}`)})
+        : (window.__slobsEmbedWhenReady ? window.__slobsEmbedWhenReady() : false)`,
     );
   }
 
@@ -335,5 +364,6 @@ export class WidgetEmbedViewService extends Service {
     s.booted = false;
     s.loadedProduct = null;
     s.loadedTheme = null;
+    s.pendingSave = null;
   }
 }
