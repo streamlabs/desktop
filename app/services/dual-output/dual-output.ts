@@ -416,6 +416,7 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
       }
 
       this.SET_SHOW_DUAL_OUTPUT(false);
+      this.selectionService.views.globalSelection.reset();
 
       this.SET_IS_LOADING(false);
       this.dualOutputModeChanged.next(status);
