@@ -3,6 +3,7 @@
   "Successfully converted %{filename}": "%{filename} が変換されました",
   "Successfully saved %{filename} to %{filepath}": "%{filename} が %{filepath} に保存されました",
   "Successfully loaded %{filename}.overlay": "%{filename}.オーバーレイが正常に読み込まれました",
+  "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
   "This is an experimental feature.  Use at your own risk.": "これは実験的な機能です。自己責任で使用してください。",
   "Export Overlay File": "オーバーレイ ファイルをエクスポート",
   "Import Overlay File": "オーバーレイ ファイルをインポート",
