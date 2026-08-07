@@ -407,11 +407,11 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     force?: boolean,
   ) {
     if (!status && force) {
-      if (!this.state.videoSettings.horizontal) {
+      if (!this.views.showHorizontalDisplay) {
         this.toggleDisplay(true, 'horizontal');
       }
 
-      if (this.state.videoSettings.vertical) {
+      if (this.views.showVerticalDisplay) {
         this.toggleDisplay(false, 'vertical');
       }
 
