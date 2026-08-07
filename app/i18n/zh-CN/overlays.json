@@ -3,6 +3,7 @@
   "Successfully converted %{filename}": "成功转换 %{filename}",
   "Successfully saved %{filename} to %{filepath}": "成功保存 %{filename} 至 %{filepath}",
   "Successfully loaded %{filename}.overlay": "成功载入 %{filename}.叠加",
+  "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
   "This is an experimental feature.  Use at your own risk.": "这是一项实验功能。使用风险自负。",
   "Export Overlay File": "导出叠加文件",
   "Import Overlay File": "导入叠加文件",
