@@ -38,7 +38,7 @@ export class DualOutputService {
   /**
    * Converts the single output collection to a dual output collection.
    */
-  convertSingleOutputToDualOutputCollection(): Promise<void> {
+  convertSingleOutputToDualOutputCollection(): void {
     return this.dualOutputService.convertSingleOutputToDualOutputCollection();
   }
 
