@@ -143,6 +143,14 @@ export class NotificationsService
     this.notificationRead.next(unreadNotifies.map(notify => notify.id));
   }
 
+  removeByCode(code: string) {
+    const matchingNotifications = this.views.getAll().filter(notify => notify.code === code);
+    if (!matchingNotifications.length) return;
+
+    this.REMOVE_BY_CODE(code);
+    this.notificationRead.next(matchingNotifications.map(notify => notify.id));
+  }
+
   setSettings(patch: Partial<INotificationsSettings>) {
     this.SET_SETTINGS(patch);
   }
@@ -175,6 +183,11 @@ export class NotificationsService
   @mutation()
   private CLEAR() {
     this.state.notifications = [];
+  }
+
+  @mutation()
+  private REMOVE_BY_CODE(code: string) {
+    this.state.notifications = this.state.notifications.filter(notify => notify.code !== code);
   }
 
   @mutation()
