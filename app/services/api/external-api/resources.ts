@@ -14,4 +14,3 @@ export * from './transitions';
 export * from './game-overlay';
 export * from './recent-events';
 export * from './customization';
-export * from './dual-output';

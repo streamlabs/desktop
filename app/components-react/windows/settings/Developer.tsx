@@ -106,7 +106,7 @@ export function DualOutputDeveloperSettings(p: { collection?: string }) {
    * horizontal display or should be deleted
    * @param exportOverlay Boolean for is the scene collection should be exported upon completion
    */
-  async function repairDualOutputCollection(
+  async function convertDualOutputCollection(
     assignToHorizontal: boolean = false,
     exportOverlay: boolean = false,
   ) {
@@ -128,7 +128,7 @@ export function DualOutputDeveloperSettings(p: { collection?: string }) {
       setBusy(true);
 
       // convert collection
-      const collectionFilePath = await SceneCollectionsService.actions.return.repairDualOutputCollection(
+      const collectionFilePath = await SceneCollectionsService.actions.return.convertDualOutputCollection(
         assignToHorizontal,
         p.collection,
       );
@@ -154,9 +154,8 @@ export function DualOutputDeveloperSettings(p: { collection?: string }) {
       setBusy(true);
 
       // convert collection
-      const filePath = await SceneCollectionsService.actions.return.repairDualOutputCollection(
+      const filePath = await SceneCollectionsService.actions.return.convertDualOutputCollection(
         assignToHorizontal,
-        p.collection,
       );
 
       if (filePath) {
@@ -182,20 +181,20 @@ export function DualOutputDeveloperSettings(p: { collection?: string }) {
         )}
       </span>
       <div>
-        <h4>{$t('Repair Scene Collection')}</h4>
+        <h4>{$t('Convert to Vanilla Scene')}</h4>
         <div style={{ display: 'flex', justifyContent: 'space-evenly', paddingBottom: '16px' }}>
           <Button
             className="button--soft-warning"
             style={{ marginRight: '16px' }}
-            onClick={() => repairDualOutputCollection()}
+            onClick={() => convertDualOutputCollection()}
             disabled={busy}
           >
-            {$t('Repair')}
+            {$t('Convert')}
           </Button>
           {!p.collection && (
             <Button
               className="button--soft-warning"
-              onClick={() => repairDualOutputCollection(false, true)}
+              onClick={() => convertDualOutputCollection(false, true)}
               disabled={busy}
             >
               {$t('Convert and Export Overlay')}
@@ -210,14 +209,14 @@ export function DualOutputDeveloperSettings(p: { collection?: string }) {
             <Button
               className="button--soft-warning"
               style={{ marginRight: '16px' }}
-              onClick={() => repairDualOutputCollection(true)}
+              onClick={() => convertDualOutputCollection(true)}
               disabled={busy}
             >
               {$t('Assign')}
             </Button>
             <Button
               className="button--soft-warning"
-              onClick={() => repairDualOutputCollection(true, true)}
+              onClick={() => convertDualOutputCollection(true, true)}
               disabled={busy}
             >
               {$t('Assign and Export Overlay')}

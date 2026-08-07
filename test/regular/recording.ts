@@ -27,6 +27,7 @@ import {
   waitForDisplayed,
 } from '../helpers/modules/core';
 import { logIn, logOut } from '../helpers/webdriver/user';
+import { toggleDualOutputMode } from '../helpers/modules/dual-output';
 import { showPage } from '../helpers/modules/navigation';
 import { useForm, fillForm } from '../helpers/modules/forms';
 import * as childProcess from 'child_process';
@@ -160,6 +161,7 @@ test('Recording', async t => {
  */
 test('Recording with two contexts active', async t => {
   await logIn(t);
+  await toggleDualOutputMode();
 
   // low resolution reduces CPU usage
   await setOutputResolution('100x100');

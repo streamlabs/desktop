@@ -1267,8 +1267,6 @@ export class StreamingService
       this.handleUpdatePlatformError(e, platform);
       return false;
     }
-
-    return true;
   }
 
   handleUpdatePlatformError(e: unknown, platform: TPlatform) {
