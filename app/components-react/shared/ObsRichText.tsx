@@ -11,7 +11,8 @@ export default function ObsRichText(p: { text: string }) {
     [p.text],
   );
 
-  return <span>{nodes.map(renderNode)}</span>;
+  // a block wrapper, not a span: it is a flex item and the allowlist permits <p>
+  return <div>{nodes.map(renderNode)}</div>;
 }
 
 const INLINE_TAGS = ['b', 'strong', 'i', 'em', 'code', 'span', 'p'];
@@ -53,13 +54,23 @@ function renderNode(node: Node, key: number): React.ReactNode {
       return <React.Fragment key={key}>{renderChildren(node)}</React.Fragment>;
     }
 
+    // no href, so it needs an explicit role and key handling to stay reachable
+    const open = () => remote.shell.openExternal(href);
     return (
       <a
         key={key}
+        role="link"
+        tabIndex={0}
         style={LINK_STYLE}
         onClick={e => {
           e.preventDefault();
-          remote.shell.openExternal(href);
+          open();
+        }}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            open();
+          }
         }}
       >
         {renderChildren(node)}
