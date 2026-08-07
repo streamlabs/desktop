@@ -111,7 +111,7 @@ export function DualOutputDeveloperSettings(p: { collectionId?: string }) {
     exportOverlay: boolean = false,
   ) {
     const collection = p.collectionId
-      ? SceneCollectionsService.collections.find(c => c.name === p.collectionId)
+      ? SceneCollectionsService.collections.find(c => c.id === p.collectionId)
       : SceneCollectionsService.activeCollection;
 
     // confirm that the scene collection is a dual output collection
@@ -120,7 +120,7 @@ export function DualOutputDeveloperSettings(p: { collectionId?: string }) {
       (collection?.sceneNodeMaps && Object.values(collection?.sceneNodeMaps).length === 0)
     ) {
       setError(true);
-      setMessage($t('The active scene collection is not a dual output scene collection.'));
+      setMessage($t('The scene collection is not a dual output scene collection.'));
       return;
     }
     if (exportOverlay) {
@@ -139,6 +139,8 @@ export function DualOutputDeveloperSettings(p: { collectionId?: string }) {
       if (!collectionFilePath) {
         setError(true);
         setMessage($t('Unable to convert dual output collection.'));
+        setBusy(false);
+
         return;
       }
 
