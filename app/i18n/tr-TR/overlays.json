@@ -3,6 +3,7 @@
   "Successfully converted %{filename}": "%{filename} başarıyla dönüştürüldü",
   "Successfully saved %{filename} to %{filepath}": "%{filename}, %{filepath} dizinine başarıyla kaydedildi",
   "Successfully loaded %{filename}.overlay": "%{filename}.overlay başarıyla yüklendi",
+  "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
   "This is an experimental feature.  Use at your own risk.": "Bu, deneysel bir özelliktir. Riski göz önünde bulundurarak kullanın.",
   "Export Overlay File": "Katman Dosyasını Dışa Aktar",
   "Import Overlay File": "Katman Dosyasını İçe Aktar",
