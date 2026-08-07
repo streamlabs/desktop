@@ -34,6 +34,8 @@ export class WidgetManager extends PropertiesManager {
   setWidgetType(type: WidgetType) {
     const url = this.widgetsService.getWidgetUrl(type);
 
+    if (!url) return;
+
     if (this.obsSource.settings['url'] !== url) {
       this.obsSource.update({ url });
     }
