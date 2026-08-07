@@ -42,11 +42,12 @@ export type TWidgetEmbedSlot = 'properties' | 'page';
 /**
  * Outcome of {@link WidgetEmbedViewService.triggerSave}.
  *
- * `saved`       — the page confirmed the save; safe to close the window.
+ * `saved`       — the page settled its pending save (including the no-op case where nothing was
+ *                 dirty). Nothing is outstanding.
  * `failed`      — the save was attempted and did not succeed, or the view is gone. The page is
- *                 showing its own error toast, so keep the window open.
- * `unsupported` — the page exposes no save bridge (a legacy settings page). It owns its own
- *                 in-page Save; a native Save must not pretend to have saved anything.
+ *                 showing its own error toast.
+ * `unsupported` — the page exposes no save bridge (a legacy settings page with its own in-page
+ *                 Save). Nothing to flush.
  */
 export type TWidgetSaveResult = 'saved' | 'failed' | 'unsupported';
 
@@ -131,40 +132,26 @@ export class WidgetEmbedViewService extends Service {
 
   /** Detach from the current window but keep the view warm; evict it after an idle timeout. */
   unmount(slot: TWidgetEmbedSlot) {
+    // Flush whatever the page's auto-save still has debounced. This is the only close path that
+    // catches every way out of the window — the titlebar X and Escape never reach the footer's
+    // Close button. Deliberately not awaited: detaching should not wait on the network, and it
+    // doesn't need to. Detaching only removes the BrowserView from the window; the webContents
+    // stays alive in this process (the whole point of staying warm) until idle eviction, which
+    // is orders of magnitude longer than a save.
+    this.triggerSave(slot).catch(() => {});
     this.detachFromWindow(slot);
     this.startIdleEviction(slot);
   }
 
   /**
-   * Whether the embedded page exposes a save bridge.
+   * Flush the embedded page's pending auto-save (exposed as `window.__slobsWidgetSave` in embed
+   * mode). Lives here rather than in the child renderer because the view belongs to the worker
+   * process and can't be handed across the process boundary.
    *
-   * Only the revamped settings pages do. Widget types that still route to a legacy dashboard
-   * page (and the revamped ones whose rollout flag is off) render their own in-page Save
-   * instead, and never define `window.__slobsWidgetSave`. Callers use this to decide whether
-   * to offer a native Save button at all — offering one that no page is listening for would
-   * silently discard the user's edits.
-   */
-  async hasSaveBridge(slot: TWidgetEmbedSlot): Promise<boolean> {
-    if (!this.isAlive(slot)) return false;
-    try {
-      return await this.slots[slot].view!.webContents.executeJavaScript(
-        'typeof window.__slobsWidgetSave === "function"',
-      );
-    } catch {
-      // Landed mid-navigation; treat as absent rather than claiming a bridge we can't reach.
-      return false;
-    }
-  }
-
-  /**
-   * Trigger the embedded page's own save (exposed as `window.__slobsWidgetSave` in embed mode).
-   * Lives here rather than in the child renderer because the view belongs to the worker process
-   * and can't be handed across the process boundary.
-   *
-   * Only `'saved'` means it is safe to close the window. The page does NOT throw on failure — it
-   * renders its own error toast — so a caller that closes on anything else takes that toast down
-   * with the window before the user can read it. `'unsupported'` means the page has no bridge
-   * (see {@link hasSaveBridge}); closing there would discard the edits outright.
+   * The page saves as the user edits, so this is only needed before the view goes away: it
+   * cancels the page's debounce and resolves once the save settles. `'unsupported'` means the
+   * page defines no bridge — a legacy dashboard page that kept its own in-page Save — and there
+   * is nothing pending to flush.
    */
   async triggerSave(slot: TWidgetEmbedSlot): Promise<TWidgetSaveResult> {
     if (!this.isAlive(slot)) return 'failed';

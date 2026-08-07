@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button, InputNumber } from 'antd';
 import * as remote from '@electron/remote';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
@@ -12,10 +12,6 @@ import { IWidgetConfig } from 'services/widgets/widgets-config';
 import { $t } from 'services/i18n';
 import css from './WidgetSettingsEmbed.m.less';
 
-/** How long to keep looking for the page's save bridge before deciding it has none. */
-const SAVE_BRIDGE_TIMEOUT_MS = 8000;
-const SAVE_BRIDGE_POLL_MS = 300;
-
 /**
  * Child-window host for a widget's streamlabs.com dashboard settings, embedded in the source
  * Properties window (opened from {@link SourcesService.showWidgetProperties}). The embedded
@@ -27,7 +23,6 @@ const SAVE_BRIDGE_POLL_MS = 300;
  *                      so it always renders (the real source is black when idle), and is kept
  *                      in sync with the real source's settings. Test Widgets shows here.
  *   - Test Widgets   → fires a test event into the preview.
- *   - Save Settings  → triggers the embedded page's own save via the BrowserView (see below).
  *   - Manage on Web  → opens the full web settings page in the external browser.
  *
  * Layout lives in WidgetSettingsEmbed.m.less: a full-width header (Width/Height + Test Widgets),
@@ -35,27 +30,18 @@ const SAVE_BRIDGE_POLL_MS = 300;
  * footer. The two OS overlays (Display + BrowserView) sit in separate left/right columns so they
  * never share a rect.
  *
- * Save bridge: on the revamped settings pages the in-page "Save Settings" tray is hidden in embed
- * mode (core `.widget-settings--embed .widget-settings__footer { display: none }`) and the page
- * exposes a `window.__slobsWidgetSave()` entrypoint instead. The native Save button awaits that
- * via `WidgetEmbedViewService.triggerSave()` (saving only when there are changes) and closes the
- * window only on a confirmed save. The warm view lives in the worker process, so the save goes
- * through the service rather than a raw view reference held here.
+ * There is no Save button. The embedded page auto-saves as the user edits, matching what the
+ * legacy `WidgetEditor` did — and it has to, because saving is the only thing that reaches the
+ * preview above: the backend broadcasts a settings-update socket event on save and the overlay
+ * applies (or reloads on) it. The page's in-page draft channel was a local `postMessage` to a
+ * preview iframe that embed mode strips, so without a save nothing here would ever change.
  *
- * Not every widget type has a revamped page — some still route to a legacy dashboard page, as do
- * revamped ones whose rollout flag is off. Those expose no bridge and keep their own in-page Save,
- * so we probe for the bridge once the embed is ready and simply omit the native Save button when
- * it is absent; offering one there would silently discard the user's edits. The probe retries for
- * a few seconds rather than asking once — see {@link SAVE_BRIDGE_TIMEOUT_MS}.
+ * Closing flushes whatever the page still has debounced, so a change made in the last second
+ * isn't dropped. That lives in `WidgetEmbedViewService.unmount()` rather than in the Close
+ * handler here, because the titlebar X and Escape never reach this footer at all.
  */
 export default function WidgetSettingsEmbed() {
-  const {
-    WindowsService,
-    SourcesService,
-    WidgetsService,
-    EditorCommandsService,
-    WidgetEmbedViewService,
-  } = Services;
+  const { WindowsService, SourcesService, WidgetsService, EditorCommandsService } = Services;
 
   const { sourceId } = WindowsService.getChildWindowQueryParams();
 
@@ -118,60 +104,6 @@ export default function WidgetSettingsEmbed() {
     setProperties(source.getPropertiesFormData());
   }
 
-  const [saving, setSaving] = useState(false);
-
-  // Whether the loaded page exposes `window.__slobsWidgetSave`. Only the revamped settings pages
-  // do; widget types still served by a legacy dashboard page render their own in-page Save. We
-  // hide the native Save for those rather than offer a button that would discard their edits.
-  const [canSave, setCanSave] = useState(false);
-
-  // Unmount guard for the retry loop below, so a window closed mid-probe stops polling a view
-  // it no longer owns.
-  const probing = useRef(false);
-  useEffect(
-    () => () => {
-      probing.current = false;
-    },
-    [],
-  );
-
-  async function probeSaveBridge() {
-    // Retry rather than probe once. The page binds the bridge when its settings component
-    // mounts, which can land *after* the view reports ready: the widgets behind an
-    // IncrementalRollout flag (poll, spin-wheel, stream-boss, ...) resolve their real component
-    // in a second async hop, and the ready signal doesn't wait for it — core's `whenContentSettled`
-    // sees a rendered `.widget-view` with no loader in between and calls it done. A single probe
-    // loses that race and hides Save for the life of the window.
-    probing.current = true;
-    const deadline = Date.now() + SAVE_BRIDGE_TIMEOUT_MS;
-
-    for (;;) {
-      if (!probing.current) return;
-      if (await WidgetEmbedViewService.actions.return.hasSaveBridge('properties')) {
-        setCanSave(true);
-        return;
-      }
-      // Genuinely bridge-less pages (legacy settings with their own in-page Save) just run out
-      // the clock here and keep the native button hidden, which is the correct outcome for them.
-      if (Date.now() >= deadline) return;
-      await new Promise(resolve => setTimeout(resolve, SAVE_BRIDGE_POLL_MS));
-    }
-  }
-
-  async function saveWebSettings() {
-    // Trigger the embedded page's save via the bridge it exposes in embed mode. It saves only
-    // when there are unsaved changes and resolves once the save settles. Close ONLY on a
-    // confirmed save — the page renders its own error toast rather than throwing, and closing
-    // takes that toast down with the window before the user can read it.
-    setSaving(true);
-    const result = await WidgetEmbedViewService.actions.return
-      .triggerSave('properties')
-      .catch(() => 'failed' as const);
-    setSaving(false);
-
-    if (result === 'saved') WindowsService.actions.closeChildWindow();
-  }
-
   function openWebSettings() {
     if (apiSettings?.webSettingsUrl) remote.shell.openExternal(apiSettings.webSettingsUrl);
     WindowsService.actions.closeChildWindow();
@@ -188,14 +120,9 @@ export default function WidgetSettingsEmbed() {
         <span />
       )}
       <div className={css.footerActions}>
-        <Button disabled={saving} onClick={() => WindowsService.actions.closeChildWindow()}>
+        <Button type="primary" onClick={() => WindowsService.actions.closeChildWindow()}>
           {$t('Close')}
         </Button>
-        {canSave && (
-          <Button type="primary" loading={saving} onClick={saveWebSettings}>
-            {$t('Save Settings')}
-          </Button>
-        )}
       </div>
     </div>
   );
@@ -230,7 +157,7 @@ export default function WidgetSettingsEmbed() {
           </div>
         )}
         <div className={css.embed}>
-          <WidgetEmbedWarm slot="properties" onReady={probeSaveBridge} />
+          <WidgetEmbedWarm slot="properties" />
         </div>
       </div>
     </ModalLayout>
