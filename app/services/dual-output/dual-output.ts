@@ -358,6 +358,13 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
      * @remark Optimize by only confirming when the collection is switched
      */
     this.sceneCollectionsService.collectionSwitched.subscribe(collection => {
+      // Skip validating a collection that is being converted to a single output collection
+      // to prevent recreating the partner nodes
+      if (this.sceneCollectionsService.isConvertingCollection) {
+        this.collectionHandled.next(null);
+        return;
+      }
+
       const hasNodeMap =
         collection?.sceneNodeMaps && Object.entries(collection?.sceneNodeMaps).length > 0;
 

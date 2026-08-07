@@ -101,7 +101,7 @@ export function DualOutputDeveloperSettings(p: { collectionId?: string }) {
   const [error, setError] = useState(false);
 
   /**
-   * Convert a dual output scene collection to a vanilla scene collection
+   * Convert a dual output scene collection to a single output collection
    * @param assignToHorizontal Boolean for if the vertical sources should be assigned to the
    * horizontal display or should be deleted
    * @param exportOverlay Boolean for is the scene collection should be exported upon completion
