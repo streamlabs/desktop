@@ -263,7 +263,10 @@ export class OnboardingV2Service extends Service {
   }
 
   showOnboardingIfNecessary() {
-    if (!Utils.env.SLD_FORCE_ONBOARDING_STEP && localStorage.getItem(this.localStorageKey)) {
+    if (
+      !Utils.env.SLD_FORCE_ONBOARDING_STEP &&
+      (this.userService.isAlphaGroup || localStorage.getItem(this.localStorageKey))
+    ) {
       return;
     }
     this.appService.setOnboarded(true);
@@ -271,6 +274,20 @@ export class OnboardingV2Service extends Service {
   }
 
   showOnboarding() {
+    if (Utils.env.SLD_FORCE_ONBOARDING_STEP !== undefined) {
+      const isValidStep = Object.values(EOnboardingSteps).some(
+        step => step === Utils.env.SLD_FORCE_ONBOARDING_STEP,
+      );
+
+      if (isValidStep) {
+        this.initalizeView({
+          startingStep: { name: Utils.env.SLD_FORCE_ONBOARDING_STEP as EOnboardingSteps },
+          isSingleton: true,
+        });
+        return;
+      }
+    }
+
     this.initalizeView({
       startingStep: { name: EOnboardingSteps.Splash, isSkippable: false, isClosable: false },
       isSingleton: false,
