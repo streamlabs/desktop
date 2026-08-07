@@ -1,5 +1,5 @@
 {
-  "Horizontal canvas": "Horizontal canvas",
-  "Vertical canvas": "Vertical canvas",
-  "Error stopping stream: default streams do not exist.": "Error stopping stream: default streams do not exist."
+  "Horizontal canvas": "اللوحة الأفقية",
+  "Vertical canvas": "اللوحة الرأسية",
+  "Error stopping stream: default streams do not exist.": "تعذر إيقاف البث: لم يتم العثور على جلسات البث الافتراضية."
 }

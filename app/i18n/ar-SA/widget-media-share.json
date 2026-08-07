@@ -1,15 +1,15 @@
 {
-  "Banned Media": "Banned Media",
-  "Check Banned Media": "Check Banned Media",
-  "Price Per Second": "Price Per Second",
-  "Min. Amount to Share": "Min. Amount to Share",
-  "Max Duration": "Max Duration",
-  "Buffer Time": "Buffer Time",
-  "Spam Security": "Spam Security",
-  "The time between videos the next video has to buffer.": "The time between videos the next video has to buffer.",
-  "Manage Media Settings": "Manage Media Settings",
-  "The maximum duration in seconds that media can be played, regardless of amount donated. The default value is 60 seconds.": "The maximum duration in seconds that media can be played, regardless of amount donated. The default value is 60 seconds.",
-  "This slider helps you filter shared media before it can be submitted.\nOff: No security\nLow: 65%+ rating, 5k+ views\nMedium: 75%+ rating, 40k+ views\nHigh: 80%+ rating, 300k+ views\nVery High: 85%+ rating, 900k+ views": "This slider helps you filter shared media before it can be submitted.\nOff: No security\nLow: 65%+ rating, 5k+ views\nMedium: 75%+ rating, 40k+ views\nHigh: 80%+ rating, 300k+ views\nVery High: 85%+ rating, 900k+ views",
-  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD",
-  "In order to control length, you can decide how much it costs per second to share media. Setting this to 0.30 would mean that for $10, media would play for 30 seconds. The default value is 0.10.": "In order to control length, you can decide how much it costs per second to share media. Setting this to 0.30 would mean that for $10, media would play for 30 seconds. The default value is 0.10."
+  "Banned Media": "الوسائط المحظورة",
+  "Check Banned Media": "عرض الوسائط المحظورة",
+  "Price Per Second": "السعر لكل ثانية",
+  "Min. Amount to Share": "الحد الأدنى للمشاركة",
+  "Max Duration": "المدة القصوى",
+  "Buffer Time": "مدة التخزين المؤقت",
+  "Spam Security": "الحماية من الرسائل المزعجة",
+  "The time between videos the next video has to buffer.": "المدة التي ينتظرها الفيديو التالي لإكمال التخزين المؤقت بين تشغيل مقاطع الفيديو.",
+  "Manage Media Settings": "إدارة إعدادات الوسائط",
+  "The maximum duration in seconds that media can be played, regardless of amount donated. The default value is 60 seconds.": "الحد الأقصى لمدة تشغيل الوسائط بالثواني، بغض النظر عن قيمة التبرع. القيمة الافتراضية هي 60 ثانية.",
+  "This slider helps you filter shared media before it can be submitted.\nOff: No security\nLow: 65%+ rating, 5k+ views\nMedium: 75%+ rating, 40k+ views\nHigh: 80%+ rating, 300k+ views\nVery High: 85%+ rating, 900k+ views": "يساعدك هذا المنزلق على تصفية الوسائط المشتركة قبل إرسالها.\nإيقاف: بدون حماية\nمنخفض: تقييم 65٪ فأكثر، و5 آلاف مشاهدة فأكثر\nمتوسط: تقييم 75٪ فأكثر، و40 ألف مشاهدة فأكثر\nمرتفع: تقييم 80٪ فأكثر، و300 ألف مشاهدة فأكثر\nمرتفع جدًا: تقييم 85٪ فأكثر، و900 ألف مشاهدة فأكثر",
+  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "الحد الأدنى لقيمة التبرع المطلوبة لمشاركة الوسائط. القيمة الافتراضية هي 5.00 دولار أمريكي.",
+  "In order to control length, you can decide how much it costs per second to share media. Setting this to 0.30 would mean that for $10, media would play for 30 seconds. The default value is 0.10.": "للتحكم في مدة تشغيل الوسائط، يمكنك تحديد التكلفة لكل ثانية. على سبيل المثال، إذا كانت القيمة 0.30، فإن تبرعًا بقيمة 10 دولارات سيتيح تشغيل الوسائط لمدة 30 ثانية. القيمة الافتراضية هي 0.10."
 }

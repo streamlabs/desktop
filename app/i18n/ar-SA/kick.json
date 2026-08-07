@@ -1,15 +1,15 @@
 {
-  "Edit your stream title on Kick after going live.": "Edit your stream title on Kick after going live.",
-  "Kick Category": "Kick Category",
-  "Failed to update Kick account. Please unlink and reconnect your Kick account.": "Failed to update Kick account. Please unlink and reconnect your Kick account.",
-  "Failed to start Kick stream. Please check permissions with Kick and try again": "Failed to start Kick stream. Please check permissions with Kick and try again",
-  "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support": "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support",
-  "Kick stream key failed to generate due to missing permissions": "Kick stream key failed to generate due to missing permissions",
-  "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one": "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one",
-  "Login to Kick": "Login to Kick",
-  "Go to: <link></link>": "Go to: <link></link>",
-  "Click on the \"eye\" icon to see your stream key": "Click on the \"eye\" icon to see your stream key",
-  "Put in 2FA": "Put in 2FA",
-  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.",
-  "Stream Shift Error: Kick is not live": "Stream Shift Error: Kick is not live"
+  "Edit your stream title on Kick after going live.": "عدّل عنوان البث على Kick بعد بدء البث.",
+  "Kick Category": "فئة Kick",
+  "Failed to update Kick account. Please unlink and reconnect your Kick account.": "فشل تحديث حساب Kick. يُرجى إلغاء ربط الحساب ثم إعادة ربطه.",
+  "Failed to start Kick stream. Please check permissions with Kick and try again": "فشل بدء البث على Kick. تحقق من صلاحيات حسابك في Kick ثم حاول مرة أخرى.",
+  "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support": "من المحتمل أن طلب Kick فشل بسبب صلاحيات غير صحيحة أو مفقودة. ألغِ ربط حساب Kick ثم أعد ربطه، وبعد ذلك أعد تشغيل Streamlabs Desktop. إذا استمرت المشكلة، فتواصل مع دعم Kick.",
+  "Kick stream key failed to generate due to missing permissions": "تعذر إنشاء مفتاح بث Kick بسبب نقص الصلاحيات.",
+  "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one": "تأكد من إنشاء مفتاح بث باستخدام المصادقة الثنائية (2FA) في Kick لاستخدامه مع Streamlabs Desktop. إذا لم يكن موجودًا، فأنشئه يدويًا.",
+  "Login to Kick": "تسجيل الدخول إلى Kick",
+  "Go to: <link></link>": "انتقل إلى: <link></link>",
+  "Click on the \"eye\" icon to see your stream key": "انقر على أيقونة «العين» لعرض مفتاح البث.",
+  "Put in 2FA": "أدخل رمز المصادقة الثنائية (2FA).",
+  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "بعد إكمال المصادقة الثنائية (2FA)، سيتم إنشاء مفتاح البث وسيصبح متاحًا لاستخدامه مع Streamlabs Desktop لهذا الحساب. يمكنك الآن بدء البث على Kick.",
+  "Stream Shift Error: Kick is not live": "خطأ في تحويل البث: بث Kick غير مباشر."
 }
