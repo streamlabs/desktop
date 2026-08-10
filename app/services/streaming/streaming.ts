@@ -1033,12 +1033,12 @@ export class StreamingService
           shouldUpdateRestream,
         );
       } catch (e: unknown) {
-        console.log('Error updating stream settings', e);
+        console.error('Error updating stream settings', e);
 
-        throwStreamError(
-          'RESTREAM_UPDATE_FAILED',
+        this.handleTypedStreamError(
           e,
-          'Failed to update stream settings while live',
+          'RESTREAM_UPDATE_FAILED',
+          'Failed to update restream settings',
         );
       } finally {
         // Finish the 'runChecklist' step

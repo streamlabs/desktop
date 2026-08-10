@@ -7,5 +7,9 @@
   "Dual Stream is not available while Live Output Editing is enabled": "Dual Stream is not available while Live Output Editing is enabled",
   "Stream Shift cannot be used while Live Output Editing is enabled": "Stream Shift cannot be used while Live Output Editing is enabled",
   "Live Output Editing cannot be used with Stream Shift": "Live Output Editing cannot be used with Stream Shift",
-  "Update your live outputs mid-stream": "Update your live outputs mid-stream"
+  "Update your live outputs mid-stream": "Update your live outputs mid-stream",
+  "Update Destinations & Outputs:": "Update Destinations & Outputs:",
+  "Updating": "Updating",
+  "Start streaming to %{platform}": "Start streaming to %{platform}",
+  "Stop streaming to %{platform}": "Stop streaming to %{platform}"
 }
