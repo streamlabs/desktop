@@ -49,7 +49,8 @@ test.after.always(() => stopAll());
 interface ICompatInfo {
   rendered: boolean;
   text: string;
-  frameStyle: string;
+  severity: string;
+  borderColor: string;
   iconClass: string;
   codeCount: number;
   anchorCount: number;
@@ -63,14 +64,19 @@ interface ICompatInfo {
 function readCompatInfo() {
   const box = document.querySelector('[data-name="compat_info"]') as HTMLElement;
   if (!box) return { rendered: false } as any;
-  const frame = box.querySelector('div[style*="border"]') as HTMLElement;
+  const frame = box.querySelector('[data-severity]') as HTMLElement;
   const icon = box.querySelector('i') as HTMLElement;
   const anchors = Array.prototype.slice.call(box.querySelectorAll('a')) as HTMLAnchorElement[];
   return {
     rendered: true,
     text: box.innerText,
-    frameStyle: frame ? frame.getAttribute('style') : null,
-    iconClass: icon ? icon.className : null,
+    severity: frame ? frame.getAttribute('data-severity') : null,
+    // a transparent border would mean the severity class never applied
+    borderColor: frame ? getComputedStyle(frame).borderTopColor : null,
+    // the icon also carries a hashed CSS-module class; only the icon-font one is semantic
+    iconClass: icon
+      ? Array.prototype.slice.call(icon.classList).find((c: string) => c.indexOf('icon-') === 0)
+      : null,
     codeCount: box.querySelectorAll('code').length,
     anchorCount: anchors.length,
     anchorHref: anchors.length ? anchors[0].getAttribute('href') : null,
@@ -164,7 +170,8 @@ test('Game Capture compat warning renders as rich text with an accessible link',
   t.is(info.anchorTabIndex, 0, 'link must be focusable');
 
   t.is(info.iconClass, 'icon-information', 'Warning severity uses the information icon');
-  t.true(info.frameStyle.includes('var(--info-border)'), info.frameStyle);
+  t.is(info.severity, 'warning');
+  t.not(info.borderColor, 'rgba(0, 0, 0, 0)', 'severity styling did not apply');
 });
 
 test('Game Capture compat message uses Error styling', async t => {
@@ -172,7 +179,8 @@ test('Game Capture compat message uses Error styling', async t => {
 
   t.true(info.rendered);
   t.is(info.iconClass, 'icon-error');
-  t.true(info.frameStyle.includes('var(--warning-border)'), info.frameStyle);
+  t.is(info.severity, 'error');
+  t.not(info.borderColor, 'rgba(0, 0, 0, 0)', 'severity styling did not apply');
 });
 
 test('Game Capture compat message uses Normal styling', async t => {
@@ -180,7 +188,8 @@ test('Game Capture compat message uses Normal styling', async t => {
 
   t.true(info.rendered);
   t.is(info.iconClass, 'icon-question');
-  t.true(info.frameStyle.includes('var(--callout-border)'), info.frameStyle);
+  t.is(info.severity, 'normal');
+  t.not(info.borderColor, 'rgba(0, 0, 0, 0)', 'severity styling did not apply');
 });
 
 test('Game Capture hides the transient hook status', async t => {
