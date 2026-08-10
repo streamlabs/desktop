@@ -37,5 +37,7 @@
   "Use your TikTok stream key to stream. Stream Keys are granted by TikTok and renew after each session. <link>See Guide</link>": "Use your TikTok stream key to stream. Stream Keys are granted by TikTok and renew after each session. <link>See Guide</link>",
   "Can't find your stream key? <link>Click here</link>": "Can't find your stream key? <link>Click here</link>",
   "Request streaming access through Streamlabs": "Request streaming access through Streamlabs",
-  "Request access to stream without a stream key directly through Streamlabs. You must stream at least 50% gaming content continuously. <link>Learn more</link>": "Request access to stream without a stream key directly through Streamlabs. You must stream at least 50% gaming content continuously. <link>Learn more</link>"
+  "Request access to stream without a stream key directly through Streamlabs. You must stream at least 50% gaming content continuously. <link>Learn more</link>": "Request access to stream without a stream key directly through Streamlabs. You must stream at least 50% gaming content continuously. <link>Learn more</link>",
+  "Open TikTok Live Manager": "Open TikTok Live Manager",
+  "Your TikTok account is not enabled for live streaming.": "Your TikTok account is not enabled for live streaming."
 }

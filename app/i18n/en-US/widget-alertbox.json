@@ -157,5 +157,10 @@
   "Use unlimited delay": "Use unlimited delay",
   "When enabled new alerts will interrupt the on screen alert": "When enabled new alerts will interrupt the on screen alert",
   "Text Highlight Color": "Text Highlight Color",
-  "Platforms: Twitch, YouTube, Facebook & integrations": "Platforms: Twitch, YouTube, Facebook & integrations"
+  "Platforms: Twitch, YouTube, Facebook & integrations": "Platforms: Twitch, YouTube, Facebook & integrations",
+  "The display name of the viewer who redeemed the Power-Up": "The display name of the viewer who redeemed the Power-Up",
+  "The title of the Power-Up that was redeemed": "The title of the Power-Up that was redeemed",
+  "The number of Bits the viewer spent on the redemption": "The number of Bits the viewer spent on the redemption",
+  "Any text the viewer provided when redeeming the Power-Up": "Any text the viewer provided when redeeming the Power-Up",
+  "Available Tokens:": "Available Tokens:"
 }

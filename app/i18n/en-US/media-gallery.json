@@ -29,7 +29,10 @@
   "No Sound": "No Sound",
   "No Media": "No Media",
   "Change Link": "Change Link",
-  "Pick From Gallery":  "Pick From Gallery",
+  "Pick From Gallery": "Pick From Gallery",
   "Clear Link": "Clear Link",
-  "Media URL": "Media URL"
+  "Media URL": "Media URL",
+  "Only .jpeg and .png is supported": "Only .jpeg and .png is supported",
+  "This file could not be uploaded": "This file could not be uploaded",
+  "You must have Streamlabs Ultra to use this media": "You must have Streamlabs Ultra to use this media"
 }

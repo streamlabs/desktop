@@ -133,10 +133,7 @@ export class AlertBoxService extends WidgetSettingsService<IAlertBoxData> {
       ttsSecurity: metadata.spamSecurity({
         title: $t('Spam Security'),
         tooltip: $t(
-          'This setting helps control text to speech spam, such as "wwwwwwwwwww." ' +
-            'By default this is turned off, but most users will want to set this to Low or Medium. ' +
-            'The higher the security, the less spam, but also a higher chance of a legitimate message being flagged ' +
-            'as spam and not being read.',
+          'This setting helps control text to speech spam, such as "wwwwwwwwwww." By default this is turned off, but most users will want to set this to Low or Medium. The higher the security, the less spam, but also a higher chance of a legitimate message being flagged as spam and not being read.',
         ),
         data: [$t('Off'), $t('Low'), $t('Medium'), $t('High')],
         indexModifier: 1,

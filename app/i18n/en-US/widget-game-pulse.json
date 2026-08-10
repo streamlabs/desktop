@@ -21,5 +21,14 @@
   "Triggered when a player achieves a consecutive number of events without interruption.": "Triggered when a player achieves a consecutive number of events without interruption.",
   "No triggers available.": "No triggers available.",
   "Animation Settings": "Animation Settings",
-  "Real time alerts reacting to your in game events.": "Real time alerts reacting to your in game events."
+  "Real time alerts reacting to your in game events.": "Real time alerts reacting to your in game events.",
+  "Event Type": "Event Type",
+  "General Game Settings": "General Game Settings",
+  "Enable All": "Enable All",
+  "Disable All": "Disable All",
+  "Total Amount": "Total Amount",
+  "Level Range Type": "Level Range Type",
+  "Action Settings": "Action Settings",
+  "Text To Speech": "Text To Speech",
+  "Voice": "Voice"
 }

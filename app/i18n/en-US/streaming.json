@@ -378,5 +378,15 @@
   "Automatic (Recommended)": "Automatic (Recommended)",
   "Preferred Multistream Ingest Server": "Preferred Multistream Ingest Server",
   "You've reached the maximum number of streaming destinations. Upgrade to Ultra to enable multistreaming.": "You've reached the maximum number of streaming destinations. Upgrade to Ultra to enable multistreaming.",
-  "Failed to update Multistream platforms and destinations while live": "Failed to update Multistream platforms and destinations while live"
+  "Failed to update Multistream platforms and destinations while live": "Failed to update Multistream platforms and destinations while live",
+  "Delete the event?": "Delete the event?",
+  "Error Ended Stream - PC": "Error Ended Stream - PC",
+  "Error ending stream. Please try ending the stream from the other device again.": "Error ending stream. Please try ending the stream from the other device again.",
+  "unlink and re-merge Kick account, then restart Desktop": "unlink and re-merge Kick account, then restart Desktop",
+  "Failed to setup restream": "Failed to setup restream",
+  "Missing server url or stream key": "Missing server url or stream key",
+  "An unknown error occurred. Please try again.": "An unknown error occurred. Please try again.",
+  "You could try locking and unlocking your computer to fix this error.": "You could try locking and unlocking your computer to fix this error.",
+  "%{videoCodec} codec is not supported for Dual Output streaming to more than two destinations. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported for Dual Output streaming to more than two destinations. Would you like to proceed with the H.264 codec or select another codec?",
+  "Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming.": "Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming."
 }

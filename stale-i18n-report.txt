@@ -1,0 +1,1238 @@
+● Yes — 945 of 3,691 keys (25.6%) are never passed as a string literal to $t() outside app/i18n/. Full list written to
+  stale-i18n-report.txt.
+
+  Method
+
+  Scanned 1,093 .ts/.tsx/.js/.vue/.html files (excluding node_modules, bundles, dist, test-dist, obs-api, and app/i18n/
+  itself) for $t( followed by a plain string literal. Note the dictionary loader (app/services/i18n/i18n.ts:242) merges
+  every JSON file into one flat namespace, so filenames are organizational only — a key used anywhere counts as used.
+
+  Two groups
+
+  Group A — 773 keys. Not in a $t() literal and the string doesn't appear as a quoted literal anywhere else in the repo.
+  Strongest candidates.
+
+  Group B — 172 keys. Not in a $t() literal, but the string does exist somewhere in code — often a dynamic key or
+  hardcoded untranslated text. Needs eyeballing.
+
+  Biggest offenders in Group A: sources.json (128), streaming.json (113), onboarding.json (91), settings.json (87),
+  filters.json (40), highlighter.json (36), promotional-copy.json (30), widgets.json (29), facemasks.json (28),
+  common.json (27).
+
+  Important caveat before you delete anything
+
+  A large share of Group A is not actually stale. Three call sites translate runtime strings, so their keys never appear
+  as literals:
+
+  - $translateIfExist(obsProp.description) — app/components-react/obs/ObsForm.tsx:110,
+  app/components/obs/inputs/ObsInput.ts:187,362
+  - $translateIfExistWithCheck(opt.description) — ObsForm.tsx:179,210
+
+  These take OBS property/enum descriptions handed over by libobs at runtime. That's why filters.json entries like "Key
+  Color Type", "Similarity (1-1000)", "Opacity", "Gamma" and settings.json entries like "Output Mode", "Encoder Preset
+  (Higher = Less CPU)" show as unreferenced — they're live. sources.json, settings.json, filters.json, audio.json, and
+  source-props.json are heavily OBS-driven and I'd treat them as unsafe to bulk-delete.
+
+  There are also 23 dynamic $t(variable) call sites (e.g. ObsForm.tsx nameSubCategory, Settings.tsx category names,
+  TestWidgets.tsx tester names, EventFilterMenu.tsx filter names, and the editor-commands undo descriptions) whose keys
+  I can't resolve statically.
+
+  The clean wins are the app-owned namespaces — onboarding.json, promotional-copy.json, facemasks.json, loader.json,
+  highlighter.json, widgets.json, socials.json, twitter.json. Spot-checking confirms real rot: settings.json has "Source
+  Alignement Snapping" (typo, zero hits) and "Night mode"; sources.json has "Third party widget" while the code at
+  app/services/sources/sources-data.ts:47 uses the plural "Third party widgets".
+
+  Separately, the scan found 80 $t() literals with no en-US entry at all — the inverse problem. Say the word and I'll
+  pull that list.
+
+✻ Cooked for 37s
+
+❯ please pull that list as well!                                                                                        
+
+● I deleted that during cleanup — re-running the scan to regenerate it.
+
+● Write(tmp-missing-i18n.js)
+  ⎿  Wrote 101 lines to tmp-missing-i18n.js
+       1 const fs = require('fs');
+       2 const p = require('path');
+       3 const root = process.cwd();
+       4 const SKIP = new Set([
+       5   'node_modules', '.git', 'bundles', 'dist', 'test-dist', '.yarn', 'updater',
+       6   'media', 'vendor', 'coverage', 'obs-api',
+       7 ]);
+       8 const EXT = new Set(['.ts', '.tsx', '.js', '.jsx', '.vue', '.html', '.json']);
+       9
+      10 const files = [];
+     … +91 lines (ctrl+o to expand)
+
+● Bash(cd C:/Users/seanr/desktop && node tmp-missing-i18n.js)
+  ⎿  $t() literals total: 2659
+     MISSING from en-US: 80
+     … +176 lines (ctrl+o to expand)
+
+● Bash(cd C:/Users/seanr/desktop && rm -f tmp-missing-i18n.js && ls *.txt && git status --short)
+  ⎿  missing-i18n-report.txt
+     stale-i18n-report.txt
+     ?? missing-i18n-report.txt
+     ?? stale-i18n-report.txt
+
+● Full list above, also written to missing-i18n-report.txt (grouped by area, with every call site).
+
+  80 $t() literals have no matching key in app/i18n/en-US/*. These fall back to the raw key, so they read fine in
+  English but are untranslatable in every other locale — the inverse of the stale-key problem, and arguably the more
+  user-visible one.
+
+  Where they cluster:
+
+  ┌──────────────────────────────────┬───────┐
+  │               Area               │ Count │
+  ├──────────────────────────────────┼───────┤
+  │ app/components-react/windows     │ 24    │
+  ├──────────────────────────────────┼───────┤
+  │ app/components-react/widgets     │ 15    │
+  ├──────────────────────────────────┼───────┤
+  │ app/components-react/pages       │ 13    │
+  ├──────────────────────────────────┼───────┤
+  │ app/components-react/highlighter │ 7     │
+  ├──────────────────────────────────┼───────┤
+  │ app/services/streaming           │ 5     │
+  ├──────────────────────────────────┼───────┤
+  │ everything else                  │ 16    │
+  └──────────────────────────────────┴───────┘
+
+  A few patterns worth calling out:
+
+  Newer features never got their strings extracted. The game-pulse widget contributes 8 on its own
+  (GamePulseTriggerDetails.tsx, GamePulseGameSettings.tsx), and reactive-data-editor another 4. Twitch Power-Ups in
+  useAlertBox.tsx:601-604 is a clean block of 4.
+
+  Error messages are over-represented — GoLiveError.tsx (4), streaming.ts (4), restream.ts (2), Troubleshooter.tsx (2).
+  These are exactly the strings a non-English user most needs translated.
+
+  Two look like genuine bugs, not just missing keys:
+  - app/components-react/highlighter/ClipsView.tsx:485 — "Export detectected timecodes as markers for editing software".
+  Typo, shipped.
+  - app/components-react/pages/grow/Grow.tsx:247 and app/services/sources/sources-data.ts:276 both call $t('') with an
+  empty string.
+
+  Some are split-string concatenations, where a sentence was broken across $t() calls and one half drifted from the
+  dictionary — e.g. ObsImport.tsx:110,119 and OptimizedProfileSwitcher.tsx:39, both ending mid-sentence with a trailing
+  space. Those are worth rejoining into a single key rather than just adding the fragment.
+
+  One caveat on both reports: "All Supported Games" at AILanding.tsx:366 is missing, while ai.json has "All Supported
+  Games:" with a colon — so a handful of my 945 "stale" keys and these 80 "missing" ones are actually the same string
+  with punctuation drift. Worth a pass to reconcile the near-matches before deleting anything.
+
+Stale i18n candidates — keys in app/i18n/en-US/* never passed as a string literal to $t() anywhere outside app/i18n/.
+Generated by scanning 1093 .ts/.tsx/.js/.vue/.html files (node_modules, bundles, dist, obs-api excluded).
+Total en-US keys: 3691 | not referenced via literal $t(): 945
+
+==================================================================
+GROUP A (773) - also never appears as ANY string literal in the repo
+==================================================================
+
+--- advanced-statistics.json (3) ---
+  "You do not have any notifications"
+  "Click to add this info to your footer"
+  "dropped frames"
+
+--- ai.json (1) ---
+  "All Supported Games:"
+
+--- app.json (1) ---
+  "You have been logged out"
+
+--- audio.json (9) ---
+  "Volume (%)"
+  "Sync Offset (ms)"
+  "Volume ( % )"
+  "Desktop Audio Device 1"
+  "Desktop Audio Device 2"
+  "Mic/Auxiliary Device 1"
+  "Mic/Auxiliary Device 2"
+  "Mic/Auxiliary Device 3"
+  "Recording Audio Encoder"
+
+--- common.json (27) ---
+  "Library"
+  "Bug Report"
+  "Create New"
+  "Name is required"
+  "Complete"
+  "Users"
+  "Face Masks"
+  "Logout"
+  "Day mode"
+  "OBSInit.ErrorTitle"
+  "Please enter a valid date"
+  "Tag"
+  "Points"
+  "Hours"
+  "Amount"
+  "here"
+  "Link"
+  "OBSInit.UnknownError"
+  "OBSInit.ModuleNotFoundError"
+  "OBSInit.NotSupportedError"
+  "Store"
+  "System error message:"
+  "Play Audio"
+  "Widget"
+  "Collectibles"
+  "Alert Box Library"
+  "Edit Data"
+
+--- customization.json (4) ---
+  "Chat Text Size"
+  "Chat Width"
+  "Obsidian Prime"
+  "Alabaster Prime"
+
+--- facebook.json (10) ---
+  "You can access your Facebook Streamer Dashboard here."
+  "Create a Page"
+  "Facebook Setup"
+  "Streamer Dashboard"
+  "Create a Facebook Gaming page to get started."
+  "Create a Gaming Page"
+  "Connect Facebook"
+  "Multistream To Facebook"
+  "Share in a Group"
+  "Your account is not eligible to stream on Facebook. Click to learn more."
+
+--- facemasks.json (28) ---
+  "Face Masks Enabled"
+  "Enable Face Masks"
+  "Download Progress"
+  "Video Device"
+  "Face Mask Donations"
+  "Enable Face Mask Donations"
+  "Donation URL"
+  "Donation Alert Duration"
+  "Subscriber Masks"
+  "Enable Sub Masks"
+  "Get the Extension"
+  "The Streamlabs Face Masks extension is required for Subscription and Bits Masks"
+  "Test T3  Masks"
+  "Test T2 Masks"
+  "Bits Masks"
+  "Enable Bits Masks"
+  "Bits Price"
+  "We encountered an issue setting up your Face Mask Library"
+  "Click Retry to try again"
+  "Unable to find face mask plugin. You will not be able to use Face Masks"
+  "Face Mask Settings"
+  "YouTube Follows"
+  "Mask Duration"
+  "Donation Masks"
+  "Minimum Bits to Activate"
+  "Test Face Masks"
+  "Collapse"
+  "Expand"
+
+--- filters.json (40) ---
+  "Add source filter"
+  "No filters applied"
+  "Key Color Type"
+  "Key Color"
+  "Similarity (1-1000)"
+  "Smoothness (1-1000)"
+  "Key Color Spill Reduction (1-1000)"
+  "Opacity"
+  "Contrast"
+  "Brightness"
+  "Hue Shift"
+  "Saturation"
+  "Gamma"
+  "Sharpness"
+  "Tone Transform"
+  "SDR White Level"
+  "HDR Input Maximum"
+  "HDR Output Maximum"
+  "Info: Settings only apply to SDR video."
+  "Passthrough Alpha"
+  "Delay"
+  "Horizontal Speed"
+  "Vertical Speed"
+  "Limit Width"
+  "Limit Height"
+  "Undistort center of image when scaling from ultrawide"
+  "Relative"
+  "Stretch Image (discard image aspect ratio)"
+  "Sidechain/Ducking Source"
+  "Output Gain"
+  "Release"
+  "Attack"
+  "Threshold"
+  "Ratio"
+  "Release Time"
+  "Hold Time"
+  "Attack Time"
+  "Open Threshold"
+  "Close Threshold"
+  "Presets"
+
+--- game-overlay.json (2) ---
+  "Enable stream preview in overlay"
+  "The in-game overlay is a new experimental feature that allows you to view chat and events overlayed on top of your game.  This overlay may not work with certain games running in exclusive fullscreen mode.  For best results, we recommend running your game in windowed-fullscreen mode."
+
+--- grow.json (2) ---
+  "Content Hub"
+  "Start Multistreaming with Ultra"
+
+--- guest-cam.json (6) ---
+  "Source: %{sourceName}"
+  "Guest Cam is currently listening for connecting guests, but is not broadcasting your microphone and webcam to your guests yet."
+  "Waiting for guest to join"
+  "Guest %{num}"
+  "Copy Link"
+  "Waiting for host to begin"
+
+--- highlighter.json (36) ---
+  "Drag & drop to reorder clips."
+  "View Tutorial"
+  "Drag & drop or click to add clips"
+  "Remove the clip?"
+  "Are you sure you want to remove the clip? You will need to manually import it again to reverse this action."
+  "Set the duration of captured replays. You can always trim them down later."
+  "Capture a replay"
+  "highlighterHotkeyInstructions"
+  "Start streaming and capture a replay. Check back here after your stream."
+  "Or, import a clip from your computer"
+  "Trim clip"
+  "Remove clip"
+  "Video Name"
+  "Export Progress"
+  "Rendering Frames: %{currentFrame}/%{totalFrames}"
+  "Mixing Audio:"
+  "Render Preview"
+  "The render preview shows a low-quality preview of the final rendered video. The final exported video will be higher resolution, framerate, and quality."
+  "Upload to YouTube"
+  "Upload To"
+  "Add subtitles, transcribe, and more"
+  "Convert to mobile-friendly short video"
+  "YouTube (private video)"
+  "Clip"
+  "Subtitle"
+  "Manual Highlighter"
+  "Import Fortnite Stream"
+  "Select video to start import"
+  "Select your Fortnite recording"
+  "Set a title for your stream"
+  "For Fortnite streams (Beta)"
+  "No clips found."
+  "Game language is set to English"
+  "Try AI Highlighter to generate game highlight reels of your stream"
+  "AI Highlighter requirements"
+  "Auto-create highlights"
+
+--- hotkeys.json (1) ---
+  "This scene has not been converted to Dual Output. Please make the scene active to add vertical sources."
+
+--- kick.json (1) ---
+  "Edit your stream title on Kick after going live."
+
+--- loader.json (9) ---
+  "You can edit the sounds of your stream alerts from the alertbox properties menu."
+  "You can access our theme library from the left sidebar."
+  "Our 24/7 support staff is available at Discord.gg/stream."
+  "The sources listed at the top of your sources pane will be layered the highest in your editor."
+  "The Remote Control feature lets you control your active scene in real-time from your phone."
+  "Widgets are dynamic, interactive overlays you can add to your scene."
+  "Our App Store contains advanced technology to take your stream to the next level."
+  "With multi-stream, you can stream to YouTube, Twitch, and Facebook at the same time."
+  "You can customize the design of your tip page from the Theme Library."
+
+--- media-gallery.json (3) ---
+  "Select"
+  "Downloading..."
+  "Pick From Gallery"
+
+--- notifications.json (1) ---
+  "Recording History"
+
+--- onboarding.json (91) ---
+  "We are improving our backend systems. As part of the migration process, we will need to you log in again. If you have any questions, you can"
+  "contact support."
+  "Sign in with your content platform to get started with Streamlabs"
+  "Importing"
+  "Successfully Imported"
+  "Importing your scenes and sources"
+  "All scenes, sources and settings have been imported."
+  "Import your scenes and your settings from OBS with a simple click, or start fresh."
+  "Rather do this manually?"
+  "Setup later"
+  "We're connecting to OBS and pulling your previous settings for a seamless conversion."
+  "Initialzing ..."
+  "Connecting to OBS ..."
+  "Pulling settings ..."
+  "Starting import ..."
+  "Finalizing ..."
+  "We're analyzing your internet speed and computer hardware to give you the best settings possible."
+  "Done!"
+  "Next"
+  "Scene Collections Import"
+  "The following scene collections have been imported from your Streamlabs account"
+  "Collecting some information about your PC..."
+  "We found optimized settings for your PC"
+  "Download and Apply"
+  "This device is not available"
+  "Welcome to Streamlabs"
+  "Import your existing settings from OBS in less than a minute and go live"
+  "Not seeing a theme that catches your eye? Our theme library has hundreds of free choices available"
+  "Something went wrong."
+  "Optimized Video Encoding"
+  "Some exclusive features we recommend to take your stream to the next level"
+  "Check out 50+ amazing apps from independent developers, ranging from DMCA-compliant music to stunning overlays to more tools to engage with your community. Head over to the app store in the left navigation to browse our selection of free and paid apps."
+  "Only have one screen? Perfect! Enable our in-game overlay to make sure you catch every chat message and stream event that happens while you get your game on. You can enable this feature in the ‘Game Overlay’ tab of the settings menu."
+  "Re-Authorize"
+  "or select another platform"
+  "Select platform"
+  "Enable multistream to grow your audience, build your brand, and earn great prizes - with no extra effort. Available for Facebook today, and other platforms coming soon."
+  "Enable multistream"
+  "Enable multistream to get started."
+  "Merge your account with your new page. We can then track your progress so you can start earning great rewards!"
+  "A Facebook Gaming Page is required to multistream to Facebook."
+  "Create Facebook Gaming Page"
+  "Create Gaming Video Creator Page"
+  "Merge your Facebook Gaming Page"
+  "Merge with Facebook"
+  "primeTitle"
+  "Overlay, Widget & Site Themes"
+  "Custom Domain + Website"
+  "More Than 40 FREE Apps"
+  "Custom Merch Store"
+  "Stream on Mobile"
+  "Gold Status + FREE T-shirt"
+  "While we import your settings and scenes from OBS Studio, check out these great features unique to Streamlabs"
+  "Importing Your Existing Settings From OBS"
+  "Everything you need to go live. Always and forever free."
+  "Alert Box and Widget Themes"
+  "Access to all App Store Apps"
+  "Ultra Web Suite"
+  "Pro features to take your stream and channel to the next level."
+  "Something went wrong while importing from OBS Studio. Please try again or skip to the next step."
+  "I want to live stream to a platform. I may also want to record my live streams."
+  "I want to record my screen or camera. I will not be live streaming."
+  "1-Click Import from OBS"
+  "Desktop App Store"
+  "Limited Free Apps"
+  "No-fee Tipping"
+  "Basic Chatbot"
+  "Access Full App Library (%{appNumber})"
+  "%{destinationsNumber} Destinations"
+  "Custom Named Chatbot"
+  "Current Plan"
+  "Includes everything in Starter plus:"
+  "You unlocked hundreds of Ultra overlays! Choose from the ones below or navigate to the Overlays tab later to personalize your scenes."
+  "What type of creator are you?"
+  "Beginner"
+  "I want to be guided step by step."
+  "Intermediate"
+  "I need a little help getting started"
+  "I like to setup things myself"
+  "Add an Overlay"
+  "Streamlabs Mobile"
+  "+ Disconnect Protection"
+  "Tips to get the most out of your experience:"
+  "Set up your alerts and widgets on <link>Streamlabs Dashboard</link>"
+  "Need further assistance? Check out our <link>Creator resource hub</link> for everything you need"
+  "Earn rewards by streaming. Check your All Stars rank <link>on your dashboard</link>"
+  "Tips to run your first stream like a Pro:"
+  "Set yourself up for success with our <link>getting started guide</link>"
+  "Prevent crashes with <link>this troubleshooting guide</link>"
+  "Learn more about streaming through our free <link>Streamer University</link>"
+  "Setup your mic & webcam"
+
+--- overlays.json (2) ---
+  "This is an experimental feature.  Use at your own risk."
+  "GameCapture.WindowInternalMode"
+
+--- patreon.json (2) ---
+  "Campaign ID"
+  "Audience"
+
+--- promotional-copy.json (30) ---
+  "Your access to Ultra themes and other benefits will expire soon"
+  "Thank you for being a valued member of Streamlabs. We just wanted to check in and see if you’d like to give Ultra another shot."
+  "Resubscribe to Ultra"
+  "No Thanks"
+  "Choose your Streamlabs plan"
+  "Choose Ultra to enjoy everything from Starter plus themes and much more."
+  "Go Live to a single platform"
+  "Alerts & Tipping"
+  "Unlimited Themes & Overlays"
+  "Go Live to one or more platforms"
+  "Custom Tip Page"
+  "Custom Alerts & Tipping"
+  "App Store Apps are FREE"
+  "Custom Merch Store"
+  "Starter"
+  "Choose Starter"
+  "From $12/mo, billed annually"
+  "Your Benefits Are Expiring Soon"
+  "Your will lose access to the following Ultra benefits if you don’t resubscribe:"
+  "Thank you for being a valued member of Streamlabs. We just wanted to check in to see if you’ve had a chance to explore all Ultra has to offer."
+  "Continue Ultra"
+  "Stream Overlays"
+  "Premium Merch"
+  "Alert Box Themes"
+  "All Apps Included Free"
+  "Thumbnail & Panel Maker"
+  "Ultra Mobile Streaming"
+  "Create a custom personal, all-in-one page to link in bio"
+  "Access to All Overlays and Themes"
+  "Everything in Starter plus:"
+
+--- recent-events.json (9) ---
+  "has hosted you with %{viewers} viewers"
+  "Popout Recent Events"
+  "New Events Feed"
+  "We have combined the Editor & Live tabs, and given your events feed a new look. If you want to switch back to the old events feed, check out the Layout Editor in the sidebar."
+  "Duration in minutes"
+  "has resubscribed"
+  "has gifted a sub to"
+  "has resubscribed for %{streak} months in a row! (%{months} total)"
+  "has resubscribed for %{months} months"
+
+--- remote-control.json (3) ---
+  "Hide details"
+  "Click to show"
+  "Host"
+
+--- scenes.json (16) ---
+  "Please enter the name of the Scenes Collection"
+  "The scene name is required"
+  "Projector:"
+  "Projector: Output"
+  "Your preview is currently disabled"
+  "Are you sure you want to remove %sceneName%?"
+  "Switch Scenes"
+  "Template"
+  "Choose a template from our theme library"
+  "Dual Output Mode"
+  "Horizontal Output"
+  "Vertical Output"
+  "Arrange sources here for a vertical scene layout."
+  "Arrange sources here for a horizontal scene layout."
+  "Toggle Dual Output Mode."
+  "Cannot hide dual output toggles in dual output mode."
+
+--- settings.json (87) ---
+  "Remote Control"
+  "Face Masks"
+  "Night mode"
+  "Deleting your cache directory will cause you to lose some settings. Do not delete your cache directory unless instructed to do so by a Streamlabs staff member"
+  "Delete Cache and Restart"
+  "WARNING! You will lose all scenes, sources, and settings. This cannot be undone!"
+  "Show confirmation dialog when starting streams"
+  "Show confirmation dialog when stopping streams"
+  "Automatically record when streaming"
+  "Keep recording when stream stops"
+  "Source Alignement Snapping"
+  "Snap Sources to edge of screen"
+  "Snap Sources to other sources"
+  "Output Mode"
+  "Enforce streaming service bitrate limits"
+  "Encoder Preset (Higher = Less CPU)"
+  "No elements found. Consider changing the search query."
+  "Integer FPS Value"
+  "Fractional FPS Value"
+  "Stream Delay"
+  "Duration (Seconds)"
+  "Face Mask Settings"
+  "Navigate to Live tab when going live"
+  "Disable hardware acceleration"
+  "Streaming to %{platformName}"
+  "Streaming to a custom ingest is advanced functionality. Some features may stop working as expected"
+  "Automatically Reconnect"
+  "Media Files"
+  "Audio - Track 1"
+  "Audio - Track 2"
+  "Audio - Track 3"
+  "Audio - Track 4"
+  "Audio - Track 5"
+  "Audio - Track 6"
+  "This is an experimental feature."
+  "Output Selection"
+  "Use custom resolution"
+  "Support Links"
+  "Streamlabs Support"
+  "Diagnostic Report"
+  "Cache Directory"
+  "Automatically start replay buffer when streaming"
+  "Keep replay buffer active when stream stops"
+  "Snap Sensitivity"
+  "HDR Nominal Peak Level"
+  "Low Latency Audio Buffering Mode (For Decklink/NDI outputs), requires a restart"
+  "Enable Caching"
+  "Seekable"
+  "Reconnect Delay"
+  "Input Format"
+  "Network Buffering"
+  "Page permissions"
+  "Server"
+  "Stream key"
+  "Show all services"
+  "Always minimize to system tray instead of task bar"
+  "Minimize to system tray when started"
+  "Save projectors on exit"
+  "Make projectors always on top"
+  "Hide cursor over projectors"
+  "Snap Sources to horizontal and vertical center"
+  "repeat_headers"
+  "x264 Options (separated by space)"
+  "Tune"
+  "Profile"
+  "CPU Usage Preset (higher = less CPU)"
+  "Keyframe Interval (seconds, 0=auto)"
+  "CRF"
+  "Bitrate"
+  "Enforce streaming service encoder settings"
+  "Twitch VOD"
+  "Use authentication"
+  "Username"
+  "Keyframe Interval (0=auto)"
+  "Split Time (MB)"
+  "Split Time (min)"
+  "Reset timestamps at the beginning of each split file"
+  "Manage Dual Output"
+  "Auto optimizer disabled for dual output scenes"
+  "Above High"
+  "Below Normal"
+  "Idle"
+  "Bearer Token"
+  "%{videoCodec} codec is not supported for Dual Output. Would you like to proceed with the H.264 codec or select another codec?"
+  "Deleting your cache directory will cause you to lose some settings."
+  "Enable reporting additional information on a crash (requires restart)."
+  "Use stream output"
+
+--- socials.json (9) ---
+  "Share to Facebook"
+  "Grow your viewership using the free Streamlabs Deck App"
+  "Connected"
+  "Shared"
+  "Build a small following before you start streaming of like 10-20 viewers, whether they are friends, family, teammates, whatever"
+  "As a small streamer one of the best ways to grow is growing with your friends or other streamers. Sharing communities and such can help growth"
+  "Try to focus on each social media equally. People forget that you can build a social media presence and bring them over to your stream"
+  "I got my first group of viewers by messaging ALL my friends and family"
+  "Don't show this code on stream. Click to reveal"
+
+--- sources.json (128) ---
+  "Third party widget"
+  "Thanks viewers with notification popups."
+  "Hosts"
+  "Show off your most recent donations to your viewers."
+  "Include your channel's most recent events into your stream."
+  "YouTube Follows"
+  "Include your channel's chat into your stream."
+  "The jar that catches bits, tips, and more."
+  "Show off your viewers from multiple platforms."
+  "Battle with bits to be the boss of the stream!"
+  "Rolling credits to play at the end of your stream."
+  "Spin the wheel to make a decision."
+  "This is a placeholder description for Stream Labels."
+  "New Donations"
+  "All-Time Top Donator"
+  "Weekly Top Donator"
+  "Many more"
+  "Welcome to sources!"
+  "Browse through our Standard and Widget sources"
+  "Click a source to get more details about it"
+  "Essential"
+  "The source name is required"
+  "Go To Widget Settings"
+  "Hide Test Widgets"
+  "Add Folder"
+  "Remove Sources"
+  "Setup Source Properties"
+  "Name Source"
+  "Source filters"
+  "Add source filter"
+  "Click \"Add Source\" when you're ready to add it to your scene"
+  "BrowserSource"
+  "Cloud Backup: All media and sources are backed up in the cloud"
+  "Cloud Backup: Your media and sources are being synced with the cloud"
+  "There are no existing sources of this type."
+  "Include text into your stream, such as follower count, last donation, and many others."
+  "New filter"
+  "Force SDR"
+  "Custom Placeholder"
+  "Essential Sources"
+  "General Sources"
+  "Add media"
+  "Your webcam device"
+  "Display device video"
+  "Capture games and apps"
+  "Dynamic, live alerts"
+  "Capture an application window"
+  "Use custom frame rate"
+  "Custom CSS"
+  "Refresh browser when scene becomes active"
+  "Refresh cache of current page"
+  "Local file"
+  "Local File"
+  "IsMediaFlag"
+  "Loop"
+  "Restart playback when source becomes active"
+  "Use hardware decoding when available"
+  "Show nothing when playback ends"
+  "Close file when inactive"
+  "Apply alpha in linear space"
+  "FFmpeg Options"
+  "Speed"
+  "Wrap"
+  "Use Custom Text Extents"
+  "Chatlog Line Limit"
+  "Chatlog Mode"
+  "Outline Opacity"
+  "Outline Color"
+  "Outline Size"
+  "Outline"
+  "Vertical Alignment"
+  "Alignment"
+  "Background Opacity"
+  "Gradient Direction"
+  "Gradient Opacity"
+  "Gradient Color"
+  "Gradient"
+  "Text Transform"
+  "Enable Antialiasing"
+  "Text File (UTF-8)"
+  "Read from file"
+  "Apply rotation data from camera (if any)"
+  "Flip Vertically"
+  "Buffering"
+  "Color Range"
+  "Color Space"
+  "Video Format"
+  "Resolution/FPS Type"
+  "Deactivate when not showing"
+  "Configure Crossbar"
+  "Configure Video"
+  "Deactivate"
+  "Audio Output Mode"
+  "Use custom audio device"
+  "Audio Device"
+  "Hook Rate"
+  "Placeholder Image"
+  "Сustomize placeholder"
+  "RGB10A2 Color Space"
+  "Capture third-party overlays (such as steam)"
+  "Use anti-cheat compatibility hook"
+  "Allow Transparency"
+  "SLI/Crossfire Capture Mode (Slow)"
+  "Limit capture framerate"
+  "Client Area"
+  "Multi-adapter Compatibility"
+  "Capture Method"
+  "Suppression Level"
+  "Suppression Intensity"
+  "Image Files"
+  "Bounding Size/Aspect Ratio"
+  "Randomize Playback"
+  "Time Between Slides"
+  "Transition Speed"
+  "Hide when slideshow is done"
+  "Transition Speed (milliseconds)"
+  "Time Between Slides (milliseconds)"
+  "Slide Mode"
+  "Visibility Behavior"
+  "Unload image when not showing"
+  "Image File"
+  "You currently have the same source on both canvases selected. Please select the source in the canvas to edit it independently."
+  "Spout Senders"
+  "Composite mode"
+  "Poll time for new senders"
+  "Spout2 capture (Vtube support)"
+  "Virtual camera output selection"
+  "Virtual camera output type"
+
+--- stream-shift.json (7) ---
+  "Toggle Stream Shift"
+  "You can stream to any 2 destinations for free with Dual Output. Multistream and switch seamlessly between streams with Ultra"
+  "Switch Stream"
+  "Dual Output cannot be used with Stream Shift"
+  "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source."
+  "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. Dual Output will be disabled since not supported in this mode."
+  "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. Dual Output will be disabled since not supported in this mode. If you're sure you're not live and it has been incorrectly detected, choose \"Force Start\" below."
+
+--- streaming.json (113) ---
+  "An unexpected error occurred:"
+  "Do not show this message when going live"
+  "You will not be asked again to update your stream info when going live.  "
+  "You can re-enable this from the settings."
+  "Optimized encoder gives equivalent quality while reducing usage. Game specific encoders for Fortnite, PUBG, Destiny 2, and League Of Legends"
+  "Something went wrong while updating your stream info.  Please try again."
+  "Something went wrong while updating your stream info. You can try again, or you can"
+  "just go live"
+  "Optimized profile for average CPUs"
+  "Optimized profile for weak CPUs"
+  "Enable the preview stream"
+  "Disable the preview stream, can help with CPU"
+  "Set path in Settings > Output."
+  "Stopping..."
+  "Your stream has been scheduled for %{time} from now. If you'd like to make another schedule please enter a different time"
+  "Tags"
+  "Select stream tags"
+  "You can now edit your channel tags from this screen."
+  "Log out and back in to reauthorize additional permissions."
+  "Please enable account for streaming to recieve a stream key"
+  "You must create a Facebook gaming page to go live."
+  "Create Page"
+  "Checking optimized setting for"
+  "You will not be asked again to update your stream info when going live. "
+  "Use optimized encoder settings "
+  "Scheduled Date"
+  "Scheduled Time"
+  "Twitch requires two factor authentication to be enabled on your account in order to stream to Twitch. Please enable two factor authentication and try again."
+  "Tweet to let your followers know you're going live"
+  "Optimized encoding provides better quality and/or lower cpu/gpu usage. Depending on the game, resolution may be changed for a better quality of experience"
+  "An error occurred with the output. Please check and switch encoders in your streaming and recording Output settings."
+  "System error message:"
+  "Something went wrong while going live, please try again."
+  "You must select a game"
+  "Enable Multistream"
+  "Multistream allows you to stream to multiple platforms simultaneously."
+  "Your Twitch login is expired. Please log in again to continue using Streamlabs"
+  "Link to the %{platform} page has been copied to your clipboard"
+  "twitchMissedScopeError"
+  "tiktokReAuthError"
+  "You must select a game for %{platformName}"
+  "Stream to %{platformName}"
+  "Schedule to %{platformName}"
+  "Use different title, game and description"
+  "Use different title and game"
+  "Go back"
+  "Show Advanced Settings"
+  "Publish Youtube broadcast"
+  "Post a tweet"
+  "You could try reducing the number of your destinations to one for direct streaming."
+  "Select at least one destination"
+  "You cannot disable the platform you used to sign in to Streamlabs Desktop. Please sign in with a different platform to disable streaming to this destination."
+  "There was an error starting the output. Check your settings and try again. If this issue persists, please contact Streamlabs support."
+  "Contact Support"
+  "No Facebook pages were found"
+  "Failed to publish the YouTube broadcast"
+  "Failed to post the Tweet"
+  "Please try again. If the issue persists, you can stream directly to a single platform instead."
+  "You cannot disable the platform you used to sign in to Streamlabs Desktop. Please sign in with a different platform to disable streaming to this destinationType."
+  "canNotDisablePrimaryPlatform"
+  "Update scheduled event"
+  "Schedule new stream"
+  "Stream scheduled"
+  "Common Stream Settings"
+  "Stream to multiple platforms with Prime"
+  "Step 2: Ensure the \"Confirm stream title and game before going live\" option is checked in the <general>General</general> settings tab."
+  "New features coming soon!"
+  "Stream to multiple platforms at once with <ultra>Streamlabs Ultra</ultra>."
+  "Dual Output Settings"
+  "Set your default output mode for each platform."
+  "Set Dual Output Settings"
+  "Mode:"
+  "You can select which one to stream with in the Go Live window."
+  "Video Output Orientation"
+  "Upgrade your stream with premium themes with <ultra>Streamlabs Ultra</ultra>."
+  "You cannot change these settings when you're live."
+  "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform."
+  "Set up Go Live Settings for Dual Output Mode in the Go Live window."
+  "Tweet"
+  "Failed to authenticate with TikTok"
+  "Error generating TikTok stream credentials"
+  "Connect your TikTok account to stream to TikTok and one additional platform for free."
+  "Code:"
+  "confirm streaming approval status with TikTok"
+  "re-login or re-merge TikTok account"
+  "Streaming to platform is temporarily not available, confirm streaming approval and output settings."
+  "You're not eligible to Go Live, your profile needs to be at least 60 days old, or your page needs to have at least 100 followers"
+  "Are you sure you want to start multistreaming with errors?"
+  "Confirm Horizontal and Vertical Platforms"
+  "To use Dual Output you must stream to one horizontal and one vertical platform."
+  "High CPU Usage"
+  "Encoder Preset (higher = less CPU)"
+  "Connect your %{platform} account"
+  "Connect your %{platform} account to stream to %{platform}."
+  "Connect your %{platform} account to stream to %{platform}. Try streaming to %{platform} and another platform at the same time for free in dual output mode, or multistream with ultra."
+  "Failed Checks"
+  "Video Transmission"
+  "Optimized Settings"
+  "Recording Audio Encoder"
+  "Record Stream in"
+  "Stream Information:"
+  "Destinations & Outputs:"
+  "Upgrade to Ultra to stream to multiple platforms simultaneously!"
+  "Add More"
+  "Multichat"
+  "You've selected the two streaming destinations. Disable a destination to enable a different one. \nYou can always upgrade to Ultra for multistreaming."
+  "Dual Output will be disabled since not supported in this mode."
+  "Disable Twitch dual stream to add another platform"
+  "Dual streaming to Twitch only available with Twitch as the only platform"
+  "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform"
+  "Vertical replay buffer is in-progress. Would you like to stop the replay buffer to enable AI Highlighter?"
+  "Dual Output horizontal stream failed to start. Please try again or go live in single output mode."
+  "Unable to start video transmission"
+
+--- tiktok.json (13) ---
+  "Click here to learn more about streaming on TikTok"
+  "Go to the TikTok Live Center Dashboard"
+  "Go live to TikTok with a single click. Click here to learn more."
+  "You do not have permission to stream live to TikTok."
+  "Failed to update TikTok account"
+  "Close Streamlabs Desktop and reload"
+  "Go to Settings - Stream and reconnect TikTok"
+  "Connect TikTok Account"
+  "Approvals are solely at TikTok's discretion."
+  "TikTok Live Access not granted. Click here to learn more."
+  "Couldn't confirm TikTok Live Access. Apply for Live Permissions below"
+  "Connect your TikTok account"
+  "Connect your TikTok account to stream to TikTok and one other platform for free. Haven't applied to stream on TikTok Live yet? <link>Start the process here</link>."
+
+--- transitions.json (2) ---
+  "Softness"
+  "Invert"
+
+--- troubleshooter.json (2) ---
+  " Streamlabs has detected dropped frames"
+  " Some frames have not been uploaded. This problem is usually related to a poor network connection."
+
+--- twitch.json (1) ---
+  "Importing Your Existing Settings From Twitch Studio"
+
+--- twitter.json (10) ---
+  "Compose Tweet"
+  "Custom URL with"
+  "Connect to Twitter"
+  "Enable Tweet Sharing"
+  "Tweet when going live"
+  "Unlink Twitter"
+  "Tweet & Go Live"
+  "Could not connect to Twitter"
+  "Use Streamlabs URL"
+  "Stream Shift Error: Twitter is not live"
+
+--- widget-alertbox.json (7) ---
+  "Cheer"
+  "Donation is in Crypto currency"
+  "Viewers gained is at least <viewers>"
+  "This setting helps control text to speech spam, such as \"wwwwwwwwwww.\" By default this is turned off, but most users will want to set this to Low or Medium. The higher the security, the less spam, but also a higher chance of a legitimate message being flagged as spam and not being read."
+  "When a donation alert shows up, this will be the format of the message."
+  "Available Tokens: "
+  "Plays an alert when another streamer hosts your channel"
+
+--- widget-chat-box.json (2) ---
+  "Chatter"
+  "Hide Commands"
+
+--- widget-chat-highlight.json (1) ---
+  "Pin and highlight chat messages from your viewers on your stream."
+
+--- widget-credits.json (1) ---
+  "Show donations"
+
+--- widget-emote-wall.json (2) ---
+  "Display and animate emotes that are seen in chat, improving chat participation via positive feedback."
+  "Wall Settings"
+
+--- widget-event-list.json (1) ---
+  "Theme Color"
+
+--- widget-game-pulse.json (1) ---
+  "Select a Trigger Type"
+
+--- widget-game.json (2) ---
+  "Let your viewers play a game in chat"
+  "Chat Response Timer"
+
+--- widget-media-share.json (4) ---
+  "Check Banned Media"
+  "The maximum duration in seconds that media can be played, regardless of amount donated. The default value is 60 seconds."
+  "This slider helps you filter shared media before it can be submitted.\nOff: No security\nLow: 65%+ rating, 5k+ views\nMedium: 75%+ rating, 40k+ views\nHigh: 80%+ rating, 300k+ views\nVery High: 85%+ rating, 900k+ views"
+  "In order to control length, you can decide how much it costs per second to share media. Setting this to 0.30 would mean that for $10, media would play for 30 seconds. The default value is 0.10."
+
+--- widget-sponsor-banner.json (4) ---
+  "Ad Layout"
+  "Placement %{number} Images"
+  "Set up a sponsor banner to be able to edit (add, remove, update) rotating sponsor logos on streamer channel."
+  "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)"
+
+--- widget-viewer-count.json (1) ---
+  "Manage Viewer Count"
+
+--- widgets.json (29) ---
+  "Add Widgets"
+  "Select the Streamlabs widgets you would like to activate for your stream. These will get automatically added to your scene."
+  "Thanks viewers with notification popups"
+  "Most recent events into your stream"
+  "A jar that catches bits, tips, and more"
+  "Your channel's chat in your stream"
+  "Show off most recent donations to viewers"
+  "Give your viewers a donation target to help you reach"
+  "Give your viewers a follower target to help you reach"
+  "Give your viewers a bit target to help you reach"
+  "Give your viewers a subscriber target to help you reach"
+  "Show off how many viewers you have from multiple platforms"
+  "Give your viewers an opportunity of becoming a boss"
+  "Rolling credits at the end of your stream"
+  "Add %{widgetscount} Widgets"
+  "Rather do this manually?"
+  "Setup later"
+  "Host"
+  "The Google Font to use for the text. Visit http://google.com/fonts to find one! Popular Fonts include: Open Sans, Roboto, Oswald, Lato, and Droid Sans."
+  "Please login to configure widget"
+  "Sparks sent are at least <amount>"
+  "Sparks sent are exactly <amount>"
+  "Ember amount is at least <amount>"
+  "Ember amount is exactly <amopunt>"
+  "Allow your viewers to donate to share media on your stream."
+  "Note: This background color is for preview purposes only.It will not be shown in your stream."
+  "This background color is for preview purposes only. It will not be shown in your stream."
+  "Min. Sparks"
+  "Min. Embers"
+
+--- youtube.json (9) ---
+  "YouTube stream status"
+  "Waiting for YouTube to receive the video signal..."
+  "Testing your broadcast..."
+  "Finalizing broadcast testing..."
+  "Publishing to your YouTube channel..."
+  "Waiting broadcast to be published..."
+  "Waiting for broadcast to be published..."
+  "Your stream will start shortly. You can close this window."
+  "Go to YouTube Live Dashboard"
+
+==================================================================
+GROUP B (172) - string DOES appear as a literal elsewhere (likely a
+dynamic $t(variable) key, or hardcoded untranslated text). Verify.
+==================================================================
+
+--- advanced-statistics.json (2) ---
+  "FPS"
+  "bandwidth"
+
+--- app.json (1) ---
+  "Authentication Error"
+
+--- audio.json (4) ---
+  "Muted"
+  "Device"
+  "Sample Rate (requires a restart)"
+  "Channels (requires a restart)"
+
+--- common.json (6) ---
+  "Themes"
+  "Help"
+  "Coming Soon"
+  "min"
+  "Studio"
+  "Multistreaming"
+
+--- facebook.json (3) ---
+  "Share"
+  "Like"
+  "Stream Shift Error: Facebook is not live"
+
+--- filters.json (1) ---
+  "Detection"
+
+--- grow.json (1) ---
+  "Grow"
+
+--- highlighter.json (14) ---
+  "Auto created reels in seconds powered by Streamlabs AI"
+  "Turn 1 Recording into 10 Reels - automatically"
+  "Recording to shorts - fully automatic"
+  "Horizontal to vertical with one click"
+  "Subtitles like the PROs"
+  "Automatic subtitles"
+  "Grow on every platform - without effort"
+  "Grow everywhere"
+  "Auto-Record: Create content even when you are not live"
+  "Auto record gameplay"
+  "Convert your horizontal stream into TikTok and Instagram formats."
+  "Add subtitles like the pros with the click of a button. Zero extra work."
+  "Direct sharing to YouTube, Discord and shortcuts to TikTok, Instagram or X. Grow on all platforms without effort."
+  "Not streaming? No problem! Your gameplay gets recorded automatically — if you want it to."
+
+--- hotkeys.json (1) ---
+  "<color>Pro tip:</color> set Markers in Hotkeys settings to timestamp your recordings. <link>Set up here</link>"
+
+--- kick.json (1) ---
+  "Stream Shift Error: Kick is not live"
+
+--- loader.json (17) ---
+  "Sources are what we call media like text, images, video & audio feeds."
+  "Undo works in the Editor. Just hit Ctrl + Z!"
+  "Studio Mode is a powerful way to curate a professional-quality stream."
+  "Cloudbot is a chatbot that can help you moderate your stream."
+  "Set Hotkeys from your settings to control your stream with your keyboard."
+  "With Game Overlay you can view chat messages while gaming without switching screens."
+  "The editor is fully customizable. Try repositioning things from the Layout Editor."
+  "Studio Mode allows you to customize a scene while you are live before your viewers can see it."
+  "With the Highlighter, you can save clips during your stream and publish them to YouTube."
+  "You can login to Streamlabs from any device, and we'll load your scenes from the cloud."
+  "As your scenes get more complex, try managing your sources in folders."
+  "To fine-tune the positioning of a source, select it from the editor then press any arrow key."
+  "Right-click a source, then choose \"Properties\" to view its advanced settings."
+  "You can position your chat panel to be either on the left or right side of your screen."
+  "Right-click on your camera source to add filters to your webcam."
+  "You can add and edit stinger transitions by clicking the settings cog near your scene collections."
+  "To crop your webcam, press Alt then drag the bounding box."
+
+--- media-gallery.json (2) ---
+  "All Files"
+  "Copy URL"
+
+--- onboarding.json (4) ---
+  "Streamlabs Console"
+  "Don't have an account? <link>Create one</link>"
+  "Already have an account? <link>Log In</link>"
+  "Just looking to record? <link>Start here</link>"
+
+--- overlays.json (2) ---
+  "default_width"
+  "default_height"
+
+--- recent-events.json (1) ---
+  "months"
+
+--- settings.json (60) ---
+  "General"
+  "Stream"
+  "Audio"
+  "Appearance"
+  "Experimental"
+  "Developer"
+  "Installed Apps"
+  "This action will restart the application. Continue?"
+  "Stream Type"
+  "Enable Advanced Encoder Settings"
+  "Generate File Name without Space"
+  "Recording Quality"
+  "Recording Format"
+  "Custom Muxer Settings"
+  "Enable Replay Buffer"
+  "Process Priority"
+  "Color Format"
+  "Audio Monitoring Device"
+  "Disable Windows audio ducking"
+  "YUV Color Space"
+  "YUV Color Range"
+  "Preserved cutoff point (increase delay) when reconnecting"
+  "Recording Path"
+  "Custom Encoder Settings"
+  "Audio Bitrate"
+  "Video Bitrate"
+  "Network"
+  "Get Support"
+  "Enable Browser Source Hardware Acceleration (requires a restart)"
+  "Enable media file caching"
+  "Low latency mode"
+  "Enable new networking code"
+  "Dynamically change bitrate when dropping frames while streaming"
+  "Bind to IP"
+  "Retry Delay (seconds)"
+  "Maximum Retries"
+  "Filename Formatting"
+  "Force GPU as render device"
+  "Overwrite if file exists"
+  "Replay Buffer Filename Prefix"
+  "Replay Buffer Filename Suffix"
+  "Use stream encoder"
+  "Input"
+  "Service"
+  "Maximum Replay Time (Seconds)"
+  "Encoder"
+  "Rescale Output"
+  "Audio Track"
+  "Buffer Size"
+  "Use Custom Buffer Size"
+  "Rate Control"
+  "Password"
+  "Automatic File Splitting"
+  "Themes"
+  "FPSNum"
+  "FPSDen"
+  "Audio Encoder"
+  "Additional Settings"
+  "Output Resolution"
+  "Mobile"
+
+--- source-props.json (2) ---
+  "Video Capture Device"
+  "NDI Source"
+
+--- sources.json (12) ---
+  "Application Audio Capture (BETA)"
+  "Widget Type"
+  "Control audio via Streamlabs Desktop"
+  "Shutdown source when not visible"
+  "URL"
+  "Color"
+  "Window"
+  "auto_placeholder_message"
+  "auto_placeholder_image"
+  "auto_capture_rules_path"
+  "Display"
+  "Method"
+
+--- streaming.json (8) ---
+  "Step 1: Connect your streaming accounts in the <stream>Stream</stream> settings."
+  "Upgrade your stream with premium overlays with <ultra>Streamlabs Ultra</ultra>."
+  "Instagram Stream Key"
+  "Instagram Stream URL"
+  "Stream URL"
+  "<unlink>Unlink here</unlink>"
+  "Destinations:"
+  "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again."
+
+--- streamlabels.json (1) ---
+  "Duration (seconds)"
+
+--- tiktok.json (1) ---
+  "Stream Shift Error: TikTok is not live"
+
+--- twitch.json (1) ---
+  "Stream Shift Error: Twitch is not live"
+
+--- undo.json (5) ---
+  "Show %{sourceName}"
+  "Mute %{sourceName}"
+  "Unmute %{sourceName}"
+  "Enable %{filterName}"
+  "Disable %{filterName}"
+
+--- widget-credits.json (5) ---
+  "Includes"
+  "Donors"
+  "Loop Option"
+  "Loop the credits"
+  "Show Donations"
+
+--- widget-goal.json (1) ---
+  "Streamlabs Charity Goal"
+
+--- widget-sponsor-banner.json (1) ---
+  "No Image"
+
+--- widget-stream-boss.json (3) ---
+  "Current Boss Name"
+  "Total Health"
+  "Current Health"
+
+--- widget-tip-jar.json (5) ---
+  "Enabled Events"
+  "Minimum Bits"
+  "Minimum Tips"
+  "Text"
+  "Show Text"
+
+--- widgets.json (4) ---
+  "Add Custom Fields"
+  "Remove Custom Fields"
+  "Subscriber"
+  "Membership"
+
+--- youtube.json (3) ---
+  "Additional Settings"
+  "Stream Shift Error: YouTube is not live"
+  "Error starting vertical stream in YouTube dual streaming"
