@@ -222,23 +222,25 @@ captureTest('Game Capture lists and captures a live window', async t => {
     const listed = (windowProp.options || []).some((o: any) => o.value === target.obsWindowSetting);
     t.true(listed, 'the target window should appear in the window property options');
 
-    // poll with properties closed. Game Capture shows a placeholder at its own size when it is
-    // not capturing, so only an exact match with the target's client area proves real capture.
-    t.truthy(target.clientSize, 'target did not report its client size');
+    // the target reports the hook from inside its own process, which is unambiguous; Game
+    // Capture shows a placeholder at its own size when it is not capturing, so the source's
+    // dimensions alone cannot tell the two apart
+    const hooked = await target.waitForEvent('hooked', 30000);
+    t.truthy(
+      hooked,
+      'target never reported being hooked — the agent may lack a GPU or an interactive session',
+    );
+
+    // and the frames that arrive are actually its own
     let dimensions = '0x0';
-    const deadline = Date.now() + 30000;
+    const deadline = Date.now() + 15000;
     while (Date.now() < deadline) {
       const { width, height } = await readDimensions(name);
       dimensions = `${width}x${height}`;
       if (dimensions === target.clientSize) break;
       await sleep(1000);
     }
-    t.is(
-      dimensions,
-      target.clientSize,
-      `source never matched the target's ${target.clientSize} after 30s (saw ${dimensions}) — ` +
-        'the agent may lack a GPU or an interactive desktop session, or this is the placeholder',
-    );
+    t.is(dimensions, target.clientSize, `source never matched the target's ${target.clientSize}`);
   } finally {
     await removeGameCapture(name);
     stopAll();
@@ -246,31 +248,29 @@ captureTest('Game Capture lists and captures a live window', async t => {
 });
 
 captureTest('Game Capture warns and refuses capture when injection is blocked', async t => {
-  // reproduces CS2 launched without -allow_third_party_software: the hook cannot load.
-  // signature-policy is requested explicitly — the profile's default (squat-ipc) did not
-  // actually prevent capture when measured.
+  // reproduces CS2 launched without -allow_third_party_software: the hook cannot load
   stopAll();
-  const target = await launchProfile('cs2-blocked', { blockCapture: 'signature-policy' });
+  const target = await launchProfile('cs2-blocked');
   const name = 'GC blocked capture';
+
+  // the target self-verifies that the block is actually armed, so a block that silently stops
+  // working fails here instead of quietly turning this into a no-op test
+  const block = target.events.find(e => e.event === 'block_active');
+  t.truthy(block, 'target did not report an armed capture block');
+  t.true(block.verified, `block ${block.mode} could not be verified: ${block.detail}`);
 
   await addSource('Game Capture', name);
   try {
     await updateSettings(name, { capture_mode: 'window', window: target.obsWindowSetting });
 
-    // never matching the target's own size means the hook never delivered a frame; the source
-    // shows the placeholder instead
-    let dimensions = '0x0';
-    const deadline = Date.now() + 20000;
-    while (Date.now() < deadline) {
-      const { width, height } = await readDimensions(name);
-      dimensions = `${width}x${height}`;
-      if (dimensions === target.clientSize) break;
-      await sleep(1000);
-    }
+    const hooked = await target.waitForEvent('hooked', 20000);
+    t.falsy(hooked, 'a blocked target must never be hooked');
+
+    const { width, height } = await readDimensions(name);
     t.not(
-      dimensions,
+      `${width}x${height}`,
       target.clientSize,
-      `a blocked target must never produce frames, but the source matched ${target.clientSize}`,
+      'a blocked target must never produce frames',
     );
 
     const info = await readCompatInfoFor(name);

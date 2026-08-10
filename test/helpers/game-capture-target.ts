@@ -5,6 +5,9 @@
  * The binary is fetched from a pinned release and checksum-verified into the gitignored
  * `test-dist/`; set FAKEGAME_PATH to use a local build instead (offline, or when testing a
  * change to the tool itself).
+ *
+ * The target reports itself over NDJSON on stdout (`--events json`): a `ready` object, whether
+ * an armed capture block verified, and whether OBS actually hooked it.
  */
 import * as fs from 'fs';
 import * as path from 'path';
@@ -13,17 +16,17 @@ import * as ChildProcess from 'child_process';
 import fetch from 'node-fetch';
 import extract = require('extract-zip');
 
-const RELEASE_TAG = 'v0.1.0';
+const RELEASE_TAG = 'v0.2.0';
 const ZIP_NAME = `fakegame-${RELEASE_TAG}-win-x64.zip`;
 const ZIP_URL = `https://github.com/summeroff/game-capture-target/releases/download/${RELEASE_TAG}/${ZIP_NAME}`;
-const ZIP_SHA256 = 'a247b693adf2327d3c86947759fc9be42477ac118af9b5e8ce3d1c7da06461d6';
+const ZIP_SHA256 = 'f37e11c2c9624bf934657cec43ab576e5eafa07eae8d4df31cdf51b1e3246c6e';
 
 // __dirname is test-dist/test/helpers at runtime
 const CACHE_DIR = path.resolve(__dirname, '..', '..', 'game-capture-target');
 const SPAWN_DIR = path.join(CACHE_DIR, '_spawn');
 const EXTRACT_DIR = path.join(CACHE_DIR, RELEASE_TAG);
 
-const WINDOW_READY_TIMEOUT = 30000;
+const READY_TIMEOUT = 30000;
 
 export interface IGameCaptureProfile {
   id: string;
@@ -31,32 +34,53 @@ export interface IGameCaptureProfile {
   exe: string;
   windowClass: string;
   windowTitle: string;
-  severity: number;
+  clientWidth: number;
+  clientHeight: number;
   severityName: 'Normal' | 'Warning' | 'Error';
   captureExpected: boolean;
   defaultBlock: string;
   notes: string;
 }
 
-export interface ILaunchedTarget extends IGameCaptureProfile {
-  pid: number;
-  hwnd: string;
-  /** value for the `window` property of a game/window capture source */
-  obsWindowSetting: string;
-  /**
-   * Client area the target reports for itself, e.g. "1280x720". Game Capture renders a
-   * placeholder at a different size when it is not capturing, so matching this exactly is the
-   * only reliable way to tell real capture from the placeholder.
-   */
-  clientSize: string;
+export interface ITargetEvent {
+  event: string;
+  ts: string;
+  [key: string]: any;
 }
 
-const running: ChildProcess.ChildProcess[] = [];
+export interface ILaunchedTarget {
+  profile: string;
+  pid: number;
+  hwnd: string;
+  exe: string;
+  windowClass: string;
+  windowTitle: string;
+  clientWidth: number;
+  clientHeight: number;
+  blockCapture: string;
+  captureExpected: boolean;
+  /** value for the `window` property of a game/window capture source, computed by the target */
+  obsWindowSetting: string;
+  /** "1280x720" — what the source reports once real frames arrive */
+  clientSize: string;
+  /** every event seen so far */
+  events: ITargetEvent[];
+  /** resolves with the first matching event, or null on timeout */
+  waitForEvent(name: string, timeoutMs?: number): Promise<ITargetEvent>;
+}
+
+interface ITargetState {
+  child: ChildProcess.ChildProcess;
+  events: ITargetEvent[];
+  waiters: { name: string; resolve: (e: ITargetEvent) => void }[];
+}
+
+const running: ITargetState[] = [];
 
 /**
- * `title:class:exe`, with `#` and `:` escaped the way libobs expects.
- * Mirrors encode_dstr/ms_build_window_strings in libobs/util/windows/window-helpers.c —
- * `#` must be escaped before `:` or the decode is ambiguous.
+ * `title:class:exe` with `#` and `:` escaped the way libobs expects (see encode_dstr in
+ * libobs/util/windows/window-helpers.c — `#` must be escaped first). Only needed for synthetic
+ * settings that never launch a target; a launched one reports its own `obsWindowSetting`.
  */
 export function buildWindowSetting(title: string, windowClass: string, exe: string) {
   const encode = (s: string) => s.replace(/#/g, '#22').replace(/:/g, '#3A');
@@ -73,9 +97,7 @@ async function download(url: string, dest: string) {
   fs.writeFileSync(dest, await res.buffer());
 }
 
-/**
- * Resolves fakegame.exe, downloading the pinned release if it is not already cached.
- */
+/** Resolves fakegame.exe, downloading the pinned release if it is not already cached. */
 export async function ensureBinary(): Promise<string> {
   const override = process.env.FAKEGAME_PATH;
   if (override) {
@@ -112,7 +134,6 @@ export async function ensureBinary(): Promise<string> {
     extract(zipPath, { dir: EXTRACT_DIR }, err => (err ? reject(err) : resolve()));
   });
 
-  // the zip has a single versioned folder; hoist the exe if it is nested
   if (!fs.existsSync(exePath)) {
     const nested = findExe(EXTRACT_DIR);
     if (!nested) throw new Error(`fakegame.exe not found after extracting ${ZIP_NAME}`);
@@ -148,84 +169,130 @@ export async function getProfile(id: string): Promise<IGameCaptureProfile> {
 
 /**
  * Copies the binary to the profile's executable name (the rename is what makes exe-matched
- * compatibility entries apply), launches it, and waits for its window to exist.
+ * compatibility entries apply), launches it and waits for its `ready` event.
  */
 export async function launchProfile(
   id: string,
-  opts: { api?: string; blockCapture?: string; extraArgs?: string[] } = {},
+  opts: { api?: string; blockCapture?: string; instance?: string; extraArgs?: string[] } = {},
 ): Promise<ILaunchedTarget> {
   const source = await ensureBinary();
   const profile = await getProfile(id);
 
-  const dir = path.join(SPAWN_DIR, id);
+  const dir = path.join(SPAWN_DIR, opts.instance ? `${id}-${opts.instance}` : id);
   fs.mkdirSync(dir, { recursive: true });
   const target = path.join(dir, profile.exe);
   fs.copyFileSync(source, target);
 
-  const args = ['--profile', id];
+  const args = ['--events', 'json', '--profile', id];
   if (opts.api) args.push('--api', opts.api);
   if (opts.blockCapture) args.push('--block-capture', opts.blockCapture);
+  if (opts.instance) args.push('--instance', opts.instance);
   if (opts.extraArgs) args.push(...opts.extraArgs);
 
   const child = ChildProcess.spawn(target, args, { stdio: ['ignore', 'pipe', 'pipe'] });
-  running.push(child);
+  const state: ITargetState = { child, events: [], waiters: [] };
+  running.push(state);
 
-  const { hwnd, clientSize } = await waitForWindow(child, id);
+  const ready = await waitForReady(state, id, args);
 
   return {
-    ...profile,
-    pid: child.pid,
-    hwnd,
-    clientSize,
-    obsWindowSetting: buildWindowSetting(profile.windowTitle, profile.windowClass, profile.exe),
+    profile: ready.profile,
+    pid: ready.pid,
+    hwnd: ready.hwnd,
+    exe: ready.exe,
+    windowClass: ready.windowClass,
+    windowTitle: ready.windowTitle,
+    clientWidth: ready.clientWidth,
+    clientHeight: ready.clientHeight,
+    blockCapture: ready.blockCapture,
+    captureExpected: ready.captureExpected,
+    obsWindowSetting: ready.obsWindowSetting,
+    clientSize: `${ready.clientWidth}x${ready.clientHeight}`,
+    events: state.events,
+    waitForEvent: (name: string, timeoutMs = 20000) => waitForEvent(state, name, timeoutMs),
   };
 }
 
-function waitForWindow(child: ChildProcess.ChildProcess, id: string) {
-  return new Promise<{ hwnd: string; clientSize: string }>((resolve, reject) => {
-    let stdout = '';
+function waitForEvent(state: ITargetState, name: string, timeoutMs: number) {
+  const seen = state.events.find(e => e.event === name);
+  if (seen) return Promise.resolve(seen);
+
+  return new Promise<ITargetEvent>(resolve => {
+    const waiter = { name, resolve };
+    state.waiters.push(waiter);
+    setTimeout(() => {
+      state.waiters = state.waiters.filter(w => w !== waiter);
+      resolve(null);
+    }, timeoutMs);
+  });
+}
+
+function waitForReady(state: ITargetState, id: string, args: string[]) {
+  return new Promise<ITargetEvent>((resolve, reject) => {
+    let pending = '';
     let stderr = '';
     let settled = false;
 
-    const finish = (fn: Function, arg: any) => {
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(
+        new Error(`game capture target "${id}" was not ready in ${READY_TIMEOUT}ms
+args: ${args.join(' ')}
+stderr: ${stderr}`),
+      );
+    }, READY_TIMEOUT);
+
+    state.child.stdout.on('data', (d: Buffer) => {
+      // NDJSON: consume whole lines, keep any partial tail for the next chunk
+      const lines = (pending + d.toString()).split('\n');
+      pending = lines.pop();
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        let parsed: ITargetEvent;
+        try {
+          parsed = JSON.parse(line);
+        } catch (e: unknown) {
+          continue; // not an event line
+        }
+
+        state.events.push(parsed);
+        state.waiters
+          .filter(w => w.name === parsed.event)
+          .forEach(w => {
+            state.waiters = state.waiters.filter(x => x !== w);
+            w.resolve(parsed);
+          });
+
+        if (parsed.event === 'ready' && !settled) {
+          settled = true;
+          clearTimeout(timer);
+          resolve(parsed);
+        }
+      }
+    });
+
+    state.child.stderr.on('data', (d: Buffer) => (stderr += d.toString()));
+    state.child.on('exit', code => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      fn(arg);
-    };
-
-    const timer = setTimeout(() => {
-      finish(
-        reject,
-        new Error(`game capture target "${id}" did not open a window in ${WINDOW_READY_TIMEOUT}ms.
-stdout: ${stdout}
+      // exit codes: 2 args / 3 window / 4 renderer / 5 block could not be verified
+      reject(
+        new Error(`game capture target "${id}" exited early with code ${code}
+args: ${args.join(' ')}
 stderr: ${stderr}`),
       );
-    }, WINDOW_READY_TIMEOUT);
-
-    child.stdout.on('data', (d: Buffer) => {
-      stdout += d.toString();
-      const m = stdout.match(/app: hwnd=([0-9A-Fa-f]+)/);
-      // logged as e.g. "mode -> windowed client=1280x720", before the hwnd line
-      const size = stdout.match(/client=(\d+x\d+)/);
-      if (m) finish(resolve, { hwnd: m[1], clientSize: size ? size[1] : '' });
     });
-    child.stderr.on('data', (d: Buffer) => (stderr += d.toString()));
-    child.on('exit', code =>
-      finish(
-        reject,
-        new Error(`game capture target "${id}" exited early (code ${code}).
-stdout: ${stdout}
-stderr: ${stderr}`),
-      ),
-    );
   });
 }
 
 /** Terminates every target launched by this process. Safe to call more than once. */
 export function stopAll() {
   while (running.length) {
-    const child = running.pop();
+    const state = running.pop();
+    const child = state && state.child;
     if (!child || child.killed || child.exitCode !== null) continue;
     try {
       // /T so any child processes go too; child.kill() alone is unreliable on Windows
