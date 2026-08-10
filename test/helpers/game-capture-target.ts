@@ -16,10 +16,10 @@ import * as ChildProcess from 'child_process';
 import fetch from 'node-fetch';
 import extract = require('extract-zip');
 
-const RELEASE_TAG = 'v0.2.0';
+const RELEASE_TAG = 'v0.3.0';
 const ZIP_NAME = `fakegame-${RELEASE_TAG}-win-x64.zip`;
 const ZIP_URL = `https://github.com/summeroff/game-capture-target/releases/download/${RELEASE_TAG}/${ZIP_NAME}`;
-const ZIP_SHA256 = 'f37e11c2c9624bf934657cec43ab576e5eafa07eae8d4df31cdf51b1e3246c6e';
+const ZIP_SHA256 = 'de4b23dd02515d3d388bbede7689ecadf2378ca4f22bf9bbdd05c27d354a9448';
 
 // __dirname is test-dist/test/helpers at runtime
 const CACHE_DIR = path.resolve(__dirname, '..', '..', 'game-capture-target');
@@ -258,6 +258,13 @@ stderr: ${stderr}`),
         }
 
         state.events.push(parsed);
+
+        // e.g. exe_mismatch when the binary was not renamed, which silently stops the
+        // compatibility entry from matching. Surface it rather than leaving it buffered.
+        if (parsed.event === 'warning') {
+          console.log(`[game-capture-target:${id}] ${parsed.code}: ${parsed.detail}`);
+        }
+
         state.waiters
           .filter(w => w.name === parsed.event)
           .forEach(w => {
