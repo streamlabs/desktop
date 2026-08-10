@@ -1,5 +1,6 @@
 import React, { createElement, useMemo } from 'react';
 import * as remote from '@electron/remote';
+import styles from './ObsRichText.m.less';
 
 /**
  * Renders the Qt rich text libobs puts in OBS_TEXT_INFO descriptions. Tags are rebuilt from an
@@ -19,20 +20,6 @@ const INLINE_TAGS = ['b', 'strong', 'i', 'em', 'code', 'span', 'p'];
 
 // dropped with their contents; other unknown tags keep their text
 const OPAQUE_TAGS = ['script', 'style'];
-
-const CODE_STYLE: React.CSSProperties = {
-  fontFamily: 'monospace',
-  whiteSpace: 'nowrap', // launch flags; wrapping mid-token reads as a typo
-  background: 'var(--section-alt)',
-  borderRadius: '2px',
-  padding: '0 3px',
-};
-
-// colour comes from the global `a` rule
-const LINK_STYLE: React.CSSProperties = {
-  textDecoration: 'underline',
-  cursor: 'pointer',
-};
 
 function renderChildren(node: Node) {
   return Array.from(node.childNodes).map(renderNode);
@@ -61,7 +48,7 @@ function renderNode(node: Node, key: number): React.ReactNode {
         key={key}
         role="link"
         tabIndex={0}
-        style={LINK_STYLE}
+        className={styles.link}
         onClick={e => {
           e.preventDefault();
           open();
@@ -81,7 +68,7 @@ function renderNode(node: Node, key: number): React.ReactNode {
   if (INLINE_TAGS.includes(tag)) {
     return createElement(
       tag,
-      { key, style: tag === 'code' ? CODE_STYLE : undefined },
+      { key, className: tag === 'code' ? styles.code : undefined },
       renderChildren(node),
     );
   }
