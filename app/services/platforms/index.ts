@@ -11,6 +11,7 @@ import { TDisplayType } from 'services/settings-v2';
 import { $t } from 'services/i18n';
 import { KickService, IKickStartStreamOptions } from './kick';
 import { PatreonService, IPatreonStartStreamOptions } from './patreon';
+import { TStreamErrorType } from 'services/streaming/stream-error';
 
 export type Tag = string;
 export interface IGame {
@@ -214,6 +215,8 @@ export interface IPlatformService {
   setupStreamShiftStream?: (options: IGoLiveSettings) => Promise<void>;
 
   postNotification?: (message: string) => void;
+
+  formatError?: (e: any, platform: TPlatform, errorType?: TStreamErrorType) => void;
 
   fetchNewToken: () => Promise<void>;
 
