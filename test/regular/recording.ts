@@ -311,6 +311,7 @@ test('Recording without spaces', async t => {
       await clickCheckbox('RecFileNameWithoutSpace');
     });
 
+    await sleep(1000);
     await validateTitleContainsNoSpaces(t, tmpDir);
   } finally {
     await logOut(t, true);
