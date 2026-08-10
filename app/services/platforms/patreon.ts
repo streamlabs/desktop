@@ -291,7 +291,7 @@ export class PatreonService
         return res;
       })
       .catch(e => {
-        this.formatError(e, 'patreon');
+        return this.formatError(e, 'patreon');
       });
   }
 
@@ -312,7 +312,7 @@ export class PatreonService
         return res;
       })
       .catch(e => {
-        this.formatError(e, 'patreon');
+        return this.formatError(e, 'patreon');
       });
   }
 

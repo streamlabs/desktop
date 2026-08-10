@@ -160,8 +160,8 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
     e: any,
     platform: TPlatform,
     errorType: TStreamErrorType = 'PLATFORM_REQUEST_FAILED',
-  ): void {
-    console.warn(`Error starting ${platformLabels(platform)} stream: `, e);
+  ): never {
+    console.error(`${platformLabels(platform)} Error: `, e);
 
     const message =
       e.result?.data?.message ||
