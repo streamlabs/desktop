@@ -268,6 +268,11 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
             '--app=test-main.js',
             `user-data-dir=${path.join(t.context.cacheDir, 'slobs-client')}`,
           ],
+          // Chromedriver adds --enable-logging by default, which makes Chromium write every
+          // renderer console message to the browser process's stderr synchronously. Nothing
+          // drains that pipe, so a chatty renderer eventually fills it and the main process
+          // blocks forever in NtWriteFile. No test reads browser logs.
+          excludeSwitches: ['enable-logging'],
         },
       },
     });
@@ -383,6 +388,10 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
 
         // TODO: Only enable this check when running tests locally
         if (record.match(/Missing translation/)) {
+          // The key can be multi-line (OBS compat messages contain <br> and a newline), and
+          // logFromRemote prefixes every line with [error], so ignore the continuation lines
+          // too until something that isn't an error shows up.
+          ignoringErrors = true;
           return false;
         }
 
