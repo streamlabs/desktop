@@ -268,10 +268,9 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
             '--app=test-main.js',
             `user-data-dir=${path.join(t.context.cacheDir, 'slobs-client')}`,
           ],
-          // Chromedriver adds --enable-logging by default, which makes Chromium write every
-          // renderer console message to the browser process's stderr synchronously. Nothing
-          // drains that pipe, so a chatty renderer eventually fills it and the main process
-          // blocks forever in NtWriteFile. No test reads browser logs.
+          // Chromedriver's default --enable-logging makes Chromium write every renderer console
+          // message synchronously to a stderr pipe nobody drains, wedging the main process once
+          // it fills. No test reads browser logs.
           excludeSwitches: ['enable-logging'],
         },
       },
@@ -363,6 +362,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     if (!logs) return;
     lastLogs = logs;
     let ignoringErrors = false;
+    let inMissingTranslation = false;
     const errors = logs
       .slice(logFileLastReadingPos)
       .split('\n')
@@ -386,12 +386,10 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
           return false;
         }
 
-        // TODO: Only enable this check when running tests locally
-        if (record.match(/Missing translation/)) {
-          // The key can be multi-line (OBS compat messages contain <br> and a newline), and
-          // logFromRemote prefixes every line with [error], so ignore the continuation lines
-          // too until something that isn't an error shows up.
-          ignoringErrors = true;
+        // The key can span lines (OBS compat messages do) and every line is prefixed [error],
+        // so skip continuations up to the one closing the quote.
+        if (inMissingTranslation || record.match(/Missing translation/)) {
+          inMissingTranslation = !record.trimEnd().endsWith('"');
           return false;
         }
 
