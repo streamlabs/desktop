@@ -29,6 +29,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { Button, Collapse, Input, InputNumber } from 'antd';
 import InputWrapper from '../shared/inputs/InputWrapper';
 import ObsRichText from '../shared/ObsRichText';
+import styles from './ObsCompatInfo.m.less';
 import { $t, $translateIfExist, $translateIfExistWithCheck } from '../../services/i18n';
 import Utils from 'services/utils';
 import cx from 'classnames';
@@ -91,30 +92,14 @@ interface IObsInputProps {
 // property and this never clears. Untranslated libobs literal. Remove once that is fixed.
 const HOOK_STATUS_PLACEHOLDER = 'Attempting to hook process...';
 
-// `--info` is amber and `--warning` is red, despite the names.
-function infoFieldTokens(infoType?: obs.ETextInfoType) {
+function infoFieldSeverity(infoType?: obs.ETextInfoType) {
   switch (infoType) {
     case obs.ETextInfoType.Error:
-      return {
-        accent: 'var(--warning)',
-        border: 'var(--warning-border)',
-        bg: 'var(--warning-semi)',
-        icon: 'icon-error',
-      };
+      return { name: 'error', frame: styles.error, icon: 'icon-error' };
     case obs.ETextInfoType.Warning:
-      return {
-        accent: 'var(--info)',
-        border: 'var(--info-border)',
-        bg: 'var(--info-semi)',
-        icon: 'icon-information',
-      };
+      return { name: 'warning', frame: styles.warning, icon: 'icon-information' };
     default:
-      return {
-        accent: 'var(--callout)',
-        border: 'var(--callout-border)',
-        bg: 'var(--callout-semi)',
-        icon: 'icon-question',
-      };
+      return { name: 'normal', frame: styles.normal, icon: 'icon-question' };
   }
 }
 
@@ -177,25 +162,16 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
         if (!infoText || infoText === HOOK_STATUS_PLACEHOLDER) return <></>;
 
         // severity goes on the frame and icon, not the body text
-        const info = infoFieldTokens(textVal.infoType);
+        const severity = infoFieldSeverity(textVal.infoType);
 
         return (
           <InputWrapper data-name={p.value.name}>
             {/* `selectable` so launch options and URLs can be copied */}
             <div
-              className="selectable"
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '8px',
-                padding: '10px 12px',
-                border: `1px solid ${info.border}`,
-                borderRadius: '8px',
-                background: info.bg,
-                overflowWrap: 'anywhere',
-              }}
+              className={cx(styles.frame, severity.frame, 'selectable')}
+              data-severity={severity.name}
             >
-              <i className={info.icon} style={{ color: info.accent, lineHeight: 'inherit' }} />
+              <i className={cx(styles.icon, severity.icon)} />
               <ObsRichText text={infoText} />
             </div>
           </InputWrapper>
