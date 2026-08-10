@@ -27,6 +27,12 @@ export type TAutoOptimizerUploadRoute = 'direct' | 'cloud-restream';
 export type TAutoOptimizerProbeProvider = 'twitch' | 'youtube';
 export type TAutoOptimizerProbeKind = 'twitch-standard' | 'youtube-unbound';
 export type TAutoOptimizerProbeMethod = 'twitch-bandwidth-test' | 'youtube-unbound-ramp';
+export type TAutoOptimizerEncoderFamily =
+  | 'obs_nvenc_h264_tex'
+  | 'qsv'
+  | 'amd'
+  | 'apple'
+  | 'x264';
 
 export type TAutoOptimizerPlatform =
   | 'twitch'
@@ -82,8 +88,10 @@ export interface IAutoOptimizerTopology {
 
 export interface IAutoOptimizerEncoderRecommendation {
   id: string;
-  codec?: string;
-  preset?: string;
+  family: TAutoOptimizerEncoderFamily;
+  title: string;
+  codec: 'h264';
+  preset: string;
 }
 
 export interface IAutoOptimizerLegResult {
@@ -96,9 +104,12 @@ export interface IAutoOptimizerLegResult {
   probes?: IAutoOptimizerProbeEvidence[];
   estimateReason?: string;
   resolution: { width: number; height: number };
+  fpsNum: number;
+  fpsDen: number;
   fps: number;
   bitrate: number;
-  encoder: IAutoOptimizerEncoderRecommendation;
+  /** Omitted when the provider owns the encoding ladder. */
+  encoder?: IAutoOptimizerEncoderRecommendation;
 }
 
 export interface IAutoOptimizerAdvice {
@@ -129,11 +140,26 @@ export interface IAutoOptimizerState {
   topology: IAutoOptimizerTopology | null;
   result: IAutoOptimizerResult | null;
   error: IAutoOptimizerError | null;
-  /** Provider currently being probed; omitted by older native sessions. */
-  activeProbeProvider?: TAutoOptimizerProbeProvider | null;
-  /** Applied video bitrate for the active probe substep; audio is additional. */
-  activeProbeTargetBitrateKbps?: number | null;
+  /** Sanitized attempt-local detail for the currently displayed native step. */
+  progressDetail: IAutoOptimizerProgressDetail | null;
   promptStates: Record<string, TAutoOptimizerPromptState>;
+}
+
+export interface IAutoOptimizerProgressDetail {
+  code: string | null;
+  provider: TAutoOptimizerProbeProvider | null;
+  /** Applied video bitrate for a provider probe; audio is additional. */
+  targetBitrateKbps: number | null;
+  /** Safe aggregate upload budget available to recommendation selection. */
+  availableBitrateKbps: number | null;
+  encoderId: string | null;
+  encoderFamily: TAutoOptimizerEncoderFamily | null;
+  encoderTitle: string | null;
+  width: number | null;
+  height: number | null;
+  fpsNum: number | null;
+  fpsDen: number | null;
+  selectedBitrateKbps: number | null;
 }
 
 export interface IAutoConfigCapabilities {
@@ -219,6 +245,16 @@ export interface IAutoConfigEvent {
   probeId?: string;
   provider?: TAutoOptimizerProbeProvider;
   targetBitrateKbps?: number;
+  availableBitrateKbps?: number;
+  encoderId?: string;
+  /** Native/provider-owned progress may carry a family outside V1's H.264 allowlist. */
+  encoderFamily?: string;
+  encoderTitle?: string;
+  width?: number;
+  height?: number;
+  fpsNum?: number;
+  fpsDen?: number;
+  selectedBitrateKbps?: number;
 }
 
 export interface IAutoConfigNativeResult {
@@ -251,6 +287,9 @@ export interface IAutoConfigNativeResult {
       fpsDen: number;
       bitrateKbps: number;
       encoderId: string;
+      /** Provider-managed results may preserve a codec/family outside V1's H.264 allowlist. */
+      encoderFamily: string;
+      encoderTitle: string;
       codec: string;
       preset?: string;
     };

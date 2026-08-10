@@ -3,12 +3,14 @@ import {
   autoConfigPhaseStepKey,
   filterAutoConfigTopologyProbes,
   hasRequiredAutoConfigCapabilities,
+  sanitizeAutoConfigProgressDetail,
   sanitizeAutoConfigProbeEvidence,
   sanitizeAutoConfigProbeTargetBitrateKbps,
   supportedAutoConfigProbeProviders,
 } from '../../app/services/auto-config/probe-policy';
 import {
   IAutoConfigCapabilities,
+  IAutoConfigEvent,
   IAutoOptimizerTopology,
   TAutoOptimizerProbeProvider,
 } from '../../app/services/auto-config/types';
@@ -241,6 +243,50 @@ test('sequential provider bandwidth events receive distinct pacing keys', t => {
     autoConfigPhaseStepKey('bandwidth', 'youtube'),
   );
   t.is(autoConfigPhaseStepKey('hardware', 'youtube'), 'hardware');
+  t.is(
+    autoConfigPhaseStepKey('hardware', null, 'hardware_discovering_encoders'),
+    'hardware:discovering',
+  );
+  t.is(
+    autoConfigPhaseStepKey('hardware', null, 'hardware_validating_encoder'),
+    'hardware:validating',
+  );
+  t.not(
+    autoConfigPhaseStepKey('hardware', null, 'hardware_testing_encoder'),
+    autoConfigPhaseStepKey('hardware', null, 'hardware_validating_encoder'),
+  );
+  t.is(
+    autoConfigPhaseStepKey('hardware', null, 'hardware_encoder_selected'),
+    'hardware:selected',
+  );
+  t.is(
+    autoConfigPhaseStepKey('recommendation', null, 'recommendation_selecting_quality'),
+    'recommendation:selecting',
+  );
+  t.is(
+    autoConfigPhaseStepKey('recommendation', null, 'recommendation_quality_selected'),
+    'recommendation:selected',
+  );
+  t.not(
+    autoConfigPhaseStepKey('recommendation', null, 'recommendation_selecting_quality'),
+    autoConfigPhaseStepKey('recommendation', null, 'recommendation_quality_selected'),
+  );
+  t.is(
+    autoConfigPhaseStepKey('hardware', null, 'hardware_encoder_rejected'),
+    'hardware',
+  );
+  t.is(
+    autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_completed'),
+    'bandwidth:youtube:complete',
+  );
+  t.is(
+    autoConfigPhaseStepKey('bandwidth', 'twitch', 'twitch_probe_failed_estimate_used'),
+    'bandwidth:twitch:complete',
+  );
+  t.not(
+    autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_completed'),
+    autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_baseline'),
+  );
 });
 
 test('active probe target bitrate feedback is conservatively validated', t => {
@@ -251,6 +297,76 @@ test('active probe target bitrate feedback is conservatively validated', t => {
   t.is(sanitizeAutoConfigProbeTargetBitrateKbps(Number.POSITIVE_INFINITY), null);
   t.is(sanitizeAutoConfigProbeTargetBitrateKbps('6000'), null);
   t.is(sanitizeAutoConfigProbeTargetBitrateKbps(100001), null);
+});
+
+test('attempt progress detail preserves only bounded native status metadata', t => {
+  const event: IAutoConfigEvent = {
+    schemaVersion: 1,
+    sessionId: 'session',
+    sequence: 3,
+    type: 'progress',
+    phase: 'hardware',
+    progress: 25,
+    code: 'hardware_testing_encoder',
+    encoderId: 'obs_nvenc_h264_tex',
+    encoderFamily: 'obs_nvenc_h264_tex',
+    encoderTitle: 'NVIDIA NVENC H.264',
+    width: 1920,
+    height: 1080,
+    fpsNum: 60000,
+    fpsDen: 1001,
+    targetBitrateKbps: 6000,
+    availableBitrateKbps: 9000,
+  };
+
+  t.deepEqual(sanitizeAutoConfigProgressDetail(event, 'hardware'), {
+    code: 'hardware_testing_encoder',
+    provider: null,
+    targetBitrateKbps: null,
+    availableBitrateKbps: 9000,
+    encoderId: 'obs_nvenc_h264_tex',
+    encoderFamily: 'obs_nvenc_h264_tex',
+    encoderTitle: 'NVIDIA NVENC H.264',
+    width: 1920,
+    height: 1080,
+    fpsNum: 60000,
+    fpsDen: 1001,
+    selectedBitrateKbps: null,
+  });
+});
+
+test('malformed progress metadata cannot leak into mirrored UI state', t => {
+  const event = {
+    schemaVersion: 1,
+    sessionId: 'session',
+    sequence: 4,
+    type: 'progress',
+    phase: 'bandwidth',
+    progress: 40,
+    code: '<script>',
+    provider: 'youtube',
+    targetBitrateKbps: 12000,
+    availableBitrateKbps: Number.POSITIVE_INFINITY,
+    encoderId: 'x'.repeat(300),
+    encoderFamily: 'legacy',
+    encoderTitle: 'x'.repeat(300),
+    width: -1,
+  } as unknown as IAutoConfigEvent;
+
+  t.deepEqual(sanitizeAutoConfigProgressDetail(event, 'bandwidth'), {
+    code: null,
+    provider: 'youtube',
+    targetBitrateKbps: 12000,
+    availableBitrateKbps: null,
+    encoderId: null,
+    encoderFamily: null,
+    encoderTitle: null,
+    width: null,
+    height: null,
+    fpsNum: null,
+    fpsDen: null,
+    selectedBitrateKbps: null,
+  });
 });
 
 test('probe evidence is validated and strips attempt-local or unknown fields', t => {

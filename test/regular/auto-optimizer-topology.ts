@@ -229,9 +229,17 @@ function profileFor(settingsValue: IGoLiveSettings): IAutoOptimizerProfile {
       ...leg,
       confidence: 'high',
       resolution: { width: 1280, height: 720 },
+      fpsNum: 30,
+      fpsDen: 1,
       fps: 30,
       bitrate: 6000,
-      encoder: { id: 'obs_x264' },
+      encoder: {
+        id: 'obs_x264',
+        family: 'x264',
+        title: 'Software (x264)',
+        codec: 'h264',
+        preset: 'veryfast',
+      },
     })),
   };
 }

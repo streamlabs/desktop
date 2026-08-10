@@ -1,7 +1,8 @@
 import React from 'react';
 import {
   AutoOptimizerFlow,
-  bandwidthPhaseLabelKey,
+  autoOptimizerErrorMessage,
+  autoOptimizerProgressLabel,
   successfulProbeProviders,
 } from 'components-react/shared/auto-optimizer';
 import { useVuex } from 'components-react/hooks';
@@ -79,8 +80,7 @@ export default function GoLiveAutoOptimizer() {
       topology,
       result,
       error,
-      activeProbeProvider,
-      activeProbeTargetBitrateKbps,
+      progressDetail,
     } = service.state;
     return {
       stage,
@@ -89,29 +89,22 @@ export default function GoLiveAutoOptimizer() {
       topology,
       result,
       error,
-      activeProbeProvider,
-      activeProbeTargetBitrateKbps,
+      progressDetail,
     };
   });
 
-  const bandwidthLabelKey = bandwidthPhaseLabelKey(
-    state.activeProbeProvider,
+  const progressLabel = autoOptimizerProgressLabel(
+    state.phase,
+    state.progressDetail,
     state.topology?.probeCandidates || [],
-    state.activeProbeTargetBitrateKbps,
   );
-  const bandwidthLabel = state.activeProbeTargetBitrateKbps
-    ? $t(bandwidthLabelKey, {
-        bitrate: new Intl.NumberFormat().format(state.activeProbeTargetBitrateKbps),
-      })
-    : $t(bandwidthLabelKey);
-
   const phaseLabel = state.phase
-    ? {
-        preflight: $t('Preparing the optimizer...'),
-        hardware: $t('Checking your hardware...'),
-        bandwidth: bandwidthLabel,
-        recommendation: $t('Calculating your recommended settings...'),
-      }[state.phase]
+    ? $t(progressLabel.key, {
+        ...progressLabel.values,
+        ...(progressLabel.values?.bitrate
+          ? { bitrate: new Intl.NumberFormat().format(Number(progressLabel.values.bitrate)) }
+          : {}),
+      })
     : undefined;
 
   const legs = (state.result?.legs || []).map(leg => {
@@ -144,8 +137,8 @@ export default function GoLiveAutoOptimizer() {
       height: leg.resolution.height,
       fps: leg.fps,
       bitrateKbps: leg.bitrate,
-      encoder: leg.encoder.id,
-      preset: leg.encoder.preset,
+      encoder: leg.encoder?.title || leg.encoder?.id,
+      preset: leg.encoder?.preset,
     };
   });
 
@@ -161,7 +154,7 @@ export default function GoLiveAutoOptimizer() {
       progress={state.progress}
       legs={legs}
       advice={state.result?.advice}
-      errorMessage={state.error?.message}
+      errorMessage={$t(autoOptimizerErrorMessage(state.error))}
       canRetry={state.error?.retryable}
       host="go-live"
       onStart={() => void service.actions.return.startOptimization()}

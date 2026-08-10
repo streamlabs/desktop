@@ -4,8 +4,12 @@ import Vue from 'vue';
 import * as obs from '../../../obs-api';
 import { Inject, mutation, PersistentStatefulService, ViewHandler } from 'services/core';
 import { IGoLiveSettings } from 'services/streaming';
-import { SettingsService } from 'services/settings';
+import { ISettingsSubCategory, SettingsService } from 'services/settings';
 import { EEncoderFamily, IOutputSettings, OutputSettingsService } from 'services/settings/output';
+import {
+  encoderPresetField,
+  encoderPresetFromSettingsValue,
+} from 'services/settings/output/encoder-settings-policy';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import { UserService } from 'services/user';
 import { TwitchService } from 'services/platforms/twitch';
@@ -23,10 +27,17 @@ import {
   autoConfigPhaseStepKey,
   filterAutoConfigTopologyProbes,
   hasRequiredAutoConfigCapabilities,
+  sanitizeAutoConfigProgressDetail,
   sanitizeAutoConfigProbeEvidence,
-  sanitizeAutoConfigProbeTargetBitrateKbps,
   supportedAutoConfigProbeProviders,
 } from './probe-policy';
+import { validateAutoConfigRecommendation } from './result-policy';
+import {
+  captureRawOutputValues,
+  outputTransactionValuesMatch,
+  shouldCaptureTargetPresetForRollback,
+  TRawOutputValues,
+} from './output-transaction-policy';
 import {
   IAutoConfigCapabilities,
   IAutoConfigActiveProbe,
@@ -39,6 +50,7 @@ import {
   IAutoOptimizerError,
   IAutoOptimizerLegResult,
   IAutoOptimizerProfile,
+  IAutoOptimizerProgressDetail,
   IAutoOptimizerResult,
   IAutoOptimizerState,
   IAutoOptimizerTopology,
@@ -51,7 +63,10 @@ import {
 export * from './types';
 export { classifyAutoOptimizerTopology } from './topology';
 
-const NATIVE_RUN_TIMEOUT_MS = 150000;
+// Native may spend up to four minutes exhausting bounded encoder/quality
+// candidates, followed by sequential Twitch and YouTube probes. This is only
+// a final dead-session guard; each real substep continues to update the UI.
+const NATIVE_RUN_TIMEOUT_MS = 420000;
 const FEATURE_READINESS_TIMEOUT_MS = 2000;
 const MIN_PHASE_VISIBLE_MS = 1000;
 const YOUTUBE_INGEST_CONFIRMATION_TIMEOUT_MS = 12000;
@@ -77,9 +92,20 @@ interface INodeObsAutoConfig {
 
 interface ISettingsSnapshot {
   output: IOutputSettings;
+  rawOutputFormData: ISettingsSubCategory[];
+  rawOutputValues: TRawOutputValues;
+  targetPreset?: ITargetEncoderPresetSnapshot;
   horizontalVideo: typeof VideoSettingsService.prototype.state.horizontal;
   verticalVideo: typeof VideoSettingsService.prototype.state.vertical;
   liveVideoDisplays: TDisplayType[];
+}
+
+interface ITargetEncoderPresetSnapshot {
+  mode: IOutputSettings['mode'];
+  encoderId: string;
+  encoderFamily: EEncoderFamily;
+  field: string;
+  value: string;
 }
 
 interface IPreparedAutoConfigRequest {
@@ -91,14 +117,13 @@ type TConcreteAutoOptimizerPhase = Exclude<TAutoOptimizerPhase, null>;
 
 interface IPhaseStep {
   phase: TConcreteAutoOptimizerPhase;
-  provider: TAutoOptimizerProbeProvider | null;
-  targetBitrateKbps: number | null;
+  detail: IAutoOptimizerProgressDetail;
   key: string;
 }
 
 interface IPhaseUpdate {
   progress: number;
-  targetBitrateKbps: number | null;
+  detail: IAutoOptimizerProgressDetail;
 }
 
 function initialFlowState(): Omit<IAutoOptimizerState, 'promptStates'> {
@@ -106,8 +131,7 @@ function initialFlowState(): Omit<IAutoOptimizerState, 'promptStates'> {
     stage: 'idle',
     phase: null,
     progress: 0,
-    activeProbeProvider: null,
-    activeProbeTargetBitrateKbps: null,
+    progressDetail: null,
     topology: null,
     result: null,
     error: null,
@@ -120,34 +144,29 @@ function clampProgress(progress: unknown): number {
   return Math.max(0, Math.min(100, value));
 }
 
+function emptyProgressDetail(): IAutoOptimizerProgressDetail {
+  return {
+    code: null,
+    provider: null,
+    targetBitrateKbps: null,
+    availableBitrateKbps: null,
+    encoderId: null,
+    encoderFamily: null,
+    encoderTitle: null,
+    width: null,
+    height: null,
+    fpsNum: null,
+    fpsDen: null,
+    selectedBitrateKbps: null,
+  };
+}
+
 function parseJson<T>(value: unknown): T | null {
   try {
     if (typeof value === 'string') return JSON.parse(value) as T;
     if (value && typeof value === 'object') return value as T;
   } catch (e: unknown) {}
   return null;
-}
-
-function codecForEncoder(encoder: string): string {
-  const id = encoder.toLowerCase();
-  if (id.includes('av1') || id.includes('aom') || id.includes('svt')) return 'av1';
-  if (id.includes('hevc') || id.includes('h265')) return 'hevc';
-  return 'h264';
-}
-
-function encoderFamilyForSettings(encoderId: string, fallback: EEncoderFamily): EEncoderFamily {
-  const id = encoderId.toLowerCase();
-  if (id.includes('x264')) return EEncoderFamily.x264;
-  if (id.includes('qsv')) return EEncoderFamily.qsv;
-  if (id.includes('amf') || id.includes('amd')) return EEncoderFamily.amd;
-  if (id.includes('aom')) return EEncoderFamily.ffmpeg_aom_av1;
-  if (id.includes('svt')) return EEncoderFamily.ffmpeg_svt_av1;
-  if (id.includes('nvenc') || id.includes('nvidia')) {
-    if (id.includes('av1')) return EEncoderFamily.obs_nvenc_av1_tex;
-    if (id.includes('hevc')) return EEncoderFamily.obs_nvenc_hevc_tex;
-    return EEncoderFamily.nvenc;
-  }
-  return fallback;
 }
 
 function normalizePlatform(platform: string): TAutoOptimizerPlatform {
@@ -692,8 +711,10 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           fpsNum: video.fpsNum,
           fpsDen: video.fpsDen,
           bitrateKbps: output.streaming.bitrate,
-          encoderId: output.streaming.encoder,
-          codec: codecForEncoder(output.streaming.encoder),
+          encoderId: output.streaming.encoderId,
+          // V1 deliberately benchmarks and recommends H.264 only. This is a
+          // requested codec, not an inference from an encoder identifier.
+          codec: 'h264',
           preset: output.streaming.preset || undefined,
         },
         limits: knownCaps.length ? { maxBitrateKbps: Math.min(...knownCaps) } : undefined,
@@ -752,16 +773,12 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         ? event.phase
         : null;
     if (phase) {
-      const targetBitrateKbps =
-        phase === 'bandwidth' && provider
-          ? sanitizeAutoConfigProbeTargetBitrateKbps(event.targetBitrateKbps)
-          : null;
+      const detail = sanitizeAutoConfigProgressDetail(event, phase);
       this.queuePhaseProgress(
         phase,
         clampProgress(event.progress),
         token,
-        provider,
-        targetBitrateKbps,
+        detail,
       );
     }
 
@@ -808,8 +825,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private beginPhasePacing() {
     this.displayedPhaseStep = {
       phase: 'preflight',
-      provider: null,
-      targetBitrateKbps: null,
+      detail: emptyProgressDetail(),
       key: autoConfigPhaseStepKey('preflight'),
     };
     this.displayedPhaseSince = Date.now();
@@ -823,33 +839,41 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     phase: TConcreteAutoOptimizerPhase,
     progress: number,
     token: number,
-    provider: TAutoOptimizerProbeProvider | null,
-    targetBitrateKbps: number | null,
+    detail: IAutoOptimizerProgressDetail,
   ) {
     if (token !== this.runToken || this.state.stage !== 'running') return;
+    const key = autoConfigPhaseStepKey(phase, detail.provider, detail.code);
+    // Rejections can be immediately followed by another real attempt. Keep
+    // that next/previous attempt readable; native retains rejection details in
+    // logs. Terminal selections are shown as truthful one-second milestones.
+    const transientCode = detail.code === 'hardware_encoder_rejected';
+    const retainedDetail =
+      this.displayedPhaseStep?.key === key
+        ? this.displayedPhaseStep.detail
+        : this.pendingPhaseUpdates.get(key)?.detail;
+    const displayDetail = transientCode && retainedDetail ? retainedDetail : detail;
     const step: IPhaseStep = {
       phase,
-      provider: phase === 'bandwidth' ? provider : null,
-      targetBitrateKbps: phase === 'bandwidth' && provider ? targetBitrateKbps : null,
-      key: autoConfigPhaseStepKey(phase, provider),
+      detail: displayDetail,
+      key,
     };
 
     if (step.key === this.displayedPhaseStep?.key) {
       this.displayedPhaseStep = step;
-      this.SET_PROGRESS(step.phase, progress, step.provider, step.targetBitrateKbps);
+      this.SET_PROGRESS(step.phase, progress, step.detail);
       return;
     }
 
     if (this.seenPhaseSteps.has(step.key)) {
       if (this.pendingPhaseSteps.some(pending => pending.key === step.key)) {
-        this.pendingPhaseUpdates.set(step.key, { progress, targetBitrateKbps: step.targetBitrateKbps });
+        this.pendingPhaseUpdates.set(step.key, { progress, detail: step.detail });
       }
       return;
     }
 
     this.seenPhaseSteps.add(step.key);
     this.pendingPhaseSteps.push(step);
-    this.pendingPhaseUpdates.set(step.key, { progress, targetBitrateKbps: step.targetBitrateKbps });
+    this.pendingPhaseUpdates.set(step.key, { progress, detail: step.detail });
     this.startPhaseDrain(token);
   }
 
@@ -876,12 +900,12 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       const step = this.pendingPhaseSteps.shift()!;
       const update = this.pendingPhaseUpdates.get(step.key) || {
         progress: 0,
-        targetBitrateKbps: null,
+        detail: step.detail,
       };
       this.pendingPhaseUpdates.delete(step.key);
-      this.displayedPhaseStep = { ...step, targetBitrateKbps: update.targetBitrateKbps };
+      this.displayedPhaseStep = { ...step, detail: update.detail };
       this.displayedPhaseSince = Date.now();
-      this.SET_PROGRESS(step.phase, update.progress, step.provider, update.targetBitrateKbps);
+      this.SET_PROGRESS(step.phase, update.progress, update.detail);
     }
   }
 
@@ -922,9 +946,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private toPublicResult(nativeResult: IAutoConfigNativeResult): IAutoOptimizerResult {
     const expectedLegs = this.state.topology?.legs || [];
     const currentBitrate = this.outputSettingsService.getSettings().streaming.bitrate;
-    const legs: IAutoOptimizerLegResult[] = nativeResult.legs
-      .filter(leg => {
-        const r = leg.recommendation;
+    const legs: IAutoOptimizerLegResult[] = nativeResult.legs.flatMap(leg => {
         const expected = expectedLegs.find(item => item.legId === leg.legId);
         const evidence = sanitizeAutoConfigProbeEvidence(leg.measurement?.probes);
         const activeEvidenceComplete =
@@ -932,7 +954,17 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           expected?.probeCandidates.every(candidate =>
             evidence.some(item => item.provider === candidate.provider && item.success),
           );
-        return (
+        const providerOwnsEncoding =
+          this.state.topology?.type === 'enhanced-broadcasting' ||
+          (expected?.display === 'both' &&
+            expected.destinations.some(destination => destination.platform === 'twitch'));
+        const recommendation = validateAutoConfigRecommendation(leg.recommendation, {
+          measurementMode: leg.measurement?.mode,
+          currentBitrateKbps: currentBitrate,
+          probeEvidence: evidence,
+          providerOwnsEncoding,
+        });
+        const valid =
           expected?.display === leg.display &&
           (expected?.measurement === 'active' || leg.measurement?.mode === 'estimated') &&
           activeEvidenceComplete &&
@@ -941,27 +973,10 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           leg.measurement &&
           ['active', 'estimated'].includes(leg.measurement.mode) &&
           ['high', 'medium', 'low'].includes(leg.measurement.confidence) &&
-          r &&
-          Number.isFinite(r.width) &&
-          r.width > 0 &&
-          r.width <= 16384 &&
-          Number.isFinite(r.height) &&
-          r.height > 0 &&
-          r.height <= 16384 &&
-          Number.isFinite(r.fpsNum) &&
-          r.fpsNum > 0 &&
-          Number.isFinite(r.fpsDen) &&
-          r.fpsDen > 0 &&
-          r.fpsNum / r.fpsDen <= 240 &&
-          Number.isFinite(r.bitrateKbps) &&
-          r.bitrateKbps > 0 &&
-          r.bitrateKbps <= 100000 &&
-          typeof r.encoderId === 'string'
-        );
-      })
-      .map(leg => {
-        const expected = expectedLegs.find(item => item.legId === leg.legId)!;
-        return {
+          recommendation !== null;
+        if (!valid || !expected || !recommendation) return [];
+
+        return [{
           legId: leg.legId,
           display: leg.display,
           destinations: expected.destinations.map(
@@ -970,24 +985,18 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           measurement: leg.measurement.mode,
           confidence: leg.measurement.confidence,
           route: expected.route,
-          probes: sanitizeAutoConfigProbeEvidence(leg.measurement.probes),
+          probes: evidence,
           estimateReason: leg.measurement.reason,
           resolution: {
-            width: Math.round(leg.recommendation.width),
-            height: Math.round(leg.recommendation.height),
+            width: recommendation.width,
+            height: recommendation.height,
           },
-          fps: leg.recommendation.fpsNum / leg.recommendation.fpsDen,
-          bitrate: Math.round(
-            leg.measurement.mode === 'estimated' && currentBitrate > 0
-              ? Math.min(leg.recommendation.bitrateKbps, currentBitrate)
-              : leg.recommendation.bitrateKbps,
-          ),
-          encoder: {
-            id: leg.recommendation.encoderId,
-            codec: leg.recommendation.codec,
-            preset: leg.recommendation.preset,
-          },
-        };
+          fpsNum: recommendation.fpsNum,
+          fpsDen: recommendation.fpsDen,
+          fps: recommendation.fpsNum / recommendation.fpsDen,
+          bitrate: recommendation.bitrateKbps,
+          ...(recommendation.encoder ? { encoder: recommendation.encoder } : {}),
+        }];
       });
 
     return {
@@ -1045,15 +1054,23 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       this.state.topology.type === 'enhanced-broadcasting' ||
       (primary.display === 'both' &&
         primary.destinations.some(destination => destination.platform === 'twitch'));
+    if (!providerOwnsEncoding && result.legs.some(leg => !leg.encoder)) {
+      throw new Error('The optimizer did not return a tested encoder');
+    }
     const encoderSignatures = new Set(
-      result.legs.map(leg => `${leg.encoder.id}:${leg.encoder.preset || ''}`),
+      result.legs.map(
+        leg =>
+          leg.encoder
+            ? `${leg.encoder.id}:${leg.encoder.family}:${leg.encoder.preset || ''}`
+            : 'provider-managed',
+      ),
     );
     if (!providerOwnsEncoding && encoderSignatures.size > 1) {
       throw new Error('This stream topology cannot apply different encoders per upload leg');
     }
     const expectedEncoder = providerOwnsEncoding
       ? null
-      : encoderFamilyForSettings(primary.encoder.id, snapshot.output.streaming.encoder);
+      : (primary.encoder!.family as EEncoderFamily);
     const displaysToApply = Array.from(
       new Set(
         result.legs.map(
@@ -1070,14 +1087,30 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         throw new Error('A required video context is unavailable');
       }
       if (!providerOwnsEncoding) {
+        // Simple mode can hide the preset whenever UseAdvanced is disabled,
+        // even when the recommended encoder is already selected. Always
+        // preserve that target value before enabling/mutating its context.
+        // Advanced mode has one shared encoder-settings document, so its
+        // active raw form is the complete rollback source.
+        if (shouldCaptureTargetPresetForRollback(snapshot.output.mode)) {
+          snapshot.targetPreset = this.captureTargetEncoderPresetSnapshot(
+            snapshot.output.mode,
+            primary.encoder!.id,
+            primary.encoder!.family as EEncoderFamily,
+          );
+        } else {
+          this.activateEncoderPresetContext(
+            snapshot.output.mode,
+            primary.encoder!.id,
+            primary.encoder!.family as EEncoderFamily,
+          );
+        }
         this.outputSettingsService.setSettings({
           streaming: {
             bitrate: primary.bitrate,
             encoder: expectedEncoder!,
-            // Never carry a preset across encoder families. If native omits a
-            // preset, OutputSettingsService keeps the selected encoder's own
-            // existing/default preset field.
-            preset: primary.encoder.preset,
+            encoderId: primary.encoder!.id,
+            preset: primary.encoder!.preset,
           },
         });
       }
@@ -1089,8 +1122,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
             {
               outputWidth: leg.resolution.width,
               outputHeight: leg.resolution.height,
-              fpsNum: Math.round(leg.fps * 1000),
-              fpsDen: 1000,
+              fpsNum: leg.fpsNum,
+              fpsDen: leg.fpsDen,
             },
             display,
           );
@@ -1105,8 +1138,14 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         legs: cloneDeep(result.legs),
       };
     } catch (e: unknown) {
-      this.restoreSettingsSnapshot(snapshot);
-      if (!this.matchesSettingsSnapshot(snapshot)) {
+      let fullyRestored = false;
+      try {
+        this.restoreSettingsSnapshot(snapshot);
+        fullyRestored = this.matchesSettingsSnapshot(snapshot);
+      } catch (restoreError: unknown) {
+        console.error('[Auto Optimizer] Failed to restore Output settings', restoreError);
+      }
+      if (!fullyRestored) {
         throw new Error('Auto Optimizer failed and could not fully restore previous settings');
       }
       throw e;
@@ -1114,8 +1153,11 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   private captureSettingsSnapshot(): ISettingsSnapshot {
+    const rawOutputFormData = cloneDeep(this.settingsService.state.Output.formData);
     return {
       output: cloneDeep(this.outputSettingsService.getSettings()),
+      rawOutputFormData,
+      rawOutputValues: captureRawOutputValues(rawOutputFormData),
       horizontalVideo: cloneDeep(this.videoSettingsService.state.horizontal),
       verticalVideo: cloneDeep(this.videoSettingsService.state.vertical),
       liveVideoDisplays: (['horizontal', 'vertical'] as TDisplayType[]).filter(
@@ -1125,7 +1167,11 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   private restoreSettingsSnapshot(snapshot: ISettingsSnapshot) {
-    this.outputSettingsService.setSettings(snapshot.output);
+    if (snapshot.targetPreset) {
+      this.activateTargetEncoderPreset(snapshot.targetPreset);
+      this.setRawOutputField('Streaming', snapshot.targetPreset.field, snapshot.targetPreset.value);
+    }
+    this.restoreRawOutputForm(snapshot.rawOutputFormData);
     this.videoSettingsService.setSettings(
       snapshot.horizontalVideo,
       'horizontal',
@@ -1140,8 +1186,17 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   private matchesSettingsSnapshot(snapshot: ISettingsSnapshot): boolean {
+    const actualTargetPreset = snapshot.targetPreset
+      ? this.readDormantTargetPreset(snapshot.targetPreset)
+      : null;
     return (
       isEqual(this.outputSettingsService.getSettings(), snapshot.output) &&
+      outputTransactionValuesMatch(
+        snapshot.rawOutputValues,
+        this.settingsService.state.Output.formData,
+        snapshot.targetPreset ? snapshot.targetPreset.value : null,
+        actualTargetPreset,
+      ) &&
       isEqual(this.videoSettingsService.state.horizontal, snapshot.horizontalVideo) &&
       isEqual(this.videoSettingsService.state.vertical, snapshot.verticalVideo) &&
       snapshot.liveVideoDisplays.every(display =>
@@ -1151,6 +1206,96 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         ),
       )
     );
+  }
+
+  private captureTargetEncoderPresetSnapshot(
+    mode: IOutputSettings['mode'],
+    encoderId: string,
+    encoderFamily: EEncoderFamily,
+  ): ITargetEncoderPresetSnapshot {
+    const field = encoderPresetField(encoderId, mode);
+    if (!field) throw new Error(`No preset field is available for encoder ${encoderId}`);
+
+    const target: ITargetEncoderPresetSnapshot = {
+      mode,
+      encoderId,
+      encoderFamily,
+      field,
+      value: '',
+    };
+    this.activateEncoderPresetContext(mode, encoderId, encoderFamily);
+    const value = this.readRawOutputField('Streaming', field);
+    if (typeof value !== 'string') {
+      throw new Error(`Could not read the current preset for encoder ${encoderId}`);
+    }
+    target.value = value;
+    return target;
+  }
+
+  private activateTargetEncoderPreset(target: ITargetEncoderPresetSnapshot) {
+    this.activateEncoderPresetContext(target.mode, target.encoderId, target.encoderFamily);
+  }
+
+  private activateEncoderPresetContext(
+    mode: IOutputSettings['mode'],
+    encoderId: string,
+    encoderFamily: EEncoderFamily,
+  ) {
+    if (this.outputSettingsService.getSettings().mode !== mode) {
+      throw new Error('Output mode changed during Auto Optimizer apply');
+    }
+    this.outputSettingsService.setSettings({
+      streaming: {
+        encoder: encoderFamily,
+        encoderId,
+      },
+    });
+    if (mode === 'Simple') {
+      const useAdvanced = this.readRawOutputField('Streaming', 'UseAdvanced');
+      if (useAdvanced !== true) this.setRawOutputField('Streaming', 'UseAdvanced', true);
+    }
+    if (this.outputSettingsService.getSettings().streaming.encoderId !== encoderId) {
+      throw new Error(`Could not activate encoder ${encoderId}`);
+    }
+  }
+
+  private readDormantTargetPreset(target: ITargetEncoderPresetSnapshot): string | null {
+    // Target snapshots are intentionally Simple-only: these are distinct
+    // config keys and remain meaningful after the original encoder is restored.
+    const activeFormData = cloneDeep(this.settingsService.state.Output.formData);
+    try {
+      this.activateTargetEncoderPreset(target);
+      const value = this.readRawOutputField('Streaming', target.field);
+      return typeof value === 'string' ? value : null;
+    } finally {
+      // Dormant verification must not leave the target encoder selected.
+      this.restoreRawOutputForm(activeFormData);
+    }
+  }
+
+  private restoreRawOutputForm(formData: ISettingsSubCategory[]) {
+    // The first Advanced-mode save switches the encoder. OBS intentionally
+    // discards encoder-property values from that same save and creates the
+    // selected encoder with defaults. The second save restores those values
+    // now that the original encoder is active. This is harmless in Simple mode.
+    this.settingsService.setSettings('Output', cloneDeep(formData));
+    this.settingsService.setSettings('Output', cloneDeep(formData));
+  }
+
+  private readRawOutputField(subCategory: string, field: string): unknown {
+    return this.settingsService.findSettingValue(
+      this.settingsService.state.Output.formData,
+      subCategory,
+      field,
+    );
+  }
+
+  private setRawOutputField(subCategory: string, field: string, value: string | boolean) {
+    const formData = cloneDeep(this.settingsService.state.Output.formData);
+    const setting = this.settingsService.findSetting(formData, subCategory, field);
+    if (!setting) throw new Error(`Output setting ${subCategory}.${field} is unavailable`);
+    setting.value = value;
+    this.settingsService.setSettings('Output', formData);
   }
 
   private obsVideoMatches(expected: ISettingsSnapshot['horizontalVideo'], display: TDisplayType) {
@@ -1177,23 +1322,45 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     if (!providerOwnsEncoding && output.streaming.encoder !== expectedEncoder) {
       throw new Error('Failed to apply the recommended encoder');
     }
-    if (
-      !providerOwnsEncoding &&
-      primary.encoder.preset &&
-      output.streaming.preset !== primary.encoder.preset
-    ) {
-      throw new Error('Failed to apply the recommended encoder preset');
+    if (!providerOwnsEncoding && output.streaming.encoderId !== primary.encoder!.id) {
+      throw new Error('Failed to apply the tested encoder implementation');
+    }
+    if (!providerOwnsEncoding) {
+      const presetField = encoderPresetField(primary.encoder!.id, output.mode);
+      const rawPreset = presetField
+        ? this.readRawOutputField('Streaming', presetField)
+        : null;
+      let appliedPreset: string;
+      try {
+        if (typeof rawPreset !== 'string' || !rawPreset) throw new Error('Missing preset');
+        appliedPreset = encoderPresetFromSettingsValue(
+          primary.encoder!.id,
+          output.mode,
+          rawPreset,
+        );
+      } catch (error: unknown) {
+        throw new Error('Failed to read the recommended encoder preset');
+      }
+      if (appliedPreset !== primary.encoder!.preset) {
+        throw new Error('Failed to apply the recommended encoder preset');
+      }
+      if (
+        output.mode === 'Simple' &&
+        this.readRawOutputField('Streaming', 'UseAdvanced') !== true
+      ) {
+        throw new Error('Failed to enable the recommended encoder preset');
+      }
     }
     if (!providerOwnsEncoding) {
       result.legs.forEach(leg => {
         const display: TDisplayType = leg.display === 'vertical' ? 'vertical' : 'horizontal';
         const video = this.videoSettingsService.contexts[display]?.video;
         if (!video) throw new Error(`The ${display} video context is unavailable`);
-        const appliedFps = video.fpsDen ? video.fpsNum / video.fpsDen : 0;
         if (
           video.outputWidth !== leg.resolution.width ||
           video.outputHeight !== leg.resolution.height ||
-          Math.abs(appliedFps - leg.fps) > 0.001
+          video.fpsNum !== leg.fpsNum ||
+          video.fpsDen !== leg.fpsDen
         ) {
           throw new Error(`Failed to apply the recommended ${display} video settings`);
         }
@@ -1319,8 +1486,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       stage: 'intro',
       phase: null,
       progress: 0,
-      activeProbeProvider: null,
-      activeProbeTargetBitrateKbps: null,
+      progressDetail: null,
       topology,
       result: null,
       error: null,
@@ -1333,8 +1499,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       stage: 'running',
       phase: 'preflight',
       progress: 0,
-      activeProbeProvider: null,
-      activeProbeTargetBitrateKbps: null,
+      progressDetail: emptyProgressDetail(),
       topology,
       result: null,
       error: null,
@@ -1350,14 +1515,13 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private SET_PROGRESS(
     phase: TAutoOptimizerPhase,
     progress: number,
-    provider: TAutoOptimizerProbeProvider | null = null,
-    targetBitrateKbps: number | null = null,
+    detail: IAutoOptimizerProgressDetail,
   ) {
     this.state.phase = phase;
-    this.state.progress = progress;
-    this.state.activeProbeProvider = phase === 'bandwidth' ? provider : null;
-    this.state.activeProbeTargetBitrateKbps =
-      phase === 'bandwidth' && provider ? targetBitrateKbps : null;
+    // Native progress is global to one session. Keep the mirrored bar
+    // monotonic even if a delayed event reports an older percentage.
+    this.state.progress = Math.max(this.state.progress, progress);
+    this.state.progressDetail = detail;
   }
 
   @mutation()
@@ -1366,8 +1530,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       stage: 'review',
       phase: null,
       progress: 100,
-      activeProbeProvider: null,
-      activeProbeTargetBitrateKbps: null,
+      progressDetail: null,
       result,
       error: null,
     });
@@ -1377,8 +1540,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private SET_CANCELLING() {
     this.state.stage = 'cancelling';
     this.state.phase = null;
-    this.state.activeProbeProvider = null;
-    this.state.activeProbeTargetBitrateKbps = null;
+    this.state.progressDetail = null;
   }
 
   @mutation()
@@ -1391,8 +1553,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private SET_ERROR(error: IAutoOptimizerError) {
     this.state.stage = 'error';
     this.state.phase = null;
-    this.state.activeProbeProvider = null;
-    this.state.activeProbeTargetBitrateKbps = null;
+    this.state.progressDetail = null;
     this.state.error = error;
   }
 

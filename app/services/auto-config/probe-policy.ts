@@ -1,11 +1,22 @@
 import {
   IAutoConfigCapabilities,
+  IAutoConfigEvent,
+  IAutoOptimizerProgressDetail,
   IAutoOptimizerProbeEvidence,
   IAutoOptimizerTopology,
+  TAutoOptimizerEncoderFamily,
   TAutoOptimizerPhase,
   TAutoOptimizerProbeMethod,
   TAutoOptimizerProbeProvider,
 } from './types';
+
+const AUTO_OPTIMIZER_ENCODER_FAMILIES = new Set([
+  'obs_nvenc_h264_tex',
+  'qsv',
+  'amd',
+  'apple',
+  'x264',
+]);
 
 export interface IAutoConfigProbeRuntimeSupport {
   twitchFeatureEnabled: boolean;
@@ -102,12 +113,41 @@ export function filterAutoConfigTopologyProbes(
   return filtered;
 }
 
-/** Distinguish sequential provider probes while keeping all other phases singular. */
+/** Give real sequential work and terminal decisions distinct readable milestones. */
 export function autoConfigPhaseStepKey(
   phase: TAutoOptimizerPhase,
   provider?: TAutoOptimizerProbeProvider | null,
+  code?: string | null,
 ): string {
-  return phase === 'bandwidth' && provider ? `${phase}:${provider}` : String(phase);
+  if (
+    phase === 'bandwidth' &&
+    provider &&
+    (code === `${provider}_probe_completed` ||
+      code === `${provider}_probe_failed_estimate_used` ||
+      code === `${provider}_probe_unstable_estimate_used`)
+  ) {
+    return `${phase}:${provider}:complete`;
+  }
+  if (phase === 'bandwidth' && provider) return `${phase}:${provider}`;
+  if (phase === 'hardware' && code === 'hardware_discovering_encoders') {
+    return 'hardware:discovering';
+  }
+  if (phase === 'hardware' && code === 'hardware_validating_encoder') {
+    return 'hardware:validating';
+  }
+  if (phase === 'hardware' && code === 'hardware_encoder_selected') {
+    return 'hardware:selected';
+  }
+  if (phase === 'recommendation' && code === 'recommendation_selecting_quality') {
+    return 'recommendation:selecting';
+  }
+  if (phase === 'recommendation' && code === 'recommendation_quality_selected') {
+    return 'recommendation:selected';
+  }
+  if (phase === 'recommendation' && code === 'recommendation_provider_managed') {
+    return 'recommendation:provider-managed';
+  }
+  return String(phase);
 }
 
 /** Validate optional applied video-bitrate feedback from the native probe. */
@@ -115,6 +155,57 @@ export function sanitizeAutoConfigProbeTargetBitrateKbps(value: unknown): number
   return typeof value === 'number' && Number.isInteger(value) && value > 0 && value <= 100000
     ? value
     : null;
+}
+
+function sanitizeProgressText(value: unknown, maxLength: number): string | null {
+  return typeof value === 'string' && value.length > 0 && value.length <= maxLength
+    ? value
+    : null;
+}
+
+function sanitizeProgressInteger(value: unknown, maximum: number): number | null {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 && value <= maximum
+    ? value
+    : null;
+}
+
+/**
+ * Keep native attempt detail serializable and bounded before mirroring it to
+ * visible renderers. Unknown codes remain available for diagnostics but never
+ * become untranslated UI text.
+ */
+export function sanitizeAutoConfigProgressDetail(
+  event: IAutoConfigEvent,
+  phase: TAutoOptimizerPhase,
+): IAutoOptimizerProgressDetail {
+  const provider =
+    phase === 'bandwidth' && (event.provider === 'twitch' || event.provider === 'youtube')
+      ? event.provider
+      : null;
+  const encoderFamily = AUTO_OPTIMIZER_ENCODER_FAMILIES.has(String(event.encoderFamily))
+    ? (event.encoderFamily as TAutoOptimizerEncoderFamily)
+    : null;
+
+  return {
+    code:
+      typeof event.code === 'string' && /^[a-z0-9_]+$/.test(event.code) && event.code.length <= 128
+        ? event.code
+        : null,
+    provider,
+    targetBitrateKbps:
+      provider !== null ? sanitizeAutoConfigProbeTargetBitrateKbps(event.targetBitrateKbps) : null,
+    availableBitrateKbps: sanitizeAutoConfigProbeTargetBitrateKbps(
+      event.availableBitrateKbps,
+    ),
+    encoderId: sanitizeProgressText(event.encoderId, 256),
+    encoderFamily,
+    encoderTitle: sanitizeProgressText(event.encoderTitle, 256),
+    width: sanitizeProgressInteger(event.width, 16384),
+    height: sanitizeProgressInteger(event.height, 16384),
+    fpsNum: sanitizeProgressInteger(event.fpsNum, 1000000),
+    fpsDen: sanitizeProgressInteger(event.fpsDen, 1000000),
+    selectedBitrateKbps: sanitizeAutoConfigProbeTargetBitrateKbps(event.selectedBitrateKbps),
+  };
 }
 
 function isFiniteNonNegative(value: unknown): value is number {

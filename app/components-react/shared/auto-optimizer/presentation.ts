@@ -2,8 +2,35 @@ import {
   IAutoOptimizerPresentationProbeEvidence,
   TAutoOptimizerPresentationProbeProvider,
 } from './types';
+import {
+  IAutoOptimizerError,
+  IAutoOptimizerProgressDetail,
+  TAutoOptimizerPhase,
+} from 'services/auto-config/types';
 
 const providerOrder: TAutoOptimizerPresentationProbeProvider[] = ['twitch', 'youtube'];
+
+const hardwareFailureMessages: Record<string, string> = {
+  hardware_no_usable_encoder:
+    "We couldn't find an encoder that can stream reliably. Close other apps and try again.",
+  hardware_benchmark_timeout:
+    'The encoder test took too long. Close other apps and try again.',
+  hardware_benchmark_unavailable:
+    "We couldn't start the encoder test. Restart Streamlabs Desktop and try again.",
+  hardware_benchmark_overloaded:
+    'Your encoder could not keep up during the test. Close other apps and try again.',
+};
+
+/** Localize known native failures without hiding useful unknown diagnostics. */
+export function autoOptimizerErrorMessage(
+  error: Pick<IAutoOptimizerError, 'code' | 'message'> | null | undefined,
+): string {
+  const knownCode = [error?.code, error?.message].find(
+    value => value && hardwareFailureMessages[value],
+  );
+  if (knownCode) return hardwareFailureMessages[knownCode];
+  return error?.message || 'Optimization failed. Please try again.';
+}
 
 /** Providers with successful active evidence, in stable product display order. */
 export function successfulProbeProviders(
@@ -37,4 +64,140 @@ export function bandwidthPhaseLabelKey(
   if (providers.has('twitch')) return 'Measuring your Twitch upload...';
   if (providers.has('youtube')) return 'Measuring your YouTube upload...';
   return 'Estimating safe upload settings...';
+}
+
+export interface IAutoOptimizerProgressLabel {
+  key: string;
+  values?: Record<string, string | number>;
+}
+
+function tupleValues(detail: IAutoOptimizerProgressDetail): Record<string, string | number> | null {
+  if (!detail.width || !detail.height || !detail.fpsNum || !detail.fpsDen) return null;
+  return {
+    width: detail.width,
+    height: detail.height,
+    fps: Math.round((detail.fpsNum / detail.fpsDen) * 100) / 100,
+    encoder: detail.encoderTitle || detail.encoderId || 'Encoder',
+    bitrate: detail.selectedBitrateKbps || detail.targetBitrateKbps || 0,
+  };
+}
+
+/** Map native status codes to localized, user-facing progress copy. */
+export function autoOptimizerProgressLabel(
+  phase: TAutoOptimizerPhase,
+  detail: IAutoOptimizerProgressDetail | null | undefined,
+  candidates: Array<{ provider: TAutoOptimizerPresentationProbeProvider }> = [],
+): IAutoOptimizerProgressLabel {
+  const tuple = detail ? tupleValues(detail) : null;
+
+  switch (detail?.code) {
+    case 'hardware_discovering_encoders':
+      return { key: 'Looking for compatible hardware encoders...' };
+    case 'hardware_provider_managed':
+    case 'recommendation_provider_managed':
+      return { key: 'Using Twitch-managed encoding settings...' };
+    case 'hardware_testing_encoder':
+    case 'hardware_testing_x264':
+      if (tuple) {
+        return {
+          key: 'Testing %{encoder} at %{width}×%{height}, %{fps} FPS...',
+          values: tuple,
+        };
+      }
+      return { key: 'Testing a compatible stream encoder...' };
+    case 'hardware_validating_encoder':
+      if (tuple) {
+        return {
+          key: 'Validating %{encoder} with your current scene at %{width}×%{height}, %{fps} FPS...',
+          values: tuple,
+        };
+      }
+      return { key: 'Validating the hardware encoder with your current scene...' };
+    case 'hardware_encoder_rejected':
+      if (detail.encoderTitle || detail.encoderId) {
+        return {
+          key: '%{encoder} could not keep up. Trying another encoder...',
+          values: { encoder: detail.encoderTitle || detail.encoderId! },
+        };
+      }
+      return { key: 'That encoder could not keep up. Trying another encoder...' };
+    case 'hardware_encoder_selected':
+      if (tuple) {
+        return {
+          key: 'Selected %{encoder} at %{width}×%{height}, %{fps} FPS.',
+          values: tuple,
+        };
+      }
+      return { key: 'Hardware test complete.' };
+    case 'youtube_probe_waiting_for_ingest':
+      return { key: 'Connecting to YouTube...' };
+    case 'youtube_probe_baseline':
+      return detail.targetBitrateKbps
+        ? {
+            key: 'Checking your YouTube connection at %{bitrate} Kbps...',
+            values: { bitrate: detail.targetBitrateKbps },
+          }
+        : { key: 'Checking your YouTube connection...' };
+    case 'youtube_probe_confirming_stability':
+      return detail.targetBitrateKbps
+        ? {
+            key: 'Confirming YouTube stability at %{bitrate} Kbps...',
+            values: { bitrate: detail.targetBitrateKbps },
+          }
+        : { key: 'Confirming YouTube connection stability...' };
+    case 'youtube_probe_retrying':
+      return detail.targetBitrateKbps
+        ? {
+            key: 'Retrying your YouTube upload at %{bitrate} Kbps...',
+            values: { bitrate: detail.targetBitrateKbps },
+          }
+        : { key: 'Retrying your YouTube upload...' };
+    case 'twitch_probe_completed':
+      return { key: 'Twitch upload test complete.' };
+    case 'youtube_probe_completed':
+      return { key: 'YouTube upload test complete.' };
+    case 'twitch_probe_unstable_estimate_used':
+      return { key: 'Your Twitch upload was unstable. Using an estimate...' };
+    case 'youtube_probe_unstable_estimate_used':
+      return { key: 'Your YouTube upload was unstable. Using an estimate...' };
+    case 'twitch_probe_failed_estimate_used':
+      return { key: "Couldn't complete the Twitch upload test. Using an estimate..." };
+    case 'youtube_probe_failed_estimate_used':
+      return { key: "Couldn't complete the YouTube upload test. Using an estimate..." };
+    case 'active_probe_not_eligible':
+    case 'active_probe_set_incomplete':
+    case 'dual_output_multiple_active_legs':
+      return { key: 'Estimating safe upload settings...' };
+    case 'recommendation_selecting_quality':
+      return detail.availableBitrateKbps
+        ? {
+            key: 'Selecting settings for %{bitrate} Kbps...',
+            values: { bitrate: detail.availableBitrateKbps },
+          }
+        : { key: 'Selecting resolution and frame rate...' };
+    case 'recommendation_quality_selected':
+      if (tuple && detail.selectedBitrateKbps) {
+        return {
+          key: 'Selected %{width}×%{height}, %{fps} FPS at %{bitrate} Kbps.',
+          values: tuple,
+        };
+      }
+      return { key: 'Calculating your recommended settings...' };
+  }
+
+  if (phase === 'bandwidth') {
+    return {
+      key: bandwidthPhaseLabelKey(
+        detail?.provider,
+        candidates,
+        detail?.targetBitrateKbps,
+      ),
+      ...(detail?.targetBitrateKbps
+        ? { values: { bitrate: detail.targetBitrateKbps } }
+        : {}),
+    };
+  }
+  if (phase === 'preflight') return { key: 'Preparing the optimizer...' };
+  if (phase === 'hardware') return { key: 'Checking your hardware...' };
+  return { key: 'Calculating your recommended settings...' };
 }
