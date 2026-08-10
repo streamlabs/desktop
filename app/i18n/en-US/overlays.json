@@ -3,7 +3,6 @@
   "Successfully converted %{filename}": "Successfully converted %{filename}",
   "Successfully saved %{filename} to %{filepath}": "Successfully saved %{filename} to %{filepath}",
   "Successfully loaded %{filename}.overlay": "Successfully loaded %{filename}.overlay",
-  "This is an experimental feature.  Use at your own risk.": "This is an experimental feature.  Use at your own risk.",
   "Export Overlay File": "Export Overlay File",
   "Import Overlay File": "Import Overlay File",
   "Import Widget File in Current Scene": "Import Widget File in Current Scene",
