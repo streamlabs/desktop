@@ -20,6 +20,7 @@ import { TDisplayType } from 'services/settings-v2';
 import partition from 'lodash/partition';
 import xorWith from 'lodash/xorWith';
 import { Subject } from 'rxjs';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 type TCommonFieldName = 'title' | 'description';
 
@@ -551,12 +552,24 @@ export class GoLiveSettingsModule {
     Services.UserService.actions.setPrimaryPlatform(platform);
   }
 
+  /**
+   * If any target should be added to or removed from the stream while live
+   */
   get isUpdatingTargets() {
+    if (
+      !Services.IncrementalRolloutService.views.featureIsEnabled(
+        EAvailableFeatures.liveOutputEditing,
+      )
+    )
+      return false;
+
     return (
       xorWith(this.activePlatforms, this.state.enabledPlatforms, isEqual).length > 0 ||
       xorWith(
-        this.activeDestinations?.map(dest => dest.streamKey),
-        this.state.customDestinations.filter(dest => dest.enabled).map(dest => dest.streamKey),
+        this.activeDestinations?.map(dest => `${dest.url}${dest.streamKey}`),
+        this.state.customDestinations
+          .filter(dest => dest.enabled)
+          .map(dest => `${dest.url}${dest.streamKey}`),
         isEqual,
       ).length > 0
     );
@@ -565,15 +578,17 @@ export class GoLiveSettingsModule {
   /**
    * Get platform/destination live status
    * @param target - platform or index of custom destination
-   * @returns whether the target is currently live
+   * @returns boolean - whether the target is currently live
    */
-  isTargetLive(target: TPlatform | number) {
+  isTargetLive(target: TPlatform | number): boolean {
     if (typeof target === 'number') {
+      if (!this.activeDestinations) return false;
       const dest = this.state.customDestinations[target];
       return this.activeDestinations?.some(
         d => `{${d.url}${d.streamKey}` === `{${dest.url}${dest.streamKey}`,
       );
     } else {
+      if (!this.activePlatforms) return false;
       return this.activePlatforms?.includes(target);
     }
   }
@@ -673,23 +688,63 @@ export class GoLiveSettingsModule {
    */
   async updateStream() {
     if (
-      (await this.validate()) &&
-      (await Services.StreamingService.actions.return.updateStreamSettings(
-        this.state.settings,
-        this.activePlatforms,
-        this.activeDestinations,
-      ))
+      Services.IncrementalRolloutService.views.featureIsEnabled(
+        EAvailableFeatures.liveOutputEditing,
+      )
     ) {
-      message.success($t('Successfully updated'));
+      if (!(await this.validate())) return;
 
-      // Handle add/remove targets when updating a stream while live
-      if (this.isUpdateMode) {
-        if (this.isUpdatingTargets) {
-          this.cooldownTimer.next(true);
+      let updated = false;
+      try {
+        updated = await Services.StreamingService.actions.return.updateStreamSettings(
+          this.state.settings,
+          this.activePlatforms,
+          this.activeDestinations,
+        );
+      } catch (e: unknown) {
+        // The error is surfaced by the streaming service through the Go Live checklist, so just
+        // stop here. Any stream that is already live will not be affected.
+        console.error('Error updating stream settings', e);
+        return;
+      }
+
+      if (updated) {
+        message.success($t('Successfully updated'));
+
+        // Handle add/remove targets when updating a stream while live
+        if (this.isUpdateMode) {
+          if (this.isUpdatingTargets) {
+            this.cooldownTimer.next(true);
+          }
+
+          this.activePlatforms = this.state.enabledPlatforms;
+          this.activeDestinations = this.state.customDestinations.filter(dest => dest.enabled);
         }
+      } else {
+        message.error(
+          $t('Error updating stream settings. Please check your settings and try again.'),
+        );
+      }
+    } else {
+      if (
+        (await this.validate()) &&
+        (await Services.StreamingService.actions.return.updateStreamSettings(
+          this.state.settings,
+          this.activePlatforms,
+          this.activeDestinations,
+        ))
+      ) {
+        message.success($t('Successfully updated'));
 
-        this.activePlatforms = this.state.enabledPlatforms;
-        this.activeDestinations = this.state.customDestinations.filter(dest => dest.enabled);
+        // Handle add/remove targets when updating a stream while live
+        if (this.isUpdateMode) {
+          if (this.isUpdatingTargets) {
+            this.cooldownTimer.next(true);
+          }
+
+          this.activePlatforms = this.state.enabledPlatforms;
+          this.activeDestinations = this.state.customDestinations.filter(dest => dest.enabled);
+        }
       }
     }
   }
@@ -731,7 +786,7 @@ export class GoLiveSettingsModule {
 
   get isStreamShiftDisabled() {
     if (!this.isPrime) return true;
-    return this.isPatreonEnabled;
+    return this.isPatreonEnabled || this.state.liveOutputEditing;
   }
 
   /**
@@ -744,7 +799,7 @@ export class GoLiveSettingsModule {
    */
   get forceStreamShiftToggleEnabled() {
     return (
-      this.state.isStreamShiftMode &&
+      this.state.streamShift &&
       this.state.enabledPlatforms.length === 1 &&
       this.state.settings.platforms[this.state.enabledPlatforms[0]]?.display === 'both'
     );
@@ -752,7 +807,7 @@ export class GoLiveSettingsModule {
 
   get isLiveOutputEditingDisabled() {
     if (!this.isPrime) return true;
-    return this.state.isStreamShiftMode;
+    return this.state.streamShift;
   }
 
   get enabledPlatformsCount() {

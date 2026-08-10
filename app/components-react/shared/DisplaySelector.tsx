@@ -29,10 +29,18 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     toggleVerticalDisplay,
     isLiveOutputEditingEnabled,
     isUpdateMode,
+    isLive,
   } = useGoLiveSettings().extend(module => ({
     get canDualStream() {
       if (!p.platform) return false;
       return module.getCanDualStream(p.platform);
+    },
+    get isLive(): boolean {
+      return (
+        module.isUpdateMode &&
+        module.isTargetLive(p.platform ?? p.index) &&
+        module.isLiveOutputEditingEnabled
+      );
     },
     get display(): TDisplayOutput {
       const defaultDisplay = p.platform
@@ -61,6 +69,22 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       },
     ];
 
+    if (isLive) {
+      // Platforms and destinations cannot change their display while live
+      const activeDisplay =
+        defaultDisplays.find(option => option.value === display) ?? defaultDisplays[0];
+
+      return [
+        {
+          ...activeDisplay,
+          disabled: true,
+          tooltip: $t(
+            'Go offline to change orientation, then select a new resolution and go live again',
+          ),
+        },
+      ];
+    }
+
     if (isUpdateMode) {
       // Dual stream is not compatible with live output editing so don't show it in the edit stream window
       return defaultDisplays;
@@ -68,7 +92,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
 
     if (canDualStream) {
       const tooltip = isLiveOutputEditingEnabled
-        ? $t('Dual Stream is not available while live output editing is enabled')
+        ? $t('Dual Stream is not available while Live Output Editing is enabled')
         : $t('Stream both horizontally and vertically to %{platform}', {
             platform: platformLabels(p.platform!),
           });
@@ -86,7 +110,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     }
 
     return defaultDisplays;
-  }, [canDualStream, isLiveOutputEditingEnabled, isUpdateMode, p.platform]);
+  }, [canDualStream, isLiveOutputEditingEnabled, isUpdateMode, isLive, display, p.platform]);
 
   const onChange = useCallback(
     (val: string) => {

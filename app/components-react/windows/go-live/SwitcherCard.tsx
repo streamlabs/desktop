@@ -28,7 +28,7 @@ interface ISwitcherCardProps {
   description: string;
   value: boolean;
   onClick: (e: MouseEvent) => boolean | void | unknown;
-  tooltip?: string;
+  tooltip?: string | ReactNode;
   tooltipDisabled?: boolean;
   className?: string;
   switchClassName?: string;

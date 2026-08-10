@@ -11,7 +11,7 @@ import {
 } from 'services/customization';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import electron from 'electron';
-import { StreamingService } from './streaming';
+import { StreamingService, EStreamingState } from './streaming';
 import { FacebookService } from './platforms/facebook';
 import { TikTokService } from './platforms/tiktok';
 import { KickService } from './platforms/kick';
@@ -361,7 +361,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @param streamKey - The stream key for the restream session
    * @param targets - The updated list of targets on the stream
    */
-  async addRuntimeTargets(streamKey: string, targets: TRestreamTarget[]) {
+  async addRuntimeTargets(streamKey: string, targets: IRestreamRuntimeTarget[]) {
     const headers = authorizedHeaders(
       this.userService.apiToken,
       new Headers({ 'Content-Type': 'application/json' }),
@@ -399,40 +399,118 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   /**
-   * Add targets to the restream session
-   * @remark This is a wrapper that formats the target data for the api call before adding
-   * @param platforms - The list of platforms to add
-   * @param customDestinations - The list of custom destinations to add
+   * Derive the stream key for an orientation from the landscape (default) stream key
+   * @remark Only use this when the key was fetched without a `mode`. If the key was fetched
+   * with `fetchUserSettings(mode)` it is already resolved for that orientation and applying
+   * this again would transform it a second time.
+   * TODO: This is an unverified assumption about the shape of the backend's stream keys.
+   * Replace it with `fetchUserSettings('portrait').streamKey` once the stream shift flow,
+   * which depends on the modeless key, can also fetch per-mode keys.
+   * @param streamKey - The landscape stream key for the restream session
+   * @param orientation - The orientation to resolve the key for
    */
-  async addTargets(platforms: TPlatform[], customDestinations: ICustomStreamDestination[]) {
-    const streamKey = await this.fetchUserSettings().then(s => s.streamKey);
+  private async getModeStreamKey(
+    orientation: TOutputOrientation,
+    streamKey?: string,
+  ): Promise<string> {
+    const key = streamKey ?? (await this.fetchUserSettings(orientation).then(s => s.streamKey));
 
-    if (!streamKey) {
-      console.debug('Unable to fetch user stream key.');
-      throwStreamError('RESTREAM_UPDATE_FAILED');
+    const expectedSuffix = orientation === 'landscape' ? '_landscape' : '_portrait';
+    if (!key.endsWith(expectedSuffix)) {
+      console.error(
+        `Stream key is not in the expected format for ${orientation}, reformatting it.`,
+      );
+      return key.replace(/_[^_]*$/, expectedSuffix);
     }
 
+    return key;
+  }
+
+  getActiveModes(targets: TRestreamTarget[]) {
+    const targetsByMode = this.filterTargetsByMode(targets);
+    const modes: TOutputOrientation[] = [];
+    if (targetsByMode.landscape.length > 0) modes.push('landscape');
+    if (targetsByMode.portrait.length > 0) modes.push('portrait');
+    return modes;
+  }
+
+  /**
+   * Add targets to the restream session
+   * @remark This is a wrapper that formats the target data for the api call before adding.
+   * A display that is already streaming has a running restream session, so its targets are added
+   * with the runtime endpoint. A display that is not yet streaming has no session to add runtime
+   * targets to, so it is set up the same way the go live flow does it: point the display's output
+   * at the restream ingest, then create the targets with the standard endpoint.
+   * @param platforms - The list of platforms to add
+   * @param customDestinations - The list of custom destinations to add
+   * @param displaysToSetup - The displays that have no restream session yet
+   */
+  async addTargets(
+    platforms: TPlatform[],
+    customDestinations: ICustomStreamDestination[],
+    displaysToSetup: TDisplayType[] = [],
+  ) {
     const startTargets: IRestreamRuntimeTarget[] = [
       ...platforms.map(platform => ({
         ...this.formatRuntimePlatformData(platform),
-        enabled: true,
-        dcProtection: false,
-        label: `${platform} target`,
       })),
       ...customDestinations.map(destination => ({
         ...this.formatRuntimeCustomDestinationData(destination),
-        enabled: true,
-        dcProtection: false,
-        label: `${destination.name} target`,
       })),
     ];
 
-    await this.updateTargets(startTargets, streamKey);
+    if (!startTargets.length) return;
+
+    const modes = this.getActiveModes(startTargets);
+    const targetsByMode = this.filterTargetsByMode(startTargets);
+    const modesToSetup = new Set(displaysToSetup.map(display => this.getMode(display)));
+
+    // Resolve the ingest once for the whole operation, it can make more than one request
+    const ingest = modesToSetup.size ? await this.getIngestServer() : '';
+
+    // Handle the modes sequentially so that a failure can be attributed to a single display
+    for (const mode of modes) {
+      const display: TDisplayType = mode === 'landscape' ? 'horizontal' : 'vertical';
+
+      let streamKey: string;
+      try {
+        streamKey = await this.getModeStreamKey(mode);
+      } catch (e: unknown) {
+        console.error('Restream Error: Unable to fetch user stream key for', mode, e);
+        throwStreamError('RESTREAM_UPDATE_FAILED');
+      }
+
+      if (!streamKey) {
+        console.error('Restream Error: No stream key returned for', mode);
+        throwStreamError('RESTREAM_UPDATE_FAILED');
+      }
+
+      if (modesToSetup.has(mode)) {
+        // This display has no restream session yet. Configure the stream settings first so that
+        // the output instance created afterwards connects to the correct ingest with the right
+        // stream key, then create the targets the same way the go live flow does.
+        this.setStreamSettingsForDisplay(display, streamKey, ingest);
+
+        try {
+          await this.setupDisplayTargets(platforms, customDestinations, display);
+        } catch (e: unknown) {
+          console.error('Restream Error: Unable to create targets for', display, e);
+          throwStreamError('RESTREAM_UPDATE_FAILED');
+        }
+      } else {
+        // This display already has a running restream session, so add the targets to it.
+        // The stream key is already resolved for this mode, so pass it through unchanged.
+        await this.updateTargetsAndValidate(targetsByMode[mode], streamKey, mode);
+      }
+    }
   }
 
   /**
    * Remove targets from the restream session
-   * @remark This is a wrapper that formats the target data for the api call before removing
+   * @remark Every display is a separate restream stream with its own stream key, so a target can
+   * only be removed using the key for the stream it is actually running on. The targets are grouped
+   * by the mode the server reports for them and removed with one request per stream. Sending every
+   * target id to a single stream key only ever removes the targets on that one display.
    * @param platforms - The list of platforms to remove
    * @param customDestinations - The list of custom destinations to remove
    * @param removeAll - If true, remove all targets from the restream session
@@ -442,34 +520,48 @@ export class RestreamService extends StatefulService<IRestreamState> {
     customDestinations: ICustomStreamDestination[],
     removeAll: boolean = false,
   ) {
-    const streamKey = await this.fetchUserSettings().then(s => s.streamKey);
     const remoteTargets: IRestreamTarget[] = await this.fetchTargets();
 
-    if (!streamKey || !remoteTargets.length) {
-      console.debug('No active restream targets or stream key missing.');
+    if (!remoteTargets.length) {
+      console.debug('No active restream targets.');
       throwStreamError('RESTREAM_UPDATE_FAILED');
     }
 
-    // Use the `remove` endpoint only when removing all targets
-    if (removeAll) {
-      const stopTargets = remoteTargets.map(t => ({ id: t.id }));
-      await this.removeRuntimeTargets(streamKey, stopTargets);
-    } else {
-      // Otherwise use the `update` endpoint to remove specific targets
-      const targetsToRemove: IRestreamRuntimeTarget[] = [
-        ...platforms.map(target => this.formatRuntimePlatformData(target)),
-        ...customDestinations.map(dest => this.formatRuntimeCustomDestinationData(dest)),
-      ];
+    // Match the targets to remove against the remote targets by stream key. When removing all
+    // targets, every remote target is removed regardless of which stream it belongs to.
+    const streamKeysToRemove = removeAll
+      ? undefined
+      : new Set([
+          ...platforms.map(platform => this.formatRuntimePlatformData(platform).streamKey),
+          ...customDestinations.map(
+            dest => this.formatRuntimeCustomDestinationData(dest).streamKey,
+          ),
+        ]);
 
-      const remoteTargetIds = remoteTargets.reduce(
-        (acc: { [streamKey: string]: number }, target) => {
-          acc[target.streamKey] = target.id;
-          return acc;
-        },
-        {},
-      );
+    // Group by the mode reported by the server. It is the only reliable record of which stream a
+    // target is running on, the locally derived mode can be stale.
+    const targetsByMode = remoteTargets.reduce(
+      (acc: Record<TOutputOrientation, { id: number }[]>, target) => {
+        if (streamKeysToRemove && !streamKeysToRemove.has(target.streamKey)) return acc;
 
-      await this.updateTargets(targetsToRemove, streamKey, remoteTargetIds);
+        acc[target.mode ?? 'landscape'].push({ id: target.id });
+        return acc;
+      },
+      { landscape: [], portrait: [] },
+    );
+
+    for (const mode of Object.keys(targetsByMode) as TOutputOrientation[]) {
+      const stopTargets = targetsByMode[mode];
+      if (!stopTargets.length) continue;
+
+      try {
+        // Fetch the key for this mode rather than deriving it, the same way `addTargets` does, so
+        // that targets are removed from the stream they were added to
+        await this.removeRuntimeTargets(await this.getModeStreamKey(mode), stopTargets);
+      } catch (e: unknown) {
+        console.error('Restream Error: Error removing restream targets for', mode, e);
+        throwStreamError('RESTREAM_UPDATE_FAILED');
+      }
     }
   }
 
@@ -540,10 +632,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
         const stopTargets = targets.map(t => ({ id: remoteTargetIds[t.streamKey] }));
         await this.removeRuntimeTargets(key, stopTargets);
       } else {
-        await this.addRuntimeTargets(key, targets);
+        await this.addRuntimeTargets(key, targets as IRestreamRuntimeTarget[]);
       }
     } catch (e: unknown) {
-      console.error('Restream Error: Error updating restream targets', e);
+      console.error('Restream Error: Error updating restream targets for', orientation, e);
       throwStreamError('RESTREAM_UPDATE_FAILED');
     }
   }
@@ -697,60 +789,65 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @param context - Optional, display to stream
    * @param mode - Optional, mode which denotes which context to stream
    */
-  async setupIngest() {
+  async setupIngest(display?: TDisplayType) {
     const ingest = await this.getIngestServer();
+
+    // Setup ingest for the display if provided, otherwise setup ingest for the entire stream
+    if (display) {
+      const mode = this.getMode(display);
+      const settings = await this.fetchUserSettings(mode);
+
+      this.setStreamSettingsForDisplay(display, settings.streamKey, ingest);
+      return;
+    }
 
     if (this.streamInfo.isStreamShiftMode) {
       // in single output mode, we just set the ingest for the default display
-      this.streamSettingsService.setSettings({
-        streamType: 'rtmp_custom',
-      });
-
       const streamId = uuid();
       this.SET_STREAM_SWITCHER_STREAM_ID(streamId);
       // for the stream switcher, the stream needs a unique identifier
       const streamKey = `${this.settings.streamKey}&sid=${streamId}`;
 
-      this.streamSettingsService.setSettings({
+      this.setStreamSettingsForDisplay('horizontal', streamKey, ingest);
+    } else if (this.streamInfo.isLiveOutputEditingEnabled || this.streamInfo.isDualOutputMode) {
+      // Set the ingest for each display being restreamed.
+      // In live output editing mode, every display must use the restream servers so that a target
+      // can switch between displays mid-stream, so use every display with a target.
+      const displays = this.streamInfo.isLiveOutputEditingEnabled
+        ? this.streamInfo.liveOutputDisplays
+        : this.streamInfo.displaysToRestream;
+
+      // Await the settings for every display. Otherwise `beforeGoLive` resolves before the
+      // stream settings have been written and `createStreaming` reads stale values.
+      await Promise.all(
+        displays.map(async display => {
+          const mode = this.getMode(display);
+          const settings = await this.fetchUserSettings(mode);
+
+          this.setStreamSettingsForDisplay(display, settings.streamKey, ingest);
+        }),
+      );
+    } else {
+      // In single output mode, we just set the ingest for the horizontal (default) display
+      this.setStreamSettingsForDisplay('horizontal', this.settings.streamKey, ingest);
+    }
+  }
+
+  setStreamSettingsForDisplay(display: TDisplayType, streamKey: string, ingest: string) {
+    this.streamSettingsService.setSettings(
+      {
         streamType: 'rtmp_custom',
+      },
+      display,
+    );
+
+    this.streamSettingsService.setSettings(
+      {
         key: streamKey,
         server: ingest,
-      });
-    } else if (this.streamingService.views.isDualOutputMode) {
-      // in dual output mode, we need to set the ingest for each display
-      const displays = this.streamInfo.displaysToRestream;
-
-      displays.forEach(async display => {
-        const mode = this.getMode(display);
-        const settings = await this.fetchUserSettings(mode);
-
-        this.streamSettingsService.setSettings(
-          {
-            streamType: 'rtmp_custom',
-          },
-          display,
-        );
-
-        this.streamSettingsService.setSettings(
-          {
-            key: settings.streamKey,
-            server: ingest,
-          },
-          display,
-        );
-      });
-    } else {
-      // in single output mode, we just set the ingest for the default display
-      this.streamSettingsService.setSettings({
-        streamType: 'rtmp_custom',
-      });
-
-      this.streamSettingsService.setSettings({
-        streamType: 'rtmp_custom',
-        key: this.settings.streamKey,
-        server: ingest,
-      });
-    }
+      },
+      display,
+    );
   }
 
   /**
@@ -772,17 +869,27 @@ export class RestreamService extends StatefulService<IRestreamState> {
     await this.createTargets(newTargets);
   }
 
-  setupPlatforms() {
+  setupPlatforms(updatedPlatforms?: TPlatform[], display?: TDisplayType) {
     const isEnhancedBroadcasting = this.settingsService.isEnhancedBroadcasting();
-    const isDualOutputMode = this.streamingService.views.isDualOutputMode;
-    const modesToRestream = this.streamInfo.displaysToRestream.map(display =>
-      this.getMode(display),
-    );
+    const modesToRestream = this.streamInfo.isLiveOutputEditingEnabled
+      ? this.streamInfo.liveOutputDisplays.map(display => this.getMode(display))
+      : this.streamInfo.displaysToRestream.map(display => this.getMode(display));
 
-    return this.streamInfo.enabledPlatforms.reduce((platforms, platform) => {
+    const targetPlatforms = updatedPlatforms ?? this.streamInfo.enabledPlatforms;
+
+    return targetPlatforms.reduce((platforms, platform) => {
       // Enhanced broacasting when multistreaming uses its own video context and stream
       // so skip setting up Twitch as a target here
       if (isEnhancedBroadcasting && platform === 'twitch') {
+        if (updatedPlatforms) {
+          // Enhanced broadcasting is disabled while live output editing is enabled, so reaching
+          // this while adding targets means no Twitch target will be created for the display.
+          console.warn(
+            'RESTREAM Skipping Twitch target for display',
+            display,
+            'because enhanced broadcasting is enabled',
+          );
+        }
         return platforms;
       }
 
@@ -823,8 +930,14 @@ export class RestreamService extends StatefulService<IRestreamState> {
         targetInfo.streamKey = `${this.patreonService.state.ingest}/${this.patreonService.state.streamKey}`;
       }
 
+      if (updatedPlatforms) {
+        const mode = display ? this.getMode(display) : this.getPlatformMode(platform);
+        platforms.push({ ...targetInfo, mode });
+        return platforms;
+      }
+
       // reassign platforms to displays if in dual output mode
-      if (isDualOutputMode) {
+      if (this.streamInfo.isDualOutputMode || this.streamInfo.isLiveOutputEditingEnabled) {
         const mode = this.getPlatformMode(platform) ?? 'landscape';
 
         // Add platform if the display is being restreamed in dual output mode
@@ -841,19 +954,29 @@ export class RestreamService extends StatefulService<IRestreamState> {
     }, []);
   }
 
-  setupCustomDestinations() {
+  setupCustomDestinations(customDestinations?: ICustomStreamDestination[], display?: TDisplayType) {
     const isDualOutputMode = this.streamingService.views.isDualOutputMode;
     const modesToRestream = this.streamInfo.displaysToRestream.map(display =>
       this.getMode(display),
     );
 
-    return this.streamInfo.customDestinations.reduce((dests, dest) => {
+    // When an explicit list is passed, only create targets for that list. Otherwise this is the
+    // go live flow, which creates targets for every enabled destination on the stream.
+    const targetDestinations = customDestinations ?? this.streamInfo.customDestinations;
+
+    return targetDestinations.reduce((dests, dest) => {
       if (!dest.enabled) return dests;
 
       const targetInfo = {
         platform: 'relay' as 'relay',
         streamKey: `${this.formatUrl(dest.url)}${dest.streamKey}`,
       };
+
+      if (customDestinations) {
+        const mode = display ? this.getMode(display) : this.getMode(dest.display);
+        dests.push({ ...targetInfo, mode });
+        return dests;
+      }
 
       if (isDualOutputMode) {
         const mode = this.getMode(dest.display);
@@ -879,45 +1002,65 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @returns The formatted restream platform data
    */
   formatRuntimePlatformData(platform: TPlatform): IRestreamRuntimeTarget {
-    const isDualOutputMode = this.streamingService.views.isDualOutputMode;
+    const useSavedMode =
+      this.streamInfo.isDualOutputMode || this.streamInfo.isLiveOutputEditingEnabled;
+
     const platformData = {
-      platform: 'relay' as 'relay',
+      platform: platform as TPlatform | 'relay',
       streamKey: getPlatformService(platform).state.streamKey,
       label: `${platform} target`,
-      mode: isDualOutputMode ? this.getPlatformMode(platform) : 'landscape',
+      mode: useSavedMode ? this.getPlatformMode(platform) : 'landscape',
       dcProtection: false,
       enabled: true,
     };
 
     switch (platform) {
+      case 'youtube': {
+        // DC Protection must be enabled for YouTube because it goes live to a unique link so an error that temporarily cuts the
+        // stream on the server would cause the stream to end completely.
+        return {
+          ...platformData,
+          dcProtection: true,
+        };
+      }
       case 'tiktok': {
         return {
           ...platformData,
+          platform: 'relay' as 'relay',
           streamKey: `${this.tiktokService.state.settings.serverUrl}/${this.tiktokService.state.settings.streamKey}`,
         };
       }
       case 'twitter': {
         return {
           ...platformData,
+          platform: 'relay' as 'relay',
           streamKey: `${this.twitterService.state.ingest}/${this.twitterService.state.streamKey}`,
         };
       }
       case 'instagram': {
         return {
           ...platformData,
+          platform: 'relay' as 'relay',
           streamKey: `${this.instagramService.state.settings.streamUrl}${this.instagramService.state.streamKey}`,
+          dcProtection: true,
         };
       }
       case 'kick': {
         return {
           ...platformData,
+          platform: 'relay' as 'relay',
           streamKey: `${this.kickService.state.ingest}/${this.kickService.state.streamKey}`,
         };
       }
+      // Patreon is a special relay case because while it is technically a relay, the server expects the platform value `patreon`
       case 'patreon': {
+        // Note: unlike other relay targets, Patreon's platform is not `relay`, it is `patreon`.
+        // DC Protection must be enabled for Patreon because it goes live to a unique link so an error that temporarily cuts the
+        // stream on the server would cause the stream to end completely.
         return {
           ...platformData,
           streamKey: `${this.patreonService.state.ingest}/${this.patreonService.state.streamKey}`,
+          dcProtection: true,
         };
       }
       default: {
@@ -934,15 +1077,50 @@ export class RestreamService extends StatefulService<IRestreamState> {
   formatRuntimeCustomDestinationData(
     destination: ICustomStreamDestination,
   ): IRestreamRuntimeTarget {
+    const useSavedMode =
+      this.streamingService.views.isDualOutputMode ||
+      this.streamingService.views.isLiveOutputEditingEnabled;
+
     return {
       platform: 'relay' as 'relay',
       streamKey: `${this.formatUrl(destination.url)}${destination.streamKey}`,
-      mode: this.streamingService.views.isDualOutputMode
-        ? this.getMode(destination.display)
-        : 'landscape',
-      dcProtection: false,
+      mode: useSavedMode ? this.getMode(destination.display) : 'landscape',
+      dcProtection: true,
       enabled: true,
+      label: `${destination.name} target`,
     };
+  }
+
+  /**
+   * Create restream targets for a single display
+   * @remark Used when adding targets to a display that has no restream session yet, such as when
+   * a target is added to the opposite display mid-stream in live output editing. Unlike
+   * `setupTargets`, this does not delete the existing targets because the other display is live.
+   * @param platforms - The platforms being added, may span both displays
+   * @param customDestinations - The custom destinations being added, may span both displays
+   * @param display - The display to create the targets for
+   */
+  async setupDisplayTargets(
+    platforms: TPlatform[],
+    customDestinations: ICustomStreamDestination[],
+    display: TDisplayType,
+  ) {
+    const mode = this.getMode(display);
+
+    // Only create targets for the platforms and destinations assigned to this display
+    const displayPlatforms = platforms.filter(platform => this.getPlatformMode(platform) === mode);
+    const displayDestinations = customDestinations.filter(
+      dest => dest.enabled && (dest.display ?? 'horizontal') === display,
+    );
+
+    const updatedTargets = [
+      ...this.setupPlatforms(displayPlatforms, display),
+      ...this.setupCustomDestinations(displayDestinations, display),
+    ];
+
+    if (!updatedTargets.length) return;
+
+    await this.createTargets(updatedTargets);
   }
 
   checkStatus(): Promise<boolean> {
@@ -955,6 +1133,16 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   async checkIsLive(): Promise<boolean> {
+    // Don't check stream shift status while the stream status isn't `Offline`.
+    // While the stream is active, starting, or tearing down, the is live status will be reported
+    // as true from Desktop's own stream, while the intent is to check for a stream on another device.
+    // This prevents bugs with live output editing, where the stream will always be active, so
+    // if changes are made to components that call this function, it could accidentally trigger an
+    // unintended false positive for a stream on another device.
+    if (this.streamInfo.streamingStatus !== EStreamingState.Offline) {
+      return false;
+    }
+
     const status = await this.fetchLiveStatus();
     console.debug('Stream Shift Status', status);
 
