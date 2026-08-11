@@ -157,7 +157,7 @@ export function SceneCollectionsSettings() {
           onChange={setCollection}
           options={collectionOptions}
         />
-        <DualOutputDeveloperSettings collection={collection} />
+        <DualOutputDeveloperSettings collectionId={collection} />
       </ObsSettingsSection>
     </>
   );

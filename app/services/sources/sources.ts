@@ -54,6 +54,16 @@ const AsyncFlag = obs.ESourceOutputFlags.Async;
 const DoNotDuplicateFlag = obs.ESourceOutputFlags.DoNotDuplicate;
 const ForceUiRefresh = obs.ESourceOutputFlags.ForceUiRefresh;
 
+/**
+ * Sunset widgets. The enum values stay reserved because they are persisted in user
+ * scene collections, but these widgets have no settings window anymore.
+ */
+const RETIRED_WIDGETS: WidgetType[] = [
+  WidgetType.StarsGoal,
+  WidgetType.SupporterGoal,
+  WidgetType.GameWidget,
+];
+
 export const PROPERTIES_MANAGER_TYPES = {
   default: DefaultManager,
   widget: WidgetManager,
@@ -165,6 +175,13 @@ class SourcesViews extends ViewHandler<ISourcesState> {
 
   getSourcesByType(type: TSourceType) {
     return this.sources.filter(s => s.type === type);
+  }
+
+  isRetiredWidget(id: string): boolean {
+    const source = this.getSource(id);
+    if (!source || source.getPropertiesManagerType() !== 'widget') return false;
+
+    return RETIRED_WIDGETS.includes(source.getPropertiesManagerSettings().widgetType);
   }
 
   suggestName(name?: string): string {
@@ -669,6 +686,33 @@ export class SourcesService extends StatefulService<ISourcesState> {
     return this.getAvailableSourcesTypesList().map(listItem => listItem.value);
   }
 
+  /**
+   * Get all smart sources
+   * @remark Primarily used for updating the smart browser sources for forwarding socket events
+   * from the reactive data service. For performance optimization, filter smart sources before
+   * constructing the `Source`. This prevents hot paths while iterating through sources, which
+   * may happen frequently when forwarding events from reactive data to smart sources while live.
+   * @returns An array of all of the smart sources in the scene collection
+   */
+  getSmartSources() {
+    return Object.values(this.state.sources)
+      .filter(s => s.propertiesManagerType === 'smartBrowserSource')
+      .map(sourceModel => new Source(sourceModel.sourceId));
+  }
+
+  /**
+   * Confirm if a smart source exists
+   * @remark Primarily used for updating the smart browser sources for forwarding socket events
+   * from the reactive data service. For performance optimization, check for the existence of any
+   * smart sources.
+   * @returns A boolean indicating whether there are any smart sources in the scene collection
+   */
+  hasSmartSources() {
+    return Object.values(this.state.sources).some(
+      s => s.propertiesManagerType === 'smartBrowserSource',
+    );
+  }
+
   private handleSourceCallback(objs: IObsSourceCallbackInfo[]) {
     objs.forEach(info => {
       const source = this.views.getSource(info.name);
@@ -807,6 +851,11 @@ export class SourcesService extends StatefulService<ISourcesState> {
     const platform = this.userService.views.platform;
     assertIsDefined(platform);
     const widgetType = source.getPropertiesManagerSettings().widgetType;
+
+    // Retired widgets still exist in saved scene collections but no longer have a
+    // settings window.
+    if (RETIRED_WIDGETS.includes(widgetType)) return;
+
     const componentName = this.widgetsService.getWidgetComponent(widgetType);
 
     // React widgets are in the WidgetsWindow component
@@ -816,7 +865,6 @@ export class SourcesService extends StatefulService<ISourcesState> {
       'DonationGoal',
       'CharityGoal',
       'FollowerGoal',
-      'StarsGoal',
       'SubGoal',
       'SubscriberGoal',
       'SuperchatGoal',
@@ -834,7 +882,6 @@ export class SourcesService extends StatefulService<ISourcesState> {
       // 'StreamBoss',
       // 'TipJar',
       'ViewerCount',
-      'GameWidget',
       'CustomWidget',
       'GamePulseWidget',
     ];

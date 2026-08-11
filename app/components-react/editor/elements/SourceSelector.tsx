@@ -21,6 +21,7 @@ import { initStore, useController } from 'components-react/hooks/zustand';
 import { useVuex } from 'components-react/hooks';
 import * as remote from '@electron/remote';
 import { AuthModal } from 'components-react/shared/AuthModal';
+import { alertAsync } from 'components-react/modals';
 import Utils from 'services/utils';
 
 interface ISourceMetadata {
@@ -280,6 +281,15 @@ class SourceSelectorController {
 
     if (!item.video) {
       this.audioService.actions.showAdvancedSettings(item.sourceId);
+      return;
+    }
+
+    if (this.sourcesService.views.isRetiredWidget(item.sourceId)) {
+      alertAsync(
+        $t(
+          'This widget is no longer supported and can no longer be configured. You can safely remove it from your scene.',
+        ),
+      );
       return;
     }
 

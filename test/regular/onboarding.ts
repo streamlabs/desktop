@@ -171,7 +171,16 @@ test('Go through onboarding', async t => {
   t.true(await isDisplayed('button=dlive'), 'Shows Dlive button');
   t.true(await isDisplayed('button=NimoTV'), 'Shows NimoTV button');
 
-  t.true(await isDisplayed('button=Back'), 'Has a link to go back to Sign Up');
+  // Check for all the login buttons
+  t.true(await isDisplayed('button=Log in with Twitch'), 'Shows Twitch button');
+  t.true(await isDisplayed('button=Log in with YouTube'), 'Shows YouTube button');
+  t.true(await isDisplayed('button=Log in with Facebook'), 'Shows Facebook button');
+  t.true(await isDisplayed('button=Log in with TikTok'), 'Shows TikTok button');
+
+  // Check for all the login icons
+  t.true(await isDisplayed('[data-testid=platform-icon-button-nimotv]'), 'Shows NimoTV button');
+
+  t.true(await isDisplayed('a=Sign up'), 'Has a link to go back to Sign Up');
 
   // Complete login
   await waitForDisplayed('button=Twitch');

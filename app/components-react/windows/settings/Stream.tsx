@@ -586,6 +586,7 @@ function CustomDestinationList() {
 
           {shouldShowPrimeLabel ? (
             <ButtonHighlighted
+              name="customDestUltraBtn"
               onClick={() => addCustomDest(true)}
               filled
               text={$t('Ultra')}

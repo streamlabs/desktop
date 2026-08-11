@@ -119,6 +119,12 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   private collectionErrorOpen = false;
 
   /**
+   * Whether a dual output collection is currently being converted
+   * to a single output collection.
+   */
+  isConvertingCollection = false;
+
+  /**
    * true if the scene-collections sync in progress
    */
   private syncPending = false;
@@ -367,17 +373,28 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     const collection = collectionId ? this.getCollection(collectionId) : this.activeCollection;
     const name = `${collection?.name} - Converted`;
 
-    const newCollectionId = await this.duplicate(name, collectionId);
+    // Prevent recreating vertical nodes while converting the collection to a single output.
+    this.isConvertingCollection = true;
 
-    if (!newCollectionId) return;
+    try {
+      const newCollectionId = await this.duplicate(name, collectionId);
 
-    this.dualOutputService.setDualOutputModeIfPossible(false);
+      if (!newCollectionId) return;
 
-    await this.load(newCollectionId);
+      await this.load(newCollectionId);
 
-    await this.convertToVanillaSceneCollection(assignToHorizontal);
+      // Disable dual output mode after loading the duplicate to prevent the converted collection
+      // from being saved as a dual output collection.
+      this.dualOutputService.setDualOutputModeIfPossible(false, true, false, true);
 
-    return this.stateService.getCollectionFilePath(newCollectionId);
+      await this.convertToSingleOutputSceneCollection(assignToHorizontal);
+
+      return this.stateService.getCollectionFilePath(newCollectionId);
+    } finally {
+      // Always reset this flag to false, even if the conversion fails, so that the user can
+      // attempt to convert the collection again or repair it manually
+      this.isConvertingCollection = false;
+    }
   }
 
   downloadProgress = new Subject<IDownloadProgress>();
@@ -1331,10 +1348,12 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   }
 
   /**
-   * Convert dual output scene collection to vanilla scene collection
+   * Convert dual output scene collection to single output collection
+   * @param assignToHorizontal - Whether to reassign the vertical nodes to the horizontal
+   * display instead of removing them
    */
-  async convertToVanillaSceneCollection(assignToHorizontal?: boolean) {
-    if (!this.activeCollection?.sceneNodeMaps) return;
+  async convertToSingleOutputSceneCollection(assignToHorizontal?: boolean) {
+    if (!this.activeCollection || !this.activeCollection?.sceneNodeMaps) return;
 
     const allSceneIds: string[] = this.scenesService.getSceneIds();
 
