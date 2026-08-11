@@ -138,6 +138,26 @@ export class SceneCollectionsStateService extends StatefulService<ISceneCollecti
   }
 
   /**
+   * Legacy absolute-coordinate collections get one bounded, non-rolling backup before their
+   * first relative-coordinate save. The regular `.bak` remains free to track later saves.
+   */
+  async coordinateMigrationBackupMatches(id: string, data: string) {
+    const backupPath = this.getCoordinateMigrationBackupPath(id);
+    if (!(await this.fileManagerService.exists(backupPath))) return false;
+
+    try {
+      return this.fileManagerService.read(backupPath, { validateJSON: true, retries: 2 }) === data;
+    } catch (error: unknown) {
+      console.warn('Ignoring invalid coordinate migration backup', error);
+      return false;
+    }
+  }
+
+  writeCoordinateMigrationBackup(id: string, data: string) {
+    this.fileManagerService.write(this.getCoordinateMigrationBackupPath(id), data);
+  }
+
+  /**
    * Copies a collection file
    * @param sourceId the scene collection to copy
    * @param destId the scene collection to copy to
@@ -177,6 +197,10 @@ export class SceneCollectionsStateService extends StatefulService<ISceneCollecti
 
   getCollectionFilePath(id: string) {
     return path.join(this.collectionsDirectory, `${id}.json`);
+  }
+
+  getCoordinateMigrationBackupPath(id: string) {
+    return `${this.getCollectionFilePath(id)}.absolute-v4`;
   }
 
   /**

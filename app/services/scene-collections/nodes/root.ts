@@ -10,31 +10,34 @@ import { StreamingService } from 'services/streaming';
 import { OS } from 'util/operating-systems';
 import { GuestCamNode } from './guest-cam';
 import { VideoSettingsService } from 'services/settings-v2/video';
+import {
+  IBaseResolution,
+  IBaseResolutions,
+  resolveCollectionBaseResolutions,
+} from 'services/settings-v2/base-resolutions';
 import { DualOutputService } from 'services/dual-output';
 import { SettingsService } from 'services/settings';
 import { SceneCollectionsService } from '../scene-collections';
+import { ESceneCoordinateMode, SceneFactory } from '../../../../obs-api';
+import { loadArrayNodesStrictly } from './array-node';
+
+export type TSceneCoordinateMode = 'absolute' | 'relative';
 
 interface ISchema {
   /**
    * this is for backward compatibility with single output collections
    */
-  baseResolution: {
-    baseWidth: number;
-    baseHeight: number;
-  };
+  baseResolution?: IBaseResolution;
   /**
    * this is for scenes created with dual output
    */
-  baseResolutions: {
-    horizontal: {
-      baseWidth: number;
-      baseHeight: number;
-    };
-    vertical: {
-      baseWidth: number;
-      baseHeight: number;
-    };
-  };
+  baseResolutions: IBaseResolutions;
+
+  /**
+   * Coordinate system used when the serialized scene-item transforms were written.
+   * Collections written before schema v5 contain absolute transforms.
+   */
+  coordinateMode: TSceneCoordinateMode;
 
   selectiveRecording?: boolean;
   dualOutputMode?: boolean;
@@ -53,7 +56,9 @@ interface ISchema {
  * This is the root node of the config file
  */
 export class RootNode extends Node<ISchema, {}> {
-  schemaVersion = 4;
+  schemaVersion = 5;
+
+  private needsCoordinateMigration = false;
 
   @Inject() videoService: VideoService;
   @Inject() streamingService: StreamingService;
@@ -86,6 +91,7 @@ export class RootNode extends Node<ISchema, {}> {
       nodeMap,
       baseResolution: this.videoSettingsService.baseResolutions?.horizontal,
       baseResolutions: this.videoSettingsService.baseResolutions,
+      coordinateMode: 'relative',
       selectiveRecording: this.streamingService.state.selectiveRecording,
       dualOutputMode: this.dualOutputService.views.dualOutputMode,
       operatingSystem: process.platform as OS,
@@ -97,52 +103,47 @@ export class RootNode extends Node<ISchema, {}> {
    * This if/else prevents an error by guaranteeing a video context exists.
    */
   async load(): Promise<void> {
+    // All newly-created scene items use relative coordinates. A legacy collection is
+    // migrated by first restoring the canvas on which its absolute values were authored,
+    // then feeding those values through the normal scene-item setters during load.
+    SceneFactory.coordinateMode = ESceneCoordinateMode.Relative;
+
     if (!this.videoSettingsService.contexts.horizontal) {
-      const establishedContext = this.videoSettingsService.establishedContext.subscribe(
-        async () => {
-          this.videoService.setBaseResolution(this.data.baseResolutions);
-          this.streamingService.setSelectiveRecording(!!this.data.selectiveRecording);
-          this.streamingService.setDualOutputMode(this.data.dualOutputMode);
+      await new Promise<void>(resolve => {
+        const establishedContext = this.videoSettingsService.establishedContext.subscribe(
+          display => {
+            if (display !== 'horizontal') return;
+            establishedContext.unsubscribe();
+            resolve();
+          },
+        );
+      });
+    }
 
-          await this.data.transitions.load();
-          await this.data.sources.load({});
-          await this.data.scenes.load({});
+    this.streamingService.setSelectiveRecording(!!this.data.selectiveRecording);
+    this.streamingService.setDualOutputMode(this.data.dualOutputMode);
+    this.videoSettingsService.applyBaseResolutionBaseline(this.data.baseResolutions);
+    this.videoService.setBaseResolution(this.data.baseResolutions);
 
-          if (this.data.nodeMap) {
-            await this.data.nodeMap.load();
-          }
+    const loadChildren = async () => {
+      // The node map assigns horizontal/vertical displays and must exist before scene items
+      // are recreated and associated with a video context.
+      if (this.data.nodeMap) await this.data.nodeMap.load();
 
-          if (this.data.hotkeys) {
-            await this.data.hotkeys.load({});
-          }
-
-          if (this.data.guestCam) {
-            await this.data.guestCam.load();
-          }
-          establishedContext.unsubscribe();
-        },
-      );
-    } else {
-      this.videoService.setBaseResolution(this.data.baseResolutions);
-      this.streamingService.setSelectiveRecording(!!this.data.selectiveRecording);
-      this.streamingService.setDualOutputMode(this.data.dualOutputMode);
-
-      if (this.data.nodeMap) {
-        await this.data.nodeMap.load();
-      }
-
-      await this.data.transitions.load();
+      if (this.data.transitions) await this.data.transitions.load();
       await this.data.sources.load({});
       await this.data.scenes.load({});
 
-      if (this.data.hotkeys) {
-        await this.data.hotkeys.load({});
-      }
+      if (this.data.hotkeys) await this.data.hotkeys.load({});
+      if (this.data.guestCam) await this.data.guestCam.load();
+    };
 
-      if (this.data.guestCam) {
-        await this.data.guestCam.load();
-      }
-    }
+    if (this.requiresCoordinateMigration) await loadArrayNodesStrictly(loadChildren);
+    else await loadChildren();
+  }
+
+  get requiresCoordinateMigration() {
+    return this.needsCoordinateMigration;
   }
 
   migrate(version: number) {
@@ -158,8 +159,16 @@ export class RootNode extends Node<ISchema, {}> {
       this.data.baseResolution = this.videoSettingsService.baseResolution;
     }
     // Added multiple displays with individual base resolutions in version 4
-    if (version < 4) {
-      this.data.baseResolutions = this.videoSettingsService.baseResolutions;
+    this.data.baseResolutions = resolveCollectionBaseResolutions(
+      version,
+      this.data.baseResolution,
+      this.data.baseResolutions,
+      this.videoSettingsService.baseResolutions,
+    );
+
+    if (version < 5 || this.data.coordinateMode !== 'relative') {
+      this.data.coordinateMode = 'absolute';
+      this.needsCoordinateMigration = true;
     }
   }
 }

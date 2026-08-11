@@ -17,6 +17,7 @@ import { SettingsService } from 'services/settings';
 import { OutputSettingsService } from 'services/settings/output';
 import { Subject } from 'rxjs';
 import { horizontalDisplayData } from './default-settings-data';
+import { applyBaseResolutionSteps, IBaseResolutions } from './base-resolutions';
 
 /**
  * Display Types
@@ -478,6 +479,75 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
 
     // also update the persisted settings
     this.dualOutputService.updateVideoSettings(newVideoSettings, display);
+  }
+
+  /**
+   * Immediately resets a video context and synchronizes its state and persisted settings.
+   *
+   * Unlike the normal form-update path, this method is intentionally not debounced. Scene
+   * collection migration and base-canvas resize transactions must know that libobs finished
+   * rebasing scene items before they read the transformed values back.
+   */
+  applySettingsImmediately(
+    patch: Partial<IVideoInfo>,
+    display: TDisplayType = 'horizontal',
+  ): IVideoInfo {
+    const context = this.contexts[display];
+    if (!context) throw new Error(`Cannot reset missing ${display} video context`);
+
+    const settings = { ...this.state[display], ...patch };
+    const previousSettings = { ...this.state[display] };
+
+    // Reset libobs first. Do not advertise settings in Vuex/persistence that the native
+    // context rejected. If the legacy mirror fails, restore the context before returning.
+    try {
+      context.video = settings;
+      context.legacySettings = settings;
+    } catch (error: unknown) {
+      try {
+        context.video = previousSettings;
+        context.legacySettings = previousSettings;
+      } catch (rollbackError: unknown) {
+        console.error(`Failed to roll back ${display} video context`, rollbackError);
+      }
+      throw error;
+    }
+
+    this.SET_VIDEO_CONTEXT(display, settings);
+    this.dualOutputService.updateVideoSettings(settings, display);
+    this.settingsService.refreshVideoSettings();
+    return settings;
+  }
+
+  /**
+   * Restores the per-display canvases saved with a scene collection before its items are
+   * recreated. Each display is handled independently; a missing context receives the baseline
+   * in persisted settings so a later context establishment does not lose it.
+   */
+  applyBaseResolutionBaseline(resolutions: IBaseResolutions) {
+    const steps = displays.map(display => {
+      const snapshot = {
+        ...(this.state[display] ?? this.dualOutputService.views.videoSettings[display]),
+      };
+      return {
+        display,
+        snapshot,
+        target: { ...snapshot, ...resolutions[display] },
+        apply: (settings: IVideoInfo) => {
+          if (this.contexts[display]) {
+            this.applySettingsImmediately(settings, display);
+          } else {
+            // A disabled/unavailable vertical context is established later from these settings.
+            // Preserve its independent collection baseline instead of borrowing horizontal values.
+            this.dualOutputService.updateVideoSettings(settings, display);
+          }
+        },
+      };
+    });
+
+    applyBaseResolutionSteps(steps, (display, rollbackError) => {
+      console.error(`Failed to restore ${display} collection video baseline`, rollbackError);
+    });
   }
 
   /**

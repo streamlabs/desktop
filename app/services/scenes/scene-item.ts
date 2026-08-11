@@ -29,6 +29,7 @@ import { TSceneNodeType } from './scenes';
 import { ServiceHelper, ExecuteInWorkerProcess } from 'services/core';
 import { assertIsDefined } from '../../util/properties-type-guards';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2';
+import { normalizeEditedCrop, normalizeLoadedCrop } from './scene-item-crop';
 
 /**
  * A SceneItem is a source that contains
@@ -184,12 +185,10 @@ export class SceneItem extends SceneItemNode {
 
       if (changedTransform.crop) {
         const crop = newSettings.transform.crop;
-        const cropModel: ICrop = {
-          top: Math.round(crop.top),
-          right: Math.round(crop.right),
-          bottom: Math.round(crop.bottom),
-          left: Math.round(crop.left),
-        };
+        const display = newSettings.display ?? this.display ?? 'horizontal';
+        const referenceSize = this.videoSettingsService.baseResolutions[display];
+        assertIsDefined(referenceSize);
+        const cropModel = normalizeEditedCrop(crop, this.type === 'scene', referenceSize);
         changed.transform.crop = cropModel;
         obsSceneItem.crop = cropModel;
       }
@@ -294,7 +293,6 @@ export class SceneItem extends SceneItemNode {
   loadItemAttributes(customSceneItem: ISceneItemInfo) {
     const visible = customSceneItem.visible;
     const position = { x: customSceneItem.x, y: customSceneItem.y };
-    const crop = customSceneItem.crop;
     const display = customSceneItem?.display ?? this?.display ?? 'horizontal';
 
     // guarantee vertical context exists to prevent null errors
@@ -302,9 +300,15 @@ export class SceneItem extends SceneItemNode {
       this.videoSettingsService.validateVideoContext('vertical');
     }
     const context = this.videoSettingsService.contexts[display];
+    const referenceSize = this.videoSettingsService.baseResolutions[display];
+    assertIsDefined(referenceSize);
+    const crop = normalizeLoadedCrop(customSceneItem.crop, this.type === 'scene', referenceSize);
 
     const obsSceneItem = this.getObsSceneItem();
+    // obs.addItems creates items against the default video context. Reassign the saved display
+    // first, then reapply crop so legacy scene-source crops acquire the matching canvas anchor.
     obsSceneItem.video = context as obs.IVideo;
+    obsSceneItem.crop = crop;
 
     this.UPDATE({
       visible,
@@ -325,6 +329,40 @@ export class SceneItem extends SceneItemNode {
       output: context,
       position: obsSceneItem.position,
     });
+  }
+
+  /**
+   * Refreshes the renderer cache from libobs without writing stale absolute values back to it.
+   * This is required after a relative-coordinate canvas reset: libobs owns the rebase, while
+   * Desktop's Vuex model still contains values from the previous canvas until queried again.
+   */
+  @ExecuteInWorkerProcess()
+  refreshTransformFromObs() {
+    const obsSceneItem = this.getObsSceneItem();
+    const position = { ...obsSceneItem.position };
+    const scale = { ...obsSceneItem.scale };
+    const crop = { ...obsSceneItem.crop };
+
+    this.UPDATE({
+      sceneItemId: this.sceneItemId,
+      transform: {
+        position,
+        scale,
+        crop,
+        rotation: obsSceneItem.rotation,
+      },
+      position,
+    });
+
+    if (this.type === 'scene') {
+      const baseResolution = this.videoSettingsService.baseResolutions[
+        this.display ?? 'horizontal'
+      ];
+      this.baseWidth = baseResolution.baseWidth;
+      this.baseHeight = baseResolution.baseHeight;
+    }
+
+    this.scenesService.itemUpdated.next(this.getModel());
   }
 
   setTransform(transform: IPartialTransform) {

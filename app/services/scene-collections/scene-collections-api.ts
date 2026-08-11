@@ -1,5 +1,7 @@
 import { Observable } from 'rxjs';
 import { OS } from 'util/operating-systems';
+import { IVideoInfo } from '../../../obs-api';
+import { TDisplayType } from 'services/settings-v2/video';
 
 export interface ISceneCollectionsServiceApi {
   /**
@@ -13,6 +15,11 @@ export interface ISceneCollectionsServiceApi {
    * @param options an optional options object
    */
   create(options?: ISceneCollectionCreateOptions): Promise<ISceneCollectionsManifestEntry>;
+
+  /**
+   * Atomically changes a base canvas and persists the rebased relative scene-item transforms.
+   */
+  resizeBaseCanvas(settings: Partial<IVideoInfo>, display?: TDisplayType): Promise<void>;
 
   /**
    * Fetch a list of all scene collections and information

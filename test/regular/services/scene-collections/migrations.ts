@@ -49,4 +49,21 @@ test('Loading an old scene collection', async t => {
   t.true(await sceneExisting('Intermission'));
   t.true(await sceneExisting('Be Right Back'));
   t.true(await sceneExisting('Stream Ending Soon'));
+
+  const collectionPath = path.join(
+    t.context.cacheDir,
+    'slobs-client',
+    'SceneCollections',
+    '4e467470-923c-43a3-90d2-2be39c8c34ee.json',
+  );
+  const migrated = JSON.parse(fs.readFileSync(collectionPath).toString());
+  t.is(migrated.schemaVersion, 5);
+  t.is(migrated.coordinateMode, 'relative');
+  t.true(migrated.baseResolutions.horizontal.baseWidth > 0);
+  t.true(migrated.baseResolutions.vertical.baseHeight > 0);
+
+  const absoluteBackupPath = `${collectionPath}.absolute-v4`;
+  t.true(fs.existsSync(absoluteBackupPath));
+  const absoluteBackup = JSON.parse(fs.readFileSync(absoluteBackupPath).toString());
+  t.is(absoluteBackup.schemaVersion, 1);
 });

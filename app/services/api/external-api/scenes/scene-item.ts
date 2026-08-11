@@ -264,13 +264,24 @@ export function getExternalSceneItemModel(
   name: string,
 ): ISceneItemModel {
   const resourceId = `SceneItem["${internalModel.sceneId}", "${internalModel.sceneItemId}", "${internalModel.sourceId}"]`;
+  const { crop } = internalModel.transform;
   return {
     ...getExternalNodeModel(internalModel),
     sourceId: internalModel.sourceId,
     sceneItemId: internalModel.sceneItemId,
     name,
     resourceId,
-    transform: internalModel.transform,
+    transform: {
+      ...internalModel.transform,
+      // referenceWidth/referenceHeight are internal collection-migration metadata. Keep the
+      // longstanding public scene API crop contract limited to source-pixel crop strips.
+      crop: {
+        top: crop.top,
+        right: crop.right,
+        bottom: crop.bottom,
+        left: crop.left,
+      },
+    },
     visible: internalModel.visible,
     locked: internalModel.locked,
     streamVisible: internalModel.streamVisible,

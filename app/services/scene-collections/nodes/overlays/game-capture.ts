@@ -38,7 +38,7 @@ export class GameCaptureNode extends Node<ISchema, IContext> {
       context.sceneItem.display ?? 'horizontal'
     ].baseWidth;
     const height = this.videoSettingsService.baseResolutions[
-      context.sceneItem.display ?? 'vertical'
+      context.sceneItem.display ?? 'horizontal'
     ].baseHeight;
 
     this.data = {

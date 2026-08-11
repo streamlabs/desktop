@@ -43,8 +43,19 @@ import * as remote from '@electron/remote';
 import { GuestCamNode } from './nodes/guest-cam';
 import { DualOutputService } from 'services/dual-output';
 import { NodeMapNode } from './nodes/node-map';
-import { VideoSettingsService } from 'services/settings-v2';
+import { TDisplayType, VideoSettingsService } from 'services/settings-v2';
 import { WidgetsService, WidgetType } from 'services/widgets';
+import { FileManagerService } from 'services/file-manager';
+import { ESceneCoordinateMode, IVideoInfo, SceneFactory } from '../../../obs-api';
+import {
+  CoordinateMigrationPersistenceError,
+  persistCoordinateMigration,
+  shouldAttemptCollectionRecovery,
+} from './coordinate-migration';
+import {
+  AutoSavePauseCoordinator,
+  SceneCollectionOperationCoordinator,
+} from './operation-coordinator';
 
 const uuid = window['require']('uuid/v4');
 
@@ -94,6 +105,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   @Inject() streamingService: StreamingService;
   @Inject() dualOutputService: DualOutputService;
   @Inject() videoSettingsService: VideoSettingsService;
+  @Inject() private fileManagerService: FileManagerService;
   @Inject() private defaultHardwareService: DefaultHardwareService;
   @Inject() private widgetsService: WidgetsService;
 
@@ -128,6 +140,9 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * true if the scene-collections sync in progress
    */
   private syncPending = false;
+  private collectionOperations = new SceneCollectionOperationCoordinator();
+  private autoSavePauses = new AutoSavePauseCoordinator();
+  private legacyAutoSavePauseTokens: number[] = [];
   scenesServices: any;
 
   /**
@@ -140,6 +155,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * initialization.
    */
   async initialize() {
+    this.useRelativeSceneCoordinates();
     await this.stateService.loadManifestFile();
     await this.migrateOS();
     await this.safeSync();
@@ -177,7 +193,11 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * Persists the current collection and manifest before shutdown starts destroying OBS state.
    * FileManagerService.flushAll() must be awaited by the caller to make these queued writes durable.
    */
-  async persistForShutdown() {
+  persistForShutdown() {
+    return this.collectionOperations.run(() => this.persistForShutdownImmediately());
+  }
+
+  private async persistForShutdownImmediately() {
     await this.disableAutoSave();
     await this.save();
     this.stateService.flushManifestFile();
@@ -187,9 +207,12 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * Generally called on application shutdown after persistForShutdown has completed.
    * Cloud synchronization is intentionally left to startup so network stalls cannot block exit.
    */
-  async deinitialize({ persist = true }: { persist?: boolean } = {}) {
-    if (persist) await this.persistForShutdown();
-    await this.deloadCurrentApplicationState({ save: false });
+  deinitialize({ persist = true }: { persist?: boolean } = {}) {
+    return this.collectionOperations.run(async () => {
+      if (persist) await this.persistForShutdownImmediately();
+      else await this.disableAutoSave();
+      await this.deloadCurrentApplicationState({ save: false });
+    });
   }
 
   /**
@@ -203,6 +226,100 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   }
 
   /**
+   * Changes a base canvas as one scene-collection transaction. Relative transforms are rebased
+   * by libobs; Desktop then invalidates the native cache and refreshes every affected item before
+   * persisting the new collection. Output-only changes intentionally continue through the normal
+   * VideoSettingsService path.
+   */
+  resizeBaseCanvas(
+    settings: Partial<IVideoInfo>,
+    display: TDisplayType = 'horizontal',
+  ): Promise<void> {
+    return this.collectionOperations.run(() => this.performBaseCanvasResize(settings, display));
+  }
+
+  private async performBaseCanvasResize(settings: Partial<IVideoInfo>, display: TDisplayType) {
+    const { baseWidth, baseHeight } = settings;
+    if (
+      !Number.isFinite(baseWidth) ||
+      !Number.isFinite(baseHeight) ||
+      baseWidth! <= 0 ||
+      baseHeight! <= 0
+    ) {
+      throw new Error('Base canvas dimensions must be positive finite numbers');
+    }
+    if (this.streamingService.views.isStreaming || this.streamingService.views.isRecording) {
+      throw new Error('The base canvas cannot be changed while streaming or recording');
+    }
+    if (!this.collectionLoaded || !this.activeCollection) {
+      throw new Error('A scene collection must be loaded before changing its base canvas');
+    }
+
+    const autoSavePause = await this.acquireAutoSavePause();
+    const collectionId = this.activeCollection.id;
+    const previousSettings = { ...this.videoSettingsService.state[display] };
+    let originalData: string | undefined;
+    let resetAttempted = false;
+    let rollbackSucceeded = true;
+
+    try {
+      // Capture the latest editor state, not merely the last periodic autosave.
+      await this.saveCurrentApplicationStateAs(collectionId);
+      originalData = this.stateService.readCollectionFile(collectionId);
+      this.stateService.writeDataToCollectionFile(collectionId, originalData, true);
+      await this.fileManagerService.flushAll();
+
+      this.useRelativeSceneCoordinates();
+      resetAttempted = true;
+      this.videoSettingsService.applySettingsImmediately(settings, display);
+      SceneFactory.invalidateItemTransformCache();
+      this.scenesService.refreshSceneItemTransforms(display);
+
+      await this.saveCurrentApplicationStateAs(collectionId);
+      await this.fileManagerService.flushAll();
+      this.stateService.SET_MODIFIED(collectionId, new Date().toISOString());
+    } catch (error: unknown) {
+      const rollbackErrors: unknown[] = [];
+      if (resetAttempted) {
+        try {
+          this.videoSettingsService.applySettingsImmediately(previousSettings, display);
+          SceneFactory.invalidateItemTransformCache();
+          this.scenesService.refreshSceneItemTransforms(display);
+        } catch (rollbackError: unknown) {
+          rollbackErrors.push(rollbackError);
+          console.error('Failed to roll back base canvas and scene-item transforms', rollbackError);
+        }
+      }
+
+      if (originalData !== undefined) {
+        this.stateService.writeDataToCollectionFile(collectionId, originalData);
+        try {
+          await this.fileManagerService.flushAll();
+        } catch (rollbackError: unknown) {
+          console.error(
+            'Failed to restore scene collection after base canvas reset',
+            rollbackError,
+          );
+          rollbackErrors.push(rollbackError);
+        }
+      }
+
+      if (rollbackErrors.length) {
+        rollbackSucceeded = false;
+        this.collectionLoaded = false;
+        const rollbackFailure = new Error(
+          `Base canvas resize failed and ${rollbackErrors.length} rollback step(s) also failed`,
+        );
+        console.error('Base canvas transaction is no longer safe to autosave', error);
+        throw rollbackFailure;
+      }
+      throw error;
+    } finally {
+      this.releaseAutoSavePause(autoSavePause, rollbackSucceeded);
+    }
+  }
+
+  /**
    * This is a safe method that will load the requested scene collection.
    * It is responsible for cleaning up and saving any existing config,
    * setting the app in the apropriate loading state, and updating the state
@@ -211,8 +328,13 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * @param shouldAttemptRecovery whether a new copy of the file should
    * be downloaded from the server if loading fails.
    */
-  @RunInLoadingMode()
-  async load(id: string, shouldAttemptRecovery = true): Promise<void> {
+  load(id: string, shouldAttemptRecovery = true): Promise<void> {
+    return this.collectionOperations.run(() =>
+      this.appService.runInLoadingMode(() => this.loadImmediately(id, shouldAttemptRecovery)),
+    );
+  }
+
+  private async loadImmediately(id: string, shouldAttemptRecovery = true): Promise<void> {
     await this.deloadCurrentApplicationState();
     try {
       await this.setActiveCollection(id);
@@ -221,6 +343,8 @@ export class SceneCollectionsService extends Service implements ISceneCollection
       this.collectionSwitched.next(this.getCollection(id)!);
     } catch (e: unknown) {
       console.error('Error loading collection!', e);
+
+      if (!shouldAttemptCollectionRecovery(e)) throw e;
 
       if (shouldAttemptRecovery) {
         await this.attemptRecovery(id);
@@ -237,8 +361,15 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * @param options An optional object containing a setup function
    * @see {ISceneCollectionCreateOptions}
    */
-  @RunInLoadingMode()
-  async create(
+  create(
+    options: ISceneCollectionInternalCreateOptions = {},
+  ): Promise<ISceneCollectionsManifestEntry> {
+    return this.collectionOperations.run(() =>
+      this.appService.runInLoadingMode(() => this.createImmediately(options)),
+    );
+  }
+
+  private async createImmediately(
     options: ISceneCollectionInternalCreateOptions = {},
   ): Promise<ISceneCollectionsManifestEntry> {
     await this.deloadCurrentApplicationState();
@@ -267,7 +398,11 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * will delete the current collection.
    * @param id the id of the collection to delete
    */
-  async delete(id?: string): Promise<void> {
+  delete(id?: string): Promise<void> {
+    return this.collectionOperations.run(() => this.deleteImmediately(id));
+  }
+
+  private async deleteImmediately(id?: string): Promise<void> {
     const collId = id ?? this.activeCollection?.id;
 
     if (collId == null) return;
@@ -279,9 +414,9 @@ export class SceneCollectionsService extends Service implements ISceneCollection
         await this.removeCollection(collId);
 
         if (this.loadableCollections.length > 0) {
-          await this.load(this.loadableCollections[0].id);
+          await this.loadImmediately(this.loadableCollections[0].id);
         } else {
-          await this.create();
+          await this.createImmediately();
         }
       });
     } else {
@@ -336,27 +471,34 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * @param name the name of the new scene collection
    * @param id An optional ID, if omitted the active collection ID is used
    */
-  async duplicate(name: string, id?: string): Promise<string | undefined> {
+  duplicate(name: string, id?: string): Promise<string | undefined> {
+    return this.collectionOperations.run(() => this.duplicateImmediately(name, id));
+  }
+
+  private async duplicateImmediately(name: string, id?: string): Promise<string | undefined> {
     const oldId = id ?? this.activeCollection?.id;
     if (oldId == null) return;
 
     const oldColl = this.getCollection(oldId);
     if (!oldColl) return;
 
-    await this.disableAutoSave();
+    const autoSavePause = await this.acquireAutoSavePause();
 
-    const newId = uuid();
-    const duplicatedName = $t('Copy of %{collectionName}', { collectionName: name });
-    const collection = await this.insertCollection(
-      newId,
-      duplicatedName,
-      oldColl.operatingSystem,
-      false,
-      oldId,
-    );
-    this.enableAutoSave();
+    try {
+      const newId = uuid();
+      const duplicatedName = $t('Copy of %{collectionName}', { collectionName: name });
+      const collection = await this.insertCollection(
+        newId,
+        duplicatedName,
+        oldColl.operatingSystem,
+        false,
+        oldId,
+      );
 
-    return collection.id;
+      return collection.id;
+    } finally {
+      this.releaseAutoSavePause(autoSavePause);
+    }
   }
 
   /**
@@ -365,9 +507,19 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * @params Boolean for if the vertical sources should be assigned to the horizontal display
    * @returns String filepath for new collection
    */
-  @RunInLoadingMode()
-  async convertDualOutputCollection(
+  convertDualOutputCollection(
     assignToHorizontal: boolean = false,
+    collectionId?: string,
+  ): Promise<string | undefined> {
+    return this.collectionOperations.run(() =>
+      this.appService.runInLoadingMode(() =>
+        this.convertDualOutputCollectionImmediately(assignToHorizontal, collectionId),
+      ),
+    );
+  }
+
+  private async convertDualOutputCollectionImmediately(
+    assignToHorizontal: boolean,
     collectionId?: string,
   ): Promise<string | undefined> {
     const collection = collectionId ? this.getCollection(collectionId) : this.activeCollection;
@@ -377,11 +529,11 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     this.isConvertingCollection = true;
 
     try {
-      const newCollectionId = await this.duplicate(name, collectionId);
+      const newCollectionId = await this.duplicateImmediately(name, collectionId);
 
       if (!newCollectionId) return;
 
-      await this.load(newCollectionId);
+      await this.loadImmediately(newCollectionId);
 
       // Disable dual output mode after loading the duplicate to prevent the converted collection
       // from being saved as a dual output collection.
@@ -405,8 +557,16 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * @param name the name of the overlay
    * @param progressCallback a callback that receives progress of the download
    */
-  @RunInLoadingMode({ hideStyleBlockers: false })
-  async installOverlay(url: string, name: string) {
+  installOverlay(url: string, name: string) {
+    return this.collectionOperations.run(() =>
+      this.appService.runInLoadingMode(
+        () => this.installOverlayImmediately(url, name),
+        { hideStyleBlockers: false },
+      ),
+    );
+  }
+
+  private async installOverlayImmediately(url: string, name: string) {
     const pathName = await this.overlaysPersistenceService.downloadOverlay(
       url,
       (progress: IDownloadProgress) => {
@@ -414,7 +574,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
       },
     );
     const collectionName = this.suggestName(name);
-    await this.loadOverlay(pathName, collectionName);
+    await this.loadOverlayImmediately(pathName, collectionName);
 
     // repair scene collection in the case if it has any issues
     this.scenesService.repair();
@@ -425,8 +585,16 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * @param filePath the location of the overlay file
    * @param name the name of the overlay
    */
-  @RunInLoadingMode()
-  async loadOverlay(filePath: string, name: string) {
+  loadOverlay(filePath: string, name: string) {
+    return this.collectionOperations.run(() =>
+      this.appService.runInLoadingMode(
+        () => this.loadOverlayImmediately(filePath, name),
+        { hideStyleBlockers: false },
+      ),
+    );
+  }
+
+  private async loadOverlayImmediately(filePath: string, name: string) {
     // Save the current audio devices for Desktop Audio and Mic so when we
     // install a new overlay they're preserved.
     // TODO: this only works if the user sources have the default names
@@ -576,11 +744,12 @@ export class SceneCollectionsService extends Service implements ISceneCollection
 
     if (exists) {
       let data: string;
+      let root: RootNode;
 
       try {
         data = this.stateService.readCollectionFile(id);
         if (!data) throw new Error('Got blank data from collection file');
-        await this.loadDataIntoApplicationState(data);
+        root = await this.loadDataIntoApplicationState(data);
       } catch (e: unknown) {
         console.error(
           'Error while loading collection, restoring backup:',
@@ -595,7 +764,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
            *  and methods being invoked (like `updateRegisteredHotkeys`) as
            *  part of the loading process.
            */
-          this.deloadPartialApplicationState();
+          await this.deloadPartialApplicationState();
 
           // Check for a backup and load it
           const backupExists = await this.stateService.collectionFileExists(id, true);
@@ -604,7 +773,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
 
           data = this.stateService.readCollectionFile(id, true);
           if (!data) throw new Error('Got blank data from backup collection file');
-          await this.loadDataIntoApplicationState(data);
+          root = await this.loadDataIntoApplicationState(data);
         } catch (backupError: unknown) {
           console.error(
             'Error while loading backup collection:',
@@ -614,14 +783,14 @@ export class SceneCollectionsService extends Service implements ISceneCollection
           // If there is an error loading the backup, create an empty scene collection
           // otherwise the app will fail to load
           await this.handleCollectionLoadError();
-          await this.create({ auto: true });
+          await this.createImmediately({ auto: true });
           return; // Prevent further execution by returning early
         }
       }
 
       // create an empty scene collection if failed to load both the collection and the backup
       if (!data) {
-        await this.create({ auto: true });
+        await this.createImmediately({ auto: true });
         return;
       }
 
@@ -630,12 +799,18 @@ export class SceneCollectionsService extends Service implements ISceneCollection
         console.error('Scene collection was loaded but there were no scenes.');
         this.setupEmptyCollection();
         this.collectionLoaded = true;
+        if (root!.requiresCoordinateMigration) {
+          await this.persistRelativeCoordinateMigration(id, data);
+        }
         return; // Return early to prevent writing a backup for an empty scene collection
       }
 
       // Everything was successful, write a backup
       this.stateService.writeDataToCollectionFile(id, data, true);
       this.collectionLoaded = true;
+      if (root!.requiresCoordinateMigration) {
+        await this.persistRelativeCoordinateMigration(id, data);
+      }
     } else {
       try {
         await this.attemptRecovery(id);
@@ -669,7 +844,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * Parses and loads the given JSON string into application state
    * @param data Scene collection JSON data
    */
-  private async loadDataIntoApplicationState(data: string) {
+  private async loadDataIntoApplicationState(data: string): Promise<RootNode> {
     const root: RootNode = parse(data, NODE_TYPES);
 
     // Since scene collections are already segmented by OS,
@@ -705,6 +880,42 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     if (this.newUserFirstLogin) {
       this.newUserFirstLogin = false;
     }
+
+    return root;
+  }
+
+  /**
+   * Persists the first successful absolute-to-relative migration. The original absolute file
+   * is retained separately from the rolling backup, and a failed write restores the original
+   * main file so the migration can be retried safely on the next launch.
+   */
+  private async persistRelativeCoordinateMigration(id: string, originalData: string) {
+    try {
+      await persistCoordinateMigration({
+        backupMatches: () =>
+          this.stateService.coordinateMigrationBackupMatches(id, originalData),
+        writeBackup: () => this.stateService.writeCoordinateMigrationBackup(id, originalData),
+        writeMigrated: () => this.saveCurrentApplicationStateAs(id),
+        restoreOriginal: () => this.stateService.writeDataToCollectionFile(id, originalData),
+        flush: () => this.fileManagerService.flushAll(),
+        onRollbackError: rollbackError =>
+          console.error(
+            'Failed to restore scene collection after migration save failure',
+            rollbackError,
+          ),
+      });
+      this.stateService.SET_MODIFIED(id, new Date().toISOString());
+    } catch (error: unknown) {
+      console.error('Failed to persist relative-coordinate scene collection migration', error);
+      // Prevent periodic or shutdown autosave from replacing the restored legacy file without
+      // its proven one-time backup. The next load will retry migration from that original file.
+      this.collectionLoaded = false;
+      throw new CoordinateMigrationPersistenceError(error);
+    }
+  }
+
+  private useRelativeSceneCoordinates() {
+    SceneFactory.coordinateMode = ESceneCoordinateMode.Relative;
   }
 
   async showUnsupportedSourcesDialog(e?: Error | unknown) {
@@ -756,7 +967,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
         const newCollection = this.collections.find(coll => coll.serverId === collection.serverId);
 
         if (newCollection) {
-          await this.load(newCollection.id, false);
+          await this.loadImmediately(newCollection.id, false);
           return;
         }
       }
@@ -773,7 +984,6 @@ export class SceneCollectionsService extends Service implements ISceneCollection
 
     this.collectionWillSwitch.next();
 
-    await this.disableAutoSave();
     if (save) await this.save();
 
     let deloadError: unknown;
@@ -819,8 +1029,6 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    */
   private async deloadPartialApplicationState() {
     this.tcpServerService.stopRequestsHandling();
-
-    await this.disableAutoSave();
 
     this.collectionWillSwitch.next();
 
@@ -955,7 +1163,22 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   private autoSavePromise: Promise<void>;
 
   enableAutoSave() {
-    if (this.autoSaveInterval) return;
+    const pauseToken = this.legacyAutoSavePauseTokens.pop();
+    if (pauseToken !== undefined) {
+      this.releaseAutoSavePause(pauseToken, true, true);
+      return;
+    }
+    if (this.autoSavePauses.isPaused || !this.collectionLoaded) return;
+    this.startAutoSaveInterval();
+  }
+
+  async disableAutoSave() {
+    const pauseToken = await this.acquireAutoSavePause();
+    this.legacyAutoSavePauseTokens.push(pauseToken);
+  }
+
+  private startAutoSaveInterval() {
+    if (this.autoSaveInterval != null) return;
     this.autoSaveInterval = window.setInterval(async () => {
       if (this.streamingService.views.streamingStatus === EStreamingState.Live) return;
 
@@ -965,12 +1188,24 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     }, 60 * 1000);
   }
 
-  async disableAutoSave() {
-    if (this.autoSaveInterval) clearInterval(this.autoSaveInterval);
+  private async acquireAutoSavePause(): Promise<number> {
+    const pauseToken = this.autoSavePauses.acquire(this.autoSaveInterval != null);
+    if (this.autoSaveInterval != null) clearInterval(this.autoSaveInterval);
     this.autoSaveInterval = null;
 
     // Wait for the current saving process to finish
     if (this.autoSavePromise) await this.autoSavePromise;
+    return pauseToken;
+  }
+
+  private releaseAutoSavePause(
+    pauseToken: number,
+    allowResume = true,
+    forceEnable = false,
+  ) {
+    const result = this.autoSavePauses.release(pauseToken, allowResume);
+    if (!result.becameUnpaused || !result.resumeAllowed || !this.collectionLoaded) return;
+    if (forceEnable || result.shouldResume) this.startAutoSaveInterval();
   }
 
   private async setActiveCollection(id: string) {

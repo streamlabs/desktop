@@ -59,6 +59,7 @@ class VideoSettingsModule {
   service = Services.VideoSettingsService;
   userService = Services.UserService;
   dualOutputService = Services.DualOutputService;
+  sceneCollectionsService = Services.SceneCollectionsService;
   streamingService = Services.StreamingService;
   tiktokService = Services.TikTokService;
 
@@ -342,7 +343,20 @@ class VideoSettingsModule {
           settings[`${otherPrefix}Height`] = Number(height);
         }
       }
-      this.service.actions.setSettings(settings, display);
+      if (key === 'baseRes') {
+        this.sceneCollectionsService.actions.return
+          .resizeBaseCanvas(settings, display)
+          .catch((error: unknown) => {
+            console.error('Failed to resize base canvas', error);
+            this.setDisplay(display);
+            message.error({
+              content: $t('Unable to change the Base (Canvas) Resolution.'),
+            });
+          });
+      } else {
+        // Output resolution does not change scene coordinates and stays on the normal path.
+        this.service.actions.setSettings(settings, display);
+      }
     }
   }
 

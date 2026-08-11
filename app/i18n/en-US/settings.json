@@ -50,6 +50,7 @@
   "Custom Muxer Settings": "Custom Muxer Settings",
   "Enable Replay Buffer": "Enable Replay Buffer",
   "Base (Canvas) Resolution": "Base (Canvas) Resolution",
+  "Unable to change the Base (Canvas) Resolution.": "Unable to change the Base (Canvas) Resolution.",
   "Output (Scaled) Resolution": "Output (Scaled) Resolution",
   "Downscale Filter": "Downscale Filter",
   "Bilinear (Fastest, but blurry if scaling)": "Bilinear (Fastest, but blurry if scaling)",

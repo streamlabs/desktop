@@ -2,6 +2,7 @@ import { AudioService } from 'services/audio';
 import { Inject } from 'services/core/injector';
 import { Scene, SceneItem, ScenesService, TSceneNode } from 'services/scenes';
 import { TDisplayType } from 'services/settings-v2';
+import { resolveBaseResolutionDisplay } from 'services/settings-v2/base-resolutions';
 import { VideoSettingsService } from 'services/settings-v2/video';
 import { SourceFiltersService, TSourceFilterType } from 'services/source-filters';
 import { SourcesService, TSourceType } from 'services/sources';
@@ -49,6 +50,9 @@ interface IItemSchema {
 
   scaleX: number;
   scaleY: number;
+  /** Per-display canvas on which the normalized transform was authored. */
+  baseWidth?: number;
+  baseHeight?: number;
 
   crop?: ICrop;
   rotation?: number;
@@ -104,18 +108,22 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
       };
     }
 
+    const display = sceneNode?.display ?? 'horizontal';
+    const baseResolution = this.videoSettingsService.baseResolutions[display];
     const details: Partial<IItemSchema> = {
       id: sceneNode.id,
       sceneNodeType: 'item',
       name: sceneNode.name,
-      x: sceneNode.transform.position.x / this.videoSettingsService.baseWidth,
-      y: sceneNode.transform.position.y / this.videoSettingsService.baseHeight,
-      scaleX: sceneNode.transform.scale.x / this.videoSettingsService.baseWidth,
-      scaleY: sceneNode.transform.scale.y / this.videoSettingsService.baseHeight,
+      x: sceneNode.transform.position.x / baseResolution.baseWidth,
+      y: sceneNode.transform.position.y / baseResolution.baseHeight,
+      scaleX: sceneNode.transform.scale.x / baseResolution.baseWidth,
+      scaleY: sceneNode.transform.scale.y / baseResolution.baseHeight,
+      baseWidth: baseResolution.baseWidth,
+      baseHeight: baseResolution.baseHeight,
       crop: sceneNode.transform.crop,
       rotation: sceneNode.transform.rotation,
       visible: sceneNode.visible,
-      display: sceneNode?.display,
+      display,
       filters: sceneNode.getObsInput().filters.map(filter => {
         filter.save();
 
@@ -210,7 +218,9 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
     let sceneItem: SceneItem;
 
     const id = obj.id;
-    const display = obj.display;
+    // Overlay files created before per-display persistence belong to the main canvas.
+    // Normalize once so every source-specific base-resolution lookup is safe.
+    const display = resolveBaseResolutionDisplay(obj.display);
 
     if (obj.sceneNodeType === 'folder') {
       context.scene.createFolder(obj.name, { id, display });
@@ -279,8 +289,9 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
 
         // Adjust scales by the ratio of the exported base resolution to
         // the users current base resolution
-        obj.scaleX *= obj.content.data.width / this.videoSettingsService.baseWidth;
-        obj.scaleY *= obj.content.data.height / this.videoSettingsService.baseHeight;
+        const baseResolution = this.videoSettingsService.baseResolutions[display];
+        obj.scaleX *= (obj.baseWidth ?? obj.content.data.width) / baseResolution.baseWidth;
+        obj.scaleY *= (obj.baseHeight ?? obj.content.data.height) / baseResolution.baseHeight;
       } else {
         // We will not load this source at all on mac
         return;
@@ -342,8 +353,9 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
 
       // Adjust scales by the ratio of the exported base resolution to
       // the users current base resolution
-      obj.scaleX *= obj.content.data.width / this.videoSettingsService.baseWidth;
-      obj.scaleY *= obj.content.data.height / this.videoSettingsService.baseHeight;
+      const baseResolution = this.videoSettingsService.baseResolutions[display];
+      obj.scaleX *= (obj.baseWidth ?? obj.content.data.width) / baseResolution.baseWidth;
+      obj.scaleY *= (obj.baseHeight ?? obj.content.data.height) / baseResolution.baseHeight;
     } else if (obj.content instanceof SmartBrowserNode) {
       sceneItem = context.scene.createAndAddSource(
         obj.name,
@@ -388,11 +400,12 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
   adjustTransform(item: SceneItem, obj: IItemSchema) {
     // special handling for game capture to show same dimensions on the vertical display as the horizontal
 
+    const baseResolution = this.videoSettingsService.baseResolutions[item.display ?? 'horizontal'];
     if (item.type === 'game_capture') {
       item.setTransform({
         position: {
-          x: obj.x * this.videoSettingsService.baseWidth,
-          y: obj.y * this.videoSettingsService.baseHeight,
+          x: obj.x * baseResolution.baseWidth,
+          y: obj.y * baseResolution.baseHeight,
         },
         crop: obj.crop,
         rotation: obj.rotation,
@@ -400,12 +413,12 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
     } else {
       item.setTransform({
         position: {
-          x: obj.x * this.videoSettingsService.baseWidth,
-          y: obj.y * this.videoSettingsService.baseHeight,
+          x: obj.x * baseResolution.baseWidth,
+          y: obj.y * baseResolution.baseHeight,
         },
         scale: {
-          x: obj.scaleX * this.videoSettingsService.baseWidth,
-          y: obj.scaleY * this.videoSettingsService.baseHeight,
+          x: obj.scaleX * baseResolution.baseWidth,
+          y: obj.scaleY * baseResolution.baseHeight,
         },
         crop: obj.crop,
         rotation: obj.rotation,
