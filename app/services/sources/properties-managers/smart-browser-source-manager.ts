@@ -1,7 +1,4 @@
 import { PropertiesManager } from './properties-manager';
-import { Inject } from 'services/core/injector';
-import { WebsocketService } from 'services/websocket';
-import { Subscription } from 'rxjs';
 import { TObsFormData } from 'components/obs/inputs/ObsInput';
 
 /**
@@ -43,9 +40,6 @@ function matchesHostnamePattern(hostname: string): boolean {
 }
 
 export class SmartBrowserSourceManager extends PropertiesManager {
-  @Inject() private websocketService: WebsocketService;
-  private socketSub!: Subscription;
-
   normalizeUrl(formUrl?: string): string | undefined {
     const hasSourceUrl = this.obsSource.settings.url && this.obsSource.settings.url !== '';
     const url = hasSourceUrl ? this.obsSource.settings.url : formUrl;
@@ -75,14 +69,6 @@ export class SmartBrowserSourceManager extends PropertiesManager {
   }
 
   init() {
-    // todo: switch over to consume from ReactiveDataService
-    this.socketSub = this.websocketService.socketEvent.subscribe(e => {
-      // send all visionEvents and userStateUpdated to smart sources
-      if (['visionEvent', 'userStateUpdated'].includes(e.type)) {
-        this.obsSource.sendMessage({ message: JSON.stringify(e) });
-      }
-    });
-
     this.normalizeUrl();
   }
 
@@ -100,9 +86,5 @@ export class SmartBrowserSourceManager extends PropertiesManager {
       : properties;
 
     super.setPropertiesFormData(updatedProperties);
-  }
-
-  destroy() {
-    this.socketSub?.unsubscribe();
   }
 }

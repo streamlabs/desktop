@@ -162,8 +162,10 @@ test('Streaming to Twitch unlisted category', async t => {
   t.pass();
 });
 
-// This test has been skipped because of an error likely caused by Selenium and Chromium version mismatch
-test.skip(
+// TODO: confirm that this test passes in the automated test run
+// This test was previously skipped because of an error likely caused by
+// Selenium and Chromium version mismatch
+test(
   'Twitch Enhanced Broadcasting',
   withUser('twitch', { multistream: true, prime: true }),
   async t => {
@@ -192,16 +194,85 @@ test.skip(
     await stopStream();
 
     // Single Output Multistream
+    // TODO: Add more test accounts with YouTube streaming enabled to the user pool
+    // so that this test doesn't fail due to rate-limiting from YouTube
+    // await clickGoLive();
+    // await waitForSettingsWindowLoaded();
+
+    // await fillForm({
+    //   youtube: true,
+    // });
+
+    // await waitForSettingsWindowLoaded();
+    // await submit();
+    // await waitForStreamStart();
+    // await stopStream();
+    t.pass();
+  },
+);
+
+// TODO: Confirm that this passes in the automated test run
+// Like the enhanced broadcasting test, this may fail because of an error likely caused by
+// Selenium and Chromium version mismatch
+test(
+  'Twitch Dual Format (Dual Stream)',
+  withUser('twitch', { multistream: true, prime: true }),
+  async t => {
+    await prepareToGoLive();
+
+    // Single Output Single Stream
     await clickGoLive();
     await waitForSettingsWindowLoaded();
+
+    // Automatically enables/disables Enhanced Broadcasting when going live with dual stream
+    await assertFormContains({
+      isEnhancedBroadcasting: false,
+    });
+    await fillForm({
+      twitchDisplay: 'both',
+    });
 
     await waitForSettingsWindowLoaded();
     await submit();
     await waitForStreamStart();
     await stopStream();
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+    await fillForm({
+      twitchDisplay: 'vertical',
+    });
+    await assertFormContains({
+      isEnhancedBroadcasting: false,
+    });
 
-    await sleep(4000);
+    await fillForm({
+      isEnhancedBroadcasting: true,
+      twitchDisplay: 'both',
+    });
 
+    await submit();
+    await waitForStreamStart();
+    await stopStream();
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+
+    // Also maintains the Enhanced Broadcasting setting when already enabled
+    await fillForm({
+      isEnhancedBroadcasting: true,
+    });
+
+    // Multistream
+    // TODO: Add more test accounts with YouTube streaming enabled to the user pool
+    // so that this test doesn't fail due to rate-limiting from YouTube
+    // await clickGoLive();
+    // await waitForSettingsWindowLoaded();
+    // await fillForm({
+    //   youtube: true,
+    // });
+    // await waitForSettingsWindowLoaded();
+    // await submit();
+    // await waitForStreamStart();
+    // await stopStream();
     t.pass();
   },
 );

@@ -1,6 +1,11 @@
 import { getContext, TExecutionContext } from '../webdriver';
 import { TPlatform } from '../../../app/services/platforms';
-import { ITestUserFeatures, reserveUserFromPool, logIn as userLogin } from '../webdriver/user';
+import {
+  ITestUser,
+  ITestUserFeatures,
+  reserveUserFromPool,
+  logIn as userLogin,
+} from '../webdriver/user';
 import { click, clickButton } from './core';
 import { fillForm } from './forms';
 import { showSettingsWindow } from './settings/settings';
@@ -14,9 +19,13 @@ export function logIn(
   return userLogin(getContext(), platform, features, waitForUI, isOnboardingTest);
 }
 
-export async function addCustomDestination(t: TExecutionContext) {
-  const user = await reserveUserFromPool(t, 'twitch');
-  const name = 'MyCustomDest';
+export async function addCustomDestination(
+  t: TExecutionContext,
+  destName?: string,
+  testUser?: ITestUser,
+) {
+  const user = testUser ?? (await reserveUserFromPool(t, 'twitch'));
+  const name = destName ?? 'MyCustomDest';
 
   // add new destination
   await showSettingsWindow('Stream');
