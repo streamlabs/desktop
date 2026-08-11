@@ -10,6 +10,7 @@
   "Import Widget File in Current Scene": "Importovat soubor widgetu v aktuální scéně",
   "The active scene collection is not a dual output scene collection.": "Aktivní kolekce scén není kolekcí scén s Dual Output.",
   "Convert to Vanilla Scene": "Převést na Vanilla Scene",
+  "Convert to Single Output": "Convert to Single Output",
   "Convert": "Převést",
   "Convert and Export Overlay": "Převést a exportovat překrytí",
   "Assign": "Přiřadit",
@@ -26,5 +27,6 @@
   "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "Níže uvedené vytvoří kopii aktivní kolekce scén, nastaví kopii jako aktivní kolekci a poté odstraní všechny vertikální zdroje.",
   "Show Components Library": "Zobrazit knihovnu komponent",
   "Convert Dual Output Scene Collection": "Převést Kolekci scén Dual Output",
-  "Repair Scene Collection": "Kolekce scén oprav"
+  "Repair Scene Collection": "Kolekce scén oprav",
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
 }
