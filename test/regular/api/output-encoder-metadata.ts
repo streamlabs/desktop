@@ -1,5 +1,5 @@
 import type { ExecutionContext } from 'ava';
-import { test, useWebdriver } from '../../helpers/webdriver';
+import { skipCheckingErrorsInLog, test, useWebdriver } from '../../helpers/webdriver';
 import { getApiClient } from '../../helpers/api-client';
 import {
   EncoderQueryService,
@@ -12,7 +12,7 @@ import {
 } from '../../../app/services/settings/output/encoder-compatibility';
 import { ERecordingFormat } from '../../../obs-api';
 import type { IEncoderOption } from 'obs-studio-node';
-import type { TOutputSettingsMode } from '../../../app/services/settings';
+import type { ISettingsSubCategory, TOutputSettingsMode } from '../../../app/services/settings';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -75,6 +75,50 @@ function getFirstSettingOptionValue(
   }
 
   return value;
+}
+
+function requireMkvOnlyRecordingEncoder(
+  t: ExecutionContext,
+  encoderQueryService: EncoderQueryService,
+) {
+  const flvEncoders = encoderQueryService.getAvailableRecordingEncoderMetadata(
+    'Advanced',
+    ERecordingFormat.FLV,
+  );
+  const flvEncoderNames = new Set(flvEncoders.map(encoder => encoder.name));
+  const encoder = requireEncoder(
+    t,
+    encoderQueryService.getAvailableRecordingEncoderMetadata('Advanced', ERecordingFormat.MKV),
+    candidate => !flvEncoderNames.has(candidate.name),
+    'Expected an encoder that is compatible with MKV but not FLV',
+  );
+
+  t.false(
+    flvEncoderNames.has(encoder.name),
+    `${encoder.name} should be excluded from FLV recording encoders`,
+  );
+
+  return encoder;
+}
+
+function setOutputSettingValue(
+  t: ExecutionContext,
+  outputSettings: ISettingsSubCategory[],
+  subCategoryName: string,
+  settingName: string,
+  value: string,
+) {
+  const setting = outputSettings
+    .find(subCategory => subCategory.nameSubCategory === subCategoryName)
+    ?.parameters.find(parameter => parameter.name === settingName);
+
+  if (!setting) {
+    const message = `Expected Output.${subCategoryName}.${settingName} to exist`;
+    t.fail(message);
+    throw new Error(message);
+  }
+
+  setting.value = value;
 }
 
 test('legacy QSV v1 encoder id migrates to backend advertised QSV v2 id', t => {
@@ -144,16 +188,82 @@ test('backend-advertised recording encoders resolve to Desktop metadata', async 
         `${mode} recording encoder ${encoder.name} should resolve to backend id ${encoder.id}`,
       );
       t.is(
-        encoderQueryService.resolveRecordingEncoderFamily(
-          mode,
-          ERecordingFormat.MKV,
-          encoder.name,
-        ),
+        encoderQueryService.resolveRecordingEncoderFamily(mode, ERecordingFormat.MKV, encoder.name),
         encoder.family,
         `${mode} recording encoder ${encoder.name} should resolve to backend family ${encoder.family}`,
       );
     });
   });
+});
+
+test('backend preserves changed recording format when encoder is incompatible', async t => {
+  const client = await getApiClient();
+  const encoderQueryService = client.getResource<EncoderQueryService>('EncoderQueryService');
+  const settingsService = client.getResource<SettingsService>('SettingsService');
+  const incompatibleEncoder = requireMkvOnlyRecordingEncoder(t, encoderQueryService);
+
+  settingsService.setSettingValue('Output', 'Mode', 'Advanced');
+  settingsService.setSettingValue('Output', 'RecFormat', ERecordingFormat.MKV);
+  settingsService.setSettingValue('Output', 'RecEncoder', incompatibleEncoder.name);
+
+  const outputSettings = settingsService.state.Output.formData;
+  setOutputSettingValue(t, outputSettings, 'Recording', 'RecFormat', ERecordingFormat.FLV);
+  skipCheckingErrorsInLog();
+  settingsService.setSettings('Output', outputSettings);
+
+  t.is(
+    settingsService.findSettingValue(
+      settingsService.state.Output.formData,
+      'Recording',
+      'RecFormat',
+    ),
+    ERecordingFormat.FLV,
+    'backend should preserve the newly selected recording format',
+  );
+  t.is(
+    settingsService.findSettingValue(
+      settingsService.state.Output.formData,
+      'Recording',
+      'RecEncoder',
+    ),
+    'obs_x264',
+    'backend should replace the incompatible recording encoder with x264',
+  );
+});
+
+test('backend preserves changed recording encoder when format is incompatible', async t => {
+  const client = await getApiClient();
+  const encoderQueryService = client.getResource<EncoderQueryService>('EncoderQueryService');
+  const settingsService = client.getResource<SettingsService>('SettingsService');
+  const incompatibleEncoder = requireMkvOnlyRecordingEncoder(t, encoderQueryService);
+
+  settingsService.setSettingValue('Output', 'Mode', 'Advanced');
+  settingsService.setSettingValue('Output', 'RecEncoder', 'obs_x264');
+  settingsService.setSettingValue('Output', 'RecFormat', ERecordingFormat.FLV);
+
+  const outputSettings = settingsService.state.Output.formData;
+  setOutputSettingValue(t, outputSettings, 'Recording', 'RecEncoder', incompatibleEncoder.name);
+  skipCheckingErrorsInLog();
+  settingsService.setSettings('Output', outputSettings);
+
+  t.is(
+    settingsService.findSettingValue(
+      settingsService.state.Output.formData,
+      'Recording',
+      'RecEncoder',
+    ),
+    incompatibleEncoder.name,
+    'backend should preserve the newly selected recording encoder',
+  );
+  t.is(
+    settingsService.findSettingValue(
+      settingsService.state.Output.formData,
+      'Recording',
+      'RecFormat',
+    ),
+    ERecordingFormat.MKV,
+    'backend should replace the incompatible recording format with MKV',
+  );
 });
 
 test('output streaming settings use backend encoder metadata', async t => {
@@ -237,11 +347,7 @@ test('legacy advanced streaming encoder ids resolve to backend metadata', async 
   const x264StreamingSettings = outputSettingsService.getSettings().streaming;
 
   t.is(
-    settingsService.findSettingValue(
-      settingsService.state.Output.formData,
-      'Streaming',
-      'Encoder',
-    ),
+    settingsService.findSettingValue(settingsService.state.Output.formData, 'Streaming', 'Encoder'),
     x264Encoder.name,
     'settings load should canonicalize legacy x264 alias to the backend encoder option value',
   );
@@ -272,11 +378,7 @@ test('legacy advanced streaming encoder ids resolve to backend metadata', async 
   const streamingSettings = outputSettingsService.getSettings().streaming;
 
   t.is(
-    settingsService.findSettingValue(
-      settingsService.state.Output.formData,
-      'Streaming',
-      'Encoder',
-    ),
+    settingsService.findSettingValue(settingsService.state.Output.formData, 'Streaming', 'Encoder'),
     migratedEncoder.name,
     'settings load should canonicalize legacy AMD encoder id to the backend encoder option value',
   );
@@ -307,11 +409,7 @@ test('legacy advanced streaming encoder ids resolve to backend metadata', async 
   const qsvStreamingSettings = outputSettingsService.getSettings().streaming;
 
   t.is(
-    settingsService.findSettingValue(
-      settingsService.state.Output.formData,
-      'Streaming',
-      'Encoder',
-    ),
+    settingsService.findSettingValue(settingsService.state.Output.formData, 'Streaming', 'Encoder'),
     qsvEncoder.name,
     'settings load should canonicalize legacy QSV encoder id to the backend encoder option value',
   );

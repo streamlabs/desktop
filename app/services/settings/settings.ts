@@ -704,16 +704,6 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     if (categoryName === 'Audio') this.setAudioSettings([settingsData.pop()]);
     if (categoryName === 'Video' && forceApplyCategory && forceApplyCategory !== 'Video') return;
 
-    // This is a temporary solution to prevent errors when saving the recording format
-    // in advanced mode. It ensures that the recording encoder is always valid for the format.
-    // TODO: This should be removed once the backend completely handles invalid combinations
-    // of recording format and encoder.
-    if (categoryName === 'Output' && forceApplyCategory && forceApplyCategory === 'Output') {
-      // The below will call set settings again but with a validated recording encoder
-      this.ensureValidRecordingEncoder(settingsData);
-      return;
-    }
-
     const dataToSave = [];
 
     for (const subGroup of settingsData) {
