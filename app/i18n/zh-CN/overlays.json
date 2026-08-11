@@ -10,6 +10,7 @@
   "Import Widget File in Current Scene": "在当前场景中导入小工具文件",
   "The active scene collection is not a dual output scene collection.": "活动场景集不是 Dual Output 场景集。",
   "Convert to Vanilla Scene": "转换为原始场景",
+  "Convert to Single Output": "Convert to Single Output",
   "Convert": "转换",
   "Convert and Export Overlay": "转换并导出叠加层",
   "Assign": "分配",
@@ -26,5 +27,6 @@
   "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "下面将创建活动场景集的副本，将副本设置为活动集，然后移除所有纵向资源。",
   "Show Components Library": "显示组件库",
   "Convert Dual Output Scene Collection": "转换 Dual Output 场景集",
-  "Repair Scene Collection": "修复场景集"
+  "Repair Scene Collection": "修复场景集",
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
 }
