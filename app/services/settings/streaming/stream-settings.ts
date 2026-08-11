@@ -25,6 +25,7 @@ export interface ISavedGoLiveSettings {
   advancedMode: boolean;
   recording?: TDisplayOutput;
   streamShift?: boolean;
+  liveOutputEditing?: boolean;
 }
 
 export interface ICustomStreamDestination {
@@ -98,7 +99,6 @@ const platformToServiceNameMap: { [key in TPlatform]: string } = {
   twitch: 'Twitch',
   youtube: 'YouTube / YouTube Gaming',
   facebook: 'Facebook Live',
-  trovo: 'Trovo',
   tiktok: 'Custom',
   twitter: 'Custom',
   instagram: 'Custom',
@@ -213,6 +213,8 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
   }
 
   setGoLiveSettings(settingsPatch: Partial<IGoLiveSettings>) {
+    if (!settingsPatch) return;
+
     // transform IGoLiveSettings to ISavedGoLiveSettings
     const patch: Partial<ISavedGoLiveSettings> = settingsPatch;
     if (settingsPatch.platforms) {
@@ -224,11 +226,10 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
         const platformSettings = pick(settingsPatch.platforms![platform], pickedFields);
 
         if (this.streamingService.views.isDualOutputMode) {
-          this.videoSettingsService.validateVideoContext();
           const display = this.streamingService.views.getPlatformDisplayType(platform as TPlatform);
           platformSettings.video = this.videoSettingsService.contexts[display];
         }
-        return (platforms[platform] = platformSettings);
+        platforms[platform] = platformSettings;
       });
       patch.platforms = platforms as ISavedGoLiveSettings['platforms'];
     }

@@ -2,7 +2,13 @@ import { Service } from 'services/core/service';
 import { ISettingsSubCategory, SettingsService } from 'services/settings';
 import { TDisplayType, VideoSettingsService } from 'services/settings-v2/video';
 import { Inject } from 'services/core/injector';
-import { ERecordingQuality, ERecordingFormat, EScaleType, ISettings } from 'obs-studio-node';
+import {
+  ERecordingQuality,
+  ERecordingFormat,
+  EScaleType,
+  ERecSplitType,
+  ISettings,
+} from 'obs-studio-node';
 import { EncoderQueryService } from './encoder-query';
 import {
   EObsSimpleEncoder,
@@ -74,6 +80,12 @@ export const QUALITY_ORDER = [
   'quality',
 ];
 
+const SPLIT_TYPE_MAP = {
+  Size: ERecSplitType.Size,
+  Manual: ERecSplitType.Manual,
+  Time: ERecSplitType.Time,
+};
+
 export interface IOutputSettings {
   mode: TOutputSettingsMode;
   inputResolution: string;
@@ -127,8 +139,8 @@ interface IAdvancedRecordingOutputSettings extends IRecordingOutputSettings {
   enableFileSplit: boolean;
   splitTime: number;
   splitSize: number;
-  splitType: string;
-  resetTimestamps: boolean;
+  splitType: ERecSplitType;
+  fileResetTimestamps: boolean;
 }
 
 interface IStreamingOutputSettings {
@@ -366,10 +378,11 @@ export class OutputSettingsService extends Service {
       'OverwriteIfExists',
     );
 
-    const noSpace: boolean = this.settingsService.findSettingValue(
+    const noSpaceKey = mode === 'Advanced' ? 'RecFileNameWithoutSpace' : 'FileNameWithoutSpace';
+    const noSpace: boolean = !!this.settingsService.findSettingValue(
       output,
       'Recording',
-      'FileNameWithoutSpace',
+      noSpaceKey,
     );
 
     const prefix: string = this.settingsService.findSettingValue(
@@ -382,8 +395,8 @@ export class OutputSettingsService extends Service {
       'Recording',
       'RecRBSuffix',
     );
-    const outputWidth = this.videoSettingsService.outputResolutions[display].outputWidth;
-    const outputHeight = this.videoSettingsService.outputResolutions[display].outputHeight;
+    let outputWidth = this.videoSettingsService.outputResolutions[display].outputWidth;
+    let outputHeight = this.videoSettingsService.outputResolutions[display].outputHeight;
 
     const fileFormat = this.settingsService.findSettingValue(
       advanced,
@@ -395,28 +408,42 @@ export class OutputSettingsService extends Service {
     if (mode === 'Advanced') {
       const mixer = this.settingsService.findSettingValue(output, 'Recording', 'RecTracks');
       const rescaling = this.settingsService.findSettingValue(output, 'Recording', 'RecRescale');
+      if (rescaling) {
+        const rescaleResolution = this.settingsService.findSettingValue(
+          output,
+          'Recording',
+          'RecRescaleRes',
+        );
+        if (rescaleResolution) {
+          const [rescaleWidth, rescaleHeight] = rescaleResolution.split('x').map(Number);
+          if (Number.isFinite(rescaleWidth) && Number.isFinite(rescaleHeight)) {
+            outputWidth = rescaleWidth;
+            outputHeight = rescaleHeight;
+          }
+        }
+      }
       const enableFileSplit = this.settingsService.findSettingValue(
         output,
         'Recording',
         'RecSplitFile',
       );
-      const splitTime =
-        this.settingsService.findSettingValue(output, 'Recording', 'RecSplitFileTime') * 60; // convert seconds to minutes
-      const splitSize = this.settingsService.findSettingValue(
-        output,
-        'Recording',
-        'RecSplitFileSize',
+      const splitTimeMinutes = Number(
+        this.settingsService.findSettingValue(output, 'Recording', 'RecSplitFileTime') ?? 0,
       );
-      const splitType = this.settingsService.findSettingValue(
+      const splitTime = Number.isFinite(splitTimeMinutes) ? splitTimeMinutes * 60 : 0;
+      const splitSizeValue = Number(
+        this.settingsService.findSettingValue(output, 'Recording', 'RecSplitFileSize') ?? 0,
+      );
+      const splitSize = Number.isFinite(splitSizeValue) ? splitSizeValue : 0;
+      const splitTypeValue: 'Size' | 'Manual' | 'Time' = this.settingsService.findSettingValue(
         output,
         'Recording',
         'RecSplitFileType',
       );
-      const resetTimestamps = this.settingsService.findSettingValue(
-        output,
-        'Recording',
-        'RecSplitFileResetTimestamps',
-      );
+      const splitType = SPLIT_TYPE_MAP[splitTypeValue];
+      const fileResetTimestamps =
+        this.settingsService.findSettingValue(output, 'Recording', 'RecSplitFileResetTimestamps') ??
+        true;
 
       // advanced settings
       return {
@@ -438,7 +465,7 @@ export class OutputSettingsService extends Service {
         splitTime,
         splitSize,
         splitType,
-        resetTimestamps,
+        fileResetTimestamps,
       };
     } else {
       // simple settings
@@ -495,10 +522,11 @@ export class OutputSettingsService extends Service {
       'OverwriteIfExists',
     );
 
-    const noSpace: boolean = this.settingsService.findSettingValue(
+    const noSpaceKey = mode === 'Advanced' ? 'RecFileNameWithoutSpace' : 'FileNameWithoutSpace';
+    const noSpace: boolean = !!this.settingsService.findSettingValue(
       output,
       'Recording',
-      'FileNameWithoutSpace',
+      noSpaceKey,
     );
 
     const prefix: string = this.settingsService.findSettingValue(

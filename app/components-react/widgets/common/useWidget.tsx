@@ -502,14 +502,6 @@ export function useWidget<TModule extends WidgetModule>(params?: WidgetParams) {
   return useModule('WidgetModule', params ? [params] : undefined) as GetUseModuleResult<TModule>;
 }
 
-/**
- * This function ensures that given object have a key for each alert type
- * Also it provides better experience for Typescript types related to widgets
- */
-export function createAlertsMap<T extends { [key in TAlertType]: any }>(obj: T) {
-  return obj;
-}
-
 export interface ICustomCode {
   custom_enabled: boolean;
   custom_html: string;

@@ -304,16 +304,17 @@ const RecordingTooltipTitle = memo(
     }, [p.isRecording, p.isDualOutputMode, p.useAiHighlighter]);
 
     const showRecordingSwitcher = useMemo(() => {
-      if (
-        Services.IncrementalRolloutService.views.featureIsEnabled(
-          EAvailableFeatures.verticalRecording,
-        ) ||
-        Services.IncrementalRolloutService.views.featureIsEnabled(
-          EAvailableFeatures.dualOutputRecording,
-        )
-      ) {
-        return p.isDualOutputMode && !p.isRecording && !p.useAiHighlighter;
-      }
+      // TODO: Comment in when ready for testing
+      // if (
+      //   Services.IncrementalRolloutService.views.featureIsEnabled(
+      //     EAvailableFeatures.verticalRecording,
+      //   ) ||
+      //   Services.IncrementalRolloutService.views.featureIsEnabled(
+      //     EAvailableFeatures.dualOutputRecording,
+      //   )
+      // ) {
+      //   return p.isDualOutputMode && !p.isRecording && !p.useAiHighlighter;
+      // }
 
       return false;
     }, [p.isDualOutputMode, p.isRecording, p.useAiHighlighter]);

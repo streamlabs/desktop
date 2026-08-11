@@ -40,7 +40,7 @@ useWebdriver();
 async function logInYouTubeEnabledAccount(
   t: TExecutionContext,
   retries: number = 3,
-): Promise<void> {
+): Promise<boolean | void> {
   // only exclude multistream accounts on the first attempt to expand the user pool on later attempts
   const multistream = retries === 3 ? false : undefined;
   if (retries === 0) {
@@ -62,6 +62,15 @@ async function logInYouTubeEnabledAccount(
   }
 
   await closeWindow('child');
+
+  // return true if we had a retry so that we can skip checking errors in the log for account reasons
+  const retried = retries !== 3;
+
+  if (retried) {
+    skipCheckingErrorsInLog();
+  }
+
+  return retried;
 }
 
 test('Streaming to Youtube', async t => {

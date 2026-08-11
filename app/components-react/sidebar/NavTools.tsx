@@ -15,7 +15,7 @@ import MenuItem from 'components-react/shared/MenuItem';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import PlatformIndicator from './PlatformIndicator';
 import { AuthModal } from 'components-react/shared/AuthModal';
-import { TCategoryName } from 'services/settings';
+import { ESettingsCategory, TCategoryName } from 'services/settings';
 
 export default memo(function NavTools() {
   const {
@@ -99,7 +99,7 @@ export default memo(function NavTools() {
 
   function openHelp() {
     UsageStatisticsService.actions.recordClick('SideNav2', 'help');
-    remote.shell.openExternal(UrlService.supportLink);
+    openSettingsWindow(ESettingsCategory.GetSupport);
   }
 
   async function upgradeToPrime() {
@@ -178,18 +178,7 @@ export default memo(function NavTools() {
             );
           } else if (menuItem.key === EMenuItemKey.GetHelp) {
             return (
-              <NavToolsItem
-                key={menuItem.key}
-                menuItem={menuItem}
-                icon={
-                  <div>
-                    <Badge count={<i className={cx('icon-pop-out-3', styles.linkBadge)} />}>
-                      <i className={menuItem?.icon} />
-                    </Badge>
-                  </div>
-                }
-                onClick={() => openHelp()}
-              />
+              <NavToolsItem key={menuItem.key} menuItem={menuItem} onClick={() => openHelp()} />
             );
           } else if (menuItem.key === EMenuItemKey.Settings) {
             return (

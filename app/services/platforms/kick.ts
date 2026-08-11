@@ -123,7 +123,13 @@ export class KickService
   readonly domain = 'https://kick.com';
   readonly platform = 'kick';
   readonly displayName = 'Kick';
-  readonly capabilities = new Set<TPlatformCapability>(['title', 'chat', 'game', 'viewerCount']);
+  readonly capabilities = new Set<TPlatformCapability>([
+    'title',
+    'chat',
+    'game',
+    'viewerCount',
+    'streamlabels',
+  ]);
   readonly liveDockFeatures = new Set<TLiveDockFeature>([
     'view-stream',
     'refresh-chat',
@@ -206,6 +212,10 @@ export class KickService
   }
 
   async afterStopStream(): Promise<void> {
+    if (this.state.platformId) {
+      await this.endStream(this.state.platformId);
+    }
+
     // clear server url and stream key
     this.SET_INGEST('');
     this.SET_STREAM_KEY('');
@@ -374,7 +384,7 @@ export class KickService
         console.warn('Error fetching Kick info: ', e);
 
         if (e.result && e.result.data.code === 401) {
-          const message = e.statusText !== '' ? e.statusText : e.result.data.message;
+          const message = e.statusText || e.result.data.message;
           throwStreamError(
             'KICK_SCOPE_OUTDATED',
             {
@@ -385,6 +395,22 @@ export class KickService
             e.result.data.message,
           );
         }
+
+        let message = e.message ?? 'Unknown error fetching Kick info';
+        if (e.result) {
+          message = e.statusText || e.result.data.message;
+        }
+        const details = e.result?.data?.message ?? message;
+
+        throwStreamError(
+          'PLATFORM_REQUEST_FAILED',
+          {
+            status: e.status,
+            statusText: message,
+            platform: 'kick',
+          },
+          details,
+        );
       });
   }
 
@@ -474,6 +500,23 @@ export class KickService
       })
       .catch((e: unknown) => {
         console.warn('Error updating Kick channel info', e);
+
+        const err = e as any;
+        let message = err?.message ?? 'Unknown error updating Kick channel info';
+        if (err?.result) {
+          message = err.statusText || err.result.data.message;
+        }
+        const details = err?.result?.data?.message ?? message;
+
+        throwStreamError(
+          'PLATFORM_REQUEST_FAILED',
+          {
+            status: err?.status,
+            statusText: message,
+            platform: 'kick',
+          },
+          details,
+        );
       });
   }
 

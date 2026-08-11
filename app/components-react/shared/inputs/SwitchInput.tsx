@@ -17,6 +17,7 @@ export type TSwitchInputProps = TSlobsInputProps<
     size?: 'small' | 'default';
     color?: 'primary' | 'secondary';
     nolabel?: boolean;
+    nomargin?: boolean;
     checkmark?: boolean;
     skipWrapperAttrs?: boolean;
   },
@@ -49,7 +50,8 @@ export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
           size={size}
           {...inputAttrs}
           ref={p.inputRef}
-          className={cx(styles.horizontal, styles.horizontalItem, {
+          className={cx({
+            [styles.horizontal]: !p?.nomargin,
             [styles.checkmark]: p?.checkmark,
             [styles.secondarySwitch]: p?.color === 'secondary',
             [styles.noLabel]: p?.nolabel,

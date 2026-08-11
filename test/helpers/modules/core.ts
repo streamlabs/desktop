@@ -64,8 +64,32 @@ export async function clickButton(buttonText: string) {
   await click($button);
 }
 
-export async function clickTab(tabText: string) {
-  await click(`div[role="tab"]=${tabText}`);
+export async function clickTab(tabText: string, dataName?: string) {
+  const selector = dataName ? `[data-name="${dataName}"]` : `div[role="tab"]=${tabText}`;
+  await click(selector);
+}
+
+/**
+ * Check whether a tab with the given text is currently active
+ * @remark Note: to throw an error if the tab is not active, must be used with `t.true`
+ * @param tabText The text of the tab to check
+ * @param dataName Optional data-name attribute of the tab to check, use if the tab text is not unique
+ * or if the tab contents contain elements other than text
+ * @returns A promise that resolves to true if the tab is active, false otherwise
+ */
+export async function isTabActive(tabText: string, dataName?: string): Promise<boolean> {
+  // Test for active tab with data-name as selector
+  if (dataName) {
+    const $span = await select(`[data-name="${dataName}"]`);
+    const $tabBtn = await $span.parentElement();
+    const ariaSelected = await $tabBtn.getAttribute('aria-selected');
+    return ariaSelected === 'true';
+  }
+
+  // Test for active tab with text as selector
+  const $tab = await select(`div[role="tab"]=${tabText}`);
+  const ariaSelected = await $tab.getAttribute('aria-selected');
+  return ariaSelected === 'true';
 }
 
 export async function clickCheckbox(dataName: string) {
@@ -88,12 +112,21 @@ export async function selectAsyncAlert(title: string) {
 
 // OTHER SHORTCUTS
 
-export async function hoverElement(selector: string, duration?: number) {
+export async function hoverElement(selector: string, waitForOptions?: WaitForOptions) {
   const element = await select(`${selector}`);
   await element.moveTo();
-  if (duration) {
-    await getClient().pause(duration);
+  if (waitForOptions?.timeout) {
+    await getClient().pause(waitForOptions.timeout);
   }
+}
+
+export async function isTooltipDisplayed(
+  hoverSelector: string,
+  tooltipSelector: string,
+  waitForOptions?: WaitForOptions,
+): Promise<void> {
+  await hoverElement(hoverSelector, waitForOptions);
+  await isDisplayed(tooltipSelector, waitForOptions);
 }
 
 export async function isDisplayed(selectorOrEl: TSelectorOrEl, waitForOptions?: WaitForOptions) {
@@ -122,6 +155,31 @@ export function waitForText(text: string) {
 
 export async function waitForEnabled(selectorOrEl: TSelectorOrEl, options?: WaitForOptions) {
   await (await select(selectorOrEl)).waitForEnabled(options);
+}
+
+/**
+ * Wait for an antd message alert identified by its data-name attribute
+ */
+export async function waitForAlert(name: string, options?: WaitForOptions) {
+  await waitForDisplayed(`[data-name="${name}"]`, options);
+}
+
+/**
+ * Click an antd message alert identified by its data-name attribute, if displayed
+ */
+export async function clickAlert(name: string) {
+  const selector = `[data-name="${name}"]`;
+  if (await isDisplayed(selector)) {
+    await click(selector);
+  }
+}
+
+/**
+ * Wait for an antd message alert by data-name, then click it to dismiss
+ */
+export async function dismissAlert(name: string, options?: WaitForOptions) {
+  await waitForAlert(name, options);
+  await clickAlert(name);
 }
 
 /**

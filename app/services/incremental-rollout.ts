@@ -16,6 +16,7 @@ export enum EAvailableFeatures {
   tiktok = 'slobs--tiktok',
   highlighter = 'slobs--highlighter',
   aiHighlighter = 'slobs--ai-highlighter',
+  highlighterMigration = 'slobs--highlighter-migration',
   growTab = 'slobs--grow-tab',
   themeAudit = 'slobs--theme-audit',
   reactWidgets = 'slobs--react-widgets',
@@ -25,7 +26,7 @@ export enum EAvailableFeatures {
   streamShift = 'slobs--stream-shift',
   twitchDualStream = 'slobs--twitch-dual-stream',
   twitchDualStreamPreview = 'slobs--twitch-dual-stream-preview',
-  patreon = 'slobs--patreon',
+  liveOutputEditing = 'slobs--live-output-editing',
 
   /**
    * There are two flags because one is used for beta access and

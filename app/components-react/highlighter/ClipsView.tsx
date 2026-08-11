@@ -211,6 +211,7 @@ export default function ClipsView({
               <PreviewExportButton streamId={streamId} setModal={setModal} />
             </div>
           </div>
+
           {sortedList.length === 0 ? (
             <div style={{ padding: '20px' }}>
               {$t('No clips found')}
@@ -307,8 +308,10 @@ export default function ClipsView({
           )}
         </div>
         <EditingControls
-          emitSetShowModal={(modal: TModalClipsView) => {
-            setModal({ modal });
+          emitSetShowModal={(modal: TModalClipsView | null) => {
+            if (modal) {
+              setModal({ modal });
+            }
           }}
         />
         <ClipsViewModal

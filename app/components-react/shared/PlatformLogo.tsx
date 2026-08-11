@@ -30,7 +30,6 @@ export default function PlatformLogo(p: IProps & HTMLAttributes<unknown>) {
       youtube: 'youtube',
       facebook: 'fab fa-facebook',
       tiktok: 'tiktok',
-      trovo: 'fab fa-trovo',
       dlive: 'dlive',
       nimotv: 'nimotv',
       twitter: 'twitter',
@@ -68,7 +67,6 @@ export default function PlatformLogo(p: IProps & HTMLAttributes<unknown>) {
         <i
           className={cx(iconForPlatform(), !p.nocolor && css[p.platform], p.className, {
             // The platforms below don't provide an SVG, so just use different colored PNGs
-            [css['trovo--black']]: p.platform === 'trovo' && p.color === 'black',
             [css['twitter--black']]: p.platform === 'twitter' && color === 'black',
             [css['tiktok--black']]: p.platform === 'tiktok' && color === 'black',
             [css['patreon--black']]: p.platform === 'patreon' && color === 'black',

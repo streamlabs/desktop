@@ -139,12 +139,31 @@
     color: var(--midtone);
   }
 
-  .supported-game-list {
+  &-list {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
     gap: 2 * @spacing;
+  }
+}
+
+.more-games {
+  &--icon {
+    cursor: pointer;
+  }
+
+  &-list {
+    columns: 2;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  &--cta {
+    margin-top: @spacing;
+    text-align: center;
+    font-style: italic;
   }
 }

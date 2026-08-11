@@ -67,6 +67,38 @@ button.highlighted {
       padding-box !important;
   }
 
+  &.filled-light,
+  &.filled-light:hover,
+  &.filled-light:active,
+  &.filled-light:focus,
+  &.filled-light:visited {
+    &::after {
+      opacity: 0.25;
+      z-index: 1;
+    }
+
+    & * {
+      background: linear-gradient(
+        123.53deg,
+        #209e78 0%,
+        #788a32 48.8%,
+        #bd7f39 75.86%,
+        #993131 100%
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    &:hover {
+      transition: 0.3s !important;
+      opacity: 1 !important;
+      background: linear-gradient(0deg, var(--background), var(--background)) padding-box,
+        linear-gradient(123.53deg, #2de8b0 0%, #cbe953 48.8%, #ffab48 75.86%, #ff5151 100%)
+          border-box !important;
+    }
+  }
+
   &.faded,
   &.faded:active,
   &.faded:focus,

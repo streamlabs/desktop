@@ -57,6 +57,8 @@ export interface IYoutubeStartStreamOptions extends IExtraBroadcastSettings {
   privacyStatus?: 'private' | 'public' | 'unlisted';
   scheduledStartTime?: number;
   mode?: TOutputOrientation;
+  monetizationEnabled?: boolean;
+  eligibleForMonetization?: boolean;
 }
 
 /**
@@ -110,7 +112,23 @@ export interface IYoutubeLiveBroadcast {
     madeForKids: boolean;
     selfDeclaredMadeForKids: boolean;
   };
+  monetizationDetails?: {
+    cuepointSchedule: {
+      enabled?: boolean;
+      pauseAdsUntil?: string;
+      creatorCuepointConfig?: any;
+      ytOptimizedCuepointConfig?: 'LOW' | 'MEDIUM' | 'HIGH';
+    };
+    adsMonetizationStatus?: 'on' | 'off';
+    eligibleForAdsMonetization?: boolean;
+  };
 }
+
+type TYoutubeLiveBroadcastKey = keyof IYoutubeLiveBroadcast;
+interface IYoutubeLiveBroadcastPatch
+  extends Partial<
+    Record<TYoutubeLiveBroadcastKey, Partial<IYoutubeLiveBroadcast[TYoutubeLiveBroadcastKey]>>
+  > {}
 
 /**
  * A liveStream resource contains information about the video stream that you are transmitting to YouTube.
@@ -237,6 +255,7 @@ export class YoutubeService
       thumbnail: '',
       video: undefined,
       mode: undefined,
+      monetizationEnabled: false,
       display: 'horizontal',
     },
   };
@@ -297,40 +316,82 @@ export class YoutubeService
       console.error(`Failed ${this.displayName} API Request:`, reqInfo);
 
       const error = e as any;
+      const details = error?.message ?? $t('Connection Failed');
 
-      // Log specific Youtube API errors if they exist
-      if (error?.result && error.result?.error) {
-        console.log('Youtube API Error: ', JSON.stringify(error.result.error, null, 2));
+      // If the error doesn't have a result or an error object, it's not a YouTube API error response
+      if (!error?.result || !error.result?.error) {
+        return throwStreamError(
+          'PLATFORM_REQUEST_FAILED',
+          { ...error, platform: 'youtube' },
+          details,
+        );
       }
 
-      let details = $t('Connection Failed');
-      if (error?.message) {
-        details = error.message;
+      const json = error.result.error;
+
+      // If there are no errors in the array, check the status code
+      if (!json?.errors || !json.errors.length) {
+        if (!json.status) {
+          console.error('No status or reason in YouTube API error response', json);
+          return throwStreamError('PLATFORM_REQUEST_FAILED', {
+            ...error,
+            platform: 'youtube',
+            details,
+          });
+        }
+
+        if (json.status === 423) {
+          console.error('Error 423: YouTube token expired, need to refresh', json);
+          return throwStreamError('YOUTUBE_TOKEN_EXPIRED', {
+            ...error,
+            platform: 'youtube',
+            details,
+          });
+        }
+
+        if (json.status === 503) {
+          console.error('Error 503: YouTube service unavailable', json);
+          return throwStreamError('YOUTUBE_UNAVAILABLE', {
+            ...error,
+            platform: 'youtube',
+            details,
+          });
+        }
+
+        if (json.status !== 403) {
+          console.error('Error ', json.status, ': Non-generic error', json);
+          return throwStreamError('PLATFORM_REQUEST_FAILED', {
+            ...error,
+            platform: 'youtube',
+            details,
+          });
+        }
       }
 
-      if (error?.url ?? error?.url.split('/').includes('token')) {
-        error.statusText = `${$t('Authentication Error')}: ${details}`;
+      // If there are errors in the array, check the first one for the reason
+      const firstError = json.errors[0];
+      if (firstError.reason) {
+        // Log the reason and the full error response for debugging
+        console.log('YouTube API error Reason:', firstError.reason, json);
+
+        if (firstError.reason === 'liveStreamingNotEnabled') {
+          if (repeatRequestIfRateLimitExceed) {
+            await Utils.sleep(3000);
+            return await this.requestYoutube(reqInfo, false);
+          }
+          return throwStreamError('YOUTUBE_STREAMING_DISABLED', {
+            ...error,
+            platform: 'youtube',
+            details,
+          });
+        }
       }
 
-      const isLiveStreamingDisabled =
-        error?.errors &&
-        error?.errors.length &&
-        error?.errors[0].reason === 'liveStreamingNotEnabled';
-
-      // if the rate limit exceeded then repeat request after 3s delay
-      if (isLiveStreamingDisabled && repeatRequestIfRateLimitExceed) {
-        await Utils.sleep(3000);
-        return await this.requestYoutube(reqInfo, false);
-      }
-
-      let errorType: TStreamErrorType = 'PLATFORM_REQUEST_FAILED';
-      if (isLiveStreamingDisabled) {
-        errorType = 'YOUTUBE_STREAMING_DISABLED';
-      } else if (error?.status === 423) {
-        errorType = 'YOUTUBE_TOKEN_EXPIRED';
-      }
-
-      return throwStreamError(errorType, { ...error, platform: 'youtube' }, details);
+      return throwStreamError('PLATFORM_REQUEST_FAILED', {
+        ...error,
+        platform: 'youtube',
+        details,
+      });
     }
   }
 
@@ -500,12 +561,21 @@ export class YoutubeService
       return;
     }
 
+    // Make sure the scheduled stream exists and is in the future
     const streamToScheduledBroadcast = !!ytSettings.broadcastId;
+    if (ytSettings.scheduledStartTime && !(ytSettings.scheduledStartTime > new Date().getTime())) {
+      ytSettings.scheduledStartTime = new Date().getTime();
+    }
     // update selected LiveBroadcast with new title and description
     // or create a new LiveBroadcast if there are no broadcasts selected
     let broadcast: IYoutubeLiveBroadcast;
     if (!streamToScheduledBroadcast) {
       broadcast = await this.createBroadcast(ytSettings);
+
+      // Current YT api doesn't let us POST with monetization settings so need to patch it in after creation
+      if (ytSettings.monetizationEnabled) {
+        await this.updateBroadcast(broadcast.id, ytSettings);
+      }
     } else {
       assertIsDefined(ytSettings.broadcastId);
       await this.updateBroadcast(ytSettings.broadcastId, ytSettings);
@@ -557,7 +627,7 @@ export class YoutubeService
       );
     }
 
-    if (this.streamingService.views.isDualOutputMode && ytSettings.display === 'both') {
+    if (ytSettings.display === 'both') {
       try {
         // Prevent rate limit errors by delaying the dual stream setup by 1 second
         await new Promise<void>(resolve => {
@@ -637,44 +707,23 @@ export class YoutubeService
     try {
       const endpoint = 'liveStreams?part=id,snippet&mine=true';
       const url = `${this.apiBase}/${endpoint}`;
-      await platformAuthorizedRequest('youtube', url);
+      await this.requestYoutube(url, false);
       this.SET_ENABLED_STATUS(true);
       return EPlatformCallResult.Success;
     } catch (e: unknown) {
-      const error = e as any;
-
-      // Check if this is a YouTube live stream API error response
-      if (error?.errors && error?.status) {
-        if (error.status === 423) {
-          console.error('Error 423: YouTube token expired, need to refresh', error);
-          this.SET_ENABLED_STATUS(false);
-          return EPlatformCallResult.TokenExpired;
-        }
-        if (error.status && error.status !== 403) {
-          console.error('Error checking if YT is enabled for live streaming', error);
-          return EPlatformCallResult.Error;
-        }
-        if (error?.errors.length && error?.errors[0].reason === 'liveStreamingNotEnabled') {
-          this.SET_ENABLED_STATUS(false);
-        }
-
-        return EPlatformCallResult.YoutubeStreamingDisabled;
+      if ((e as any)?.result?.error?.errors?.length) {
+        console.log('Youtube API Error Reason: ', (e as any).result.error.errors[0].reason);
       }
+      console.error('Error validating YouTube platform', e);
 
-      // Otherwise, it's probably a generic YouTube API error
-      if (error.status !== 403) {
-        console.error('Got 403 checking if YT is enabled for live streaming', error);
-        return EPlatformCallResult.Error;
+      this.SET_ENABLED_STATUS(false);
+      if (e instanceof StreamError) {
+        if (e.type === 'YOUTUBE_TOKEN_EXPIRED') return EPlatformCallResult.TokenExpired;
+        if (e.type === 'YOUTUBE_STREAMING_DISABLED') {
+          return EPlatformCallResult.YoutubeStreamingDisabled;
+        }
       }
-      const json = error.result;
-      if (
-        json.error &&
-        json.error.errors &&
-        json.error.errors[0].reason === 'liveStreamingNotEnabled'
-      ) {
-        this.SET_ENABLED_STATUS(false);
-      }
-      return EPlatformCallResult.YoutubeStreamingDisabled;
+      return EPlatformCallResult.Error;
     }
   }
 
@@ -728,6 +777,11 @@ export class YoutubeService
       'defaultAudioLanguage',
       'scheduledStartTime',
     ]);
+
+    // Ensure scheduled start time is in the future
+    if (snippet.scheduledStartTime && !(new Date(snippet.scheduledStartTime) > new Date())) {
+      snippet.scheduledStartTime = new Date().toISOString();
+    }
 
     // `zxx` is a `Not applicable` language code
     // YouTube API doesn't allow us to set this code
@@ -849,7 +903,7 @@ export class YoutubeService
     const scheduledStartTime = params.scheduledStartTime
       ? new Date(params.scheduledStartTime)
       : new Date();
-    const data: Dictionary<any> = {
+    const data: IYoutubeLiveBroadcastPatch = {
       snippet: {
         title: params.title,
         scheduledStartTime: scheduledStartTime.toISOString(),
@@ -919,7 +973,7 @@ export class YoutubeService
       scheduledStartTime: scheduledStartTime.toISOString(),
     };
 
-    const contentDetails: Dictionary<any> = {
+    const contentDetails: Partial<IYoutubeLiveBroadcast['contentDetails']> = {
       enableAutoStart: isMidStreamMode
         ? broadcast.contentDetails.enableAutoStart
         : params.enableAutoStart,
@@ -948,8 +1002,37 @@ export class YoutubeService
     };
 
     const fields = ['snippet', 'status', 'contentDetails'];
+
+    let monetizationDetails: Partial<IYoutubeLiveBroadcast['monetizationDetails']>;
+    if (broadcast.monetizationDetails) {
+      fields.push('monetizationDetails');
+      this.usageStatisticsService.actions.recordFeatureUsage('YouTubeMonetization');
+
+      const moneyInfo = broadcast.monetizationDetails;
+      monetizationDetails = {
+        adsMonetizationStatus: isMidStreamMode
+          ? moneyInfo?.adsMonetizationStatus
+          : this.getMonetizationStatus(params.monetizationEnabled),
+      };
+      if (!isMidStreamMode && params.monetizationEnabled) {
+        monetizationDetails.cuepointSchedule = {
+          ...moneyInfo.cuepointSchedule,
+          enabled: params.monetizationEnabled,
+          ytOptimizedCuepointConfig: 'MEDIUM',
+          creatorCuepointConfig: undefined,
+        };
+      }
+    }
+
     const endpoint = `liveBroadcasts?part=${fields.join(',')}&id=${id}`;
-    const body: Dictionary<any> = { id, snippet, contentDetails, status };
+    const body: IYoutubeLiveBroadcastPatch = {
+      id,
+      snippet,
+      contentDetails,
+      status,
+    };
+
+    if (params.eligibleForMonetization) body.monetizationDetails = monetizationDetails;
 
     broadcast = await this.requestYoutube<IYoutubeLiveBroadcast>({
       body: JSON.stringify(body),
@@ -997,19 +1080,22 @@ export class YoutubeService
    */
   private async createLiveStream(title: string): Promise<IYoutubeLiveStream> {
     const endpoint = 'liveStreams?part=cdn,snippet,contentDetails';
-    return platformAuthorizedRequest<IYoutubeLiveStream>('youtube', {
-      url: `${this.apiBase}/${endpoint}`,
-      method: 'POST',
-      body: JSON.stringify({
-        snippet: { title },
-        cdn: {
-          frameRate: 'variable',
-          ingestionType: 'rtmp',
-          resolution: 'variable',
-        },
-        contentDetails: { isReusable: false },
-      }),
-    });
+    return this.requestYoutube<IYoutubeLiveStream>(
+      {
+        url: `${this.apiBase}/${endpoint}`,
+        method: 'POST',
+        body: JSON.stringify({
+          snippet: { title },
+          cdn: {
+            frameRate: 'variable',
+            ingestionType: 'rtmp',
+            resolution: 'variable',
+          },
+          contentDetails: { isReusable: false },
+        }),
+      },
+      false,
+    );
   }
 
   get liveDockEnabled(): boolean {
@@ -1026,15 +1112,15 @@ export class YoutubeService
     // fetch active and upcoming broadcasts simultaneously
     let [activeBroadcasts, upcomingBroadcasts] = await Promise.all([
       (
-        await platformAuthorizedRequest<IYoutubeCollection<IYoutubeLiveBroadcast>>(
-          'youtube',
+        await this.requestYoutube<IYoutubeCollection<IYoutubeLiveBroadcast>>(
           `${this.apiBase}/liveBroadcasts?${query}&broadcastStatus=active`,
+          false,
         )
       ).items,
       (
-        await platformAuthorizedRequest<IYoutubeCollection<IYoutubeLiveBroadcast>>(
-          'youtube',
+        await this.requestYoutube<IYoutubeCollection<IYoutubeLiveBroadcast>>(
           `${this.apiBase}/liveBroadcasts?${query}&broadcastStatus=upcoming`,
+          false,
         )
       ).items,
     ]);
@@ -1067,9 +1153,9 @@ export class YoutubeService
     const fields = ['snippet', 'contentDetails', 'status'];
     const query = `part=${fields.join(',')}&broadcastType=all&mine=true&maxResults=100`;
     const broadcasts = (
-      await platformAuthorizedRequest<IYoutubeCollection<IYoutubeLiveBroadcast>>(
-        'youtube',
+      await this.requestYoutube<IYoutubeCollection<IYoutubeLiveBroadcast>>(
         `${this.apiBase}/liveBroadcasts?${query}`,
+        false,
       )
     ).items;
     return broadcasts;
@@ -1081,9 +1167,9 @@ export class YoutubeService
     const fields = ['snippet', 'contentDetails', 'status'];
     const query = `part=${fields.join(',')}`;
     const broadcasts = (
-      await platformAuthorizedRequest<IYoutubeCollection<IYoutubeLiveBroadcast>>(
-        'youtube',
+      await this.requestYoutube<IYoutubeCollection<IYoutubeLiveBroadcast>>(
         `${this.apiBase}/liveBroadcasts?${query}&broadcastStatus=${status}&maxResults=100`,
+        false,
       )
     ).items;
     return broadcasts;
@@ -1091,22 +1177,25 @@ export class YoutubeService
 
   private async fetchLiveStream(id: string): Promise<IYoutubeLiveStream> {
     const url = `${this.apiBase}/liveStreams?part=cdn,snippet,contentDetails&id=${id}`;
-    return (await platformAuthorizedRequest<{ items: IYoutubeLiveStream[] }>('youtube', url))
-      .items[0];
+    return (await this.requestYoutube<{ items: IYoutubeLiveStream[] }>(url, false)).items[0];
   }
 
   async fetchBroadcast(
     id: string,
-    fields = ['snippet', 'contentDetails', 'status'],
+    fields = ['snippet', 'contentDetails', 'status', 'monetizationDetails'],
   ): Promise<IYoutubeLiveBroadcast> {
     const filter = `&id=${id}`;
     const query = `part=${fields.join(',')}${filter}&maxResults=1`;
     return (
-      await platformAuthorizedRequest<IYoutubeCollection<IYoutubeLiveBroadcast>>(
-        'youtube',
+      await this.requestYoutube<IYoutubeCollection<IYoutubeLiveBroadcast>>(
         `${this.apiBase}/liveBroadcasts?${query}`,
+        false,
       )
     ).items[0];
+  }
+
+  getMonetizationStatus(val?: boolean) {
+    return val ? 'on' : 'off';
   }
 
   get chatUrl() {
@@ -1127,6 +1216,10 @@ export class YoutubeService
       this.fetchBroadcast(broadcastId),
       this.fetchVideo(broadcastId),
     ]);
+    console.log('BROADCAST');
+    console.log(JSON.stringify(broadcast, null, 2));
+    console.log('VIDEO');
+    console.log(JSON.stringify(video, null, 2));
     const { title, description } = broadcast.snippet;
     const { privacyStatus, selfDeclaredMadeForKids } = broadcast.status;
     const { enableDvr, projection, latencyPreference } = broadcast.contentDetails;
@@ -1141,6 +1234,8 @@ export class YoutubeService
       latencyPreference,
       categoryId: video.snippet.categoryId,
       thumbnail: broadcast.snippet.thumbnails.default.url,
+      monetizationEnabled: broadcast.monetizationDetails?.adsMonetizationStatus === 'on',
+      eligibleForMonetization: broadcast.monetizationDetails?.eligibleForAdsMonetization,
     };
   }
 
@@ -1231,16 +1326,19 @@ export class YoutubeService
   async stopBroadcast(broadcastId: string) {
     // https://www.googleapis.com/youtube/v3/liveBroadcasts/transition
     const endpoint = `liveBroadcasts/transition?id=${broadcastId}&broadcastStatus=complete`;
-    return platformAuthorizedRequest<IYoutubeLiveStream>('youtube', {
-      url: `${this.apiBase}/${endpoint}`,
-      method: 'POST',
-    });
+    return this.requestYoutube<IYoutubeLiveStream>(
+      {
+        url: `${this.apiBase}/${endpoint}`,
+        method: 'POST',
+      },
+      false,
+    );
   }
 
   fetchFollowers() {
-    return platformAuthorizedRequest<{ items: { statistics: { subscriberCount: number } }[] }>(
-      'youtube',
+    return this.requestYoutube<{ items: { statistics: { subscriberCount: number } }[] }>(
       `${this.apiBase}/channels?part=statistics&mine=true`,
+      false,
     )
       .then(json => Number(json.items[0].statistics.subscriberCount))
       .catch(() => 0);

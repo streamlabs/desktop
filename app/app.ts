@@ -37,6 +37,7 @@ import { MetricsService } from 'services/metrics';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import * as remote from '@electron/remote';
 import { RealmService } from 'app-services';
+import { DiagnosticsService } from 'services/diagnostics';
 
 // // TODO: commented until we remove slap library
 // // For React Windows
@@ -48,6 +49,9 @@ const { ipcRenderer } = electron;
 const slobsVersion = Utils.env.SLOBS_VERSION;
 const isProduction = Utils.env.NODE_ENV === 'production';
 const isPreview = !!Utils.env.SLOBS_PREVIEW;
+
+const logTypes = ['debug', 'error', 'info', 'log'] as const;
+type TLogType = typeof logTypes[number];
 
 if (isProduction) {
   electron.crashReporter.addExtraParameter('windowId', Utils.getWindowId());
@@ -67,7 +71,7 @@ for (let i = 0; i < styleSheets.length; i++) {
   }
 }
 
-function wrapLogFn(fn: 'debug' | 'error' | 'info' | 'log') {
+function wrapLogFn(fn: TLogType) {
   const old: Function = console[fn];
   console[fn] = (...args: any[]) => {
     old.apply(console, args);
@@ -90,7 +94,7 @@ function sendLogMsg(level: string, ...args: any[]) {
   ipcRenderer.send('logmsg', { level, sender: windowId, message: serialized });
 }
 
-['log', 'info', 'warn', 'error'].forEach(wrapLogFn);
+logTypes.forEach(wrapLogFn);
 
 if (windowId === 'worker') {
   console.log(`Bundle Id: ${SLOBS_BUNDLE_ID}`);
@@ -413,5 +417,80 @@ if (Utils.isDevMode()) {
   window.addEventListener('error', () => ipcRenderer.send('showErrorAlert'));
   window.addEventListener('keyup', ev => {
     if (ev.key === 'F12') electron.ipcRenderer.send('openDevTools');
+  });
+}
+
+// Ctrl+Shift+Alt+D uploads a diagnostic report from the main window only.
+// Kept outside HotkeysService so it stays window-focused (HotkeysService uses node-libuiohook,
+// which is OS-global and would fire during gaming/streaming).
+// Note: While the user hypothetically could add this hotkey combination as a custom hotkey, it is
+// specific enough that this is unlikely and the benefit of having it work even when the app isn't
+// focused outweighs the risk of conflicts.
+if (Utils.isMainWindow()) {
+  let uploadingDiag = false;
+
+  window.addEventListener('keyup', ev => {
+    const isChord = ev.code === 'KeyD' && ev.shiftKey && ev.altKey && (ev.ctrlKey || ev.metaKey);
+    if (!isChord) return;
+
+    const target = ev.target as HTMLElement | null;
+    if (
+      target &&
+      (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+    ) {
+      return;
+    }
+
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    if (uploadingDiag) return;
+    uploadingDiag = true;
+
+    const diagnosticsService = getResource<DiagnosticsService>('DiagnosticsService');
+
+    diagnosticsService.actions.return
+      .uploadReport()
+      .then(r => {
+        remote.clipboard.writeText(r.report_code);
+        remote.dialog
+          .showMessageBox(remote.getCurrentWindow(), {
+            type: 'info',
+            title: $t('Diagnostic Report Uploaded Successfully'),
+            message: $t('Diagnostic Report Uploaded Successfully'),
+            detail:
+              $t(
+                'The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.',
+              ) +
+              '\n\n' +
+              r.report_code,
+            buttons: [$t('Copy Report ID'), $t('OK')],
+            noLink: true,
+          })
+          .then(({ response }) => {
+            if (response === 0) {
+              // Copy the report code to clipboard
+              remote.clipboard.writeText(r.report_code);
+            }
+            return;
+          });
+      })
+
+      .catch(e => {
+        console.error('Error generating diagnostic report', e);
+        remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+          type: 'error',
+          title: $t('Error Uploading Diagnostic Report'),
+          message: $t('Error Uploading Diagnostic Report'),
+          detail: $t(
+            'There was an error uploading the diagnostic report. Please try again, and let the Streamlabs Streamer Success team know if the issue persists.',
+          ),
+          buttons: [$t('OK')],
+          noLink: true,
+        });
+      })
+      .finally(() => {
+        uploadingDiag = false;
+      });
   });
 }

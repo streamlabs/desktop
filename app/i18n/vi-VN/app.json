@@ -19,5 +19,8 @@
   "Custom Destination": "Custom Destination",
   "This app is currently popped out in another window.": "This app is currently popped out in another window.",
   "Error granting chat permissions.": "Error granting chat permissions.",
-  "Authentication Error": "Authentication Error"
+  "Authentication Error": "Authentication Error",
+  "Diagnostic Report Uploaded Successfully": "Diagnostic Report Uploaded Successfully",
+  "Copy Report ID": "Copy Report ID",
+  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team."
 }

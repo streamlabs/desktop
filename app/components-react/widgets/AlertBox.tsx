@@ -1,36 +1,32 @@
-/**
- * Components for AlertBox widget
- */
-
+import { CaretRightOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import * as remote from '@electron/remote';
+import { Alert, Button, Collapse, Menu, Tooltip } from 'antd';
 import React, { useRef } from 'react';
+import { useForceUpdate } from 'slap';
+import { $t } from '../../services/i18n';
+import { TAlertType } from '../../services/widgets/alerts-config';
+import { assertIsDefined } from '../../util/properties-type-guards';
+import { Services } from '../service-provider';
+import { ButtonGroup } from '../shared/ButtonGroup';
 import {
+  AudioUrlInput,
   CheckboxInput,
+  ColorInput,
+  FontFamilyInput,
+  FontSizeInput,
+  FontWeightInput,
+  ListInput,
   MediaUrlInput,
   NumberInput,
   SliderInput,
-  TextInput,
-  AudioUrlInput,
   SwitchInput,
-  FontFamilyInput,
-  ColorInput,
-  FontWeightInput,
-  FontSizeInput,
-  ListInput,
+  TextInput,
 } from '../shared/inputs';
-import { $t } from '../../services/i18n';
-import { Alert, Button, Collapse, Menu, Tooltip } from 'antd';
 import Form from '../shared/inputs/Form';
-import { WidgetLayout } from './common/WidgetLayout';
-import { CaretRightOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import { TAlertType } from '../../services/widgets/alerts-config';
-import { useAlertBox } from './useAlertBox';
-import { Services } from '../service-provider';
-import { ButtonGroup } from '../shared/ButtonGroup';
-import { LayoutInput } from './common/LayoutInput';
 import InputWrapper from '../shared/inputs/InputWrapper';
-import * as remote from '@electron/remote';
-import { assertIsDefined } from '../../util/properties-type-guards';
-import { useForceUpdate } from 'slap';
+import { LayoutInput } from './common/LayoutInput';
+import { WidgetLayout } from './common/WidgetLayout';
+import { useAlertBox } from './useAlertBox';
 
 /**
  * Root component
@@ -77,10 +73,6 @@ function TabContent() {
  */
 function GeneralSettings() {
   const { bind, switchToLegacyAlertbox } = useAlertBox();
-
-  function openAdvancedAlertTesting() {
-    Services.MagicLinkService.actions.openAdvancedAlertTesting();
-  }
 
   return (
     <Form layout={'horizontal'}>
@@ -185,6 +177,9 @@ function VariationSettings(p: { type: TAlertType }) {
     case 'merch':
       SettingsComponent = <MerchSettings />;
       break;
+    case 'power_up':
+      SettingsComponent = <PowerUpsSettings />;
+      break;
     default:
       SettingsComponent = <CommonAlertSettings type={p.type} />;
       break;
@@ -285,8 +280,6 @@ function AnimationSettingsPanel() {
  * Additional settings for donation alerts
  */
 function DonationSettings() {
-  const { createVariationBinding } = useAlertBox();
-  const bind = createVariationBinding('donation', 'default', useForceUpdate());
   const { HostsService, UsageStatisticsService, MagicLinkService } = Services;
   const host = HostsService.streamlabs;
 
@@ -326,6 +319,24 @@ function MerchSettings() {
         <CheckboxInput {...bind.use_custom_image} />
       </InputWrapper>
       <CommonAlertSettings type="merch" hiddenFields={hiddenFields} />
+    </>
+  );
+}
+
+/**
+ * Additional settings for power-ups
+ */
+function PowerUpsSettings() {
+  const { createVariationBinding } = useAlertBox();
+  const bind = createVariationBinding('power_up', 'default', useForceUpdate());
+  const hiddenFields = bind.use_event_image.value ? ['image_href'] : [];
+
+  return (
+    <>
+      <InputWrapper>
+        <CheckboxInput {...bind.use_event_image} />
+      </InputWrapper>
+      <CommonAlertSettings type="power_up" hiddenFields={hiddenFields} />
     </>
   );
 }

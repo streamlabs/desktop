@@ -19,5 +19,8 @@
   "Custom Destination": "Vlastní cílové umístění",
   "This app is currently popped out in another window.": "Tato aplikace je v současné době otevřena v jiném okně.",
   "Error granting chat permissions.": "Chyba při udělování oprávnění k chatu.",
-  "Authentication Error": "Chyba ověření"
+  "Authentication Error": "Chyba ověření",
+  "Diagnostic Report Uploaded Successfully": "Diagnostic Report Uploaded Successfully",
+  "Copy Report ID": "Copy Report ID",
+  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team."
 }

@@ -40,12 +40,6 @@ export default function MultistreamChatInfo() {
       write: false,
     },
     {
-      icon: 'trovo',
-      name: $t('Trovo'),
-      read: true,
-      write: false,
-    },
-    {
       icon: 'instagram',
       name: $t('Instagram Live'),
       read: false,

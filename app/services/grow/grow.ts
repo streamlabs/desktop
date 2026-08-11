@@ -8,7 +8,6 @@ import { GOAL_OPTIONS, GROWTH_TIPS } from './grow-data';
 import { TwitchService } from 'services/platforms/twitch';
 import { YoutubeService } from 'services/platforms/youtube';
 import { FacebookService } from 'services/platforms/facebook';
-import { TrovoService } from 'services/platforms/trovo';
 import { TPlatform } from 'services/platforms';
 import moment from 'moment';
 
@@ -126,7 +125,6 @@ export class GrowService extends StatefulService<IGrowServiceState> {
   @Inject() twitchService: TwitchService;
   @Inject() youtubeService: YoutubeService;
   @Inject() facebookService: FacebookService;
-  @Inject() trovoService: TrovoService;
 
   static initialState: IGrowServiceState = {
     goals: {},
@@ -209,7 +207,6 @@ export class GrowService extends StatefulService<IGrowServiceState> {
       twitch: this.twitchService,
       facebook: this.facebookService,
       youtube: this.youtubeService,
-      trovo: this.trovoService,
     };
 
     const communityReach: ICommunityReach[] = [];

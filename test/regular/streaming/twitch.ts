@@ -195,10 +195,6 @@ test.skip(
     await clickGoLive();
     await waitForSettingsWindowLoaded();
 
-    await fillForm({
-      trovo: true,
-    });
-
     await waitForSettingsWindowLoaded();
     await submit();
     await waitForStreamStart();

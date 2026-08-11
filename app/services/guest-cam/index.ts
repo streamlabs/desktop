@@ -82,6 +82,7 @@ export interface IObsReturnTypes {
   func_stop_sender: {};
   func_stop_receiver: {};
   func_stop_producer: {};
+  func_reset_device: {};
 }
 
 interface IRoomResponse {
@@ -898,11 +899,19 @@ export class GuestCamService extends StatefulService<IGuestCamServiceState> {
       this.producer = null;
     }
 
-    // TODO: AFAIK there is no way to cleanly recreate the producer without
-    // entirely disconnecting destroying all state on the server. For now, we
-    // disconnect from the socket and start listening to guests again.
+    // Disconnect the socket and reset the native mediasoup transceiver so the
+    // next session starts from a clean device. Without the reset, the singleton
+    // transceiver in mediasoup-connector retains m_device across sessions and
+    // every subsequent func_load_device call hits the "Device already exists"
+    // early-return path, leaving stale WebRTC state in place.
     this.socket.disconnect();
     this.socket = null;
+
+    const sourceForReset = this.views.sources[0];
+    if (sourceForReset) {
+      this.makeObsRequest(sourceForReset.sourceId, 'func_reset_device');
+    }
+
     this.CLEAR_GUESTS();
   }
 

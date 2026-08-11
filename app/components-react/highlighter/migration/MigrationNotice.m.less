@@ -1,0 +1,472 @@
+@sectionWidth: 424px;
+@sectionHeight: @sectionWidth;
+@gap: 16px;
+
+.migration-notice {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+}
+
+.migration-notice-modal {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  line-height: 1.2;
+}
+
+.title-modal {
+  font-size: 24px;
+}
+
+.subtitle {
+  font-size: 16px;
+  opacity: 0.7;
+  margin: 0 0 32px 0;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+}
+
+// =================================================================================================
+// Installation Flow
+// =================================================================================================
+
+.installation-flow {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.installation-flow-page {
+  max-height: 50vh;
+}
+
+.installation-flow-modal {
+  max-height: 100%;
+}
+
+.install-title {
+  font-size: 16px;
+  font-weight: 600;
+  align-self: flex-start;
+  margin: 0;
+}
+
+.install-content {
+  text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-percent {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.install-subtext {
+  font-size: 14px;
+  opacity: 0.7;
+  line-height: 1.6;
+  margin: 0;
+  text-align: center;
+}
+
+.error-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--warning);
+  margin-bottom: 16px;
+}
+
+.success-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--teal);
+  margin-bottom: 16px;
+}
+
+.support-link {
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  opacity: 0.8;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.install-actions {
+  width: 100%;
+  max-width: 400px;
+}
+
+.cancel-install-button {
+  width: 100%;
+  background: var(--button);
+  color: var(--title);
+  border: none;
+  padding: 14px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background: var(--button-hover);
+  }
+
+  &:active {
+    background: var(--dark-background);
+  }
+}
+
+.retry-button {
+  width: 100%;
+  background: var(--title);
+  color: var(--background);
+  border: none;
+  padding: 14px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background: var(--paragraph);
+  }
+
+  &:active {
+    background: var(--border);
+  }
+}
+
+// =================================================================================================
+// Feature Carousel
+// =================================================================================================
+
+.carousel-wrapper {
+  display: flex;
+  background-color: var(--dark-background);
+  border-radius: 10px;
+  padding: 48px;
+  border: solid 1px var(--border);
+  width: 100%;
+  gap: 64px;
+}
+
+.carousel-left {
+  max-width: 550px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 24px;
+}
+
+.carousel-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.carousel-title {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.carousel-subtitle {
+  font-weight: 500;
+  font-style: italic;
+  opacity: 0.8;
+  margin: 0;
+}
+
+.carousel-description {
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 600;
+  opacity: 0.6;
+  margin: 0;
+}
+
+.feature-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  margin-left: -12px;
+}
+
+.feature-item {
+  cursor: pointer;
+  border-radius: 9px;
+  padding: 4px 12px;
+  font-size: 14px;
+  line-height: 26px;
+  letter-spacing: -0.004em;
+  transition: color 0.2s, background-color 0.2s;
+  opacity: 0.6;
+  width: fit-content;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.feature-item-active {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  border-radius: 9px;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 26px;
+  letter-spacing: -0.004em;
+  color: var(--title);
+  opacity: 1;
+  width: fit-content;
+}
+
+.carousel-cta {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cta-hint {
+  font-size: 14px;
+  opacity: 0.6;
+  font-style: italic;
+  margin: 0;
+}
+
+.cta-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
+
+.cta-annotation {
+  font-size: 14px;
+  opacity: 0.6;
+  font-style: italic;
+  margin: 0;
+}
+
+// Carousel: progress bar (inline install states)
+
+.progress-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.progress-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progress-status {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.progress-bar-row {
+  display: flex;
+  align-items: center;
+  max-width: 280px;
+  height: 20px;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.progress-track {
+  height: 10px;
+  flex: 1;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: var(--icon-semi);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--teal);
+  transition: width 0.3s ease-out;
+}
+
+.progress-fill-pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.cancel-x {
+  background: none;
+  border: none;
+  color: var(--icon);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s;
+
+  &:hover {
+    color: var(--title);
+  }
+}
+
+.progress-pct-large {
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.1;
+  white-space: nowrap;
+}
+
+// Carousel: inline done / error states
+
+.carousel-done {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  gap: 4px;
+}
+
+.carousel-done-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.carousel-done-sub {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.carousel-error {
+  display: flex;
+  flex-direction: column;
+}
+
+.carousel-error-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--warning);
+  margin-bottom: 4px;
+}
+
+.carousel-error-sub {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-bottom: 8px;
+}
+
+// Carousel: right column (image area)
+
+.carousel-right {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+.carousel-card {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  container-type: inline-size;
+}
+
+.carousel-card-inner {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-card-image {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+}
+
+.carousel-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px;
+  text-align: center;
+  opacity: 0.6;
+}
+
+.carousel-placeholder-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-placeholder-icon-inner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+}
+
+.carousel-placeholder-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.handwritten-annotations {
+  font-family: 'Patrick Hand', cursive;
+  color: var(--teal);
+}

@@ -31,7 +31,6 @@ const platformServiceConfig: Record<TPlatform, { streamType: string; service?: s
   twitch: { streamType: 'rtmp_common', service: 'Twitch' },
   youtube: { streamType: 'rtmp_common', service: 'YouTube - RTMPS' },
   facebook: { streamType: 'rtmp_common', service: 'Facebook Live' },
-  trovo: { streamType: 'rtmp_custom' },
   tiktok: { streamType: 'rtmp_custom' },
   twitter: { streamType: 'rtmp_custom' },
   instagram: { streamType: 'rtmp_custom' },
@@ -132,11 +131,14 @@ export class EncoderQueryService extends Service {
 
     try {
       const existing = this.streamingService.getRecordingInstance();
-      if (existing && hasGetAvailableEncoders(existing)) {
-        const encoders = existing.getAvailableEncoders();
-        const options = mapEncoders(encoders);
-        this.recordingEncoderCache = { key: cacheKey, encoders, options };
-        return options;
+      if (existing) {
+        existing.format = format;
+        if (hasGetAvailableEncoders(existing)) {
+          const encoders = existing.getAvailableEncoders();
+          const options = mapEncoders(encoders);
+          this.recordingEncoderCache = { key: cacheKey, encoders, options };
+          return options;
+        }
       }
 
       if (mode === 'Simple') {

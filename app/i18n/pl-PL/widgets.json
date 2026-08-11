@@ -1,6 +1,6 @@
 {
   "Add Widgets": "Dodaj widżety",
-  "Manage on Web": "Manage on Web",
+  "Manage on Web": "Zarządzaj w sieci",
   "Select the Streamlabs widgets you would like to activate for your stream. These will get automatically added to your scene.": "Wybierz widżety Streamlabs, które chciałbyś aktywować na swojej transmisji. Zostaną automatycznie dodane do Twojej sceny.",
   "Thanks viewers with notification popups": "Podziękuj widzom wyskakującymi powiadomieniami",
   "Custom on-screen alerts to thank your loyal viewers for following, subbing, tipping and more.": "Niestandardowe powiadomienia na ekranie, które pozwalają podziękować lojalnym widzom za obserwowanie, subskrypcję, napiwki i nie tylko.",
@@ -25,6 +25,7 @@
   "Subscription": "Subskrypcja",
   "Donation": "Dotacja",
   "Bits": "Bity",
+  "Power-Ups": "Power-Ups",
   "Host": "Host",
   "The Google Font to use for the text. Visit http://google.com/fonts to find one! Popular Fonts include: Open Sans, Roboto, Oswald, Lato, and Droid Sans.": "Czcionka Google do wykorzystania w tekście. Odwiedź stronę http://google.com/fonts, aby znaleźć odpowiednią czcionkę! Popularne czcionki: Open Sans, Roboto, Oswald, Lato i Droid Sans.",
   "A hex code for the base text color.": "Kod szesnastkowy dla podstawowego koloru tekstu.",

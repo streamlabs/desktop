@@ -26,6 +26,8 @@ import EducationCarousel from './EducationCarousel';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import { ImportStreamModal } from './ImportStream';
 import SupportedGames from './supportedGames/SupportedGames';
+import MigrationNotice from './migration/MigrationNotice';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 type TModalStreamView = {
   type: 'upload';
@@ -36,13 +38,22 @@ type TModalStreamView = {
 } | null;
 
 export default function StreamView({ emitSetView }: { emitSetView: (data: IViewState) => void }) {
-  const { HighlighterService, HotkeysService, UsageStatisticsService } = Services;
+  const {
+    HighlighterService,
+    HotkeysService,
+    UsageStatisticsService,
+    IncrementalRolloutService,
+  } = Services;
   const v = useVuex(() => ({
     error: HighlighterService.views.error,
     uploadInfo: HighlighterService.views.uploadInfo,
     highlighterVersion: HighlighterService.views.highlighterVersion,
     tempRecordingInfoPath: HighlighterService.views.tempRecordingInfo.recordingPath,
   }));
+
+  const migrationEnabled = IncrementalRolloutService.views.featureIsEnabled(
+    EAvailableFeatures.highlighterMigration,
+  );
 
   useEffect(() => {
     const recordingInfo = { ...HighlighterService.views.tempRecordingInfo };
@@ -105,7 +116,7 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
 
   // This should also open the ImportStreamModal
   function onDrop(e: React.DragEvent<HTMLDivElement>) {
-    if (v.highlighterVersion === '') return;
+    if (v.highlighterVersion === '' && !migrationEnabled) return;
 
     const extensions = SUPPORTED_FILE_TYPES.map(e => `.${e}`);
     const files: string[] = [];
@@ -138,7 +149,7 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
           <h1 style={{ margin: 0 }}>{$t('My Stream Highlights')}</h1>
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
-          {v.highlighterVersion !== '' && (
+          {(v.highlighterVersion !== '' || migrationEnabled) && (
             <div
               className={styles.uploadWrapper}
               style={{
@@ -169,6 +180,14 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
       </div>
 
       <Scrollable style={{ flexGrow: 1, padding: '20px 0 20px 20px' }}>
+        {migrationEnabled && (
+          <MigrationNotice
+            variant="page"
+            onShowAllClips={() => {
+              emitSetView({ view: EHighlighterView.CLIPS, id: undefined });
+            }}
+          />
+        )}
         {highlightedStreams.length === 0 ? (
           <>No highlight clips created from streams</> // TODO: Add empty state
         ) : (
@@ -211,9 +230,11 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
         visible={!!showModal}
         destroyOnClose={true}
         keyboard={false}
+        transitionName=""
+        maskTransitionName=""
       >
         {!!v.error && <Alert message={v.error} type="error" showIcon />}
-        {showModal?.type === 'upload' && v.highlighterVersion !== '' && (
+        {showModal?.type === 'upload' && (v.highlighterVersion !== '' || migrationEnabled) && (
           <ImportStreamModal
             close={closeModal}
             videoPath={showModal.path}

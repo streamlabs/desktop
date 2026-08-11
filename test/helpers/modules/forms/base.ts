@@ -66,14 +66,23 @@ export async function setInputValue(
 ) {
   // find element
   const $el = await select(selectorOrEl);
-  const client = getClient();
   await $el.waitForDisplayed();
 
-  // focus
-  await $el.click();
-  await ((client.keys(['Control', 'a']) as any) as Promise<any>); // select all
-  await ((client.keys('Control') as any) as Promise<any>); // release ctrl key
-  await ((client.keys('Backspace') as any) as Promise<any>); // clear
+  // focus and clear existing value.
+  const client = getClient();
+  await $el.click(); // ensure the element is focused before executing select()
+  if (process.platform === 'darwin') {
+    // On macOS, the clicked selector may be a wrapper (e.g. list inputs). Select the focused element instead.
+    await client.execute(() => {
+      const el = document.activeElement as any;
+      if (el && typeof el.select === 'function') el.select();
+    });
+    await client.keys('Backspace');
+  } else {
+    await ((client.keys(['Control', 'a']) as any) as Promise<any>); // select all
+    await ((client.keys('Control') as any) as Promise<any>); // release ctrl key
+    await ((client.keys('Backspace') as any) as Promise<any>); // clear
+  }
 
   await $el.click(); // click again if it's a list input
   await sendKeys(String(value), bufferInput); // type text

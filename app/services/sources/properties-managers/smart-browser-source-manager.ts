@@ -2,7 +2,6 @@ import { PropertiesManager } from './properties-manager';
 import { Inject } from 'services/core/injector';
 import { WebsocketService } from 'services/websocket';
 import { Subscription } from 'rxjs';
-import { VisionService } from 'services/vision';
 import { TObsFormData } from 'components/obs/inputs/ObsInput';
 
 /**
@@ -45,7 +44,6 @@ function matchesHostnamePattern(hostname: string): boolean {
 
 export class SmartBrowserSourceManager extends PropertiesManager {
   @Inject() private websocketService: WebsocketService;
-  @Inject() visionService: VisionService;
   private socketSub!: Subscription;
 
   normalizeUrl(formUrl?: string): string | undefined {
@@ -85,7 +83,6 @@ export class SmartBrowserSourceManager extends PropertiesManager {
       }
     });
 
-    this.visionService.ensureRunning();
     this.normalizeUrl();
   }
 

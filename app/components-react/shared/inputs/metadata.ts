@@ -1,7 +1,6 @@
 import { Rule } from 'antd/lib/form';
 import { TInputValue } from './FormFactory';
 import { IListOption } from './ListInput';
-import { TInputType } from './inputs';
 
 /**
  * Metadata generator for inputs
@@ -58,7 +57,7 @@ export type TInputMetadata<T = string> =
 
 interface IBaseMetadata {
   label?: string;
-  tooltip?: string;
+  tooltip?: string | React.ReactNode;
   required?: boolean;
   type?: string;
   rules?: Rule[];

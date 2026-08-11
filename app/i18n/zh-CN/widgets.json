@@ -1,6 +1,6 @@
 {
   "Add Widgets": "添加小工具",
-  "Manage on Web": "Manage on Web",
+  "Manage on Web": "在网页上管理",
   "Select the Streamlabs widgets you would like to activate for your stream. These will get automatically added to your scene.": "选择要为直播激活的 Streamlabs 小工具。将自动添加到场景中。",
   "Thanks viewers with notification popups": "使用通知弹出窗口感谢观众",
   "Custom on-screen alerts to thank your loyal viewers for following, subbing, tipping and more.": "自定义屏幕提示，感谢忠实观众的关注、订阅、打赏等。",
@@ -25,6 +25,7 @@
   "Subscription": "订阅",
   "Donation": "打赏",
   "Bits": "Bits",
+  "Power-Ups": "Power-Ups",
   "Host": "主持人",
   "The Google Font to use for the text. Visit http://google.com/fonts to find one! Popular Fonts include: Open Sans, Roboto, Oswald, Lato, and Droid Sans.": "用于文本的 Google 字体。访问 http://google.com/fonts 找到自己的字体！热门字体：Open Sans、Roboto、Oswald、Lato、Droid Sans。",
   "A hex code for the base text color.": "基本文本颜色的十六进制代码。",

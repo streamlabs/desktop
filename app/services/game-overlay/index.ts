@@ -53,22 +53,6 @@ const hideInteraction = `
   sheet.insertRule('.stream-chat .stream-chat-header { display: none !important; }', sheet.cssRules.length);
   // Chat Input
   sheet.insertRule('.stream-chat .chat-input { display: none !important; }', sheet.cssRules.length);
-
-  /* Trovo Chat */
-  // Fix chat container that's cut off on Game Overlay's 300px wide window
-  /*
-   * The input box is rendered way after this code runs, insert a CSS rule to hide it instead of
-   * manipulating style directly since we will never find the element here.
-   * Since we're using CSSStyleSheet we add the rest of the rules here.
-   *
-   * 1. Fix chat wrapper width.
-   * 2. Hide chat input panel.
-   * 3. Hide all headers, including Gift Rank.
-   */
-  sheet.insertRule('#__layout .popout-container .chat-wrap { min-width: 300px }', sheet.cssRules.length);
-  sheet.insertRule('#__layout .popout-container .chat-wrap .chat-header { display: none }', sheet.cssRules.length);
-  sheet.insertRule('#__layout .popout-container .input-panels-container { display: none }', sheet.cssRules.length);
-  sheet.insertRule('#__layout .popout-container .gift-rank-header { display: none }', sheet.cssRules.length);
 `;
 
 export enum EGameOverlayState {

@@ -311,7 +311,6 @@
   "%{platform} Setup Error: Toggling off %{platform} to bypass and go live.": "Chyba nastavení platformy %{platform}: Vypnutím platformy %{platform} bude problém ignorován a přejdete na živé vysílání.",
   "Recording Audio Encoder": "Audio kodér pro nahrávání",
   "Record Stream in": "Nahrát stream v",
-  "format": "formát",
   "Record Stream": "Nahrát stream",
   "AI Highlighter is enabled. Recording will start when stream starts.": "AI Highlighter je zapnutý. Nahrávání začne v okamžiku spuštění streamu.",
   "Connection Failed": "Připojení se nezdařilo",

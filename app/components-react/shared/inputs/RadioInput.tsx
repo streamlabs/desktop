@@ -20,8 +20,8 @@ interface ICustomRadioGroupProps {
   label?: string;
   nolabel?: boolean;
   nowrap?: boolean;
+  nomargin?: boolean;
   options: ICustomRadioOption[];
-  buttons?: boolean;
   icons?: boolean;
   style?: CSSProperties;
   value?: string;
@@ -29,6 +29,9 @@ interface ICustomRadioGroupProps {
   disabled?: boolean;
   className?: string;
   gapsize?: number;
+  alignIcons?: 'left' | 'center' | 'right';
+  optionType?: 'default' | 'button';
+  filled?: boolean;
 }
 
 type TRadioInputProps = TSlobsInputProps<ICustomRadioGroupProps, string, {}>;
@@ -41,9 +44,22 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
     ...pick(p, 'name'),
   };
 
+  const optionType = p.optionType ?? 'default';
+
   return (
-    <InputWrapper {...wrapperAttrs} data-title={p.label}>
-      {p.buttons && (
+    <InputWrapper
+      {...wrapperAttrs}
+      data-title={p.label}
+      nolabel={p.nolabel}
+      className={cx({
+        [styles.defaultRadio]: optionType === 'default' && !p.icons,
+        [styles.iconsLeft]: p.alignIcons === 'left',
+        [styles.iconsCenter]: p.alignIcons === 'center',
+        [styles.iconsRight]: p.alignIcons === 'right',
+        [styles.nomargin]: p.nomargin,
+      })}
+    >
+      {optionType === 'button' && !p.icons && (
         <Radio.Group
           {...inputProps}
           data-title={p.label}
@@ -52,7 +68,6 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           onChange={e => p.onChange && p.onChange(e.target.value)}
           options={p.options}
           optionType="button"
-          buttonStyle="solid"
           disabled={p.disabled}
           className={p.className}
           style={p?.style}
@@ -66,9 +81,14 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           value={p.value}
           defaultValue={p.defaultValue}
           onChange={e => p.onChange && p.onChange(e.target.value)}
-          className={cx(p.className, styles.iconRadio)}
+          className={cx(p.className, styles.iconRadio, {
+            [styles.iconDefault]: optionType === 'default',
+            [styles.iconButton]: optionType === 'button',
+            [styles.filled]: p.filled,
+          })}
           style={p?.style}
           disabled={p.disabled}
+          optionType={p.optionType}
         >
           {p.options.map((option: ICustomRadioOption) => {
             return (
@@ -90,7 +110,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           })}
         </Radio.Group>
       )}
-      {!p.icons && !p.buttons && (
+      {!p.icons && optionType === 'default' && (
         <Radio.Group
           {...inputProps}
           data-title={p.label}
@@ -104,7 +124,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           <Space size={p?.gapsize ?? undefined} direction={p?.direction ?? 'vertical'}>
             {p.options.map(option => {
               return (
-                <React.Fragment key={option.value}>
+                <React.Fragment key={`${p.name}-${option.value}`}>
                   <Radio
                     value={option.value}
                     disabled={p.disabled}

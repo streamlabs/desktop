@@ -19,5 +19,8 @@
   "Custom Destination": "Tujuan Kustom",
   "This app is currently popped out in another window.": "Aplikasi ini saat ini muncul di jendela lain.",
   "Error granting chat permissions.": "Kesalahan pemberian izin obrolan.",
-  "Authentication Error": "Kesalahan Autentikasi"
+  "Authentication Error": "Kesalahan Autentikasi",
+  "Diagnostic Report Uploaded Successfully": "Diagnostic Report Uploaded Successfully",
+  "Copy Report ID": "Copy Report ID",
+  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team."
 }

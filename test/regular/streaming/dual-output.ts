@@ -311,10 +311,6 @@ test(
 
       await clickGoLive();
       await waitForSettingsWindowLoaded();
-      await fillForm({
-        trovo: true,
-      });
-      await waitForSettingsWindowLoaded();
       await submit();
 
       // Cannot go live in dual output mode with all targets assigned to one display
@@ -326,19 +322,9 @@ test(
 
       // Dual output with one platform for each display
       await fillForm({
-        trovoDisplay: 'vertical',
-      });
-      await goLiveWithDualOutput('trovo');
-
-      await clickGoLive();
-      await waitForSettingsWindowLoaded();
-      await fillForm({
-        trovoDisplay: 'horizontal',
         twitchDisplay: 'vertical',
-        primaryChat: 'Trovo',
       });
-
-      await goLiveWithDualOutput('trovo');
+      await goLiveWithDualOutput('twitch');
     } catch (e: unknown) {
       console.log('Error during Dual Output Go Live Ultra test:', e);
     } finally {

@@ -118,6 +118,8 @@
   "Cheer (Bits)": "Fandit (bity)",
   "Plays an alert when a viewer sends a Cheer": "Přehraje upozornění, když divák pošle Fandění",
   "Plays an alert when another streamer raids your channel": "Přehraje upozornění, když jiný streamer provede nájezd na váš kanál",
+  "Use Power-Up Image": "Use Power-Up Image",
+  "Plays an alert when a viewer uses a Power-Up": "Plays an alert when a viewer uses a Power-Up",
   "YouTube Super Chat": "Super chat na YouTube",
   "Facebook Support": "Podpora na Facebooku",
   "Plays an alert for new Facebook Supporters": "Přehraje upozornění na nové příznivce Facebooku",
@@ -155,5 +157,5 @@
   "Use unlimited delay": "Použít neomezené zpoždění",
   "When enabled new alerts will interrupt the on screen alert": "Po aktivaci této možnosti přeruší nová upozornění upozornění na obrazovce",
   "Text Highlight Color": "Barva zvýraznění textu",
-  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "Platformy: Twitch, YouTube, Facebook, Trovo a integrace"
+  "Platforms: Twitch, YouTube, Facebook & integrations": "Platforms: Twitch, YouTube, Facebook & integrations"
 }

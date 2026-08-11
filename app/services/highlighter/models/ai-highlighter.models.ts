@@ -71,6 +71,9 @@ export enum EGame {
   EA_SPORTS_FC_26 = 'ea_sports_fc_26',
   NBA_2K26 = 'nba_2k26',
   DEADLOCK = 'deadlock',
+  FORZA_HORIZON_6 = 'forza_horizon_6',
+  ENSHROUDED = 'enshrouded',
+  MINECRAFT = 'minecraft',
   UNSET = 'unset',
 }
 

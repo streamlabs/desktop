@@ -1,5 +1,5 @@
 import * as inputControllers from './inputs';
-import { BaseInputController, TFiledSetterFn } from './base';
+import { BaseInputController, TFiledSetterFn, setInputValue as setBaseInputValue } from './base';
 import { pascalize } from 'humps';
 import { difference, keyBy, isEqual, mapValues } from 'lodash';
 import { getClient, waitForDisplayed } from '../core';
@@ -237,16 +237,7 @@ export function useForm(name?: string) {
 }
 
 export async function setInputValue(selector: string, value: string) {
-  const client = getClient();
-  const $el = await client.$(selector);
-
-  await $el.waitForDisplayed();
-  await $el.click();
-  await ((client.keys(['Control', 'a']) as any) as Promise<any>); // select all
-  await ((client.keys('Control') as any) as Promise<any>); // release ctrl key
-  await ((client.keys('Backspace') as any) as Promise<any>); // clear
-  await $el.click(); // click again if it's a list input
-  await ((client.keys(value) as any) as Promise<any>); // type text
+  await setBaseInputValue(selector, value);
 }
 
 /**

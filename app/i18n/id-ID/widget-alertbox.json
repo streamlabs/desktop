@@ -118,6 +118,8 @@
   "Cheer (Bits)": "Cheer (Bits)",
   "Plays an alert when a viewer sends a Cheer": "Mainkan peringatan ketika penonton mengirimkan Cheer",
   "Plays an alert when another streamer raids your channel": "Mainkan peringatan ketika streamer lain melakukan raid ke channel Anda",
+  "Use Power-Up Image": "Use Power-Up Image",
+  "Plays an alert when a viewer uses a Power-Up": "Plays an alert when a viewer uses a Power-Up",
   "YouTube Super Chat": "Super Chat YouTube",
   "Facebook Support": "Dukungan Facebook",
   "Plays an alert for new Facebook Supporters": "Mainkan peringatan untuk Pendukung Facebook yang baru",
@@ -155,5 +157,5 @@
   "Use unlimited delay": "Gunakan penundaan yang tidak terbatas",
   "When enabled new alerts will interrupt the on screen alert": "Ketika diaktifkan, peringatan baru akan mengganggu peringatan di layar",
   "Text Highlight Color": "Warna Highlight Teks",
-  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "Platform: Twitch, YouTube, Facebook, Trovo & integrasi"
+  "Platforms: Twitch, YouTube, Facebook & integrations": "Platforms: Twitch, YouTube, Facebook & integrations"
 }

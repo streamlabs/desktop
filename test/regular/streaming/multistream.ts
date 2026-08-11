@@ -33,7 +33,7 @@ import { sleep } from '../../helpers/sleep';
 useWebdriver();
 
 async function enableAllPlatforms() {
-  for (const platform of ['twitch', 'youtube', 'trovo']) {
+  for (const platform of ['twitch', 'youtube']) {
     await fillForm({ [platform]: true });
     await sleep(500);
     await waitForSettingsWindowLoaded();
@@ -76,7 +76,6 @@ async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean)
       title: 'Test stream',
       description: 'Test stream description',
       twitchGame: 'Fortnite',
-      trovoGame: 'Doom',
       streamShift: true,
     });
     await goLiveWithMultistream();
@@ -161,7 +160,6 @@ test(
       title: 'Test stream',
       description: 'Test stream description',
       twitchGame: 'Fortnite',
-      trovoGame: 'Doom',
       primaryChat: 'YouTube',
     });
 
@@ -186,27 +184,24 @@ test(
     await waitForSettingsWindowLoaded();
 
     const twitchForm = useForm('twitch-settings');
-    await twitchForm.fillForm({
+    const twitchSettings = {
       customEnabled: true,
       title: 'twitch title',
       twitchGame: 'Fortnite',
       // TODO: Re-enable after reauthing userpool
       // twitchTags: ['100%'],
-    });
+    };
+    await twitchForm.fillForm(twitchSettings);
+    await twitchForm.assertFormContains(twitchSettings);
 
     const youtubeForm = useForm('youtube-settings');
-    await youtubeForm.fillForm({
+    const youtubeSettings = {
       customEnabled: true,
       title: 'youtube title',
       description: 'youtube description',
-    });
-
-    const trovoForm = useForm('trovo-settings');
-    await trovoForm.fillForm({
-      customEnabled: true,
-      trovoGame: 'Doom',
-      title: 'trovo title',
-    });
+    };
+    await youtubeForm.fillForm(youtubeSettings);
+    await youtubeForm.assertFormContains(youtubeSettings);
 
     await goLiveWithMultistream();
     await stopStream();

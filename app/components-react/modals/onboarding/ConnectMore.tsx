@@ -25,7 +25,7 @@ export function ConnectMore(p: IOnboardingStepProps) {
     : $t('Connect your accounts for the best experience. You can always connect more later.');
 
   const platformCards: TPlatform[] = ['twitch', 'youtube', 'tiktok', 'kick', 'patreon', 'facebook'];
-  const listedPlatforms: TPlatform[] = ['trovo', 'twitter', 'instagram'];
+  const listedPlatforms: TPlatform[] = ['twitter', 'instagram'];
 
   const { mergePlatform } = useAuth();
 

@@ -21,7 +21,6 @@ const THEME_MAP = {
   FREE: {
     2574: 'https://cdn.streamlabs.com/marketplace/overlays/60327649/aa0e00a/aa0e00a.overlay',
     3216: 'https://cdn.streamlabs.com/marketplace/overlays/60327649/5b85194/5b85194.overlay',
-    3010: 'https://cdn.streamlabs.com/marketplace/overlays/7684923/30a5873/30a5873.overlay',
     2592: 'https://cdn.streamlabs.com/marketplace/overlays/7684923/cf2c950/cf2c950.overlay',
     515: 'https://cdn.streamlabs.com/marketplace/overlays/7684923/45547fa/45547fa.overlay',
     1142: 'https://cdn.streamlabs.com/marketplace/overlays/7684923/ce0222e/ce0222e.overlay',
@@ -94,7 +93,7 @@ export function Themes(p: IOnboardingStepProps) {
           themeMetadata.current = { ...themeMetadata.current, [data.id]: data };
           const thumbnail = data.preview_images.length
             ? data.preview_images[0]
-            : data.custom_images[0];
+            : data.custom_images.start;
           thumbnailArray.current.push({ id: String(data.id), url: thumbnail });
         });
       })

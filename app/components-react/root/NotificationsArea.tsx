@@ -106,7 +106,7 @@ class NotificationsModule {
     Services.YoutubeService.actions.openYoutubeEnable();
   }
 
-  confirmYoutubeEnabled() {
+  async confirmYoutubeEnabled() {
     if (this.platform === 'youtube') {
       Services.YoutubeService.actions.prepopulateInfo();
     }
@@ -224,6 +224,22 @@ function MessageNode(p: { notif: INotification }) {
 
 function YTError() {
   const { confirmYoutubeEnabled, openYoutubeEnable } = useModule(NotificationsModule);
+  const [loading, setLoading] = useState(false);
+  const [refreshText, setRefreshText] = useState($t("I'm set up"));
+
+  async function handleConfirm() {
+    setLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    await confirmYoutubeEnabled();
+    if (!Services.YoutubeService.state.liveStreamingEnabled) {
+      setRefreshText($t('Not enabled'));
+      setLoading(false);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setRefreshText($t("I'm set up"));
+    } else {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className={cx('ant-message-notice', styles.notification, styles.warning, styles.ytError)}>
@@ -232,8 +248,12 @@ function YTError() {
       <button className={cx('button', styles.alertButton)} onClick={openYoutubeEnable}>
         {$t('Fix')}
       </button>
-      <button className={cx('button', styles.alertButton)} onClick={confirmYoutubeEnabled}>
-        {$t("I'm set up")}
+      <button
+        className={cx('button', styles.alertButton, styles.refresh)}
+        onClick={handleConfirm}
+        disabled={loading || refreshText === $t('Not enabled')}
+      >
+        {loading ? <i className="fa fa-spinner fa-spin" /> : refreshText}
       </button>
     </div>
   );
