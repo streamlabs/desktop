@@ -1,7 +1,6 @@
 import { restartApp, test, TExecutionContext, useWebdriver } from '../../helpers/webdriver';
 import {
   click,
-  clickCheckbox,
   clickIfDisplayed,
   clickTab,
   focusChild,
@@ -135,9 +134,8 @@ test('Shows and filters scene item hotkeys', async t => {
   t.true(numVerticalIcons === 0, 'Single output scene collection should have no vertical icons');
 
   // confirm dual output scene collection scene item hotkeys
-  await toggleDualOutputMode(false);
-  await focusChild();
-  await click('[data-name="settings-nav-item"]=Hotkeys');
+  await toggleDualOutputMode();
+  await showSettingsWindow('Hotkeys');
   await clickIfDisplayed('div.ant-collapse-item');
   await waitForDisplayed('div.section-content--opened');
 
@@ -186,9 +184,8 @@ test('Shows and filters scene item hotkeys', async t => {
 
   // confirm horizontal and vertical scene items show when dual output is toggled off
   // on a dual output scene collection
-  await click('[data-name="settings-nav-item"]=Video');
-  await clickCheckbox('dual-output-checkbox');
-  await click('[data-name="settings-nav-item"]=Hotkeys');
+  await toggleDualOutputMode();
+  await showSettingsWindow('Hotkeys');
   await clickIfDisplayed('div.ant-collapse-item');
   await waitForDisplayed('div.section-content--opened');
 

@@ -1,17 +1,14 @@
 import {
   clickGoLive,
   prepareToGoLive,
-  stopStream,
   submit,
   waitForSettingsWindowLoaded,
-  waitForStreamStart,
 } from '../../helpers/modules/streaming';
 import {
   click,
   clickButton,
   clickWhenDisplayed,
   dismissAlert,
-  focusChild,
   focusMain,
   isDisplayed,
   waitForDisplayed,
@@ -28,16 +25,10 @@ import {
   TExecutionContext,
   useWebdriver,
 } from '../../helpers/webdriver';
-import {
-  addDummyAccount,
-  logOut,
-  releaseUserInPool,
-  removeDummyAccount,
-  withUser,
-} from '../../helpers/webdriver/user';
+import { addDummyAccount, logOut, releaseUserInPool, withUser } from '../../helpers/webdriver/user';
 import { SceneBuilder } from '../../helpers/scene-builder';
 import { getApiClient } from '../../helpers/api-client';
-import { fillForm, readFields } from '../../helpers/modules/forms';
+import { fillForm } from '../../helpers/modules/forms';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 
 // not a react hook
@@ -51,12 +42,12 @@ useWebdriver();
  */
 test('Dual Output', async (t: TExecutionContext) => {
   // user must be logged in to toggle dual output
-  await toggleDualOutputMode(false);
-  await focusChild();
+  await toggleDualOutputMode();
   t.true(
     await isDisplayed('form#login-modal', { timeout: 1000 }),
     'User must be logged in to toggle dual output',
   );
+  await clickButton('No');
 
   // dual output duplicates the scene collection and heirarchy
   const user = await logIn();
@@ -246,7 +237,7 @@ test(
 // multiple merged accounts here and move dual output instagram testing to the instagram test
 test('Dual Output Go Live Non-Ultra', async t => {
   await logIn('twitch', { prime: false });
-  await toggleDualOutputMode(true);
+  await toggleDualOutputMode();
   await prepareToGoLive();
 
   const dummy = await addDummyAccount('instagram');
@@ -392,7 +383,8 @@ test(
       });
       await goLiveWithDualOutput('twitch');
     } catch (e: unknown) {
-      t.fail('Error going live with platforms during Dual Output Go Live Ultra test');
+      console.log('Dual Output Go Live Ultra error with platforms:', e);
+      t.fail('Error going live with platforms during Dual Output Go Live Ultra test ');
       return;
     }
 

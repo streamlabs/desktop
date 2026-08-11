@@ -2,17 +2,14 @@ import { sleep } from '../sleep';
 import { skipCheckingErrorsInLog } from '../webdriver';
 import { addDummyAccount } from '../webdriver/user';
 import {
-  focusChild,
   click,
-  clickCheckbox,
-  clickButton,
+  clickToggle,
   clickIfDisplayed,
   focusMain,
   isDisplayed,
   waitForDisplayed,
 } from './core';
 import { fillForm } from './forms';
-import { showSettingsWindow } from './settings/settings';
 import {
   chatIsVisible,
   clickGoLive,
@@ -25,17 +22,11 @@ import {
 
 /**
  * Toggle dual output mode
+ * @remark Toggled from the dual output switch in the studio editor header
  */
-export async function toggleDualOutputMode(closeChildWindow: boolean = true) {
-  await showSettingsWindow('Video', async () => {
-    await focusChild();
-    await clickCheckbox('dual-output-checkbox');
-
-    if (closeChildWindow) {
-      await clickButton('Close');
-    }
-  });
+export async function toggleDualOutputMode() {
   await focusMain();
+  await clickToggle('dual-output-toggle');
   await isDisplayed('div#vertical-display');
 }
 
