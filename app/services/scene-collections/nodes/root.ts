@@ -16,7 +16,7 @@ import { SceneCollectionsService } from '../scene-collections';
 
 interface ISchema {
   /**
-   * this is for backward compatibility with vanilla scene collections
+   * this is for backward compatibility with single output collections
    */
   baseResolution: {
     baseWidth: number;

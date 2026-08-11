@@ -11,7 +11,7 @@ export const sizeMap: Dictionary<number> = {
 };
 
 interface IProps {
-  platform: TPlatform | 'nimotv' | 'dlive' | 'instagram' | 'streamlabs';
+  platform: TPlatform | 'nimotv' | 'instagram' | 'streamlabs';
   size?: keyof typeof sizeMap | number;
   color?: string;
   nocolor?: boolean;
@@ -30,7 +30,6 @@ export default function PlatformLogo(p: IProps & HTMLAttributes<unknown>) {
       youtube: 'youtube',
       facebook: 'fab fa-facebook',
       tiktok: 'tiktok',
-      dlive: 'dlive',
       nimotv: 'nimotv',
       twitter: 'twitter',
       streamlabs: 'icon-streamlabs',

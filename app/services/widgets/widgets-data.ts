@@ -42,13 +42,16 @@ export enum WidgetType {
   SponsorBanner = 13,
   MediaShare = 14,
   SubGoal = 15,
+  /** @deprecated Sunset 2026-08. Retired, but persisted in user scene collections. Never reuse. */
   StarsGoal = 16,
+  /** @deprecated Sunset 2026-08. Retired, but persisted in user scene collections. Never reuse. */
   SupporterGoal = 17,
   CharityGoal = 18,
   Poll = 19,
   EmoteWall = 20,
   ChatHighlight = 21,
   SuperchatGoal = 22,
+  /** @deprecated Sunset 2026-08. Retired, but persisted in user scene collections. Never reuse. */
   GameWidget = 23,
   CustomWidget = 24,
   GamePulseWidget = 25,
@@ -245,38 +248,6 @@ export const WidgetDefinitions: { [x: number]: IWidget } = {
     humanType: 'bit_goal',
     url(host, token) {
       return `https://${host}/widgets/bit-goal?token=${token}`;
-    },
-
-    width: 600,
-    height: 200,
-
-    x: 0,
-    y: 1,
-
-    anchor: AnchorPoint.SouthWest,
-  },
-
-  [WidgetType.StarsGoal]: {
-    name: 'Stars Goal',
-    humanType: 'stars_goal',
-    url(host, token) {
-      return `https://${host}/widgets/stars-goal?token=${token}`;
-    },
-
-    width: 600,
-    height: 200,
-
-    x: 0,
-    y: 1,
-
-    anchor: AnchorPoint.SouthWest,
-  },
-
-  [WidgetType.SupporterGoal]: {
-    name: 'Supporter Goal',
-    humanType: 'supporter_goal',
-    url(host, token) {
-      return `https://${host}/widgets/supporter-goal?token=${token}`;
     },
 
     width: 600,
@@ -523,19 +494,6 @@ export const WidgetDefinitions: { [x: number]: IWidget } = {
   },
   // TODO: it seems we've half way transitioned to getWidgetsConfig but
   // this list is still referenced
-  [WidgetType.GameWidget]: {
-    name: 'Game Widget',
-    humanType: 'game_widget',
-    width: 400,
-    height: 750,
-    x: 0.5,
-    y: 0,
-    anchor: AnchorPoint.North,
-
-    url(host, token) {
-      return `https://${host}/widgets/game-widget?token=${token}`;
-    },
-  },
   [WidgetType.CustomWidget]: {
     name: 'Custom Widget',
     humanType: 'custom_widget',
@@ -658,26 +616,6 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
     demoFilename: 'source-bit-goal.png',
     supportList: [$t('Twitch Bits')],
     platforms: new Set(['twitch']),
-    icon: 'fas fa-calendar',
-    group: 'goals',
-  },
-  [WidgetType.StarsGoal]: {
-    name: $t('Stars Goal'),
-    description: $t('Set a stars goal for your viewers to help you reach.'),
-    demoVideo: false,
-    demoFilename: 'source-bit-goal.png',
-    supportList: [$t('Facebook Stars')],
-    platforms: new Set(['facebook']),
-    icon: 'fas fa-calendar',
-    group: 'goals',
-  },
-  [WidgetType.SupporterGoal]: {
-    name: $t('Supporter Goal'),
-    description: $t('Set a goal for your viewers to help you reach.'),
-    demoVideo: false,
-    demoFilename: 'source-follower-goal.png',
-    supportList: [$t('Facebook Supporters')],
-    platforms: new Set(['facebook']),
     icon: 'fas fa-calendar',
     group: 'goals',
   },
@@ -848,16 +786,6 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
     supportList: [],
     platforms: new Set(['twitch']),
     icon: 'icon-community',
-    group: 'interactive',
-  },
-  [WidgetType.GameWidget]: {
-    name: $t('Game Widget'),
-    description: $t('Allow your chat to play games together while you are live.'),
-    demoVideo: false,
-    demoFilename: 'game-widget.png',
-    supportList: [],
-    platforms: new Set(['twitch', 'youtube']),
-    icon: 'icon-face-masks',
     group: 'interactive',
   },
   [WidgetType.CustomWidget]: {

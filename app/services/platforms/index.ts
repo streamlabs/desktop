@@ -192,7 +192,7 @@ export interface IPlatformService {
 
   fetchUserInfo: () => Promise<IUserInfo>;
 
-  putChannelInfo: (channelInfo: TStartStreamOptions) => Promise<void>;
+  putChannelInfo(channelInfo: TStartStreamOptions): Promise<void>;
 
   searchGames?: (searchString: string) => Promise<IGame[]>;
 
@@ -308,7 +308,6 @@ export const platformLabels = (platform: TPlatform | string) =>
     [EPlatform.Instagram]: $t('Instagram'),
     [EPlatform.Kick]: $t('Kick'),
     [EPlatform.Patreon]: $t('Patreon'),
-    dlive: 'dlive',
     nimotv: 'NimoTV',
   }[platform] || '');
 
