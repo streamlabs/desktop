@@ -10,6 +10,7 @@
   "Import Widget File in Current Scene": "Importa file widget nella scena corrente",
   "The active scene collection is not a dual output scene collection.": "La raccolta di scene attiva non è Dual Output.",
   "Convert to Vanilla Scene": "Convertire in scena Vanilla",
+  "Convert to Single Output": "Convert to Single Output",
   "Convert": "Converti",
   "Convert and Export Overlay": "Converti ed esporta overlay",
   "Assign": "Assegna",
@@ -26,5 +27,6 @@
   "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "Quanto segue creerà una copia della raccolta di scene attiva, imposterà la copia come raccolta attiva e quindi rimuoverà tutte le fonti verticali.",
   "Show Components Library": "Mostra libreria dei componenti",
   "Convert Dual Output Scene Collection": "Converti raccolta di scene Dual Output",
-  "Repair Scene Collection": "Ripara raccolta di scene"
+  "Repair Scene Collection": "Ripara raccolta di scene",
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
 }
