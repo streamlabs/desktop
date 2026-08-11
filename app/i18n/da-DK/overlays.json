@@ -10,6 +10,7 @@
   "Import Widget File in Current Scene": "Importér widget i nuværende scene",
   "The active scene collection is not a dual output scene collection.": "Den aktive scenesamling er ikke en scenesamling med dobbeltoutput.",
   "Convert to Vanilla Scene": "Konverter til Vanilla-scene",
+  "Convert to Single Output": "Convert to Single Output",
   "Convert": "Konverter",
   "Convert and Export Overlay": "Konverter og eksportér overlay",
   "Assign": "Tildel",
@@ -26,5 +27,6 @@
   "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "Følgende opretter en kopi af den aktive scenesamling og indstiller kopien som den aktive samling, hvorefter alle lodrette kilder fjernes.",
   "Show Components Library": "Vis komponentbibliotek",
   "Convert Dual Output Scene Collection": "Konverter samling med Dual Output-scener",
-  "Repair Scene Collection": "Samling med reparationsscener"
+  "Repair Scene Collection": "Samling med reparationsscener",
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
 }
