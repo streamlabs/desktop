@@ -42,7 +42,8 @@ useWebdriver();
  */
 test('Dual Output', async (t: TExecutionContext) => {
   // user must be logged in to toggle dual output
-  await toggleDualOutputMode();
+  await focusMain();
+  await toggleDualOutputMode(false);
   t.true(
     await isDisplayed('form#login-modal', { timeout: 1000 }),
     'User must be logged in to toggle dual output',
@@ -142,8 +143,8 @@ test('Dual Output', async (t: TExecutionContext) => {
   await focusMain();
   t.true(await isDisplayed('#vertical-display'), 'Toggling on dual output shows vertical display');
 
-  await toggleDualOutputMode();
-  await focusMain();
+  await toggleDualOutputMode(false);
+  await waitForDisplayed('#dual-output-header');
   t.false(
     await isDisplayed('#vertical-display'),
     'Toggling off dual output hides vertical display',
@@ -153,7 +154,10 @@ test('Dual Output', async (t: TExecutionContext) => {
   await toggleDualOutputMode();
   await focusMain();
 
-  t.true(await isDisplayed('#dual-output-header'), 'Dual output header exists');
+  t.true(
+    await isDisplayed('#dual-output-header'),
+    'Dual output header exists when toggling on dual output',
+  );
 
   // check permutations of toggling on and off the displays
   await toggleDisplay('horizontal', true);

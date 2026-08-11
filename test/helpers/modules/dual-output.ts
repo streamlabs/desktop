@@ -23,11 +23,19 @@ import {
 /**
  * Toggle dual output mode
  * @remark Toggled from the dual output switch in the studio editor header
+ * @remark Toggling runs in loading mode, which converts the scene collection before
+ * showing the vertical display. The toggle itself returns immediately, so wait for the
+ * vertical display to settle or assertions will run against a half converted collection.
  */
-export async function toggleDualOutputMode() {
+export async function toggleDualOutputMode(checkVerticalDisplay: boolean = true) {
   await focusMain();
   await clickToggle('dual-output-toggle');
-  await isDisplayed('div#vertical-display');
+
+  if (checkVerticalDisplay) {
+    await waitForDisplayed('div#vertical-display', {
+      timeout: 5000,
+    });
+  }
 }
 
 /**
