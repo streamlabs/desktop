@@ -53,11 +53,9 @@
   "Display your channel's most recent events on stream.": "Menampilkan acara terbaru saluran Anda yang sedang tayang.",
   "Redemptions": "Penebusan",
   "Tip Goal": "Tujuan Tip",
-  "Set a goal for your viewers to help you reach.": "Tetapkan tujuan untuk pemirsa agar membantu Anda mencapainya.",
   "Set a subscriber goal for your viewers to help you reach.": "Tetapkan target pelanggan untuk penonton agar membantu Anda mencapainya.",
   "Set a bit goal for your viewers to help you reach.": "Tetapkan target bit untuk penonton agar membantu Anda mencapainya.",
   "Set a follower goal for your viewers to help you reach.": "Tetapkan target pengikut untuk penonton agar membantu Anda mencapainya.",
-  "Set a stars goal for your viewers to help you reach.": "Tetapkan target bintang untuk penonton agar membantu Anda mencapainya.",
   "Set a charity donation goal for your viewers to help you reach.": "Tetapkan sasaran donasi amal yang dapat dicapai oleh pemirsa Anda.",
   "Set a super chat goal for your viewers to help you reach.": "Tetapkan target super chat untuk penonton agar membantu Anda mencapainya.",
   "Facebook Supporters": "Pendukung Facebook",
@@ -438,5 +436,6 @@
   "Health changes": "Perubahan kesehatan",
   "Search...": "Cari...",
   "Virtual Cam": "Kamera Virtual",
-  "Virtual Cam Error": "Kesalahan Kamera Virtual"
+  "Virtual Cam Error": "Kesalahan Kamera Virtual",
+  "This widget is no longer supported and can no longer be configured. You can safely remove it from your scene.": "This widget is no longer supported and can no longer be configured. You can safely remove it from your scene."
 }
