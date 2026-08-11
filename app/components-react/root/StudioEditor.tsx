@@ -52,7 +52,7 @@ export default function StudioEditor() {
 
   const sourceId = useMemo(() => {
     return v.studioMode && !v.dualOutputMode ? studioModeTransitionName : undefined;
-  }, [v.showHorizontalDisplay, v.showVerticalDisplay, v.studioMode]);
+  }, [v.dualOutputMode, v.studioMode, studioModeTransitionName]);
 
   useEffect(() => {
     const timeoutHandles: { [key: number]: NodeJS.Timeout | undefined } = {};
@@ -399,12 +399,11 @@ function StudioModeControls(p: { stacked: boolean }) {
 }
 
 function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
-  const showHorizontal = Services.DualOutputService.views.showHorizontalDisplay;
-  const showVertical = Services.DualOutputService.views.showVerticalDisplay;
-
   const v = useVuex(() => ({
     toggleDisplay: Services.DualOutputService.actions.toggleDisplay,
     dualOutputMode: Services.DualOutputService.views.dualOutputMode,
+    showHorizontal: Services.DualOutputService.views.showHorizontalDisplay,
+    showVertical: Services.DualOutputService.views.showVerticalDisplay,
   }));
 
   const showRecordingIcons = useMemo(() => {
@@ -429,18 +428,38 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
           <div
             id="horizontal-display-toggle"
             className={styles.toggleWrapper}
-            onClick={() => v.toggleDisplay(!showHorizontal, 'horizontal')}
+            role="button"
+            tabIndex={0}
+            aria-label={$t('Toggle horizontal display')}
+            onKeyDown={e => {
+              // Necessary to allow toggling with keyboard for accessibility
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                v.toggleDisplay(!v.showHorizontal, 'horizontal');
+              }
+            }}
+            onClick={() => v.toggleDisplay(!v.showHorizontal, 'horizontal')}
           >
             {showRecordingIcons && <DualOutputIcons display="horizontal" />}
-            <i className={cx('icon-desktop', { [styles.displayActive]: showHorizontal })} />
+            <i className={cx('icon-desktop', { [styles.displayActive]: v.showHorizontal })} />
           </div>
           <div
             id="vertical-display-toggle"
             className={styles.toggleWrapper}
-            onClick={() => v.toggleDisplay(!showVertical, 'vertical')}
+            role="button"
+            tabIndex={0}
+            aria-label={$t('Toggle vertical display')}
+            onKeyDown={e => {
+              // Necessary to allow toggling with keyboard for accessibility
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                v.toggleDisplay(!v.showVertical, 'vertical');
+              }
+            }}
+            onClick={() => v.toggleDisplay(!v.showVertical, 'vertical')}
           >
             {showRecordingIcons && <DualOutputIcons display="vertical" />}
-            <i className={cx('icon-phone', { [styles.displayActive]: showVertical })} />
+            <i className={cx('icon-phone', { [styles.displayActive]: v.showVertical })} />
           </div>
         </>
       )}

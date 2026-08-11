@@ -1,7 +1,6 @@
 import React, { CSSProperties, useCallback, useState } from 'react';
 import { message } from 'antd';
 import cx from 'classnames';
-import * as remote from '@electron/remote';
 import { Services } from '../service-provider';
 import { useVuex } from 'components-react/hooks';
 import styles from './DualOutputToggle.m.less';
@@ -69,7 +68,6 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
     !v.dualOutputMode || !v.isLoggedIn
       ? $t('Enable Dual Output to stream to horizontal & vertical platforms simultaneously')
       : $t('Disable Dual Output');
-  const label = $t('Dual Output');
 
   const handleShowModal = useCallback((status: boolean) => {
     WindowsService.actions.updateStyleBlockers(Utils.isChildWindow() ? 'child' : 'main', status);
@@ -133,59 +131,65 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
     });
   }, []);
 
-  function toggleDualOutput() {
-    // User must be logged in to enable dual output, so prompt them to log in if they are not
-    if (!v.isLoggedIn) {
-      handleShowModal(true);
-      return false;
-    }
+  const toggleDualOutput = useCallback(
+    (status?: boolean) => {
+      // User must be logged in to enable dual output, so prompt them to log in if they are not
+      if (!v.isLoggedIn) {
+        handleShowModal(true);
+        return false;
+      }
 
-    if (v.isMidStreamMode) {
-      message.error({
-        content: $t('Cannot toggle Dual Output while live.'),
-        className: styles.toggleError,
-      });
-      return;
-    }
+      if (v.isMidStreamMode) {
+        message.error({
+          content: $t('Cannot toggle Dual Output while live.'),
+          className: styles.toggleError,
+        });
+        return;
+      }
 
-    if (v.studioMode) {
-      showStudioModeModal();
-      message.error({
-        content: $t('Cannot toggle Dual Output while in Studio Mode.'),
-        className: styles.toggleError,
-      });
-      return;
-    }
+      if (v.studioMode) {
+        showStudioModeModal();
+        message.error({
+          content: $t('Cannot toggle Dual Output while in Studio Mode.'),
+          className: styles.toggleError,
+        });
+        return;
+      }
 
-    if (!v.dualOutputMode && v.selectiveRecording) {
-      showSelectiveRecordingModal();
+      if (!v.dualOutputMode && v.selectiveRecording) {
+        showSelectiveRecordingModal();
+        return;
+      }
 
-      remote.dialog
-        .showMessageBox(Utils.getChildWindow(), {
-          title: 'Vertical Display Disabled',
-          message: $t(
-            'Dual Output can’t be displayed - Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable selective recording from Sources to set up Dual Output.',
-          ),
-          buttons: [$t('OK')],
-        })
-        .catch(() => {});
-      return;
-    }
+      const shouldEnableDualOutput = status ?? !v.dualOutputMode;
+      // toggle dual output
+      DualOutputService.actions.setDualOutputModeIfPossible(shouldEnableDualOutput, true, false);
 
-    // toggle dual output
-    DualOutputService.actions.setDualOutputModeIfPossible(!v.dualOutputMode, true, false);
-
-    if (v.dualOutputMode) {
-      UsageStatisticsService.recordFeatureUsage('DualOutput');
-      UsageStatisticsService.recordAnalyticsEvent('DualOutput', {
-        type: 'ToggleOnDualOutput',
-        source: p.source,
-        isPrime: v.isPrime,
-        platforms: v.linkedPlatforms,
-        tiktokStatus: Services.TikTokService.scope,
-      });
-    }
-  }
+      if (shouldEnableDualOutput) {
+        UsageStatisticsService.recordFeatureUsage('DualOutput');
+        UsageStatisticsService.recordAnalyticsEvent('DualOutput', {
+          type: 'ToggleOnDualOutput',
+          source: p.source,
+          isPrime: v.isPrime,
+          platforms: v.linkedPlatforms,
+          tiktokStatus: Services.TikTokService.scope,
+        });
+      }
+    },
+    [
+      v.isLoggedIn,
+      v.isMidStreamMode,
+      v.selectiveRecording,
+      v.dualOutputMode,
+      v.studioMode,
+      v.linkedPlatforms,
+      v.isPrime,
+      p.source,
+      handleShowModal,
+      showStudioModeModal,
+      showSelectiveRecordingModal,
+    ],
+  );
 
   return (
     <div
@@ -196,10 +200,10 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
       })}
       style={p?.style}
     >
-      <Tooltip title={tooltip} placement={placement} lightShadow>
+      <Tooltip title={tooltip} placement={placement} disabled={disabled} lightShadow>
         {type === 'switch' && (
           <DualOutputToggleSwitch
-            label={label}
+            label={$t('Dual Output')}
             value={v.dualOutputMode}
             onChange={toggleDualOutput}
             classname={p?.inputClassname}
@@ -208,7 +212,7 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
         )}
         {type === 'checkbox' && (
           <DualOutputToggleCheckbox
-            label={label}
+            label={$t('Dual Output')}
             value={v.dualOutputMode}
             onChange={toggleDualOutput}
             classname={p?.inputClassname}
@@ -217,7 +221,7 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
         )}
         {type === 'icon' && (
           <DualOutputToggleIcons
-            label={label}
+            label={$t('Dual Output')}
             value={v.dualOutputMode}
             onChange={toggleDualOutput}
             classname={p?.inputClassname}
@@ -268,7 +272,10 @@ function DualOutputToggleIcons(p: IDualOutputInputProps) {
         active: p.value === true,
         disabled: p?.disabled,
       })}
-      onClick={() => p.onChange(!p.value)}
+      onClick={() => {
+        if (p.disabled) return;
+        p.onChange(!p.value);
+      }}
     />
   );
 }
