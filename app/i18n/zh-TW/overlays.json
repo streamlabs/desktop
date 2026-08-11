@@ -10,6 +10,7 @@
   "Import Widget File in Current Scene": "在目前的場景匯入小程式檔案",
   "The active scene collection is not a dual output scene collection.": "作用中的場景集合不是 Dual Output 場景集合。",
   "Convert to Vanilla Scene": "轉換為 Vanilla 場景",
+  "Convert to Single Output": "Convert to Single Output",
   "Convert": "轉換",
   "Convert and Export Overlay": "轉換與匯出疊層",
   "Assign": "指派",
@@ -26,5 +27,6 @@
   "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "下列項目會建立作用中場景集合的副本，將副本設定為作用中的集合，然後移除全部的垂直來源。",
   "Show Components Library": "顯示組件庫",
   "Convert Dual Output Scene Collection": "轉換 Dual Output 場景集合",
-  "Repair Scene Collection": "修復場景集合"
+  "Repair Scene Collection": "修復場景集合",
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
 }
