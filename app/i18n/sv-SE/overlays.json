@@ -10,6 +10,7 @@
   "Import Widget File in Current Scene": "Importera widgetfilen till nuvarande scen",
   "The active scene collection is not a dual output scene collection.": "The active scene collection is not a dual output scene collection.",
   "Convert to Vanilla Scene": "Convert to Vanilla Scene",
+  "Convert to Single Output": "Convert to Single Output",
   "Convert": "Convert",
   "Convert and Export Overlay": "Convert and Export Overlay",
   "Assign": "Assign",
@@ -26,5 +27,6 @@
   "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.",
   "Show Components Library": "Show Components Library",
   "Convert Dual Output Scene Collection": "Convert Dual Output Scene Collection",
-  "Repair Scene Collection": "Repair Scene Collection"
+  "Repair Scene Collection": "Repair Scene Collection",
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
 }
