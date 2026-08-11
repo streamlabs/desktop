@@ -41,14 +41,14 @@ export function AgentRequiredNotice({
   if (!isAgentInstalled) {
     return (
       <p style={agentNoticeStyle}>
-        {$t('Requires the Intelligent Streaming Agent app.')}
+        {$t('Requires the Sidekick app.')}
         <a onClick={onInstallAgent}>{$t('Install')}</a>
       </p>
     );
   }
   return (
     <p style={agentNoticeStyle}>
-      {$t('The Intelligent Streaming Agent app is disabled.')}
+      {$t('The Sidekick app is disabled.')}
       <a onClick={onEnableAgent}>{$t('Enable')}</a>
     </p>
   );

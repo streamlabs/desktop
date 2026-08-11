@@ -14,7 +14,7 @@ export interface IResourceRef {
 export interface IAvailableResources {
   scenes: IResourceRef[];
   sources: IResourceRef[];
-  /** Whether the Intelligent Streaming Agent app is installed AND enabled, gating co-host actions. */
+  /** Whether the Sidekick app is installed AND enabled, gating co-host actions. */
   agentAppReady?: boolean;
 }
 
@@ -66,12 +66,7 @@ function validateAction(
     ActionRegistry[action.type]?.group === 'co-host' &&
     resources.agentAppReady === false
   ) {
-    issues.push(
-      actionIssue(
-        'type',
-        $t('Requires the Intelligent Streaming Agent app to be installed and enabled.'),
-      ),
-    );
+    issues.push(actionIssue('type', $t('Requires the Sidekick app to be installed and enabled.')));
   }
 
   switch (action?.type) {

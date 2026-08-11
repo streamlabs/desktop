@@ -8,11 +8,11 @@ export const AGENT_APP_STORE_ID = '7643';
 export const AGENT_APP_ID = '93125d1c33';
 
 /**
- * Tracks whether the Intelligent Streaming Agent (co-host) platform app is
- * installed and enabled, and exposes helpers to install or (re-)enable it —
- * the same detection/redirect logic AILanding.tsx uses for its co-host
- * feature card. Installed and enabled are tracked separately since a user
- * can install the app but later disable it from Settings > Installed Apps.
+ * Tracks whether the Sidekick (co-host) platform app is installed and enabled,
+ * and exposes helpers to install or (re-)enable it — the same detection/redirect
+ * logic AILanding.tsx uses for its co-host feature card. Installed and enabled
+ * are tracked separately since a user can install the app but later disable it
+ * from Settings > Installed Apps.
  *
  * Reads reactively off PlatformAppsService's Vuex state (rather than local
  * component state) so every consumer of this hook — e.g. the automations

@@ -296,9 +296,9 @@ export default function AILanding() {
                 }}
               />
               <AIFeature
-                name={$t('Intelligent Streaming Agent')}
+                name={$t('Sidekick')}
                 description={$t(
-                  'The Intelligent Streaming Agent is a virtual co-host, live producer, and technical assistant.',
+                  'Sidekick is a virtual co-host, live producer, and technical assistant.',
                 )}
                 img={$i('images/ai/ai-streaming-agent.png')}
                 disabled={!enabled}
@@ -306,7 +306,7 @@ export default function AILanding() {
                   isAgentAppInstalled
                     ? { text: $t('Launch App'), onClick: onLaunchAgentClick }
                     : {
-                        text: $t('Install Intelligent Streaming Agent'),
+                        text: $t('Install Sidekick'),
                         onClick: onInstallAgentClick,
                       }
                 }

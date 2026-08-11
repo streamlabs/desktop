@@ -49,7 +49,7 @@ function getActionOptions() {
       <span>
         {def.label}{' '}
         <Tag style={{ fontSize: 10, lineHeight: '14px', padding: '0 4px', marginLeft: 2 }}>
-          {$t('Requires ISA App')}
+          {$t('Requires Sidekick App')}
         </Tag>
       </span>
     ) : (
@@ -92,13 +92,11 @@ export default function ActionEditor({
     if (!isAgentInstalled) {
       await alertAsync({
         type: 'confirm',
-        title: $t('Intelligent Streaming Agent Required'),
+        title: $t('Sidekick Required'),
         closable: true,
         content: (
           <span>
-            {$t(
-              'Co-host actions require the Intelligent Streaming Agent app. Install it to use this action.',
-            )}
+            {$t('Co-host actions require the Sidekick app. Install it to use this action.')}
           </span>
         ),
         cancelText: $t('Cancel'),
@@ -113,12 +111,12 @@ export default function ActionEditor({
     }
     await alertAsync({
       type: 'confirm',
-      title: $t('Intelligent Streaming Agent Disabled'),
+      title: $t('Sidekick Disabled'),
       closable: true,
       content: (
         <span>
           {$t(
-            'The Intelligent Streaming Agent app is installed but currently disabled. Enable it to use this action.',
+            'The Sidekick app is installed but currently disabled. Enable it to use this action.',
           )}
         </span>
       ),
