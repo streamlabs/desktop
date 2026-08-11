@@ -10,6 +10,7 @@
   "Import Widget File in Current Scene": "Importuj plik widżetu do bieżącej sceny",
   "The active scene collection is not a dual output scene collection.": "Aktywna kolekcja scen nie jest kolekcją scen Dual Output.",
   "Convert to Vanilla Scene": "Konwertuj na scenę Vanilla",
+  "Convert to Single Output": "Convert to Single Output",
   "Convert": "Konwertuj",
   "Convert and Export Overlay": "Konwertuj i eksportuj nakładkę",
   "Assign": "Przypisz",
@@ -26,5 +27,6 @@
   "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "Poniższe polecenie utworzy kopię aktywnej kolekcji scen, ustawi ją jako aktywną kolekcję, a następnie usunie wszystkie źródła pionowe.",
   "Show Components Library": "Pokaż bibliotekę komponentów",
   "Convert Dual Output Scene Collection": "Konwertuj kolekcję scen w trybie Dual Output",
-  "Repair Scene Collection": "Napraw kolekcję scen"
+  "Repair Scene Collection": "Napraw kolekcję scen",
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
 }
