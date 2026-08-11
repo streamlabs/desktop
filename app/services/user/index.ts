@@ -624,6 +624,15 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     return EPlatformCallResult.Success;
   }
 
+  /**
+   * Remove a dummy account that was previously added via addDummyAccount.
+   * @remark Use for tests to unlink a platform from the local state.
+   */
+  removeDummyAccount(platform: TPlatform): void {
+    if (!Utils.isTestMode()) return;
+    this.UNLINK_PLATFORM(platform);
+  }
+
   async autoLogin() {
     if (!this.state.auth) return;
 

@@ -503,7 +503,7 @@ export class TwitchService
     }).then(json => json.total);
   }
 
-  async putChannelInfo(settings: Partial<ITwitchStartStreamOptions>): Promise<void> {
+  async putChannelInfo(settings: ITwitchStartStreamOptions): Promise<void> {
     if (settings.tags) {
       this.twitchTagsService.actions.setTags(settings.tags);
     } else {

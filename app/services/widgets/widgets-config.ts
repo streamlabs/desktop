@@ -5,7 +5,6 @@ import { WidgetType } from './widgets-data';
 export type TWidgetType =
   | WidgetType.AlertBox
   | WidgetType.ViewerCount
-  | WidgetType.GameWidget
   | WidgetType.EmoteWall
   | WidgetType.DonationTicker
   | WidgetType.CustomWidget
@@ -16,8 +15,6 @@ export type TWidgetType =
   | WidgetType.SubscriberGoal
   | WidgetType.SubGoal
   | WidgetType.BitGoal
-  | WidgetType.StarsGoal
-  | WidgetType.SupporterGoal
   | WidgetType.SuperchatGoal
   | WidgetType.CharityGoal
   | WidgetType.EventList
@@ -122,32 +119,6 @@ export function getWidgetsConfig(
       settingsUpdateEvent: 'viewerCountSettingsUpdate',
       customCodeAllowed: true,
       customFieldsAllowed: true,
-    },
-
-    [WidgetType.GameWidget]: {
-      type: WidgetType.GameWidget,
-
-      defaultTransform: {
-        width: 400,
-        height: 750,
-        x: 0.5,
-        y: 0,
-        anchor: AnchorPoint.North,
-      },
-
-      settingsWindowSize: {
-        width: 850,
-        height: 700,
-      },
-
-      url: `https://${host}/widgets/game-widget?token=${token}`,
-      previewUrl: `https://${host}/widgets/game-widget?token=${token}&simulate=1`,
-      webSettingsUrl: `https://${host}/dashboard#/widgets/game-widget`,
-      dataFetchUrl: `https://${host}/api/v5/slobs/widget/game-widget`,
-      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/game-widget`,
-      settingsUpdateEvent: 'gameWidgetSettingsUpdate',
-      customCodeAllowed: false,
-      customFieldsAllowed: false,
     },
 
     [WidgetType.EmoteWall]: {
@@ -318,64 +289,6 @@ export function getWidgetsConfig(
       settingsUpdateEvent: 'bitGoalSettingsUpdate',
       goalCreateEvent: 'bitGoalStart',
       goalResetEvent: 'bitGoalEnd',
-      customCodeAllowed: true,
-      customFieldsAllowed: true,
-    },
-
-    [WidgetType.StarsGoal]: {
-      type: WidgetType.StarsGoal,
-
-      defaultTransform: {
-        width: 600,
-        height: 200,
-        x: 0,
-        y: 1,
-        anchor: AnchorPoint.SouthWest,
-      },
-
-      settingsWindowSize: {
-        width: 700,
-        height: 800,
-      },
-
-      url: `https://${host}/widgets/stars-goal?token=${token}`,
-      previewUrl: `https://${host}/widgets/stars-goal?token=${token}`,
-      webSettingsUrl: `https://${host}/dashboard#/widgets/starsgoal`,
-      dataFetchUrl: `https://${host}/api/v5/slobs/widget/starsgoal/settings`,
-      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/starsgoal/settings`,
-      goalUrl: `https://${host}/api/v5/slobs/widget/starsgoal`,
-      settingsUpdateEvent: 'starsGoalSettingsUpdate',
-      goalCreateEvent: 'starsGoalStart',
-      goalResetEvent: 'starsGoalEnd',
-      customCodeAllowed: true,
-      customFieldsAllowed: true,
-    },
-
-    [WidgetType.SupporterGoal]: {
-      type: WidgetType.SupporterGoal,
-
-      defaultTransform: {
-        width: 600,
-        height: 200,
-        x: 0,
-        y: 1,
-        anchor: AnchorPoint.SouthWest,
-      },
-
-      settingsWindowSize: {
-        width: 700,
-        height: 800,
-      },
-
-      url: `https://${host}/widgets/supporter-goal?token=${token}`,
-      previewUrl: `https://${host}/widgets/supporter-goal?token=${token}`,
-      webSettingsUrl: `https://${host}/dashboard#/widgets/supportergoal`,
-      dataFetchUrl: `https://${host}/api/v5/slobs/widget/supportergoal/settings`,
-      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/supportergoal/settings`,
-      goalUrl: `https://${host}/api/v5/slobs/widget/supportergoal`,
-      settingsUpdateEvent: 'supporterGoalSettingsUpdate',
-      goalCreateEvent: 'supporterGoalStart',
-      goalResetEvent: 'supporterGoalEnd',
       customCodeAllowed: true,
       customFieldsAllowed: true,
     },

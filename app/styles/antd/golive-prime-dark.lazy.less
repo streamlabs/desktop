@@ -1,0 +1,141 @@
+@import '~antd/dist/antd.dark.less';
+@import '../colors';
+@import './antd.less';
+@import '../go-live.less';
+
+// ANTD COLOR MAPPING
+@primary-color: @prime-dark;
+@info-color: @prime-dark;
+@success-color: @prime-dark;
+@processing-color: @prime-dark;
+@error-color: @red-dark;
+@highlight-color: @prime-dark;
+@warning-color: @prime-dark;
+@normal-color: @primedark-5;
+@disabled-color: fade(@primelight-3, 50%);
+@disabled-bg: fade(@primedark-5, 50%);
+
+@primary-1: darken(@prime-dark, 4%);
+@primary-2: darken(@prime-dark, 4%);
+@primary-5: darken(@prime-dark, 4%);
+@primary-7: darken(@prime-dark, 4%);
+
+@text-color: @primelight-3;
+@text-color-secondary: @primelight-3;
+@text-color-dark: @primelight-3;
+@text-color-secondary-dark: @primelight-3;
+@icon-color: @prime-dark;
+@icon-color-hover: @prime-dark;
+@heading-color: @primelight-1;
+
+@component-background: @primedark-3;
+@popover-background: @primedark-3;
+@background-color-light: @primedark-3;
+@background-color-base: @primedark-3;
+
+@item-active-bg: darken(@primedark-4, 4%);
+@item-hover-bg: darken(@primedark-4, 4%);
+
+@link-color: @primelight-1;
+@link-hover-color: @primelight-1;
+@link-active-color: @primelight-1;
+
+@border-color-base: @primelight-5;
+@border-color-split: @primedark-4;
+@border-color-inverse: @primedark-4;
+
+@shadow-color: rgba(1, 2, 2, 0.16);
+@shadow-color-inverse: rgba(1, 2, 2, 0.16);
+@btn-shadow: rgba(1, 2, 2, 0.16);
+@btn-primary-shadow: rgba(1, 2, 2, 0.16);
+@btn-text-shadow: rgba(1, 2, 2, 0.16);
+
+@btn-danger-color: @red-dark;
+@btn-danger-bg: fade(@red-dark, 28%);
+@btn-text-hover-bg: transparent;
+@btn-default-bg: @primelight-5;
+@btn-primary-color: @primedark-2;
+
+@radio-button-hover-color: @primary-1;
+
+@checkbox-check-color: @primelight-1;
+
+@radio-dot-disabled-color: @primedark-3;
+@radio-disabled-button-checked-bg: @primedark-3;
+
+@select-multiple-item-disabled-color: @primelight-3;
+@select-item-selected-color: @white;
+@select-dropdown-bg: @primedark-2;
+@select-item-active-bg: @primedark-4;
+@select-item-selected-bg: fade(@prime-dark, 15%);
+@select-background: @primedark-3;
+@select-clear-background: @primedark-3;
+@select-selection-item-bg: @primedark-4;
+@select-selection-item-border-color: @primedark-5;
+
+@slider-rail-background-color: @prime-dark;
+@slider-rail-background-color-hover: @prime-dark;
+@slider-track-background-color: @prime-dark;
+@slider-track-background-color-hover: @prime-dark;
+@slider-handle-background-color: @prime-dark;
+@slider-handle-color: @prime-dark;
+@slider-handle-color-hover: @prime-dark;
+@slider-handle-color-focus: @prime-dark;
+@slider-handle-color-focus-shadow: rgba(1, 2, 2, 0.16);
+@slider-handle-color-tooltip-open: @prime-dark;
+@slider-dot-border-color-active: @primedark-4;
+
+// FORM
+@label-color: @primelight-3;
+@input-placeholder-color: @primelight-3;
+@input-number-handler-active-bg: @primelight-3;
+@input-icon-hover-color: @prime-dark;
+@input-disabled-color: @disabled-color;
+
+@layout-body-background: @primedark-4;
+@layout-header-background: @primedark-4;
+@layout-trigger-background: @primedark-4;
+@layout-trigger-color: @primelight-3;
+@layout-sider-background-light: @primedark-4;
+@layout-trigger-background-light: @primedark-4;
+
+@divider-color: @primedark-4;
+
+@tooltip-color: @primelight-3;
+@tooltip-bg: @primedark-3;
+@tooltip-arrow-width: 4px;
+
+@modal-mask-bg: rgba(0, 0, 0, 0.5);
+
+@alert-success-border-color: @prime-dark;
+@alert-success-bg-color: fade(@prime-dark, 8%);
+@alert-success-icon-color: @prime-dark;
+@alert-info-border-color: @prime-dark;
+@alert-info-bg-color: fade(@yellow-dark, 8%);
+@alert-info-icon-color: @prime-dark;
+@alert-warning-border-color: @red-dark;
+@alert-warning-bg-color: fade(@red-dark, 28%);
+@alert-warning-icon-color: @red-dark;
+@alert-error-border-color: @red-dark;
+@alert-error-bg-color: fade(@red-dark, 28%);
+@alert-error-icon-color: @red-dark;
+@alert-message-color: @primelight-1;
+
+@image-bg: transparent;
+@image-color: transparent;
+
+@border-radius-base: 4px;
+@font-family: 'Roboto', sans-serif;
+
+// Checkbox check icon color
+.ant-checkbox-checked .ant-checkbox-inner::after {
+  border: 2px solid @primedark-1;
+  border-top: 0;
+  border-left: 0;
+}
+
+// Checkbox check icon color
+.ant-checkbox-checked .ant-checkbox-inner {
+  background-color: var(--secondary-checkbox);
+  border-color: var(--secondary-checkbox);
+}

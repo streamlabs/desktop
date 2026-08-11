@@ -11,8 +11,8 @@ import { Services } from 'components-react/service-provider';
 import Form from 'components-react/shared/inputs/Form';
 
 export function ExtraPlatformConnect(p: {
-  selectedExtraPlatform: 'dlive' | 'nimotv' | undefined;
-  setExtraPlatform: (val: 'dlive' | 'nimotv' | undefined) => void;
+  selectedExtraPlatform: 'nimotv' | undefined;
+  setExtraPlatform: (val: 'nimotv' | undefined) => void;
 }) {
   const { selectedExtraPlatform, setExtraPlatform } = p;
   const { next } = useModule(OnboardingModule);
@@ -21,12 +21,6 @@ export function ExtraPlatformConnect(p: {
   if (!selectedExtraPlatform) return <div></div>;
 
   const platformDefinition = {
-    dlive: {
-      name: 'DLive',
-      ingestUrl: 'rtmp://stream.dlive.tv/live',
-      helpUrl: 'https://go.dlive.tv/stream',
-      icon: 'dlive-white.png',
-    },
     nimotv: {
       name: 'Nimo.TV',
       ingestUrl: 'rtmp://txpush.rtmp.nimo.tv/live/',

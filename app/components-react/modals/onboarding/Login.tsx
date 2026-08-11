@@ -8,7 +8,7 @@ import PlatformLogo from 'components-react/shared/PlatformLogo';
 import { ExtraPlatformConnect } from 'components-react/pages/onboarding/ExtraPlatformConnect';
 import { DancingKevins, IOnboardingStepProps, useAuth } from './Onboarding';
 
-type TExtraPlatform = 'dlive' | 'nimotv';
+type TExtraPlatform = 'nimotv';
 
 export function Login(p: IOnboardingStepProps) {
   const [extraPlatform, setExtraPlatform] = useState<TExtraPlatform>();
@@ -25,7 +25,7 @@ export function Login(p: IOnboardingStepProps) {
     EPlatform.Instagram,
   ];
 
-  const extraPlatforms: TExtraPlatform[] = ['dlive', 'nimotv'];
+  const extraPlatforms: TExtraPlatform[] = ['nimotv'];
 
   return (
     <div className={styles.centered}>

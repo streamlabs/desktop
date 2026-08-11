@@ -171,10 +171,10 @@
   "Alert Box Settings": "Instellingen Meldingenvenster",
   "Alerts and Widgets": "Meldingen en widgets",
   "AI": "AI",
-  "Between": "Between",
+  "Between": "Tussen",
   "Upgrade": "Upgraden",
-  "Edit Data": "Edit Data",
-  "Edit Reactive Data": "Edit Reactive Data",
-  "Reactive Data Editor": "Reactive Data Editor",
-  "Not enabled": "Not enabled"
+  "Edit Data": "Gegevens bewerken",
+  "Edit Reactive Data": "Reactieve gegevens bewerken",
+  "Reactive Data Editor": "Editor voor reactieve gegevens",
+  "Not enabled": "Niet ingeschakeld"
 }

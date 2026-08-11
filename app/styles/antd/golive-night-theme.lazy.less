@@ -1,0 +1,139 @@
+@import '~antd/dist/antd.dark.less';
+@import '../colors';
+@import './antd.less';
+@import '../go-live.less';
+
+// ANTD COLOR MAPPING
+@primary-color: @teal-dark;
+@info-color: @yellow-dark;
+@success-color: @teal-dark;
+@processing-color: @teal-dark;
+@error-color: @red-dark;
+@highlight-color: @purple-dark;
+@warning-color: @yellow-dark;
+@normal-color: @dark-5;
+@disabled-color: fade(@light-4, 50%);
+@disabled-bg: fade(@dark-5, 50%);
+
+@primary-1: darken(@teal-dark, 4%);
+@primary-2: darken(@teal-dark, 4%);
+@primary-5: darken(@teal-dark, 4%);
+@primary-7: darken(@teal-dark, 4%);
+
+@text-color: @light-4;
+@text-color-secondary: @light-4;
+@text-color-dark: @light-4;
+@text-color-secondary-dark: @light-4;
+@icon-color: @light-5;
+@icon-color-hover: @light-5;
+@heading-color: @light-1;
+
+@component-background: @dark-3;
+@popover-background: @dark-3;
+@background-color-light: @dark-3;
+@background-color-base: @dark-3;
+@border-color-split: @dark-4;
+
+@item-active-bg: darken(@dark-4, 4%);
+@item-hover-bg: darken(@dark-4, 4%);
+
+@link-color: @light-1;
+@link-hover-color: @light-1;
+@link-active-color: @light-1;
+
+@border-color-base: @dark-5;
+@border-color-split: @dark-4;
+@border-color-inverse: @dark-4;
+
+@shadow-color: rgba(1, 2, 2, 0.16);
+@shadow-color-inverse: rgba(1, 2, 2, 0.16);
+@btn-shadow: rgba(1, 2, 2, 0.16);
+@btn-primary-shadow: rgba(1, 2, 2, 0.16);
+@btn-text-shadow: rgba(1, 2, 2, 0.16);
+
+@btn-danger-color: @red-dark;
+@btn-danger-bg: fade(@red-dark, 28%);
+@btn-text-hover-bg: transparent;
+@btn-default-bg: @dark-5;
+@btn-primary-color: @dark-2;
+
+@radio-button-hover-color: @primary-1;
+
+@checkbox-check-color: @light-1;
+
+@radio-dot-disabled-color: @dark-3;
+@radio-disabled-button-checked-bg: @dark-3;
+
+@select-multiple-item-disabled-color: @light-4;
+@select-item-selected-color: @white;
+@select-dropdown-bg: @dark-2;
+@select-item-active-bg: @dark-4;
+@select-item-selected-bg: fade(@teal-dark, 15%);
+@select-background: @dark-3;
+@select-clear-background: @dark-3;
+@select-selection-item-bg: @dark-4;
+@select-selection-item-border-color: @dark-5;
+
+@slider-rail-background-color: @dark-5;
+@slider-rail-background-color-hover: @dark-5;
+@slider-track-background-color: @teal-dark;
+@slider-track-background-color-hover: @teal-dark;
+@slider-handle-background-color: @light-5;
+@slider-handle-color: @light-5;
+@slider-handle-color-hover: @light-5;
+@slider-handle-color-focus: @light-5;
+@slider-handle-color-focus-shadow: rgba(1, 2, 2, 0.16);
+@slider-handle-color-tooltip-open: @light-5;
+@slider-dot-border-color-active: @dark-4;
+
+// FORM
+@label-color: @primelight-4;
+@input-placeholder-color: @light-4;
+@input-number-handler-active-bg: @light-4;
+@input-icon-hover-color: @light-5;
+@input-disabled-color: @disabled-color;
+
+@layout-body-background: @dark-4;
+@layout-header-background: @dark-4;
+@layout-trigger-background: @dark-4;
+@layout-trigger-color: @light-4;
+@layout-sider-background-light: @dark-4;
+@layout-trigger-background-light: @dark-4;
+
+@divider-color: @dark-4;
+
+@tooltip-color: @light-4;
+@tooltip-bg: @dark-3;
+@tooltip-arrow-width: 4px;
+
+@modal-mask-bg: rgba(0, 0, 0, 0.5);
+
+@alert-success-border-color: @teal-dark;
+@alert-success-bg-color: fade(@teal-dark, 8%);
+@alert-success-icon-color: @teal-dark;
+@alert-info-border-color: fade(@yellow-dark, 15%);
+@alert-info-bg-color: fade(@yellow-dark, 8%);
+@alert-info-icon-color: @yellow-dark;
+@alert-warning-border-color: @red-dark;
+@alert-warning-bg-color: fade(@red-dark, 28%);
+@alert-warning-icon-color: @red-dark;
+@alert-error-border-color: @red-dark;
+@alert-error-bg-color: fade(@red-dark, 28%);
+@alert-error-icon-color: @red-dark;
+@alert-message-color: @light-1;
+
+@border-radius-base: 4px;
+@font-family: 'Roboto', sans-serif;
+
+// Checkbox check icon color
+.ant-checkbox-checked .ant-checkbox-inner::after {
+  border: 2px solid @dark-2;
+  border-top: 0;
+  border-left: 0;
+}
+
+// Checkbox check icon color
+.ant-checkbox-checked .ant-checkbox-inner {
+  background-color: var(--secondary-checkbox);
+  border-color: var(--secondary-checkbox);
+}

@@ -19,7 +19,6 @@ import { EventList, EventListModule } from '../EventList';
 import { SponsorBanner, SponsorBannerModule } from '../SponsorBanner';
 // StreamBoss
 // TipJar
-import { GameWidget, GameWidgetModule } from '../GameWidget';
 import { ViewerCount, ViewerCountModule } from '../ViewerCount';
 import { CustomWidget, CustomWidgetModule } from '../CustomWidget';
 import { GamePulseWidget } from 'components-react/widgets/GamePulse';
@@ -34,7 +33,6 @@ export const components = {
   DonationGoal: [GenericGoal, GenericGoalModule],
   CharityGoal: [GenericGoal, GenericGoalModule],
   FollowerGoal: [GenericGoal, GenericGoalModule],
-  StarsGoal: [GenericGoal, GenericGoalModule],
   SubGoal: [GenericGoal, GenericGoalModule],
   SubscriberGoal: [GenericGoal, GenericGoalModule],
   SuperchatGoal: [GenericGoal, GenericGoalModule],
@@ -51,7 +49,6 @@ export const components = {
   // StreamBoss
   // TipJar
   ViewerCount: [ViewerCount, ViewerCountModule],
-  GameWidget: [GameWidget, GameWidgetModule],
   CustomWidget: [CustomWidget, CustomWidgetModule],
   GamePulseWidget: [GamePulseWidget, GamePulseModule],
 };

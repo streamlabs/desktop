@@ -29,6 +29,7 @@ import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import Tooltip from 'components-react/shared/Tooltip';
 import ConnectButton from 'components-react/shared/ConnectButton';
 import { Observable } from 'rxjs';
+import debounce from 'lodash/debounce';
 
 function censorWord(str: string) {
   if (str.length < 3) return str;
@@ -322,10 +323,18 @@ function IngestServerSetting(p: { disabled?: boolean }) {
   const [servers, setServers] = useState<{ name: string; url: string }[]>([]);
 
   useEffect(() => {
-    RestreamService.actions.return
-      .fetchIngestServers()
-      .then(res => setServers(res.servers))
-      .catch(() => setServers([]));
+    const fetchServers = debounce(() => {
+      RestreamService.actions.return
+        .fetchIngestServers()
+        .then(res => setServers(res.servers))
+        .catch(() => setServers([]));
+    }, 5000);
+
+    fetchServers();
+
+    return () => {
+      fetchServers.cancel();
+    };
   }, []);
 
   const options = [
@@ -577,10 +586,12 @@ function CustomDestinationList() {
 
           {shouldShowPrimeLabel ? (
             <ButtonHighlighted
+              name="customDestUltraBtn"
               onClick={() => addCustomDest(true)}
               filled
               text={$t('Ultra')}
               icon={<UltraIcon type="simple" />}
+              className={styles.ultraText}
             />
           ) : (
             <div className={styles.ultra} />

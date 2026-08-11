@@ -1,10 +1,10 @@
 {
-  "Campaign ID": "Campaign ID",
+  "Campaign ID": "ID de campagne",
   "Audience": "Audience",
-  "Select Tier": "Select Tier",
-  "Stream Shift cannot be used with Patreon": "Stream Shift cannot be used with Patreon",
-  "All Members": "All Members",
-  "Paid": "Paid",
-  "All Tiers": "All Tiers",
-  "Patreon Audience": "Patreon Audience"
+  "Select Tier": "Sélectionner le niveau",
+  "Stream Shift cannot be used with Patreon": "Stream Shift ne peut pas être utilisé avec Patreon",
+  "All Members": "Tous les membres",
+  "Paid": "Payé",
+  "All Tiers": "Tous les niveaux",
+  "Patreon Audience": "Audience Patreon"
 }

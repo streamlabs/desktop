@@ -1,5 +1,5 @@
 {
-  "Horizontal canvas": "Horizontal canvas",
-  "Vertical canvas": "Vertical canvas",
-  "Error stopping stream: default streams do not exist.": "Error stopping stream: default streams do not exist."
+  "Horizontal canvas": "横向画布",
+  "Vertical canvas": "纵向画布",
+  "Error stopping stream: default streams do not exist.": "停止流时出错：默认流不存在。"
 }

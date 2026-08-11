@@ -49,5 +49,5 @@
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube küçük resim görseli çok büyük. Maksimum boyut 2 MB'dir.",
   "Please upload thumbnail manually on YouTube.": "Lütfen YouTube'a küçük resmi manuel olarak yükleyin.",
   "Stream Shift Error: YouTube is not live": "Stream Shift Hatası: YouTube canlı değil",
-  "Error starting vertical stream in YouTube dual streaming": "Error starting vertical stream in YouTube dual streaming"
+  "Error starting vertical stream in YouTube dual streaming": "YouTube çift yayınında dikey yayın başlatılırken hata oluştu"
 }
