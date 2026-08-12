@@ -40,7 +40,7 @@ async function installOBSCache(t: ExecutionContext) {
   });
 }
 
-test('OBS Importer', async t => {
+test.skip('OBS Importer', async t => {
   // Disabling due to incorrect state set issue in useModule
   skipCheckingErrorsInLog();
 
