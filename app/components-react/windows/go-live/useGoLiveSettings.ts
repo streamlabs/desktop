@@ -779,6 +779,7 @@ export class GoLiveSettingsModule {
   }
 
   get disableCustomDestinationSwitchers() {
+    if (this.isPrime && this.isDualOutputMode) return false;
     return (
       !this.isRestreamEnabled &&
       !this.state.enabledPlatforms.includes('tiktok') &&
