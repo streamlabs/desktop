@@ -9,7 +9,7 @@ import {
   clickButton,
   dismissAlert,
   isDisplayed,
-  isTooltipDisplayed,
+  tooltipExists,
   waitForDisplayed,
 } from '../../helpers/modules/core';
 import {
@@ -27,6 +27,7 @@ import {
 import { assertFormContains, fillForm } from '../../helpers/modules/forms';
 import { addCustomDestination } from '../../helpers/modules/user';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
+import { toggleDualOutputMode } from '../../helpers/modules/dual-output';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -58,12 +59,20 @@ test('Go Live Non-Ultra', withUser('twitch', { prime: false }), async (t: TExecu
     timeout: 1000,
     timeoutMsg: 'Case 3: Shift ultra icon should be visible for non-prime users but was not found',
   });
-  await isTooltipDisplayed('i.icon-information', '[data-name="non-ultra"]', {
-    timeout: 1000,
-    timeoutMsg: 'Case 3: Non-Ultra stream shift tooltip did not appear',
-  });
+  t.true(
+    await tooltipExists('i.icon-information', '[data-name="not-ultra"]', {
+      timeout: 1000,
+    }),
+    'Case 3: Non-Ultra stream shift tooltip did not appear',
+  );
   await assertFormContains({ streamShift: false });
+  t.false(
+    await isDisplayed('[data-name="display-selector"]'),
+    'Case 3: Display selectors should be hidden in single output mode',
+  );
   await clickButton('Close');
+
+  await toggleDualOutputMode();
 
   try {
     await addDummyAccount('instagram');
@@ -89,7 +98,11 @@ test('Go Live Non-Ultra', withUser('twitch', { prime: false }), async (t: TExecu
     });
     await waitForSettingsWindowLoaded();
 
-    // Case 6: Can set displays for both targets
+    // Case 6: Can set displays for both targets in dual output mode
+    t.true(
+      await isDisplayed('[data-name="display-selector"]'),
+      'Case 6: Display selectors should be shown in dual output mode',
+    );
     await fillForm({ instagramDisplay: 'vertical', twitchDisplay: 'horizontal' });
 
     // Case 7: Cannot toggle a 3rd target
@@ -337,44 +350,19 @@ test(
       await waitForSettingsWindowLoaded();
 
       // Case 6: Stream shift default explanation tooltip shows
-      await isTooltipDisplayed('i.icon-information', '[data-name="explanation"]', {
-        timeout: 1000,
-        timeoutMsg: 'Case 6: Default stream shift explanation tooltip did not appear',
-      });
+      t.true(
+        await tooltipExists('i.icon-information', '[data-name="explanation"]', { timeout: 1000 }),
+        'Case 6: Default stream shift explanation tooltip did not appear',
+      );
 
       // Case 7: Default tooltip stays the same when multiple platforms are enabled
       await fillForm({ instagram: true });
-      await isTooltipDisplayed('i.icon-information', '[data-name="explanation"]', {
-        timeout: 1000,
-        timeoutMsg: 'Case 7: Default stream shift explanation tooltip did not appear',
-      });
-
-      // Case 8: Dual output tooltip
-      await fillForm({ instagramDisplay: 'vertical' });
-      await isTooltipDisplayed('i.icon-information', '[data-name="dual-output"]', {
-        timeout: 1000,
-        timeoutMsg: 'Case 8: Dual output tooltip did not appear',
-      });
-      await assertFormContains({ streamShift: false });
-      await fillForm({ instagramDisplay: 'horizontal' });
-      await fillForm({ streamShift: true });
-
-      // Case 9: Stream Shift toggle hides/shows display selectors
-      t.false(
-        await isDisplayed('[data-name="display-selector"]', {
-          timeout: 1000,
-        }),
-        'Case 9: Toggling on Stream Shift hides display selectors',
+      t.true(
+        await tooltipExists('i.icon-information', '[data-name="explanation"]', { timeout: 1000 }),
+        'Case 7: Default stream shift explanation tooltip did not appear',
       );
-      await fillForm({ streamShift: false });
-      await isDisplayed('[data-name="display-selector"]', {
-        timeout: 1000,
-        timeoutMsg: 'Case 9: Toggling off Stream Shift did not show display selectors',
-      });
-      await fillForm({ instagram: false });
-      await waitForSettingsWindowLoaded();
 
-      // Case 10: Toggling stream shift disables enhanced broadcasting and vice versa
+      // Case 8: Toggling stream shift disables enhanced broadcasting and vice versa
       await fillForm({ isEnhancedBroadcasting: true });
       await assertFormContains({ streamShift: false, isEnhancedBroadcasting: true });
       await fillForm({ streamShift: true });
@@ -382,6 +370,34 @@ test(
       await fillForm({ streamShift: false });
       await assertFormContains({ streamShift: false, isEnhancedBroadcasting: true });
       await fillForm({ isEnhancedBroadcasting: false });
+
+      // Case 9: Display selectors are hidden in single output mode
+      t.false(
+        await isDisplayed('[data-name="display-selector"]'),
+        'Case 9: Display selectors should be hidden in single output mode',
+      );
+
+      await clickButton('Close');
+      await toggleDualOutputMode();
+      await clickGoLive();
+      await waitForSettingsWindowLoaded();
+
+      // Case 10: Dual output tooltip and display selectors
+      t.true(
+        await isDisplayed('[data-name="display-selector"]'),
+        'Case 10: Display selectors should be shown in dual output mode',
+      );
+      t.true(
+        await tooltipExists('i.icon-information', '[data-name="dual-output"]', {
+          timeout: 1000,
+        }),
+        'Case 10: Dual output tooltip did not appear',
+      );
+      await assertFormContains({ streamShift: false });
+      await fillForm({ instagramDisplay: 'vertical' });
+      await fillForm({ instagramDisplay: 'horizontal' });
+      await fillForm({ instagram: false });
+      await waitForSettingsWindowLoaded();
     } catch (e: unknown) {
       await removeDummyAccount('instagram');
       console.log('Go Live Ultra Error testing platforms ', e);
@@ -472,6 +488,10 @@ test(
     // Patreon stream shift tooltip
     // Note: testing this at the end of the test because it requires adding a dummy Patreon account and toggling
     // the account throws an error
+    // @remark The dual output tooltip takes precedence over the default explanation tooltip,
+    // so return to single output mode before asserting on either
+    await toggleDualOutputMode(false);
+
     try {
       // TODO: Remove the skipCheckingErrorsInLog() call after adding test accounts
       skipCheckingErrorsInLog();
@@ -481,19 +501,19 @@ test(
       await clickGoLive();
       await waitForSettingsWindowLoaded();
       await fillForm({ patreon: true });
-      await isTooltipDisplayed('i.icon-information', '[data-name="patreon"]', {
-        timeout: 1000,
-        timeoutMsg: 'Case 17: Patreon tooltip did not appear',
-      });
+      t.true(
+        await tooltipExists('i.icon-information', '[data-name="patreon"]', { timeout: 1000 }),
+        'Case 17: Patreon tooltip did not appear',
+      );
       await assertFormContains({ streamShift: false });
 
       // Case 18: Default tooltip shown when Patreon is disabled
       await fillForm({ patreon: false });
       await waitForSettingsWindowLoaded();
-      await isTooltipDisplayed('i.icon-information', '[data-name="explanation"]', {
-        timeout: 1000,
-        timeoutMsg: 'Case 18: Default stream shift explanation tooltip did not appear',
-      });
+      t.true(
+        await tooltipExists('i.icon-information', '[data-name="explanation"]', { timeout: 1000 }),
+        'Case 18: Default stream shift explanation tooltip did not appear',
+      );
       await assertFormContains({ streamShift: false });
 
       // Case 19: Patreon tooltip when stream shift toggle was enabled and then Patreon is enabled
@@ -501,7 +521,7 @@ test(
       // the form from loading again
       // await fillForm({ streamShift: true });
       // await fillForm({ patreon: true });
-      // await isTooltipDisplayed('i.icon-information', '[data-name="patreon"]', {
+      // await tooltipExists('i.icon-information', '[data-name="patreon"]', {
       //   timeout: 1000,
       //   timeoutMsg: 'Case 19: Patreon tooltip did not appear',
       // });

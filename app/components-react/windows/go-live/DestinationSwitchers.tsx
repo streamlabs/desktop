@@ -410,6 +410,7 @@ const DestinationSwitcher = memo(
       >
         {/* DISPLAY TOGGLES */}
         <AnimatedWrapper
+          name="display-selector"
           visible={p.showDisplaySelector}
           className={styles.displaySelectorWrapper}
           onClick={e => e.stopPropagation()}

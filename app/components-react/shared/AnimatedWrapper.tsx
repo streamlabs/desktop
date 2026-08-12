@@ -9,11 +9,14 @@ interface IAnimatedWrapperProps {
   children?: React.ReactNode;
   height: string;
   onClick?: (props?: any) => void;
+  // Render name as data-name for testing purposes
+  name?: string;
 }
 
 export default function AnimatedWrapper(p: IAnimatedWrapperProps) {
   return (
     <div
+      data-name={p?.name}
       className={cx(p?.className, { [styles.visible]: p.visible, [styles.hidden]: !p.visible })}
       style={{ ...p?.style, height: p.height }}
       onClick={p?.onClick}
