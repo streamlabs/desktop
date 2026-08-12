@@ -212,7 +212,7 @@ export class ApiClient {
     socket.on('data', (data: Buffer) => {
       chunks.push(data);
       if (data.toString().includes('\x0a')) {
-        socket.destroy();
+        socket.end();
         result = Buffer.concat(chunks as Uint8Array[]);
         done = true;
       }

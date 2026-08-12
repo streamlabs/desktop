@@ -49,5 +49,7 @@
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube のサムネイルの画像サイズが大きすぎます。最大サイズは2MB です。",
   "Please upload thumbnail manually on YouTube.": "サムネイルを手動で YouTube にアップロードしてください。",
   "Stream Shift Error: YouTube is not live": "Stream Shift エラー：YouTube はライブ配信されていません",
-  "Error starting vertical stream in YouTube dual streaming": "YouTubeデュアルストリーミングでの縦型ストリーム開始エラー"
+  "Error starting vertical stream in YouTube dual streaming": "YouTubeデュアルストリーミングでの縦型ストリーム開始エラー",
+  "YouTube service is temporarily unavailable": "YouTube service is temporarily unavailable",
+  "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support": "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support"
 }

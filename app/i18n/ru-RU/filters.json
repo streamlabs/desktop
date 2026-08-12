@@ -27,6 +27,7 @@
   "Shader": "Шейдер",
   "HDR Tone Mapping (Override)": "Тональная компрессия HDR (корректировка вручную)",
   "NVIDIA Background Removal": "Удаление фона (NVIDIA)",
+  "Luma Key": "Luma Key",
   "No settings are available for this filter": "Для этого фильтра нет доступных настроек",
   "Visual Presets": "Визуальные предустановки",
   "None": "Нет",
@@ -81,5 +82,7 @@
   "Open Threshold": "Открыть порог",
   "Close Threshold": "Закрыть порог",
   "Presets": "Предустановки",
-  "Detection": "Обнаружения"
+  "Detection": "Обнаружения",
+  "Upward Compressor": "Upward Compressor",
+  "3-Band Equalizer": "3-Band Equalizer"
 }

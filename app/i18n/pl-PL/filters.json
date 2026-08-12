@@ -27,6 +27,7 @@
   "Shader": "Shader",
   "HDR Tone Mapping (Override)": "Mapowanie tonów HDR (nadpisywanie)",
   "NVIDIA Background Removal": "Usuwanie tła dla NVIDIA",
+  "Luma Key": "Luma Key",
   "No settings are available for this filter": "Dla tego filtra nie są dostępne ustawienia",
   "Visual Presets": "Wizualne ustawienia wstępne",
   "None": "Brak",
@@ -81,5 +82,7 @@
   "Open Threshold": "Otwórz próg",
   "Close Threshold": "Zamknij próg",
   "Presets": "Ustawienia wstępne",
-  "Detection": "Wykrywanie"
+  "Detection": "Wykrywanie",
+  "Upward Compressor": "Upward Compressor",
+  "3-Band Equalizer": "3-Band Equalizer"
 }

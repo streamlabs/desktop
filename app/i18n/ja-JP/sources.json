@@ -53,11 +53,9 @@
   "Display your channel's most recent events on stream.": "チャンネルの最新イベントをストリームに表示します。",
   "Redemptions": "引き換え",
   "Tip Goal": "チップ目標",
-  "Set a goal for your viewers to help you reach.": "達成を支援してもらうために、視聴者に対して目標を設定します。",
   "Set a subscriber goal for your viewers to help you reach.": "サブスクライバー目標を設定して、視聴者に到達を支援してもらいましょう。",
   "Set a bit goal for your viewers to help you reach.": "ビット目標を設定して、視聴者に到達を支援してもらいましょう。",
   "Set a follower goal for your viewers to help you reach.": "フォロワー目標を設定して、視聴者に到達を支援してもらいましょう。",
-  "Set a stars goal for your viewers to help you reach.": "スター目標を設定して、視聴者に到達を支援してもらいましょう。",
   "Set a charity donation goal for your viewers to help you reach.": "チャリティドネーション目標を設定して、視聴者に達成を支援してもらいます。",
   "Set a super chat goal for your viewers to help you reach.": "スーパーチャット目標を設定して、視聴者に到達を支援してもらいましょう。",
   "Facebook Supporters": "Facebook サポーター",
@@ -438,5 +436,6 @@
   "Health changes": "体力の変化",
   "Search...": "検索...",
   "Virtual Cam": "仮想カメラ",
-  "Virtual Cam Error": "仮想カメラエラー"
+  "Virtual Cam Error": "仮想カメラエラー",
+  "This widget is no longer supported and can no longer be configured. You can safely remove it from your scene.": "This widget is no longer supported and can no longer be configured. You can safely remove it from your scene."
 }

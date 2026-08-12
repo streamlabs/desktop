@@ -53,11 +53,9 @@
   "Display your channel's most recent events on stream.": "Display your channel's most recent events on stream.",
   "Redemptions": "Beváltások",
   "Tip Goal": "Tip Goal",
-  "Set a goal for your viewers to help you reach.": "Állíts be egy célt, amit a nézők segíthetnek elérni.",
   "Set a subscriber goal for your viewers to help you reach.": "Set a subscriber goal for your viewers to help you reach.",
   "Set a bit goal for your viewers to help you reach.": "Set a bit goal for your viewers to help you reach.",
   "Set a follower goal for your viewers to help you reach.": "Set a follower goal for your viewers to help you reach.",
-  "Set a stars goal for your viewers to help you reach.": "Set a stars goal for your viewers to help you reach.",
   "Set a charity donation goal for your viewers to help you reach.": "Set a charity donation goal for your viewers to help you reach.",
   "Set a super chat goal for your viewers to help you reach.": "Set a super chat goal for your viewers to help you reach.",
   "Facebook Supporters": "Facebook Supporters",
@@ -438,5 +436,6 @@
   "Health changes": "Health changes",
   "Search...": "Search...",
   "Virtual Cam": "Virtual Cam",
-  "Virtual Cam Error": "Virtual Cam Error"
+  "Virtual Cam Error": "Virtual Cam Error",
+  "This widget is no longer supported and can no longer be configured. You can safely remove it from your scene.": "This widget is no longer supported and can no longer be configured. You can safely remove it from your scene."
 }

@@ -18,11 +18,12 @@ import { AppService } from 'services/app';
 import { $t } from 'services/i18n';
 import {
   encoderFieldsMap,
-  obsEncoderToEncoderFamily,
   EFileFormat,
   convertFileFormatToRecordingFormat,
   EncoderQueryService,
+  resolveAvailableEncoderOptionValue,
 } from './output';
+import type { TOutputSettingsMode } from './output';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { EDeviceType, HardwareService } from 'services/hardware';
 import { StreamingService } from 'services/streaming';
@@ -397,14 +398,27 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       !this.streamingService.isIdle &&
       this.videoEncodingOptimizationService.state.useOptimizedProfile
     ) {
-      const encoder = obsEncoderToEncoderFamily(
+      const mode = this.findSettingValue(settings, 'Untitled', 'Mode') as TOutputSettingsMode;
+      const selectedEncoder =
         this.findSettingValue(settings, 'Streaming', 'Encoder') ||
-          this.findSettingValue(settings, 'Streaming', 'StreamEncoder'),
+        this.findSettingValue(settings, 'Streaming', 'StreamEncoder');
+      const encoder = this.encoderQueryService.resolveStreamingEncoderFamily(
+        mode,
+        selectedEncoder,
+      ) as keyof typeof encoderFieldsMap | undefined;
+      const presetField = this.encoderQueryService.resolveStreamingEncoderPreset(
+        mode,
+        selectedEncoder,
       );
+
+      if (!encoder || !presetField) {
+        throw new Error(`Missing streaming encoder metadata for ${selectedEncoder}`);
+      }
+
       // Setting preset visibility
-      settings = this.patchSetting(settings, encoderFieldsMap[encoder].preset, { visible: false });
+      settings = this.patchSetting(settings, presetField, { visible: false });
       // Setting encoder settings visibility
-      if (encoder === 'x264') {
+      if (encoder === 'x264' && encoderFieldsMap[encoder]?.encoderOptions) {
         settings = this.patchSetting(settings, encoderFieldsMap[encoder].encoderOptions, {
           visible: false,
         });
@@ -690,16 +704,6 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     if (categoryName === 'Audio') this.setAudioSettings([settingsData.pop()]);
     if (categoryName === 'Video' && forceApplyCategory && forceApplyCategory !== 'Video') return;
 
-    // This is a temporary solution to prevent errors when saving the recording format
-    // in advanced mode. It ensures that the recording encoder is always valid for the format.
-    // TODO: This should be removed once the backend completely handles invalid combinations
-    // of recording format and encoder.
-    if (categoryName === 'Output' && forceApplyCategory && forceApplyCategory === 'Output') {
-      // The below will call set settings again but with a validated recording encoder
-      this.ensureValidRecordingEncoder(settingsData);
-      return;
-    }
-
     const dataToSave = [];
 
     for (const subGroup of settingsData) {
@@ -795,23 +799,17 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
    * getAvailableEncoders() on streaming/recording instances.
    */
   private replaceEncoderOptions(settings: ISettingsSubCategory[]): ISettingsSubCategory[] {
-    const mode: string = this.findSettingValue(settings, 'Untitled', 'Mode');
-    // Stream settings may not be loaded yet during init (loadSettingsIntoStore
-    // processes categories in order and Stream may come after Output).
-    const streamSettings = this.state.Stream ? this.views.values.Stream : undefined;
+    const mode = this.findSettingValue(settings, 'Untitled', 'Mode') as TOutputSettingsMode;
 
     try {
-      // Replace streaming encoder options (skip if stream settings aren't available yet)
+      // Replace streaming encoder options from obs-studio-node metadata.
       const streamEncoderField = mode === 'Advanced' ? 'Encoder' : 'StreamEncoder';
-      const streamEncoderSetting = streamSettings
-        ? (this.findSetting(settings, 'Streaming', streamEncoderField) as IObsListInput<string>)
-        : undefined;
+      const streamEncoderSetting = this.findSetting(settings, 'Streaming', streamEncoderField) as
+        | IObsListInput<string>
+        | undefined;
 
       if (streamEncoderSetting) {
-        const streamEncoderOptions = this.encoderQueryService.getAvailableStreamingEncoders(
-          mode as 'Simple' | 'Advanced',
-          streamSettings,
-        );
+        const streamEncoderOptions = this.encoderQueryService.getAvailableStreamingEncoders(mode);
 
         if (streamEncoderOptions.length > 0) {
           // Only update options if values actually differ to avoid triggering re-renders
@@ -821,7 +819,16 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
             streamEncoderSetting.options = streamEncoderOptions;
           }
 
-          if (!streamEncoderOptions.some(opt => opt.value === streamEncoderSetting.value)) {
+          // Rebuilding options from OSN can make old saved values disappear from the list.
+          // Canonicalize legacy values before falling back to the first available encoder.
+          const streamEncoderValue = resolveAvailableEncoderOptionValue(
+            streamEncoderOptions,
+            streamEncoderSetting.value,
+          );
+
+          if (streamEncoderValue) {
+            streamEncoderSetting.value = streamEncoderValue;
+          } else {
             streamEncoderSetting.value = streamEncoderOptions[0].value;
           }
         }
@@ -844,12 +851,13 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
 
         if (recordingFormat !== undefined) {
           const recEncoderOptions = this.encoderQueryService.getAvailableRecordingEncoders(
-            mode as 'Simple' | 'Advanced',
+            mode,
             recordingFormat,
           );
 
           if (recEncoderOptions.length > 0) {
-            // Preserve the "Use stream encoder" (none) pseudo-option from OBS
+            // OBS stores "none" for Advanced recording's "(Use stream encoder)" option.
+            // It is not a real encoder, but it must remain selectable when options are rebuilt.
             const origOptions = recEncoderSetting.options || [];
             const noneOpt = origOptions.find((o: any) => o.value === 'none');
             const fullRecOptions = noneOpt ? [noneOpt, ...recEncoderOptions] : recEncoderOptions;
@@ -861,7 +869,16 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
               recEncoderSetting.options = fullRecOptions;
             }
 
-            if (!fullRecOptions.some(opt => opt.value === recEncoderSetting.value)) {
+            // Rebuilding options from OSN can make old saved values disappear from the list.
+            // Canonicalize legacy values before falling back to the first available encoder.
+            const recEncoderValue = resolveAvailableEncoderOptionValue(
+              fullRecOptions,
+              recEncoderSetting.value,
+            );
+
+            if (recEncoderValue) {
+              recEncoderSetting.value = recEncoderValue;
+            } else {
               recEncoderSetting.value = fullRecOptions[0].value;
             }
           }
@@ -883,45 +900,51 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     const encoderSetting: IObsListInput<string> =
       this.findSetting(this.state.Output.formData, 'Streaming', 'Encoder') ??
       this.findSetting(this.state.Output.formData, 'Streaming', 'StreamEncoder');
-    const encoderIsValid = !!encoderSetting.options.find(opt => opt.value === encoderSetting.value);
+    const encoderValue = resolveAvailableEncoderOptionValue(
+      encoderSetting.options,
+      encoderSetting.value,
+    );
 
     // The backend incorrectly defaults to obs_x264 in Simple mode rather x264.
     // In this case we shouldn't do anything here.
     if (encoderSetting.value === 'obs_x264') return;
 
-    if (!encoderIsValid) {
-      console.warn(
-        `The selected encoder ${encoderSetting.value} is not valid for the current configuration. Resetting to a valid encoder.`,
-      );
-      const mode: string = this.findSettingValue(this.state.Output.formData, 'Untitled', 'Mode');
-
-      const encoderMessage =
-        getOS() === OS.Windows
-          ? $t(
-              'Your stream encoder has been reset to Software (x264). This can be caused by out of date graphics drivers. Please update your graphics drivers to continue using hardware encoding.',
-            )
-          : $t(
-              'Your stream encoder has been reset to Software (x264). This can be caused by an invalid encoder setting.',
-            );
-      if (mode === 'Advanced') {
-        this.setSettingValue('Output', 'Encoder', 'obs_x264');
-      } else {
-        if (getOS() === OS.Mac) {
-          this.setSettingValue('Output', 'StreamEncoder', 'obs_x264'); // obs_x264 is the default encoder for MacOS in simple mode
-        } else {
-          this.setSettingValue('Output', 'StreamEncoder', 'x264');
-        }
-      }
-
-      remote.dialog.showMessageBox(this.windowsService.windows.main, {
-        type: 'error',
-        message: encoderMessage,
-      });
+    if (encoderValue) {
+      encoderSetting.value = encoderValue;
+      return;
     }
+
+    console.warn(
+      `The selected encoder ${encoderSetting.value} is not valid for the current configuration. Resetting to a valid encoder.`,
+    );
+    const mode: string = this.findSettingValue(this.state.Output.formData, 'Untitled', 'Mode');
+
+    const encoderMessage =
+      getOS() === OS.Windows
+        ? $t(
+            'Your stream encoder has been reset to Software (x264). This can be caused by out of date graphics drivers. Please update your graphics drivers to continue using hardware encoding.',
+          )
+        : $t(
+            'Your stream encoder has been reset to Software (x264). This can be caused by an invalid encoder setting.',
+          );
+    if (mode === 'Advanced') {
+      this.setSettingValue('Output', 'Encoder', 'obs_x264');
+    } else {
+      if (getOS() === OS.Mac) {
+        this.setSettingValue('Output', 'StreamEncoder', 'obs_x264'); // obs_x264 is the default encoder for MacOS in simple mode
+      } else {
+        this.setSettingValue('Output', 'StreamEncoder', 'x264');
+      }
+    }
+
+    remote.dialog.showMessageBox(this.windowsService.windows.main, {
+      type: 'error',
+      message: encoderMessage,
+    });
   }
 
   private ensureValidRecordingEncoder(settingsData?: ISettingsSubCategory[]) {
-    const outputSettings = settingsData ?? this.state.Output.formData;
+    let outputSettings = settingsData ?? this.state.Output.formData;
     const recordingFormat = this.findSettingValue(
       outputSettings,
       'Recording',
@@ -933,25 +956,36 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       'RecEncoder',
     ) as string;
 
-    const mode: string = this.findSettingValue(outputSettings, 'Untitled', 'Mode');
+    const mode = this.findSettingValue(outputSettings, 'Untitled', 'Mode') as TOutputSettingsMode;
     const recFormat = convertFileFormatToRecordingFormat(recordingFormat);
 
+    // In Advanced mode, RecEncoder="none" means use the stream encoder.
+    // Treat it as valid instead of checking it against the real recording encoder list.
     // Use getAvailableEncoders() to check if the current recording encoder is
     // compatible with the selected file format.
-    if (recFormat !== undefined) {
+    if (recFormat !== undefined && !(mode === 'Advanced' && recordingEncoder === 'none')) {
       try {
         const availableEncoders = this.encoderQueryService.getAvailableRecordingEncoders(
-          mode as 'Simple' | 'Advanced',
+          mode,
           recFormat,
         );
-        const encoderIsValid = availableEncoders.some(opt => opt.value === recordingEncoder);
+        const encoderValue = resolveAvailableEncoderOptionValue(
+          availableEncoders,
+          recordingEncoder,
+        );
 
-        if (!encoderIsValid && recordingEncoder) {
+        if (!encoderValue && recordingEncoder) {
           const patchedSettings = this.patchSetting(outputSettings, 'RecEncoder', {
             value: 'obs_x264',
           });
           this.setSettings('Output', patchedSettings);
           return;
+        }
+
+        if (encoderValue && encoderValue !== recordingEncoder) {
+          outputSettings = this.patchSetting(outputSettings, 'RecEncoder', {
+            value: encoderValue,
+          });
         }
       } catch (e: unknown) {
         console.error('Error validating recording encoder', e);
