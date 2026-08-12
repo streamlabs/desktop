@@ -107,7 +107,7 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
       },
       cancelButtonProps: { style: { display: 'inline' } },
     });
-  }, []);
+  }, [v.selectiveRecording]);
 
   const showStudioModeModal = useCallback(() => {
     alertAsync({
@@ -242,11 +242,7 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
 
 function DualOutputToggleCheckbox(p: IDualOutputInputProps) {
   return (
-    <CheckboxInput
-      {...p}
-      name="dual-output-toggle"
-      className={cx(styles.doCheckbox, p?.classname)}
-    />
+    <CheckboxInput {...p} name="dual-output-toggle" className={cx(styles.doInput, p?.classname)} />
   );
 }
 
