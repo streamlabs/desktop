@@ -420,7 +420,7 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
 
   return (
     <div
-      id="dual-output-header"
+      data-name="dual-output-header"
       className={cx(styles.dualOutputHeader, { [styles.stacked]: p.stacked })}
     >
       {v.dualOutputMode && (
