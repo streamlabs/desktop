@@ -9,8 +9,8 @@ import {
 } from './streaming-api';
 import { StreamSettingsService, ICustomStreamDestination } from '../settings/streaming';
 import { UserService } from '../user';
-import { RestreamService, TStreamShiftStatus } from '../restream';
-import { TDisplayPlatforms, TDisplayDestinations } from '../dual-output';
+import { RestreamService, TOutputOrientation, TStreamShiftStatus } from '../restream';
+import { TDisplayPlatforms, TDisplayDestinations, DualOutputService } from '../dual-output';
 import { getPlatformService, TPlatform, TPlatformCapability, platformList } from '../platforms';
 import { TwitchService, TwitterService } from '../../app-services';
 import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremental-rollout';
@@ -53,6 +53,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   private get incrementalRolloutView() {
     return this.getServiceViews(IncrementalRolloutService);
+  }
+
+  private get dualOutputView() {
+    return this.getServiceViews(DualOutputService);
   }
 
   private get streamingState() {
@@ -358,6 +362,12 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.shouldSetupDualOutput;
   }
 
+  getPlatformMode(platform: TPlatform): TOutputOrientation {
+    if (this.isDualOutputMode) return 'landscape';
+    const display = this.getPlatformDisplayType(platform);
+    return display === 'vertical' ? 'portrait' : 'landscape';
+  }
+
   getPlatformDisplayType(platform: TPlatform): TDisplayType {
     const display = this.settings.platforms[platform]?.display ?? 'horizontal';
     return display === 'both' ? 'horizontal' : display;
@@ -443,6 +453,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get shouldSetupDualOutput(): boolean {
+    if (this.dualOutputView.dualOutputMode) return true;
     // Read from state to avoid circular dependency:
     // isDualOutputMode → shouldSetupDualOutput → this.settings → savedSettings → getSavedPlatformSettings → isDualOutputMode
     const savedSettings = this.streamSettingsView.state.goLiveSettings;

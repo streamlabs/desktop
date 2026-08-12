@@ -823,18 +823,13 @@ export class RestreamService extends StatefulService<IRestreamState> {
         targetInfo.streamKey = `${this.patreonService.state.ingest}/${this.patreonService.state.streamKey}`;
       }
 
-      // reassign platforms to displays if in dual output mode
-      if (isDualOutputMode) {
-        const mode = this.getPlatformMode(platform) ?? 'landscape';
+      // `getPlatformMode` handles the logic for determi
+      const mode = this.streamingService.views.getPlatformMode(platform);
 
-        // Add platform if the display is being restreamed in dual output mode
-        if (modesToRestream.includes(mode)) {
-          // In order to restream a platform to a display in dual output mode,
-          // assign the platform to a `mode`, which denotes the display context
-          platforms.push({ ...targetInfo, mode });
-        }
-      } else {
-        platforms.push({ ...targetInfo, mode: 'landscape' as TOutputOrientation });
+      // In single output mode, always add the platform as a target
+      // In dual output mode, only add the platform as a target if its display (aka mode) is being restreamed
+      if (!isDualOutputMode || modesToRestream.includes(mode)) {
+        platforms.push({ ...targetInfo, mode });
       }
 
       return platforms;
@@ -884,7 +879,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       platform: 'relay' as 'relay',
       streamKey: getPlatformService(platform).state.streamKey,
       label: `${platform} target`,
-      mode: isDualOutputMode ? this.getPlatformMode(platform) : 'landscape',
+      mode: this.getPlatformMode(platform),
       dcProtection: false,
       enabled: true,
     };
@@ -1281,8 +1276,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   private getPlatformMode(platform: TPlatform): TOutputOrientation {
-    const display = this.streamingService.views.getPlatformDisplayType(platform);
-    return this.getMode(display);
+    const display = this.streamingService.views.getPlatformMode(platform);
+    return this.streamingService.views.getPlatformMode(platform);
   }
 
   getMode(display: TDisplayType): TOutputOrientation {
