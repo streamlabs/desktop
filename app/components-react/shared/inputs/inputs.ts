@@ -268,6 +268,7 @@ export function useInput<
     inputAttrs: inputAttrsRef.current,
     wrapperAttrs: wrapperAttrsRef.current,
     dataAttrs,
+    localValueRef,
     forceUpdate,
     setLocalValue,
     emitChange,
@@ -287,11 +288,14 @@ export function useTextInput<
 >(type: TInputType, p: TProps, antFeatures?: Parameters<typeof useInput>[2]) {
   // Text inputs are uncontrolled by default for better performance
   const uncontrolled = p.uncontrolled === true || p.uncontrolled !== false;
-  const { inputAttrs, wrapperAttrs, forceUpdate, setLocalValue, emitChange } = useInput(
-    type,
-    { uncontrolled, ...p },
-    antFeatures,
-  );
+  const {
+    inputAttrs,
+    wrapperAttrs,
+    localValueRef,
+    forceUpdate,
+    setLocalValue,
+    emitChange,
+  } = useInput(type, { uncontrolled, ...p }, antFeatures);
 
   // we need to handle onChange differently for text inputs
   const onChange = useCallback((ev: ChangeEvent<any>) => {
@@ -315,6 +319,14 @@ export function useTextInput<
       emitChange(newVal);
     }
     p.onBlur && p.onBlur(ev);
+  }, []);
+
+  // Ensure uncontrolled inputs are updated before they are destroyed if
+  // focused when destroyed
+  useEffect(() => {
+    if (uncontrolled) {
+      emitChange(localValueRef.current);
+    }
   }, []);
 
   const textInputAttrs = {
