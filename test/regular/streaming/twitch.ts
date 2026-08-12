@@ -20,7 +20,7 @@ import { assertFormContains, fillForm } from '../../helpers/modules/forms';
 import { setInputValue } from '../../helpers/modules/forms/base';
 import { logIn } from '../../helpers/modules/user';
 import { dismissModal } from '../../helpers/webdriver/modals';
-import { sleep } from '../../helpers/sleep';
+import { toggleDualOutputMode } from '../../helpers/modules/dual-output';
 
 async function enableTwitchVOD(status: boolean = true) {
   await showSettingsWindow('Output', async () => {
@@ -219,6 +219,9 @@ test(
   withUser('twitch', { multistream: true, prime: true }),
   async t => {
     await prepareToGoLive();
+
+    // Dual Stream is only available in Dual Output mode
+    await toggleDualOutputMode();
 
     // Single Output Single Stream
     await clickGoLive();
