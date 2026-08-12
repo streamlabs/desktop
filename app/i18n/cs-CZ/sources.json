@@ -53,11 +53,9 @@
   "Display your channel's most recent events on stream.": "Zobrazení nejnovějších událostí z vašeho kanálu ve streamu.",
   "Redemptions": "Uplatnění",
   "Tip Goal": "Zadejte cíl",
-  "Set a goal for your viewers to help you reach.": "Nastavení cíle, kterého vám diváci pomáhají dosáhnout.",
   "Set a subscriber goal for your viewers to help you reach.": "Nastavení cíle členů/odběratelů, který vám sledující pomáhají dosáhnout.",
   "Set a bit goal for your viewers to help you reach.": "Nastavení cílové částky, které vám diváci pomáhají dosáhnout.",
   "Set a follower goal for your viewers to help you reach.": "Nastavení cíle podporovatele, který vám sledující pomáhají dosáhnout.",
-  "Set a stars goal for your viewers to help you reach.": "Nastavení cílového počtu hvězdiček, který vám diváci pomáhají dosáhnout.",
   "Set a charity donation goal for your viewers to help you reach.": "Nastavení cílové výše charitativních darů, které vám vaši sledující mohou pomoci dosáhnout.",
   "Set a super chat goal for your viewers to help you reach.": "Nastavení cílového super chatu, který vám diváci pomáhají dosáhnout.",
   "Facebook Supporters": "Příznivci na Facebooku",
@@ -438,5 +436,6 @@
   "Health changes": "Změny úrovně zdraví",
   "Search...": "Hledat...",
   "Virtual Cam": "Virtuální kamera",
-  "Virtual Cam Error": "Chyba virtuální kamery"
+  "Virtual Cam Error": "Chyba virtuální kamery",
+  "This widget is no longer supported and can no longer be configured. You can safely remove it from your scene.": "This widget is no longer supported and can no longer be configured. You can safely remove it from your scene."
 }

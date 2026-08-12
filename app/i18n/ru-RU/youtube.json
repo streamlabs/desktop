@@ -49,5 +49,7 @@
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "Изображение миниатюры на YouTube слишком большое. Максимальный размер — 2 МБ.",
   "Please upload thumbnail manually on YouTube.": "Загрузите миниатюру на YouTube вручную.",
   "Stream Shift Error: YouTube is not live": "Ошибка Stream Shift: прямая трансляция на YouTube не осуществляется",
-  "Error starting vertical stream in YouTube dual streaming": "Ошибка запуска вертикальной трансляции в режиме двойной трансляции на YouTube"
+  "Error starting vertical stream in YouTube dual streaming": "Ошибка запуска вертикальной трансляции в режиме двойной трансляции на YouTube",
+  "YouTube service is temporarily unavailable": "YouTube service is temporarily unavailable",
+  "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support": "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support"
 }

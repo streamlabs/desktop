@@ -27,6 +27,7 @@
   "Shader": "Gölgelendirici",
   "HDR Tone Mapping (Override)": "HDR Tonu Eşleme (Geçersiz Kılma)",
   "NVIDIA Background Removal": "NVIDIA Arka Planı Kaldırma",
+  "Luma Key": "Luma Key",
   "No settings are available for this filter": "Bu filtre için herhangi bir ayar yok",
   "Visual Presets": "Görsel Ön Tanımlı Ayarlar",
   "None": "Hiçbiri",
@@ -81,5 +82,7 @@
   "Open Threshold": "Açılma Eşiği",
   "Close Threshold": "Kapanma Eşiği",
   "Presets": "Önayarlar",
-  "Detection": "Tespit"
+  "Detection": "Tespit",
+  "Upward Compressor": "Upward Compressor",
+  "3-Band Equalizer": "3-Band Equalizer"
 }
