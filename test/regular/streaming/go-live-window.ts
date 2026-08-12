@@ -485,6 +485,19 @@ test(
         [name2]: false,
       });
 
+      // Case 17: In dual output mode, must go live with at least one horizontal and one vertical target
+      await fillForm({
+        twitchDisplay: 'horizontal',
+        [`${name}Display`]: 'horizontal',
+      });
+      await submit();
+      await dismissAlert('dual-output-info-alert', {
+        timeout: 5000,
+        timeoutMsg:
+          'Case 17: Dual output alert did not appear when going live with no vertical target',
+      });
+      await fillForm({ [`${name}Display`]: 'vertical' });
+
       await clickButton('Close');
     } catch (e: unknown) {
       console.log('Go Live Ultra Error testing custom destinations ', e);
