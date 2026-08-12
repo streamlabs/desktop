@@ -1,4 +1,4 @@
-applyTo: "app/components/**,app/components-react/**,app/services/**,app/i18n/en-US/**"
+applyTo: "app/components/\*\*,app/components-react/\*\*,app/services/\*\*,app/i18n/en-US/\*\*"
 
 Read the entire instructions file before carrying out any checks.
 
@@ -33,7 +33,13 @@ When code reviewing a PR, check for any strings wrapped in a `$t()` function tha
 When those strings are removed, they should have a corresponding removal of the same key/value pair in the `app/i18n/en-US/**` directory.
 If no such key/value pair has been removed in the PR, it should be flagged as a stale translation.
 
+# New Translations Files
+
+When code reviewing a PR, check for any files added to the `app/i18n/en-US/**` directory, these are new translation files.
+Each new file added there must be added as a `require` in the `fallbackDictionary` of `app/i18n/fallback.ts`.
+Flag any new translation files not included in the `fallbackDirectory` as needing to be included there.
+
 # Special Considerations
 
-- Do not pay attention to any other directory in `app/i18n` outside of `en-US`.
+- Do not pay attention to any other directory in `app/i18n/**` outside of `en-US` or `fallback.ts`.
 - Do not run these instructions on any PR named `New Crowdin updates`
