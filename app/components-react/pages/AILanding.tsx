@@ -300,7 +300,7 @@ export default function AILanding() {
                 description={$t(
                   'Sidekick is a virtual co-host, live producer, and technical assistant.',
                 )}
-                img={$i('images/ai/ai-streaming-agent.png')}
+                img={$i('images/ai/ai-sidekick.png')}
                 disabled={!enabled}
                 actions={
                   isAgentAppInstalled
