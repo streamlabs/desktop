@@ -31,8 +31,7 @@ export const DestinationSwitchers = memo(() => {
     switchPlatforms,
     switchCustomDestination,
     renderedPlatforms,
-    isStreamShiftMode,
-    isPatreonEnabled,
+    isDualOutputMode,
     isPrime,
     disableCustomDestinationSwitchers,
     disableNonUltraSwitchers,
@@ -203,9 +202,12 @@ export const DestinationSwitchers = memo(() => {
     [enabledDestRef],
   );
 
-  const hideDisplaySelector = useMemo(() => {
-    return isPatreonEnabled ? false : isStreamShiftMode;
-  }, [isPatreonEnabled, isStreamShiftMode]);
+  // Because the conditional logic for the Go Live window changes frequently, track the
+  // display selector visibility in a memoized value to make it easier to update
+  const showDisplaySelector = useMemo(() => {
+    if (isDualOutputMode) return true;
+    return false;
+  }, [isDualOutputMode]);
 
   return (
     <div className={cx(styles.switchWrapper)}>
@@ -217,7 +219,7 @@ export const DestinationSwitchers = memo(() => {
         const bothDisplayPlatformLabel = disabledByBoth
           ? platformLabels(nonPrimeBothDisplayPlatform!)
           : undefined;
-        const visible = enabled && !hideDisplaySelector;
+        const visible = enabled && showDisplaySelector;
 
         return (
           <DestinationSwitcher
@@ -245,7 +247,7 @@ export const DestinationSwitchers = memo(() => {
         const bothDisplayPlatformLabel = disabledByBoth
           ? platformLabels(nonPrimeBothDisplayPlatform!)
           : undefined;
-        const visible = dest.enabled && !hideDisplaySelector;
+        const visible = dest.enabled && showDisplaySelector;
 
         return (
           <DestinationSwitcher
@@ -421,7 +423,6 @@ const DestinationSwitcher = memo(
             platform={platform}
             index={p.index}
             alignIcons="left"
-            visible={p.showDisplaySelector}
             disabled={p.isLoading}
           />
         </AnimatedWrapper>
