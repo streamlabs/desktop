@@ -395,11 +395,11 @@ export function getWidgetsConfig(
       type: WidgetType.Credits,
 
       defaultTransform: {
-        width: 600,
-        height: 200,
-        x: 1,
-        y: 1,
-        anchor: AnchorPoint.North,
+        width: 1280,
+        height: 720,
+        x: 0.5,
+        y: 0.5,
+        anchor: AnchorPoint.Center,
       },
 
       settingsWindowSize: {
