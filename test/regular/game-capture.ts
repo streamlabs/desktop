@@ -41,6 +41,10 @@ const captureTest = skipCapture ? test.skip : test;
 const CS2 = buildWindowSetting('Counter-Strike 2', 'FakeGameWindowClass', 'cs2.exe');
 const DESTINY2 = buildWindowSetting('Destiny 2', 'FakeGameWindowClass', 'destiny2.exe');
 const TERRARIA = buildWindowSetting('Terraria', 'FakeGameWindowClass', 'terraria.exe');
+// matched on exe + a *prefix* of the title, so the version suffix must not prevent a match
+const MINECRAFT = buildWindowSetting('Minecraft 1.21', 'GLFW30', 'javaw.exe');
+// matched on window class alone; the executable deliberately matches nothing
+const CHROMIUM = buildWindowSetting('Some Chromium App', 'Chrome_WidgetWin_1', 'notagame.exe');
 
 const COMPAT_SELECTOR = '[data-name="compat_info"]';
 
@@ -190,6 +194,26 @@ test('Game Capture compat message uses Normal styling', async t => {
   t.is(info.iconClass, 'icon-question');
   t.is(info.severity, 'normal');
   t.not(info.borderColor, 'rgba(0, 0, 0, 0)', 'severity styling did not apply');
+});
+
+test('Game Capture compat matches on a title prefix', async t => {
+  const info = await probeCompat('GC title prefix', { capture_mode: 'window', window: MINECRAFT });
+
+  t.true(info.rendered, 'a title-prefix entry should still match with a version suffix');
+  t.true(info.text.includes('Minecraft'), info.text);
+  t.is(info.severity, 'normal');
+  t.false(info.rawMarkupVisible, info.text);
+});
+
+test('Game Capture compat matches on window class alone', async t => {
+  const info = await probeCompat('GC class match', { capture_mode: 'window', window: CHROMIUM });
+
+  t.true(info.rendered, 'a class-only entry should match even when the exe does not');
+  t.true(info.text.includes('Chromium'), info.text);
+  t.is(info.severity, 'error');
+  // this entry carries no URL, so the renderer must cope with a message that has no link
+  t.is(info.anchorCount, 0, 'entry has no URL, so no link should be rendered');
+  t.false(info.rawMarkupVisible, info.text);
 });
 
 test('Game Capture hides the transient hook status', async t => {
