@@ -96,6 +96,10 @@ import { SignalsService } from 'services/signals-manager';
 import { TSocketEvent } from 'services/websocket';
 import { HighlighterService } from 'services/highlighter';
 import {
+  RESOLUTION_CHANGE_NOTIFICATION_CODE,
+  createResolutionChangeNotification,
+} from './enhanced-broadcasting-notifications';
+import {
   canDestroyDisplayOutputContext,
   isDisplayOutputContext,
   shouldStopDisplayContextBeforeDestroy as shouldStopDisplayOutputContextBeforeDestroy,
@@ -2476,6 +2480,13 @@ export class StreamingService
     this.contexts[contextName].streaming.network = network;
 
     if (start) {
+      const isEnhancedBroadcastingContext =
+        isEnhancedBroadcasting || contextName === 'enhancedBroadcasting';
+
+      if (isEnhancedBroadcastingContext) {
+        this.clearEnhancedBroadcastingResolutionChangeNotification();
+      }
+
       try {
         this.contexts[contextName].streaming.start();
       } catch (e: unknown) {
@@ -2933,6 +2944,10 @@ export class StreamingService
   private async handleSignal(info: EOutputSignal, context: TOutputContext) {
     const type = info.type as EOBSOutputType;
     try {
+      if (this.handleEnhancedBroadcastingResolutionChangeSignal(info)) {
+        return;
+      }
+
       if (info.code !== EOutputCode.Success) {
         // handle errors before attempting anything else
         console.error('Output Signal Error:', info, context);
@@ -2959,6 +2974,19 @@ export class StreamingService
       this.RESET_STREAM_INFO();
       this.rejectStartStreaming();
     }
+  }
+
+  private handleEnhancedBroadcastingResolutionChangeSignal(info: EOutputSignal): boolean {
+    const notification = createResolutionChangeNotification(info);
+    if (!notification) return false;
+
+    this.clearEnhancedBroadcastingResolutionChangeNotification();
+    this.notificationsService.push(notification);
+    return true;
+  }
+
+  private clearEnhancedBroadcastingResolutionChangeNotification() {
+    this.notificationsService.removeByCode(RESOLUTION_CHANGE_NOTIFICATION_CODE);
   }
 
   private async handleStreamingSignal(info: EOutputSignal, context: TOutputContext) {
