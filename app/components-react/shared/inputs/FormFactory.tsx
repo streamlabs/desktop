@@ -6,7 +6,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import * as inputs from './inputList';
 import { TInputType, TSlobsInputProps } from './inputs';
 import Form, { useForm } from './Form';
-import { TInputMetadata } from './metadata';
+import { IBaseMetadata } from './metadata';
 import { ButtonGroup } from 'components-react/shared/ButtonGroup';
 import { $t } from 'services/i18n';
 
@@ -36,7 +36,7 @@ const componentTable: {
 };
 
 interface IFormMetadata {
-  [value: string]: TInputMetadata;
+  [value: string]: IBaseMetadata;
 }
 
 export default function FormFactory(p: {
@@ -93,7 +93,7 @@ export default function FormFactory(p: {
 
 function FormInput(p: {
   id: string;
-  metadata: TInputMetadata<unknown>;
+  metadata: IBaseMetadata;
   values: Dictionary<TInputValue>;
   onChange: (key: string) => (value: TInputValue) => void;
 }) {
