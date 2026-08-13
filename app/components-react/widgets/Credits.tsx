@@ -193,6 +193,7 @@ export class CreditsModule extends WidgetModule<ICreditsState> {
           'A hex code for the widget background. This is for preview purposes only. It will not be shown in your stream.',
         ),
       }),
+      loop_credits: metadata.bool({ label: $t('Loop the credits') }),
       delay_time: metadata.slider({
         label: $t('Delay Time'),
         tooltip: $t('Wait time before rerunning the credit reel.'),
