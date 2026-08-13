@@ -2,13 +2,14 @@
   "Jar Image": "단지 이미지",
   "Enabled Events": "활성화된 이벤트",
   "Minimum Bits": "최소 비트",
+  "Minimum Power-Ups": "Minimum Power-Ups",
   "Minimum Tips": "최소 팁",
   "Background Color": "배경색",
   "Text": "텍스트",
   "Show Text": "텍스트 표시",
   "Text Color": "텍스트 색상",
   "Font Size": "폰트 사이즈",
-  "Tips over": "팁",
+  "Tips over": "Tips over {amount}",
   "Tips & Donations": "팁 및 후원",
   "Twitch Subs": "Twitch 구독",
   "Twitch Resubs": "Twitch 재구독",
@@ -19,5 +20,7 @@
   "Picarto Follows": "Picarto 팔로우",
   "Picarto Subscriptions": "Picarto 구독자",
   "Facebook Support Gifters": "Facebook 지원 선물 제공자",
+  "Kick Follows": "Kick Follows",
+  "Kick Subscriptions": "Kick Subscriptions",
   "Manage Jar": "단지 관리"
 }
