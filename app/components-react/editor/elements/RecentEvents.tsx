@@ -32,7 +32,7 @@ export default function RecentEvents(p: { isOverlay?: boolean }) {
 }
 
 function Toolbar() {
-  const { RecentEventsService, UserService, SpinWheelService } = Services;
+  const { RecentEventsService, UserService } = Services;
 
   const {
     muted,
@@ -59,7 +59,7 @@ function Toolbar() {
         <Tooltip title={$t('Spin Wheel')} placement="bottom">
           <i
             className="fas fa-chart-pie action-icon"
-            onClick={() => SpinWheelService.actions.spinWheel()}
+            onClick={() => RecentEventsService.actions.spinWheel()}
           />
         </Tooltip>
       )}
