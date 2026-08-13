@@ -392,7 +392,7 @@ export function getWidgetsConfig(
     // },
 
     [WidgetType.Credits]: {
-      type: WidgetType.DonationTicker,
+      type: WidgetType.Credits,
 
       defaultTransform: {
         width: 600,
