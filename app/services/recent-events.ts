@@ -241,7 +241,12 @@ function getHashForRecentEvent(event: IRecentEvent) {
     case 'superheart':
     case 'tiltifydonation':
     case 'stars':
-      return [event.type, event.name, event.message, parseInt(event.amount, 10)].join(':');
+      return [
+        event.type,
+        event.name,
+        event.message,
+        event.amount ? parseInt(event.amount, 10) : 0,
+      ].join(':');
     case 'follow':
     case 'kick_follow':
     case 'loyalty_store_redemption':
@@ -263,7 +268,7 @@ function getHashForRecentEvent(event: IRecentEvent) {
     case 'subscription':
     case 'kick_subscription':
     case 'kick_subscription_gifts':
-      return [event.type, event.name.toLowerCase(), event.message].join(':');
+      return [event.type, event.name?.toLowerCase(), event.message].join(':');
     case 'treat':
       return [event.type, event.name, event.title, event.message, event.createdAt].join(':');
     case 'merch':
