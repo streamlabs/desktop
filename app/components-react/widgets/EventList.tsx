@@ -56,34 +56,23 @@ interface IEventListState extends IWidgetCommonState {
 }
 
 export function EventList() {
-  const {
-    isLoading,
-    settings,
-    eventMeta,
-    fontMeta,
-    visualMeta,
-    updateSetting,
-    setSelectedTab,
-    selectedTab,
-  } = useEventList();
-
-  // use 1 column layout
+  const w = useEventList();
   return (
     <WidgetLayout>
-      <Menu onClick={e => setSelectedTab(e.key)} selectedKeys={[selectedTab]}>
+      <Menu onClick={e => w.setSelectedTab(e.key)} selectedKeys={[w.selectedTab]}>
         <Menu.Item key="event">{$t('Manage List')}</Menu.Item>
         <Menu.Item key="font">{$t('Font Settings')}</Menu.Item>
         <Menu.Item key="visual">{$t('Visual Settings')}</Menu.Item>
       </Menu>
       <Form>
-        {!isLoading && selectedTab === 'event' && (
-          <FormFactory metadata={eventMeta} values={settings} onChange={updateSetting} />
+        {w.hasLoadedSettings() && w.selectedTab === 'event' && (
+          <FormFactory metadata={w.eventMeta} values={w.settings} onChange={w.updateSetting} />
         )}
-        {!isLoading && selectedTab === 'font' && (
-          <FormFactory metadata={fontMeta} values={settings} onChange={updateSetting} />
+        {w.hasLoadedSettings() && w.selectedTab === 'font' && (
+          <FormFactory metadata={w.fontMeta} values={w.settings} onChange={w.updateSetting} />
         )}
-        {!isLoading && selectedTab === 'visual' && (
-          <FormFactory metadata={visualMeta} values={settings} onChange={updateSetting} />
+        {w.hasLoadedSettings() && w.selectedTab === 'visual' && (
+          <FormFactory metadata={w.visualMeta} values={w.settings} onChange={w.updateSetting} />
         )}
       </Form>
     </WidgetLayout>

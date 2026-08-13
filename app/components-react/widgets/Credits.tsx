@@ -57,34 +57,23 @@ function fromMeta(meta: TCreditsMeta): Record<string, IBaseMetadata> {
 }
 
 export function Credits() {
-  const {
-    isLoading,
-    settings,
-    creditsMeta,
-    fontMeta,
-    visualMeta,
-    updateSetting,
-    setSelectedTab,
-    selectedTab,
-  } = useCredits();
-
-  // use 1 column layout
+  const w = useCredits();
   return (
     <WidgetLayout>
-      <Menu onClick={e => setSelectedTab(e.key)} selectedKeys={[selectedTab]}>
+      <Menu onClick={e => w.setSelectedTab(e.key)} selectedKeys={[w.selectedTab]}>
         <Menu.Item key="credits">{$t('Manage Credits')}</Menu.Item>
         <Menu.Item key="font">{$t('Font Settings')}</Menu.Item>
         <Menu.Item key="visual">{$t('Visual Settings')}</Menu.Item>
       </Menu>
       <Form>
-        {!isLoading && selectedTab === 'credits' && (
-          <FormFactory metadata={creditsMeta} values={settings} onChange={updateSetting} />
+        {w.hasLoadedSettings() && w.selectedTab === 'credits' && (
+          <FormFactory metadata={w.creditsMeta} values={w.settings} onChange={w.updateSetting} />
         )}
-        {!isLoading && selectedTab === 'font' && (
-          <FormFactory metadata={fontMeta} values={settings} onChange={updateSetting} />
+        {w.hasLoadedSettings() && w.selectedTab === 'font' && (
+          <FormFactory metadata={w.fontMeta} values={w.settings} onChange={w.updateSetting} />
         )}
-        {!isLoading && selectedTab === 'visual' && (
-          <FormFactory metadata={visualMeta} values={settings} onChange={updateSetting} />
+        {w.hasLoadedSettings() && w.selectedTab === 'visual' && (
+          <FormFactory metadata={w.visualMeta} values={w.settings} onChange={w.updateSetting} />
         )}
       </Form>
     </WidgetLayout>

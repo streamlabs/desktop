@@ -18,7 +18,7 @@ import { EventList, EventListModule } from '../EventList';
 // SpinWheel
 import { SponsorBanner, SponsorBannerModule } from '../SponsorBanner';
 // StreamBoss
-// TipJar
+import { Jar, JarModule } from '../Jar';
 import { ViewerCount, ViewerCountModule } from '../ViewerCount';
 import { CustomWidget, CustomWidgetModule } from '../CustomWidget';
 import { GamePulseWidget } from 'components-react/widgets/GamePulse';
@@ -47,7 +47,7 @@ export const components = {
   // SpinWheel
   SponsorBanner: [SponsorBanner, SponsorBannerModule],
   // StreamBoss
-  // TipJar
+  TipJar: [Jar, JarModule],
   ViewerCount: [ViewerCount, ViewerCountModule],
   CustomWidget: [CustomWidget, CustomWidgetModule],
   GamePulseWidget: [GamePulseWidget, GamePulseModule],
