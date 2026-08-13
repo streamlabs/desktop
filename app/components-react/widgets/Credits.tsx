@@ -18,7 +18,7 @@ interface ICreditsState extends IWidgetCommonState {
       credit_subtitle: string;
       background_color: string;
       font_color: string;
-      font_size: 14;
+      font_size: number;
       font: string;
       muted_chatters: string;
       bits: boolean;
