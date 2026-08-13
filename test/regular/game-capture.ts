@@ -280,6 +280,48 @@ captureTest('Game Capture lists and captures a live window', async t => {
   }
 });
 
+captureTest('Game Capture survives the target recreating its D3D device', async t => {
+  stopAll();
+  // scheduled relative to the hook: an absolute delay races OBS, which needs several seconds to
+  // inject, so the recreate would otherwise fire before there is anything to disturb
+  const target = await launchProfile('cs2', {
+    extraArgs: ['--recreate-device-after', 'hooked+3'],
+  });
+  const name = 'GC churn recovery';
+
+  await addSource('Game Capture', name);
+  try {
+    await updateSettings(name, { capture_mode: 'window', window: target.obsWindowSetting });
+
+    const hooked = await target.waitForEvent('hooked', 40000);
+    t.truthy(hooked, 'target was never hooked, so there was nothing to disturb');
+
+    const recreated = await target.waitForEvent(
+      'device_recreated',
+      30000,
+      target.events.indexOf(hooked) + 1,
+    );
+    t.truthy(recreated, 'the scheduled device recreate never fired');
+
+    // Frames must still be arriving afterwards. The placeholder has a different size, so
+    // matching the target's client area is the signal that they are real.
+    // Note: no `unhooked` fires here — the hook DLL stays loaded across in-process churn and
+    // re-acquires the new device, so don't expect an unhook/rehook cycle to assert on.
+    let dimensions = '0x0';
+    const deadline = Date.now() + 30000;
+    while (Date.now() < deadline) {
+      const { width, height } = await readDimensions(name);
+      dimensions = `${width}x${height}`;
+      if (dimensions === target.clientSize) break;
+      await sleep(1000);
+    }
+    t.is(dimensions, target.clientSize, 'capture stopped after the device was recreated');
+  } finally {
+    await removeGameCapture(name);
+    stopAll();
+  }
+});
+
 captureTest('Game Capture warns and refuses capture when injection is blocked', async t => {
   // reproduces CS2 launched without -allow_third_party_software: the hook cannot load
   stopAll();

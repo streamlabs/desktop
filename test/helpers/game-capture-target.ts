@@ -16,10 +16,10 @@ import * as ChildProcess from 'child_process';
 import fetch from 'node-fetch';
 import extract = require('extract-zip');
 
-const RELEASE_TAG = 'v0.3.2';
+const RELEASE_TAG = 'v0.4.1';
 const ZIP_NAME = `fakegame-${RELEASE_TAG}-win-x64.zip`;
 const ZIP_URL = `https://github.com/summeroff/game-capture-target/releases/download/${RELEASE_TAG}/${ZIP_NAME}`;
-const ZIP_SHA256 = '127720a401894c0f67ac99d3bb28ffd7555c524e7171903a75e76fdd0f670e46';
+const ZIP_SHA256 = 'edc00d57cc6b1357b87c63f8a50eb00a8fd839f33aea707a634a72078ab86e66';
 
 // __dirname is test-dist/test/helpers at runtime
 const CACHE_DIR = path.resolve(__dirname, '..', '..', 'game-capture-target');
@@ -65,8 +65,12 @@ export interface ILaunchedTarget {
   clientSize: string;
   /** every event seen so far */
   events: ITargetEvent[];
-  /** resolves with the first matching event, or null on timeout */
-  waitForEvent(name: string, timeoutMs?: number): Promise<ITargetEvent>;
+  /**
+   * Resolves with the first matching event, or null on timeout. `fromIndex` skips events already
+   * buffered, which is what makes a sequence like hooked -> recreated -> hooked assertable
+   * without matching an earlier occurrence.
+   */
+  waitForEvent(name: string, timeoutMs?: number, fromIndex?: number): Promise<ITargetEvent>;
 }
 
 interface ITargetState {
@@ -209,12 +213,13 @@ export async function launchProfile(
     obsWindowSetting: ready.obsWindowSetting,
     clientSize: `${ready.clientWidth}x${ready.clientHeight}`,
     events: state.events,
-    waitForEvent: (name: string, timeoutMs = 20000) => waitForEvent(state, name, timeoutMs),
+    waitForEvent: (name: string, timeoutMs = 20000, fromIndex = 0) =>
+      waitForEvent(state, name, timeoutMs, fromIndex),
   };
 }
 
-function waitForEvent(state: ITargetState, name: string, timeoutMs: number) {
-  const seen = state.events.find(e => e.event === name);
+function waitForEvent(state: ITargetState, name: string, timeoutMs: number, fromIndex = 0) {
+  const seen = state.events.find((e, i) => i >= fromIndex && e.event === name);
   if (seen) return Promise.resolve(seen);
 
   return new Promise<ITargetEvent>(resolve => {
