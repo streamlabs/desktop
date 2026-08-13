@@ -16,6 +16,27 @@ export interface ITestStats {
   syncIPCCalls: number;
 }
 
+/**
+ * Contents of ACCOUNT_FAILURES_PATH
+ *  - `tests` is keyed by test name.
+ *  - `job` holds reasons that belong to the run as a whole and is written by the runner.
+ */
+export interface IAccountFailures {
+  tests: Record<string, TAccountFailure>;
+  job: TAccountFailure[];
+}
+
+/**
+ * Reasons a test failed because of the account it was given, rather than because of a bug.
+ * HEROKU_ANALYTICS_SEND_FAILED is job-wide and written by the runner, not by a test.
+ */
+export type TAccountFailure =
+  | 'NO_ACCOUNT_AVAILABLE'
+  | 'YOUTUBE_STREAMING_DISABLED'
+  | 'YOUTUBE_ACCOUNT_RATE_LIMITED'
+  | 'YOUTUBE_ACCOUNT_FAILURE'
+  | 'HEROKU_ANALYTICS_SEND_FAILED';
+
 const {
   BUILD_BUILDID,
   SYSTEM_JOBID,
@@ -31,6 +52,7 @@ const USER_POOL_URL = 'https://slobs-users-pool.herokuapp.com'; // 'http://local
 const FAILED_TESTS_PATH = 'test-dist/failed-tests.json'; // failed will be written down to this file
 const TESTS_TIMINGS_PATH = 'test-dist/test-timings.json'; // a known timings for tests should be provided in this file
 const TEST_STATS_PATH = 'test-dist/test-stats.json'; // each successfully completed tests save stats like duration, syncIPCCalls in this file
+const ACCOUNT_FAILURES_PATH = 'test-dist/account-failures.json'; // failures because of the user pool account
 
 // save names of all running tests in this array to use them in the retrying mechanism
 const pendingTests: string[] = [];
@@ -91,6 +113,29 @@ export function removeFailedTestFromFile(testName: string) {
     failedTests.splice(failedTests.indexOf(testName), 1);
     fs.writeFileSync(FAILED_TESTS_PATH, JSON.stringify(failedTests));
   }
+}
+
+/**
+ * Parse the account failure details for logging purposes
+ * @returns - An object with the test failure details
+ */
+function readAccountFailures(): IAccountFailures {
+  const failures = fs.existsSync(ACCOUNT_FAILURES_PATH)
+    ? JSON.parse(fs.readFileSync(ACCOUNT_FAILURES_PATH, 'utf8'))
+    : {};
+  return { tests: failures.tests ?? {}, job: failures.job ?? [] };
+}
+
+/**
+ * Write to the logs test failure that was caused by the test account to indicate that
+ * the failure is not from a bug
+ * @param testName - Name of the test with the failure
+ * @param reason - The account failure reason
+ */
+export function saveAccountFailureToFile(testName: string, reason: TAccountFailure) {
+  const failures = readAccountFailures();
+  failures.tests[testName] = reason;
+  fs.writeFileSync(ACCOUNT_FAILURES_PATH, JSON.stringify(failures));
 }
 
 /**
@@ -195,7 +240,7 @@ export async function waitForElectronInstancesExist() {
     timeleft -= interval;
     tasks = await getElectronInstances();
   }
-   if (tasks.length > 0) {
-     throw new Error('Timed out waiting for Electron instances to exit');
-   }
+  if (tasks.length > 0) {
+    throw new Error('Timed out waiting for Electron instances to exit');
+  }
 }

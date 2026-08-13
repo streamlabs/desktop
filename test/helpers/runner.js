@@ -13,6 +13,7 @@ const fetch = require('node-fetch');
 
 const failedTestsFile = 'test-dist/failed-tests.json';
 const testStatsFile = 'test-dist/test-stats.json';
+const accountFailuresFile = 'test-dist/account-failures.json';
 const args = process.argv.slice(2);
 const TIMEOUT = 3; // timeout in minutes
 const {
@@ -24,6 +25,16 @@ const {
   BUILD_DEFINITIONNAME,
   SLOBS_TEST_RUN_CHUNK,
 } = process.env;
+
+// Order the account failure errors from highest to lowest severity
+const ACCOUNT_FAILURE_SEVERITY = [
+  'NO_ACCOUNT_AVAILABLE',
+  'HEROKU_ANALYTICS_SEND_FAILED',
+  'YOUTUBE_ACCOUNT_FAILURE',
+  'YOUTUBE_ACCOUNT_RATE_LIMITED',
+  'YOUTUBE_STREAMING_DISABLED',
+];
+
 let retryingFailed = false;
 
 const RUN_TESTS_CMD = !args.length ? `yarn test --timeout=${TIMEOUT}m ` : args.join(' ') + ' ';
@@ -33,6 +44,7 @@ const RUN_TESTS_CMD = !args.length ? `yarn test --timeout=${TIMEOUT}m ` : args.j
   try {
     rimraf.sync(failedTestsFile);
     rimraf.sync(testStatsFile);
+    rimraf.sync(accountFailuresFile);
     await createTestTimingsFile();
     execSync(RUN_TESTS_CMD, { stdio: [0, 1, 2] });
   } catch (e) {
@@ -94,13 +106,46 @@ function readTestStats() {
   return stats;
 }
 
+/**
+ * Read recorded failures from user pool account failure reasons
+ * @remark Test failures may occur because of the user pool account instead of from a bug,
+ * which creates a false failure.
+ * - `tests` is keyed by test name and written by the test harness, `job` holds reasons
+ * - that belong to the run as a whole and is written here. See IAccountFailures.
+ * @returns - An object with the test failure details
+ */
+function readAccountFailures() {
+  let failures = {};
+  try {
+    failures = JSON.parse(fs.readFileSync(accountFailuresFile, 'utf8'));
+  } catch (e) {
+    failures = {};
+  }
+  return { tests: failures.tests || {}, job: failures.job || [] };
+}
+
+/**
+ * Roll the per-test and job-wide reasons up into a single reason for the job.
+ * A pool with no free accounts affects the whole run, so it wins over an account
+ * that just couldn't go live on YouTube.
+ */
+function getJobAccountFailure(testsToSend, jobReasons) {
+  const reasons = jobReasons.concat(
+    testsToSend.map(test => test.accountFailure).filter(reason => reason),
+  );
+  if (!reasons.length) return null;
+  return ACCOUNT_FAILURE_SEVERITY.find(reason => reasons.includes(reason)) || reasons[0];
+}
+
 async function sendJobToAnalytics(failedTests) {
   if (!BUILD_BUILDID) return; // do not send analytics for local builds
 
   const failedAfterRetryTests = getFailedTests();
+  const accountFailures = readAccountFailures();
   const testsToSend = failedTests.map(testName => ({
     name: testName,
     retrySucceeded: !failedAfterRetryTests.includes(testName),
+    accountFailure: accountFailures.tests[testName] || null,
   }));
   log('Sending analytics..');
   const body = {
@@ -114,12 +159,30 @@ async function sendJobToAnalytics(failedTests) {
     branch: BUILD_SOURCEBRANCH,
     slice: SLOBS_TEST_RUN_CHUNK,
     stats: readTestStats(),
+    accountFailure: getJobAccountFailure(testsToSend, accountFailures.job),
   };
   log(body);
   try {
     await requestUtilityServer('job', 'post', body);
   } catch (e) {
     console.error('failed to send analytics', e);
+    saveJobAccountFailure('HEROKU_ANALYTICS_SEND_FAILED');
+  }
+}
+
+/**
+ * The body never reached the server, so nothing in it was recorded - including the
+ * accountFailure we just worked out. Append the reason to the account failures file so the
+ * lost job is visible on the agent rather than only in the console. Reasons accumulate
+ * rather than overwrite, so an earlier one isn't lost behind a later one.
+ */
+function saveJobAccountFailure(reason) {
+  const failures = readAccountFailures();
+  failures.job.push(reason);
+  try {
+    fs.writeFileSync(accountFailuresFile, JSON.stringify(failures));
+  } catch (e) {
+    console.error('failed to record the account failure', e);
   }
 }
 
