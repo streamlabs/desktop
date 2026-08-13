@@ -2,13 +2,14 @@
   "Jar Image": "Gambar Kendi",
   "Enabled Events": "Acara yang Diaktifkan",
   "Minimum Bits": "Bit Minimum",
+  "Minimum Power-Ups": "Minimum Power-Ups",
   "Minimum Tips": "Tips Minimum",
   "Background Color": "Warna Latar Belakang",
   "Text": "Teks",
   "Show Text": "Tampilkan Teks",
   "Text Color": "Warna Teks",
   "Font Size": "Ukuran Font",
-  "Tips over": "Tips lebih",
+  "Tips over": "Tips over {amount}",
   "Tips & Donations": "Tips & Donasi",
   "Twitch Subs": "Langganan Twitch",
   "Twitch Resubs": "Langganan Ulang Twitch",
@@ -19,5 +20,7 @@
   "Picarto Follows": "Picarto Mengikuti",
   "Picarto Subscriptions": "Langganan Picarto",
   "Facebook Support Gifters": "Pemberi Dukungan Facebook",
+  "Kick Follows": "Kick Follows",
+  "Kick Subscriptions": "Kick Subscriptions",
   "Manage Jar": "Kelola Kendi"
 }
