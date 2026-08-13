@@ -16,10 +16,10 @@ import * as ChildProcess from 'child_process';
 import fetch from 'node-fetch';
 import extract = require('extract-zip');
 
-const RELEASE_TAG = 'v0.4.1';
+const RELEASE_TAG = 'v0.4.2';
 const ZIP_NAME = `fakegame-${RELEASE_TAG}-win-x64.zip`;
 const ZIP_URL = `https://github.com/summeroff/game-capture-target/releases/download/${RELEASE_TAG}/${ZIP_NAME}`;
-const ZIP_SHA256 = 'edc00d57cc6b1357b87c63f8a50eb00a8fd839f33aea707a634a72078ab86e66';
+const ZIP_SHA256 = '34a65310bf546983cd9f7b3fd4f366cc7fe0ba73541e47ac82d734606ebe07a2';
 
 // __dirname is test-dist/test/helpers at runtime
 const CACHE_DIR = path.resolve(__dirname, '..', '..', 'game-capture-target');
