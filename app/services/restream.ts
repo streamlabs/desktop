@@ -827,16 +827,16 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * Setup restream targets
    * @remark In dual output mode, assign a context to the ingest targets. Defaults to the horizontal context.
    * @remark When setting up targets, modes are also assigned to the target. A mode corresponds to
-    // the display the target is assigned to. In single output mode, a display can only be assigned
-    // to the horizontal display. In dual output mode, target can be assigned to either the horizontal
-    // or vertical display, or both if the platform supports dual stream.
-    // The modes correspond as follows:
-    // |-------------------|-------------------|
-    // | Display           | Mode              |
-    // |-------------------|-------------------|
-    // | horizontal        | landscape         |
-    // | vertical          | portrait          |
-    // |-------------------|-------------------|
+   * the display the target is assigned to. In single output mode, a display can only be assigned
+   * to the horizontal display. In dual output mode, target can be assigned to either the horizontal
+   * or vertical display, or both if the platform supports dual stream.
+   * The modes correspond as follows:
+   * |-------------------|-------------------|
+   * | Display           | Mode              |
+   * |-------------------|-------------------|
+   * | horizontal        | landscape         |
+   * | vertical          | portrait          |
+   * |-------------------|-------------------|
    */
   async setupTargets() {
     // delete existing targets
