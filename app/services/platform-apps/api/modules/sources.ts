@@ -282,4 +282,9 @@ export class SourcesModule extends Module {
   ) {
     this.sourceFiltersService.add(sourceId, filterType, filterName, settings);
   }
+
+  @apiMethod()
+  removeFilter(_ctx: IApiContext, sourceId: string, filterName: string) {
+    this.sourceFiltersService.remove(sourceId, filterName);
+  }
 }
