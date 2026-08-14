@@ -871,7 +871,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
       'ChatBox',
       // TODO:
       // 'ChatHighlight',
-      // 'Credits',
+      'Credits',
       'DonationTicker',
       'EmoteWall',
       'EventList',
@@ -880,7 +880,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
       // 'SpinWheel',
       'SponsorBanner',
       // 'StreamBoss',
-      // 'TipJar',
+      'TipJar',
       'ViewerCount',
       'CustomWidget',
       'GamePulseWidget',
