@@ -12,7 +12,7 @@ export function Ultra(p: IOnboardingStepProps) {
     const sub = UserService.subscribedToPrime.subscribe(() => {
       OnboardingV2Service.actions.takeStep();
     });
-    return sub.unsubscribe;
+    return () => sub.unsubscribe();
   }, []);
 
   function clickFree() {
