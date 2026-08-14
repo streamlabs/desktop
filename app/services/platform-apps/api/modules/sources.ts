@@ -284,7 +284,7 @@ export class SourcesModule extends Module {
   }
 
   @apiMethod()
-  removeFilter(_ctx: IApiContext, sourceId: string, filterName: string) {
+  removeFilter(ctx: IApiContext, sourceId: string, filterName: string) {
     this.sourceFiltersService.remove(sourceId, filterName);
   }
 }
