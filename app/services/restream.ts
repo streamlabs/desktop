@@ -497,7 +497,11 @@ export class RestreamService extends StatefulService<IRestreamState> {
         streamKey = await this.resolveStreamKey(mode);
       } catch (e: unknown) {
         console.error('Restream Error: Unable to fetch user stream key for', mode, e);
-        throwStreamError('RESTREAM_UPDATE_FAILED');
+        throwStreamError(
+          'RESTREAM_UPDATE_FAILED',
+          e,
+          `Unable to fetch user stream key for ${mode}.`,
+        );
       }
 
       if (displaysToSetup.includes(display)) {
@@ -510,7 +514,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
           await this.setupDisplayTargets(platforms, customDestinations, display);
         } catch (e: unknown) {
           console.error('Restream Error: Unable to create targets for', display, e);
-          throwStreamError('RESTREAM_UPDATE_FAILED');
+          throwStreamError('RESTREAM_UPDATE_FAILED', e, `Unable to create targets for ${display}.`);
         }
       } else {
         // This display already has a running restream session, so add the targets to it.
@@ -519,7 +523,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
           await this.addRuntimeTargets(streamKey, targetsByMode[mode] as IRestreamRuntimeTarget[]);
         } catch (e: unknown) {
           console.error('Restream Error: Unable to add targets for', display, e);
-          throwStreamError('RESTREAM_UPDATE_FAILED');
+          throwStreamError('RESTREAM_UPDATE_FAILED', e, `Unable to add targets for ${display}.`);
         }
       }
     }
@@ -545,7 +549,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
     if (!remoteTargets.length) {
       console.debug('No active restream targets.');
-      throwStreamError('RESTREAM_UPDATE_FAILED');
+      throwStreamError('RESTREAM_UPDATE_FAILED', {}, 'No active restream targets.');
     }
 
     // Match the targets to remove against the remote targets by stream key. When removing all
@@ -573,7 +577,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
         await this.removeRuntimeTargets(await this.resolveStreamKey(mode), stopTargets);
       } catch (e: unknown) {
         console.error('Restream Error: Error removing restream targets for', mode, e);
-        throwStreamError('RESTREAM_UPDATE_FAILED');
+        throwStreamError('RESTREAM_UPDATE_FAILED', e, `Unable to remove targets for ${mode}.`);
       }
     }
   }
@@ -827,7 +831,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * Setup restream targets
    * @remark In dual output mode, assign a context to the ingest targets. Defaults to the horizontal context.
    * @remark When setting up targets, modes are also assigned to the target. A mode corresponds to
-   * the display the target is assigned to. In single output mode, a display can only be assigned
+   * the display the target is assigned to. In single output mode, a target can only be assigned
    * to the horizontal display. In dual output mode, target can be assigned to either the horizontal
    * or vertical display, or both if the platform supports dual stream.
    * The modes correspond as follows:
