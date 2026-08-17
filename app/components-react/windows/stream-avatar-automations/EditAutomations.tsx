@@ -9,6 +9,7 @@ import { $t } from 'services/i18n';
 import { Conditions } from 'services/stream-avatar/engine/conditions';
 import type { ConditionType } from 'services/stream-avatar/engine/conditions';
 import { validateAutomation } from 'services/stream-avatar/engine/validation';
+import type { IAutomationIssue } from 'services/stream-avatar/engine/validation';
 import type { TAutomationExport } from 'services/stream-avatar/engine/automations';
 import { EDismissable } from 'services/dismissables';
 import AutomationEditor from './AutomationEditor';
@@ -231,82 +232,109 @@ export default function EditAutomations() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(automation => {
-              const issues = validateAutomation(automation, {
-                scenes,
-                sources,
-                agentAppReady: isAgentInstalled && isAgentEnabled,
-              });
-              return (
-                <tr key={automation.id}>
-                  <td className={styles.descCell}>
-                    {automation.description || $t('(no description)')}
-                  </td>
-                  <td>{automation.conditions.map(c => conditionLabel(c)).join(', ')}</td>
-                  <td className={styles.mutedCell}>{summarizeActions(automation.actions)}</td>
-                  <td>
-                    {automation.conditions.map((c, i) => {
-                      const game = conditionGame(c);
-                      return game ? (
-                        <Tag key={i} className={styles.badge}>
-                          {game}
-                        </Tag>
-                      ) : null;
-                    })}
-                  </td>
-                  <td>
-                    <div className={styles.rowActions}>
-                      {issues.length > 0 && (
-                        <Tooltip
-                          title={
-                            <div>
-                              {issues.map((issue, i) => (
-                                <div key={i}>{issue.message}</div>
-                              ))}
-                            </div>
-                          }
-                        >
-                          <i className={`icon-error ${styles.errorIcon}`} />
-                        </Tooltip>
-                      )}
-                      <Tooltip title={automation.enabled ? $t('Enabled') : $t('Disabled')}>
-                        <Switch
-                          size="small"
-                          checked={automation.enabled}
-                          onChange={() => toggleEnabled(automation)}
-                        />
-                      </Tooltip>
-                      <Tooltip title={$t('Test automation')}>
-                        {simulatingId === automation.id ? (
-                          <Spin size="small" />
-                        ) : (
-                          <i
-                            className={`icon-play-round ${
-                              simulatingId !== null ? styles.disabledIcon : ''
-                            }`}
-                            onClick={() => simulate(automation)}
-                          />
-                        )}
-                      </Tooltip>
-                      <Tooltip title={$t('Edit')}>
-                        <i className="icon-edit" onClick={() => edit(automation)} />
-                      </Tooltip>
-                      <Popconfirm
-                        title={$t('Delete this automation?')}
-                        onConfirm={() => remove(automation)}
-                        okText={$t('Delete')}
-                        cancelText={$t('Cancel')}
-                      >
-                        <i className="icon-trash" />
-                      </Popconfirm>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+            {filtered.map(automation => (
+              <AutomationRow
+                key={automation.id}
+                automation={automation}
+                issues={validateAutomation(automation, {
+                  scenes,
+                  sources,
+                  agentAppReady: isAgentInstalled && isAgentEnabled,
+                })}
+                simulating={simulatingId === automation.id}
+                simulateDisabled={simulatingId !== null}
+                onToggle={() => toggleEnabled(automation)}
+                onSimulate={() => simulate(automation)}
+                onEdit={() => edit(automation)}
+                onDelete={() => remove(automation)}
+              />
+            ))}
           </tbody>
         </table>
       )}
     </ModalLayout>
+  );
+}
+
+interface AutomationRowProps {
+  automation: TAutomationExport;
+  issues: IAutomationIssue[];
+  /** This row's own test run is in progress. */
+  simulating: boolean;
+  /** Some row is testing, so every row's test button is unavailable. */
+  simulateDisabled: boolean;
+  onToggle: () => void;
+  onSimulate: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}
+
+function AutomationRow({
+  automation,
+  issues,
+  simulating,
+  simulateDisabled,
+  onToggle,
+  onSimulate,
+  onEdit,
+  onDelete,
+}: AutomationRowProps) {
+  return (
+    <tr>
+      <td className={styles.descCell}>{automation.description || $t('(no description)')}</td>
+      <td>{automation.conditions.map(c => conditionLabel(c)).join(', ')}</td>
+      <td className={styles.mutedCell}>{summarizeActions(automation.actions)}</td>
+      <td>
+        {automation.conditions.map((c, i) => {
+          const game = conditionGame(c);
+          return game ? (
+            <Tag key={i} className={styles.badge}>
+              {game}
+            </Tag>
+          ) : null;
+        })}
+      </td>
+      <td>
+        <div className={styles.rowActions}>
+          {issues.length > 0 && (
+            <Tooltip
+              title={
+                <div>
+                  {issues.map((issue, i) => (
+                    <div key={i}>{issue.message}</div>
+                  ))}
+                </div>
+              }
+            >
+              <i className={`icon-error ${styles.errorIcon}`} />
+            </Tooltip>
+          )}
+          <Tooltip title={automation.enabled ? $t('Enabled') : $t('Disabled')}>
+            <Switch size="small" checked={automation.enabled} onChange={onToggle} />
+          </Tooltip>
+          <Tooltip title={$t('Test automation')}>
+            {simulating ? (
+              <Spin size="small" />
+            ) : (
+              <i
+                className={`icon-play-round ${simulateDisabled ? styles.disabledIcon : ''}`}
+                onClick={onSimulate}
+              />
+            )}
+          </Tooltip>
+          <Tooltip title={$t('Edit')}>
+            <i className="icon-edit" onClick={onEdit} />
+          </Tooltip>
+          <Popconfirm
+            title={$t('Delete this automation?')}
+            onConfirm={onDelete}
+            okText={$t('Delete')}
+            cancelText={$t('Cancel')}
+          >
+            <i className="icon-trash" />
+          </Popconfirm>
+        </div>
+      </td>
+    </tr>
   );
 }
