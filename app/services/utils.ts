@@ -119,12 +119,9 @@ export default class Utils {
   }
 
   static getAvatarEnvironment(): 'production' | 'staging' | 'local' {
-    //if (remote.process.argv.includes('--bundle-qa')) {
-    return 'staging';
-    //}
-
-    console.log('[Utils] Avatar Environment:', process.env.AVATAR_ENV);
-    console.log('[Utils] Avatar Environment (remote):', Utils.env.AVATAR_ENV);
+    if (remote.process.argv.includes('--bundle-qa')) {
+      return 'staging';
+    }
 
     return Utils.env.AVATAR_ENV || (process.env.AVATAR_ENV as 'production' | 'staging' | 'local');
   }
