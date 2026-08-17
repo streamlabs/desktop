@@ -12,6 +12,13 @@ const base = {
     'bundles',
     '!bundles/*.js.map',
     'node_modules',
+    // The `electron` npm package is a devDependency, but two production deps
+    // (@electron/remote, react-devtools-electron) peer-depend on it, so it lands in
+    // the production tree. Its dist/ is a full second copy of the Electron runtime
+    // (~348MB) that smart-unpack then extracts into app.asar.unpacked. Nothing needs
+    // it: index.js only resolves the binary path for development, and in a packaged
+    // app require('electron') resolves to the built-in module.
+    '!node_modules/electron',
     'vendor',
     'app/i18n',
     'media/images/game-capture',
@@ -27,6 +34,10 @@ const base = {
   directories: {
     buildResources: '.',
   },
+  // Turn "nothing was configured to sign" into a hard error rather than a silently
+  // unsigned build. Must be gated on SLOBS_NO_SIGN: on macOS an unsigned build sets
+  // mac.identity to null, which throws when forceCodeSigning is on.
+  forceCodeSigning: !process.env.SLOBS_NO_SIGN,
   nsis: {
     license: 'AGREEMENT',
     oneClick: false,
@@ -34,6 +45,9 @@ const base = {
     perMachine: true,
     allowToChangeInstallationDirectory: true,
     include: 'installer.nsh',
+    // Replaces the old scripts/postinstall.js patch of app-builder-lib's
+    // assistedInstaller.nsh. Requires electron-builder >= 23.0.6.
+    removeDefaultUninstallWelcomePage: true,
   },
   asarUnpack : ["**/node-libuiohook/**", "**/node-fontinfo/**", "**/font-manager/**", "**/game_overlay/**","**/color-picker/**"],
   publish: {
@@ -43,29 +57,34 @@ const base = {
   win: {
     executableName: 'Streamlabs OBS',
     extraFiles: ['LICENSE', 'AGREEMENT', 'shared-resources/**/*', '!shared-resources/README'],
-    rfc3161TimeStampServer: 'http://timestamp.digicert.com',
-    timeStampServer: 'http://timestamp.digicert.com',
-    signDlls: true,
-    signingHashAlgorithms: ['sha256'],
-    async sign(config) {
-      if (process.env.SLOBS_NO_SIGN) return;
+    // Replaces `signDlls: true`, removed in electron-builder 26. Both select the
+    // same files: `.dll` matches this list, and `.exe` still signs via the
+    // isExe fallback in WinPackager.shouldSignFile.
+    signExts: ['.dll'],
+    signtoolOptions: {
+      // rfc3161TimeStampServer / timeStampServer both already default to
+      // http://timestamp.digicert.com, which is what was set explicitly before.
+      signingHashAlgorithms: ['sha256'],
+      async sign(config) {
+        if (process.env.SLOBS_NO_SIGN) return;
 
-      if (
-        config.path.indexOf('node_modules\\obs-studio-node\\data\\obs-plugins\\win-capture') !== -1
-      ) {
-        console.log(`Skipping ${config.path}`);
-        return;
-      }
+        if (
+          config.path.indexOf('node_modules\\obs-studio-node\\data\\obs-plugins\\win-capture') !== -1
+        ) {
+          console.log(`Skipping ${config.path}`);
+          return;
+        }
 
-      console.log(`Signing ${config.hash} ${config.path}`);
+        console.log(`Signing ${config.hash} ${config.path}`);
 
-      const signingPath = path.join(os.tmpdir(), 'sldesktopsigning');
+        const signingPath = path.join(os.tmpdir(), 'sldesktopsigning');
 
-      if (fs.existsSync(signingPath)) {
-        fs.appendFileSync(signingPath, `${config.path}\n`);
-      } else {
-        cp.execSync(`logisign client --client logitech-cpg-sign-client --app streamlabs --files "${config.path}"`, { stdio: 'inherit' });
-      }
+        if (fs.existsSync(signingPath)) {
+          fs.appendFileSync(signingPath, `${config.path}\n`);
+        } else {
+          cp.execSync(`logisign client --client logitech-cpg-sign-client --app streamlabs --files "${config.path}"`, { stdio: 'inherit' });
+        }
+      },
     },
   },
   mac: {
