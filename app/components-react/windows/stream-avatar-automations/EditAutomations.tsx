@@ -7,6 +7,7 @@ import { useAgentAppInstalled } from 'components-react/hooks/useAgentAppInstalle
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
 import { Conditions } from 'services/stream-avatar/engine/conditions';
+import type { ConditionType } from 'services/stream-avatar/engine/conditions';
 import { validateAutomation } from 'services/stream-avatar/engine/validation';
 import type { TAutomationExport } from 'services/stream-avatar/engine/automations';
 import { EDismissable } from 'services/dismissables';
@@ -151,11 +152,11 @@ export default function EditAutomations() {
     );
   }
 
+  // Conditions() rebuilds the whole registry, so resolve it once rather than per row.
+  const conditions = Conditions();
   const filtered = filterGame
     ? automations.filter(a =>
-        a.conditions.some(
-          c => (Conditions[c.type as keyof typeof Conditions]?.group ?? '') === filterGame,
-        ),
+        a.conditions.some(c => (conditions[c.type as ConditionType]?.group ?? '') === filterGame),
       )
     : automations;
 

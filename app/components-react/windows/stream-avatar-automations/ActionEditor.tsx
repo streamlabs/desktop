@@ -40,11 +40,11 @@ const trashCellStyle = {
 } as const;
 
 function requiresAgentApp(type: ActionType): boolean {
-  return ActionRegistry[type]?.group === 'co-host';
+  return ActionRegistry()[type]?.group === 'co-host';
 }
 
 function getActionOptions() {
-  return Object.entries(ActionRegistry).map(([type, def]) => ({
+  return Object.entries(ActionRegistry()).map(([type, def]) => ({
     label: requiresAgentApp(type as ActionType) ? (
       <span>
         {def.label}{' '}

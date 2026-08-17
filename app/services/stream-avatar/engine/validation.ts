@@ -1,5 +1,6 @@
 import { $t } from 'services/i18n';
 import { Conditions } from './conditions';
+import type { ConditionType } from './conditions';
 import { ActionRegistry } from './actions';
 import type { TAutomationExport } from './automations';
 import type { ExportedAction, ExportedActionProps } from './actions';
@@ -63,7 +64,7 @@ function validateAction(
 
   if (
     action?.type &&
-    ActionRegistry[action.type]?.group === 'co-host' &&
+    ActionRegistry()[action.type]?.group === 'co-host' &&
     resources.agentAppReady === false
   ) {
     issues.push(actionIssue('type', $t('Requires the Sidekick app to be installed and enabled.')));
@@ -140,9 +141,7 @@ export function validateAutomation(
 
   if (!automation.conditions?.length) {
     issues.push({ scope: 'conditions', message: $t('Select a condition.') });
-  } else if (
-    automation.conditions.some(c => !c?.type || !Conditions[c.type as keyof typeof Conditions])
-  ) {
+  } else if (automation.conditions.some(c => !c?.type || !Conditions()[c.type as ConditionType])) {
     issues.push({ scope: 'conditions', message: $t('This automation uses an unknown condition.') });
   }
 

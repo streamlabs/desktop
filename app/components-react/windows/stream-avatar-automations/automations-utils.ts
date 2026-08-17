@@ -1,6 +1,8 @@
 import { $t } from 'services/i18n';
 import { Conditions, GAME_NAMES } from 'services/stream-avatar/engine/conditions';
+import type { ConditionType } from 'services/stream-avatar/engine/conditions';
 import { ActionRegistry } from 'services/stream-avatar/engine/actions';
+import type { ActionType } from 'services/stream-avatar/engine/actions';
 import type { TAutomationExport } from 'services/stream-avatar/engine/automations';
 
 export const BADGE_COLORS = ['#7c5cff', '#f97316', '#22c55e', '#ef4444', '#06b6d4', '#eab308'];
@@ -22,22 +24,23 @@ export const GAME_OPTIONS = Object.entries(GAME_NAMES)
 
 export function conditionLabel(condition: { type: string } | null): string {
   if (!condition?.type) return $t('(unknown)');
-  const def = Conditions[condition.type as keyof typeof Conditions];
+  const def = Conditions()[condition.type as ConditionType];
   return def ? def.label : condition.type;
 }
 
 export function conditionGame(condition: { type: string } | null): string {
   if (!condition?.type) return '';
-  const def = Conditions[condition.type as keyof typeof Conditions];
+  const def = Conditions()[condition.type as ConditionType];
   if (!def) return '';
   return GAME_NAMES[def.group] ?? def.group;
 }
 
 export function summarizeActions(actions: TAutomationExport['actions']): string {
+  const registry = ActionRegistry();
   return actions
     .filter(a => a?.type)
     .map(a => {
-      const def = ActionRegistry[a.type as keyof typeof ActionRegistry];
+      const def = registry[a.type as ActionType];
       return def ? def.label : a.type;
     })
     .join(', ');

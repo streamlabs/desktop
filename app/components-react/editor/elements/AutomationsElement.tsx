@@ -5,6 +5,7 @@ import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
 import { Conditions } from 'services/stream-avatar/engine/conditions';
+import type { ConditionType } from 'services/stream-avatar/engine/conditions';
 import type { TAutomationExport } from 'services/stream-avatar/engine/automations';
 import useBaseElement from './hooks';
 import styles from './AutomationsElement.m.less';
@@ -14,7 +15,7 @@ const mins = { x: 220, y: 120 };
 function conditionLabel(automation: TAutomationExport) {
   const c = automation.conditions[0];
   if (!c?.type) return '';
-  const def = Conditions[c.type as keyof typeof Conditions];
+  const def = Conditions()[c.type as ConditionType];
   return def ? def.label : c.type;
 }
 

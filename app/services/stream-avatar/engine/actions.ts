@@ -1,4 +1,5 @@
 import uuid from 'uuid/v4';
+import { $t } from 'services/i18n';
 import { Properties, PropertyInstance, PropertyMap } from './properties';
 import { getInstruction, interpolateInstruction } from './instructions';
 import type { TCondition } from './conditions';
@@ -61,127 +62,138 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export const ActionRegistry = {
-  'common.switch_to_scene': {
-    group: 'common',
-    name: 'switch_to_scene',
-    label: 'Switch to Scene',
-    properties: {
-      scene: new Properties.Scene({ label: 'Scene' }),
+export const ActionRegistry = () =>
+  ({
+    'common.switch_to_scene': {
+      group: 'common',
+      name: 'switch_to_scene',
+      label: $t('Switch to Scene'),
+      properties: {
+        scene: new Properties.Scene({ label: $t('Scene') }),
+      },
+      process: async ({ conditionsMet, props, context }: ActionProcessPayload) => {
+        if (!conditionsMet || !props?.scene) return;
+        context.switchScene(props.scene.id);
+      },
     },
-    process: async ({ conditionsMet, props, context }: ActionProcessPayload) => {
-      if (!conditionsMet || !props?.scene) return;
-      context.switchScene(props.scene.id);
-    },
-  },
 
-  'common.hide_source': {
-    group: 'common',
-    name: 'hide_source',
-    label: 'Hide Source',
-    properties: {
-      source: new Properties.Source({ label: 'Source' }),
-      show_if_condition_false: new Properties.Checkbox({ label: 'Show if condition is false' }),
-    },
-    process: async ({ conditionsMet, props, context }: ActionProcessPayload) => {
-      if (!props?.source) return;
-      if (!conditionsMet) {
-        if (props.show_if_condition_false) {
-          context.setSourceVisible(props.source.id, true);
+    'common.hide_source': {
+      group: 'common',
+      name: 'hide_source',
+      label: $t('Hide Source'),
+      properties: {
+        source: new Properties.Source({ label: $t('Source') }),
+        show_if_condition_false: new Properties.Checkbox({
+          label: $t('Show if condition is false'),
+        }),
+      },
+      process: async ({ conditionsMet, props, context }: ActionProcessPayload) => {
+        if (!props?.source) return;
+        if (!conditionsMet) {
+          if (props.show_if_condition_false) {
+            context.setSourceVisible(props.source.id, true);
+          }
+          return;
         }
-        return;
-      }
-      context.setSourceVisible(props.source.id, false);
+        context.setSourceVisible(props.source.id, false);
+      },
     },
-  },
 
-  'common.show_source': {
-    group: 'common',
-    name: 'show_source',
-    label: 'Show Source',
-    properties: {
-      source: new Properties.Source({ label: 'Source' }),
-      hide_if_condition_false: new Properties.Checkbox({ label: 'Hide if condition is false' }),
-    },
-    process: async ({ conditionsMet, props, context }: ActionProcessPayload) => {
-      if (!props?.source) return;
-      if (!conditionsMet) {
-        if (props.hide_if_condition_false) {
-          context.setSourceVisible(props.source.id, false);
+    'common.show_source': {
+      group: 'common',
+      name: 'show_source',
+      label: $t('Show Source'),
+      properties: {
+        source: new Properties.Source({ label: $t('Source') }),
+        hide_if_condition_false: new Properties.Checkbox({
+          label: $t('Hide if condition is false'),
+        }),
+      },
+      process: async ({ conditionsMet, props, context }: ActionProcessPayload) => {
+        if (!props?.source) return;
+        if (!conditionsMet) {
+          if (props.hide_if_condition_false) {
+            context.setSourceVisible(props.source.id, false);
+          }
+          return;
         }
-        return;
-      }
-      context.setSourceVisible(props.source.id, true);
+        context.setSourceVisible(props.source.id, true);
+      },
     },
-  },
 
-  'common.save_replay': {
-    group: 'common',
-    name: 'save_replay',
-    label: 'Save Replay',
-    process: async ({ conditionsMet, context }: ActionProcessPayload) => {
-      if (!conditionsMet) return;
-      await context.saveReplay();
+    'common.save_replay': {
+      group: 'common',
+      name: 'save_replay',
+      label: $t('Save Replay'),
+      process: async ({ conditionsMet, context }: ActionProcessPayload) => {
+        if (!conditionsMet) return;
+        await context.saveReplay();
+      },
     },
-  },
 
-  'common.wait_for_ms': {
-    group: 'common',
-    name: 'wait_for_ms',
-    label: 'Wait',
-    properties: {
-      duration: new Properties.Slider({
-        label: 'Duration',
-        min: 500,
-        max: 60000,
-        default: 5000,
-        step: 500,
-        format: (ms: number) => `${(ms / 1000).toFixed(1)} ${ms === 1000 ? 'second' : 'seconds'}`,
-      }),
+    'common.wait_for_ms': {
+      group: 'common',
+      name: 'wait_for_ms',
+      label: $t('Wait'),
+      properties: {
+        duration: new Properties.Slider({
+          label: $t('Duration'),
+          min: 500,
+          max: 60000,
+          default: 5000,
+          step: 500,
+          format: (ms: number) => `${(ms / 1000).toFixed(1)} ${ms === 1000 ? 'second' : 'seconds'}`,
+        }),
+      },
+      process: async ({ conditionsMet, props }: ActionProcessPayload) => {
+        if (!conditionsMet || typeof props?.duration !== 'number') return;
+        await sleep(props.duration);
+      },
     },
-    process: async ({ conditionsMet, props }: ActionProcessPayload) => {
-      if (!conditionsMet || typeof props?.duration !== 'number') return;
-      await sleep(props.duration);
-    },
-  },
 
-  'co-host.comment': {
-    group: 'co-host',
-    name: 'comment',
-    label: 'Co-host Comment',
-    properties: {},
-    process: async ({ conditionsMet, conditions, context, state, props }: ActionProcessPayload) => {
-      if (!conditionsMet) return;
-      for (const c of conditions) {
-        if (props?.simulating) {
-          context.sendSimulationBark(c.type);
-        } else {
-          const template = getInstruction(c.type);
-          if (!template) continue;
-          const instruction = interpolateInstruction(template, state);
-          console.log('[AutomationsEngine] co-host.comment', { condition: c.type, instruction });
-          context.sendInstruction(instruction);
+    'co-host.comment': {
+      group: 'co-host',
+      name: 'comment',
+      label: $t('Co-host Comment'),
+      properties: {},
+      process: async ({
+        conditionsMet,
+        conditions,
+        context,
+        state,
+        props,
+      }: ActionProcessPayload) => {
+        if (!conditionsMet) return;
+        for (const c of conditions) {
+          if (props?.simulating) {
+            context.sendSimulationBark(c.type);
+          } else {
+            const template = getInstruction(c.type);
+            if (!template) continue;
+            const instruction = interpolateInstruction(template, state);
+            console.log('[AutomationsEngine] co-host.comment', { condition: c.type, instruction });
+            context.sendInstruction(instruction);
+          }
         }
-      }
+      },
     },
-  },
 
-  'co-host.instruction': {
-    group: 'co-host',
-    name: 'instruction',
-    label: 'Co-host Instruction',
-    properties: {
-      instruction: new Properties.Text({ label: 'Instruction' }),
+    'co-host.instruction': {
+      group: 'co-host',
+      name: 'instruction',
+      label: $t('Co-host Instruction'),
+      properties: {
+        instruction: new Properties.Text({ label: $t('Instruction') }),
+      },
+      process: async ({ conditionsMet, props, context }: ActionProcessPayload) => {
+        if (!conditionsMet || !props?.instruction || props?.simulating) return;
+        console.log('[AutomationsEngine] co-host.instruction', { instruction: props.instruction });
+        context.sendInstruction(props.instruction);
+      },
     },
-    process: async ({ conditionsMet, props, context }: ActionProcessPayload) => {
-      if (!conditionsMet || !props?.instruction || props?.simulating) return;
-      console.log('[AutomationsEngine] co-host.instruction', { instruction: props.instruction });
-      context.sendInstruction(props.instruction);
-    },
-  },
-} as const;
+  } as const);
 
-export type ActionType = keyof typeof ActionRegistry;
+export type ActionType = keyof ReturnType<typeof ActionRegistry>;
 
 export type Action = {
   id: string;
@@ -201,7 +213,7 @@ export type ExportedAction = {
  * default can be used directly.
  */
 export function defaultExportedProps(type: ActionType): ExportedActionProps | undefined {
-  const def = ActionRegistry[type];
+  const def = ActionRegistry()[type];
   if (!('properties' in def) || !def.properties) return undefined;
 
   const props: Partial<ExportedActionProps> = {};
@@ -238,7 +250,7 @@ const valueToExport = (
 ): Promise<unknown> | unknown => (property as any).valueToExport(v, context);
 
 const importAction = async (exported: ExportedAction, context: ActionContext): Promise<Action> => {
-  const def = ActionRegistry[exported.type];
+  const def = ActionRegistry()[exported.type];
   if (!def) throw new Error(`Action ${exported.type} not found`);
 
   if (!('properties' in def) || !def.properties) {
@@ -265,7 +277,7 @@ const importAction = async (exported: ExportedAction, context: ActionContext): P
 };
 
 const exportAction = async (action: Action, context: ActionContext): Promise<ExportedAction> => {
-  const def = ActionRegistry[action.type];
+  const def = ActionRegistry()[action.type];
   if (!def) throw new Error(`Action ${action.type} not found`);
 
   if (!('properties' in def) || !def.properties) {
@@ -314,7 +326,7 @@ export class Actions {
     state: GameState;
     prevState: GameState;
   }) {
-    const def = ActionRegistry[action.type];
+    const def = ActionRegistry()[action.type];
     if (!def) throw new Error(`Action ${action.type} not found`);
 
     return def.process({

@@ -1,3 +1,4 @@
+import { $t } from 'services/i18n';
 import type { PropertyInstance } from './properties';
 import type { GameState } from './game-state';
 import { Properties } from './properties';
@@ -18,10 +19,10 @@ const hasShield = ({ state }: { state: GameState }): boolean => (state.shield ??
 const noShield = ({ state }: { state: GameState }): boolean => (state.shield ?? 0) === 0;
 
 const eliminationCount = () => ({
-  label: 'Enemy Elimination Count',
+  label: $t('Enemy Elimination Count'),
   properties: {
     elimination_count: new Properties.SliderRange({
-      label: '# of Eliminations',
+      label: $t('# of Eliminations'),
       min: 0,
       max: 50,
       default: [5, 5],
@@ -37,11 +38,11 @@ const eliminationCount = () => ({
 });
 
 const playersRemaining = (sliderMax: number) => ({
-  label: 'Players Remaining (coming soon)',
+  label: $t('Players Remaining (coming soon)'),
   disabled: true,
   properties: {
     players_remaining: new Properties.SliderRange({
-      label: '# of Players Remaining',
+      label: $t('# of Players Remaining'),
       min: 1,
       max: sliderMax,
       default: [1, 1],
@@ -317,315 +318,380 @@ export type RegisteredCondition<K extends ConditionType> = ConditionDefinition<K
 
 // ─── Condition registry ───────────────────────────────────────────────
 
-const perGameConditions = {
-  // Fortnite
-  'fortnite.game_started': { label: 'Game Started', evaluate: onEvent('game_start') },
-  'fortnite.deployed': { label: 'Deployed', evaluate: onEvent('deploy') },
-  'fortnite.game_ended': { label: 'Game Ended', evaluate: onEvent('game_end') },
-  'fortnite.low_health': { label: 'Low Health', evaluate: lowHealth },
-  'fortnite.has_shield': { label: 'Has Shield', evaluate: hasShield },
-  'fortnite.no_shield': { label: 'No Shield', evaluate: noShield },
-  'fortnite.victory_royale': { label: 'Victory Royale', evaluate: onEvent('victory') },
-  'fortnite.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
-  'fortnite.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
-  'fortnite.player_knocked': { label: 'Player Knocked', evaluate: onEvent('player_knocked') },
-  'fortnite.storm_closing': { label: 'Storm Closing', evaluate: onEvent('storm_shrinking') },
-  'fortnite.elimination': { label: 'Enemy Eliminated', evaluate: onEvent('elimination') },
-  'fortnite.knocked': { label: 'Enemy Knocked', evaluate: onEvent('knockout') },
-  'fortnite.elimination_count': eliminationCount(),
-  'fortnite.players_remaining': playersRemaining(100),
+const perGameConditions = () =>
+  ({
+    // Fortnite
+    'fortnite.game_started': { label: $t('Game Started'), evaluate: onEvent('game_start') },
+    'fortnite.deployed': { label: $t('Deployed'), evaluate: onEvent('deploy') },
+    'fortnite.game_ended': { label: $t('Game Ended'), evaluate: onEvent('game_end') },
+    'fortnite.low_health': { label: $t('Low Health'), evaluate: lowHealth },
+    'fortnite.has_shield': { label: $t('Has Shield'), evaluate: hasShield },
+    'fortnite.no_shield': { label: $t('No Shield'), evaluate: noShield },
+    'fortnite.victory_royale': { label: $t('Victory Royale'), evaluate: onEvent('victory') },
+    'fortnite.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'fortnite.player_eliminated': { label: $t('Player Eliminated'), evaluate: onEvent('death') },
+    'fortnite.player_knocked': { label: $t('Player Knocked'), evaluate: onEvent('player_knocked') },
+    'fortnite.storm_closing': { label: $t('Storm Closing'), evaluate: onEvent('storm_shrinking') },
+    'fortnite.elimination': { label: $t('Enemy Eliminated'), evaluate: onEvent('elimination') },
+    'fortnite.knocked': { label: $t('Enemy Knocked'), evaluate: onEvent('knockout') },
+    'fortnite.elimination_count': eliminationCount(),
+    'fortnite.players_remaining': playersRemaining(100),
 
-  // PUBG
-  'pubg.game_started': { label: 'Game Started', evaluate: onEvent('game_start') },
-  'pubg.deployed': { label: 'Deployed', evaluate: onEvent('deploy') },
-  'pubg.storm_closing': { label: 'Storm Closing', evaluate: onEvent('storm_shrinking') },
-  'pubg.game_ended': { label: 'Game Ended', evaluate: onEvent('game_end') },
-  'pubg.victory': { label: 'Victory', evaluate: onEvent('victory') },
-  'pubg.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
-  'pubg.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
-  'pubg.player_knocked': { label: 'Player Knocked', evaluate: onEvent('player_knocked') },
-  'pubg.elimination': { label: 'Enemy Eliminated', evaluate: onEvent('elimination') },
-  'pubg.knocked': { label: 'Enemy Knocked', evaluate: onEvent('knockout') },
-  'pubg.elimination_count': eliminationCount(),
-  'pubg.players_remaining': playersRemaining(100),
+    // PUBG
+    'pubg.game_started': { label: $t('Game Started'), evaluate: onEvent('game_start') },
+    'pubg.deployed': { label: $t('Deployed'), evaluate: onEvent('deploy') },
+    'pubg.storm_closing': { label: $t('Storm Closing'), evaluate: onEvent('storm_shrinking') },
+    'pubg.game_ended': { label: $t('Game Ended'), evaluate: onEvent('game_end') },
+    'pubg.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'pubg.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'pubg.player_eliminated': { label: $t('Player Eliminated'), evaluate: onEvent('death') },
+    'pubg.player_knocked': { label: $t('Player Knocked'), evaluate: onEvent('player_knocked') },
+    'pubg.elimination': { label: $t('Enemy Eliminated'), evaluate: onEvent('elimination') },
+    'pubg.knocked': { label: $t('Enemy Knocked'), evaluate: onEvent('knockout') },
+    'pubg.elimination_count': eliminationCount(),
+    'pubg.players_remaining': playersRemaining(100),
 
-  // Valorant
-  'valorant.round_started': { label: 'Round Started', evaluate: onEvent('game_start') },
-  'valorant.low_health': { label: 'Low Health', evaluate: lowHealth },
-  'valorant.victory': { label: 'Victory', evaluate: onEvent('victory') },
-  'valorant.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
-  'valorant.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
-  'valorant.elimination': { label: 'Enemy Eliminated', evaluate: onEvent('elimination') },
-  'valorant.elimination_count': eliminationCount(),
+    // Valorant
+    'valorant.round_started': { label: $t('Round Started'), evaluate: onEvent('game_start') },
+    'valorant.low_health': { label: $t('Low Health'), evaluate: lowHealth },
+    'valorant.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'valorant.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'valorant.player_eliminated': { label: $t('Player Eliminated'), evaluate: onEvent('death') },
+    'valorant.elimination': { label: $t('Enemy Eliminated'), evaluate: onEvent('elimination') },
+    'valorant.elimination_count': eliminationCount(),
 
-  // Counter-Strike 2
-  'counter_strike_2.round_started': { label: 'Round Started', evaluate: onEvent('game_start') },
-  'counter_strike_2.low_health': { label: 'Low Health', evaluate: lowHealth },
-  'counter_strike_2.victory': { label: 'Victory', evaluate: onEvent('victory') },
-  'counter_strike_2.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
-  'counter_strike_2.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
-  'counter_strike_2.elimination': { label: 'Enemy Eliminated', evaluate: onEvent('elimination') },
-  'counter_strike_2.elimination_count': eliminationCount(),
-  'counter_strike_2.first_half': { label: 'First Half', evaluate: onEvent('first_half') },
-  'counter_strike_2.second_half': { label: 'Second Half', evaluate: onEvent('second_half') },
-  'counter_strike_2.round_won': { label: 'Round Won', evaluate: onEvent('round_won') },
-  'counter_strike_2.round_lost': { label: 'Round Lost', evaluate: onEvent('round_lost') },
-  'counter_strike_2.game_ended': { label: 'Game Ended', evaluate: onEvent('game_end') },
-
-  // Warzone
-  'warzone.deploy': { label: 'Deploy', evaluate: onEvent('deploy') },
-  'warzone.elimination': { label: 'Enemy Eliminated', evaluate: onEvent('elimination') },
-  'warzone.knockout': { label: 'Enemy Downed', evaluate: onEvent('knockout') },
-  'warzone.player_knocked': { label: 'Player Downed', evaluate: onEvent('player_knocked') },
-  'warzone.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
-  'warzone.victory': { label: 'Victory', evaluate: onEvent('victory') },
-  'warzone.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
-  'warzone.gulag_start': { label: 'Gulag Started', evaluate: onEvent('gulag_start') },
-  'warzone.gulag_end': { label: 'Gulag Ended', evaluate: onEvent('gulag_end') },
-  'warzone.spectating': { label: 'Spectating', evaluate: onEvent('spectating') },
-  'warzone.redeploying': { label: 'Redeploying', evaluate: onEvent('redeploying') },
-  'warzone.elimination_count': eliminationCount(),
-  'warzone.players_remaining': playersRemaining(150),
-
-  // Arc Raiders
-  'arc_raiders.game_start': { label: 'Game Started', evaluate: onEvent('game_start') },
-  'arc_raiders.game_end': { label: 'Game Ended', evaluate: onEvent('game_end') },
-  'arc_raiders.victory': { label: 'Victory', evaluate: onEvent('victory') },
-  'arc_raiders.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
-  'arc_raiders.player_knocked': { label: 'Player Knocked', evaluate: onEvent('player_knocked') },
-  'arc_raiders.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
-  'arc_raiders.enemy_spotted': { label: 'Enemy Spotted', evaluate: onEvent('enemy_spotted') },
-  'arc_raiders.enemy_detected': { label: 'Enemy Detected', evaluate: onEvent('enemy_detected') },
-  'arc_raiders.interesting_moment': {
-    label: 'Interesting Moment',
-    evaluate: onEvent('interesting_moment'),
-  },
-
-  // Call of Duty: Black Ops 6
-  'black_ops_6.elimination': { label: 'Enemy Eliminated', evaluate: onEvent('elimination') },
-  'black_ops_6.victory': { label: 'Victory', evaluate: onEvent('victory') },
-  'black_ops_6.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
-  'black_ops_6.spectating': { label: 'Spectating', evaluate: onEvent('spectating') },
-
-  // Rocket League
-  'rocket_league.game_start': { label: 'Game Started', evaluate: onEvent('game_start') },
-  'rocket_league.game_end': { label: 'Game Ended', evaluate: onEvent('game_end') },
-  'rocket_league.team_scored': { label: 'Team Scored', evaluate: onEvent('team_scored') },
-  'rocket_league.opponent_scored': {
-    label: 'Opponent Scored',
-    evaluate: onEvent('opponent_scored'),
-  },
-  'rocket_league.victory': { label: 'Victory', evaluate: onEvent('victory') },
-  'rocket_league.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
-
-  // Minecraft
-  'minecraft.ender_dragon_spawned': {
-    label: 'Ender Dragon Spawned',
-    evaluate: onEvent('ender_dragon_spawned'),
-  },
-  'minecraft.boss_killed': { label: 'Boss Killed', evaluate: onEvent('boss_killed') },
-  'minecraft.wither_spawned': { label: 'Wither Spawned', evaluate: onEvent('wither_spawned') },
-  'minecraft.advancement_made': {
-    label: 'Advancement Made',
-    evaluate: onEvent('advancement_made'),
-  },
-  'minecraft.first_diamond': { label: 'First Diamond', evaluate: onEvent('first_diamond') },
-  'minecraft.nether_entered': { label: 'Nether Entered', evaluate: onEvent('nether_entered') },
-  'minecraft.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
-  // Edge-triggered: fires only on the tick health first drops into the danger zone.
-  'minecraft.low_health': {
-    label: 'Low Health',
-    evaluate: ({
-      state,
-      prevState,
-    }: {
-      state: GameState;
-      prevState: GameState;
-      props: undefined;
-    }) => {
-      const { health = 100 } = state;
-      const { health: prevHealth = 100 } = prevState;
-      return health < 50 && prevHealth >= 50;
+    // Counter-Strike 2
+    'counter_strike_2.round_started': {
+      label: $t('Round Started'),
+      evaluate: onEvent('game_start'),
     },
-  },
-  'minecraft.totem_of_undying_used': {
-    label: 'Totem of Undying Used',
-    evaluate: onEvent('totem_of_undying_used'),
-  },
+    'counter_strike_2.low_health': { label: $t('Low Health'), evaluate: lowHealth },
+    'counter_strike_2.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'counter_strike_2.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'counter_strike_2.player_eliminated': {
+      label: $t('Player Eliminated'),
+      evaluate: onEvent('death'),
+    },
+    'counter_strike_2.elimination': {
+      label: $t('Enemy Eliminated'),
+      evaluate: onEvent('elimination'),
+    },
+    'counter_strike_2.elimination_count': eliminationCount(),
+    'counter_strike_2.first_half': { label: $t('First Half'), evaluate: onEvent('first_half') },
+    'counter_strike_2.second_half': { label: $t('Second Half'), evaluate: onEvent('second_half') },
+    'counter_strike_2.round_won': { label: $t('Round Won'), evaluate: onEvent('round_won') },
+    'counter_strike_2.round_lost': { label: $t('Round Lost'), evaluate: onEvent('round_lost') },
+    'counter_strike_2.game_ended': { label: $t('Game Ended'), evaluate: onEvent('game_end') },
 
-  // Apex Legends
-  'apex_legends.game_start': { label: 'Game Started', evaluate: onEvent('game_start') },
-  'apex_legends.deploy': { label: 'Deployed', evaluate: onEvent('deploy') },
-  'apex_legends.storm_shrinking': { label: 'Ring Closing', evaluate: onEvent('storm_shrinking') },
-  'apex_legends.game_end': { label: 'Game Ended', evaluate: onEvent('game_end') },
-  'apex_legends.player_knocked': { label: 'Player Knocked', evaluate: onEvent('player_knocked') },
-  'apex_legends.player_revived': { label: 'Player Revived', evaluate: onEvent('player_revived') },
-  'apex_legends.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
-  'apex_legends.victory': { label: 'Victory (Champion)', evaluate: onEvent('victory') },
-  'apex_legends.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
-  'apex_legends.elimination': { label: 'Enemy Eliminated', evaluate: onEvent('elimination') },
-  'apex_legends.knockout': { label: 'Enemy Knocked', evaluate: onEvent('knockout') },
+    // Warzone
+    'warzone.deploy': { label: $t('Deploy'), evaluate: onEvent('deploy') },
+    'warzone.elimination': { label: $t('Enemy Eliminated'), evaluate: onEvent('elimination') },
+    'warzone.knockout': { label: $t('Enemy Downed'), evaluate: onEvent('knockout') },
+    'warzone.player_knocked': { label: $t('Player Downed'), evaluate: onEvent('player_knocked') },
+    'warzone.player_eliminated': { label: $t('Player Eliminated'), evaluate: onEvent('death') },
+    'warzone.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'warzone.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'warzone.gulag_start': { label: $t('Gulag Started'), evaluate: onEvent('gulag_start') },
+    'warzone.gulag_end': { label: $t('Gulag Ended'), evaluate: onEvent('gulag_end') },
+    'warzone.spectating': { label: $t('Spectating'), evaluate: onEvent('spectating') },
+    'warzone.redeploying': { label: $t('Redeploying'), evaluate: onEvent('redeploying') },
+    'warzone.elimination_count': eliminationCount(),
+    'warzone.players_remaining': playersRemaining(150),
 
-  // Battlefield 6
-  'battlefield_6.game_start': { label: 'Game Started', evaluate: onEvent('game_start') },
-  'battlefield_6.game_end': { label: 'Game Ended', evaluate: onEvent('game_end') },
-  'battlefield_6.victory': { label: 'Victory', evaluate: onEvent('victory') },
-  'battlefield_6.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
-  'battlefield_6.elimination': { label: 'Enemy Eliminated', evaluate: onEvent('elimination') },
-  'battlefield_6.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
+    // Arc Raiders
+    'arc_raiders.game_start': { label: $t('Game Started'), evaluate: onEvent('game_start') },
+    'arc_raiders.game_end': { label: $t('Game Ended'), evaluate: onEvent('game_end') },
+    'arc_raiders.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'arc_raiders.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'arc_raiders.player_knocked': {
+      label: $t('Player Knocked'),
+      evaluate: onEvent('player_knocked'),
+    },
+    'arc_raiders.player_eliminated': { label: $t('Player Eliminated'), evaluate: onEvent('death') },
+    'arc_raiders.enemy_spotted': { label: $t('Enemy Spotted'), evaluate: onEvent('enemy_spotted') },
+    'arc_raiders.enemy_detected': {
+      label: $t('Enemy Detected'),
+      evaluate: onEvent('enemy_detected'),
+    },
+    'arc_raiders.interesting_moment': {
+      label: $t('Interesting Moment'),
+      evaluate: onEvent('interesting_moment'),
+    },
 
-  // Dead by Daylight
-  'dead_by_daylight.game_start': { label: 'Match Started', evaluate: onEvent('game_start') },
-  'dead_by_daylight.game_end': { label: 'Match Ended', evaluate: onEvent('game_end') },
-  'dead_by_daylight.victory': { label: 'Victory', evaluate: onEvent('victory') },
-  'dead_by_daylight.player_eliminated': {
-    label: 'Player Sacrificed / Eliminated',
-    evaluate: onEvent('death'),
-  },
-  'dead_by_daylight.elimination': {
-    label: 'Survivor Sacrificed (Killer)',
-    evaluate: onEvent('elimination'),
-  },
-  'dead_by_daylight.hooked_survivor': {
-    label: 'Survivor Hooked',
-    evaluate: onEvent('hooked_survivor'),
-  },
-  'dead_by_daylight.escaped': { label: 'Survivor Escaped', evaluate: onEvent('escaped') },
+    // Call of Duty: Black Ops 6
+    'black_ops_6.elimination': { label: $t('Enemy Eliminated'), evaluate: onEvent('elimination') },
+    'black_ops_6.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'black_ops_6.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'black_ops_6.spectating': { label: $t('Spectating'), evaluate: onEvent('spectating') },
 
-  // Deadlock
-  'deadlock.game_start': { label: 'Game Started', evaluate: onEvent('game_start') },
-  'deadlock.game_end': { label: 'Game Ended', evaluate: onEvent('game_end') },
-  'deadlock.victory': { label: 'Victory', evaluate: onEvent('victory') },
-  'deadlock.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
-  'deadlock.elimination': { label: 'Enemy Eliminated', evaluate: onEvent('elimination') },
-  'deadlock.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
+    // Rocket League
+    'rocket_league.game_start': { label: $t('Game Started'), evaluate: onEvent('game_start') },
+    'rocket_league.game_end': { label: $t('Game Ended'), evaluate: onEvent('game_end') },
+    'rocket_league.team_scored': { label: $t('Team Scored'), evaluate: onEvent('team_scored') },
+    'rocket_league.opponent_scored': {
+      label: $t('Opponent Scored'),
+      evaluate: onEvent('opponent_scored'),
+    },
+    'rocket_league.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'rocket_league.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
 
-  // Dota 2
-  'dota_2.game_start': { label: 'Game Started', evaluate: onEvent('game_start') },
-  'dota_2.game_end': { label: 'Game Ended', evaluate: onEvent('game_end') },
-  'dota_2.victory': { label: 'Victory', evaluate: onEvent('victory') },
-  'dota_2.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
-  'dota_2.elimination': { label: 'Hero Kill', evaluate: onEvent('elimination') },
-  'dota_2.player_eliminated': { label: 'Player Died', evaluate: onEvent('death') },
-  'dota_2.tower_destroyed': { label: 'Tower Destroyed', evaluate: onEvent('tower_destroyed') },
-  'dota_2.glyph_used': { label: 'Glyph of Fortification Used', evaluate: onEvent('glyph_used') },
+    // Minecraft
+    'minecraft.ender_dragon_spawned': {
+      label: $t('Ender Dragon Spawned'),
+      evaluate: onEvent('ender_dragon_spawned'),
+    },
+    'minecraft.boss_killed': { label: $t('Boss Killed'), evaluate: onEvent('boss_killed') },
+    'minecraft.wither_spawned': {
+      label: $t('Wither Spawned'),
+      evaluate: onEvent('wither_spawned'),
+    },
+    'minecraft.advancement_made': {
+      label: $t('Advancement Made'),
+      evaluate: onEvent('advancement_made'),
+    },
+    'minecraft.first_diamond': { label: $t('First Diamond'), evaluate: onEvent('first_diamond') },
+    'minecraft.nether_entered': {
+      label: $t('Nether Entered'),
+      evaluate: onEvent('nether_entered'),
+    },
+    'minecraft.player_eliminated': { label: $t('Player Eliminated'), evaluate: onEvent('death') },
+    // Edge-triggered: fires only on the tick health first drops into the danger zone.
+    'minecraft.low_health': {
+      label: $t('Low Health'),
+      evaluate: ({
+        state,
+        prevState,
+      }: {
+        state: GameState;
+        prevState: GameState;
+        props: undefined;
+      }) => {
+        const { health = 100 } = state;
+        const { health: prevHealth = 100 } = prevState;
+        return health < 50 && prevHealth >= 50;
+      },
+    },
+    'minecraft.totem_of_undying_used': {
+      label: $t('Totem of Undying Used'),
+      evaluate: onEvent('totem_of_undying_used'),
+    },
 
-  // League of Legends
-  'league_of_legends.game_start': { label: 'Game Started', evaluate: onEvent('game_start') },
-  'league_of_legends.game_end': { label: 'Game Ended', evaluate: onEvent('game_end') },
-  'league_of_legends.victory': { label: 'Victory', evaluate: onEvent('victory') },
-  'league_of_legends.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
-  'league_of_legends.elimination': { label: 'Champion Kill', evaluate: onEvent('elimination') },
-  'league_of_legends.player_eliminated': { label: 'Player Died', evaluate: onEvent('death') },
-  'league_of_legends.objective_ally': {
-    label: 'Ally Team Secured Objective',
-    evaluate: onEvent('objective_ally'),
-  },
-  'league_of_legends.objective_enemy': {
-    label: 'Enemy Team Secured Objective',
-    evaluate: onEvent('objective_enemy'),
-  },
-  'league_of_legends.enemy_turret_destroyed': {
-    label: 'Enemy Turret Destroyed',
-    evaluate: onEvent('enemy_turret_destroyed'),
-  },
-  'league_of_legends.ally_turret_destroyed': {
-    label: 'Ally Turret Destroyed',
-    evaluate: onEvent('ally_turret_destroyed'),
-  },
+    // Apex Legends
+    'apex_legends.game_start': { label: $t('Game Started'), evaluate: onEvent('game_start') },
+    'apex_legends.deploy': { label: $t('Deployed'), evaluate: onEvent('deploy') },
+    'apex_legends.storm_shrinking': {
+      label: $t('Ring Closing'),
+      evaluate: onEvent('storm_shrinking'),
+    },
+    'apex_legends.game_end': { label: $t('Game Ended'), evaluate: onEvent('game_end') },
+    'apex_legends.player_knocked': {
+      label: $t('Player Knocked'),
+      evaluate: onEvent('player_knocked'),
+    },
+    'apex_legends.player_revived': {
+      label: $t('Player Revived'),
+      evaluate: onEvent('player_revived'),
+    },
+    'apex_legends.player_eliminated': {
+      label: $t('Player Eliminated'),
+      evaluate: onEvent('death'),
+    },
+    'apex_legends.victory': { label: $t('Victory (Champion)'), evaluate: onEvent('victory') },
+    'apex_legends.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'apex_legends.elimination': { label: $t('Enemy Eliminated'), evaluate: onEvent('elimination') },
+    'apex_legends.knockout': { label: $t('Enemy Knocked'), evaluate: onEvent('knockout') },
 
-  // Marvel Rivals
-  'marvel_rivals.game_end': { label: 'Match Ended', evaluate: onEvent('game_end') },
-  'marvel_rivals.victory': { label: 'Victory', evaluate: onEvent('victory') },
-  'marvel_rivals.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
-  'marvel_rivals.elimination': { label: 'Hero Eliminated', evaluate: onEvent('elimination') },
-  'marvel_rivals.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
+    // Battlefield 6
+    'battlefield_6.game_start': { label: $t('Game Started'), evaluate: onEvent('game_start') },
+    'battlefield_6.game_end': { label: $t('Game Ended'), evaluate: onEvent('game_end') },
+    'battlefield_6.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'battlefield_6.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'battlefield_6.elimination': {
+      label: $t('Enemy Eliminated'),
+      evaluate: onEvent('elimination'),
+    },
+    'battlefield_6.player_eliminated': {
+      label: $t('Player Eliminated'),
+      evaluate: onEvent('death'),
+    },
 
-  // Overwatch 2
-  'overwatch_2.round_start': { label: 'Round Started', evaluate: onEvent('game_start') },
-  'overwatch_2.round_end': { label: 'Round Ended', evaluate: onEvent('game_end') },
-  'overwatch_2.victory': { label: 'Victory', evaluate: onEvent('victory') },
-  'overwatch_2.defeat': { label: 'Defeat', evaluate: onEvent('defeat') },
-  'overwatch_2.elimination': { label: 'Elimination', evaluate: onEvent('elimination') },
-  'overwatch_2.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
+    // Dead by Daylight
+    'dead_by_daylight.game_start': { label: $t('Match Started'), evaluate: onEvent('game_start') },
+    'dead_by_daylight.game_end': { label: $t('Match Ended'), evaluate: onEvent('game_end') },
+    'dead_by_daylight.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'dead_by_daylight.player_eliminated': {
+      label: $t('Player Sacrificed / Eliminated'),
+      evaluate: onEvent('death'),
+    },
+    'dead_by_daylight.elimination': {
+      label: $t('Survivor Sacrificed (Killer)'),
+      evaluate: onEvent('elimination'),
+    },
+    'dead_by_daylight.hooked_survivor': {
+      label: $t('Survivor Hooked'),
+      evaluate: onEvent('hooked_survivor'),
+    },
+    'dead_by_daylight.escaped': { label: $t('Survivor Escaped'), evaluate: onEvent('escaped') },
 
-  // Rainbow Six Siege
-  'rainbow_six_siege.round_start': {
-    label: 'Round Started (Preparation Phase)',
-    evaluate: onEvent('game_start'),
-  },
-  'rainbow_six_siege.action_phase': {
-    label: 'Action Phase Started',
-    evaluate: onEvent('action_phase'),
-  },
-  'rainbow_six_siege.round_end': { label: 'Round Ended', evaluate: onEvent('game_end') },
-  'rainbow_six_siege.victory': { label: 'Round Won', evaluate: onEvent('victory') },
-  'rainbow_six_siege.defeat': { label: 'Round Lost', evaluate: onEvent('defeat') },
-  'rainbow_six_siege.elimination': { label: 'Enemy Eliminated', evaluate: onEvent('elimination') },
-  'rainbow_six_siege.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
+    // Deadlock
+    'deadlock.game_start': { label: $t('Game Started'), evaluate: onEvent('game_start') },
+    'deadlock.game_end': { label: $t('Game Ended'), evaluate: onEvent('game_end') },
+    'deadlock.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'deadlock.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'deadlock.elimination': { label: $t('Enemy Eliminated'), evaluate: onEvent('elimination') },
+    'deadlock.player_eliminated': { label: $t('Player Eliminated'), evaluate: onEvent('death') },
 
-  // War Thunder
-  'war_thunder.elimination': { label: 'Target Destroyed', evaluate: onEvent('elimination') },
+    // Dota 2
+    'dota_2.game_start': { label: $t('Game Started'), evaluate: onEvent('game_start') },
+    'dota_2.game_end': { label: $t('Game Ended'), evaluate: onEvent('game_end') },
+    'dota_2.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'dota_2.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'dota_2.elimination': { label: $t('Hero Kill'), evaluate: onEvent('elimination') },
+    'dota_2.player_eliminated': { label: $t('Player Died'), evaluate: onEvent('death') },
+    'dota_2.tower_destroyed': {
+      label: $t('Tower Destroyed'),
+      evaluate: onEvent('tower_destroyed'),
+    },
+    'dota_2.glyph_used': {
+      label: $t('Glyph of Fortification Used'),
+      evaluate: onEvent('glyph_used'),
+    },
 
-  // Marathon
-  'marathon.game_start': { label: 'Match Started', evaluate: onEvent('game_start') },
-  'marathon.game_end': { label: 'Match Ended', evaluate: onEvent('game_end') },
-  'marathon.victory': { label: 'Exfiltrated (Victory)', evaluate: onEvent('victory') },
-  'marathon.defeat': { label: 'Eliminated (Defeat)', evaluate: onEvent('defeat') },
-  'marathon.player_knocked': { label: 'Player Knocked', evaluate: onEvent('player_knocked') },
-  'marathon.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
-  'marathon.elimination': { label: 'Runner Eliminated', evaluate: onEvent('elimination') },
-  'marathon.knockout': { label: 'Runner Knocked', evaluate: onEvent('knockout') },
+    // League of Legends
+    'league_of_legends.game_start': { label: $t('Game Started'), evaluate: onEvent('game_start') },
+    'league_of_legends.game_end': { label: $t('Game Ended'), evaluate: onEvent('game_end') },
+    'league_of_legends.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'league_of_legends.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'league_of_legends.elimination': {
+      label: $t('Champion Kill'),
+      evaluate: onEvent('elimination'),
+    },
+    'league_of_legends.player_eliminated': { label: $t('Player Died'), evaluate: onEvent('death') },
+    'league_of_legends.objective_ally': {
+      label: $t('Ally Team Secured Objective'),
+      evaluate: onEvent('objective_ally'),
+    },
+    'league_of_legends.objective_enemy': {
+      label: $t('Enemy Team Secured Objective'),
+      evaluate: onEvent('objective_enemy'),
+    },
+    'league_of_legends.enemy_turret_destroyed': {
+      label: $t('Enemy Turret Destroyed'),
+      evaluate: onEvent('enemy_turret_destroyed'),
+    },
+    'league_of_legends.ally_turret_destroyed': {
+      label: $t('Ally Turret Destroyed'),
+      evaluate: onEvent('ally_turret_destroyed'),
+    },
 
-  // F1 25
-  'f1_25.game_start': { label: 'Race Started', evaluate: onEvent('game_start') },
-  'f1_25.game_end': { label: 'Race Ended (Chequered Flag)', evaluate: onEvent('game_end') },
-  'f1_25.victory': { label: 'Race Win (P1)', evaluate: onEvent('victory') },
-  'f1_25.position_change': { label: 'Race Position Changed', evaluate: onEvent('position_change') },
-  'f1_25.lap_change': { label: 'New Lap Started', evaluate: onEvent('lap_change') },
+    // Marvel Rivals
+    'marvel_rivals.game_end': { label: $t('Match Ended'), evaluate: onEvent('game_end') },
+    'marvel_rivals.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'marvel_rivals.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'marvel_rivals.elimination': { label: $t('Hero Eliminated'), evaluate: onEvent('elimination') },
+    'marvel_rivals.player_eliminated': {
+      label: $t('Player Eliminated'),
+      evaluate: onEvent('death'),
+    },
 
-  // EA Sports FC 26
-  'ea_sports_fc_26.game_start': { label: 'Match Started', evaluate: onEvent('game_start') },
-  'ea_sports_fc_26.game_end': { label: 'Match Ended', evaluate: onEvent('game_end') },
-  'ea_sports_fc_26.goal': { label: 'Goal Scored', evaluate: onEvent('goal') },
-  'ea_sports_fc_26.set_piece': { label: 'Set Piece', evaluate: onEvent('set_piece') },
-  'ea_sports_fc_26.halftime': { label: 'Half Time', evaluate: onEvent('halftime') },
-  'ea_sports_fc_26.fulltime': { label: 'Full Time', evaluate: onEvent('fulltime') },
+    // Overwatch 2
+    'overwatch_2.round_start': { label: $t('Round Started'), evaluate: onEvent('game_start') },
+    'overwatch_2.round_end': { label: $t('Round Ended'), evaluate: onEvent('game_end') },
+    'overwatch_2.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'overwatch_2.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'overwatch_2.elimination': { label: $t('Elimination'), evaluate: onEvent('elimination') },
+    'overwatch_2.player_eliminated': { label: $t('Player Eliminated'), evaluate: onEvent('death') },
 
-  // NBA 2K26
-  'nba_2k26.game_start': { label: 'Game Started', evaluate: onEvent('game_start') },
-  'nba_2k26.game_end': { label: 'Game Ended (Final)', evaluate: onEvent('game_end') },
-  'nba_2k26.goal': { label: 'Basket Scored', evaluate: onEvent('goal') },
-  'nba_2k26.halftime': { label: 'Halftime', evaluate: onEvent('halftime') },
+    // Rainbow Six Siege
+    'rainbow_six_siege.round_start': {
+      label: $t('Round Started (Preparation Phase)'),
+      evaluate: onEvent('game_start'),
+    },
+    'rainbow_six_siege.action_phase': {
+      label: $t('Action Phase Started'),
+      evaluate: onEvent('action_phase'),
+    },
+    'rainbow_six_siege.round_end': { label: $t('Round Ended'), evaluate: onEvent('game_end') },
+    'rainbow_six_siege.victory': { label: $t('Round Won'), evaluate: onEvent('victory') },
+    'rainbow_six_siege.defeat': { label: $t('Round Lost'), evaluate: onEvent('defeat') },
+    'rainbow_six_siege.elimination': {
+      label: $t('Enemy Eliminated'),
+      evaluate: onEvent('elimination'),
+    },
+    'rainbow_six_siege.player_eliminated': {
+      label: $t('Player Eliminated'),
+      evaluate: onEvent('death'),
+    },
 
-  // Forza Horizon 6
-  'forza_horizon_6.game_start': { label: 'Race Started', evaluate: onEvent('game_start') },
-  'forza_horizon_6.game_end': { label: 'Race Finished', evaluate: onEvent('game_end') },
-  'forza_horizon_6.position_change': {
-    label: 'Race Position Changed',
-    evaluate: onEvent('position_change'),
-  },
-  'forza_horizon_6.lap_change': { label: 'New Lap Started', evaluate: onEvent('lap_change') },
-  'forza_horizon_6.great_drift': { label: 'Great Drift', evaluate: onEvent('great_drift') },
-  'forza_horizon_6.great_air': { label: 'Great Air', evaluate: onEvent('great_air') },
-  'forza_horizon_6.great_skill_chain': {
-    label: 'Great Skill Chain',
-    evaluate: onEvent('great_skill_chain'),
-  },
+    // War Thunder
+    'war_thunder.elimination': { label: $t('Target Destroyed'), evaluate: onEvent('elimination') },
 
-  // Enshrouded
-  'enshrouded.player_eliminated': { label: 'Player Eliminated', evaluate: onEvent('death') },
-  'enshrouded.level_up': { label: 'Level Up', evaluate: onEvent('level_up') },
-  'enshrouded.soul_discovered': { label: 'Soul Discovered', evaluate: onEvent('soul_discovered') },
-  'enshrouded.quest_update': { label: 'Quest Updated', evaluate: onEvent('quest_update') },
-} as const;
+    // Marathon
+    'marathon.game_start': { label: $t('Match Started'), evaluate: onEvent('game_start') },
+    'marathon.game_end': { label: $t('Match Ended'), evaluate: onEvent('game_end') },
+    'marathon.victory': { label: $t('Exfiltrated (Victory)'), evaluate: onEvent('victory') },
+    'marathon.defeat': { label: $t('Eliminated (Defeat)'), evaluate: onEvent('defeat') },
+    'marathon.player_knocked': { label: $t('Player Knocked'), evaluate: onEvent('player_knocked') },
+    'marathon.player_eliminated': { label: $t('Player Eliminated'), evaluate: onEvent('death') },
+    'marathon.elimination': { label: $t('Runner Eliminated'), evaluate: onEvent('elimination') },
+    'marathon.knockout': { label: $t('Runner Knocked'), evaluate: onEvent('knockout') },
 
-export const Conditions = Object.fromEntries(
-  Object.entries(perGameConditions).map(([type, def]) => [
-    type,
-    { ...def, group: type.split('.')[0] },
-  ]),
-) as { [K in ConditionType]: RegisteredCondition<K> };
+    // F1 25
+    'f1_25.game_start': { label: $t('Race Started'), evaluate: onEvent('game_start') },
+    'f1_25.game_end': { label: $t('Race Ended (Chequered Flag)'), evaluate: onEvent('game_end') },
+    'f1_25.victory': { label: $t('Race Win (P1)'), evaluate: onEvent('victory') },
+    'f1_25.position_change': {
+      label: $t('Race Position Changed'),
+      evaluate: onEvent('position_change'),
+    },
+    'f1_25.lap_change': { label: $t('New Lap Started'), evaluate: onEvent('lap_change') },
+
+    // EA Sports FC 26
+    'ea_sports_fc_26.game_start': { label: $t('Match Started'), evaluate: onEvent('game_start') },
+    'ea_sports_fc_26.game_end': { label: $t('Match Ended'), evaluate: onEvent('game_end') },
+    'ea_sports_fc_26.goal': { label: $t('Goal Scored'), evaluate: onEvent('goal') },
+    'ea_sports_fc_26.set_piece': { label: $t('Set Piece'), evaluate: onEvent('set_piece') },
+    'ea_sports_fc_26.halftime': { label: $t('Half Time'), evaluate: onEvent('halftime') },
+    'ea_sports_fc_26.fulltime': { label: $t('Full Time'), evaluate: onEvent('fulltime') },
+
+    // NBA 2K26
+    'nba_2k26.game_start': { label: $t('Game Started'), evaluate: onEvent('game_start') },
+    'nba_2k26.game_end': { label: $t('Game Ended (Final)'), evaluate: onEvent('game_end') },
+    'nba_2k26.goal': { label: $t('Basket Scored'), evaluate: onEvent('goal') },
+    'nba_2k26.halftime': { label: $t('Halftime'), evaluate: onEvent('halftime') },
+
+    // Forza Horizon 6
+    'forza_horizon_6.game_start': { label: $t('Race Started'), evaluate: onEvent('game_start') },
+    'forza_horizon_6.game_end': { label: $t('Race Finished'), evaluate: onEvent('game_end') },
+    'forza_horizon_6.position_change': {
+      label: $t('Race Position Changed'),
+      evaluate: onEvent('position_change'),
+    },
+    'forza_horizon_6.lap_change': { label: $t('New Lap Started'), evaluate: onEvent('lap_change') },
+    'forza_horizon_6.great_drift': { label: $t('Great Drift'), evaluate: onEvent('great_drift') },
+    'forza_horizon_6.great_air': { label: $t('Great Air'), evaluate: onEvent('great_air') },
+    'forza_horizon_6.great_skill_chain': {
+      label: $t('Great Skill Chain'),
+      evaluate: onEvent('great_skill_chain'),
+    },
+
+    // Enshrouded
+    'enshrouded.player_eliminated': { label: $t('Player Eliminated'), evaluate: onEvent('death') },
+    'enshrouded.level_up': { label: $t('Level Up'), evaluate: onEvent('level_up') },
+    'enshrouded.soul_discovered': {
+      label: $t('Soul Discovered'),
+      evaluate: onEvent('soul_discovered'),
+    },
+    'enshrouded.quest_update': { label: $t('Quest Updated'), evaluate: onEvent('quest_update') },
+  } as const);
+
+export const Conditions = () =>
+  Object.fromEntries(
+    Object.entries(perGameConditions()).map(([type, def]) => [
+      type,
+      { ...def, group: type.split('.')[0] },
+    ]),
+  ) as { [K in ConditionType]: RegisteredCondition<K> };
 
 export const GAME_NAMES: Record<string, string> = {
   fortnite: 'Fortnite',
@@ -675,7 +741,7 @@ export class ConditionsManager {
     state: GameState;
     prevState: GameState;
   }) {
-    const def = Conditions[condition.type];
+    const def = Conditions()[condition.type];
     if (!def) {
       throw new Error(`Condition type "${condition.type}" not found`);
     }

@@ -34,7 +34,7 @@ function makeRow(action: ExportedAction): ActionRow {
 }
 
 function getConditionOptions(gameId: string) {
-  return Object.entries(Conditions)
+  return Object.entries(Conditions())
     .filter(([, def]) => def.group === gameId && !def.disabled)
     .map(([key, def]) => ({ label: def.label, value: key as ConditionType }))
     .sort((a, b) => a.label.localeCompare(b.label));
@@ -121,7 +121,7 @@ export default function AutomationEditor({ initial, onClose }: Props) {
 
   function applyConditionType(type: ConditionType | '') {
     setConditionType(type);
-    const def = type ? Conditions[type] : undefined;
+    const def = type ? Conditions()[type] : undefined;
     const defaults: Record<string, unknown> = {};
     if (def?.properties) {
       for (const [key, prop] of Object.entries(def.properties)) {
@@ -282,7 +282,7 @@ export default function AutomationEditor({ initial, onClose }: Props) {
 
           {conditionType &&
             (() => {
-              const def = Conditions[conditionType as ConditionType];
+              const def = Conditions()[conditionType as ConditionType];
               if (!def?.properties) return null;
               return Object.entries(def.properties).map(([key, prop]) => {
                 if (prop instanceof Properties.SliderRange) {
