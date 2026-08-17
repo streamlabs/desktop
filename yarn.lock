@@ -3330,12 +3330,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^20.9.0":
-  version: 20.12.8
-  resolution: "@types/node@npm:20.12.8"
+"@types/node@npm:^22.7.7":
+  version: 22.20.1
+  resolution: "@types/node@npm:22.20.1"
   dependencies:
-    undici-types: ~5.26.4
-  checksum: 84d4876d95792a9567d2cc5a2c48db7028c397820e842cd65e2f848c23dd4b868b7131bda8eb66a1729d4944289070153d6180048de5bd155b35de421283c433
+    undici-types: ~6.21.0
+  checksum: 03cc6d9941229b13fa9ab4e477d6550e85ed3e3d5f85734c03c84e0c18346d8a7c9f22b93570bb9cb4a44ffa176279f8a7ab3cd328fbdcf5d4e6ec541ce03f21
   languageName: node
   linkType: hard
 
@@ -7188,15 +7188,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-chromedriver@npm:32.3.3":
-  version: 32.3.3
-  resolution: "electron-chromedriver@npm:32.3.3"
+"electron-chromedriver@npm:36.9.5":
+  version: 36.9.5
+  resolution: "electron-chromedriver@npm:36.9.5"
   dependencies:
     "@electron/get": ^2.0.1
     extract-zip: ^2.0.0
   bin:
     chromedriver: chromedriver.js
-  checksum: 554f2e9034195142d3d43b600b4b8ef5410cedcb863bd2043ff789737c2f1897dfb37bd724e49b2df7618b67921381db31b468482fa069498dea394ba7dd412d
+  checksum: 79035b6590964f38554656f2188fa08eff7bb64abd96fb0748fa49c7a90be50467063fa3e3562ffc6d3bf4f6a92b98aed067b23bc6afae616cd7928d6e64955e
   languageName: node
   linkType: hard
 
@@ -7290,16 +7290,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron@npm:32.3.3":
-  version: 32.3.3
-  resolution: "electron@npm:32.3.3"
+"electron@npm:36.9.5":
+  version: 36.9.5
+  resolution: "electron@npm:36.9.5"
   dependencies:
     "@electron/get": ^2.0.0
-    "@types/node": ^20.9.0
+    "@types/node": ^22.7.7
     extract-zip: ^2.0.1
   bin:
     electron: cli.js
-  checksum: 1bbc21b5f2f9f3c4404b2ab175e54e5a8e505ea8ae3d23b74bfce7fc2589368c4e518ee6112e78ce49422309eb18f2b8f67daf94250f38772170d72303bb9f2a
+  checksum: ca292fc30f746681922797c56c7db1c0fcf80c2954d765e0e07f0c9fc80e9c747b264aefd6c298f7de3ca3fd3860b37af678b34aba79447121feddbe45a528ea
   languageName: node
   linkType: hard
 
@@ -14918,9 +14918,9 @@ __metadata:
     css-loader: 2.1.1
     deasync: 0.1.31
     dotenv: 8.2.0
-    electron: 32.3.3
+    electron: 36.9.5
     electron-builder: 22.14.5
-    electron-chromedriver: 32.3.3
+    electron-chromedriver: 36.9.5
     electron-devtools-installer: 3.1.1
     electron-react-devtools: ^0.5.3
     electron-updater: ^4.2.0
@@ -16393,6 +16393,13 @@ __metadata:
   version: 6.19.8
   resolution: "undici-types@npm:6.19.8"
   checksum: de51f1b447d22571cf155dfe14ff6d12c5bdaec237c765085b439c38ca8518fc360e88c70f99469162bf2e14188a7b0bcb06e1ed2dc031042b984b0bb9544017
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~6.21.0":
+  version: 6.21.0
+  resolution: "undici-types@npm:6.21.0"
+  checksum: 46331c7d6016bf85b3e8f20c159d62f5ae471aba1eb3dc52fff35a0259d58dcc7d592d4cc4f00c5f9243fa738a11cfa48bd20203040d4a9e6bc25e807fab7ab3
   languageName: node
   linkType: hard
 
