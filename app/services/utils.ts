@@ -27,7 +27,7 @@ export interface IEnv {
   CI: boolean;
   HIGHLIGHTER_ENV: 'production' | 'staging' | 'local';
   PRODUCT_UPDATES: boolean;
-  AVATAR_ENV: 'production' | 'staging' | 'local';
+  AVATAR_ENV?: 'production' | 'staging' | 'local';
 }
 
 export default class Utils {
@@ -123,7 +123,11 @@ export default class Utils {
       return 'staging';
     }
 
-    return Utils.env.AVATAR_ENV || (process.env.AVATAR_ENV as 'production' | 'staging' | 'local');
+    if (process.env.AVATAR_ENV !== 'staging' && process.env.AVATAR_ENV !== 'local') {
+      return 'production';
+    }
+
+    return process.env.AVATAR_ENV as 'production' | 'staging' | 'local';
   }
 
   static isTestMode() {

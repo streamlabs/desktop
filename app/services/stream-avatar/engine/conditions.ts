@@ -29,11 +29,10 @@ const eliminationCount = () => ({
       step: 1,
     }),
   },
-  evaluate: ({ state, prevState, props }: EvalArgs<{ elimination_count?: [number, number] }>) => {
+  evaluate: ({ state, props }: EvalArgs<{ elimination_count?: [number, number] }>) => {
     const [min, max] = props?.elimination_count ?? [5, 5];
     const { eliminations = 0 } = state;
-    const { eliminations: prevEliminations = 0 } = prevState;
-    return eliminations >= min && prevEliminations <= max;
+    return eliminations >= min && eliminations <= max;
   },
 });
 

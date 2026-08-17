@@ -44,7 +44,8 @@ export class AutomationsEngineService extends Service {
   private prevState: GameState = { ...defaultGameState, pendingEvents: new Set() };
   private activeProcess: VisionProcess | null = null;
   private selectedGame = 'fortnite';
-  private automationPreviousConditionsMetCache = new Map<number, boolean>();
+  private automationPreviousConditionsMetCache = new Map<string, boolean>();
+  private triggerChain: Promise<void> = Promise.resolve();
   private actionContext!: ActionContext;
 
   init() {
@@ -238,32 +239,43 @@ export class AutomationsEngineService extends Service {
     this.gameState = { ...this.gameState, ...next, pendingEvents: new Set(newEvents) };
 
     if (newEvents.length > 0 || Object.keys(next).length > 0) {
-      this.checkAndTriggerAutomations();
+      const state = this.gameState;
+      const prevState = this.prevState;
+
+      this.triggerChain = this.triggerChain.then(() =>
+        this.checkAndTriggerAutomations(state, prevState).catch(error => {
+          console.warn('[AutomationsEngine] Trigger pass failed', error);
+        }),
+      );
       queueMicrotask(() => {
         this.gameState = { ...this.gameState, pendingEvents: new Set() };
       });
     }
   }
 
-  private async checkAndTriggerAutomations() {
+  private async checkAndTriggerAutomations(state: GameState, prevState: GameState) {
     const automations = this.automationsService.state.automations.filter(a => a.enabled);
-    const state = this.gameState;
-    const prevState = this.prevState;
     const currentGame = this.getCurrentGame().toLowerCase();
 
     for (const automation of automations) {
-      const conditionResults: TEvaluatedCondition[] = [];
+      const conditions = (automation.conditions as TCondition[]).filter(c =>
+        c.type.startsWith(currentGame),
+      );
+      if (!conditions.length) continue;
 
-      for (const condition of automation.conditions as TCondition[]) {
-        const status = ConditionsManager.evaluate({ condition, state, prevState });
-        const cachedStatus = this.automationPreviousConditionsMetCache.get(automation.id!);
-        if (cachedStatus === status) continue;
-        if (!condition.type.startsWith(currentGame)) continue;
-        this.automationPreviousConditionsMetCache.set(automation.id!, status);
-        conditionResults.push({ condition, status });
-      }
+      const conditionResults: TEvaluatedCondition[] = conditions.map(condition => ({
+        condition,
+        status: ConditionsManager.evaluate({ condition, state, prevState }),
+      }));
 
-      if (!conditionResults.length) continue;
+      const cacheKey = (condition: TCondition) => `${automation.id}:${condition.type}`;
+      const changed = conditionResults.some(
+        r => this.automationPreviousConditionsMetCache.get(cacheKey(r.condition)) !== r.status,
+      );
+      conditionResults.forEach(r =>
+        this.automationPreviousConditionsMetCache.set(cacheKey(r.condition), r.status),
+      );
+      if (!changed) continue;
 
       const conditionsNotMet = conditionResults.some(r => !r.status);
 

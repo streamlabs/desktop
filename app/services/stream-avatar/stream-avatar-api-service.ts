@@ -39,6 +39,15 @@ export interface AutomationTemplateGame {
   templates: AutomationTemplateItem[];
 }
 
+/**
+ * Decodes a JWT's payload segment. It is base64url and unpadded, and atob() rejects a
+ * length of 1 mod 4, so restore the '=' padding before decoding.
+ */
+function decodeJwtPayload(jwt: string): string {
+  const b64 = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+  return atob(b64.padEnd(Math.ceil(b64.length / 4) * 4, '='));
+}
+
 export class StreamAvatarApiService extends Service {
   @Inject() private userService: UserService;
   @Inject() private hostsService: HostsService;
@@ -77,8 +86,7 @@ export class StreamAvatarApiService extends Service {
     );
 
     const jwt = response.token;
-    const payloadB64 = jwt.split('.')[1];
-    const payload = JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/')));
+    const payload = JSON.parse(decodeJwtPayload(jwt));
     this.cachedJwt = jwt;
     this.cachedJwtExp = payload.exp;
     return jwt;

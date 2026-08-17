@@ -36,6 +36,6 @@ export default function TemplatePreview({
   return isVideoUrl(src) ? (
     <video key={src} ref={videoRef} src={src} className={className} playsInline onEnded={onEnded} />
   ) : (
-    <img key={src} src={src} className={className} />
+    <img key={src} src={src} className={className} alt="" />
   );
 }

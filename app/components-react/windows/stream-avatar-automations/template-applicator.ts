@@ -46,7 +46,8 @@ export async function createTemplateSource(
   const activeScene = ScenesService.views.activeScene;
   if (!activeScene) return;
 
-  let assetPath = assets.find(a => a.includes(source.assetKey));
+  const assetFile = path.basename(source.assetKey);
+  let assetPath = assets.find(a => path.basename(a) === assetFile);
   if (!assetPath) {
     assetPath = (await downloadAsset(source.downloadUrl, source.assetKey)) ?? undefined;
     if (!assetPath) return;
