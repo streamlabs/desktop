@@ -14,7 +14,3 @@ const antdlibSettings = JSON.parse(fs.readFileSync(antdLibSettingsPath, 'utf8'))
 delete antdlibSettings.module;
 antdlibSettings.main = 'dist/antd.min.js';
 fs.writeFileSync(antdLibSettingsPath, JSON.stringify(antdlibSettings, null, 2));
-
-// NOTE: this file used to patch app-builder-lib's assistedInstaller.nsh in place to
-// suppress the uninstaller welcome page. That is now the supported
-// `nsis.removeDefaultUninstallWelcomePage` option, set in electron-builder/base.config.js.
