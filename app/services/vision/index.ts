@@ -1,5 +1,11 @@
 import * as remote from '@electron/remote';
-import { HostsService, SourcesService, UserService, WidgetsService } from 'app-services';
+import {
+  AutomationsService,
+  HostsService,
+  SourcesService,
+  UserService,
+  WidgetsService,
+} from 'app-services';
 import _ from 'lodash';
 import pMemoize from 'p-memoize';
 import path from 'path';
@@ -132,6 +138,7 @@ export class VisionService extends Service {
   // Install hook services
   @Inject() sourcesService: SourcesService;
   @Inject() widgetsService: WidgetsService;
+  @Inject() automationsService: AutomationsService;
 
   enabledState = VisionEnabledState.inject();
   state = VisionState.inject();
@@ -147,6 +154,7 @@ export class VisionService extends Service {
     // TODO @widgets-refactor: Remove IWidgetConfig cast.
     this.widgetsService.widgetCreated.subscribe(({ type }) => this.onWidgetCreated(type));
     this.sourcesService.sourceCreated.subscribe(({ source }) => this.onSourceCreated(source));
+    this.automationsService.automationCreated.subscribe(() => this.onAutomationCreated());
 
     const runnerHandle = this.visionRunner.on('exit', () => {
       this.writeEnabledState(false);
@@ -409,6 +417,13 @@ export class VisionService extends Service {
       console.log('Game Pulse widget added, enabling vision service');
       this.setIsEnabled(true);
     }
+  }
+
+  private onAutomationCreated() {
+    if (this.state.isRunning) return;
+
+    console.log('Automation created, enabling vision service');
+    this.setIsEnabled(true);
   }
 
   requestFrame() {

@@ -1,3 +1,4 @@
+import { Subject } from 'rxjs';
 import { InitAfter } from 'services/core';
 import { StatefulService, mutation } from 'services/core/stateful-service';
 import { Inject } from 'services/core/injector';
@@ -26,6 +27,8 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
     loaded: false,
     error: false,
   };
+
+  automationCreated = new Subject<TAutomationExport>();
 
   @Inject() private streamAvatarApiService: StreamAvatarApiService;
   @Inject() private userService: UserService;
@@ -166,6 +169,7 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
   async create(automation: Omit<TAutomationExport, 'id'>): Promise<TAutomationExport> {
     const created = await this.streamAvatarApiService.createAutomation(automation);
     this.ADD_AUTOMATION(created as TAutomationExport);
+    this.automationCreated.next(created as TAutomationExport);
     return created as TAutomationExport;
   }
 
