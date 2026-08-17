@@ -21,6 +21,7 @@ import {
 import { skipOnboarding } from '../modules/onboarding';
 import {
   clickButton,
+  clickIfDisplayed,
   closeWindow,
   focusChild,
   focusMain,
@@ -302,7 +303,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
 
     if (platform() === 'darwin') {
       // Select the "Continue" button on the macOS permissions page (MacPermissions.tsx), if it exists.
-      await clickButton('Continue');
+      await clickIfDisplayed('button=Continue');
     }
     // Pretty much all tests except for onboarding-specific
     // tests will want to skip this flow, so we do it automatically.
