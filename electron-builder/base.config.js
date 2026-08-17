@@ -62,8 +62,10 @@ const base = {
     // isExe fallback in WinPackager.shouldSignFile.
     signExts: ['.dll'],
     signtoolOptions: {
-      // rfc3161TimeStampServer / timeStampServer both already default to
-      // http://timestamp.digicert.com, which is what was set explicitly before.
+      // These currently match electron-builder's defaults, but are set explicitly
+      // so a change to those defaults can't silently alter our timestamping.
+      rfc3161TimeStampServer: 'http://timestamp.digicert.com',
+      timeStampServer: 'http://timestamp.digicert.com',
       signingHashAlgorithms: ['sha256'],
       async sign(config) {
         if (process.env.SLOBS_NO_SIGN) return;
