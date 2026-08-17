@@ -317,6 +317,23 @@ async function startApp() {
 
   remote.initialize();
 
+  // Resolve remote.require() from this file rather than letting @electron/remote
+  // pick the context itself.
+  //
+  // @electron/remote branches on `process.mainModule` being undefined to decide how
+  // to resolve modules. That assumption held around Electron 28, but Electron 43
+  // defines `process.mainModule` again -- as Electron's own internal module, whose
+  // `paths` array is empty -- so it takes the legacy branch and every
+  // remote.require() fails with "Cannot find module ... Require stack: - electron".
+  // Still present in @electron/remote 2.1.3.
+  //
+  // Setting `returnValue` on the documented `remote-require` event short-circuits
+  // that logic. `require` here resolves from main.js, which has the correct paths.
+  // Affects game_overlay, node-libuiohook, and node-window-rendering.
+  app.on('remote-require', (event, webContents, moduleName) => {
+    event.returnValue = require(moduleName);
+  });
+
   const Raven = require('raven');
 
   function handleFinishedReport() {
