@@ -34,19 +34,6 @@ export interface IAutomationIssue {
 export const MAX_DESCRIPTION_LENGTH = 100;
 export const MAX_INSTRUCTION_LENGTH = 128;
 
-/**
- * Translates `key` and substitutes `%{name}` placeholders. VueI18n only
- * interpolates keys that exist in the dictionary; these strings are new and not
- * synced yet, so we fill any placeholders left in the returned key ourselves.
- */
-function t(key: string, vars?: Record<string, string | number>): string {
-  const translated = vars ? $t(key, vars) : $t(key);
-  if (!vars) return translated;
-  return translated.replace(/%\{(\w+)\}/g, (match, name) =>
-    name in vars ? String(vars[name]) : match,
-  );
-}
-
 function validateAction(
   action: ExportedAction,
   index: number,
@@ -76,7 +63,7 @@ function validateAction(
       if (!name) {
         issues.push(actionIssue('scene', $t('Select a scene to switch to.')));
       } else if (!resources.scenes.some(s => s.name === name)) {
-        issues.push(actionIssue('scene', t('Scene "%{name}" no longer exists.', { name })));
+        issues.push(actionIssue('scene', $t('Scene "%{name}" no longer exists.', { name })));
       }
       break;
     }
@@ -87,7 +74,7 @@ function validateAction(
       if (!name) {
         issues.push(actionIssue('source', $t('Select a source.')));
       } else if (!resources.sources.some(s => s.name === name)) {
-        issues.push(actionIssue('source', t('Source "%{name}" is unavailable.', { name })));
+        issues.push(actionIssue('source', $t('Source "%{name}" is unavailable.', { name })));
       }
       break;
     }
@@ -100,7 +87,7 @@ function validateAction(
         issues.push(
           actionIssue(
             'instruction',
-            t('Instruction must be %{max} characters or fewer.', {
+            $t('Instruction must be %{max} characters or fewer.', {
               max: MAX_INSTRUCTION_LENGTH,
             }),
           ),
@@ -133,7 +120,7 @@ export function validateAutomation(
   } else if (description.length > MAX_DESCRIPTION_LENGTH) {
     issues.push({
       scope: 'description',
-      message: t('Description must be %{max} characters or fewer.', {
+      message: $t('Description must be %{max} characters or fewer.', {
         max: MAX_DESCRIPTION_LENGTH,
       }),
     });
