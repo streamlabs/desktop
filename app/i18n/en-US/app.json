@@ -22,5 +22,6 @@
   "Authentication Error": "Authentication Error",
   "Diagnostic Report Uploaded Successfully": "Diagnostic Report Uploaded Successfully",
   "Copy Report ID": "Copy Report ID",
-  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team."
+  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.",
+  "Unknown %{platform} error": "Unknown %{platform} error"
 }

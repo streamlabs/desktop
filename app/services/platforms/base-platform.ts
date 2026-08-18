@@ -19,7 +19,8 @@ import * as remote from '@electron/remote';
 import { VideoSettingsService } from 'services/settings-v2/video';
 import { ENotificationType, NotificationsService } from 'services/notifications';
 import { IJsonRpcRequest } from 'services/api/jsonrpc';
-import { throwStreamError, TStreamErrorType } from 'services/streaming/stream-error';
+import { StreamError, throwStreamError, TStreamErrorType } from 'services/streaming/stream-error';
+import { $t } from 'services/i18n/i18n';
 
 const VIEWER_COUNT_UPDATE_INTERVAL = 60 * 1000;
 
@@ -156,19 +157,23 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
     }
   }
 
-  formatError(
-    e: any,
+  throwPlatformError(
     platform: TPlatform,
+    e: StreamError | any,
     errorType: TStreamErrorType = 'PLATFORM_REQUEST_FAILED',
   ): never {
     console.error(`${platformLabels(platform)} Error: `, e);
+
+    if (e instanceof StreamError) {
+      throwStreamError(e.type, e, e.message);
+    }
 
     const message =
       e.result?.data?.message ||
       e.result?.message ||
       e.statusText ||
       e.message ||
-      `Unknown error starting ${platformLabels(platform)} stream`;
+      $t('Unknown %{platform} error', { platform: platformLabels(platform) });
 
     throwStreamError(
       errorType,

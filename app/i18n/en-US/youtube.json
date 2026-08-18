@@ -51,5 +51,11 @@
   "Stream Shift Error: YouTube is not live": "Stream Shift Error: YouTube is not live",
   "Error starting vertical stream in YouTube dual streaming": "Error starting vertical stream in YouTube dual streaming",
   "YouTube service is temporarily unavailable": "YouTube service is temporarily unavailable",
-  "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support": "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support"
+  "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support": "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support",
+  "This channel is not in the YouTube Partner Program, so monetization settings cannot be changed.": "This channel is not in the YouTube Partner Program, so monetization settings cannot be changed.",
+  "You have too many live or scheduled broadcasts on YouTube. Remove some in YouTube Studio and try again.": "You have too many live or scheduled broadcasts on YouTube. Remove some in YouTube Studio and try again.",
+  "Streamlabs has reached YouTube's daily API limit. It resets at midnight Pacific time.": "Streamlabs has reached YouTube's daily API limit. It resets at midnight Pacific time.",
+  "Too many requests to YouTube in a short period. Wait a few minutes and try again.": "Too many requests to YouTube in a short period. Wait a few minutes and try again.",
+  "Your YouTube account has not granted Streamlabs the permissions needed to stream. Re-log or re-merge the account.": "Your YouTube account has not granted Streamlabs the permissions needed to stream. Re-log or re-merge the account.",
+  "Failed to upload thumbnail.": "Failed to upload thumbnail."
 }

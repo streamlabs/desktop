@@ -269,6 +269,11 @@ export interface IRejectedRequest {
   status?: number;
   statusText?: string;
   platform?: TPlatform;
+  /**
+   * Machine-readable reason from the platform, e.g. YouTube's `error.errors[0].reason`.
+   * Callers use it to react to a specific failure without re-parsing the response.
+   */
+  reason?: string;
 }
 
 export interface IStreamError extends IRejectedRequest {
@@ -292,6 +297,7 @@ export class StreamError extends Error implements IRejectedRequest {
   public status?: number;
   public statusText?: string;
   public platform?: TPlatform;
+  public reason?: string;
 
   /**
    * returns serializable representation of the error
@@ -302,6 +308,7 @@ export class StreamError extends Error implements IRejectedRequest {
       message: this.message,
       details: this.details,
       platform: this.platform,
+      reason: this.reason,
     };
   };
 
@@ -319,6 +326,7 @@ export class StreamError extends Error implements IRejectedRequest {
     this.url = rejectedRequest?.url;
     this.status = rejectedRequest?.status;
     this.statusText = rejectedRequest?.statusText;
+    this.reason = rejectedRequest?.reason;
     this.platform = rejectedRequest?.platform ?? getPlatform(this?.url);
 
     // TODO: remove sensitive data from YT requests
