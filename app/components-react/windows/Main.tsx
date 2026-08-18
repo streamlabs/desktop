@@ -1,5 +1,6 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import fs from 'fs';
+import { webUtils } from 'electron';
 import * as remote from '@electron/remote';
 import cx from 'classnames';
 import Animation from 'rc-animate';
@@ -132,7 +133,7 @@ export default function Main() {
 
       const files: string[] = [];
       let fi = fileList.length;
-      while (fi--) files.push(fileList.item(fi)!.path);
+      while (fi--) files.push(webUtils.getPathForFile(fileList.item(fi)!));
 
       const isDir = await isDirectory(files[0]).catch(err => {
         console.error('Error checking if drop is directory', err);
