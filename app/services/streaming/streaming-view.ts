@@ -328,15 +328,8 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     if (this.isStreamShiftMode) return true;
 
     // Live output editing uses the restream service
-    // TODO: Comment in when implemented
-    // if (this.isLiveOutputEditingEnabled) return true;
-
-    // TODO: Swap with the above when implemented
     if (this.isLiveOutputEditingEnabled) {
-      // This log is intentionally left in for development purposes to confirm that live output
-      // editing is being detected correctly. It will be removed when live output editing is implemented.
-      console.log('LIVE OUTPUT EDITING ENABLED');
-      return false;
+      return this.incrementalRolloutView.featureIsEnabled(EAvailableFeatures.liveOutputEditing);
     }
 
     // In dual output mode, if a display has more than one target that display uses the restream service

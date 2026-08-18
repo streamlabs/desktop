@@ -21,6 +21,7 @@ const base = {
     '!node_modules/electron',
     'vendor',
     'app/i18n',
+    'app/util/shutdown-coordinator.js',
     'media/images/game-capture',
     'updater/build/bootstrap.js',
     'updater/build/bundle-updater.js',
@@ -56,7 +57,7 @@ const base = {
   },
   win: {
     executableName: 'Streamlabs OBS',
-    extraFiles: ['LICENSE', 'AGREEMENT', 'shared-resources/**/*', '!shared-resources/README'],
+    extraFiles: ['LICENSE', 'AGREEMENT', 'LICENSES', 'shared-resources/**/*', '!shared-resources/README'],
     // Replaces `signDlls: true`, removed in electron-builder 26. Both select the
     // same files: `.dll` matches this list, and `.exe` still signs via the
     // isExe fallback in WinPackager.shouldSignFile.

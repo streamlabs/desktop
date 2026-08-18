@@ -3,12 +3,14 @@
   "Successfully converted %{filename}": "Успешно конвертировано: %{filename}",
   "Successfully saved %{filename} to %{filepath}": "%{filename} успешно сохранен в %{filepath}",
   "Successfully loaded %{filename}.overlay": "Успешно загружен файл %{filename}.overlay",
+  "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
   "This is an experimental feature.  Use at your own risk.": "Это экспериментальная функция. Используйте на свой страх и риск.",
   "Export Overlay File": "Экспорт файла оверлея",
   "Import Overlay File": "Импорт файла оверлея",
   "Import Widget File in Current Scene": "Импортировать виджет в текущую сцену",
   "The active scene collection is not a dual output scene collection.": "Активная коллекция сцен не является коллекцией сцен Dual Output.",
   "Convert to Vanilla Scene": "Конвертировать в Vanilla Scene",
+  "Convert to Single Output": "Convert to Single Output",
   "Convert": "Конвертировать",
   "Convert and Export Overlay": "Конвертировать и экспортировать оверлей",
   "Assign": "Назначить",
@@ -25,5 +27,6 @@
   "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "Описанные ниже действия создадут копию активной коллекции сцен, установят копию как активную коллекцию, а затем будут удалены все вертикальные источники.",
   "Show Components Library": "Показать библиотеку компонентов",
   "Convert Dual Output Scene Collection": "Преобразование коллекции сцен Dual Output",
-  "Repair Scene Collection": "Коллекция сцен ремонта"
+  "Repair Scene Collection": "Коллекция сцен ремонта",
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
 }

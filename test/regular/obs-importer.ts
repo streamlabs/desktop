@@ -46,21 +46,24 @@ test('OBS Importer', async t => {
 
   const client = t.context.app.client;
 
-  if (!(await isDisplayed('h2=Live Streaming'))) return;
-  await click('h2=Live Streaming');
-  await click('button=Continue');
-  await click('button=Skip');
+  if (!(await isDisplayed('h1=Welcome to Streamlabs Desktop', { timeout: 15000 }))) {
+    t.fail('Onboarding welcome page not shown');
+    return;
+  }
+  await click('a=Log In');
+  await isDisplayed('button=Twitch');
 
   await logIn(t, 'twitch', { prime: false }, false, true);
   await sleep(1000);
+  await clickIfDisplayed('button=Skip');
+  await clickIfDisplayed('button=Skip');
 
   // import from OBS
-  await click('div=Import from OBS Studio');
-  await click('div=Start');
+  await click('button=Start Import');
 
   // skip Ultra
-  await waitForDisplayed('div[data-testid=choose-free-plan-btn]', { timeout: 15000 });
-  // skip Themes
+  await clickIfDisplayed('button=Skip');
+  // skip Hardware
   await click('button=Skip');
 
   await waitForDisplayed('[data-name=SceneSelector]');

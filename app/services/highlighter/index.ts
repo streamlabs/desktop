@@ -411,28 +411,100 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   /**
    * Verifies the Authenticode signature of a Windows executable using PowerShell.
    * Throws if the signature is invalid or the subject does not contain 'Logitech Inc' (Streamlabs Replay publisher).
+   *
+   * Revocation is checked in Offline mode only (cached CRLs, no network calls), so an unreachable
+   * or slow CA endpoint can never hang the check.
+   *
+   * Exit-1 (unsigned/invalid) and exit-2 (wrong publisher) are deterministic verdicts and fail fast.
+   * Any other failure (PowerShell killed by the timeout, the freshly-downloaded exe still locked by
+   * antivirus, a PowerShell environment issue, etc.) is transient and retried a few times before
+   * giving up. Full error detail is reported to Sentry so these can be told apart in the field.
    */
   private async verifyAuthenticodeSignature(filePath: string): Promise<void> {
     // Use PS single-quote escaping then encode as UTF-16LE base64
     // to avoid any command-line quoting/injection issues with the file path.
     const escapedPath = filePath.replace(/'/g, "''");
-    const script = `$sig = Get-AuthenticodeSignature '${escapedPath}'; if ($sig.Status -ne 'Valid') { exit 1 }; if ($sig.SignerCertificate.Subject -notmatch 'CN=Logitech Inc') { exit 2 }; exit 0`;
+
+    // Verify the signature without ever performing an ONLINE revocation lookup.
+    // Get-AuthenticodeSignature gives us the local integrity verdict (is the file signed,
+    // does the embedded hash match the bytes) and the signer certificate. We then validate
+    // trust ourselves with an X509Chain in Offline revocation mode: it consults only cached
+    // CRLs, never dials out to the CA (so an unreachable/slow CRL/OCSP endpoint can't hang us),
+    // and DisableCertificateDownloads stops it fetching missing intermediates over AIA.
+    // IgnoreRevocationUnknown means "can't determine revocation" is not fatal, while a cert the
+    // cache already knows is revoked still fails the build.
+    // Exit codes: 1 = unsigned/tampered/untrusted, 2 = wrong publisher, 0 = valid.
+    const script = [
+      "$ErrorActionPreference = 'Stop'",
+      `try { $sig = Get-AuthenticodeSignature -LiteralPath '${escapedPath}' } catch { exit 1 }`,
+      'if ($null -eq $sig -or $null -eq $sig.SignerCertificate) { exit 1 }',
+      "if ($sig.Status -eq 'NotSigned' -or $sig.Status -eq 'HashMismatch') { exit 1 }",
+      '$chain = New-Object System.Security.Cryptography.X509Certificates.X509Chain',
+      "$chain.ChainPolicy.RevocationMode = 'Offline'",
+      "$chain.ChainPolicy.RevocationFlag = 'EntireChain'",
+      "$chain.ChainPolicy.VerificationFlags = 'IgnoreEndRevocationUnknown, IgnoreCertificateAuthorityRevocationUnknown, IgnoreRootRevocationUnknown'",
+      'try { $chain.ChainPolicy.DisableCertificateDownloads = $true } catch {}',
+      'if (-not $chain.Build($sig.SignerCertificate)) { exit 1 }',
+      "if ($sig.SignerCertificate.Subject -notmatch 'CN=Logitech Inc') { exit 2 }",
+      'exit 0',
+    ].join('; ');
     const encodedCommand = Buffer.from(script, 'utf16le').toString('base64');
 
-    await execAsync(`powershell -NonInteractive -NoProfile -EncodedCommand ${encodedCommand}`, {
-      timeout: 15000,
-    }).catch((err: Error & { code?: number }) => {
-      const code = err.code ?? -1;
-      if (code === 1) {
-        throw new Error('Installer signature verification failed: invalid or missing signature.');
+    const MAX_ATTEMPTS = 3;
+    const RETRY_DELAY_MS = 2000;
+
+    type ExecError = Error & {
+      code?: number | null;
+      killed?: boolean;
+      signal?: string | null;
+      stdout?: string;
+      stderr?: string;
+    };
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        await execAsync(`powershell -NonInteractive -NoProfile -EncodedCommand ${encodedCommand}`, {
+          timeout: 30000,
+        });
+        return;
+      } catch (e: unknown) {
+        const err = e as ExecError;
+        const code = err.code ?? -1;
+
+        // Deterministic signature verdicts — retrying will not change the outcome, so fail fast.
+        if (code === 1) {
+          throw new Error('Installer signature verification failed: invalid or missing signature.');
+        }
+        if (code === 2) {
+          throw new Error(
+            'Installer signature verification failed: publisher does not match Logitech Inc.',
+          );
+        }
+
+        // Transient/tooling failure (timeout, AV file lock, slow revocation lookup, PS env issue).
+        const isLastAttempt = attempt === MAX_ATTEMPTS;
+        Sentry.withScope(scope => {
+          scope.setTag('feature', 'highlighter');
+          scope.setTag('replayInstallPhase', 'verify-signature');
+          scope.setTag('signatureCheckAttempt', String(attempt));
+          scope.setTag('signatureCheckExitCode', String(err.code ?? 'null'));
+          scope.setTag('signatureCheckKilled', String(err.killed ?? false));
+          scope.setExtra('signatureCheckSignal', err.signal ?? null);
+          scope.setExtra('signatureCheckStdout', err.stdout ?? '');
+          scope.setExtra('signatureCheckStderr', err.stderr ?? '');
+          console.error(
+            `Installer signature check attempt ${attempt}/${MAX_ATTEMPTS} failed:`,
+            err.message,
+          );
+        });
+
+        if (isLastAttempt) {
+          throw new Error(`Installer signature check failed: ${err.message}`);
+        }
+
+        await this.wait(RETRY_DELAY_MS);
       }
-      if (code === 2) {
-        throw new Error(
-          'Installer signature verification failed: publisher does not match Logitech Inc.',
-        );
-      }
-      throw new Error(`Installer signature check failed: ${err.message}`);
-    });
+    }
   }
 
   /**

@@ -27,6 +27,7 @@
   "Shader": "Shader",
   "HDR Tone Mapping (Override)": "Pemetaan Nada HDR (Override)",
   "NVIDIA Background Removal": "Penghapusan Latar Belakang NVIDIA",
+  "Luma Key": "Luma Key",
   "No settings are available for this filter": "Tidak tersedia pengaturan untuk filter ini",
   "Visual Presets": "Preset Visual",
   "None": "Tidak ada",
@@ -81,5 +82,7 @@
   "Open Threshold": "Buka Batas",
   "Close Threshold": "Tutup Batas",
   "Presets": "Preset",
-  "Detection": "Deteksi"
+  "Detection": "Deteksi",
+  "Upward Compressor": "Upward Compressor",
+  "3-Band Equalizer": "3-Band Equalizer"
 }

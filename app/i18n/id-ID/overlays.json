@@ -3,12 +3,14 @@
   "Successfully converted %{filename}": "Berhasil dikonversi %{filename}",
   "Successfully saved %{filename} to %{filepath}": "Berhasil disimpan %{filename} ke %{filepath}",
   "Successfully loaded %{filename}.overlay": "Tampilan %{filename} berhasil dimuat",
+  "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
   "This is an experimental feature.  Use at your own risk.": "Ini adalah fitur eksperimental. Gunakan dengan risiko sendiri.",
   "Export Overlay File": "Ekspor File Tampilan",
   "Import Overlay File": "Impor File Tampilan",
   "Import Widget File in Current Scene": "Impor File Widget di Scene Saat Ini",
   "The active scene collection is not a dual output scene collection.": "Koleksi adegan aktif bukan koleksi adegan keluaran ganda.",
   "Convert to Vanilla Scene": "Ubah ke Adegan Vanilla",
+  "Convert to Single Output": "Convert to Single Output",
   "Convert": "Mengonversi",
   "Convert and Export Overlay": "Konversi dan Ekspor Hamparan",
   "Assign": "Tetapkan",
@@ -25,5 +27,6 @@
   "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "Di bawah ini akan membuat salinan koleksi scene aktif, menetapkan salinan sebagai koleksi aktif, kemudian menghapus semua sumber vertikal.",
   "Show Components Library": "Tampilkan Perpustakaan Komponen",
   "Convert Dual Output Scene Collection": "Mengonversi Koleksi Adegan Dual Output",
-  "Repair Scene Collection": "Koleksi Adegan Perbaikan"
+  "Repair Scene Collection": "Koleksi Adegan Perbaikan",
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
 }

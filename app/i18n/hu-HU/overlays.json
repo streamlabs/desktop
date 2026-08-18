@@ -3,12 +3,14 @@
   "Successfully converted %{filename}": "Successfully converted %{filename}",
   "Successfully saved %{filename} to %{filepath}": "Successfully saved %{filename} to %{filepath}",
   "Successfully loaded %{filename}.overlay": "%{filename}.overlay sikeresen betöltve",
+  "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
   "This is an experimental feature.  Use at your own risk.": "Ez egy kísérleti funkció. Csak saját felelősségedre használd.",
   "Export Overlay File": "Fedvény-fájl exportálása",
   "Import Overlay File": "Fedvény-fájl Importálása",
   "Import Widget File in Current Scene": "Widget-fájl Importálása a Jelenlegi Jelenetbe",
   "The active scene collection is not a dual output scene collection.": "The active scene collection is not a dual output scene collection.",
   "Convert to Vanilla Scene": "Convert to Vanilla Scene",
+  "Convert to Single Output": "Convert to Single Output",
   "Convert": "Convert",
   "Convert and Export Overlay": "Convert and Export Overlay",
   "Assign": "Assign",
@@ -25,5 +27,6 @@
   "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.",
   "Show Components Library": "Show Components Library",
   "Convert Dual Output Scene Collection": "Convert Dual Output Scene Collection",
-  "Repair Scene Collection": "Repair Scene Collection"
+  "Repair Scene Collection": "Repair Scene Collection",
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
 }

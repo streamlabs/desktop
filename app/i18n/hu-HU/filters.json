@@ -27,6 +27,7 @@
   "Shader": "Shader",
   "HDR Tone Mapping (Override)": "HDR tónusleképezés (felülbírálás)",
   "NVIDIA Background Removal": "NVIDIA háttéreltávolító",
+  "Luma Key": "Luma Key",
   "No settings are available for this filter": "Ehhez a szűrőhöz nem állnak rendelkezésre beállítások",
   "Visual Presets": "Visual Presets",
   "None": "Nincs",
@@ -81,5 +82,7 @@
   "Open Threshold": "Nyitó küszöb",
   "Close Threshold": "Záró küszöb",
   "Presets": "Készletek",
-  "Detection": "Észlelés"
+  "Detection": "Észlelés",
+  "Upward Compressor": "Upward Compressor",
+  "3-Band Equalizer": "3-Band Equalizer"
 }

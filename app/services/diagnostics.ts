@@ -19,6 +19,7 @@ import { CacheUploaderService } from './cache-uploader';
 import { AudioService } from './audio';
 import { getOS, OS } from 'util/operating-systems';
 import { Source, SourcesService } from './sources';
+import { WidgetType } from './widgets';
 import { VideoEncodingOptimizationService } from './video-encoding-optimizations';
 import {
   DualOutputService,
@@ -941,34 +942,6 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
   }
 
   private generateSourceData(source: Source, sceneItem?: SceneItem) {
-    // Non-translated plain names for widget types
-    const widgetLookup = [
-      'AlertBox',
-      'DonationGoal',
-      'FollowerGoal',
-      'SubscriberGoal',
-      'BitGoal',
-      'DonationTicker',
-      'ChatBox',
-      'EventList',
-      'TipJar',
-      'ViewerCount',
-      'StreamBoss',
-      'Credits',
-      'SpinWheel',
-      'SponsorBanner',
-      'MediaShare',
-      'SubGoal',
-      'StarsGoal',
-      'SupporterGoal',
-      'CharityGoal',
-      'Poll',
-      'EmoteWall',
-      'ChatHighlight',
-      'CustomWidget',
-      'GamePulseWidget',
-    ];
-
     const propertiesManagerType = source.getPropertiesManagerType();
     const propertiesManagerSettings = source.getPropertiesManagerSettings();
 
@@ -978,9 +951,10 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     };
 
     if (propertiesManagerType === 'widget') {
+      // Non-translated plain name, straight off the enum so it can never drift.
       // TODO: index
       // @ts-ignore
-      sourceData['Widget Type'] = widgetLookup[propertiesManagerSettings.widgetType];
+      sourceData['Widget Type'] = WidgetType[propertiesManagerSettings.widgetType];
     } else if (propertiesManagerType === 'streamlabels') {
       // TODO: index
       // @ts-ignore

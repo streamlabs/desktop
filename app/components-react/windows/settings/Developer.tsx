@@ -93,7 +93,7 @@ export function DeveloperSettings() {
   );
 }
 
-export function DualOutputDeveloperSettings(p: { collection?: string }) {
+export function DualOutputDeveloperSettings(p: { collectionId?: string }) {
   const { OverlaysPersistenceService, SceneCollectionsService } = Services;
 
   const [busy, setBusy] = useState(false);
@@ -101,7 +101,7 @@ export function DualOutputDeveloperSettings(p: { collection?: string }) {
   const [error, setError] = useState(false);
 
   /**
-   * Convert a dual output scene collection to a vanilla scene collection
+   * Convert a dual output scene collection to a single output collection
    * @param assignToHorizontal Boolean for if the vertical sources should be assigned to the
    * horizontal display or should be deleted
    * @param exportOverlay Boolean for is the scene collection should be exported upon completion
@@ -110,14 +110,17 @@ export function DualOutputDeveloperSettings(p: { collection?: string }) {
     assignToHorizontal: boolean = false,
     exportOverlay: boolean = false,
   ) {
-    // confirm that the active scene collection is a dual output collection
+    const collection = p.collectionId
+      ? SceneCollectionsService.collections.find(c => c.id === p.collectionId)
+      : SceneCollectionsService.activeCollection;
+
+    // confirm that the scene collection is a dual output collection
     if (
-      !SceneCollectionsService?.sceneNodeMaps ||
-      (SceneCollectionsService?.sceneNodeMaps &&
-        Object.values(SceneCollectionsService?.sceneNodeMaps).length === 0)
+      !collection?.sceneNodeMaps ||
+      (collection?.sceneNodeMaps && Object.values(collection?.sceneNodeMaps).length === 0)
     ) {
       setError(true);
-      setMessage($t('The active scene collection is not a dual output scene collection.'));
+      setMessage($t('The scene collection is not a dual output scene collection.'));
       return;
     }
     if (exportOverlay) {
@@ -130,32 +133,42 @@ export function DualOutputDeveloperSettings(p: { collection?: string }) {
       // convert collection
       const collectionFilePath = await SceneCollectionsService.actions.return.convertDualOutputCollection(
         assignToHorizontal,
-        p.collection,
+        p.collectionId,
       );
 
       if (!collectionFilePath) {
+        setBusy(false);
         setError(true);
         setMessage($t('Unable to convert dual output collection.'));
+        setBusy(false);
+
         return;
       }
 
       // save overlay
-      OverlaysPersistenceService.actions.return.saveOverlay(filePath).then(() => {
+      try {
+        await OverlaysPersistenceService.actions.return.saveOverlay(filePath);
         setError(false);
-        setBusy(false);
         setMessage(
           $t('Successfully saved %{filename} to %{filepath}', {
             filename: path.parse(collectionFilePath).base,
             filepath: filePath,
           }),
         );
-      });
+      } catch (e: unknown) {
+        console.error('Failed to export overlay', e);
+        setError(true);
+        setMessage($t('Failed to export overlay. Please choose a different location.'));
+      } finally {
+        setBusy(false);
+      }
     } else {
       setBusy(true);
 
       // convert collection
       const filePath = await SceneCollectionsService.actions.return.convertDualOutputCollection(
         assignToHorizontal,
+        p.collectionId,
       );
 
       if (filePath) {
@@ -181,7 +194,7 @@ export function DualOutputDeveloperSettings(p: { collection?: string }) {
         )}
       </span>
       <div>
-        <h4>{$t('Convert to Vanilla Scene')}</h4>
+        <h4>{$t('Convert to Single Output')}</h4>
         <div style={{ display: 'flex', justifyContent: 'space-evenly', paddingBottom: '16px' }}>
           <Button
             className="button--soft-warning"
@@ -191,7 +204,7 @@ export function DualOutputDeveloperSettings(p: { collection?: string }) {
           >
             {$t('Convert')}
           </Button>
-          {!p.collection && (
+          {!p.collectionId && (
             <Button
               className="button--soft-warning"
               onClick={() => convertDualOutputCollection(false, true)}
@@ -202,7 +215,7 @@ export function DualOutputDeveloperSettings(p: { collection?: string }) {
           )}
         </div>
       </div>
-      {!p.collection && (
+      {!p.collectionId && (
         <div style={{ marginTop: '10px' }}>
           <h4>{$t('Assign Vertical Sources to Horizontal Display')}</h4>
           <div style={{ display: 'flex', justifyContent: 'space-evenly', paddingBottom: '16px' }}>

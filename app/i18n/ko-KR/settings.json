@@ -292,6 +292,8 @@
   "%{videoCodec} codec is not supported for Dual Output. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} 코덱은 듀얼 출력을 지원하지 않습니다. H.264 코덱으로 진행하시겠습니까, 아니면 다른 코덱을 선택하시겠습니까?",
   "Your stream encoder has been reset to Software (x264). This can be caused by out of date graphics drivers. Please update your graphics drivers to continue using hardware encoding.": "스트림 인코더가 소프트웨어(x264)로 재설정되었습니다. 그래픽 드라이버가 최신 버전이 아닐 경우 발생할 수 있습니다. 하드웨어 인코딩을 계속 사용하려면 그래픽 드라이버를 업데이트하십시오.",
   "Your stream encoder has been reset to Software (x264). This can be caused by an invalid encoder setting.": "스트림 인코더가 소프트웨어(x264)로 재설정되었습니다. 잘못된 인코더 설정으로 인해 발생할 수 있습니다.",
+  "Live Settings": "Live Settings",
+  "Channel Settings": "Channel Settings",
   "Fix common issues": "Fix common issues",
   "Restore Ultra benefits": "Restore Ultra benefits",
   "If you subscribed on web, you may need to restore your Ultra membership on desktop.": "If you subscribed on web, you may need to restore your Ultra membership on desktop.",
@@ -317,5 +319,6 @@
   "Cache": "Cache",
   "Deleting your cache directory will cause you to lose some settings.": "Deleting your cache directory will cause you to lose some settings.",
   "Do not delete your cache directory unless instructed to do so by a Streamlabs staff member.": "Do not delete your cache directory unless instructed to do so by a Streamlabs staff member.",
-  "Enable reporting additional information on a crash (requires restart).": "Enable reporting additional information on a crash (requires restart)."
+  "Enable reporting additional information on a crash (requires restart).": "Enable reporting additional information on a crash (requires restart).",
+  "Use stream output": "Use stream output"
 }

@@ -3,12 +3,14 @@
   "Successfully converted %{filename}": "%{filename} wurde konvertiert",
   "Successfully saved %{filename} to %{filepath}": "%{filename} wurde unter %{filepath} gespeichert",
   "Successfully loaded %{filename}.overlay": "%{filename}.overlay erfolgreich geladen",
+  "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
   "This is an experimental feature.  Use at your own risk.": "Diese Funktion befindet sich noch im Versuchsstadium, Verwendung auf eigene Gefahr.",
   "Export Overlay File": "Overlay-Datei exportieren",
   "Import Overlay File": "Overlay-Datei importieren",
   "Import Widget File in Current Scene": "Widget-Datei in aktuelle Szene importieren",
   "The active scene collection is not a dual output scene collection.": "Die aktive Szenensammlung ist keine Szenensammlung mit Dual Output.",
   "Convert to Vanilla Scene": "In Vanilla-Szene konvertieren",
+  "Convert to Single Output": "Convert to Single Output",
   "Convert": "Konvertieren",
   "Convert and Export Overlay": "Overlay konvertieren und exportieren",
   "Assign": "Zuweisen",
@@ -25,5 +27,6 @@
   "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "Im Folgenden wird eine Kopie der aktiven Szenesammlung erstellt, die Kopie als aktive Sammlung festgelegt und dann alle vertikalen Quellen entfernt.",
   "Show Components Library": "Komponentenbibliothek anzeigen",
   "Convert Dual Output Scene Collection": "Dual Output-Szenesammlung konvertieren",
-  "Repair Scene Collection": "Reparatur-Szenesammlung"
+  "Repair Scene Collection": "Reparatur-Szenesammlung",
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
 }

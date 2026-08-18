@@ -119,6 +119,12 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   private collectionErrorOpen = false;
 
   /**
+   * Whether a dual output collection is currently being converted
+   * to a single output collection.
+   */
+  isConvertingCollection = false;
+
+  /**
    * true if the scene-collections sync in progress
    */
   private syncPending = false;
@@ -168,14 +174,22 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   }
 
   /**
-   * Generally called on application shutdown.
+   * Persists the current collection and manifest before shutdown starts destroying OBS state.
+   * FileManagerService.flushAll() must be awaited by the caller to make these queued writes durable.
    */
-  async deinitialize() {
+  async persistForShutdown() {
     await this.disableAutoSave();
     await this.save();
-    await this.deloadCurrentApplicationState();
-    await this.safeSync();
-    await this.stateService.flushManifestFile();
+    this.stateService.flushManifestFile();
+  }
+
+  /**
+   * Generally called on application shutdown after persistForShutdown has completed.
+   * Cloud synchronization is intentionally left to startup so network stalls cannot block exit.
+   */
+  async deinitialize({ persist = true }: { persist?: boolean } = {}) {
+    if (persist) await this.persistForShutdown();
+    await this.deloadCurrentApplicationState({ save: false });
   }
 
   /**
@@ -359,17 +373,28 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     const collection = collectionId ? this.getCollection(collectionId) : this.activeCollection;
     const name = `${collection?.name} - Converted`;
 
-    const newCollectionId = await this.duplicate(name, collectionId);
+    // Prevent recreating vertical nodes while converting the collection to a single output.
+    this.isConvertingCollection = true;
 
-    if (!newCollectionId) return;
+    try {
+      const newCollectionId = await this.duplicate(name, collectionId);
 
-    this.dualOutputService.setDualOutputModeIfPossible(false);
+      if (!newCollectionId) return;
 
-    await this.load(newCollectionId);
+      await this.load(newCollectionId);
 
-    await this.convertToVanillaSceneCollection(assignToHorizontal);
+      // Disable dual output mode after loading the duplicate to prevent the converted collection
+      // from being saved as a dual output collection.
+      this.dualOutputService.setDualOutputModeIfPossible(false, true, false, true);
 
-    return this.stateService.getCollectionFilePath(newCollectionId);
+      await this.convertToSingleOutputSceneCollection(assignToHorizontal);
+
+      return this.stateService.getCollectionFilePath(newCollectionId);
+    } finally {
+      // Always reset this flag to false, even if the conversion fails, so that the user can
+      // attempt to convert the collection again or repair it manually
+      this.isConvertingCollection = false;
+    }
   }
 
   downloadProgress = new Subject<IDownloadProgress>();
@@ -743,13 +768,15 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * ready to load a new config file.  This should only ever be
    * performed while the application is already in a "LOADING" state.
    */
-  private async deloadCurrentApplicationState() {
+  private async deloadCurrentApplicationState({ save = true }: { save?: boolean } = {}) {
     this.tcpServerService.stopRequestsHandling();
 
     this.collectionWillSwitch.next();
 
     await this.disableAutoSave();
-    await this.save();
+    if (save) await this.save();
+
+    let deloadError: unknown;
 
     // we should remove inactive scenes first to avoid the switching between scenes
     try {
@@ -772,10 +799,13 @@ export class SceneCollectionsService extends Service implements ISceneCollection
       this.streamingService.setSelectiveRecording(false);
     } catch (e: unknown) {
       console.error('Error deloading application state', e);
+      deloadError = e;
     }
 
     this.hotkeysService.clearAllHotkeys();
     this.collectionLoaded = false;
+
+    if (deloadError) throw deloadError;
   }
 
   /**
@@ -1318,10 +1348,12 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   }
 
   /**
-   * Convert dual output scene collection to vanilla scene collection
+   * Convert dual output scene collection to single output collection
+   * @param assignToHorizontal - Whether to reassign the vertical nodes to the horizontal
+   * display instead of removing them
    */
-  async convertToVanillaSceneCollection(assignToHorizontal?: boolean) {
-    if (!this.activeCollection?.sceneNodeMaps) return;
+  async convertToSingleOutputSceneCollection(assignToHorizontal?: boolean) {
+    if (!this.activeCollection || !this.activeCollection?.sceneNodeMaps) return;
 
     const allSceneIds: string[] = this.scenesService.getSceneIds();
 

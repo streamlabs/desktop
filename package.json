@@ -4,7 +4,7 @@
   "description": "Streamlabs streaming software",
   "author": "General Workings, Inc.",
   "license": "GPL-3.0",
-  "version": "1.21.8",
+  "version": "1.22.0-preview.1",
   "main": "main.js",
   "macVirtualCamUrl": "https://obs-studio-deployment.s3.us-west-2.amazonaws.com/slobs-vcam-installer-1.0.16-release-osx-[ARCH].tar.gz",
   "scripts": {
@@ -47,8 +47,9 @@
     "commit": "commit",
     "postinstall": "node ./scripts/postinstall.js",
     "tail-obs-logs": "node bin/tail-obs-logs.js",
-    "generate-agreement": "cat BASEAGREEMENT > AGREEMENT && yarn licenses generate-disclaimer >> AGREEMENT",
-    "generate-agreement:mac": "cat BASEAGREEMENT > license_en.txt && yarn licenses generate-disclaimer >> license_en.txt",
+    "generate-licenses": "yarn licenses generate-disclaimer > LICENSES",
+    "generate-agreement": "yarn generate-licenses && cat BASEAGREEMENT LICENSES > AGREEMENT",
+    "generate-agreement:mac": "yarn generate-licenses && cat BASEAGREEMENT LICENSES > license_en.txt",
     "beta": "SLD_USE_BETA=true electron .",
     "qa": "rm -rf node_modules/ && yarn install && yarn compile && yarn start",
     "qa:beta": "rm -rf node_modules/ && yarn install && yarn compile && yarn beta"

@@ -65,7 +65,7 @@ import {
 } from 'services/notifications';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
-import { StreamSettingsService } from '../settings/streaming';
+import { ICustomStreamDestination, StreamSettingsService } from '../settings/streaming';
 import { IStreamShiftTarget, RestreamService } from 'services/restream';
 import Utils from 'services/utils';
 import cloneDeep from 'lodash/cloneDeep';
@@ -95,6 +95,13 @@ import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services
 import { SignalsService } from 'services/signals-manager';
 import { TSocketEvent } from 'services/websocket';
 import { HighlighterService } from 'services/highlighter';
+import {
+  canDestroyDisplayOutputContext,
+  isDisplayOutputContext,
+  shouldStopDisplayContextBeforeDestroy as shouldStopDisplayOutputContextBeforeDestroy,
+  shouldStopStreamingContext as shouldStopStreamingOutputContext,
+  TStreamingDisplay,
+} from './output-context';
 
 type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
 type TOutputContext = TDisplayType | 'enhancedBroadcasting' | 'stream' | 'streamSecond';
@@ -189,6 +196,8 @@ export class StreamingService
   streamingStateChange = new Subject<void>();
 
   powerSaveId: number;
+  private isUpdatingStreamTarget: boolean = false;
+  private isUpdatingStreamSecondTarget: boolean = false;
   private numInstances: number = 0;
 
   private resolveStartStreaming: Function = () => {};
@@ -802,6 +811,7 @@ export class StreamingService
     platform: TPlatform,
     settings: IGoLiveSettings,
     unattendedMode: boolean,
+    failOnError: boolean = false,
   ) {
     const service = getPlatformService(platform);
 
@@ -872,7 +882,14 @@ export class StreamingService
       // To prevent users from being blocked by livestreaming from a single platform failing to
       // set up. Users can elect to bypass the error and go live anyways. To prevent the go live
       // checklist from being stopped too soon, only stop if no displays are multistreaming.
-      if (!this.views.shouldSetupRestream) {
+      //
+      // `failOnError` opts out of that for a target added mid-stream, where that platform is the
+      // whole operation rather than one of several going live. Continuing would add a restream
+      // target built from the stream key the failed `beforeGoLive` never set, leaving the user
+      // live to an address that goes nowhere with no indication anything went wrong.
+      // Rethrow the original error so the reason the platform failed survives to the user.
+      if (failOnError || !this.views.shouldSetupRestream) {
+        if (e instanceof StreamError) throw e;
         throwStreamError(errorType);
       }
     }
@@ -970,41 +987,303 @@ export class StreamingService
   }
 
   /**
-   * Update stream stetting while being live
+   * Update stream settings while being live
+   * @remark Handles adding/removing restream targets and updating platform settings while live   *
+   * @param settings - The go-live settings for updating the enabled platforms and destinations
+   * @param activePlatforms - Updated platforms for the stream
+   * @param activeDestinations - Updated custom destinations for the stream
+   * @returns `true` if all updates succeeded, `false` if a platform settings update failed
    */
-  async updateStreamSettings(settings: IGoLiveSettings): Promise<boolean> {
+  async updateStreamSettings(
+    settings: IGoLiveSettings,
+    activePlatforms: TPlatform[] = [],
+    activeDestinations: ICustomStreamDestination[] = [],
+  ): Promise<boolean> {
     const lifecycle = this.state.info.lifecycle;
 
     // save current settings in store so we can re-use them if something will go wrong
     this.SET_GO_LIVE_SETTINGS(settings);
 
-    // run checklist
-    this.UPDATE_STREAM_INFO({ lifecycle: 'runChecklist' });
+    if (this.views.isLiveOutputEditingEnabled) {
+      // call putChannelInfo for each platform
+      const platforms = this.views.getEnabledPlatforms(settings.platforms);
+      const updatePlatforms = this.parseUpdatePlatforms(platforms, activePlatforms);
 
-    // call putChannelInfo for each platform
-    const platforms = this.views.getEnabledPlatforms(settings.platforms);
+      // Compare active custom destinations by URL+streamKey to uniquely identify them
+      const updateDestinations = this.parseUpdateCustomDestinations(
+        settings.customDestinations.filter(dest => dest.enabled),
+        activeDestinations,
+      );
 
-    platforms.forEach(platform => {
-      this.UPDATE_STREAM_INFO({
-        checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
+      // If there is a difference in the active platforms/destinations vs the ones in the go live window,
+      // update the restream targets
+      const shouldUpdateRestream =
+        updatePlatforms.start.length > 0 ||
+        updatePlatforms.stop.length > 0 ||
+        updateDestinations.start.length > 0 ||
+        updateDestinations.stop.length > 0;
+
+      if (this.userService.isPrime && shouldUpdateRestream) {
+        updatePlatforms.stop.forEach(platform => {
+          this.UPDATE_STREAM_INFO({
+            checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
+          });
+        });
+
+        updatePlatforms.start.forEach(platform => {
+          this.UPDATE_STREAM_INFO({
+            checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
+          });
+        });
+
+        updatePlatforms.continue.forEach(platform => {
+          this.UPDATE_STREAM_INFO({
+            checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
+          });
+        });
+
+        if (shouldUpdateRestream) {
+          this.UPDATE_STREAM_INFO({
+            checklist: { ...this.state.info.checklist, ['setupMultistream']: 'not-started' },
+          });
+        }
+
+        // Run checklist
+        this.UPDATE_STREAM_INFO({ lifecycle: 'runChecklist' });
+
+        // Remove targets from restream in a single request
+        if (updatePlatforms.stop.length > 0 || updateDestinations.stop.length > 0) {
+          await this.removeTargetsFromStream(updatePlatforms.stop, updateDestinations.stop);
+        }
+
+        // Update checklist for added platforms and run `beforeGoLive` to set up the new platforms.
+        // Fail on error so that a platform that could not be set up is never added as a target.
+        for (const platform of updatePlatforms.start) {
+          await this.setPlatformSettings(platform, settings, false, true);
+        }
+
+        // Save any settings updated during the `beforeGoLive` process for the platforms.
+        // This is important for dual streaming and multistreaming.
+        this.SET_GO_LIVE_SETTINGS(this.views.savedSettings);
+
+        // Update settings for the persisted targets
+        for (const platform of updatePlatforms.continue) {
+          await this.updatePlatformSettings(platform, settings);
+        }
+
+        // Add targets to restream in a single request
+        if (updatePlatforms.start.length > 0 || updateDestinations.start.length > 0) {
+          await this.addTargetsToStream(updatePlatforms.start, updateDestinations.start);
+        }
+      } else {
+        // If not a prime user or not adding/removing targets, just update settings for enabled platforms
+        platforms.forEach(platform => {
+          this.UPDATE_STREAM_INFO({
+            checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
+          });
+        });
+
+        // Run checklist
+        this.UPDATE_STREAM_INFO({ lifecycle: 'runChecklist' });
+
+        // Update settings for all enabled platforms
+        for (const platform of platforms) {
+          await this.updatePlatformSettings(platform, settings);
+        }
+      }
+    } else {
+      this.UPDATE_STREAM_INFO({ lifecycle: 'runChecklist' });
+
+      const platforms = this.views.getEnabledPlatforms(settings.platforms);
+
+      platforms.forEach(platform => {
+        this.UPDATE_STREAM_INFO({
+          checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
+        });
       });
-    });
 
-    for (const platform of platforms) {
-      const service = getPlatformService(platform);
-      const newSettings = getDefined(settings.platforms[platform]);
-      try {
-        await this.runCheck(platform, () => service.putChannelInfo(newSettings));
-      } catch (e: unknown) {
-        this.handleUpdatePlatformError(e, platform);
-        return false;
+      for (const platform of platforms) {
+        const service = getPlatformService(platform);
+        const newSettings = getDefined(settings.platforms[platform]);
+        try {
+          await this.runCheck(platform, () => service.putChannelInfo(newSettings));
+        } catch (e: unknown) {
+          this.handleUpdatePlatformError(e, platform);
+          return false;
+        }
       }
     }
 
-    // save updated settings locally
+    // Save updated settings locally
     this.streamSettingsService.setSettings({ goLiveSettings: settings });
-    // finish the 'runChecklist' step
+    // Finish the 'runChecklist' step
     this.UPDATE_STREAM_INFO({ lifecycle });
+    return true;
+  }
+
+  /**
+   * Adds restream targets while live
+   * @remark Adds targets through the update window checklist
+   * @param platforms - Updated list of platforms for the stream
+   * @param destinations - Updated list of custom destinations for the stream
+   */
+  async addTargetsToStream(platforms: TPlatform[], destinations: ICustomStreamDestination[]) {
+    // Regular multistreaming via restream service
+    try {
+      await this.runCheck('setupMultistream', async () => {
+        await this.restreamService.addTargets(platforms, destinations);
+      });
+    } catch (e: unknown) {
+      const errorType = this.handleTypedStreamError(
+        e,
+        'RESTREAM_UPDATE_FAILED',
+        'Failed to add restream targets while live',
+      );
+      throwStreamError(errorType);
+    }
+  }
+
+  /**
+   * Remove restream targets while live
+   * @remark Removes targets through the update window checklist.
+   * @param platforms - Platforms to stop streaming to
+   * @param destinations - Custom destinations to stop streaming to
+   */
+  async removeTargetsFromStream(platforms: TPlatform[], destinations: ICustomStreamDestination[]) {
+    if (!this.restreamService.state.enabled) {
+      console.error('Restream service is not enabled, cannot remove targets from stream');
+      return;
+    }
+
+    try {
+      await this.restreamService.removeTargets(platforms, destinations);
+
+      // Update checklist for stopped platforms
+      for (const platform of platforms) {
+        await this.runCheck(platform, async () => {
+          // Delay for UI animation
+          await new Promise(resolve => setTimeout(resolve, 300));
+        });
+      }
+    } catch (e: unknown) {
+      const errorType = this.handleTypedStreamError(
+        e,
+        'RESTREAM_UPDATE_FAILED',
+        'Failed to remove restream targets while live',
+      );
+
+      throwStreamError(errorType);
+    }
+  }
+
+  /**
+   * Categorize platforms
+   *
+   * @remark Categorizes platforms for mid-stream updates:
+   * - `continue` — enabled and already active (update settings only)
+   * - `start` — add to restream targets
+   * - `stop` — remove from restream targets
+   * @param enabledPlatforms - Platforms enabled in the Update window
+   * @param activePlatforms - Platforms currently streaming
+   * @returns Platforms grouped `continue`, `stop`, and `start`
+   */
+  parseUpdatePlatforms(
+    enabledPlatforms: TPlatform[],
+    activePlatforms: TPlatform[],
+  ): {
+    continue: TPlatform[];
+    stop: TPlatform[];
+    start: TPlatform[];
+  } {
+    const active = new Set(activePlatforms);
+    const enabled = new Set(enabledPlatforms);
+
+    const platforms = enabledPlatforms.reduce(
+      (acc, platform) => {
+        if (active.has(platform)) {
+          acc.continue.push(platform);
+        } else {
+          acc.start.push(platform);
+        }
+        return acc;
+      },
+      {
+        continue: [] as TPlatform[],
+        stop: [] as TPlatform[],
+        start: [] as TPlatform[],
+      },
+    );
+
+    platforms.stop = activePlatforms.reduce((acc, platform) => {
+      if (!enabled.has(platform)) {
+        acc.push(platform);
+      }
+      return acc;
+    }, [] as TPlatform[]);
+
+    return platforms;
+  }
+
+  /**
+   * Diff enabled custom destinations against currently active custom destinations
+   *
+   * @remark Uses `url + streamKey` as a composite key to uniquely identify destinations.
+   * Categorizes into the same three buckets as {@link parseUpdatePlatforms}.
+   *
+   * @param enabledDestinations - Custom destinations enabled in the Go Live window
+   * @param activeDestinations - Custom destinations currently streaming
+   * @returns Destinations grouped by action: `continue`, `stop`, and `start`
+   */
+  parseUpdateCustomDestinations(
+    enabledDestinations: ICustomStreamDestination[],
+    activeDestinations: ICustomStreamDestination[],
+  ) {
+    const active = new Set(activeDestinations.map(dest => `${dest.url}${dest.streamKey}`));
+    const enabled = new Set(enabledDestinations.map(dest => `${dest.url}${dest.streamKey}`));
+
+    const destinations = enabledDestinations.reduce(
+      (acc, dest) => {
+        const url = `${dest.url}${dest.streamKey}`;
+        if (active.has(url)) {
+          acc.continue.push(dest);
+        } else {
+          acc.start.push(dest);
+        }
+        return acc;
+      },
+      {
+        continue: [] as ICustomStreamDestination[],
+        stop: [] as ICustomStreamDestination[],
+        start: [] as ICustomStreamDestination[],
+      },
+    );
+
+    destinations.stop = activeDestinations.reduce((acc, dest) => {
+      const url = `${dest.url}${dest.streamKey}`;
+      if (!enabled.has(url)) {
+        acc.push(dest);
+      }
+      return acc;
+    }, [] as ICustomStreamDestination[]);
+
+    return destinations;
+  }
+
+  /**
+   * Update channel info for a single platform via `putChannelInfo`
+   * @param platform - The platform to update
+   * @param settings - The update window settings
+   */
+  async updatePlatformSettings(platform: TPlatform, settings: IGoLiveSettings): Promise<boolean> {
+    const service = getPlatformService(platform);
+    const newSettings = getDefined(settings.platforms[platform]);
+    try {
+      await this.runCheck(platform, () => service.putChannelInfo(newSettings));
+    } catch (e: unknown) {
+      this.handleUpdatePlatformError(e, platform);
+      return false;
+    }
+
     return true;
   }
 
@@ -1901,6 +2180,7 @@ export class StreamingService
     contextNames.forEach(contextName => {
       const streaming = this.contexts[contextName].streaming;
       if (!streaming) return;
+      if (!this.shouldStopStreamingOutputContext(contextName)) return;
 
       const forceStop =
         force ||
@@ -2726,6 +3006,9 @@ export class StreamingService
       // Do nothing on the `starting` signal except for updating the streaming status to `starting` for the UI,
       // which happens below
     } else if (info.signal === EOBSOutputSignal.Stopping) {
+      // Ignore stopping signals when updating stream targets mid-stream
+      if (this.isUpdatingStreamTarget || this.isUpdatingStreamSecondTarget) return;
+
       const isEnhancedBroadcastDualOutputStopping =
         this.views.isDualOutputMode &&
         this.state.enhancedBroadcasting &&
@@ -2748,6 +3031,14 @@ export class StreamingService
       // Error handling with a stop signal is handled in the `signalHandler`
     } else if (info.signal === EOBSOutputSignal.Deactivate) {
       // The `deactivate` signal is sent after the `stop` signal
+
+      // Reset mid-stream update flags
+      if (this.isUpdatingStreamTarget && context === 'horizontal') {
+        this.isUpdatingStreamTarget = false;
+      }
+      if (this.isUpdatingStreamSecondTarget && context === 'vertical') {
+        this.isUpdatingStreamSecondTarget = false;
+      }
 
       // Handle stopping recording and replay buffer started by AI Highlighter.
       // handleStopStreaming already stops these for the normal recordWhenStreaming/
@@ -3316,7 +3607,41 @@ export class StreamingService
   }
 
   private isDisplayContext(context: TOutputContext): context is TDisplayType {
-    return context === 'horizontal' || context === 'vertical';
+    return isDisplayOutputContext(context);
+  }
+
+  private hasEnhancedBroadcastingStreamingInstance() {
+    return this.isEnhancedBroadcastingStreaming(this.contexts.enhancedBroadcasting.streaming);
+  }
+
+  private shouldStopStreamingOutputContext(contextName: TOutputContext) {
+    return shouldStopStreamingOutputContext(
+      contextName,
+      this.hasEnhancedBroadcastingStreamingInstance(),
+      display => this.displayNeedsNonEnhancedBroadcastingInstance(display),
+    );
+  }
+
+  private canDestroyDisplayOutputContext(contextName: TDisplayType) {
+    return canDestroyDisplayOutputContext(
+      contextName as TStreamingDisplay,
+      this.state.status[contextName],
+      this.hasEnhancedBroadcastingStreamingInstance(),
+      display => this.displayNeedsNonEnhancedBroadcastingInstance(display),
+    );
+  }
+
+  private shouldStopDisplayOutputContextBeforeDestroy(
+    contextName: TDisplayType,
+    contextType: keyof IOutputContext,
+  ) {
+    return shouldStopDisplayOutputContextBeforeDestroy(
+      contextName as TStreamingDisplay,
+      contextType,
+      this.state.status[contextName],
+      this.hasEnhancedBroadcastingStreamingInstance(),
+      display => this.displayNeedsNonEnhancedBroadcastingInstance(display),
+    );
   }
 
   private isEnhancedBroadcastingStreaming(
@@ -3981,6 +4306,8 @@ export class StreamingService
    * even if one fails. This prevents orphan contexts that can leave phantom processes or create errors on next startup.
    */
   async shutdown() {
+    const failures: string[] = [];
+
     // InitShutdownSequence is called before this method, so OBS outputs are
     // already being torn down. Skip .stop() calls and directly destroy factory
     // instances to avoid blocking on native calls that may never return.
@@ -3997,10 +4324,15 @@ export class StreamingService
           this.destroyFactoryInstance(type, instance);
         } catch (e: unknown) {
           console.error(`Error destroying ${type} for ${context} during shutdown:`, e);
+          failures.push(`${context}.${type}`);
         }
 
         this.contexts[context][type] = null;
       }
+    }
+
+    if (failures.length) {
+      throw new Error(`Failed to destroy output contexts during shutdown: ${failures.join(', ')}`);
     }
   }
 
@@ -4038,7 +4370,8 @@ export class StreamingService
       if (
         (contextName === 'horizontal' && skipHorizontal) ||
         this.contexts[contextName].streaming === undefined ||
-        this.contexts[contextName].streaming === null
+        this.contexts[contextName].streaming === null ||
+        !this.shouldStopStreamingOutputContext(contextName)
       ) {
         continue;
       }
@@ -4078,10 +4411,7 @@ export class StreamingService
     }
 
     // For the horizontal and vertical contexts, only destroy instances if all outputs are offline
-    const offline =
-      this.state.status[context].replayBuffer === EReplayBufferState.Offline &&
-      this.state.status[context].recording === ERecordingState.Offline &&
-      this.state.status[context].streaming === EStreamingState.Offline;
+    const offline = this.canDestroyDisplayOutputContext(context);
 
     if (offline || force) {
       await this.destroyOutputContextIfExists(context, 'replayBuffer');
@@ -4118,8 +4448,7 @@ export class StreamingService
       // Prevent errors by stopping an active context before destroying it
       if (
         this.isDisplayContext(contextName) &&
-        this.state.status[contextName][contextType] &&
-        this.state.status[contextName][contextType].toString() !== 'offline'
+        this.shouldStopDisplayOutputContextBeforeDestroy(contextName, contextType)
       ) {
         this.contexts[contextName][contextType].stop(true);
 

@@ -11,6 +11,7 @@ import { TDisplayType } from 'services/settings-v2';
 import { $t } from 'services/i18n';
 import { KickService, IKickStartStreamOptions } from './kick';
 import { PatreonService, IPatreonStartStreamOptions } from './patreon';
+import type { TStreamErrorType } from 'services/streaming/stream-error';
 
 export type Tag = string;
 export interface IGame {
@@ -192,7 +193,7 @@ export interface IPlatformService {
 
   fetchUserInfo: () => Promise<IUserInfo>;
 
-  putChannelInfo: (channelInfo: TStartStreamOptions) => Promise<void>;
+  putChannelInfo(channelInfo: TStartStreamOptions): Promise<void>;
 
   searchGames?: (searchString: string) => Promise<IGame[]>;
 
@@ -214,6 +215,8 @@ export interface IPlatformService {
   setupStreamShiftStream?: (options: IGoLiveSettings) => Promise<void>;
 
   postNotification?: (message: string) => void;
+
+  formatError?: (e: any, platform: TPlatform, errorType?: TStreamErrorType) => never;
 
   fetchNewToken: () => Promise<void>;
 
@@ -308,7 +311,6 @@ export const platformLabels = (platform: TPlatform | string) =>
     [EPlatform.Instagram]: $t('Instagram'),
     [EPlatform.Kick]: $t('Kick'),
     [EPlatform.Patreon]: $t('Patreon'),
-    dlive: 'dlive',
     nimotv: 'NimoTV',
   }[platform] || '');
 

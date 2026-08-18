@@ -51,14 +51,20 @@ export function SceneCollectionsSettings() {
     setBusy(true);
     setMessage('');
 
-    // TODO: Expose progress to the user
-    await OverlaysPersistenceService.actions.return.saveOverlay(filePath);
-    setBusy(false);
-    setMessage(
-      $t('Successfully saved %{filename}', {
-        filename: path.parse(filePath).base,
-      }),
-    );
+    try {
+      // TODO: Expose progress to the user
+      await OverlaysPersistenceService.actions.return.saveOverlay(filePath);
+      setMessage(
+        $t('Successfully saved %{filename}', {
+          filename: path.parse(filePath).base,
+        }),
+      );
+    } catch (e: unknown) {
+      console.error('Failed to export overlay', e);
+      setMessage($t('Failed to export overlay. Please choose a different location.'));
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function loadOverlay() {
@@ -151,7 +157,7 @@ export function SceneCollectionsSettings() {
           onChange={setCollection}
           options={collectionOptions}
         />
-        <DualOutputDeveloperSettings collection={collection} />
+        <DualOutputDeveloperSettings collectionId={collection} />
       </ObsSettingsSection>
     </>
   );

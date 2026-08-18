@@ -65,11 +65,18 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
   useEffect(() => {
     if (!broadcastId) return;
 
+    let isMounted = true;
+
     Services.YoutubeService.actions.return
       .fetchStartStreamOptionsForBroadcast(broadcastId)
       .then(newYtSettings => {
+        if (!isMounted) return;
         updateSettings(newYtSettings);
       });
+
+    return () => {
+      isMounted = false;
+    };
   }, [broadcastId]);
 
   function fieldIsDisabled(fieldName: keyof IYoutubeStartStreamOptions): boolean {

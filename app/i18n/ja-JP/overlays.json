@@ -3,12 +3,14 @@
   "Successfully converted %{filename}": "%{filename} が変換されました",
   "Successfully saved %{filename} to %{filepath}": "%{filename} が %{filepath} に保存されました",
   "Successfully loaded %{filename}.overlay": "%{filename}.オーバーレイが正常に読み込まれました",
+  "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
   "This is an experimental feature.  Use at your own risk.": "これは実験的な機能です。自己責任で使用してください。",
   "Export Overlay File": "オーバーレイ ファイルをエクスポート",
   "Import Overlay File": "オーバーレイ ファイルをインポート",
   "Import Widget File in Current Scene": "現在のシーンのウィジェットファイルをインポート",
   "The active scene collection is not a dual output scene collection.": "アクティブなシーンコレクションは Dual Output シーンコレクションではありません。",
   "Convert to Vanilla Scene": "Vanilla シーンに変換",
+  "Convert to Single Output": "Convert to Single Output",
   "Convert": "変換",
   "Convert and Export Overlay": "オーバーレイの変換とエクスポート",
   "Assign": "割り当てる",
@@ -25,5 +27,6 @@
   "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "以下で、アクティブなシーンコレクションのコピーを作成し、そのコピーをアクティブなコレクションとして設定したら、垂直方向のソースをすべて削除します。",
   "Show Components Library": "コンポーネントライブラリを表示",
   "Convert Dual Output Scene Collection": "Dual Outputシーンコレクションを変換",
-  "Repair Scene Collection": "シーンコレクションを修正"
+  "Repair Scene Collection": "シーンコレクションを修正",
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
 }

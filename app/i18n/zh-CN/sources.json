@@ -53,11 +53,9 @@
   "Display your channel's most recent events on stream.": "在直播中显示频道的最近事件。",
   "Redemptions": "兑换",
   "Tip Goal": "打赏目标",
-  "Set a goal for your viewers to help you reach.": "为观众设定一个目标，以帮助您实现目标。",
   "Set a subscriber goal for your viewers to help you reach.": "为观众设定一个订阅目标，让他们协助您实现。",
   "Set a bit goal for your viewers to help you reach.": "为观众设定一个小奇点目标，让他们协助您实现。",
   "Set a follower goal for your viewers to help you reach.": "为观众设定一个关注目标，让他们协助您实现。",
-  "Set a stars goal for your viewers to help you reach.": "为观众设定一个星星目标，让他们协助您实现。",
   "Set a charity donation goal for your viewers to help you reach.": "设定慈善捐赠目标，让观众助力实现。",
   "Set a super chat goal for your viewers to help you reach.": "为观众设定一个超级留言目标，让他们协助您实现。",
   "Facebook Supporters": "Facebook 支持者",
@@ -438,5 +436,6 @@
   "Health changes": "生命值变化",
   "Search...": "搜索...",
   "Virtual Cam": "虚拟摄像头",
-  "Virtual Cam Error": "虚拟摄像头错误"
+  "Virtual Cam Error": "虚拟摄像头错误",
+  "This widget is no longer supported and can no longer be configured. You can safely remove it from your scene.": "This widget is no longer supported and can no longer be configured. You can safely remove it from your scene."
 }
