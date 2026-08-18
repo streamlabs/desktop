@@ -459,9 +459,11 @@ module.exports = async (basePath: string) => {
       console.log('Error unregistering main process from crash handler');
     }
 
-    electron.app.on('window-all-closed', (e: Electron.Event) => {
-      e.preventDefault();
-
+    // Subscribing is what suppresses the default quit-on-last-window-closed.
+    // At runtime this event does pass an Event, but it's undocumented and absent
+    // from Electron's (doc-generated) types, and preventDefault() on it has no
+    // effect on quit behavior here -- verified empirically on Electron 32.
+    electron.app.on('window-all-closed', () => {
       // Wait a second for files to no longer be in use
       setTimeout(() => {
         console.log('Attempting to empty bundles directory');

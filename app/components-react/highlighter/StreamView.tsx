@@ -2,6 +2,7 @@ import { useVuex } from 'components-react/hooks';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Services } from 'components-react/service-provider';
 import styles from './StreamView.m.less';
+import { webUtils } from 'electron';
 import * as remote from '@electron/remote';
 import cx from 'classnames';
 import {
@@ -122,7 +123,8 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
     const files: string[] = [];
     let fi = e.dataTransfer.files.length;
     while (fi--) {
-      const file = e.dataTransfer.files.item(fi)?.path;
+      const item = e.dataTransfer.files.item(fi);
+      const file = item ? webUtils.getPathForFile(item) : '';
       if (file) files.push(file);
     }
 
