@@ -597,7 +597,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
       return 'YOUTUBE_ACCOUNT_FAILURE';
     }
 
-    return null;
+    return 'ACCOUNT_FAILURE';
   }
 
   /**

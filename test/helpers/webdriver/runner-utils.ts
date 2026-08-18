@@ -28,14 +28,13 @@ export interface IAccountFailures {
 
 /**
  * Reasons a test failed because of the account it was given, rather than because of a bug.
- * HEROKU_ANALYTICS_SEND_FAILED is job-wide and written by the runner, not by a test.
  */
 export type TAccountFailure =
   | 'NO_ACCOUNT_AVAILABLE'
   | 'YOUTUBE_STREAMING_DISABLED'
   | 'YOUTUBE_ACCOUNT_RATE_LIMITED'
   | 'YOUTUBE_ACCOUNT_FAILURE'
-  | 'HEROKU_ANALYTICS_SEND_FAILED';
+  | 'ACCOUNT_FAILURE';
 
 const {
   BUILD_BUILDID,

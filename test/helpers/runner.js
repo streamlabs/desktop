@@ -26,15 +26,6 @@ const {
   SLOBS_TEST_RUN_CHUNK,
 } = process.env;
 
-// Order the account failure errors from highest to lowest severity
-const ACCOUNT_FAILURE_SEVERITY = [
-  'NO_ACCOUNT_AVAILABLE',
-  'HEROKU_ANALYTICS_SEND_FAILED',
-  'YOUTUBE_ACCOUNT_FAILURE',
-  'YOUTUBE_ACCOUNT_RATE_LIMITED',
-  'YOUTUBE_STREAMING_DISABLED',
-];
-
 let retryingFailed = false;
 
 const RUN_TESTS_CMD = !args.length ? `yarn test --timeout=${TIMEOUT}m ` : args.join(' ') + ' ';
@@ -124,19 +115,6 @@ function readAccountFailures() {
   return { tests: failures.tests || {}, job: failures.job || [] };
 }
 
-/**
- * Roll the per-test and job-wide reasons up into a single reason for the job.
- * A pool with no free accounts affects the whole run, so it wins over an account
- * that just couldn't go live on YouTube.
- */
-function getJobAccountFailure(testsToSend, jobReasons) {
-  const reasons = jobReasons.concat(
-    testsToSend.map(test => test.accountFailure).filter(reason => reason),
-  );
-  if (!reasons.length) return null;
-  return ACCOUNT_FAILURE_SEVERITY.find(reason => reasons.includes(reason)) || reasons[0];
-}
-
 async function sendJobToAnalytics(failedTests) {
   if (!BUILD_BUILDID) return; // do not send analytics for local builds
 
@@ -145,7 +123,10 @@ async function sendJobToAnalytics(failedTests) {
   const testsToSend = failedTests.map(testName => ({
     name: testName,
     retrySucceeded: !failedAfterRetryTests.includes(testName),
-    accountFailure: accountFailures.tests[testName] || null,
+    accountFailure:
+      !failedAfterRetryTests.includes(testName) && accountFailures.tests[testName]
+        ? accountFailures.tests[testName]
+        : undefined,
   }));
   log('Sending analytics..');
   const body = {
@@ -159,14 +140,12 @@ async function sendJobToAnalytics(failedTests) {
     branch: BUILD_SOURCEBRANCH,
     slice: SLOBS_TEST_RUN_CHUNK,
     stats: readTestStats(),
-    accountFailure: getJobAccountFailure(testsToSend, accountFailures.job),
   };
   log(body);
   try {
     await requestUtilityServer('job', 'post', body);
   } catch (e) {
     console.error('failed to send analytics', e);
-    saveJobAccountFailure('HEROKU_ANALYTICS_SEND_FAILED');
   }
 }
 
