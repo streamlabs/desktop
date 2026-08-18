@@ -219,17 +219,24 @@ export function killChromedriverOnPort(port: number) {
 
 export async function waitForElectronInstancesExist() {
   const interval = 1000;
+  // Deliberately short. A stalled shutdown is unbounded rather than slow -- the
+  // worker can block in a synchronous native OBS call, and the main-process
+  // watchdog in shutdown-coordinator.js cannot fire while main is blocked too.
+  // Raising this budget only delays the same failure, so keep it small enough
+  // that a wedged app surfaces quickly. Elapsed time is logged below to make
+  // real teardown durations visible if this ever needs retuning.
   const timeout = 10000;
 
-  let timeleft = timeout;
+  const startedAt = Date.now();
   let tasks: any[] = await getElectronInstances();
 
-  while (tasks.length > 0 && timeleft > 0) {
+  while (tasks.length > 0 && Date.now() - startedAt < timeout) {
     await new Promise(resolve => setTimeout(resolve, interval));
-    timeleft -= interval;
     tasks = await getElectronInstances();
   }
-   if (tasks.length > 0) {
-     throw new Error('Timed out waiting for Electron instances to exit');
-   }
+
+  const elapsed = Date.now() - startedAt;
+  if (tasks.length > 0) {
+    throw new Error(`Timed out waiting for Electron instances to exit after ${elapsed}ms`);
+  }
 }
