@@ -4,6 +4,7 @@ import { SourcesService } from 'services/sources';
 import { StreamingService } from 'services/streaming';
 import { WebsocketService } from 'services/websocket';
 import { VisionService, VisionProcess } from 'services/vision';
+import { isVisionSupported } from 'services/vision/supported';
 import { AutomationsService } from './automations-service';
 import { StreamAvatarApiService } from './stream-avatar-api-service';
 import { UsageStatisticsService } from 'services/usage-statistics';
@@ -55,6 +56,7 @@ export class AutomationsEngineService extends Service {
   init() {
     // Engine runs only in the worker window to prevent double-firing.
     if (!Utils.isWorkerWindow()) return;
+    if (!isVisionSupported()) return;
 
     this.streamAvatarApiService
       .getInstructions()

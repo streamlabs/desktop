@@ -15,11 +15,10 @@ import { InitAfter, Inject, Service } from 'services';
 import { RealmObject } from 'services/realm';
 import { ISource, TSourceType } from 'services/sources';
 import { GAME_NAMES } from 'services/stream-avatar/engine/conditions';
-import Utils from 'services/utils';
 import { WidgetType } from 'services/widgets';
-import { getOS, OS } from 'util/operating-systems';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import uuid from 'uuid/v4';
+import { isVisionSupported } from './supported';
 import { VisionRunner, VisionRunnerStartOptions } from './vision-runner';
 import { VisionUpdater } from './vision-updater';
 
@@ -133,7 +132,7 @@ export class VisionService extends Service {
   state = VisionState.inject();
 
   isSupportedForOs() {
-    return getOS() === OS.Windows || (getOS() === OS.Mac && Utils.isDevMode());
+    return isVisionSupported();
   }
 
   init() {

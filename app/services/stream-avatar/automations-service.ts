@@ -7,6 +7,7 @@ import { UserService } from 'services/user';
 import { WindowsService } from 'services/windows';
 import { $t } from 'services/i18n';
 import Utils from 'services/utils';
+import { isVisionSupported } from 'services/vision/supported';
 import type { TAutomationExport } from './engine/automations';
 
 interface IAutomationsState {
@@ -40,6 +41,9 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
   init() {
     console.log('[AutomationsService] init() called. isWorkerWindow:', Utils.isWorkerWindow());
     if (!Utils.isWorkerWindow()) return;
+    // Automations are driven entirely by vision events; without Vision they
+    // could be created but never fire.
+    if (!isVisionSupported()) return;
     console.log('[AutomationsService] init() isLoggedIn:', this.userService.isLoggedIn);
     if (this.userService.isLoggedIn) {
       this.fetchAll();
