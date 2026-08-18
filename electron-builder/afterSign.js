@@ -62,7 +62,15 @@ async function afterPackWin() {
   // The manifest is the exact list electron-builder asked us to sign, so verify
   // each entry rather than trust the batch. Without this, a partial failure ships
   // unsigned binaries in an otherwise successful build.
-  const files = fs.readFileSync(signingPath, 'utf8').split('\n').filter(Boolean);
+  // afterPack creates this manifest and the sign hook appends to it with \n, but logisign
+  // reads and could rewrite it in between, so don't assume we still own its line endings.
+  // A stray \r would make every path a "file not found" — the same uniform, misleading
+  // failure this check exists to distinguish from a real signing problem.
+  const files = fs
+    .readFileSync(signingPath, 'utf8')
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean);
   const unsigned = [];
 
   for (const file of files) {
