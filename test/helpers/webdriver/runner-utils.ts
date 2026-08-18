@@ -140,6 +140,11 @@ function readFailureReason(): IFailureReasons {
  * @param reason - The failure reason
  */
 export function saveFailureReasonToFile(testName: string, reason: TFailureReason) {
+  if (!reason) {
+    console.log('Expected failure reason but none provided for test', testName);
+    return;
+  }
+
   const failures = readFailureReason();
   failures.tests[testName] = reason;
   fs.writeFileSync(FAILURE_REASONS_PATH, JSON.stringify(failures));

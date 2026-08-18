@@ -105,13 +105,13 @@ function readTestStats() {
  * @returns - An object with the test failure details
  */
 function readFailureReason() {
-  let failures = {};
   try {
-    failures = JSON.parse(fs.readFileSync(failureReasonsFile, 'utf8'));
+    const failures = JSON.parse(fs.readFileSync(failureReasonsFile, 'utf8'));
+    return { tests: failures?.tests || {}, job: failures?.job || [] };
   } catch (e) {
-    failures = {};
+    console.error('Failed to read the failure reasons file', e);
+    return { tests: {}, job: [] };
   }
-  return { tests: failures.tests || {}, job: failures.job || [] };
 }
 
 async function sendJobToAnalytics(failedTests) {

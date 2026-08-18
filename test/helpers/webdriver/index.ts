@@ -619,7 +619,9 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     return null;
   }
 
-  function detectAccountFailure(reason: TFailureReason): boolean {
+  function detectAccountFailure(reason?: TFailureReason): boolean {
+    if (!reason) return false;
+
     return (
       reason === 'NO_ACCOUNT_AVAILABLE' ||
       reason === 'YOUTUBE_STREAMING_DISABLED' ||
