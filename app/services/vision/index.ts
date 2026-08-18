@@ -14,6 +14,7 @@ import { Subject } from 'rxjs';
 import { InitAfter, Inject, Service } from 'services';
 import { RealmObject } from 'services/realm';
 import { ISource, TSourceType } from 'services/sources';
+import { GAME_NAMES } from 'services/stream-avatar/engine/conditions';
 import Utils from 'services/utils';
 import { WidgetType } from 'services/widgets';
 import { getOS, OS } from 'util/operating-systems';
@@ -93,21 +94,9 @@ export class VisionState extends RealmObject {
       availableGames: {
         type: 'dictionary',
         objectType: 'string',
-        default: {
-          apex_legends: 'Apex Legends',
-          battlefield_6: 'Battlefield 6',
-          black_ops_6: 'Call of Duty: Black Ops 6',
-          counter_strike_2: 'Counter-Strike 2',
-          fortnite: 'Fortnite',
-          league_of_legends: 'League of Legends',
-          marvel_rivals: 'Marvel Rivals',
-          overwatch_2: 'Overwatch 2',
-          pubg: 'PUBG: Battlegrounds',
-          rainbow_six_siege: 'Rainbow Six Siege',
-          valorant: 'Valorant',
-          war_thunder: 'War Thunder',
-          warzone: 'Call of Duty: Warzone',
-        },
+        // Sourced from the condition registry so it can never drift behind the
+        // set of games automations actually support.
+        default: GAME_NAMES,
       },
     },
   };

@@ -29,6 +29,10 @@ interface VisionEventPayload {
   game: string;
 }
 
+// Continuous state feeds, not moments — no condition listens for these, and
+// they fire on every frame they change.
+const STATE_ONLY_EVENTS = new Set(['health', 'shield', 'full_health']);
+
 @InitAfter('VisionService')
 export class AutomationsEngineService extends Service {
   @Inject() private scenesService: ScenesService;
@@ -184,19 +188,18 @@ export class AutomationsEngineService extends Service {
     const next: Partial<GameState> = {};
 
     for (const { name, data } of payload.events) {
+      // 1. Fold the event into game state.
       switch (name) {
         case 'game_start':
         case 'round_start':
           next.eliminations = 0;
           next.teamScore = 0;
           next.opponentScore = 0;
-          newEvents.push('game_start');
           break;
 
         case 'round_end':
         case 'game_end':
           Object.assign(next, defaultGameState);
-          newEvents.push('game_end');
           break;
 
         case 'health':
@@ -209,17 +212,14 @@ export class AutomationsEngineService extends Service {
 
         case 'elimination':
           next.eliminations = (this.gameState.eliminations || 0) + 1;
-          newEvents.push('elimination');
           break;
 
         case 'team_scored':
           next.teamScore = data.value;
-          newEvents.push('team_scored');
           break;
 
         case 'opponent_scored':
           next.opponentScore = data.value;
-          newEvents.push('opponent_scored');
           break;
 
         case 'low_health':
@@ -229,11 +229,10 @@ export class AutomationsEngineService extends Service {
         case 'full_health':
           next.health = 100;
           break;
-
-        default:
-          newEvents.push(name);
-          break;
       }
+
+      // 2. Forward the raw name so `onEvent(name)` conditions can match it.
+      if (!STATE_ONLY_EVENTS.has(name)) newEvents.push(name);
     }
 
     this.gameState = { ...this.gameState, ...next, pendingEvents: new Set(newEvents) };

@@ -128,6 +128,7 @@ export type ConditionPropsMap = {
   'warzone.players_remaining': { players_remaining?: [number, number] };
 
   // Arc Raiders
+  'arc_raiders.elimination': undefined;
   'arc_raiders.game_start': undefined;
   'arc_raiders.game_end': undefined;
   'arc_raiders.victory': undefined;
@@ -295,6 +296,163 @@ export type ConditionPropsMap = {
   'enshrouded.level_up': undefined;
   'enshrouded.soul_discovered': undefined;
   'enshrouded.quest_update': undefined;
+
+  // 7 Days to Die
+  '7_days_to_die.player_eliminated': undefined;
+  '7_days_to_die.low_health': undefined;
+  '7_days_to_die.blood_moon_start': undefined;
+  '7_days_to_die.blood_moon_peak': undefined;
+  '7_days_to_die.blood_moon_end': undefined;
+
+  // Arena Breakout: Infinite
+  'arena_breakout_infinite.game_start': undefined;
+  'arena_breakout_infinite.game_end': undefined;
+  'arena_breakout_infinite.victory': undefined;
+  'arena_breakout_infinite.defeat': undefined;
+  'arena_breakout_infinite.player_eliminated': undefined;
+  'arena_breakout_infinite.enemy_spotted': undefined;
+  'arena_breakout_infinite.enemy_detected': undefined;
+
+  // Bloodborne
+  'bloodborne.boss_killed': undefined;
+  'bloodborne.player_eliminated': undefined;
+
+  // Dark Souls II
+  'dark_souls_2.boss_killed': undefined;
+  'dark_souls_2.player_eliminated': undefined;
+
+  // Dark Souls III
+  'dark_souls_3.boss_killed': undefined;
+  'dark_souls_3.player_eliminated': undefined;
+
+  // Dark Souls: Remastered
+  'dark_souls_remastered.boss_killed': undefined;
+  'dark_souls_remastered.player_eliminated': undefined;
+
+  // DayZ
+  'dayz.player_eliminated': undefined;
+
+  // Delta Force
+  'delta_force.game_end': undefined;
+  'delta_force.victory': undefined;
+  'delta_force.defeat': undefined;
+  'delta_force.elimination': undefined;
+  'delta_force.assist': undefined;
+  'delta_force.revive': undefined;
+  'delta_force.capturing_objective': undefined;
+  'delta_force.captured_objective': undefined;
+  'delta_force.player_eliminated': undefined;
+
+  // Elden Ring
+  'elden_ring.boss_killed': undefined;
+  'elden_ring.player_eliminated': undefined;
+
+  // Escape from Tarkov
+  'escape_from_tarkov.game_start': undefined;
+  'escape_from_tarkov.game_end': undefined;
+  'escape_from_tarkov.victory': undefined;
+  'escape_from_tarkov.defeat': undefined;
+  'escape_from_tarkov.player_eliminated': undefined;
+  'escape_from_tarkov.enemy_spotted': undefined;
+  'escape_from_tarkov.enemy_detected': undefined;
+  'escape_from_tarkov.item_found': undefined;
+  'escape_from_tarkov.interesting_moment': undefined;
+
+  // Halo Infinite
+  'halo_infinite.game_start': undefined;
+  'halo_infinite.game_end': undefined;
+  'halo_infinite.victory': undefined;
+  'halo_infinite.defeat': undefined;
+  'halo_infinite.elimination': undefined;
+  'halo_infinite.assist': undefined;
+  'halo_infinite.captured_objective': undefined;
+  'halo_infinite.player_eliminated': undefined;
+
+  // Helldivers 2
+  'helldivers_2.game_end': undefined;
+  'helldivers_2.victory': undefined;
+  'helldivers_2.defeat': undefined;
+  'helldivers_2.player_eliminated': undefined;
+  'helldivers_2.objective_spawned': undefined;
+  'helldivers_2.shuttle_landing': undefined;
+  'helldivers_2.interesting_moment': undefined;
+
+  // Heroes of the Storm
+  'heroes_of_the_storm.game_start': undefined;
+  'heroes_of_the_storm.game_end': undefined;
+  'heroes_of_the_storm.victory': undefined;
+  'heroes_of_the_storm.defeat': undefined;
+  'heroes_of_the_storm.elimination': undefined;
+  'heroes_of_the_storm.player_eliminated': undefined;
+
+  // Hunt: Showdown 1896
+  'hunt_showdown_1896.game_start': undefined;
+  'hunt_showdown_1896.game_end': undefined;
+  'hunt_showdown_1896.victory': undefined;
+  'hunt_showdown_1896.elimination': undefined;
+  'hunt_showdown_1896.player_eliminated': undefined;
+  'hunt_showdown_1896.objective_spawned': undefined;
+  'hunt_showdown_1896.bounty_acquired': undefined;
+  'hunt_showdown_1896.interesting_moment': undefined;
+
+  // Left 4 Dead 2
+  'left_4_dead_2.elimination': undefined;
+  'left_4_dead_2.player_eliminated': undefined;
+  'left_4_dead_2.healing': undefined;
+  'left_4_dead_2.interesting_moment': undefined;
+
+  // Madden NFL 27
+  'madden_nfl_27.game_start': undefined;
+  'madden_nfl_27.game_end': undefined;
+  'madden_nfl_27.goal': undefined;
+  'madden_nfl_27.touchdown': undefined;
+  'madden_nfl_27.field_goal': undefined;
+  'madden_nfl_27.halftime': undefined;
+  'madden_nfl_27.final_score': undefined;
+
+  // Mortal Shell 2
+  'mortal_shell_2.boss_killed': undefined;
+  'mortal_shell_2.item_found': undefined;
+  'mortal_shell_2.player_eliminated': undefined;
+
+  // Palworld
+  'palworld.boss_killed': undefined;
+  'palworld.new_pal_captured': undefined;
+  'palworld.player_eliminated': undefined;
+
+  // Rust
+  'rust.player_knocked': undefined;
+  'rust.player_eliminated': undefined;
+  'rust.interesting_moment': undefined;
+
+  // Sekiro: Shadows Die Twice
+  'sekiro_shadows_die_twice.boss_killed': undefined;
+  'sekiro_shadows_die_twice.player_eliminated': undefined;
+
+  // Teamfight Tactics
+  'teamfight_tactics.game_start': undefined;
+  'teamfight_tactics.game_end': undefined;
+  'teamfight_tactics.victory': undefined;
+  'teamfight_tactics.defeat': undefined;
+  'teamfight_tactics.interesting_moment': undefined;
+
+  // Valheim
+  'valheim.advancement_made': undefined;
+  'valheim.boss_spawned': undefined;
+  'valheim.boss_killed': undefined;
+  'valheim.player_eliminated': undefined;
+  'valheim.hunt_start': undefined;
+  'valheim.hunt_end': undefined;
+
+  // World of Warcraft: Solo Shuffle
+  'world_of_warcraft_ss.game_start': undefined;
+  'world_of_warcraft_ss.game_end': undefined;
+  'world_of_warcraft_ss.round_start': undefined;
+  'world_of_warcraft_ss.round_won': undefined;
+  'world_of_warcraft_ss.round_lost': undefined;
+  'world_of_warcraft_ss.victory': undefined;
+  'world_of_warcraft_ss.defeat': undefined;
+  'world_of_warcraft_ss.draw': undefined;
 };
 
 export type ConditionType = keyof ConditionPropsMap;
@@ -351,7 +509,7 @@ const perGameConditions = () =>
     'pubg.players_remaining': playersRemaining(100),
 
     // Valorant
-    'valorant.round_started': { label: $t('Round Started'), evaluate: onEvent('game_start') },
+    'valorant.round_started': { label: $t('Round Started'), evaluate: onEvent('round_start') },
     'valorant.low_health': { label: $t('Low Health'), evaluate: lowHealth },
     'valorant.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
     'valorant.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
@@ -362,7 +520,7 @@ const perGameConditions = () =>
     // Counter-Strike 2
     'counter_strike_2.round_started': {
       label: $t('Round Started'),
-      evaluate: onEvent('game_start'),
+      evaluate: onEvent('round_start'),
     },
     'counter_strike_2.low_health': { label: $t('Low Health'), evaluate: lowHealth },
     'counter_strike_2.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
@@ -398,6 +556,7 @@ const perGameConditions = () =>
     'warzone.players_remaining': playersRemaining(150),
 
     // Arc Raiders
+    'arc_raiders.elimination': { label: $t('Enemy Eliminated'), evaluate: onEvent('elimination') },
     'arc_raiders.game_start': { label: $t('Game Started'), evaluate: onEvent('game_start') },
     'arc_raiders.game_end': { label: $t('Game Ended'), evaluate: onEvent('game_end') },
     'arc_raiders.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
@@ -594,8 +753,8 @@ const perGameConditions = () =>
     },
 
     // Overwatch 2
-    'overwatch_2.round_start': { label: $t('Round Started'), evaluate: onEvent('game_start') },
-    'overwatch_2.round_end': { label: $t('Round Ended'), evaluate: onEvent('game_end') },
+    'overwatch_2.round_start': { label: $t('Round Started'), evaluate: onEvent('round_start') },
+    'overwatch_2.round_end': { label: $t('Round Ended'), evaluate: onEvent('round_end') },
     'overwatch_2.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
     'overwatch_2.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
     'overwatch_2.elimination': { label: $t('Elimination'), evaluate: onEvent('elimination') },
@@ -604,13 +763,13 @@ const perGameConditions = () =>
     // Rainbow Six Siege
     'rainbow_six_siege.round_start': {
       label: $t('Round Started (Preparation Phase)'),
-      evaluate: onEvent('game_start'),
+      evaluate: onEvent('round_start'),
     },
     'rainbow_six_siege.action_phase': {
       label: $t('Action Phase Started'),
       evaluate: onEvent('action_phase'),
     },
-    'rainbow_six_siege.round_end': { label: $t('Round Ended'), evaluate: onEvent('game_end') },
+    'rainbow_six_siege.round_end': { label: $t('Round Ended'), evaluate: onEvent('round_end') },
     'rainbow_six_siege.victory': { label: $t('Round Won'), evaluate: onEvent('victory') },
     'rainbow_six_siege.defeat': { label: $t('Round Lost'), evaluate: onEvent('defeat') },
     'rainbow_six_siege.elimination': {
@@ -682,6 +841,286 @@ const perGameConditions = () =>
       evaluate: onEvent('soul_discovered'),
     },
     'enshrouded.quest_update': { label: $t('Quest Updated'), evaluate: onEvent('quest_update') },
+
+    // 7 Days to Die
+    '7_days_to_die.player_eliminated': { label: $t('Player Died'), evaluate: onEvent('death') },
+    '7_days_to_die.low_health': { label: $t('Low Health'), evaluate: onEvent('low_health') },
+    '7_days_to_die.blood_moon_start': {
+      label: $t('Blood Moon Started'),
+      evaluate: onEvent('blood_moon_start'),
+    },
+    '7_days_to_die.blood_moon_peak': {
+      label: $t('Blood Moon Peak'),
+      evaluate: onEvent('blood_moon_peak'),
+    },
+    '7_days_to_die.blood_moon_end': {
+      label: $t('Blood Moon Ended'),
+      evaluate: onEvent('blood_moon_end'),
+    },
+
+    // Arena Breakout: Infinite
+    'arena_breakout_infinite.game_start': {
+      label: $t('Raid Started'),
+      evaluate: onEvent('game_start'),
+    },
+    'arena_breakout_infinite.game_end': { label: $t('Raid Ended'), evaluate: onEvent('game_end') },
+    'arena_breakout_infinite.victory': {
+      label: $t('Extracted (Victory)'),
+      evaluate: onEvent('victory'),
+    },
+    'arena_breakout_infinite.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'arena_breakout_infinite.player_eliminated': {
+      label: $t('Player Eliminated'),
+      evaluate: onEvent('death'),
+    },
+    'arena_breakout_infinite.enemy_spotted': {
+      label: $t('Enemy Spotted'),
+      evaluate: onEvent('enemy_spotted'),
+    },
+    'arena_breakout_infinite.enemy_detected': {
+      label: $t('Enemy Detected'),
+      evaluate: onEvent('enemy_detected'),
+    },
+
+    // Bloodborne
+    'bloodborne.boss_killed': { label: $t('Boss Killed'), evaluate: onEvent('boss_killed') },
+    'bloodborne.player_eliminated': { label: $t('Player Died'), evaluate: onEvent('death') },
+
+    // Dark Souls II
+    'dark_souls_2.boss_killed': { label: $t('Boss Killed'), evaluate: onEvent('boss_killed') },
+    'dark_souls_2.player_eliminated': { label: $t('Player Died'), evaluate: onEvent('death') },
+
+    // Dark Souls III
+    'dark_souls_3.boss_killed': { label: $t('Boss Killed'), evaluate: onEvent('boss_killed') },
+    'dark_souls_3.player_eliminated': { label: $t('Player Died'), evaluate: onEvent('death') },
+
+    // Dark Souls: Remastered
+    'dark_souls_remastered.boss_killed': {
+      label: $t('Boss Killed'),
+      evaluate: onEvent('boss_killed'),
+    },
+    'dark_souls_remastered.player_eliminated': {
+      label: $t('Player Died'),
+      evaluate: onEvent('death'),
+    },
+
+    // DayZ
+    'dayz.player_eliminated': { label: $t('Player Died'), evaluate: onEvent('death') },
+
+    // Delta Force
+    'delta_force.game_end': { label: $t('Match Ended'), evaluate: onEvent('game_end') },
+    'delta_force.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'delta_force.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'delta_force.elimination': { label: $t('Enemy Eliminated'), evaluate: onEvent('elimination') },
+    'delta_force.assist': { label: $t('Assist'), evaluate: onEvent('assist') },
+    'delta_force.revive': { label: $t('Revive'), evaluate: onEvent('revive') },
+    'delta_force.capturing_objective': {
+      label: $t('Capturing Objective'),
+      evaluate: onEvent('capturing_objective'),
+    },
+    'delta_force.captured_objective': {
+      label: $t('Objective Captured'),
+      evaluate: onEvent('captured_objective'),
+    },
+    'delta_force.player_eliminated': { label: $t('Player Eliminated'), evaluate: onEvent('death') },
+
+    // Elden Ring
+    'elden_ring.boss_killed': { label: $t('Boss Killed'), evaluate: onEvent('boss_killed') },
+    'elden_ring.player_eliminated': { label: $t('Player Died'), evaluate: onEvent('death') },
+
+    // Escape from Tarkov
+    'escape_from_tarkov.game_start': { label: $t('Raid Started'), evaluate: onEvent('game_start') },
+    'escape_from_tarkov.game_end': { label: $t('Raid Ended'), evaluate: onEvent('game_end') },
+    'escape_from_tarkov.victory': {
+      label: $t('Extracted (Victory)'),
+      evaluate: onEvent('victory'),
+    },
+    'escape_from_tarkov.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'escape_from_tarkov.player_eliminated': {
+      label: $t('Player Eliminated'),
+      evaluate: onEvent('death'),
+    },
+    'escape_from_tarkov.enemy_spotted': {
+      label: $t('Enemy Spotted'),
+      evaluate: onEvent('enemy_spotted'),
+    },
+    'escape_from_tarkov.enemy_detected': {
+      label: $t('Enemy Detected'),
+      evaluate: onEvent('enemy_detected'),
+    },
+    'escape_from_tarkov.item_found': { label: $t('Item Found'), evaluate: onEvent('item_found') },
+    'escape_from_tarkov.interesting_moment': {
+      label: $t('Interesting Moment'),
+      evaluate: onEvent('interesting_moment'),
+    },
+
+    // Halo Infinite
+    'halo_infinite.game_start': { label: $t('Match Started'), evaluate: onEvent('game_start') },
+    'halo_infinite.game_end': { label: $t('Match Ended'), evaluate: onEvent('game_end') },
+    'halo_infinite.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'halo_infinite.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'halo_infinite.elimination': {
+      label: $t('Enemy Eliminated'),
+      evaluate: onEvent('elimination'),
+    },
+    'halo_infinite.assist': { label: $t('Assist'), evaluate: onEvent('assist') },
+    'halo_infinite.captured_objective': {
+      label: $t('Objective Captured'),
+      evaluate: onEvent('captured_objective'),
+    },
+    'halo_infinite.player_eliminated': {
+      label: $t('Player Eliminated'),
+      evaluate: onEvent('death'),
+    },
+
+    // Helldivers 2
+    'helldivers_2.game_end': { label: $t('Mission Ended'), evaluate: onEvent('game_end') },
+    'helldivers_2.victory': { label: $t('Mission Success'), evaluate: onEvent('victory') },
+    'helldivers_2.defeat': { label: $t('Mission Failed'), evaluate: onEvent('defeat') },
+    'helldivers_2.player_eliminated': { label: $t('Player Died'), evaluate: onEvent('death') },
+    'helldivers_2.objective_spawned': {
+      label: $t('Objective Spawned'),
+      evaluate: onEvent('objective_spawned'),
+    },
+    'helldivers_2.shuttle_landing': {
+      label: $t('Shuttle Landing'),
+      evaluate: onEvent('shuttle_landing'),
+    },
+    'helldivers_2.interesting_moment': {
+      label: $t('Interesting Moment'),
+      evaluate: onEvent('interesting_moment'),
+    },
+
+    // Heroes of the Storm
+    'heroes_of_the_storm.game_start': {
+      label: $t('Match Started'),
+      evaluate: onEvent('game_start'),
+    },
+    'heroes_of_the_storm.game_end': { label: $t('Match Ended'), evaluate: onEvent('game_end') },
+    'heroes_of_the_storm.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'heroes_of_the_storm.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'heroes_of_the_storm.elimination': { label: $t('Hero Kill'), evaluate: onEvent('elimination') },
+    'heroes_of_the_storm.player_eliminated': {
+      label: $t('Player Died'),
+      evaluate: onEvent('death'),
+    },
+
+    // Hunt: Showdown 1896
+    'hunt_showdown_1896.game_start': { label: $t('Hunt Started'), evaluate: onEvent('game_start') },
+    'hunt_showdown_1896.game_end': { label: $t('Hunt Ended'), evaluate: onEvent('game_end') },
+    'hunt_showdown_1896.victory': {
+      label: $t('Extracted (Victory)'),
+      evaluate: onEvent('victory'),
+    },
+    'hunt_showdown_1896.elimination': {
+      label: $t('Enemy Eliminated'),
+      evaluate: onEvent('elimination'),
+    },
+    'hunt_showdown_1896.player_eliminated': {
+      label: $t('Player Died'),
+      evaluate: onEvent('death'),
+    },
+    'hunt_showdown_1896.objective_spawned': {
+      label: $t('Objective Spawned'),
+      evaluate: onEvent('objective_spawned'),
+    },
+    'hunt_showdown_1896.bounty_acquired': {
+      label: $t('Bounty Acquired'),
+      evaluate: onEvent('bounty_acquired'),
+    },
+    'hunt_showdown_1896.interesting_moment': {
+      label: $t('Interesting Moment'),
+      evaluate: onEvent('interesting_moment'),
+    },
+
+    // Left 4 Dead 2
+    'left_4_dead_2.elimination': {
+      label: $t('Special Infected Killed'),
+      evaluate: onEvent('elimination'),
+    },
+    'left_4_dead_2.player_eliminated': { label: $t('Player Died'), evaluate: onEvent('death') },
+    'left_4_dead_2.healing': { label: $t('Healing'), evaluate: onEvent('healing') },
+    'left_4_dead_2.interesting_moment': {
+      label: $t('Interesting Moment'),
+      evaluate: onEvent('interesting_moment'),
+    },
+
+    // Madden NFL 27
+    'madden_nfl_27.game_start': { label: $t('Game Started'), evaluate: onEvent('game_start') },
+    'madden_nfl_27.game_end': { label: $t('Game Ended'), evaluate: onEvent('game_end') },
+    'madden_nfl_27.goal': { label: $t('Score Changed'), evaluate: onEvent('goal') },
+    'madden_nfl_27.touchdown': { label: $t('Touchdown'), evaluate: onEvent('touchdown') },
+    'madden_nfl_27.field_goal': { label: $t('Field Goal'), evaluate: onEvent('field_goal') },
+    'madden_nfl_27.halftime': { label: $t('Halftime'), evaluate: onEvent('halftime') },
+    'madden_nfl_27.final_score': { label: $t('Final Score'), evaluate: onEvent('final_score') },
+
+    // Mortal Shell 2
+    'mortal_shell_2.boss_killed': { label: $t('Boss Killed'), evaluate: onEvent('boss_killed') },
+    'mortal_shell_2.item_found': { label: $t('Item Found'), evaluate: onEvent('item_found') },
+    'mortal_shell_2.player_eliminated': { label: $t('Player Died'), evaluate: onEvent('death') },
+
+    // Palworld
+    'palworld.boss_killed': { label: $t('Boss Killed'), evaluate: onEvent('boss_killed') },
+    'palworld.new_pal_captured': {
+      label: $t('New Pal Captured'),
+      evaluate: onEvent('new_pal_captured'),
+    },
+    'palworld.player_eliminated': { label: $t('Player Died'), evaluate: onEvent('death') },
+
+    // Rust
+    'rust.player_knocked': { label: $t('Player Knocked'), evaluate: onEvent('player_knocked') },
+    'rust.player_eliminated': { label: $t('Player Died'), evaluate: onEvent('death') },
+    'rust.interesting_moment': {
+      label: $t('Interesting Moment'),
+      evaluate: onEvent('interesting_moment'),
+    },
+
+    // Sekiro: Shadows Die Twice
+    'sekiro_shadows_die_twice.boss_killed': {
+      label: $t('Boss Killed'),
+      evaluate: onEvent('boss_killed'),
+    },
+    'sekiro_shadows_die_twice.player_eliminated': {
+      label: $t('Player Died'),
+      evaluate: onEvent('death'),
+    },
+
+    // Teamfight Tactics
+    'teamfight_tactics.game_start': { label: $t('Match Started'), evaluate: onEvent('game_start') },
+    'teamfight_tactics.game_end': { label: $t('Match Ended'), evaluate: onEvent('game_end') },
+    'teamfight_tactics.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'teamfight_tactics.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'teamfight_tactics.interesting_moment': {
+      label: $t('Interesting Moment'),
+      evaluate: onEvent('interesting_moment'),
+    },
+
+    // Valheim
+    'valheim.advancement_made': {
+      label: $t('Advancement Made'),
+      evaluate: onEvent('advancement_made'),
+    },
+    'valheim.boss_spawned': { label: $t('Boss Spawned'), evaluate: onEvent('boss_spawned') },
+    'valheim.boss_killed': { label: $t('Boss Killed'), evaluate: onEvent('boss_killed') },
+    'valheim.player_eliminated': { label: $t('Player Died'), evaluate: onEvent('death') },
+    'valheim.hunt_start': { label: $t('Hunt Started'), evaluate: onEvent('hunt_start') },
+    'valheim.hunt_end': { label: $t('Hunt Ended'), evaluate: onEvent('hunt_end') },
+
+    // World of Warcraft: Solo Shuffle
+    'world_of_warcraft_ss.game_start': {
+      label: $t('Match Started'),
+      evaluate: onEvent('game_start'),
+    },
+    'world_of_warcraft_ss.game_end': { label: $t('Match Ended'), evaluate: onEvent('game_end') },
+    'world_of_warcraft_ss.round_start': {
+      label: $t('Round Started'),
+      evaluate: onEvent('round_start'),
+    },
+    'world_of_warcraft_ss.round_won': { label: $t('Round Won'), evaluate: onEvent('round_won') },
+    'world_of_warcraft_ss.round_lost': { label: $t('Round Lost'), evaluate: onEvent('round_lost') },
+    'world_of_warcraft_ss.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'world_of_warcraft_ss.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'world_of_warcraft_ss.draw': { label: $t('Draw'), evaluate: onEvent('draw') },
   } as const);
 
 export const Conditions = () =>
@@ -718,6 +1157,29 @@ export const GAME_NAMES: Record<string, string> = {
   nba_2k26: 'NBA 2K26',
   forza_horizon_6: 'Forza Horizon 6',
   enshrouded: 'Enshrouded',
+  '7_days_to_die': '7 Days to Die',
+  arena_breakout_infinite: 'Arena Breakout: Infinite',
+  bloodborne: 'Bloodborne',
+  dark_souls_2: 'Dark Souls II',
+  dark_souls_3: 'Dark Souls III',
+  dark_souls_remastered: 'Dark Souls: Remastered',
+  dayz: 'DayZ',
+  delta_force: 'Delta Force',
+  elden_ring: 'Elden Ring',
+  escape_from_tarkov: 'Escape from Tarkov',
+  halo_infinite: 'Halo Infinite',
+  helldivers_2: 'Helldivers 2',
+  heroes_of_the_storm: 'Heroes of the Storm',
+  hunt_showdown_1896: 'Hunt: Showdown 1896',
+  left_4_dead_2: 'Left 4 Dead 2',
+  madden_nfl_27: 'Madden NFL 27',
+  mortal_shell_2: 'Mortal Shell 2',
+  palworld: 'Palworld',
+  rust: 'Rust',
+  sekiro_shadows_die_twice: 'Sekiro: Shadows Die Twice',
+  teamfight_tactics: 'Teamfight Tactics',
+  valheim: 'Valheim',
+  world_of_warcraft_ss: 'World of Warcraft: Solo Shuffle',
 };
 
 export type TCondition<T extends ConditionType = ConditionType> = {
