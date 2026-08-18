@@ -13,7 +13,7 @@ const fetch = require('node-fetch');
 
 const failedTestsFile = 'test-dist/failed-tests.json';
 const testStatsFile = 'test-dist/test-stats.json';
-const accountFailuresFile = 'test-dist/account-failures.json';
+const failureReasonsFile = 'test-dist/failure-reasons.json';
 const args = process.argv.slice(2);
 const TIMEOUT = 3; // timeout in minutes
 const {
@@ -35,7 +35,7 @@ const RUN_TESTS_CMD = !args.length ? `yarn test --timeout=${TIMEOUT}m ` : args.j
   try {
     rimraf.sync(failedTestsFile);
     rimraf.sync(testStatsFile);
-    rimraf.sync(accountFailuresFile);
+    rimraf.sync(failureReasonsFile);
     await createTestTimingsFile();
     execSync(RUN_TESTS_CMD, { stdio: [0, 1, 2] });
   } catch (e) {
@@ -98,17 +98,16 @@ function readTestStats() {
 }
 
 /**
- * Read recorded failures from user pool account failure reasons
- * @remark Test failures may occur because of the user pool account instead of from a bug,
- * which creates a false failure.
+ * Read recorded failures reasons
+ * @remark Test failures may occur because of reasons other than bugs, such as the user pool account
  * - `tests` is keyed by test name and written by the test harness, `job` holds reasons
- * - that belong to the run as a whole and is written here. See IAccountFailures.
+ * - that belong to the run as a whole and is written here. See IFailureReasons.
  * @returns - An object with the test failure details
  */
-function readAccountFailures() {
+function readFailureReason() {
   let failures = {};
   try {
-    failures = JSON.parse(fs.readFileSync(accountFailuresFile, 'utf8'));
+    failures = JSON.parse(fs.readFileSync(failureReasonsFile, 'utf8'));
   } catch (e) {
     failures = {};
   }
@@ -119,15 +118,19 @@ async function sendJobToAnalytics(failedTests) {
   if (!BUILD_BUILDID) return; // do not send analytics for local builds
 
   const failedAfterRetryTests = getFailedTests();
-  const accountFailures = readAccountFailures();
-  const testsToSend = failedTests.map(testName => ({
-    name: testName,
-    retrySucceeded: !failedAfterRetryTests.includes(testName),
-    accountFailure:
-      !failedAfterRetryTests.includes(testName) && accountFailures.tests[testName]
-        ? accountFailures.tests[testName]
-        : undefined,
-  }));
+  const failureReasons = readFailureReason();
+  const testsToSend = failedTests.map(testName => {
+    const failureLog = {
+      name: testName,
+      retrySucceeded: !failedAfterRetryTests.includes(testName),
+    };
+
+    if (!failureLog.retrySucceeded && failureReasons.tests[testName]) {
+      failureLog.failureReason = failureReasons.tests[testName];
+    }
+
+    return failureLog;
+  });
   log('Sending analytics..');
   const body = {
     name: SYSTEM_JOBNAME,
@@ -146,22 +149,6 @@ async function sendJobToAnalytics(failedTests) {
     await requestUtilityServer('job', 'post', body);
   } catch (e) {
     console.error('failed to send analytics', e);
-  }
-}
-
-/**
- * The body never reached the server, so nothing in it was recorded - including the
- * accountFailure we just worked out. Append the reason to the account failures file so the
- * lost job is visible on the agent rather than only in the console. Reasons accumulate
- * rather than overwrite, so an earlier one isn't lost behind a later one.
- */
-function saveJobAccountFailure(reason) {
-  const failures = readAccountFailures();
-  failures.job.push(reason);
-  try {
-    fs.writeFileSync(accountFailuresFile, JSON.stringify(failures));
-  } catch (e) {
-    console.error('failed to record the account failure', e);
   }
 }
 

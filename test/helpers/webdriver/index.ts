@@ -13,10 +13,10 @@ import {
   ITestStats,
   killElectronInstances,
   removeFailedTestFromFile,
-  saveAccountFailureToFile,
+  saveFailureReasonToFile,
   saveFailedTestsToFile,
   saveTestStatsToFile,
-  TAccountFailure,
+  TFailureReason,
   testFn,
   waitForElectronInstancesExist,
 } from './runner-utils';
@@ -47,6 +47,12 @@ const CHROMEDRIVER_PORT = 4444;
 // Enable Chromedriver logging to chromedriver.log
 // Enable Webdriver logging to test output
 const CHROMEDRIVER_DEBUG = false;
+
+// Failures that are frequently not related to bugs in the app
+const MISSING_TRANSLATIONS_IN_LOG = /Missing translation/;
+const UNMOUNTED_REACT_UPDATE_IN_LOG = /Tried to update component state before component has been mounted\./;
+const NO_ACCOUNT_AVAILABLE_IN_LOG = /No users available/;
+const UTILITY_SERVER_FAILURE_IN_LOG = /Unable to request the utility server/;
 
 // YouTube API logs the `reason`, which is the most reliable signal that YouTube rejected the account rather than that we have a bug
 const YOUTUBE_STREAMING_DISABLED_IN_LOG = /liveStreamingNotEnabled|YOUTUBE_STREAMING_DISABLED|YouTube account is not enabled for live streaming/;
@@ -557,11 +563,11 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
         console.log(`Test failed for the account: ${user.type} ${user.email}`);
       }
 
-      const accountFailure = detectAccountFailure();
-      if (accountFailure) {
-        console.log(`Test failed because of account failure: ${accountFailure}`);
-        saveAccountFailureToFile(testName, accountFailure);
+      const failureReason = detectFailureReason();
+      if (detectAccountFailure(failureReason)) {
+        console.log(`Test failed because of failure reason: ${failureReason}`);
       }
+      saveFailureReasonToFile(testName, failureReason);
 
       t.fail(failMsg);
     }
@@ -574,14 +580,23 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
   });
 
   /**
-   * Explicitly identify if the test failed because of the account instead of the app.
+   * Explicitly identify if the test failed because of a frequently identified non-bug reason.
    * This is important because it indicates that the test failure is not a bug in the app.
-   * @returns - The type for the account reason the test failed
+   * @returns - The type for the reason the test failed
    */
-  function detectAccountFailure(): TAccountFailure {
+  function detectFailureReason(): TFailureReason | null {
+    // Check for known app-related failures frequently not related to bugs
+    if (logsFromCurrentTest.match(MISSING_TRANSLATIONS_IN_LOG)) {
+      return 'MISSING_TRANSLATIONS';
+    }
+
+    if (logsFromCurrentTest.match(UNMOUNTED_REACT_UPDATE_IN_LOG)) {
+      return 'UNMOUNTED_REACT_UPDATE';
+    }
+
     const noAccountAvailable = userPoolIsExhausted();
 
-    if (noAccountAvailable) {
+    if (noAccountAvailable || logsFromCurrentTest.match(NO_ACCOUNT_AVAILABLE_IN_LOG)) {
       return 'NO_ACCOUNT_AVAILABLE';
     }
 
@@ -597,7 +612,20 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
       return 'YOUTUBE_ACCOUNT_FAILURE';
     }
 
-    return 'ACCOUNT_FAILURE';
+    if (logsFromCurrentTest.match(UTILITY_SERVER_FAILURE_IN_LOG)) {
+      return 'UTILITY_SERVER_FAILURE';
+    }
+
+    return null;
+  }
+
+  function detectAccountFailure(reason: TFailureReason): boolean {
+    return (
+      reason === 'NO_ACCOUNT_AVAILABLE' ||
+      reason === 'YOUTUBE_STREAMING_DISABLED' ||
+      reason === 'YOUTUBE_ACCOUNT_RATE_LIMITED' ||
+      reason === 'YOUTUBE_ACCOUNT_FAILURE'
+    );
   }
 
   /**
