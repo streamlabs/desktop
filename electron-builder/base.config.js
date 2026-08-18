@@ -39,6 +39,21 @@ const base = {
   // unsigned build. Must be gated on SLOBS_NO_SIGN: on macOS an unsigned build sets
   // mac.identity to null, which throws when forceCodeSigning is on.
   forceCodeSigning: !process.env.SLOBS_NO_SIGN,
+  // Don't let electron-builder rebuild native modules at package time. electron-builder
+  // 24+ delegates this to @electron/rebuild, which is more aggressive than the app-builder
+  // Go rebuilder it replaced, and there is nothing here for it to usefully do:
+  //   - every native module we ship is N-API, so it is ABI-stable across the Node 20 -> 24
+  //     jump and needs no rebuild for Electron 43;
+  //   - the Streamlabs-owned modules (obs-studio-node, crash-handler, font-manager,
+  //     node-libuiohook, node-fontinfo, game_overlay, color-picker) arrive as prebuilt
+  //     tarballs with no binding.gyp and cannot be built on a release machine anyway;
+  //   - realm's binding.gyp is an empty `{}` stub that only exists to signal "prebuilt" to
+  //     old electron-builder; its own install script already ran `prebuild-install`;
+  //   - deasync is only used by the e2e harness (test/helpers/api-client.ts), which runs in
+  //     plain Node, so building it against Electron is actively wrong.
+  // Left on, @electron/rebuild source-builds deasync and dies resolving node-addon-api's
+  // include dir ("Cannot open include file: 'napi.h'") on the release machine.
+  npmRebuild: false,
   nsis: {
     license: 'AGREEMENT',
     oneClick: false,
