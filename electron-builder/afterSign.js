@@ -3,6 +3,11 @@ const fs = require('fs');
 const cp = require('child_process');
 const path = require('path');
 const os = require('os');
+// Wrapper around signtool.exe. We use the package rather than a bare `signtool`
+// command because signtool.exe ships in the Windows SDK and is only on PATH inside a
+// Developer Command Prompt — not in the environment electron-builder hands to hooks.
+// The package bundles its own signtool.exe and resolves it by path.
+const signtool = require('signtool');
 
 async function notarizeMac(context) {
   if (process.env.SLOBS_NO_NOTARIZE) return;
@@ -29,6 +34,19 @@ async function notarizeMac(context) {
   console.log('Notarization finished.');
 }
 
+// signtool reports diagnostics as a banner on stdout rather than a single stderr line,
+// e.g. "SignTool Error: No signature found." for an unsigned file vs. a chain-of-trust
+// complaint for one signed by an untrusted cert. Those distinctions are the whole point
+// of the check, so pull the meaningful line out instead of discarding the output.
+function signtoolReason(err) {
+  const lines = `${err.stdout || ''}\n${err.stderr || ''}`
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line && !/^=+$/.test(line));
+
+  return lines.find(line => line.startsWith('SignTool Error:')) || lines.pop() || err.message;
+}
+
 async function afterPackWin() {
   if (process.env.SLOBS_NO_SIGN) return;
 
@@ -45,18 +63,28 @@ async function afterPackWin() {
   // each entry rather than trust the batch. Without this, a partial failure ships
   // unsigned binaries in an otherwise successful build.
   const files = fs.readFileSync(signingPath, 'utf8').split('\n').filter(Boolean);
-  const unsigned = files.filter(file => {
+  const unsigned = [];
+
+  for (const file of files) {
     try {
-      cp.execSync(`signtool verify /pa /q "${file}"`, { stdio: 'ignore' });
-      return false;
+      // defaultAuthPolicy => /pa, the Authenticode policy. Deliberately not /a: these
+      // are embedded signatures, and catalog lookup would mask a missing one.
+      await signtool.verify(file, { defaultAuthPolicy: true });
     } catch (e) {
-      return true;
+      // A spawn failure (ENOENT, EACCES) means the verifier never ran. Reporting that
+      // as "these files are unsigned" would be a lie, and a uniform one — it would fail
+      // every file in the batch and point the investigation at the signing service.
+      if (typeof e.code !== 'number') {
+        throw new Error(`Could not run signtool to verify signatures: ${e.message}`);
+      }
+      unsigned.push({ file, reason: signtoolReason(e) });
     }
-  });
+  }
 
   if (unsigned.length) {
+    const detail = unsigned.map(({ file, reason }) => `${file}\n    ${reason}`).join('\n');
     throw new Error(
-      `Signature verification failed for ${unsigned.length} of ${files.length} file(s):\n${unsigned.join('\n')}`,
+      `Signature verification failed for ${unsigned.length} of ${files.length} file(s):\n${detail}`,
     );
   }
 
