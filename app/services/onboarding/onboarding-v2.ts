@@ -241,10 +241,10 @@ export class OnboardingV2Service extends Service {
   localStorageKey = 'UserHasBeenOnboarded';
 
   // Uncomment to debug/style a specific step
-  init() {
-    super.init();
-    this.initalizeView({ startingStep: { name: EOnboardingSteps.Ultra }, isSingleton: true });
-  }
+  // init() {
+  //   super.init();
+  //   this.initalizeView({ startingStep: { name: EOnboardingSteps.Ultra }, isSingleton: true });
+  // }
 
   get currentStepName() {
     return this.state.currentStep.name;
