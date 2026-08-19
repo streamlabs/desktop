@@ -18,7 +18,6 @@ import {
 import { DualOutputService } from 'services/dual-output';
 import { SettingsService } from 'services/settings';
 import { SceneCollectionsService } from '../scene-collections';
-import { ESceneCoordinateMode, SceneFactory } from '../../../../obs-api';
 import { loadArrayNodesStrictly } from './array-node';
 
 export type TSceneCoordinateMode = 'absolute' | 'relative';
@@ -103,11 +102,6 @@ export class RootNode extends Node<ISchema, {}> {
    * This if/else prevents an error by guaranteeing a video context exists.
    */
   async load(): Promise<void> {
-    // All newly-created scene items use relative coordinates. A legacy collection is
-    // migrated by first restoring the canvas on which its absolute values were authored,
-    // then feeding those values through the normal scene-item setters during load.
-    SceneFactory.coordinateMode = ESceneCoordinateMode.Relative;
-
     if (!this.videoSettingsService.contexts.horizontal) {
       await new Promise<void>(resolve => {
         const establishedContext = this.videoSettingsService.establishedContext.subscribe(

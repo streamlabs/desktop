@@ -46,7 +46,7 @@ import { NodeMapNode } from './nodes/node-map';
 import { TDisplayType, VideoSettingsService } from 'services/settings-v2';
 import { WidgetsService, WidgetType } from 'services/widgets';
 import { FileManagerService } from 'services/file-manager';
-import { ESceneCoordinateMode, IVideoInfo, SceneFactory } from '../../../obs-api';
+import { IVideoInfo, SceneFactory } from '../../../obs-api';
 import {
   CoordinateMigrationPersistenceError,
   persistCoordinateMigration,
@@ -155,7 +155,6 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * initialization.
    */
   async initialize() {
-    this.useRelativeSceneCoordinates();
     await this.stateService.loadManifestFile();
     await this.migrateOS();
     await this.safeSync();
@@ -269,7 +268,6 @@ export class SceneCollectionsService extends Service implements ISceneCollection
       this.stateService.writeDataToCollectionFile(collectionId, originalData, true);
       await this.fileManagerService.flushAll();
 
-      this.useRelativeSceneCoordinates();
       resetAttempted = true;
       this.videoSettingsService.applySettingsImmediately(settings, display);
       SceneFactory.invalidateItemTransformCache();
@@ -912,10 +910,6 @@ export class SceneCollectionsService extends Service implements ISceneCollection
       this.collectionLoaded = false;
       throw new CoordinateMigrationPersistenceError(error);
     }
-  }
-
-  private useRelativeSceneCoordinates() {
-    SceneFactory.coordinateMode = ESceneCoordinateMode.Relative;
   }
 
   async showUnsupportedSourcesDialog(e?: Error | unknown) {
