@@ -162,10 +162,8 @@ test('Streaming to Twitch unlisted category', async t => {
   t.pass();
 });
 
-// TODO: confirm that this test passes in the automated test run
-// This test was previously skipped because of an error likely caused by
-// Selenium and Chromium version mismatch
-test(
+// TODO: Skipped because of an error likely caused by Selenium and Chromium version mismatch
+test.skip(
   'Twitch Enhanced Broadcasting',
   withUser('twitch', { multistream: true, prime: true }),
   async t => {
@@ -211,10 +209,9 @@ test(
   },
 );
 
-// TODO: Confirm that this passes in the automated test run
-// Like the enhanced broadcasting test, this may fail because of an error likely caused by
+// TODO: Like the enhanced broadcasting test, skipped because error likely caused by
 // Selenium and Chromium version mismatch
-test(
+test.skip(
   'Twitch Dual Format (Dual Stream)',
   withUser('twitch', { multistream: true, prime: true }),
   async t => {
