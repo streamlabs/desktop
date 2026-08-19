@@ -4,7 +4,6 @@ import styles from './UltraComparison.m.less';
 import cx from 'classnames';
 import { Services } from 'components-react/service-provider';
 import UltraIcon from 'components-react/shared/UltraIcon';
-import { Tooltip } from 'antd';
 
 interface IUltraComparisonProps {
   onSkip?: () => void;
@@ -53,7 +52,6 @@ export function UltraComparison(p: IUltraComparisonProps) {
       style={{
         display: 'flex',
         justifyContent: 'center',
-        fontSize: p.condensed ? '10px' : undefined,
       }}
     >
       <div
@@ -66,20 +64,20 @@ export function UltraComparison(p: IUltraComparisonProps) {
             {$t('Free')}
           </h1>
           <div className={styles.subheader}>
-            <span>{$t('Everything you need to go live.')}</span>
+            <span>{$t('Everything you need to get started.')}</span>
             <span>{$t('Always and forever free')}</span>
           </div>
           <div className={styles.button} data-testid="choose-free-plan-btn">
             {$t('Choose Free')}
           </div>
-          <div className={styles.features}>
-            {featureData.standard.map(data => (
-              <div key={data.text} className={styles.row}>
-                {data.icon && <i className={data.icon} />}
-                <span>{data.text}</span>
-              </div>
-            ))}
-          </div>
+        </div>
+        <div className={styles.features}>
+          {featureData.standard.map(data => (
+            <div key={data.text} className={styles.row} style={{ padding: p.condensed ? 8 : 12 }}>
+              {data.icon && <i className={data.icon} />}
+              <span>{data.text}</span>
+            </div>
+          ))}
         </div>
       </div>
       <div
@@ -95,7 +93,7 @@ export function UltraComparison(p: IUltraComparisonProps) {
             Streamlabs Ultra
           </h1>
           <div className={styles.subheader}>
-            <span>{$t('Premium features for your stream.')}</span>
+            <span>{$t('Everything in free, plus:')}</span>
             {shouldDisplayPrices ? (
               <span>
                 {$t('%{monthlyPrice}/mo or %{yearlyPrice}/year', {
@@ -116,7 +114,7 @@ export function UltraComparison(p: IUltraComparisonProps) {
         </div>
         <div className={styles.features}>
           {featureData.ultra.map(data => (
-            <div className={styles.row} key={data.text}>
+            <div className={styles.row} key={data.text} style={{ padding: p.condensed ? 8 : 12 }}>
               {data.icon && <i className={data.icon} />}
               <span>{data.text}</span>
             </div>
