@@ -167,7 +167,7 @@ export default function AutomationEditor({ initial, onClose }: Props) {
           ? [{ type: conditionType, props: conditionPropsForSave as any }]
           : [],
         actions,
-        enabled: enabled ?? checkEnableLimit(),
+        enabled: enabled ?? checkEnableLimit(1, 'editor'),
       };
 
       const game = payload.conditions[0]?.type.split('.')[0] ?? 'unknown';

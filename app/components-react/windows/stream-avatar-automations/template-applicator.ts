@@ -114,7 +114,7 @@ export async function applyTemplates(
   // Everything past the tier cap is still created, just switched off. Prompt once
   // up front rather than once per template.
   const totalSelected = Object.values(selections).reduce((sum, set) => sum + set.size, 0);
-  checkEnableLimit(totalSelected);
+  checkEnableLimit(totalSelected, 'templates');
   const usage = enabledUsage();
   let remaining = Math.max(0, usage.max - usage.count);
 

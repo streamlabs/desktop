@@ -103,7 +103,7 @@ export default function EditAutomations() {
   function toggleEnabled(automation: TAutomationExport) {
     if (!automation.id) return;
     // Turning one off is always allowed; only turning one on is capped.
-    if (!automation.enabled && !checkEnableLimit()) return;
+    if (!automation.enabled && !checkEnableLimit(1, 'toggle')) return;
     AutomationsService.actions.update(automation.id, {
       ...automation,
       enabled: !automation.enabled,
@@ -202,7 +202,7 @@ export default function EditAutomations() {
                 {$t('%{count} of %{max} enabled', { count: usage.count, max: usage.max })}
               </span>
               {usage.tier !== ULTRA_PLUS_TIER && (
-                <span className={styles.upgradeLink} onClick={() => upgrade(usage.tier)}>
+                <span className={styles.upgradeLink} onClick={() => upgrade(usage.tier, 'header')}>
                   <UltraIcon type="badge" style={{ marginRight: 4 }} />
                   {$t('Upgrade for more')}
                 </span>
