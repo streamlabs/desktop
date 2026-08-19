@@ -24,7 +24,8 @@ test.skip('Adding and removing a Color Correction filter', async t => {
   await waitForDisplayed('label=Saturation');
   await waitForDisplayed('label=Hue Shift');
   await waitForDisplayed('label=Opacity');
-  await waitForDisplayed('label=Color');
+  await waitForDisplayed('label=Color Multiply');
+  await waitForDisplayed('label=Color Add');
 
   await removeFilter(sourceName, filterName);
   await openFiltersWindow(sourceName);
