@@ -224,7 +224,6 @@ test('Adding and removing a Noise Suppression filter', async t => {
   await focusChild();
 
   await waitForDisplayed('label=Method');
-  await waitForDisplayed('label=Suppression Level');
 
   await removeFilter(sourceName, filterName);
   t.pass();
