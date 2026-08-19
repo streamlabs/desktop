@@ -144,6 +144,7 @@ test('Adding and removing a LUT filter', async t => {
 
   await waitForDisplayed('label=Path');
   await waitForDisplayed('label=Amount');
+  await waitForDisplayed('label=Passthrough Alpha');
 
   await removeFilter(sourceName, filterName);
   t.pass();
