@@ -52,6 +52,7 @@ export class ApiClient {
     if (this.socket) this.socket.destroy();
     this.receiveBuffer = '';
     this.stringDecoder = new StringDecoder('utf8');
+    this.earlyPromiseResults = {};
 
     this.socket = new net.Socket();
     this.bindListeners();
