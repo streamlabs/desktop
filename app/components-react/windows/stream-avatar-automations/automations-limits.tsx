@@ -15,7 +15,7 @@ import type { TLimitTrigger, TUpsellSource } from './automations-analytics';
 export const AUTOMATION_LIMITS: Record<string, number> = {
   free: 5,
   ultra: 10,
-  ultra_plus: 15,
+  ultra_plus: 30,
 };
 
 /** TODO: confirm with backend — only 'free' and 'ultra' are returned today. */
