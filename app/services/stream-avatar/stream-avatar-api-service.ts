@@ -61,6 +61,12 @@ export class StreamAvatarApiService extends Service {
     return `${protocol}${this.hostsService.streamAvatarApi}`;
   }
 
+  /** Drop the cached JWT (call on logout so an account switch can't reuse it). */
+  clearToken() {
+    this.cachedJwt = null;
+    this.cachedJwtExp = 0;
+  }
+
   async getToken(forceRefresh = false): Promise<string> {
     const now = Date.now() / 1000;
     if (!forceRefresh && this.cachedJwt && this.cachedJwtExp - now > 60) {
