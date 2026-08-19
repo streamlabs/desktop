@@ -1,4 +1,13 @@
 {
+  "%{count} of %{max} enabled": "%{count} of %{max} enabled",
+  "Automation limit reached": "Automation limit reached",
+  "Not now": "Not now",
+  "Ultra includes %{max} enabled automations. Upgrade to Ultra+ to enable up to %{next}.": "Ultra includes %{max} enabled automations. Upgrade to Ultra+ to enable up to %{next}.",
+  "Upgrade for more": "Upgrade for more",
+  "Upgrade to Ultra": "Upgrade to Ultra",
+  "Upgrade to Ultra+": "Upgrade to Ultra+",
+  "You can enable %{max} automations on a free account. Upgrade to Ultra to enable up to %{next}.": "You can enable %{max} automations on a free account. Upgrade to Ultra to enable up to %{next}.",
+  "You've reached the maximum of %{max} enabled automations. Disable one to enable another.": "You've reached the maximum of %{max} enabled automations. Disable one to enable another.",
   "— select scene —": "— select scene —",
   "— select source —": "— select source —",
   "(no description)": "(no description)",

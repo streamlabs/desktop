@@ -9,6 +9,7 @@ import type {
   AutomationTemplateSource,
 } from 'services/stream-avatar/stream-avatar-api-service';
 import { AutomationsAnalytics } from './automations-analytics';
+import { checkEnableLimit, enabledUsage } from './automations-limits';
 
 export async function downloadAsset(downloadUrl: string, assetKey: string): Promise<string | null> {
   try {
@@ -110,6 +111,13 @@ export async function applyTemplates(
   const assets: string[] =
     (await (window as any)?.streamlabsOBS?.v1?.NativeComponents?.getAssets?.()) ?? [];
 
+  // Everything past the tier cap is still created, just switched off. Prompt once
+  // up front rather than once per template.
+  const totalSelected = Object.values(selections).reduce((sum, set) => sum + set.size, 0);
+  checkEnableLimit(totalSelected);
+  const usage = enabledUsage();
+  let remaining = Math.max(0, usage.max - usage.count);
+
   for (const game of games) {
     const indices = selections[game.game];
     if (!indices || indices.size === 0) continue;
@@ -125,7 +133,9 @@ export async function applyTemplates(
         }
       }
 
-      await AutomationsService.actions.create(item.automation);
+      const enabled = (item.automation.enabled ?? true) && remaining > 0;
+      if (enabled) remaining -= 1;
+      await AutomationsService.actions.create({ ...item.automation, enabled });
       AutomationsAnalytics.templateAdded(
         game.game,
         item.automation.conditions[0]?.type ?? 'unknown',

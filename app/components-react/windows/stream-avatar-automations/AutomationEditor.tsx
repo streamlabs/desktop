@@ -17,6 +17,7 @@ import type { ActionType, ExportedAction } from 'services/stream-avatar/engine/a
 import { TextInput } from 'components-react/shared/inputs';
 import ActionEditor from './ActionEditor';
 import { GAME_OPTIONS } from './automations-utils';
+import { checkEnableLimit } from './automations-limits';
 
 const errorTextStyle: CSSProperties = {
   margin: '4px 0 0',
@@ -81,7 +82,9 @@ export default function AutomationEditor({ initial, onClose }: Props) {
       ],
   );
   const actions = rows.filter(r => r.action.type).map(r => r.action);
-  const enabled = initial?.enabled ?? true;
+  // New automations start enabled unless that would exceed the tier cap, in which case
+  // checkEnableLimit() has already shown the upgrade modal and we save it disabled.
+  const enabled = initial?.enabled ?? undefined;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [attempted, setAttempted] = useState(!!initial);
@@ -94,7 +97,7 @@ export default function AutomationEditor({ initial, onClose }: Props) {
     description,
     conditions: conditionType ? [{ type: conditionType, props: conditionPropsForSave as any }] : [],
     actions,
-    enabled,
+    enabled: enabled ?? true,
   };
   const issues = validateAutomation(draft, {
     scenes,
@@ -164,7 +167,7 @@ export default function AutomationEditor({ initial, onClose }: Props) {
           ? [{ type: conditionType, props: conditionPropsForSave as any }]
           : [],
         actions,
-        enabled,
+        enabled: enabled ?? checkEnableLimit(),
       };
 
       const game = payload.conditions[0]?.type.split('.')[0] ?? 'unknown';

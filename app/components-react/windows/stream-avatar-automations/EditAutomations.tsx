@@ -17,6 +17,8 @@ import AutomationsEmptyState from './AutomationsEmptyState';
 import AutomationTemplates from './AutomationTemplates';
 import { AutomationsAnalytics } from './automations-analytics';
 import { conditionLabel, conditionGame, summarizeActions, GAME_OPTIONS } from './automations-utils';
+import { checkEnableLimit, enabledUsage, upgrade, ULTRA_PLUS_TIER } from './automations-limits';
+import UltraIcon from 'components-react/shared/UltraIcon';
 import styles from './EditAutomations.m.less';
 
 export default function EditAutomations() {
@@ -100,6 +102,8 @@ export default function EditAutomations() {
 
   function toggleEnabled(automation: TAutomationExport) {
     if (!automation.id) return;
+    // Turning one off is always allowed; only turning one on is capped.
+    if (!automation.enabled && !checkEnableLimit()) return;
     AutomationsService.actions.update(automation.id, {
       ...automation,
       enabled: !automation.enabled,
@@ -161,6 +165,8 @@ export default function EditAutomations() {
       )
     : automations;
 
+  const usage = enabledUsage();
+
   const addNewMenu = (
     <Menu>
       <Menu.Item key="new" onClick={create}>
@@ -192,6 +198,15 @@ export default function EditAutomations() {
                 options={[{ label: $t('All game automations'), value: '' }, ...GAME_OPTIONS]}
                 style={{ width: 200 }}
               />
+              <span className={styles.enabledCount}>
+                {$t('%{count} of %{max} enabled', { count: usage.count, max: usage.max })}
+              </span>
+              {usage.tier !== ULTRA_PLUS_TIER && (
+                <span className={styles.upgradeLink} onClick={() => upgrade(usage.tier)}>
+                  <UltraIcon type="badge" style={{ marginRight: 4 }} />
+                  {$t('Upgrade for more')}
+                </span>
+              )}
             </>
           )}
         </div>

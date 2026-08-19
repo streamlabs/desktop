@@ -53,13 +53,21 @@ export class MagicLinkService extends Service {
    */
   async linkToPrime(
     refl: TUltraRefl,
-    config?: { redirectToCheckout?: boolean; event?: TAnalyticsEvent },
+    config?: { redirectToCheckout?: boolean; event?: TAnalyticsEvent; tier?: string },
   ) {
     // TODO: this is only here to accommodate ultra checkout A/B test requiring OS
     // remove this and the parameter from {getDashboardMagicLink} after.
     const os = byOS({ [OS.Windows]: 'windows', [OS.Mac]: 'mac' });
 
     this.usageStatisticsService.recordUltra(refl, config?.event);
+
+    // Tiers above Ultra go straight to checkout — the dashboard magic link only
+    // resolves to the plain Ultra plan.
+    if (config?.tier) {
+      return remote.shell.openExternal(
+        `https://${this.hostsService.streamlabs}/ultra?checkout=1&tier=${config.tier}&plan=month&refl=${refl}&os=${os}`,
+      );
+    }
 
     if (config?.redirectToCheckout === false || !this.userService.views.isLoggedIn) {
       return remote.shell.openExternal(
