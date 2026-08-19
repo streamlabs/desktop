@@ -1,28 +1,26 @@
-import { Throttle, Bind } from 'lodash-decorators';
-import cloneDeep from 'lodash/cloneDeep';
+import { Services } from 'components-react/service-provider';
 import { useWidget, WidgetModule } from 'components-react/widgets/common/useWidget';
+import { Bind, Throttle } from 'lodash-decorators';
+import cloneDeep from 'lodash/cloneDeep';
 import {
-  GamePulseTabUtils,
+  ActiveTabContext,
   buildNewTrigger,
-  sortEventKeys,
   delay,
   GAME_PULSE_API,
   GamePulseAnalytics,
-} from './GamePulse.models';
-import { Services } from 'components-react/service-provider';
-import {
-  ScopeId,
-  GamePulseWidgetSettings,
-  GamePulseTrigger,
-  IGamePulseGroupOption,
-  TabKind,
-  ActiveTabContext,
-  TriggerType,
-  GamePulseStaticConfig,
-  GamePulseGameMeta,
   GamePulseEventMeta,
+  GamePulseGameMeta,
+  GamePulseStaticConfig,
+  GamePulseTabUtils,
+  GamePulseTrigger,
   GamePulseTriggerGroup,
+  GamePulseWidgetSettings,
+  IGamePulseGroupOption,
   IGamePulseWidgetState,
+  ScopeId,
+  sortEventKeys,
+  TabKind,
+  TriggerType,
 } from './GamePulse.models';
 
 /**
@@ -74,7 +72,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
   get groupOptions(): IGamePulseGroupOption[] {
     const gamesMeta = this.games;
 
-    const games = Object.entries(this.settings.games || {}).map(([gameId, gameData]) => ({
+    const games = Object.entries(this.settings?.games || {}).map(([gameId, gameData]) => ({
       id: gameId,
       name: gamesMeta?.[gameId]?.title || gameId,
       enabled: !!gameData?.enabled,
@@ -83,7 +81,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     const global: IGamePulseGroupOption = {
       id: ScopeId.Global,
       name: 'Global',
-      enabled: !!this.settings.global?.enabled,
+      enabled: !!this.settings?.global?.enabled,
     };
 
     return [global, ...games];
@@ -127,7 +125,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     return this.hasTriggersFn(this.settings);
   }
 
-  hasTriggersFn(settings: GamePulseWidgetSettings): boolean {
+  hasTriggersFn(settings: GamePulseWidgetSettings | null): boolean {
     const globalTriggers = settings?.global?.triggers || [];
     const gameTriggers = Object.values(settings?.games || {}).flatMap(
       group => group?.triggers || [],
@@ -180,6 +178,8 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     scopeId: string,
     updater: (trigger: GamePulseTrigger) => GamePulseTrigger,
   ) {
+    if (!this.hasLoadedSettings()) return;
+
     const isGlobal = scopeId === ScopeId.Global;
     const groupSettings = this.getScope(scopeId) || { enabled: true, triggers: [] };
     const updatedGroupSettings = {
@@ -193,7 +193,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
         ? { global: updatedGroupSettings }
         : {
             games: {
-              ...(this.settings.games || {}),
+              ...this.settings.games,
               [scopeId]: updatedGroupSettings,
             },
           }),
@@ -326,6 +326,8 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
 
   /** Enable all trigger groups at once. */
   public enableAllGroups() {
+    if (!this.hasLoadedSettings()) return;
+
     const games = this.settings.games || {};
     const newGames: Record<string, GamePulseTriggerGroup> = {};
 
@@ -351,6 +353,8 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
 
   /** Disable all trigger groups at once. */
   public disableAllGroups() {
+    if (!this.hasLoadedSettings()) return;
+
     const games = this.settings.games || {};
     const newGames: Record<string, GamePulseTriggerGroup> = {};
 
@@ -394,6 +398,8 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
   @Bind()
   @Throttle(1000)
   public async testGamePulseTrigger(trigger: GamePulseTrigger) {
+    if (!this.hasLoadedSettings()) return;
+
     if (!this.settings.is_muted) {
       /**
        * Ensure settings are muted before testing so that the user doesn't
@@ -482,6 +488,8 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     name: string;
     triggerType: TriggerType;
   }) {
+    if (!this.hasLoadedSettings()) return;
+
     const newTrigger = buildNewTrigger({
       triggerType,
       eventKey: eventType,
@@ -536,7 +544,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
 
   /** Helper to resolve a trigger group (global or game-specific) from settings. */
   private getScope(scopeId: string, settings = this.settings) {
-    return scopeId === ScopeId.Global ? settings.global : settings.games?.[scopeId];
+    return scopeId === ScopeId.Global ? settings?.global : settings?.games?.[scopeId];
   }
 
   /** Get all triggers for a specific group. */
@@ -566,7 +574,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
         currentConfig.data.options.tts_voices = voicesRes.data || voicesRes;
         this.state.setStaticConfig(currentConfig);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('[GamePulseWidget] Failed to merge voice data:', err);
     }
 
@@ -589,7 +597,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
 
         this.updateSettings(newSettings);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('[GamePulseWidget] Failed to create default settings', err);
     }
   }
