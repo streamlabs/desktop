@@ -3,6 +3,7 @@ import { Observable, Subject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { isEqual } from 'lodash';
 import { NamedPipeClient } from './named-pipe-client';
+import { StringDecoder } from 'string_decoder';
 
 const net = require('net');
 const snp = process.platform === 'win32' ? require('node-win32-np') : null;
@@ -28,6 +29,9 @@ export class ApiClient {
   private requests = {};
   private subscriptions: Dictionary<Subject<any>> = {};
   private connectionStatus: TConnectionStatus = 'disconnected';
+  private receiveBuffer = '';
+  private earlyPromiseResults: Dictionary<{ isRejected: boolean; data: any }> = {};
+  private stringDecoder: StringDecoder = null;
 
   /**
    * cached resourceSchemes
@@ -46,6 +50,8 @@ export class ApiClient {
 
   connect() {
     if (this.socket) this.socket.destroy();
+    this.receiveBuffer = '';
+    this.stringDecoder = new StringDecoder('utf8');
 
     this.socket = new net.Socket();
     this.bindListeners();
@@ -83,6 +89,7 @@ export class ApiClient {
     });
 
     this.socket.on('close', () => {
+      this.receiveBuffer += this.stringDecoder.end();
       this.connectionStatus = 'disconnected';
       this.log('Connection closed');
     });
@@ -127,7 +134,8 @@ export class ApiClient {
     };
 
     const response = this.sendMessageSync(requestBody);
-    const parsedResponse = JSON.parse(response.toString());
+    const responseLine = response.toString().split('\n').find(line => line.trim()) ?? '';
+    const parsedResponse = JSON.parse(responseLine);
     this.log('Response Sync:', parsedResponse);
 
     if (parsedResponse.error) {
@@ -235,51 +243,58 @@ export class ApiClient {
   }
 
   onMessageHandler(data: ArrayBuffer) {
-    data
-      .toString()
-      .split('\n')
-      .forEach(rawMessage => {
-        if (!rawMessage) return;
-        const message = JSON.parse(rawMessage);
-        this.messageReceived.next(message);
+    this.receiveBuffer += this.stringDecoder.write((data as unknown) as Buffer);
+    const lines = this.receiveBuffer.split('\n');
+    this.receiveBuffer = lines.pop(); // keep any incomplete trailing chunk
+    lines.forEach(rawMessage => {
+      if (!rawMessage) return;
+      const message = JSON.parse(rawMessage);
+      this.messageReceived.next(message);
 
-        // if message is response for an API call
-        // than we should have a pending request object
+      // if message is response for an API call
+      // than we should have a pending request object
+      // TODO: index
+      // @ts-ignore
+      const request = this.requests[message.id];
+      if (request) {
+        if (message.error) {
+          request.reject(message.error);
+        } else {
+          request.resolve(message.result);
+        }
         // TODO: index
         // @ts-ignore
-        const request = this.requests[message.id];
-        if (request) {
-          if (message.error) {
-            request.reject(message.error);
+        delete this.requests[message.id];
+      }
+
+      const result = message.result;
+      if (!result) return;
+
+      if (result._type === 'EVENT') {
+        if (result.emitter === 'STREAM') {
+          const eventSubject = this.subscriptions[message.result.resourceId];
+          this.eventReceived.next(result);
+          if (eventSubject) eventSubject.next(result.data);
+        } else if (result.emitter === 'PROMISE') {
+          if (!this.promises[result.resourceId]) {
+            // Resolution arrived before handleRequest registered the promise (race with deasync).
+            // Buffer it so it can be replayed when the promise is registered.
+            this.earlyPromiseResults[result.resourceId] = {
+              isRejected: result.isRejected,
+              data: result.data,
+            };
+            return;
+          }
+
+          const [resolve, reject] = this.promises[result.resourceId];
+          if (result.isRejected) {
+            reject(result.data);
           } else {
-            request.resolve(message.result);
-          }
-          // TODO: index
-          // @ts-ignore
-          delete this.requests[message.id];
-        }
-
-        const result = message.result;
-        if (!result) return;
-
-        if (result._type === 'EVENT') {
-          if (result.emitter === 'STREAM') {
-            const eventSubject = this.subscriptions[message.result.resourceId];
-            this.eventReceived.next(result);
-            if (eventSubject) eventSubject.next(result.data);
-          } else if (result.emitter === 'PROMISE') {
-            // case when listenAllSubscriptions = true
-            if (!this.promises[result.resourceId]) return;
-
-            const [resolve, reject] = this.promises[result.resourceId];
-            if (result.isRejected) {
-              reject(result.data);
-            } else {
-              resolve(result.data);
-            }
+            resolve(result.data);
           }
         }
-      });
+      }
+    });
   }
 
   unsubscribe(subscriptionId: string): Promise<any> {
@@ -304,6 +319,17 @@ export class ApiClient {
             () => reject(`promise timeout for ${resourceId}.${property}`),
             PROMISE_TIMEOUT,
           );
+          // If the resolution arrived before this promise was registered (race with deasync),
+          // replay it now.
+          const early = this.earlyPromiseResults[result.resourceId];
+          if (early) {
+            delete this.earlyPromiseResults[result.resourceId];
+            if (early.isRejected) {
+              reject(early.data);
+            } else {
+              resolve(early.data);
+            }
+          }
         });
         // tslint:disable-next-line:no-else-after-return
       } else if (result && result._type === 'SUBSCRIPTION' && result.emitter === 'STREAM') {
