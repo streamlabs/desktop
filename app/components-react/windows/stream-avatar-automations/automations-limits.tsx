@@ -10,7 +10,6 @@ import type { TLimitTrigger, TUpsellSource } from './automations-analytics';
 
 /**
  * How many automations may be enabled at once, by subscription tier.
- * ponytail: hardcoded — the server owns real enforcement, this is the UX guardrail.
  */
 export const AUTOMATION_LIMITS: Record<string, number> = {
   free: 5,
