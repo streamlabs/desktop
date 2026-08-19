@@ -1,3 +1,5 @@
+@import "../../../styles/ultra";
+
 // ── Table ─────────────────────────────────────────────
 
 .table {
@@ -100,6 +102,10 @@
 // ── Page header ───────────────────────────────────────
 
 .pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 12px;
 }
 
@@ -135,23 +141,64 @@
   white-space: nowrap;
 }
 
-.enabledCount {
+.usageMeter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
   font-size: 13px;
-  color: var(--paragraph);
   white-space: nowrap;
+}
+
+.usageRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.usageText {
+  color: var(--title);
 }
 
 .upgradeLink {
   display: inline-flex;
   align-items: center;
-  font-size: 13px;
+  gap: 6px;
   font-weight: 600;
-  white-space: nowrap;
   cursor: pointer;
 
-  &:hover {
-    color: var(--title);
+  &:hover .upgradeText {
+    opacity: 0.85;
   }
+}
+
+.upgradeText {
+  .ultra-text('warm');
+}
+
+.atCapNote {
+  color: var(--paragraph);
+}
+
+.usageInfo {
+  color: var(--icon);
+  cursor: help;
+}
+
+.usageTrack {
+  width: 140px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.usageFill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--teal);
+  transition: width 150ms ease;
 }
 
 .addNewBtn {
