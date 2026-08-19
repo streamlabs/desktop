@@ -52,6 +52,7 @@ export function Ultra(p: IOnboardingStepProps) {
         refl="slobs-onboarding"
         onSkip={clickFree}
         featureData={featureData}
+        displayPrices
         condensed
       />
     </div>
