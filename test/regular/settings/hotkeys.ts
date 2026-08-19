@@ -184,7 +184,7 @@ test('Shows and filters scene item hotkeys', async t => {
 
   // confirm horizontal and vertical scene items show when dual output is toggled off
   // on a dual output scene collection
-  await toggleDualOutputMode();
+  await toggleDualOutputMode(false);
   await showSettingsWindow('Hotkeys');
   await clickIfDisplayed('div.ant-collapse-item');
   await waitForDisplayed('div.section-content--opened');
