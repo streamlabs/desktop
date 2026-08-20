@@ -1,95 +1,70 @@
-trigger:
-  - staging
-  - master
+# Diagnostic-only pipeline. Throwaway branch — do not merge.
+#
+# Answers two questions about the agent VMs without running the suite:
+#   1. What resolution do the agents actually run at, in the same session the
+#      tests run in?
+#   2. Is Set-DisplayResolution absent because the image switched from Server
+#      Core to Desktop Experience, or present but failing to set a mode?
+#
+# No checkout, no install, no build. Finishes in seconds.
 
-variables:
-  CI: true
+trigger: none
+pr: none
 
 jobs:
-  - job: Test
+  - job: DiagnoseDisplay
     pool:
       name: 'Streamlabs Desktop Frontend'
 
-    workspace:
-      clean: resources
-
+    # Fan out so we sample several agents — if only some were re-imaged, that
+    # alone would explain intermittent behaviour.
     strategy:
       parallel: 4
 
     steps:
-      - powershell: echo "IP for RDP connections:" $(Invoke-RestMethod ipinfo.io/ip)
-        displayName: 'Get RDP address'
-
-      # - powershell: Set-DisplayResolution -Width 1920 -Height 1080 -Force
-      #   displayName: 'Setup Screen Resolution'
-
-      - script: yarn install --immutable 2>&1
-        displayName: 'Install Dependencies'
+      - checkout: none
 
       - powershell: |
-          $url = "https://aka.ms/vs/17/release/vc_redist.x64.exe"
-          $output = "$env:TEMP\vc_redist.x64.exe"
-          Invoke-WebRequest -Uri $url -OutFile $output
-          Start-Process -FilePath $output -ArgumentList "/install", "/quiet", "/norestart" -Wait
-        displayName: 'Install Visual Studio Redistributable DLLs'
+          Write-Host "=== Agent ==="
+          Write-Host "COMPUTERNAME : $env:COMPUTERNAME"
+          Write-Host "SESSIONNAME  : $env:SESSIONNAME"
+          Write-Host "USERNAME     : $env:USERNAME"
 
-      - script: node node_modules/electron/install.js
-        displayName: 'Install Electron'
+          Write-Host ""
+          Write-Host "=== OS / edition ==="
+          Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' |
+            Select-Object ProductName, DisplayVersion, CurrentBuild, UBR, InstallationType |
+            Format-List
 
-      - script: 'yarn ci:compile'
-        displayName: 'Compile Assets'
+          Write-Host "=== Display adapters / resolution ==="
+          Get-CimInstance Win32_VideoController |
+            Select-Object Name, VideoModeDescription, CurrentHorizontalResolution, CurrentVerticalResolution |
+            Format-List
 
-      - script: 'yarn ci:tests'
-        displayName: 'Run Tests'
-        env:
-          SLOBS_TEST_USER_POOL_TOKEN: $(userPoolToken)
-          BROWSER_SOURCE_HARDWARE_ACCELERATION: 'OFF'
-          SLOBS_TEST_STREAM_KEY: $(twitchStreamKey)
-          SLOBS_TEST_RUN_CHUNK: "$(System.JobPositionInPhase)/$(System.TotalJobsInPhase)"
+          Write-Host "=== Set-DisplayResolution availability ==="
+          $cmd = Get-Command Set-DisplayResolution -ErrorAction SilentlyContinue
+          if ($cmd) {
+            $cmd | Select-Object Name, CommandType, Source | Format-List
+            try {
+              Get-DisplayResolution
+            } catch {
+              Write-Host "Get-DisplayResolution failed:"
+              Write-Host $_.Exception.Message
+            }
+          } else {
+            Write-Host "Set-DisplayResolution: NOT PRESENT (CommandNotFoundException)"
+          }
 
-  - job: Check_eslint_and_strict_nulls_regression
+          $setres = Test-Path "$env:SystemRoot\System32\setres.exe"
+          $sdr = Test-Path "$env:SystemRoot\System32\SetDisplayResolution.exe"
+          Write-Host "setres.exe present               : $setres"
+          Write-Host "SetDisplayResolution.exe present : $sdr"
 
-    pool:
-      name: 'Streamlabs Desktop Frontend'
-
-    workspace:
-      clean: resources
-
-    steps:
-
-      - powershell: echo "IP for RDP connections:" $(Invoke-RestMethod ipinfo.io/ip)
-        displayName: 'Get RDP address'
-
-      # - powershell: Set-DisplayResolution -Width 1920 -Height 1080 -Force
-      #   displayName: 'Setup Screen Resolution'
-
-      - script: yarn install --immutable 2>&1
-        displayName: 'Install Dependencies'
-
-      - script: 'yarn eslint'
-        displayName: 'ESLint'
-
-      - script: 'yarn compile:strictnulls'
-        displayName: 'Check regressions in files with strictNullChecks'
-
-  - job: macOS
-
-    pool:
-      name: 'Streamlabs Desktop Frontend'
-      vmImage: macOS-latest
-
-    workspace:
-      clean: resources
-
-    steps:
-      - script: yarn install --immutable --network-timeout 1000000 2>&1
-        displayName: 'Install Dependencies'
-
-      - script: node node_modules/electron/install.js
-        displayName: 'Install Electron'
-
-      - script: 'yarn eslint'
-        displayName: 'ESLint'
-
-      - script: 'yarn ci:compile'
-        displayName: 'Compile Assets'
+          Write-Host ""
+          Write-Host "=== Toolchain ==="
+          $nodeVersion = & node --version 2>&1
+          Write-Host "node : $nodeVersion"
+          $yarnVersion = & yarn --version 2>&1
+          Write-Host "yarn : $yarnVersion"
+        displayName: 'Diagnose display + OS'
+        continueOnError: true
