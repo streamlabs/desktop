@@ -19,6 +19,11 @@ interface IAutomationsState {
 
 const RETRY_BASE_DELAY_MS = 2000;
 const RETRY_MAX_DELAY_MS = 30000;
+// ponytail: give up after this many auto-retries. Without a cap a client whose
+// fetch fails for a non-transient reason (403, bad account state) polls
+// /automations + /token every 30s for the whole session. The window has a
+// "retry" button, and login re-arms the counter.
+const MAX_RETRY_ATTEMPTS = 5;
 
 @InitAfter('UserService')
 export class AutomationsService extends StatefulService<IAutomationsState> {
@@ -37,6 +42,7 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
 
   private retryDelay = RETRY_BASE_DELAY_MS;
   private retryTimer: number | null = null;
+  private retryAttempts = 0;
 
   init() {
     console.log('[AutomationsService] init() called. isWorkerWindow:', Utils.isWorkerWindow());
@@ -59,6 +65,8 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
         this.retryTimer = null;
       }
       this.retryDelay = RETRY_BASE_DELAY_MS;
+      this.retryAttempts = 0;
+      this.streamAvatarApiService.clearToken();
       this.RESET();
     });
   }
@@ -141,7 +149,14 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
     this.state.error = false;
   }
 
+  /** User- or login-initiated load. Re-arms the auto-retry budget. */
   async fetchAll(): Promise<void> {
+    this.retryAttempts = 0;
+    this.retryDelay = RETRY_BASE_DELAY_MS;
+    return this.load();
+  }
+
+  private async load(): Promise<void> {
     console.log('[AutomationsService] fetchAll() start');
     if (this.retryTimer !== null) {
       clearTimeout(this.retryTimer);
@@ -163,9 +178,14 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
 
   private scheduleRetry() {
     if (this.retryTimer !== null) return;
+    if (this.retryAttempts >= MAX_RETRY_ATTEMPTS) {
+      console.warn('[AutomationsService] giving up after', this.retryAttempts, 'retries');
+      return;
+    }
+    this.retryAttempts += 1;
     this.retryTimer = window.setTimeout(() => {
       this.retryTimer = null;
-      if (this.userService.isLoggedIn) this.fetchAll();
+      if (this.userService.isLoggedIn) this.load();
     }, this.retryDelay);
     this.retryDelay = Math.min(this.retryDelay * 2, RETRY_MAX_DELAY_MS);
   }

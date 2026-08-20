@@ -16,7 +16,15 @@ import AutomationEditor from './AutomationEditor';
 import AutomationsEmptyState from './AutomationsEmptyState';
 import AutomationTemplates from './AutomationTemplates';
 import { AutomationsAnalytics } from './automations-analytics';
+import UltraIcon from 'components-react/shared/UltraIcon';
 import { conditionLabel, conditionGame, summarizeActions, GAME_OPTIONS } from './automations-utils';
+import {
+  checkEnableLimit,
+  enabledUsage,
+  upgrade,
+  ULTRA_PLUS_TIER,
+  AUTOMATION_LIMITS,
+} from './automations-limits';
 import styles from './EditAutomations.m.less';
 
 export default function EditAutomations() {
@@ -100,6 +108,8 @@ export default function EditAutomations() {
 
   function toggleEnabled(automation: TAutomationExport) {
     if (!automation.id) return;
+    // Turning one off is always allowed; only turning one on is capped.
+    if (!automation.enabled && !checkEnableLimit(1, 'toggle')) return;
     AutomationsService.actions.update(automation.id, {
       ...automation,
       enabled: !automation.enabled,
@@ -161,6 +171,8 @@ export default function EditAutomations() {
       )
     : automations;
 
+  const usage = enabledUsage();
+
   const addNewMenu = (
     <Menu>
       <Menu.Item key="new" onClick={create}>
@@ -175,10 +187,13 @@ export default function EditAutomations() {
   return (
     <ModalLayout hideFooter scrollable>
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>{$t('Automations')}</h1>
-        <p className={styles.pageSubtitle}>
-          {$t('Automatically trigger on stream effects in response to gameplay events.')}
-        </p>
+        <div>
+          <h1 className={styles.pageTitle}>{$t('Automations')}</h1>
+          <p className={styles.pageSubtitle}>
+            {$t('Automatically trigger on stream effects in response to gameplay events.')}
+          </p>
+        </div>
+        {loaded && <UsageMeter count={usage.count} max={usage.max} tier={usage.tier} />}
       </div>
 
       <div className={styles.filterBar}>
@@ -253,6 +268,51 @@ export default function EditAutomations() {
         </table>
       )}
     </ModalLayout>
+  );
+}
+
+function UsageMeter(p: { count: number; max: number; tier: string }) {
+  const pct = p.max > 0 ? Math.min(100, Math.round((p.count / p.max) * 100)) : 0;
+  const atCap = p.count >= p.max;
+  const atTopTier = p.tier === ULTRA_PLUS_TIER;
+
+  return (
+    <div className={styles.usageMeter}>
+      <div className={styles.usageRow}>
+        <span className={styles.usageText}>
+          {$t('%{count}/%{max} automations used', { count: p.count, max: p.max })}
+        </span>
+        <Tooltip
+          title={$t(
+            'Free includes %{free} enabled automations, Ultra %{ultra}, and Ultra+ %{ultraPlus}.',
+            {
+              free: AUTOMATION_LIMITS.free,
+              ultra: AUTOMATION_LIMITS.ultra,
+              ultraPlus: AUTOMATION_LIMITS[ULTRA_PLUS_TIER],
+            },
+          )}
+        >
+          <i className={`icon-information ${styles.usageInfo}`} />
+        </Tooltip>
+        <div className={styles.usageTrack}>
+          <div className={styles.usageFill} style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+
+      {atCap && !atTopTier && (
+        <span className={styles.upgradeLink} onClick={() => upgrade(p.tier, 'header')}>
+          <UltraIcon type="badge" />
+          <span className={styles.upgradeText}>
+            {p.tier === 'ultra'
+              ? $t('Upgrade to Ultra+ to unlock more')
+              : $t('Upgrade to Ultra to unlock more')}
+          </span>
+        </span>
+      )}
+      {atCap && atTopTier && (
+        <span className={styles.atCapNote}>{$t('Maximum automations reached')}</span>
+      )}
+    </div>
   );
 }
 
