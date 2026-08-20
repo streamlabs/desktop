@@ -20,8 +20,36 @@ jobs:
       - powershell: echo "IP for RDP connections:" $(Invoke-RestMethod ipinfo.io/ip)
         displayName: 'Get RDP address'
 
-      # - powershell: Set-DisplayResolution -Width 1920 -Height 1080 -Force
-      #   displayName: 'Setup Screen Resolution'
+      # Set-DisplayResolution was removed on 2026-07-09 (e07d90059, f3e061001) because it
+      # fails on the Server 2025 agents: the Amazon emulated VGA device falls back to the
+      # Microsoft Basic Display Adapter, which enumerates only 800x600. Removing it stopped
+      # the error but left the desktop at 800x600, and the suite ran there unnoticed for
+      # six weeks. Assert instead of setting blindly, so this can't regress silently again.
+      # See azure-test-blackout-verification.md.
+      - powershell: |
+          $c = Get-CimInstance Win32_VideoController | Select-Object -First 1
+          $adapter = $c.Name
+          $w = $c.CurrentHorizontalResolution
+          $h = $c.CurrentVerticalResolution
+          Write-Host "adapter    : $adapter"
+          Write-Host "resolution : $w x $h"
+
+          # The app's main window defaults to 1600x1000 (main.js). The e2e harness never
+          # sets a window size, so tests inherit the desktop. Below this the window is
+          # clamped toward its 800x600 minimum and UI tests fail misleadingly.
+          $minW = 1600
+          $minH = 1000
+
+          if ($null -eq $w -or $null -eq $h) {
+            Write-Host "##vso[task.logissue type=error]Could not read the console resolution from Win32_VideoController."
+            exit 1
+          }
+          if ($w -lt $minW -or $h -lt $minH) {
+            Write-Host "##vso[task.logissue type=error]Desktop is $w x $h but the app's main window needs $minW x $minH. Tests would run in a clamped window and fail misleadingly. Fix the agent display driver rather than lowering this threshold."
+            exit 1
+          }
+          Write-Host "OK - desktop is large enough for the app's default window."
+        displayName: 'Assert usable screen resolution'
 
       - script: yarn install --immutable 2>&1
         displayName: 'Install Dependencies'
