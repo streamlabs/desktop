@@ -72,7 +72,7 @@ export const DestinationSwitchers = memo((p: { disabled?: boolean }) => {
       activeDisplayPlatforms.horizontal.length < 2
       ? activeDisplayPlatforms.horizontal[0]
       : null;
-  }, [isDualOutputMode, isPrime, isUpdateMode, activeDisplayPlatforms]);
+  }, [isDualOutputMode, isPrime, isUpdateMode, activeDisplayPlatforms, isLiveOutputEditingEnabled]);
 
   const disabledVerticalUltraSwitcher = useMemo(() => {
     if (isLiveOutputEditingEnabled) return null;
@@ -80,7 +80,7 @@ export const DestinationSwitchers = memo((p: { disabled?: boolean }) => {
     return isDualOutputMode && isPrime && isUpdateMode && activeDisplayPlatforms.vertical.length < 2
       ? activeDisplayPlatforms.vertical[0]
       : null;
-  }, [isDualOutputMode, isPrime, isUpdateMode, activeDisplayPlatforms]);
+  }, [isDualOutputMode, isPrime, isUpdateMode, activeDisplayPlatforms, isLiveOutputEditingEnabled]);
 
   const emitSwitch = useDebounce(500, (ind?: number, enabled?: boolean) => {
     if (ind !== undefined && enabled !== undefined) {
@@ -131,7 +131,7 @@ export const DestinationSwitchers = memo((p: { disabled?: boolean }) => {
       emitSwitch();
       return enabledPlatformsRef.current.includes(platform);
     },
-    [emitSwitch, isPrime],
+    [emitSwitch, isPrime, disabledHorizontalUltraSwitcher, disabledVerticalUltraSwitcher],
   );
 
   const toggleNonUltraPlatform = useCallback(
