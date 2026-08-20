@@ -66,7 +66,6 @@ export function UltraComparison(p: IUltraComparisonProps) {
           </h1>
           <div className={styles.subheader}>
             <span>{$t('Everything you need to get started.')}</span>
-            <span>{$t('Always and forever free')}</span>
           </div>
         </div>
         <div className={styles.features}>
