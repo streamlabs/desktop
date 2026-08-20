@@ -19,6 +19,9 @@ import {
   HIGHLIGHTER_SETUP_URL_PRODUCTION,
   REPLAY_PROTOCOL,
   REPLAY_SETUP_EXE_NAME,
+  REPLAY_INSTALL_ORIGIN,
+  REPLAY_INSTALL_ORIGIN_DIR_NAME,
+  REPLAY_INSTALL_ORIGIN_FILE_NAME,
 } from './constants';
 import { pmap } from 'util/pmap';
 import { RenderingClip } from './rendering/rendering-clip';
@@ -508,6 +511,72 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   }
 
   /**
+   * Where Replay looks for the install origin marker, given who we are running as.
+   *
+   * Replay reads exactly one location: the current user's temp directory. A parent writing under a
+   * different identity gets a different %TEMP% — SYSTEM and services land in C:\Windows\TEMP or a
+   * profile under the Windows directory — and the marker would sit somewhere Replay never reads.
+   * Elevation alone is fine: "run as administrator" from the user's own account keeps the profile.
+   *
+   * Throws rather than returning a path we know Replay will not read.
+   */
+  private getReplayInstallOriginMarkerPath(): string {
+    const isInside = (child: string, parent: string) => {
+      const relativePath = path.relative(parent, child);
+      return (
+        relativePath !== '' && !relativePath.startsWith('..') && !path.isAbsolute(relativePath)
+      );
+    };
+
+    const temp = remote.app.getPath('temp');
+    const home = remote.app.getPath('home');
+    const systemRoot = remote.process.env.SystemRoot ?? 'C:\\Windows';
+
+    if (!isInside(temp, home) || isInside(home, systemRoot)) {
+      throw new Error(`"${temp}" is not the desktop user's temp directory`);
+    }
+
+    return path.join(temp, REPLAY_INSTALL_ORIGIN_DIR_NAME, REPLAY_INSTALL_ORIGIN_FILE_NAME);
+  }
+
+  /**
+   * Writes the marker Streamlabs Replay reads on first run to attribute the install to
+   * Streamlabs Desktop.
+   *
+   * Must run before the installer is executed: Squirrel's Setup.exe launches Replay at the end of
+   * the install, so Replay can resolve its origin while our exec call is still pending.
+   *
+   * Best-effort by design. Attribution is never worth failing an install over, so every error is
+   * swallowed and only reported to Sentry.
+   */
+  private async writeReplayInstallOriginMarker(): Promise<void> {
+    try {
+      const markerPath = this.getReplayInstallOriginMarkerPath();
+
+      // outputJson creates the containing directory if it does not exist yet
+      await fs.outputJson(markerPath, {
+        version: 1,
+        origin: REPLAY_INSTALL_ORIGIN,
+        createdAt: new Date().toISOString(),
+      });
+
+      // Replay logs the path it looked at on every launch until the origin settles. Two paths that
+      // do not match is the whole diagnosis, so log ours and the identity that wrote it.
+      console.log(
+        `Wrote Streamlabs Replay install origin marker to "${markerPath}" as "${
+          os.userInfo().username
+        }"`,
+      );
+    } catch (error: unknown) {
+      Sentry.withScope(scope => {
+        scope.setTag('feature', 'highlighter');
+        scope.setTag('replayInstallPhase', 'write-install-origin');
+        console.error('Failed to write Streamlabs Replay install origin marker:', error);
+      });
+    }
+  }
+
+  /**
    * Downloads and installs Streamlabs Replay.
    * Fakes progress increments during the download/install phases,
    * verifies the deeplink registry after install, and auto-launches the app.
@@ -575,6 +644,10 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
       // Verify the Authenticode signature before execution
       await this.verifyAuthenticodeSignature(setupPath);
+
+      // Attribute this install to Streamlabs Desktop before the installer runs.
+      // Best-effort: this never throws and never blocks the install.
+      await this.writeReplayInstallOriginMarker();
 
       // --- Installing phase ---
       this.SET_REPLAY_INSTALL({ step: 'installing', progress: 94 });
