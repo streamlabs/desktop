@@ -33,13 +33,12 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression
 
 # lets us configure the screen resolution
 echo "Download and install Amazon DCV Server"
-Invoke-WebRequest -Uri https://d1uj6qtbmh3dt5.cloudfront.net/2025.0/Servers/nice-dcv-server-x64-Release-2025.0-20103.msi
-msiexec.exe /i nice-dcv-server-x64-Release-2025.0-version_number.msi
-/quiet /norestart /l*v dcv_install_msi.log
+Invoke-WebRequest -Uri https://d1uj6qtbmh3dt5.cloudfront.net/2025.0/Servers/nice-dcv-server-x64-Release-2025.0-20103.msi -OutFile "$PWD\nice-dcv-server-x64-Release-2025.0-20103.msi"
+Start-Process msiexec.exe -ArgumentList "/i nice-dcv-server-x64-Release-2025.0-20103.msi /quiet /norestart /l*v dcv_install_msi.log" -Wait
 
 echo "Configuring Screen Resolution"
 reg.exe add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v console-session-default-layout /t REG_SZ /d "[{'w':<1920>, 'h':<1080>, 'x':<0>, 'y': <0>}]" /f
-reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v min-head-resolution /t REG_SZ /d "(1920, 1080)" /f
+reg.exe add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v min-head-resolution /t REG_SZ /d "(1920, 1080)" /f
 
 #copy scripts to the workingDir
 Copy-Item -Path "$PSScriptRoot\*" -Destination $workingDir
