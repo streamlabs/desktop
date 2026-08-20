@@ -1,0 +1,187 @@
+@import '../../styles/index';
+
+// Figma tokens map onto the night-theme palette 1:1:
+//   background/base #17242D -> --background   (content area)
+//   background/dark #09161D -> --section      (composer strip)
+//   stroke/default  #2B383F -> --border
+.window {
+  // Nothing inside may make the page itself scrollable: the window's title bar
+  // sits above this element in normal flow, so a scrolled document hides it.
+  overflow: hidden;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--background);
+}
+
+.content {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 0;
+  padding: 16px 24px;
+}
+
+// -- empty state -------------------------------------------------------------
+
+.empty-state {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 0;
+  padding: 16px 0;
+  text-align: center;
+}
+
+.empty-title {
+  .weight(@bold);
+
+  margin: 6px 0 0;
+  color: var(--title);
+  font-size: 18px;
+}
+
+.empty-body {
+  max-width: 420px;
+  margin: 0;
+  color: var(--paragraph);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+// -- suggested prompts -------------------------------------------------------
+
+.suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.suggestions-title {
+  .weight(@bold);
+
+  color: var(--paragraph);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.prompt-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.prompt {
+  .weight(@medium);
+
+  padding: 8px 12px;
+  color: var(--title);
+  font-size: 12px;
+  background-color: var(--section);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--teal);
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+// -- transcript --------------------------------------------------------------
+
+.messages {
+  flex: 1 0 0;
+  min-height: 0;
+}
+
+.message {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.from-user {
+  justify-content: flex-end;
+}
+
+.from-agent {
+  justify-content: flex-start;
+}
+
+.bubble {
+  max-width: 80%;
+  padding: 8px 12px;
+  color: var(--title);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background-color: var(--section);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+
+  .from-user & {
+    background-color: var(--button);
+  }
+}
+
+.link {
+  color: var(--teal);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+// -- errors ------------------------------------------------------------------
+
+.error {
+  padding: 8px 24px;
+  color: var(--warning);
+  font-size: 12px;
+}
+
+// -- composer ----------------------------------------------------------------
+
+.composer {
+  display: flex;
+  flex-shrink: 0;
+  gap: 12px;
+  align-items: flex-end;
+  padding: 12px 16px;
+  background-color: var(--section);
+  border-top: 1px solid var(--border);
+}
+
+.input {
+  flex: 1 0 0;
+  min-width: 0;
+  padding: 8px 12px !important;
+  color: var(--title);
+  font-size: 13px;
+  background-color: var(--background) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 6px !important;
+  resize: none;
+
+  &:focus {
+    border-color: var(--focus-border) !important;
+    box-shadow: none !important;
+  }
+}
+
+.send {
+  flex-shrink: 0;
+  height: 36px;
+  padding: 8px 16px;
+}

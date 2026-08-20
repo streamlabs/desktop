@@ -26,5 +26,17 @@
   "Open Display Frame": "Open Display Frame",
   "Active Process": "Active Process",
   "Selected Game": "Selected Game",
-  "There was an error installing Streamlabs AI.": "There was an error installing Streamlabs AI."
+  "There was an error installing Streamlabs AI.": "There was an error installing Streamlabs AI.",
+  "Streamlabs Desktop Support": "Streamlabs Desktop Support",
+  "How can we help you today?": "How can we help you today?",
+  "Ask me any question about alerts, widgets, audio delay, or connected streaming platforms.": "Ask me any question about alerts, widgets, audio delay, or connected streaming platforms.",
+  "Suggested Prompts": "Suggested Prompts",
+  "Set up alerts & widgets": "Set up alerts & widgets",
+  "Connect streaming platform": "Connect streaming platform",
+  "Intelligent Streaming Agent": "Intelligent Streaming Agent",
+  "Type your message...": "Type your message...",
+  "Send": "Send",
+  "Log in to use Streamlabs Desktop Support.": "Log in to use Streamlabs Desktop Support.",
+  "Could not connect to Streamlabs Desktop Support. Please try again.": "Could not connect to Streamlabs Desktop Support. Please try again.",
+  "Something went wrong. Please try again.": "Something went wrong. Please try again."
 }
