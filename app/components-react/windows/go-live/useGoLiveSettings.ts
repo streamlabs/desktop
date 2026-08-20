@@ -695,6 +695,7 @@ export class GoLiveSettingsModule {
       // The error is surfaced by the streaming service through the Go Live checklist, so just
       // stop here. Any stream that was already live is unaffected.
       console.error('Error updating stream settings', e);
+      this.syncToLiveTargets();
       return;
     }
 
@@ -714,7 +715,29 @@ export class GoLiveSettingsModule {
       message.error(
         $t('Error updating stream settings. Please check your settings and try again.'),
       );
+      this.syncToLiveTargets();
     }
+  }
+
+  /**
+   * Show the targets that are actually streaming after a failed update
+   * @remark The destination switchers persist its target as soon as it is toggled, before the update runs, so a
+   * failure leaves the switchers showing targets that never started or never stopped. The streaming service already
+   * corrected the saved settings against the server, so read them back here to re-render.
+   * `activePlatforms` and `activeDestinations` update to match so `isTargetLive` and `isUpdatingTargets` show the actual state.
+   */
+  private syncToLiveTargets() {
+    if (!this.isUpdateMode) return;
+
+    const savedSettings = this.state.savedSettings;
+
+    this.state.updateSettings({
+      platforms: savedSettings.platforms,
+      customDestinations: savedSettings.customDestinations,
+    });
+
+    this.activePlatforms = this.state.enabledPlatforms;
+    this.activeDestinations = this.state.customDestinations.filter(dest => dest.enabled);
   }
 
   /**
@@ -784,6 +807,10 @@ export class GoLiveSettingsModule {
 
   get enabledPlatformsCount() {
     return this.state.enabledPlatforms.length;
+  }
+
+  get enabledCustomDestinations() {
+    return this.state.customDestinations.filter(dest => dest.enabled);
   }
 
   get canAddDestinations() {

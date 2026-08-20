@@ -271,6 +271,7 @@ export class StreamingService
         facebook: 'not-started',
         twitter: 'not-started',
         instagram: 'not-started',
+        destination: 'not-started',
         setupMultistream: 'not-started',
         setupDualOutput: 'not-started',
         startVideoTransmission: 'not-started',
@@ -1018,6 +1019,7 @@ export class StreamingService
       // call putChannelInfo for each platform
       const platforms = this.views.getEnabledPlatforms(settings.platforms);
       const updatePlatforms = this.parseUpdatePlatforms(platforms, activePlatforms);
+      console.log('updatePlatforms', JSON.stringify(updatePlatforms, null, 2));
 
       // Compare active custom destinations by URL+streamKey to uniquely identify them
       const updateDestinations = this.parseUpdateCustomDestinations(
@@ -1058,6 +1060,11 @@ export class StreamingService
           platformError?.platform,
         );
 
+        // The Edit Stream window persists a toggle as soon as it is switched, so the saved
+        // settings now claim targets that never started, or claim a target was removed when it is
+        // still streaming. Correct them against what the server actually has.
+        await this.syncTargetsToLive(settings);
+
         // Report the failure so the caller does not tell the user the update succeeded, and does
         // not record the targets that failed to start as active
         return false;
@@ -1097,6 +1104,48 @@ export class StreamingService
     // Finish the 'runChecklist' step
     this.UPDATE_STREAM_INFO({ lifecycle });
     return true;
+  }
+
+  /**
+   * Correct the saved Go Live settings to match the targets that are actually streaming
+   * @remark Called when updating targets mid-stream fails. The Edit Stream window persists a
+   * toggle as soon as the user switches it, before the update is applied, so a failure leaves the
+   * saved settings claiming targets that never started. Targets are added and removed one display
+   * at a time, so an update can also fail partway with some targets already changed, which is why
+   * this reconciles against the server rather than rolling back the attempted change.
+   * @param settings - The settings the failed update was applied with
+   */
+  private async syncTargetsToLive(settings: IGoLiveSettings) {
+    try {
+      const enabledPlatforms = this.views.getEnabledPlatforms(settings.platforms);
+      const enabledDestinations = settings.customDestinations.filter(dest => dest.enabled);
+
+      const live = await this.restreamService.getLiveTargets(enabledPlatforms, enabledDestinations);
+
+      const livePlatforms = new Set(live.platforms);
+      const liveDestinations = new Set(
+        live.customDestinations.map(dest => `${dest.url}${dest.streamKey}`),
+      );
+
+      const platforms = cloneDeep(settings.platforms);
+      enabledPlatforms.forEach(platform => {
+        const platformSettings = platforms[platform];
+        if (!platformSettings) return;
+        platformSettings.enabled = livePlatforms.has(platform);
+      });
+
+      const customDestinations = settings.customDestinations.map(dest => ({
+        ...dest,
+        enabled: liveDestinations.has(`${dest.url}${dest.streamKey}`),
+      }));
+
+      this.streamSettingsService.setGoLiveSettings({ platforms, customDestinations });
+    } catch (e: unknown) {
+      // Never let this replace the error the update actually failed with, which is the one that
+      // tells the user what to do. A failing API is often why the update failed in the first
+      // place, so `getLiveTargets` throwing here is expected rather than exceptional.
+      console.error('Unable to sync targets to the live stream, leaving saved settings as is', e);
+    }
   }
 
   /**
@@ -1326,6 +1375,16 @@ export class StreamingService
       // This is in case the update partially succeeded and the user wants to try again.
       throwStreamError(errorType);
     }
+
+    if (destinations.length) {
+      // Update checklist for added custom destinations
+      for (const d of destinations) {
+        await this.runCheck('destination', async () => {
+          // Delay for UI animation
+          await new Promise(resolve => setTimeout(resolve, 300));
+        });
+      }
+    }
   }
 
   /**
@@ -1364,6 +1423,16 @@ export class StreamingService
       this.restoreFailedTargets(platforms, destinations);
 
       throwStreamError(errorType);
+    }
+
+    if (destinations.length) {
+      // Update checklist for added custom destinations
+      for (const d of destinations) {
+        await this.runCheck('destination', async () => {
+          // Delay for UI animation
+          await new Promise(resolve => setTimeout(resolve, 300));
+        });
+      }
     }
 
     // Stop streaming displays that no longer have any targets

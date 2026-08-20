@@ -362,6 +362,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @param targets - The updated list of targets on the stream
    */
   async addRuntimeTargets(streamKey: string, targets: IRestreamRuntimeTarget[]) {
+    console.log(`Adding restream targets for ${streamKey}:`, targets);
     const headers = authorizedHeaders(
       this.userService.apiToken,
       new Headers({ 'Content-Type': 'application/json' }),
@@ -384,6 +385,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @param targets - The updated list of targets on the stream
    */
   async removeRuntimeTargets(streamKey: string, targets: { id: number }[]) {
+    console.log('Removing restream targets for', streamKey, targets);
     const headers = authorizedHeaders(
       this.userService.apiToken,
       new Headers({ 'Content-Type': 'application/json' }),
@@ -580,6 +582,35 @@ export class RestreamService extends StatefulService<IRestreamState> {
         throwStreamError('RESTREAM_UPDATE_FAILED', e, `Unable to remove targets for ${mode}.`);
       }
     }
+  }
+
+  /**
+   * Determine which of the given targets are actually streaming
+   * @remark Used to reconcile the Go Live settings after a runtime target update fails. Adding and
+   * removing targets is done one display at a time, so an update can fail partway with some
+   * targets already changed. The server's target list is the only record of what really happened,
+   * which is why this compares against it rather than rolling back the attempted change.
+   * Targets are matched by stream key, not platform, because relayed platforms are all reported by
+   * the server as `relay`.
+   * @param platforms - The platforms to check
+   * @param customDestinations - The custom destinations to check
+   * @returns The subset of each that the server currently has a target for
+   */
+  async getLiveTargets(
+    platforms: TPlatform[],
+    customDestinations: ICustomStreamDestination[],
+  ): Promise<{ platforms: TPlatform[]; customDestinations: ICustomStreamDestination[] }> {
+    const remoteTargets: IRestreamTarget[] = await this.fetchTargets();
+    const liveStreamKeys = new Set(remoteTargets.map(target => target.streamKey));
+
+    return {
+      platforms: platforms.filter(platform =>
+        liveStreamKeys.has(this.formatRuntimePlatformData(platform).streamKey),
+      ),
+      customDestinations: customDestinations.filter(dest =>
+        liveStreamKeys.has(this.formatRuntimeCustomDestinationData(dest).streamKey),
+      ),
+    };
   }
 
   /**

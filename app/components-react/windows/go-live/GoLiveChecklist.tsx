@@ -33,6 +33,9 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
     stopTargets,
     startTargets,
     continueTargets,
+    stopDestinations,
+    startDestinations,
+    continueDestinations,
     isLiveOutputEditingEnabled,
     isUpdatingTargets,
   } = useGoLiveSettings().extend(module => ({
@@ -50,6 +53,24 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
         : [];
     },
 
+    get stopDestinations() {
+      return module.activeDestinations
+        ? difference(
+            module.activeDestinations.map(dest => dest.name),
+            module.enabledCustomDestinations.map(dest => dest.name),
+          )
+        : [];
+    },
+
+    get startDestinations() {
+      return module.activeDestinations
+        ? difference(
+            module.enabledCustomDestinations.map(dest => dest.name),
+            module.activeDestinations.map(dest => dest.name),
+          )
+        : [];
+    },
+
     get startTargets() {
       return module.activePlatforms
         ? difference(module.enabledPlatforms, module.activePlatforms)
@@ -59,6 +80,15 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
     get continueTargets() {
       return module.activePlatforms
         ? intersection(module.enabledPlatforms, module.activePlatforms)
+        : [];
+    },
+
+    get continueDestinations() {
+      return module.activeDestinations
+        ? intersection(
+            module.enabledCustomDestinations.map(dest => dest.name),
+            module.activeDestinations.map(dest => dest.name),
+          )
         : [];
     },
   }));
@@ -94,37 +124,70 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
             )}
 
           {/* EDIT STREAM - STOP TARGETS */}
-          {showLiveOutputEditing &&
-            stopTargets.map(platform =>
-              renderCheck(
-                $t('Stop streaming to %{platform}', {
-                  platform: getPlatformDisplayName(platform),
-                }),
-                checklist[platform],
-              ),
-            )}
+          {showLiveOutputEditing && (
+            <>
+              {stopTargets.map(platform =>
+                renderCheck(
+                  $t('Stop streaming to %{target}', {
+                    target: getPlatformDisplayName(platform),
+                  }),
+                  checklist[platform],
+                ),
+              )}
+              {stopDestinations.map(destination =>
+                renderCheck(
+                  $t('Stop streaming to %{target}', {
+                    target: destination,
+                  }),
+                  checklist.destination,
+                ),
+              )}
+            </>
+          )}
 
           {/* EDIT STREAM - START TARGETS */}
-          {showLiveOutputEditing &&
-            startTargets.map(platform =>
-              renderCheck(
-                $t('Start streaming to %{platform}', {
-                  platform: getPlatformDisplayName(platform),
-                }),
-                checklist[platform],
-              ),
-            )}
+          {showLiveOutputEditing && (
+            <>
+              {startTargets.map(platform =>
+                renderCheck(
+                  $t('Start streaming to %{target}', {
+                    target: getPlatformDisplayName(platform),
+                  }),
+                  checklist[platform],
+                ),
+              )}
+              {startDestinations.map(destination =>
+                renderCheck(
+                  $t('Start streaming to %{target}', {
+                    target: destination,
+                  }),
+                  checklist.destination,
+                ),
+              )}
+            </>
+          )}
 
           {/* EDIT STREAM - CONTINUE/UPDATE TARGETS */}
-          {showLiveOutputEditing &&
-            continueTargets.map(platform =>
-              renderCheck(
-                $t('Update settings for %{platform}', {
-                  platform: getPlatformDisplayName(platform),
-                }),
-                checklist[platform],
-              ),
-            )}
+          {showLiveOutputEditing && (
+            <>
+              {continueTargets.map(platform =>
+                renderCheck(
+                  $t('Update settings for %{platform}', {
+                    platform: getPlatformDisplayName(platform),
+                  }),
+                  checklist[platform],
+                ),
+              )}
+              {continueDestinations.map(destination =>
+                renderCheck(
+                  $t('Continue streaming to %{target}', {
+                    target: destination,
+                  }),
+                  checklist.destination,
+                ),
+              )}
+            </>
+          )}
 
           {/* RESTREAM */}
           {shouldRenderMultistreamItem &&
