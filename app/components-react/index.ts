@@ -40,6 +40,7 @@ import DismissableBadge from './shared/DismissableBadge';
 import UltraIcon from './shared/UltraIcon';
 import EditTransform from './windows/EditTransform';
 import EditAutomations from './windows/stream-avatar-automations/EditAutomations';
+import KevinSupport from './agent/KevinSupport';
 import MarketingModal from './windows/MarketingModal';
 import Main from './windows/Main';
 import Loader from './pages/Loader';
@@ -96,6 +97,7 @@ export const components = {
   UltraIcon,
   EditTransform,
   EditAutomations,
+  KevinSupport,
   Blank,
   MarketingModal,
   Main: createRoot(Main),
