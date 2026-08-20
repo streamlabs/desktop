@@ -27,12 +27,38 @@ jobs:
       # six weeks. Assert instead of setting blindly, so this can't regress silently again.
       # See azure-test-blackout-verification.md.
       - powershell: |
+          $sessionName = $env:SESSIONNAME
+          Write-Host "session     : $sessionName"
+
+          # The hardware adapter / console framebuffer.
           $c = Get-CimInstance Win32_VideoController | Select-Object -First 1
           $adapter = $c.Name
-          $w = $c.CurrentHorizontalResolution
-          $h = $c.CurrentVerticalResolution
-          Write-Host "adapter    : $adapter"
-          Write-Host "resolution : $w x $h"
+          $hwW = $c.CurrentHorizontalResolution
+          $hwH = $c.CurrentVerticalResolution
+          Write-Host "adapter     : $adapter"
+          Write-Host "adapter res : $hwW x $hwH"
+
+          # What a GUI process in THIS session actually sees, which is what Electron gets
+          # when it creates the main window. Under RDP, or with a virtual display driver
+          # active, this differs from the adapter reading - so assert on this one.
+          $w = $null
+          $h = $null
+          try {
+            Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
+            $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+            $w = $b.Width
+            $h = $b.Height
+            Write-Host "session res : $w x $h"
+          } catch {
+            Write-Host "session res : unavailable, falling back to the adapter reading"
+            Write-Host $_.Exception.Message
+            $w = $hwW
+            $h = $hwH
+          }
+
+          if ($w -ne $hwW -or $h -ne $hwH) {
+            Write-Host "##vso[task.logissue type=warning]Session resolution $w x $h differs from the adapter $hwW x $hwH. The agent is probably not on the console session. Tests will use the session value."
+          }
 
           # The app's main window defaults to 1600x1000 (main.js). The e2e harness never
           # sets a window size, so tests inherit the desktop. Below this the window is
@@ -40,8 +66,8 @@ jobs:
           $minW = 1600
           $minH = 1000
 
-          if ($null -eq $w -or $null -eq $h) {
-            Write-Host "##vso[task.logissue type=error]Could not read the console resolution from Win32_VideoController."
+          if ($null -eq $w -or $null -eq $h -or $w -eq 0 -or $h -eq 0) {
+            Write-Host "##vso[task.logissue type=error]Could not determine the screen resolution for this session."
             exit 1
           }
           if ($w -lt $minW -or $h -lt $minH) {
