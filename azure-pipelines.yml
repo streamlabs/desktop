@@ -41,6 +41,39 @@ jobs:
             Select-Object Name, VideoModeDescription, CurrentHorizontalResolution, CurrentVerticalResolution |
             Format-List
 
+          Write-Host "=== Supported display modes ==="
+          $modes = Get-CimInstance -ClassName CIM_VideoControllerResolution -ErrorAction SilentlyContinue |
+            Select-Object HorizontalResolution, VerticalResolution |
+            Sort-Object HorizontalResolution, VerticalResolution -Unique
+          if ($modes) {
+            $modes | Format-Table -AutoSize
+            Write-Host "distinct modes :" $modes.Count
+            $max = $modes | Sort-Object { $_.HorizontalResolution * $_.VerticalResolution } | Select-Object -Last 1
+            Write-Host "largest mode   :" $max.HorizontalResolution "x" $max.VerticalResolution
+
+            # 1920x1080 is what the pipeline used to ask for.
+            # 1600x1000 is the app's default main-window size (main.js).
+            $hasHd = $modes | Where-Object { $_.HorizontalResolution -ge 1920 -and $_.VerticalResolution -ge 1080 }
+            $hasApp = $modes | Where-Object { $_.HorizontalResolution -ge 1600 -and $_.VerticalResolution -ge 1000 }
+            if ($hasHd) {
+              Write-Host "VERDICT: 1920x1080 IS available - re-enable Set-DisplayResolution"
+            } elseif ($hasApp) {
+              Write-Host "VERDICT: no 1920x1080, but a mode >= 1600x1000 exists - usable, set that instead"
+            } else {
+              Write-Host "VERDICT: NO mode >= 1600x1000 - scripting cannot fix this, the image needs a display driver"
+            }
+          } else {
+            Write-Host "CIM_VideoControllerResolution returned nothing; falling back to Win32_VideoSettings"
+            Get-CimInstance -ClassName Win32_VideoSettings -ErrorAction SilentlyContinue |
+              Select-Object -First 40 Setting | Format-Table -AutoSize
+          }
+
+          Write-Host ""
+          Write-Host "=== Display driver detail ==="
+          Get-CimInstance Win32_VideoController |
+            Select-Object Name, AdapterCompatibility, DriverVersion, DriverDate, InstalledDisplayDrivers, PNPDeviceID, Status |
+            Format-List
+
           Write-Host "=== Set-DisplayResolution availability ==="
           $cmd = Get-Command Set-DisplayResolution -ErrorAction SilentlyContinue
           if ($cmd) {
