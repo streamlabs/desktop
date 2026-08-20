@@ -28,9 +28,18 @@ echo "Download and install Azure Agent"
 cd /
 Remove-Item -Recurse -Force -ErrorAction Ignore agent
 mkdir agent ; cd agent;
-Invoke-WebRequest -Uri https://download.agent.dev.azure.com/agent/4.255.0/vsts-agent-win-x64-4.255.0.zip -OutFile "$PWD\agent.zip"
+Invoke-WebRequest -Uri https://download.agent.dev.azure.com/agent/5.275.0/vsts-agent-win-x64-5.275.0.zip -OutFile "$PWD\agent.zip"
 Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD\agent.zip", "$PWD")
 
+# lets us configure the screen resolution
+echo "Download and install Amazon DCV Server"
+Invoke-WebRequest -Uri https://d1uj6qtbmh3dt5.cloudfront.net/2025.0/Servers/nice-dcv-server-x64-Release-2025.0-20103.msi
+msiexec.exe /i nice-dcv-server-x64-Release-2025.0-version_number.msi
+/quiet /norestart /l*v dcv_install_msi.log
+
+echo "Configuring Screen Resolution"
+reg.exe add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v console-session-default-layout /t REG_SZ /d "[{'w':<1920>, 'h':<1080>, 'x':<0>, 'y': <0>}]" /f
+reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v min-head-resolution /t REG_SZ /d "(1920, 1080)" /f
 
 #copy scripts to the workingDir
 Copy-Item -Path "$PSScriptRoot\*" -Destination $workingDir
@@ -46,7 +55,7 @@ echo "Install Visual C++ Redistributable (required for node-win32-np module)"
 choco install vcredist2015
 
 echo "Install Nodejs"
-choco install nodejs --version=12.16.2
+choco install nodejs --version=22.18.0
 
 echo "Install Yarn"
 choco install yarn
