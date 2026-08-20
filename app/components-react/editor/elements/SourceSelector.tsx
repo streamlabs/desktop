@@ -21,6 +21,7 @@ import { initStore, useController } from 'components-react/hooks/zustand';
 import { useVuex } from 'components-react/hooks';
 import * as remote from '@electron/remote';
 import { AuthModal } from 'components-react/shared/AuthModal';
+import { alertAsync } from 'components-react/modals';
 import Utils from 'services/utils';
 
 interface ISourceMetadata {
@@ -280,6 +281,15 @@ class SourceSelectorController {
 
     if (!item.video) {
       this.audioService.actions.showAdvancedSettings(item.sourceId);
+      return;
+    }
+
+    if (this.sourcesService.views.isRetiredWidget(item.sourceId)) {
+      alertAsync(
+        $t(
+          'This widget is no longer supported and can no longer be configured. You can safely remove it from your scene.',
+        ),
+      );
       return;
     }
 
@@ -662,6 +672,73 @@ class SourceSelectorController {
     return this.scene.getSelection(sceneNodeId);
   }
 
+  toggleDualOutput() {
+    if (this.userService.isLoggedIn) {
+      if (Services.StreamingService.views.isMidStreamMode) {
+        message.error({
+          content: $t('Cannot toggle Dual Output while live.'),
+          className: styles.toggleError,
+        });
+      } else if (Services.TransitionsService.views.studioMode) {
+        message.error({
+          content: $t('Cannot toggle Dual Output while in Studio Mode.'),
+          className: styles.toggleError,
+        });
+      } else {
+        // only open video settings when toggling on dual output
+        const skipShowVideoSettings = this.dualOutputService.views.dualOutputMode === true;
+
+        this.dualOutputService.actions.setDualOutputModeIfPossible(
+          !this.dualOutputService.views.dualOutputMode,
+          skipShowVideoSettings,
+        );
+        Services.UsageStatisticsService.recordFeatureUsage('DualOutput');
+        Services.UsageStatisticsService.recordAnalyticsEvent('DualOutput', {
+          type: 'ToggleOnDualOutput',
+          source: 'SourceSelector',
+          isPrime: this.userService.isPrime,
+          platforms: this.streamingService.views.linkedPlatforms,
+          tiktokStatus: this.tiktokService.scope,
+        });
+
+        if (!this.dualOutputService.views.dualOutputMode && this.selectiveRecordingEnabled) {
+          // show warning message if selective recording is active
+          remote.dialog
+            .showMessageBox(Utils.getChildWindow(), {
+              title: 'Vertical Display Disabled',
+              message: $t(
+                'Dual Output can’t be displayed - Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable selective recording from Sources to set up Dual Output.',
+              ),
+              buttons: [$t('OK')],
+            })
+            .catch(() => {});
+        }
+      }
+    } else {
+      this.handleShowModal(true);
+    }
+  }
+
+  handleShowModal(status: boolean) {
+    Services.WindowsService.actions.updateStyleBlockers('main', status);
+    this.store.update('showModal', status);
+  }
+
+  handleAuth() {
+    this.userService.actions.showLogin();
+    const onboardingCompleted = Services.OnboardingService.onboardingCompleted.subscribe(() => {
+      Services.DualOutputService.actions.setDualOutputModeIfPossible();
+      Services.SettingsService.actions.showSettings('Video');
+      onboardingCompleted.unsubscribe();
+    });
+  }
+
+  get dualOutputTitle() {
+    return !this.isDualOutputActive || !this.userService.isLoggedIn
+      ? $t('Enable Dual Output to stream to horizontal & vertical platforms simultaneously')
+      : $t('Disable Dual Output');
+  }
+
   get scene() {
     const scene = getDefined(this.scenesService.views.activeScene);
     return scene;
@@ -690,6 +767,12 @@ function SourceSelector() {
           </Translate>
         </HelpTip>
       )}
+      <AuthModal
+        prompt={$t('Please log in to enable dual output. Would you like to log in now?')}
+        showModal={showModal}
+        handleShowModal={ctrl.handleShowModal}
+        handleAuth={ctrl.handleAuth}
+      />
     </>
   );
 }
@@ -715,6 +798,17 @@ function StudioControls() {
         <i
           className="icon-add-circle icon-button icon-button--lg"
           onClick={() => ctrl.addSource()}
+        />
+      </Tooltip>
+
+      <Tooltip title={ctrl.dualOutputTitle} placement="bottomRight">
+        <i
+          data-name="dual-output-toggle"
+          className={cx('icon-dual-output icon-button icon-button--lg', {
+            active: ctrl.isDualOutputActive,
+          })}
+          onClick={() => ctrl.toggleDualOutput()}
+          data-testid={ctrl.isDualOutputActive ? 'dual-output-active' : 'dual-output-inactive'}
         />
       </Tooltip>
 
@@ -814,7 +908,7 @@ const TreeNode = React.forwardRef(
       removeSource: () => void;
       sourceProperties: () => void;
     },
-    ref: React.ForwardedRef<HTMLDivElement>,
+    ref: React.RefObject<HTMLDivElement>,
   ) => {
     function selectiveRecordingMetadata() {
       if (p.isStreamVisible && p.isRecordingVisible) {

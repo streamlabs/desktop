@@ -64,6 +64,9 @@ export { SettingsManagerService } from 'services/settings-manager';
 export { MarkersService } from 'services/markers';
 export { RealmService } from 'services/realm';
 export { StreamAvatarService } from 'services/stream-avatar/stream-avatar-service';
+export { StreamAvatarApiService } from 'services/stream-avatar/stream-avatar-api-service';
+export { AutomationsService } from 'services/stream-avatar/automations-service';
+export { AutomationsEngineService } from 'services/stream-avatar/automations-engine-service';
 export { OnboardingV2Service } from 'services/onboarding/onboarding-v2';
 
 // ONLINE SERVICES
@@ -115,8 +118,6 @@ export { SseService } from 'services/server-sent-events';
 // WIDGETS
 export { WidgetSource, WidgetsService } from './services/widgets';
 export { StreamBossService } from 'services/widgets/settings/stream-boss';
-export { CreditsService } from 'services/widgets/settings/credits';
-export { TipJarService } from 'services/widgets/settings/tip-jar';
 export { MediaShareService } from 'services/widgets/settings/media-share';
 export { AlertBoxService } from 'services/widgets/settings/alert-box';
 export { SpinWheelService } from 'services/widgets/settings/spin-wheel';
@@ -210,6 +211,9 @@ import { SignalsService } from 'services/signals-manager';
 import { TroubleshooterService } from 'services/troubleshooter';
 import { OnboardingV2Service } from 'services/onboarding/onboarding-v2';
 import { VirtualWebcamService } from 'services/virtual-webcam';
+import { StreamAvatarApiService } from 'services/stream-avatar/stream-avatar-api-service';
+import { AutomationsService } from 'services/stream-avatar/automations-service';
+import { AutomationsEngineService } from 'services/stream-avatar/automations-engine-service';
 
 export const AppServices = {
   AppService,
@@ -298,4 +302,7 @@ export const AppServices = {
   ReactiveDataService,
   TroubleshooterService,
   OnboardingV2Service,
+  StreamAvatarApiService,
+  AutomationsService,
+  AutomationsEngineService,
 };

@@ -143,7 +143,7 @@ export function promptAction(p: {
     type: 'confirm',
     title: p.title,
     content: p.message,
-    icon: p?.icon,
+    icon: p.icon ? <span className={styles.actionModalIcon}>{p.icon}</span> : undefined,
     closable: true,
     maskClosable: p.maskClosable ?? true,
     cancelButtonProps: { style: { display: 'none' } },

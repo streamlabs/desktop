@@ -27,6 +27,7 @@ import {
   waitForDisplayed,
 } from '../helpers/modules/core';
 import { logIn, logOut } from '../helpers/webdriver/user';
+import { toggleDualOutputMode } from '../helpers/modules/dual-output';
 import { showPage } from '../helpers/modules/navigation';
 import { useForm, fillForm } from '../helpers/modules/forms';
 import * as childProcess from 'child_process';
@@ -160,6 +161,7 @@ test('Recording', async t => {
  */
 test('Recording with two contexts active', async t => {
   await logIn(t);
+  await toggleDualOutputMode();
 
   // low resolution reduces CPU usage
   await setOutputResolution('100x100');
@@ -179,7 +181,7 @@ test('Recording from Go Live window', async t => {
   await clickGoLive();
   await waitForSettingsWindowLoaded();
 
-  await clickToggle('recording-toggle');
+  await clickToggle('recording');
 
   if (user.type === 'twitch') {
     await fillForm({
@@ -293,7 +295,7 @@ async function validateTitleContainsNoSpaces(t: TExecutionContext, tmpDir: strin
   const files = await readdir(tmpDir);
   t.true(files.length >= 1, `Files that were created:\n${files.join('\n')}`);
   const videoFile = files.find(f => f.endsWith('.mkv'));
-  t.truthy(videoFile, 'Expected a .mkv recording file');
+  t.truthy(videoFile, `Expected a .mkv recording file but got ${videoFile}`);
   if (!videoFile) return;
   t.false(videoFile.includes(' '), `Recording filename should not contain spaces: "${videoFile}"`);
 }
@@ -309,6 +311,7 @@ test('Recording without spaces', async t => {
       await clickCheckbox('RecFileNameWithoutSpace');
     });
 
+    await sleep(1000);
     await validateTitleContainsNoSpaces(t, tmpDir);
   } finally {
     await logOut(t, true);

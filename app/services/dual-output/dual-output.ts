@@ -326,10 +326,6 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     // confirm custom destinations have a default display
     this.confirmDestinationDisplays();
 
-    if (!this.state.dualOutputMode) {
-      this.SET_SHOW_DUAL_OUTPUT(true);
-    }
-
     /**
      * Handles enabling/disabling performance mode when toggling displays
      */
@@ -361,13 +357,19 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
      * to a dual output collection when a single output collection is loaded in dual output mode
      * @remark Optimize by only confirming when the collection is switched
      */
-    this.sceneCollectionsService.collectionSwitched.subscribe(async collection => {
-      const hasNodeMap =
-        !!collection?.sceneNodeMaps && Object.keys(collection?.sceneNodeMaps).length > 0;
+    this.sceneCollectionsService.collectionSwitched.subscribe(collection => {
+      // Skip validating a collection that is being converted to a single output collection
+      // to prevent recreating the partner nodes
+      if (this.sceneCollectionsService.isConvertingCollection) {
+        this.collectionHandled.next(null);
+        return;
+      }
 
-      if (!hasNodeMap) {
-        console.log('[DUAL OUTPUT: Convert single output collection to dual output]');
-        await this.convertSingleOutputToDualOutputCollection();
+      const hasNodeMap =
+        collection?.sceneNodeMaps && Object.entries(collection?.sceneNodeMaps).length > 0;
+
+      if (this.state.dualOutputMode && !hasNodeMap) {
+        this.convertSingleOutputToDualOutputCollection();
       } else if (hasNodeMap) {
         this.validateDualOutputCollection();
       } else {
@@ -409,7 +411,25 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     status: boolean = true,
     skipShowVideoSettings: boolean = false,
     showGoLiveWindow?: boolean,
+    force?: boolean,
   ) {
+    if (!status && force) {
+      if (!this.views.showHorizontalDisplay) {
+        this.toggleDisplay(true, 'horizontal');
+      }
+
+      if (this.views.showVerticalDisplay) {
+        this.toggleDisplay(false, 'vertical');
+      }
+
+      this.SET_SHOW_DUAL_OUTPUT(false);
+      this.selectionService.views.globalSelection.reset();
+
+      this.SET_IS_LOADING(false);
+      this.dualOutputModeChanged.next(status);
+      return;
+    }
+
     if (!this.userService.isLoggedIn) return;
 
     // If a user is not in protected mode (ie using "Stream to a Custom Ingest")
@@ -448,8 +468,12 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     this.toggleDualOutputMode(status);
 
     if (this.state.dualOutputMode) {
-      // All dual output scene collections will have been converted on collection load
-      // so there is no need to validate again
+      // All dual output scene collections will have been validated when the collection was switched
+      // so there is no need to validate the scene nodes again. So just convert the single output collection
+      // to dual output if needed.
+      if (!this.views.isDualOutputCollection) {
+        this.convertSingleOutputToDualOutputCollection();
+      }
 
       /**
        * Selective recording only works with horizontal sources, so don't show the
@@ -491,11 +515,7 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     this.SET_SHOW_DUAL_OUTPUT(status);
   }
 
-  /**
-   * Convert a single output scene collection to a dual output scene collection
-   * @remark This functionality will be moved into the nodes system in a future PR
-   */
-  async convertSingleOutputToDualOutputCollection() {
+  convertSingleOutputToDualOutputCollection() {
     this.SET_IS_LOADING(true);
 
     // establish vertical context if it doesn't exist
@@ -511,8 +531,6 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
       this.collectionHandled.next();
     }
 
-    await this.sceneCollectionsService.save();
-    this.sceneCollectionsService.stateService.flushManifestFile();
     this.collectionHandled.next(this.sceneCollectionsService.sceneNodeMaps);
   }
 
@@ -654,8 +672,6 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
       this.collectionHandled.next();
     }
 
-    this.sceneCollectionsService.save();
-    this.sceneCollectionsService.stateService.flushManifestFile();
     this.collectionHandled.next(this.sceneCollectionsService.sceneNodeMaps);
   }
 

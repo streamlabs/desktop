@@ -54,6 +54,16 @@ const AsyncFlag = obs.ESourceOutputFlags.Async;
 const DoNotDuplicateFlag = obs.ESourceOutputFlags.DoNotDuplicate;
 const ForceUiRefresh = obs.ESourceOutputFlags.ForceUiRefresh;
 
+/**
+ * Sunset widgets. The enum values stay reserved because they are persisted in user
+ * scene collections, but these widgets have no settings window anymore.
+ */
+const RETIRED_WIDGETS: WidgetType[] = [
+  WidgetType.StarsGoal,
+  WidgetType.SupporterGoal,
+  WidgetType.GameWidget,
+];
+
 export const PROPERTIES_MANAGER_TYPES = {
   default: DefaultManager,
   widget: WidgetManager,
@@ -165,6 +175,13 @@ class SourcesViews extends ViewHandler<ISourcesState> {
 
   getSourcesByType(type: TSourceType) {
     return this.sources.filter(s => s.type === type);
+  }
+
+  isRetiredWidget(id: string): boolean {
+    const source = this.getSource(id);
+    if (!source || source.getPropertiesManagerType() !== 'widget') return false;
+
+    return RETIRED_WIDGETS.includes(source.getPropertiesManagerSettings().widgetType);
   }
 
   suggestName(name?: string): string {
@@ -834,6 +851,11 @@ export class SourcesService extends StatefulService<ISourcesState> {
     const platform = this.userService.views.platform;
     assertIsDefined(platform);
     const widgetType = source.getPropertiesManagerSettings().widgetType;
+
+    // Retired widgets still exist in saved scene collections but no longer have a
+    // settings window.
+    if (RETIRED_WIDGETS.includes(widgetType)) return;
+
     const componentName = this.widgetsService.getWidgetComponent(widgetType);
 
     // React widgets are in the WidgetsWindow component
@@ -843,14 +865,13 @@ export class SourcesService extends StatefulService<ISourcesState> {
       'DonationGoal',
       'CharityGoal',
       'FollowerGoal',
-      'StarsGoal',
       'SubGoal',
       'SubscriberGoal',
       'SuperchatGoal',
       'ChatBox',
       // TODO:
       // 'ChatHighlight',
-      // 'Credits',
+      'Credits',
       'DonationTicker',
       'EmoteWall',
       'EventList',
@@ -859,9 +880,8 @@ export class SourcesService extends StatefulService<ISourcesState> {
       // 'SpinWheel',
       'SponsorBanner',
       // 'StreamBoss',
-      // 'TipJar',
+      'TipJar',
       'ViewerCount',
-      'GameWidget',
       'CustomWidget',
       'GamePulseWidget',
     ];

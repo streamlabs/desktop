@@ -27,7 +27,6 @@ export function ExperimentalSettings() {
         <h2>{$t('Repair Scene Collection')}</h2>
         <Button onClick={repairSceneCollection}>Repair Scene Collection</Button>
       </div>
-
       <div className="section">
         <h2>{$t('Show Components Library')}</h2>
         <Button type="primary" onClick={showDemoComponents}>
