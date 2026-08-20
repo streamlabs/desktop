@@ -355,8 +355,9 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   /**
    * Add targets while live
-   * @remark Use `addTargets` instead of calling this directly. `addTargets` is a wrapper that
-   * formats the target data and resolves the stream key for the display.
+   * @remark Used for updating a stream while live. Use `addTargets` instead
+   * of calling this directly. `addTargets` is a wrapper that formats the target data
+   * and resolves the stream key for the display.
    * @param streamKey - The stream key for the restream session
    * @param targets - The updated list of targets on the stream
    */
@@ -377,8 +378,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   /**
    * Remove targets while live
-   * @remark Use `removeTargets` instead of calling this directly. `removeTargets` is a
-   * wrapper that formats the target data
+   * @remark Used for updating a stream while live. Use `removeTargets` instead of calling
+   * this directly. `removeTargets` is a wrapper that formats the target data
    * @param streamKey - The stream key for the restream session
    * @param targets - The updated list of targets on the stream
    */
@@ -399,7 +400,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   /**
    * Fetch the stream key for an orientation and resolve it to the expected format
-   * @remark Check:
+   * @remark Used for updating a stream while live. Checks:
    *    1. If the request returns no key for the orientation, create one from the session key
    *    2. Otherwise, format whatever came back. Handle an empty key first because an empty key
    *       has no suffix to correct, so formatting it would produce a bare `_landscape` or `_portrait`.
@@ -430,8 +431,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   /**
    * Apply the orientation suffix to a stream key
-   * @remark A key with no underscore has no suffix to replace, so the orientation is appended
-   * rather than swapped in.
+   * @remark Used for updating a stream while live. A key with no underscore has no suffix to replace,
+   * so the orientation is appended rather than swapped in.
    * @param key - The stream key to format
    * @param orientation - The orientation the key belongs to
    */
@@ -446,7 +447,9 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   /**
    * Add targets to the restream session
-   * @remark This is a wrapper that formats the target data for the api call before adding.
+   * @remark Used for updating a stream while live. This is a wrapper that formats the target data
+   * for the api call before adding.
+   *
    * A display that is already streaming has a running restream session, so its targets are added
    * with the runtime endpoint. A display that is not yet streaming has no session to add runtime
    * targets to, so it is set up the same way the go live flow does it: point the display's output
@@ -494,7 +497,11 @@ export class RestreamService extends StatefulService<IRestreamState> {
         streamKey = await this.resolveStreamKey(mode);
       } catch (e: unknown) {
         console.error('Restream Error: Unable to fetch user stream key for', mode, e);
-        throwStreamError('RESTREAM_UPDATE_FAILED');
+        throwStreamError(
+          'RESTREAM_UPDATE_FAILED',
+          e,
+          `Unable to fetch user stream key for ${mode}.`,
+        );
       }
 
       if (displaysToSetup.includes(display)) {
@@ -507,7 +514,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
           await this.setupDisplayTargets(platforms, customDestinations, display);
         } catch (e: unknown) {
           console.error('Restream Error: Unable to create targets for', display, e);
-          throwStreamError('RESTREAM_UPDATE_FAILED');
+          throwStreamError('RESTREAM_UPDATE_FAILED', e, `Unable to create targets for ${display}.`);
         }
       } else {
         // This display already has a running restream session, so add the targets to it.
@@ -516,7 +523,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
           await this.addRuntimeTargets(streamKey, targetsByMode[mode] as IRestreamRuntimeTarget[]);
         } catch (e: unknown) {
           console.error('Restream Error: Unable to add targets for', display, e);
-          throwStreamError('RESTREAM_UPDATE_FAILED');
+          throwStreamError('RESTREAM_UPDATE_FAILED', e, `Unable to add targets for ${display}.`);
         }
       }
     }
@@ -524,10 +531,11 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   /**
    * Remove targets from the restream session
-   * @remark Every display is a separate restream stream with its own stream key, so a target can
-   * only be removed using the key for the stream it is actually running on. The targets are grouped
-   * by the mode the server reports for them and removed with one request per stream. Sending every
-   * target id to a single stream key only ever removes the targets on that one display.
+   * @remark Used for updating a stream while live.
+   * Every display is a separate restream stream with its own stream key, so a target can only be
+   * removed using the key for the stream it is actually running on. The targets are grouped by the
+   * mode the server reports for them and removed with one request per stream. Sending every target id
+   * to a single stream key only ever removes the targets on that one display.
    * @param platforms - The list of platforms to remove
    * @param customDestinations - The list of custom destinations to remove
    * @param removeAll - If true, remove all targets from the restream session
@@ -541,7 +549,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
     if (!remoteTargets.length) {
       console.debug('No active restream targets.');
-      throwStreamError('RESTREAM_UPDATE_FAILED');
+      throwStreamError('RESTREAM_UPDATE_FAILED', {}, 'No active restream targets.');
     }
 
     // Match the targets to remove against the remote targets by stream key. When removing all
@@ -569,16 +577,17 @@ export class RestreamService extends StatefulService<IRestreamState> {
         await this.removeRuntimeTargets(await this.resolveStreamKey(mode), stopTargets);
       } catch (e: unknown) {
         console.error('Restream Error: Error removing restream targets for', mode, e);
-        throwStreamError('RESTREAM_UPDATE_FAILED');
+        throwStreamError('RESTREAM_UPDATE_FAILED', e, `Unable to remove targets for ${mode}.`);
       }
     }
   }
 
   /**
    * Filter targets by their mode (landscape or portrait)
-   * @remark Needed for dual output mode to separate targets for each display so that each stream
-   * is updated correctly. In dual output mode, under the hood there are two separate streams,
-   * one for each display, so the targets need to be updated for each display separately.
+   * @remark Used for updating a stream while live. Needed for dual output mode to separate targets
+   * for each display so that each stream is updated correctly. In dual output mode, under the hood
+   * there are two separate streams, one for each display, so the targets need to be updated for each
+   * display separately.
    * @param targets - The targets in the stream
    * @returns An object containing the targets grouped by their mode (landscape or portrait)
    */
@@ -600,8 +609,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   /**
    * Filter the targets to remove and group them by their mode (landscape or portrait)
-   * @remark Grouped by the mode the server reports because that is the only reliable record of
-   * which stream a target is running on, the locally derived mode can be stale.
+   * @remark Used for updating a stream while live. Grouped by the mode the server reports because that is
+   * the only reliable record of which stream a target is running on, the locally derived mode can be stale.
    * @param remoteTargets - The targets on the stream, as reported by the server
    * @param streamKeysToRemove - The keys of the targets to remove, or `undefined` to remove every
    * remote target regardless of which stream it belongs to
@@ -615,11 +624,101 @@ export class RestreamService extends StatefulService<IRestreamState> {
       (acc: Record<TOutputOrientation, { id: number }[]>, target) => {
         if (streamKeysToRemove && !streamKeysToRemove.has(target.streamKey)) return acc;
 
-        acc[target.mode ?? 'landscape'].push({ id: target.id });
+        const mode: TOutputOrientation = /^(portrait|landscape)$/.test(target.mode ?? '')
+          ? (target.mode as TOutputOrientation)
+          : 'landscape';
+        acc[mode].push({ id: target.id });
         return acc;
       },
       { landscape: [], portrait: [] },
     );
+  }
+
+  /**
+   * Derive the stream key for an orientation from the landscape (default) stream key
+   * @remark Only use this when the key was fetched without a `mode`. If the key was fetched
+   * with `fetchUserSettings(mode)` it is already resolved for that orientation and applying
+   * this again would transform it a second time.
+   * TODO: This is an unverified assumption about the shape of the backend's stream keys.
+   * Replace it with `fetchUserSettings('portrait').streamKey` once the stream shift flow,
+   * which depends on the modeless key, can also fetch per-mode keys.
+   * @param streamKey - The landscape stream key for the restream session
+   * @param orientation - The orientation to resolve the key for
+   */
+  private async getModeStreamKey(
+    orientation: TOutputOrientation,
+    streamKey?: string,
+  ): Promise<string> {
+    const key = streamKey ?? (await this.fetchUserSettings(orientation).then(s => s.streamKey));
+
+    const expectedSuffix = orientation === 'landscape' ? '_landscape' : '_portrait';
+    if (!key.endsWith(expectedSuffix)) {
+      console.error(
+        `Stream key is not in the expected format for ${orientation}, reformatting it.`,
+      );
+      return key.replace(/_[^_]*$/, expectedSuffix);
+    }
+
+    return key;
+  }
+
+  /**
+   * Update targets in the restream session and handle errors
+   * @remark This is a wrapper that handles any errors that occur when updating. Passing all update calls through
+   * a single function simplifies error handling, which makes debugging easier.
+   * @param targets - The updated targets for the stream, should already have data correctly formatted
+   * @param streamKey - The stream key for the restream session, already resolved for `orientation`
+   * (see `getModeStreamKey`)
+   * @param orientation - The display to apply the updates to, defaults to landscape. In dual output mode,
+   * under the hood there are two separate streams, one for each display, so the targets need to be updated
+   * for each display separately.
+   */
+  async updateTargetsAndValidate(
+    targets: TRestreamTarget[],
+    streamKey: string,
+    orientation: TOutputOrientation = 'landscape',
+  ) {
+    if (!targets.length) return;
+
+    try {
+      await this.addRuntimeTargets(streamKey, targets as IRestreamRuntimeTarget[]);
+    } catch (e: unknown) {
+      console.error('Restream Error: Error updating restream targets for', orientation, e);
+      throwStreamError('RESTREAM_UPDATE_FAILED');
+    }
+  }
+
+  /**
+   * Filter targets by their mode (landscape or portrait)
+   * @remark Needed for dual output mode to separate targets for each display so that each stream
+   * is updated correctly. In dual output mode, under the hood there are two separate streams,
+   * one for each display, so the targets need to be updated for each display separately.
+   * @param targets - The targets in the stream
+   * @returns An object containing the targets grouped by their mode (landscape or portrait)
+   */
+  filterTargetsByMode(targets: TRestreamTarget[]) {
+    return targets.reduce(
+      (acc, target) => {
+        if (target.mode === 'landscape') {
+          acc.landscape.push(target);
+        } else if (target.mode === 'portrait') {
+          acc.portrait.push(target);
+        }
+        return acc;
+      },
+      {
+        landscape: [] as TRestreamTarget[],
+        portrait: [] as TRestreamTarget[],
+      },
+    );
+  }
+
+  getActiveModes(targets: TRestreamTarget[]) {
+    const targetsByMode = this.filterTargetsByMode(targets);
+    const modes: TOutputOrientation[] = [];
+    if (targetsByMode.landscape.length > 0) modes.push('landscape');
+    if (targetsByMode.portrait.length > 0) modes.push('portrait');
+    return modes;
   }
 
   /**
@@ -797,9 +896,18 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   /**
    * Setup restream targets
-   * @remarks
-   * In dual output mode, assign a contexts to the ingest targets.
-   * Defaults to the horizontal context.
+   * @remark In dual output mode, assign a context to the ingest targets. Defaults to the horizontal context.
+   * @remark When setting up targets, modes are also assigned to the target. A mode corresponds to
+   * the display the target is assigned to. In single output mode, a target can only be assigned
+   * to the horizontal display. In dual output mode, target can be assigned to either the horizontal
+   * or vertical display, or both if the platform supports dual stream.
+   * The modes correspond as follows:
+   * |-------------------|-------------------|
+   * | Display           | Mode              |
+   * |-------------------|-------------------|
+   * | horizontal        | landscape         |
+   * | vertical          | portrait          |
+   * |-------------------|-------------------|
    */
   async setupTargets() {
     // delete existing targets
@@ -810,7 +918,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
     // setup new targets
     const newTargets = [...this.setupPlatforms(), ...this.setupCustomDestinations()];
-
+    console.log('RESTREAM setupTargets newTargets', JSON.stringify(newTargets, null, 2));
     await this.createTargets(newTargets);
   }
 
@@ -875,6 +983,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
         targetInfo.streamKey = `${this.patreonService.state.ingest}/${this.patreonService.state.streamKey}`;
       }
 
+      console.log('RESTREAM targetInfo', targetInfo, 'display', display);
+
       if (updatedPlatforms) {
         const mode = display ? this.getMode(display) : this.getPlatformMode(platform);
         platforms.push({ ...targetInfo, mode });
@@ -883,6 +993,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
       // reassign platforms to displays if in dual output mode
       if (this.streamInfo.isDualOutputMode || this.streamInfo.isLiveOutputEditingEnabled) {
+        console.log('RESTREAM modesToRestream', modesToRestream, 'platform', platform);
         const mode = this.getPlatformMode(platform) ?? 'landscape';
 
         // Add platform if the display is being restreamed in dual output mode
@@ -901,9 +1012,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   setupCustomDestinations(customDestinations?: ICustomStreamDestination[], display?: TDisplayType) {
     const isDualOutputMode = this.streamingService.views.isDualOutputMode;
-    const modesToRestream = this.streamInfo.displaysToRestream.map(display =>
-      this.getMode(display),
-    );
+    const modesToRestream = this.streamInfo.displaysToRestream.map(d => this.getMode(d));
 
     // When an explicit list is passed, only create targets for that list. Otherwise this is the
     // go live flow, which creates targets for every enabled destination on the stream.
@@ -942,11 +1051,12 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   /**
    * Format platform data for updating runtime targets
-   * @remark Treat TikTok, X, Instagram, Kick, and Patreon as custom destinations
-   * @param platform - The platform to format stream data for
+   * @remark Used for updating a stream while live. Treat TikTok, X, Instagram, Kick, and Patreon as custom destinations   * @param platform - The platform to format stream data for
    * @returns The formatted restream platform data
    */
   formatRuntimePlatformData(platform: TPlatform): IRestreamRuntimeTarget {
+    // Only dual output and live output editing assign targets to a display. In single output mode
+    // every target belongs to the landscape stream, so the saved display must not be read there.
     const useSavedMode =
       this.streamInfo.isDualOutputMode || this.streamInfo.isLiveOutputEditingEnabled;
 
@@ -988,10 +1098,11 @@ export class RestreamService extends StatefulService<IRestreamState> {
           streamKey: `${this.kickService.state.ingest}/${this.kickService.state.streamKey}`,
         };
       }
+      // Patreon is a special relay case because while it is technically a relay, the server expects the platform value `patreon`
       case 'patreon': {
-        // Patreon is a special relay case because while it is technically a relay, the server expects the platform value `patreon`
         return {
           ...platformData,
+          platform: 'patreon' as 'patreon',
           streamKey: `${this.patreonService.state.ingest}/${this.patreonService.state.streamKey}`,
         };
       }
@@ -1003,6 +1114,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   /**
    * Format custom destination data for updating runtime targets
+   * @remark Used for updating a stream while live.
    * @param destination - The custom destination to format stream data for
    * @returns The formatted restream custom destination data
    */
@@ -1068,9 +1180,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
     // Don't check stream shift status while the stream status isn't `Offline`.
     // While the stream is active, starting, or tearing down, the is live status will be reported
     // as true from Desktop's own stream, while the intent is to check for a stream on another device.
-    // This prevents bugs with live output editing, where the stream will always be active, so
-    // if changes are made to components that call this function, it could accidentally trigger an
-    // unintended false positive for a stream on another device.
     if (this.streamInfo.streamingStatus !== EStreamingState.Offline) {
       return false;
     }
@@ -1415,17 +1524,6 @@ class RestreamView extends ViewHandler<IRestreamState> {
   get isGrandfathered() {
     return this.state.grandfathered || this.state.tiktokGrandfathered;
   }
-
-  // includes both multistream and Facebook grandfathered statuses
-  get isFacebookGrandfathered() {
-    return this.state.grandfathered;
-  }
-
-  // includes only the TikTok grandfathered status
-  get isTikTokGrandfathered() {
-    return this.state.tiktokGrandfathered;
-  }
-
   /**
    * This determines whether the user can enable restream
    * Requirements:

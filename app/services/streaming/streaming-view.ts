@@ -362,7 +362,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       this.isDualOutputMode && (this.horizontalStream.length > 1 || this.verticalStream.length > 1);
     return this.isMultiplatformMode || restreamDualOutputMode;
   }
-
+  /**
+   * Returns the displays that should use restream
+   * @remark In dual output mode, only displays that have multiple targets enabled should use restream
+   */
   get displaysToRestream(): TDisplayType[] {
     const displays = [] as TDisplayType[];
 

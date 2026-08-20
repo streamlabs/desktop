@@ -35,13 +35,15 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       if (!p.platform) return false;
       return module.getCanDualStream(p.platform);
     },
+
     get isLive(): boolean {
       return (
         module.isUpdateMode &&
-        module.isTargetLive(p.platform ?? p.index) &&
-        module.isLiveOutputEditingEnabled
+        module.isLiveOutputEditingEnabled &&
+        !!module.isTargetLive(p.platform ?? p.index)
       );
     },
+
     get display(): TDisplayOutput {
       const defaultDisplay = p.platform
         ? module.settings.platforms[p.platform]?.display
@@ -70,7 +72,8 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     ];
 
     if (isLive) {
-      // Platforms and destinations cannot change their display while live
+      // A live target cannot change display without restarting its stream, so offer only the
+      // display it is already using and explain how to change it
       const activeDisplay =
         defaultDisplays.find(option => option.value === display) ?? defaultDisplays[0];
 
@@ -92,7 +95,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
 
     if (canDualStream) {
       const tooltip = isLiveOutputEditingEnabled
-        ? $t('Dual Stream is not available while Live Output Editing is enabled')
+        ? $t('Dual Stream is not available while live output editing is enabled')
         : $t('Stream both horizontally and vertically to %{platform}', {
             platform: platformLabels(p.platform!),
           });

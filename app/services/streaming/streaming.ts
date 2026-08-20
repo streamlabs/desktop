@@ -815,9 +815,11 @@ export class StreamingService
   ) {
     const service = getPlatformService(platform);
 
-    // in dual output mode, assign context by settings
-    // in single output mode, assign context to 'horizontal' by default
-    const display = this.views.getPlatformDisplayType(platform);
+    // In dual output mode, assign context by platform display.
+    // In single output mode, assign context to 'horizontal' by default.
+    const display = this.views.isDualOutputMode
+      ? this.views.getPlatformDisplayType(platform)
+      : 'horizontal';
 
     try {
       const isStreamShiftStream = this.restreamService.views.hasStreamShiftTargets;
@@ -1043,11 +1045,22 @@ export class StreamingService
       } catch (e: unknown) {
         console.error('Error updating stream settings', e);
 
+        // `handleTypedStreamError` builds the message the user sees. Prefer the reason the
+        // platform gave, because it is the only part that tells the user what to do about it.
+        // A generic message here would replace it, since the `RESTREAM` branch rebuilds the
+        // details from whatever is passed in.
+        const platformError = e instanceof StreamError ? e : undefined;
+
         this.handleTypedStreamError(
           e,
           'RESTREAM_UPDATE_FAILED',
-          'Failed to update restream settings',
+          platformError?.details || platformError?.message || 'Failed to update restream settings',
+          platformError?.platform,
         );
+
+        // Report the failure so the caller does not tell the user the update succeeded, and does
+        // not record the targets that failed to start as active
+        return false;
       } finally {
         // Finish the 'runChecklist' step
         this.UPDATE_STREAM_INFO({ lifecycle });
@@ -4762,7 +4775,7 @@ export class StreamingService
    * Clear every flag tracking a display that is mid-transition from a target update
    * @remark Call this anywhere the stream is torn down. These flags change how the `start` and
    * `stopping` signals are handled, so one left set after its display is gone would misroute the
-   * next legitimate signal. `isUpdatingStreamTarget` and `isUpdatingStreamSecondTarget` are
+   * next legitimate signal. `isUpdatingHorizontalStream` and `isUpdatingVerticalStream` are
    * otherwise only cleared on the `deactivate` signal, which never arrives if the stop fails.
    */
   private resetLiveOutputEditing() {
