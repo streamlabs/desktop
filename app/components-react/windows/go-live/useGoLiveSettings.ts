@@ -732,6 +732,14 @@ export class GoLiveSettingsModule {
     return Services.RestreamService.views.canEnableRestream;
   }
 
+  get isFacebookGrandfathered() {
+    return Services.RestreamService.views.isFacebookGrandfathered;
+  }
+
+  get isTikTokGrandfathered() {
+    return Services.RestreamService.views.isTikTokGrandfathered;
+  }
+
   get recommendedColorSpaceWarnings() {
     return Services.SettingsService.views.recommendedColorSpaceWarnings;
   }
@@ -770,6 +778,10 @@ export class GoLiveSettingsModule {
     return this.state.isStreamShiftMode;
   }
 
+  get isDualOutputMode() {
+    return Services.DualOutputService.views.dualOutputMode;
+  }
+
   get enabledPlatformsCount() {
     return this.state.enabledPlatforms.length;
   }
@@ -789,6 +801,7 @@ export class GoLiveSettingsModule {
   }
 
   get disableCustomDestinationSwitchers() {
+    if (this.isPrime && this.isDualOutputMode) return false;
     return (
       !this.isRestreamEnabled &&
       !this.state.enabledPlatforms.includes('tiktok') &&

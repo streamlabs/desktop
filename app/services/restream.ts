@@ -991,19 +991,17 @@ export class RestreamService extends StatefulService<IRestreamState> {
         return platforms;
       }
 
-      // reassign platforms to displays if in dual output mode
-      if (this.streamInfo.isDualOutputMode || this.streamInfo.isLiveOutputEditingEnabled) {
-        console.log('RESTREAM modesToRestream', modesToRestream, 'platform', platform);
-        const mode = this.getPlatformMode(platform) ?? 'landscape';
+      // `getPlatformMode` resolves the platform's assigned display in dual output and live output
+      // editing modes, and falls back to landscape in single output mode
+      const mode = this.getPlatformMode(platform);
 
-        // Add platform if the display is being restreamed in dual output mode
-        if (modesToRestream.includes(mode)) {
-          // In order to restream a platform to a display in dual output mode,
-          // assign the platform to a `mode`, which denotes the display context
-          platforms.push({ ...targetInfo, mode });
-        }
-      } else {
-        platforms.push({ ...targetInfo, mode: 'landscape' as TOutputOrientation });
+      // In single output mode every platform is a target. In dual output and live output editing
+      // modes a platform is only a target when its display is one of the displays being restreamed.
+      const usesDisplays =
+        this.streamInfo.isDualOutputMode || this.streamInfo.isLiveOutputEditingEnabled;
+
+      if (!usesDisplays || modesToRestream.includes(mode)) {
+        platforms.push({ ...targetInfo, mode });
       }
 
       return platforms;
@@ -1510,8 +1508,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   private getPlatformMode(platform: TPlatform): TOutputOrientation {
-    const display = this.streamingService.views.getPlatformDisplayType(platform);
-    return this.getMode(display);
+    return this.streamingService.views.getPlatformMode(platform);
   }
 
   getMode(display: TDisplayType): TOutputOrientation {
@@ -1523,6 +1520,16 @@ export class RestreamService extends StatefulService<IRestreamState> {
 class RestreamView extends ViewHandler<IRestreamState> {
   get isGrandfathered() {
     return this.state.grandfathered || this.state.tiktokGrandfathered;
+  }
+
+  // includes both multistream and Facebook grandfathered statuses
+  get isFacebookGrandfathered() {
+    return this.state.grandfathered;
+  }
+
+  // includes only the TikTok grandfathered status
+  get isTikTokGrandfathered() {
+    return this.state.tiktokGrandfathered;
   }
   /**
    * This determines whether the user can enable restream
