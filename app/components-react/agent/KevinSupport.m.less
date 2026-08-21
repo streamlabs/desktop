@@ -185,3 +185,43 @@
   height: 36px;
   padding: 8px 16px;
 }
+
+/* Inline tool-approval card. Shares the agent bubble, but wider and with a
+   left accent so it reads as a decision point rather than another reply. */
+.approval {
+  .bubble {
+    max-width: 100%;
+    border-left: 3px solid var(--warning);
+  }
+}
+
+.approvalSummary {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.approvalWarning {
+  color: var(--warning);
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.approvalActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+
+  button {
+    margin: 0;
+  }
+}
+
+/* Shown when an approval is the only thing in the window, so the card is not
+   floating with no explanation of where it came from. */
+.approvalContext {
+  color: var(--paragraph);
+  font-size: 12px;
+  text-align: center;
+  padding: 12px 16px 4px;
+}

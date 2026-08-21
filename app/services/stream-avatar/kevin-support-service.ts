@@ -4,14 +4,27 @@ import { Inject } from 'services/core/injector';
 import { UserService } from 'services/user';
 import { $t } from 'services/i18n';
 import { HostsService } from 'services/hosts';
+import { WindowsService } from 'services/windows';
 import Utils from 'services/utils';
 import { importSocketIOClient } from 'util/slow-imports';
 import { StreamAvatarApiService } from './stream-avatar-api-service';
+import { AgentToolsService } from './v2/agent-tools';
+import {
+  V2_NAMESPACE,
+  V2_PROTOCOL_VERSION,
+  V2_TOOL_PROTOCOL_VERSION,
+  V2ApprovalDecision,
+  V2ApprovalRequestPayload,
+  V2ReadyPayload,
+  V2RunEndedPayload,
+  V2TextPayload,
+  V2ToolInvokePayload,
+} from './v2/protocol';
 
 const CONNECT_TIMEOUT_MS = 15000;
 
 export interface IKevinMessage {
-  /** Groups the burst of TEXT packets that make up one assistant reply. */
+  /** Groups the burst of text packets that make up one assistant reply. */
   interactionId: string;
   isUser: boolean;
   text: string;
@@ -20,32 +33,37 @@ export interface IKevinMessage {
 
 export interface IKevinSupportState {
   messages: IKevinMessage[];
-  /** A reply has been requested and INTERACTION_END has not arrived yet. */
+  /** A reply has been requested and the run has not ended yet. */
   pending: boolean;
   connected: boolean;
   connecting: boolean;
   error: string | null;
   rateLimit: { current: number; maximum: number } | null;
-}
-
-/** Packet shapes we care about, from stream-avatar-api's EventFactory. */
-interface IIncomingPacket {
-  type: 'TEXT' | 'AUDIO' | 'INTENT' | 'INTERACTION_END' | 'ERROR' | string;
-  text?: { text: string; final: boolean };
-  error?: string;
-  packetId?: { interactionId?: string; utteranceId?: string };
-  routing?: { source?: { isAgent?: boolean } };
+  /**
+   * Sensitive tool calls waiting on a human. The worker owns the socket but
+   * cannot render, so a UI window observes this via useVuex and answers
+   * through resolveApproval().
+   */
+  pendingApprovals: V2ApprovalRequestPayload[];
 }
 
 /**
- * The Streamlabs Desktop Support chat ("Kevin").
+ * Streamlabs Desktop Support chat ("Kevin"), on the agent API's `/v2` namespace.
  *
- * Lives in the worker so the conversation survives the support window being
- * closed and reopened. Talks to stream-avatar-api over its Socket.IO namespace
- * with the default `desktop` role — TEXT packets for a desktop socket are
- * emitted back to that socket only, so support replies never reach the avatar
- * browser sources, and `getSessionForUser` still prefers the avatar app's
- * socket so this connection can't hijack it.
+ * Beyond chat, this connection is now how the agent reaches OBS: the server
+ * emits `v2:tool.invoke`, we run it against the services layer, and reply with
+ * a correlated `v2:tool.result`. Nothing uses an acknowledgement callback, so
+ * a slow tool or a human sitting on an approval never blocks the server's
+ * agent loop.
+ *
+ * Still worker-window only, so the conversation and any in-flight tool call
+ * survive the support window being closed.
+ *
+ * socket.io-client here is v2, which has no `auth` option — identity rides the
+ * query string. The server accepts that and `allowEIO3` lets a v2 client speak
+ * to its 4.x server. Note that connection-state recovery is a v4-protocol
+ * feature and never engages for us, so every reconnect is a fresh session that
+ * resyncs from `v2:ready`.
  */
 @InitAfter('UserService')
 export class KevinSupportService extends StatefulService<IKevinSupportState> {
@@ -56,11 +74,14 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
     connecting: false,
     error: null,
     rateLimit: null,
+    pendingApprovals: [],
   };
 
   @Inject() private streamAvatarApiService: StreamAvatarApiService;
   @Inject() private userService: UserService;
   @Inject() private hostsService: HostsService;
+  @Inject() private agentToolsService: AgentToolsService;
+  @Inject() private windowsService: WindowsService;
 
   private io: SocketIOClientStatic;
   private socket: SocketIOClient.Socket | null = null;
@@ -73,15 +94,22 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
       this.disconnect();
       this.RESET();
     });
+
+    // Connect at startup, not when the chat window first opens.
+    //
+    // Desktop is the approval surface for the whole product: an approval can be
+    // raised by a voice request through the avatar plugin, with this window
+    // never having been opened. Connecting lazily meant no `desktop` device was
+    // attached at that moment, so the server fell back to the plugin — and the
+    // rule "Desktop handles approvals whenever connected" silently degraded to
+    // "whenever the user happened to open the chat".
+    this.userService.userLogin.subscribe(() => void this.connect());
+    if (this.userService.isLoggedIn) void this.connect();
   }
 
-  /**
-   * Opens the socket if it isn't open already. Safe to call repeatedly —
-   * concurrent callers share one in-flight connect.
-   */
+  /** Idempotent; concurrent callers share one in-flight connect. */
   async connect(): Promise<void> {
     if (!Utils.isWorkerWindow()) return;
-    // state.connected only flips after `authenticated`, unlike socket.connected.
     if (this.state.connected && this.socket?.connected) return;
     if (this.connectPromise) return this.connectPromise;
 
@@ -92,12 +120,7 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
     return this.connectPromise;
   }
 
-  /**
-   * Resolves once the server has emitted `authenticated` and we've selected the
-   * support agent — not merely once the socket object exists. Emitting a text
-   * message before `setGame` lands would run it against the server's default
-   * (Fortnite) agent.
-   */
+  /** Resolves once `v2:ready` lands, not merely once the socket object exists. */
   private async openSocket(): Promise<void> {
     if (!this.userService.isLoggedIn) {
       this.SET_ERROR($t('Log in to use Streamlabs Desktop Support.'));
@@ -108,29 +131,79 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
     this.SET_ERROR(null);
 
     try {
-      // socket.io-client is a slow import; the rest of the app defers it too.
       if (!this.io) this.io = (await importSocketIOClient()).default;
 
       const token = await this.streamAvatarApiService.getToken();
       const protocol = Utils.getAvatarEnvironment() === 'local' ? 'http://' : 'https://';
-      // Desktop is on socket.io-client@2, which has no `auth` option — the API
-      // reads the JWT from the query string as well. The role defaults to
-      // `desktop` server-side, which is exactly what we want.
-      const url = `${protocol}${this.hostsService.streamAvatarApi}?token=${token}`;
+      const url =
+        `${protocol}${this.hostsService.streamAvatarApi}${V2_NAMESPACE}` +
+        `?token=${token}&role=desktop&tv=${V2_TOOL_PROTOCOL_VERSION}`;
 
       this.socket?.disconnect();
+      this.log('--', 'connecting', { url: url.replace(/token=[^&]+/, 'token=***') });
       const socket = this.io(url, { transports: ['websocket'] });
       this.socket = socket;
 
-      socket.on('message', (packet: IIncomingPacket) => this.handlePacket(packet));
+      this.traceUnhandled(socket, [
+        'v2:text',
+        'v2:run.started',
+        'v2:presence',
+        'v2:run.ended',
+        'v2:tool.invoke',
+        'v2:approval.request',
+        'v2:approval.resolved',
+        'v2:rateLimit',
+        'v2:error',
+      ]);
 
-      socket.on('rateLimit', (limit: { current: number; maximum: number }) => {
-        this.SET_RATE_LIMIT(limit);
+      socket.on('v2:run.started', (p: { runId: string }) => {
+        this.log('in', 'v2:run.started', p);
+        this.SET_PENDING(true);
       });
 
-      socket.on('disconnect', () => {
+      socket.on('v2:presence', (p: { roles: string[]; sourceCount: number }) => {
+        this.log('in', 'v2:presence', p);
+      });
+
+      socket.on('v2:text', (p: V2TextPayload) => {
+        this.log('in', 'v2:text', { runId: p?.packetId?.runId, kind: p?.kind, text: p?.text });
+        this.handleText(p);
+      });
+      socket.on('v2:run.ended', (p: V2RunEndedPayload) => {
+        this.log('in', 'v2:run.ended', p);
+        this.handleRunEnded(p);
+      });
+      socket.on('v2:tool.invoke', (p: V2ToolInvokePayload) => {
+        this.log('in', 'v2:tool.invoke', { callId: p?.callId, tool: p?.tool, args: p?.args });
+        this.handleToolInvoke(p);
+      });
+      socket.on('v2:approval.request', (p: V2ApprovalRequestPayload) => {
+        this.log('in', 'v2:approval.request', {
+          approvalId: p?.approvalId,
+          tool: p?.tool,
+          risk: p?.risk,
+          summary: p?.summary,
+        });
+        this.ADD_APPROVAL(p);
+        this.surfaceApproval();
+      });
+      socket.on('v2:approval.resolved', (p: { approvalId: string }) =>
+        this.REMOVE_APPROVAL(p.approvalId),
+      );
+      socket.on('v2:rateLimit', (p: { current: number; maximum: number }) =>
+        this.SET_RATE_LIMIT({ current: p.current, maximum: p.maximum }),
+      );
+      socket.on('v2:error', (p: { code: string; message: string }) => {
+        this.log('in', 'v2:error', p);
+        if (p.code === 'rate_limit' || p.code === 'auth') this.SET_ERROR(p.message);
+      });
+
+      socket.on('disconnect', (reason: string) => {
+        this.log('--', 'disconnect', { reason });
         this.SET_CONNECTED(false);
         this.SET_PENDING(false);
+        // Prompts belong to a live session; a stale one cannot be answered.
+        this.CLEAR_APPROVALS();
       });
 
       await new Promise<void>((resolve, reject) => {
@@ -140,17 +213,35 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
           err ? reject(err) : resolve();
         };
 
-        socket.on('authenticated', () => {
-          // Selects the "Support Bot" persona (AgentType.Default).
-          socket.emit('message', { type: 'setGame', data: { game: 'STREAMLABS' } });
+        socket.on('connect', () => {
+          this.log('out', 'v2:hello', { role: 'desktop' });
+          socket.emit('v2:hello', {
+            protocolVersion: V2_PROTOCOL_VERSION,
+            toolProtocolVersion: V2_TOOL_PROTOCOL_VERSION,
+            role: 'desktop',
+            deviceId: this.deviceId(),
+          });
+        });
+
+        socket.on('v2:ready', (ready: V2ReadyPayload) => {
+          this.log('in', 'v2:ready', {
+            role: ready?.role,
+            tools: ready?.tools,
+            activeRunIds: ready?.activeRunIds,
+            pendingApprovals: ready?.pendingApprovals?.length ?? 0,
+          });
+          // Replayed approvals: a prompt raised while we were reconnecting is
+          // still live server-side and must reappear here.
+          this.SET_APPROVALS(ready.pendingApprovals ?? []);
           this.SET_CONNECTING(false);
           this.SET_CONNECTED(true);
           settle();
         });
-        socket.on('authError', (e: { message?: string }) =>
-          settle(new Error(e?.message || 'auth failed')),
-        );
-        socket.on('connect_error', () => settle(new Error('connect_error')));
+
+        socket.on('connect_error', (e: unknown) => {
+          this.log('--', 'connect_error', { error: String(e) });
+          settle(new Error('connect_error'));
+        });
       });
     } catch (e: unknown) {
       console.error('[KevinSupport] connect failed', e);
@@ -163,43 +254,118 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
     }
   }
 
-  private handlePacket(packet: IIncomingPacket) {
-    if (!packet) return;
 
-    if (packet.type === 'TEXT' && packet.text?.text) {
-      // The agent sends a reply as several chunk packets sharing one
-      // interactionId; concatenate them into a single assistant row.
-      const interactionId = packet.packetId?.interactionId ?? '';
-      const isUser = packet.routing?.source?.isAgent === false;
-      if (isUser) return; // our own echo — we already added it locally
+  /**
+   * Wire tracing. Always on: this socket is low-traffic (text chat plus the
+   * occasional tool call), and the failure mode it exists to catch — a packet
+   * the server sent to a room this device never joined — is otherwise
+   * completely silent on the client.
+   */
+  private log(direction: 'in' | 'out' | '--', event: string, detail?: unknown) {
+    const body = detail === undefined ? '' : ` ${JSON.stringify(detail).slice(0, 400)}`;
+    console.log(`[KevinSupport ${direction}] ${event}${body}`);
+  }
 
-      const existing = this.state.messages.find(
-        m => !m.isUser && m.interactionId === interactionId,
+  /**
+   * Catch-all so we can see events the server sends that we do NOT handle.
+   * socket.io v2 exposes onevent rather than onAny.
+   */
+  private traceUnhandled(socket: SocketIOClient.Socket, handled: string[]) {
+    const known = new Set([...handled, 'connect', 'disconnect', 'connect_error', 'v2:ready']);
+    const anySocket = socket as unknown as {
+      onevent: (packet: { data?: unknown[] }) => void;
+    };
+    const original = anySocket.onevent.bind(anySocket);
+    anySocket.onevent = (packet: { data?: unknown[] }) => {
+      const name = String(packet?.data?.[0] ?? '');
+      if (name && !known.has(name)) this.log('in', `${name} (UNHANDLED)`, packet?.data?.[1]);
+      original(packet);
+    };
+  }
+
+
+  /**
+   * Desktop handles every approval whenever it is connected — including ones
+   * raised by a voice request through the avatar plugin. That only works if the
+   * support window is actually visible, so an incoming approval opens it.
+   *
+   * The fixed 'kevin-support' windowId means this restores and focuses the
+   * existing window rather than spawning a second one, so it is safe to call on
+   * every approval.
+   */
+  private surfaceApproval() {
+    try {
+      this.windowsService.createOneOffWindow(
+        {
+          componentName: 'KevinSupport',
+          title: $t('Streamlabs Desktop Support'),
+          queryParams: {},
+          size: { width: 900, height: 640, minWidth: 560, minHeight: 420 },
+        },
+        'kevin-support',
       );
-
-      if (existing) {
-        this.APPEND_TEXT(interactionId, packet.text.text);
-      } else {
-        this.ADD_MESSAGE({
-          interactionId,
-          isUser: false,
-          text: packet.text.text,
-          date: Date.now(),
-        });
-      }
-      return;
-    }
-
-    if (packet.type === 'INTERACTION_END') {
-      this.SET_PENDING(false);
-      return;
-    }
-
-    if (packet.type === 'ERROR') {
-      this.SET_PENDING(false);
-      this.SET_ERROR(packet.error || $t('Something went wrong. Please try again.'));
+    } catch (e: unknown) {
+      // Never let a windowing failure swallow the approval; it is still in
+      // state, and the prompt will show whenever the window is next opened.
+      console.error('[KevinSupport] could not surface approval window', e);
     }
   }
+
+  /** Stable per-install id so a reconnect is recognised as the same device. */
+  private deviceId(): string {
+    const KEY = 'sa.v2.desktopDeviceId';
+    try {
+      const existing = localStorage.getItem(KEY);
+      if (existing) return existing;
+      const fresh = `desktop-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+      localStorage.setItem(KEY, fresh);
+      return fresh;
+    } catch {
+      return `desktop-${Date.now()}`;
+    }
+  }
+
+  // ── inbound ────────────────────────────────────────────────────────────────
+
+  private handleText(packet: V2TextPayload) {
+    if (!packet?.text) return;
+    // The link footer is not part of the spoken reply; skip it in a chat UI.
+    if (packet.kind === 'links') return;
+
+    const interactionId = packet.packetId?.runId ?? '';
+    const existing = this.state.messages.find(m => !m.isUser && m.interactionId === interactionId);
+
+    if (existing) {
+      this.APPEND_TEXT(interactionId, packet.text);
+    } else {
+      this.ADD_MESSAGE({ interactionId, isUser: false, text: packet.text, date: Date.now() });
+    }
+  }
+
+  private handleRunEnded(packet: V2RunEndedPayload) {
+    this.SET_PENDING(false);
+    if (packet.reason === 'error' && packet.message) this.SET_ERROR(packet.message);
+  }
+
+  /**
+   * Executes a tool the server routed here and replies. Always replies — the
+   * agent loop is parked on this callId and would otherwise wait out its
+   * timeout before telling the user anything.
+   */
+  private async handleToolInvoke(invoke: V2ToolInvokePayload) {
+    const outcome = this.agentToolsService.canExecute(invoke.tool)
+      ? await this.agentToolsService.execute(invoke.tool, invoke.args ?? {})
+      : ({
+          ok: false as const,
+          code: 'unknown_tool',
+          message: `Desktop cannot run ${invoke.tool}.`,
+        });
+
+    this.log('out', 'v2:tool.result', { callId: invoke.callId, ok: outcome.ok });
+    this.socket?.emit('v2:tool.result', { callId: invoke.callId, outcome });
+  }
+
+  // ── outbound ───────────────────────────────────────────────────────────────
 
   async sendMessage(text: string): Promise<void> {
     const trimmed = text.trim();
@@ -216,7 +382,21 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
       date: Date.now(),
     });
     this.SET_PENDING(true);
-    this.socket.emit('message', { type: 'text', data: { text: trimmed }, response: 'text' });
+    this.log('out', 'v2:input.text', { text: trimmed.slice(0, 80) });
+    this.socket.emit('v2:input.text', { text: trimmed, responseType: 'text' });
+  }
+
+  /**
+   * Answers a pending approval. Called from a UI window through
+   * `KevinSupportService.actions.resolveApproval(...)`, since the prompt cannot
+   * render in the worker.
+   */
+  resolveApproval(approvalId: string, decision: V2ApprovalDecision) {
+    this.log('out', 'v2:approval.resolve', { approvalId, decision });
+    this.socket?.emit('v2:approval.resolve', { approvalId, decision });
+    // Optimistic: the server confirms with v2:approval.resolved, but the
+    // prompt should not linger while that round-trips.
+    this.REMOVE_APPROVAL(approvalId);
   }
 
   clearConversation() {
@@ -229,6 +409,7 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
     this.SET_CONNECTED(false);
     this.SET_CONNECTING(false);
     this.SET_PENDING(false);
+    this.CLEAR_APPROVALS();
   }
 
   @mutation()
@@ -273,6 +454,31 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
   }
 
   @mutation()
+  private ADD_APPROVAL(approval: V2ApprovalRequestPayload) {
+    // The server replays outstanding approvals on reconnect; do not stack one
+    // we are already showing.
+    if (this.state.pendingApprovals.some(a => a.approvalId === approval.approvalId)) return;
+    this.state.pendingApprovals.push(approval);
+  }
+
+  @mutation()
+  private REMOVE_APPROVAL(approvalId: string) {
+    this.state.pendingApprovals = this.state.pendingApprovals.filter(
+      a => a.approvalId !== approvalId,
+    );
+  }
+
+  @mutation()
+  private SET_APPROVALS(approvals: V2ApprovalRequestPayload[]) {
+    this.state.pendingApprovals = approvals;
+  }
+
+  @mutation()
+  private CLEAR_APPROVALS() {
+    this.state.pendingApprovals = [];
+  }
+
+  @mutation()
   private RESET() {
     this.state.messages = [];
     this.state.pending = false;
@@ -280,5 +486,6 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
     this.state.connecting = false;
     this.state.error = null;
     this.state.rateLimit = null;
+    this.state.pendingApprovals = [];
   }
 }
