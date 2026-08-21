@@ -2,13 +2,14 @@
   "Jar Image": "Persely Kép",
   "Enabled Events": "Engedélyezett Események",
   "Minimum Bits": "Minimális bitek",
+  "Minimum Power-Ups": "Minimum Power-Ups",
   "Minimum Tips": "Minimum Támogatás",
   "Background Color": "Háttérszín",
   "Text": "Szöveg",
   "Show Text": "Szöveg megjelenítése",
   "Text Color": "Szöveg színe",
   "Font Size": "Betűméret",
-  "Tips over": "Támogatások felett",
+  "Tips over": "Tips over {amount}",
   "Tips & Donations": "Tippek & Adományok",
   "Twitch Subs": "Twitch Feliratkozó",
   "Twitch Resubs": "Twitch Újra Feliratkozó",
@@ -19,5 +20,7 @@
   "Picarto Follows": "Picarto követő",
   "Picarto Subscriptions": "Picarto feliratkozások",
   "Facebook Support Gifters": "Facebook Support Gifters",
+  "Kick Follows": "Kick Follows",
+  "Kick Subscriptions": "Kick Subscriptions",
   "Manage Jar": "Persely kezelése"
 }

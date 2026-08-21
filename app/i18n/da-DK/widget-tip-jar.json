@@ -2,13 +2,14 @@
   "Jar Image": "Sparebøssebillede",
   "Enabled Events": "Aktiverede begivenheder",
   "Minimum Bits": "Minimum bits",
+  "Minimum Power-Ups": "Minimum Power-Ups",
   "Minimum Tips": "Minimum drikkepenge",
   "Background Color": "Baggrundsfarve",
   "Text": "Tekst",
   "Show Text": "Vis tekst",
   "Text Color": "Tekstfarve",
   "Font Size": "Skriftstørrelse",
-  "Tips over": "Drikkepenge over",
+  "Tips over": "Tips over {amount}",
   "Tips & Donations": "Drikkepenge og donationer",
   "Twitch Subs": "Twitch-abonnementer",
   "Twitch Resubs": "Forlængede Twitch-abonnementer",
@@ -19,5 +20,7 @@
   "Picarto Follows": "Picarto-følgere",
   "Picarto Subscriptions": "Picarto-abonnementer",
   "Facebook Support Gifters": "Facebook-supportsponsorer",
+  "Kick Follows": "Kick Follows",
+  "Kick Subscriptions": "Kick Subscriptions",
   "Manage Jar": "Administrer sparebøsse"
 }

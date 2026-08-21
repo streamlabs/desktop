@@ -2,13 +2,14 @@
   "Jar Image": "Image du bocal",
   "Enabled Events": "Événements activés",
   "Minimum Bits": "Bits minimums",
+  "Minimum Power-Ups": "Minimum Power-Ups",
   "Minimum Tips": "Pourboires minimums",
   "Background Color": "Couleur d'arrière-plan",
   "Text": "Texte",
   "Show Text": "Afficher le texte",
   "Text Color": "Couleur du texte",
   "Font Size": "Taille de la police",
-  "Tips over": "Pourboires de plus de",
+  "Tips over": "Tips over {amount}",
   "Tips & Donations": "Pourboires et dons",
   "Twitch Subs": "Abonnements Twitch",
   "Twitch Resubs": "Réabonnements Twitch",
@@ -19,5 +20,7 @@
   "Picarto Follows": "Followers Picarto",
   "Picarto Subscriptions": "Abonnements Picarto",
   "Facebook Support Gifters": "Donateurs de soutien Facebook",
+  "Kick Follows": "Kick Follows",
+  "Kick Subscriptions": "Kick Subscriptions",
   "Manage Jar": "Gérer le bocal"
 }

@@ -2,13 +2,14 @@
   "Jar Image": "Imagem da Jarra",
   "Enabled Events": "Eventos ativados",
   "Minimum Bits": "Bits Mínimos",
+  "Minimum Power-Ups": "Minimum Power-Ups",
   "Minimum Tips": "Gorjetas Mínimas",
   "Background Color": "Cor de Fundo",
   "Text": "Texto",
   "Show Text": "Mostrar texto",
   "Text Color": "Cor do Texto",
   "Font Size": "Tamanho da fonte",
-  "Tips over": "Gorjetas acima de",
+  "Tips over": "Tips over {amount}",
   "Tips & Donations": "Gorjetas e Doações",
   "Twitch Subs": "Inscritos do Twitch",
   "Twitch Resubs": "Reinscritos da Twitch",
@@ -19,5 +20,7 @@
   "Picarto Follows": "Seguidores do Picarto",
   "Picarto Subscriptions": "Inscrições do Picarto",
   "Facebook Support Gifters": "Presenteadores de suporte do Facebook",
+  "Kick Follows": "Kick Follows",
+  "Kick Subscriptions": "Kick Subscriptions",
   "Manage Jar": "Gerenciar a Jarra"
 }

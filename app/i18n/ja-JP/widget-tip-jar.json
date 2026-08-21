@@ -2,13 +2,14 @@
   "Jar Image": "ジャーの画像",
   "Enabled Events": "有効化されたイベント",
   "Minimum Bits": "最小ビット",
+  "Minimum Power-Ups": "Minimum Power-Ups",
   "Minimum Tips": "最小チップ",
   "Background Color": "背景色",
   "Text": "テキスト",
   "Show Text": "テキストを表示",
   "Text Color": "テキスト色",
   "Font Size": "フォントサイズ",
-  "Tips over": "超えるチップ",
+  "Tips over": "Tips over {amount}",
   "Tips & Donations": "チップ & ドネーション",
   "Twitch Subs": "Twitch サブスクリプション",
   "Twitch Resubs": "Twitch リサブ",
@@ -19,5 +20,7 @@
   "Picarto Follows": "Picarto フォロー",
   "Picarto Subscriptions": "Picarto サブスクリプション",
   "Facebook Support Gifters": "Facebook サポートギフター",
+  "Kick Follows": "Kick Follows",
+  "Kick Subscriptions": "Kick Subscriptions",
   "Manage Jar": "ジャーの管理"
 }

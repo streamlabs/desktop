@@ -2,13 +2,14 @@
   "Jar Image": "存钱罐图片",
   "Enabled Events": "启用的事件",
   "Minimum Bits": "最少 Bits",
+  "Minimum Power-Ups": "Minimum Power-Ups",
   "Minimum Tips": "最低打赏",
   "Background Color": "背景颜色",
   "Text": "文字",
   "Show Text": "显示文字",
   "Text Color": "文字颜色",
   "Font Size": "字体大小",
-  "Tips over": "打赏超过",
+  "Tips over": "Tips over {amount}",
   "Tips & Donations": "打赏",
   "Twitch Subs": "Twitch 订阅",
   "Twitch Resubs": "Twitch 再订阅",
@@ -19,5 +20,7 @@
   "Picarto Follows": "Picarto 关注",
   "Picarto Subscriptions": "Picarto 订阅",
   "Facebook Support Gifters": "Facebook 支持赠礼者",
+  "Kick Follows": "Kick Follows",
+  "Kick Subscriptions": "Kick Subscriptions",
   "Manage Jar": "管理存钱罐"
 }

@@ -2,13 +2,14 @@
   "Jar Image": "Obrázek nádoby",
   "Enabled Events": "Povolené události",
   "Minimum Bits": "Min. bitů",
+  "Minimum Power-Ups": "Minimum Power-Ups",
   "Minimum Tips": "Min. spropitné",
   "Background Color": "Barva pozadí",
   "Text": "Text",
   "Show Text": "Zobrazit text",
   "Text Color": "Barva textu",
   "Font Size": "Velikost písma",
-  "Tips over": "Přesahující spropitné",
+  "Tips over": "Tips over {amount}",
   "Tips & Donations": "Spropitné a dary",
   "Twitch Subs": "Předplatné na Twitchi",
   "Twitch Resubs": "Prodloužení předplatného na Twitchi",
@@ -19,5 +20,7 @@
   "Picarto Follows": "Sledující na Picarto",
   "Picarto Subscriptions": "Předplatné na Picarto",
   "Facebook Support Gifters": "Dárci podpory na Facebook",
+  "Kick Follows": "Kick Follows",
+  "Kick Subscriptions": "Kick Subscriptions",
   "Manage Jar": "Spravovat nádobu"
 }
