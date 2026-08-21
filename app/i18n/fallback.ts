@@ -72,6 +72,7 @@ const fallbackDictionary = {
   ...require('./en-US/dual-output.json'),
   ...require('./en-US/patreon.json'),
   ...require('./en-US/stream-avatar-automations.json'),
+  ...require('./en-US/stream-avatar-agent.json'),
 };
 
 export default fallbackDictionary;

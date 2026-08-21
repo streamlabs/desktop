@@ -67,16 +67,25 @@ function renderText(text: string): React.ReactNode[] {
 export default function KevinSupport() {
   const { KevinSupportService } = Services;
 
-  const { messages, pending, error } = useVuex(() => ({
+  const { messages, pending, error, pendingApprovals } = useVuex(() => ({
     messages: KevinSupportService.state.messages,
     pending: KevinSupportService.state.pending,
     error: KevinSupportService.state.error,
+    pendingApprovals: KevinSupportService.state.pendingApprovals,
   }));
 
   const [draft, setDraft] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
 
-  const isEmpty = useMemo(() => messages.length === 0, [messages.length]);
+  // A pending approval is content, even with no messages behind it: an approval
+  // raised by a voice request through the avatar plugin arrives on a Desktop
+  // chat that has never been used. Gating purely on messages.length showed the
+  // "How can we help you today?" empty state while an approval sat unanswered
+  // in state, and the run expired.
+  const isEmpty = useMemo(
+    () => messages.length === 0 && pendingApprovals.length === 0,
+    [messages.length, pendingApprovals.length],
+  );
 
   useEffect(() => {
     KevinSupportService.actions.connect();
@@ -88,7 +97,7 @@ export default function KevinSupport() {
     // window's title bar off the top of the screen.
     const viewport = listRef.current?.closest('.os-viewport') as HTMLElement | null;
     if (viewport) viewport.scrollTop = viewport.scrollHeight;
-  }, [messages.length, pending]);
+  }, [messages.length, pending, pendingApprovals.length]);
 
   const send = useCallback(
     (text: string) => {
@@ -140,7 +149,68 @@ export default function KevinSupport() {
                     <div className={styles.bubble}>{renderText(message.text)}</div>
                   </div>
                 ))}
-                {pending && (
+                {/* An approval is a turn in the conversation, not a modal over
+                    it: the agent asked for something and is waiting on an
+                    answer. Rendering it inline also means it cannot be missed
+                    behind another window. */}
+                {pendingApprovals.length > 0 && messages.length === 0 && (
+                  <div className={styles.approvalContext}>
+                    {$t('Your avatar is asking permission for something you requested by voice.')}
+                  </div>
+                )}
+
+                {pendingApprovals.map(approval => (
+                  <div
+                    key={approval.approvalId}
+                    className={cx(styles.message, styles.fromAgent, styles.approval)}
+                  >
+                    <div className={styles.bubble}>
+                      <div className={styles.approvalSummary}>{approval.summary}</div>
+                      {approval.risk === 'irreversible' && (
+                        <div className={styles.approvalWarning}>{$t('This cannot be undone.')}</div>
+                      )}
+                      {approval.risk === 'external' && (
+                        <div className={styles.approvalWarning}>
+                          {$t('This will be visible to your viewers.')}
+                        </div>
+                      )}
+                      <div className={styles.approvalActions}>
+                        <button
+                          className="button button--action"
+                          onClick={() =>
+                            KevinSupportService.actions.resolveApproval(
+                              approval.approvalId,
+                              'approve',
+                            )
+                          }
+                        >
+                          {$t('Allow once')}
+                        </button>
+                        <button
+                          className="button button--default"
+                          onClick={() =>
+                            KevinSupportService.actions.resolveApproval(
+                              approval.approvalId,
+                              'always',
+                            )
+                          }
+                        >
+                          {$t('Always allow')}
+                        </button>
+                        <button
+                          className="button button--default"
+                          onClick={() =>
+                            KevinSupportService.actions.resolveApproval(approval.approvalId, 'deny')
+                          }
+                        >
+                          {$t('Deny')}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {pending && pendingApprovals.length === 0 && (
                   <div className={cx(styles.message, styles.fromAgent)}>
                     <div className={styles.bubble}>
                       <i className="fa fa-spinner fa-pulse" />
