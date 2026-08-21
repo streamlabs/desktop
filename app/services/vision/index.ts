@@ -1,5 +1,11 @@
 import * as remote from '@electron/remote';
-import { HostsService, SourcesService, UserService, WidgetsService } from 'app-services';
+import {
+  AutomationsService,
+  HostsService,
+  SourcesService,
+  UserService,
+  WidgetsService,
+} from 'app-services';
 import _ from 'lodash';
 import pMemoize from 'p-memoize';
 import path from 'path';
@@ -8,11 +14,11 @@ import { Subject } from 'rxjs';
 import { InitAfter, Inject, Service } from 'services';
 import { RealmObject } from 'services/realm';
 import { ISource, TSourceType } from 'services/sources';
-import Utils from 'services/utils';
+import { GAME_NAMES } from 'services/stream-avatar/engine/conditions';
 import { WidgetType } from 'services/widgets';
-import { getOS, OS } from 'util/operating-systems';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import uuid from 'uuid/v4';
+import { isVisionSupported } from './supported';
 import { VisionRunner, VisionRunnerStartOptions } from './vision-runner';
 import { VisionUpdater } from './vision-updater';
 
@@ -87,21 +93,9 @@ export class VisionState extends RealmObject {
       availableGames: {
         type: 'dictionary',
         objectType: 'string',
-        default: {
-          apex_legends: 'Apex Legends',
-          battlefield_6: 'Battlefield 6',
-          black_ops_6: 'Call of Duty: Black Ops 6',
-          counter_strike_2: 'Counter-Strike 2',
-          fortnite: 'Fortnite',
-          league_of_legends: 'League of Legends',
-          marvel_rivals: 'Marvel Rivals',
-          overwatch_2: 'Overwatch 2',
-          pubg: 'PUBG: Battlegrounds',
-          rainbow_six_siege: 'Rainbow Six Siege',
-          valorant: 'Valorant',
-          war_thunder: 'War Thunder',
-          warzone: 'Call of Duty: Warzone',
-        },
+        // Sourced from the condition registry so it can never drift behind the
+        // set of games automations actually support.
+        default: GAME_NAMES,
       },
     },
   };
@@ -132,12 +126,13 @@ export class VisionService extends Service {
   // Install hook services
   @Inject() sourcesService: SourcesService;
   @Inject() widgetsService: WidgetsService;
+  @Inject() automationsService: AutomationsService;
 
   enabledState = VisionEnabledState.inject();
   state = VisionState.inject();
 
   isSupportedForOs() {
-    return getOS() === OS.Windows || (getOS() === OS.Mac && Utils.isDevMode());
+    return isVisionSupported();
   }
 
   init() {
@@ -147,6 +142,7 @@ export class VisionService extends Service {
     // TODO @widgets-refactor: Remove IWidgetConfig cast.
     this.widgetsService.widgetCreated.subscribe(({ type }) => this.onWidgetCreated(type));
     this.sourcesService.sourceCreated.subscribe(({ source }) => this.onSourceCreated(source));
+    this.automationsService.automationCreated.subscribe(() => this.onAutomationCreated());
 
     const runnerHandle = this.visionRunner.on('exit', () => {
       this.writeEnabledState(false);
@@ -409,6 +405,13 @@ export class VisionService extends Service {
       console.log('Game Pulse widget added, enabling vision service');
       this.setIsEnabled(true);
     }
+  }
+
+  private onAutomationCreated() {
+    if (this.state.isRunning) return;
+
+    console.log('Automation created, enabling vision service');
+    this.setIsEnabled(true);
   }
 
   requestFrame() {

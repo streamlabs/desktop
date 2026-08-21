@@ -21,20 +21,23 @@ export class MagicLinkService extends Service {
   @Inject() hostsService: HostsService;
   @Inject() usageStatisticsService: UsageStatisticsService;
 
-  async getDashboardMagicLink(subPage = '', source?: string, os?: string) {
+  async getDashboardMagicLink(subPage = '', source?: string, os?: string, tier?: string) {
     const token = (await this.fetchNewToken()).login_token;
-    // TODO: we really need `qs` or similar
-    const sourceString = source ? `&refl=${source}` : '';
-    const osString = os ? `&os=${os}` : '';
 
     if (subPage === 'multistream') {
       // TODO: remove this if statement when multistream settings are implemented
       return `https://${this.hostsService.streamlabs}/content-hub/post/how-to-multistream-the-ultimate-guide-to-multistreaming?login_token=${token}`;
     }
 
-    return `https://${this.hostsService.streamlabs}/slobs/magic/dashboard?login_token=${token}&r=${
-      subPage ?? ''
-    }${sourceString}${osString}`;
+    const params = new URLSearchParams({
+      login_token: token,
+      r: subPage ?? '',
+      ...(source ? { refl: source } : {}),
+      ...(os ? { os } : {}),
+      ...(tier ? { tier } : {}),
+    });
+
+    return `https://${this.hostsService.streamlabs}/slobs/magic/dashboard?${params.toString()}`;
   }
 
   private fetchNewToken(): Promise<ILoginTokenResponse> {
@@ -53,7 +56,7 @@ export class MagicLinkService extends Service {
    */
   async linkToPrime(
     refl: TUltraRefl,
-    config?: { redirectToCheckout?: boolean; event?: TAnalyticsEvent },
+    config?: { redirectToCheckout?: boolean; event?: TAnalyticsEvent; tier?: string },
   ) {
     // TODO: this is only here to accommodate ultra checkout A/B test requiring OS
     // remove this and the parameter from {getDashboardMagicLink} after.
@@ -68,7 +71,7 @@ export class MagicLinkService extends Service {
     }
 
     try {
-      const link = await this.getDashboardMagicLink('prime', refl, os);
+      const link = await this.getDashboardMagicLink('prime', refl, os, config?.tier);
       remote.shell.openExternal(link);
     } catch (e: unknown) {
       console.error('Error generating dashboard magic link', e);
