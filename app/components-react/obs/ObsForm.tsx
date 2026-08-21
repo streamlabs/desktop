@@ -28,6 +28,8 @@ import { showFileDialog } from '../shared/inputs/FileInput';
 import cloneDeep from 'lodash/cloneDeep';
 import { Button, Collapse, Input, InputNumber } from 'antd';
 import InputWrapper from '../shared/inputs/InputWrapper';
+import ObsRichText from '../shared/ObsRichText';
+import styles from './ObsCompatInfo.m.less';
 import { $t, $translateIfExist, $translateIfExistWithCheck } from '../../services/i18n';
 import Utils from 'services/utils';
 import cx from 'classnames';
@@ -86,6 +88,21 @@ interface IObsInputProps {
   extraProps?: IExtraInputProps;
 }
 
+// game-capture.c registers `compat_info` twice, so the visibility logic no-ops on a NULL
+// property and this never clears. Untranslated libobs literal. Remove once that is fixed.
+const HOOK_STATUS_PLACEHOLDER = 'Attempting to hook process...';
+
+function infoFieldSeverity(infoType?: obs.ETextInfoType) {
+  switch (infoType) {
+    case obs.ETextInfoType.Error:
+      return { name: 'error', frame: styles.error, icon: 'icon-error' };
+    case obs.ETextInfoType.Warning:
+      return { name: 'warning', frame: styles.warning, icon: 'icon-information' };
+    default:
+      return { name: 'normal', frame: styles.normal, icon: 'icon-question' };
+  }
+}
+
 /**
  * Renders a single OBS input
  */
@@ -139,23 +156,26 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
       if (textVal.multiline) {
         return <TextAreaInput {...inputProps} debounce={300} data-name={p.value.name} />;
       } else if (textVal.infoField) {
-        const infoField = (textVal.infoField as unknown) as obs.ETextInfoType;
-        switch (textVal.infoField) {
-          case infoField === obs.ETextInfoType.Warning:
-            return (
-              <InputWrapper style={{ color: 'var(--info)' }} data-name={p.value.name}>
-                {textVal.description}
-              </InputWrapper>
-            );
-          case infoField === obs.ETextInfoType.Error:
-            return (
-              <InputWrapper style={{ color: 'var(--warning)' }} data-name={p.value.name}>
-                {textVal.description}
-              </InputWrapper>
-            );
-          default:
-            return <InputWrapper data-name={p.value.name}>{textVal.description}</InputWrapper>;
-        }
+        // libobs can leave this visible with an empty description; an empty frame is worse
+        // than nothing.
+        const infoText = textVal.description?.trim();
+        if (!infoText || infoText === HOOK_STATUS_PLACEHOLDER) return <></>;
+
+        // severity goes on the frame and icon, not the body text
+        const severity = infoFieldSeverity(textVal.infoType);
+
+        return (
+          <InputWrapper data-name={p.value.name}>
+            {/* `selectable` so launch options and URLs can be copied */}
+            <div
+              className={cx(styles.frame, severity.frame, 'selectable')}
+              data-severity={severity.name}
+            >
+              <i className={cx(styles.icon, severity.icon)} />
+              <ObsRichText text={infoText} />
+            </div>
+          </InputWrapper>
+        );
       } else {
         return (
           <ObsTextInput
