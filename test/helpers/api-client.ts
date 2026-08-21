@@ -90,7 +90,6 @@ export class ApiClient {
     });
 
     this.socket.on('close', () => {
-      this.receiveBuffer += this.stringDecoder.end();
       this.connectionStatus = 'disconnected';
       this.log('Connection closed');
     });
