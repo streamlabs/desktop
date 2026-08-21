@@ -16,6 +16,28 @@ export interface ITestStats {
   syncIPCCalls: number;
 }
 
+/**
+ * Contents of FAILURE_REASONS_PATH
+ *  - `tests` is keyed by test name.
+ *  - `job` holds reasons that belong to the run as a whole and is written by the runner.
+ */
+export interface IFailureReasons {
+  tests: Record<string, TFailureReason>;
+  job: TFailureReason[];
+}
+
+/**
+ * Reasons a test failed because of a frequently identified non-bug reason.
+ */
+export type TFailureReason =
+  | 'MISSING_TRANSLATIONS'
+  | 'UNMOUNTED_REACT_UPDATE'
+  | 'NO_ACCOUNT_AVAILABLE'
+  | 'YOUTUBE_STREAMING_DISABLED'
+  | 'YOUTUBE_ACCOUNT_RATE_LIMITED'
+  | 'YOUTUBE_ACCOUNT_FAILURE'
+  | 'UTILITY_SERVER_FAILURE';
+
 const {
   BUILD_BUILDID,
   SYSTEM_JOBID,
@@ -31,6 +53,7 @@ const USER_POOL_URL = 'https://slobs-users-pool.herokuapp.com'; // 'http://local
 const FAILED_TESTS_PATH = 'test-dist/failed-tests.json'; // failed will be written down to this file
 const TESTS_TIMINGS_PATH = 'test-dist/test-timings.json'; // a known timings for tests should be provided in this file
 const TEST_STATS_PATH = 'test-dist/test-stats.json'; // each successfully completed tests save stats like duration, syncIPCCalls in this file
+const FAILURE_REASONS_PATH = 'test-dist/failure-reasons.json'; // failures because of known frequent non-bug reasons (like account issues) should be written in this file
 
 // save names of all running tests in this array to use them in the retrying mechanism
 const pendingTests: string[] = [];
@@ -91,6 +114,40 @@ export function removeFailedTestFromFile(testName: string) {
     failedTests.splice(failedTests.indexOf(testName), 1);
     fs.writeFileSync(FAILED_TESTS_PATH, JSON.stringify(failedTests));
   }
+}
+
+/**
+ * Parse the failure details for logging purposes
+ * @returns - An object with the test failure details
+ */
+function readFailureReason(): IFailureReasons {
+  try {
+    if (fs.existsSync(FAILURE_REASONS_PATH)) {
+      const failures = JSON.parse(fs.readFileSync(FAILURE_REASONS_PATH, 'utf8'));
+      return { tests: failures.tests || {}, job: failures.job || [] };
+    }
+  } catch (e) {
+    console.error('Failed to read the failure reasons file', e);
+  }
+
+  return { tests: {}, job: [] };
+}
+
+/**
+ * Write to the logs test failure that was caused by a frequently identified non-bug reason,
+ * such as an issue with the test account to indicate that the failure is not from a bug
+ * @param testName - Name of the test with the failure
+ * @param reason - The failure reason
+ */
+export function saveFailureReasonToFile(testName: string, reason: TFailureReason) {
+  if (!reason) {
+    console.log('Expected failure reason but none provided for test', testName);
+    return;
+  }
+
+  const failures = readFailureReason();
+  failures.tests[testName] = reason;
+  fs.writeFileSync(FAILURE_REASONS_PATH, JSON.stringify(failures));
 }
 
 /**
@@ -195,7 +252,7 @@ export async function waitForElectronInstancesExist() {
     timeleft -= interval;
     tasks = await getElectronInstances();
   }
-   if (tasks.length > 0) {
-     throw new Error('Timed out waiting for Electron instances to exit');
-   }
+  if (tasks.length > 0) {
+    throw new Error('Timed out waiting for Electron instances to exit');
+  }
 }
