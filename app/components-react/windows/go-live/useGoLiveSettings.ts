@@ -756,6 +756,10 @@ export class GoLiveSettingsModule {
     return this.state.isStreamShiftMode;
   }
 
+  get isDualOutputMode() {
+    return Services.DualOutputService.views.dualOutputMode;
+  }
+
   get enabledPlatformsCount() {
     return this.state.enabledPlatforms.length;
   }
@@ -775,6 +779,7 @@ export class GoLiveSettingsModule {
   }
 
   get disableCustomDestinationSwitchers() {
+    if (this.isPrime && this.isDualOutputMode) return false;
     return (
       !this.isRestreamEnabled &&
       !this.state.enabledPlatforms.includes('tiktok') &&
