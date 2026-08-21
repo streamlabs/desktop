@@ -176,6 +176,12 @@ export interface IPlatformState {
   isPrepopulated: boolean;
 }
 
+export interface IPlatformErrorCallbackProps {
+  e: any;
+  reqInfo: IPlatformRequest | string;
+  errorType?: TStreamErrorType;
+}
+
 // All platform services should implement this interface.
 export interface IPlatformService {
   capabilities: Set<TPlatformCapability>;
@@ -220,7 +226,7 @@ export interface IPlatformService {
     e: any,
     reqInfo: IPlatformRequest | string,
     errorType?: TStreamErrorType,
-    fn?: () => void,
+    fn?: (p: IPlatformErrorCallbackProps) => void,
   ) => StreamError;
 
   fetchNewToken: () => Promise<void>;

@@ -94,6 +94,110 @@ export const errorTypes = {
       );
     },
   },
+  YOUTUBE_CREATE_BROADCAST_FAILED: {
+    get message() {
+      return $t('Failed to create the YouTube broadcast');
+    },
+    get action() {
+      return $t('confirm the channel is under its broadcast limit');
+    },
+  },
+  YOUTUBE_UPDATE_BROADCAST_FAILED: {
+    get message() {
+      return $t('Failed to update the YouTube broadcast');
+    },
+    get action() {
+      return $t('confirm their current and upcoming broadcasts in YouTube Studio');
+    },
+  },
+  YOUTUBE_DELETE_BROADCAST_FAILED: {
+    get message() {
+      return $t('Failed to delete the YouTube broadcast');
+    },
+    get action() {
+      return $t('confirm their current and upcoming broadcasts in YouTube Studio');
+    },
+  },
+  YOUTUBE_BIND_STREAM_FAILED: {
+    get message() {
+      return $t('Failed to bind the stream to the YouTube broadcast');
+    },
+    get action() {
+      return $t('confirm their current and upcoming broadcasts in YouTube Studio');
+    },
+  },
+  YOUTUBE_TRANSITION_BROADCAST_FAILED: {
+    get message() {
+      return $t('Failed to change the status of the YouTube broadcast');
+    },
+    get action() {
+      return $t('confirm the broadcast is currently live or that it exists in YouTube Studio');
+    },
+  },
+  YOUTUBE_FETCH_BROADCASTS_FAILED: {
+    get message() {
+      return $t('Failed to fetch your YouTube broadcasts');
+    },
+    get action() {
+      return $t('confirm the account is enabled for live streaming');
+    },
+  },
+  YOUTUBE_CREATE_STREAM_FAILED: {
+    get message() {
+      return $t('Failed to create the YouTube stream');
+    },
+    get action() {
+      return $t('confirm their current and upcoming broadcasts in YouTube Studio');
+    },
+  },
+  YOUTUBE_FETCH_STREAM_FAILED: {
+    get message() {
+      return $t('Failed to fetch the YouTube stream');
+    },
+    get action() {
+      return $t('confirm their current and upcoming broadcasts in YouTube Studio');
+    },
+  },
+  YOUTUBE_UPDATE_VIDEO_FAILED: {
+    get message() {
+      return $t('Failed to update the YouTube video settings');
+    },
+    get action() {
+      return $t('confirm their current and upcoming broadcasts in YouTube Studio');
+    },
+  },
+  YOUTUBE_FETCH_VIDEO_FAILED: {
+    get message() {
+      return $t('Failed to fetch the YouTube video');
+    },
+    get action() {
+      return $t('confirm their videos and current and upcoming broadcasts in YouTube Studio');
+    },
+  },
+  YOUTUBE_UPLOAD_VIDEO_FAILED: {
+    get message() {
+      return $t('Failed to upload the video to YouTube');
+    },
+    get action() {
+      return $t('confirm their videos and current and upcoming broadcasts in YouTube Studio');
+    },
+  },
+  YOUTUBE_FETCH_CATEGORIES_FAILED: {
+    get message() {
+      return $t('Failed to fetch YouTube categories');
+    },
+    get action() {
+      return $t('confirm the account is enabled for live streaming');
+    },
+  },
+  YOUTUBE_FETCH_CHANNEL_FAILED: {
+    get message() {
+      return $t('Failed to fetch your YouTube channel');
+    },
+    get action() {
+      return $t('confirm the account is enabled for live streaming');
+    },
+  },
   FACEBOOK_STREAMING_DISABLED: {
     get message() {
       return $t(
@@ -329,9 +433,9 @@ export class StreamError extends Error implements IRejectedRequest {
     this.reason = rejectedRequest?.reason;
     this.platform = rejectedRequest?.platform ?? getPlatform(this?.url);
 
-    // TODO: remove sensitive data from YT requests
+    // Remove sensitive query params from the URL for YouTube errors
     if (this.platform === 'youtube') {
-      this.url = '';
+      this.url = this.url?.replace(/\?.*$/, '');
     }
 
     // don't allow to call 'new' outside this file
