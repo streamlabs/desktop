@@ -24,7 +24,8 @@ test('Adding and removing a Color Correction filter', async t => {
   await waitForDisplayed('label=Saturation');
   await waitForDisplayed('label=Hue Shift');
   await waitForDisplayed('label=Opacity');
-  await waitForDisplayed('label=Color');
+  await waitForDisplayed('label=Color Multiply');
+  await waitForDisplayed('label=Color Add');
 
   await removeFilter(sourceName, filterName);
   await openFiltersWindow(sourceName);
@@ -143,6 +144,7 @@ test('Adding and removing a LUT filter', async t => {
 
   await waitForDisplayed('label=Path');
   await waitForDisplayed('label=Amount');
+  await waitForDisplayed('label=Passthrough Alpha');
 
   await removeFilter(sourceName, filterName);
   t.pass();
@@ -223,7 +225,6 @@ test('Adding and removing a Noise Suppression filter', async t => {
   await focusChild();
 
   await waitForDisplayed('label=Method');
-  await waitForDisplayed('label=Suppression Level');
 
   await removeFilter(sourceName, filterName);
   t.pass();

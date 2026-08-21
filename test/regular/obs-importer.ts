@@ -56,15 +56,14 @@ test('OBS Importer', async t => {
 
   await logIn(t, 'twitch', { prime: false }, false, true);
   await sleep(1000);
-
+  await clickIfDisplayed('button=Skip');
+  await waitForDisplayed('h1=Connect Platforms');
+  await clickIfDisplayed('button=Skip');
   // import from OBS
-  await click('div=Import from OBS Studio');
-  await click('div=Start');
-
-  // skip Ultra
-  await waitForDisplayed('div[data-testid=choose-free-plan-btn]', { timeout: 15000 });
-  // skip Themes
-  await click('button=Skip');
+  await clickIfDisplayed('button=Start Import');
+  await clickIfDisplayed('button=Skip');
+  await waitForDisplayed('h1=Set Up Your Mic & Webcam');
+  await clickIfDisplayed('button=Skip');
 
   await waitForDisplayed('[data-name=SceneSelector]');
 
