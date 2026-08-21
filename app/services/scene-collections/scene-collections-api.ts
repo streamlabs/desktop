@@ -6,7 +6,9 @@ import { TDisplayType } from 'services/settings-v2/video';
 export interface ISceneCollectionsServiceApi {
   /**
    * Attempt to load a scene collection.
-   * @param id The id of the colleciton to load
+   * @param id The id of the collection to load
+   * @throws {VideoOutputActiveError} When loading requires a base canvas reset while a video
+   * output is active. The active collection and its scene graph remain unchanged.
    */
   load(id: string): Promise<void>;
 

@@ -17,7 +17,11 @@ import { SettingsService } from 'services/settings';
 import { OutputSettingsService } from 'services/settings/output';
 import { Subject } from 'rxjs';
 import { horizontalDisplayData } from './default-settings-data';
-import { applyBaseResolutionSteps, IBaseResolutions } from './base-resolutions';
+import {
+  applyBaseResolutionSteps,
+  baseResolutionResetRequired,
+  IBaseResolutions,
+} from './base-resolutions';
 
 /**
  * Display Types
@@ -526,9 +530,7 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
    */
   applyBaseResolutionBaseline(resolutions: IBaseResolutions) {
     const steps = displays.map(display => {
-      const snapshot = {
-        ...(this.state[display] ?? this.dualOutputService.views.videoSettings[display]),
-      };
+      const snapshot = this.getBaseResolutionSnapshot(display);
       return {
         display,
         snapshot,
@@ -548,6 +550,29 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     applyBaseResolutionSteps(steps, (display, rollbackError) => {
       console.error(`Failed to restore ${display} collection video baseline`, rollbackError);
     });
+  }
+
+  /** Returns whether applying collection baselines would reset an established native context. */
+  requiresBaseResolutionReset(resolutions: IBaseResolutions): boolean {
+    const establishedBaseResolutions = displays.reduce<Partial<IBaseResolutions>>(
+      (result, display) => {
+        if (!this.contexts[display]) return result;
+
+        const settings = this.getBaseResolutionSnapshot(display);
+        result[display] = {
+          baseWidth: settings.baseWidth,
+          baseHeight: settings.baseHeight,
+        };
+        return result;
+      },
+      {},
+    );
+
+    return baseResolutionResetRequired(establishedBaseResolutions, resolutions);
+  }
+
+  private getBaseResolutionSnapshot(display: TDisplayType): IVideoInfo {
+    return { ...(this.state[display] ?? this.dualOutputService.views.videoSettings[display]) };
   }
 
   /**

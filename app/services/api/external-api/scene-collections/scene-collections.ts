@@ -103,6 +103,10 @@ export class SceneCollectionsService {
    * Switches to the scene collection with the provided id.
    *
    * @param id The id of the scene collection to switch to
+   * @throws {VideoOutputActiveError} When the target requires a base canvas reset while a video
+   * output is active. When this preflight rejection occurs, the active collection and scene graph
+   * remain unchanged. External RPC clients receive an object whose `error` field starts with
+   * `VideoOutputActiveError:` and whose `stack` field contains the worker stack.
    */
   load(id: string): Promise<void> {
     return this.sceneCollectionsService.load(id);
@@ -123,6 +127,11 @@ export class SceneCollectionsService {
    * current collection.
    *
    * @param id The id of the collection to delete
+   * @throws {VideoOutputActiveError} When deleting the active collection would load a replacement
+   * that requires a base canvas reset while a video output is active. When this preflight
+   * rejection occurs, the collection is not deleted. External RPC clients receive an object whose
+   * `error` field starts with `VideoOutputActiveError:` and whose `stack` field contains the worker
+   * stack.
    */
   async delete(id?: string): Promise<void> {
     return this.sceneCollectionsService.delete(id);

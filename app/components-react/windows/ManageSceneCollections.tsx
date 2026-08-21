@@ -9,7 +9,10 @@ import { confirmAsync, promptAsync, alertAsync } from 'components-react/modals';
 import Scrollable from 'components-react/shared/Scrollable';
 import { $t } from 'services/i18n';
 import { $i } from 'services/utils';
-import { ISceneCollectionsManifestEntry } from 'services/scene-collections';
+import {
+  ISceneCollectionsManifestEntry,
+  isVideoOutputActiveError,
+} from 'services/scene-collections';
 import { getOS, OS } from 'util/operating-systems';
 import styles from './ManageSceneCollections.m.less';
 import { TextInput } from 'components-react/shared/inputs';
@@ -203,7 +206,11 @@ function CollectionNode(p: {
 
   async function makeActive() {
     if (p.collection.operatingSystem !== getOS()) return;
-    SceneCollectionsService.actions.load(p.collection.id);
+    try {
+      await SceneCollectionsService.actions.return.load(p.collection.id);
+    } catch (error: unknown) {
+      if (!isVideoOutputActiveError(error)) throw error;
+    }
   }
 
   function duplicate() {
@@ -230,7 +237,13 @@ function CollectionNode(p: {
         collectionName: p.collection.name,
       }),
     );
-    if (deleteConfirmed) SceneCollectionsService.actions.delete(p.collection.id);
+    if (!deleteConfirmed) return;
+
+    try {
+      await SceneCollectionsService.actions.return.delete(p.collection.id);
+    } catch (error: unknown) {
+      if (!isVideoOutputActiveError(error)) throw error;
+    }
   }
 
   return (

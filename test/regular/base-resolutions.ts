@@ -1,8 +1,11 @@
 import test from 'ava';
 import {
   applyBaseResolutionSteps,
+  baseResolutionResetRequired,
+  baseResolutionsMatch,
   resolveBaseResolutionDisplay,
   resolveCollectionBaseResolutions,
+  resolveSerializedCollectionBaseResolutions,
 } from '../../app/services/settings-v2/base-resolutions';
 import {
   CoordinateMigrationPersistenceError,
@@ -61,6 +64,70 @@ test('v4 migration handles missing display baselines independently', t => {
   });
 });
 
+test('collection preflight resolves legacy v3 authored resolution metadata', t => {
+  t.deepEqual(
+    resolveSerializedCollectionBaseResolutions(
+      {
+        schemaVersion: 3,
+        baseResolution: { baseWidth: 1600, baseHeight: 900 },
+      },
+      current,
+    ),
+    {
+      horizontal: { baseWidth: 1600, baseHeight: 900 },
+      vertical: current.vertical,
+    },
+  );
+});
+
+test('collection preflight resolves independent v4 and v5 authored baselines', t => {
+  const saved = {
+    horizontal: { baseWidth: 1280, baseHeight: 720 },
+    vertical: { baseWidth: 720, baseHeight: 1280 },
+  };
+
+  for (const schemaVersion of [4, 5]) {
+    t.deepEqual(
+      resolveSerializedCollectionBaseResolutions(
+        { schemaVersion, baseResolutions: saved },
+        current,
+      ),
+      saved,
+    );
+  }
+});
+
+test('matching baselines do not require an established video context reset', t => {
+  t.false(baseResolutionResetRequired(current, current));
+});
+
+test('a mismatch on either established display requires a video context reset', t => {
+  t.true(
+    baseResolutionResetRequired(current, {
+      ...current,
+      horizontal: { baseWidth: 1280, baseHeight: 720 },
+    }),
+  );
+  t.true(
+    baseResolutionResetRequired(current, {
+      ...current,
+      vertical: { baseWidth: 720, baseHeight: 1280 },
+    }),
+  );
+});
+
+test('a missing vertical context does not turn a persisted vertical change into a native reset', t => {
+  t.false(
+    baseResolutionResetRequired(
+      { horizontal: current.horizontal },
+      {
+        horizontal: current.horizontal,
+        vertical: { baseWidth: 720, baseHeight: 1280 },
+      },
+    ),
+  );
+});
+
 test('baseline transaction applies a missing vertical context through its persistence step', t => {
   let horizontal = { baseWidth: 1920, baseHeight: 1080 };
   let persistedVertical = { baseWidth: 1080, baseHeight: 1920 };
@@ -82,6 +149,70 @@ test('baseline transaction applies a missing vertical context through its persis
 
   t.deepEqual(horizontal, { baseWidth: 1280, baseHeight: 720 });
   t.deepEqual(persistedVertical, { baseWidth: 720, baseHeight: 1280 });
+});
+
+test('unchanged collection baselines do not reset video contexts', t => {
+  let resetCalls = 0;
+
+  t.notThrows(() =>
+    applyBaseResolutionSteps([
+      {
+        display: 'horizontal',
+        snapshot: { baseWidth: 1920, baseHeight: 1080 },
+        target: { baseWidth: 1920, baseHeight: 1080 },
+        apply: () => {
+          resetCalls++;
+          throw new Error('video active');
+        },
+      },
+      {
+        display: 'vertical',
+        snapshot: { baseWidth: 1080, baseHeight: 1920 },
+        target: { baseWidth: 1080, baseHeight: 1920 },
+        apply: () => {
+          resetCalls++;
+          throw new Error('video active');
+        },
+      },
+    ]),
+  );
+
+  t.is(resetCalls, 0);
+});
+
+test('baseline equality requires two valid positive resolutions', t => {
+  t.true(
+    baseResolutionsMatch(
+      { baseWidth: 1920, baseHeight: 1080 },
+      { baseWidth: 1920, baseHeight: 1080 },
+    ),
+  );
+  t.false(baseResolutionsMatch(undefined, undefined));
+  t.false(baseResolutionsMatch({}, {}));
+  t.false(
+    baseResolutionsMatch({ baseWidth: 1920, baseHeight: 0 }, { baseWidth: 1920, baseHeight: 0 }),
+  );
+});
+
+test('baseline transaction applies only displays whose dimensions changed', t => {
+  const applied: string[] = [];
+
+  applyBaseResolutionSteps([
+    {
+      display: 'horizontal',
+      snapshot: { baseWidth: 1920, baseHeight: 1080 },
+      target: { baseWidth: 1920, baseHeight: 1080 },
+      apply: () => applied.push('horizontal'),
+    },
+    {
+      display: 'vertical',
+      snapshot: { baseWidth: 1080, baseHeight: 1920 },
+      target: { baseWidth: 720, baseHeight: 1280 },
+      apply: () => applied.push('vertical'),
+    },
+  ]);
+
+  t.deepEqual(applied, ['vertical']);
 });
 
 test('baseline transaction restores the first display when the second display fails', t => {

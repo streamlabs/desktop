@@ -17,6 +17,7 @@ import { ERenderingMode } from '../../../../obs-api';
 import styles from './SceneSelector.m.less';
 import useBaseElement from './hooks';
 import { IScene } from 'services/scenes';
+import { isVideoOutputActiveError } from 'services/scene-collections';
 
 function SceneSelector() {
   const {
@@ -122,11 +123,15 @@ function SceneSelector() {
       });
   }
 
-  function loadCollection(id: string) {
+  async function loadCollection(id: string) {
     if (SceneCollectionsService.getCollection(id)?.operatingSystem !== getOS()) return;
 
-    SceneCollectionsService.actions.load(id);
     setShowDropdown(false);
+    try {
+      await SceneCollectionsService.actions.return.load(id);
+    } catch (error: unknown) {
+      if (!isVideoOutputActiveError(error)) throw error;
+    }
   }
 
   const DropdownMenu = (

@@ -56,6 +56,18 @@ import {
   AutoSavePauseCoordinator,
   SceneCollectionOperationCoordinator,
 } from './operation-coordinator';
+import {
+  getActiveVideoOutputs,
+  IVideoOutputActivityState,
+  VideoOutputActiveError,
+} from './operation-safety';
+import { ENotificationType, NotificationsService } from 'services/notifications';
+import {
+  IBaseResolutions,
+  ISerializedCollectionBaseResolutions,
+  resolveSerializedCollectionBaseResolutions,
+} from 'services/settings-v2/base-resolutions';
+import type { VirtualWebcamService } from 'services/virtual-webcam';
 
 const uuid = window['require']('uuid/v4');
 
@@ -105,9 +117,11 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   @Inject() streamingService: StreamingService;
   @Inject() dualOutputService: DualOutputService;
   @Inject() videoSettingsService: VideoSettingsService;
+  @Inject('VirtualWebcamService') private virtualWebcamService: VirtualWebcamService;
   @Inject() private fileManagerService: FileManagerService;
   @Inject() private defaultHardwareService: DefaultHardwareService;
   @Inject() private widgetsService: WidgetsService;
+  @Inject() private notificationsService: NotificationsService;
 
   collectionAdded = new Subject<ISceneCollectionsManifestEntry>();
   collectionRemoved = new Subject<ISceneCollectionsManifestEntry>();
@@ -325,15 +339,42 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * @param id The id of the colleciton to load
    * @param shouldAttemptRecovery whether a new copy of the file should
    * be downloaded from the server if loading fails.
+   * @throws {VideoOutputActiveError} If the target requires a native base canvas reset while a
+   * video output is active.
    */
   load(id: string, shouldAttemptRecovery = true): Promise<void> {
-    return this.collectionOperations.run(() =>
-      this.appService.runInLoadingMode(() => this.loadImmediately(id, shouldAttemptRecovery)),
-    );
+    return this.collectionOperations.run(async () => {
+      try {
+        // Loading the active collection rewrites its file during preparation, so its post-save
+        // metadata is the authoritative baseline for the reset decision.
+        if (id !== this.activeCollection?.id) this.assertCollectionLoadAllowed(id);
+        await this.appService.runInLoadingMode(async () => {
+          // Loading mode performs asynchronous UI preparation, so check again before accepting
+          // requests or persistence work for a switch that may require a native video reset.
+          if (id !== this.activeCollection?.id) this.assertCollectionLoadAllowed(id);
+          this.tcpServerService.stopRequestsHandling();
+          await this.save();
+
+          await this.loadImmediately(id, shouldAttemptRecovery, {
+            saveCurrentApplicationState: false,
+          });
+        });
+      } catch (error: unknown) {
+        if (error instanceof VideoOutputActiveError) {
+          this.notifyVideoOutputActiveError();
+        }
+        throw error;
+      }
+    });
   }
 
-  private async loadImmediately(id: string, shouldAttemptRecovery = true): Promise<void> {
-    await this.deloadCurrentApplicationState();
+  private async loadImmediately(
+    id: string,
+    shouldAttemptRecovery = true,
+    { saveCurrentApplicationState = true }: { saveCurrentApplicationState?: boolean } = {},
+  ): Promise<void> {
+    this.assertCollectionLoadAllowed(id);
+    await this.deloadCurrentApplicationState({ save: saveCurrentApplicationState });
     try {
       await this.setActiveCollection(id);
 
@@ -395,9 +436,20 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * Deletes a scene collection.  If no id is specified, it
    * will delete the current collection.
    * @param id the id of the collection to delete
+   * @throws {VideoOutputActiveError} If deleting the active collection would load a replacement
+   * that requires a native base canvas reset while a video output is active.
    */
   delete(id?: string): Promise<void> {
-    return this.collectionOperations.run(() => this.deleteImmediately(id));
+    return this.collectionOperations.run(async () => {
+      try {
+        await this.deleteImmediately(id);
+      } catch (error: unknown) {
+        if (error instanceof VideoOutputActiveError) {
+          this.notifyVideoOutputActiveError();
+        }
+        throw error;
+      }
+    });
   }
 
   private async deleteImmediately(id?: string): Promise<void> {
@@ -408,14 +460,21 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     const removingActiveCollection = collId === this.activeCollection?.id;
 
     if (removingActiveCollection) {
-      await this.appService.runInLoadingMode(async () => {
-        await this.removeCollection(collId);
+      const replacementCollection = this.loadableCollections.find(
+        collection => collection.id !== collId,
+      );
+      if (replacementCollection) this.assertCollectionLoadAllowed(replacementCollection.id);
 
-        if (this.loadableCollections.length > 0) {
-          await this.loadImmediately(this.loadableCollections[0].id);
+      await this.appService.runInLoadingMode(async () => {
+        if (replacementCollection) {
+          this.assertCollectionLoadAllowed(replacementCollection.id);
+          await this.loadImmediately(replacementCollection.id);
         } else {
           await this.createImmediately();
         }
+
+        // Keep the former collection recoverable until its replacement is loaded successfully.
+        await this.removeCollection(collId);
       });
     } else {
       await this.removeCollection(collId);
@@ -966,6 +1025,63 @@ export class SceneCollectionsService extends Service implements ISceneCollection
         }
       }
     }
+  }
+
+  private get videoOutputActivityState(): IVideoOutputActivityState {
+    return {
+      streamStartup: this.streamingService.views.lifecycle === 'runChecklist',
+      streaming: this.streamingService.views.isStreaming,
+      recording: this.streamingService.views.isRecording,
+      replayBuffer: this.streamingService.views.isReplayBufferActive,
+      virtualCamera: this.virtualWebcamService.views.running,
+    };
+  }
+
+  /**
+   * Reads only the target root metadata needed to decide whether loading it would reset video.
+   * Parse and recovery errors remain owned by the normal collection loader.
+   */
+  private getCollectionBaseResolutions(id: string): IBaseResolutions | undefined {
+    try {
+      const data = this.stateService.readCollectionFile(id);
+      if (!data) return;
+
+      return resolveSerializedCollectionBaseResolutions(
+        JSON.parse(data) as ISerializedCollectionBaseResolutions,
+        this.videoSettingsService.baseResolutions,
+      );
+    } catch {
+      return;
+    }
+  }
+
+  private assertCollectionLoadAllowed(id: string): void {
+    const activeOutputs = getActiveVideoOutputs(this.videoOutputActivityState);
+    if (!activeOutputs.length) return;
+
+    const targetBaseResolutions = this.getCollectionBaseResolutions(id);
+    if (
+      !targetBaseResolutions ||
+      !this.videoSettingsService.requiresBaseResolutionReset(targetBaseResolutions)
+    ) {
+      return;
+    }
+
+    throw new VideoOutputActiveError(
+      'Scene collections with a different canvas resolution cannot be switched',
+      activeOutputs,
+    );
+  }
+
+  private notifyVideoOutputActiveError(): void {
+    this.notificationsService.push({
+      message: $t(
+        'Stop active video outputs before switching to a scene collection with a different canvas resolution.',
+      ),
+      type: ENotificationType.WARNING,
+      lifeTime: 5000,
+      singleton: true,
+    });
   }
 
   /**

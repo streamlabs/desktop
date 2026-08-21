@@ -8,6 +8,12 @@ export interface IBaseResolutions {
   vertical: IBaseResolution;
 }
 
+export interface ISerializedCollectionBaseResolutions {
+  schemaVersion?: number;
+  baseResolution?: Partial<IBaseResolution>;
+  baseResolutions?: Partial<IBaseResolutions>;
+}
+
 export type TBaseResolutionDisplay = keyof IBaseResolutions;
 
 /** Legacy scene/overlay records without an explicit display belong to the main canvas. */
@@ -26,6 +32,18 @@ export function isValidBaseResolution(
     Number.isFinite(resolution.baseHeight) &&
     resolution.baseWidth! > 0 &&
     resolution.baseHeight! > 0
+  );
+}
+
+export function baseResolutionsMatch(
+  first: Partial<IBaseResolution> | undefined,
+  second: Partial<IBaseResolution> | undefined,
+): boolean {
+  return (
+    isValidBaseResolution(first) &&
+    isValidBaseResolution(second) &&
+    first.baseWidth === second.baseWidth &&
+    first.baseHeight === second.baseHeight
   );
 }
 
@@ -59,7 +77,36 @@ export function resolveCollectionBaseResolutions(
   };
 }
 
-export interface IBaseResolutionApplyStep<TSettings> {
+/** Resolves the authored canvases from the serialized root without constructing its scene graph. */
+export function resolveSerializedCollectionBaseResolutions(
+  collection: ISerializedCollectionBaseResolutions,
+  currentBaseResolutions: IBaseResolutions,
+): IBaseResolutions {
+  const schemaVersion = Number.isFinite(collection.schemaVersion) ? collection.schemaVersion! : 1;
+
+  return resolveCollectionBaseResolutions(
+    schemaVersion,
+    collection.baseResolution,
+    collection.baseResolutions,
+    currentBaseResolutions,
+  );
+}
+
+/**
+ * Returns whether any established video context must be reset for the target baselines.
+ * Omitted displays have no native context and therefore require only persisted settings updates.
+ */
+export function baseResolutionResetRequired(
+  establishedBaseResolutions: Partial<IBaseResolutions>,
+  targetBaseResolutions: IBaseResolutions,
+): boolean {
+  return (Object.keys(establishedBaseResolutions) as TBaseResolutionDisplay[]).some(
+    display =>
+      !baseResolutionsMatch(establishedBaseResolutions[display], targetBaseResolutions[display]),
+  );
+}
+
+export interface IBaseResolutionApplyStep<TSettings extends IBaseResolution> {
   display: TBaseResolutionDisplay;
   snapshot: TSettings;
   target: TSettings;
@@ -70,13 +117,14 @@ export interface IBaseResolutionApplyStep<TSettings> {
  * Applies per-display baselines as one transaction. A target that is not backed by an active
  * video context can use the same contract to update persisted settings for later establishment.
  */
-export function applyBaseResolutionSteps<TSettings>(
+export function applyBaseResolutionSteps<TSettings extends IBaseResolution>(
   steps: IBaseResolutionApplyStep<TSettings>[],
   onRollbackError?: (display: TBaseResolutionDisplay, error: unknown) => void,
 ) {
   const applied: IBaseResolutionApplyStep<TSettings>[] = [];
   try {
     steps.forEach(step => {
+      if (baseResolutionsMatch(step.snapshot, step.target)) return;
       step.apply(step.target);
       applied.push(step);
     });
