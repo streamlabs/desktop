@@ -135,8 +135,22 @@ export class ApiClient {
     };
 
     const response = this.sendMessageSync(requestBody);
-    const responseLine = response.toString().split('\n').find(line => line.trim()) ?? '';
-    const parsedResponse = JSON.parse(responseLine);
+    let parsedResponse: any;
+    for (const line of response.toString().split('\n')) {
+      if (!line.trim()) continue;
+      try {
+        const msg = JSON.parse(line);
+        if (msg.id === id) {
+          parsedResponse = msg;
+          break;
+        }
+      } catch {
+        // skip partial or malformed fragments
+      }
+    }
+    if (!parsedResponse) {
+      throw new Error(`No response found for request id ${id} (${resourceId}.${methodName})`);
+    }
     this.log('Response Sync:', parsedResponse);
 
     if (parsedResponse.error) {
