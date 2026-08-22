@@ -38,9 +38,13 @@ export const V2_PROTOCOL_VERSION = 1;
  * transport changes, and because Desktop ships on a slower release cadence than
  * the API deploys. A tool declaring `minToolVersion: N` is hidden from the
  * model entirely unless an attached device advertises `toolProtocolVersion >= N`.
- * Bump whenever a device gains a new executable tool.
+ * Bump whenever a device gains a new executable tool, and pin the new tool with
+ * `minToolVersion`. Tools without one default to 1, so a bump never hides
+ * anything from clients that are already out there.
+ *
+ * 2 — plugin gains audio_set_muted and change_filter.
  */
-export const V2_TOOL_PROTOCOL_VERSION = 1;
+export const V2_TOOL_PROTOCOL_VERSION = 2;
 
 // ─── identity ────────────────────────────────────────────────────────────────
 
