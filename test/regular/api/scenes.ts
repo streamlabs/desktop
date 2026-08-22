@@ -167,6 +167,51 @@ test('Creating nested scenes', async t => {
   t.deepEqual(itemsANames, ['SceneB']);
 });
 
+test('Nested-scene crops use current-canvas pixels in external API round trips', async t => {
+  const client = await getApiClient();
+  const scenesService = client.getResource<ScenesService>('ScenesService');
+  const videoSettingsService = client.getResource<VideoSettingsService>('VideoSettingsService');
+  const parentScene = scenesService.createScene('Crop reference parent');
+  const childScene = scenesService.createScene('Crop reference child');
+
+  try {
+    const sceneItem = parentScene.addSource(childScene.id);
+    const currentCanvas = videoSettingsService.baseResolutions.horizontal;
+    // Seed the internal authored representation. The external model intentionally exposes only
+    // the effective four-field crop in current-canvas pixels.
+    const authoredCrop = {
+      top: 101,
+      right: 202,
+      bottom: 303,
+      left: 404,
+      referenceWidth: currentCanvas.baseWidth * 2,
+      referenceHeight: currentCanvas.baseHeight * 2,
+    };
+
+    sceneItem.setTransform({ crop: authoredCrop });
+    const serializedTransform = sceneItem.getModel().transform;
+
+    const effectiveCrop = {
+      top: Math.trunc(authoredCrop.top / 2),
+      right: Math.trunc(authoredCrop.right / 2),
+      bottom: Math.trunc(authoredCrop.bottom / 2),
+      left: Math.trunc(authoredCrop.left / 2),
+    };
+
+    t.deepEqual(serializedTransform.crop, effectiveCrop);
+
+    sceneItem.setTransform(serializedTransform);
+    t.deepEqual(sceneItem.getModel().transform.crop, effectiveCrop);
+
+    const editedCrop = { top: 11, right: 22, bottom: 33, left: 44 };
+    sceneItem.setTransform({ crop: editedCrop });
+    t.deepEqual(sceneItem.getModel().transform.crop, editedCrop);
+  } finally {
+    parentScene.remove();
+    childScene.remove();
+  }
+});
+
 test('SceneItem.setSettings()', async t => {
   const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');

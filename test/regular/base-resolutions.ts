@@ -18,6 +18,8 @@ import {
   SceneCollectionOperationCoordinator,
 } from '../../app/services/scene-collections/operation-coordinator';
 import {
+  applyCropPatch,
+  getEffectiveCrop,
   normalizeEditedCrop,
   normalizeLoadedCrop,
 } from '../../app/services/scenes/scene-item-crop';
@@ -379,6 +381,11 @@ test('legacy nested-scene crops adopt their matching display baseline', t => {
     referenceWidth: 1080,
     referenceHeight: 1920,
   });
+  t.deepEqual(normalizeLoadedCrop({ ...crop, referenceWidth: 720 }, true, current.vertical), {
+    ...crop,
+    referenceWidth: 1080,
+    referenceHeight: 1920,
+  });
   t.deepEqual(normalizeLoadedCrop(crop, false, current.vertical), crop);
 });
 
@@ -407,4 +414,160 @@ test('saved nested-scene crop anchors survive load and user edits intentionally 
     bottom: 36,
     left: 49,
   });
+});
+
+test('nested-scene crops use libobs scaling and truncation in the current canvas', t => {
+  const crop = {
+    top: 101,
+    right: 99,
+    bottom: 37,
+    left: 100,
+    referenceWidth: 1920,
+    referenceHeight: 1080,
+  };
+
+  t.deepEqual(
+    getEffectiveCrop(crop, true, {
+      baseWidth: 1280,
+      baseHeight: 540,
+    }),
+    {
+      top: 50,
+      right: 66,
+      bottom: 18,
+      left: 66,
+    },
+  );
+});
+
+test('ordinary input crops are unchanged by canvas reference dimensions', t => {
+  const crop = { top: 101, right: 99, bottom: 37, left: 100 };
+
+  t.deepEqual(getEffectiveCrop(crop, false, current.vertical), crop);
+});
+
+test('explicit crop reference pairs survive transform restoration', t => {
+  const currentCrop = {
+    top: 12,
+    right: 24,
+    bottom: 36,
+    left: 48,
+    referenceWidth: 1920,
+    referenceHeight: 1080,
+  };
+  const restoredCrop = {
+    top: 5,
+    right: 10,
+    bottom: 15,
+    left: 20,
+    referenceWidth: 720,
+    referenceHeight: 1280,
+  };
+
+  t.deepEqual(applyCropPatch(currentCrop, restoredCrop, true, current.horizontal), restoredCrop);
+});
+
+test('partial or invalid crop reference pairs are treated as current-canvas edits', t => {
+  const currentCrop = {
+    top: 12,
+    right: 24,
+    bottom: 36,
+    left: 48,
+    referenceWidth: 720,
+    referenceHeight: 1280,
+  };
+  const editedCrop = { top: 1.4, right: 2.6, bottom: 3.2, left: 4.8 };
+
+  t.deepEqual(
+    applyCropPatch(currentCrop, { ...editedCrop, referenceWidth: 720 }, true, current.horizontal),
+    {
+      top: 1,
+      right: 3,
+      bottom: 3,
+      left: 5,
+      referenceWidth: 1920,
+      referenceHeight: 1080,
+    },
+  );
+  t.deepEqual(
+    applyCropPatch(
+      currentCrop,
+      { ...editedCrop, referenceWidth: 720, referenceHeight: 0 },
+      true,
+      current.horizontal,
+    ),
+    {
+      top: 1,
+      right: 3,
+      bottom: 3,
+      left: 5,
+      referenceWidth: 1920,
+      referenceHeight: 1080,
+    },
+  );
+});
+
+test('partial crop snapshots cannot mix strips from different reference spaces', t => {
+  const currentCrop = {
+    top: 100,
+    right: 100,
+    bottom: 100,
+    left: 100,
+    referenceWidth: 1920,
+    referenceHeight: 1080,
+  };
+  const resizedCanvas = { baseWidth: 1280, baseHeight: 720 };
+
+  t.deepEqual(
+    applyCropPatch(
+      currentCrop,
+      { left: 20, referenceWidth: 1280, referenceHeight: 720 },
+      true,
+      resizedCanvas,
+    ),
+    {
+      top: 66,
+      right: 66,
+      bottom: 66,
+      left: 20,
+      referenceWidth: 1280,
+      referenceHeight: 720,
+    },
+  );
+});
+
+test('partial crop edits merge over the current effective crop before reanchoring', t => {
+  const currentCrop = {
+    top: 101,
+    right: 99,
+    bottom: 37,
+    left: 100,
+    referenceWidth: 1920,
+    referenceHeight: 1080,
+  };
+  const resizedCanvas = { baseWidth: 1280, baseHeight: 540 };
+
+  t.deepEqual(applyCropPatch(currentCrop, { left: 70.4 }, true, resizedCanvas), {
+    top: 50,
+    right: 66,
+    bottom: 18,
+    left: 70,
+    referenceWidth: 1280,
+    referenceHeight: 540,
+  });
+});
+
+test('writing the current effective crop preserves its authored reference', t => {
+  const currentCrop = {
+    top: 101,
+    right: 99,
+    bottom: 37,
+    left: 100,
+    referenceWidth: 1920,
+    referenceHeight: 1080,
+  };
+  const resizedCanvas = { baseWidth: 1280, baseHeight: 540 };
+  const effectiveCrop = getEffectiveCrop(currentCrop, true, resizedCanvas);
+
+  t.is(applyCropPatch(currentCrop, effectiveCrop, true, resizedCanvas), currentCrop);
 });

@@ -42,7 +42,7 @@ export interface ISceneItemSettings {
 }
 
 /**
- * Available cropping options.
+ * Available cropping options. Nested-scene crop strips are expressed in current-canvas pixels.
  */
 interface ICrop {
   top: number;
@@ -195,7 +195,11 @@ export class SceneItem extends SceneNode implements ISceneItemActions, ISceneIte
    */
   getModel(): ISceneItemModel {
     const sourceModel = this.getSource().getModel();
-    return getExternalSceneItemModel(this.sceneItem as ISceneItem, sourceModel.name);
+    return getExternalSceneItemModel(
+      this.sceneItem as ISceneItem,
+      sourceModel.name,
+      this.sceneItem.effectiveCrop,
+    );
   }
 
   setSettings(settings: Partial<ISceneItemSettings>): void {
@@ -262,9 +266,9 @@ export class SceneItem extends SceneNode implements ISceneItemActions, ISceneIte
 export function getExternalSceneItemModel(
   internalModel: IInternalSceneItemModel,
   name: string,
+  effectiveCrop: ICrop,
 ): ISceneItemModel {
   const resourceId = `SceneItem["${internalModel.sceneId}", "${internalModel.sceneItemId}", "${internalModel.sourceId}"]`;
-  const { crop } = internalModel.transform;
   return {
     ...getExternalNodeModel(internalModel),
     sourceId: internalModel.sourceId,
@@ -273,14 +277,7 @@ export function getExternalSceneItemModel(
     resourceId,
     transform: {
       ...internalModel.transform,
-      // referenceWidth/referenceHeight are internal collection-migration metadata. Keep the
-      // longstanding public scene API crop contract limited to source-pixel crop strips.
-      crop: {
-        top: crop.top,
-        right: crop.right,
-        bottom: crop.bottom,
-        left: crop.left,
-      },
+      crop: effectiveCrop,
     },
     visible: internalModel.visible,
     locked: internalModel.locked,

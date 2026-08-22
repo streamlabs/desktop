@@ -29,7 +29,7 @@ import { TSceneNodeType } from './scenes';
 import { ServiceHelper, ExecuteInWorkerProcess } from 'services/core';
 import { assertIsDefined } from '../../util/properties-type-guards';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2';
-import { normalizeEditedCrop, normalizeLoadedCrop } from './scene-item-crop';
+import { applyCropPatch, getEffectiveCrop, normalizeLoadedCrop } from './scene-item-crop';
 
 /**
  * A SceneItem is a source that contains
@@ -184,13 +184,22 @@ export class SceneItem extends SceneItemNode {
       }
 
       if (changedTransform.crop) {
-        const crop = newSettings.transform.crop;
         const display = newSettings.display ?? this.display ?? 'horizontal';
         const referenceSize = this.videoSettingsService.baseResolutions[display];
         assertIsDefined(referenceSize);
-        const cropModel = normalizeEditedCrop(crop, this.type === 'scene', referenceSize);
-        changed.transform.crop = cropModel;
-        obsSceneItem.crop = cropModel;
+        const cropModel = applyCropPatch(
+          this.state.transform.crop,
+          patch.transform!.crop!,
+          this.type === 'scene',
+          referenceSize,
+        );
+
+        if (cropModel === this.state.transform.crop) {
+          delete changed.transform.crop;
+        } else {
+          changed.transform.crop = cropModel;
+          obsSceneItem.crop = cropModel;
+        }
       }
 
       if (changedTransform.rotation !== void 0) {
@@ -532,6 +541,13 @@ export class SceneItem extends SceneItemNode {
   /**
    * A rectangle representing this sceneItem
    */
+  get effectiveCrop(): ICrop {
+    return getEffectiveCrop(this.transform.crop, this.type === 'scene', {
+      baseWidth: this.baseWidth ?? this.width,
+      baseHeight: this.baseHeight ?? this.height,
+    });
+  }
+
   get rectangle(): IScalableRectangle {
     // TODO: remove after v2 api migration and scene source resolution bug investigation
     const width = this.baseWidth ?? this.width;
@@ -544,7 +560,7 @@ export class SceneItem extends SceneItemNode {
       scaleY: this.transform.scale.y,
       width,
       height,
-      crop: this.transform.crop,
+      crop: this.effectiveCrop,
       rotation: this.transform.rotation,
     };
   }
