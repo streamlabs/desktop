@@ -372,18 +372,19 @@ export class OnboardingService extends StatefulService<IOnboardingServiceState> 
   }
 
   // Ends the onboarding process
-  finish() {
-    localStorage.setItem(this.localStorageKey, 'true');
-    remote.session.defaultSession.flushStorageData();
-    console.log('Set onboarding key successful.');
-
+  async finish() {
     // setup a custom resolution if the platform requires that
     const platformService = getPlatformService(this.userService.views.platform?.type);
     if (platformService && platformService.hasCapability('resolutionPreset')) {
       const { inputResolution, outputResolution } = platformService;
+
+      if (inputResolution) {
+        const [baseWidth, baseHeight] = inputResolution.split('x').map(Number);
+        await this.sceneCollectionsService.resizeBaseCanvas({ baseWidth, baseHeight });
+      }
+
       this.outputSettingsService.setSettings({
         mode: 'Advanced',
-        inputResolution,
         streaming: { outputResolution },
       });
     }
@@ -393,6 +394,10 @@ export class OnboardingService extends StatefulService<IOnboardingServiceState> 
     if (this.sceneCollectionsService.newUserFirstLogin) {
       this.sceneCollectionsService.setupDefaultSources(this.shouldAddDefaultSources);
     }
+
+    localStorage.setItem(this.localStorageKey, 'true');
+    remote.session.defaultSession.flushStorageData();
+    console.log('Set onboarding key successful.');
 
     this.navigationService.navigate('Studio');
     this.onboardingCompleted.next();

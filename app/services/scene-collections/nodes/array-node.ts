@@ -1,5 +1,6 @@
 import { Node } from './node';
 import compact from 'lodash/compact';
+import { reportNodeLoadError } from './load-errors';
 
 interface IArraySchema<TSchema> {
   items: TSchema[];
@@ -37,6 +38,7 @@ export abstract class ArrayNode<TSchema, TContext, TItem> extends Node<
         afterLoadItemsCallbacks.push(await this.loadItem(item, context));
       } catch (e: unknown) {
         console.error('Array node step failed', e);
+        reportNodeLoadError(e);
       }
     }
 
@@ -46,6 +48,7 @@ export abstract class ArrayNode<TSchema, TContext, TItem> extends Node<
           await cb();
         } catch (e: unknown) {
           console.error('Array node callback failed', e);
+          reportNodeLoadError(e);
         }
       }
     }

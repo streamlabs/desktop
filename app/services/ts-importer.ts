@@ -13,7 +13,6 @@ import { SceneItem } from 'services/scenes';
 import { VideoService } from './video';
 import Utils from './utils';
 import { WidgetType } from './widgets';
-import { VideoSettingsService } from './settings-v2';
 
 interface ITSConfig {
   graph: {
@@ -174,7 +173,6 @@ export class TwitchStudioImporterService extends StatefulService<{
   @Inject() sourcesService: SourcesService;
   @Inject() defaultHardwareService: DefaultHardwareService;
   @Inject() videoService: VideoService;
-  @Inject() videoSettingsService: VideoSettingsService;
 
   static initialState: { isTwitchStudioInstalled: boolean } = {
     isTwitchStudioInstalled: false,
@@ -211,17 +209,22 @@ export class TwitchStudioImporterService extends StatefulService<{
     await this.sceneCollectionsService.create({
       name: 'Twitch Studio Imported',
       setupFunction: async () => {
-        this.setupVideo(config);
-        this.importScenes(config);
+        await this.importScenes(config);
 
         return this.scenesService.views.scenes.length !== 0;
       },
     });
+
+    // Scene-collection creation already owns the serialized operation queue. Apply the imported
+    // canvas afterward as one transaction so every completed item is rebased and persisted.
+    await this.setupVideo(config);
   }
 
-  setupVideo(config: ITSConfig) {
-    this.videoSettingsService.setVideoSetting('baseWidth', config.graphics.canvasWidth);
-    this.videoSettingsService.setVideoSetting('baseHeight', config.graphics.canvasHeight);
+  setupVideo(config: ITSConfig): Promise<void> {
+    return this.sceneCollectionsService.resizeBaseCanvas({
+      baseWidth: config.graphics.canvasWidth,
+      baseHeight: config.graphics.canvasHeight,
+    });
   }
 
   async importScenes(config: ITSConfig) {

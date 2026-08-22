@@ -14,7 +14,8 @@ import { Expensive } from 'services/api/external-api-limits';
 import { EditorService } from '../../../editor';
 import { map } from 'rxjs/operators';
 import { SelectionService } from 'services/selection';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType, VideoSettingsService } from 'services/settings-v2';
+import { getEffectiveCrop } from 'services/scenes/scene-item-crop';
 
 /**
  * API for scenes management. Contains operations like scene creation, switching
@@ -28,6 +29,7 @@ export class ScenesService {
 
   @Inject() editorService: EditorService;
   @Inject() selectionService: SelectionService;
+  @Inject() videoSettingsService: VideoSettingsService;
   @InjectFromExternalApi() sourcesService: SourcesService;
 
   private convertToExternalSceneItemModel(
@@ -35,7 +37,13 @@ export class ScenesService {
   ): ISceneItemModel {
     const source = this.sourcesService.getSource(internalItemModel.sourceId);
     const name = source ? source.name : '';
-    return getExternalSceneItemModel(internalItemModel, name);
+    const display = internalItemModel.display ?? 'horizontal';
+    const effectiveCrop = getEffectiveCrop(
+      internalItemModel.transform.crop,
+      internalItemModel.type === 'scene',
+      this.videoSettingsService.baseResolutions[display],
+    );
+    return getExternalSceneItemModel(internalItemModel, name, effectiveCrop);
   }
 
   private convertToExternalSceneModel(internalSceneModel: IInternalSceneModel): ISceneModel {

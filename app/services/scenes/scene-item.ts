@@ -29,6 +29,7 @@ import { TSceneNodeType } from './scenes';
 import { ServiceHelper, ExecuteInWorkerProcess } from 'services/core';
 import { assertIsDefined } from '../../util/properties-type-guards';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2';
+import { applyCropPatch, getEffectiveCrop, normalizeLoadedCrop } from './scene-item-crop';
 
 /**
  * A SceneItem is a source that contains
@@ -183,15 +184,22 @@ export class SceneItem extends SceneItemNode {
       }
 
       if (changedTransform.crop) {
-        const crop = newSettings.transform.crop;
-        const cropModel: ICrop = {
-          top: Math.round(crop.top),
-          right: Math.round(crop.right),
-          bottom: Math.round(crop.bottom),
-          left: Math.round(crop.left),
-        };
-        changed.transform.crop = cropModel;
-        obsSceneItem.crop = cropModel;
+        const display = newSettings.display ?? this.display ?? 'horizontal';
+        const referenceSize = this.videoSettingsService.baseResolutions[display];
+        assertIsDefined(referenceSize);
+        const cropModel = applyCropPatch(
+          this.state.transform.crop,
+          patch.transform!.crop!,
+          this.type === 'scene',
+          referenceSize,
+        );
+
+        if (cropModel === this.state.transform.crop) {
+          delete changed.transform.crop;
+        } else {
+          changed.transform.crop = cropModel;
+          obsSceneItem.crop = cropModel;
+        }
       }
 
       if (changedTransform.rotation !== void 0) {
@@ -294,7 +302,6 @@ export class SceneItem extends SceneItemNode {
   loadItemAttributes(customSceneItem: ISceneItemInfo) {
     const visible = customSceneItem.visible;
     const position = { x: customSceneItem.x, y: customSceneItem.y };
-    const crop = customSceneItem.crop;
     const display = customSceneItem?.display ?? this?.display ?? 'horizontal';
 
     // guarantee vertical context exists to prevent null errors
@@ -302,9 +309,15 @@ export class SceneItem extends SceneItemNode {
       this.videoSettingsService.validateVideoContext('vertical');
     }
     const context = this.videoSettingsService.contexts[display];
+    const referenceSize = this.videoSettingsService.baseResolutions[display];
+    assertIsDefined(referenceSize);
+    const crop = normalizeLoadedCrop(customSceneItem.crop, this.type === 'scene', referenceSize);
 
     const obsSceneItem = this.getObsSceneItem();
+    // obs.addItems creates items against the default video context. Reassign the saved display
+    // first, then reapply crop so legacy scene-source crops acquire the matching canvas anchor.
     obsSceneItem.video = context as obs.IVideo;
+    obsSceneItem.crop = crop;
 
     this.UPDATE({
       visible,
@@ -325,6 +338,40 @@ export class SceneItem extends SceneItemNode {
       output: context,
       position: obsSceneItem.position,
     });
+  }
+
+  /**
+   * Refreshes the renderer cache from libobs without writing stale absolute values back to it.
+   * This is required after a relative-coordinate canvas reset: libobs owns the rebase, while
+   * Desktop's Vuex model still contains values from the previous canvas until queried again.
+   */
+  @ExecuteInWorkerProcess()
+  refreshTransformFromObs() {
+    const obsSceneItem = this.getObsSceneItem();
+    const position = { ...obsSceneItem.position };
+    const scale = { ...obsSceneItem.scale };
+    const crop = { ...obsSceneItem.crop };
+
+    this.UPDATE({
+      sceneItemId: this.sceneItemId,
+      transform: {
+        position,
+        scale,
+        crop,
+        rotation: obsSceneItem.rotation,
+      },
+      position,
+    });
+
+    if (this.type === 'scene') {
+      const baseResolution = this.videoSettingsService.baseResolutions[
+        this.display ?? 'horizontal'
+      ];
+      this.baseWidth = baseResolution.baseWidth;
+      this.baseHeight = baseResolution.baseHeight;
+    }
+
+    this.scenesService.itemUpdated.next(this.getModel());
   }
 
   setTransform(transform: IPartialTransform) {
@@ -494,6 +541,13 @@ export class SceneItem extends SceneItemNode {
   /**
    * A rectangle representing this sceneItem
    */
+  get effectiveCrop(): ICrop {
+    return getEffectiveCrop(this.transform.crop, this.type === 'scene', {
+      baseWidth: this.baseWidth ?? this.width,
+      baseHeight: this.baseHeight ?? this.height,
+    });
+  }
+
   get rectangle(): IScalableRectangle {
     // TODO: remove after v2 api migration and scene source resolution bug investigation
     const width = this.baseWidth ?? this.width;
@@ -506,7 +560,7 @@ export class SceneItem extends SceneItemNode {
       scaleY: this.transform.scale.y,
       width,
       height,
-      crop: this.transform.crop,
+      crop: this.effectiveCrop,
       rotation: this.transform.rotation,
     };
   }

@@ -23,7 +23,8 @@ export default function EditTransform() {
   const { selection } = useVuex(() => ({ selection: SelectionService.views.globalSelection }));
   // // We only care about the attributes of the rectangle not the functionality
   const [rect, setRect] = useState({ ...selection.getBoundingRect() });
-  const transform = selection.getItems()[0].transform;
+  const selectedItem = selection.getItems()[0];
+  const transform = { ...selectedItem.transform, crop: selectedItem.effectiveCrop };
   const form = useForm();
 
   useEffect(() => {

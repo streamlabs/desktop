@@ -1,10 +1,14 @@
 import { Observable } from 'rxjs';
 import { OS } from 'util/operating-systems';
+import { IVideoInfo } from '../../../obs-api';
+import { TDisplayType } from 'services/settings-v2/video';
 
 export interface ISceneCollectionsServiceApi {
   /**
    * Attempt to load a scene collection.
-   * @param id The id of the colleciton to load
+   * @param id The id of the collection to load
+   * @throws {VideoOutputActiveError} When loading requires a base canvas reset while a video
+   * output is active. The active collection and its scene graph remain unchanged.
    */
   load(id: string): Promise<void>;
 
@@ -13,6 +17,16 @@ export interface ISceneCollectionsServiceApi {
    * @param options an optional options object
    */
   create(options?: ISceneCollectionCreateOptions): Promise<ISceneCollectionsManifestEntry>;
+
+  /**
+   * Atomically changes a base canvas and persists the rebased relative scene-item transforms.
+   * @throws {VideoOutputActiveError} When stream startup or any video output is active. A
+   * preflight rejection leaves the collection and its autosave state unchanged.
+   */
+  resizeBaseCanvas(settings: Partial<IVideoInfo>, display?: TDisplayType): Promise<void>;
+
+  /** Whether stream startup or any video output currently prevents a native video reset. */
+  hasActiveVideoOutputs: boolean;
 
   /**
    * Fetch a list of all scene collections and information

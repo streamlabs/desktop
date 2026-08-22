@@ -38,6 +38,7 @@
   "Rename Folder": "Rename Folder",
   "Name Folder": "Name Folder",
   "Switch Scenes": "Switch Scenes",
+  "Stop active video outputs before switching to a scene collection with a different canvas resolution.": "Stop active video outputs before switching to a scene collection with a different canvas resolution.",
   "Failed to load scene collection.  A new one will be created instead.": "Failed to load scene collection.  A new one will be created instead.",
   "New Scene": "New Scene",
   "Projector": "Projector",

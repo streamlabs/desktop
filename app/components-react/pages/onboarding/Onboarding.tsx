@@ -251,13 +251,19 @@ export class OnboardingModule {
   }
 
   finish() {
+    if (this.state.processing) return;
+
+    this.setProcessing(true);
     if (!this.singletonStep) {
       this.UsageStatisticsService.actions.recordShown('Onboarding', 'completed');
     }
-    this.OnboardingService.actions.finish();
+
+    void this.OnboardingService.actions.return
+      .finish()
+      .catch(error => console.error('Failed to finish onboarding', error))
+      .finally(() => this.setProcessing(false));
   }
 
-  @mutation()
   next(isSkip = false) {
     if (this.state.processing) return;
 
@@ -275,9 +281,15 @@ export class OnboardingModule {
     }
 
     if (this.state.stepIndex >= this.steps.length - 1 || this.singletonStep) {
-      return this.finish();
+      this.finish();
+      return;
     }
 
+    this.advance();
+  }
+
+  @mutation()
+  advance() {
     this.state.stepIndex += 1;
   }
 

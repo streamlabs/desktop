@@ -11,6 +11,8 @@ import { getApiClient } from '../helpers/api-client';
 import { SceneCollectionsService } from 'app-services';
 import { clickButton, focusMain, select, waitForDisplayed } from '../helpers/modules/core';
 import { useForm } from '../helpers/modules/forms';
+import { ScenesService } from '../../app/services/api/external-api/scenes';
+import { VideoSettingsService } from 'services/settings-v2';
 
 useWebdriver();
 
@@ -96,13 +98,41 @@ test('Rename scene', async t => {
 });
 
 test('Duplicate scene', async t => {
+  const client = await getApiClient();
+  const scenesService = client.getResource<ScenesService>('ScenesService');
+  const videoSettingsService = client.getResource<VideoSettingsService>('VideoSettingsService');
   const sceneName = 'My Scene';
   await addScene(sceneName);
+  const scene = scenesService.getScenes().find(candidate => candidate.name === sceneName)!;
+  const childScene = scenesService.createScene('Nested crop source');
+  const nestedItem = scene.addSource(childScene.id);
+  const currentCanvas = videoSettingsService.baseResolutions.horizontal;
+  const authoredCrop = {
+    top: 101,
+    right: 203,
+    bottom: 305,
+    left: 407,
+    referenceWidth: currentCanvas.baseWidth * 2,
+    referenceHeight: currentCanvas.baseHeight * 2,
+  };
+  nestedItem.setTransform({ crop: authoredCrop });
+  scenesService.makeSceneActive(scene.id);
+
   await focusMain();
   await waitForDisplayed(`div=${sceneName}`);
   await openDuplicateWindow(sceneName);
   await clickButton('Done');
   await focusMain();
   await waitForDisplayed(`div=${sceneName} (1)`);
-  t.pass();
+
+  const duplicate = scenesService
+    .getScenes()
+    .find(candidate => candidate.name === `${sceneName} (1)`)!;
+  const copiedNestedItem = duplicate.getItems().find(item => item.sourceId === childScene.id)!;
+  t.deepEqual(copiedNestedItem.getModel().transform.crop, {
+    top: Math.trunc(authoredCrop.top / 2),
+    right: Math.trunc(authoredCrop.right / 2),
+    bottom: Math.trunc(authoredCrop.bottom / 2),
+    left: Math.trunc(authoredCrop.left / 2),
+  });
 });

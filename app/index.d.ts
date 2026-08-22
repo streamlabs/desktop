@@ -38,6 +38,9 @@ interface ICrop {
   bottom: number;
   left: number;
   right: number;
+  /** Canvas used to author scene-source crop strips. Omitted for ordinary source-pixel crops. */
+  referenceWidth?: number;
+  referenceHeight?: number;
 }
 
 interface IRGBColor {

@@ -26,39 +26,41 @@ function copyFile(src: string, dest: string) {
 }
 
 /**
- * Confirm if the scene collection is a vanilla or dual output collection
- * @remark - The identifiers of a dual output scene collection is the existence of
- * the sceneNodeMaps property in the scene collections manifest, and the nodeMaps
- * property in the scene collection json.
- * @param t - execution context
- * @param fileName - name of the json file to read
- * @param propName - property name to confirm
- * @param dualOutput - true if confirming that the collection is a dual output collection, false if confirming it's a vanilla collection
+ * Confirms whether a saved collection contains real horizontal-to-vertical node mappings.
+ * The nodeMap wrapper itself is serialized for single-output collections and is therefore
+ * not a Dual Output identifier.
  */
 function confirmIsCollectionType(
   t: TExecutionContext,
   fileName: string,
-  propName: string,
-  dualOutput?: boolean,
+  dualOutput = false,
 ) {
   const filePath = path.join(t.context.cacheDir, 'slobs-client', 'SceneCollections', fileName);
+  const data = JSON.parse(fs.readFileSync(filePath).toString());
+  const isManifest = fileName === 'manifest.json';
+  const root = isManifest
+    ? data.collections.find((collection: { id: string }) => collection.id === data.activeId) ??
+      data.collections[0]
+    : data;
+  const sceneNodeMaps = (isManifest
+    ? root.sceneNodeMaps
+    : root.nodeMap?.sceneNodeMaps) as Dictionary<Dictionary<string>> | undefined;
+  const hasMappings = Object.values(sceneNodeMaps ?? {}).some(sceneMap =>
+    Object.values(sceneMap).some(verticalNodeId => verticalNodeId.length > 0),
+  );
 
-  try {
-    const data = JSON.parse(fs.readFileSync(filePath).toString());
-    const root = fileName === 'manifest.json' && data?.collections ? data?.collections[0] : data;
+  t.is(
+    hasMappings,
+    dualOutput,
+    `Expected ${fileName} ${dualOutput ? 'to contain' : 'not to contain'} Dual Output mappings`,
+  );
 
-    if (dualOutput) {
-      // dual output: has sceneNodeMaps prop in manifest, has nodeMap node in collection
-      t.true(root.hasOwnProperty(propName), `Expected ${fileName} to have property ${propName}`);
-    } else {
-      // single output: no sceneNodeMaps prop in manifest, no nodeMap node in collection
-      t.true(
-        !root.hasOwnProperty(propName),
-        `Expected ${fileName} to not have property ${propName}`,
-      );
-    }
-  } catch (e: unknown) {
-    console.log('Error: ', e);
+  if (!isManifest) {
+    t.is(
+      root.dualOutputMode === true,
+      dualOutput,
+      `Expected ${fileName} to persist Dual Output mode as ${dualOutput}`,
+    );
   }
 }
 
@@ -100,15 +102,15 @@ useWebdriver({
 
 test('Loading single & dual output scene collections', async (t: TExecutionContext) => {
   // confirm no scene node map for single output collection
-  confirmIsCollectionType(t, 'manifest.json', 'sceneNodeMaps');
-  confirmIsCollectionType(t, '3c6cf522-6b85-4d64-a152-236939c63686.json', 'nodeMap');
+  confirmIsCollectionType(t, 'manifest.json');
+  confirmIsCollectionType(t, '3c6cf522-6b85-4d64-a152-236939c63686.json');
   await sleep(500);
 
   // confirm save/load single output collection
   await stopApp(t, false);
   await startApp(t);
-  confirmIsCollectionType(t, 'manifest.json', 'sceneNodeMaps');
-  confirmIsCollectionType(t, '3c6cf522-6b85-4d64-a152-236939c63686.json', 'nodeMap');
+  confirmIsCollectionType(t, 'manifest.json');
+  confirmIsCollectionType(t, '3c6cf522-6b85-4d64-a152-236939c63686.json');
 
   // confirm save/load dual output collection
   await sleep(500);
@@ -117,8 +119,8 @@ test('Loading single & dual output scene collections', async (t: TExecutionConte
   await sleep(500);
   await stopApp(t, false);
   await startApp(t, true);
-  confirmIsCollectionType(t, 'manifest.json', 'sceneNodeMaps', true);
-  confirmIsCollectionType(t, '3c6cf522-6b85-4d64-a152-236939c63686.json', 'nodeMap', true);
+  confirmIsCollectionType(t, 'manifest.json', true);
+  confirmIsCollectionType(t, '3c6cf522-6b85-4d64-a152-236939c63686.json', true);
 
   // await logOut(t);
   await stopApp(t, false);

@@ -1,6 +1,10 @@
 import { Service } from 'services/core/service';
 import { ISettingsSubCategory, SettingsService } from 'services/settings';
-import { TDisplayType, VideoSettingsService } from 'services/settings-v2/video';
+import {
+  BaseCanvasTransactionRequiredError,
+  TDisplayType,
+  VideoSettingsService,
+} from 'services/settings-v2/video';
 import { Inject } from 'services/core/injector';
 import {
   ERecordingQuality,
@@ -984,18 +988,18 @@ export class OutputSettingsService extends Service {
   /**
    * This method helps to simplify tuning the encoder's settings
    * This method can patch ONLY Advanced settings
+   * @throws {BaseCanvasTransactionRequiredError} If `inputResolution` is supplied. Callers must
+   * apply it through `SceneCollectionsService.resizeBaseCanvas()` before updating output settings.
    */
   setSettings(settingsPatch: IOutputSettingsPatch) {
+    if (Object.prototype.hasOwnProperty.call(settingsPatch, 'inputResolution')) {
+      throw new BaseCanvasTransactionRequiredError();
+    }
+
     if (settingsPatch.mode) {
       this.settingsService.setSettingValue('Output', 'Mode', settingsPatch.mode);
     }
     const currentSettings = this.getSettings();
-
-    if (settingsPatch.inputResolution) {
-      const [width, height] = settingsPatch.inputResolution.split('x');
-      this.videoSettingsService.setVideoSetting('baseWidth', Number(width));
-      this.videoSettingsService.setVideoSetting('baseHeight', Number(height));
-    }
 
     if (settingsPatch.streaming) {
       this.setStreamingEncoderSettings(currentSettings, settingsPatch.streaming);

@@ -389,6 +389,17 @@ export class ScenesService extends StatefulService<IScenesState> {
   @Inject() private transitionsService: TransitionsService;
   @Inject() private selectionService: SelectionService;
 
+  /**
+   * Re-reads the absolute transform view exposed by libobs after a relative-coordinate canvas
+   * change. Callers must invalidate the native transform cache before invoking this method.
+   */
+  refreshSceneItemTransforms(display: TDisplayType) {
+    this.views.getSceneItems().forEach(item => {
+      const itemDisplay = item.display ?? this.views.getNodeDisplay(item.id, item.sceneId);
+      if (itemDisplay === display) item.refreshTransformFromObs();
+    });
+  }
+
   @mutation()
   private ADD_SCENE(id: string, name: string) {
     Vue.set<IScene>(this.state.scenes, id, {

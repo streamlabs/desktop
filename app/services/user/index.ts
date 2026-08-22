@@ -612,7 +612,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       this.sceneCollectionsService.newUserFirstLogin = true;
     }
 
-    if (!isOnboardingTest) this.onboardingService.finish();
+    if (!isOnboardingTest) await this.onboardingService.finish();
   }
 
   /**

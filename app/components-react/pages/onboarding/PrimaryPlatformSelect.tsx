@@ -127,7 +127,7 @@ export function PrimaryPlatformSelect() {
 
   async function afterLogin(platform: TPlatform) {
     await finishSLAuth(platform);
-    if (isLogin) OnboardingService.actions.finish();
+    if (isLogin) await OnboardingService.actions.return.finish();
   }
 
   async function onSkip() {
@@ -140,8 +140,9 @@ export function PrimaryPlatformSelect() {
       btnType: 'primary',
       cancelBtnPosition: 'left',
       fn: () => {
-        finishSLAuth();
-        OnboardingService.actions.finish();
+        void finishSLAuth()
+          .then(() => OnboardingService.actions.return.finish())
+          .catch(error => console.error('Failed to finish onboarding', error));
       },
       secondaryActionText: $t('Refresh Platforms'),
       secondaryActionFn: refreshLinkedPlatforms,
@@ -152,7 +153,7 @@ export function PrimaryPlatformSelect() {
     if (!selectedPlatform && !primary) return;
 
     await finishSLAuth(primary ?? (selectedPlatform as TPlatform));
-    if (isLogin) OnboardingService.actions.finish();
+    if (isLogin) await OnboardingService.actions.return.finish();
   }
 
   if (linkedPlatforms.length) {
