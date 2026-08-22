@@ -1,29 +1,9 @@
 import { Node } from './node';
 import compact from 'lodash/compact';
+import { reportNodeLoadError } from './load-errors';
 
 interface IArraySchema<TSchema> {
   items: TSchema[];
-}
-
-let strictLoadErrors: unknown[] | null = null;
-
-export class StrictArrayNodeLoadError extends Error {
-  constructor(readonly errors: unknown[]) {
-    super(`Legacy scene collection load failed in ${errors.length} array node step(s)`);
-    this.name = 'StrictArrayNodeLoadError';
-  }
-}
-
-export async function loadArrayNodesStrictly(load: () => Promise<void>): Promise<void> {
-  const parentErrors = strictLoadErrors;
-  const errors: unknown[] = [];
-  strictLoadErrors = errors;
-  try {
-    await load();
-  } finally {
-    strictLoadErrors = parentErrors;
-  }
-  if (errors.length) throw new StrictArrayNodeLoadError(errors);
 }
 
 export abstract class ArrayNode<TSchema, TContext, TItem> extends Node<
@@ -58,7 +38,7 @@ export abstract class ArrayNode<TSchema, TContext, TItem> extends Node<
         afterLoadItemsCallbacks.push(await this.loadItem(item, context));
       } catch (e: unknown) {
         console.error('Array node step failed', e);
-        strictLoadErrors?.push(e);
+        reportNodeLoadError(e);
       }
     }
 
@@ -68,7 +48,7 @@ export abstract class ArrayNode<TSchema, TContext, TItem> extends Node<
           await cb();
         } catch (e: unknown) {
           console.error('Array node callback failed', e);
-          strictLoadErrors?.push(e);
+          reportNodeLoadError(e);
         }
       }
     }

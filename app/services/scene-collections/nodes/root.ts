@@ -18,7 +18,7 @@ import {
 import { DualOutputService } from 'services/dual-output';
 import { SettingsService } from 'services/settings';
 import { SceneCollectionsService } from '../scene-collections';
-import { loadArrayNodesStrictly } from './array-node';
+import { loadNodesForCoordinateMigration } from './load-errors';
 
 export type TSceneCoordinateMode = 'absolute' | 'relative';
 
@@ -58,6 +58,7 @@ export class RootNode extends Node<ISchema, {}> {
   schemaVersion = 5;
 
   private needsCoordinateMigration = false;
+  private coordinateMigrationBlocked = false;
 
   @Inject() videoService: VideoService;
   @Inject() streamingService: StreamingService;
@@ -102,6 +103,8 @@ export class RootNode extends Node<ISchema, {}> {
    * This if/else prevents an error by guaranteeing a video context exists.
    */
   async load(): Promise<void> {
+    this.coordinateMigrationBlocked = false;
+
     if (!this.videoSettingsService.contexts.horizontal) {
       await new Promise<void>(resolve => {
         const establishedContext = this.videoSettingsService.establishedContext.subscribe(
@@ -132,12 +135,19 @@ export class RootNode extends Node<ISchema, {}> {
       if (this.data.guestCam) await this.data.guestCam.load();
     };
 
-    if (this.requiresCoordinateMigration) await loadArrayNodesStrictly(loadChildren);
-    else await loadChildren();
+    if (this.requiresCoordinateMigration) {
+      this.coordinateMigrationBlocked = !(await loadNodesForCoordinateMigration(loadChildren));
+    } else {
+      await loadChildren();
+    }
   }
 
   get requiresCoordinateMigration() {
     return this.needsCoordinateMigration;
+  }
+
+  get isCoordinateMigrationBlocked() {
+    return this.coordinateMigrationBlocked;
   }
 
   migrate(version: number) {

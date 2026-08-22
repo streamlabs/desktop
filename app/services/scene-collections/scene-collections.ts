@@ -48,6 +48,8 @@ import { WidgetsService, WidgetType } from 'services/widgets';
 import { FileManagerService } from 'services/file-manager';
 import { IVideoInfo, SceneFactory } from '../../../obs-api';
 import {
+  assertCoordinateMigrationCompleted,
+  CoordinateMigrationBlockedError,
   CoordinateMigrationPersistenceError,
   persistCoordinateMigration,
   shouldAttemptCollectionRecovery,
@@ -135,6 +137,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * Is used to decide whether we should save.
    */
   private collectionLoaded = false;
+  private coordinateMigrationBlocked = false;
 
   /**
    * Whether the error dialogue is currently open.
@@ -374,6 +377,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     { saveCurrentApplicationState = true }: { saveCurrentApplicationState?: boolean } = {},
   ): Promise<void> {
     this.assertCollectionLoadAllowed(id);
+    this.coordinateMigrationBlocked = false;
     await this.deloadCurrentApplicationState({ save: saveCurrentApplicationState });
     try {
       await this.setActiveCollection(id);
@@ -438,6 +442,8 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * @param id the id of the collection to delete
    * @throws {VideoOutputActiveError} If deleting the active collection would load a replacement
    * that requires a native base canvas reset while a video output is active.
+   * @throws {CoordinateMigrationBlockedError} If the replacement is only partially loaded because
+   * its legacy-coordinate migration is blocked.
    */
   delete(id?: string): Promise<void> {
     return this.collectionOperations.run(async () => {
@@ -469,6 +475,10 @@ export class SceneCollectionsService extends Service implements ISceneCollection
         if (replacementCollection) {
           this.assertCollectionLoadAllowed(replacementCollection.id);
           await this.loadImmediately(replacementCollection.id);
+          assertCoordinateMigrationCompleted(
+            this.coordinateMigrationBlocked,
+            'delete the active scene collection',
+          );
         } else {
           await this.createImmediately();
         }
@@ -561,8 +571,10 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   /**
    * Convert a dual output scene to a vanilla scene
    * @remark This duplicates the scene collection before conversion to prevent loss of data
-   * @params Boolean for if the vertical sources should be assigned to the horizontal display
+   * @param assignToHorizontal Whether vertical sources should be assigned to the horizontal display
    * @returns String filepath for new collection
+   * @throws {CoordinateMigrationBlockedError} If unavailable sources block migration of the
+   * duplicated collection.
    */
   convertDualOutputCollection(
     assignToHorizontal: boolean = false,
@@ -591,6 +603,10 @@ export class SceneCollectionsService extends Service implements ISceneCollection
       if (!newCollectionId) return;
 
       await this.loadImmediately(newCollectionId);
+      assertCoordinateMigrationCompleted(
+        this.coordinateMigrationBlocked,
+        'convert the scene collection',
+      );
 
       // Disable dual output mode after loading the duplicate to prevent the converted collection
       // from being saved as a dual output collection.
@@ -851,10 +867,25 @@ export class SceneCollectionsService extends Service implements ISceneCollection
         return;
       }
 
-      // the app cannot load without a default scene
-      if (this.scenesService.views.scenes.length === 0) {
+      // The app cannot load without a default scene. If migration is blocked, this scene remains
+      // temporary because collectionLoaded stays false below.
+      const loadedWithoutScenes = this.scenesService.views.scenes.length === 0;
+      if (loadedWithoutScenes) {
         console.error('Scene collection was loaded but there were no scenes.');
         this.setupEmptyCollection();
+      }
+
+      if (root!.isCoordinateMigrationBlocked) {
+        console.error(
+          'Scene collection migration is blocked because one or more sources were not created. ' +
+            'The original collection will be retried without saving this partial graph.',
+        );
+        this.coordinateMigrationBlocked = true;
+        this.collectionLoaded = false;
+        return;
+      }
+
+      if (loadedWithoutScenes) {
         this.collectionLoaded = true;
         if (root!.requiresCoordinateMigration) {
           await this.persistRelativeCoordinateMigration(id, data);
@@ -880,7 +911,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
         await this.handleCollectionLoadError();
         this.setupEmptyCollection();
       }
-      this.collectionLoaded = true;
+      if (!this.coordinateMigrationBlocked) this.collectionLoaded = true;
     }
   }
 
@@ -911,26 +942,37 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     if (root.data.sources.removeUnsupported()) {
       // The underlying function already wrote all details to the log.
       // Users will see a very basic information.
-      this.showUnsupportedSourcesDialog();
+      await this.showUnsupportedSourcesDialog();
     }
 
     await root.load();
     this.hotkeysService.bindHotkeys();
 
     if (this.sourcesService.missingInputs.length > 0) {
-      await remote.dialog
-        .showMessageBox(Utils.getMainWindow(), {
-          title: 'Unsupported Sources',
-          type: 'warning',
-          message: $t(
-            'Scene items were removed because there was an error loading them: %{inputs}.\n\nPlease accept or reject permissions to view the Streamlabs Editor panel',
-            { inputs: this.sourcesService.missingInputs.join(', ') },
-          ),
-        })
-        .then(() => {
-          this.collectionErrorOpen = false;
-        });
+      const coordinateMigrationBlocked = root.isCoordinateMigrationBlocked;
       this.collectionErrorOpen = true;
+      try {
+        await remote.dialog.showMessageBox(Utils.getMainWindow(), {
+          title: coordinateMigrationBlocked
+            ? 'Scene Collection Migration Paused'
+            : 'Unsupported Sources',
+          type: 'warning',
+          message: coordinateMigrationBlocked
+            ? $t(
+                'Scene items could not be loaded because these inputs are unavailable: %{inputs}.\n\nThe original scene collection was preserved. Migration will retry when this collection is loaded again. Changes to this collection will not be saved until migration succeeds.',
+                { inputs: this.sourcesService.missingInputs.join(', ') },
+              )
+            : $t(
+                'Scene items were removed because there was an error loading them: %{inputs}.\n\nPlease accept or reject permissions to view the Streamlabs Editor panel',
+                { inputs: this.sourcesService.missingInputs.join(', ') },
+              ),
+        });
+      } catch (dialogError: unknown) {
+        // A notification failure is not evidence that the scene collection itself is damaged.
+        console.error('Failed to show the missing sources dialog:', dialogError);
+      } finally {
+        this.collectionErrorOpen = false;
+      }
     }
 
     // Users who selected a theme during onboarding should skip adding default sources
@@ -972,17 +1014,23 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   }
 
   async showUnsupportedSourcesDialog(e?: Error | unknown) {
+    if (this.collectionErrorOpen) return;
+
     const message = e && e instanceof Error ? e.message : e ?? '';
     console.error('Error during sources creation when loading scene collection:', message);
 
-    await remote.dialog
-      .showMessageBox(Utils.getMainWindow(), {
+    this.collectionErrorOpen = true;
+    try {
+      await remote.dialog.showMessageBox(Utils.getMainWindow(), {
         title: 'Unsupported Sources',
         type: 'warning',
         message: $t('One or more scene items were removed because they are not supported'),
-      })
-      .then(() => (this.collectionErrorOpen = false));
-    this.collectionErrorOpen = true;
+      });
+    } catch (dialogError: unknown) {
+      console.error('Failed to show the unsupported sources dialog:', dialogError);
+    } finally {
+      this.collectionErrorOpen = false;
+    }
   }
 
   /**
@@ -1124,6 +1172,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
 
     this.hotkeysService.clearAllHotkeys();
     this.collectionLoaded = false;
+    this.coordinateMigrationBlocked = false;
 
     if (deloadError) throw deloadError;
   }

@@ -17,6 +17,7 @@ import defaultTo from 'lodash/defaultTo';
 import { byOS, OS } from 'util/operating-systems';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { EFilterDisplayType, ISourceFilter, SourceFiltersService } from 'services/source-filters';
+import { reportUncreatedSceneCollectionSources } from './source-creation-errors';
 
 interface ISchema {
   items: ISourceInfo[];
@@ -220,6 +221,8 @@ export class SourcesNode extends Node<ISchema, {}> {
   }
 
   load(context: {}): Promise<void> {
+    // A backup or later collection load must not inherit failures from an earlier attempt.
+    this.sourcesService.missingInputs = [];
     this.sanitizeSources();
 
     const supportedSources = this.data.items.filter(source => {
@@ -328,12 +331,9 @@ export class SourcesNode extends Node<ISchema, {}> {
     const sources = obs.createSources(sourceCreateData);
     const promises: Promise<void>[] = [];
     let sourcesNotCreatedNames: string[] = [];
+    const sourcesNotCreated = reportUncreatedSceneCollectionSources(sourceCreateData, sources);
 
-    if (sourceCreateData.length !== sources.length) {
-      const sourcesNotCreated = sourceCreateData.filter(
-        source => !sources.some(s => s.name === source.name),
-      );
-
+    if (sourcesNotCreated.length > 0) {
       sourcesNotCreatedNames = sourcesNotCreated.map(source => source.name);
       console.error(
         'Error during sources creation when loading scene collection.',
@@ -341,7 +341,7 @@ export class SourcesNode extends Node<ISchema, {}> {
       );
 
       this.sourcesService.missingInputs = sourcesNotCreated.map(
-        source => this.sourcesService.sourceDisplayData[source.type]?.name,
+        source => this.sourcesService.sourceDisplayData[source.type]?.name || source.type,
       );
     }
 

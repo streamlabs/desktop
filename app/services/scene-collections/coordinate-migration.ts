@@ -19,6 +19,18 @@ export class CoordinateMigrationPersistenceError extends Error {
   }
 }
 
+/** Identifies an operation that cannot safely consume a partially loaded legacy collection. */
+export class CoordinateMigrationBlockedError extends Error {
+  constructor(readonly operation: string) {
+    super(`Cannot ${operation} while scene collection migration is blocked by unavailable sources`);
+    this.name = 'CoordinateMigrationBlockedError';
+  }
+}
+
+export function assertCoordinateMigrationCompleted(blocked: boolean, operation: string): void {
+  if (blocked) throw new CoordinateMigrationBlockedError(operation);
+}
+
 export function shouldAttemptCollectionRecovery(error: unknown): boolean {
   return !(error instanceof CoordinateMigrationPersistenceError);
 }
