@@ -254,7 +254,6 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
     }
   }
 
-
   /**
    * Wire tracing. Always on: this socket is low-traffic (text chat plus the
    * occasional tool call), and the failure mode it exists to catch — a packet
@@ -272,7 +271,7 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
    */
   private traceUnhandled(socket: SocketIOClient.Socket, handled: string[]) {
     const known = new Set([...handled, 'connect', 'disconnect', 'connect_error', 'v2:ready']);
-    const anySocket = socket as unknown as {
+    const anySocket = (socket as unknown) as {
       onevent: (packet: { data?: unknown[] }) => void;
     };
     const original = anySocket.onevent.bind(anySocket);
@@ -282,7 +281,6 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
       original(packet);
     };
   }
-
 
   /**
    * Desktop handles every approval whenever it is connected — including ones
@@ -329,9 +327,10 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
 
   private handleText(packet: V2TextPayload) {
     if (!packet?.text) return;
-    // The link footer is not part of the spoken reply; skip it in a chat UI.
-    if (packet.kind === 'links') return;
 
+    // kind === 'links' is the source footer for a knowledge answer. It appends
+    // to the reply it belongs to, or opens its own bubble when the question was
+    // asked by voice and the spoken answer never came through here.
     const interactionId = packet.packetId?.runId ?? '';
     const existing = this.state.messages.find(m => !m.isUser && m.interactionId === interactionId);
 
@@ -355,11 +354,11 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
   private async handleToolInvoke(invoke: V2ToolInvokePayload) {
     const outcome = this.agentToolsService.canExecute(invoke.tool)
       ? await this.agentToolsService.execute(invoke.tool, invoke.args ?? {})
-      : ({
+      : {
           ok: false as const,
           code: 'unknown_tool',
           message: `Desktop cannot run ${invoke.tool}.`,
-        });
+        };
 
     this.log('out', 'v2:tool.result', { callId: invoke.callId, ok: outcome.ok });
     this.socket?.emit('v2:tool.result', { callId: invoke.callId, outcome });
