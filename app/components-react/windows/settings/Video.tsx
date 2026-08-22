@@ -76,7 +76,7 @@ class VideoSettingsModule {
   }
 
   get cantEditFields(): boolean {
-    return this.streamingService.views.isStreaming || this.streamingService.views.isRecording;
+    return this.sceneCollectionsService.hasActiveVideoOutputs;
   }
 
   get values(): Dictionary<TInputValue> {

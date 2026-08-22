@@ -20,8 +20,13 @@ export interface ISceneCollectionsServiceApi {
 
   /**
    * Atomically changes a base canvas and persists the rebased relative scene-item transforms.
+   * @throws {VideoOutputActiveError} When stream startup or any video output is active. A
+   * preflight rejection leaves the collection and its autosave state unchanged.
    */
   resizeBaseCanvas(settings: Partial<IVideoInfo>, display?: TDisplayType): Promise<void>;
+
+  /** Whether stream startup or any video output currently prevents a native video reset. */
+  hasActiveVideoOutputs: boolean;
 
   /**
    * Fetch a list of all scene collections and information

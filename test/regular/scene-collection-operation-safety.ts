@@ -14,7 +14,7 @@ const inactive: IVideoOutputActivityState = {
   virtualCamera: false,
 };
 
-test('each video output state is detected for target-aware collection preflight', t => {
+test('each video output state is detected for scene operation preflight', t => {
   const cases: [keyof IVideoOutputActivityState, string][] = [
     ['streamStartup', 'stream startup'],
     ['streaming', 'streaming'],

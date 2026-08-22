@@ -264,9 +264,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     ) {
       throw new Error('Base canvas dimensions must be positive finite numbers');
     }
-    if (this.streamingService.views.isStreaming || this.streamingService.views.isRecording) {
-      throw new Error('The base canvas cannot be changed while streaming or recording');
-    }
+    this.assertBaseCanvasResizeAllowed();
     if (!this.collectionLoaded || !this.activeCollection) {
       throw new Error('A scene collection must be loaded before changing its base canvas');
     }
@@ -275,7 +273,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     const collectionId = this.activeCollection.id;
     const previousSettings = { ...this.videoSettingsService.state[display] };
     let originalData: string | undefined;
-    let resetAttempted = false;
+    let resetApplied = false;
     let rollbackSucceeded = true;
 
     try {
@@ -285,8 +283,10 @@ export class SceneCollectionsService extends Service implements ISceneCollection
       this.stateService.writeDataToCollectionFile(collectionId, originalData, true);
       await this.fileManagerService.flushAll();
 
-      resetAttempted = true;
+      // Output state can change while the collection snapshot is being flushed.
+      this.assertBaseCanvasResizeAllowed();
       this.videoSettingsService.applySettingsImmediately(settings, display);
+      resetApplied = true;
       SceneFactory.invalidateItemTransformCache();
       this.scenesService.refreshSceneItemTransforms(display);
 
@@ -295,7 +295,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
       this.stateService.SET_MODIFIED(collectionId, new Date().toISOString());
     } catch (error: unknown) {
       const rollbackErrors: unknown[] = [];
-      if (resetAttempted) {
+      if (resetApplied) {
         try {
           this.videoSettingsService.applySettingsImmediately(previousSettings, display);
           SceneFactory.invalidateItemTransformCache();
@@ -801,6 +801,10 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     return this.stateService.activeCollection;
   }
 
+  get hasActiveVideoOutputs(): boolean {
+    return this.activeVideoOutputs.length > 0;
+  }
+
   get sceneNodeMaps() {
     return this.stateService.sceneNodeMaps;
   }
@@ -1085,6 +1089,17 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     };
   }
 
+  private get activeVideoOutputs() {
+    return getActiveVideoOutputs(this.videoOutputActivityState);
+  }
+
+  private assertBaseCanvasResizeAllowed(): void {
+    const activeOutputs = this.activeVideoOutputs;
+    if (!activeOutputs.length) return;
+
+    throw new VideoOutputActiveError('The base canvas cannot be changed', activeOutputs);
+  }
+
   /**
    * Reads only the target root metadata needed to decide whether loading it would reset video.
    * Parse and recovery errors remain owned by the normal collection loader.
@@ -1104,7 +1119,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   }
 
   private assertCollectionLoadAllowed(id: string): void {
-    const activeOutputs = getActiveVideoOutputs(this.videoOutputActivityState);
+    const activeOutputs = this.activeVideoOutputs;
     if (!activeOutputs.length) return;
 
     const targetBaseResolutions = this.getCollectionBaseResolutions(id);
