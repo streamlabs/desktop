@@ -8,7 +8,15 @@ import { EScaleType, EFPSType, IVideoInfo } from '../../../../obs-api';
 import { $t } from 'services/i18n';
 import styles from './Common.m.less';
 import Tabs from 'components-react/shared/Tabs';
-import { invalidFps, IVideoInfoValue, TDisplayType, ObsSetting } from 'services/settings-v2/video';
+import {
+  invalidFps,
+  IVideoInfoValue,
+  TDisplayType,
+  ObsSetting,
+  TVideoSettingKey,
+  TVideoSettingsPatch,
+} from 'services/settings-v2/video';
+import { hasBaseResolutionSettings } from 'services/settings-v2/base-resolutions';
 import { AuthModal } from 'components-react/shared/AuthModal';
 import Utils from 'services/utils';
 import DualOutputToggle from '../../shared/DualOutputToggle';
@@ -309,7 +317,7 @@ class VideoSettingsModule {
       const [width, height] = value.split('x');
       const prefix = key === 'baseRes' ? 'base' : 'output';
 
-      const settings = {
+      const settings: Partial<IVideoInfo> = {
         [`${prefix}Width`]: Number(width),
         [`${prefix}Height`]: Number(height),
       };
@@ -343,7 +351,7 @@ class VideoSettingsModule {
           settings[`${otherPrefix}Height`] = Number(height);
         }
       }
-      if (key === 'baseRes') {
+      if (hasBaseResolutionSettings(settings)) {
         this.sceneCollectionsService.actions.return
           .resizeBaseCanvas(settings, display)
           .catch((error: unknown) => {
@@ -354,8 +362,8 @@ class VideoSettingsModule {
             });
           });
       } else {
-        // Output resolution does not change scene coordinates and stays on the normal path.
-        this.service.actions.setSettings(settings, display);
+        // A final output-only patch does not change scene coordinates and stays on the normal path.
+        this.service.actions.setSettings(settings as TVideoSettingsPatch, display);
       }
     }
   }
@@ -459,7 +467,7 @@ class VideoSettingsModule {
     }
   }
 
-  onChange(key: keyof IVideoInfo) {
+  onChange(key: TVideoSettingKey) {
     return (val: IVideoInfoValue) =>
       this.service.actions.setVideoSetting(key, val, this.state.display);
   }

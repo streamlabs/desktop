@@ -16,6 +16,13 @@ export interface ISerializedCollectionBaseResolutions {
 
 export type TBaseResolutionDisplay = keyof IBaseResolutions;
 
+const BASE_RESOLUTION_KEYS = ['baseWidth', 'baseHeight'] as const;
+
+/** Returns whether a settings patch owns either base-canvas dimension. */
+export function hasBaseResolutionSettings(settings: object): boolean {
+  return BASE_RESOLUTION_KEYS.some(key => Object.prototype.hasOwnProperty.call(settings, key));
+}
+
 /** Legacy scene/overlay records without an explicit display belong to the main canvas. */
 export function resolveBaseResolutionDisplay(
   display?: TBaseResolutionDisplay,

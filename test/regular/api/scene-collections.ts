@@ -25,9 +25,9 @@ test('SceneCollection events', async t => {
 
   // remove the collection
   eventWatcher = client.watchForEvents([
-    'SceneCollectionsService.collectionRemoved',
     'SceneCollectionsService.collectionWillSwitch',
     'SceneCollectionsService.collectionSwitched',
+    'SceneCollectionsService.collectionRemoved',
   ]);
   await collectionService.delete(collection.id);
   await eventWatcher.waitForAll();

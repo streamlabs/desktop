@@ -106,6 +106,11 @@ test('an active recording rejects deleting into a different canvas before manife
   await startTemporaryRecording();
 
   try {
+    const eventWatcher = client.watchForEvents([
+      'SceneCollectionsService.collectionWillSwitch',
+      'SceneCollectionsService.collectionSwitched',
+      'SceneCollectionsService.collectionRemoved',
+    ]);
     let error: unknown;
     try {
       await collections.delete(deletionTarget.id);
@@ -115,6 +120,7 @@ test('an active recording rejects deleting into a different canvas before manife
 
     t.truthy(error);
     t.regex(messageFromRejectedApiCall(error), /cannot be switched while recording is active/i);
+    t.deepEqual(eventWatcher.receivedEvents, []);
     t.is(collections.activeCollection!.id, deletionTarget.id);
     t.truthy(collections.collections.find(collection => collection.id === deletionTarget.id));
     t.truthy(

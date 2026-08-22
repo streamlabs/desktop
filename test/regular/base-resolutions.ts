@@ -3,6 +3,7 @@ import {
   applyBaseResolutionSteps,
   baseResolutionResetRequired,
   baseResolutionsMatch,
+  hasBaseResolutionSettings,
   resolveBaseResolutionDisplay,
   resolveCollectionBaseResolutions,
   resolveSerializedCollectionBaseResolutions,
@@ -25,6 +26,19 @@ const current = {
   horizontal: { baseWidth: 1920, baseHeight: 1080 },
   vertical: { baseWidth: 1080, baseHeight: 1920 },
 };
+
+test('base-resolution settings are detected from the final patch', t => {
+  t.true(
+    hasBaseResolutionSettings({
+      outputWidth: 720,
+      outputHeight: 1280,
+      baseWidth: 720,
+      baseHeight: 1280,
+    }),
+  );
+  t.true(hasBaseResolutionSettings({ baseWidth: undefined }));
+  t.false(hasBaseResolutionSettings({ outputWidth: 1280, outputHeight: 720 }));
+});
 
 test('legacy overlay sources without a display use the horizontal canvas', t => {
   const legacyDisplays: Partial<Record<'game_capture' | 'scene', 'horizontal' | 'vertical'>> = {};

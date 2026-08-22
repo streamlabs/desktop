@@ -1,4 +1,5 @@
 import { debounce } from 'lodash-decorators';
+import { omit } from 'lodash';
 import { Inject } from 'services/core/injector';
 import { mutation, StatefulService } from '../core/stateful-service';
 import {
@@ -20,6 +21,8 @@ import { horizontalDisplayData } from './default-settings-data';
 import {
   applyBaseResolutionSteps,
   baseResolutionResetRequired,
+  hasBaseResolutionSettings,
+  IBaseResolution,
   IBaseResolutions,
 } from './base-resolutions';
 
@@ -44,6 +47,9 @@ export type IVideoInfoValue =
   | ERangeType
   | EScaleType
   | EFPSType;
+
+export type TVideoSettingKey = Exclude<keyof IVideoInfo, keyof IBaseResolution>;
+export type TVideoSettingsPatch = Partial<Omit<IVideoInfo, keyof IBaseResolution>>;
 
 export interface IVideoSettingFormatted {
   baseRes: string;
@@ -86,8 +92,17 @@ export function invalidFps(num: number, den: number) {
 }
 
 export interface ObsSetting {
-  key: keyof IVideoInfo;
+  key: TVideoSettingKey;
   value: IVideoInfoValue;
+}
+
+export class BaseCanvasTransactionRequiredError extends Error {
+  constructor() {
+    super(
+      'Base canvas dimensions must be changed through SceneCollectionsService.resizeBaseCanvas()',
+    );
+    this.name = 'BaseCanvasTransactionRequiredError';
+  }
 }
 
 export class VideoSettingsService extends StatefulService<IVideoSetting> {
@@ -411,9 +426,7 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     if (this.contexts?.vertical) {
       // add optimized settings to vertical context
       const newVerticalSettings = {
-        ...this.contexts.horizontal.video,
-        baseWidth: this.state.vertical.baseWidth,
-        baseHeight: this.state.vertical.baseHeight,
+        ...omit(this.contexts.horizontal.video, ['baseWidth', 'baseHeight']),
         outputWidth: this.state.vertical.outputWidth,
         outputHeight: this.state.vertical.outputHeight,
       };
@@ -475,7 +488,8 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     }
   }
 
-  updateVideoSettings(patch: Partial<IVideoInfo>, display: TDisplayType = 'horizontal') {
+  private updateVideoSettings(patch: TVideoSettingsPatch, display: TDisplayType = 'horizontal') {
+    this.assertNoBaseResolutionSettings(patch);
     const newVideoSettings = { ...this.state[display], ...patch };
 
     this.SET_VIDEO_CONTEXT(display, newVideoSettings);
@@ -581,13 +595,15 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
    * @param key - name of the video setting, must be key of obs video info
    * @param value - value of the video setting, must be valid value of obs video info
    * @param display - (optional) name of context (aka display) to apply setting to. Default is horizontal.
+   * @throws {BaseCanvasTransactionRequiredError} If a base-canvas dimension is supplied.
    */
   setVideoSetting(
-    key: keyof IVideoInfo,
+    key: TVideoSettingKey,
     value: IVideoInfoValue,
     display: TDisplayType = 'horizontal',
     shouldSyncFPS: Boolean = false,
   ) {
+    this.assertNoBaseResolutionSettings({ [key]: value });
     this.SET_VIDEO_SETTING(key, value, display);
     this.updateObsSettings(display, shouldSyncFPS);
 
@@ -603,8 +619,17 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
    * @remark V2 api. This also updates the video settings in the V1 api.
    * @param display - name of context (aka display) to apply setting to. Default is horizontal.
    * @param settings - collection of key/value pairs. Each pair is a video setting and its' value.
+   * @throws {BaseCanvasTransactionRequiredError} If any base-canvas dimension is supplied. The
+   * complete batch is validated before any setting is changed.
    */
   setVideoSettings(display: TDisplayType = 'horizontal', settings: ObsSetting[]) {
+    this.assertNoBaseResolutionSettings(
+      settings.reduce<Record<string, IVideoInfoValue>>((patch, setting) => {
+        patch[setting.key] = setting.value;
+        return patch;
+      }, {}),
+    );
+
     for (let i = 0; i < settings.length; i++) {
       const setting: ObsSetting = settings[i];
       this.SET_VIDEO_SETTING(setting.key, setting.value, display);
@@ -620,7 +645,12 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     }
   }
 
-  setSettings(settings: Partial<IVideoInfo>, display: TDisplayType = 'horizontal') {
+  /**
+   * Applies video settings that do not change the base canvas.
+   * @throws {BaseCanvasTransactionRequiredError} If a base-canvas dimension is supplied.
+   */
+  setSettings(settings: TVideoSettingsPatch, display: TDisplayType = 'horizontal') {
+    this.assertNoBaseResolutionSettings(settings);
     this.SET_SETTINGS(settings, display);
 
     this.updateObsSettings(display);
@@ -630,6 +660,12 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
 
     // refresh v1 settings
     this.settingsService.refreshVideoSettings();
+  }
+
+  private assertNoBaseResolutionSettings(settings: object): void {
+    if (hasBaseResolutionSettings(settings)) {
+      throw new BaseCanvasTransactionRequiredError();
+    }
   }
 
   /**
