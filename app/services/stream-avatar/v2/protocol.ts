@@ -23,7 +23,7 @@
 //   - Risk and policy are server-owned. Nothing a model emits is trusted here.
 
 /** Socket.IO namespace. Legacy clients stay on "/". */
-export const V2_NAMESPACE = "/v2";
+export const V2_NAMESPACE = '/v2';
 
 /**
  * Wire protocol version. Bump on any breaking change to the event set or to a
@@ -51,15 +51,15 @@ export const V2_TOOL_PROTOCOL_VERSION = 1;
  *   source  — the avatar browser source; render/playback only, executes no tools
  *   desktop — the native Streamlabs Desktop app; owns OBS
  */
-export type V2DeviceRole = "app" | "source" | "desktop";
+export type V2DeviceRole = 'app' | 'source' | 'desktop';
 
-export const V2_DEVICE_ROLES = ["app", "source", "desktop"] as const;
+export const V2_DEVICE_ROLES = ['app', 'source', 'desktop'] as const;
 
 /** Where a tool actually runs. */
-export type V2ToolExecutor = "server" | "app" | "desktop";
+export type V2ToolExecutor = 'server' | 'app' | 'desktop';
 
 /** Requested output modality for a run. */
-export type V2ResponseType = "text" | "tts" | "both";
+export type V2ResponseType = 'text' | 'tts' | 'both';
 
 // ─── policy ──────────────────────────────────────────────────────────────────
 
@@ -70,26 +70,26 @@ export type V2ResponseType = "text" | "tts" | "both";
  *   irreversible  — cannot be undone (ending a broadcast)
  *   external      — visible outside the machine (public chat, published clip)
  */
-export type V2ToolRisk = "read" | "reversible" | "irreversible" | "external";
+export type V2ToolRisk = 'read' | 'reversible' | 'irreversible' | 'external';
 
 /** Per-user override, persisted in the existing settings jsonb column. */
-export type V2ToolPolicyMode = "auto" | "ask" | "never";
+export type V2ToolPolicyMode = 'auto' | 'ask' | 'never';
 
 /** Default gating by risk, before any per-user override. */
 export const V2_DEFAULT_POLICY: Record<V2ToolRisk, V2ToolPolicyMode> = {
-  read: "auto",
-  reversible: "auto",
-  irreversible: "ask",
-  external: "ask"
+  read: 'auto',
+  reversible: 'auto',
+  irreversible: 'ask',
+  external: 'ask',
 };
 
-export type V2ApprovalDecision = "approve" | "deny" | "always";
+export type V2ApprovalDecision = 'approve' | 'deny' | 'always';
 
 /** How an approval finished. "cancelled" means the run was aborted under it. */
-export type V2ApprovalOutcome = "approved" | "denied" | "expired" | "cancelled";
+export type V2ApprovalOutcome = 'approved' | 'denied' | 'expired' | 'cancelled';
 
 /** Why a run stopped. "lost" is emitted on resync when the process no longer has it. */
-export type V2RunEndReason = "complete" | "cancelled" | "error" | "lost";
+export type V2RunEndReason = 'complete' | 'cancelled' | 'error' | 'lost';
 
 // ─── timings ─────────────────────────────────────────────────────────────────
 
@@ -222,22 +222,22 @@ export interface V2SettingsUpdatePayload {
 }
 
 export interface V2ClientToServerEvents {
-  "v2:hello": (p: V2HelloPayload) => void;
-  "v2:input.text": (p: V2TextInput) => void;
-  "v2:input.trigger": (p: V2TriggerInput) => void;
-  "v2:input.instruction": (p: V2InstructionInput) => void;
+  'v2:hello': (p: V2HelloPayload) => void;
+  'v2:input.text': (p: V2TextInput) => void;
+  'v2:input.trigger': (p: V2TriggerInput) => void;
+  'v2:input.instruction': (p: V2InstructionInput) => void;
   /** Also the barge-in signal: aborts every in-flight run for this user. */
-  "v2:input.audio.start": (p: V2AudioStart) => void;
-  "v2:input.audio.chunk": (p: V2AudioChunk) => void;
-  "v2:input.audio.end": () => void;
-  "v2:tool.result": (p: V2ToolResultPayload) => void;
-  "v2:approval.resolve": (p: V2ApprovalResolvePayload) => void;
-  "v2:run.cancel": (p: V2RunCancelPayload) => void;
-  "v2:state": (p: V2StatePayload) => void;
-  "v2:chat.message": (p: V2ChatMessagePayload) => void;
-  "v2:settings.update": (p: V2SettingsUpdatePayload) => void;
+  'v2:input.audio.start': (p: V2AudioStart) => void;
+  'v2:input.audio.chunk': (p: V2AudioChunk) => void;
+  'v2:input.audio.end': () => void;
+  'v2:tool.result': (p: V2ToolResultPayload) => void;
+  'v2:approval.resolve': (p: V2ApprovalResolvePayload) => void;
+  'v2:run.cancel': (p: V2RunCancelPayload) => void;
+  'v2:state': (p: V2StatePayload) => void;
+  'v2:chat.message': (p: V2ChatMessagePayload) => void;
+  'v2:settings.update': (p: V2SettingsUpdatePayload) => void;
   /** Viseme stream for the 2D avatar. High frequency, never logged. */
-  "v2:animate": (p: { viseme: string; duration?: number }) => void;
+  'v2:animate': (p: { viseme: string; duration?: number }) => void;
 }
 
 // ─── server → client ─────────────────────────────────────────────────────────
@@ -279,7 +279,7 @@ export interface V2TextPayload {
   /** Last text packet of the run. */
   final: boolean;
   /** Present when the text is a link footer or similar non-spoken addendum. */
-  kind?: "speech" | "links";
+  kind?: 'speech' | 'links';
 }
 
 export interface V2AudioPayload {
@@ -351,27 +351,27 @@ export interface V2PresencePayload {
 }
 
 export interface V2ServerToClientEvents {
-  "v2:ready": (p: V2ReadyPayload) => void;
-  "v2:run.started": (p: V2RunStartedPayload) => void;
-  "v2:text": (p: V2TextPayload) => void;
-  "v2:audio": (p: V2AudioPayload) => void;
-  "v2:intent": (p: V2IntentPayload) => void;
-  "v2:run.ended": (p: V2RunEndedPayload) => void;
-  "v2:tool.invoke": (p: V2ToolInvokePayload) => void;
-  "v2:tool.cancel": (p: V2ToolCancelPayload) => void;
-  "v2:approval.request": (p: V2ApprovalRequestPayload) => void;
-  "v2:approval.resolved": (p: V2ApprovalResolvedPayload) => void;
+  'v2:ready': (p: V2ReadyPayload) => void;
+  'v2:run.started': (p: V2RunStartedPayload) => void;
+  'v2:text': (p: V2TextPayload) => void;
+  'v2:audio': (p: V2AudioPayload) => void;
+  'v2:intent': (p: V2IntentPayload) => void;
+  'v2:run.ended': (p: V2RunEndedPayload) => void;
+  'v2:tool.invoke': (p: V2ToolInvokePayload) => void;
+  'v2:tool.cancel': (p: V2ToolCancelPayload) => void;
+  'v2:approval.request': (p: V2ApprovalRequestPayload) => void;
+  'v2:approval.resolved': (p: V2ApprovalResolvedPayload) => void;
   /** Relayed viseme, panel -> avatar browser sources. */
-  "v2:animate": (p: { viseme: string; duration?: number }) => void;
+  'v2:animate': (p: { viseme: string; duration?: number }) => void;
   /**
    * Automation preview: play a pre-recorded CDN voice line for a condition,
    * bypassing the agent entirely. Triggered from Desktop's automation test
    * button via REST.
    */
-  "v2:bark": (p: { conditionType: string }) => void;
-  "v2:rateLimit": (p: V2RateLimitPayload) => void;
-  "v2:presence": (p: V2PresencePayload) => void;
-  "v2:error": (p: V2ErrorPayload) => void;
+  'v2:bark': (p: { conditionType: string }) => void;
+  'v2:rateLimit': (p: V2RateLimitPayload) => void;
+  'v2:presence': (p: V2PresencePayload) => void;
+  'v2:error': (p: V2ErrorPayload) => void;
 }
 
 // ─── rooms ───────────────────────────────────────────────────────────────────
