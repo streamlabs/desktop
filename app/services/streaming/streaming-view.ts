@@ -355,6 +355,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.isMultiplatformMode || restreamDualOutputMode;
   }
 
+  /**
+   * Returns the displays that should use restream
+   * @remark In dual output mode, only displays that have multiple targets enabled should use restream
+   */
   get displaysToRestream(): TDisplayType[] {
     const displays = [] as TDisplayType[];
     if (!this.isDualOutputMode) return displays;
@@ -362,6 +366,23 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       displays.push('horizontal' as TDisplayType);
     }
     if (this.verticalStream.length > 1) {
+      displays.push('vertical' as TDisplayType);
+    }
+    return displays;
+  }
+
+  /**
+   * Returns the displays that are enabled for the stream.
+   * @remark Live output editing requires that all streams use restream
+   */
+  get liveOutputDisplays(): TDisplayType[] {
+    const displays = [] as TDisplayType[];
+
+    if (this.horizontalStream.length > 0) {
+      displays.push('horizontal' as TDisplayType);
+    }
+
+    if (this.verticalStream.length > 0) {
       displays.push('vertical' as TDisplayType);
     }
     return displays;

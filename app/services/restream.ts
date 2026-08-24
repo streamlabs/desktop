@@ -355,13 +355,13 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   /**
    * Add targets while live
-   * @remark Currently unused, use `updateTargets` instead to add targets while live
-   * because it also updates data for existing targets so is more comprehensive. This
-   * method exists for reference.
+   * @remark Used for updating a stream while live. Use `addTargets` instead
+   * of calling this directly. `addTargets` is a wrapper that formats the target data
+   * and resolves the stream key for the display.
    * @param streamKey - The stream key for the restream session
    * @param targets - The updated list of targets on the stream
    */
-  async addRuntimeTargets(streamKey: string, targets: TRestreamTarget[]) {
+  async addRuntimeTargets(streamKey: string, targets: IRestreamRuntimeTarget[]) {
     const headers = authorizedHeaders(
       this.userService.apiToken,
       new Headers({ 'Content-Type': 'application/json' }),
@@ -378,8 +378,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   /**
    * Remove targets while live
-   * @remark Only use when removing all targets, otherwise use `updateTargets` because
-   * it also updates data for existing targets so is more comprehensive.
+   * @remark Used for updating a stream while live. Use `removeTargets` instead of calling
+   * this directly. `removeTargets` is a wrapper that formats the target data
    * @param streamKey - The stream key for the restream session
    * @param targets - The updated list of targets on the stream
    */
@@ -399,40 +399,143 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   /**
-   * Add targets to the restream session
-   * @remark This is a wrapper that formats the target data for the api call before adding
-   * @param platforms - The list of platforms to add
-   * @param customDestinations - The list of custom destinations to add
+   * Fetch the stream key for an orientation and resolve it to the expected format
+   * @remark Used for updating a stream while live. Checks:
+   *    1. If the request returns no key for the orientation, create one from the session key
+   *    2. Otherwise, format whatever came back. Handle an empty key first because an empty key
+   *       has no suffix to correct, so formatting it would produce a bare `_landscape` or `_portrait`.
+   * @param orientation - The orientation for the key
    */
-  async addTargets(platforms: TPlatform[], customDestinations: ICustomStreamDestination[]) {
-    const streamKey = await this.fetchUserSettings().then(s => s.streamKey);
+  private async resolveStreamKey(orientation: TOutputOrientation): Promise<string> {
+    const key = await this.fetchUserSettings(orientation).then(s => s.streamKey);
 
-    if (!streamKey) {
-      console.debug('Unable to fetch user stream key.');
-      throwStreamError('RESTREAM_UPDATE_FAILED');
+    if (!key) {
+      // Nothing for this orientation, so derive a key from the one loaded for the session
+      const sessionKey = this.settings?.streamKey;
+
+      // Throw rather than returning an empty key so that adding and removing fail the same way.
+      // Returning one only defers the failure to the runtime endpoint, which rejects the request
+      // with an error that does not say which display was missing a key.
+      if (!sessionKey) {
+        throwStreamError('RESTREAM_UPDATE_FAILED', {}, `No stream key for ${orientation}.`);
+      }
+
+      console.error(
+        `No stream key returned for ${orientation}, deriving one from the session key.`,
+      );
+      return this.formatOrientationKey(sessionKey, orientation);
     }
 
+    return this.formatOrientationKey(key, orientation);
+  }
+
+  /**
+   * Apply the orientation suffix to a stream key
+   * @remark Used for updating a stream while live. A key with no underscore has no suffix to replace,
+   * so the orientation is appended rather than swapped in.
+   * @param key - The stream key to format
+   * @param orientation - The orientation the key belongs to
+   */
+  private formatOrientationKey(key: string, orientation: TOutputOrientation): string {
+    const expectedSuffix = `_${orientation}`;
+    if (key.endsWith(expectedSuffix)) return key;
+
+    console.error(`Stream key is not in the expected format for ${orientation}, reformatting it.`);
+
+    return key.includes('_') ? key.replace(/_[^_]*$/, expectedSuffix) : `${key}${expectedSuffix}`;
+  }
+
+  /**
+   * Add targets to the restream session
+   * @remark Used for updating a stream while live. This is a wrapper that formats the target data
+   * for the api call before adding.
+   *
+   * A display that is already streaming has a running restream session, so its targets are added
+   * with the runtime endpoint. A display that is not yet streaming has no session to add runtime
+   * targets to, so it is set up the same way the go live flow does it: point the display's output
+   * at the restream ingest, then create the targets with the standard endpoint.
+   * @param platforms - The list of platforms to add
+   * @param customDestinations - The list of custom destinations to add
+   * @param displaysToSetup - The displays that have no restream session yet
+   */
+  async addTargets(
+    platforms: TPlatform[],
+    customDestinations: ICustomStreamDestination[],
+    displaysToSetup: TDisplayType[] = [],
+  ) {
     const startTargets: IRestreamRuntimeTarget[] = [
       ...platforms.map(platform => ({
         ...this.formatRuntimePlatformData(platform),
-        enabled: true,
-        dcProtection: false,
-        label: `${platform} target`,
       })),
       ...customDestinations.map(destination => ({
         ...this.formatRuntimeCustomDestinationData(destination),
-        enabled: true,
-        dcProtection: false,
-        label: `${destination.name} target`,
       })),
     ];
 
-    await this.updateTargets(startTargets, streamKey);
+    if (!startTargets.length) return;
+
+    const targetsByMode = this.filterAddTargetsByMode(startTargets);
+
+    // `filterAddTargetsByMode` always returns both modes, so drop the ones with no targets.
+    // Iterating a mode that is not being changed resolves a stream key it does not need, which
+    // fails the whole operation when that display has no key, and can point a display with
+    // nothing to stream at the restream ingest.
+    const modes = (Object.keys(targetsByMode) as TOutputOrientation[]).filter(
+      mode => targetsByMode[mode].length,
+    );
+
+    // Resolve the ingest once for the whole operation, it can make more than one request. Only
+    // the setup branch uses it, so skip it entirely when every display is already streaming.
+    const ingest = displaysToSetup.length ? await this.getIngestServer() : '';
+
+    // Handle the modes sequentially so that a failure can be attributed to a single display
+    for (const mode of modes) {
+      const display: TDisplayType = mode === 'landscape' ? 'horizontal' : 'vertical';
+
+      let streamKey: string;
+      try {
+        streamKey = await this.resolveStreamKey(mode);
+      } catch (e: unknown) {
+        console.error('Restream Error: Unable to fetch user stream key for', mode, e);
+        throwStreamError(
+          'RESTREAM_UPDATE_FAILED',
+          e,
+          `Unable to fetch user stream key for ${mode}.`,
+        );
+      }
+
+      if (displaysToSetup.includes(display)) {
+        // This display has no restream session yet. Configure the stream settings first so that
+        // the output instance created afterwards connects to the correct ingest with the right
+        // stream key, then create the targets the same way the go live flow does.
+        this.setStreamSettingsForDisplay(display, streamKey, ingest);
+
+        try {
+          await this.setupDisplayTargets(platforms, customDestinations, display);
+        } catch (e: unknown) {
+          console.error('Restream Error: Unable to create targets for', display, e);
+          throwStreamError('RESTREAM_UPDATE_FAILED', e, `Unable to create targets for ${display}.`);
+        }
+      } else {
+        // This display already has a running restream session, so add the targets to it.
+        // The stream key is already resolved for this mode, so pass it through unchanged.
+        try {
+          await this.addRuntimeTargets(streamKey, targetsByMode[mode] as IRestreamRuntimeTarget[]);
+        } catch (e: unknown) {
+          console.error('Restream Error: Unable to add targets for', display, e);
+          throwStreamError('RESTREAM_UPDATE_FAILED', e, `Unable to add targets for ${display}.`);
+        }
+      }
+    }
   }
 
   /**
    * Remove targets from the restream session
-   * @remark This is a wrapper that formats the target data for the api call before removing
+   * @remark Used for updating a stream while live.
+   * Every display is a separate restream stream with its own stream key, so a target can only be
+   * removed using the key for the stream it is actually running on. The targets are grouped by the
+   * mode the server reports for them and removed with one request per stream. Sending every target id
+   * to a single stream key only ever removes the targets on that one display.
    * @param platforms - The list of platforms to remove
    * @param customDestinations - The list of custom destinations to remove
    * @param removeAll - If true, remove all targets from the restream session
@@ -442,146 +545,92 @@ export class RestreamService extends StatefulService<IRestreamState> {
     customDestinations: ICustomStreamDestination[],
     removeAll: boolean = false,
   ) {
-    const streamKey = await this.fetchUserSettings().then(s => s.streamKey);
     const remoteTargets: IRestreamTarget[] = await this.fetchTargets();
 
-    if (!streamKey || !remoteTargets.length) {
-      console.debug('No active restream targets or stream key missing.');
-      throwStreamError('RESTREAM_UPDATE_FAILED');
+    if (!remoteTargets.length) {
+      console.debug('No active restream targets.');
+      throwStreamError('RESTREAM_UPDATE_FAILED', {}, 'No active restream targets.');
     }
 
-    // Use the `remove` endpoint only when removing all targets
-    if (removeAll) {
-      const stopTargets = remoteTargets.map(t => ({ id: t.id }));
-      await this.removeRuntimeTargets(streamKey, stopTargets);
-    } else {
-      // Otherwise use the `update` endpoint to remove specific targets
-      const targetsToRemove: IRestreamRuntimeTarget[] = [
-        ...platforms.map(target => this.formatRuntimePlatformData(target)),
-        ...customDestinations.map(dest => this.formatRuntimeCustomDestinationData(dest)),
-      ];
+    // Match the targets to remove against the remote targets by stream key. When removing all
+    // targets, every remote target is removed regardless of which stream it belongs to.
+    const streamKeysToRemove = removeAll
+      ? undefined
+      : new Set([
+          ...platforms.map(platform => this.formatRuntimePlatformData(platform).streamKey),
+          ...customDestinations.map(
+            dest => this.formatRuntimeCustomDestinationData(dest).streamKey,
+          ),
+        ]);
 
-      const remoteTargetIds = remoteTargets.reduce(
-        (acc: { [streamKey: string]: number }, target) => {
-          acc[target.streamKey] = target.id;
-          return acc;
-        },
-        {},
-      );
+    // Group by the mode reported by the server. It is the only reliable record of which stream a
+    // target is running on, the locally derived mode can be stale.
+    const targetsByMode = this.filterRemoveTargetsByMode(remoteTargets, streamKeysToRemove);
 
-      await this.updateTargets(targetsToRemove, streamKey, remoteTargetIds);
-    }
-  }
+    for (const mode of Object.keys(targetsByMode) as TOutputOrientation[]) {
+      const stopTargets = targetsByMode[mode];
+      if (!stopTargets.length) continue;
 
-  /**
-   * Update runtime targets in the restream session
-   * @remark This is a wrapper for updating the stream targets, distinguishing by
-   * single or dual output mode
-   * @param targets - The list of targets to update, already formatted
-   * @param streamKey - The base stream key for the restream session
-   * @param remoteTargetIds - Optional mapping of remote target IDs
-   */
-  async updateTargets(
-    targets: IRestreamRuntimeTarget[],
-    streamKey: string,
-    remoteTargetIds?: { [streamKey: string]: number },
-  ) {
-    if (this.streamInfo.isDualOutputMode) {
-      const targetsByMode = this.filterTargetsByMode(targets);
-
-      await this.updateTargetsAndValidate(
-        targetsByMode.landscape,
-        streamKey,
-        'landscape',
-        remoteTargetIds,
-      );
-
-      await this.updateTargetsAndValidate(
-        targetsByMode.portrait,
-        streamKey,
-        'portrait',
-        remoteTargetIds,
-      );
-    } else {
-      await this.updateTargetsAndValidate(targets, streamKey, 'landscape', remoteTargetIds);
-    }
-  }
-
-  /**
-   * Update targets in the restream session and handle errors
-   * @remark This is a wrapper that handles any errors that occur when updating. Passing all update calls through
-   * a single function simplifies error handling, which makes debugging easier.
-   * @param targets - The updated targets for the stream, should already have data correctly formatted
-   * @param streamKey - The stream key for the restream session
-   * @param orientation - The display to apply the updates to, defaults to landscape. In dual output mode,
-   * under the hood there are two separate streams, one for each display, so the targets need to be updated
-   * for each display separately.
-   * @param remoteTargetIds - Optional mapping of remote target IDs, used when removing targets. If provided,
-   * it indicates that this is a call to remove the targets, otherwise it is a call to add/update the targets.
-   * Remote target ids are needed to remove targets in order to identify them correctly.
-   */
-  async updateTargetsAndValidate(
-    targets: TRestreamTarget[],
-    streamKey: string,
-    orientation: TOutputOrientation = 'landscape',
-    remoteTargetIds?: { [streamKey: string]: number },
-  ) {
-    if (!targets.length) return;
-
-    try {
-      const key = await this.formatUpdateStreamKey(orientation, streamKey);
-
-      if (!key) {
-        throwStreamError('RESTREAM_UPDATE_FAILED', {}, 'Stream key missing.');
+      try {
+        // Fetch the key for this mode rather than deriving it, the same way `addTargets` does, so
+        // that targets are removed from the stream they were added to
+        await this.removeRuntimeTargets(await this.resolveStreamKey(mode), stopTargets);
+      } catch (e: unknown) {
+        console.error('Restream Error: Error removing restream targets for', mode, e);
+        throwStreamError('RESTREAM_UPDATE_FAILED', e, `Unable to remove targets for ${mode}.`);
       }
-
-      // If remoteTargetIds is provided, this is a call to remove the targets
-      if (remoteTargetIds) {
-        const stopTargets = targets.map(t => ({ id: remoteTargetIds[t.streamKey] }));
-        await this.removeRuntimeTargets(key, stopTargets);
-      } else {
-        await this.addRuntimeTargets(key, targets);
-      }
-    } catch (e: unknown) {
-      console.error('Restream Error: Error updating restream targets', e);
-      throwStreamError('RESTREAM_UPDATE_FAILED');
     }
-  }
-
-  async formatUpdateStreamKey(orientation: TOutputOrientation, streamKey: string) {
-    if (orientation === 'portrait') {
-      const key = await this.fetchUserSettings('portrait').then(s => s.streamKey);
-
-      return key ?? streamKey.replace(/_[^_]*$/, '_portrait');
-    }
-
-    return streamKey;
   }
 
   /**
    * Filter targets by their mode (landscape or portrait)
-   * @remark Needed for dual output mode to separate targets for each display so that each stream
-   * is updated correctly. In dual output mode, under the hood there are two separate streams,
-   * one for each display, so the targets need to be updated for each display separately.
+   * @remark Used for updating a stream while live. Needed for dual output mode to separate targets
+   * for each display so that each stream is updated correctly. In dual output mode, under the hood
+   * there are two separate streams, one for each display, so the targets need to be updated for each
+   * display separately.
    * @param targets - The targets in the stream
    * @returns An object containing the targets grouped by their mode (landscape or portrait)
    */
-  filterTargetsByMode(
+  filterAddTargetsByMode(
     targets: TRestreamTarget[],
   ): { landscape: TRestreamTarget[]; portrait: TRestreamTarget[] } {
     return targets.reduce(
       (acc, target) => {
-        if (target.mode === 'landscape') {
-          acc.landscape.push(target);
-        } else if (target.mode === 'portrait') {
-          acc.portrait.push(target);
-        }
+        const mode = target.mode === 'portrait' ? 'portrait' : 'landscape';
+        acc[mode].push(target);
         return acc;
       },
       {
         landscape: [] as TRestreamTarget[],
         portrait: [] as TRestreamTarget[],
       },
+    );
+  }
+
+  /**
+   * Filter the targets to remove and group them by their mode (landscape or portrait)
+   * @remark Used for updating a stream while live. Grouped by the mode the server reports because that is
+   * the only reliable record of which stream a target is running on, the locally derived mode can be stale.
+   * @param remoteTargets - The targets on the stream, as reported by the server
+   * @param streamKeysToRemove - The keys of the targets to remove, or `undefined` to remove every
+   * remote target regardless of which stream it belongs to
+   * @returns An object containing the ids to remove grouped by their mode
+   */
+  filterRemoveTargetsByMode(
+    remoteTargets: IRestreamTarget[],
+    streamKeysToRemove?: Set<string>,
+  ): Record<TOutputOrientation, { id: number }[]> {
+    return remoteTargets.reduce(
+      (acc: Record<TOutputOrientation, { id: number }[]>, target) => {
+        if (streamKeysToRemove && !streamKeysToRemove.has(target.streamKey)) return acc;
+
+        const mode: TOutputOrientation = /^(portrait|landscape)$/.test(target.mode ?? '')
+          ? (target.mode as TOutputOrientation)
+          : 'landscape';
+        acc[mode].push({ id: target.id });
+        return acc;
+      },
+      { landscape: [], portrait: [] },
     );
   }
 
@@ -754,10 +803,44 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   /**
+   * Set stream settings for a specific display
+   * @remark Used for updating a stream while live. This assignment is needed in order for the target
+   * to stream with the correct display.
+   * @param display - The display to set the stream settings and display for
+   * @param streamKey - The stream key for the target
+   * @param ingest - The server url for the target
+   */
+  setStreamSettingsForDisplay(display: TDisplayType, streamKey: string, ingest: string) {
+    this.streamSettingsService.setSettings(
+      {
+        streamType: 'rtmp_custom',
+      },
+      display,
+    );
+
+    this.streamSettingsService.setSettings(
+      {
+        key: streamKey,
+        server: ingest,
+      },
+      display,
+    );
+  }
+
+  /**
    * Setup restream targets
-   * @remarks
-   * In dual output mode, assign a contexts to the ingest targets.
-   * Defaults to the horizontal context.
+   * @remark In dual output mode, assign a context to the ingest targets. Defaults to the horizontal context.
+   * @remark When setting up targets, modes are also assigned to the target. A mode corresponds to
+   * the display the target is assigned to. In single output mode, a target can only be assigned
+   * to the horizontal display. In dual output mode, target can be assigned to either the horizontal
+   * or vertical display, or both if the platform supports dual stream.
+   * The modes correspond as follows:
+   * |-------------------|-------------------|
+   * | Display           | Mode              |
+   * |-------------------|-------------------|
+   * | horizontal        | landscape         |
+   * | vertical          | portrait          |
+   * |-------------------|-------------------|
    */
   async setupTargets() {
     // delete existing targets
@@ -766,7 +849,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     const promises = targets.map(t => this.deleteTarget(t.id));
     await Promise.all(promises);
 
-    // setup new targets
+    // Setup new targets
     const newTargets = [...this.setupPlatforms(), ...this.setupCustomDestinations()];
 
     await this.createTargets(newTargets);
@@ -869,18 +952,17 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   /**
    * Format platform data for updating runtime targets
-   * @remark Treat TikTok, X, Instagram, Kick, and Patreon as custom destinations
+   * @remark Used for updating a stream while live. Treat TikTok, X, Instagram, Kick, and Patreon as custom destinations
    * @param platform - The platform to format stream data for
    * @returns The formatted restream platform data
    */
   formatRuntimePlatformData(platform: TPlatform): IRestreamRuntimeTarget {
-    const isDualOutputMode = this.streamingService.views.isDualOutputMode;
     const platformData = {
-      platform: 'relay' as 'relay',
+      platform: platform as TPlatform | 'relay',
       streamKey: getPlatformService(platform).state.streamKey,
       label: `${platform} target`,
       mode: this.getPlatformMode(platform),
-      dcProtection: false,
+      dcProtection: true,
       enabled: true,
     };
 
@@ -888,28 +970,33 @@ export class RestreamService extends StatefulService<IRestreamState> {
       case 'tiktok': {
         return {
           ...platformData,
+          platform: 'relay' as 'relay',
           streamKey: `${this.tiktokService.state.settings.serverUrl}/${this.tiktokService.state.settings.streamKey}`,
         };
       }
       case 'twitter': {
         return {
           ...platformData,
+          platform: 'relay' as 'relay',
           streamKey: `${this.twitterService.state.ingest}/${this.twitterService.state.streamKey}`,
         };
       }
       case 'instagram': {
         return {
           ...platformData,
+          platform: 'relay' as 'relay',
           streamKey: `${this.instagramService.state.settings.streamUrl}${this.instagramService.state.streamKey}`,
         };
       }
       case 'kick': {
         return {
           ...platformData,
+          platform: 'relay' as 'relay',
           streamKey: `${this.kickService.state.ingest}/${this.kickService.state.streamKey}`,
         };
       }
       case 'patreon': {
+        // Patreon is a special relay case because while it is technically a relay, the server expects the platform value `patreon`
         return {
           ...platformData,
           streamKey: `${this.patreonService.state.ingest}/${this.patreonService.state.streamKey}`,
@@ -923,21 +1010,62 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   /**
    * Format custom destination data for updating runtime targets
+   * @remark Used for updating a stream while live.
    * @param destination - The custom destination to format stream data for
    * @returns The formatted restream custom destination data
    */
   formatRuntimeCustomDestinationData(
     destination: ICustomStreamDestination,
   ): IRestreamRuntimeTarget {
+    const useSavedMode =
+      this.streamingService.views.isDualOutputMode ||
+      this.streamingService.views.isLiveOutputEditingEnabled;
+
     return {
       platform: 'relay' as 'relay',
       streamKey: `${this.formatUrl(destination.url)}${destination.streamKey}`,
-      mode: this.streamingService.views.isDualOutputMode
-        ? this.getMode(destination.display)
-        : 'landscape',
-      dcProtection: false,
+      mode: useSavedMode ? this.getMode(destination.display) : 'landscape',
+      dcProtection: true,
       enabled: true,
+      label: `${destination.name} target`,
     };
+  }
+
+  /**
+   * Create restream targets for a single display
+   * @remark Used for updating a stream while live. Used when adding targets to a display
+   * that has no restream session yet, such as when a target is added to the opposite display
+   * mid-stream in live output editing. Unlike `setupTargets`, this does not delete the existing
+   * targets because the other display is live.
+   * @param platforms - The platforms being added, may span both displays
+   * @param customDestinations - The custom destinations being added, may span both displays
+   * @param display - The display to create the targets for
+   */
+  async setupDisplayTargets(
+    platforms: TPlatform[],
+    customDestinations: ICustomStreamDestination[],
+    display: TDisplayType,
+  ) {
+    const mode = this.getMode(display);
+
+    // Only create targets for the platforms and destinations assigned to this display
+    const displayPlatforms = platforms.filter(platform => this.getPlatformMode(platform) === mode);
+    const displayDestinations = customDestinations.filter(
+      dest => dest.enabled && (dest.display ?? 'horizontal') === display,
+    );
+
+    // TODO: Comment in when UI merged
+    // const updatedTargets = [
+    //   ...this.setupPlatforms(displayPlatforms, display),
+    //   ...this.setupCustomDestinations(displayDestinations, display),
+    // ];
+
+    // TODO: Remove when UI merged
+    const updatedTargets: IRestreamRuntimeTarget[] = [];
+
+    if (!updatedTargets.length) return;
+
+    await this.createTargets(updatedTargets);
   }
 
   checkStatus(): Promise<boolean> {
