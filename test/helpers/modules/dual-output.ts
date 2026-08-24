@@ -2,17 +2,14 @@ import { sleep } from '../sleep';
 import { skipCheckingErrorsInLog } from '../webdriver';
 import { addDummyAccount } from '../webdriver/user';
 import {
-  focusChild,
   click,
-  clickCheckbox,
-  clickButton,
+  clickToggle,
   clickIfDisplayed,
   focusMain,
   isDisplayed,
   waitForDisplayed,
 } from './core';
 import { fillForm } from './forms';
-import { showSettingsWindow } from './settings/settings';
 import {
   chatIsVisible,
   clickGoLive,
@@ -25,18 +22,20 @@ import {
 
 /**
  * Toggle dual output mode
+ * @remark Toggled from the dual output switch in the studio editor header
+ * @remark Toggling runs in loading mode, which converts the scene collection before
+ * showing the vertical display. The toggle itself returns immediately, so wait for the
+ * vertical display to settle or assertions will run against a half converted collection.
  */
-export async function toggleDualOutputMode(closeChildWindow: boolean = true) {
-  await showSettingsWindow('Video', async () => {
-    await focusChild();
-    await clickCheckbox('dual-output-checkbox');
-
-    if (closeChildWindow) {
-      await clickButton('Close');
-    }
-  });
+export async function toggleDualOutputMode(checkVerticalDisplay: boolean = true) {
   await focusMain();
-  await isDisplayed('div#vertical-display');
+  await clickToggle('dual-output-toggle');
+
+  if (checkVerticalDisplay) {
+    await waitForDisplayed('div#vertical-display', {
+      timeout: 5000,
+    });
+  }
 }
 
 /**

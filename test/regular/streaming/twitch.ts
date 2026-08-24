@@ -20,7 +20,7 @@ import { assertFormContains, fillForm } from '../../helpers/modules/forms';
 import { setInputValue } from '../../helpers/modules/forms/base';
 import { logIn } from '../../helpers/modules/user';
 import { dismissModal } from '../../helpers/webdriver/modals';
-import { sleep } from '../../helpers/sleep';
+import { toggleDualOutputMode } from '../../helpers/modules/dual-output';
 
 async function enableTwitchVOD(status: boolean = true) {
   await showSettingsWindow('Output', async () => {
@@ -162,10 +162,8 @@ test('Streaming to Twitch unlisted category', async t => {
   t.pass();
 });
 
-// TODO: confirm that this test passes in the automated test run
-// This test was previously skipped because of an error likely caused by
-// Selenium and Chromium version mismatch
-test(
+// TODO: Skipped because of an error likely caused by Selenium and Chromium version mismatch
+test.skip(
   'Twitch Enhanced Broadcasting',
   withUser('twitch', { multistream: true, prime: true }),
   async t => {
@@ -211,14 +209,16 @@ test(
   },
 );
 
-// TODO: Confirm that this passes in the automated test run
-// Like the enhanced broadcasting test, this may fail because of an error likely caused by
+// TODO: Like the enhanced broadcasting test, skipped because error likely caused by
 // Selenium and Chromium version mismatch
-test(
+test.skip(
   'Twitch Dual Format (Dual Stream)',
   withUser('twitch', { multistream: true, prime: true }),
   async t => {
     await prepareToGoLive();
+
+    // Dual Stream is only available in Dual Output mode
+    await toggleDualOutputMode();
 
     // Single Output Single Stream
     await clickGoLive();

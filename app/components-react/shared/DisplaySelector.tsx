@@ -16,7 +16,6 @@ interface IDisplaySelectorProps {
   style?: CSSProperties;
   nolabel?: boolean;
   alignIcons?: 'left' | 'center' | 'right';
-  visible?: boolean;
   disabled?: boolean;
 }
 

@@ -808,9 +808,11 @@ export class StreamingService
   ) {
     const service = getPlatformService(platform);
 
-    // in dual output mode, assign context by settings
-    // in single output mode, assign context to 'horizontal' by default
-    const display = this.views.getPlatformDisplayType(platform);
+    // In dual output mode, assign context by platform display
+    // In single output mode, assign context to 'horizontal' by default
+    const display = this.views.isDualOutputMode
+      ? this.views.getPlatformDisplayType(platform)
+      : 'horizontal';
 
     try {
       const isStreamShiftStream = this.restreamService.views.hasStreamShiftTargets;

@@ -5,13 +5,26 @@
   margin-bottom: 10px;
 }
 
-.do-checkbox {
+.do-input {
   margin-right: 10px;
   color: var(--title);
   font-size: 14px;
 
   :global(.ant-checkbox-wrapper) {
     margin: 0px;
+  }
+}
+
+.do-switch-active {
+  color: var(--teal) !important;
+}
+
+.toggle-error {
+  padding: 0px !important;
+  text-align: unset !important;
+
+  :global(.ant-message-notice-content) {
+    padding: 4px 16px;
   }
 }
 
@@ -24,6 +37,10 @@
 
   :global(.ant-tooltip-placement-bottom) {
     left: 10px !important;
+  }
+
+  :global(.ant-form-item) {
+    margin-bottom: 0 !important;
   }
 }
 
