@@ -16,7 +16,7 @@ export default function PlatformAppPopOut() {
       }
     });
 
-    return subscription.unsubscribe;
+    return () => subscription.unsubscribe();
   }, []);
 
   return (

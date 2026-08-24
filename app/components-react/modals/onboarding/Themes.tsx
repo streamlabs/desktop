@@ -108,7 +108,7 @@ export function Themes(p: IOnboardingStepProps) {
         setProgress(progress.percent * 100),
       );
 
-      return sub.unsubscribe;
+      return () => sub.unsubscribe();
     }
   }, [installing]);
 
