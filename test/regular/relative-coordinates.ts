@@ -16,6 +16,7 @@ interface IPersistedSceneCollection {
   relativeCoordinates: boolean;
   baseResolutions: {
     horizontal: { baseWidth: number; baseHeight: number };
+    vertical: { baseWidth: number; baseHeight: number };
   };
   scenes: {
     items: Array<{
@@ -28,6 +29,14 @@ interface IPersistedSceneCollection {
           scaleX: number;
           scaleY: number;
           display?: string;
+          crop: {
+            top: number;
+            right: number;
+            bottom: number;
+            left: number;
+            referenceWidth?: number;
+            referenceHeight?: number;
+          };
         }>;
       };
     }>;
@@ -417,4 +426,82 @@ test('A persistence failure rolls back the canvas resolution and scene transform
   t.true(
     approximatelyEqual(resizedTransform.position.y, originalTransform.position.y * resizeFactor),
   );
+});
+
+test('Nested-scene crop references survive Desktop save, reload, and canvas resize', async t => {
+  const client = await getApiClient();
+  const scenesService = client.getResource<ExternalScenesService>('ScenesService');
+  const sceneCollectionsService = client.getResource<SceneCollectionsService>(
+    'SceneCollectionsService',
+  );
+  const videoSettingsService = client.getResource<VideoSettingsService>('VideoSettingsService');
+  const outerScene = scenesService.createScene('Relative Coordinates Crop Outer Scene');
+  const nestedScene = scenesService.createScene('Relative Coordinates Crop Nested Scene');
+  nestedScene.createAndAddSource('Nested Content', 'color_source');
+  const nestedItem = outerScene.addSource(nestedScene.id, { display: 'vertical' });
+  const originalVertical = { ...videoSettingsService.state.vertical };
+  const firstResize = {
+    baseWidth: Math.max(2, Math.floor(originalVertical.baseWidth * 1.25)),
+    baseHeight: Math.max(2, Math.floor(originalVertical.baseHeight * 1.25)),
+  };
+  const secondResize = {
+    baseWidth: Math.max(2, Math.floor(originalVertical.baseWidth * 1.5)),
+    baseHeight: Math.max(2, Math.floor(originalVertical.baseHeight * 1.5)),
+  };
+  const authoredCrop = { top: 24, right: 36, bottom: 48, left: 12 };
+
+  nestedItem.setTransform({
+    position: { x: originalVertical.baseWidth * 0.2, y: originalVertical.baseHeight * 0.3 },
+    scale: { x: 1, y: 1 },
+    crop: authoredCrop,
+  });
+  t.deepEqual(nestedItem.getModel().transform.crop, authoredCrop);
+
+  const collectionPath = path.join(
+    t.context.cacheDir,
+    'slobs-client',
+    'SceneCollections',
+    `${sceneCollectionsService.activeCollection.id}.json`,
+  );
+  const readPersistedItem = () => {
+    const persisted = JSON.parse(
+      fs.readFileSync(collectionPath).toString(),
+    ) as IPersistedSceneCollection;
+    const persistedScene = persisted.scenes.items.find(candidate => candidate.id === outerScene.id);
+    const persistedItem = persistedScene?.sceneItems.items.find(
+      candidate => candidate.id === nestedItem.id,
+    );
+    return { persisted, persistedItem };
+  };
+
+  await videoSettingsService.setSettings(firstResize, 'vertical');
+
+  const firstSave = readPersistedItem();
+  t.truthy(firstSave.persistedItem);
+  t.deepEqual(firstSave.persistedItem!.crop, {
+    ...authoredCrop,
+    referenceWidth: originalVertical.baseWidth,
+    referenceHeight: originalVertical.baseHeight,
+  });
+
+  const outerSceneId = outerScene.id;
+  const nestedItemId = nestedItem.id;
+  await sceneCollectionsService.load(sceneCollectionsService.activeCollection.id);
+
+  const reloadedOuterScene = scenesService.getScene(outerSceneId);
+  const reloadedNestedItem = reloadedOuterScene.getItem(nestedItemId);
+  t.is(reloadedNestedItem.display, 'vertical');
+  t.deepEqual(reloadedNestedItem.getModel().transform.crop, authoredCrop);
+
+  await videoSettingsService.setSettings(secondResize, 'vertical');
+
+  const secondSave = readPersistedItem();
+  t.deepEqual(secondSave.persisted.baseResolutions.vertical, secondResize);
+  t.truthy(secondSave.persistedItem);
+  t.deepEqual(secondSave.persistedItem!.crop, {
+    ...authoredCrop,
+    referenceWidth: originalVertical.baseWidth,
+    referenceHeight: originalVertical.baseHeight,
+  });
+  t.deepEqual(reloadedNestedItem.getModel().transform.crop, authoredCrop);
 });

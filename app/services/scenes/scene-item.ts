@@ -190,8 +190,24 @@ export class SceneItem extends SceneItemNode {
           bottom: Math.round(crop.bottom),
           left: Math.round(crop.left),
         };
+        let obsCrop: obs.ICropInfo = cropModel;
+
+        // A nested scene reports the ambient canvas size to OBS on the worker
+        // thread, which may differ from the canvas where this crop was authored.
+        // Keep the reference internal so the public transform remains four-field.
+        if (this.type === 'scene') {
+          const reference = this.videoSettingsService.baseResolutions[
+            newSettings.display ?? 'horizontal'
+          ];
+          obsCrop = {
+            ...cropModel,
+            referenceWidth: reference.baseWidth,
+            referenceHeight: reference.baseHeight,
+          };
+        }
+
         changed.transform.crop = cropModel;
-        obsSceneItem.crop = cropModel;
+        obsSceneItem.crop = obsCrop;
       }
 
       if (changedTransform.rotation !== void 0) {
