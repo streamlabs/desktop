@@ -11,6 +11,7 @@ import fetch from 'node-fetch';
 
 import {
   ITestStats,
+  killChromedriverOnPort,
   killElectronInstances,
   removeFailedTestFromFile,
   saveFailedTestsToFile,
@@ -21,6 +22,7 @@ import {
 import { skipOnboarding } from '../modules/onboarding';
 import {
   clickButton,
+  clickIfDisplayed,
   closeWindow,
   focusChild,
   focusMain,
@@ -238,6 +240,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     if (options.networkLogging) appArgs.push('--network-logging');
     if (options.noSync) appArgs.push('--nosync');
 
+    killChromedriverOnPort(CHROMEDRIVER_PORT);
     await killElectronInstances();
 
     app = t.context.app = new Application({
@@ -302,7 +305,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
 
     if (platform() === 'darwin') {
       // Select the "Continue" button on the macOS permissions page (MacPermissions.tsx), if it exists.
-      await clickButton('Continue');
+      await clickIfDisplayed('button=Continue');
     }
     // Pretty much all tests except for onboarding-specific
     // tests will want to skip this flow, so we do it automatically.
@@ -390,14 +393,6 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
         // so skip continuations up to the one closing the quote.
         if (inMissingTranslation || record.match(/Missing translation/)) {
           inMissingTranslation = !record.trimEnd().endsWith('"');
-          return false;
-        }
-
-        // RxJS Subscriber.unsubscribe null-dereference during React passive effect cleanup
-        // on app shutdown. This is a teardown race condition triggered by the test harness
-        // forcibly closing the app and is not indicative of a test failure.
-        if (process.platform === 'darwin' && record.match(/Cannot read properties of null \(reading 'closed'\)/)) {
-          ignoringErrors = true;
           return false;
         }
 

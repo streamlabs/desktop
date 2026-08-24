@@ -1,6 +1,11 @@
-import { Service } from 'services/core/service';
+import { Service } from './core/service';
 import path from 'path';
 import fs from 'fs';
+
+interface IFlushWaiter {
+  resolve: () => void;
+  reject: (error: unknown) => void;
+}
 
 interface IFile {
   data: string;
@@ -12,7 +17,7 @@ interface IFile {
    * Used during shutdown to coordinate flushing fully finished
    * before shutting down.
    */
-  flushFinished?: () => void;
+  flushWaiters?: IFlushWaiter[];
 }
 
 export interface IFileReadOptions {
@@ -125,15 +130,59 @@ export class FileManagerService extends Service {
    * be called before shutdown.
    */
   async flushAll() {
-    const promises = Object.values(this.files)
-      .filter(file => file.dirty)
-      .map(file => {
-        return new Promise<void>(resolve => {
-          file.flushFinished = resolve;
-        });
-      });
+    const attemptedVersions: Dictionary<number> = {};
+    const failures: { filePath: string; error: unknown }[] = [];
 
-    await Promise.all(promises);
+    while (true) {
+      const dirtyFiles = Object.entries(this.files).filter(([, file]) => file.dirty);
+      if (!dirtyFiles.length) return;
+
+      // Revisit the file list after every batch. This catches files created or rewritten while
+      // another file was still flushing, without retrying the same failed version forever.
+      const pendingFiles = dirtyFiles.filter(
+        ([filePath, file]) => file.locked || attemptedVersions[filePath] !== file.version,
+      );
+      if (!pendingFiles.length) break;
+
+      await Promise.all(
+        pendingFiles.map(async ([filePath, file]) => {
+          const version = file.version;
+          attemptedVersions[filePath] = version;
+
+          try {
+            await this.waitForFlush(filePath, file);
+            const previousFailure = failures.findIndex(failure => failure.filePath === filePath);
+            if (previousFailure !== -1) failures.splice(previousFailure, 1);
+          } catch (error: unknown) {
+            const previousFailure = failures.find(failure => failure.filePath === filePath);
+            if (previousFailure) {
+              previousFailure.error = error;
+            } else {
+              failures.push({ filePath, error });
+            }
+          }
+        }),
+      );
+    }
+
+    if (failures.length) {
+      throw new Error(
+        `Failed to flush ${failures.length} file(s): ${failures
+          .map(failure => failure.filePath)
+          .join(', ')}`,
+      );
+    }
+  }
+
+  private waitForFlush(filePath: string, file: IFile): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      if (!file.flushWaiters) file.flushWaiters = [];
+      file.flushWaiters.push({ resolve, reject });
+
+      // A previous background flush may already have exhausted its retries before shutdown
+      // began. Restart it now that flushAll has installed completion observers.
+      if (!file.locked) this.flush(filePath);
+    });
   }
 
   private async flush(filePath: string, tries = 10) {
@@ -155,17 +204,27 @@ export class FileManagerService extends Service {
 
       file.locked = false;
       file.dirty = false;
-      if (file.flushFinished) file.flushFinished();
+      this.notifyFlushFinished(file);
       console.debug(`Wrote file ${filePath} version ${version}`);
     } catch (e: unknown) {
       if (tries > 0) {
         file.locked = false;
         await this.flush(filePath, tries - 1);
       } else {
-        if (file.flushFinished) file.flushFinished();
-        console.error(`Ran out of retries writing ${filePath}`);
+        file.locked = false;
+        this.notifyFlushFinished(file, e);
+        console.error(`Ran out of retries writing ${filePath}`, e);
       }
     }
+  }
+
+  private notifyFlushFinished(file: IFile, error?: unknown) {
+    const flushWaiters = file.flushWaiters || [];
+    file.flushWaiters = [];
+
+    flushWaiters.forEach(waiter => {
+      error === undefined ? waiter.resolve() : waiter.reject(error);
+    });
   }
 
   /**

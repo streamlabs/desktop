@@ -9,6 +9,7 @@ import { ExecutionContext } from 'ava';
 import {
   click,
   clickIfDisplayed,
+  clickWhenDisplayed,
   focusChild,
   focusMain,
   isDisplayed,
@@ -46,10 +47,12 @@ test('OBS Importer', async t => {
 
   const client = t.context.app.client;
 
-  if (!(await isDisplayed('h2=Live Streaming'))) return;
-  await click('h2=Live Streaming');
-  await click('button=Continue');
-  await click('button=Skip');
+  if (!(await isDisplayed('h1=Welcome to Streamlabs Desktop', { timeout: 15000 }))) {
+    t.fail('Onboarding welcome page not shown');
+    return;
+  }
+  await clickWhenDisplayed('a=Log In', { timeout: 15000 });
+  await waitForDisplayed('button=Twitch');
 
   await logIn(t, 'twitch', { prime: false }, false, true);
   await sleep(1000);
