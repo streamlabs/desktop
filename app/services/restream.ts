@@ -362,7 +362,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @param targets - The updated list of targets on the stream
    */
   async addRuntimeTargets(streamKey: string, targets: IRestreamRuntimeTarget[]) {
-    console.log(`Adding restream targets for ${streamKey}:`, targets);
     const headers = authorizedHeaders(
       this.userService.apiToken,
       new Headers({ 'Content-Type': 'application/json' }),
@@ -721,9 +720,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   /**
    * Filter targets by their mode (landscape or portrait)
-   * @remark Needed for dual output mode to separate targets for each display so that each stream
-   * is updated correctly. In dual output mode, under the hood there are two separate streams,
-   * one for each display, so the targets need to be updated for each display separately.
+   * @remark Used for updating a stream while live. Needed for dual output mode to separate targets
+   * for each display so that each stream is updated correctly. In dual output mode, under the hood
+   * there are two separate streams, one for each display, so the targets need to be updated for each
+   * display separately.
    * @param targets - The targets in the stream
    * @returns An object containing the targets grouped by their mode (landscape or portrait)
    */
@@ -908,6 +908,14 @@ export class RestreamService extends StatefulService<IRestreamState> {
     }
   }
 
+  /**
+   * Set stream settings for a specific display
+   * @remark Used for updating a stream while live. This assignment is needed in order for the target
+   * to stream with the correct display.
+   * @param display - The display to set the stream settings and display for
+   * @param streamKey - The stream key for the target
+   * @param ingest - The server url for the target
+   */
   setStreamSettingsForDisplay(display: TDisplayType, streamKey: string, ingest: string) {
     this.streamSettingsService.setSettings(
       {
@@ -947,7 +955,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     const promises = targets.map(t => this.deleteTarget(t.id));
     await Promise.all(promises);
 
-    // setup new targets
+    // Setup new targets
     const newTargets = [...this.setupPlatforms(), ...this.setupCustomDestinations()];
     console.log('RESTREAM setupTargets newTargets', JSON.stringify(newTargets, null, 2));
     await this.createTargets(newTargets);
@@ -1080,7 +1088,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   /**
    * Format platform data for updating runtime targets
-   * @remark Used for updating a stream while live. Treat TikTok, X, Instagram, Kick, and Patreon as custom destinations   * @param platform - The platform to format stream data for
+   * @remark Used for updating a stream while live. Treat TikTok, X, Instagram, Kick, and Patreon as custom destinations
+   * @param platform - The platform to format stream data for
    * @returns The formatted restream platform data
    */
   formatRuntimePlatformData(platform: TPlatform): IRestreamRuntimeTarget {
@@ -1166,9 +1175,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   /**
    * Create restream targets for a single display
-   * @remark Used when adding targets to a display that has no restream session yet, such as when
-   * a target is added to the opposite display mid-stream in live output editing. Unlike
-   * `setupTargets`, this does not delete the existing targets because the other display is live.
+   * @remark Used for updating a stream while live. Used when adding targets to a display
+   * that has no restream session yet, such as when a target is added to the opposite display
+   * mid-stream in live output editing. Unlike `setupTargets`, this does not delete the existing
+   * targets because the other display is live.
    * @param platforms - The platforms being added, may span both displays
    * @param customDestinations - The custom destinations being added, may span both displays
    * @param display - The display to create the targets for
