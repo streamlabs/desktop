@@ -1,11 +1,11 @@
 # start agent
-$workingDir=[System.Environment]::GetEnvironmentVariable('AZURE_PIPELINES_WORKING_DIR', [System.EnvironmentVariableTarget]::User);
+$workingDir=[System.Environment]::GetEnvironmentVariable('GH_WORKING_DIR', [System.EnvironmentVariableTarget]::User);
 
 if (-Not($workingDir)) {
   echo "Working dir is not set. Did you run the installation script?";
   exit -1;
 }
-$workingDir = "C:\agent" # Replace with your actual agent working directory
+$workingDir = "C:\actions-runner" # Replace with your actual agent working directory
 $timeout = New-TimeSpan -Minutes 60 # Set your desired timeout duration
 $agentProcess = Start-Process -NoNewWindow -PassThru -FilePath "$workingDir\run.cmd" -ArgumentList "--once"
 

@@ -15,21 +15,26 @@ if (-Not($token) -Or -Not($username) -Or -Not($password)) {
 cd $PSScriptRoot;
 
 # define paths
-$workingDir = "C:\agent"
+$workingDir = "C:\actions-runner"
 $agentPath = "$workingDir\run.cmd"
 $registerAgentScriptName = "register-agent.ps1"
 
 
 # save token and working dir to env variable
-[System.Environment]::SetEnvironmentVariable('AZURE_PIPELINES_TOKEN', $token, [System.EnvironmentVariableTarget]::User)
-[System.Environment]::SetEnvironmentVariable('AZURE_PIPELINES_WORKING_DIR', $workingDir, [System.EnvironmentVariableTarget]::User)
+[System.Environment]::SetEnvironmentVariable('GH_WORKING_DIR', $workingDir, [System.EnvironmentVariableTarget]::User)
 
-echo "Download and install Azure Agent"
+echo "Download and install GH Actions Runner"
 cd /
 Remove-Item -Recurse -Force -ErrorAction Ignore agent
-mkdir agent ; cd agent;
-Invoke-WebRequest -Uri https://download.agent.dev.azure.com/agent/5.275.0/vsts-agent-win-x64-5.275.0.zip -OutFile "$PWD\agent.zip"
-Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD\agent.zip", "$PWD")
+Remove-Item -Recurse -Force -ErrorAction Ignore actions-runner
+# Create a folder under the drive root
+$ mkdir actions-runner; cd actions-runner
+# Download the latest runner package
+$ Invoke-WebRequest -Uri https://github.com/actions/runner/releases/download/v2.336.0/actions-runner-win-x64-2.336.0.zip -OutFile actions-runner-win-x64-2.336.0.zip
+# Optional: Validate the hash
+$ if((Get-FileHash -Path actions-runner-win-x64-2.336.0.zip -Algorithm SHA256).Hash.ToUpper() -ne 'd59123a43003e357b0805b5d0f611d0bd2f65ab67d51bd070dd4e7a0f685c162'.ToUpper()){ throw 'Computed checksum did not match' }
+# Extract the installer
+$ Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/actions-runner-win-x64-2.336.0.zip", "$PWD")
 
 # lets us configure the screen resolution
 echo "Download and install Amazon DCV Server"
@@ -76,8 +81,8 @@ echo "Install Visual Studio 2019 Build Tools"
 choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools;includeRecommended;includeOptional"
 
 # run registration script
-echo "Configure Azure Agent"
-."$workingDir\$registerAgentScriptName"
+echo "Configure GH Actions"
+."$workingDir\config.cmd --url https://github.com/streamlabs/desktop --token $token"
 
 # Disable the lock screen to prevent the PC locking after the end of the RDP session
 Set-ItemProperty "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization" -Name 'NoLockScreen' -Value 1;

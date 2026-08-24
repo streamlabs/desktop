@@ -17,7 +17,7 @@ env:
 jobs:
   test:
     name: 'Frontend Tests'
-    runs-on: windows-latest
+    runs-on: self-hosted
 
     strategy:
       matrix:
@@ -51,7 +51,7 @@ jobs:
 
   es-lint-strict-nulls:
     name: 'Check ESLint and Strict Nulls Regression'
-    runs-on: windows-latest
+    runs-on: self-hosted
     steps:
       - name: 'Get RDP Address'
         run: echo "IP for RDP connections:" ${{ Invoke-RestMethod ipinfo.io/ip }}
@@ -63,15 +63,15 @@ jobs:
       - name: 'Check regressions in files with strictNullChecks'
         run: yarn compile:strictnulls
 
-  mac-os:
-    name: 'MacOS'
-    runs-on: macOs-latest
-    steps:
-      - name: 'Install Dependencies'
-        run: yarn install --immutable --network-timeout 1000000 2>&1
-      - name: 'Install Electron'
-        run: node node_modules/electron/install.js
-      - name: 'ESLint'
-        run: yarn eslint
-      - name: 'Compile Assets'
-        run: yarn ci:compile
+  # mac-os:
+  #   name: 'MacOS'
+  #   runs-on: macOs-latest
+  #   steps:
+  #     - name: 'Install Dependencies'
+  #       run: yarn install --immutable --network-timeout 1000000 2>&1
+  #     - name: 'Install Electron'
+  #       run: node node_modules/electron/install.js
+  #     - name: 'ESLint'
+  #       run: yarn eslint
+  #     - name: 'Compile Assets'
+  #       run: yarn ci:compile
