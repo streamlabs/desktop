@@ -7,6 +7,32 @@ import { VideoSettingsService } from '../../app/services/settings-v2/video';
 import { StreamingService } from '../../app/services/streaming';
 import { sleep } from '../helpers/sleep';
 import { startRecording, stopRecording } from '../helpers/modules/streaming';
+import { focusMain, focusWindow } from '../helpers/modules/core';
+
+const fs = require('fs');
+const path = require('path');
+
+interface IPersistedSceneCollection {
+  relativeCoordinates: boolean;
+  baseResolutions: {
+    horizontal: { baseWidth: number; baseHeight: number };
+  };
+  scenes: {
+    items: Array<{
+      id: string;
+      sceneItems: {
+        items: Array<{
+          id: string;
+          x: number;
+          y: number;
+          scaleX: number;
+          scaleY: number;
+          display?: string;
+        }>;
+      };
+    }>;
+  };
+}
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -279,4 +305,116 @@ test('Rapid canvas width and height updates are applied as one coherent resize',
   t.true(approximatelyEqual(resizedTransform.scale.x, resizeFactor));
   t.true(approximatelyEqual(resizedTransform.scale.y, resizeFactor));
   t.is(loadingWatcher.receivedEvents.length, 0, 'debounced resizing remains seamless');
+});
+
+test('A persistence failure rolls back the canvas resolution and scene transforms', async t => {
+  const client = await getApiClient();
+  const scenesService = client.getResource<ScenesService>('ScenesService');
+  const sceneCollectionsService = client.getResource<SceneCollectionsService>(
+    'SceneCollectionsService',
+  );
+  const videoSettingsService = client.getResource<VideoSettingsService>('VideoSettingsService');
+  const scene = scenesService.createScene('Relative Coordinates Rollback Scene');
+  const item = scene.createAndAddSource('Rollback Source', 'color_source');
+  const originalVideo = { ...videoSettingsService.state.horizontal };
+  const targetVideo = {
+    baseWidth: Math.max(2, Math.floor(originalVideo.baseWidth * 0.75)),
+    baseHeight: Math.max(2, Math.floor(originalVideo.baseHeight * 0.75)),
+  };
+
+  item.setTransform({
+    position: { x: originalVideo.baseWidth * 0.4, y: originalVideo.baseHeight * 0.3 },
+    scale: { x: 0.8, y: 1.1 },
+  });
+  const originalTransform = item.getModel().transform;
+
+  t.true(await focusWindow('worker'), 'worker window is available');
+  await t.context.app.client.execute(`
+    (() => {
+      const fileManager = window.servicesManager.getResource('FileManagerService');
+      const originalFlushAll = fileManager.flushAll;
+      let shouldFail = true;
+
+      window.__restoreRelativeCoordinatesFlushAll = () => {
+        fileManager.flushAll = originalFlushAll;
+        delete window.__restoreRelativeCoordinatesFlushAll;
+      };
+      fileManager.flushAll = function(...args) {
+        if (shouldFail) {
+          shouldFail = false;
+          return Promise.reject(new Error('Injected canvas persistence failure'));
+        }
+        return originalFlushAll.apply(this, args);
+      };
+    })();
+    0;
+  `);
+  await focusMain();
+
+  skipCheckingErrorsInLog();
+  let rejection: { error?: string } | undefined;
+  try {
+    await Promise.resolve(videoSettingsService.setSettings(targetVideo, 'horizontal'));
+  } catch (error: unknown) {
+    rejection = error as { error?: string };
+  } finally {
+    await focusWindow('worker');
+    await t.context.app.client.execute(`
+      if (window.__restoreRelativeCoordinatesFlushAll) {
+        window.__restoreRelativeCoordinatesFlushAll();
+      }
+      0;
+    `);
+    await focusMain();
+  }
+
+  t.regex(rejection?.error ?? '', /Injected canvas persistence failure/);
+  t.deepEqual(videoSettingsService.state.horizontal, originalVideo);
+  const rolledBackTransform = item.getModel().transform;
+  t.true(approximatelyEqual(rolledBackTransform.position.x, originalTransform.position.x));
+  t.true(approximatelyEqual(rolledBackTransform.position.y, originalTransform.position.y));
+  t.true(approximatelyEqual(rolledBackTransform.scale.x, originalTransform.scale.x));
+  t.true(approximatelyEqual(rolledBackTransform.scale.y, originalTransform.scale.y));
+  t.deepEqual(rolledBackTransform.crop, originalTransform.crop);
+  t.is(rolledBackTransform.rotation, originalTransform.rotation);
+
+  const collectionPath = path.join(
+    t.context.cacheDir,
+    'slobs-client',
+    'SceneCollections',
+    `${sceneCollectionsService.activeCollection.id}.json`,
+  );
+  const persisted = JSON.parse(
+    fs.readFileSync(collectionPath).toString(),
+  ) as IPersistedSceneCollection;
+  const persistedScene = persisted.scenes.items.find(candidate => candidate.id === scene.id);
+  const persistedItem = persistedScene?.sceneItems.items.find(
+    candidate => candidate.id === item.id,
+  );
+
+  t.true(persisted.relativeCoordinates);
+  t.deepEqual(persisted.baseResolutions.horizontal, {
+    baseWidth: originalVideo.baseWidth,
+    baseHeight: originalVideo.baseHeight,
+  });
+  t.truthy(persistedScene);
+  t.truthy(persistedItem);
+  t.true(approximatelyEqual(persistedItem!.x, originalTransform.position.x));
+  t.true(approximatelyEqual(persistedItem!.y, originalTransform.position.y));
+  t.true(approximatelyEqual(persistedItem!.scaleX, originalTransform.scale.x));
+  t.true(approximatelyEqual(persistedItem!.scaleY, originalTransform.scale.y));
+  t.is(persistedItem!.display, 'horizontal');
+
+  await videoSettingsService.setSettings(targetVideo, 'horizontal');
+
+  const resizedTransform = item.getModel().transform;
+  const resizeFactor = targetVideo.baseHeight / originalVideo.baseHeight;
+  t.is(videoSettingsService.state.horizontal.baseWidth, targetVideo.baseWidth);
+  t.is(videoSettingsService.state.horizontal.baseHeight, targetVideo.baseHeight);
+  t.true(
+    approximatelyEqual(resizedTransform.position.x, originalTransform.position.x * resizeFactor),
+  );
+  t.true(
+    approximatelyEqual(resizedTransform.position.y, originalTransform.position.y * resizeFactor),
+  );
 });
