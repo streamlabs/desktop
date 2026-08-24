@@ -1,5 +1,5 @@
 {
-  "Horizontal canvas": "横向画布",
-  "Vertical canvas": "纵向画布",
+  "Toggle horizontal display": "Toggle horizontal display",
+  "Toggle vertical display": "Toggle vertical display",
   "Error stopping stream: default streams do not exist.": "停止流时出错：默认流不存在。"
 }
