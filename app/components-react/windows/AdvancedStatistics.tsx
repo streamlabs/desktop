@@ -11,7 +11,6 @@ import moment from 'moment';
 import { EStreamQuality } from 'services/performance';
 import { ENotificationSubType, INotification } from 'services/notifications';
 import Scrollable from '../shared/Scrollable';
-import { useRealmObject } from 'components-react/hooks/realm';
 
 export default function AdvancedStatistics() {
   const {
@@ -33,6 +32,8 @@ export default function AdvancedStatistics() {
   // Forces a refresh on notification labels every minute
   useRenderInterval(() => {}, 60 * 1000);
 
+  // Do not use useSubscription here because the cleanup needs to do more than just unsubscribe, it also needs to
+  // mark all notifications as read
   useEffect(() => {
     const notificationPushedSub = NotificationsService.notificationPushed.subscribe(notify => {
       onNotificationHandler(notify);

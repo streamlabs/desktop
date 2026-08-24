@@ -1,5 +1,5 @@
 import { Services } from 'components-react/service-provider';
-import React, { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useState } from 'react';
 import Display from 'components-react/shared/Display';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import { Button, Menu, Modal } from 'antd';
@@ -67,6 +67,7 @@ export default function SourceFilters() {
 
   // There's no good way to make this reactive with good
   // performance currently, so we rely on events.
+  // Do not use useSubscription here because the subscription needs to update when the source id changes
   useEffect(() => {
     if (!selectedFilter) return;
     loadFormData(selectedFilter);

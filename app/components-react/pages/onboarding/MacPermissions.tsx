@@ -12,6 +12,7 @@ export function MacPermissions() {
     MacPermissionsService.getPermissionsStatus(),
   );
 
+  // Do not use useSubscription to ensure that the subscription handles the mac permissions request call
   useEffect(() => {
     const sub = MacPermissionsService.permissionsUpdated.subscribe(perms => {
       setPermissions(perms);
