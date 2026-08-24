@@ -1,5 +1,5 @@
 {
-  "Horizontal canvas": "Tela horizontal",
-  "Vertical canvas": "Tela vertical",
+  "Toggle horizontal display": "Toggle horizontal display",
+  "Toggle vertical display": "Toggle vertical display",
   "Error stopping stream: default streams do not exist.": "Erro ao parar a transmissão: as transmissões predefinidas não existem."
 }
