@@ -279,6 +279,114 @@ test('Canvas resizing is rejected while recording and succeeds after recording s
   );
 });
 
+test('Collection switching with different base resolutions is rejected while recording', async t => {
+  const client = await getApiClient();
+  const scenesService = client.getResource<ExternalScenesService>('ScenesService');
+  const sceneCollectionsService = client.getResource<SceneCollectionsService>(
+    'SceneCollectionsService',
+  );
+  const videoSettingsService = client.getResource<VideoSettingsService>('VideoSettingsService');
+  const streamingService = client.getResource<StreamingService>('StreamingService');
+  const currentCollectionId = sceneCollectionsService.activeCollection.id;
+  const originalVideo = { ...videoSettingsService.state.horizontal };
+  const currentScene = scenesService.createScene('Recording Collection Preflight Scene');
+  const currentItem = currentScene.createAndAddSource(
+    'Recording Collection Preflight Source',
+    'color_source',
+  );
+  const targetVideo = {
+    baseWidth: Math.max(2, Math.floor(originalVideo.baseWidth * 0.75)),
+    baseHeight: Math.max(2, Math.floor(originalVideo.baseHeight * 0.75)),
+  };
+
+  currentItem.setTransform({
+    position: { x: originalVideo.baseWidth * 0.35, y: originalVideo.baseHeight * 0.45 },
+    scale: { x: 0.8, y: 1.1 },
+  });
+  const currentSceneId = currentScene.id;
+  const currentItemId = currentItem.sceneItemId;
+
+  const targetCollection = await sceneCollectionsService.create({
+    name: 'Different Resolution Recording Target',
+  });
+  await sceneCollectionsService.load(currentCollectionId);
+
+  // Build the target fixture through Desktop's managed file cache so setup
+  // does not need an otherwise unrelated live canvas reset and switch back.
+  const targetCollectionPath = path.join(
+    t.context.cacheDir,
+    'slobs-client',
+    'SceneCollections',
+    `${targetCollection.id}.json`,
+  );
+  t.true(await focusWindow('worker'), 'worker window is available');
+  await t.context.app.client.execute(`
+    (() => {
+      const fileManager = window.servicesManager.getResource('FileManagerService');
+      const collectionPath = ${JSON.stringify(targetCollectionPath)};
+      const targetVideo = ${JSON.stringify(targetVideo)};
+      const collection = JSON.parse(fileManager.read(collectionPath, { validateJSON: true }));
+
+      collection.baseResolution = { ...collection.baseResolution, ...targetVideo };
+      collection.baseResolutions.horizontal = {
+        ...collection.baseResolutions.horizontal,
+        ...targetVideo,
+      };
+      fileManager.write(collectionPath, JSON.stringify(collection, null, 2));
+    })();
+    0;
+  `);
+  await focusMain();
+
+  const reloadedScene = scenesService.getScene(currentSceneId);
+  const reloadedItem = reloadedScene.getItem(currentItemId);
+  const expectedSceneNames = scenesService.getSceneNames();
+  const expectedActiveSceneId = scenesService.activeSceneId;
+  const expectedTransform = reloadedItem.getModel().transform;
+  const expectedSourceId = reloadedItem.sourceId;
+
+  t.deepEqual(videoSettingsService.state.horizontal, originalVideo);
+
+  await startRecording();
+  try {
+    // This rejection is expected and may be logged by the RPC promise handler.
+    skipCheckingErrorsInLog();
+    const switchWatcher = client.watchForEvents([
+      'SceneCollectionsService.collectionWillSwitch',
+      'SceneCollectionsService.collectionSwitched',
+    ]);
+    await sleep(100);
+
+    let rejection: { error?: string } | undefined;
+    try {
+      await sceneCollectionsService.load(targetCollection.id);
+    } catch (error: unknown) {
+      rejection = error as { error?: string };
+    }
+    await sleep(100);
+
+    t.regex(rejection?.error ?? '', /different base canvas resolution/i);
+    t.true(streamingService.isRecording);
+    t.is(sceneCollectionsService.activeCollection.id, currentCollectionId);
+    t.is(scenesService.activeSceneId, expectedActiveSceneId);
+    t.deepEqual(scenesService.getSceneNames(), expectedSceneNames);
+    t.is(switchWatcher.receivedEvents.length, 0, 'scene graph teardown never begins');
+
+    const preservedScene = scenesService.getScene(currentSceneId);
+    const preservedItem = preservedScene.getItem(currentItemId);
+    t.is(preservedItem.sourceId, expectedSourceId);
+    t.deepEqual(preservedItem.getModel().transform, expectedTransform);
+    t.deepEqual(videoSettingsService.state.horizontal, originalVideo);
+  } finally {
+    await stopRecording();
+  }
+
+  for (let attempt = 0; attempt < 100 && streamingService.isRecording; attempt++) {
+    await sleep(50);
+  }
+  t.false(streamingService.isRecording, 'recording reaches the offline state');
+});
+
 test('Rapid canvas width and height updates are applied as one coherent resize', async t => {
   const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
