@@ -11,6 +11,7 @@ import { getDummyUser, IDummyTestUser, TTestDummyUserPlatforms } from '../../dat
 import { TTikTokLiveScopeTypes } from 'services/platforms/tiktok/api';
 
 let user: ITestUser; // keep user's name if SLOBS is logged-in
+let userPoolExhausted = false; // set if the pool could not give us an account for the current test
 
 export interface ITestUser {
   email: string;
@@ -319,7 +320,10 @@ export async function reserveUserFromPool(
       }
     }
   }
-  if (!reservedUser) throw new Error(`Unable to reserve a user after ${maxAttempts} attempts`);
+  if (!reservedUser) {
+    userPoolExhausted = true;
+    throw new Error(`Unable to reserve a user after ${maxAttempts} attempts`);
+  }
   return reservedUser;
 }
 
@@ -332,4 +336,12 @@ async function requestUserPool(path: string): Promise<any> {
 
 export function getUser(): ITestUser {
   return user;
+}
+
+export function userPoolIsExhausted(): boolean {
+  return userPoolExhausted;
+}
+
+export function resetUserPoolExhausted() {
+  userPoolExhausted = false;
 }

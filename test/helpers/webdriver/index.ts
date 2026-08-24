@@ -3,7 +3,7 @@
 import { ExecutionContext } from 'ava';
 import { getApiClient } from '../api-client';
 import { DismissablesService } from 'services/dismissables';
-import { getUser, logOut } from './user';
+import { getUser, logOut, resetUserPoolExhausted, userPoolIsExhausted } from './user';
 import { sleep } from '../sleep';
 import { remote, RemoteOptions } from 'webdriverio';
 import * as ChildProcess from 'child_process';
@@ -13,8 +13,10 @@ import {
   ITestStats,
   killElectronInstances,
   removeFailedTestFromFile,
+  saveFailureReasonToFile,
   saveFailedTestsToFile,
   saveTestStatsToFile,
+  TFailureReason,
   testFn,
   waitForElectronInstancesExist,
 } from './runner-utils';
@@ -34,6 +36,7 @@ export const test = testFn; // the overridden "test" function
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const util = require('util');
 const rimraf = require('rimraf');
 
 const ALMOST_INFINITY = Math.pow(2, 31) - 1; // max 32bit int
@@ -44,6 +47,17 @@ const CHROMEDRIVER_PORT = 4444;
 // Enable Chromedriver logging to chromedriver.log
 // Enable Webdriver logging to test output
 const CHROMEDRIVER_DEBUG = false;
+
+// Failures that are frequently not related to bugs in the app
+const MISSING_TRANSLATIONS_IN_LOG = /Missing translation/;
+const UNMOUNTED_REACT_UPDATE_IN_LOG = /Tried to update component state before component has been mounted\./;
+const NO_ACCOUNT_AVAILABLE_IN_LOG = /No users available/;
+const UTILITY_SERVER_FAILURE_IN_LOG = /Unable to request the utility server/;
+
+// YouTube API logs the `reason`, which is the most reliable signal that YouTube rejected the account rather than that we have a bug
+const YOUTUBE_STREAMING_DISABLED_IN_LOG = /liveStreamingNotEnabled|YOUTUBE_STREAMING_DISABLED|YouTube account is not enabled for live streaming/;
+const YOUTUBE_RATE_LIMITED_IN_LOG = /userRequestsExceedRateLimit|User requests exceed the rate limit/;
+const YOUTUBE_ACCOUNT_FAILURE_IN_LOG = /YOUTUBE_TOKEN_EXPIRED|YouTube token has expired|Error validating YouTube platform/;
 
 const testStats: Record<string, ITestStats> = {};
 
@@ -213,6 +227,63 @@ export async function debugPause() {
   await new Promise(() => {});
 }
 
+/**
+ * For more specific logging of errors, attempt to parse errors into readable strings
+ * @param e - The error that was thrown
+ * @returns - A string representation of the error
+ */
+function parseErrorMessage(e: unknown): string {
+  if (e instanceof Error) return e.message;
+  if (typeof e === 'string') return e;
+  if (e && typeof e === 'object' && typeof (e as { message?: unknown }).message === 'string') {
+    return (e as { message: string }).message;
+  }
+  // Unlike `JSON.stringify`, util.inspect handles cycles and always returns a string.
+  // This matches how the app itself serializes unknown values into the log
+  return util.inspect(e);
+}
+
+/**
+ * Identify the reason for a shutdown failure
+ * @remark Shutdown can fail for several unrelated reasons. Specify the reason for the failure
+ * for improved logging and debugging.
+ * @param e - The error that was thrown during shutdown
+ */
+function formatShutdownError(e: unknown): string {
+  const message = parseErrorMessage(e);
+
+  // waitForElectronInstancesExist() gave up: the app is still running
+  if (message.match(/Timed out waiting for Electron instances to exit/)) {
+    return `The app did not exit within the shutdown timeout: ${message}`;
+  }
+
+  // chromedriver no longer has a session, which means the app already went away
+  if (message.match(/invalid session id|no such session|session deleted|session not created/i)) {
+    return `The app exited before shutdown, the webdriver session is gone: ${message}`;
+  }
+
+  // the window we asked to close isn't there anymore
+  if (message.match(/no such window|target window already closed|window was already closed/i)) {
+    return `The window disappeared before shutdown completed: ${message}`;
+  }
+
+  // we lost the connection to the app's api server or to chromedriver
+  if (
+    message.match(
+      /ECONNREFUSED|ECONNRESET|EPIPE|socket hang up|Socket is not writeable|not reachable/i,
+    )
+  ) {
+    return `Lost the connection to the app during shutdown: ${message}`;
+  }
+
+  // closeWindow() or an api call hung
+  if (message.match(/timeout|timed out/i)) {
+    return `Shutdown timed out: ${message}`;
+  }
+
+  return `Crash on shutdown: ${message}`;
+}
+
 export function useWebdriver(options: ITestRunnerOptions = {}) {
   // tslint:disable-next-line:no-parameter-reassignment TODO
   options = Object.assign({}, DEFAULT_OPTIONS, options);
@@ -224,6 +295,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
   let logFileLastReadingPos = 0;
   let lastCacheDir: string;
   let lastLogs: string;
+  let logsFromCurrentTest = '';
 
   startAppFn = async function startApp(
     t: TExecutionContext,
@@ -332,7 +404,8 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
 
       await app.stop();
     } catch (e: unknown) {
-      fail('Crash on shutdown');
+      const shutdownError = formatShutdownError(e);
+      fail(shutdownError);
       console.error(e);
     }
     await killElectronInstances();
@@ -357,6 +430,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     const logs: string = await readLogs();
     if (!logs) return;
     lastLogs = logs;
+    logsFromCurrentTest += logs.slice(logFileLastReadingPos);
     let ignoringErrors = false;
     const errors = logs
       .slice(logFileLastReadingPos)
@@ -389,7 +463,10 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
         // RxJS Subscriber.unsubscribe null-dereference during React passive effect cleanup
         // on app shutdown. This is a teardown race condition triggered by the test harness
         // forcibly closing the app and is not indicative of a test failure.
-        if (process.platform === 'darwin' && record.match(/Cannot read properties of null \(reading 'closed'\)/)) {
+        if (
+          process.platform === 'darwin' &&
+          record.match(/Cannot read properties of null \(reading 'closed'\)/)
+        ) {
           ignoringErrors = true;
           return false;
         }
@@ -424,6 +501,8 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     testName = t.title.replace('beforeEach hook for ', '');
     testPassed = false;
     skipCheckingErrorsInLogFlag = false;
+    logsFromCurrentTest = '';
+    resetUserPoolExhausted();
 
     t.context.app = app;
     setContext(t);
@@ -478,8 +557,18 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
       };
     } else {
       fail();
+
       const user = getUser();
-      if (user) console.log(`Test failed for the account: ${user.type} ${user.email}`);
+      if (user) {
+        console.log(`Test failed for the account: ${user.type} ${user.email}`);
+      }
+
+      const failureReason = detectFailureReason();
+      if (detectAccountFailure(failureReason)) {
+        console.log(`Test failed because of failure reason: ${failureReason}`);
+      }
+      saveFailureReasonToFile(testName, failureReason);
+
       t.fail(failMsg);
     }
   });
@@ -489,6 +578,57 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     if (!testPassed) saveFailedTestsToFile([testName]);
     await saveTestStatsToFile(testStats);
   });
+
+  /**
+   * Explicitly identify if the test failed because of a frequently identified non-bug reason.
+   * This is important because it indicates that the test failure is not a bug in the app.
+   * @returns - The type for the reason the test failed
+   */
+  function detectFailureReason(): TFailureReason | null {
+    // Check for known app-related failures frequently not related to bugs
+    if (logsFromCurrentTest.match(MISSING_TRANSLATIONS_IN_LOG)) {
+      return 'MISSING_TRANSLATIONS';
+    }
+
+    if (logsFromCurrentTest.match(UNMOUNTED_REACT_UPDATE_IN_LOG)) {
+      return 'UNMOUNTED_REACT_UPDATE';
+    }
+
+    const noAccountAvailable = userPoolIsExhausted();
+
+    if (noAccountAvailable || logsFromCurrentTest.match(NO_ACCOUNT_AVAILABLE_IN_LOG)) {
+      return 'NO_ACCOUNT_AVAILABLE';
+    }
+
+    if (logsFromCurrentTest.match(YOUTUBE_STREAMING_DISABLED_IN_LOG)) {
+      return 'YOUTUBE_STREAMING_DISABLED';
+    }
+
+    if (logsFromCurrentTest.match(YOUTUBE_RATE_LIMITED_IN_LOG)) {
+      return 'YOUTUBE_ACCOUNT_RATE_LIMITED';
+    }
+
+    if (logsFromCurrentTest.match(YOUTUBE_ACCOUNT_FAILURE_IN_LOG)) {
+      return 'YOUTUBE_ACCOUNT_FAILURE';
+    }
+
+    if (logsFromCurrentTest.match(UTILITY_SERVER_FAILURE_IN_LOG)) {
+      return 'UTILITY_SERVER_FAILURE';
+    }
+
+    return null;
+  }
+
+  function detectAccountFailure(reason?: TFailureReason): boolean {
+    if (!reason) return false;
+
+    return (
+      reason === 'NO_ACCOUNT_AVAILABLE' ||
+      reason === 'YOUTUBE_STREAMING_DISABLED' ||
+      reason === 'YOUTUBE_ACCOUNT_RATE_LIMITED' ||
+      reason === 'YOUTUBE_ACCOUNT_FAILURE'
+    );
+  }
 
   /**
    * mark tests as failed

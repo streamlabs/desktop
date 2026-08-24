@@ -13,6 +13,7 @@ const fetch = require('node-fetch');
 
 const failedTestsFile = 'test-dist/failed-tests.json';
 const testStatsFile = 'test-dist/test-stats.json';
+const failureReasonsFile = 'test-dist/failure-reasons.json';
 const args = process.argv.slice(2);
 const TIMEOUT = 3; // timeout in minutes
 const {
@@ -24,6 +25,7 @@ const {
   BUILD_DEFINITIONNAME,
   SLOBS_TEST_RUN_CHUNK,
 } = process.env;
+
 let retryingFailed = false;
 
 const RUN_TESTS_CMD = !args.length ? `yarn test --timeout=${TIMEOUT}m ` : args.join(' ') + ' ';
@@ -33,6 +35,7 @@ const RUN_TESTS_CMD = !args.length ? `yarn test --timeout=${TIMEOUT}m ` : args.j
   try {
     rimraf.sync(failedTestsFile);
     rimraf.sync(testStatsFile);
+    rimraf.sync(failureReasonsFile);
     await createTestTimingsFile();
     execSync(RUN_TESTS_CMD, { stdio: [0, 1, 2] });
   } catch (e) {
@@ -94,14 +97,40 @@ function readTestStats() {
   return stats;
 }
 
+/**
+ * Read recorded failures reasons
+ * @remark Test failures may occur because of reasons other than bugs, such as the user pool account
+ * - `tests` is keyed by test name and written by the test harness, `job` holds reasons
+ * - that belong to the run as a whole and is written here. See IFailureReasons.
+ * @returns - An object with the test failure details
+ */
+function readFailureReason() {
+  try {
+    const failures = JSON.parse(fs.readFileSync(failureReasonsFile, 'utf8'));
+    return { tests: failures?.tests || {}, job: failures?.job || [] };
+  } catch (e) {
+    console.error('Failed to read the failure reasons file', e);
+    return { tests: {}, job: [] };
+  }
+}
+
 async function sendJobToAnalytics(failedTests) {
   if (!BUILD_BUILDID) return; // do not send analytics for local builds
 
   const failedAfterRetryTests = getFailedTests();
-  const testsToSend = failedTests.map(testName => ({
-    name: testName,
-    retrySucceeded: !failedAfterRetryTests.includes(testName),
-  }));
+  const failureReasons = readFailureReason();
+  const testsToSend = failedTests.map(testName => {
+    const failureLog = {
+      name: testName,
+      retrySucceeded: !failedAfterRetryTests.includes(testName),
+    };
+
+    if (!failureLog.retrySucceeded && failureReasons.tests[testName]) {
+      failureLog.failureReason = failureReasons.tests[testName];
+    }
+
+    return failureLog;
+  });
   log('Sending analytics..');
   const body = {
     name: SYSTEM_JOBNAME,
