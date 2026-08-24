@@ -41,7 +41,7 @@ export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
    */
   return wrapperAttrs?.layout === 'horizontal' ? (
     <InputWrapper {...attrs}>
-      <Form.Item colon={false} aria-label={p.label} style={p.style}>
+      <Form.Item colon={false} aria-label={p.label} style={p.style} className={p?.className}>
         {!p.nolabel && labelAlign === 'left' && (
           <span style={{ marginRight: '10px' }}>{p.label}</span>
         )}
@@ -70,7 +70,7 @@ export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
         size={size}
         {...inputAttrs}
         ref={p.inputRef}
-        className={cx({
+        className={cx(p?.className, {
           [styles.secondarySwitch]: p?.color === 'secondary',
           [styles.noLabel]: p?.nolabel,
         })}
