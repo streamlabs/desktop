@@ -2,7 +2,9 @@ import { useWebdriver, test } from '../../helpers/webdriver';
 import { getApiClient } from '../../helpers/api-client';
 import { ScenesService } from 'services/api/external-api/scenes/scenes';
 import { SourcesService } from 'services/api/external-api/sources/sources';
-import { sleep } from '../../helpers/sleep';
+import { Source } from 'services/api/external-api/sources';
+import { platform } from 'os';
+import { SceneItem } from 'services/api/external-api/scenes/scene-item';
 
 useWebdriver({ restartAppAfterEachTest: false });
 
@@ -42,25 +44,51 @@ test('Source events', async t => {
   sourcesService.sourceRemoved.subscribe(() => void 0);
   sourcesService.sourceUpdated.subscribe(() => void 0);
 
-  // check `sourceUpdated` event after `createSource` call
-  const source1 = sourcesService.createSource('audio1', 'wasapi_output_capture');
-  let event = await client.fetchNextEvent();
+  // check `sourceAdded` event after `createSource` call
+  let source1: Source = null;
+  let eventPromise = client.fetchNextEvent();
+  if (platform() === 'win32') {
+    source1 = sourcesService.createSource('audio1', 'wasapi_output_capture');
+  } else if (platform() === 'darwin') {
+    source1 = sourcesService.createSource('audio1', 'coreaudio_output_capture');
+  }
+
+  if (!source1) {
+    t.fail('Failed to create source');
+    return;
+  }
+
+  let event = await eventPromise;
   t.is(event.data.name, 'audio1');
   t.truthy(event.data.id); // id field is necessary for Streamdeck
 
-  // check `sourceUpdated` event after `createAndAddSource` call
-  const item2 = scenesService.activeScene.createAndAddSource('audio2', 'wasapi_output_capture');
-  event = await client.fetchNextEvent();
+  // check `sourceAdded` event after `createAndAddSource` call
+  let item2: SceneItem = null;
+  eventPromise = client.fetchNextEvent();
+  if (platform() === 'win32') {
+    item2 = scenesService.activeScene.createAndAddSource('audio2', 'wasapi_output_capture');
+  } else if (platform() === 'darwin') {
+    item2 = scenesService.activeScene.createAndAddSource('audio2', 'coreaudio_output_capture');
+  }
+
+  if (!item2) {
+    t.fail('Failed to create scene item');
+    return;
+  }
+
+  event = await eventPromise;
   t.is(event.data.name, 'audio2');
 
   // check `sourceRemoved` event
+  eventPromise = client.fetchNextEvent();
   item2.remove();
-  event = await client.fetchNextEvent();
+  event = await eventPromise;
   t.is(event.data.name, 'audio2');
 
   // check `sourceUpdated` event when renaming a source
+  eventPromise = client.fetchNextEvent();
   source1.setName('audio3');
-  event = await client.fetchNextEvent();
+  event = await eventPromise;
 
   // the remote control app requires these fields to be in the event
   t.is(event.data.name, 'audio3');
