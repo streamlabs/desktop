@@ -17,7 +17,10 @@ function copyFile(src: string, dest: string) {
   });
 }
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver({
+  noSync: true,
   beforeAppStartCb: async t => {
     const dataDir = path.resolve(__dirname, '..', '..', '..', '..', '..', 'test', 'data');
 
@@ -49,4 +52,20 @@ test('Loading an old scene collection', async t => {
   t.true(await sceneExisting('Intermission'));
   t.true(await sceneExisting('Be Right Back'));
   t.true(await sceneExisting('Stream Ending Soon'));
+
+  const collectionPath = path.join(
+    t.context.cacheDir,
+    'slobs-client',
+    'SceneCollections',
+    '4e467470-923c-43a3-90d2-2be39c8c34ee.json',
+  );
+  const absoluteBackupPath = `${collectionPath}.absolute.bak`;
+  const migrated = JSON.parse(fs.readFileSync(collectionPath).toString());
+  const absoluteBackup = JSON.parse(fs.readFileSync(absoluteBackupPath).toString());
+
+  t.is(migrated.schemaVersion, 5);
+  t.true(migrated.relativeCoordinates);
+  t.truthy(migrated.baseResolutions.horizontal);
+  t.truthy(migrated.baseResolutions.vertical);
+  t.is(absoluteBackup.schemaVersion, 1);
 });

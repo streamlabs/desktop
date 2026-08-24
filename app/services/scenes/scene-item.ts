@@ -292,9 +292,6 @@ export class SceneItem extends SceneItemNode {
   }
 
   loadItemAttributes(customSceneItem: ISceneItemInfo) {
-    const visible = customSceneItem.visible;
-    const position = { x: customSceneItem.x, y: customSceneItem.y };
-    const crop = customSceneItem.crop;
     const display = customSceneItem?.display ?? this?.display ?? 'horizontal';
 
     // guarantee vertical context exists to prevent null errors
@@ -304,27 +301,58 @@ export class SceneItem extends SceneItemNode {
     const context = this.videoSettingsService.contexts[display];
 
     const obsSceneItem = this.getObsSceneItem();
-    obsSceneItem.video = context as obs.IVideo;
 
     this.UPDATE({
-      visible,
+      visible: obsSceneItem.visible,
       sceneItemId: this.sceneItemId,
-      transform: {
-        position,
-        crop,
-        scale: { x: customSceneItem.scaleX, y: customSceneItem.scaleY },
-        rotation: customSceneItem.rotation,
-      },
       locked: !!customSceneItem.locked,
-      streamVisible: !!customSceneItem.streamVisible,
-      recordingVisible: !!customSceneItem.recordingVisible,
-      scaleFilter: customSceneItem.scaleFilter,
-      blendingMode: customSceneItem.blendingMode,
-      blendingMethod: customSceneItem.blendingMethod,
+      streamVisible: obsSceneItem.streamVisible,
+      recordingVisible: obsSceneItem.recordingVisible,
+      scaleFilter: obsSceneItem.scaleFilter,
+      blendingMode: obsSceneItem.blendingMode,
+      blendingMethod: obsSceneItem.blendingMethod,
       display,
       output: context,
-      position: obsSceneItem.position,
     });
+    this.refreshTransformFromObs(false);
+  }
+
+  /**
+   * Refreshes Desktop's public absolute-pixel model after OSN has invalidated
+   * its transform cache for a canvas resize. Crop reference dimensions are an
+   * internal persistence detail and intentionally stay out of this model.
+   */
+  refreshTransformFromObs(notify = true) {
+    const obsSceneItem = this.getObsSceneItem();
+    const position = obsSceneItem.position;
+    const scale = obsSceneItem.scale;
+    const crop = obsSceneItem.crop;
+
+    this.UPDATE({
+      sceneItemId: this.sceneItemId,
+      transform: {
+        position: { x: position.x, y: position.y },
+        scale: { x: scale.x, y: scale.y },
+        crop: {
+          top: crop.top,
+          right: crop.right,
+          bottom: crop.bottom,
+          left: crop.left,
+        },
+        rotation: obsSceneItem.rotation,
+      },
+      position: { x: position.x, y: position.y },
+    });
+
+    if (this.type === 'scene') {
+      const baseResolution = this.videoSettingsService.baseResolutions[
+        this.display ?? 'horizontal'
+      ];
+      this.baseWidth = baseResolution.baseWidth;
+      this.baseHeight = baseResolution.baseHeight;
+    }
+
+    if (notify) this.scenesService.itemUpdated.next(this.getModel());
   }
 
   setTransform(transform: IPartialTransform) {

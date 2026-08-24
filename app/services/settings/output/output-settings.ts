@@ -991,10 +991,13 @@ export class OutputSettingsService extends Service {
     }
     const currentSettings = this.getSettings();
 
+    let videoSettingsUpdate: Promise<void> | void;
     if (settingsPatch.inputResolution) {
       const [width, height] = settingsPatch.inputResolution.split('x');
-      this.videoSettingsService.setVideoSetting('baseWidth', Number(width));
-      this.videoSettingsService.setVideoSetting('baseHeight', Number(height));
+      videoSettingsUpdate = this.videoSettingsService.setSettings({
+        baseWidth: Number(width),
+        baseHeight: Number(height),
+      });
     }
 
     if (settingsPatch.streaming) {
@@ -1006,6 +1009,8 @@ export class OutputSettingsService extends Service {
     }
 
     if (settingsPatch.replayBuffer) this.setReplayBufferSettings(settingsPatch.replayBuffer);
+
+    return videoSettingsUpdate;
   }
 
   private setReplayBufferSettings(replayBufferSettings: Partial<IReplayBufferSettings>) {

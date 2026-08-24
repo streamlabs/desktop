@@ -17,6 +17,8 @@ import defaultTo from 'lodash/defaultTo';
 import { byOS, OS } from 'util/operating-systems';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { EFilterDisplayType, ISourceFilter, SourceFiltersService } from 'services/source-filters';
+import { ISceneCollectionLoadContext } from './load-session';
+import { SceneCollectionMigrationError } from '../errors';
 
 interface ISchema {
   items: ISourceInfo[];
@@ -49,7 +51,7 @@ export interface ISourceInfo {
   propertiesManagerSettings?: Dictionary<any>;
 }
 
-export class SourcesNode extends Node<ISchema, {}> {
+export class SourcesNode extends Node<ISchema, ISceneCollectionLoadContext> {
   schemaVersion = 5;
 
   @Inject() private sourcesService: SourcesService;
@@ -219,7 +221,7 @@ export class SourcesNode extends Node<ISchema, {}> {
     return removed;
   }
 
-  load(context: {}): Promise<void> {
+  load(context: ISceneCollectionLoadContext = {}): Promise<void> {
     this.sanitizeSources();
 
     const supportedSources = this.data.items.filter(source => {
@@ -343,9 +345,17 @@ export class SourcesNode extends Node<ISchema, {}> {
       this.sourcesService.missingInputs = sourcesNotCreated.map(
         source => this.sourcesService.sourceDisplayData[source.type]?.name,
       );
+
+      if (context.loadSession?.strictCoordinateMigration) {
+        throw new SceneCollectionMigrationError(
+          `Could not create sources required for coordinate migration: ${sourcesNotCreatedNames.join(
+            ', ',
+          )}`,
+        );
+      }
     }
 
-    sources.forEach(async source => {
+    sources.forEach(source => {
       const sourceInfo = sourceData[source.name];
 
       this.sourcesService.addSource(source, sourceInfo.name, {
@@ -383,15 +393,18 @@ export class SourcesNode extends Node<ISchema, {}> {
           console.error('Attempting to load hotkey for not created source:', sourceInfo.id);
         }
 
-        promises.push(sourceInfo.hotkeys.load({ sourceId: sourceInfo.id }));
+        promises.push(
+          sourceInfo.hotkeys.load({
+            sourceId: sourceInfo.id,
+            loadSession: context.loadSession,
+          }),
+        );
       }
 
       this.sourceFiltersService.loadFilterData(sourceInfo.id, sourceInfo.filters.items);
     });
 
-    return new Promise(resolve => {
-      Promise.all(promises).then(() => resolve());
-    });
+    return Promise.all(promises).then(() => undefined);
   }
 
   migrate(version: number) {
