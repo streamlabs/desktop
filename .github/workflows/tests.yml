@@ -1,0 +1,77 @@
+name: 'Frontend Tests'
+
+on:
+  push:
+    branches: [staging, master]
+  pull_request:
+    branches: [staging, master]
+    types: [synchronize, opened, reopened]
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: true
+
+jobs:
+  test:
+    name: 'Frontend Tests'
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        chunk: [1, 2, 3, 4]
+      max-parallel: 4
+
+    steps:
+      - name: 'Get RDP Address'
+        run: echo "IP for RDP connections:" ${{ Invoke-RestMethod ipinfo.io/ip }}
+        shell: pwsh
+      - name: 'Install Dependencies'
+        run: yarn install --immutable 2>&1
+      - name: 'Install Visual Studio Redistributable DLLs'
+        run: |
+          $url = "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+          $output = "$env:TEMP\vc_redist.x64.exe"
+          Invoke-WebRequest -Uri $url -OutFile $output
+          Start-Process -FilePath $output -ArgumentList "/install", "/quiet", "/norestart" -Wait
+        shell: pwsh
+      - name: 'Install Electron'
+        run: node node_modules/electron/install.js
+      - name: 'Compile Assets'
+        run: yarn ci:compile
+      - name: 'Run Tests'
+        run: yarn ci:tets
+        env:
+          SLOBS_TEST_USER_POOL_TOKEN: ${{ userPoolToken }}
+          BROWSER_SOURCE_HARDWARE_ACCELERATION: 'OFF'
+          SLOBS_TEST_STREAM_KEY: ${{ twitchStreamKey }}
+          SLOBS_TEST_RUN_CHUNK: '${{ matrix.chunk }}/4'
+
+  es-lint-strict-nulls:
+    name: 'Check ESLint and Strict Nulls Regression'
+    runs-on: windows-latest
+    steps:
+      - name: 'Get RDP Address'
+        run: echo "IP for RDP connections:" ${{ Invoke-RestMethod ipinfo.io/ip }}
+        shell: pwsh
+      - name: 'Install Dependencies'
+        run: yarn install --immutable 2>&1
+      - name: 'ESLint'
+        run: yarn eslint
+      - name: 'Check regressions in files with strictNullChecks'
+        run: yarn compile:strictnulls
+
+  mac-os:
+    name: 'MacOS'
+    runs-on: macOs-latest
+    steps:
+      - name: 'Install Dependencies'
+        run: yarn install --immutable --network-timeout 1000000 2>&1
+      - name: 'Install Electron'
+        run: node node_modules/electron/install.js
+      - name: 'ESLint'
+        run: yarn eslint
+      - name: 'Compile Assets'
+        run: yarn ci:compile
