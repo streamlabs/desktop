@@ -8,14 +8,14 @@ import { useVuex } from 'components-react/hooks';
 type TTwitchTagsInputProps = TSlobsInputProps<{}, string[]>;
 
 export function TwitchTagsInput(p: TTwitchTagsInputProps) {
-  const { TwitchService, OnboardingService, WindowsService } = Services;
+  const { TwitchService, OnboardingV2Service, WindowsService } = Services;
   const { tags, hasTagsScope } = useVuex(() => ({
     tags: TwitchService.state.settings.tags,
     hasTagsScope: TwitchService.state.hasUpdateTagsPermission,
   }));
 
   function reauth() {
-    OnboardingService.actions.start({ isLogin: true });
+    OnboardingV2Service.actions.showLogin();
     WindowsService.closeChildWindow();
   }
 

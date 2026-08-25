@@ -12,6 +12,8 @@ import {
   WindowsService,
 } from 'app-services';
 import Utils from '../utils';
+import { jfetch } from 'util/requests';
+import { IThemeMetadata } from './theme-metadata';
 
 export enum EOnboardingSteps {
   Splash = 'Splash',
@@ -305,6 +307,13 @@ export class OnboardingV2Service extends Service {
     });
   }
 
+  showSingletonStep(step: EOnboardingSteps) {
+    this.initalizeView({
+      startingStep: { name: step, isSkippable: false },
+      isSingleton: true,
+    });
+  }
+
   takeStep(skipped?: boolean) {
     this.recordOnboardingNavEvent(skipped ? 'skip' : 'continue');
     const nextStep = this.path.takeNextStep(this.modifiers);
@@ -338,6 +347,11 @@ export class OnboardingV2Service extends Service {
       ...data,
       type,
     });
+  }
+
+  async fetchThemeData(id: string) {
+    const url = `https://overlays.streamlabs.com/api/overlay/${id}`;
+    return jfetch<IThemeMetadata>(url);
   }
 
   private initalizeView(config: IOnboardingInitialization) {

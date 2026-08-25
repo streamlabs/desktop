@@ -46,7 +46,6 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
     TransitionsService,
     UserService,
     WindowsService,
-    OnboardingService,
     SettingsService,
     UsageStatisticsService,
   } = Services;
@@ -80,11 +79,18 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
     }
 
     UserService.actions.showLogin();
-    const onboardingCompleted = OnboardingService.onboardingCompleted.subscribe(() => {
-      DualOutputService.actions.setDualOutputModeIfPossible();
-      SettingsService.actions.showSettings('Video');
-      onboardingCompleted.unsubscribe();
-    });
+    // Since the new onboarding is a modal we check whether
+    // style blockers on the main window are no longer hidden
+    // indicating the modal has been closed
+    const loginClosed = WindowsService.styleBlockersUpdated.subscribe(
+      (event: { windowId: string; hideStyleBlockers: boolean }) => {
+        if (event.windowId === 'main' && !event.hideStyleBlockers) {
+          DualOutputService.actions.setDualOutputModeIfPossible();
+          SettingsService.actions.showSettings('Video');
+          loginClosed.unsubscribe();
+        }
+      },
+    );
   }, []);
 
   const showSelectiveRecordingModal = useCallback(() => {
