@@ -14,6 +14,7 @@ const base = {
     'node_modules',
     'vendor',
     'app/i18n',
+    'app/util/shutdown-coordinator.js',
     'media/images/game-capture',
     'updater/build/bootstrap.js',
     'updater/build/bundle-updater.js',
