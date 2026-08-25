@@ -23,6 +23,8 @@ import { InstagramService } from './platforms/instagram';
 import { PlatformAppsService } from './platform-apps';
 import { DualOutputService } from 'services/dual-output';
 import { SettingsService } from 'services/settings';
+import { UsageStatisticsService } from 'services/usage-statistics';
+import { DiagnosticsService } from './diagnostics';
 import { throwStreamError } from './streaming/stream-error';
 import { Subject } from 'rxjs';
 import uuid from 'uuid';
@@ -30,6 +32,7 @@ import Utils from './utils';
 import { $t } from './i18n';
 import { RealmObject } from './realm';
 import { ObjectSchema } from 'realm';
+import { TSocketEvent } from './websocket';
 
 interface IIngestServer {
   name: string;
@@ -160,6 +163,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @Inject() platformAppsService: PlatformAppsService;
   @Inject() dualOutputService: DualOutputService;
   @Inject() settingsService: SettingsService;
+  @Inject() usageStatisticsService: UsageStatisticsService;
+  @Inject() diagnosticsService: DiagnosticsService;
 
   settings: IUserSettingsResponse;
 
@@ -367,9 +372,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
       new Headers({ 'Content-Type': 'application/json' }),
     );
     const url = `https://${this.host}/api/v1/rst/targets/runtime`;
+    const body = JSON.stringify({ streamKey, targets });
     const request = new Request(url, {
       headers,
-      body: JSON.stringify({ streamKey, targets }),
+      body,
       method: 'POST',
     });
 
@@ -564,6 +570,28 @@ export class RestreamService extends StatefulService<IRestreamState> {
           ),
         ]);
 
+    // Every requested key must correspond to a live target. The keys are re-derived from platform
+    // state here rather than recorded when the target was created, so a key that has since changed
+    // matches nothing, and without this the filter below would quietly drop it, no request would
+    // be sent, and the caller would report the target as removed while it is still streaming.
+    if (streamKeysToRemove) {
+      const liveStreamKeys = new Set(remoteTargets.map(target => target.streamKey));
+      const unmatched = [...streamKeysToRemove].filter(key => !liveStreamKeys.has(key));
+
+      if (unmatched.length) {
+        console.error(
+          'Restream Error: No live restream target matches',
+          unmatched.length,
+          'of the targets to remove.',
+        );
+        throwStreamError(
+          'RESTREAM_UPDATE_FAILED',
+          {},
+          `Unable to match ${unmatched.length} target(s) to remove against the active stream.`,
+        );
+      }
+    }
+
     // Group by the mode reported by the server. It is the only reliable record of which stream a
     // target is running on, the locally derived mode can be stale.
     const targetsByMode = this.filterRemoveTargetsByMode(remoteTargets, streamKeysToRemove);
@@ -572,10 +600,13 @@ export class RestreamService extends StatefulService<IRestreamState> {
       const stopTargets = targetsByMode[mode];
       if (!stopTargets.length) continue;
 
+      const streamKey = await this.resolveStreamKey(mode);
+      console.debug('Removing targets for mode', mode, 'with stream key', streamKey, stopTargets);
+
       try {
         // Fetch the key for this mode rather than deriving it, the same way `addTargets` does, so
         // that targets are removed from the stream they were added to
-        await this.removeRuntimeTargets(await this.resolveStreamKey(mode), stopTargets);
+        await this.removeRuntimeTargets(streamKey, stopTargets);
       } catch (e: unknown) {
         console.error('Restream Error: Error removing restream targets for', mode, e);
         throwStreamError('RESTREAM_UPDATE_FAILED', e, `Unable to remove targets for ${mode}.`);
@@ -867,23 +898,27 @@ export class RestreamService extends StatefulService<IRestreamState> {
   async setupIngest(display?: TDisplayType) {
     const ingest = await this.getIngestServer();
 
-    // Setup ingest for the display if provided, otherwise setup ingest for the entire stream
-    if (display) {
-      const mode = this.getMode(display);
-      const settings = await this.fetchUserSettings(mode);
+    const shouldSetupStreamShift =
+      this.streamInfo.isStreamShiftMode || this.state.streamShiftStatus === 'pending';
 
-      this.setStreamSettingsForDisplay(display, settings.streamKey, ingest);
-      return;
-    }
-
-    if (this.streamInfo.isStreamShiftMode) {
+    if (shouldSetupStreamShift) {
       // in single output mode, we just set the ingest for the default display
       const streamId = uuid();
       this.SET_STREAM_SWITCHER_STREAM_ID(streamId);
       // for the stream switcher, the stream needs a unique identifier
       const streamKey = `${this.settings.streamKey}&sid=${streamId}`;
 
+      console.log('RESTREAM setupIngest stream shift streamKey', streamKey, 'ingest', ingest);
+
       this.setStreamSettingsForDisplay('horizontal', streamKey, ingest);
+    } else if (display) {
+      // Setup ingest for the display if provided, otherwise setup ingest for the entire stream
+
+      const mode = this.getMode(display);
+      const settings = await this.fetchUserSettings(mode);
+
+      this.setStreamSettingsForDisplay(display, settings.streamKey, ingest);
+      return;
     } else if (this.streamInfo.isLiveOutputEditingEnabled || this.streamInfo.isDualOutputMode) {
       // Set the ingest for each display being restreamed.
       // In live output editing mode, every display must use the restream servers so that a target
@@ -1215,7 +1250,25 @@ export class RestreamService extends StatefulService<IRestreamState> {
     );
   }
 
+  /**
+   * Check if the user is already live via stream shift
+   * @remark This also validates and resets the stream shift state for non-ultra users.
+   * @returns - Promise with stream shift live status
+   */
   async checkIsLive(): Promise<boolean> {
+    // Stream Shift is ultra-only. Reset if the user is not prime
+    if (!this.userService.views.isPrime) {
+      if (this.state.streamShiftStatus === 'pending') {
+        this.SET_STREAM_SWITCHER_STATUS('inactive');
+        this.SET_STREAM_SWITCHER_TARGETS([]);
+      }
+
+      if (this.streamInfo.settings.streamShift) {
+        this.streamSettingsService.setGoLiveSettings({ streamShift: false });
+      }
+      return false;
+    }
+
     // Don't check stream shift status while the stream status isn't `Offline`.
     // While the stream is active, starting, or tearing down, the is live status will be reported
     // as true from Desktop's own stream, while the intent is to check for a stream on another device.
@@ -1227,6 +1280,22 @@ export class RestreamService extends StatefulService<IRestreamState> {
     console.debug('Stream Shift Status', status);
 
     if (status.isLive) {
+      // If the last stream had live output editing enabled, it may still be in the cooldown period
+      // and show as a new live stream immediately after the previous one ended. To prevent it from
+      // accidentally being identified as a stream shift stream, force the stream to go live if the
+      // app recently went live with live output editing enabled.
+      if (this.streamInfo.isLiveOutputEditingEnabled) {
+        // If the last stream ended within the last minute, assume it is still in the cooldown period
+        const streamEndedRecently =
+          this.diagnosticsService.lastStream &&
+          Date.now() - new Date(this.diagnosticsService.lastStream.endTime).getTime() < 60 * 1000;
+
+        if (streamEndedRecently) {
+          this.SET_STREAM_SWITCHER_FORCE_GO_LIVE(true);
+          return false;
+        }
+      }
+
       this.streamSettingsService.setGoLiveSettings({ streamShift: true });
       this.SET_STREAM_SWITCHER_STATUS('pending');
       this.SET_STREAM_SWITCHER_TARGETS(status.targets);
@@ -1234,6 +1303,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
       this.SET_STREAM_SWITCHER_STATUS('inactive');
       this.SET_STREAM_SWITCHER_TARGETS([]);
     }
+
+    this.SET_STREAM_SWITCHER_FORCE_GO_LIVE(false);
 
     this.isLive.next(status.isLive);
     return status.isLive;
@@ -1264,18 +1335,21 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
     return jfetch<{ [key: string]: ITargetLiveData[] }>(request)
       .then(res => {
-        const targets = this.state.streamShiftTargets.reduce((targetData: ITargetLiveData[], t) => {
-          const platform = t.platform as string;
-          if (t.platform !== 'relay') {
-            const data = res[platform]?.[0];
+        // Preserve targets the status endpoint returned no data for. Dropping them removes the
+        // platform from the switch entirely, and drops the relay target on every fetch.
+        const targets = this.state.streamShiftTargets.map((t: ITargetLiveData) => {
+          console.log('Stream Shift target data', t, res[t.platform as string]);
+          if (t.platform === 'relay') return t;
 
-            if (data) {
-              targetData.push({ ...t, ...data });
-            }
-          }
+          const data = res[t.platform as string]?.[0];
+          // A default value is needed here because the status endpoint does not return a value
+          // for `is_live` when the stream is not live and its absence should be treated as false.
+          // Needed to prevent the relay target from being dropped when the status endpoint returns
+          // no data for a platform.
+          const isLive = data?.is_live ?? false;
 
-          return targetData;
-        }, []);
+          return data ? { ...t, ...data, is_live: isLive } : t;
+        });
 
         console.debug('Stream Shift target data', targets);
 
@@ -1391,7 +1465,9 @@ export class RestreamService extends StatefulService<IRestreamState> {
       }
 
       this.SET_STREAM_SWITCHER_STATUS('inactive');
-      this.updateStreamShift('approved');
+      this.updateStreamShift('approved').catch((e: unknown) => {
+        console.error('Stream Shift Error: failed to approve the switch', e);
+      });
     }
   }
 
@@ -1444,6 +1520,93 @@ export class RestreamService extends StatefulService<IRestreamState> {
     this.SET_STREAM_SWITCHER_STREAM_ID();
     this.SET_STREAM_SWITCHER_TARGETS([]);
     this.SET_STREAM_SWITCHER_FORCE_GO_LIVE(true);
+  }
+
+  /**
+   * Infer the type of the remote device from its stream identifier
+   * @remarks Mobile identifiers contain uppercase characters, desktop identifiers do not.
+   * Note: because the event's stream id is from the device that requested the switch, it is not
+   * possible to know what type of device the stream will be switching from. We can only identify
+   * the type of device the stream is switching to.
+   */
+  private getStreamShiftDeviceType(id: string): 'mobile' | 'desktop' {
+    return /[A-Z]/.test(id) ? 'mobile' : 'desktop';
+  }
+
+  /**
+   * Handle an incoming stream shift socket event
+   * @returns A message to show the user, or an empty string when no alert should be shown
+   */
+  async handleStreamShiftEvent(event: TSocketEvent): Promise<string> {
+    console.log('Stream Shift handleStreamShiftEvent', event);
+    if (this.state.streamShiftForceGoLive) return '';
+    if (event.type !== 'streamSwitchRequest' && event.type !== 'switchActionComplete') {
+      return '';
+    }
+
+    const streamShiftStreamId = this.state.streamShiftStreamId;
+    console.debug('Event ID: ' + event.data.identifier, '\n Stream ID: ' + streamShiftStreamId);
+    const isIncomingStream: boolean =
+      (streamShiftStreamId && event.data.identifier === streamShiftStreamId) || false;
+
+    // Handle stream shift request events
+    if (event.type === 'streamSwitchRequest') {
+      if (isIncomingStream) {
+        // Don't record the request from this device because the other device will record it
+        this.confirmStreamShift('approved');
+      } else {
+        this.recordStreamShiftAnalytics('request', event.data.identifier);
+      }
+
+      // Currently no alert is shown for stream shift requests, so this is a placeholder message
+      return $t('Switch Stream');
+    }
+
+    // Handle stream shift completed events
+    if (event.type === 'switchActionComplete') {
+      // End the stream on this device if switching the stream to another device
+      // Only record analytics if the stream was switched from this device to a different one
+
+      console.log(
+        'Stream Shift switchActionComplete',
+        isIncomingStream,
+        event.data.identifier,
+        streamShiftStreamId,
+      );
+      if (!isIncomingStream) {
+        this.endStreamShiftStream(event.data.identifier);
+        this.recordStreamShiftAnalytics('complete', event.data.identifier);
+      }
+
+      // Notify the user
+      if (isIncomingStream) {
+        // close go live window
+        return $t(
+          'Your stream has been switched to Streamlabs Desktop from another device. Enjoy your stream!',
+        );
+      }
+
+      return this.getStreamShiftDeviceType(event.data.identifier) === 'mobile'
+        ? $t('Your stream has been successfully switched to Streamlabs Mobile. Enjoy your stream!')
+        : $t(
+            'Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!',
+          );
+    }
+
+    // Placeholder for a default return value when no stream shift event is handled
+    return '';
+  }
+
+  /**
+   * @param id - The stream identifier of the device the stream is switching to
+   */
+  recordStreamShiftAnalytics(action: 'request' | 'complete', id: string) {
+    if (Utils.isTestMode()) return;
+
+    this.usageStatisticsService.recordAnalyticsEvent('StreamShift', {
+      stream: `desktop-${this.getStreamShiftDeviceType(id)}`,
+      action,
+    });
   }
 
   /**
