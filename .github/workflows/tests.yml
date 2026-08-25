@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [staging, master]
     types: [synchronize, opened, reopened]
+    paths-ignore:
+      - 'app/i18n/**'
+      - '.github/instructions/*'
+      - '*.md'
+      - '*.yml'
+      - 'package.json'
+      - 'yarn.lock'
 
 defaults:
   run:
@@ -14,10 +21,15 @@ defaults:
 env:
   CI: true
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
     name: 'Frontend Tests'
-    runs-on: self-hosted
+    runs-on: [self-hosted, desktop-frontend]
+    timeout-minutes: 80
 
     strategy:
       matrix:
@@ -25,8 +37,16 @@ jobs:
       max-parallel: 4
 
     steps:
+      - name: 'Reset runner state'
+        run: |
+          'obs64','crash-handler','chromedriver','electron' | ForEach-Object {
+            Get-Process -Name $_ -ErrorAction Ignore | Stop-Process -Force -ErrorAction Ignore
+          }
+          Remove-Item -Recurse -Force "$env:TEMP\slobs-test*" -ErrorAction Ignore
+        shell: pwsh
+      - uses: actions/checkout@v4
       - name: 'Get RDP Address'
-        run: echo "IP for RDP connections:" ${{ Invoke-RestMethod ipinfo.io/ip }}
+        run: echo "IP for RDP connections:" $(Invoke-RestMethod ipinfo.io/ip)
         shell: pwsh
       - name: 'Install Dependencies'
         run: yarn install --immutable 2>&1
@@ -42,20 +62,22 @@ jobs:
       - name: 'Compile Assets'
         run: yarn ci:compile
       - name: 'Run Tests'
-        run: yarn ci:tets
+        run: yarn ci:tests
         env:
-          SLOBS_TEST_USER_POOL_TOKEN: ${{ userPoolToken }}
+          SLOBS_TEST_USER_POOL_TOKEN: ${{ secrets.SLOBS_TEST_USER_POOL_TOKEN }}
           BROWSER_SOURCE_HARDWARE_ACCELERATION: 'OFF'
-          SLOBS_TEST_STREAM_KEY: ${{ twitchStreamKey }}
+          SLOBS_TEST_STREAM_KEY: ${{ secrets.SLOBS_TEST_STREAM_KEY }}
           SLOBS_TEST_RUN_CHUNK: '${{ matrix.chunk }}/4'
 
   es-lint-strict-nulls:
     name: 'Check ESLint and Strict Nulls Regression'
     runs-on: windows-latest
     steps:
-      - name: 'Get RDP Address'
-        run: echo "IP for RDP connections:" ${{ Invoke-RestMethod ipinfo.io/ip }}
-        shell: pwsh
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.18.0'
+          cache: 'yarn'
       - name: 'Install Dependencies'
         run: yarn install --immutable 2>&1
       - name: 'ESLint'
@@ -67,6 +89,7 @@ jobs:
   #   name: 'MacOS'
   #   runs-on: macOs-latest
   #   steps:
+  #     - uses: actions/checkout@v4
   #     - name: 'Install Dependencies'
   #       run: yarn install --immutable --network-timeout 1000000 2>&1
   #     - name: 'Install Electron'

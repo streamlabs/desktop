@@ -1,5 +1,5 @@
 # Run this script as administrator to setup enviroment on new CI machine:
-# powershell install.ps1 your_azure_token host_user host_password
+# powershell install.ps1 your_gh_token host_user host_password
 
 $token=$args[0]
 $username=$args[1]
@@ -16,9 +16,6 @@ cd $PSScriptRoot;
 
 # define paths
 $workingDir = "C:\actions-runner"
-$agentPath = "$workingDir\run.cmd"
-$registerAgentScriptName = "register-agent.ps1"
-
 
 # save token and working dir to env variable
 [System.Environment]::SetEnvironmentVariable('GH_WORKING_DIR', $workingDir, [System.EnvironmentVariableTarget]::User)
@@ -27,14 +24,16 @@ echo "Download and install GH Actions Runner"
 cd /
 Remove-Item -Recurse -Force -ErrorAction Ignore agent
 Remove-Item -Recurse -Force -ErrorAction Ignore actions-runner
+
+$ErrorActionPreference = 'Stop'
 # Create a folder under the drive root
-$ mkdir actions-runner; cd actions-runner
+mkdir actions-runner; cd actions-runner
 # Download the latest runner package
-$ Invoke-WebRequest -Uri https://github.com/actions/runner/releases/download/v2.336.0/actions-runner-win-x64-2.336.0.zip -OutFile actions-runner-win-x64-2.336.0.zip
+Invoke-WebRequest -Uri https://github.com/actions/runner/releases/download/v2.336.0/actions-runner-win-x64-2.336.0.zip -OutFile actions-runner-win-x64-2.336.0.zip
 # Optional: Validate the hash
-$ if((Get-FileHash -Path actions-runner-win-x64-2.336.0.zip -Algorithm SHA256).Hash.ToUpper() -ne 'd59123a43003e357b0805b5d0f611d0bd2f65ab67d51bd070dd4e7a0f685c162'.ToUpper()){ throw 'Computed checksum did not match' }
+if((Get-FileHash -Path actions-runner-win-x64-2.336.0.zip -Algorithm SHA256).Hash.ToUpper() -ne 'd59123a43003e357b0805b5d0f611d0bd2f65ab67d51bd070dd4e7a0f685c162'.ToUpper()){ throw 'Computed checksum did not match' }
 # Extract the installer
-$ Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/actions-runner-win-x64-2.336.0.zip", "$PWD")
+Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/actions-runner-win-x64-2.336.0.zip", "$PWD")
 
 # lets us configure the screen resolution
 echo "Download and install Amazon DCV Server"
@@ -82,14 +81,13 @@ choco install visualstudio2019buildtools --package-parameters "--add Microsoft.V
 
 # run registration script
 echo "Configure GH Actions"
-cmd.exe /c "$workingDir\config.cmd --url https://github.com/streamlabs/desktop --token $token"
+cmd.exe /c "$workingDir\config.cmd --unattended --replace --url https://github.com/streamlabs/desktop --token $token --labels desktop-frontend --name $env:COMPUTERNAME --work _work"
 
 # Disable the lock screen to prevent the PC locking after the end of the RDP session
-Set-ItemProperty "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization" -Name 'NoLockScreen' -Value 1;
+$personalizationKey = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization"
+New-Item -Path $personalizationKey -Force | Out-Null
+Set-ItemProperty $personalizationKey -Name 'NoLockScreen' -Value 1 -Type DWord
 
-# Azure Agent has --AutoLogon option to add Agent to autostartup
-# But it doesn't allow to pass any arguments to the Agent
-# So call own implementation of AutoLogon here
 echo "Setup auto-login when system starts"
 $RegPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
 Set-ItemProperty $RegPath "AutoAdminLogon" -Value "1" -type String
@@ -108,7 +106,7 @@ Restart-Service WinRM
 
 echo "Setup agent autostart"
 $autoStartupRegPath = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run"
-Set-ItemProperty $autoStartupRegPath -Name 'RegisterAzureAgent' -Value "powershell $workingDir\startup.ps1";
+Set-ItemProperty $autoStartupRegPath -Name 'StartGHRunner' -Value "powershell $workingDir\startup.ps1";
 
 
 echo "Installation completed. Restart PC to take effect"
