@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "streamlabs": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["mcp/dist/index.js"]
+    }
+  }
+}
