@@ -642,6 +642,13 @@ export class GoLiveSettingsModule {
    * Validate the form and show an error message
    */
   async validate() {
+    if (
+      Services.RestreamService.views.streamShiftStatus === 'pending' &&
+      !Services.RestreamService.views.streamShiftForceGoLive
+    ) {
+      return true;
+    }
+
     if (this.getIsInvalidDualStream()) {
       alertInfo({
         name: 'ultra-required-alert',

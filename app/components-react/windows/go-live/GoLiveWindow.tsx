@@ -179,11 +179,6 @@ function ModalFooter() {
     });
   }, [isStreamShiftMode, isDualOutputMode, codec, goLiveWithDefaultCodec, showSettings]);
 
-  const startStreamShift = useCallback(() => {
-    setStreamShift(true);
-    goLive();
-  }, [goLive, setStreamShift]);
-
   const promptStreamShift = useCallback(async () => {
     isStreamShiftPromptShown.current = true;
     await promptAction({
@@ -197,7 +192,8 @@ function ModalFooter() {
         if (hasIncompatibleCodec) {
           promptUseDefaultCodec();
         } else {
-          startStreamShift();
+          setStreamShift(true);
+          goLive();
           close();
         }
       },
@@ -218,8 +214,9 @@ function ModalFooter() {
       maskClosable: false,
     });
   }, [
+    isStreamShiftPromptShown,
     hasIncompatibleCodec,
-    startStreamShift,
+    setStreamShift,
     close,
     forceStreamShiftGoLive,
     promptUseDefaultCodec,
@@ -228,6 +225,12 @@ function ModalFooter() {
 
   // When the streaming service detects an active stream on another device, show the prompt
   useEffect(() => {
+    // Prompt the user to switch to Streamlabs Desktop if a stream is detected on another device
+    // Note: Intentionally left out of the dependency array to avoid multiple prompts on window load
+    if (Services.RestreamService.views.streamShiftStatus === 'pending') {
+      promptStreamShift();
+    }
+
     const isLive = Services.RestreamService.isLive.subscribe(isLive => {
       if (isLive && !isStreamShiftPromptShown.current) {
         promptStreamShift();

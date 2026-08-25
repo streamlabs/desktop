@@ -1128,16 +1128,11 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @returns The formatted restream platform data
    */
   formatRuntimePlatformData(platform: TPlatform): IRestreamRuntimeTarget {
-    // Only dual output and live output editing assign targets to a display. In single output mode
-    // every target belongs to the landscape stream, so the saved display must not be read there.
-    const useSavedMode =
-      this.streamInfo.isDualOutputMode || this.streamInfo.isLiveOutputEditingEnabled;
-
     const platformData = {
       platform: platform as TPlatform | 'relay',
       streamKey: getPlatformService(platform).state.streamKey,
       label: `${platform} target`,
-      mode: useSavedMode ? this.getPlatformMode(platform) : 'landscape',
+      mode: this.streamInfo.isDualOutputMode ? this.getPlatformMode(platform) : 'landscape',
       dcProtection: true,
       enabled: true,
     };
@@ -1194,14 +1189,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
   formatRuntimeCustomDestinationData(
     destination: ICustomStreamDestination,
   ): IRestreamRuntimeTarget {
-    const useSavedMode =
-      this.streamingService.views.isDualOutputMode ||
-      this.streamingService.views.isLiveOutputEditingEnabled;
-
     return {
       platform: 'relay' as 'relay',
       streamKey: `${this.formatUrl(destination.url)}${destination.streamKey}`,
-      mode: useSavedMode ? this.getMode(destination.display) : 'landscape',
+      mode: this.streamInfo.isDualOutputMode ? this.getMode(destination.display) : 'landscape',
       dcProtection: true,
       enabled: true,
       label: `${destination.name} target`,
