@@ -1,4 +1,4 @@
-import React, { CSSProperties, useCallback, useEffect, useMemo } from 'react';
+import React, { CSSProperties, useCallback, useMemo } from 'react';
 import { shell } from '@electron/remote';
 import styles from './StreamShiftToggle.m.less';
 import Tooltip from 'components-react/shared/Tooltip';
@@ -37,17 +37,10 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
       if (!module.isPrime) return true;
       if (module.isPatreonEnabled) return true;
       if (module.isLiveOutputEditingEnabled) return true;
-      if (module.isDualOutputMode && !module.forceStreamShiftToggleEnabled) return true;
+      if (module.isDualOutputMode) return true;
       return module.isStreamShiftDisabled;
     },
   }));
-
-  useEffect(() => {
-    // Ensure that non-ultra users have the stream switcher disabled
-    if (!isPrime && isStreamShiftMode) {
-      setStreamShift(false);
-    }
-  }, [isPrime, isStreamShiftMode]);
 
   const label = $t('Stream Shift');
 
@@ -114,14 +107,13 @@ function StreamShiftTooltip() {
     isDualOutputMode,
     isPatreonEnabled,
     isLiveOutputEditingEnabled,
-    forceStreamShiftToggleEnabled,
     showTooltip,
   } = useGoLiveSettings().extend(module => ({
     get showTooltip() {
       if (module.isPatreonEnabled) return true;
       if (!module.isPrime) return true;
       if (module.isLiveOutputEditingEnabled) return true;
-      if (module.isDualOutputMode && !module.forceStreamShiftToggleEnabled) return true;
+      if (module.isDualOutputMode) return true;
       return false;
     },
   }));
@@ -129,6 +121,10 @@ function StreamShiftTooltip() {
   const tooltipText = useMemo(() => {
     if (!isPrime) {
       return { name: 'non-ultra', text: $t('Upgrade to Ultra to switch streams between devices.') };
+    }
+
+    if (isDualOutputMode) {
+      return { name: 'dual-output', text: $t('Stream Shift cannot be used with Dual Output') };
     }
 
     if (isPatreonEnabled) {
@@ -142,18 +138,8 @@ function StreamShiftTooltip() {
       };
     }
 
-    if (isDualOutputMode && !forceStreamShiftToggleEnabled) {
-      return { name: 'dual-output', text: $t('Stream Shift cannot be used with Dual Output') };
-    }
-
     return { name: 'default', text: '' };
-  }, [
-    isPrime,
-    isPatreonEnabled,
-    isDualOutputMode,
-    isLiveOutputEditingEnabled,
-    forceStreamShiftToggleEnabled,
-  ]);
+  }, [isPrime, isPatreonEnabled, isDualOutputMode, isLiveOutputEditingEnabled]);
 
   function handleTooltipClick() {
     shell.openExternal(

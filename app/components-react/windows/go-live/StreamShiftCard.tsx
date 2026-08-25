@@ -1,20 +1,17 @@
 import React, { useCallback, useMemo } from 'react';
-import { TInputLayout } from 'components-react/shared/inputs';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import { Services } from 'components-react/service-provider';
 import { SwitcherCard } from './SwitcherCard';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import { $t } from 'services/i18n/i18n';
 import styles from './GoLive.m.less';
+import cx from 'classnames';
 import { shell } from '@electron/remote';
 
 export default function StreamShiftCard() {
-  const {
-    isStreamShiftMode,
-    isPrime,
-    setStreamShift,
-    isLiveOutputEditingEnabled,
-  } = useGoLiveSettings();
+  const { isStreamShiftMode, isPrime, setStreamShift, isStreamShiftDisabled } = useGoLiveSettings();
+
+  const tooltipDisabled = !isStreamShiftDisabled;
 
   const handleToggleStreamShift = useCallback(
     (status?: boolean) => {
@@ -36,7 +33,7 @@ export default function StreamShiftCard() {
   return (
     <SwitcherCard
       onClick={() => handleToggleStreamShift()}
-      value={isLiveOutputEditingEnabled ? false : isStreamShiftMode}
+      value={isStreamShiftDisabled ? false : isStreamShiftMode}
       title={
         <>
           {$t('Stream Shift')}
@@ -47,8 +44,9 @@ export default function StreamShiftCard() {
       description={$t('Switch between devices while live.')}
       icon="icon-repeat-2"
       iconClassName={!isPrime ? styles.ultraIcon : undefined}
-      tooltip={<StreamShiftTooltip />}
-      disabled={isLiveOutputEditingEnabled}
+      disabled={isStreamShiftDisabled}
+      switchTooltip={<StreamShiftTooltip />}
+      switchTooltipDisabled={tooltipDisabled}
     />
   );
 }
@@ -60,7 +58,6 @@ function StreamShiftTooltip() {
     isPatreonEnabled,
     isStreamShiftMode,
     isLiveOutputEditingEnabled,
-    forceStreamShiftToggleEnabled,
     showTooltip,
   } = useGoLiveSettings().extend(module => ({
     get showTooltip() {
@@ -68,7 +65,7 @@ function StreamShiftTooltip() {
       if (!module.isPrime) return true;
       if (module.isStreamShiftMode) return false;
       if (module.isLiveOutputEditingEnabled) return true;
-      if (module.isDualOutputMode && !module.forceStreamShiftToggleEnabled) return true;
+      if (module.isDualOutputMode) return true;
       return false;
     },
   }));
@@ -76,6 +73,10 @@ function StreamShiftTooltip() {
   const tooltipText = useMemo(() => {
     if (!isPrime) {
       return { name: 'non-ultra', text: $t('Upgrade to Ultra to switch streams between devices.') };
+    }
+
+    if (isDualOutputMode) {
+      return { name: 'dual-output', text: $t('Stream Shift cannot be used with Dual Output') };
     }
 
     if (isPatreonEnabled) {
@@ -89,19 +90,8 @@ function StreamShiftTooltip() {
       };
     }
 
-    if (isDualOutputMode && !forceStreamShiftToggleEnabled) {
-      return { name: 'dual-output', text: $t('Stream Shift cannot be used with Dual Output') };
-    }
-
     return { name: 'default', text: '' };
-  }, [
-    isPrime,
-    isPatreonEnabled,
-    isDualOutputMode,
-    isStreamShiftMode,
-    isLiveOutputEditingEnabled,
-    forceStreamShiftToggleEnabled,
-  ]);
+  }, [isPrime, isPatreonEnabled, isDualOutputMode, isStreamShiftMode, isLiveOutputEditingEnabled]);
 
   function handleTooltipClick() {
     shell.openExternal(

@@ -30,9 +30,12 @@ interface ISwitcherCardProps {
   onClick: (e: MouseEvent) => boolean | void | unknown;
   tooltip?: string | ReactNode;
   tooltipDisabled?: boolean;
+  switchTooltip?: string | ReactNode;
+  switchTooltipDisabled?: boolean;
   className?: string;
   switchClassName?: string;
   tooltipClassName?: string;
+  switchTooltipClassName?: string;
   iconClassName?: string;
   disabled?: boolean;
   switchDisabled?: boolean;
@@ -53,6 +56,9 @@ interface ISwitcherCardContentsProps {
   description: string;
   children?: ReactNode;
   switchDisabled?: boolean;
+  switchTooltip?: string | ReactNode;
+  switchTooltipDisabled?: boolean;
+  switchTooltipClassName?: string;
 }
 
 /**
@@ -132,6 +138,9 @@ export const SwitcherCard = forwardRef<ISwitcherCardHandle, ISwitcherCardProps>(
         icon={p.icon}
         iconClassName={p.iconClassName}
         description={p.description}
+        switchTooltip={p.switchTooltip}
+        switchTooltipDisabled={p.switchTooltipDisabled}
+        switchTooltipClassName={p.switchTooltipClassName}
       >
         {p.children}
       </SwitcherCardContents>
@@ -141,18 +150,43 @@ export const SwitcherCard = forwardRef<ISwitcherCardHandle, ISwitcherCardProps>(
 
 function SwitcherCardContents(p: ISwitcherCardContentsProps) {
   return (
-    <div className={cx(styles.platformSwitcher, p.className)} onClick={p.onClick}>
+    <div
+      className={cx(styles.platformSwitcher, { [styles.cardDisabled]: p.disabled }, p.className)}
+      onClick={p.onClick}
+    >
       <div className={styles.destinationInfo}>
         <div className={styles.colInput} onTransitionEnd={p.onTransitionEnd}>
-          <SwitchInput
-            value={p.value}
-            name={p.name}
-            disabled={p.disabled}
-            label={p.label ?? p.title}
-            nolabel
-            className={p.switchClassName}
-            skipWrapperAttrs={true}
-          />
+          {p.switchTooltip ? (
+            <Tooltip
+              title={p.switchTooltip}
+              placement="left"
+              className={p.switchTooltipClassName}
+              overlayClassName={styles.switcherTooltip}
+              disabled={p.switchTooltipDisabled}
+              styleContent={false}
+              lightShadow={true}
+            >
+              <SwitchInput
+                value={p.value}
+                name={p.name}
+                disabled={p.disabled}
+                label={p.label ?? p.title}
+                nolabel
+                className={p.switchClassName}
+                skipWrapperAttrs={true}
+              />
+            </Tooltip>
+          ) : (
+            <SwitchInput
+              value={p.value}
+              name={p.name}
+              disabled={p.disabled}
+              label={p.label ?? p.title}
+              nolabel
+              className={p.switchClassName}
+              skipWrapperAttrs={true}
+            />
+          )}
         </div>
 
         <div className={styles.colInfo}>

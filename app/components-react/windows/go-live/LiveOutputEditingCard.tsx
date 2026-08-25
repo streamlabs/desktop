@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo } from 'react';
-import { TInputLayout } from 'components-react/shared/inputs';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import { Services } from 'components-react/service-provider';
 import { SwitcherCard } from './SwitcherCard';
@@ -26,6 +25,10 @@ export default function LiveOutputEditingCard() {
     }
 
     return $t('Update your live outputs mid-stream');
+  }, [isPrime, isStreamShiftMode]);
+
+  const tooltipDisabled = useMemo(() => {
+    return isPrime && !isStreamShiftMode;
   }, [isPrime, isStreamShiftMode]);
 
   const handleToggleLiveOutputEditing = useCallback(
@@ -59,7 +62,8 @@ export default function LiveOutputEditingCard() {
       description={$t('Manage output destinations mid-stream.')}
       icon="icon-output"
       disabled={isLiveOutputEditingDisabled}
-      tooltip={liveOutputTooltip}
+      switchTooltip={liveOutputTooltip}
+      switchTooltipDisabled={tooltipDisabled}
       iconClassName={!isPrime ? styles.ultraIcon : undefined}
     />
   );
