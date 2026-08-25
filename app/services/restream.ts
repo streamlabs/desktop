@@ -749,7 +749,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
   async setupIngest() {
     const ingest = await this.getIngestServer();
 
-    if (this.streamInfo.isStreamShiftMode) {
+    console.log('this.streamInfo', this.streamInfo.isStreamShiftMode);
+    if (this.streamInfo.isStreamShiftMode || this.state.streamShiftStatus === 'pending') {
       // in single output mode, we just set the ingest for the default display
       this.streamSettingsService.setSettings({
         streamType: 'rtmp_custom',
@@ -757,8 +758,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
       const streamId = uuid();
       this.SET_STREAM_SWITCHER_STREAM_ID(streamId);
-      // for the stream switcher, the stream needs a unique identifier
+      // For the stream switcher, the stream needs a unique identifier
+      // Note: if there is a bug with stream shift, start by checking for an sid parameter in the stream key
       const streamKey = `${this.settings.streamKey}&sid=${streamId}`;
+      console.log('Generated stream key with sid:', streamKey);
 
       this.streamSettingsService.setSettings({
         streamType: 'rtmp_custom',
@@ -1119,18 +1122,15 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
     return jfetch<{ [key: string]: ITargetLiveData[] }>(request)
       .then(res => {
-        const targets = this.state.streamShiftTargets.reduce((targetData: ITargetLiveData[], t) => {
-          const platform = t.platform as string;
-          if (t.platform !== 'relay') {
-            const data = res[platform]?.[0];
+        // Preserve targets the status endpoint returned no data for. Dropping them removes the
+        // platform from the switch entirely, and drops the relay target on every fetch.
+        const targets = this.state.streamShiftTargets.map((t: ITargetLiveData) => {
+          if (t.platform === 'relay') return t;
 
-            if (data) {
-              targetData.push({ ...t, ...data });
-            }
-          }
+          const data = res[t.platform as string]?.[0];
 
-          return targetData;
-        }, []);
+          return data ? { ...t, ...data } : t;
+        });
 
         console.debug('Stream Shift target data', targets);
 
