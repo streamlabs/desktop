@@ -85,7 +85,7 @@ test('Streaming to Youtube', async t => {
   t.true(await chatIsVisible(), 'Chat should be visible');
   await stopStream();
 
-  await toggleDualOutputMode(true);
+  await toggleDualOutputMode();
   await clickGoLive();
   await waitForSettingsWindowLoaded();
   await fillForm({
