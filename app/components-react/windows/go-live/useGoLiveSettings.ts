@@ -324,8 +324,8 @@ export class GoLiveSettingsModule {
     // This is not awaited because it only decides whether the prompt appears and nothing else
     // that is rendered depends on the result. Also don't check in update mode because any stream
     // using restream will show as live, because it is live, just not with stream shift.
-    if (!this.isUpdateMode) {
-      await Services.RestreamService.actions.checkIsLive();
+    if (!this.isUpdateMode && Services.RestreamService.views.streamShiftStatus !== 'pending') {
+      Services.RestreamService.actions.checkIsLive();
     }
 
     await this.prepopulate();
@@ -599,6 +599,15 @@ export class GoLiveSettingsModule {
 
   setStreamShift(status: boolean) {
     this.state.toggleStreamShift(status);
+
+    // The two features are mutually exclusive. `isLiveOutputEditingDisabled` stops live output
+    // editing being switched on while stream shift is active, so turn it off here to close the
+    // other direction — including when accepting a detected switch, which enables stream shift
+    // without the user touching either toggle.
+    if (status && this.state.isLiveOutputEditingEnabled) {
+      this.state.toggleLiveOutputEditing(false);
+    }
+
     this.save(this.state.settings);
   }
 

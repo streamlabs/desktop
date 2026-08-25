@@ -1460,14 +1460,24 @@ export class RestreamService extends StatefulService<IRestreamState> {
     if (action === 'rejected') {
       this.SET_STREAM_SWITCHER_STATUS('pending');
     } else {
+      this.streamSettingsService.setGoLiveSettings({ streamShift: true });
+
+      // Dual output mode is not compatible with stream shift
       if (this.streamInfo.isDualOutputMode) {
-        this.dualOutputService.toggleDisplay(false, 'vertical');
+        this.dualOutputService.setDualOutputModeIfPossible(false, true, false, true);
       }
 
-      this.SET_STREAM_SWITCHER_STATUS('inactive');
+      // Live output editing mode is not compatible with stream shift
+      if (this.streamInfo.isLiveOutputEditingEnabled) {
+        this.streamSettingsService.setGoLiveSettings({ liveOutputEditing: false });
+      }
+
       this.updateStreamShift('approved').catch((e: unknown) => {
         console.error('Stream Shift Error: failed to approve the switch', e);
       });
+      this.SET_STREAM_SWITCHER_STATUS('inactive');
+
+      await this.streamingService.toggleStreaming();
     }
   }
 
@@ -1481,8 +1491,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
       identifier: this.state.streamShiftStreamId,
       action,
     });
+    console.log('Stream Shift updateStreamShift', action, this.state.streamShiftStreamId);
     const request = new Request(url, { headers, body, method: 'POST' });
     const res = await fetch(request);
+    console.log('res ', res);
     if (!res.ok) throw await res.json();
     return res.json();
   }

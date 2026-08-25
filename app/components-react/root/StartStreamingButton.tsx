@@ -3,14 +3,13 @@ import cx from 'classnames';
 import { EStreamingState } from 'services/streaming';
 import { EGlobalSyncStatus } from 'services/media-backup';
 import { $t } from 'services/i18n';
-import { useVuex } from '../hooks';
+import { useDebounce, useVuex } from '../hooks';
 import { Services } from '../service-provider';
 import * as remote from '@electron/remote';
 import { TStreamShiftStatus } from 'services/restream';
 import { promptAction } from 'components-react/modals';
 import { TSocketEvent } from 'services/websocket';
 import { useRealmObject } from 'components-react/hooks/realm';
-import debounce from 'lodash/debounce';
 
 function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -75,9 +74,7 @@ function StartStreamingButton(p: { disabled?: boolean }) {
   useEffect(() => {
     // Check for stream shift status on mount. This will happen on app launch because the main window is always active
     if (isPrime && streamingStatus === EStreamingState.Offline) {
-      fetchStreamShiftStatus().catch((e: unknown) => {
-        console.error('Error fetching stream shift status:', e);
-      });
+      checkIsLive();
     }
 
     const streamShiftEvent = StreamingService.streamShiftEvent.subscribe(
@@ -101,6 +98,7 @@ function StartStreamingButton(p: { disabled?: boolean }) {
 
     return () => {
       toggleStreaming.cancel();
+      checkIsLive.cancel();
       streamShiftEvent.unsubscribe();
     };
   }, []);
@@ -164,9 +162,10 @@ function StartStreamingButton(p: { disabled?: boolean }) {
 
   // Wrap the toggleStreaming function in a debounce to prevent multiple rapid clicks
   // and also to cancel the action on unmount to prevent memory leaks and state updates on unmounted components
-  const toggleStreaming = useMemo(() => debounce(handleToggleStreaming, 500), [
-    handleToggleStreaming,
-  ]);
+  const toggleStreaming = useDebounce(500, handleToggleStreaming);
+
+  // Checking for a stream shift status can take up to four seconds
+  const checkIsLive = useDebounce(4000, RestreamService.actions.checkIsLive);
 
   const getIsRedButton = useMemo(() => {
     return streamingStatus !== EStreamingState.Offline && streamShiftStatus !== 'pending';
@@ -180,17 +179,6 @@ function StartStreamingButton(p: { disabled?: boolean }) {
     );
   }, [p.disabled, streamingStatus, delaySecondsRemaining]);
 
-  const fetchStreamShiftStatus = useCallback(async () => {
-    try {
-      const isLive = await RestreamService.actions.return.checkIsLive();
-      return isLive;
-    } catch (e: unknown) {
-      console.log('Error checking stream shift status', e);
-      setIsLoading(false);
-      return false;
-    }
-  }, []);
-
   const shouldShowGoLiveWindow = useCallback(() => {
     if (!UserService.isLoggedIn) return false;
     const primaryPlatform = UserService.state.auth?.primaryPlatform;
@@ -198,13 +186,17 @@ function StartStreamingButton(p: { disabled?: boolean }) {
 
     if (!primaryPlatform) return false;
 
+    if (streamShiftStatus === 'pending') {
+      return true;
+    }
+
     if (StreamingService.views.isDualOutputMode) {
       return true;
     }
 
     if (
       !!UserService.state.auth?.platforms &&
-      StreamingService.views.isMultiplatformMode &&
+      isMultiplatformMode &&
       Object.keys(UserService.state.auth?.platforms).length > 1
     ) {
       return true;
@@ -213,14 +205,14 @@ function StartStreamingButton(p: { disabled?: boolean }) {
     if (primaryPlatform === 'twitch') {
       // For Twitch, we can show the Go Live window even with protected mode off
       // This is mainly for legacy reasons.
-      return StreamingService.views.isMultiplatformMode || updateStreamInfoOnLive;
+      return isMultiplatformMode || updateStreamInfoOnLive;
     } else {
       return (
         StreamSettingsService.state.protectedModeEnabled &&
         StreamSettingsService.isSafeToModifyStreamKey()
       );
     }
-  }, [primaryPlatform, isMultiplatformMode, updateStreamInfoOnLive]);
+  }, [primaryPlatform, isMultiplatformMode, updateStreamInfoOnLive, streamShiftStatus]);
 
   return (
     <button

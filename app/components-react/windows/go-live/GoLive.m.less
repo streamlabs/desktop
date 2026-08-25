@@ -52,6 +52,17 @@
 .destination-mode {
   padding-right: 25px !important;
   padding-left: 25px !important;
+
+  // Without a left column this padding is the only gutter, so the children's own right margins
+  // sit on top of it and inset the right edge further than the left. Those margins exist to
+  // separate the two columns, which is not this layout.
+  > *:not(:first-child) {
+    margin-right: 0;
+  }
+
+  .right-column-scroll {
+    margin-right: 0 !important;
+  }
 }
 
 .label {
