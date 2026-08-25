@@ -1381,13 +1381,15 @@ export class RestreamService extends StatefulService<IRestreamState> {
       new Headers({ 'Content-Type': 'application/json' }),
     );
     const url = `https://${this.host}/api/v1/rst/targets`;
+    const dcProtection =
+      this.streamInfo.isStreamShiftMode || this.streamInfo.isLiveOutputEditingEnabled;
     const body = JSON.stringify(
       targets.map(target => {
         return {
           platform: target.platform,
           streamKey: target.streamKey,
           enabled: true,
-          dcProtection: false,
+          dcProtection,
           idleTimeout: 30,
           label: target?.label ?? `${target.platform} target`,
           mode: target?.mode,

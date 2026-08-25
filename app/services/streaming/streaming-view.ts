@@ -432,6 +432,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * @param platform - The platform to resolve the orientation for
    */
   getPlatformMode(platform: TPlatform): TOutputOrientation {
+    if (this.isStreamShiftMode) return 'landscape';
     if (!this.isDualOutputMode && !this.isLiveOutputEditingEnabled) return 'landscape';
     const display = this.getPlatformDisplayType(platform);
     return display === 'vertical' ? 'portrait' : 'landscape';
