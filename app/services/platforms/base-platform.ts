@@ -7,6 +7,7 @@ import {
   TStartStreamOptions,
   TPlatformCapabilityMap,
   TLiveDockFeature,
+  platformLabels,
 } from './index';
 import { StreamingService } from 'services/streaming';
 import { UserService } from 'services/user';
@@ -18,6 +19,7 @@ import * as remote from '@electron/remote';
 import { VideoSettingsService } from 'services/settings-v2/video';
 import { ENotificationType, NotificationsService } from 'services/notifications';
 import { IJsonRpcRequest } from 'services/api/jsonrpc';
+import { throwStreamError, TStreamErrorType } from 'services/streaming/stream-error';
 
 const VIEWER_COUNT_UPDATE_INTERVAL = 60 * 1000;
 
@@ -144,14 +146,35 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
   }
 
   setPlatformContext(platform: TPlatform) {
-    if (this.streamingService.views.isDualOutputMode) {
-      const display = this.streamingService.views.getPlatformDisplayType(platform);
-      const mode = display === 'vertical' ? 'portrait' : 'landscape';
+    const mode = this.streamingService.views.getPlatformMode(platform);
+    this.UPDATE_STREAM_SETTINGS({
+      mode,
+    });
+  }
 
-      this.UPDATE_STREAM_SETTINGS({
-        mode,
-      });
-    }
+  formatError(
+    e: any,
+    platform: TPlatform,
+    errorType: TStreamErrorType = 'PLATFORM_REQUEST_FAILED',
+  ): never {
+    console.error(`${platformLabels(platform)} Error: `, e);
+
+    const message =
+      e.result?.data?.message ||
+      e.result?.message ||
+      e.statusText ||
+      e.message ||
+      `Unknown error starting ${platformLabels(platform)} stream`;
+
+    throwStreamError(
+      errorType,
+      {
+        status: e.status,
+        statusText: message,
+        platform,
+      },
+      message,
+    );
   }
 
   @mutation()

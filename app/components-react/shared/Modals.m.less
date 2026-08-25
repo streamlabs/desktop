@@ -1,11 +1,16 @@
 .action-modal-icon {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  margin-right: 10px;
-  vertical-align: super;
+  display: inline-flex;
+  align-items: center;
+  margin-right: 8px;
+  vertical-align: middle;
   font-size: 18px;
   color: var(--title);
+}
+
+// Only indent the message when an icon is present, so it lines up under the title
+// instead of hanging off to the left of it.
+.action-modal-icon + :global(.ant-modal-confirm-title) + :global(.ant-modal-confirm-content) {
+  margin-left: 23px;
 }
 
 .action-modal {
@@ -34,6 +39,7 @@
     display: inline-block;
     font-size: 19px;
     line-height: unset;
+    vertical-align: middle;
   }
 
   :global(.ant-modal-confirm-btns) {

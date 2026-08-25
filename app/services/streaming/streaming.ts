@@ -804,12 +804,15 @@ export class StreamingService
     platform: TPlatform,
     settings: IGoLiveSettings,
     unattendedMode: boolean,
+    failOnError: boolean = false,
   ) {
     const service = getPlatformService(platform);
 
-    // in dual output mode, assign context by settings
-    // in single output mode, assign context to 'horizontal' by default
-    const display = this.views.getPlatformDisplayType(platform);
+    // In dual output mode, assign context by platform display
+    // In single output mode, assign context to 'horizontal' by default
+    const display = this.views.isDualOutputMode
+      ? this.views.getPlatformDisplayType(platform)
+      : 'horizontal';
 
     try {
       const isStreamShiftStream = this.restreamService.views.hasStreamShiftTargets;
@@ -874,7 +877,14 @@ export class StreamingService
       // To prevent users from being blocked by livestreaming from a single platform failing to
       // set up. Users can elect to bypass the error and go live anyways. To prevent the go live
       // checklist from being stopped too soon, only stop if no displays are multistreaming.
-      if (!this.views.shouldSetupRestream) {
+      //
+      // `failOnError` opts out of that for a target added mid-stream, where that platform is the
+      // whole operation rather than one of several going live. Continuing would add a restream
+      // target built from the stream key the failed `beforeGoLive` never set, leaving the user
+      // live to an address that goes nowhere with no indication anything went wrong.
+      // Rethrow the original error so the reason the platform failed survives to the user.
+      if (failOnError || !this.views.shouldSetupRestream) {
+        if (e instanceof StreamError) throw e;
         throwStreamError(errorType);
       }
     }
@@ -1041,9 +1051,10 @@ export class StreamingService
           await this.removeTargetsFromStream(updatePlatforms.stop, updateDestinations.stop);
         }
 
-        // Update checklist for added platforms and run `beforeGoLive` to set up the new platforms
+        // Update checklist for added platforms and run `beforeGoLive` to set up the new platforms.
+        // Fail on error so that a platform that could not be set up is never added as a target.
         for (const platform of updatePlatforms.start) {
-          await this.setPlatformSettings(platform, settings, false);
+          await this.setPlatformSettings(platform, settings, false, true);
         }
 
         // Save any settings updated during the `beforeGoLive` process for the platforms.
@@ -4255,6 +4266,8 @@ export class StreamingService
    * even if one fails. This prevents orphan contexts that can leave phantom processes or create errors on next startup.
    */
   async shutdown() {
+    const failures: string[] = [];
+
     // InitShutdownSequence is called before this method, so OBS outputs are
     // already being torn down. Skip .stop() calls and directly destroy factory
     // instances to avoid blocking on native calls that may never return.
@@ -4271,10 +4284,15 @@ export class StreamingService
           this.destroyFactoryInstance(type, instance);
         } catch (e: unknown) {
           console.error(`Error destroying ${type} for ${context} during shutdown:`, e);
+          failures.push(`${context}.${type}`);
         }
 
         this.contexts[context][type] = null;
       }
+    }
+
+    if (failures.length) {
+      throw new Error(`Failed to destroy output contexts during shutdown: ${failures.join(', ')}`);
     }
   }
 

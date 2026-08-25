@@ -27,6 +27,10 @@ if (process.env.HIGHLIGHTER_ENV) {
   console.log('Compiling build with ' + process.env.HIGHLIGHTER_ENV + ' highlighter version.');
   envDef['process.env.HIGHLIGHTER_ENV'] = JSON.stringify(process.env.HIGHLIGHTER_ENV ?? '');
 }
+if (process.env.AVATAR_ENV) {
+  console.log('Compiling build with ' + process.env.AVATAR_ENV + ' avatar version.');
+  envDef['process.env.AVATAR_ENV'] = JSON.stringify(process.env.AVATAR_ENV ?? '');
+}
 
 plugins.push(new webpack.DefinePlugin(envDef));
 

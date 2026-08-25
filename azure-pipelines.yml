@@ -2,6 +2,22 @@ trigger:
   - staging
   - master
 
+pr:
+  branches:
+    include:
+      - staging
+      - master
+  paths:
+    include:
+      - '*'
+    exclude:
+      - package.json
+      - yarn.lock
+      - app/i18n/*
+      - .github/*
+      - '*.md'
+      - '*.yml'
+
 variables:
   CI: true
 
@@ -45,7 +61,7 @@ jobs:
           SLOBS_TEST_USER_POOL_TOKEN: $(userPoolToken)
           BROWSER_SOURCE_HARDWARE_ACCELERATION: 'OFF'
           SLOBS_TEST_STREAM_KEY: $(twitchStreamKey)
-          SLOBS_TEST_RUN_CHUNK: "$(System.JobPositionInPhase)/$(System.TotalJobsInPhase)"
+          SLOBS_TEST_RUN_CHUNK: '$(System.JobPositionInPhase)/$(System.TotalJobsInPhase)'
 
   - job: Check_eslint_and_strict_nulls_regression
 
@@ -56,7 +72,6 @@ jobs:
       clean: resources
 
     steps:
-
       - powershell: echo "IP for RDP connections:" $(Invoke-RestMethod ipinfo.io/ip)
         displayName: 'Get RDP address'
 

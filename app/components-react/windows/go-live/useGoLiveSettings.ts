@@ -507,12 +507,6 @@ export class GoLiveSettingsModule {
     this.save(this.state.settings);
   }
 
-  toggleVerticalDisplay() {
-    if (Services.DualOutputService.views.showVerticalDisplay) return;
-    Services.DualOutputService.actions.toggleDualOutputMode(true);
-    Services.DualOutputService.actions.toggleDisplay(true, 'vertical');
-  }
-
   get enabledDestinations() {
     return this.state.customDestinations.reduce(
       (enabled: number[], dest: ICustomStreamDestination, index: number) => {
@@ -756,6 +750,10 @@ export class GoLiveSettingsModule {
     return this.state.isStreamShiftMode;
   }
 
+  get isDualOutputMode() {
+    return Services.DualOutputService.views.dualOutputMode;
+  }
+
   get enabledPlatformsCount() {
     return this.state.enabledPlatforms.length;
   }
@@ -775,6 +773,7 @@ export class GoLiveSettingsModule {
   }
 
   get disableCustomDestinationSwitchers() {
+    if (this.isPrime && this.isDualOutputMode) return false;
     return (
       !this.isRestreamEnabled &&
       !this.state.enabledPlatforms.includes('tiktok') &&

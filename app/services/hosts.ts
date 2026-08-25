@@ -55,6 +55,18 @@ export class HostsService extends Service {
   get analitycs() {
     return 'r2d2.streamlabs.com';
   }
+
+  get streamAvatarApi() {
+    if (Util.getAvatarEnvironment() === 'local') {
+      return 'localhost:3000';
+    }
+
+    if (Util.getAvatarEnvironment() === 'staging') {
+      return 'ai-agent.streamlabs.com';
+    }
+
+    return 'isa.streamlabs.com';
+  }
 }
 
 export class UrlService extends Service {

@@ -28,7 +28,7 @@ export default function EditTransform() {
 
   useEffect(() => {
     const subscription = SourcesService.sourceRemoved.subscribe(cancel);
-    return subscription.unsubscribe;
+    return () => subscription.unsubscribe();
   }, []);
 
   async function invalidForm() {
