@@ -1,0 +1,24 @@
+{
+  "name": "sld-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP server exposing Streamlabs Desktop to an AI agent over its local JSON-RPC pipe.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/index.ts",
+    "probe": "tsx scripts/probe.ts",
+    "inspect": "npx -y @modelcontextprotocol/inspector node dist/index.js",
+    "test:e2e": "tsx scripts/e2e.ts",
+    "test:reconnect": "tsx scripts/reconnect-test.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

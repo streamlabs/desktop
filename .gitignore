@@ -32,3 +32,4 @@ license_en.txt
 !.yarn/versions
 chromedriver.log
 shared-resources/ai-highlighter/*
+.sld-mcp-cache/
