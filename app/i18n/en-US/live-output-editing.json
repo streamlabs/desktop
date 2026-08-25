@@ -13,5 +13,6 @@
   "Start streaming to %{target}": "Start streaming to %{target}",
   "Stop streaming to %{target}": "Stop streaming to %{target}",
   "Continue streaming to %{target}": "Continue streaming to %{target}",
-  "Dual Stream is not available while live output editing is enabled": "Dual Stream is not available while live output editing is enabled"
+  "Dual Stream is not available while live output editing is enabled": "Dual Stream is not available while live output editing is enabled",
+  "Manage Stream": "Manage Stream"
 }
