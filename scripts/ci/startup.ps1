@@ -2,7 +2,5 @@
 
 cd $PSScriptRoot;
 
-# start agent and run one job
+# start agent service
 ."./start-agent.ps1";
-
-Restart-Computer -Force

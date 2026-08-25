@@ -82,7 +82,7 @@ choco install visualstudio2019buildtools --package-parameters "--add Microsoft.V
 
 # run registration script
 echo "Configure GH Actions"
-."$workingDir\config.cmd --url https://github.com/streamlabs/desktop --token $token"
+cmd.exe /c "$workingDir\config.cmd --url https://github.com/streamlabs/desktop --token $token"
 
 # Disable the lock screen to prevent the PC locking after the end of the RDP session
 Set-ItemProperty "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization" -Name 'NoLockScreen' -Value 1;

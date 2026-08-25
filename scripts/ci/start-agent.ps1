@@ -5,23 +5,23 @@ if (-Not($workingDir)) {
   echo "Working dir is not set. Did you run the installation script?";
   exit -1;
 }
-$workingDir = "C:\actions-runner" # Replace with your actual agent working directory
-$timeout = New-TimeSpan -Minutes 60 # Set your desired timeout duration
-$agentProcess = Start-Process -NoNewWindow -PassThru -FilePath "$workingDir\run.cmd" -ArgumentList "--once"
+$agentService = Start-Service "actions.runner.*" -PassThru
 
 $agentStarted = Get-Date
 
 # Poll the agent process status in a loop
-While ($agentProcess.HasExited -ne $true) {
+While ($agentService.Status -ne 1) {
     Start-Sleep -Seconds 30 # Check every 30 seconds
+    $runnerStatus = Get-Service "actions.runner.*"
 
-    # If the current time exceeds the start time by the timeout duration, stop the agent
-    If ((Get-Date) -gt $agentStarted.Add($timeout)) {
-        Write-Host "Agent is still running after timeout. Forcing exit..."
-        Stop-Process -Id $agentProcess.Id -Force
+    # Check if the runners status is "Offline" which on the running machine indicates it cannot communicate with GH
+    # Statuses here: https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/monitor-and-troubleshoot#checking-the-status-of-a-self-hosted-runner
+    If ($runnerStatus -eq "Offline") {
+        Write-Host "Agent has gone offline. Forcing exit..."
+        Stop-Service "actions.runner.*"
+        Write-Host "Agent process is offline, restarting computer."
+        Restart-Computer -Force
         Break
     }
 }
-
-Write-Host "Agent process has completed."
 
