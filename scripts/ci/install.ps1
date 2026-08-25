@@ -27,7 +27,8 @@ Remove-Item -Recurse -Force -ErrorAction Ignore actions-runner
 
 $ErrorActionPreference = 'Stop'
 # Create a folder under the drive root
-mkdir actions-runner; cd actions-runner
+New-Item -ItemType Directory -Force actions-runner | Out-Null
+cd actions-runner
 # Download the latest runner package
 Invoke-WebRequest -Uri https://github.com/actions/runner/releases/download/v2.336.0/actions-runner-win-x64-2.336.0.zip -OutFile actions-runner-win-x64-2.336.0.zip
 # Optional: Validate the hash
@@ -65,7 +66,11 @@ choco install yarn
 
 echo "Install Git for Windows"
 choco install git.install
-git config --global core.autocrlf false # setup line-ednings transform
+
+# setup line-endings transform
+$env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' +
+              [System.Environment]::GetEnvironmentVariable('Path','User')
+git config --global core.autocrlf false 
 
 echo "Install 7zip"
 choco install 7zip
@@ -83,7 +88,7 @@ choco install visualstudio2019buildtools --package-parameters "--add Microsoft.V
 echo "Configure GH Actions"
 cmd.exe /c "$workingDir\config.cmd --unattended --replace --url https://github.com/streamlabs/desktop --token $token --labels desktop-frontend --name $env:COMPUTERNAME --work _work"
 
-# Disable the lock screen to prevent the PC locking after the end of the RDP session
+# Disable the lock screen UI
 $personalizationKey = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization"
 New-Item -Path $personalizationKey -Force | Out-Null
 Set-ItemProperty $personalizationKey -Name 'NoLockScreen' -Value 1 -Type DWord
@@ -99,9 +104,11 @@ Set-ItemProperty $RegPath "DefaultPassword" -Value "$password" -type String
 # Use the example below to run restart all agents
 #   $LiveCred = Get-Credential
 #   Invoke-Command -Computer Agent1, Agent2, Agent3 -Credential $LiveCred -ScriptBlock {Restart-Computer -Force}
-Enable-PSRemoting -Force
+Enable-PSRemoting -Force -SkipNetworkProfileCheck
 Set-Item -Force wsman:\localhost\client\trustedhosts *
-New-NetFirewallRule -DisplayName "Allow inbound TCP port 5985" -Direction inbound -LocalPort 5985 -Protocol TCP -Action Allow
+if (-Not (Get-NetFirewallRule -DisplayName "Allow inbound TCP port 5985" -ErrorAction Ignore)) {
+  New-NetFirewallRule -DisplayName "Allow inbound TCP port 5985" -Direction inbound -LocalPort 5985 -Protocol TCP -Action Allow
+}
 Restart-Service WinRM
 
 echo "Setup agent autostart"

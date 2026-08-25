@@ -6,13 +6,6 @@ on:
   pull_request:
     branches: [staging, master]
     types: [synchronize, opened, reopened]
-    paths-ignore:
-      - 'app/i18n/**'
-      - '.github/instructions/*'
-      - '*.md'
-      - '*.yml'
-      - 'package.json'
-      - 'yarn.lock'
 
 defaults:
   run:
@@ -25,9 +18,35 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
+  testable-changes:
+    name: 'Detect Changes Requiring Testing'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          predicate-quantifier: 'every'
+          filters: |
+            src:
+              - '!app/i18n/**'
+              - '!.github/instructions/**'
+              - '!**/*.md'
+              - '!*.yml'
+              - '!package.json'
+              - '!yarn.lock'
+    outputs:
+      has-testable-changes: ${{ steps.filter.outputs.src }}
+
   test:
     name: 'Frontend Tests'
+    needs: testable-changes
+    if: needs.testable-changes.outputs.has-testable-changes == 'true' || github.event_name == 'push'
     runs-on: [self-hosted, desktop-frontend]
     timeout-minutes: 80
 
@@ -71,7 +90,10 @@ jobs:
 
   es-lint-strict-nulls:
     name: 'Check ESLint and Strict Nulls Regression'
+    needs: testable-changes
+    if: needs.testable-changes.outputs.has-testable-changes == 'true' || github.event_name == 'push'
     runs-on: windows-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -98,3 +120,19 @@ jobs:
   #       run: yarn eslint
   #     - name: 'Compile Assets'
   #       run: yarn ci:compile
+
+  results:
+    name: 'CI Results'
+    if: always()
+    # Note: every required job in this workflow must be accounted in the results collation
+    # to work properly as a required check
+    needs: [testable-changes, test, es-lint-strict-nulls]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check CI Results'
+        run: |
+          if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}; then
+            echo "One or more required jobs failed or were cancelled."
+            exit 1
+          fi
+          echo "All required jobs succeeded or were skipped."
