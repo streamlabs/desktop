@@ -51,7 +51,7 @@ jobs:
 
   es-lint-strict-nulls:
     name: 'Check ESLint and Strict Nulls Regression'
-    runs-on: self-hosted
+    runs-on: windows-latest
     steps:
       - name: 'Get RDP Address'
         run: echo "IP for RDP connections:" ${{ Invoke-RestMethod ipinfo.io/ip }}
