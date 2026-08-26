@@ -25,12 +25,24 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     canDualStream,
     updateCustomDestinationDisplayAndSaveSettings,
     updatePlatformDisplayAndSaveSettings,
+    isLiveOutputEditingEnabled,
+    isUpdateMode,
+    isLive,
   } = useGoLiveSettings().extend(module => ({
     get canDualStream() {
       if (!p.platform) return false;
       if (module.isLiveOutputEditingEnabled) return false;
       return module.getCanDualStream(p.platform);
     },
+
+    get isLive(): boolean {
+      return (
+        module.isUpdateMode &&
+        module.isLiveOutputEditingEnabled &&
+        !!module.isTargetLive(p.platform ?? p.index)
+      );
+    },
+
     get display(): TDisplayOutput {
       const defaultDisplay = p.platform
         ? module.settings.platforms[p.platform]?.display
@@ -58,12 +70,34 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       },
     ];
 
+    if (isLive) {
+      // A live target cannot change display without restarting its stream, so offer only the
+      // display it is already using and explain how to change it
+      const activeDisplay =
+        defaultDisplays.find(option => option.value === display) ?? defaultDisplays[0];
+
+      return [
+        {
+          ...activeDisplay,
+          disabled: true,
+          tooltip: $t(
+            'Go offline to change orientation, then select a new resolution and go live again',
+          ),
+        },
+      ];
+    }
+
+    if (isUpdateMode) {
+      // Dual stream is not compatible with live output editing so don't show it in the edit stream window
+      return defaultDisplays;
+    }
+
     if (canDualStream) {
-      const tooltip = p?.platform
-        ? $t('Stream both horizontally and vertically to %{platform}', {
-            platform: platformLabels(p.platform),
-          })
-        : undefined;
+      const tooltip = isLiveOutputEditingEnabled
+        ? $t('Dual Stream is not available while live output editing is enabled')
+        : $t('Stream both horizontally and vertically to %{platform}', {
+            platform: platformLabels(p.platform!),
+          });
 
       return [
         ...defaultDisplays,
@@ -72,12 +106,13 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
           value: 'both' as TDisplayType,
           icon: 'icon-dual-output',
           tooltip,
+          disabled: isLiveOutputEditingEnabled,
         },
       ];
     }
 
     return defaultDisplays;
-  }, [canDualStream]);
+  }, [canDualStream, isLiveOutputEditingEnabled, isUpdateMode, isLive, display, p.platform]);
 
   const onChange = useCallback(
     (val: string) => {
