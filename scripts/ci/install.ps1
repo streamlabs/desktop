@@ -73,6 +73,15 @@ choco install yarn
 echo "Install Git for Windows"
 choco install git.install
 
+# Git's default PATH entry (<Git>\cmd) has git.exe but not bash.exe. The Actions
+# runner resolves `shell: bash` off PATH, so add <Git>\bin explicitly.
+# Deliberately NOT adding <Git>\usr\bin - it shadows Windows' find.exe/sort.exe.
+$gitBin = "$env:ProgramFiles\Git\bin"
+$machinePath = [System.Environment]::GetEnvironmentVariable('Path', 'Machine')
+if ($machinePath -notlike "*$gitBin*") {
+  [System.Environment]::SetEnvironmentVariable('Path', "$machinePath;$gitBin", 'Machine')
+}
+
 # setup line-endings transform
 $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' +
               [System.Environment]::GetEnvironmentVariable('Path','User')
