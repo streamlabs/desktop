@@ -6,6 +6,7 @@ on:
   pull_request:
     branches: [staging, master]
     types: [synchronize, opened, reopened]
+  workflow_dispatch:
 
 defaults:
   run:
