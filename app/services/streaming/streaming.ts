@@ -1197,9 +1197,10 @@ export class StreamingService
       const keepsAtLeastOneTarget =
         updatePlatforms.continue.length > 0 || updateDestinations.continue.length > 0;
 
-      // Removing all targets from the stream will end the stream. Ordinarily, we remove the targets before adding targets
-      // but if the user is removing all currently active targets then we need to switch the order and add targets before
-      // removing the old targets to ensure that the stream does not end.
+      // Removing all targets from the stream will end the stream. Ordinarily, we remove the
+      // targets before adding targets but if the user is removing all currently active targets
+      // then we need to switch the order and add targets before removing the old targets to
+      // ensure that the stream does not end.
       const deferRemoval = willRemoveTargets && willAddTargets && !keepsAtLeastOneTarget;
 
       const removeStoppedTargets = async () => {
@@ -1233,7 +1234,7 @@ export class StreamingService
       const allStartDestinations = [...updateDestinations.start, ...dualStreamDestinations];
 
       // Add targets to restream in a single request
-      if (updatePlatforms.start.length > 0 || allStartDestinations.length > 0) {
+      if (willAddTargets) {
         // Targets can be added for a display that is not live yet, which means that display needs to
         // go through the full go live flow to create the streaming instance and restream session.
         const displaysToSetup = this.getDisplaysToSetup(

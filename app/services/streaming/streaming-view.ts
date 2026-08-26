@@ -424,16 +424,16 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   /**
-   * Resolve the orientation a platform's targets belong to
-   * @remark Both dual output and live output editing assign targets to a display, so both must
-   * read the saved assignment. Live output editing runs in single output mode, so gating on
-   * `isDualOutputMode` alone would report a vertical target as landscape and send it to the
-   * wrong display's restream stream.
-   * @param platform - The platform to resolve the orientation for
+   * Returns the output orientation for a given platform.
+   * @remark Expects to return the following per feature:
+   * - Stream Shift - always returns 'landscape'
+   * - Single Output Mode - always returns 'landscape'
+   * - Dual Output Mode - returns assigned displays: 'landscape' for horizontal displays and 'portrait' for vertical displays
+   * - Live Output Editing - returns 'landscape' in single output mode, and assigned displays in dual output mode
    */
   getPlatformMode(platform: TPlatform): TOutputOrientation {
     if (this.isStreamShiftMode) return 'landscape';
-    if (!this.isDualOutputMode && !this.isLiveOutputEditingEnabled) return 'landscape';
+    if (!this.isDualOutputMode) return 'landscape';
     const display = this.getPlatformDisplayType(platform);
     return display === 'vertical' ? 'portrait' : 'landscape';
   }

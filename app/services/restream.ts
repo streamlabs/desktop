@@ -601,7 +601,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
       if (!stopTargets.length) continue;
 
       const streamKey = await this.resolveStreamKey(mode);
-      console.debug('Removing targets for mode', mode, 'with stream key', streamKey, stopTargets);
 
       try {
         // Fetch the key for this mode rather than deriving it, the same way `addTargets` does, so
@@ -905,10 +904,9 @@ export class RestreamService extends StatefulService<IRestreamState> {
       // in single output mode, we just set the ingest for the default display
       const streamId = uuid();
       this.SET_STREAM_SWITCHER_STREAM_ID(streamId);
-      // for the stream switcher, the stream needs a unique identifier
+      // For the stream switcher, the stream needs a unique identifier
+      // Note: if there is a bug with stream shift, start by checking for an sid parameter in the stream key
       const streamKey = `${this.settings.streamKey}&sid=${streamId}`;
-
-      console.log('RESTREAM setupIngest stream shift streamKey', streamKey, 'ingest', ingest);
 
       this.setStreamSettingsForDisplay('horizontal', streamKey, ingest);
     } else if (display) {
@@ -1541,7 +1539,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @returns A message to show the user, or an empty string when no alert should be shown
    */
   async handleStreamShiftEvent(event: TSocketEvent): Promise<string> {
-    console.log('Stream Shift handleStreamShiftEvent', event);
     if (this.state.streamShiftForceGoLive) return '';
     if (event.type !== 'streamSwitchRequest' && event.type !== 'switchActionComplete') {
       return '';
@@ -1570,12 +1567,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
       // End the stream on this device if switching the stream to another device
       // Only record analytics if the stream was switched from this device to a different one
 
-      console.log(
-        'Stream Shift switchActionComplete',
-        isIncomingStream,
-        event.data.identifier,
-        streamShiftStreamId,
-      );
       if (!isIncomingStream) {
         this.endStreamShiftStream(event.data.identifier);
         this.recordStreamShiftAnalytics('complete', event.data.identifier);
