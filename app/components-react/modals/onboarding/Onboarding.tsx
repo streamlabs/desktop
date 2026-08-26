@@ -11,6 +11,7 @@ import UltraIcon from 'components-react/shared/UltraIcon';
 import KevinSvg from 'components-react/shared/KevinSvg';
 import styles from './Common.m.less';
 import { $i } from 'services/utils';
+import { useVuex } from 'components-react/hooks';
 
 const NO_BUTTON_STEPS = new Set([EOnboardingSteps.Splash, EOnboardingSteps.Login]);
 
@@ -164,12 +165,20 @@ export function DancingKevins() {
 
 export function useAuth() {
   const { UsageStatisticsService, OnboardingV2Service, UserService } = Services;
+  const { isPartialSLAuth } = useVuex(() => ({
+    isPartialSLAuth: UserService.views.isPartialSLAuth,
+  }));
 
   const SLIDLogin = useCallback(() => {
     UsageStatisticsService.actions.recordAnalyticsEvent('PlatformLogin', 'streamlabs');
     UserService.startSLAuth().then((status: EPlatformCallResult) => {
-      if (status !== EPlatformCallResult.Success) return;
-      OnboardingV2Service.actions.takeStep();
+      if (status !== EPlatformCallResult.Success) throw new Error('did not authenticate properly');
+      // Don't let users get in a partially authed stated even if they're just logging in
+      if (isPartialSLAuth && OnboardingV2Service.singletonPath) {
+        OnboardingV2Service.actions.showSingletonStep(EOnboardingSteps.ConnectMore);
+      } else {
+        OnboardingV2Service.actions.takeStep();
+      }
     });
   }, []);
 
