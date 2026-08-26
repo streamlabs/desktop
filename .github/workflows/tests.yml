@@ -99,7 +99,7 @@ jobs:
           path: ${{ runner.temp }}/frontend-test-artifact
       - name: 'Prepare Test Runner'
         run: |
-          'obs64','crash-handler','chromedriver','electron' | ForEach-Object {
+          'obs64','crash-handler','crash-handler-process','chromedriver','electron' | ForEach-Object {
             Get-Process -Name $_ -ErrorAction Ignore | Stop-Process -Force -ErrorAction Ignore
           }
           Remove-Item -Recurse -Force "$env:TEMP\slobs-test*" -ErrorAction Ignore
