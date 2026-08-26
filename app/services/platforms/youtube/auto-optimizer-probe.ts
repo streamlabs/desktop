@@ -94,9 +94,10 @@ const DEFAULT_ACTIVE_TIMEOUT_MS = 30_000;
 const DEFAULT_INACTIVE_TIMEOUT_MS = 30_000;
 const DEFAULT_DELETE_TIMEOUT_MS = 10_000;
 const DEFAULT_POLL_INTERVAL_MS = 1_000;
-// An empty-ID journal is deliberately retained while a just-created resource
-// may still be becoming visible through liveStreams.list. Startup recovery
-// retries it; only a sufficiently old marker with no exact matches is cleared.
+// An empty-ID journal is deliberately retained after an ambiguous transport
+// failure while a potentially accepted resource may still be becoming visible
+// through liveStreams.list. Startup recovery retries it; only a sufficiently
+// old marker with no exact matches is cleared.
 const AMBIGUOUS_INSERT_RETENTION_MS = 2 * 60_000;
 
 function createAbortError() {
@@ -107,6 +108,28 @@ function createAbortError() {
 
 function throwIfAborted(signal?: AbortSignal) {
   if (signal?.aborted) throw createAbortError();
+}
+
+/**
+ * `jfetch` rejects HTTP responses with either its plain response-error shape
+ * or a native `Response`. An authoritative client-error response proves that
+ * the create request reached YouTube and was rejected, so no resource can
+ * have been orphaned. Timeout, proxy-style client cancellation, server, and
+ * transport failures remain ambiguous because the create may have completed
+ * before the failure was returned to us.
+ */
+function isDefiniteHttpRejection(error: unknown): boolean {
+  if (!error || (typeof error !== 'object' && typeof error !== 'function')) return false;
+
+  const status = (error as { status?: unknown }).status;
+  return (
+    typeof status === 'number' &&
+    Number.isInteger(status) &&
+    status >= 400 &&
+    status < 500 &&
+    status !== 408 &&
+    status !== 499
+  );
 }
 
 function isJournal(value: unknown): value is IYoutubeAutoOptimizerProbeJournal {
@@ -150,6 +173,7 @@ export class YoutubeAutoOptimizerProbeManager {
     }
 
     let journal: IYoutubeAutoOptimizerProbeJournal | null = null;
+    let createRequestPending = false;
 
     try {
       throwIfAborted(options.signal);
@@ -166,7 +190,9 @@ export class YoutubeAutoOptimizerProbeManager {
       journal = { schemaVersion: 1, probeId, streamId: '', accountId, createdAt };
       this.writeJournal(journal);
 
+      createRequestPending = true;
       const stream = await this.adapter.createStream(probeId, options.signal);
+      createRequestPending = false;
 
       if (!stream?.id) {
         throw new YoutubeAutoOptimizerProbeError(
@@ -202,7 +228,13 @@ export class YoutubeAutoOptimizerProbeManager {
       if (journal) {
         try {
           if (journal.streamId) await this.cleanupJournal(journal);
-          else await this.cleanupAmbiguousJournal(journal);
+          else if (createRequestPending && isDefiniteHttpRejection(error)) {
+            // A server response with an error status is authoritative: unlike
+            // a transport failure, it cannot have created an orphaned stream.
+            this.clearJournalIfMatching(journal);
+          } else {
+            await this.cleanupAmbiguousJournal(journal);
+          }
         } catch (cleanupError: unknown) {
           throw new YoutubeAutoOptimizerProbeError(
             'cleanup_failed',

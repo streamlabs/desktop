@@ -24,6 +24,73 @@ export interface IAutoConfigProbeRuntimeSupport {
   canConfirmYoutubeIngest: boolean;
 }
 
+export interface IAutoConfigProbeCoverage {
+  measurement: 'active' | 'estimated';
+  estimateReason?: 'probe_disabled' | 'partial_provider_probes';
+  allowPromotion: boolean;
+}
+
+/**
+ * Describe how much of a leg's provider-probe plan is available. A successful
+ * provider remains useful when another provider cannot be prepared, but that
+ * partial evidence must not unlock a resolution or frame-rate promotion.
+ */
+export function autoConfigProbeCoverage(
+  expectedProbeCount: number,
+  availableProbeCount: number,
+): IAutoConfigProbeCoverage {
+  if (availableProbeCount <= 0) {
+    return {
+      measurement: 'estimated',
+      estimateReason: 'probe_disabled',
+      allowPromotion: false,
+    };
+  }
+  if (availableProbeCount < expectedProbeCount) {
+    return {
+      measurement: 'active',
+      estimateReason: 'partial_provider_probes',
+      allowPromotion: false,
+    };
+  }
+  return { measurement: 'active', allowPromotion: true };
+}
+
+/**
+ * Validate active native evidence against the exact attempt Desktop prepared.
+ * At least one attempted provider must succeed. Any selected or attempted
+ * provider without successful evidence makes the result partial and is
+ * accepted only when native lowers confidence to low.
+ */
+export function isValidAutoConfigActiveProbeCoverage(p: {
+  destinations: Array<{ platform: string }>;
+  attemptedCandidates: Array<{ provider: TAutoOptimizerProbeProvider }>;
+  evidence: IAutoOptimizerProbeEvidence[];
+  confidence: string | undefined;
+}): boolean {
+  const selectedProviders = new Set<TAutoOptimizerProbeProvider>(
+    p.destinations.flatMap(destination =>
+      destination.platform === 'twitch' || destination.platform === 'youtube'
+        ? [destination.platform]
+        : [],
+    ),
+  );
+  const attemptedProviders = new Set(p.attemptedCandidates.map(candidate => candidate.provider));
+  const successfulProviders = new Set(
+    p.evidence.filter(item => item.success).map(item => item.provider),
+  );
+
+  if (!attemptedProviders.size) return false;
+  if ([...attemptedProviders].some(provider => !selectedProviders.has(provider))) return false;
+  if ([...successfulProviders].some(provider => !attemptedProviders.has(provider))) return false;
+  if (![...attemptedProviders].some(provider => successfulProviders.has(provider))) return false;
+
+  const isPartial =
+    [...attemptedProviders].some(provider => !successfulProviders.has(provider)) ||
+    [...selectedProviders].some(provider => !successfulProviders.has(provider));
+  return !isPartial || p.confidence === 'low';
+}
+
 /** The session API can still optimize with estimates when no active probe is available. */
 export function hasRequiredAutoConfigCapabilities(
   capabilities: IAutoConfigCapabilities | null | undefined,
@@ -65,8 +132,9 @@ export function supportedAutoConfigProbeProviders(
 
 /**
  * Filter credential-free candidates against the negotiated native/runtime
- * capabilities. A shared cloud-restream leg is atomic: partial provider
- * measurements must not be presented as measuring that upload route.
+ * capabilities. Supported provider probes remain useful independently; a
+ * shared leg with partial coverage is identified explicitly and cannot promote
+ * video quality from that incomplete evidence.
  */
 export function filterAutoConfigTopologyProbes(
   topology: IAutoOptimizerTopology,
@@ -97,16 +165,14 @@ export function filterAutoConfigTopologyProbes(
     const supportedCandidates = unsafeDualOutput
       ? []
       : originalCandidates.filter(candidate => supportedProviders.has(candidate.provider));
-    const incompleteCloudProbe =
-      leg.route === 'cloud-restream' && supportedCandidates.length !== originalCandidates.length;
-
-    leg.probeCandidates = incompleteCloudProbe ? [] : supportedCandidates;
-    if (leg.probeCandidates.length) {
-      leg.measurement = 'active';
-      leg.estimateReason = undefined;
-    } else if (originalCandidates.length) {
-      leg.measurement = 'estimated';
-      leg.estimateReason = unsafeDualOutput ? 'dual_output' : 'probe_disabled';
+    leg.probeCandidates = supportedCandidates;
+    if (originalCandidates.length) {
+      const coverage = autoConfigProbeCoverage(
+        originalCandidates.length,
+        supportedCandidates.length,
+      );
+      leg.measurement = coverage.measurement;
+      leg.estimateReason = unsafeDualOutput ? 'dual_output' : coverage.estimateReason;
     }
   });
   filtered.probeCandidates = filtered.legs.flatMap(leg => leg.probeCandidates);
@@ -118,6 +184,10 @@ export function autoConfigPhaseStepKey(
   phase: TAutoOptimizerPhase,
   provider?: TAutoOptimizerProbeProvider | null,
   code?: string | null,
+  detail?: Pick<
+    IAutoOptimizerProgressDetail,
+    'encoderId' | 'width' | 'height' | 'fpsNum' | 'fpsDen'
+  >,
 ): string {
   if (
     phase === 'bandwidth' &&
@@ -135,6 +205,27 @@ export function autoConfigPhaseStepKey(
   }
   if (phase === 'hardware' && code === 'hardware_validating_encoder') {
     return 'hardware:validating';
+  }
+  if (
+    phase === 'hardware' &&
+    (code === 'hardware_testing_encoder_surfaces' ||
+      code === 'hardware_validating_target_cadence' ||
+      code === 'hardware_target_cadence_rejected')
+  ) {
+    const kind =
+      code === 'hardware_testing_encoder_surfaces'
+        ? 'surfaces'
+        : code === 'hardware_validating_target_cadence'
+        ? 'target-cadence'
+        : 'target-cadence-rejected';
+    const attempt = detail
+      ? [
+          detail.encoderId || 'encoder',
+          `${detail.width || 0}x${detail.height || 0}`,
+          `${detail.fpsNum || 0}/${detail.fpsDen || 0}`,
+        ].join(':')
+      : '';
+    return `hardware:${kind}${attempt ? `:${attempt}` : ''}`;
   }
   if (phase === 'hardware' && code === 'hardware_encoder_selected') {
     return 'hardware:selected';

@@ -194,7 +194,7 @@ export interface IAutoConfigRequestLeg {
   current: IAutoConfigCurrentSettings;
   limits?: {
     maxBitrateKbps?: number;
-    /** Highest canvas-bounded output eligible for hardware and bandwidth testing. */
+    /** Highest canvas-bounded video tuple eligible for hardware and bandwidth testing. */
     maxWidth?: number;
     maxHeight?: number;
     maxFpsNum?: number;
@@ -208,7 +208,8 @@ export interface IAutoConfigRequestLeg {
     | 'enhanced_broadcasting'
     | 'stream_shift'
     | 'mixed_topology'
-    | 'probe_disabled';
+    | 'probe_disabled'
+    | 'partial_provider_probes';
 }
 
 export interface IAutoConfigRequest {

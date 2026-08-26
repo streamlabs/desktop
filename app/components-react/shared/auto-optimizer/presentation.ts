@@ -12,10 +12,28 @@ const providerOrder: TAutoOptimizerPresentationProbeProvider[] = ['twitch', 'you
 
 const visibleActiveMeasurementReasons = new Set([
   'connection_variability_detected',
-  'hardware_benchmark_resolution_fallback',
+  'hardware_benchmark_quality_fallback',
   'probe_source_underfill',
-  'resolution_promotion_tested',
+  'partial_provider_probes',
+  'quality_promotion_tested',
 ]);
+
+/**
+ * Generic medium-confidence cloud-restream copy is intentionally omitted: it
+ * does not explain an actionable constraint. Low/high confidence retain their
+ * explicit provenance copy when no more specific measurement reason is shown.
+ */
+export function cloudRestreamConfidenceExplanationKey(
+  confidence?: 'high' | 'medium' | 'low',
+): string | null {
+  if (confidence === 'low') {
+    return 'This shared cloud-restream upload was measured indirectly, so the result has low confidence.';
+  }
+  if (confidence === 'high') {
+    return 'This shared cloud-restream upload was measured indirectly. The result has high confidence.';
+  }
+  return null;
+}
 
 /** Active medium-confidence reasons that should be explained on the result card. */
 export function shouldShowAutoOptimizerMeasurementReason(reason?: string): boolean {
@@ -50,6 +68,16 @@ export function successfulProbeProviders(
 ): TAutoOptimizerPresentationProbeProvider[] {
   const successful = new Set(evidence.filter(item => item.success).map(item => item.provider));
   return providerOrder.filter(provider => successful.has(provider));
+}
+
+/** Selected probe-capable providers without successful active evidence. */
+export function estimatedProbeProviders(
+  platforms: Array<{ id: string }> = [],
+  evidence: IAutoOptimizerPresentationProbeEvidence[] = [],
+): TAutoOptimizerPresentationProbeProvider[] {
+  const selected = new Set(platforms.map(platform => platform.id));
+  const measured = new Set(successfulProbeProviders(evidence));
+  return providerOrder.filter(provider => selected.has(provider) && !measured.has(provider));
 }
 
 /** Translation key for the bandwidth phase when native reports the active provider. */
@@ -117,6 +145,34 @@ export function autoOptimizerProgressLabel(
         };
       }
       return { key: 'Testing a compatible stream encoder...' };
+    case 'hardware_testing_encoder_surfaces':
+      if (tuple) {
+        return {
+          key: 'Testing %{encoder} video at %{width}×%{height}...',
+          values: {
+            encoder: tuple.encoder,
+            width: tuple.width,
+            height: tuple.height,
+          },
+        };
+      }
+      return { key: 'Testing hardware encoding at the target resolution...' };
+    case 'hardware_validating_target_cadence':
+      if (tuple) {
+        return {
+          key: 'Checking %{encoder} at %{width}×%{height}, %{fps} FPS...',
+          values: tuple,
+        };
+      }
+      return { key: 'Checking the target frame rate...' };
+    case 'hardware_target_cadence_rejected':
+      if (tuple) {
+        return {
+          key: 'Could not validate %{encoder} at %{width}×%{height}, %{fps} FPS. Trying a lower setting...',
+          values: tuple,
+        };
+      }
+      return { key: 'Could not validate that frame rate. Trying a lower setting...' };
     case 'hardware_validating_encoder':
       if (tuple) {
         return {

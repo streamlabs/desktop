@@ -3,6 +3,8 @@ import {
   autoOptimizerErrorMessage,
   autoOptimizerProgressLabel,
   bandwidthPhaseLabelKey,
+  cloudRestreamConfidenceExplanationKey,
+  estimatedProbeProviders,
   shouldShowAutoOptimizerMeasurementReason,
   successfulProbeProviders,
 } from '../../app/components-react/shared/auto-optimizer/presentation';
@@ -40,13 +42,38 @@ test('successful measured providers are stable, deduplicated, and omit failures'
   );
 });
 
+test('partial provider provenance separates measured and estimated destinations', t => {
+  const platforms = [{ id: 'twitch' }, { id: 'youtube' }, { id: 'facebook' }];
+  const evidence = [
+    { provider: 'twitch' as const, success: true },
+    { provider: 'youtube' as const, success: false },
+  ];
+
+  t.deepEqual(successfulProbeProviders(evidence), ['twitch']);
+  t.deepEqual(estimatedProbeProviders(platforms, evidence), ['youtube']);
+});
+
 test('active medium-confidence quality reasons remain visible in results', t => {
-  t.true(shouldShowAutoOptimizerMeasurementReason('resolution_promotion_tested'));
-  t.true(shouldShowAutoOptimizerMeasurementReason('hardware_benchmark_resolution_fallback'));
+  t.true(shouldShowAutoOptimizerMeasurementReason('quality_promotion_tested'));
+  t.true(shouldShowAutoOptimizerMeasurementReason('hardware_benchmark_quality_fallback'));
   t.true(shouldShowAutoOptimizerMeasurementReason('connection_variability_detected'));
   t.true(shouldShowAutoOptimizerMeasurementReason('probe_source_underfill'));
+  t.true(shouldShowAutoOptimizerMeasurementReason('partial_provider_probes'));
   t.false(shouldShowAutoOptimizerMeasurementReason('probe_failed'));
   t.false(shouldShowAutoOptimizerMeasurementReason());
+});
+
+test('generic cloud-restream copy omits medium confidence while preserving explicit extremes', t => {
+  t.is(cloudRestreamConfidenceExplanationKey(), null);
+  t.is(cloudRestreamConfidenceExplanationKey('medium'), null);
+  t.is(
+    cloudRestreamConfidenceExplanationKey('low'),
+    'This shared cloud-restream upload was measured indirectly, so the result has low confidence.',
+  );
+  t.is(
+    cloudRestreamConfidenceExplanationKey('high'),
+    'This shared cloud-restream upload was measured indirectly. The result has high confidence.',
+  );
 });
 
 test('bandwidth phase follows the provider currently being probed', t => {
@@ -92,6 +119,59 @@ test('hardware progress describes the encoder and exact tuple being tested', t =
         width: 1920,
         height: 1080,
         fps: 59.94,
+        bitrate: 0,
+      },
+    },
+  );
+});
+
+test('paired hardware progress distinguishes resolution surfaces from exact cadence', t => {
+  const surface = progressDetail({
+    code: 'hardware_testing_encoder_surfaces',
+    encoderId: 'obs_nvenc_h264_tex',
+    encoderTitle: 'NVIDIA NVENC H.264',
+    width: 1920,
+    height: 1080,
+    fpsNum: 30,
+    fpsDen: 1,
+  });
+  t.deepEqual(autoOptimizerProgressLabel('hardware', surface), {
+    key: 'Testing %{encoder} video at %{width}×%{height}...',
+    values: {
+      encoder: 'NVIDIA NVENC H.264',
+      width: 1920,
+      height: 1080,
+    },
+  });
+
+  const cadence = progressDetail({
+    ...surface,
+    code: 'hardware_validating_target_cadence',
+    fpsNum: 60,
+  });
+  t.deepEqual(autoOptimizerProgressLabel('hardware', cadence), {
+    key: 'Checking %{encoder} at %{width}×%{height}, %{fps} FPS...',
+    values: {
+      encoder: 'NVIDIA NVENC H.264',
+      width: 1920,
+      height: 1080,
+      fps: 60,
+      bitrate: 0,
+    },
+  });
+
+  t.deepEqual(
+    autoOptimizerProgressLabel('hardware', {
+      ...cadence,
+      code: 'hardware_target_cadence_rejected',
+    }),
+    {
+      key: 'Could not validate %{encoder} at %{width}×%{height}, %{fps} FPS. Trying a lower setting...',
+      values: {
+        encoder: 'NVIDIA NVENC H.264',
+        width: 1920,
+        height: 1080,
+        fps: 60,
         bitrate: 0,
       },
     },

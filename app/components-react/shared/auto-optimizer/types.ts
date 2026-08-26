@@ -21,6 +21,7 @@ export interface IAutoOptimizerPresentationLeg {
   label: string;
   platforms?: Array<{ id: string; label: string }>;
   measuredPlatforms?: Array<{ id: string; label: string }>;
+  estimatedPlatforms?: Array<{ id: string; label: string }>;
   probeEvidence?: IAutoOptimizerPresentationProbeEvidence[];
   display?: 'horizontal' | 'vertical' | 'shared';
   measurementMode: TAutoOptimizerMeasurementMode;

@@ -22,15 +22,23 @@ import { $t } from 'services/i18n';
 import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremental-rollout';
 import { classifyAutoOptimizerTopology, isAutoOptimizerProfileCompatible } from './topology';
 import {
+  autoConfigProbeCoverage,
   autoConfigPhaseStepKey,
   filterAutoConfigTopologyProbes,
   hasRequiredAutoConfigCapabilities,
+  isValidAutoConfigActiveProbeCoverage,
   sanitizeAutoConfigProgressDetail,
   sanitizeAutoConfigProbeEvidence,
   supportedAutoConfigProbeProviders,
 } from './probe-policy';
 import { validateAutoConfigRecommendation } from './result-policy';
-import { buildAutoOptimizerRequestLimits } from './resolution-policy';
+import {
+  autoOptimizerAcceptedBaseResolution,
+  autoOptimizerCanvasAllowsQualityPromotion,
+  autoOptimizerDisplayFrameRate,
+  autoOptimizerPromotesResolution,
+  buildAutoOptimizerRequestLimits,
+} from './resolution-policy';
 import {
   captureRawOutputValues,
   outputTransactionValuesMatch,
@@ -78,6 +86,18 @@ const PLATFORM_MAX_BITRATE_KBPS: Partial<Record<TAutoOptimizerPlatform, number>>
   kick: 8000,
   tiktok: 6000,
 };
+
+class AutoOptimizerProbeSetupError extends Error {
+  readonly code = 'active_probe_setup_failed';
+  readonly retryable = true;
+
+  constructor() {
+    super(
+      "We couldn't prepare the bandwidth test. Try again, or continue without optimization.",
+    );
+    this.name = 'AutoOptimizerProbeSetupError';
+  }
+}
 
 interface INodeObsAutoConfig {
   GetAutoConfigCapabilities?: () => string;
@@ -613,12 +633,15 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     credentialProbes: IAutoConfigActiveProbe[],
   ): Promise<IPreparedAutoConfigRequest> {
     const topology = cloneDeep(sourceTopology);
+    const requestedActiveProbeCount = topology.probeCandidates.length;
     const activeProbes: IAutoConfigActiveProbe[] = [];
     this.probeAbortController?.abort();
     const controller = new AbortController();
     this.probeAbortController = controller;
 
     for (const leg of topology.legs) {
+      const expectedProbeCount = leg.probeCandidates.length;
+      const alreadyPartial = leg.estimateReason === 'partial_provider_probes';
       const acquired: Array<{
         candidate: typeof leg.probeCandidates[number];
         probe: IAutoConfigActiveProbe;
@@ -673,31 +696,30 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         }
       }
 
-      // Shared cloud-restream legs are all-or-nothing. Measuring only one
-      // provider could recommend a bitrate that is unsafe for the other.
-      if (acquired.length !== leg.probeCandidates.length) {
-        for (const { probe } of acquired) {
-          try {
-            if (probe.kind !== 'youtube-unbound') continue;
-            const lease = this.youtubeProbeLeases.get(probe.probeId);
-            if (!lease) continue;
-            await this.youtubeService.releaseAutoOptimizerProbe(lease);
-            this.youtubeProbeLeases.delete(probe.probeId);
-          } finally {
-            probe.streamKey = '';
-            probe.server = '';
-          }
-        }
-        leg.probeCandidates = [];
-        leg.measurement = 'estimated';
-        leg.estimateReason = 'probe_disabled';
-        continue;
-      }
-
       leg.probeCandidates = acquired.map(({ candidate }) => candidate);
-      activeProbes.push(...acquired.map(({ probe }) => probe));
+      if (expectedProbeCount > 0) {
+        const coverage = autoConfigProbeCoverage(expectedProbeCount, acquired.length);
+        leg.measurement = coverage.measurement;
+        leg.estimateReason =
+          coverage.measurement === 'active' && alreadyPartial
+            ? 'partial_provider_probes'
+            : coverage.estimateReason;
+      }
+      if (acquired.length) {
+        // A provider that was prepared successfully still supplies useful path
+        // evidence when another provider is unavailable. OSN lowers confidence
+        // for that partial provider set; Desktop keeps the missing route marked
+        // as estimated and prevents quality promotion below.
+        activeProbes.push(...acquired.map(({ probe }) => probe));
+      }
     }
     topology.probeCandidates = topology.legs.flatMap(leg => leg.probeCandidates);
+    if (requestedActiveProbeCount > 0 && activeProbes.length === 0) {
+      // Runtime setup failures are actionable and retryable. Falling through to
+      // an estimate would hide the provider/API problem and leave the user with
+      // no explanation for why a requested measurement never ran.
+      throw new AutoOptimizerProbeSetupError();
+    }
 
     const output = this.outputSettingsService.getSettings();
     const legs: IAutoConfigRequestLeg[] = topology.legs.map(leg => {
@@ -723,13 +745,19 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           codec: 'h264',
           preset: output.streaming.preset || undefined,
         },
-        // Resolution promotion is permitted only when every provider probe for
-        // this leg was acquired. Estimate-only paths may lower a tested tuple,
-        // but their request ceiling cannot rise above the current output.
+        // Resolution and frame-rate promotion are permitted only with complete
+        // provider coverage. Partial and estimate-only paths may lower a tested
+        // tuple, but their request ceiling cannot rise above the current output.
         limits: buildAutoOptimizerRequestLimits({
-          allowPromotion: leg.measurement === 'active',
-          baseWidth: video.baseWidth,
-          baseHeight: video.baseHeight,
+          allowPromotion:
+            leg.measurement === 'active' &&
+            leg.estimateReason !== 'partial_provider_probes' &&
+            autoOptimizerCanvasAllowsQualityPromotion(
+              video.baseWidth,
+              video.baseHeight,
+              video.outputWidth,
+              video.outputHeight,
+            ),
           currentWidth: video.outputWidth,
           currentHeight: video.outputHeight,
           currentFpsNum: video.fpsNum,
@@ -860,7 +888,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     detail: IAutoOptimizerProgressDetail,
   ) {
     if (token !== this.runToken || this.state.stage !== 'running') return;
-    const key = autoConfigPhaseStepKey(phase, detail.provider, detail.code);
+    const key = autoConfigPhaseStepKey(phase, detail.provider, detail.code, detail);
     // Rejections can be immediately followed by another real attempt. Keep
     // that next/previous attempt readable; native retains rejection details in
     // logs. Terminal selections are shown as truthful one-second milestones.
@@ -967,10 +995,19 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       const expected = expectedLegs.find(item => item.legId === leg.legId);
       const requested = this.attemptRequestLegs.get(leg.legId);
       const evidence = sanitizeAutoConfigProbeEvidence(leg.measurement?.probes);
-      const activeEvidenceComplete =
+      // state.topology is replaced with the prepared attempt topology before
+      // native execution. At least one attempted candidate must succeed;
+      // failed or missing selected providers are accepted only at low confidence.
+      const activeEvidenceValid =
         leg.measurement?.mode !== 'active' ||
-        expected?.probeCandidates.every(candidate =>
-          evidence.some(item => item.provider === candidate.provider && item.success),
+        Boolean(
+          expected &&
+            isValidAutoConfigActiveProbeCoverage({
+              destinations: expected.destinations,
+              attemptedCandidates: expected.probeCandidates,
+              evidence,
+              confidence: leg.measurement?.confidence,
+            }),
         );
       const providerOwnsEncoding =
         this.state.topology?.type === 'enhanced-broadcasting' ||
@@ -996,7 +1033,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         requested?.display === leg.display &&
         expected?.display === leg.display &&
         (expected?.measurement === 'active' || leg.measurement?.mode === 'estimated') &&
-        activeEvidenceComplete &&
+        activeEvidenceValid &&
         typeof leg.legId === 'string' &&
         Array.isArray(leg.destinations) &&
         leg.measurement &&
@@ -1023,7 +1060,10 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           },
           fpsNum: recommendation.fpsNum,
           fpsDen: recommendation.fpsDen,
-          fps: recommendation.fpsNum / recommendation.fpsDen,
+          fps: autoOptimizerDisplayFrameRate(
+            recommendation.fpsNum,
+            recommendation.fpsDen,
+          ),
           bitrate: recommendation.bitrateKbps,
           ...(recommendation.encoder ? { encoder: recommendation.encoder } : {}),
         },
@@ -1079,8 +1119,18 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     result: IAutoOptimizerResult,
   ): Promise<IAutoOptimizerProfile> {
     if (!result.legs.length || !this.state.topology) throw new Error('No recommendations to apply');
+    // A Settings-window canvas edit may still be inside its 200 ms batching
+    // window when the user accepts the result. Apply it before capturing the
+    // rollback snapshot or computing the non-shrinking accepted Base Canvas.
+    await this.videoSettingsService.flushPendingCanvasSettings();
     const snapshot = this.captureSettingsSnapshot();
     const primary = result.legs.find(leg => leg.display === 'horizontal') || result.legs[0];
+    const frameRateSignatures = new Set(
+      result.legs.map(leg => `${leg.fpsNum}/${leg.fpsDen}`),
+    );
+    if (frameRateSignatures.size > 1) {
+      throw new Error('This stream topology cannot apply different frame rates per upload leg');
+    }
     const providerOwnsEncoding =
       this.state.topology.type === 'enhanced-broadcasting' ||
       (primary.display === 'both' &&
@@ -1147,22 +1197,55 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       }
 
       if (!providerOwnsEncoding) {
+        // Testing used disposable native mixes and did not mutate these values.
+        // Only this user-approved path may grow Base Canvas. Output resolution
+        // may differ per display, while OBS cadence is a shared video setting.
+        const patches: Parameters<
+          VideoSettingsService['applyAutoOptimizerSettings']
+        >[0] = {};
         result.legs.forEach(leg => {
           const display: TDisplayType = leg.display === 'vertical' ? 'vertical' : 'horizontal';
-          this.videoSettingsService.setSettings(
-            {
-              outputWidth: leg.resolution.width,
-              outputHeight: leg.resolution.height,
-              fpsNum: leg.fpsNum,
-              fpsDen: leg.fpsDen,
-            },
-            display,
+          const current = this.videoSettingsService.state[display];
+          const promotesResolution = autoOptimizerPromotesResolution(
+            current.outputWidth,
+            current.outputHeight,
+            leg.resolution.width,
+            leg.resolution.height,
           );
+          const base = promotesResolution
+            ? autoOptimizerAcceptedBaseResolution(
+                current.baseWidth,
+                current.baseHeight,
+                leg.resolution.width,
+                leg.resolution.height,
+              )
+            : { width: current.baseWidth, height: current.baseHeight };
+          patches[display] = {
+            ...patches[display],
+            baseWidth: base.width,
+            baseHeight: base.height,
+            outputWidth: leg.resolution.width,
+            outputHeight: leg.resolution.height,
+          };
         });
-        this.videoSettingsService.flushObsSettings(displaysToApply);
+        (['horizontal', 'vertical'] as TDisplayType[]).forEach(display => {
+          if (!this.videoSettingsService.state[display]) return;
+          patches[display] = {
+            ...patches[display],
+            fpsNum: primary.fpsNum,
+            fpsDen: primary.fpsDen,
+          };
+        });
+        await this.videoSettingsService.applyAutoOptimizerSettings(patches);
       }
 
-      this.verifyAppliedSettings(result, primary, providerOwnsEncoding, expectedEncoder);
+      this.verifyAppliedSettings(
+        result,
+        primary,
+        providerOwnsEncoding,
+        expectedEncoder,
+        snapshot,
+      );
       return {
         schemaVersion: 1,
         topology: this.state.topology.type,
@@ -1171,7 +1254,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     } catch (e: unknown) {
       let fullyRestored = false;
       try {
-        this.restoreSettingsSnapshot(snapshot);
+        await this.restoreSettingsSnapshot(snapshot);
         fullyRestored = this.matchesSettingsSnapshot(snapshot);
       } catch (restoreError: unknown) {
         console.error('[Auto Optimizer] Failed to restore Output settings', restoreError);
@@ -1197,23 +1280,16 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     };
   }
 
-  private restoreSettingsSnapshot(snapshot: ISettingsSnapshot) {
+  private async restoreSettingsSnapshot(snapshot: ISettingsSnapshot): Promise<void> {
     if (snapshot.targetPreset) {
       this.activateTargetEncoderPreset(snapshot.targetPreset);
       this.setRawOutputField('Streaming', snapshot.targetPreset.field, snapshot.targetPreset.value);
     }
     this.restoreRawOutputForm(snapshot.rawOutputFormData);
-    this.videoSettingsService.setSettings(
-      snapshot.horizontalVideo,
-      'horizontal',
-      snapshot.liveVideoDisplays.includes('horizontal'),
-    );
-    this.videoSettingsService.setSettings(
-      snapshot.verticalVideo,
-      'vertical',
-      snapshot.liveVideoDisplays.includes('vertical'),
-    );
-    this.videoSettingsService.flushObsSettings(snapshot.liveVideoDisplays);
+    await this.videoSettingsService.applyAutoOptimizerSettings({
+      horizontal: snapshot.horizontalVideo,
+      vertical: snapshot.verticalVideo,
+    });
   }
 
   private matchesSettingsSnapshot(snapshot: ISettingsSnapshot): boolean {
@@ -1333,6 +1409,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     const actual = this.videoSettingsService.contexts[display]?.video;
     if (!actual) return false;
     return (
+      actual.baseWidth === expected.baseWidth &&
+      actual.baseHeight === expected.baseHeight &&
       actual.outputWidth === expected.outputWidth &&
       actual.outputHeight === expected.outputHeight &&
       actual.fpsNum === expected.fpsNum &&
@@ -1345,6 +1423,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     primary: IAutoOptimizerLegResult,
     providerOwnsEncoding: boolean,
     expectedEncoder: EEncoderFamily | null,
+    snapshot: ISettingsSnapshot,
   ) {
     const output = this.outputSettingsService.getSettings();
     if (!providerOwnsEncoding && output.streaming.bitrate !== primary.bitrate) {
@@ -1386,15 +1465,44 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       }
     }
     if (!providerOwnsEncoding) {
+      (['horizontal', 'vertical'] as TDisplayType[]).forEach(display => {
+        const state = this.videoSettingsService.state[display];
+        if (
+          state &&
+          (state.fpsNum !== primary.fpsNum || state.fpsDen !== primary.fpsDen)
+        ) {
+          throw new Error(`Failed to persist the recommended ${display} frame rate`);
+        }
+        const live = this.videoSettingsService.contexts[display]?.video;
+        if (
+          live &&
+          (live.fpsNum !== primary.fpsNum || live.fpsDen !== primary.fpsDen)
+        ) {
+          throw new Error(`Failed to apply the recommended ${display} frame rate`);
+        }
+      });
       result.legs.forEach(leg => {
         const display: TDisplayType = leg.display === 'vertical' ? 'vertical' : 'horizontal';
+        const state = this.videoSettingsService.state[display];
         const video = this.videoSettingsService.contexts[display]?.video;
-        if (!video) throw new Error(`The ${display} video context is unavailable`);
+        const previous =
+          display === 'vertical' ? snapshot.verticalVideo : snapshot.horizontalVideo;
+        const promotedResolution = autoOptimizerPromotesResolution(
+          previous.outputWidth,
+          previous.outputHeight,
+          leg.resolution.width,
+          leg.resolution.height,
+        );
+        if (!state || !video) throw new Error(`The ${display} video context is unavailable`);
         if (
+          state.outputWidth !== leg.resolution.width ||
+          state.outputHeight !== leg.resolution.height ||
+          (promotedResolution && state.baseWidth < leg.resolution.width) ||
+          (promotedResolution && state.baseHeight < leg.resolution.height) ||
+          video.baseWidth !== state.baseWidth ||
+          video.baseHeight !== state.baseHeight ||
           video.outputWidth !== leg.resolution.width ||
-          video.outputHeight !== leg.resolution.height ||
-          video.fpsNum !== leg.fpsNum ||
-          video.fpsDen !== leg.fpsDen
+          video.outputHeight !== leg.resolution.height
         ) {
           throw new Error(`Failed to apply the recommended ${display} video settings`);
         }
@@ -1512,6 +1620,9 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
   private toError(error: unknown, fallbackCode: string, retryable: boolean): IAutoOptimizerError {
     const message = error instanceof Error ? error.message : String(error || 'Unknown error');
+    if (error instanceof AutoOptimizerProbeSetupError) {
+      return { code: error.code, message, retryable: error.retryable };
+    }
     return { code: fallbackCode, message, retryable };
   }
 

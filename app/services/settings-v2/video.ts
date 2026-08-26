@@ -48,7 +48,7 @@ export interface IBaseResolution {
 
 export type IBaseResolutions = Record<TDisplayType, IBaseResolution>;
 
-type TVideoSettingsPatches = Partial<Record<TDisplayType, Partial<IVideoInfo>>>;
+export type TVideoSettingsPatches = Partial<Record<TDisplayType, Partial<IVideoInfo>>>;
 
 interface IAppliedVideoSettings {
   baseResolutionChanged: boolean;
@@ -448,6 +448,32 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     });
   }
 
+  /**
+   * Apply a complete user-approved video tuple as one serialized transaction.
+   * This is the only Auto Optimizer path that may grow Base Canvas: benchmarking
+   * uses disposable native mixes and never calls this method.
+   */
+  async applyAutoOptimizerSettings(patches: TVideoSettingsPatches): Promise<void> {
+    // Bitrate/encoder-only recommendations do not need a video reset and must
+    // remain applicable while independent outputs such as Replay Buffer run.
+    if (!this.videoSettingsPatchesChangeState(patches)) return;
+    // A dormant vertical display still needs the shared FPS persisted, but the
+    // optimizer must not create a video context that was unavailable before.
+    await this.runCanvasSettingsTransaction(patches, false);
+  }
+
+  private videoSettingsPatchesChangeState(patches: TVideoSettingsPatches): boolean {
+    return displays.some(display => {
+      const patch = patches[display];
+      if (!patch) return false;
+      const current = this.state[display];
+      if (!current) return true;
+      return (Object.keys(patch) as Array<keyof IVideoInfo>).some(
+        key => patch[key] !== current[key],
+      );
+    });
+  }
+
   private changesBaseResolution(patch: Partial<IVideoInfo>, display: TDisplayType): boolean {
     const pending = this.pendingCanvasSettings[display];
     return (['baseWidth', 'baseHeight'] as const).some(key => {
@@ -538,7 +564,10 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     if (this.pendingCanvasSettingsWaiters.length) await this.flushPendingCanvasSettings();
   }
 
-  private async runCanvasSettingsTransaction(patches: TVideoSettingsPatches): Promise<void> {
+  private async runCanvasSettingsTransaction(
+    patches: TVideoSettingsPatches,
+    establishMissingContexts = true,
+  ): Promise<void> {
     await this.videoSettingsMutex.do(async () => {
       const releaseVideoReset = videoOutputCoordinator.reserveVideoReset();
       let autoSaveState: Awaited<
@@ -549,7 +578,7 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
       try {
         this.assertVideoOutputsInactive();
         autoSaveState = await this.sceneCollectionsService.disableAutoSave();
-        appliedSettings = this.applyVideoSettingsPatches(patches);
+        appliedSettings = this.applyVideoSettingsPatches(patches, establishMissingContexts);
         if (!appliedSettings.baseResolutionChanged) return;
 
         this.refreshSceneItemTransforms();
@@ -558,7 +587,7 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
       } catch (error: unknown) {
         if (appliedSettings) {
           try {
-            this.applyVideoSettingsPatches(appliedSettings.previous);
+            this.applyVideoSettingsPatches(appliedSettings.previous, establishMissingContexts);
             this.refreshSceneItemTransforms();
             await this.sceneCollectionsService.save();
             await this.fileManagerService.flushAll();
@@ -589,20 +618,26 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     }
   }
 
-  private applyVideoSettingsPatches(patches: TVideoSettingsPatches): IAppliedVideoSettings {
+  private applyVideoSettingsPatches(
+    patches: TVideoSettingsPatches,
+    establishMissingContexts = true,
+  ): IAppliedVideoSettings {
     const updates: Array<{
       display: TDisplayType;
       previous: IVideoInfo;
       next: IVideoInfo;
+      live: boolean;
     }> = [];
     let baseResolutionChanged = false;
 
     displays.forEach(display => {
       const patch = patches[display];
       if (!patch) return;
-      this.ensureVideoContext(display);
+      if (!this.contexts[display] && establishMissingContexts) this.ensureVideoContext(display);
 
-      const previous = { ...(this.state[display] ?? this.contexts[display].video) };
+      const existing = this.state[display] ?? this.contexts[display]?.video;
+      if (!existing) throw new Error(`The ${display} video settings are unavailable.`);
+      const previous = { ...existing };
       const next = { ...previous, ...patch };
       this.validateVideoDimensions(next);
       if (isEqual(previous, next)) return;
@@ -610,19 +645,19 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
       if (previous.baseWidth !== next.baseWidth || previous.baseHeight !== next.baseHeight) {
         baseResolutionChanged = true;
       }
-      updates.push({ display, previous, next });
+      updates.push({ display, previous, next, live: !!this.contexts[display] });
     });
 
     const applied: typeof updates = [];
     try {
       updates.forEach(update => {
-        this.contexts[update.display].video = update.next;
+        if (update.live) this.contexts[update.display].video = update.next;
         applied.push(update);
       });
 
       updates.forEach(update => {
         this.SET_VIDEO_CONTEXT(update.display, { ...update.next });
-        this.contexts[update.display].legacySettings = update.next;
+        if (update.live) this.contexts[update.display].legacySettings = update.next;
         this.dualOutputService.updateVideoSettings(update.next, update.display);
       });
       if (updates.length) this.settingsService.refreshVideoSettings();
@@ -630,7 +665,7 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
       let rollbackError: unknown;
       [...applied].reverse().forEach(update => {
         try {
-          this.contexts[update.display].video = update.previous;
+          if (update.live) this.contexts[update.display].video = update.previous;
         } catch (error: unknown) {
           rollbackError = rollbackError ?? error;
         }
@@ -638,7 +673,7 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
 
       updates.forEach(update => {
         this.SET_VIDEO_CONTEXT(update.display, { ...update.previous });
-        this.contexts[update.display].legacySettings = update.previous;
+        if (update.live) this.contexts[update.display].legacySettings = update.previous;
         this.dualOutputService.updateVideoSettings(update.previous, update.display);
       });
       if (updates.length) this.settingsService.refreshVideoSettings();

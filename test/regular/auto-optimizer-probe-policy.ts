@@ -1,8 +1,10 @@
 import test from 'ava';
 import {
+  autoConfigProbeCoverage,
   autoConfigPhaseStepKey,
   filterAutoConfigTopologyProbes,
   hasRequiredAutoConfigCapabilities,
+  isValidAutoConfigActiveProbeCoverage,
   sanitizeAutoConfigProgressDetail,
   sanitizeAutoConfigProbeEvidence,
   sanitizeAutoConfigProbeTargetBitrateKbps,
@@ -125,19 +127,165 @@ test('YouTube probing requires its flag, confirmation bridge, and multi-probe co
   );
 });
 
-test('a shared cloud leg falls back atomically when one provider is unavailable', t => {
+test('a shared cloud leg retains the supported provider when another is unavailable', t => {
   const topology = sharedCloudTopology();
   const filtered = filterAutoConfigTopologyProbes(
     topology,
     new Set<TAutoOptimizerProbeProvider>(['twitch']),
   );
 
-  t.is(filtered.legs[0].measurement, 'estimated');
-  t.is(filtered.legs[0].estimateReason, 'probe_disabled');
-  t.deepEqual(filtered.legs[0].probeCandidates, []);
-  t.deepEqual(filtered.probeCandidates, []);
+  t.is(filtered.legs[0].measurement, 'active');
+  t.is(filtered.legs[0].estimateReason, 'partial_provider_probes');
+  t.deepEqual(
+    filtered.legs[0].probeCandidates.map(candidate => candidate.provider),
+    ['twitch'],
+  );
+  t.deepEqual(filtered.probeCandidates.map(candidate => candidate.provider), ['twitch']);
   t.is(topology.legs[0].measurement, 'active', 'the classifier output is not mutated');
   t.is(topology.probeCandidates.length, 2);
+});
+
+test('probe coverage estimates only with zero probes and disables partial promotion', t => {
+  t.deepEqual(autoConfigProbeCoverage(2, 0), {
+    measurement: 'estimated',
+    estimateReason: 'probe_disabled',
+    allowPromotion: false,
+  });
+  t.deepEqual(autoConfigProbeCoverage(2, 1), {
+    measurement: 'active',
+    estimateReason: 'partial_provider_probes',
+    allowPromotion: false,
+  });
+  t.deepEqual(autoConfigProbeCoverage(2, 2), {
+    measurement: 'active',
+    allowPromotion: true,
+  });
+});
+
+test('partial active provider evidence is accepted only at low confidence', t => {
+  const partial = {
+    destinations: [{ platform: 'twitch' }, { platform: 'youtube' }],
+    attemptedCandidates: [{ provider: 'twitch' as const }],
+    evidence: [
+      {
+        provider: 'twitch' as const,
+        method: 'twitch-bandwidth-test' as const,
+        measuredKbps: 6013,
+        safeKbps: 6000,
+        headroomPercent: 0,
+        success: true,
+      },
+    ],
+  };
+
+  t.true(isValidAutoConfigActiveProbeCoverage({ ...partial, confidence: 'low' }));
+  t.false(isValidAutoConfigActiveProbeCoverage({ ...partial, confidence: 'medium' }));
+  t.false(isValidAutoConfigActiveProbeCoverage({ ...partial, confidence: 'high' }));
+});
+
+test('runtime-partial active coverage accepts one prepared success only at low confidence', t => {
+  const twitchEvidence = {
+    provider: 'twitch' as const,
+    method: 'twitch-bandwidth-test' as const,
+    measuredKbps: 6013,
+    safeKbps: 6000,
+    headroomPercent: 0,
+    success: true,
+  };
+  const context = {
+    destinations: [{ platform: 'twitch' }, { platform: 'youtube' }],
+    attemptedCandidates: [
+      { provider: 'twitch' as const },
+      { provider: 'youtube' as const },
+    ],
+  };
+
+  const runtimePartial = {
+    ...context,
+    evidence: [
+      twitchEvidence,
+      { provider: 'youtube' as const, method: 'youtube-unbound-ramp' as const, success: false },
+    ],
+  };
+
+  t.true(
+    isValidAutoConfigActiveProbeCoverage({
+      ...runtimePartial,
+      confidence: 'low',
+    }),
+  );
+  t.false(
+    isValidAutoConfigActiveProbeCoverage({ ...runtimePartial, confidence: 'medium' }),
+  );
+  t.false(
+    isValidAutoConfigActiveProbeCoverage({ ...runtimePartial, confidence: 'high' }),
+  );
+  t.false(
+    isValidAutoConfigActiveProbeCoverage({
+      ...context,
+      confidence: 'low',
+      evidence: [
+        { provider: 'twitch', method: 'twitch-bandwidth-test', success: false },
+        { provider: 'youtube', method: 'youtube-unbound-ramp', success: false },
+      ],
+    }),
+  );
+  t.true(
+    isValidAutoConfigActiveProbeCoverage({
+      ...context,
+      confidence: 'medium',
+      evidence: [
+        twitchEvidence,
+        {
+          provider: 'youtube',
+          method: 'youtube-unbound-ramp',
+          measuredKbps: 8000,
+          safeKbps: 8000,
+          headroomPercent: 0,
+          success: true,
+        },
+      ],
+    }),
+  );
+});
+
+test('active evidence cannot claim a provider Desktop did not attempt', t => {
+  t.false(
+    isValidAutoConfigActiveProbeCoverage({
+      destinations: [{ platform: 'twitch' }, { platform: 'youtube' }],
+      attemptedCandidates: [{ provider: 'twitch' }],
+      confidence: 'low',
+      evidence: [
+        {
+          provider: 'twitch',
+          method: 'twitch-bandwidth-test',
+          measuredKbps: 6000,
+          safeKbps: 6000,
+          headroomPercent: 0,
+          success: true,
+        },
+        {
+          provider: 'youtube',
+          method: 'youtube-unbound-ramp',
+          measuredKbps: 8000,
+          safeKbps: 8000,
+          headroomPercent: 0,
+          success: true,
+        },
+      ],
+    }),
+  );
+});
+
+test('a shared cloud leg remains estimate-only when no provider probe is supported', t => {
+  const filtered = filterAutoConfigTopologyProbes(
+    sharedCloudTopology(),
+    new Set<TAutoOptimizerProbeProvider>(),
+  );
+
+  t.is(filtered.legs[0].measurement, 'estimated');
+  t.is(filtered.legs[0].estimateReason, 'probe_disabled');
+  t.deepEqual(filtered.probeCandidates, []);
 });
 
 test('a shared cloud leg retains deterministic candidates when every provider is supported', t => {
@@ -258,6 +406,42 @@ test('sequential provider bandwidth events receive distinct pacing keys', t => {
   t.is(
     autoConfigPhaseStepKey('hardware', null, 'hardware_encoder_selected'),
     'hardware:selected',
+  );
+  const surfaceAttempt = {
+    encoderId: 'obs_nvenc_h264_tex',
+    width: 1920,
+    height: 1080,
+    fpsNum: 30,
+    fpsDen: 1,
+  };
+  t.is(
+    autoConfigPhaseStepKey(
+      'hardware',
+      null,
+      'hardware_testing_encoder_surfaces',
+      surfaceAttempt,
+    ),
+    'hardware:surfaces:obs_nvenc_h264_tex:1920x1080:30/1',
+  );
+  t.is(
+    autoConfigPhaseStepKey('hardware', null, 'hardware_validating_target_cadence', {
+      ...surfaceAttempt,
+      fpsNum: 60,
+    }),
+    'hardware:target-cadence:obs_nvenc_h264_tex:1920x1080:60/1',
+  );
+  t.not(
+    autoConfigPhaseStepKey(
+      'hardware',
+      null,
+      'hardware_testing_encoder_surfaces',
+      surfaceAttempt,
+    ),
+    autoConfigPhaseStepKey('hardware', null, 'hardware_testing_encoder_surfaces', {
+      ...surfaceAttempt,
+      width: 1280,
+      height: 720,
+    }),
   );
   t.is(
     autoConfigPhaseStepKey('recommendation', null, 'recommendation_selecting_quality'),

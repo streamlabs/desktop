@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from 'antd';
 import { $t } from 'services/i18n';
 import { $i } from 'services/utils';
+import { cloudRestreamConfidenceExplanationKey } from './presentation';
 import { IAutoOptimizerPresentationAdvice, IAutoOptimizerPresentationLeg } from './types';
 import styles from './AutoOptimizer.m.less';
 
@@ -16,22 +17,15 @@ function settingsKey(leg: IAutoOptimizerPresentationLeg) {
     leg.measurementMode,
     leg.estimateReason || '',
     ...(leg.platforms || []).map(platform => platform.id).sort(),
+    ...(leg.measuredPlatforms || []).map(platform => `measured:${platform.id}`).sort(),
+    ...(leg.estimatedPlatforms || []).map(platform => `estimated:${platform.id}`).sort(),
   ].join(':');
 }
 
-function MeasurementProvenance(p: { leg: IAutoOptimizerPresentationLeg }) {
-  const platforms =
-    p.leg.measurementMode === 'active' && p.leg.measuredPlatforms?.length
-      ? p.leg.measuredPlatforms
-      : p.leg.platforms;
-  if (!platforms?.length) return null;
-
-  const label = p.leg.measurementMode === 'active' ? $t('Measured on') : $t('Estimated for');
+function PlatformChips(p: { platforms: Array<{ id: string; label: string }> }) {
   return (
-    <span className={styles.measurementInline}>
-      {' '}
-      ({label}{' '}
-      {platforms.map((platform, index) => (
+    <>
+      {p.platforms.map((platform, index) => (
         <React.Fragment key={platform.id}>
           {index > 0 && <span className={styles.platformJoin}>+</span>}
           <span
@@ -43,7 +37,34 @@ function MeasurementProvenance(p: { leg: IAutoOptimizerPresentationLeg }) {
           </span>
         </React.Fragment>
       ))}
-      )
+    </>
+  );
+}
+
+function MeasurementProvenance(p: { leg: IAutoOptimizerPresentationLeg }) {
+  const measured =
+    p.leg.measurementMode === 'active' ? p.leg.measuredPlatforms || [] : [];
+  const estimated =
+    p.leg.measurementMode === 'active'
+      ? p.leg.estimatedPlatforms || []
+      : p.leg.platforms || [];
+  if (!measured.length && !estimated.length) return null;
+
+  return (
+    <span className={styles.measurementInline}>
+      {' ('}
+      {measured.length > 0 && (
+        <>
+          {$t('Measured on')} <PlatformChips platforms={measured} />
+        </>
+      )}
+      {measured.length > 0 && estimated.length > 0 && '; '}
+      {estimated.length > 0 && (
+        <>
+          {$t('Estimated for')} <PlatformChips platforms={estimated} />
+        </>
+      )}
+      {')'}
     </span>
   );
 }
@@ -63,16 +84,8 @@ function EstimateExplanation(p: { leg: IAutoOptimizerPresentationLeg }) {
 function ActiveMeasurementExplanation(p: { leg: IAutoOptimizerPresentationLeg }) {
   if (p.leg.showMeasurementReason) return null;
   if (p.leg.measurementMode !== 'active' || p.leg.route !== 'cloud-restream') return null;
-  let message =
-    'This shared cloud-restream upload was measured indirectly, so the result has medium confidence.';
-  if (p.leg.measurementConfidence === 'low') {
-    message =
-      'This shared cloud-restream upload was measured indirectly, so the result has low confidence.';
-  } else if (p.leg.measurementConfidence === 'high') {
-    message =
-      'This shared cloud-restream upload was measured indirectly. The result has high confidence.';
-  }
-  return <p className={styles.estimateExplanation}>{$t(message)}</p>;
+  const message = cloudRestreamConfidenceExplanationKey(p.leg.measurementConfidence);
+  return message ? <p className={styles.estimateExplanation}>{$t(message)}</p> : null;
 }
 
 function SettingsList(p: { leg: IAutoOptimizerPresentationLeg }) {

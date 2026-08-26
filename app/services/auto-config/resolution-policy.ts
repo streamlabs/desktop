@@ -18,8 +18,6 @@ export interface IAutoOptimizerRequestLimits {
 
 export interface IAutoOptimizerRequestLimitsInput {
   allowPromotion: boolean;
-  baseWidth: number;
-  baseHeight: number;
   currentWidth: number;
   currentHeight: number;
   currentFpsNum: number;
@@ -117,13 +115,12 @@ function fitTupleToTier(
 }
 
 /**
- * Return the highest canonical V1 output tier that fits inside the authored
- * canvas. Promotion is supported only from an existing 16:9/9:16 output; a
- * custom-aspect output remains at its current dimensions.
+ * Return the highest canonical V1 output tier that can be tested without
+ * changing the authored canvas. OSN owns the disposable benchmark mix, so an
+ * active test is deliberately independent of the persistent Base Canvas.
+ * Custom-aspect output remains at its current dimensions.
  */
 export function autoOptimizerResolutionCeiling(
-  baseWidth: number,
-  baseHeight: number,
   currentWidth: number,
   currentHeight: number,
 ): IAutoOptimizerResolution {
@@ -131,34 +128,115 @@ export function autoOptimizerResolutionCeiling(
   if (!isValidDimension(currentWidth) || !isValidDimension(currentHeight)) {
     return { width: 2, height: 2 };
   }
-  if (
-    !isValidDimension(baseWidth) ||
-    !isValidDimension(baseHeight) ||
-    !isCanonicalAspect(currentWidth, currentHeight) ||
-    isPortrait(baseWidth, baseHeight) !== isPortrait(currentWidth, currentHeight)
-  ) {
+  if (!isCanonicalAspect(currentWidth, currentHeight)) {
     return current;
   }
+  return orientedTiers(isPortrait(currentWidth, currentHeight))[0];
+}
 
-  const base = { width: baseWidth, height: baseHeight };
+/**
+ * A promoted output may grow Base Canvas only when both use the same supported
+ * V1 aspect/orientation. Otherwise preserving the authored canvas aspect could
+ * create a larger render workload than the isolated native test validated.
+ */
+export function autoOptimizerCanvasAllowsQualityPromotion(
+  baseWidth: number,
+  baseHeight: number,
+  outputWidth: number,
+  outputHeight: number,
+): boolean {
   return (
-    orientedTiers(isPortrait(currentWidth, currentHeight)).find(tier =>
-      fitsWithin(tier, base),
-    ) || current
+    isValidDimension(baseWidth) &&
+    isValidDimension(baseHeight) &&
+    isValidDimension(outputWidth) &&
+    isValidDimension(outputHeight) &&
+    isCanonicalAspect(baseWidth, baseHeight) &&
+    isCanonicalAspect(outputWidth, outputHeight) &&
+    isPortrait(baseWidth, baseHeight) === isPortrait(outputWidth, outputHeight)
   );
+}
+
+/** Whether accepting a recommendation raises the canonical output tier. */
+export function autoOptimizerPromotesResolution(
+  currentWidth: number,
+  currentHeight: number,
+  recommendedWidth: number,
+  recommendedHeight: number,
+): boolean {
+  return recommendedWidth > currentWidth && recommendedHeight > currentHeight;
 }
 
 /** Estimate-only routes keep the current output as their promotion ceiling. */
 export function autoOptimizerRequestResolutionCeiling(
   allowPromotion: boolean,
-  baseWidth: number,
-  baseHeight: number,
   currentWidth: number,
   currentHeight: number,
 ): IAutoOptimizerResolution {
   return allowPromotion
-    ? autoOptimizerResolutionCeiling(baseWidth, baseHeight, currentWidth, currentHeight)
+    ? autoOptimizerResolutionCeiling(currentWidth, currentHeight)
     : { width: currentWidth, height: currentHeight };
+}
+
+/**
+ * Grow an authored canvas just enough to contain an accepted recommendation.
+ * The existing canvas aspect and every dimension are preserved when possible;
+ * Auto Optimizer never shrinks a larger authored canvas.
+ */
+export function autoOptimizerAcceptedBaseResolution(
+  baseWidth: number,
+  baseHeight: number,
+  outputWidth: number,
+  outputHeight: number,
+): IAutoOptimizerResolution {
+  const current = { width: baseWidth, height: baseHeight };
+  if (
+    !isValidDimension(baseWidth) ||
+    !isValidDimension(baseHeight) ||
+    !isValidDimension(outputWidth) ||
+    !isValidDimension(outputHeight) ||
+    (outputWidth <= baseWidth && outputHeight <= baseHeight)
+  ) {
+    return current;
+  }
+
+  const scale = Math.max(outputWidth / baseWidth, outputHeight / baseHeight);
+  return {
+    width: Math.ceil((baseWidth * scale) / 2) * 2,
+    height: Math.ceil((baseHeight * scale) / 2) * 2,
+  };
+}
+
+/**
+ * Active V1 tests may promote only the two supported 30 FPS cadence families.
+ * Estimate-only routes, custom-aspect outputs, and every other cadence retain
+ * the exact current rational value.
+ */
+export function autoOptimizerRequestFrameRateCeiling(
+  allowPromotion: boolean,
+  currentWidth: number,
+  currentHeight: number,
+  currentFpsNum: number,
+  currentFpsDen: number,
+): { fpsNum: number; fpsDen: number } {
+  if (
+    !allowPromotion ||
+    !isCanonicalAspect(currentWidth, currentHeight) ||
+    !isValidFrameRate(currentFpsNum, currentFpsDen)
+  ) {
+    return { fpsNum: currentFpsNum, fpsDen: currentFpsDen };
+  }
+  if (currentFpsNum === 30 && currentFpsDen === 1) {
+    return { fpsNum: 60, fpsDen: 1 };
+  }
+  if (currentFpsNum === 30000 && currentFpsDen === 1001) {
+    return { fpsNum: 60000, fpsDen: 1001 };
+  }
+  return { fpsNum: currentFpsNum, fpsDen: currentFpsDen };
+}
+
+/** Round a rational frame rate for the public result without weakening apply precision. */
+export function autoOptimizerDisplayFrameRate(fpsNum: number, fpsDen: number): number {
+  return Math.round((fpsNum / fpsDen) * 100) / 100;
 }
 
 /** Construct the complete credential-free limit tuple sent for one upload leg. */
@@ -167,17 +245,22 @@ export function buildAutoOptimizerRequestLimits(
 ): IAutoOptimizerRequestLimits {
   const resolution = autoOptimizerRequestResolutionCeiling(
     input.allowPromotion,
-    input.baseWidth,
-    input.baseHeight,
     input.currentWidth,
     input.currentHeight,
+  );
+  const frameRate = autoOptimizerRequestFrameRateCeiling(
+    input.allowPromotion,
+    input.currentWidth,
+    input.currentHeight,
+    input.currentFpsNum,
+    input.currentFpsDen,
   );
   return {
     ...(input.maxBitrateKbps ? { maxBitrateKbps: input.maxBitrateKbps } : {}),
     maxWidth: resolution.width,
     maxHeight: resolution.height,
-    maxFpsNum: input.currentFpsNum,
-    maxFpsDen: input.currentFpsDen,
+    maxFpsNum: frameRate.fpsNum,
+    maxFpsDen: frameRate.fpsDen,
   };
 }
 

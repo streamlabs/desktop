@@ -3,6 +3,7 @@ import {
   AutoOptimizerFlow,
   autoOptimizerErrorMessage,
   autoOptimizerProgressLabel,
+  estimatedProbeProviders,
   shouldShowAutoOptimizerMeasurementReason,
   successfulProbeProviders,
 } from 'components-react/shared/auto-optimizer';
@@ -31,6 +32,8 @@ const estimateReasonLabels: Record<string, string> = {
   stream_shift: 'Estimated without connecting to Stream Shift.',
   mixed_topology: 'Estimated for this combination of stream destinations.',
   probe_disabled: 'Estimated because active bandwidth testing was unavailable.',
+  partial_provider_probes:
+    'Not all selected platforms could be tested. The recommendation uses the successful provider measurement and estimates the remaining provider route, so confidence is low.',
   probe_failed: 'Estimated because active bandwidth testing could not be completed.',
   probe_source_underfill:
     'The YouTube test did not fully reach its target bitrate and showed no clear signs of network congestion. This recommendation uses the highest upload rate that was verified and may be conservative.',
@@ -48,10 +51,10 @@ const estimateReasonLabels: Record<string, string> = {
     'Estimated after testing your hardware at a safe streaming resolution and framerate.',
   hardware_benchmark_encoder_fallback:
     'Estimated with a compatible encoder after testing your hardware.',
-  hardware_benchmark_resolution_fallback:
+  hardware_benchmark_quality_fallback:
     'Your hardware test selected a lower resolution or frame rate for reliable streaming.',
-  resolution_promotion_tested:
-    'Connection and encoder tests support this higher resolution. Performance while gaming may vary.',
+  quality_promotion_tested:
+    'Connection and encoder tests support this higher resolution or frame rate. Performance while gaming may vary.',
   hardware_benchmark_timeout:
     'Estimated conservatively because the hardware test did not finish in time.',
   hardware_benchmark_unavailable:
@@ -118,12 +121,17 @@ export default function GoLiveAutoOptimizer() {
       new Set(leg.destinations.map(destination => destination.platform)),
     ).map(platform => ({ id: platform, label: $t(platformLabels[platform]) }));
     const measuredProviders = successfulProbeProviders(leg.probes || []);
+    const estimatedProviders = estimatedProbeProviders(platforms, leg.probes || []);
 
     return {
       legId: leg.legId,
       label: destinationLabel(leg.destinations),
       platforms,
       measuredPlatforms: measuredProviders.map(platform => ({
+        id: platform,
+        label: $t(platformLabels[platform]),
+      })),
+      estimatedPlatforms: estimatedProviders.map(platform => ({
         id: platform,
         label: $t(platformLabels[platform]),
       })),

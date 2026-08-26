@@ -60,6 +60,52 @@ test('an exact modern H.264 recommendation is preserved as one tuple', t => {
   });
 });
 
+test('active validation accepts a tested 30 to 60 FPS promotion', t => {
+  t.truthy(
+    validateAutoConfigRecommendation(
+      recommendation({ fpsNum: 60, fpsDen: 1 }),
+      {
+        ...activeContext,
+        maxFpsNum: 60,
+        maxFpsDen: 1,
+        currentWidth: 1920,
+        currentHeight: 1080,
+        currentFpsNum: 30,
+        currentFpsDen: 1,
+      },
+    ),
+  );
+});
+
+test('estimate-only validation rejects an FPS promotion and preserves current cadence', t => {
+  const estimated30Context = {
+    measurementMode: 'estimated' as const,
+    currentBitrateKbps: 5800,
+    probeEvidence: [] as [],
+    maxWidth: 1920,
+    maxHeight: 1080,
+    maxFpsNum: 30,
+    maxFpsDen: 1,
+    currentWidth: 1920,
+    currentHeight: 1080,
+    currentFpsNum: 30,
+    currentFpsDen: 1,
+  };
+  t.is(
+    validateAutoConfigRecommendation(
+      recommendation({ fpsNum: 60, fpsDen: 1 }),
+      estimated30Context,
+    ),
+    null,
+  );
+  t.truthy(
+    validateAutoConfigRecommendation(
+      recommendation({ fpsNum: 30, fpsDen: 1 }),
+      estimated30Context,
+    ),
+  );
+});
+
 test('estimated recommendations cannot independently raise bitrate', t => {
   t.is(
     validateAutoConfigRecommendation(recommendation({ bitrateKbps: 2501 }), {

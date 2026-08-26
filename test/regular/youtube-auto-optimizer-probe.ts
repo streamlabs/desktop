@@ -282,6 +282,54 @@ test('YouTube Auto Optimizer deletes an exact UUID-marked ambiguous insert', asy
   t.is(adapter.storage.values.size, 0);
 });
 
+test('YouTube Auto Optimizer clears an empty journal after a definite API rejection', async t => {
+  const adapter = createAdapter();
+  const apiError = {
+    status: 400,
+    statusText: 'Bad Request',
+    url: 'https://www.googleapis.com/youtube/v3/liveStreams',
+    result: { error: { code: 400, message: 'Invalid liveStream configuration' } },
+  };
+  adapter.foundStreamIds = ['must-not-be-deleted'];
+  adapter.createStream = async () => Promise.reject(apiError);
+  const manager = new YoutubeAutoOptimizerProbeManager(adapter);
+
+  const error = await manager.acquire().then(
+    () => null,
+    (error: unknown) => error,
+  );
+
+  t.is((error as { status: number }).status, apiError.status);
+  t.deepEqual(adapter.deletedStreamIds, []);
+  t.is(adapter.storage.values.size, 0);
+});
+
+test('YouTube Auto Optimizer retains an empty journal after an ambiguous transport failure', async t => {
+  const adapter = createAdapter();
+  adapter.createStream = async () => Promise.reject({ status: 0, message: 'Network failure' });
+  const manager = new YoutubeAutoOptimizerProbeManager(adapter);
+
+  const error = await t.throwsAsync(manager.acquire());
+
+  t.is((error as YoutubeAutoOptimizerProbeError).code, 'cleanup_failed');
+  t.truthy(getOnlyJournal(adapter.storage));
+  t.deepEqual(adapter.deletedStreamIds, []);
+});
+
+test('YouTube Auto Optimizer retains an empty journal after an ambiguous HTTP failure', async t => {
+  for (const status of [408, 499, 503]) {
+    const adapter = createAdapter();
+    adapter.createStream = async () => Promise.reject({ status, message: 'Ambiguous failure' });
+    const manager = new YoutubeAutoOptimizerProbeManager(adapter);
+
+    const error = await t.throwsAsync(manager.acquire());
+
+    t.is((error as YoutubeAutoOptimizerProbeError).code, 'cleanup_failed');
+    t.truthy(getOnlyJournal(adapter.storage));
+    t.deepEqual(adapter.deletedStreamIds, []);
+  }
+});
+
 test('YouTube Auto Optimizer retains and later recovers a recent ambiguous insert', async t => {
   const adapter = createAdapter();
   adapter.createStream = async () => {
