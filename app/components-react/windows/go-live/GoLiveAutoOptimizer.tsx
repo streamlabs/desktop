@@ -3,6 +3,7 @@ import {
   AutoOptimizerFlow,
   autoOptimizerErrorMessage,
   autoOptimizerProgressLabel,
+  shouldShowAutoOptimizerMeasurementReason,
   successfulProbeProviders,
 } from 'components-react/shared/auto-optimizer';
 import { useVuex } from 'components-react/hooks';
@@ -31,6 +32,8 @@ const estimateReasonLabels: Record<string, string> = {
   mixed_topology: 'Estimated for this combination of stream destinations.',
   probe_disabled: 'Estimated because active bandwidth testing was unavailable.',
   probe_failed: 'Estimated because active bandwidth testing could not be completed.',
+  probe_source_underfill:
+    'The YouTube test did not fully reach its target bitrate and showed no clear signs of network congestion. This recommendation uses the highest upload rate that was verified and may be conservative.',
   unstable_connection:
     'Your connection was unstable during bandwidth testing, so this recommendation has low confidence.',
   connection_variability_detected:
@@ -46,7 +49,9 @@ const estimateReasonLabels: Record<string, string> = {
   hardware_benchmark_encoder_fallback:
     'Estimated with a compatible encoder after testing your hardware.',
   hardware_benchmark_resolution_fallback:
-    'Estimated at a lower resolution and framerate after testing your hardware.',
+    'Your hardware test selected a lower resolution or frame rate for reliable streaming.',
+  resolution_promotion_tested:
+    'Connection and encoder tests support this higher resolution. Performance while gaming may vary.',
   hardware_benchmark_timeout:
     'Estimated conservatively because the hardware test did not finish in time.',
   hardware_benchmark_unavailable:
@@ -130,7 +135,7 @@ export default function GoLiveAutoOptimizer() {
       estimateReason: leg.estimateReason
         ? $t(estimateReasonLabels[leg.estimateReason] || leg.estimateReason)
         : undefined,
-      showMeasurementReason: leg.estimateReason === 'connection_variability_detected',
+      showMeasurementReason: shouldShowAutoOptimizerMeasurementReason(leg.estimateReason),
       managedByProvider:
         leg.display === 'both' || state.result?.topology === 'enhanced-broadcasting',
       width: leg.resolution.width,

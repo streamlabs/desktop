@@ -30,6 +30,7 @@ import {
   supportedAutoConfigProbeProviders,
 } from './probe-policy';
 import { validateAutoConfigRecommendation } from './result-policy';
+import { buildAutoOptimizerRequestLimits } from './resolution-policy';
 import {
   captureRawOutputValues,
   outputTransactionValuesMatch,
@@ -239,6 +240,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private youtubeProbeLeases = new Map<string, IYoutubeAutoOptimizerProbeLease>();
   private youtubeConfirmationPromises = new Map<string, Promise<void>>();
   private probeAbortController: AbortController | null = null;
+  /** Exact credential-free native inputs retained only for the active attempt. */
+  private attemptRequestLegs = new Map<string, IAutoConfigRequestLeg>();
 
   init() {
     super.init();
@@ -341,6 +344,9 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       }
       topology = prepared.topology;
       const request = prepared.request;
+      this.attemptRequestLegs = new Map(
+        request.legs.map(leg => [leg.legId, cloneDeep(leg)]),
+      );
       this.SET_TOPOLOGY(topology);
 
       const native = this.nativeApi();
@@ -700,6 +706,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       const knownCaps = leg.destinations
         .map(item => PLATFORM_MAX_BITRATE_KBPS[item.platform])
         .filter((value): value is number => typeof value === 'number' && value > 0);
+      const maxBitrateKbps = knownCaps.length ? Math.min(...knownCaps) : undefined;
       return {
         legId: leg.legId,
         display: leg.display,
@@ -716,7 +723,19 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           codec: 'h264',
           preset: output.streaming.preset || undefined,
         },
-        limits: knownCaps.length ? { maxBitrateKbps: Math.min(...knownCaps) } : undefined,
+        // Resolution promotion is permitted only when every provider probe for
+        // this leg was acquired. Estimate-only paths may lower a tested tuple,
+        // but their request ceiling cannot rise above the current output.
+        limits: buildAutoOptimizerRequestLimits({
+          allowPromotion: leg.measurement === 'active',
+          baseWidth: video.baseWidth,
+          baseHeight: video.baseHeight,
+          currentWidth: video.outputWidth,
+          currentHeight: video.outputHeight,
+          currentFpsNum: video.fpsNum,
+          currentFpsDen: video.fpsDen,
+          maxBitrateKbps,
+        }),
         estimateReason: leg.estimateReason as IAutoConfigRequestLeg['estimateReason'],
       };
     });
@@ -944,38 +963,50 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
   private toPublicResult(nativeResult: IAutoConfigNativeResult): IAutoOptimizerResult {
     const expectedLegs = this.state.topology?.legs || [];
-    const currentBitrate = this.outputSettingsService.getSettings().streaming.bitrate;
     const legs: IAutoOptimizerLegResult[] = nativeResult.legs.flatMap(leg => {
-        const expected = expectedLegs.find(item => item.legId === leg.legId);
-        const evidence = sanitizeAutoConfigProbeEvidence(leg.measurement?.probes);
-        const activeEvidenceComplete =
-          leg.measurement?.mode !== 'active' ||
-          expected?.probeCandidates.every(candidate =>
-            evidence.some(item => item.provider === candidate.provider && item.success),
-          );
-        const providerOwnsEncoding =
-          this.state.topology?.type === 'enhanced-broadcasting' ||
-          (expected?.display === 'both' &&
-            expected.destinations.some(destination => destination.platform === 'twitch'));
-        const recommendation = validateAutoConfigRecommendation(leg.recommendation, {
-          measurementMode: leg.measurement?.mode,
-          currentBitrateKbps: currentBitrate,
-          probeEvidence: evidence,
-          providerOwnsEncoding,
-        });
-        const valid =
-          expected?.display === leg.display &&
-          (expected?.measurement === 'active' || leg.measurement?.mode === 'estimated') &&
-          activeEvidenceComplete &&
-          typeof leg.legId === 'string' &&
-          Array.isArray(leg.destinations) &&
-          leg.measurement &&
-          ['active', 'estimated'].includes(leg.measurement.mode) &&
-          ['high', 'medium', 'low'].includes(leg.measurement.confidence) &&
-          recommendation !== null;
-        if (!valid || !expected || !recommendation) return [];
+      const expected = expectedLegs.find(item => item.legId === leg.legId);
+      const requested = this.attemptRequestLegs.get(leg.legId);
+      const evidence = sanitizeAutoConfigProbeEvidence(leg.measurement?.probes);
+      const activeEvidenceComplete =
+        leg.measurement?.mode !== 'active' ||
+        expected?.probeCandidates.every(candidate =>
+          evidence.some(item => item.provider === candidate.provider && item.success),
+        );
+      const providerOwnsEncoding =
+        this.state.topology?.type === 'enhanced-broadcasting' ||
+        (expected?.display === 'both' &&
+          expected.destinations.some(destination => destination.platform === 'twitch'));
+      const recommendation = requested
+        ? validateAutoConfigRecommendation(leg.recommendation, {
+            measurementMode: leg.measurement?.mode,
+            currentBitrateKbps: requested.current.bitrateKbps,
+            probeEvidence: evidence,
+            providerOwnsEncoding,
+            maxWidth: requested.limits?.maxWidth,
+            maxHeight: requested.limits?.maxHeight,
+            maxFpsNum: requested.limits?.maxFpsNum,
+            maxFpsDen: requested.limits?.maxFpsDen,
+            currentWidth: requested.current.width,
+            currentHeight: requested.current.height,
+            currentFpsNum: requested.current.fpsNum,
+            currentFpsDen: requested.current.fpsDen,
+          })
+        : null;
+      const valid =
+        requested?.display === leg.display &&
+        expected?.display === leg.display &&
+        (expected?.measurement === 'active' || leg.measurement?.mode === 'estimated') &&
+        activeEvidenceComplete &&
+        typeof leg.legId === 'string' &&
+        Array.isArray(leg.destinations) &&
+        leg.measurement &&
+        ['active', 'estimated'].includes(leg.measurement.mode) &&
+        ['high', 'medium', 'low'].includes(leg.measurement.confidence) &&
+        recommendation !== null;
+      if (!valid || !expected || !recommendation) return [];
 
-        return [{
+      return [
+        {
           legId: leg.legId,
           display: leg.display,
           destinations: expected.destinations.map(
@@ -995,8 +1026,9 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           fps: recommendation.fpsNum / recommendation.fpsDen,
           bitrate: recommendation.bitrateKbps,
           ...(recommendation.encoder ? { encoder: recommendation.encoder } : {}),
-        }];
-      });
+        },
+      ];
+    });
 
     return {
       schemaVersion: 1,
@@ -1386,6 +1418,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   private async cleanupOptimizerRun(cancel = false): Promise<void> {
+    this.attemptRequestLegs.clear();
     this.probeAbortController?.abort();
     this.probeAbortController = null;
     // Redact credentials even when setup failed or was cancelled before native

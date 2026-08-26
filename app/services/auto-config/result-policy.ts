@@ -4,6 +4,10 @@ import {
   TAutoOptimizerEncoderFamily,
   TAutoOptimizerMeasurementMode,
 } from './types';
+import {
+  IAutoOptimizerRequestLimits,
+  matchesAutoOptimizerQualityPolicy,
+} from './resolution-policy';
 
 type TNativeRecommendation = IAutoConfigNativeResult['legs'][number]['recommendation'];
 
@@ -68,6 +72,14 @@ export function validateAutoConfigRecommendation(
     currentBitrateKbps: number;
     probeEvidence: IAutoOptimizerProbeEvidence[];
     providerOwnsEncoding?: boolean;
+    maxWidth?: number;
+    maxHeight?: number;
+    maxFpsNum?: number;
+    maxFpsDen?: number;
+    currentWidth?: number;
+    currentHeight?: number;
+    currentFpsNum?: number;
+    currentFpsDen?: number;
   },
 ): IValidatedAutoConfigRecommendation | null {
   const value = recommendation as Partial<TNativeRecommendation> | null | undefined;
@@ -81,6 +93,28 @@ export function validateAutoConfigRecommendation(
     !isIntegerInRange(value.fpsDen, 1, 1000000) ||
     value.fpsNum / value.fpsDen > 240 ||
     !isIntegerInRange(value.bitrateKbps, 1, 100000)
+  ) {
+    return null;
+  }
+
+  if (
+    (context.maxWidth && value.width > context.maxWidth) ||
+    (context.maxHeight && value.height > context.maxHeight)
+  ) {
+    return null;
+  }
+
+  if (
+    context.measurementMode === 'estimated' &&
+    ((context.currentWidth && value.width > context.currentWidth) ||
+      (context.currentHeight && value.height > context.currentHeight))
+  ) {
+    return null;
+  }
+
+  if (
+    context.maxFpsNum &&
+    value.fpsNum * (context.maxFpsDen || 1) > context.maxFpsNum * value.fpsDen
   ) {
     return null;
   }
@@ -116,6 +150,52 @@ export function validateAutoConfigRecommendation(
       .filter(item => item.success && Number.isFinite(item.safeKbps))
       .map(item => item.safeKbps!);
     if (!safeValues.length || value.bitrateKbps > Math.min(...safeValues)) return null;
+  }
+
+  const hasCompleteQualityContext =
+    context.maxWidth !== undefined &&
+    context.maxHeight !== undefined &&
+    context.maxFpsNum !== undefined &&
+    context.maxFpsDen !== undefined &&
+    context.currentWidth !== undefined &&
+    context.currentHeight !== undefined &&
+    context.currentFpsNum !== undefined &&
+    context.currentFpsDen !== undefined;
+  const exactEstimatedCurrentFallback =
+    context.measurementMode === 'estimated' &&
+    hasCompleteQualityContext &&
+    value.width === context.currentWidth &&
+    value.height === context.currentHeight &&
+    value.fpsNum === context.currentFpsNum &&
+    value.fpsDen === context.currentFpsDen;
+  if (
+    !context.providerOwnsEncoding &&
+    hasCompleteQualityContext &&
+    !exactEstimatedCurrentFallback &&
+    !matchesAutoOptimizerQualityPolicy(
+      {
+        width: value.width,
+        height: value.height,
+        fpsNum: value.fpsNum,
+        fpsDen: value.fpsDen,
+      },
+      {
+        width: context.currentWidth!,
+        height: context.currentHeight!,
+        fpsNum: context.currentFpsNum!,
+        fpsDen: context.currentFpsDen!,
+      },
+      {
+        maxWidth: context.maxWidth!,
+        maxHeight: context.maxHeight!,
+        maxFpsNum: context.maxFpsNum!,
+        maxFpsDen: context.maxFpsDen!,
+      } as IAutoOptimizerRequestLimits,
+      value.bitrateKbps,
+      encoderFamily!,
+    )
+  ) {
+    return null;
   }
 
   return {

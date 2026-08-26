@@ -124,7 +124,8 @@ export function autoConfigPhaseStepKey(
     provider &&
     (code === `${provider}_probe_completed` ||
       code === `${provider}_probe_failed_estimate_used` ||
-      code === `${provider}_probe_unstable_estimate_used`)
+      code === `${provider}_probe_unstable_estimate_used` ||
+      (provider === 'youtube' && code === 'youtube_probe_source_underfill_completed'))
   ) {
     return `${phase}:${provider}:complete`;
   }

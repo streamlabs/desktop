@@ -283,6 +283,14 @@ test('sequential provider bandwidth events receive distinct pacing keys', t => {
     autoConfigPhaseStepKey('bandwidth', 'twitch', 'twitch_probe_failed_estimate_used'),
     'bandwidth:twitch:complete',
   );
+  t.is(
+    autoConfigPhaseStepKey(
+      'bandwidth',
+      'youtube',
+      'youtube_probe_source_underfill_completed',
+    ),
+    'bandwidth:youtube:complete',
+  );
   t.not(
     autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_completed'),
     autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_baseline'),
@@ -376,9 +384,9 @@ test('probe evidence is validated and strips attempt-local or unknown fields', t
         probeId: 'horizontal-twitch',
         provider: 'twitch',
         method: 'twitch-bandwidth-test',
-        measuredKbps: 6000,
-        safeKbps: 4200,
-        headroomPercent: 30,
+        measuredKbps: 6013,
+        safeKbps: 6000,
+        headroomPercent: 0,
         success: true,
         ceilingReached: false,
         streamKey: 'must-not-leak',
@@ -386,9 +394,9 @@ test('probe evidence is validated and strips attempt-local or unknown fields', t
       {
         provider: 'youtube',
         method: 'youtube-unbound-ramp',
-        measuredKbps: 9000,
-        safeKbps: 7200,
-        headroomPercent: 20,
+        measuredKbps: 7900,
+        safeKbps: 8000,
+        headroomPercent: 0,
         success: true,
       },
       {
@@ -417,18 +425,18 @@ test('probe evidence is validated and strips attempt-local or unknown fields', t
       {
         provider: 'twitch',
         method: 'twitch-bandwidth-test',
-        measuredKbps: 6000,
-        safeKbps: 4200,
-        headroomPercent: 30,
+        measuredKbps: 6013,
+        safeKbps: 6000,
+        headroomPercent: 0,
         success: true,
         ceilingReached: false,
       },
       {
         provider: 'youtube',
         method: 'youtube-unbound-ramp',
-        measuredKbps: 9000,
-        safeKbps: 7200,
-        headroomPercent: 20,
+        measuredKbps: 7900,
+        safeKbps: 8000,
+        headroomPercent: 0,
         success: true,
       },
       {

@@ -10,6 +10,18 @@ import {
 
 const providerOrder: TAutoOptimizerPresentationProbeProvider[] = ['twitch', 'youtube'];
 
+const visibleActiveMeasurementReasons = new Set([
+  'connection_variability_detected',
+  'hardware_benchmark_resolution_fallback',
+  'probe_source_underfill',
+  'resolution_promotion_tested',
+]);
+
+/** Active medium-confidence reasons that should be explained on the result card. */
+export function shouldShowAutoOptimizerMeasurementReason(reason?: string): boolean {
+  return visibleActiveMeasurementReasons.has(reason || '');
+}
+
 const hardwareFailureMessages: Record<string, string> = {
   hardware_no_usable_encoder:
     "We couldn't find an encoder that can stream reliably. Close other apps and try again.",
@@ -124,7 +136,7 @@ export function autoOptimizerProgressLabel(
     case 'hardware_encoder_selected':
       if (tuple) {
         return {
-          key: 'Selected %{encoder} at %{width}×%{height}, %{fps} FPS.',
+          key: '%{encoder} passed the hardware test at %{width}×%{height}, %{fps} FPS.',
           values: tuple,
         };
       }
@@ -156,6 +168,10 @@ export function autoOptimizerProgressLabel(
       return { key: 'Twitch upload test complete.' };
     case 'youtube_probe_completed':
       return { key: 'YouTube upload test complete.' };
+    case 'youtube_probe_source_underfill_completed':
+      return {
+        key: 'YouTube upload test complete. Full connection capacity could not be measured.',
+      };
     case 'twitch_probe_unstable_estimate_used':
       return { key: 'Your Twitch upload was unstable. Using an estimate...' };
     case 'youtube_probe_unstable_estimate_used':

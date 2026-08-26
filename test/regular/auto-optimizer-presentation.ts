@@ -3,6 +3,7 @@ import {
   autoOptimizerErrorMessage,
   autoOptimizerProgressLabel,
   bandwidthPhaseLabelKey,
+  shouldShowAutoOptimizerMeasurementReason,
   successfulProbeProviders,
 } from '../../app/components-react/shared/auto-optimizer/presentation';
 import { IAutoOptimizerProgressDetail } from '../../app/services/auto-config/types';
@@ -37,6 +38,15 @@ test('successful measured providers are stable, deduplicated, and omit failures'
     ]),
     ['twitch', 'youtube'],
   );
+});
+
+test('active medium-confidence quality reasons remain visible in results', t => {
+  t.true(shouldShowAutoOptimizerMeasurementReason('resolution_promotion_tested'));
+  t.true(shouldShowAutoOptimizerMeasurementReason('hardware_benchmark_resolution_fallback'));
+  t.true(shouldShowAutoOptimizerMeasurementReason('connection_variability_detected'));
+  t.true(shouldShowAutoOptimizerMeasurementReason('probe_source_underfill'));
+  t.false(shouldShowAutoOptimizerMeasurementReason('probe_failed'));
+  t.false(shouldShowAutoOptimizerMeasurementReason());
 });
 
 test('bandwidth phase follows the provider currently being probed', t => {
@@ -82,6 +92,34 @@ test('hardware progress describes the encoder and exact tuple being tested', t =
         width: 1920,
         height: 1080,
         fps: 59.94,
+        bitrate: 0,
+      },
+    },
+  );
+});
+
+test('hardware completion reports capability without claiming the final quality selection', t => {
+  t.deepEqual(
+    autoOptimizerProgressLabel(
+      'hardware',
+      progressDetail({
+        code: 'hardware_encoder_selected',
+        encoderId: 'obs_nvenc_h264_tex',
+        encoderFamily: 'obs_nvenc_h264_tex',
+        encoderTitle: 'NVIDIA NVENC H.264',
+        width: 1920,
+        height: 1080,
+        fpsNum: 30,
+        fpsDen: 1,
+      }),
+    ),
+    {
+      key: '%{encoder} passed the hardware test at %{width}×%{height}, %{fps} FPS.',
+      values: {
+        encoder: 'NVIDIA NVENC H.264',
+        width: 1920,
+        height: 1080,
+        fps: 30,
         bitrate: 0,
       },
     },
@@ -158,6 +196,16 @@ test('terminal provider progress states remain truthful and readable', t => {
       progressDetail({ code: 'youtube_probe_completed', provider: 'youtube' }),
     ).key,
     'YouTube upload test complete.',
+  );
+  t.is(
+    autoOptimizerProgressLabel(
+      'bandwidth',
+      progressDetail({
+        code: 'youtube_probe_source_underfill_completed',
+        provider: 'youtube',
+      }),
+    ).key,
+    'YouTube upload test complete. Full connection capacity could not be measured.',
   );
   t.is(
     autoOptimizerProgressLabel(

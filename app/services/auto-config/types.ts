@@ -62,8 +62,11 @@ export interface IAutoOptimizerProbeCandidate {
 export interface IAutoOptimizerProbeEvidence {
   provider: TAutoOptimizerProbeProvider;
   method: TAutoOptimizerProbeMethod;
+  /** Observed aggregate output throughput, including probe audio. */
   measuredKbps?: number;
+  /** Validated video target after explicit degradation and applicable caps. */
   safeKbps?: number;
+  /** Fixed percentage haircut; current target-validation policies report zero. */
   headroomPercent?: number;
   success: boolean;
   ceilingReached?: boolean;
@@ -191,6 +194,7 @@ export interface IAutoConfigRequestLeg {
   current: IAutoConfigCurrentSettings;
   limits?: {
     maxBitrateKbps?: number;
+    /** Highest canvas-bounded output eligible for hardware and bandwidth testing. */
     maxWidth?: number;
     maxHeight?: number;
     maxFpsNum?: number;

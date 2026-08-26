@@ -111,7 +111,6 @@ function SettingsList(p: { leg: IAutoOptimizerPresentationLeg }) {
           <li>
             <i className="icon-check" aria-hidden="true" />
             {$t('Encoder')}: {leg.encoder}
-            {leg.preset ? ` (${leg.preset})` : ''}
           </li>
         )}
       </ul>
