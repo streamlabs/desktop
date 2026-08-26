@@ -50,5 +50,5 @@ export const REPLAY_INSTALL_ORIGIN = 'sl_desktop';
 // work before Replay is installed at all, and Replay deletes it as soon as it has been read.
 // Deliberately not derived from REPLAY_APP_NAME: this directory name is a contract with Replay and
 // does not follow the app rename.
-export const REPLAY_INSTALL_ORIGIN_DIR_NAME = 'Streamlabs';
+export const REPLAY_INSTALL_ORIGIN_DIR_NAME = 'Streamlabs_Highlighter';
 export const REPLAY_INSTALL_ORIGIN_FILE_NAME = 'install-origin.json';

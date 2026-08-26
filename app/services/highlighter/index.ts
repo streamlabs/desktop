@@ -511,6 +511,39 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   }
 
   /**
+   * Dev-only escape hatch for testing the install flow against a locally built Replay installer
+   * instead of the CDN one. Set HIGHLIGHTER_LOCAL_SETUP_PATH to the setup exe before launching, e.g.
+   *
+   *   set "HIGHLIGHTER_LOCAL_SETUP_PATH=C:\path\to\Streamlabs Highlighter-0.0.16 Setup.exe"
+   *
+   * Read from remote.process.env at runtime (via Utils.env), so it takes effect on the next
+   * `yarn start` with no rebuild — unlike HIGHLIGHTER_ENV, which webpack bakes in at compile time.
+   *
+   * Gated on dev mode: a local build is not signed by Logitech, so this path skips the Authenticode
+   * check, and that check must stay unconditional in shipped builds.
+   *
+   * Throws if the path is set but missing, rather than silently falling back to the CDN download —
+   * a typo should be visible, not quietly ignored.
+   */
+  private async getLocalReplaySetupPath(): Promise<string | null> {
+    if (!Utils.isDevMode()) return null;
+
+    const configuredPath = Utils.env.HIGHLIGHTER_LOCAL_SETUP_PATH?.trim();
+    if (!configuredPath) return null;
+
+    // Tolerate a value pasted with surrounding quotes, which is easy to do for a path with spaces
+    const setupPath = path.resolve(configuredPath.replace(/^"(.*)"$/, '$1'));
+
+    if (!(await fs.pathExists(setupPath))) {
+      throw new Error(
+        `HIGHLIGHTER_LOCAL_SETUP_PATH is set but no installer exists at "${setupPath}".`,
+      );
+    }
+
+    return setupPath;
+  }
+
+  /**
    * Where Replay looks for the install origin marker, given who we are running as.
    *
    * Replay reads exactly one location: the current user's temp directory. A parent writing under a
@@ -620,17 +653,28 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       // --- Downloading phase ---
       this.SET_REPLAY_INSTALL({ step: 'downloading', progress: 0, error: null });
 
-      const setupUrl = this.getReplaySetupUrl();
+      // Dev only. When set, this is a locally built installer we neither downloaded nor own,
+      // so the download, the signature check and the cleanup below are all skipped for it.
+      const localSetupPath = await this.getLocalReplaySetupPath();
+      let setupPath: string;
 
-      // Download the setup exe to temp directory
-      const tempDir = os.tmpdir();
-      const setupPath = path.join(tempDir, REPLAY_SETUP_EXE_NAME);
+      if (localSetupPath) {
+        console.info('Installing Streamlabs Replay from local build:', localSetupPath);
+        setupPath = localSetupPath;
+        this.setReplayDownloadProgress(94);
+      } else {
+        const setupUrl = this.getReplaySetupUrl();
 
-      await downloadFile(setupUrl, setupPath, (progress: IDownloadProgress) => {
-        // Map download progress to 0-94%
-        const downloadPercent = progress.percent * 94;
-        this.setReplayDownloadProgress(downloadPercent);
-      });
+        // Download the setup exe to temp directory
+        const tempDir = os.tmpdir();
+        setupPath = path.join(tempDir, REPLAY_SETUP_EXE_NAME);
+
+        await downloadFile(setupUrl, setupPath, (progress: IDownloadProgress) => {
+          // Map download progress to 0-94%
+          const downloadPercent = progress.percent * 94;
+          this.setReplayDownloadProgress(downloadPercent);
+        });
+      }
 
       clearProgress();
 
@@ -642,8 +686,13 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         return false;
       }
 
-      // Verify the Authenticode signature before execution
-      await this.verifyAuthenticodeSignature(setupPath);
+      if (localSetupPath) {
+        // A local build is not signed by Logitech, so the check would always fail here
+        console.warn('Skipping installer signature verification for local Streamlabs Replay build');
+      } else {
+        // Verify the Authenticode signature before execution
+        await this.verifyAuthenticodeSignature(setupPath);
+      }
 
       // Attribute this install to Streamlabs Desktop before the installer runs.
       // Best-effort: this never throws and never blocks the install.
@@ -709,11 +758,13 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         });
       }
 
-      // Clean up setup file
-      try {
-        await fs.remove(setupPath);
-      } catch {
-        // Non-critical cleanup
+      // Clean up setup file. Never for a local build — that is the developer's own artifact.
+      if (!localSetupPath) {
+        try {
+          await fs.remove(setupPath);
+        } catch {
+          // Non-critical cleanup
+        }
       }
 
       // Track installation finished successfully
