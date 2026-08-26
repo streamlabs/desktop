@@ -794,9 +794,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
       // For the stream switcher, the stream needs a unique identifier
       // Note: if there is a bug with stream shift, start by checking for an sid parameter in the stream key
       const streamKey = `${this.settings.streamKey}&sid=${streamId}`;
-      console.log('Generated stream key with sid:', streamKey);
-
-      console.log('RESTREAM setupIngest stream shift streamKey', streamKey, 'ingest', ingest);
 
       this.setStreamSettingsForDisplay('horizontal', streamKey, ingest);
     } else if (display) {
@@ -1007,7 +1004,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       platform: platform as TPlatform | 'relay',
       streamKey: getPlatformService(platform).state.streamKey,
       label: `${platform} target`,
-      mode: this.streamInfo.isDualOutputMode ? this.getPlatformMode(platform) : 'landscape',
+      mode: this.getPlatformMode(platform),
       dcProtection: true,
       enabled: true,
     };
@@ -1207,7 +1204,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
         // Preserve targets the status endpoint returned no data for. Dropping them removes the
         // platform from the switch entirely, and drops the relay target on every fetch.
         const targets = this.state.streamShiftTargets.map((t: ITargetLiveData) => {
-          console.log('Stream Shift target data', t, res[t.platform as string]);
           if (t.platform === 'relay') return t;
 
           const data = res[t.platform as string]?.[0];
@@ -1360,10 +1356,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
       identifier: this.state.streamShiftStreamId,
       action,
     });
-    console.log('Stream Shift updateStreamShift', action, this.state.streamShiftStreamId);
     const request = new Request(url, { headers, body, method: 'POST' });
     const res = await fetch(request);
-    console.log('res ', res);
     if (!res.ok) throw await res.json();
     return res.json();
   }
@@ -1419,7 +1413,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @returns A message to show the user, or an empty string when no alert should be shown
    */
   async handleStreamShiftEvent(event: TSocketEvent): Promise<string> {
-    console.log('Stream Shift handleStreamShiftEvent', event);
     if (this.state.streamShiftForceGoLive) return '';
     if (event.type !== 'streamSwitchRequest' && event.type !== 'switchActionComplete') {
       return '';
@@ -1448,12 +1441,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
       // End the stream on this device if switching the stream to another device
       // Only record analytics if the stream was switched from this device to a different one
 
-      console.log(
-        'Stream Shift switchActionComplete',
-        isIncomingStream,
-        event.data.identifier,
-        streamShiftStreamId,
-      );
       if (!isIncomingStream) {
         this.endStreamShiftStream(event.data.identifier);
         this.recordStreamShiftAnalytics('complete', event.data.identifier);
@@ -1593,7 +1580,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   private getPlatformMode(platform: TPlatform): TOutputOrientation {
-    const display = this.streamingService.views.getPlatformMode(platform);
     return this.streamingService.views.getPlatformMode(platform);
   }
 

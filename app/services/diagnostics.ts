@@ -193,7 +193,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     return numStreams > 4;
   }
 
-  get lastStream(): IStreamDiagnosticInfo {
+  get lastStream(): IStreamDiagnosticInfo | undefined {
     return this.state.streams[this.state.streams.length - 1];
   }
 

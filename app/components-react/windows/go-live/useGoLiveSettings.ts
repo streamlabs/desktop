@@ -686,7 +686,6 @@ export class GoLiveSettingsModule {
   async goLive() {
     if (await this.validate()) {
       Services.StreamingService.actions.goLive(this.state.settings);
-      // await Services.StreamingService.actions.return.goLive(this.state.settings);
     }
   }
   /**

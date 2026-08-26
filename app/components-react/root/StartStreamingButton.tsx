@@ -164,8 +164,8 @@ function StartStreamingButton(p: { disabled?: boolean }) {
   // and also to cancel the action on unmount to prevent memory leaks and state updates on unmounted components
   const toggleStreaming = useDebounce(500, handleToggleStreaming);
 
-  // Checking for a stream shift status can take up to four seconds
-  const checkIsLive = useDebounce(4000, RestreamService.actions.checkIsLive);
+  // Debounce checking for the live status of the stream and enable canceling on unmount
+  const checkIsLive = useDebounce(0, RestreamService.actions.checkIsLive);
 
   const getIsRedButton = useMemo(() => {
     return streamingStatus !== EStreamingState.Offline && streamShiftStatus !== 'pending';
