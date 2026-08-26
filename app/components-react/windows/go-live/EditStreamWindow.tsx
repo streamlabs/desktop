@@ -46,12 +46,12 @@ export default function EditStreamWindow() {
     prepopulate();
   });
 
-  // 5-second countdown timer state
+  // 10-second countdown timer state
   const [timer, setTimer] = useState<number | null>(null);
 
   useEffect(() => {
     const subscription = cooldownTimer.subscribe(() => {
-      setTimer(3);
+      setTimer(10);
     });
 
     return () => {
