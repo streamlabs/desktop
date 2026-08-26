@@ -174,10 +174,6 @@ export function useAuth() {
     UsageStatisticsService.actions.recordAnalyticsEvent('PlatformLogin', 'streamlabs');
     UserService.startSLAuth().then(async (status: EPlatformCallResult) => {
       if (status !== EPlatformCallResult.Success) return;
-      console.log(JSON.stringify(platforms));
-      if (platforms.length) {
-        await UserService.actions.return.finishSLAuth(platforms[0]);
-      }
       // Don't let users get in a partially authed stated even if they're just logging in
       if (isPartialSLAuth && OnboardingV2Service.singletonPath) {
         OnboardingV2Service.actions.showSingletonStep(EOnboardingSteps.ConnectMore);

@@ -1276,8 +1276,6 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       this.SET_AUTH_STATE(EAuthProcessState.Idle);
     });
 
-    console.log('service auth', JSON.stringify(auth));
-
     if (!auth) return EPlatformCallResult.Error;
 
     this.LOGOUT();
@@ -1290,7 +1288,12 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
 
     // Find out if the user has any additional platforms linked
     await this.updateLinkedPlatforms();
-    console.log('service auth after platform refresh', JSON.stringify(this.state.auth));
+    // If they have platforms attached we can finish authenticating
+    if (this.views.platform) {
+      await this.finishSLAuth(this.views.platform.type);
+    } else if (this.views.linkedPlatforms.length && !this.views.platform) {
+      await this.finishSLAuth(this.views.linkedPlatforms[0]);
+    }
     return EPlatformCallResult.Success;
   }
 
