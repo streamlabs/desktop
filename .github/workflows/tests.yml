@@ -64,9 +64,6 @@ jobs:
           Remove-Item -Recurse -Force "$env:TEMP\slobs-test*" -ErrorAction Ignore
         shell: powershell
       - uses: actions/checkout@v4
-      - name: 'Get RDP Address'
-        run: echo "IP for RDP connections:" $(Invoke-RestMethod ipinfo.io/ip)
-        shell: powershell
       - name: 'Install Dependencies'
         run: yarn install --immutable 2>&1
       - name: 'Install Visual Studio Redistributable DLLs'
