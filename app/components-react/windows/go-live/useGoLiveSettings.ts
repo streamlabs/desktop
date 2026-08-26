@@ -555,12 +555,20 @@ export class GoLiveSettingsModule {
     Services.UserService.actions.setPrimaryPlatform(platform);
   }
 
+  /**
+   * Whether any target has been added to or removed from the stream
+   * @remark Mirrors `shouldUpdateRestream` in the streaming service, so it also answers whether the
+   * restream step will run. Custom destinations are keyed by url and stream key together, the same
+   * way `parseUpdateCustomDestinations` identifies them — the stream key alone is not unique.
+   */
   get isUpdatingTargets() {
     return (
       xorWith(this.activePlatforms, this.state.enabledPlatforms, isEqual).length > 0 ||
       xorWith(
-        this.activeDestinations?.map(dest => dest.streamKey),
-        this.state.customDestinations.filter(dest => dest.enabled).map(dest => dest.streamKey),
+        this.activeDestinations?.map(dest => `${dest.url}${dest.streamKey}`),
+        this.state.customDestinations
+          .filter(dest => dest.enabled)
+          .map(dest => `${dest.url}${dest.streamKey}`),
         isEqual,
       ).length > 0
     );
@@ -692,14 +700,24 @@ export class GoLiveSettingsModule {
    * Validate the form and send new settings for each eligible platform
    */
   async updateStream() {
-    if (
-      (await this.validate()) &&
-      (await Services.StreamingService.actions.return.updateStreamSettings(
+    if (!(await this.validate())) return;
+
+    let updated = false;
+    try {
+      updated = await Services.StreamingService.actions.return.updateStreamSettings(
         this.state.settings,
         this.activePlatforms,
         this.activeDestinations,
-      ))
-    ) {
+      );
+    } catch (e: unknown) {
+      // The error is surfaced by the streaming service through the Go Live checklist, so just
+      // stop here. Any stream that was already live is unaffected.
+      console.error('Error updating stream settings', e);
+      this.syncToLiveTargets();
+      return;
+    }
+
+    if (updated) {
       message.success($t('Successfully updated'));
 
       // Handle add/remove targets when updating a stream while live
@@ -711,7 +729,33 @@ export class GoLiveSettingsModule {
         this.activePlatforms = this.state.enabledPlatforms;
         this.activeDestinations = this.state.customDestinations.filter(dest => dest.enabled);
       }
+    } else {
+      message.error(
+        $t('Error updating stream settings. Please check your settings and try again.'),
+      );
+      this.syncToLiveTargets();
     }
+  }
+
+  /**
+   * Show the targets that are actually streaming after a failed update
+   * @remark The destination switchers persist its target as soon as it is toggled, before the update runs, so a
+   * failure leaves the switchers showing targets that never started or never stopped. The streaming service already
+   * corrected the saved settings against the server, so read them back here to re-render.
+   * `activePlatforms` and `activeDestinations` update to match so `isTargetLive` and `isUpdatingTargets` show the actual state.
+   */
+  private syncToLiveTargets() {
+    if (!this.isUpdateMode) return;
+
+    const savedSettings = this.state.savedSettings;
+
+    this.state.updateSettings({
+      platforms: savedSettings.platforms,
+      customDestinations: savedSettings.customDestinations,
+    });
+
+    this.activePlatforms = this.state.enabledPlatforms;
+    this.activeDestinations = this.state.customDestinations.filter(dest => dest.enabled);
   }
 
   /**
@@ -759,12 +803,9 @@ export class GoLiveSettingsModule {
   }
 
   /**
-   * Override the default behavior of toggling stream shift so that the user is still
-   * able to toggle stream shift on/off when they have a single platform enabled and
-   * that platform has its display set to 'both'. Otherwise, the isDualOutputMode check
-   * would prevent the user from toggling stream shift on/off.
-   * @remark Retained for `StreamShiftToggle`, which is still the stream shift control on this
-   * branch. The card-based UI that replaces it is not part of this change.
+   * TODO: Remove
+   * @deprecated Only `StreamShiftToggle` still reads this, and that component is replaced by the
+   * feature toggle cards. Removed when adding those cards.
    */
   get forceStreamShiftToggleEnabled() {
     return (
@@ -785,6 +826,10 @@ export class GoLiveSettingsModule {
 
   get enabledPlatformsCount() {
     return this.state.enabledPlatforms.length;
+  }
+
+  get enabledCustomDestinations() {
+    return this.state.customDestinations.filter(dest => dest.enabled);
   }
 
   get canAddDestinations() {
