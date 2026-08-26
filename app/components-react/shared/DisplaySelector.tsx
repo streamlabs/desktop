@@ -28,7 +28,6 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     isLiveOutputEditingEnabled,
     isUpdateMode,
     isLive,
-    showBothOption,
   } = useGoLiveSettings().extend(module => ({
     get canDualStream() {
       if (!p.platform) return false;
@@ -66,12 +65,6 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       }
 
       return defaultDisplay ?? 'horizontal';
-    },
-
-    // The both display option should be enabled when the user can dual stream, except when live output editing
-    // is enabled, in which case the both option should be visible but disabled
-    get showBothOption() {
-      return this.canDualStream && !module.isLiveOutputEditingEnabled;
     },
   }));
 
@@ -111,13 +104,15 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       return defaultDisplays;
     }
 
-    if (showBothOption) {
+    if (canDualStream) {
       const tooltip = isLiveOutputEditingEnabled
         ? $t('Dual Stream is not available while live output editing is enabled')
         : $t('Stream both horizontally and vertically to %{platform}', {
             platform: platformLabels(p.platform!),
           });
 
+      // The both display option should be enabled when the user can dual stream, except when live output editing
+      // is enabled, in which case the both option should be visible but disabled
       return [
         ...defaultDisplays,
         {
