@@ -96,7 +96,7 @@ jobs:
         with:
           name: frontend-test-build
           path: ${{ runner.temp }}/frontend-test-artifact
-      - name: 'Run Tests'
+      - name: 'Prepare Test Runner'
         run: |
           'obs64','crash-handler','chromedriver','electron' | ForEach-Object {
             Get-Process -Name $_ -ErrorAction Ignore | Stop-Process -Force -ErrorAction Ignore
@@ -111,8 +111,10 @@ jobs:
           if (-not (Test-Path package.json)) {
             throw "Test build does not contain package.json at $projectDirectory"
           }
-          yarn ci:tests
         shell: powershell
+      - name: 'Run Tests'
+        run: yarn ci:tests
+        working-directory: ${{ runner.temp }}/frontend-test-project
         env:
           SLOBS_TEST_USER_POOL_TOKEN: ${{ secrets.SLOBS_TEST_USER_POOL_TOKEN }}
           BROWSER_SOURCE_HARDWARE_ACCELERATION: 'OFF'
