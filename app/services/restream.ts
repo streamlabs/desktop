@@ -600,7 +600,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
       if (!stopTargets.length) continue;
 
       const streamKey = await this.resolveStreamKey(mode);
-      console.debug('Removing targets for mode', mode, 'with stream key', streamKey, stopTargets);
 
       try {
         // Fetch the key for this mode rather than deriving it, the same way `addTargets` does, so
