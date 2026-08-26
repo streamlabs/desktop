@@ -15,6 +15,7 @@ import { fromDotNotation, toDotNotation } from 'util/dot-tree';
 import { USER_STATE_SCHEMA_URL } from 'services/sources/properties-managers/smart-browser-source-manager';
 import { RealmObject } from 'services/realm';
 import { ObjectSchema } from 'realm';
+import { TSocketEvent } from 'services/websocket';
 
 export type TStateTreeLeaf = number | string;
 type TStateTreeNode = { [key: string]: TStateTreeLeaf | TStateTreeNode };
@@ -137,10 +138,11 @@ export class ReactiveDataService extends Service {
       this.fetchAndApplyFullState();
     });
 
-    // subscribe to websocket events to keep state updated
+    // subscribe to websocket events to keep state updated and forward events to smart sources
     this.socketSub = this.websocketService.socketEvent.subscribe(e => {
       if (['visionEvent', 'userStateUpdated'].includes(e.type)) {
         this.log(e);
+        this.forwardEventToSources(e);
       }
     });
   }
@@ -242,6 +244,24 @@ export class ReactiveDataService extends Service {
       this.log(`unhandled source message from ${sourceName}:`, parsed);
     }
   };
+
+  /**
+   * Forward a websocket event to all smart sources to update their state
+   * @remark A possible cause of errors here could be if a source is removed while trying to
+   * send a message to it or if a source is destroyed from a scene collection switch
+   * @param event - The websocket event
+   */
+  private forwardEventToSources(event: TSocketEvent) {
+    const message = JSON.stringify(event);
+
+    for (const source of this.sourcesService.getSmartSources()) {
+      try {
+        source.getObsInput()?.sendMessage({ message });
+      } catch (error: unknown) {
+        console.error(`Error forwarding event to source ${source.name}:`, error);
+      }
+    }
+  }
 
   private async fetchFullState(): Promise<TStateTree> {
     return (await this.authedRequest(

@@ -27,6 +27,7 @@
   "Shader": "Sombreador",
   "HDR Tone Mapping (Override)": "Asignación de tonos HDR (Anular)",
   "NVIDIA Background Removal": "Eliminación de fondo de NVIDIA",
+  "Luma Key": "Luma Key",
   "No settings are available for this filter": "No hay ajustes disponibles para este filtro",
   "Visual Presets": "Preajustes visuales",
   "None": "Ninguno",
@@ -81,5 +82,7 @@
   "Open Threshold": "Umbral de apertura",
   "Close Threshold": "Umbral de cierre",
   "Presets": "Preajustes",
-  "Detection": "Detección"
+  "Detection": "Detección",
+  "Upward Compressor": "Upward Compressor",
+  "3-Band Equalizer": "3-Band Equalizer"
 }

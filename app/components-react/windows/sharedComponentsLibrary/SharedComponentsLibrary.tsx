@@ -356,7 +356,6 @@ function Examples() {
         <PlatformLogo platform="youtube" />
         <PlatformLogo platform="facebook" />
         <PlatformLogo platform="streamlabs" />
-        <PlatformLogo platform="dlive" />
         <PlatformLogo platform="nimotv" />
       </Example>
 

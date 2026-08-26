@@ -49,5 +49,7 @@
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube 縮圖影像過大。大小上限為 2 MB。",
   "Please upload thumbnail manually on YouTube.": "請在 YouTube 手動上傳縮圖。",
   "Stream Shift Error: YouTube is not live": "Stream Shift 錯誤：YouTube 未開播",
-  "Error starting vertical stream in YouTube dual streaming": "在 YouTube 雙重直播中啟動豎屏直播時發生錯誤"
+  "Error starting vertical stream in YouTube dual streaming": "在 YouTube 雙重直播中啟動豎屏直播時發生錯誤",
+  "YouTube service is temporarily unavailable": "YouTube service is temporarily unavailable",
+  "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support": "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support"
 }

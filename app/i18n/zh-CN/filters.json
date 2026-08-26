@@ -27,6 +27,7 @@
   "Shader": "着色器",
   "HDR Tone Mapping (Override)": "HDR 色调映射（覆盖）",
   "NVIDIA Background Removal": "NVIDIA 背景移除",
+  "Luma Key": "Luma Key",
   "No settings are available for this filter": "此滤镜没有可用的设置",
   "Visual Presets": "视觉预设",
   "None": "无",
@@ -81,5 +82,7 @@
   "Open Threshold": "打开阈值",
   "Close Threshold": "关闭阈值",
   "Presets": "预设",
-  "Detection": "检测"
+  "Detection": "检测",
+  "Upward Compressor": "Upward Compressor",
+  "3-Band Equalizer": "3-Band Equalizer"
 }

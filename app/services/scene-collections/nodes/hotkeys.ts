@@ -1,8 +1,9 @@
 import { ArrayNode } from './array-node';
 import { HotkeysService, IHotkey, Hotkey } from '../../hotkeys';
 import { Inject } from '../../core/injector';
+import { ISceneCollectionLoadContext } from './load-session';
 
-interface IContext {
+interface IContext extends ISceneCollectionLoadContext {
   sceneId?: string;
   sceneItemId?: string;
   sourceId?: string;
@@ -40,7 +41,9 @@ export class HotkeysNode extends ArrayNode<IHotkey, IContext, Hotkey> {
   }
 
   loadItem(obj: IHotkey, context: IContext): Promise<void> {
-    this.hotkeysService.addHotkey({ ...obj, ...context });
+    const hotkeyContext = { ...context };
+    delete hotkeyContext.loadSession;
+    this.hotkeysService.addHotkey({ ...obj, ...hotkeyContext });
     return Promise.resolve();
   }
 

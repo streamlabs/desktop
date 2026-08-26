@@ -60,6 +60,7 @@ class VideoSettingsModule {
   userService = Services.UserService;
   dualOutputService = Services.DualOutputService;
   streamingService = Services.StreamingService;
+  virtualWebcamService = Services.VirtualWebcamService;
   tiktokService = Services.TikTokService;
 
   get display(): TDisplayType {
@@ -67,7 +68,12 @@ class VideoSettingsModule {
   }
 
   get cantEditFields(): boolean {
-    return this.streamingService.views.isStreaming || this.streamingService.views.isRecording;
+    return (
+      this.streamingService.views.isStreaming ||
+      this.streamingService.views.isRecording ||
+      this.streamingService.views.isReplayBufferActive ||
+      this.virtualWebcamService.views.running
+    );
   }
 
   get values(): Dictionary<TInputValue> {
@@ -342,7 +348,14 @@ class VideoSettingsModule {
           settings[`${otherPrefix}Height`] = Number(height);
         }
       }
-      this.service.actions.setSettings(settings, display);
+      Promise.resolve(this.service.actions.setSettings(settings, display)).catch(
+        (error: unknown) => {
+          message.error({
+            content:
+              error instanceof Error ? error.message : $t('Failed to update the video resolution.'),
+          });
+        },
+      );
     }
   }
 

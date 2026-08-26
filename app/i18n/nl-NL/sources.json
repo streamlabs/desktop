@@ -53,11 +53,9 @@
   "Display your channel's most recent events on stream.": "Laat de nieuwste gebeurtenissen van je kanaal zien in de stream.",
   "Redemptions": "Aflossingen",
   "Tip Goal": "Fooiendoel",
-  "Set a goal for your viewers to help you reach.": "Stel een doel in voor uw kijkers om u te helpen halen.",
   "Set a subscriber goal for your viewers to help you reach.": "Stel een doel voor het aantal abonnees dat je wilt bereiken.",
   "Set a bit goal for your viewers to help you reach.": "Stel een bitdoel voor je kijkers om je te helpen dit te bereiken.",
   "Set a follower goal for your viewers to help you reach.": "Stel een doel voor het aantal volgers dat je wilt bereiken.",
-  "Set a stars goal for your viewers to help you reach.": "Stel een sterrendoel voor je kijkers om je te helpen dit te bereiken.",
   "Set a charity donation goal for your viewers to help you reach.": "Stel een doel voor een donatie aan een goed doel dat je kijkers kunnen helpen bereiken.",
   "Set a super chat goal for your viewers to help you reach.": "Stel een superchatdoel in voor je kijkers om je te helpen dit te bereiken.",
   "Facebook Supporters": "Facebook Supporters",
@@ -438,5 +436,6 @@
   "Health changes": "Veranderingen in gezondheid",
   "Search...": "Zoeken...",
   "Virtual Cam": "Virtuele camera",
-  "Virtual Cam Error": "Fout virtuele camera"
+  "Virtual Cam Error": "Fout virtuele camera",
+  "This widget is no longer supported and can no longer be configured. You can safely remove it from your scene.": "This widget is no longer supported and can no longer be configured. You can safely remove it from your scene."
 }

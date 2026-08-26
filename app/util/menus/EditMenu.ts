@@ -447,6 +447,14 @@ export class EditMenu extends Menu {
   private showProperties() {
     if (this.options.showAudioMixerMenu || !this.source.video) {
       this.audioService.actions.showAdvancedSettings(this.source.sourceId);
+    } else if (this.sourcesService.views.isRetiredWidget(this.source.sourceId)) {
+      // `require` keeps React's types out of this tsconfig program, which excludes
+      // components-react. Same bridge ReactComponent.tsx uses.
+      require('components-react/modals').alertAsync(
+        $t(
+          'This widget is no longer supported and can no longer be configured. You can safely remove it from your scene.',
+        ),
+      );
     } else {
       this.sourcesService.actions.showSourceProperties(this.source.sourceId);
     }

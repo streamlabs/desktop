@@ -9,6 +9,7 @@ import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
 import HelpTip from 'components-react/shared/HelpTip';
 import Scrollable from 'components-react/shared/Scrollable';
+import { AutomationsIcon } from 'components-react/shared/icons';
 import { useTree, IOnDropInfo } from 'components-react/hooks/useTree';
 import { $t } from 'services/i18n';
 import { EDismissable } from 'services/dismissables';
@@ -25,23 +26,28 @@ function SceneSelector() {
     SourceFiltersService,
     ProjectorService,
     EditorCommandsService,
+    AutomationsService,
+    UserService,
   } = Services;
 
   const { treeSort } = useTree(true);
 
   const [showDropdown, setShowDropdown] = useState(false);
-  const { scenes, activeSceneId, activeScene, collections, activeCollection } = useVuex(() => ({
-    scenes: ScenesService.views.scenes.map(scene => ({
-      title: <TreeNode scene={scene} removeScene={removeScene} />,
-      key: scene.id,
-      selectable: true,
-      isLeaf: true,
-    })),
-    activeScene: ScenesService.views.activeScene,
-    activeSceneId: ScenesService.views.activeSceneId,
-    activeCollection: SceneCollectionsService.activeCollection,
-    collections: SceneCollectionsService.collections,
-  }));
+  const { scenes, activeSceneId, activeScene, collections, activeCollection, isLoggedIn } = useVuex(
+    () => ({
+      scenes: ScenesService.views.scenes.map(scene => ({
+        title: <TreeNode scene={scene} removeScene={removeScene} />,
+        key: scene.id,
+        selectable: true,
+        isLeaf: true,
+      })),
+      activeScene: ScenesService.views.activeScene,
+      activeSceneId: ScenesService.views.activeSceneId,
+      activeCollection: SceneCollectionsService.activeCollection,
+      collections: SceneCollectionsService.collections,
+      isLoggedIn: UserService.views.isLoggedIn,
+    }),
+  );
 
   function showContextMenu(info: { event: React.MouseEvent }) {
     info.event.preventDefault();
@@ -174,6 +180,16 @@ function SceneSelector() {
           <i className="icon-add-circle icon-button icon-button--lg" onClick={addScene} />
         </Tooltip>
 
+        {isLoggedIn && (
+          <Tooltip title={$t('Edit Automations.')} placement="bottomRight">
+            <span
+              className="icon-button icon-button--lg"
+              onClick={() => AutomationsService.actions.showAutomations()}
+            >
+              <AutomationsIcon style={{ width: '15px', height: '15px' }} />
+            </span>
+          </Tooltip>
+        )}
         <Tooltip title={$t('Edit Scene Transitions.')} placement="bottomRight">
           <i className="icon-transition icon-button icon-button--lg" onClick={showTransitions} />
         </Tooltip>

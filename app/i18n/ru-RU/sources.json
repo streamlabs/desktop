@@ -53,11 +53,9 @@
   "Display your channel's most recent events on stream.": "Отображение последних событий вашего канала в потоке.",
   "Redemptions": "Выплаты",
   "Tip Goal": "Цель вознаграждения",
-  "Set a goal for your viewers to help you reach.": "Задайте цель для ваших зрителей.",
   "Set a subscriber goal for your viewers to help you reach.": "Задайте цель по количеству подписчиков, чтобы ваши зрители помогли вам ее достигнуть.",
   "Set a bit goal for your viewers to help you reach.": "Задайте цель по количеству Bits, чтобы ваши зрители помогли вам ее достигнуть.",
   "Set a follower goal for your viewers to help you reach.": "Задайте цель по количеству фолловеров, чтобы ваши зрители помогли вам ее достигнуть.",
-  "Set a stars goal for your viewers to help you reach.": "Установите цель по количеству звезд, чтобы ваши зрители помогли вам ее достигнуть.",
   "Set a charity donation goal for your viewers to help you reach.": "Установите для своих зрителей цель сбора пожертвований на благотворительность, которую они помогут вам достичь.",
   "Set a super chat goal for your viewers to help you reach.": "Задайте цель в суперчате, чтобы ваши зрители помогли вам ее достигнуть.",
   "Facebook Supporters": "Сторонники в Facebook",
@@ -438,5 +436,6 @@
   "Health changes": "Изменения уровня здоровья",
   "Search...": "Поиск...",
   "Virtual Cam": "Виртуальная камера",
-  "Virtual Cam Error": "Ошибка виртуальной камеры"
+  "Virtual Cam Error": "Ошибка виртуальной камеры",
+  "This widget is no longer supported and can no longer be configured. You can safely remove it from your scene.": "This widget is no longer supported and can no longer be configured. You can safely remove it from your scene."
 }

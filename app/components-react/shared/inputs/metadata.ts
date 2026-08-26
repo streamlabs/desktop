@@ -7,7 +7,7 @@ import { IListOption } from './ListInput';
  * Provides some presets and helps with typechecking
  */
 export const metadata = {
-  any: (options: IAnyMetadata) => options,
+  any: (options: IAnyMetadata & Record<string, any>) => options,
   text: (options: ITextMetadata) => ({ ...options, type: 'text' }),
   textarea: (options: ITextMetadata) => ({ ...options, type: 'textarea' }),
   number: (options: INumberMetadata) => ({ ...options, type: 'number' }),
@@ -44,31 +44,23 @@ export const metadata = {
     type: 'radio',
   }),
   animation: (options: IAnimationMetadata) => ({ ...options, type: 'animation' }),
+  imagepicker: <T>(options: IListMetadata<T>) => ({ ...options, type: 'imagepicker' }),
 };
 
-export type TInputMetadata<T = string> =
-  | ITextMetadata
-  | INumberMetadata
-  | ISliderMetadata
-  | ITextBoolMetadata
-  | ICheckboxGroupMetadata
-  | IRadioGroupMetadata
-  | IListMetadata<T>;
-
-interface IBaseMetadata {
+export interface IBaseMetadata {
   label?: string;
   tooltip?: string | React.ReactNode;
   required?: boolean;
   type?: string;
   rules?: Rule[];
   onChange?: (value: unknown) => void;
-  children?: Dictionary<TInputMetadata<unknown>>;
+  children?: Dictionary<IBaseMetadata>;
   displayed?: boolean;
   disabled?: boolean;
   name?: string;
 }
 
-interface ITextMetadata extends IBaseMetadata {
+export interface ITextMetadata extends IBaseMetadata {
   value?: string;
   isPassword?: boolean;
   placeholder?: string;
@@ -123,6 +115,12 @@ interface IFileMetadata extends IBaseMetadata {
 
 interface IAnimationMetadata extends IListMetadata {
   filter?: 'in' | 'out' | 'text' | 'eventIn' | 'eventOut';
+}
+
+interface IImageOptionMetadata<T = string> {
+  label: string;
+  image: string;
+  value: T;
 }
 
 export interface IListMetadata<T = string> extends IBaseMetadata {

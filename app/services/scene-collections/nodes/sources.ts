@@ -17,6 +17,8 @@ import defaultTo from 'lodash/defaultTo';
 import { byOS, OS } from 'util/operating-systems';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { EFilterDisplayType, ISourceFilter, SourceFiltersService } from 'services/source-filters';
+import { ISceneCollectionLoadContext } from './load-session';
+import { SceneCollectionMigrationError } from '../errors';
 
 interface ISchema {
   items: ISourceInfo[];
@@ -49,7 +51,7 @@ export interface ISourceInfo {
   propertiesManagerSettings?: Dictionary<any>;
 }
 
-export class SourcesNode extends Node<ISchema, {}> {
+export class SourcesNode extends Node<ISchema, ISceneCollectionLoadContext> {
   schemaVersion = 5;
 
   @Inject() private sourcesService: SourcesService;
@@ -76,7 +78,7 @@ export class SourcesNode extends Node<ISchema, {}> {
   }
 
   save(context: {}): Promise<void> {
-    const promises: Promise<ISourceInfo>[] = this.getItems().map(source => {
+    const promises: Promise<ISourceInfo | null>[] = this.getItems().map(source => {
       return new Promise(resolve => {
         const hotkeys = new HotkeysNode();
 
@@ -84,6 +86,12 @@ export class SourcesNode extends Node<ISchema, {}> {
           const audioSource = this.audioService.views.getSource(source.sourceId);
 
           const obsInput = source.getObsInput();
+          if (!obsInput) {
+            console.warn(
+              `[SourcesNode] OBS input not found for source ${source.sourceId} (${source.name}), skipping save`,
+            );
+            return resolve(null);
+          }
 
           /* Signal to the source that it needs to save settings as
            * we're about to cache them to disk. */
@@ -95,6 +103,12 @@ export class SourcesNode extends Node<ISchema, {}> {
             .filter(f => f.displayType !== EFilterDisplayType.Hidden)
             .map(f => {
               const filterInput = this.sourceFiltersService.getObsFilter(source.sourceId, f.name);
+              if (!filterInput) {
+                console.warn(
+                  `[SourcesNode] OBS filter not found for filter ${f.name} on source ${source.sourceId} (${source.name}), skipping`,
+                );
+                return null;
+              }
 
               filterInput.save();
 
@@ -106,7 +120,8 @@ export class SourcesNode extends Node<ISchema, {}> {
                 visible: f.visible,
                 displayType: f.displayType,
               };
-            });
+            })
+            .filter(Boolean);
 
           let data: ISourceInfo = {
             hotkeys,
@@ -155,7 +170,7 @@ export class SourcesNode extends Node<ISchema, {}> {
 
     return new Promise(resolve => {
       Promise.all(promises).then(items => {
-        this.data = { items };
+        this.data = { items: items.filter(Boolean) as ISourceInfo[] };
         resolve();
       });
     });
@@ -206,7 +221,7 @@ export class SourcesNode extends Node<ISchema, {}> {
     return removed;
   }
 
-  load(context: {}): Promise<void> {
+  load(context: ISceneCollectionLoadContext = {}): Promise<void> {
     this.sanitizeSources();
 
     const supportedSources = this.data.items.filter(source => {
@@ -330,9 +345,17 @@ export class SourcesNode extends Node<ISchema, {}> {
       this.sourcesService.missingInputs = sourcesNotCreated.map(
         source => this.sourcesService.sourceDisplayData[source.type]?.name,
       );
+
+      if (context.loadSession?.strictCoordinateMigration) {
+        throw new SceneCollectionMigrationError(
+          `Could not create sources required for coordinate migration: ${sourcesNotCreatedNames.join(
+            ', ',
+          )}`,
+        );
+      }
     }
 
-    sources.forEach(async source => {
+    sources.forEach(source => {
       const sourceInfo = sourceData[source.name];
 
       this.sourcesService.addSource(source, sourceInfo.name, {
@@ -370,15 +393,18 @@ export class SourcesNode extends Node<ISchema, {}> {
           console.error('Attempting to load hotkey for not created source:', sourceInfo.id);
         }
 
-        promises.push(sourceInfo.hotkeys.load({ sourceId: sourceInfo.id }));
+        promises.push(
+          sourceInfo.hotkeys.load({
+            sourceId: sourceInfo.id,
+            loadSession: context.loadSession,
+          }),
+        );
       }
 
       this.sourceFiltersService.loadFilterData(sourceInfo.id, sourceInfo.filters.items);
     });
 
-    return new Promise(resolve => {
-      Promise.all(promises).then(() => resolve());
-    });
+    return Promise.all(promises).then(() => undefined);
   }
 
   migrate(version: number) {

@@ -5,18 +5,18 @@ import { TransitionsNode } from './transitions';
 import { HotkeysNode } from './hotkeys';
 import { NodeMapNode } from './node-map';
 import { Inject } from 'services/core';
-import { VideoService } from 'services/video';
 import { StreamingService } from 'services/streaming';
 import { OS } from 'util/operating-systems';
 import { GuestCamNode } from './guest-cam';
 import { VideoSettingsService } from 'services/settings-v2/video';
 import { DualOutputService } from 'services/dual-output';
-import { SettingsService } from 'services/settings';
-import { SceneCollectionsService } from '../scene-collections';
+import { ISceneCollectionLoadContext } from './load-session';
+import { SceneCollectionOperationalError } from '../errors';
 
 interface ISchema {
+  relativeCoordinates: boolean;
   /**
-   * this is for backward compatibility with vanilla scene collections
+   * this is for backward compatibility with single output collections
    */
   baseResolution: {
     baseWidth: number;
@@ -52,15 +52,13 @@ interface ISchema {
 /**
  * This is the root node of the config file
  */
-export class RootNode extends Node<ISchema, {}> {
-  schemaVersion = 4;
+export class RootNode extends Node<ISchema, ISceneCollectionLoadContext> {
+  schemaVersion = 5;
+  private coordinateMigrationRequired = false;
 
-  @Inject() videoService: VideoService;
   @Inject() streamingService: StreamingService;
   @Inject() videoSettingsService: VideoSettingsService;
   @Inject() dualOutputService: DualOutputService;
-  @Inject() settingsService: SettingsService;
-  @Inject() sceneCollectionsService: SceneCollectionsService;
 
   async save(): Promise<void> {
     const nodeMap = new NodeMapNode();
@@ -84,6 +82,7 @@ export class RootNode extends Node<ISchema, {}> {
       hotkeys,
       guestCam,
       nodeMap,
+      relativeCoordinates: true,
       baseResolution: this.videoSettingsService.baseResolutions?.horizontal,
       baseResolutions: this.videoSettingsService.baseResolutions,
       selectiveRecording: this.streamingService.state.selectiveRecording,
@@ -96,56 +95,43 @@ export class RootNode extends Node<ISchema, {}> {
    * there must be at least one video context established.
    * This if/else prevents an error by guaranteeing a video context exists.
    */
-  async load(): Promise<void> {
-    if (!this.videoSettingsService.contexts.horizontal) {
-      const establishedContext = this.videoSettingsService.establishedContext.subscribe(
-        async () => {
-          this.videoService.setBaseResolution(this.data.baseResolutions);
-          this.streamingService.setSelectiveRecording(!!this.data.selectiveRecording);
-          this.streamingService.setDualOutputMode(this.data.dualOutputMode);
-
-          await this.data.transitions.load();
-          await this.data.sources.load({});
-          await this.data.scenes.load({});
-
-          if (this.data.nodeMap) {
-            await this.data.nodeMap.load();
-          }
-
-          if (this.data.hotkeys) {
-            await this.data.hotkeys.load({});
-          }
-
-          if (this.data.guestCam) {
-            await this.data.guestCam.load();
-          }
-          establishedContext.unsubscribe();
-        },
+  async load(context: ISceneCollectionLoadContext = {}): Promise<void> {
+    try {
+      await this.videoSettingsService.applyCollectionBaseResolutions(this.data.baseResolutions);
+    } catch (error: unknown) {
+      throw new SceneCollectionOperationalError(
+        'Failed to apply the scene collection canvas resolutions.',
+        error,
       );
-    } else {
-      this.videoService.setBaseResolution(this.data.baseResolutions);
-      this.streamingService.setSelectiveRecording(!!this.data.selectiveRecording);
-      this.streamingService.setDualOutputMode(this.data.dualOutputMode);
+    }
 
-      if (this.data.nodeMap) {
-        await this.data.nodeMap.load();
-      }
+    this.streamingService.setSelectiveRecording(!!this.data.selectiveRecording);
+    this.streamingService.setDualOutputMode(this.data.dualOutputMode);
 
-      await this.data.transitions.load();
-      await this.data.sources.load({});
-      await this.data.scenes.load({});
+    if (this.data.nodeMap) {
+      await this.data.nodeMap.load();
+    }
 
-      if (this.data.hotkeys) {
-        await this.data.hotkeys.load({});
-      }
+    await this.data.transitions.load();
+    await this.data.sources.load(context);
+    await this.data.scenes.load(context);
 
-      if (this.data.guestCam) {
-        await this.data.guestCam.load();
-      }
+    if (this.data.hotkeys) {
+      await this.data.hotkeys.load({ loadSession: context.loadSession });
+    }
+
+    if (this.data.guestCam) {
+      await this.data.guestCam.load();
     }
   }
 
+  get requiresCoordinateMigration() {
+    return this.coordinateMigrationRequired;
+  }
+
   migrate(version: number) {
+    this.coordinateMigrationRequired = version < 5 || this.data.relativeCoordinates !== true;
+
     // Changed name of transition node in version 2
     if (version < 2) {
       // TODO: index
@@ -159,7 +145,21 @@ export class RootNode extends Node<ISchema, {}> {
     }
     // Added multiple displays with individual base resolutions in version 4
     if (version < 4) {
-      this.data.baseResolutions = this.videoSettingsService.baseResolutions;
+      this.data.baseResolutions = {
+        horizontal:
+          this.data.baseResolution ?? this.videoSettingsService.baseResolutions.horizontal,
+        vertical: this.videoSettingsService.baseResolutions.vertical,
+      };
     }
+
+    this.data.baseResolutions = {
+      horizontal:
+        this.data.baseResolutions?.horizontal ??
+        this.data.baseResolution ??
+        this.videoSettingsService.baseResolutions.horizontal,
+      vertical:
+        this.data.baseResolutions?.vertical ?? this.videoSettingsService.baseResolutions.vertical,
+    };
+    if (this.data.relativeCoordinates == null) this.data.relativeCoordinates = false;
   }
 }

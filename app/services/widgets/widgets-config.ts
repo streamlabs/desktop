@@ -5,9 +5,9 @@ import { WidgetType } from './widgets-data';
 export type TWidgetType =
   | WidgetType.AlertBox
   | WidgetType.ViewerCount
-  | WidgetType.GameWidget
   | WidgetType.EmoteWall
   | WidgetType.DonationTicker
+  | WidgetType.Credits
   | WidgetType.CustomWidget
   | WidgetType.ChatBox
   | WidgetType.SponsorBanner
@@ -16,11 +16,10 @@ export type TWidgetType =
   | WidgetType.SubscriberGoal
   | WidgetType.SubGoal
   | WidgetType.BitGoal
-  | WidgetType.StarsGoal
-  | WidgetType.SupporterGoal
   | WidgetType.SuperchatGoal
   | WidgetType.CharityGoal
   | WidgetType.EventList
+  | WidgetType.TipJar
   | WidgetType.GamePulseWidget;
 
 export interface IWidgetConfig {
@@ -122,32 +121,6 @@ export function getWidgetsConfig(
       settingsUpdateEvent: 'viewerCountSettingsUpdate',
       customCodeAllowed: true,
       customFieldsAllowed: true,
-    },
-
-    [WidgetType.GameWidget]: {
-      type: WidgetType.GameWidget,
-
-      defaultTransform: {
-        width: 400,
-        height: 750,
-        x: 0.5,
-        y: 0,
-        anchor: AnchorPoint.North,
-      },
-
-      settingsWindowSize: {
-        width: 850,
-        height: 700,
-      },
-
-      url: `https://${host}/widgets/game-widget?token=${token}`,
-      previewUrl: `https://${host}/widgets/game-widget?token=${token}&simulate=1`,
-      webSettingsUrl: `https://${host}/dashboard#/widgets/game-widget`,
-      dataFetchUrl: `https://${host}/api/v5/slobs/widget/game-widget`,
-      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/game-widget`,
-      settingsUpdateEvent: 'gameWidgetSettingsUpdate',
-      customCodeAllowed: false,
-      customFieldsAllowed: false,
     },
 
     [WidgetType.EmoteWall]: {
@@ -322,64 +295,6 @@ export function getWidgetsConfig(
       customFieldsAllowed: true,
     },
 
-    [WidgetType.StarsGoal]: {
-      type: WidgetType.StarsGoal,
-
-      defaultTransform: {
-        width: 600,
-        height: 200,
-        x: 0,
-        y: 1,
-        anchor: AnchorPoint.SouthWest,
-      },
-
-      settingsWindowSize: {
-        width: 700,
-        height: 800,
-      },
-
-      url: `https://${host}/widgets/stars-goal?token=${token}`,
-      previewUrl: `https://${host}/widgets/stars-goal?token=${token}`,
-      webSettingsUrl: `https://${host}/dashboard#/widgets/starsgoal`,
-      dataFetchUrl: `https://${host}/api/v5/slobs/widget/starsgoal/settings`,
-      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/starsgoal/settings`,
-      goalUrl: `https://${host}/api/v5/slobs/widget/starsgoal`,
-      settingsUpdateEvent: 'starsGoalSettingsUpdate',
-      goalCreateEvent: 'starsGoalStart',
-      goalResetEvent: 'starsGoalEnd',
-      customCodeAllowed: true,
-      customFieldsAllowed: true,
-    },
-
-    [WidgetType.SupporterGoal]: {
-      type: WidgetType.SupporterGoal,
-
-      defaultTransform: {
-        width: 600,
-        height: 200,
-        x: 0,
-        y: 1,
-        anchor: AnchorPoint.SouthWest,
-      },
-
-      settingsWindowSize: {
-        width: 700,
-        height: 800,
-      },
-
-      url: `https://${host}/widgets/supporter-goal?token=${token}`,
-      previewUrl: `https://${host}/widgets/supporter-goal?token=${token}`,
-      webSettingsUrl: `https://${host}/dashboard#/widgets/supportergoal`,
-      dataFetchUrl: `https://${host}/api/v5/slobs/widget/supportergoal/settings`,
-      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/supportergoal/settings`,
-      goalUrl: `https://${host}/api/v5/slobs/widget/supportergoal`,
-      settingsUpdateEvent: 'supporterGoalSettingsUpdate',
-      goalCreateEvent: 'supporterGoalStart',
-      goalResetEvent: 'supporterGoalEnd',
-      customCodeAllowed: true,
-      customFieldsAllowed: true,
-    },
-
     [WidgetType.SuperchatGoal]: {
       type: WidgetType.SuperchatGoal,
 
@@ -476,9 +391,31 @@ export function getWidgetsConfig(
     //
     // },
 
-    // Credits: {
-    //
-    // },
+    [WidgetType.Credits]: {
+      type: WidgetType.Credits,
+
+      defaultTransform: {
+        width: 1280,
+        height: 720,
+        x: 0.5,
+        y: 0.5,
+        anchor: AnchorPoint.Center,
+      },
+
+      settingsWindowSize: {
+        width: 850,
+        height: 700,
+      },
+
+      url: `https://${host}/widgets/end-credits?token=${token}`,
+      previewUrl: `https://${host}/widgets/end-credits?token=${token}&simulate=1`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/credits`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/endcredits`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/endcredits`,
+      settingsUpdateEvent: 'endCreditsSettingsUpdate',
+      customCodeAllowed: true,
+      customFieldsAllowed: true,
+    },
 
     [WidgetType.DonationTicker]: {
       type: WidgetType.DonationTicker,
@@ -577,9 +514,31 @@ export function getWidgetsConfig(
     //
     //  },
 
-    // TipJar: {
-    //
-    // },
+    [WidgetType.TipJar]: {
+      type: WidgetType.TipJar,
+
+      defaultTransform: {
+        width: 600,
+        height: 600,
+        x: 1,
+        y: 0.5,
+        anchor: AnchorPoint.East,
+      },
+
+      settingsWindowSize: {
+        width: 850,
+        height: 700,
+      },
+
+      url: `https://${host}/widgets/tip-jar/v1/${token}`,
+      previewUrl: `https://${host}/widgets/tip-jar/v1/${token}?simulate=1`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/jar`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/tipjar`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/tipjar`,
+      settingsUpdateEvent: 'tipJarSettingsUpdate',
+      customCodeAllowed: true,
+      customFieldsAllowed: true,
+    },
 
     [WidgetType.CustomWidget]: {
       type: WidgetType.CustomWidget,

@@ -142,7 +142,11 @@ export class GameOverlayService extends PersistentStatefulService<GameOverlaySta
       width: 600,
       componentName: 'GameOverlayEventFeed',
       queryParams: { gameOverlay: true },
-      webPreferences: { offscreen: true, nodeIntegration: true, contextIsolation: false },
+      webPreferences: {
+        offscreen: { deviceScaleFactor: this.getOverlayScaleFactor() },
+        nodeIntegration: true,
+        contextIsolation: false,
+      },
       isFullScreen: true,
     });
     this.windows.chat = new BrowserWindow({
@@ -172,8 +176,21 @@ export class GameOverlayService extends PersistentStatefulService<GameOverlaySta
       skipTaskbar: true,
       thickFrame: false,
       resizable: false,
-      webPreferences: { nodeIntegration: false, offscreen: true },
+      webPreferences: {
+        nodeIntegration: false,
+        offscreen: { deviceScaleFactor: this.getOverlayScaleFactor() },
+      },
     };
+  }
+
+  /**
+   * Electron 42 changed the offscreen rendering default device scale factor to 1.
+   * Before that it inherited the display's scale factor, so leaving it unset renders
+   * the overlay at a fraction of its former size on HiDPI displays. Pin it to the
+   * display's scale factor to preserve the pre-42 behavior.
+   */
+  private getOverlayScaleFactor() {
+    return this.windowsService.getMainWindowDisplay().scaleFactor;
   }
 
   createPreviewWindows() {

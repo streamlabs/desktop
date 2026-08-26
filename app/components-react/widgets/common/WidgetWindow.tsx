@@ -9,7 +9,7 @@ import { useWidgetRoot, WidgetModule } from './useWidget';
 import { GenericGoal, GenericGoalModule } from '../GenericGoal';
 import { ChatBox, ChatBoxModule } from '../ChatBox';
 // ChatHighlight
-// Credits
+import { Credits, CreditsModule } from '../Credits';
 import { DonationTicker, DonationTickerModule } from '../DonationTicker';
 import { EmoteWall, EmoteWallModule } from '../EmoteWall';
 import { EventList, EventListModule } from '../EventList';
@@ -18,8 +18,7 @@ import { EventList, EventListModule } from '../EventList';
 // SpinWheel
 import { SponsorBanner, SponsorBannerModule } from '../SponsorBanner';
 // StreamBoss
-// TipJar
-import { GameWidget, GameWidgetModule } from '../GameWidget';
+import { Jar, JarModule } from '../Jar';
 import { ViewerCount, ViewerCountModule } from '../ViewerCount';
 import { CustomWidget, CustomWidgetModule } from '../CustomWidget';
 import { GamePulseWidget } from 'components-react/widgets/GamePulse';
@@ -34,13 +33,12 @@ export const components = {
   DonationGoal: [GenericGoal, GenericGoalModule],
   CharityGoal: [GenericGoal, GenericGoalModule],
   FollowerGoal: [GenericGoal, GenericGoalModule],
-  StarsGoal: [GenericGoal, GenericGoalModule],
   SubGoal: [GenericGoal, GenericGoalModule],
   SubscriberGoal: [GenericGoal, GenericGoalModule],
   SuperchatGoal: [GenericGoal, GenericGoalModule],
   ChatBox: [ChatBox, ChatBoxModule],
   // ChatHighlight
-  // Credits
+  Credits: [Credits, CreditsModule],
   DonationTicker: [DonationTicker, DonationTickerModule],
   EmoteWall: [EmoteWall, EmoteWallModule],
   EventList: [EventList, EventListModule],
@@ -49,9 +47,8 @@ export const components = {
   // SpinWheel
   SponsorBanner: [SponsorBanner, SponsorBannerModule],
   // StreamBoss
-  // TipJar
+  TipJar: [Jar, JarModule],
   ViewerCount: [ViewerCount, ViewerCountModule],
-  GameWidget: [GameWidget, GameWidgetModule],
   CustomWidget: [CustomWidget, CustomWidgetModule],
   GamePulseWidget: [GamePulseWidget, GamePulseModule],
 };

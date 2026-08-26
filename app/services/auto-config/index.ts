@@ -6,10 +6,8 @@ import { Inject, mutation, PersistentStatefulService, ViewHandler } from 'servic
 import { IGoLiveSettings } from 'services/streaming';
 import { ISettingsSubCategory, SettingsService } from 'services/settings';
 import { EEncoderFamily, IOutputSettings, OutputSettingsService } from 'services/settings/output';
-import {
-  encoderPresetField,
-  encoderPresetFromSettingsValue,
-} from 'services/settings/output/encoder-settings-policy';
+import { EncoderQueryService } from 'services/settings/output/encoder-query';
+import { encoderPresetFromSettingsValue } from 'services/settings/output/encoder-settings-policy';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import { UserService } from 'services/user';
 import { TwitchService } from 'services/platforms/twitch';
@@ -201,6 +199,7 @@ class AutoConfigViews extends ViewHandler<IAutoOptimizerState> {
  */
 export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerState> {
   @Inject() private outputSettingsService: OutputSettingsService;
+  @Inject() private encoderQueryService: EncoderQueryService;
   @Inject() private settingsService: SettingsService;
   @Inject() private videoSettingsService: VideoSettingsService;
   @Inject() private userService: UserService;
@@ -1213,7 +1212,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     encoderId: string,
     encoderFamily: EEncoderFamily,
   ): ITargetEncoderPresetSnapshot {
-    const field = encoderPresetField(encoderId, mode);
+    const field = this.encoderQueryService.resolveStreamingEncoderPreset(mode, encoderId);
     if (!field) throw new Error(`No preset field is available for encoder ${encoderId}`);
 
     const target: ITargetEncoderPresetSnapshot = {
@@ -1326,7 +1325,10 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       throw new Error('Failed to apply the tested encoder implementation');
     }
     if (!providerOwnsEncoding) {
-      const presetField = encoderPresetField(primary.encoder!.id, output.mode);
+      const presetField = this.encoderQueryService.resolveStreamingEncoderPreset(
+        output.mode,
+        primary.encoder!.id,
+      );
       const rawPreset = presetField
         ? this.readRawOutputField('Streaming', presetField)
         : null;

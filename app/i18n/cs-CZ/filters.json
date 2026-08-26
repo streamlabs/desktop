@@ -27,6 +27,7 @@
   "Shader": "Shader",
   "HDR Tone Mapping (Override)": "Mapování tónu HDR (Přepsat)",
   "NVIDIA Background Removal": "NVIDIA odstranění pozadí",
+  "Luma Key": "Luma Key",
   "No settings are available for this filter": "Pro tento filtr nejsou k dispozici žádná nastavení",
   "Visual Presets": "Vizuální předvolby",
   "None": "Žádný",
@@ -81,5 +82,7 @@
   "Open Threshold": "Otevřít práh",
   "Close Threshold": "Zavřít práh",
   "Presets": "Nastavení",
-  "Detection": "Detekce"
+  "Detection": "Detekce",
+  "Upward Compressor": "Upward Compressor",
+  "3-Band Equalizer": "3-Band Equalizer"
 }

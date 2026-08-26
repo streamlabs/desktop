@@ -27,6 +27,7 @@
   "Shader": "셰이더",
   "HDR Tone Mapping (Override)": "HDR 톤 매핑(덮어쓰기)",
   "NVIDIA Background Removal": "NVIDIA 배경 제거",
+  "Luma Key": "Luma Key",
   "No settings are available for this filter": "이 필터에 사용할 수 있는 설정 없음",
   "Visual Presets": "비주얼 프리셋",
   "None": "없음",
@@ -81,5 +82,7 @@
   "Open Threshold": "한도 열기",
   "Close Threshold": "한도 닫기",
   "Presets": "프리셋",
-  "Detection": "감지"
+  "Detection": "감지",
+  "Upward Compressor": "Upward Compressor",
+  "3-Band Equalizer": "3-Band Equalizer"
 }

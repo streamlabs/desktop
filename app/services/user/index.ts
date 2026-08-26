@@ -93,12 +93,23 @@ export interface IUserAuth {
   slid?: IStreamlabsID;
 }
 
+interface IPrimeStatusResponse {
+  expires_soon: boolean;
+  expires_at: string;
+  is_prime: boolean;
+  cc_expires_in_days?: number;
+  /** 'free' | 'ultra' (and future higher tiers). Absent on older API responses. */
+  tier?: string;
+}
+
 // Eventually we will support authing multiple platforms at once
 interface IUserServiceState {
   loginValidated: boolean;
   auth?: IUserAuth;
   authProcessState: EAuthProcessState;
   isPrime: boolean;
+  /** Subscription tier as reported by /api/v5/slobs/prime, e.g. 'free' | 'ultra'. */
+  tier?: string;
   expires?: string;
   userId?: number;
   createdAt?: number;
@@ -195,6 +206,11 @@ class UserViews extends ViewHandler<IUserServiceState> {
   get isPrime() {
     if (!this.isLoggedIn) return false;
     return this.state.isPrime;
+  }
+
+  get tier(): string {
+    if (!this.isLoggedIn) return 'free';
+    return this.state.tier ?? (this.state.isPrime ? 'ultra' : 'free');
   }
 
   get username() {
@@ -351,6 +367,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   LOGOUT() {
     Vue.delete(this.state, 'auth');
     this.state.isPrime = false;
+    Vue.set(this.state, 'tier', 'free');
     Vue.delete(this.state, 'userId');
     this.state.loginValidated = false;
   }
@@ -358,6 +375,11 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   @mutation()
   SET_PRIME(isPrime: boolean) {
     this.state.isPrime = isPrime;
+  }
+
+  @mutation()
+  SET_TIER(tier: string) {
+    Vue.set(this.state, 'tier', tier);
   }
 
   @mutation()
@@ -899,23 +921,14 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     const url = `https://${host}/api/v5/slobs/prime`; // TODO: will this url change?
     const headers = authorizedHeaders(this.apiToken);
     const request = new Request(url, { headers });
-    return jfetch<{
-      expires_soon: boolean;
-      expires_at: string;
-      is_prime: boolean;
-      cc_expires_in_days?: number;
-    }>(request)
+    return jfetch<IPrimeStatusResponse>(request)
       .then(response => this.validatePrimeStatus(response))
       .catch((e: unknown): null => null);
   }
 
-  validatePrimeStatus(response: {
-    expires_soon: boolean;
-    expires_at: string;
-    is_prime: boolean;
-    cc_expires_in_days?: number;
-  }) {
+  validatePrimeStatus(response: IPrimeStatusResponse) {
     this.SET_PRIME(response.is_prime);
+    this.SET_TIER(response.tier ?? (response.is_prime ? 'ultra' : 'free'));
     if (response.cc_expires_in_days != null) this.sendExpiresSoonNotification();
     if (!response.expires_soon) {
       this.SET_EXPIRES(null);
@@ -1046,6 +1059,8 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   onSocketEvent(e: TSocketEvent) {
     if (e.type !== 'streamlabs_prime_subscribe') return;
     this.SET_PRIME(true);
+    // Lift tier-gated limits immediately rather than waiting for the next prime fetch.
+    this.SET_TIER('ultra');
     this.subscribedToPrime.next();
     if (this.navigationService.state.currentPage === 'Onboarding') return;
     this.showPrimeWindow();

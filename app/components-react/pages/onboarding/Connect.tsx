@@ -76,11 +76,6 @@ export function Connect() {
     image: string;
   }[] = [
     {
-      value: 'dlive',
-      label: 'Dlive',
-      image: require('../../../../media/images/platforms/dlive-logo-small.png'),
-    },
-    {
       value: 'nimotv',
       label: 'NimoTV',
       image: require('../../../../media/images/platforms/nimo-logo-small.png'),
@@ -224,7 +219,7 @@ const SVGOvalLeftBackground = () => (
   </svg>
 );
 
-type TExtraPlatform = 'nimotv' | 'dlive';
+type TExtraPlatform = 'nimotv';
 
 export class LoginModule {
   get UserService() {

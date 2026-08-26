@@ -464,7 +464,7 @@ export class Scene {
   }
 
   addSources(nodes: TSceneNodeInfo[]) {
-    const arrayItems: (ISceneItemInfo & obs.ISceneItemInfo)[] = [];
+    const obsSceneItems: Dictionary<obs.ISceneItem> = {};
 
     // tslint:disable-next-line:no-parameter-reassignment TODO
     nodes = nodes.filter(sceneNode => {
@@ -472,38 +472,39 @@ export class Scene {
       const source = this.sourcesService.views.getSource(sceneNode.sourceId);
       if (!source) return false;
 
-      arrayItems.push({
+      const display = sceneNode.display ?? 'horizontal';
+      const video =
+        this.videoSettingsService.contexts[display] ??
+        this.videoSettingsService.contexts.horizontal;
+      if (!video) throw new Error(`Video context ${display} is not available`);
+
+      const transform: obs.ISceneItemInfo = {
         name: source.sourceId,
-        id: sceneNode.id,
-        sourceId: source.sourceId,
-        crop: sceneNode.crop,
+        crop: sceneNode.crop ?? { top: 0, right: 0, bottom: 0, left: 0 },
         scaleX: sceneNode.scaleX == null ? 1 : sceneNode.scaleX,
         scaleY: sceneNode.scaleY == null ? 1 : sceneNode.scaleY,
-        visible: sceneNode.visible,
+        visible: sceneNode.visible !== false,
         x: sceneNode.x == null ? 0 : sceneNode.x,
         y: sceneNode.y == null ? 0 : sceneNode.y,
-        locked: sceneNode.locked,
         rotation: sceneNode.rotation || 0,
         streamVisible: sceneNode.streamVisible!,
         recordingVisible: sceneNode.recordingVisible!,
         scaleFilter: sceneNode.scaleFilter!,
         blendingMode: sceneNode.blendingMode!,
-        blendingMethod: sceneNode.blendingMethod,
-        display: sceneNode.display,
-      });
+        blendingMethod: sceneNode.blendingMethod!,
+      };
+
+      obsSceneItems[sceneNode.id] = this.getObsScene().add(source.getObsInput(), transform, video);
       return true;
     });
 
-    const obsSceneItems = obs.addItems(this.getObsScene(), arrayItems);
-
     // create folder and items
-    let itemIndex = 0;
     nodes.forEach(nodeModel => {
       const display = nodeModel?.display ?? 'horizontal';
-      const obsSceneItem = obsSceneItems[itemIndex];
       if (nodeModel.sceneNodeType === 'folder') {
         this.createFolder(nodeModel.name, { id: nodeModel.id, display });
       } else {
+        const obsSceneItem = obsSceneItems[nodeModel.id];
         this.ADD_SOURCE_TO_SCENE(
           nodeModel.id,
           nodeModel.sourceId,
@@ -513,7 +514,6 @@ export class Scene {
         );
         const item = this.getItem(nodeModel.id)!;
         item.loadItemAttributes(nodeModel);
-        itemIndex++;
       }
     });
 

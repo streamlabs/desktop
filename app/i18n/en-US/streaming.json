@@ -478,5 +478,6 @@
   "Add a Webcam Source": "Add a Webcam Source",
   "Add more scenes": "Add more scenes",
   "Looks like you only have a few scenes. Adding more can make your stream look more polished.": "Looks like you only have a few scenes. Adding more can make your stream look more polished.",
-  "Browse Overlays": "Browse Overlays"
+  "Browse Overlays": "Browse Overlays",
+  "Failed to update Multistream platforms and destinations while live": "Failed to update Multistream platforms and destinations while live"
 }
