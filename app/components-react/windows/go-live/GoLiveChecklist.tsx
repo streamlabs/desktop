@@ -134,13 +134,8 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
                   checklist[platform],
                 ),
               )}
-              {stopDestinations.map(destination =>
-                renderCheck(
-                  $t('Stop streaming to %{target}', {
-                    target: destination,
-                  }),
-                  checklist.destination,
-                ),
+              {stopDestinations.map(d =>
+                renderCheck($t('Stop streaming to Custom Destination'), checklist.destination),
               )}
             </>
           )}
@@ -156,13 +151,8 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
                   checklist[platform],
                 ),
               )}
-              {startDestinations.map(destination =>
-                renderCheck(
-                  $t('Start streaming to %{target}', {
-                    target: destination,
-                  }),
-                  checklist.destination,
-                ),
+              {startDestinations.map(d =>
+                renderCheck($t('Start streaming to Custom Destination'), checklist.destination),
               )}
             </>
           )}
@@ -178,13 +168,8 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
                   checklist[platform],
                 ),
               )}
-              {continueDestinations.map(destination =>
-                renderCheck(
-                  $t('Continue streaming to %{target}', {
-                    target: destination,
-                  }),
-                  checklist.destination,
-                ),
+              {continueDestinations.map(d =>
+                renderCheck($t('Continue streaming to Custom Destination'), checklist.destination),
               )}
             </>
           )}

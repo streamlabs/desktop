@@ -1,4 +1,9 @@
 {
   "Upgrade to Ultra to manage live outputs mid-stream.": "Upgrade to Ultra to manage live outputs mid-stream.",
-  "Manage Stream": "Manage Stream"
+  "Manage Stream": "Manage Stream",
+  "Start streaming to %{target}": "Start streaming to %{target}",
+  "Stop streaming to %{target}": "Stop streaming to %{target}",
+  "Start streaming to Custom Destination": "Start streaming to Custom Destination",
+  "Stop streaming to Custom Destination": "Stop streaming to Custom Destination",
+  "Continue streaming to Custom Destination": "Continue streaming to Custom Destination"
 }

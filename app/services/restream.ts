@@ -1075,7 +1075,9 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   setupCustomDestinations(customDestinations?: ICustomStreamDestination[], display?: TDisplayType) {
     const isDualOutputMode = this.streamingService.views.isDualOutputMode;
-    const modesToRestream = this.streamInfo.displaysToRestream.map(d => this.getMode(d));
+    const modesToRestream = this.streamInfo.isLiveOutputEditingEnabled
+      ? this.streamInfo.liveOutputDisplays.map(display => this.getMode(display))
+      : this.streamInfo.displaysToRestream.map(display => this.getMode(display));
 
     // When an explicit list is passed, only create targets for that list. Otherwise this is the
     // go live flow, which creates targets for every enabled destination on the stream.
