@@ -11,6 +11,12 @@ enum ETheme {
 const themeTable = {
   'day-theme': ETheme.Day,
   'night-theme': ETheme.Night,
+  'prime-light': ETheme.Day,
+  'prime-dark': ETheme.Night,
+  'golive-day-theme': ETheme.Day,
+  'golive-night-theme': ETheme.Night,
+  'golive-prime-light': ETheme.Day,
+  'golive-prime-dark': ETheme.Night,
 };
 
 export class ThemeModule extends Module {

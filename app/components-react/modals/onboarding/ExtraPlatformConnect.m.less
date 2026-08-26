@@ -1,0 +1,26 @@
+@import '../../../styles/index';
+
+.container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 1;
+
+  h1 {
+    margin-bottom: 8px;
+  }
+
+  :global(.list-input),
+  :global(.section) {
+    width: 400px;
+  }
+
+  @media (max-height: 600px) {
+    & > h1,
+    & > p {
+      display: none;
+    }
+  }
+}

@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { DisplaySection } from 'components-react/pages/onboarding/HardwareSetup';
+import React, { useEffect, useRef } from 'react';
+import cx from 'classnames';
 import styles from './Common.m.less';
 import { Header, IOnboardingStepProps } from './Onboarding';
 import { $t } from 'services/i18n';
@@ -7,6 +7,9 @@ import { ListInput } from 'components-react/shared/inputs';
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
 import Form from 'components-react/shared/inputs/Form';
+import { Volmeter2d } from 'services/audio/volmeter-2d';
+import Display from 'components-react/shared/Display';
+import { ERenderingMode } from '../../../../obs-api';
 
 export function Devices(p: IOnboardingStepProps) {
   const { DefaultHardwareService, WindowsService } = Services;
@@ -77,6 +80,46 @@ export function Devices(p: IOnboardingStepProps) {
           </Form>
         </div>
       </div>
+    </div>
+  );
+}
+
+function DisplaySection() {
+  const { DefaultHardwareService } = Services;
+  const v = useVuex(() => ({
+    videoDevices: DefaultHardwareService.videoDevices,
+    selectedVideoSource: DefaultHardwareService.selectedVideoSource,
+    selectedAudioSource: DefaultHardwareService.selectedAudioSource,
+  }));
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Set up volmeter
+  useEffect(() => {
+    if (canvasRef.current && v.selectedAudioSource) {
+      const volmeter2d = new Volmeter2d(v.selectedAudioSource, canvasRef.current);
+
+      return () => volmeter2d.destroy();
+    }
+  }, [canvasRef.current, v.selectedAudioSource]);
+
+  if (v.selectedVideoSource && v.videoDevices.length) {
+    return (
+      <div className={cx(styles.display, 'section')}>
+        <Display
+          sourceId={v.selectedVideoSource.sourceId}
+          renderingMode={ERenderingMode.OBS_MAIN_RENDERING}
+          isModal
+        />
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
+          <canvas ref={canvasRef} style={{ backgroundColor: 'var(--border)', width: '100%' }} />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.placeholder}>
+      <span>{$t('No webcam detected')}</span>
     </div>
   );
 }
