@@ -224,9 +224,9 @@ function ModalFooter() {
   ]);
 
   // When the streaming service detects an active stream on another device, show the prompt
+  // Note : `promptStreamShift` is intentionally left out of the dependency array to avoid multiple prompts on window load
   useEffect(() => {
     // Prompt the user to switch to Streamlabs Desktop if a stream is detected on another device
-
     if (Services.RestreamService.views.streamShiftStatus === 'pending') {
       promptStreamShift();
     }
@@ -238,7 +238,6 @@ function ModalFooter() {
     });
 
     return () => isLive.unsubscribe();
-    // Note : `promptStreamShift` is intentionally left out of the dependency array to avoid multiple prompts on window load
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
