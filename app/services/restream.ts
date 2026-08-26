@@ -1469,8 +1469,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
         console.error('Stream Shift Error: failed to approve the switch', e);
       });
       this.SET_STREAM_SWITCHER_STATUS('inactive');
-
-      await this.streamingService.toggleStreaming();
     }
   }
 
