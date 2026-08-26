@@ -66,9 +66,7 @@ function ModalFooter() {
     isPrime,
     isStreamShiftMode,
     hasIncompatibleCodec,
-    streamShiftStatus,
     codec,
-    checkIsLive,
     forceStreamShiftGoLive,
     goLiveWithDefaultCodec,
     showSettings,
@@ -93,10 +91,6 @@ function ModalFooter() {
 
     get streamShiftStatus() {
       return module.streamShiftStatus;
-    },
-
-    async checkIsLive() {
-      return this.restreamService.actions.return.checkIsLive();
     },
 
     async forceStreamShiftGoLive() {
@@ -146,14 +140,6 @@ function ModalFooter() {
   const [isCoolingDown, setIsCoolingDown] = useState(false);
   const isStreamShiftPromptShown = useRef(false);
 
-  // Check stream shift status on mount for Prime users
-  useEffect(() => {
-    if (!isPrime) return;
-    checkIsLive().catch((e: unknown) => {
-      console.error('Error checking stream shift status on mount:', e);
-    });
-  }, []);
-
   const promptUseDefaultCodec = useCallback(async () => {
     // If the user is not live but has an incompatible codec, prompt to change codec
     let message = $t(
@@ -193,15 +179,6 @@ function ModalFooter() {
     });
   }, [isStreamShiftMode, isDualOutputMode, codec, goLiveWithDefaultCodec, showSettings]);
 
-  const startStreamShift = useCallback(() => {
-    if (isDualOutputMode) {
-      Services.DualOutputService.actions.toggleDisplay(false, 'vertical');
-    }
-
-    setStreamShift(true);
-    goLive();
-  }, [isDualOutputMode, goLive, setStreamShift]);
-
   const promptStreamShift = useCallback(async () => {
     isStreamShiftPromptShown.current = true;
     await promptAction({
@@ -215,7 +192,8 @@ function ModalFooter() {
         if (hasIncompatibleCodec) {
           promptUseDefaultCodec();
         } else {
-          startStreamShift();
+          setStreamShift(true);
+          goLive();
           close();
         }
       },
@@ -236,8 +214,9 @@ function ModalFooter() {
       maskClosable: false,
     });
   }, [
+    isStreamShiftPromptShown,
     hasIncompatibleCodec,
-    startStreamShift,
+    setStreamShift,
     close,
     forceStreamShiftGoLive,
     promptUseDefaultCodec,
@@ -246,10 +225,20 @@ function ModalFooter() {
 
   // When the streaming service detects an active stream on another device, show the prompt
   useEffect(() => {
-    if (streamShiftStatus !== 'pending') return;
-    if (isStreamShiftPromptShown.current) return;
-    promptStreamShift();
-  }, [streamShiftStatus, promptStreamShift]);
+    // Prompt the user to switch to Streamlabs Desktop if a stream is detected on another device
+    // Note: Intentionally left out of the dependency array to avoid multiple prompts on window load
+    if (Services.RestreamService.views.streamShiftStatus === 'pending') {
+      promptStreamShift();
+    }
+
+    const isLive = Services.RestreamService.isLive.subscribe(isLive => {
+      if (isLive && !isStreamShiftPromptShown.current) {
+        promptStreamShift();
+      }
+    });
+
+    return () => isLive.unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (!isCoolingDown) return;

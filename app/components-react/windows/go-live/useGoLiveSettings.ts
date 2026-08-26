@@ -315,8 +315,17 @@ export class GoLiveSettingsModule {
       );
     }
 
-    // determine if TikTok apply notification should be shown
+    // Determine if TikTok apply notification should be shown
     Services.TikTokService.actions.handleApplyPrompt();
+
+    // Determine if Stream Shift prompt should be shown
+    // Always check is live because checking also resets the stream shift state for non-ultra users
+    // This is not awaited because it only decides whether the prompt appears and nothing else
+    // that is rendered depends on the result. Also don't check in update mode because any stream
+    // using restream will show as live, because it is live, just not with stream shift.
+    if (!this.isUpdateMode && Services.RestreamService.views.streamShiftStatus !== 'pending') {
+      Services.RestreamService.actions.checkIsLive();
+    }
 
     await this.prepopulate();
   }
@@ -575,6 +584,15 @@ export class GoLiveSettingsModule {
 
   setStreamShift(status: boolean) {
     this.state.toggleStreamShift(status);
+
+    // The two features are mutually exclusive. `isLiveOutputEditingDisabled` stops live output
+    // editing being switched on while stream shift is active, so turn it off here to close the
+    // other direction — including when accepting a detected switch, which enables stream shift
+    // without the user touching either toggle.
+    if (status && this.state.isLiveOutputEditingEnabled) {
+      this.state.toggleLiveOutputEditing(false);
+    }
+
     this.save(this.state.settings);
   }
 
@@ -609,6 +627,13 @@ export class GoLiveSettingsModule {
    * Validate the form and show an error message
    */
   async validate() {
+    if (
+      Services.RestreamService.views.streamShiftStatus === 'pending' &&
+      !Services.RestreamService.views.streamShiftForceGoLive
+    ) {
+      return true;
+    }
+
     if (this.getIsInvalidDualStream()) {
       alertInfo({
         name: 'ultra-required-alert',
@@ -618,7 +643,7 @@ export class GoLiveSettingsModule {
       return;
     }
 
-    if (!this.isPrime && this.state.isDualOutputMode) {
+    if (!this.state.settings.streamShift && !this.isPrime && this.state.isDualOutputMode) {
       const totalEnabled =
         this.state.enabledPlatforms.length +
         this.state.customDestinations.filter(d => d.enabled).length;
@@ -661,6 +686,7 @@ export class GoLiveSettingsModule {
   async goLive() {
     if (await this.validate()) {
       Services.StreamingService.actions.goLive(this.state.settings);
+      // await Services.StreamingService.actions.return.goLive(this.state.settings);
     }
   }
   /**
@@ -725,8 +751,12 @@ export class GoLiveSettingsModule {
   }
 
   get isStreamShiftDisabled() {
-    if (!this.isPrime) return true;
-    return this.isPatreonEnabled;
+    return (
+      !this.isPrime ||
+      this.isPatreonEnabled ||
+      this.state.isLiveOutputEditingEnabled ||
+      this.isDualOutputMode
+    );
   }
 
   /**
@@ -734,8 +764,8 @@ export class GoLiveSettingsModule {
    * able to toggle stream shift on/off when they have a single platform enabled and
    * that platform has its display set to 'both'. Otherwise, the isDualOutputMode check
    * would prevent the user from toggling stream shift on/off.
-   * Note: This should never happen but is a failsafe in case something goes wrong with
-   * the Go Live window's state.
+   * @remark Retained for `StreamShiftToggle`, which is still the stream shift control on this
+   * branch. The card-based UI that replaces it is not part of this change.
    */
   get forceStreamShiftToggleEnabled() {
     return (

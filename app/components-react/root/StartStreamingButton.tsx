@@ -3,15 +3,13 @@ import cx from 'classnames';
 import { EStreamingState } from 'services/streaming';
 import { EGlobalSyncStatus } from 'services/media-backup';
 import { $t } from 'services/i18n';
-import { useVuex } from '../hooks';
+import { useDebounce, useVuex } from '../hooks';
 import { Services } from '../service-provider';
 import * as remote from '@electron/remote';
 import { TStreamShiftStatus } from 'services/restream';
 import { promptAction } from 'components-react/modals';
 import { TSocketEvent } from 'services/websocket';
 import { useRealmObject } from 'components-react/hooks/realm';
-import debounce from 'lodash/debounce';
-import Utils from 'services/utils';
 
 function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -22,7 +20,6 @@ function StartStreamingButton(p: { disabled?: boolean }) {
     MediaBackupService,
     SourcesService,
     RestreamService,
-    UsageStatisticsService,
   } = Services;
 
   const {
@@ -30,7 +27,6 @@ function StartStreamingButton(p: { disabled?: boolean }) {
     delayEnabled,
     delaySeconds,
     streamShiftStatus,
-    streamShiftForceGoLive,
     isDualOutputMode,
     isLoggedIn,
     isPrime,
@@ -42,7 +38,6 @@ function StartStreamingButton(p: { disabled?: boolean }) {
       delayEnabled: StreamingService.views.delayEnabled,
       delaySeconds: StreamingService.views.delaySeconds,
       streamShiftStatus: RestreamService.state.streamShiftStatus,
-      streamShiftForceGoLive: RestreamService.state.streamShiftForceGoLive,
       isDualOutputMode: StreamingService.views.isDualOutputMode,
       isLoggedIn: UserService.isLoggedIn,
       isPrime: UserService.state.isPrime,
@@ -79,86 +74,33 @@ function StartStreamingButton(p: { disabled?: boolean }) {
   useEffect(() => {
     // Check for stream shift status on mount. This will happen on app launch because the main window is always active
     if (isPrime && streamingStatus === EStreamingState.Offline) {
-      fetchStreamShiftStatus().catch((e: unknown) => {
-        console.error('Error fetching stream shift status:', e);
-      });
+      checkIsLive();
     }
 
-    const streamShiftEvent = StreamingService.streamShiftEvent.subscribe((event: TSocketEvent) => {
-      if (streamShiftForceGoLive) return;
-      if (event.type !== 'streamSwitchRequest' && event.type !== 'switchActionComplete') {
-        return;
-      }
-
-      const { streamShiftStreamId } = RestreamService.state;
-      console.debug('Event ID: ' + event.data.identifier, '\n Stream ID: ' + streamShiftStreamId);
-      const isIncomingStream: boolean =
-        (streamShiftStreamId && event.data.identifier === streamShiftStreamId) || false;
-
-      if (event.type === 'streamSwitchRequest') {
-        if (isIncomingStream) {
-          // Don't record the request from this device because the other device will record it
-          RestreamService.actions.confirmStreamShift('approved');
-        } else {
-          recordStreamShiftAnalytics('request', event.data.identifier);
-        }
-      }
-
-      if (event.type === 'switchActionComplete') {
-        // End the stream on this device if switching the stream to another device
-        // Only record analytics if the stream was switched from this device to a different one
-        if (!isIncomingStream) {
-          Services.RestreamService.actions.endStreamShiftStream(event.data.identifier);
-
-          recordStreamShiftAnalytics('complete', event.data.identifier);
-        }
-
+    const streamShiftEvent = StreamingService.streamShiftEvent.subscribe(
+      async (event: TSocketEvent) => {
         // Notify the user
-        const message = formatStreamShiftMessage(isIncomingStream, event.data.identifier);
+        const message = await RestreamService.actions.return.handleStreamShiftEvent(event);
 
-        promptAction({
-          title: $t('Stream successfully switched'),
-          message,
-          btnText: $t('Close'),
-          btnType: 'default',
-          cancelBtnPosition: 'none',
-        });
-      }
-    });
+        // An empty message means the handler declined to notify (e.g. a forced go live),
+        // so don't show an alert with an empty body
+        if (event.type === 'switchActionComplete' && message) {
+          promptAction({
+            title: $t('Stream successfully switched'),
+            message,
+            btnText: $t('Close'),
+            btnType: 'default',
+            cancelBtnPosition: 'none',
+          });
+        }
+      },
+    );
 
     return () => {
       toggleStreaming.cancel();
+      checkIsLive.cancel();
       streamShiftEvent.unsubscribe();
     };
-  }, []);
-
-  const recordStreamShiftAnalytics = useCallback((action: 'request' | 'complete', id: string) => {
-    // Prevent recording analytics event in test mode
-    if (Utils.isTestMode()) return;
-
-    // Note: because the event's stream id is from the device that requested the switch,
-    // it is not possible to know what type of device the stream will be switching from.
-    // We can only identify the type of device the stream is switching to.
-    const remoteDeviceType = /[A-Z]/.test(id) ? 'mobile' : 'desktop';
-    const switchType = `desktop-${remoteDeviceType}`;
-
-    UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
-      stream: switchType,
-      action,
-    });
-  }, []);
-
-  const formatStreamShiftMessage = useCallback((isFromOtherDevice: boolean, id: string) => {
-    if (isFromOtherDevice) {
-      return $t(
-        'Your stream has been switched to Streamlabs Desktop from another device. Enjoy your stream!',
-      );
-    }
-
-    const remoteDeviceType = /[A-Z]/.test(id) ? 'mobile' : 'desktop';
-    return remoteDeviceType === 'mobile'
-      ? $t('Your stream has been successfully switched to Streamlabs Mobile. Enjoy your stream!')
-      : $t('Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!');
   }, []);
 
   const handleToggleStreaming = useCallback(async () => {
@@ -220,9 +162,10 @@ function StartStreamingButton(p: { disabled?: boolean }) {
 
   // Wrap the toggleStreaming function in a debounce to prevent multiple rapid clicks
   // and also to cancel the action on unmount to prevent memory leaks and state updates on unmounted components
-  const toggleStreaming = useMemo(() => debounce(handleToggleStreaming, 500), [
-    handleToggleStreaming,
-  ]);
+  const toggleStreaming = useDebounce(500, handleToggleStreaming);
+
+  // Checking for a stream shift status can take up to four seconds
+  const checkIsLive = useDebounce(4000, RestreamService.actions.checkIsLive);
 
   const getIsRedButton = useMemo(() => {
     return streamingStatus !== EStreamingState.Offline && streamShiftStatus !== 'pending';
@@ -236,17 +179,6 @@ function StartStreamingButton(p: { disabled?: boolean }) {
     );
   }, [p.disabled, streamingStatus, delaySecondsRemaining]);
 
-  const fetchStreamShiftStatus = useCallback(async () => {
-    try {
-      const isLive = await RestreamService.actions.return.checkIsLive();
-      return isLive;
-    } catch (e: unknown) {
-      console.log('Error checking stream shift status', e);
-      setIsLoading(false);
-      return false;
-    }
-  }, []);
-
   const shouldShowGoLiveWindow = useCallback(() => {
     if (!UserService.isLoggedIn) return false;
     const primaryPlatform = UserService.state.auth?.primaryPlatform;
@@ -254,13 +186,17 @@ function StartStreamingButton(p: { disabled?: boolean }) {
 
     if (!primaryPlatform) return false;
 
+    if (streamShiftStatus === 'pending') {
+      return true;
+    }
+
     if (StreamingService.views.isDualOutputMode) {
       return true;
     }
 
     if (
       !!UserService.state.auth?.platforms &&
-      StreamingService.views.isMultiplatformMode &&
+      isMultiplatformMode &&
       Object.keys(UserService.state.auth?.platforms).length > 1
     ) {
       return true;
@@ -269,14 +205,14 @@ function StartStreamingButton(p: { disabled?: boolean }) {
     if (primaryPlatform === 'twitch') {
       // For Twitch, we can show the Go Live window even with protected mode off
       // This is mainly for legacy reasons.
-      return StreamingService.views.isMultiplatformMode || updateStreamInfoOnLive;
+      return isMultiplatformMode || updateStreamInfoOnLive;
     } else {
       return (
         StreamSettingsService.state.protectedModeEnabled &&
         StreamSettingsService.isSafeToModifyStreamKey()
       );
     }
-  }, [primaryPlatform, isMultiplatformMode, updateStreamInfoOnLive]);
+  }, [primaryPlatform, isMultiplatformMode, updateStreamInfoOnLive, streamShiftStatus]);
 
   return (
     <button
