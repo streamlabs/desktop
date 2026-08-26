@@ -137,31 +137,11 @@ function ImportSection() {
     <ObsSettingsSection title={$t('Import your settings')}>
       <div className={styles.sectionGrid}>
         <h3>{$t('OBS Importer')}</h3>
-        {obsInstalled ? (
-          <p>{$t('Import your native OBS settings and sources.')}</p>
-        ) : (
-          <p>{$t('Import your OBS settings and sources with one click.')}</p>
-        )}
-        {obsInstalled ? (
-          <SupportLinks
-            inline
-            links={[
-              {
-                label: $t('Imported from OBS'),
-                icon: 'icon-download',
-                disabled: true,
-                className: styles.obsImportSuccess,
-                onClick: () => {},
-              },
-            ]}
-          />
-        ) : (
-          <SupportLinks
-            inline
-            links={[{ label: $t('OBS Import'), icon: 'icon-download', onClick: importFromObs }]}
-          />
-        )}
-
+        <p>{$t('Import your native OBS settings and sources.')}</p>
+        <SupportLinks
+          inline
+          links={[{ label: $t('OBS Import'), icon: 'icon-download', onClick: importFromObs }]}
+        />
         <h3>{$t('Streamelements Importer')}</h3>
         <p>
           {$t(
