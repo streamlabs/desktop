@@ -396,16 +396,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.shouldSetupDualOutput;
   }
 
-  /**
-   * Returns the output orientation for a given platform.
-   * @remark Expects to return the following per feature:
-   * - Stream Shift - always returns 'landscape'
-   * - Single Output Mode - always returns 'landscape'
-   * - Dual Output Mode - returns assigned displays: 'landscape' for horizontal displays and 'portrait' for vertical displays
-   * - Live Output Editing - returns 'landscape' in single output mode, and assigned displays in dual output mode
-   */
   getPlatformMode(platform: TPlatform): TOutputOrientation {
-    if (this.isStreamShiftMode) return 'landscape';
     if (!this.isDualOutputMode) return 'landscape';
     const display = this.getPlatformDisplayType(platform);
     return display === 'vertical' ? 'portrait' : 'landscape';
