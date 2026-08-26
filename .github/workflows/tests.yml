@@ -62,11 +62,11 @@ jobs:
             Get-Process -Name $_ -ErrorAction Ignore | Stop-Process -Force -ErrorAction Ignore
           }
           Remove-Item -Recurse -Force "$env:TEMP\slobs-test*" -ErrorAction Ignore
-        shell: pwsh
+        shell: powershell
       - uses: actions/checkout@v4
       - name: 'Get RDP Address'
         run: echo "IP for RDP connections:" $(Invoke-RestMethod ipinfo.io/ip)
-        shell: pwsh
+        shell: powershell
       - name: 'Install Dependencies'
         run: yarn install --immutable 2>&1
       - name: 'Install Visual Studio Redistributable DLLs'
@@ -75,7 +75,7 @@ jobs:
           $output = "$env:TEMP\vc_redist.x64.exe"
           Invoke-WebRequest -Uri $url -OutFile $output
           Start-Process -FilePath $output -ArgumentList "/install", "/quiet", "/norestart" -Wait
-        shell: pwsh
+        shell: powershell
       - name: 'Install Electron'
         run: node node_modules/electron/install.js
       - name: 'Compile Assets'
