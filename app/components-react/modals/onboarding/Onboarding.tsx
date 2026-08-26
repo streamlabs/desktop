@@ -165,14 +165,19 @@ export function DancingKevins() {
 
 export function useAuth() {
   const { UsageStatisticsService, OnboardingV2Service, UserService } = Services;
-  const { isPartialSLAuth } = useVuex(() => ({
+  const { isPartialSLAuth, platforms } = useVuex(() => ({
     isPartialSLAuth: UserService.views.isPartialSLAuth,
+    platforms: UserService.views.linkedPlatforms,
   }));
 
   const SLIDLogin = useCallback(() => {
     UsageStatisticsService.actions.recordAnalyticsEvent('PlatformLogin', 'streamlabs');
-    UserService.startSLAuth().then((status: EPlatformCallResult) => {
-      if (status !== EPlatformCallResult.Success) throw new Error('did not authenticate properly');
+    UserService.startSLAuth().then(async (status: EPlatformCallResult) => {
+      if (status !== EPlatformCallResult.Success) return;
+      console.log(JSON.stringify(platforms));
+      if (platforms.length) {
+        await UserService.actions.return.finishSLAuth(platforms[0]);
+      }
       // Don't let users get in a partially authed stated even if they're just logging in
       if (isPartialSLAuth && OnboardingV2Service.singletonPath) {
         OnboardingV2Service.actions.showSingletonStep(EOnboardingSteps.ConnectMore);
@@ -211,7 +216,11 @@ export function useAuth() {
   }, []);
 
   const mergePlatform = useCallback((platform: TPlatform) => {
-    platformLogin(platform, true);
+    if (isPartialSLAuth) {
+      UserService.actions.finishSLAuth(platform);
+    } else {
+      platformLogin(platform, true);
+    }
   }, []);
 
   return { SLIDLogin, platformLogin, mergePlatform };

@@ -163,7 +163,7 @@ class OnboardingPath {
       // TODO: This is gross since there are 3 optional steps after Login but before Devices
       // and each one can lead to either of the others in line, there's gotta be a better way
       [EOnboardingSteps.Login]: () => {
-        if ((modifiers.loggedIn || modifiers.isPartialSLAuth) && modifiers.lessThanTwoPlatforms) {
+        if ((modifiers.loggedIn && modifiers.lessThanTwoPlatforms) || modifiers.isPartialSLAuth) {
           return { name: EOnboardingSteps.ConnectMore };
         }
         if (modifiers.obsInstalled) return { name: EOnboardingSteps.OBSImport };
