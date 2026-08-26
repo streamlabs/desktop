@@ -2,7 +2,7 @@ name: 'Frontend Tests'
 
 on:
   push:
-    branches: [staging, master, fix-crash-handler-process-cleanup]
+    branches: [staging, master]
   pull_request:
     branches: [staging, master]
     types: [synchronize, opened, reopened]
