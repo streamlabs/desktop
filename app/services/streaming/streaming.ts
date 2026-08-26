@@ -2374,7 +2374,7 @@ export class StreamingService
     }
   }
 
-  handleStartLiveOutputEditingStreamContext(display: TDisplayType) {
+  private handleStartLiveOutputEditingStreamContext(display: TDisplayType) {
     this.SET_STREAMING_STATUS(EStreamingState.Live, display, new Date().toISOString());
     this.streamingStatusChange.next(EStreamingState.Live);
     return;

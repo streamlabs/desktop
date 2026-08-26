@@ -587,8 +587,8 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * mutation. Calling a mutation from a getter dispatches it during the component snapshot,
    * which re-enters `updateUI` and recurses until the stack overflows.
    */
-  private getValidatedDisplay(display: TDisplayOutput): TDisplayType {
-    if (this.savedLiveOutputEditing && display === 'both') {
+  private getValidatedDisplay(display?: TDisplayOutput): TDisplayType {
+    if (!display || display === 'both' || !this.isDualOutputMode) {
       return 'horizontal';
     }
 
@@ -614,7 +614,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       // Note: this is to prevent an error where the platform doesn't go live because the display is set to 'both'
       // in dual output mode when live output editing is enabled. It should never happen but to prevent errors indexing
       // `platformDisplays`, default a platform without a display to horizontal
-      const display = p.display ? this.getValidatedDisplay(p.display) : 'horizontal';
+      const display = this.getValidatedDisplay(p.display);
 
       platformDisplays[display].push(platform as TPlatform);
     }
@@ -994,10 +994,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     // Make sure platforms assigned to the vertical display in dual output mode still go live in single output mode
     // Note: This is a check to ensure that the display is valid when live output editing is enabled. If the display
     // is set to 'both', it will be defaulted to 'horizontal' for single output mode.
-    const display =
-      this.isDualOutputMode && savedDestinations && savedDestinations[platform]?.display
-        ? this.getValidatedDisplay(savedDestinations[platform]?.display)
-        : 'horizontal';
+    const display = this.getValidatedDisplay(savedDestinations[platform]?.display);
 
     return {
       ...settings,
