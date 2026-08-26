@@ -10,6 +10,7 @@ import { TStreamShiftStatus } from 'services/restream';
 import { promptAction } from 'components-react/modals';
 import { TSocketEvent } from 'services/websocket';
 import { useRealmObject } from 'components-react/hooks/realm';
+import debounce from 'lodash/debounce';
 
 function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -162,7 +163,10 @@ function StartStreamingButton(p: { disabled?: boolean }) {
 
   // Wrap the toggleStreaming function in a debounce to prevent multiple rapid clicks
   // and also to cancel the action on unmount to prevent memory leaks and state updates on unmounted components
-  const toggleStreaming = useDebounce(500, handleToggleStreaming);
+  // Don't use the useDebounce hook here to maintain stateful callbacks
+  const toggleStreaming = useMemo(() => debounce(handleToggleStreaming, 500), [
+    handleToggleStreaming,
+  ]);
 
   // Debounce checking for the live status of the stream and enable canceling on unmount
   const checkIsLive = useDebounce(0, RestreamService.actions.checkIsLive);
