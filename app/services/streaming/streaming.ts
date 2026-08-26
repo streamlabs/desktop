@@ -1011,15 +1011,9 @@ export class StreamingService
     this.SET_GO_LIVE_SETTINGS(settings);
 
     if (this.views.isLiveOutputEditingEnabled) {
-      const lifecycle = this.state.info.lifecycle;
-
-      // save current settings in store so we can re-use them if something will go wrong
-      this.SET_GO_LIVE_SETTINGS(settings);
-
       // call putChannelInfo for each platform
       const platforms = this.views.getEnabledPlatforms(settings.platforms);
       const updatePlatforms = this.parseUpdatePlatforms(platforms, activePlatforms);
-      console.log('updatePlatforms', JSON.stringify(updatePlatforms, null, 2));
 
       // Compare active custom destinations by URL+streamKey to uniquely identify them
       const updateDestinations = this.parseUpdateCustomDestinations(
@@ -1412,14 +1406,14 @@ export class StreamingService
       throwStreamError(errorType);
     }
 
+    // Update checklist for added custom destinations
+    // Note: Custom destinations show as a single checklist item for all custom destinations
+    // because there is nothing to set up for these destinations
     if (destinations.length) {
-      // Update checklist for added custom destinations
-      for (const d of destinations) {
-        await this.runCheck('destination', async () => {
-          // Delay for UI animation
-          await new Promise(resolve => setTimeout(resolve, 300));
-        });
-      }
+      await this.runCheck('destination', async () => {
+        // Delay for UI animation
+        await new Promise(resolve => setTimeout(resolve, 300));
+      });
     }
   }
 
@@ -1461,14 +1455,14 @@ export class StreamingService
       throwStreamError(errorType);
     }
 
+    // Update checklist for removed custom destinations
+    // Note: Custom destinations show as a single checklist item for all custom destinations
+    // because there is nothing to set up for these destinations
     if (destinations.length) {
-      // Update checklist for added custom destinations
-      for (const d of destinations) {
-        await this.runCheck('destination', async () => {
-          // Delay for UI animation
-          await new Promise(resolve => setTimeout(resolve, 300));
-        });
-      }
+      await this.runCheck('destination', async () => {
+        // Delay for UI animation
+        await new Promise(resolve => setTimeout(resolve, 300));
+      });
     }
 
     // Stop streaming displays that no longer have any targets

@@ -565,10 +565,10 @@ export class GoLiveSettingsModule {
     return (
       xorWith(this.activePlatforms, this.state.enabledPlatforms, isEqual).length > 0 ||
       xorWith(
-        this.activeDestinations?.map(dest => `${dest.url}${dest.streamKey}`),
+        this.activeDestinations?.map(dest => `${dest.url}/${dest.streamKey}`),
         this.state.customDestinations
           .filter(dest => dest.enabled)
-          .map(dest => `${dest.url}${dest.streamKey}`),
+          .map(dest => `${dest.url}/${dest.streamKey}`),
         isEqual,
       ).length > 0
     );
@@ -583,7 +583,7 @@ export class GoLiveSettingsModule {
     if (typeof target === 'number') {
       const dest = this.state.customDestinations[target];
       return this.activeDestinations?.some(
-        d => `{${d.url}${d.streamKey}` === `{${dest.url}${dest.streamKey}`,
+        d => `{${d.url}/${d.streamKey}` === `{${dest.url}/${dest.streamKey}`,
       );
     } else {
       return this.activePlatforms?.includes(target);

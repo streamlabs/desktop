@@ -710,15 +710,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   ): Promise<string> {
     const key = streamKey ?? (await this.fetchUserSettings(orientation).then(s => s.streamKey));
 
-    const expectedSuffix = orientation === 'landscape' ? '_landscape' : '_portrait';
-    if (!key.endsWith(expectedSuffix)) {
-      console.error(
-        `Stream key is not in the expected format for ${orientation}, reformatting it.`,
-      );
-      return key.replace(/_[^_]*$/, expectedSuffix);
-    }
-
-    return key;
+    return this.formatOrientationKey(key, orientation);
   }
 
   /**
@@ -1057,8 +1049,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
         targetInfo.platform = 'patreon';
         targetInfo.streamKey = `${this.patreonService.state.ingest}/${this.patreonService.state.streamKey}`;
       }
-
-      console.log('RESTREAM targetInfo', targetInfo, 'display', display);
 
       if (updatedPlatforms) {
         const mode = display ? this.getMode(display) : this.getPlatformMode(platform);

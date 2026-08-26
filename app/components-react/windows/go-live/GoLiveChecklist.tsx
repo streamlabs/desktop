@@ -56,8 +56,8 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
     get stopDestinations() {
       return module.activeDestinations
         ? difference(
-            module.activeDestinations.map(dest => dest.name),
-            module.enabledCustomDestinations.map(dest => dest.name),
+            module.activeDestinations.map(dest => `${dest.url}/${dest.streamKey}`),
+            module.enabledCustomDestinations.map(dest => `${dest.url}/${dest.streamKey}`),
           )
         : [];
     },
@@ -65,8 +65,8 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
     get startDestinations() {
       return module.activeDestinations
         ? difference(
-            module.enabledCustomDestinations.map(dest => dest.name),
-            module.activeDestinations.map(dest => dest.name),
+            module.enabledCustomDestinations.map(dest => `${dest.url}/${dest.streamKey}`),
+            module.activeDestinations.map(dest => `${dest.url}/${dest.streamKey}`),
           )
         : [];
     },
@@ -86,8 +86,8 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
     get continueDestinations() {
       return module.activeDestinations
         ? intersection(
-            module.enabledCustomDestinations.map(dest => dest.name),
-            module.activeDestinations.map(dest => dest.name),
+            module.enabledCustomDestinations.map(dest => `${dest.url}/${dest.streamKey}`),
+            module.activeDestinations.map(dest => `${dest.url}/${dest.streamKey}`),
           )
         : [];
     },

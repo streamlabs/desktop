@@ -1104,14 +1104,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.streamingState.selectiveRecording;
   }
 
-  /**
-   * @deprecated Renamed to `showFeatureToggleCards`. Kept so the pre-cards UI still compiles
-   * while this lands ahead of it; removed with its last caller in the feature toggle cards change.
-   */
-  get canEditLiveOutputs() {
-    return false;
-  }
-
   get showFeatureToggleCards() {
     if (!this.incrementalRolloutView.featureIsEnabled(EAvailableFeatures.liveOutputEditing)) {
       return false;
