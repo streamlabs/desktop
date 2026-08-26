@@ -28,10 +28,10 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     isLiveOutputEditingEnabled,
     isUpdateMode,
     isLive,
+    showBothOption,
   } = useGoLiveSettings().extend(module => ({
     get canDualStream() {
       if (!p.platform) return false;
-      if (module.isLiveOutputEditingEnabled) return false;
       return module.getCanDualStream(p.platform);
     },
 
@@ -48,11 +48,15 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
         ? module.settings.platforms[p.platform]?.display
         : module.settings.customDestinations[p.index]?.display;
 
-      if (defaultDisplay === 'both' && !this.canDualStream) {
+      if (defaultDisplay === 'both' && (!this.canDualStream || module.isLiveOutputEditingEnabled)) {
         return 'horizontal';
       }
 
       return defaultDisplay ?? 'horizontal';
+    },
+
+    get showBothOption() {
+      return this.canDualStream && !module.isLiveOutputEditingEnabled;
     },
   }));
 
@@ -87,12 +91,12 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       ];
     }
 
-    if (isUpdateMode) {
+    if (isUpdateMode && isLiveOutputEditingEnabled) {
       // Dual stream is not compatible with live output editing so don't show it in the edit stream window
       return defaultDisplays;
     }
 
-    if (canDualStream) {
+    if (showBothOption) {
       const tooltip = isLiveOutputEditingEnabled
         ? $t('Dual Stream is not available while live output editing is enabled')
         : $t('Stream both horizontally and vertically to %{platform}', {
