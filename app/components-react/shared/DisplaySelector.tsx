@@ -36,6 +36,15 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     },
 
     get isLive(): boolean {
+      // A custom destination is referenced by the index, and a user can have a max number of 5 custom destinations
+      // It should never happen that there is no target, but guard against it just in case
+      const hasValidTarget = !!p.platform || (!!p.index && p.index <= 5);
+
+      if (!hasValidTarget) {
+        console.error('Display Selector Error: no valid target', p.platform, p.index);
+        return false;
+      }
+
       return (
         module.isUpdateMode &&
         module.isLiveOutputEditingEnabled &&
@@ -48,6 +57,10 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
         ? module.settings.platforms[p.platform]?.display
         : module.settings.customDestinations[p.index]?.display;
 
+      // Dual stream is not compatible with live output editing, so if the platform's display is set to both,
+      // default the value to `horizontal` without changing the display that's actually set in the settings. If the
+      // form has a different value, it will update in the go live flow. Defaulting the value to `horizontal` here
+      // preserves the value on state while still enforcing a compatible display.
       if (defaultDisplay === 'both' && (!this.canDualStream || module.isLiveOutputEditingEnabled)) {
         return 'horizontal';
       }
@@ -55,6 +68,8 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       return defaultDisplay ?? 'horizontal';
     },
 
+    // The both display option should be enabled when the user can dual stream, except when live output editing
+    // is enabled, in which case the both option should be visible but disabled
     get showBothOption() {
       return this.canDualStream && !module.isLiveOutputEditingEnabled;
     },
