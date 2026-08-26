@@ -4,11 +4,17 @@
 $token=$args[0]
 $username=$args[1]
 $password=$args[2]
+$runnerName=$args[3]
 
 if (-Not($token) -Or -Not($username) -Or -Not($password)) {
   echo "Provide a token, system user name and password";
   echo "Installation canceled";
   exit;
+}
+
+if (-Not($runnerName)) {
+  echo "No runner name provided, defaulting to Computer Name"
+  $runnerName=$env:COMPUTERNAME
 }
 
 # change dir to the script's dir
@@ -86,7 +92,7 @@ choco install visualstudio2019buildtools --package-parameters "--add Microsoft.V
 
 # run registration script
 echo "Configure GH Actions"
-cmd.exe /c "$workingDir\config.cmd --unattended --replace --url https://github.com/streamlabs/desktop --token $token --labels desktop-frontend --name $env:COMPUTERNAME --work _work"
+cmd.exe /c "$workingDir\config.cmd --unattended --replace --url https://github.com/streamlabs/desktop --token $token --labels desktop-frontend --name $runnerName --work _work"
 
 # Disable the lock screen UI
 $personalizationKey = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization"
@@ -117,3 +123,4 @@ Set-ItemProperty $autoStartupRegPath -Name 'StartGHRunner' -Value "powershell $w
 
 
 echo "Installation completed. Restart PC to take effect"
+
