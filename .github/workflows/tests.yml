@@ -43,27 +43,18 @@ jobs:
     outputs:
       has-testable-changes: ${{ steps.filter.outputs.src }}
 
-  test:
-    name: 'Frontend Tests'
+  prepare-frontend-tests:
+    name: 'Prepare Frontend Tests'
     needs: testable-changes
     if: needs.testable-changes.outputs.has-testable-changes == 'true' || github.event_name == 'push'
-    runs-on: [self-hosted, desktop-frontend]
+    runs-on: windows-2022
     timeout-minutes: 80
-
-    strategy:
-      matrix:
-        chunk: [1, 2, 3, 4]
-      max-parallel: 4
-
     steps:
-      - name: 'Reset runner state'
-        run: |
-          'obs64','crash-handler','chromedriver','electron' | ForEach-Object {
-            Get-Process -Name $_ -ErrorAction Ignore | Stop-Process -Force -ErrorAction Ignore
-          }
-          Remove-Item -Recurse -Force "$env:TEMP\slobs-test*" -ErrorAction Ignore
-        shell: powershell
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.18.0'
+          cache: 'yarn'
       - name: 'Install Dependencies'
         run: yarn install --immutable 2>&1
       - name: 'Install Visual Studio Redistributable DLLs'
@@ -77,8 +68,42 @@ jobs:
         run: node node_modules/electron/install.js
       - name: 'Compile Assets'
         run: yarn ci:compile
+      - name: 'Upload Test Build'
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-test-build
+          path: |
+            .
+            !.git/**
+          include-hidden-files: true
+          retention-days: 1
+
+  test:
+    name: 'Frontend Tests'
+    needs: prepare-frontend-tests
+    runs-on: [self-hosted, desktop-frontend]
+    timeout-minutes: 80
+
+    strategy:
+      matrix:
+        chunk: [1, 2, 3, 4]
+      max-parallel: 4
+
+    steps:
+      - name: 'Download Test Build'
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-test-build
+          path: ${{ runner.temp }}/frontend-test-build
       - name: 'Run Tests'
-        run: yarn ci:tests
+        run: |
+          'obs64','crash-handler','chromedriver','electron' | ForEach-Object {
+            Get-Process -Name $_ -ErrorAction Ignore | Stop-Process -Force -ErrorAction Ignore
+          }
+          Remove-Item -Recurse -Force "$env:TEMP\slobs-test*" -ErrorAction Ignore
+          yarn ci:tests
+        shell: powershell
+        working-directory: ${{ runner.temp }}/frontend-test-build
         env:
           SLOBS_TEST_USER_POOL_TOKEN: ${{ secrets.SLOBS_TEST_USER_POOL_TOKEN }}
           BROWSER_SOURCE_HARDWARE_ACCELERATION: 'OFF'
@@ -123,7 +148,7 @@ jobs:
     if: always()
     # Note: every required job in this workflow must be accounted in the results collation
     # to work properly as a required check
-    needs: [testable-changes, test, es-lint-strict-nulls]
+    needs: [testable-changes, prepare-frontend-tests, test, es-lint-strict-nulls]
     runs-on: ubuntu-latest
     steps:
       - name: 'Check CI Results'
