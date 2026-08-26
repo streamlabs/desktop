@@ -2,7 +2,7 @@ name: 'Frontend Tests'
 
 on:
   push:
-    branches: [staging, master]
+    branches: [staging, master, fix-frontend-test-artifact-layout]
   pull_request:
     branches: [staging, master]
     types: [synchronize, opened, reopened]
