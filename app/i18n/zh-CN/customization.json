@@ -1,7 +1,5 @@
 {
   "Show the live dock (chat) on the left side": "在左侧显示直播栏（聊天）",
-  "Chat Text Size": "聊天文字大小",
-  "Chat Width": "聊天框宽度",
   "Enable BetterTTV emotes for Twitch": "为 Twitch 启用 BetterTTV 表情",
   "Enable FrankerFaceZ emotes for Twitch": "为 Twitch 启用 FrankerFaceZ 表情",
   "Editor Display": "编辑器显示",
@@ -22,9 +20,9 @@
   "Current Tab": "当前选项卡",
   "Delete Current Tab": "删除当前选项卡",
   "Enter Target URL": "输入目标 URL",
-  "Obsidian Prime": "Obsidian Prime",
-  "Alabaster Prime": "Alabaster Prime",
   "Custom Navigation Bar": "自定义导航栏",
   "Obsidian Ultra": "Obsidian Ultra",
-  "Alabaster Ultra": "Alabaster Ultra"
+  "Alabaster Ultra": "Alabaster Ultra",
+  "Read": "Read",
+  "Post Comments": "Post Comments"
 }
