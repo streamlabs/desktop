@@ -12,7 +12,6 @@ export enum EDismissable {
   GuestCamFirstTimeModal = 'guest_cam_first_time',
   SourceSelectorFolders = 'source_selector_folders',
   CollabCamRollout = 'collab_cam_rollout',
-  NewNavMenu = 'new_side_nav',
   CustomMenuSettings = 'custom_menu_settings',
   LoginPrompt = 'login_prompt',
   TikTokRejected = 'tiktok_rejected',

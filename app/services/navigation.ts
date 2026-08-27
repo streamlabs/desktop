@@ -2,7 +2,7 @@ import { Subject } from 'rxjs';
 import { ObjectSchema } from 'realm';
 import { Inject, Service } from 'services/core';
 import { NavMenuService } from 'app-services';
-import { TNavMenuKey } from './nav-menu';
+import { ENavMenuKey } from './nav-menu';
 import { RealmObject } from './realm';
 import { TCategoryName } from './settings';
 
@@ -54,7 +54,7 @@ export class NavigationService extends Service {
 
   navigated = new Subject<INavigationState>();
 
-  navigate(page: TAppPage, params: Dictionary<string | boolean> = {}, setMenuItem?: TNavMenuKey) {
+  navigate(page: TAppPage, params: Dictionary<string | boolean> = {}, setMenuItem?: ENavMenuKey) {
     if (setMenuItem) {
       this.navMenuService.setCurrentMenuItem(setMenuItem);
     }
@@ -62,9 +62,9 @@ export class NavigationService extends Service {
     this.navigated.next(this.state);
   }
 
-  navigateApp(appId: string, key?: string) {
+  navigateApp(appId: string, key?: ENavMenuKey) {
     this.navigate('PlatformAppMainPage', { appId });
-    this.navMenuService.setCurrentMenuItem(key ?? appId);
+    this.navMenuService.setCurrentMenuItem(key ?? ENavMenuKey.AppStore);
   }
 
   private setPageNavigation(page: TAppPage, params: Dictionary<string | boolean>) {
