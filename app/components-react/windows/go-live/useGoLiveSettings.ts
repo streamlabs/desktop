@@ -5,7 +5,7 @@ import {
   platformList,
   TPlatform,
 } from '../../../services/platforms';
-import { ICustomStreamDestination } from 'services/settings/streaming';
+import { getDestinationId, ICustomStreamDestination } from 'services/settings/streaming';
 import { Services } from '../../service-provider';
 import cloneDeep from 'lodash/cloneDeep';
 import { FormInstance } from 'antd/lib/form';
@@ -565,10 +565,8 @@ export class GoLiveSettingsModule {
     return (
       xorWith(this.activePlatforms, this.state.enabledPlatforms, isEqual).length > 0 ||
       xorWith(
-        this.activeDestinations?.map(dest => `${dest.url}/${dest.streamKey}`),
-        this.state.customDestinations
-          .filter(dest => dest.enabled)
-          .map(dest => `${dest.url}/${dest.streamKey}`),
+        this.activeDestinations?.map(d => getDestinationId(d)),
+        this.state.customDestinations.filter(dest => dest.enabled).map(d => getDestinationId(d)),
         isEqual,
       ).length > 0
     );
@@ -582,9 +580,7 @@ export class GoLiveSettingsModule {
   isTargetLive(target: TPlatform | number) {
     if (typeof target === 'number') {
       const dest = this.state.customDestinations[target];
-      return this.activeDestinations?.some(
-        d => `{${d.url}/${d.streamKey}` === `{${dest.url}/${dest.streamKey}`,
-      );
+      return this.activeDestinations?.some(d => getDestinationId(d) === getDestinationId(dest));
     } else {
       return this.activePlatforms?.includes(target);
     }
@@ -803,9 +799,12 @@ export class GoLiveSettingsModule {
   }
 
   /**
-   * TODO: Remove
-   * @deprecated Only `StreamShiftToggle` still reads this, and that component is replaced by the
-   * feature toggle cards. Removed when adding those cards.
+   * Override the default behavior of toggling stream shift so that the user is still
+   * able to toggle stream shift on/off when they have a single platform enabled and
+   * that platform has its display set to 'both'. Otherwise, the isDualOutputMode check
+   * would prevent the user from toggling stream shift on/off.
+   * @remark Retained for `StreamShiftToggle`, which is still the stream shift control on this
+   * branch. The card-based UI that replaces it is not part of this change.
    */
   get forceStreamShiftToggleEnabled() {
     return (

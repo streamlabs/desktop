@@ -293,10 +293,11 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   /**
    * Returns if the user can or should use the restream service
-   * @remark Order matters here when checking for which features are enabled. Stream shift mode and live output editing
-   * take precedence over dual output mode.
    */
   get isMultiplatformMode(): boolean {
+    // Order matters here when checking for which features are enabled.
+    // Stream shift mode and live output editing take precedence over
+    // dual output mode.
     if (this.isStreamShiftMode) return true;
     if (this.isLiveOutputEditingEnabled) return true;
     if (this.isDualOutputMode) return false;
@@ -578,9 +579,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   /**
    * Validate the display when live output editing is enabled
-   * @remark Used to ensure a platform with the `both` display, used for dual streaming, uses the
-   * default display instead. Reads `savedLiveOutputEditing` instead of `isLiveOutputEditingEnabled`
-   * to avoid the circular dependency: settings → savedSettings → getSavedPlatformSettings → settings
    * @param display - The display saved for the platform
    * @warning The `get` prefix is required. This class is passed to `injectState` in
    * `useGoLiveSettings`, and slap registers any method not named `get*`/`is*`/`should*` as a
@@ -993,8 +991,11 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
     // Make sure platforms assigned to the vertical display in dual output mode still go live in single output mode
     // Note: This is a check to ensure that the display is valid when live output editing is enabled. If the display
-    // is set to 'both', it will be defaulted to 'horizontal' for single output mode.
-    const display = this.getValidatedDisplay(savedDestinations[platform]?.display);
+    // is set to 'both', it will be defaulted to 'horizontal' for single output mode. Must check for `savedDestinations`
+    // to exist to prevent errors when loading the app when not logged in.
+    const display = savedDestinations
+      ? this.getValidatedDisplay(savedDestinations?.[platform]?.display)
+      : 'horizontal';
 
     return {
       ...settings,
