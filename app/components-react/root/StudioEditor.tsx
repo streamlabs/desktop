@@ -14,7 +14,6 @@ import { useRealmObject } from 'components-react/hooks/realm';
 import { ENotificationType } from 'services/notifications';
 import { Service } from 'services/core/service';
 import { AudioNotificationType } from 'services/audio/audio';
-import DualOutputToggle from 'components-react/shared/DualOutputToggle';
 
 export default function StudioEditor() {
   const {
@@ -35,7 +34,6 @@ export default function StudioEditor() {
     studioMode: TransitionsService.state.studioMode,
     showHorizontalDisplay: DualOutputService.views.showHorizontalDisplay,
     showVerticalDisplay: DualOutputService.views.showVerticalDisplay,
-    isRecording: StreamingService.views.isRecording,
     activeSceneId: ScenesService.views.activeSceneId,
     isLoading: DualOutputService.views.isLoading,
     dualOutputMode: DualOutputService.views.dualOutputMode,
@@ -242,9 +240,6 @@ export default function StudioEditor() {
       {displayEnabled && (
         <div className={cx(styles.studioModeContainer, { [styles.stacked]: studioModeStacked })}>
           {v.studioMode && <StudioModeControls stacked={studioModeStacked} />}
-          {!v.studioMode && (
-            <DualOutputControls stacked={studioModeStacked} isRecording={v.isRecording} />
-          )}
           <div
             className={cx(styles.studioDisplayContainer, { [styles.stacked]: studioModeStacked })}
           >
@@ -395,115 +390,6 @@ function StudioModeControls(p: { stacked: boolean }) {
       </button>
       <span className={styles.studioModeControl}>{$t('Live')}</span>
     </div>
-  );
-}
-
-function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
-  const v = useVuex(() => ({
-    toggleDisplay: Services.DualOutputService.actions.toggleDisplay,
-    dualOutputMode: Services.DualOutputService.views.dualOutputMode,
-    showHorizontal: Services.DualOutputService.views.showHorizontalDisplay,
-    showVertical: Services.DualOutputService.views.showVerticalDisplay,
-  }));
-
-  const showRecordingIcons = useMemo(() => {
-    return false;
-    // TODO: Comment in when ready for testing
-
-    // return (
-    //   p.isRecording &&
-    //   Services.IncrementalRolloutService.views.featureIsEnabled(
-    //     EAvailableFeatures.dualOutputRecording,
-    //   )
-    // );
-  }, [p.isRecording]);
-
-  return (
-    <div
-      data-name="dual-output-header"
-      className={cx(styles.dualOutputHeader, { [styles.stacked]: p.stacked })}
-    >
-      {v.dualOutputMode && (
-        <>
-          <div
-            id="horizontal-display-toggle"
-            className={styles.toggleWrapper}
-            role="button"
-            tabIndex={0}
-            aria-label={$t('Toggle horizontal display')}
-            onKeyDown={e => {
-              // Necessary to allow toggling with keyboard for accessibility
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                v.toggleDisplay(!v.showHorizontal, 'horizontal');
-              }
-            }}
-            onClick={() => v.toggleDisplay(!v.showHorizontal, 'horizontal')}
-          >
-            {showRecordingIcons && <DualOutputIcons display="horizontal" />}
-            <i className={cx('icon-desktop', { [styles.displayActive]: v.showHorizontal })} />
-          </div>
-          <div
-            id="vertical-display-toggle"
-            className={styles.toggleWrapper}
-            role="button"
-            tabIndex={0}
-            aria-label={$t('Toggle vertical display')}
-            onKeyDown={e => {
-              // Necessary to allow toggling with keyboard for accessibility
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                v.toggleDisplay(!v.showVertical, 'vertical');
-              }
-            }}
-            onClick={() => v.toggleDisplay(!v.showVertical, 'vertical')}
-          >
-            {showRecordingIcons && <DualOutputIcons display="vertical" />}
-            <i className={cx('icon-phone', { [styles.displayActive]: v.showVertical })} />
-          </div>
-        </>
-      )}
-      <DualOutputToggle type="switch" label={$t('Dual Output')} source="Editor" />
-    </div>
-  );
-}
-
-/**
- * Note for the streaming and recording icons:
- * To maintain the horizontal and vertical header icon and text positioning centered,
- * conditionally change the opacity of the streaming and recording icons.
- * For the horizontal recording, to maintain the same margin of the streaming and recording icons
- * swap the icons shown conditionally so that when only recording, the recording icon shows next to
- * the header text.
- */
-function DualOutputIcons(p: { display: TDisplayType }) {
-  const { StreamingService } = Services;
-
-  const {
-    isHorizontalStreaming,
-    isVerticalStreaming,
-    isHorizontalRecording,
-    isVerticalRecording,
-  } = useVuex(() => ({
-    isHorizontalStreaming: StreamingService.views.isHorizontalStreaming,
-    isVerticalStreaming: StreamingService.views.isVerticalStreaming,
-    isHorizontalRecording: StreamingService.views.isHorizontalRecording,
-    isVerticalRecording: StreamingService.views.isVerticalRecording,
-  }));
-
-  const showStreaming = useMemo(() => {
-    return p.display === 'horizontal' ? isHorizontalStreaming : isVerticalStreaming;
-  }, [p.display, isHorizontalStreaming, isVerticalStreaming]);
-
-  const showRecording = useMemo(() => {
-    return p.display === 'horizontal' ? isHorizontalRecording : isVerticalRecording;
-  }, [p.display, isHorizontalRecording, isVerticalRecording]);
-
-  return (
-    <>
-      <i className={cx('icon-studio', styles.streamIcon, { [styles.hidden]: !showStreaming })} />
-      <i className={cx('icon-record', styles.recordIcon, { [styles.hidden]: !showRecording })} />
-    </>
   );
 }
 

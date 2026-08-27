@@ -2,235 +2,111 @@
 @import '../../styles/mixins';
 @import '../../styles/badges';
 
-.bottom-nav {
-  margin-bottom: 10px !important;
-  justify-self: flex-end;
-  border-right: 0px !important;
-  border-top: 2px solid var(--nav-divider);
-
-  :global(div.ant-menu-submenu-title) {
-    padding-left: 16px !important;
+.tools-nav {
+  &.tools-start {
+    margin-left: auto;
   }
 
-  &.closed {
-    border-top: 0px;
-
-    :global(.ant-menu-item-icon) {
-      i:not(.link-badge) {
-        font-size: 14px;
-      }
-    }
-
-    :global(.ant-menu-item:hover),
-    :global(.ant-menu-submenu:hover) {
-      i:not(.link-badge),
-      span {
-        transition: all 0.2s ease-in-out;
-        transform: scale(1.2, 1.2);
-        overflow: visible;
-      }
-
-      i.link-badge {
-        position: absolute;
-        top: 0;
-        right: 0;
-        transition: all 0.2s ease-in-out;
-        transform: translate(53%, -53%);
-        transform-origin: 100% 0%;
-      }
-    }
-
-    :global(span.ant-menu-title-content) {
-      display: none !important;
-    }
-
-    :global(i.ant-menu-submenu-arrow) {
-      display: none !important;
-    }
-
-    :global(.ant-menu-submenu-vertical .ant-menu-submenu-popup) {
-      display: none !important;
-    }
-
-    :global(li.ant-menu-item),
-    :global(div.ant-menu-submenu-title) {
-      align-items: center;
+  &.divider {
+    :global(.ant-menu-title-content) {
+      align-self: stretch;
+      margin-top: 1px;
       display: flex;
-      overflow: visible;
+      align-items: center;
     }
 
-    :global(div.ant-menu.ant-menu-sub.ant-menu-inline) {
-      visibility: hidden;
-      opacity: 0;
+    hr {
+      border: none;
+      border-left: 2px solid var(--border);
+      height: 50%;
+    }
+  }
+
+  .compact {
+    :global(.ant-menu-item) {
+      padding: 0 8px !important;
+    }
+
+    i:not(.link-badge) {
+      font-size: 16px;
     }
   }
 
-  &.open {
-    :global(li.ant-menu-item),
-    :global(li.ant-menu-submenu) {
-      overflow: unset !important;
-      text-overflow: unset !important;
-      overflow-wrap: break-word !important;
-      padding-bottom: 0px;
-      white-space: normal !important;
-    }
+  .toggle {
+    margin-bottom: 0px !important;
 
-    :global(div.ant-menu.ant-menu-sub.ant-menu-inline) {
-      visibility: visible;
-      overflow: visible;
-      opacity: 1;
-      transition: opacity 150ms ease-in 150ms;
-    }
-
-    :global(span.ant-menu-title-content) {
-      visibility: visible;
-      overflow: visible;
-      opacity: 1;
-      transition: visibility 0s, opacity 0.5s linear;
-    }
-  }
-}
-
-.link-badge {
-  transform: scale(1.2, 1.2);
-  margin: auto;
-  display: block;
-  border: 1px solid var(--section-alt);
-  font-size: 8px;
-}
-
-.divider {
-  margin: 0 !important;
-  border: none !important;
-  height: 2px !important;
-  background-color: var(--nav-divider) !important;
-  border-top: 2px solid var(--nav-divider);
-}
-
-.login-divider:extend(.divider) {
-  margin: 8px 15px 0 15px !important;
-  width: auto !important;
-  min-width: auto !important;
-}
-
-.login {
-  padding-top: 10px !important;
-  :global(.ant-menu-item.ant-menu-item-only-child) {
-    margin: 2px 0px 10px 0px;
-  }
-
-  &::before {
-    content: '';
-    margin: 0 10px;
-    width: calc(100% - 20px);
-    height: 2px;
-    background: var(--nav-divider);
-    display: block;
-    left: 0;
-    top: 0;
-    position: absolute;
-  }
-
-  &.login-closed::before {
-    width: 30px;
-  }
-
-  .platform-logo {
-    margin: 2px 10px 0px 0px;
-
-    &-twitch {
-      color: var(--twitch) !important;
-    }
-    &-youtube {
-      color: var(--youtube) !important;
-    }
-    &-facebook {
-      color: var(--facebook) !important;
-    }
-    &-tiktok {
-      color: var(--tiktok) !important;
-      width: 15px;
-      height: 15px;
-      align-self: center;
-    }
-    &-twitter {
-      width: 13px;
-      height: 13px;
-    }
-    &-kick {
-      width: 15px;
-      height: 15px;
-    }
-    &-streamlabs {
+    &--active {
       color: var(--teal) !important;
     }
-    &-default {
-      color: var(--logged-in) !important;
-      width: 15px;
-      height: 15px;
+  }
+
+  .settings-menu {
+    :global(.ant-menu-title-content) {
+      margin-left: 0 !important;
     }
   }
 
-  .username {
-    margin-bottom: 0px;
-    flex-grow: 1;
-    line-height: 20px;
-    margin: 2px 0 0 0;
-  }
-
-  .login-arrow {
-    justify-self: flex-end;
-    margin-left: 5px;
-    transform: scaleX(-1);
-    -moz-transform: scaleX(-1);
-    -webkit-transform: scaleX(-1);
-    -ms-transform: scaleX(-1);
-    transition: all 0.2s ease-in-out;
-  }
-
-  > span {
+  .user-profile {
+    position: relative;
     display: flex;
-    flex-direction: row;
     align-items: center;
+    cursor: pointer;
 
-    &:hover {
-      color: var(--title);
-      i:not(.platform-logo) {
-        transform: scale(1.2, 1.2);
-        transition: all 0.4s ease;
+    &-anchor {
+      position: relative;
+      display: flex;
+      align-items: center;
+      height: 100%;
+    }
+
+    &-image {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    &-dropdown-icon {
+      position: absolute;
+      right: -4px;
+      bottom: -4px;
+      font-size: 10px;
+    }
+
+    &-menu {
+      background-color: var(--section-alt);
+      border-radius: 4px;
+      padding: 4px 0;
+      min-width: 160px;
+    }
+
+    &-header {
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 4px;
+      cursor: default;
+    }
+
+    &-item {
+      padding: 8px 16px;
+      cursor: pointer;
+
+      &:hover {
+        background-color: var(--hover);
       }
     }
   }
-}
 
-.logged-out {
-  margin-bottom: 0px;
-  flex-grow: 1;
-  text-decoration: underline !important;
-}
-
-.confirm-logout {
-  position: relative;
-  z-index: 1002; // show above resize bars
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 80%;
-
-  h2 {
-    align-self: flex-start;
-  }
-
-  .buttons {
+  :global(.ant-form-item-control-input-content) {
+    // Vertically align the toggles with their labels
     display: flex;
-    flex-direction: row;
-    justify-content: flex-end;
-    margin-top: 15px;
-    width: 100%;
+    align-items: center;
 
-    button:not(:last-child) {
-      margin-right: 5px;
+    // Remove the labels only on smaller screens
+    @media (max-width: 1400px) {
+      & > span {
+        display: none;
+      }
     }
   }
 }

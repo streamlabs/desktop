@@ -188,6 +188,8 @@
   "Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable Selective Recording to go live with Dual Output.": "Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable Selective Recording to go live with Dual Output.",
   "Studio Mode Enabled": "Studio Mode Enabled",
   "Cannot toggle Dual Output while in Studio Mode. Please disable Studio Mode to go live with Dual Output.": "Cannot toggle Dual Output while in Studio Mode. Please disable Studio Mode to go live with Dual Output.",
+  "Dual Output Enabled": "Dual Output Enabled",
+  "Cannot toggle Studio Mode while in Dual Output Mode. Please disable Dual Output to use Studio Mode.": "Cannot toggle Studio Mode while in Dual Output Mode. Please disable Dual Output to use Studio Mode.",
   "Streamlabs has detected high CPU usage in Dual Output mode": "Streamlabs has detected high CPU usage in Dual Output mode",
   "System resource overuse.": "System resource overuse.",
   "To mitigate hide one of outputs or right click in editor to enable Performance Mode.": "To mitigate hide one of outputs or right click in editor to enable Performance Mode.",
