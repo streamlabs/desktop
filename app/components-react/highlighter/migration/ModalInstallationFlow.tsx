@@ -7,10 +7,14 @@ import { $t } from 'services/i18n';
 import Translate from 'components-react/shared/Translate';
 import SectionHeader from './SectionHeader';
 import { useInstallState, getStatusText } from './useInstallState';
+import { IReplayInstallOriginMetadata } from 'services/highlighter/models/highlighter.models';
 
 interface IModalInstallationFlowProps {
   onCancel: () => void;
   onInstallComplete?: () => void;
+  /** Hand-off data for the install origin marker, so a retry writes the same marker as the first
+   * attempt. */
+  installOriginMetadata?: IReplayInstallOriginMetadata;
 }
 
 export default function ModalInstallationFlow(props: IModalInstallationFlowProps) {
@@ -23,7 +27,7 @@ export default function ModalInstallationFlow(props: IModalInstallationFlowProps
     handleOpenOrInstall,
     handleRetry,
     handleCancel,
-  } = useInstallState();
+  } = useInstallState(props.installOriginMetadata);
 
   useEffect(() => {
     if (step === 'done' && props.onInstallComplete) {

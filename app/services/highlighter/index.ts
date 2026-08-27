@@ -58,6 +58,7 @@ import {
   EHighlighterView,
   ITempRecordingInfo,
   IReplayInstallState,
+  IReplayInstallOriginMetadata,
   EReplayInstallStep,
   TOpenedFrom,
 } from './models/highlighter.models';
@@ -579,18 +580,39 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
    * Must run before the installer is executed: Squirrel's Setup.exe launches Replay at the end of
    * the install, so Replay can resolve its origin while our exec call is still pending.
    *
+   * When the install was triggered from the import dialog, the marker also carries what the user
+   * picked there, under `metadata`: the recording and its game. Those are the exact values we send
+   * via the `import` deeplink the moment the install finishes, so Replay can see it coming — a
+   * marker and a deeplink for the same import, not two unrelated ones.
+   *
    * Best-effort by design. Attribution is never worth failing an install over, so every error is
    * swallowed and only reported to Sentry.
    */
-  private async writeReplayInstallOriginMarker(): Promise<void> {
+  private async writeReplayInstallOriginMarker(
+    metadata?: IReplayInstallOriginMetadata,
+  ): Promise<void> {
     try {
       const markerPath = this.getReplayInstallOriginMarkerPath();
 
-      // outputJson creates the containing directory if it does not exist yet
+      const videoPath = metadata?.videoPath?.trim();
+      const game = metadata?.game;
+
+      // Only carry entries we actually have: an absent key is easier for Replay to reason about
+      // than one holding an empty value.
+      const markerMetadata = {
+        ...(videoPath ? { videoPath } : {}),
+        ...(game ? { game } : {}),
+      };
+      const hasMetadata = Object.keys(markerMetadata).length > 0;
+
+      // outputJson creates the containing directory if it does not exist yet.
+      // `metadata` itself is omitted when there is nothing to hand over, so Replay never has to
+      // tell an empty object apart from a missing one.
       await fs.outputJson(markerPath, {
         version: 1,
         origin: REPLAY_INSTALL_ORIGIN,
         createdAt: new Date().toISOString(),
+        ...(hasMetadata ? { metadata: markerMetadata } : {}),
       });
 
       // Replay logs the path it looked at on every launch until the origin settles. Two paths that
@@ -598,7 +620,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       console.log(
         `Wrote Streamlabs Replay install origin marker to "${markerPath}" as "${
           os.userInfo().username
-        }"`,
+        }"${hasMetadata ? ` with ${JSON.stringify(markerMetadata)}` : ''}`,
       );
     } catch (error: unknown) {
       Sentry.withScope(scope => {
@@ -613,10 +635,14 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
    * Downloads and installs Streamlabs Replay.
    * Fakes progress increments during the download/install phases,
    * verifies the deeplink registry after install, and auto-launches the app.
+   *
+   * @param originMetadata - Optional hand-off data for the install origin marker: the video and
+   * game the import dialog wants Replay to open with. Passing it here is what replaces the import
+   * deeplink — Replay reads the marker on its first launch, so nothing is sent afterwards.
    */
   private replayInstallAbortController: AbortController | null = null;
 
-  async installStreamlabsReplay(): Promise<boolean> {
+  async installStreamlabsReplay(originMetadata?: IReplayInstallOriginMetadata): Promise<boolean> {
     if (getOS() !== OS.Windows) {
       Sentry.withScope(scope => {
         scope.setTag('feature', 'highlighter');
@@ -694,9 +720,10 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         await this.verifyAuthenticodeSignature(setupPath);
       }
 
-      // Attribute this install to Streamlabs Desktop before the installer runs.
+      // Attribute this install to Streamlabs Desktop before the installer runs, and hand over
+      // whatever we already know about what comes next (the video and game to import).
       // Best-effort: this never throws and never blocks the install.
-      await this.writeReplayInstallOriginMarker();
+      await this.writeReplayInstallOriginMarker(originMetadata);
 
       // --- Installing phase ---
       this.SET_REPLAY_INSTALL({ step: 'installing', progress: 94 });

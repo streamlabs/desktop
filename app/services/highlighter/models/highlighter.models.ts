@@ -51,6 +51,22 @@ export interface IReplayInstallState {
   error: string | null;
 }
 
+/**
+ * Extra hand-off data written into the install origin marker Replay reads on first run.
+ *
+ * Everything here is optional and best-effort: it describes what Desktop is about to ask Replay
+ * to do once the install finishes, so Replay can prepare for it before the deeplink arrives.
+ */
+export interface IReplayInstallOriginMetadata {
+  /**
+   * Absolute path of the recording the user picked in the import dialog — the same path Desktop
+   * sends via the `import` deeplink as soon as the install completes.
+   */
+  videoPath?: string;
+  /** Game the user picked for that recording, sent via the same deeplink. */
+  game?: EGame;
+}
+
 // CLIP
 export interface INewClipData {
   path: string;
