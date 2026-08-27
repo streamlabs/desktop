@@ -59,9 +59,9 @@ export default function AiHighlighterToggle({
   useEffect(() => {
     const supportedGame = isGameSupported(gameName);
     setGameIsSupported(!!supportedGame);
-    if (supportedGame && !isUpdateMode) {
-      setIsExpanded(true);
+    if (supportedGame) {
       setGameConfig(getConfigByGame(supportedGame));
+      if (!isUpdateMode) setIsExpanded(true);
     } else {
       setGameConfig(null);
     }
