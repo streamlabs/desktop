@@ -237,7 +237,7 @@ export default function AiHighlighterToggle({
                   )}
                   {isUpdateMode && (
                     <CloseOutlined
-                      aria-label={$t('Dismiss')}
+                      aria-label={$t('Dismiss AI Highlighter Banner')}
                       style={{ color: '#BDC2C4', marginLeft: '8px' }}
                       onClick={e => {
                         e.stopPropagation();
