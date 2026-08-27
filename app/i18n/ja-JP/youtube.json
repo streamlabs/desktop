@@ -1,15 +1,6 @@
 {
-  "YouTube stream status": "YouTube ストリーム ステータス",
-  "Waiting for YouTube to receive the video signal...": "YouTube がビデオ信号を受信するのを待機しています...",
-  "Testing your broadcast...": "ブロードキャストをテストしています...",
-  "Finalizing broadcast testing...": "ブロードキャストテストを終了しています...",
-  "Publishing to your YouTube channel...": "YouTube チャネルに公開しています...",
-  "Waiting broadcast to be published...": "ブロードキャストが公開されるのを待機しています...",
   "You're live!": "ライブになりました！",
-  "Waiting for broadcast to be published...": "ブロードキャストが公開されるのを待機しています...",
   "Working on your live stream": "貴方のライブストリームを処理しています",
-  "Your stream will start shortly. You can close this window.": "ストリームはまもなく開始します。このウィンドウを閉じることができます。",
-  "Go to YouTube Live Dashboard": "YouTube ライブダッシュボードにアクセス",
   "Create New Event": "新規イベントを作成",
   "YouTube Chat": "YouTube チャット",
   "This action cannot be performed inside Streamlabs Desktop. To interact with chat, you can open this chat in a web browser.": "この操作は Streamlabs Desktop 内では実行できません。チャットを行うには、このチャットをウェブブラウザで開くことができます。",
@@ -49,7 +40,7 @@
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube のサムネイルの画像サイズが大きすぎます。最大サイズは2MB です。",
   "Please upload thumbnail manually on YouTube.": "サムネイルを手動で YouTube にアップロードしてください。",
   "Stream Shift Error: YouTube is not live": "Stream Shift エラー：YouTube はライブ配信されていません",
-  "Error starting vertical stream in YouTube dual streaming": "YouTubeデュアルストリーミングでの縦型ストリーム開始エラー",
+  "Error starting vertical stream in YouTube dual streaming.": "Error starting vertical stream in YouTube dual streaming.",
   "YouTube service is temporarily unavailable": "YouTube service is temporarily unavailable",
   "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support": "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support"
 }
