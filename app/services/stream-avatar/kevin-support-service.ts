@@ -38,7 +38,19 @@ export interface IKevinSupportState {
   connected: boolean;
   connecting: boolean;
   error: string | null;
-  rateLimit: { current: number; maximum: number } | null;
+  /**
+   * Interaction quota, as last reported by the server. `exceeded` is the
+   * server's own verdict on the request it just refused -- the UI shows the
+   * upsell from this rather than comparing current against maximum itself,
+   * because only the server knows whether the allowance is monthly or lifetime.
+   */
+  rateLimit: { current: number; maximum: number; exceeded: boolean } | null;
+  /**
+   * How many requests the server has refused for quota. Increments per refusal
+   * rather than latching a boolean, because `exceeded` stays true for the rest
+   * of the period: the UI needs to answer every attempt, not just the first.
+   */
+  rateLimitRefusals: number;
   /**
    * Sensitive tool calls waiting on a human. The worker owns the socket but
    * cannot render, so a UI window observes this via useVuex and answers
@@ -74,6 +86,7 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
     connecting: false,
     error: null,
     rateLimit: null,
+    rateLimitRefusals: 0,
     pendingApprovals: [],
   };
 
@@ -190,12 +203,24 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
       socket.on('v2:approval.resolved', (p: { approvalId: string }) =>
         this.REMOVE_APPROVAL(p.approvalId),
       );
-      socket.on('v2:rateLimit', (p: { current: number; maximum: number }) =>
-        this.SET_RATE_LIMIT({ current: p.current, maximum: p.maximum }),
+      socket.on('v2:rateLimit', (p: { current: number; maximum: number; exceeded?: boolean }) =>
+        this.SET_RATE_LIMIT({
+          current: p.current,
+          maximum: p.maximum,
+          exceeded: p.exceeded === true,
+        }),
       );
       socket.on('v2:error', (p: { code: string; message: string }) => {
         this.log('in', 'v2:error', p);
-        if (p.code === 'rate_limit' || p.code === 'auth') this.SET_ERROR(p.message);
+        // An error means this attempt is over. A refused request never starts a
+        // run, so `v2:run.ended` never arrives and nothing else would clear
+        // this -- the spinner span forever and Send stayed disabled.
+        this.SET_PENDING(false);
+
+        // Quota is answered by the upgrade modal, not by a red line: showing
+        // both says the same thing twice, and only one of them is actionable.
+        if (p.code === 'rate_limit') return;
+        if (p.code === 'auth') this.SET_ERROR(p.message);
       });
 
       socket.on('disconnect', (reason: string) => {
@@ -448,7 +473,8 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
   }
 
   @mutation()
-  private SET_RATE_LIMIT(rateLimit: { current: number; maximum: number }) {
+  private SET_RATE_LIMIT(rateLimit: { current: number; maximum: number; exceeded: boolean }) {
+    if (rateLimit.exceeded) this.state.rateLimitRefusals += 1;
     this.state.rateLimit = rateLimit;
   }
 
@@ -485,6 +511,7 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
     this.state.connecting = false;
     this.state.error = null;
     this.state.rateLimit = null;
+    this.state.rateLimitRefusals = 0;
     this.state.pendingApprovals = [];
   }
 }

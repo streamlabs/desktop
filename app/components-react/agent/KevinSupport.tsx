@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import cx from 'classnames';
-import { Input } from 'antd';
+import { Input, Tooltip } from 'antd';
 import * as remote from '@electron/remote';
 import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
@@ -8,6 +8,14 @@ import { useVuex } from 'components-react/hooks';
 import Scrollable from 'components-react/shared/Scrollable';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import KevinSvg from 'components-react/shared/KevinSvg';
+import UltraIcon from 'components-react/shared/UltraIcon';
+import {
+  INTERACTION_LIMITS,
+  ULTRA_PLUS_TIER,
+  promptUpgrade,
+  supportTier,
+  upgrade,
+} from './support-limits';
 import styles from './KevinSupport.m.less';
 
 // $t() must be called at render time, not module load, so the strings pick up a
@@ -64,15 +72,85 @@ function renderText(text: string): React.ReactNode[] {
   return nodes;
 }
 
+/**
+ * Interactions used, top right, mirroring the Automations usage meter.
+ *
+ * Counts come from the server on every request, so this reflects the quota that
+ * actually applies rather than one derived here. The tier constants are only
+ * used to name the next tier's allowance in the tooltip and the upsell.
+ */
+function UsageMeter(p: { rateLimit: { current: number; maximum: number } | null }) {
+  const tier = supportTier();
+  const atTopTier = tier === ULTRA_PLUS_TIER;
+
+  // The server reports the real counts, but only once it has handled a request,
+  // so waiting for them left the meter absent until after the first message --
+  // which is exactly when someone on the free tier most wants to see what their
+  // allowance is. The tier's own limit stands in until then, the way the
+  // Automations meter derives its numbers locally, and the server's figures
+  // replace it the moment they arrive.
+  const current = p.rateLimit?.current ?? 0;
+  const maximum = p.rateLimit?.maximum ?? INTERACTION_LIMITS[tier] ?? INTERACTION_LIMITS.free;
+
+  const pct = maximum > 0 ? Math.min(100, Math.round((current / maximum) * 100)) : 0;
+  // maximum > 0 guards the degenerate case: 0 >= 0 would offer an upgrade to
+  // someone whose quota simply has not been reported yet.
+  const atCap = maximum > 0 && current >= maximum;
+
+  return (
+    <div className={styles.usageMeter}>
+      <div className={styles.usageRow}>
+        <span className={styles.usageText}>
+          {$t('%{count}/%{max} interactions used', { count: current, max: maximum })}
+        </span>
+        <Tooltip
+          title={$t(
+            'Free includes %{free} interactions in total. Ultra includes %{ultra} a month and Ultra+ %{ultraPlus}.',
+            {
+              free: INTERACTION_LIMITS.free,
+              ultra: INTERACTION_LIMITS.ultra,
+              ultraPlus: INTERACTION_LIMITS[ULTRA_PLUS_TIER],
+            },
+          )}
+        >
+          <i className={`icon-information ${styles.usageInfo}`} />
+        </Tooltip>
+        <div className={styles.usageTrack}>
+          <div
+            className={cx(styles.usageFill, atCap && styles.usageFillFull)}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
+
+      {atCap && !atTopTier && (
+        <span className={styles.upgradeLink} onClick={() => upgrade(tier)}>
+          <UltraIcon type="badge" />
+          <span className={styles.upgradeText}>
+            {tier === 'ultra' ? $t('Upgrade to Ultra+ for more') : $t('Upgrade to Ultra for more')}
+          </span>
+        </span>
+      )}
+      {atCap && atTopTier && (
+        <span className={styles.atCapNote}>{$t('Monthly limit reached')}</span>
+      )}
+    </div>
+  );
+}
+
 export default function KevinSupport() {
   const { KevinSupportService } = Services;
 
-  const { messages, pending, error, pendingApprovals } = useVuex(() => ({
-    messages: KevinSupportService.state.messages,
-    pending: KevinSupportService.state.pending,
-    error: KevinSupportService.state.error,
-    pendingApprovals: KevinSupportService.state.pendingApprovals,
-  }));
+  const { messages, pending, error, pendingApprovals, rateLimit, rateLimitRefusals } = useVuex(
+    () => ({
+      messages: KevinSupportService.state.messages,
+      pending: KevinSupportService.state.pending,
+      error: KevinSupportService.state.error,
+      pendingApprovals: KevinSupportService.state.pendingApprovals,
+      rateLimit: KevinSupportService.state.rateLimit,
+      rateLimitRefusals: KevinSupportService.state.rateLimitRefusals,
+    }),
+  );
 
   const [draft, setDraft] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
@@ -82,14 +160,24 @@ export default function KevinSupport() {
   // chat that has never been used. Gating purely on messages.length showed the
   // "How can we help you today?" empty state while an approval sat unanswered
   // in state, and the run expired.
-  const isEmpty = useMemo(
-    () => messages.length === 0 && pendingApprovals.length === 0,
-    [messages.length, pendingApprovals.length],
-  );
+  const isEmpty = useMemo(() => messages.length === 0 && pendingApprovals.length === 0, [
+    messages.length,
+    pendingApprovals.length,
+  ]);
 
   useEffect(() => {
     KevinSupportService.actions.connect();
   }, []);
+
+  // Every refused request gets an answer, which is how Automations behaves: it
+  // prompts on each blocked action rather than once per period. Keyed on the
+  // refusal count and not on `exceeded`, because that latches true for the rest
+  // of the period and a later attempt would otherwise be swallowed in silence --
+  // the quota error is no longer shown as a banner, so this modal is the only
+  // thing that tells them why nothing happened.
+  useEffect(() => {
+    if (rateLimitRefusals > 0) promptUpgrade(supportTier());
+  }, [rateLimitRefusals]);
 
   useEffect(() => {
     // Scroll the OverlayScrollbars viewport itself. scrollIntoView() would walk up
@@ -121,6 +209,8 @@ export default function KevinSupport() {
   return (
     <ModalLayout hideFooter className={styles.window} bodyClassName={styles.body}>
       <div className={styles.content}>
+        <UsageMeter rateLimit={rateLimit} />
+
         {isEmpty ? (
           <div className={styles.emptyState}>
             <KevinSvg style={{ width: 36, height: 32, fill: 'var(--paragraph)' }} />
