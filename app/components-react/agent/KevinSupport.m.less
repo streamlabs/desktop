@@ -1,4 +1,5 @@
 @import '../../styles/index';
+@import '../../styles/ultra';
 
 // Figma tokens map onto the night-theme palette 1:1:
 //   background/base #17242D -> --background   (content area)
@@ -224,4 +225,76 @@
   font-size: 12px;
   text-align: center;
   padding: 12px 16px 4px;
+}
+
+// -- interaction quota --------------------------------------------------------
+// Mirrors the Automations usage meter (EditAutomations.m.less) so the two read
+// as the same control. Right-aligned and out of the flex flow so it sits in the
+// window's top-right corner without taking height from the conversation.
+
+.usage-meter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-bottom: -8px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.usage-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.usage-text {
+  color: var(--title);
+}
+
+.usage-info {
+  color: var(--icon);
+  cursor: help;
+}
+
+.usage-track {
+  width: 140px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.usage-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--teal);
+  transition: width 150ms ease;
+}
+
+// Spent, not merely nearly spent. The bar is the thing seen at a glance, so it
+// should not still read as healthy on the request that gets refused.
+.usage-fill-full {
+  background: var(--warning);
+}
+
+.upgrade-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover .upgrade-text {
+    opacity: 0.85;
+  }
+}
+
+.upgrade-text {
+  .ultra-text('warm');
+}
+
+.at-cap-note {
+  color: var(--paragraph);
 }

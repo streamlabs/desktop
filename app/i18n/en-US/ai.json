@@ -38,5 +38,17 @@
   "Send": "Send",
   "Log in to use Streamlabs Desktop Support.": "Log in to use Streamlabs Desktop Support.",
   "Could not connect to Streamlabs Desktop Support. Please try again.": "Could not connect to Streamlabs Desktop Support. Please try again.",
-  "Something went wrong. Please try again.": "Something went wrong. Please try again."
+  "Something went wrong. Please try again.": "Something went wrong. Please try again.",
+  "%{count}/%{max} interactions used": "%{count}/%{max} interactions used",
+  "Free includes %{free} interactions in total. Ultra includes %{ultra} a month and Ultra+ %{ultraPlus}.": "Free includes %{free} interactions in total. Ultra includes %{ultra} a month and Ultra+ %{ultraPlus}.",
+  "Upgrade to Ultra+ for more": "Upgrade to Ultra+ for more",
+  "Upgrade to Ultra for more": "Upgrade to Ultra for more",
+  "Monthly limit reached": "Monthly limit reached",
+  "Interaction limit reached": "Interaction limit reached",
+  "Ultra includes %{max} support interactions a month. Upgrade to Ultra+ for %{next}.": "Ultra includes %{max} support interactions a month. Upgrade to Ultra+ for %{next}.",
+  "Free accounts include %{max} support interactions in total. Upgrade to Ultra for %{next} every month.": "Free accounts include %{max} support interactions in total. Upgrade to Ultra for %{next} every month.",
+  "You've used all %{max} of this month's support interactions.": "You've used all %{max} of this month's support interactions.",
+  "Upgrade to Ultra+": "Upgrade to Ultra+",
+  "Upgrade to Ultra": "Upgrade to Ultra",
+  "Not now": "Not now"
 }
