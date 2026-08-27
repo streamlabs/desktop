@@ -1,15 +1,6 @@
 {
-  "YouTube stream status": "YouTube 直播状态",
-  "Waiting for YouTube to receive the video signal...": "正在等待 YouTube 接收视频信号...",
-  "Testing your broadcast...": "正在测试您的广播...",
-  "Finalizing broadcast testing...": "正在完成广播测试...",
-  "Publishing to your YouTube channel...": "正在发布到您的 YouTube 频道...",
-  "Waiting broadcast to be published...": "正在等待广播发布...",
   "You're live!": "您已上线！",
-  "Waiting for broadcast to be published...": "正在等待广播发布...",
   "Working on your live stream": "正在处理您的直播流",
-  "Your stream will start shortly. You can close this window.": "您的视频直播很快将开始。您可以关闭此窗口。",
-  "Go to YouTube Live Dashboard": "前往 YouTube 直播仪表板",
   "Create New Event": "创建新事件",
   "YouTube Chat": "YouTube 聊天",
   "This action cannot be performed inside Streamlabs Desktop. To interact with chat, you can open this chat in a web browser.": "无法在 Streamlabs Desktop 中执行此操作。要与聊天互动，您可以在网络浏览器中打开此聊天。",
@@ -49,7 +40,7 @@
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube 缩略图过大。最大为 2 MB。",
   "Please upload thumbnail manually on YouTube.": "请在 YouTube 上手动上传缩略图。",
   "Stream Shift Error: YouTube is not live": "Stream Shift 错误：YouTube 当前没有直播",
-  "Error starting vertical stream in YouTube dual streaming": "在 YouTube 双流中启动垂直流时出错",
+  "Error starting vertical stream in YouTube dual streaming.": "Error starting vertical stream in YouTube dual streaming.",
   "YouTube service is temporarily unavailable": "YouTube service is temporarily unavailable",
   "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support": "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support"
 }
