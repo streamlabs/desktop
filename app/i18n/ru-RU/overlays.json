@@ -4,7 +4,6 @@
   "Successfully saved %{filename} to %{filepath}": "%{filename} успешно сохранен в %{filepath}",
   "Successfully loaded %{filename}.overlay": "Успешно загружен файл %{filename}.overlay",
   "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
-  "This is an experimental feature.  Use at your own risk.": "Это экспериментальная функция. Используйте на свой страх и риск.",
   "Export Overlay File": "Экспорт файла оверлея",
   "Import Overlay File": "Импорт файла оверлея",
   "Import Widget File in Current Scene": "Импортировать виджет в текущую сцену",
@@ -28,5 +27,9 @@
   "Show Components Library": "Показать библиотеку компонентов",
   "Convert Dual Output Scene Collection": "Преобразование коллекции сцен Dual Output",
   "Repair Scene Collection": "Коллекция сцен ремонта",
-  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection.",
+  "Reactive Data": "Reactive Data",
+  "Manage your reactive data values": "Manage your reactive data values",
+  "Waiting for schema...": "Waiting for schema...",
+  "Waiting for state...": "Waiting for state..."
 }
