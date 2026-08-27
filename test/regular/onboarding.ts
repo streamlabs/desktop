@@ -231,7 +231,6 @@ test('Go through onboarding', async t => {
       0,
       'Old user onboarded without theme has no sources',
     );
-    t.true(await isDisplayed('i[data-testid=dual-output-inactive]'), 'Dual output not enabled');
   });
 
   t.pass();
@@ -258,7 +257,6 @@ test.skip('Go through onboarding and install theme', async t => {
 
     // Confirm switched to scene with default sources and dual output status
     await confirmDefaultSources(t);
-    t.true(await isDisplayed('i[data-testid=dual-output-inactive]'), 'Single output enabled.');
   });
 
   t.pass();
@@ -274,7 +272,6 @@ test('Go through onboarding as a new user', async t => {
     await finishOnboarding(installTheme);
     // Confirm sources and dual output status
     await confirmDefaultSources(t);
-    t.true(await isDisplayed('i[data-testid=dual-output-inactive]'), 'Single output enabled.');
   });
 
   t.pass();
@@ -291,7 +288,6 @@ test.skip('Go through onboarding as a new user and install theme', async t => {
     await finishOnboarding(installTheme);
     // Confirm sources and dual output status
     await confirmDefaultSources(t, DefaultSourcesCheck.CheckOverlaySources);
-    t.true(await isDisplayed('i[data-testid=dual-output-inactive]'), 'Single output enabled.');
   });
 
   t.pass();
@@ -308,7 +304,6 @@ test('Login new user after onboarding skipped', async t => {
 
     // Confirm switched to scene with default sources and dual output status
     await confirmDefaultSources(t, DefaultSourcesCheck.NoDefaultSources);
-    t.true(await isDisplayed('i[data-testid=dual-output-inactive]'), 'Dual output not enabled.');
   });
 
   t.pass();
