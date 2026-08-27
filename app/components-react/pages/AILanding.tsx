@@ -10,7 +10,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import { getConfigByGame } from 'services/highlighter/models/game-config.models';
 import { $t } from 'services/i18n/index';
-import { ENavMenuKey, TNavMenuKey } from 'services/nav-menu';
+import { ENavMenuKey } from 'services/nav-menu';
 import { IOverlayCollectionParams, TOverlayType } from 'services/user';
 import { $i } from 'services/utils';
 import { WidgetDisplayData } from 'services/widgets';
@@ -170,7 +170,7 @@ export default function AILanding() {
     NavigationService.actions.navigate(
       'PlatformAppMainPage',
       { appId: AGENT_APP_ID },
-      `sub-${AGENT_APP_ID}` as TNavMenuKey,
+      ENavMenuKey.AppStore,
     );
   }
 
