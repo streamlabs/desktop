@@ -1,5 +1,4 @@
 import React, { CSSProperties, useCallback, useState } from 'react';
-import { message } from 'antd';
 import cx from 'classnames';
 import { Services } from '../service-provider';
 import { useVuex } from 'components-react/hooks';
@@ -11,11 +10,17 @@ import { CheckboxInput, SwitchInput } from 'components-react/shared/inputs';
 import { AuthModal } from 'components-react/shared/AuthModal';
 import { alertAsync } from 'components-react/modals';
 
-// Currently only one variant type is used but preserve the others for legacy purposes
-type TDualOutputToggleType = 'checkbox' | 'switch' | 'icon';
-// Currently the dual output toggle is only used in the Editor, but for legacy purposes for old analytics
-// keep the other source tags
-type TDualOutputAnalyticsSource = 'GoLiveWindow' | 'SourceSelector' | 'VideoSettings' | 'Editor';
+/** The type of control to use for the dual output toggle. */
+export type TDualOutputToggleType = 'checkbox' | 'switch' | 'icon';
+
+// Currently the dual output toggle is only used in the Editor and nav bar,
+// but for legacy purposes for old analytics keep the other source tags.
+export type TDualOutputAnalyticsSource =
+  | 'GoLiveWindow'
+  | 'SourceSelector'
+  | 'VideoSettings'
+  | 'Editor'
+  | 'NavMenu';
 
 interface IDualOutputToggleProps {
   source: TDualOutputAnalyticsSource;
@@ -108,7 +113,7 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
     });
   }, [v.selectiveRecording]);
 
-  const showStudioModeModal = useCallback(() => {
+  const showStudioModeModal = useCallback((status?: boolean) => {
     alertAsync({
       type: 'confirm',
       title: $t('Studio Mode Enabled'),
@@ -125,6 +130,9 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
       okButtonProps: { type: 'primary' },
       onOk: () => {
         TransitionsService.actions.disableStudioMode();
+
+        // There are additional checks in the toggleDualOutput function, re-run for validation.
+        toggleDualOutput(status);
       },
       cancelButtonProps: { style: { display: 'inline' } },
     });
@@ -139,19 +147,12 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
       }
 
       if (v.isMidStreamMode) {
-        message.error({
-          content: $t('Cannot toggle Dual Output while live.'),
-          className: styles.toggleError,
-        });
+        alertAsync($t('Cannot toggle Dual Output while live.'));
         return;
       }
 
       if (v.studioMode) {
-        showStudioModeModal();
-        message.error({
-          content: $t('Cannot toggle Dual Output while in Studio Mode.'),
-          className: styles.toggleError,
-        });
+        showStudioModeModal(status);
         return;
       }
 
@@ -199,7 +200,12 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
       })}
       style={p?.style}
     >
-      <Tooltip title={tooltip} placement={placement} disabled={disabled} lightShadow>
+      <Tooltip
+        title={tooltip}
+        placement={placement}
+        disabled={p?.tooltipDisabled ?? disabled}
+        lightShadow
+      >
         {type === 'switch' && (
           <DualOutputToggleSwitch
             label={$t('Dual Output')}

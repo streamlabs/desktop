@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useModule } from 'slap';
-import { Badge, message, Tooltip } from 'antd';
+import { Badge, message } from 'antd';
 import moment from 'moment';
 import cx from 'classnames';
 import cloneDeep from 'lodash/cloneDeep';
@@ -124,39 +124,68 @@ class NotificationsModule {
   }
 }
 
-export default function NotificationsArea() {
+/** Badge + icon that opens the Notifications window. */
+export function NotificationsBell() {
   const { NotificationsService } = Services;
 
-  const {
-    unreadWarnings,
-    unreadNotifs,
-    settings,
-    ytDisabled,
-    addNotif,
-    clearQueueOfRead,
-    setReadyToPlay,
-  } = useModule(NotificationsModule);
+  const { unreadWarnings, unreadNotifs, settings } = useModule(NotificationsModule);
+
+  function showNotifications() {
+    NotificationsService.actions.showNotifications();
+  }
+
+  if (!settings.enabled) return <></>;
+
+  return (
+    <div className={styles.notificationsArea}>
+      {unreadWarnings.length > 0 && (
+        <div
+          className={cx(styles.notificationsCounter, styles.notificationsCounterWarning)}
+          onClick={showNotifications}
+        >
+          <Badge dot={unreadWarnings.length > 0} color="red">
+            <i className="fa fa-exclamation-triangle" />
+            {unreadWarnings.length}
+          </Badge>
+        </div>
+      )}
+      {unreadWarnings.length < 1 && (
+        <div className={styles.notificationsCounter} onClick={showNotifications}>
+          <Badge dot={unreadNotifs.length > 0}>
+            <i className={cx('icon-notifications', styles.notificationIcon)} />
+          </Badge>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The actual toast messages (and the YT-not-enabled banner) render here.
+ * message.config() below points the app-wide antd message container at
+ * this div, so every `message.*` call across the app (StudioEditor,
+ * SourceSelector, NavTools, ...) renders here. Rendered once from
+ * StudioFooter, inline in the bottom bar.
+ *
+ * @note The top nav bar sits above the Studio Editor's native display
+ * surface, and a toast host floating there would need style blockers
+ * to paint above it; the bottom bar doesn't.
+ */
+export function NotificationsToastHost() {
+  const { NotificationsService } = Services;
+
+  const { ytDisabled, addNotif, clearQueueOfRead, setReadyToPlay } = useModule(NotificationsModule);
 
   const notificationsContainer = useRef<HTMLDivElement>(null);
   const [showExtendedNotifications, setShowExtendedNotifications] = useState(false);
-
-  const showNotificationsTooltip = $t('Click to open your Notifications window');
-  const showUnreadNotificationsTooltip = $t('Click to read your unread Notifications');
 
   useEffect(() => {
     const notifPushedSub = NotificationsService.notificationPushed.subscribe(addNotif);
     const notifReadSub = NotificationsService.notificationRead.subscribe(clearQueueOfRead);
 
-    const resizeInterval = window.setInterval(() => {
-      if (!notificationsContainer.current || ytDisabled) return;
-      if (notificationsContainer.current?.offsetWidth >= 150 === showExtendedNotifications) return;
-      setShowExtendedNotifications(notificationsContainer.current?.offsetWidth >= 150);
-    }, 1000);
-
     return () => {
       notifPushedSub.unsubscribe();
       notifReadSub.unsubscribe();
-      clearInterval(resizeInterval);
     };
   }, []);
 
@@ -168,44 +197,23 @@ export default function NotificationsArea() {
     setReadyToPlay();
   }, []);
 
-  function showNotifications() {
-    NotificationsService.actions.showNotifications();
-  }
-
-  if (!settings.enabled) return <></>;
+  useEffect(() => {
+    if (!notificationsContainer.current) return;
+    const ro = new ResizeObserver(() => {
+      setShowExtendedNotifications((notificationsContainer.current?.offsetWidth ?? 0) >= 150);
+    });
+    ro.observe(notificationsContainer.current);
+    return () => ro.disconnect();
+  }, []);
 
   return (
-    <div className={cx(styles.notificationsArea, 'flex--grow')}>
-      {unreadWarnings.length > 0 && (
-        <Tooltip placement="right" title={showUnreadNotificationsTooltip}>
-          <div
-            className={cx(styles.notificationsCounter, styles.notificationsCounterWarning)}
-            onClick={showNotifications}
-          >
-            <Badge dot={unreadWarnings.length > 0} color="red">
-              <i className="fa fa-exclamation-triangle" />
-              {unreadWarnings.length}
-            </Badge>
-          </div>
-        </Tooltip>
-      )}
-      {unreadWarnings.length < 1 && (
-        <Tooltip placement="right" title={showNotificationsTooltip}>
-          <div className={styles.notificationsCounter} onClick={showNotifications}>
-            <Badge dot={unreadNotifs.length > 0}>
-              <i className={cx('icon-notifications', styles.notificationIcon)} />
-            </Badge>
-          </div>
-        </Tooltip>
-      )}
-      <div
-        className={cx(styles.notificationsContainer, 'flex--grow', {
-          [styles.hideNotifs]: !showExtendedNotifications,
-        })}
-        ref={notificationsContainer}
-      >
-        {ytDisabled && <YTError />}
-      </div>
+    <div
+      className={cx(styles.notificationsContainer, {
+        [styles.hideNotifs]: !showExtendedNotifications,
+      })}
+      ref={notificationsContainer}
+    >
+      {ytDisabled && <YTError />}
     </div>
   );
 }
