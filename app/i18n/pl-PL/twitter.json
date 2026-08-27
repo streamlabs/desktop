@@ -1,14 +1,5 @@
 {
-  "Compose Tweet": "Stwórz Tweeta",
-  "Custom URL with": "Niestandardowy adres URL z",
   "Share Your Stream": "Udostępnij swoją transmisję",
-  "Connect to Twitter": "Połącz z Twitterem",
-  "Enable Tweet Sharing": "Włącz udostępnianie Tweetów",
-  "Tweet when going live": "Tweetuj podczas transmisji na żywo",
-  "Unlink Twitter": "Odłącz Twittera",
-  "Tweet & Go Live": "Tweetuj i Rozpocznij transmisję",
-  "Could not connect to Twitter": "Nie można połączyć się z Twitterem",
-  "Use Streamlabs URL": "Użyj URL Streamlabs",
   "X (Twitter) Chat Type": "Typ czatu X (Twitter)",
   "Disabled": "Wyłączony",
   "Chat will be disabled": "Czat zostanie wyłączony",
@@ -21,6 +12,5 @@
   "Subscriber Only": "Tylko subskrybenci",
   "Only viewers that subscribe to you will be able to chat": "Tylko widzowie, którzy Cię subskrybują, będą mogli czatować.",
   "You need X premium account to go live on X.": "Potrzebujesz konta X Premium, aby zacząć streamować na platformie X.",
-  "You need X premium account to go live on X. Click to learn more": "Potrzebujesz konta X Premium, aby zacząć streamować na platformie X. Kliknij, aby dowiedzieć się więcej",
-  "Stream Shift Error: Twitter is not live": "Błąd funkcji Stream Shift: Twitter nie jest dostępny na żywo"
+  "You need X premium account to go live on X. Click to learn more": "Potrzebujesz konta X Premium, aby zacząć streamować na platformie X. Kliknij, aby dowiedzieć się więcej"
 }
