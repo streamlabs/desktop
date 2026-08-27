@@ -993,8 +993,11 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
     // Make sure platforms assigned to the vertical display in dual output mode still go live in single output mode
     // Note: This is a check to ensure that the display is valid when live output editing is enabled. If the display
-    // is set to 'both', it will be defaulted to 'horizontal' for single output mode.
-    const display = this.getValidatedDisplay(savedDestinations[platform]?.display);
+    // is set to 'both', it will be defaulted to 'horizontal' for single output mode. Must check for `savedDestinations`
+    // to exist to prevent errors when loading the app when not logged in.
+    const display = savedDestinations
+      ? this.getValidatedDisplay(savedDestinations?.[platform]?.display)
+      : 'horizontal';
 
     return {
       ...settings,
