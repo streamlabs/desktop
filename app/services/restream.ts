@@ -922,7 +922,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
       // Await the settings for every display. Otherwise `beforeGoLive` resolves before the
       // stream settings have been written and `createStreaming` reads stale values.
-      await Promise.all(
+      await Promise.allSettled(
         displays.map(async display => {
           const mode = this.getMode(display);
           const settings = await this.fetchUserSettings(mode);
