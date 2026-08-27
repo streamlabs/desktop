@@ -1,7 +1,6 @@
 {
   "Visual Settings": "Ustawienia wizualne",
   "Font Settings": "Ustawienia czcionki",
-  "Chatter": "Czatujący",
   "Always Show Messages": "Zawsze pokazuj wiadomości",
   "Show Moderator Badges": "Pokaż odznaki moderatorów",
   "Show Subscriber Badges": "Pokaż odznaki subskrybentów",
@@ -15,7 +14,6 @@
   "Text Color": "Kolor tekstu",
   "Font Size": "Rozmiar czcionki",
   "Muted Chatters": "Wyciszeni czatujący",
-  "Hide Commands": "Ukryj polecenia",
   "Background Color": "Kolor tła",
   "Show Platform Icons": "Pokaż ikony platform",
   "Theme": "Motyw",
