@@ -1046,26 +1046,9 @@ export class StreamingService
         // Run checklist
         this.UPDATE_STREAM_INFO({ lifecycle: 'runChecklist' });
 
-        const willRemoveTargets =
-          updatePlatforms.stop.length > 0 || updateDestinations.stop.length > 0;
-        const willAddTargets =
-          updatePlatforms.start.length > 0 || updateDestinations.start.length > 0;
-        const keepsAtLeastOneTarget =
-          updatePlatforms.continue.length > 0 || updateDestinations.continue.length > 0;
-
-        // Removing all targets from the stream will end the stream. Ordinarily, we remove the
-        // targets before adding targets but if the user is removing all currently active targets
-        // then we need to switch the order and add targets before removing the old targets to
-        // ensure that the stream does not end.
-        const deferRemoval = willRemoveTargets && willAddTargets && !keepsAtLeastOneTarget;
-
-        const removeStoppedTargets = async () => {
-          await this.removeTargetsFromStream(updatePlatforms.stop, updateDestinations.stop);
-        };
-
         // Remove targets from restream in a single request
-        if (willRemoveTargets && !deferRemoval) {
-          await removeStoppedTargets();
+        if (updatePlatforms.stop.length > 0 || updateDestinations.stop.length > 0) {
+          await this.removeTargetsFromStream(updatePlatforms.stop, updateDestinations.stop);
         }
 
         // Update checklist for added platforms and run `beforeGoLive` to set up the new platforms.
@@ -1084,24 +1067,8 @@ export class StreamingService
         }
 
         // Add targets to restream in a single request
-        if (willAddTargets) {
-          try {
-            await this.addTargetsToStream(updatePlatforms.start, updateDestinations.start);
-          } catch (e: unknown) {
-            // Cleanup platforms if there was an error adding the new platforms to the stream
-            updatePlatforms.start.forEach(platform => {
-              const service = getPlatformService(platform);
-              if (service.afterStopStream) service.afterStopStream();
-            });
-            throw e;
-          }
-        }
-
-        // The new targets are on the stream now, so the old ones can go without the session ever
-        // being empty. Deliberately after the add: if the add threw, it rethrew above and the old
-        // targets stay, which is what keeps the stream alive.
-        if (deferRemoval) {
-          await removeStoppedTargets();
+        if (updatePlatforms.start.length > 0 || updateDestinations.start.length > 0) {
+          await this.addTargetsToStream(updatePlatforms.start, updateDestinations.start);
         }
       } else {
         // If not a prime user or not adding/removing targets, just update settings for enabled platforms
