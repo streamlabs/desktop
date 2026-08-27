@@ -358,11 +358,14 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   /**
    * Returns the displays that should use restream
    * @remark In dual output mode, only displays that have multiple targets enabled should use restream
+   * @remark Stream shift is always horizontal only. The UI prevents it being enabled alongside dual
+   * output, but the two are checked independently throughout the go live flow, so pin the display
+   * here as well. Otherwise a stale vertical assignment yields a vertical display to restream while
+   * every target's mode is landscape, and the mode filters in `setupPlatforms` drop them all.
    */
   get displaysToRestream(): TDisplayType[] {
     const displays = [] as TDisplayType[];
-    if (!this.isDualOutputMode) return displays;
-    if (this.horizontalStream.length > 1) {
+    if (!this.isDualOutputMode || this.horizontalStream.length > 1) {
       displays.push('horizontal' as TDisplayType);
     }
     if (this.verticalStream.length > 1) {
@@ -411,7 +414,14 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return display === 'vertical' ? 'portrait' : 'landscape';
   }
 
+  /**
+   * Returns the display a platform is assigned to.
+   * @remark Display assignments only apply in dual output mode. Turning dual output off does not
+   * clear the saved assignments, so outside of dual output mode the saved value is ignored and
+   * every platform reports the horizontal display.
+   */
   getPlatformDisplayType(platform: TPlatform): TDisplayType {
+    if (!this.isDualOutputMode) return 'horizontal';
     const display = this.settings.platforms[platform]?.display ?? 'horizontal';
     return display === 'both' ? 'horizontal' : display;
   }
@@ -439,7 +449,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
         // if the platform is set to 'both' display, add it to both horizontal and vertical
         // for analytics purposes
-        if (this.settings.platforms[platform]?.display === 'both') {
+        if (this.isDualOutputMode && this.settings.platforms[platform]?.display === 'both') {
           displayPlatforms.vertical.push(platform);
         }
 
@@ -456,7 +466,11 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.customDestinations.reduce(
       (displayDestinations: TDisplayDestinations, destination: ICustomStreamDestination) => {
         if (destination.enabled && !destination.dualStream) {
-          displayDestinations[destination.display ?? 'horizontal'].push(destination.url);
+          // As with platforms, the saved display only applies in dual output mode
+          const display = this.isDualOutputMode
+            ? destination.display ?? 'horizontal'
+            : 'horizontal';
+          displayDestinations[display].push(destination.url);
         }
         return displayDestinations;
       },

@@ -797,11 +797,13 @@ export class RestreamService extends StatefulService<IRestreamState> {
       this.setStreamSettingsForDisplay('horizontal', streamKey, ingest);
     } else if (display) {
       // Setup ingest for the display if provided, otherwise setup ingest for the entire stream
-
-      const mode = this.getMode(display);
+      // Only dual output mode has a display other than the horizontal one, so pin the requested
+      // display rather than trusting the caller to have checked the mode
+      const targetDisplay = this.streamInfo.isDualOutputMode ? display : 'horizontal';
+      const mode = this.getMode(targetDisplay);
       const settings = await this.fetchUserSettings(mode);
 
-      this.setStreamSettingsForDisplay(display, settings.streamKey, ingest);
+      this.setStreamSettingsForDisplay(targetDisplay, settings.streamKey, ingest);
       return;
     } else if (this.streamInfo.isLiveOutputEditingEnabled || this.streamInfo.isDualOutputMode) {
       // Set the ingest for each display being restreamed.
@@ -899,7 +901,9 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   setupPlatforms() {
     const isEnhancedBroadcasting = this.settingsService.isEnhancedBroadcasting();
-    const isDualOutputMode = this.streamingService.views.isDualOutputMode;
+    // Stream shift is landscape only, so ignore the saved displays even if dual output reports on
+    const isDualOutputMode =
+      this.streamingService.views.isDualOutputMode && !this.streamInfo.isStreamShiftMode;
     const modesToRestream = this.streamInfo.displaysToRestream.map(display =>
       this.getMode(display),
     );
@@ -1084,13 +1088,21 @@ export class RestreamService extends StatefulService<IRestreamState> {
     customDestinations: ICustomStreamDestination[],
     display: TDisplayType,
   ) {
-    const mode = this.getMode(display);
+    // Only dual output mode has a display other than the horizontal one
+    const targetDisplay = this.streamInfo.isDualOutputMode ? display : 'horizontal';
+    const mode = this.getMode(targetDisplay);
 
-    // Only create targets for the platforms and destinations assigned to this display
+    // Only create targets for the platforms and destinations assigned to this display.
+    // `getPlatformMode` already resolves to landscape outside of dual output mode, so match the
+    // destinations the same way rather than reading their saved display directly.
     const displayPlatforms = platforms.filter(platform => this.getPlatformMode(platform) === mode);
-    const displayDestinations = customDestinations.filter(
-      dest => dest.enabled && (dest.display ?? 'horizontal') === display,
-    );
+    const displayDestinations = customDestinations.filter(dest => {
+      if (!dest.enabled) return false;
+      const destDisplay = this.streamInfo.isDualOutputMode
+        ? dest.display ?? 'horizontal'
+        : 'horizontal';
+      return destDisplay === targetDisplay;
+    });
 
     // TODO: Comment in when UI merged
     // const updatedTargets = [
