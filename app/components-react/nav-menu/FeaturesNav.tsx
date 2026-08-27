@@ -1,5 +1,4 @@
 import * as remote from '@electron/remote';
-import { Menu } from 'antd';
 import cx from 'classnames';
 import { ClassValue } from 'classnames/types';
 import { useVuex } from 'components-react/hooks';
@@ -10,7 +9,7 @@ import throttle from 'lodash/throttle';
 import React, { memo, useCallback, useMemo } from 'react';
 import { ENavMenuKey, TExternalLinkType, TNavMenuItem } from 'services/nav-menu';
 import { TAppPage } from 'services/navigation';
-import styles from './NavMenu.m.less';
+import styles from './FeaturesNav.m.less';
 
 /** Types that open an external dashboard link rather than an in-app page */
 const DASHBOARD_LINK_TYPES = new Set([
@@ -21,7 +20,12 @@ const DASHBOARD_LINK_TYPES = new Set([
   'multistream',
 ]);
 
-export default memo(function FeaturesNav() {
+/**
+ * Returns a fragment of feature nav items to be rendered inside a parent
+ * <Menu mode="horizontal">. Called as a hook from NavMenu so that rc-menu's
+ * overflow measurement sees individual items rather than an opaque component.
+ */
+export function useFeaturesNav() {
   const {
     MagicLinkService,
     NavigationService,
@@ -31,7 +35,7 @@ export default memo(function FeaturesNav() {
     VisionService,
   } = Services;
 
-  const { isRunning: isVisionRunning } = useRealmObject(VisionService.state);
+  const { isEnabled: isVisionEnabled } = useRealmObject(VisionService.enabledState);
 
   const { setCurrentMenuItem, loggedOutMenuItemTargets, menuItems } = useVuex(() => ({
     setCurrentMenuItem: NavMenuService.actions.setCurrentMenuItem,
@@ -41,9 +45,9 @@ export default memo(function FeaturesNav() {
 
   const menuStyles = useMemo(
     (): Partial<Record<ENavMenuKey, ClassValue>> => ({
-      [ENavMenuKey.AI]: isVisionRunning && styles.ultra,
+      [ENavMenuKey.AI]: isVisionEnabled && styles.ultra,
     }),
-    [isVisionRunning],
+    [isVisionEnabled],
   );
 
   const navigate = useCallback(
@@ -83,7 +87,13 @@ export default memo(function FeaturesNav() {
   );
 
   const handleNavigation = useCallback((menuItem: TNavMenuItem, key?: ENavMenuKey) => {
+    if (menuItem.target === 'Ultra') {
+      UsageStatisticsService.actions.recordClick('NavMenu', 'ultra');
+      MagicLinkService.actions.linkToPrime('slobs-nav-menu');
+      return;
+    }
     if (menuItem.type && DASHBOARD_LINK_TYPES.has(menuItem.type)) {
+      if (!UserService.views.isLoggedIn) return;
       openDashboard(menuItem.type);
       return;
     }
@@ -96,14 +106,7 @@ export default memo(function FeaturesNav() {
   }, []);
 
   return (
-    <Menu
-      key="features-nav"
-      forceSubMenuRender
-      mode="inline"
-      className={cx(styles.topNav, styles.open)}
-      defaultSelectedKeys={[ENavMenuKey.Editor]}
-      getPopupContainer={(triggerNode: any) => triggerNode}
-    >
+    <>
       {menuItems.map(menuItem => (
         <FeaturesNavItem
           key={menuItem.key}
@@ -112,15 +115,15 @@ export default memo(function FeaturesNav() {
           handleNavigation={handleNavigation}
         />
       ))}
-    </Menu>
+    </>
   );
-});
+}
 
 const FeaturesNavItem = memo(
   (p: {
     menuItem: TNavMenuItem;
-    handleNavigation: (menuItem: TNavMenuItem, key?: ENavMenuKey) => void;
     className?: string;
+    handleNavigation: (menuItem: TNavMenuItem, key?: ENavMenuKey) => void;
   }) => {
     const { NavMenuService } = Services;
     const { menuItem, handleNavigation, className } = p;
@@ -129,12 +132,11 @@ const FeaturesNavItem = memo(
       currentMenuItem: NavMenuService.views.currentMenuItem,
     }));
 
-    const handleClick = useCallback(() => {
-      handleNavigation(menuItem);
-    }, [handleNavigation, menuItem]);
+    const handleClick = useCallback(() => handleNavigation(menuItem), [handleNavigation, menuItem]);
 
     return (
       <MenuItem
+        wrapperClassName={cx(styles.featuresNav)}
         className={cx(className, currentMenuItem === menuItem.key && styles.active)}
         title={menuItem.title}
         icon={menuItem?.icon ? <i className={menuItem?.icon} /> : undefined}
@@ -143,7 +145,7 @@ const FeaturesNavItem = memo(
         <div style={{ display: 'flex', alignItems: 'center' }}>
           {menuItem.title}
           {menuItem.badge && (
-            <div className={styles.betaTag}>
+            <div className={styles.badge}>
               <p style={{ margin: 0 }}>{menuItem.badge}</p>
             </div>
           )}

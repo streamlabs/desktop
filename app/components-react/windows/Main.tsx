@@ -272,6 +272,8 @@ export default function Main() {
       onDrop={(ev: React.DragEvent) => onDropHandler(ev)}
     >
       <TitleBar windowId="main" className={cx({ [styles.titlebarError]: errorAlert })} />
+      {/* TODO @onboarding: Remove conditional check once new onboarding is live. */}
+      {page !== 'Onboarding' && !showLoadingSpinner && <NavMenu />}
       <div
         className={cx(styles.mainContents, {
           [styles.mainContentsRight]: renderDock && leftDock && hasLiveDock,
@@ -279,11 +281,6 @@ export default function Main() {
           [styles.mainContentsOnboarding]: page === 'Onboarding',
         })}
       >
-        {page !== 'Onboarding' && !showLoadingSpinner && (
-          <div className={styles.navMenuContainer}>
-            <NavMenu />
-          </div>
-        )}
         {renderDock && leftDock && (
           <LiveDockContainer
             max={maxDockWidth}
