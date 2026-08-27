@@ -1,13 +1,8 @@
 {
-  "You can edit the sounds of your stream alerts from the alertbox properties menu.": "Zvuky upozornění na stream můžete upravit z nabídky vlastností alertbox.",
-  "You can access our theme library from the left sidebar.": "Naši knihovnu motivů můžete otevřít z levého bočního panelu.",
-  "Our 24/7 support staff is available at Discord.gg/stream.": "Náš personál podpory je k dispozici 24 hodin denně na discord.gg/stream.",
   "Sources are what we call media like text, images, video & audio feeds.": "Jako zdroje nazýváme média, jako je text, obrázky, video a audio kanály.",
   "Undo works in the Editor. Just hit Ctrl + Z!": "Příkaz zpět funguje v Editoru. Stačí stisknout Ctrl + Z!",
-  "The sources listed at the top of your sources pane will be layered the highest in your editor.": "Zdroje uvedené v horní části podokna zdrojů budou v editoru vrstveny nejvýše.",
   "Studio Mode is a powerful way to curate a professional-quality stream.": "Režim Studio představuje efektivní způsob, jak pořádat stream v profesionální kvalitě.",
   "Cloudbot is a chatbot that can help you moderate your stream.": "Cloudbot je chatbot, který vám pomůže moderovat váš stream.",
-  "The Remote Control feature lets you control your active scene in real-time from your phone.": "Funkce Dálkové ovládání umožňuje ovládat aktivní scénu v reálném čase z vašeho telefonu.",
   "Set Hotkeys from your settings to control your stream with your keyboard.": "Chcete-li ovládat svůj stream pomocí klávesnice, nastavte v nastavení klávesové zkratky.",
   "With Game Overlay you can view chat messages while gaming without switching screens.": "S funkcí Překrytí ve hře můžete zobrazit zprávy chatu během hraní bez přepínání obrazovek.",
   "The editor is fully customizable. Try repositioning things from the Layout Editor.": "Editor je plně přizpůsobitelný. Zkuste změnit polohu věcí v Editoru rozvržení.",
@@ -20,9 +15,5 @@
   "You can position your chat panel to be either on the left or right side of your screen.": "Panel chatu můžete umístit na levou nebo pravou stranu obrazovky.",
   "Right-click on your camera source to add filters to your webcam.": "Kliknutím pravým tlačítkem myši na zdroj kamery přidáte filtry do webové kamery.",
   "You can add and edit stinger transitions by clicking the settings cog near your scene collections.": "Přechody typu stinger můžete přidávat a upravovat kliknutím na ozubené kolečko nastavení umístěné v blízkosti kolekcí scén.",
-  "To crop your webcam, press Alt then drag the bounding box.": "Chcete-li webovou kameru oříznout, stiskněte klávesu Alt a přetáhněte ohraničovací rámeček.",
-  "Widgets are dynamic, interactive overlays you can add to your scene.": "Widgety jsou dynamická interaktivní překrytí, která můžete přidat do scény.",
-  "Our App Store contains advanced technology to take your stream to the next level.": "Náš obchod s aplikacemi obsahuje pokročilou technologii, která váš stream povýší na novou úroveň.",
-  "With multi-stream, you can stream to YouTube, Twitch, and Facebook at the same time.": "With multi-stream, you can stream to YouTube, Twitch, and Facebook at the same time.",
-  "You can customize the design of your tip page from the Theme Library.": "Design vaší stránky se spropitným můžete přizpůsobit z knihovny motivů."
+  "To crop your webcam, press Alt then drag the bounding box.": "Chcete-li webovou kameru oříznout, stiskněte klávesu Alt a přetáhněte ohraničovací rámeček."
 }
