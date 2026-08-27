@@ -221,7 +221,7 @@ export class SourcesNode extends Node<ISchema, ISceneCollectionLoadContext> {
     return removed;
   }
 
-  load(context: ISceneCollectionLoadContext = {}): Promise<void> {
+  async load(context: ISceneCollectionLoadContext = {}): Promise<void> {
     this.sanitizeSources();
 
     const supportedSources = this.data.items.filter(source => {
@@ -404,7 +404,7 @@ export class SourcesNode extends Node<ISchema, ISceneCollectionLoadContext> {
       this.sourceFiltersService.loadFilterData(sourceInfo.id, sourceInfo.filters.items);
     });
 
-    return Promise.all(promises).then(() => undefined);
+    await Promise.all(promises);
   }
 
   migrate(version: number) {

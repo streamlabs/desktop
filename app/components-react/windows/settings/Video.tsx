@@ -336,14 +336,12 @@ class VideoSettingsModule {
           settings[`${otherPrefix}Height`] = Number(height);
         }
       }
-      Promise.resolve(this.service.actions.setSettings(settings, display)).catch(
-        (error: unknown) => {
-          message.error({
-            content:
-              error instanceof Error ? error.message : $t('Failed to update the video resolution.'),
-          });
-        },
-      );
+      this.service.actions.return.setSettings(settings, display).catch((error: unknown) => {
+        message.error({
+          content:
+            error instanceof Error ? error.message : $t('Failed to update the video resolution.'),
+        });
+      });
     }
   }
 

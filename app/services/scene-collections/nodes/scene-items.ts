@@ -137,7 +137,7 @@ export class SceneItemsNode extends Node<ISchema, IContext> {
     });
   }
 
-  load(context: IContext): Promise<void> {
+  async load(context: IContext): Promise<void> {
     this.sanitizeIds();
 
     // on first load, a dual output scene needs to assign displays and contexts to the scene items
@@ -196,6 +196,6 @@ export class SceneItemsNode extends Node<ISchema, IContext> {
       }
     });
 
-    return Promise.all(promises).then(() => undefined);
+    await Promise.all(promises);
   }
 }

@@ -39,6 +39,7 @@
   "Name Folder": "Name Folder",
   "Switch Scenes": "Switch Scenes",
   "Failed to load scene collection.  A new one will be created instead.": "Failed to load scene collection.  A new one will be created instead.",
+  "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.": "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.",
   "New Scene": "New Scene",
   "Projector": "Projector",
   "Your Scene Collections:": "Your Scene Collections:",
