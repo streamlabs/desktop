@@ -293,10 +293,11 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   /**
    * Returns if the user can or should use the restream service
-   * @remark Order matters here when checking for which features are enabled. Stream shift mode and live output editing
-   * take precedence over dual output mode.
-   */
-  get isMultiplatformMode(): boolean {
+  */
+get isMultiplatformMode(): boolean {
+    // Order matters here when checking for which features are enabled.
+    // Stream shift mode and live output editing take precedence over
+    // dual output mode.
     if (this.isStreamShiftMode) return true;
     if (this.isLiveOutputEditingEnabled) return true;
     if (this.isDualOutputMode) return false;
