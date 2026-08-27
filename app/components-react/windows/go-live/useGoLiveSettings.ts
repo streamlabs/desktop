@@ -5,7 +5,7 @@ import {
   platformList,
   TPlatform,
 } from '../../../services/platforms';
-import { ICustomStreamDestination } from 'services/settings/streaming';
+import { getDestinationId, ICustomStreamDestination } from 'services/settings/streaming';
 import { Services } from '../../service-provider';
 import cloneDeep from 'lodash/cloneDeep';
 import { FormInstance } from 'antd/lib/form';
@@ -565,10 +565,8 @@ export class GoLiveSettingsModule {
     return (
       xorWith(this.activePlatforms, this.state.enabledPlatforms, isEqual).length > 0 ||
       xorWith(
-        this.activeDestinations?.map(dest => `${dest.url}/${dest.streamKey}`),
-        this.state.customDestinations
-          .filter(dest => dest.enabled)
-          .map(dest => `${dest.url}/${dest.streamKey}`),
+        this.activeDestinations?.map(d => getDestinationId(d)),
+        this.state.customDestinations.filter(dest => dest.enabled).map(d => getDestinationId(d)),
         isEqual,
       ).length > 0
     );
@@ -582,9 +580,7 @@ export class GoLiveSettingsModule {
   isTargetLive(target: TPlatform | number) {
     if (typeof target === 'number') {
       const dest = this.state.customDestinations[target];
-      return this.activeDestinations?.some(
-        d => `{${d.url}/${d.streamKey}` === `{${dest.url}/${dest.streamKey}`,
-      );
+      return this.activeDestinations?.some(d => getDestinationId(d) === getDestinationId(dest));
     } else {
       return this.activePlatforms?.includes(target);
     }

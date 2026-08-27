@@ -65,7 +65,12 @@ import {
 } from 'services/notifications';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
-import { ICustomStreamDestination, StreamSettingsService } from '../settings/streaming';
+import {
+  getDestinationId,
+  ICustomStreamDestination,
+  StreamSettingsService,
+  TDestinationId,
+} from '../settings/streaming';
 import { IStreamShiftTarget, RestreamService } from 'services/restream';
 import Utils from 'services/utils';
 import cloneDeep from 'lodash/cloneDeep';
@@ -89,7 +94,7 @@ import { RecordingModeService } from 'services/recording-mode';
 import { MarkersService } from 'services/markers';
 import { byOS, OS } from 'util/operating-systems';
 import { DualOutputService } from 'services/dual-output';
-import { capitalize } from 'lodash';
+import { capitalize, get } from 'lodash';
 import { TwitchService, YoutubeService } from 'app-services';
 import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services/core/signals';
 import { SignalsService } from 'services/signals-manager';
@@ -1117,9 +1122,7 @@ export class StreamingService
       const live = await this.restreamService.getLiveTargets(enabledPlatforms, enabledDestinations);
 
       const livePlatforms = new Set(live.platforms);
-      const liveDestinations = new Set(
-        live.customDestinations.map(dest => `${dest.url}${dest.streamKey}`),
-      );
+      const liveDestinations = new Set(live.customDestinations.map(d => getDestinationId(d)));
 
       const platforms = cloneDeep(settings.platforms);
       enabledPlatforms.forEach(platform => {
@@ -1130,7 +1133,7 @@ export class StreamingService
 
       const customDestinations = settings.customDestinations.map(dest => ({
         ...dest,
-        enabled: liveDestinations.has(`${dest.url}${dest.streamKey}`),
+        enabled: liveDestinations.has(getDestinationId(dest)),
       }));
 
       this.streamSettingsService.setGoLiveSettings({ platforms, customDestinations });
@@ -1358,7 +1361,7 @@ export class StreamingService
     if (!platforms.length && !destinations.length) return;
 
     const savedSettings = this.views.savedSettings;
-    const failedDestinations = new Set(destinations.map(dest => `${dest.url}${dest.streamKey}`));
+    const failedDestinations = new Set(destinations.map(d => getDestinationId(d)));
 
     // Work with a copy of the saved settings so that they are not updated until all changes are made
     const revertedPlatforms = cloneDeep(savedSettings.platforms);
@@ -1369,7 +1372,7 @@ export class StreamingService
     });
 
     const revertedDestinations = savedSettings.customDestinations.map(dest =>
-      failedDestinations.has(`${dest.url}${dest.streamKey}`) ? { ...dest, enabled: false } : dest,
+      failedDestinations.has(getDestinationId(dest)) ? { ...dest, enabled: false } : dest,
     );
 
     this.streamSettingsService.setGoLiveSettings({
@@ -1544,13 +1547,13 @@ export class StreamingService
     enabledDestinations: ICustomStreamDestination[],
     activeDestinations: ICustomStreamDestination[],
   ) {
-    const active = new Set(activeDestinations.map(dest => `${dest.url}${dest.streamKey}`));
-    const enabled = new Set(enabledDestinations.map(dest => `${dest.url}${dest.streamKey}`));
+    const active = new Set(activeDestinations.map(d => getDestinationId(d)));
+    const enabled = new Set(enabledDestinations.map(d => getDestinationId(d)));
 
     const destinations = enabledDestinations.reduce(
       (acc, dest) => {
-        const url = `${dest.url}${dest.streamKey}`;
-        if (active.has(url)) {
+        const id: TDestinationId = getDestinationId(dest);
+        if (active.has(id)) {
           acc.continue.push(dest);
         } else {
           acc.start.push(dest);
@@ -1565,8 +1568,8 @@ export class StreamingService
     );
 
     destinations.stop = activeDestinations.reduce((acc, dest) => {
-      const url = `${dest.url}${dest.streamKey}`;
-      if (!enabled.has(url)) {
+      const id: TDestinationId = getDestinationId(dest);
+      if (!enabled.has(id)) {
         acc.push(dest);
       }
       return acc;
