@@ -455,6 +455,7 @@ test('sequential provider bandwidth events receive distinct pacing keys', t => {
     autoConfigPhaseStepKey('recommendation', null, 'recommendation_selecting_quality'),
     autoConfigPhaseStepKey('recommendation', null, 'recommendation_quality_selected'),
   );
+  t.is(autoConfigPhaseStepKey('cleanup', null, 'cleanup_resources'), 'cleanup');
   t.is(
     autoConfigPhaseStepKey('hardware', null, 'hardware_encoder_rejected'),
     'hardware',

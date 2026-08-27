@@ -63,13 +63,10 @@ test('active medium-confidence quality reasons remain visible in results', t => 
   t.false(shouldShowAutoOptimizerMeasurementReason());
 });
 
-test('generic cloud-restream copy omits medium confidence while preserving explicit extremes', t => {
+test('generic cloud-restream copy omits medium and low confidence', t => {
   t.is(cloudRestreamConfidenceExplanationKey(), null);
   t.is(cloudRestreamConfidenceExplanationKey('medium'), null);
-  t.is(
-    cloudRestreamConfidenceExplanationKey('low'),
-    'This shared cloud-restream upload was measured indirectly, so the result has low confidence.',
-  );
+  t.is(cloudRestreamConfidenceExplanationKey('low'), null);
   t.is(
     cloudRestreamConfidenceExplanationKey('high'),
     'This shared cloud-restream upload was measured indirectly. The result has high confidence.',
@@ -266,6 +263,30 @@ test('YouTube progress distinguishes connection, baseline, retry, and ramp state
       }),
     ).key,
     'Retrying your YouTube upload at %{bitrate} Kbps...',
+  );
+});
+
+test('Twitch progress identifies the extended same-target confirmation', t => {
+  t.deepEqual(
+    autoOptimizerProgressLabel(
+      'bandwidth',
+      progressDetail({
+        code: 'twitch_probe_confirming_capacity',
+        provider: 'twitch',
+        targetBitrateKbps: 6000,
+      }),
+    ),
+    {
+      key: 'Confirming your Twitch upload at %{bitrate} Kbps...',
+      values: { bitrate: 6000 },
+    },
+  );
+});
+
+test('final resource cleanup has an explicit progress label', t => {
+  t.deepEqual(
+    autoOptimizerProgressLabel('cleanup', progressDetail({ code: 'cleanup_resources' })),
+    { key: 'Cleaning up resources...' },
   );
 });
 

@@ -20,15 +20,12 @@ const visibleActiveMeasurementReasons = new Set([
 
 /**
  * Generic medium-confidence cloud-restream copy is intentionally omitted: it
- * does not explain an actionable constraint. Low/high confidence retain their
- * explicit provenance copy when no more specific measurement reason is shown.
+ * does not explain an actionable constraint. Low confidence is also omitted
+ * by product requirement; high confidence retains its explicit provenance copy.
  */
 export function cloudRestreamConfidenceExplanationKey(
   confidence?: 'high' | 'medium' | 'low',
 ): string | null {
-  if (confidence === 'low') {
-    return 'This shared cloud-restream upload was measured indirectly, so the result has low confidence.';
-  }
   if (confidence === 'high') {
     return 'This shared cloud-restream upload was measured indirectly. The result has high confidence.';
   }
@@ -197,6 +194,13 @@ export function autoOptimizerProgressLabel(
         };
       }
       return { key: 'Hardware test complete.' };
+    case 'twitch_probe_confirming_capacity':
+      return detail.targetBitrateKbps
+        ? {
+            key: 'Confirming your Twitch upload at %{bitrate} Kbps...',
+            values: { bitrate: detail.targetBitrateKbps },
+          }
+        : { key: 'Confirming your Twitch upload...' };
     case 'youtube_probe_waiting_for_ingest':
       return { key: 'Connecting to YouTube...' };
     case 'youtube_probe_baseline':
@@ -271,5 +275,6 @@ export function autoOptimizerProgressLabel(
   }
   if (phase === 'preflight') return { key: 'Preparing the optimizer...' };
   if (phase === 'hardware') return { key: 'Checking your hardware...' };
+  if (phase === 'cleanup') return { key: 'Cleaning up resources...' };
   return { key: 'Calculating your recommended settings...' };
 }

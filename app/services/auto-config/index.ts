@@ -77,6 +77,10 @@ const NATIVE_RUN_TIMEOUT_MS = 420000;
 const FEATURE_READINESS_TIMEOUT_MS = 2000;
 const MIN_PHASE_VISIBLE_MS = 1000;
 const YOUTUBE_INGEST_CONFIRMATION_TIMEOUT_MS = 12000;
+const CLEANUP_PROGRESS_START = 95;
+const CLEANUP_PROGRESS_MAX = 99;
+const CLEANUP_PROGRESS_STEP = 0.2;
+const CLEANUP_PROGRESS_INTERVAL_MS = 1000;
 
 // OBS service metadata supplies caps for Twitch, YouTube and Facebook in the
 // native estimator. These two custom-RTMP integrations do not have rtmp_common
@@ -398,7 +402,12 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       if (!this.isCompleteResultForTopology(result)) {
         throw new Error(nativeResult.error?.code || 'Optimization failed');
       }
-      await this.cleanupOptimizerRun();
+      const stopCleanupProgress = this.startCleanupProgress(token);
+      try {
+        await this.cleanupOptimizerRun();
+      } finally {
+        stopCleanupProgress();
+      }
       await this.waitForPhasePacing(token);
       if (token !== this.runToken) return;
       this.SET_RESULT(result);
@@ -970,6 +979,34 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       if (remaining <= 0) return;
       await new Promise(resolve => setTimeout(resolve, remaining));
     }
+  }
+
+  /**
+   * Keep the blocking provider cleanup legible without implying completion.
+   * Native progress deliberately stops at 95%; Desktop owns the remaining
+   * cleanup band and leaves 100% for the transition to the result screen.
+   */
+  private startCleanupProgress(token: number): () => void {
+    const detail: IAutoOptimizerProgressDetail = {
+      ...emptyProgressDetail(),
+      code: 'cleanup_resources',
+    };
+    let progress = Math.min(
+      CLEANUP_PROGRESS_MAX,
+      Math.max(CLEANUP_PROGRESS_START, this.state.progress),
+    );
+    this.queuePhaseProgress('cleanup', progress, token, detail);
+
+    const timer = setInterval(() => {
+      if (!this.isPhasePacingActive(token)) {
+        clearInterval(timer);
+        return;
+      }
+      progress = Math.min(CLEANUP_PROGRESS_MAX, progress + CLEANUP_PROGRESS_STEP);
+      this.queuePhaseProgress('cleanup', progress, token, detail);
+    }, CLEANUP_PROGRESS_INTERVAL_MS);
+
+    return () => clearInterval(timer);
   }
 
   private isPhasePacingActive(token: number): boolean {

@@ -9,7 +9,13 @@ export type TAutoOptimizerStage =
   | 'applying'
   | 'error';
 
-export type TAutoOptimizerPhase = 'preflight' | 'hardware' | 'bandwidth' | 'recommendation' | null;
+export type TAutoOptimizerPhase =
+  | 'preflight'
+  | 'hardware'
+  | 'bandwidth'
+  | 'recommendation'
+  | 'cleanup'
+  | null;
 
 export type TAutoOptimizerTopologyType =
   | 'direct-single'
