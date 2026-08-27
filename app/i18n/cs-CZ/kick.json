@@ -1,5 +1,4 @@
 {
-  "Edit your stream title on Kick after going live.": "Po spuštění živého vysílání upravte název svého streamu na Kick.",
   "Kick Category": "Kategorie na Kick",
   "Failed to update Kick account. Please unlink and reconnect your Kick account.": "Nepodařilo se aktualizovat účet Kick. Odpojte a znovu připojte svůj účet Kick.",
   "Failed to start Kick stream. Please check permissions with Kick and try again": "Nepodařilo se spustit stream na Kick. Zkontrolujte oprávnění na Kick a zkuste to znovu",
@@ -11,5 +10,7 @@
   "Click on the \"eye\" icon to see your stream key": "Klikněte na ikonu „oka“ pro zobrazení streamovacího klíče",
   "Put in 2FA": "Zadejte do 2FA",
   "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "Po provedení 2FA je vygenerován streamovací klíč, který bude k dispozici pro Streamlabs Desktop pro daný kanál. Nyní byste měli být schopni začít vysílat živě na Kick.",
-  "Stream Shift Error: Kick is not live": "Chyba funkce Stream Shift: Ve službě Kick nelze vysílat živě"
+  "Stream Shift Error: Kick is not live": "Chyba funkce Stream Shift: Ve službě Kick nelze vysílat živě",
+  "Failed to start stream on Kick.": "Failed to start stream on Kick.",
+  "Permissions to generate stream key for Kick are missing. In order to go live on Kick, you must first generate a stream key on Kick to be available for Streamlabs Desktop. Please follow these steps:": "Permissions to generate stream key for Kick are missing. In order to go live on Kick, you must first generate a stream key on Kick to be available for Streamlabs Desktop. Please follow these steps:"
 }

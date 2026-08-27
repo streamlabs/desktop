@@ -4,7 +4,6 @@
   "Successfully saved %{filename} to %{filepath}": "%{filename}, %{filepath} dizinine başarıyla kaydedildi",
   "Successfully loaded %{filename}.overlay": "%{filename}.overlay başarıyla yüklendi",
   "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
-  "This is an experimental feature.  Use at your own risk.": "Bu, deneysel bir özelliktir. Riski göz önünde bulundurarak kullanın.",
   "Export Overlay File": "Katman Dosyasını Dışa Aktar",
   "Import Overlay File": "Katman Dosyasını İçe Aktar",
   "Import Widget File in Current Scene": "Geçerli Sahneye Pencere Ögesi Dosyası Aktar",
@@ -28,5 +27,9 @@
   "Show Components Library": "Bileşen Kitaplığını Göster",
   "Convert Dual Output Scene Collection": "Dual Output Sahne Koleksiyonunu Dönüştür",
   "Repair Scene Collection": "Sahne Koleksiyonunu Onar",
-  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection.",
+  "Reactive Data": "Reactive Data",
+  "Manage your reactive data values": "Manage your reactive data values",
+  "Waiting for schema...": "Waiting for schema...",
+  "Waiting for state...": "Waiting for state..."
 }

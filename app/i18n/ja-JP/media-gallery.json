@@ -8,7 +8,6 @@
   "Browse the Gallery": "ギャラリーを参照",
   "Cancel": "キャンセル",
   "OK": "OK",
-  "Select": "選択",
   "You don't have any uploaded files!": "アップロードされたファイルはありません！",
   "You don't have any uploaded images!": "アップロードされた画像はありません！",
   "You don't have any uploaded sounds!": "アップロードされたサウンドはありません！",
@@ -19,7 +18,6 @@
   "Stock Files": "ストック ファイル",
   "My Uploads": "マイ アップロード",
   "Not a supported file type": "ファイルタイプがサポートされていません",
-  "Downloading...": "ダウンロード中...",
   "Uploading...": "アップロード中...",
   "URL Copied": "URL がコピーされました",
   "Failed to copy URL": "URL をコピーできませんでした",
@@ -29,7 +27,9 @@
   "No Sound": "サウンドがありません",
   "No Media": "メディアがありません",
   "Change Link": "リンクを変更",
-  "Pick From Gallery": "ギャラリーから選択",
   "Clear Link": "リンクをクリア",
-  "Media URL": "メディア URL"
+  "Media URL": "メディア URL",
+  "Only .jpeg and .png is supported": "Only .jpeg and .png is supported",
+  "This file could not be uploaded": "This file could not be uploaded",
+  "You must have Streamlabs Ultra to use this media": "You must have Streamlabs Ultra to use this media"
 }

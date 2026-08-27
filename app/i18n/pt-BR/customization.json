@@ -1,7 +1,5 @@
 {
   "Show the live dock (chat) on the left side": "Mostrar o chat do lado esquerdo",
-  "Chat Text Size": "Tamanho do texto do chat",
-  "Chat Width": "Largura do chat",
   "Enable BetterTTV emotes for Twitch": "Permitir emotes do BetterTTV para Twitch",
   "Enable FrankerFaceZ emotes for Twitch": "Permitir emotes do FrankerFaceZ para Twitch",
   "Editor Display": "Tela do Editor",
@@ -22,9 +20,9 @@
   "Current Tab": "Guia atual",
   "Delete Current Tab": "Excluir Guia atual",
   "Enter Target URL": "Inserir URL alvo",
-  "Obsidian Prime": "Obsidian Prime",
-  "Alabaster Prime": "Alabaster Prime",
   "Custom Navigation Bar": "Barra de navegação personalizada",
   "Obsidian Ultra": "Obsidian Ultra",
-  "Alabaster Ultra": "Alabaster Ultra"
+  "Alabaster Ultra": "Alabaster Ultra",
+  "Read": "Read",
+  "Post Comments": "Post Comments"
 }

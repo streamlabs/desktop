@@ -4,7 +4,6 @@
   "Successfully saved %{filename} to %{filepath}": "Successfully saved %{filename} to %{filepath}",
   "Successfully loaded %{filename}.overlay": "%{filename}.overlay sikeresen betöltve",
   "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
-  "This is an experimental feature.  Use at your own risk.": "Ez egy kísérleti funkció. Csak saját felelősségedre használd.",
   "Export Overlay File": "Fedvény-fájl exportálása",
   "Import Overlay File": "Fedvény-fájl Importálása",
   "Import Widget File in Current Scene": "Widget-fájl Importálása a Jelenlegi Jelenetbe",
@@ -28,5 +27,9 @@
   "Show Components Library": "Show Components Library",
   "Convert Dual Output Scene Collection": "Convert Dual Output Scene Collection",
   "Repair Scene Collection": "Repair Scene Collection",
-  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection.",
+  "Reactive Data": "Reactive Data",
+  "Manage your reactive data values": "Manage your reactive data values",
+  "Waiting for schema...": "Waiting for schema...",
+  "Waiting for state...": "Waiting for state..."
 }

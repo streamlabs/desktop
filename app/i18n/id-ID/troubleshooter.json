@@ -1,9 +1,7 @@
 {
   "Troubleshooter": "Penyelesaian masalah",
   "Open Settings": "Buka Pengaturan",
-  " Streamlabs has detected dropped frames": " Streamlabs telah mendeteksi frame yang jatuh",
   "What does this mean?": "Apakah artinya?",
-  " Some frames have not been uploaded. This problem is usually related to a poor network connection.": "Beberapa frame belum di-upload. Masalah ini biasanya berhubungan dengan koneksi jaringan yang buruk.",
   "What can I do?": "Apa yang bisa saya lakukan?",
   "Check the health of your Internet connection": "Periksa koneksi Internet Anda",
   "Change your ingest server": "Ganti server ingest Anda",
@@ -23,5 +21,7 @@
   "Disable FreeSync or GSync in your Driver": "Nonaktifkan FreeSync atau GSync di Driver Anda",
   "Lower graphics settings until you stop lagging frames": "Turunkan pengaturan grafis hingga frame tidak tertunda lagi",
   "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "Nonaktifkan hardware decoding dalam sumber media apa pun (Hal ini akan sedikit meningkatkan cpu atas gpu)",
-  "CPU usage threshold in Dual Output mode": "Ambang batas penggunaan CPU dalam mode Dual Output"
+  "CPU usage threshold in Dual Output mode": "Ambang batas penggunaan CPU dalam mode Dual Output",
+  "Streamlabs has detected dropped frames": "Streamlabs has detected dropped frames",
+  "Some frames have not been uploaded. This problem is usually related to a poor network connection.": "Some frames have not been uploaded. This problem is usually related to a poor network connection."
 }

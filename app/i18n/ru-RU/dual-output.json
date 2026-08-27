@@ -1,5 +1,5 @@
 {
-  "Horizontal canvas": "Горизонтальный холст",
-  "Vertical canvas": "Вертикальный холст",
+  "Toggle horizontal display": "Toggle horizontal display",
+  "Toggle vertical display": "Toggle vertical display",
   "Error stopping stream: default streams do not exist.": "Ошибка остановки трансляции: трансляции по умолчанию не существуют."
 }

@@ -1,7 +1,6 @@
 {
   "Visual Settings": "Impostazioni visive",
   "Font Settings": "Impostazioni font",
-  "Chatter": "Utenti chat",
   "Always Show Messages": "Mostra sempre i messaggi",
   "Show Moderator Badges": "Mostra badge moderatori",
   "Show Subscriber Badges": "Mostra badge iscritti",
@@ -15,7 +14,6 @@
   "Text Color": "Colore testo",
   "Font Size": "Dimensione font",
   "Muted Chatters": "Disattiva audio utenti chat",
-  "Hide Commands": "Nascondi comandi",
   "Background Color": "Colore di Sfondo",
   "Show Platform Icons": "Mostra le icone della piattaforma",
   "Theme": "Tema",

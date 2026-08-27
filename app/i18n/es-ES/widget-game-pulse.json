@@ -14,12 +14,20 @@
   "Select an Event": "Selecciona un evento",
   "Trigger Type": "Tipo de activador",
   "Trigger Name": "Nombre del activador",
-  "Select a Trigger Type": "Selecciona el tipo de activador",
   "Triggers are set up and ready to go! Feel free to uncheck the ones you don't want.": "Los activadores están configurados y listos para funcionar Desmarca los que no quieras.",
   "Global": "Global",
   "Triggered when a player reaches a cumulative total number of events.": "Se activa cuando un jugador alcanza un número total acumulado de eventos.",
   "Triggered when a player achieves a consecutive number of events without interruption.": "Se activa cuando un jugador logra un número consecutivo de eventos sin interrupción.",
   "No triggers available.": "No hay activadores disponibles.",
   "Animation Settings": "Configuración de la animación",
-  "Real time alerts reacting to your in game events.": "Alertas en tiempo real que reaccionan a los eventos del juego."
+  "Real time alerts reacting to your in game events.": "Alertas en tiempo real que reaccionan a los eventos del juego.",
+  "Event Type": "Event Type",
+  "General Game Settings": "General Game Settings",
+  "Enable All": "Enable All",
+  "Disable All": "Disable All",
+  "Total Amount": "Total Amount",
+  "Level Range Type": "Level Range Type",
+  "Action Settings": "Action Settings",
+  "Text To Speech": "Text To Speech",
+  "Voice": "Voice"
 }

@@ -4,7 +4,6 @@
   "Successfully saved %{filename} to %{filepath}": "%{filename} er blevet gemt i %{filepath}",
   "Successfully loaded %{filename}.overlay": "%{filename}.overlay er blevet indlæst",
   "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
-  "This is an experimental feature.  Use at your own risk.": "Dette er en testfunktion. Brug på egen risiko.",
   "Export Overlay File": "Eksportér overlay-fil",
   "Import Overlay File": "Importér overlay-fil",
   "Import Widget File in Current Scene": "Importér widget i nuværende scene",
@@ -28,5 +27,9 @@
   "Show Components Library": "Vis komponentbibliotek",
   "Convert Dual Output Scene Collection": "Konverter samling med Dual Output-scener",
   "Repair Scene Collection": "Samling med reparationsscener",
-  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection.",
+  "Reactive Data": "Reactive Data",
+  "Manage your reactive data values": "Manage your reactive data values",
+  "Waiting for schema...": "Waiting for schema...",
+  "Waiting for state...": "Waiting for state..."
 }

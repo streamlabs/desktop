@@ -1,7 +1,6 @@
 {
   "Visual Settings": "ビジュアル設定",
   "Font Settings": "フォント設定",
-  "Chatter": "チャッター",
   "Always Show Messages": "メッセージを常に表示",
   "Show Moderator Badges": "モデレーターバッジを表示",
   "Show Subscriber Badges": "サブスクライバーバッジを表示",
@@ -15,7 +14,6 @@
   "Text Color": "テキスト色",
   "Font Size": "フォントサイズ",
   "Muted Chatters": "ミュートにしたチャッター",
-  "Hide Commands": "コマンドを非表示",
   "Background Color": "背景色",
   "Show Platform Icons": "プラットフォームアイコンを表示",
   "Theme": "テーマ",

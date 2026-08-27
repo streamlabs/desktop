@@ -4,7 +4,6 @@
   "Successfully saved %{filename} to %{filepath}": "%{filename} se ha guardado correctamente en %{filepath}",
   "Successfully loaded %{filename}.overlay": "%{filename}.overlay se ha cargado correctamente",
   "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
-  "This is an experimental feature.  Use at your own risk.": "Ésta es una característica experimental. Si la usa, es por su cuenta y riesgo.",
   "Export Overlay File": "Exportar archivo de superposición",
   "Import Overlay File": "Importar archivo de superposición",
   "Import Widget File in Current Scene": "Importar archivo de widget en escena actual",
@@ -28,5 +27,9 @@
   "Show Components Library": "Mostrar biblioteca de componentes",
   "Convert Dual Output Scene Collection": "Convertir la colección de escenas a Dual Output",
   "Repair Scene Collection": "Reparar la colección de escenas",
-  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection.",
+  "Reactive Data": "Reactive Data",
+  "Manage your reactive data values": "Manage your reactive data values",
+  "Waiting for schema...": "Waiting for schema...",
+  "Waiting for state...": "Waiting for state..."
 }

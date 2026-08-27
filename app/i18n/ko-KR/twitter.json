@@ -1,14 +1,5 @@
 {
-  "Compose Tweet": "트윗 작성",
-  "Custom URL with": "커스텀 URL:",
   "Share Your Stream": "스트리밍 공유",
-  "Connect to Twitter": "Twitter에 연결",
-  "Enable Tweet Sharing": "트윗 공유 활성화",
-  "Tweet when going live": "라이브 시 트윗",
-  "Unlink Twitter": "Twitter 연결 해제",
-  "Tweet & Go Live": "트윗 및 라이브 하기",
-  "Could not connect to Twitter": "Twitter에 연결 불가",
-  "Use Streamlabs URL": "Streamlabs URL 사용",
   "X (Twitter) Chat Type": "X (Twitter) 채팅 유형",
   "Disabled": "비활성화됨",
   "Chat will be disabled": "채팅이 비활성화됩니다",
@@ -21,6 +12,5 @@
   "Subscriber Only": "구독자만",
   "Only viewers that subscribe to you will be able to chat": "나를 구독하는 시청자만 채팅할 수 있습니다",
   "You need X premium account to go live on X.": "X에서 라이브를 시작하려면 X 프리미엄 계정이 필요합니다.",
-  "You need X premium account to go live on X. Click to learn more": "X에서 라이브를 시작하려면 X 프리미엄 계정이 필요합니다. 자세히 알아보려면 클릭하십시오.",
-  "Stream Shift Error: Twitter is not live": "Stream Shift 오류: Twitter가 라이브 상태가 아님"
+  "You need X premium account to go live on X. Click to learn more": "X에서 라이브를 시작하려면 X 프리미엄 계정이 필요합니다. 자세히 알아보려면 클릭하십시오."
 }
