@@ -594,9 +594,6 @@ get isMultiplatformMode(): boolean {
 
   /**
    * Validate the display when live output editing is enabled
-   * @remark Used to ensure a platform with the `both` display, used for dual streaming, uses the
-   * default display instead. Reads `savedLiveOutputEditing` instead of `isLiveOutputEditingEnabled`
-   * to avoid the circular dependency: settings → savedSettings → getSavedPlatformSettings → settings
    * @param display - The display saved for the platform
    * @warning The `get` prefix is required. This class is passed to `injectState` in
    * `useGoLiveSettings`, and slap registers any method not named `get*`/`is*`/`should*` as a
