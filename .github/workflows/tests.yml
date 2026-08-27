@@ -90,6 +90,7 @@ jobs:
       matrix:
         chunk: [1, 2, 3, 4]
       max-parallel: 4
+      fail-fast: false
 
     steps:
       - name: 'Download Test Build'
