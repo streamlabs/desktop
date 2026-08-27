@@ -22,12 +22,16 @@ export default function StreamShiftCard() {
         return;
       }
 
+      // A disabled card still receives the click, so stop here rather than switching on a feature
+      // that is mutually exclusive with live output editing
+      if (isStreamShiftDisabled) return;
+
       setStreamShift(status ?? !isStreamShiftMode);
       Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {
         toggle: status ?? !isStreamShiftMode,
       });
     },
-    [setStreamShift, isStreamShiftMode],
+    [setStreamShift, isStreamShiftMode, isStreamShiftDisabled, isPrime],
   );
 
   return (

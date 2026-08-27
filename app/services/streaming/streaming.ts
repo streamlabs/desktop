@@ -1055,7 +1055,7 @@ export class StreamingService
 
         this.handleTypedStreamError(
           e,
-          'RESTREAM_UPDATE_FAILED',
+          platformError?.type || 'RESTREAM_UPDATE_FAILED',
           platformError?.details || platformError?.message || 'Failed to update restream settings',
           platformError?.platform,
         );
@@ -1254,7 +1254,12 @@ export class StreamingService
             const service = getPlatformService(platform);
             if (service.afterStopStream) service.afterStopStream();
           });
-          throw e;
+
+          this.handleTypedStreamError(
+            e,
+            'RESTREAM_ADD_TARGETS_FAILED',
+            $t('Failed to add new targets to the stream'),
+          );
         }
 
         for (const display of displaysToSetup) {
@@ -1298,6 +1303,13 @@ export class StreamingService
     platforms: TPlatform[],
     destinations: ICustomStreamDestination[],
   ): TDisplayType[] {
+    // Outside dual output mode only the horizontal display streams, so the saved display on a
+    // target is not meaningful. Reading it here would schedule a vertical output instance for a
+    // target that is about to be added to the landscape stream.
+    if (!this.views.isDualOutputMode) {
+      return this.views.isHorizontalStreaming ? [] : ['horizontal'];
+    }
+
     const targetedDisplays = new Set<TDisplayType>();
     platforms.forEach(platform =>
       targetedDisplays.add(this.views.getPlatformDisplayType(platform)),
@@ -1349,7 +1361,7 @@ export class StreamingService
         'RESTREAM_UPDATE_FAILED',
         $t('Failed to start the new output. Your existing stream is still live.'),
       );
-      throwStreamError(errorType);
+      this.rethrowStreamError(e, errorType);
     }
   }
 
@@ -1410,7 +1422,7 @@ export class StreamingService
 
       // The displays that were already live keep streaming. Don't remove any targets that were successfully added.
       // This is in case the update partially succeeded and the user wants to try again.
-      throwStreamError(errorType);
+      this.rethrowStreamError(e, errorType);
     }
 
     if (destinations.length) {
@@ -1459,7 +1471,7 @@ export class StreamingService
       // display still has targets when the user next removes one.
       this.restoreFailedTargets(platforms, destinations);
 
-      throwStreamError(errorType);
+      this.rethrowStreamError(e, errorType);
     }
 
     if (destinations.length) {
@@ -1608,21 +1620,47 @@ export class StreamingService
         (e.type as TStreamErrorType) === 'PLATFORM_REQUEST_FAILED'
           ? 'SETTINGS_UPDATE_FAILED'
           : e.type || 'UNKNOWN_ERROR';
-      return this.handleTypedStreamError(e, type, message, platform);
+      // `type` is already derived from `e.type` here, including the deliberate cast above, so it
+      // must win over the error's own type
+      return this.handleTypedStreamError(e, type, message, platform, true);
     } else {
       return this.handleTypedStreamError(e, 'SETTINGS_UPDATE_FAILED', message, platform);
     }
   }
 
+  /**
+   * Set the error state from a caught error and resolve the type to report
+   * @param e - The caught error
+   * @param type - The type to fall back to when `e` does not carry one of its own
+   * @param message - The message to report
+   * @param platform - The platform the error belongs to, if any
+   * @param forceType - Use `type` even when `e` already has one. Only for callers that
+   * deliberately remap a type, such as `handleUpdatePlatformError`.
+   */
   handleTypedStreamError(
     e: StreamError | unknown,
     type: TStreamErrorType,
     message: string,
     platform?: TPlatform,
+    forceType = false,
   ): TStreamErrorType {
+    // A `StreamError` thrown further down already names what failed, so `type` is only a fallback
+    // for errors that carry no type of their own. Using it unconditionally collapsed every
+    // restream failure back to the caller's generic type before it reached the user.
+    const resolvedType =
+      !forceType && e instanceof StreamError && e.type ? (e.type as TStreamErrorType) : type;
+
+    console.log('e', e);
+    console.log('type', resolvedType);
+    console.log('message', message);
+    console.log('platform', platform);
     // restream errors returns an object with key value pairs for error details
     const messages: string[] = [message];
     const details: string[] = [];
+
+    // What the thrower said about this specific failure. It is the only part that names the
+    // target or display that failed, so prefer it over the generic fallback below.
+    const errorDetails = e instanceof StreamError && e.details ? e.details : undefined;
 
     const defaultMessage =
       this.state.info.error?.message ??
@@ -1631,7 +1669,7 @@ export class StreamingService
       );
 
     // Format the error message for restream errors to show the details to the user in the bypass error modal
-    if (e && typeof e === 'object' && type.split('_').includes('RESTREAM')) {
+    if (e && typeof e === 'object' && resolvedType.split('_').includes('RESTREAM')) {
       const platformName = platform || this.state.info.error?.platform;
       const errorPlatform = platformName ? platformLabels(platformName) : undefined;
       // If the error has a platform associated with it, specify the platform in the error message
@@ -1639,10 +1677,20 @@ export class StreamingService
         const platformLabel = $t('%{platform} Error', { platform: errorPlatform });
         details.push([platformLabel, message].join('. '));
       } else {
-        details.push(defaultMessage);
+        details.push(errorDetails ?? defaultMessage);
       }
 
-      Object.entries(e).forEach(([key, value]: [string, string]) => {
+      // Report a `StreamError` through its own serializable model. `getModel` is an instance
+      // property rather than a prototype method, so iterating the error listed it as a field and
+      // printed its function source, and it skipped `message`, which is non-enumerable on an
+      // `Error`. The model carries the message and drops the fields already reported separately.
+      const model: Record<string, unknown> =
+        e instanceof StreamError ? e.getModel() : (e as Record<string, unknown>);
+
+      Object.entries(model).forEach(([key, value]) => {
+        // Unset fields say nothing, and a function has no readable value
+        if (value == null || value === '' || typeof value === 'function') return;
+
         const name = capitalize(key.replace(/([A-Z])/g, ' $1'));
         // Never show the actual stream key and server url to the user for security purposes
         if (['streamKey', 'serverUrl'].includes(key)) {
@@ -1655,7 +1703,7 @@ export class StreamingService
       const status = this.state.info.error?.status ?? 400;
 
       const streamError = createStreamError(
-        type,
+        resolvedType,
         { status, statusText: $t('Multistream Error') + messages.join('. '), platform },
         details.join('\n'),
       );
@@ -1665,12 +1713,26 @@ export class StreamingService
     }
 
     if (e instanceof StreamError) {
-      this.setError({ ...e, type });
-      return e.type;
+      this.setError({ ...e, type: resolvedType });
+      return resolvedType;
     }
 
-    this.setError(type);
-    return type;
+    this.setError(resolvedType);
+    return resolvedType;
+  }
+
+  /**
+   * Rethrow an error that has already been handled
+   * @remark `handleTypedStreamError` has set the error state by this point, so this only
+   * propagates the failure to the caller. Building a new error from the type alone drops the
+   * details naming the target or display that failed, and the caller shows those details to the
+   * user in place of its own generic message.
+   * @param e - The error that was caught and handled
+   * @param type - The type to throw with when `e` is not a `StreamError`
+   */
+  private rethrowStreamError(e: unknown, type: TStreamErrorType): never {
+    if (e instanceof StreamError) throw e;
+    throwStreamError(type);
   }
 
   /**

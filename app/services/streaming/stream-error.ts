@@ -51,6 +51,88 @@ export const errorTypes = {
       return $t('Failed to update Multistream platforms and destinations while live');
     },
   },
+  RESTREAM_INVALID_CONFIG: {
+    get message() {
+      return $t(
+        'Multistream settings are invalid, please check your platforms and destinations and try again',
+      );
+    },
+    get action() {
+      return $t(
+        'confirm the user has Ultra and confirm the settings for enabled platforms and destinations',
+      );
+    },
+  },
+  RESTREAM_STREAM_KEY_MISSING: {
+    get message() {
+      return $t('Multistream stream key does not exist');
+    },
+    get action() {
+      return $t(
+        'there was no Multistream session key, ask the user to end the stream and go live again',
+      );
+    },
+  },
+  RESTREAM_STREAM_KEY_FETCH_FAILED: {
+    get message() {
+      return $t('Failed to fetch your Multistream stream key');
+    },
+    get action() {
+      return $t(
+        'the request for the Multistream user settings failed. Check the connection to the Streamlabs API and try the update again',
+      );
+    },
+  },
+  RESTREAM_DISPLAY_SETUP_FAILED: {
+    get message() {
+      return $t('Failed to start Multistreaming on one of your displays');
+    },
+    get action() {
+      return $t(
+        'the destinations for a display that was not yet streaming could not be created. The other display may still be live, so confirm the stream status before retrying',
+      );
+    },
+  },
+  RESTREAM_ADD_TARGETS_FAILED: {
+    get message() {
+      return $t('Failed to add the destination to your live stream');
+    },
+    get action() {
+      return $t(
+        'the Multistream server rejected the request to add the destination while live. Confirm the permissions for the destination, then try updating the stream again',
+      );
+    },
+  },
+  RESTREAM_NO_ACTIVE_TARGETS: {
+    get message() {
+      return $t('No active Multistream destinations were found for your live stream');
+    },
+    get action() {
+      return $t(
+        'the Multistream server reported no live destinations, so there was nothing to remove. The stream may have already ended on the server',
+      );
+    },
+  },
+  RESTREAM_REMOVE_TARGET_NOT_FOUND: {
+    get message() {
+      return $t('Failed to find the destination to remove on your live stream');
+    },
+    get action() {
+      return $t(
+        'the stream key for the destination matches none of the live destinations, most likely because the key changed after the stream started. The destination is still streaming',
+      );
+    },
+  },
+  RESTREAM_REMOVE_TARGETS_FAILED: {
+    get message() {
+      return $t('Failed to remove the destination from your live stream');
+    },
+    get action() {
+      return $t(
+        'the Multistream server rejected the request to remove the destination while live. The destination may still be streaming',
+      );
+    },
+  },
   RESTREAM_ENHANCED_BROADCASTING_FAILED: {
     get message() {
       return $t('Failed to configure the Multistream server for Enhanced Broadcasting');

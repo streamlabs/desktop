@@ -40,6 +40,10 @@ export default function LiveOutputEditingCard() {
         return;
       }
 
+      // A disabled card still receives the click, so stop here rather than switching on a feature
+      // that is mutually exclusive with stream shift
+      if (isLiveOutputEditingDisabled) return;
+
       setLiveOutputEditingEnabled(status ?? !isLiveOutputEditingEnabled);
       Services.UsageStatisticsService.actions.recordAnalyticsEvent('LiveOutputEditing', {
         toggle: status ?? !isLiveOutputEditingEnabled,

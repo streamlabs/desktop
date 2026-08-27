@@ -20,6 +20,7 @@ export enum EDismissable {
   TikTokReapply = 'tiktok_reapply',
   EnhancedBroadcasting = 'enhanced_broadcasting',
   StreamAvatarAutomationsWelcome = 'stream_avatar_automations_welcome',
+  HighlighterBanner = 'highlighter_banner',
 }
 
 interface IDismissablesServiceState {

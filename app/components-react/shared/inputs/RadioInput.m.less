@@ -79,6 +79,11 @@
     border-bottom-right-radius: 4px;
   }
 
+  // Must be last to override the above two rules
+  :global(.ant-radio-wrapper):only-child {
+    border-radius: 4px;
+  }
+
   :global(.ant-radio-wrapper-checked) {
     background-color: var(--button);
 
