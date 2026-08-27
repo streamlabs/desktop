@@ -1,6 +1,5 @@
 {
   "Banned Media": "Bannlyst Media",
-  "Check Banned Media": "Kontrollera Bannlyst Media",
   "Price Per Second": "Pris Per Sekund",
   "Min. Amount to Share": "Min. Belopp för att Dela",
   "Max Duration": "Max Varaktighet",
@@ -8,8 +7,5 @@
   "Spam Security": "Spam Security",
   "The time between videos the next video has to buffer.": "Tiden mellan videos för att nästa video ska hinna buffra.",
   "Manage Media Settings": "Hantera Mediainställningar",
-  "The maximum duration in seconds that media can be played, regardless of amount donated. The default value is 60 seconds.": "The maximum duration in seconds that media can be played, regardless of amount donated. The default value is 60 seconds.",
-  "This slider helps you filter shared media before it can be submitted.\nOff: No security\nLow: 65%+ rating, 5k+ views\nMedium: 75%+ rating, 40k+ views\nHigh: 80%+ rating, 300k+ views\nVery High: 85%+ rating, 900k+ views": "This slider helps you filter shared media before it can be submitted.\nOff: No security\nLow: 65%+ rating, 5k+ views\nMedium: 75%+ rating, 40k+ views\nHigh: 80%+ rating, 300k+ views\nVery High: 85%+ rating, 900k+ views",
-  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD",
-  "In order to control length, you can decide how much it costs per second to share media. Setting this to 0.30 would mean that for $10, media would play for 30 seconds. The default value is 0.10.": "In order to control length, you can decide how much it costs per second to share media. Setting this to 0.30 would mean that for $10, media would play for 30 seconds. The default value is 0.10."
+  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD"
 }
