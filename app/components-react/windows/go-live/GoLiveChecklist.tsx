@@ -1,15 +1,17 @@
 import { useGoLiveSettings } from './useGoLiveSettings';
 import css from './GoLiveChecklist.m.less';
-import React, { HTMLAttributes, useEffect } from 'react';
+import React, { HTMLAttributes, useEffect, useMemo } from 'react';
 import { Services } from '../../service-provider';
 import { $t } from '../../../services/i18n';
 import { TGoLiveChecklistItemState } from '../../../services/streaming';
+import { TDestinationId, getDestinationId } from '../../../services/settings/streaming';
 import cx from 'classnames';
 import GoLiveError from './GoLiveError';
 import MessageLayout from './MessageLayout';
 import { Timeline } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import Utils from '../../../services/utils';
+import { difference, intersection } from 'lodash';
 
 /**
  * Shows transition to live progress and helps troubleshoot related problems
@@ -28,9 +30,67 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
     getPlatformDisplayName,
     isUpdateMode,
     shouldShowOptimizedProfile,
+    showLiveOutputEditing,
+    stopTargets,
+    startTargets,
+    continueTargets,
+    stopDestinations,
+    startDestinations,
+    continueDestinations,
+    isLiveOutputEditingEnabled,
+    isUpdatingTargets,
   } = useGoLiveSettings().extend(module => ({
     get shouldShowOptimizedProfile() {
       return VideoEncodingOptimizationService.state.useOptimizedProfile && !module.isUpdateMode;
+    },
+
+    get showLiveOutputEditing() {
+      return module.isLiveOutputEditingEnabled && module.isUpdateMode;
+    },
+
+    get stopTargets() {
+      return module.activePlatforms
+        ? difference(module.activePlatforms, module.enabledPlatforms)
+        : [];
+    },
+
+    get stopDestinations(): TDestinationId[] {
+      return module.activeDestinations
+        ? difference(
+            module.activeDestinations.map(d => getDestinationId(d)),
+            module.enabledCustomDestinations.map(d => getDestinationId(d)),
+          )
+        : [];
+    },
+
+    get startDestinations(): TDestinationId[] {
+      return module.activeDestinations
+        ? difference(
+            module.enabledCustomDestinations.map(d => getDestinationId(d)),
+            module.activeDestinations.map(d => getDestinationId(d)),
+          )
+        : [];
+    },
+
+    get startTargets() {
+      return module.activePlatforms
+        ? difference(module.enabledPlatforms, module.activePlatforms)
+        : [];
+    },
+
+    get continueTargets() {
+      return module.activePlatforms
+        ? intersection(module.enabledPlatforms, module.activePlatforms)
+        : [];
+    },
+
+    get continueDestinations(): TDestinationId[] {
+      return module.activeDestinations
+        ? intersection(
+            module.enabledCustomDestinations.map(d => getDestinationId(d)),
+            module.activeDestinations.map(dest => getDestinationId(dest)),
+          )
+        : [];
     },
   }));
 
@@ -50,29 +110,71 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
   function render() {
     return (
       <div className={cx(css.container, p.className, { [css.success]: success })}>
-        <h1 className={css.success}>{getHeaderText()}</h1>
+        <h1 className={css.success}>{headerText}</h1>
 
         <Timeline>
-          {/* PLATFORMS UPDATE */}
-          {enabledPlatforms.map(platform =>
-            renderCheck(
-              $t('Update settings for %{platform}', {
-                platform: getPlatformDisplayName(platform),
-              }),
-              checklist[platform],
-            ),
+          {/* GO LIVE PLATFORMS UPDATE */}
+          {(!isUpdateMode || !showLiveOutputEditing) &&
+            enabledPlatforms.map(platform =>
+              renderCheck(
+                $t('Update settings for %{platform}', {
+                  platform: getPlatformDisplayName(platform),
+                }),
+                checklist[platform],
+              ),
+            )}
+
+          {/* EDIT STREAM - STOP TARGETS */}
+          {showLiveOutputEditing && (
+            <>
+              {stopTargets.map(platform =>
+                renderCheck(
+                  $t('Stop streaming to %{target}', {
+                    target: getPlatformDisplayName(platform),
+                  }),
+                  checklist[platform],
+                ),
+              )}
+              {stopDestinations.length > 0 &&
+                renderCheck($t('Stop streaming to Custom Destination'), checklist.destination)}
+            </>
+          )}
+
+          {/* EDIT STREAM - START TARGETS */}
+          {showLiveOutputEditing && (
+            <>
+              {startTargets.map(platform =>
+                renderCheck(
+                  $t('Start streaming to %{target}', {
+                    target: getPlatformDisplayName(platform),
+                  }),
+                  checklist[platform],
+                ),
+              )}
+              {startDestinations.length > 0 &&
+                renderCheck($t('Start streaming to Custom Destination'), checklist.destination)}
+            </>
+          )}
+
+          {/* EDIT STREAM - CONTINUE/UPDATE TARGETS */}
+          {showLiveOutputEditing && (
+            <>
+              {continueTargets.map(platform =>
+                renderCheck(
+                  $t('Update settings for %{platform}', {
+                    platform: getPlatformDisplayName(platform),
+                  }),
+                  checklist[platform],
+                ),
+              )}
+              {continueDestinations.length > 0 &&
+                renderCheck($t('Continue streaming to Custom Destination'), checklist.destination)}
+            </>
           )}
 
           {/* RESTREAM */}
-          {!isUpdateMode &&
-            isMultiplatformMode &&
-            !isDualOutputMode &&
-            renderCheck(
-              isStreamShiftMode
-                ? $t('Configure the Stream Shift service')
-                : $t('Configure the Multistream service'),
-              checklist.setupMultistream,
-            )}
+          {shouldRenderMultistreamItem &&
+            renderCheck(multistreamItemText, checklist.setupMultistream)}
 
           {/* DUAL OUTPUT */}
           {!isUpdateMode &&
@@ -97,7 +199,21 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
     );
   }
 
-  function getHeaderText() {
+  const shouldRenderMultistreamItem = useMemo(() => {
+    // Check to render in Go Live checklist
+    if (!isUpdateMode && isMultiplatformMode) {
+      return true;
+    }
+
+    // Check to render in Edit Stream checklist
+    if (isUpdateMode && isUpdatingTargets) {
+      return true;
+    }
+
+    return false;
+  }, [isUpdateMode, isMultiplatformMode, isDualOutputMode, isUpdatingTargets]);
+
+  const headerText = useMemo(() => {
     if (error) {
       if (checklist.startVideoTransmission === 'done') {
         return $t('Your stream has started, but there were issues with other actions taken');
@@ -109,7 +225,19 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
       return $t("You're live!");
     }
     return $t('Working on your live stream') + '...';
-  }
+  }, [error, checklist.startVideoTransmission, lifecycle]);
+
+  const multistreamItemText = useMemo(() => {
+    if (isLiveOutputEditingEnabled) {
+      return $t('Configure the Live Output Editing service');
+    }
+
+    if (isStreamShiftMode) {
+      return $t('Configure the Stream Shift service');
+    }
+
+    return $t('Configure the Multistream service');
+  }, [isLiveOutputEditingEnabled, isStreamShiftMode]);
 
   /**
    * Renders a Timeline item in one of 4 states - 'not-started', 'pending', 'done', 'error'
