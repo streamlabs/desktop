@@ -375,7 +375,13 @@ export default function AiHighlighterToggle({
             )}
             {isUpdateMode && (
               <div className={styles.dismissable}>
-                <a>{$t('Do not ask again')}</a>
+                <a
+                  onClick={() =>
+                    DismissablesService.actions.dismiss(EDismissable.HighlighterBanner)
+                  }
+                >
+                  {$t('Do not ask again')}
+                </a>
               </div>
             )}
           </div>
