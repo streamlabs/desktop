@@ -7,7 +7,7 @@ import { GuestApiHandler } from 'util/guest-api-handler';
 import * as remote from '@electron/remote';
 import { Services } from 'components-react/service-provider';
 import { Button } from 'antd';
-import { ENavMenuFeatures } from 'services/nav-menu';
+import { ENavMenuKey } from 'services/nav-menu';
 import { $t } from 'services/i18n';
 import styles from './PlatformAppStore.m.less';
 import { useVuex } from 'components-react/hooks';
@@ -147,7 +147,7 @@ export default function PlatformAppStore(p: {
                   NavigationService.actions.navigate(
                     'Highlighter',
                     { view: 'settings' },
-                    ENavMenuFeatures.Highlighter,
+                    ENavMenuKey.Highlighter,
                   );
                 }}
               >
