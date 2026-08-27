@@ -1,49 +1,31 @@
-import { Layout } from 'antd';
+import { Menu } from 'antd';
 import cx from 'classnames';
-import { useRealmObject } from 'components-react/hooks/realm';
-import { Services } from 'components-react/service-provider';
-import HelpTip from 'components-react/shared/HelpTip';
-import Scrollable from 'components-react/shared/Scrollable';
-import React, { memo } from 'react';
-import { EDismissable } from 'services/dismissables';
-import { $t } from 'services/i18n';
-import FeaturesNav from './FeaturesNav';
+import React from 'react';
+import { ENavMenuKey } from 'services/nav-menu';
+import { useFeaturesNav } from './FeaturesNav';
 import styles from './NavMenu.m.less';
-import NavTools from './NavTools';
-
-const { Sider } = Layout;
+import { useNavTools } from './NavTools';
 
 export default function NavMenu() {
-  const { CustomizationService } = Services;
-  const { leftDock } = useRealmObject(CustomizationService.state);
+  // Both hooks are inlined here (not rendered as component children) so that
+  // rc-menu's overflow measurement sees individual Menu.Item nodes rather than
+  // opaque component elements - antd 4.16 / rc-menu 9 only flattens arrays and
+  // fragments that are *direct* children of <Menu>.
+  const featureItems = useFeaturesNav();
+  const { items: toolItems, modals } = useNavTools();
 
   return (
-    <Layout hasSider className="nav-menu">
-      <Sider className={cx(styles.navMenuSider, !leftDock && styles.noLeftDock)}>
-        <Scrollable className={cx(styles.navMenuScroll)}>
-          <FeaturesNav />
-          <NavTools />
-        </Scrollable>
-        <LoginHelpTip />
-      </Sider>
-    </Layout>
+    <div className={cx(styles.navMenu)}>
+      <Menu
+        key="nav-menu"
+        mode="horizontal"
+        defaultSelectedKeys={[ENavMenuKey.Editor]}
+        getPopupContainer={triggerNode => triggerNode}
+      >
+        {featureItems}
+        {toolItems}
+      </Menu>
+      {modals}
+    </div>
   );
 }
-
-const LoginHelpTip = memo(function LoginHelpTip() {
-  return (
-    <HelpTip
-      title={$t('Login')}
-      dismissableKey={EDismissable.LoginPrompt}
-      position={{ top: 'calc(100vh - 175px)', left: '80px' }}
-      arrowPosition="bottom"
-      style={{ position: 'absolute' }}
-    >
-      <div>
-        {$t(
-          'Gain access to additional features by logging in with your preferred streaming platform.',
-        )}
-      </div>
-    </HelpTip>
-  );
-});
