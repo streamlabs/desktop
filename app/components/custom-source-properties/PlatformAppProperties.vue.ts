@@ -6,7 +6,7 @@ import { PlatformAppsService } from 'services/platform-apps';
 import { Inject } from 'services/core/injector';
 import { IPlatformAppManagerSettings } from 'services/sources/properties-managers/platform-app-manager';
 import { WindowsService } from 'services/windows';
-import { NavMenuService } from 'services/nav-menu';
+import { ENavMenuKey, NavMenuService } from 'services/nav-menu';
 import electron from 'electron';
 
 @Component({})
@@ -27,7 +27,7 @@ export default class PlatformAppProperties extends Vue {
       appId: this.appId,
       sourceId: this.source.sourceId,
     });
-    this.navMenuService.setCurrentMenuItem(this.appId);
+    this.navMenuService.setCurrentMenuItem(ENavMenuKey.AppStore);
     this.windowsService.closeChildWindow();
   }
 
