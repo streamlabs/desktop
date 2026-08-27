@@ -3,7 +3,7 @@ import React, { useEffect, useState, memo } from 'react';
 import styles from './AiHighlighterToggle.m.less';
 import { Services } from 'components-react/service-provider';
 import { useDebounce, useVuex } from 'components-react/hooks';
-import { DownOutlined, UpOutlined, CloseOutlined } from '@ant-design/icons';
+import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { Alert, Button } from 'antd';
 import { getConfigByGame, isGameSupported } from 'services/highlighter/models/game-config.models';
 import { $t } from 'services/i18n';
@@ -235,16 +235,6 @@ export default function AiHighlighterToggle({
                   ) : (
                     <DownOutlined style={{ color: '#BDC2C4' }} />
                   )}
-                  {isUpdateMode && (
-                    <CloseOutlined
-                      aria-label={$t('Dismiss AI Highlighter Banner')}
-                      style={{ color: '#BDC2C4', marginLeft: '8px' }}
-                      onClick={e => {
-                        e.stopPropagation();
-                        DismissablesService.actions.dismiss(EDismissable.HighlighterBanner);
-                      }}
-                    />
-                  )}
                 </div>
               </div>
               <div className={styles.headlineWrapper}>
@@ -382,6 +372,11 @@ export default function AiHighlighterToggle({
                   </>
                 )}
               </>
+            )}
+            {isUpdateMode && (
+              <div className={styles.dismissable}>
+                <a>{$t('Do not ask again')}</a>
+              </div>
             )}
           </div>
         </div>
