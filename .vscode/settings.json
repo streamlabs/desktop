@@ -1,5 +1,24 @@
 {
   "typescript.tsdk": "./node_modules/typescript/lib",
   "i18n-ally.localesPaths": ["app/i18n"],
-  "i18n-ally.keystyle": "nested"
+  "i18n-ally.keystyle": "nested",
+  "workbench.colorCustomizations": {
+    "terminal.border": "#ffffff",
+    "panel.border": "#ffffff",
+    "panelTitle.activeBorder": "#ffc600",
+    "terminal.tab.activeBorder": "#ffc600",
+    "terminalCursor.foreground": "#ffc600",
+    "terminal.selectionBackground": "#ffc60055",
+    "activityBar.background": "#053241",
+    "titleBar.activeBackground": "#07465B",
+    "titleBar.activeForeground": "#F3FBFE",
+    "titleBar.inactiveBackground": "#053241",
+    "titleBar.inactiveForeground": "#F3FBFE",
+    "statusBar.background": "#053241",
+    "statusBar.foreground": "#F3FBFE",
+    "statusBar.debuggingBackground": "#053241",
+    "statusBar.debuggingForeground": "#F3FBFE",
+    "statusBar.noFolderBackground": "#053241",
+    "statusBar.noFolderForeground": "#F3FBFE"
+  }
 }
