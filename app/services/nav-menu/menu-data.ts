@@ -40,7 +40,7 @@ export type TExternalLinkType =
   | 'multistream';
 
 /** Custom navigation items that are not represented by another type. */
-export type TCustomNavItem = 'NavTools' | 'WidgetWindow' | 'Ultra';
+export type TCustomNavItem = 'ToolsNav' | 'WidgetWindow' | 'Ultra';
 
 /** Navigation targets that are present in the nav menu. */
 export type TNavMenuTarget = TAppPage | TExternalLinkType | TCustomNavItem;

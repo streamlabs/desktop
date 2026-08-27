@@ -15,18 +15,18 @@ import { ESettingsCategory } from 'services/settings';
 import Utils, { $i } from 'services/utils';
 import { useVuex } from '../hooks';
 import { Services } from '../service-provider';
-import styles from './NavTools.m.less';
+import styles from './ToolsNav.m.less';
 import PlatformIndicator from './PlatformIndicator';
 import HelpTip from 'components-react/shared/HelpTip';
 import { EDismissable } from 'services/dismissables';
 import { platformLabels } from 'services/platforms';
 
 /**
- * Returns nav tool items (fragment) and any modals that must live outside
+ * Returns tools nav items (fragment) and any modals that must live outside
  * the <Menu> element. Called as a hook from NavMenu so that rc-menu's overflow
  * measurement sees individual items rather than an opaque component.
  */
-export function useNavTools() {
+export function useToolsNav() {
   const {
     UserService,
     SettingsService,
@@ -76,7 +76,7 @@ export function useNavTools() {
   const profileRef = useRef<HTMLDivElement>(null);
 
   // Style blockers hide the native display/chat surfaces so this DOM popup can
-  // paint above them (see NavTools.tsx's callers in the top-nav migration plan).
+  // paint above them (see ToolsNav.tsx's callers in the top-nav migration plan).
   // Driven from one effect so the profile dropdown and the log-out confirm modal
   // can't race each other turning blockers off while the other is still open.
   //
@@ -124,7 +124,7 @@ export function useNavTools() {
   };
 
   const toggleStudioMode = useCallback(() => {
-    UsageStatisticsService.actions.recordClick('NavTools', 'studio-mode');
+    UsageStatisticsService.actions.recordClick('ToolsNav', 'studio-mode');
 
     if (DualOutputService.views.dualOutputMode || DualOutputService.views.showBothDisplays) {
       alertAsync({
