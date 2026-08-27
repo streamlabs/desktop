@@ -2,9 +2,8 @@ import { SwitchInput } from 'components-react/shared/inputs/SwitchInput';
 import React, { useEffect, useState, memo } from 'react';
 import styles from './AiHighlighterToggle.m.less';
 import { Services } from 'components-react/service-provider';
-import * as remote from '@electron/remote';
 import { useDebounce, useVuex } from 'components-react/hooks';
-import { DownOutlined, UpOutlined } from '@ant-design/icons';
+import { DownOutlined, UpOutlined, CloseOutlined } from '@ant-design/icons';
 import { Alert, Button } from 'antd';
 import { getConfigByGame, isGameSupported } from 'services/highlighter/models/game-config.models';
 import { $t } from 'services/i18n';
@@ -15,10 +14,22 @@ import { EAvailableFeatures } from 'services/incremental-rollout';
 import { promptAction } from 'components-react/modals';
 import InputWrapper from 'components-react/shared/inputs/InputWrapper';
 import Translate from 'components-react/shared/Translate';
+import { EDismissable } from 'services/dismissables';
 
-export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded: boolean }) {
+export default function AiHighlighterToggle({
+  cardIsExpanded,
+  isUpdateMode,
+}: {
+  cardIsExpanded: boolean;
+  isUpdateMode?: boolean;
+}) {
   //TODO M: Probably good way to integrate the highlighter in to GoLiveSettings
-  const { HighlighterService, StreamingService, IncrementalRolloutService } = Services;
+  const {
+    HighlighterService,
+    StreamingService,
+    IncrementalRolloutService,
+    DismissablesService,
+  } = Services;
   const {
     useHighlighter,
     highlighterVersion,
@@ -26,6 +37,7 @@ export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded
     isVerticalReplayBuffer,
     outputDisplay,
     gameName,
+    shouldShow,
   } = useVuex(() => {
     return {
       useHighlighter: HighlighterService.views.useAiHighlighter,
@@ -34,6 +46,7 @@ export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded
       isVerticalReplayBuffer: StreamingService.views.isVerticalReplayBuffer,
       outputDisplay: StreamingService.views.outputDisplay,
       gameName: StreamingService.views.gameName,
+      shouldShow: DismissablesService.views.shouldShow(EDismissable.HighlighterBanner),
     };
   });
 
@@ -46,7 +59,7 @@ export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded
   useEffect(() => {
     const supportedGame = isGameSupported(gameName);
     setGameIsSupported(!!supportedGame);
-    if (supportedGame) {
+    if (supportedGame && !isUpdateMode) {
       setIsExpanded(true);
       setGameConfig(getConfigByGame(supportedGame));
     } else {
@@ -83,18 +96,15 @@ export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded
   }
 
   function getInitialExpandedState() {
-    if (gameIsSupported) {
-      return true;
-    } else {
-      if (useHighlighter) {
-        return true;
-      } else {
-        return cardIsExpanded;
-      }
-    }
+    if (isUpdateMode) return false;
+    if (gameIsSupported) return true;
+    if (useHighlighter) return true;
+    return cardIsExpanded;
   }
   const initialExpandedState = getInitialExpandedState();
   const [isExpanded, setIsExpanded] = useState(initialExpandedState);
+
+  const showHighlighterBanner = shouldShow || !isUpdateMode;
 
   const toggleHighlighter = useDebounce(300, handleToggleHighlighter);
 
@@ -160,7 +170,7 @@ export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded
 
   return (
     <div>
-      {gameIsSupported ? (
+      {gameIsSupported && showHighlighterBanner ? (
         <div
           key={'aiSelector'}
           data-name="ai-highlighter-selector"
@@ -224,6 +234,14 @@ export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded
                     <UpOutlined style={{ color: '#BDC2C4' }} />
                   ) : (
                     <DownOutlined style={{ color: '#BDC2C4' }} />
+                  )}
+                  {isUpdateMode && (
+                    <CloseOutlined
+                      style={{ color: '#BDC2C4', marginLeft: '8px' }}
+                      onClick={() =>
+                        DismissablesService.actions.dismiss(EDismissable.HighlighterBanner)
+                      }
+                    />
                   )}
                 </div>
               </div>
