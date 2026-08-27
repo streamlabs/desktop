@@ -1,7 +1,6 @@
 {
   "Visual Settings": "Paramètres visuels",
   "Font Settings": "Paramètres de la police",
-  "Chatter": "Chatter",
   "Always Show Messages": "Toujours afficher les messages",
   "Show Moderator Badges": "Afficher les badges de modérateurs",
   "Show Subscriber Badges": "Afficher les badges d'abonnés",
@@ -15,7 +14,6 @@
   "Text Color": "Couleur du texte",
   "Font Size": "Taille de la police",
   "Muted Chatters": "Participants au chat mis en muet",
-  "Hide Commands": "Masquer les commandes",
   "Background Color": "Couleur d'arrière-plan",
   "Show Platform Icons": "Afficher les icônes de la plateforme",
   "Theme": "Thème",

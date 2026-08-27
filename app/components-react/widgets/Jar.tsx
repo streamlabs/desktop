@@ -146,6 +146,8 @@ export class JarModule extends WidgetModule<IJarState> {
     youtube_subscribers: () => $t('YouTube Subscriptions'),
     youtube_sponsors: () => $t('YouTube Memberships'),
     youtube_superchats: () => $t('YouTube Super Chats'),
+    youtube_jewel_gifts: () => $t('YouTube Jewel Gifts'),
+    youtube_super_stickers: () => $t('YouTube Super Stickers'),
     picarto_follows: () => $t('Picarto Follows'),
     picarto_subscriptions: () => $t('Picarto Subscriptions'),
     facebook_follows: () => $t('Facebook Follows'),
@@ -159,20 +161,21 @@ export class JarModule extends WidgetModule<IJarState> {
   };
 
   get jarMeta() {
+    // Check that settings are loaded first, otherwise querying types will throw an error.
     if (!this.hasLoadedSettings()) return {};
 
-    const enabledChildren: Dictionary<IBaseMetadata> = {};
-    Object.keys(this.settings.types)
-      .filter(k => k !== '_id' && k !== 'priority')
-      .forEach(type => {
-        const label = JarModule.EventTitles[type]?.() ?? type;
-        enabledChildren[`${type}_enabled`] = metadata.bool({ label });
-      });
     return fromMeta({
       _enabled_events: {
         type: 'checkboxGroup',
         label: $t('Enabled Events'),
-        children: enabledChildren,
+        children: Object.fromEntries(
+          Object.keys(this.settings.types)
+            .filter(k => k in JarModule.EventTitles)
+            .map((k): [string, IBaseMetadata] => [
+              `${k}_enabled`,
+              metadata.bool({ label: JarModule.EventTitles[k]() }),
+            ]),
+        ),
       },
       ...(this.settings.types.twitch_bits
         ? { twitch_bits_minimum_amount: metadata.number({ label: $t('Minimum Bits'), min: 1 }) }

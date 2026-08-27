@@ -4,7 +4,6 @@ import styles from './UltraComparison.m.less';
 import cx from 'classnames';
 import { Services } from 'components-react/service-provider';
 import UltraIcon from 'components-react/shared/UltraIcon';
-import { Tooltip } from 'antd';
 
 interface IUltraComparisonProps {
   onSkip?: () => void;
@@ -14,11 +13,12 @@ interface IUltraComparisonProps {
     ultra: { text: string; icon?: string }[];
   };
   refl: string;
+  displayPrices?: boolean;
 }
 
 export function UltraComparison(p: IUltraComparisonProps) {
   const { MagicLinkService } = Services;
-  const shouldDisplayPrices = false;
+  const shouldDisplayPrices = p.displayPrices || false;
 
   const featureData = p.featureData || {
     standard: [
@@ -53,7 +53,6 @@ export function UltraComparison(p: IUltraComparisonProps) {
       style={{
         display: 'flex',
         justifyContent: 'center',
-        fontSize: p.condensed ? '10px' : undefined,
       }}
     >
       <div
@@ -66,20 +65,19 @@ export function UltraComparison(p: IUltraComparisonProps) {
             {$t('Free')}
           </h1>
           <div className={styles.subheader}>
-            <span>{$t('Everything you need to go live.')}</span>
-            <span>{$t('Always and forever free')}</span>
+            <span>{$t('Everything you need to get started.')}</span>
           </div>
-          <div className={styles.button} data-testid="choose-free-plan-btn">
-            {$t('Choose Free')}
-          </div>
-          <div className={styles.features}>
-            {featureData.standard.map(data => (
-              <div key={data.text} className={styles.row}>
-                {data.icon && <i className={data.icon} />}
-                <span>{data.text}</span>
-              </div>
-            ))}
-          </div>
+        </div>
+        <div className={styles.features}>
+          {featureData.standard.map(data => (
+            <div key={data.text} className={styles.row} style={{ padding: p.condensed ? 8 : 12 }}>
+              {data.icon && <i className={data.icon} />}
+              <span>{data.text}</span>
+            </div>
+          ))}
+        </div>
+        <div className={styles.button} data-testid="choose-free-plan-btn">
+          {$t('Continue with Free Plan')}
         </div>
       </div>
       <div
@@ -95,32 +93,19 @@ export function UltraComparison(p: IUltraComparisonProps) {
             Streamlabs Ultra
           </h1>
           <div className={styles.subheader}>
-            <span>{$t('Premium features for your stream.')}</span>
-            {shouldDisplayPrices ? (
-              <span>
-                {$t('%{monthlyPrice}/mo or %{yearlyPrice}/year', {
-                  monthlyPrice: '$19',
-                  yearlyPrice: '$149',
-                })}
-              </span>
-            ) : (
-              <span style={{ marginBottom: '18px' }} />
-            )}
-          </div>
-          <div
-            className={cx(styles.button, styles.primeButton)}
-            data-testid="choose-ultra-plan-btn"
-          >
-            {$t('Choose Ultra')}
+            <span>{$t('Everything in free, plus:')}</span>
           </div>
         </div>
         <div className={styles.features}>
           {featureData.ultra.map(data => (
-            <div className={styles.row} key={data.text}>
+            <div className={styles.row} key={data.text} style={{ padding: p.condensed ? 8 : 12 }}>
               {data.icon && <i className={data.icon} />}
               <span>{data.text}</span>
             </div>
           ))}
+        </div>
+        <div className={cx(styles.button, styles.primeButton)} data-testid="choose-ultra-plan-btn">
+          {shouldDisplayPrices ? $t('Go Ultra from $15.75/mo') : $t('Choose Ultra')}
         </div>
       </div>
     </div>

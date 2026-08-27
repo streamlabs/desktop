@@ -21,7 +21,6 @@ export { CustomizationService } from 'services/customization';
 export { LayoutService } from 'services/layout';
 export { NotificationsService } from 'services/notifications';
 export { ObsModuleLoadNotificationsService } from 'services/obs-module-load-notifications-service';
-export { OnboardingService } from 'services/onboarding';
 export { NavigationService } from 'services/navigation';
 export { PerformanceService } from 'services/performance';
 export { SettingsService, OutputSettingsService, EncoderQueryService } from 'services/settings';
@@ -65,6 +64,9 @@ export { SettingsManagerService } from 'services/settings-manager';
 export { MarkersService } from 'services/markers';
 export { RealmService } from 'services/realm';
 export { StreamAvatarService } from 'services/stream-avatar/stream-avatar-service';
+export { StreamAvatarApiService } from 'services/stream-avatar/stream-avatar-api-service';
+export { AutomationsService } from 'services/stream-avatar/automations-service';
+export { AutomationsEngineService } from 'services/stream-avatar/automations-engine-service';
 export { OnboardingV2Service } from 'services/onboarding/onboarding-v2';
 
 // ONLINE SERVICES
@@ -165,7 +167,6 @@ import { MediaBackupService } from './services/media-backup';
 import { HotkeysService } from './services/hotkeys';
 import { WidgetsService } from './services/widgets';
 import { HostsService } from './services/hosts';
-import { OnboardingService } from './services/onboarding';
 import { CacheUploaderService } from './services/cache-uploader';
 import { StreamlabelsService } from './services/streamlabels';
 import { SceneCollectionsService } from './services/scene-collections';
@@ -210,6 +211,9 @@ import { SignalsService } from 'services/signals-manager';
 import { TroubleshooterService } from 'services/troubleshooter';
 import { OnboardingV2Service } from 'services/onboarding/onboarding-v2';
 import { VirtualWebcamService } from 'services/virtual-webcam';
+import { StreamAvatarApiService } from 'services/stream-avatar/stream-avatar-api-service';
+import { AutomationsService } from 'services/stream-avatar/automations-service';
+import { AutomationsEngineService } from 'services/stream-avatar/automations-engine-service';
 
 export const AppServices = {
   AppService,
@@ -259,7 +263,6 @@ export const AppServices = {
   HotkeysService,
   WidgetsService,
   HostsService,
-  OnboardingService,
   CacheUploaderService,
   StreamlabelsService,
   SceneCollectionsService,
@@ -299,4 +302,7 @@ export const AppServices = {
   ReactiveDataService,
   TroubleshooterService,
   OnboardingV2Service,
+  StreamAvatarApiService,
+  AutomationsService,
+  AutomationsEngineService,
 };

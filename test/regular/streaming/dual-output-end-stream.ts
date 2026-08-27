@@ -8,7 +8,8 @@ import {
 import { clickButton, focusMain, waitForDisplayed } from '../../helpers/modules/core';
 import { toggleDualOutputMode } from '../../helpers/modules/dual-output';
 import { test, TExecutionContext, useWebdriver } from '../../helpers/webdriver';
-import { logOut, withUser } from '../../helpers/webdriver/user';
+import { logOut, releaseUserInPool, withUser } from '../../helpers/webdriver/user';
+import { addCustomDestination } from '../../helpers/modules/user';
 import { getApiClient } from '../../helpers/api-client';
 import { fillForm } from '../../helpers/modules/forms';
 import { sleep } from '../../helpers/sleep';
@@ -26,11 +27,13 @@ useWebdriver();
 
 test(
   'End Stream stops both dual output streams while vertical recording is active',
-  withUser('twitch', { prime: true, multistream: true }),
+  withUser('twitch', { prime: true }),
   async (t: TExecutionContext) => {
     t.timeout(3 * 60 * 1000, 'Dual output End Stream test timed out');
 
     const { streamingService } = await configureVerticalRecordingOnStreamStart(t);
+
+    const { user, name } = await addCustomDestination(t);
 
     try {
       await toggleDualOutputMode();
@@ -39,14 +42,13 @@ test(
       await clickGoLive();
       await waitForSettingsWindowLoaded();
       await fillForm({
-        youtube: true,
+        [name]: true,
       });
       await waitForSettingsWindowLoaded();
 
       await fillForm({
         twitchDisplay: 'horizontal',
-        primaryChat: 'Twitch',
-        youtubeDisplay: 'vertical',
+        [`${name}Display`]: 'vertical',
       });
       await submit();
 
@@ -66,6 +68,7 @@ test(
       t.is(status.vertical.streaming, EStreamingState.Offline);
     } finally {
       await stopStreamingIfNeeded(streamingService);
+      await releaseUserInPool(user);
       await logOut(t);
     }
   },

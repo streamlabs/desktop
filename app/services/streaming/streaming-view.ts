@@ -9,8 +9,8 @@ import {
 } from './streaming-api';
 import { StreamSettingsService, ICustomStreamDestination } from '../settings/streaming';
 import { UserService } from '../user';
-import { RestreamService, TStreamShiftStatus } from '../restream';
-import { TDisplayPlatforms, TDisplayDestinations } from '../dual-output';
+import { RestreamService, TOutputOrientation, TStreamShiftStatus } from '../restream';
+import { TDisplayPlatforms, TDisplayDestinations, DualOutputService } from '../dual-output';
 import { getPlatformService, TPlatform, TPlatformCapability, platformList } from '../platforms';
 import { TwitchService, TwitterService } from '../../app-services';
 import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremental-rollout';
@@ -53,6 +53,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   private get incrementalRolloutView() {
     return this.getServiceViews(IncrementalRolloutService);
+  }
+
+  private get dualOutputView() {
+    return this.getServiceViews(DualOutputService);
   }
 
   private get streamingState() {
@@ -238,31 +242,44 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns if the non-ultra user has a valid display assignment to go live
    */
   get hasValidDisplayAssignment(): boolean {
-    // Only check for non-ultra users
-    if (this.userView.isPrime) return true;
+    if (this.userView.isPrime) {
+      // For ultra users single output mode, no display validation is needed
+      if (!this.isDualOutputMode) return true;
 
-    const numEnabledPlatforms = this.enabledPlatforms.length;
-    const numEnabledDestinations = this.customDestinations.filter(dest => dest.enabled).length;
+      const horizontal =
+        this.activeDisplayPlatforms.horizontal.length +
+        this.activeDisplayDestinations.horizontal.length;
+      const vertical =
+        this.activeDisplayPlatforms.vertical.length +
+        this.activeDisplayDestinations.vertical.length;
 
-    // One enabled platform with no custom destinations can always stream
-    if (numEnabledPlatforms === 1 && numEnabledDestinations === 0) return true;
+      return horizontal > 0 && vertical > 0;
+    } else {
+      // Non-Ultra users have a cap of 1 platform in single output mode, and 2 platforms in dual output mode,
+      // with the exception of grandfathered TikTok users who can have 1 platform and 1 custom destination in single output mode.
+      const numEnabledPlatforms = this.enabledPlatforms.length;
+      const numEnabledDestinations = this.customDestinations.filter(dest => dest.enabled).length;
 
-    // Users can stream to two targets when in dual output mode if
-    //  1. 2 Platforms: 1 Horizontal, 1 Vertical
-    //  2. 1 Platform, 1 Custom Destination: 1 Horizontal, 1 Vertical
-    //  3. 1 Platform: Both Horizontal and Vertical
-    if (numEnabledPlatforms + numEnabledDestinations === 2) {
-      const numHorizontalPlatforms = this.activeDisplayPlatforms.horizontal.length;
-      const numVerticalPlatforms = this.activeDisplayPlatforms.vertical.length;
-      const numHorizontalDestinations = this.activeDisplayDestinations.horizontal.length;
-      const numVerticalDestinations = this.activeDisplayDestinations.vertical.length;
+      // One enabled platform with no custom destinations can always stream
+      if (numEnabledPlatforms === 1 && numEnabledDestinations === 0) return true;
 
-      // Handle case 1 and case 3. "Both" will show the same platform for both horizontal and vertical streams
-      if (numHorizontalPlatforms === 1 && numVerticalPlatforms === 1) return true;
+      // Users can stream to two targets when in dual output mode if
+      //  1. 2 Platforms: 1 Horizontal, 1 Vertical
+      //  2. 1 Platform, 1 Custom Destination: 1 Horizontal, 1 Vertical
+      //  3. 1 Platform: Both Horizontal and Vertical
+      if (numEnabledPlatforms + numEnabledDestinations === 2) {
+        const numHorizontalPlatforms = this.activeDisplayPlatforms.horizontal.length;
+        const numVerticalPlatforms = this.activeDisplayPlatforms.vertical.length;
+        const numHorizontalDestinations = this.activeDisplayDestinations.horizontal.length;
+        const numVerticalDestinations = this.activeDisplayDestinations.vertical.length;
 
-      // Handle case 2
-      if (numHorizontalPlatforms === 1 && numVerticalDestinations === 1) return true;
-      if (numVerticalPlatforms === 1 && numHorizontalDestinations === 1) return true;
+        // Handle case 1 and case 3. "Both" will show the same platform for both horizontal and vertical streams
+        if (numHorizontalPlatforms === 1 && numVerticalPlatforms === 1) return true;
+
+        // Handle case 2
+        if (numHorizontalPlatforms === 1 && numVerticalDestinations === 1) return true;
+        if (numVerticalPlatforms === 1 && numHorizontalDestinations === 1) return true;
+      }
     }
 
     return false;
@@ -338,6 +355,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.isMultiplatformMode || restreamDualOutputMode;
   }
 
+  /**
+   * Returns the displays that should use restream
+   * @remark In dual output mode, only displays that have multiple targets enabled should use restream
+   */
   get displaysToRestream(): TDisplayType[] {
     const displays = [] as TDisplayType[];
     if (!this.isDualOutputMode) return displays;
@@ -351,11 +372,34 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   /**
+   * Returns the displays that are enabled for the stream.
+   * @remark Live output editing requires that all streams use restream
+   */
+  get liveOutputDisplays(): TDisplayType[] {
+    const displays = [] as TDisplayType[];
+
+    if (this.horizontalStream.length > 0) {
+      displays.push('horizontal' as TDisplayType);
+    }
+
+    if (this.verticalStream.length > 0) {
+      displays.push('vertical' as TDisplayType);
+    }
+    return displays;
+  }
+
+  /**
    * Returns if dual output mode is on. Dual output mode is only available to logged in users
    */
   get isDualOutputMode(): boolean {
     if (!this.userView.isLoggedIn || !this.info) return false;
     return this.shouldSetupDualOutput;
+  }
+
+  getPlatformMode(platform: TPlatform): TOutputOrientation {
+    if (!this.isDualOutputMode) return 'landscape';
+    const display = this.getPlatformDisplayType(platform);
+    return display === 'vertical' ? 'portrait' : 'landscape';
   }
 
   getPlatformDisplayType(platform: TPlatform): TDisplayType {
@@ -443,6 +487,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get shouldSetupDualOutput(): boolean {
+    if (this.dualOutputView.dualOutputMode) return true;
     // Read from state to avoid circular dependency:
     // isDualOutputMode → shouldSetupDualOutput → this.settings → savedSettings → getSavedPlatformSettings → isDualOutputMode
     const savedSettings = this.streamSettingsView.state.goLiveSettings;

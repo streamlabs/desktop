@@ -18,7 +18,7 @@ export default function Chat(props: {
   let currentPosition: IVec2 | null;
   let currentSize: IVec2 | null;
 
-  let leaveFullScreenTrigger: Function;
+  let leaveFullScreenTrigger: () => void;
 
   useEffect(() => {
     const service = props.restream ? RestreamService : ChatService;

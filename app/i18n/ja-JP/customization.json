@@ -1,7 +1,5 @@
 {
   "Show the live dock (chat) on the left side": "左側にライブドック（チャット）を表示する",
-  "Chat Text Size": "チャットのテキストサイズ",
-  "Chat Width": "チャットの幅",
   "Enable BetterTTV emotes for Twitch": "Twitch で BetterTTV エモートを有効化する",
   "Enable FrankerFaceZ emotes for Twitch": "Twitch で FrankerFaceZ エモートを有効化する",
   "Editor Display": "エディタ ディスプレイ",
@@ -22,9 +20,9 @@
   "Current Tab": "[最新] タブ",
   "Delete Current Tab": "[最新を削除] タブ",
   "Enter Target URL": "ターゲット URL を入力",
-  "Obsidian Prime": "Obsidian Prime",
-  "Alabaster Prime": "Alabaster Prime",
   "Custom Navigation Bar": "カスタム ナビゲーションバー",
   "Obsidian Ultra": "Obsidian Ultra",
-  "Alabaster Ultra": "Alabaster Ultra"
+  "Alabaster Ultra": "Alabaster Ultra",
+  "Read": "Read",
+  "Post Comments": "Post Comments"
 }

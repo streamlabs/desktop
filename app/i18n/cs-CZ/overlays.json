@@ -4,7 +4,6 @@
   "Successfully saved %{filename} to %{filepath}": "Úspěšně uloženo %{filename} do %{filepath}",
   "Successfully loaded %{filename}.overlay": "Soubor %{filename}.overlay byl úspěšně načten",
   "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
-  "This is an experimental feature.  Use at your own risk.": "Toto je experimentální funkce. Její použití je na vlastní nebezpečí.",
   "Export Overlay File": "Exportovat soubor s překrytím",
   "Import Overlay File": "Importovat soubor s překrytím",
   "Import Widget File in Current Scene": "Importovat soubor widgetu v aktuální scéně",
@@ -28,5 +27,9 @@
   "Show Components Library": "Zobrazit knihovnu komponent",
   "Convert Dual Output Scene Collection": "Převést Kolekci scén Dual Output",
   "Repair Scene Collection": "Kolekce scén oprav",
-  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection.",
+  "Reactive Data": "Reactive Data",
+  "Manage your reactive data values": "Manage your reactive data values",
+  "Waiting for schema...": "Waiting for schema...",
+  "Waiting for state...": "Waiting for state..."
 }

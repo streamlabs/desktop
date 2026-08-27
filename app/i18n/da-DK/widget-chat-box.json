@@ -1,7 +1,6 @@
 {
   "Visual Settings": "Visuelle indstillinger",
   "Font Settings": "Skrifttypeindstillinger",
-  "Chatter": "Chatter",
   "Always Show Messages": "Vis altid besked",
   "Show Moderator Badges": "Vis moderatorikoner",
   "Show Subscriber Badges": "Vis abonnentikoner",
@@ -15,7 +14,6 @@
   "Text Color": "Tekstfarve",
   "Font Size": "Skriftstørrelse",
   "Muted Chatters": "Chatdeltagere der er gjort tavse",
-  "Hide Commands": "Skjul kommandoer",
   "Background Color": "Baggrundsfarve",
   "Show Platform Icons": "Vis ikoner for platformen",
   "Theme": "Tema",

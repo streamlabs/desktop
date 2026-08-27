@@ -14,12 +14,20 @@
   "Select an Event": "イベントを選択",
   "Trigger Type": "トリガータイプ",
   "Trigger Name": "トリガー名",
-  "Select a Trigger Type": "トリガータイプを選択",
   "Triggers are set up and ready to go! Feel free to uncheck the ones you don't want.": "トリガーの設定が完了しました！不要なものは自由にチェックを外してください。",
   "Global": "グローバル",
   "Triggered when a player reaches a cumulative total number of events.": "プレイヤーが累計イベント数を達成するとトリガーされます。",
   "Triggered when a player achieves a consecutive number of events without interruption.": "プレイヤーが中断なく連続イベント数を達成するとトリガーされます。",
   "No triggers available.": "利用可能なトリガーはありません。",
   "Animation Settings": "アニメーション設定",
-  "Real time alerts reacting to your in game events.": "ゲーム内のイベントに反応するリアルタイムアラートです。"
+  "Real time alerts reacting to your in game events.": "ゲーム内のイベントに反応するリアルタイムアラートです。",
+  "Event Type": "Event Type",
+  "General Game Settings": "General Game Settings",
+  "Enable All": "Enable All",
+  "Disable All": "Disable All",
+  "Total Amount": "Total Amount",
+  "Level Range Type": "Level Range Type",
+  "Action Settings": "Action Settings",
+  "Text To Speech": "Text To Speech",
+  "Voice": "Voice"
 }

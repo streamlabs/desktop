@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { webUtils } from 'electron';
 import * as remote from '@electron/remote';
 import { Services } from 'components-react/service-provider';
 import styles from './ClipsView.m.less';
@@ -135,7 +136,8 @@ export default function ClipsView({
     const files: string[] = [];
     let fi = e.dataTransfer.files.length;
     while (fi--) {
-      const file = e.dataTransfer.files.item(fi)?.path;
+      const item = e.dataTransfer.files.item(fi);
+      const file = item ? webUtils.getPathForFile(item) : '';
       if (file) files.push(file);
     }
 
@@ -482,7 +484,7 @@ function PreviewExportButton({
     <>
       {hasHighlights && (
         <Tooltip
-          title={$t('Export detectected timecodes as markers for editing software')}
+          title={$t('Export detected timecodes as markers for editing software')}
           placement="bottom"
         >
           <Button disabled={!hasHighlights} onClick={() => setModal({ modal: 'exportMarkers' })}>

@@ -1,14 +1,5 @@
 {
-  "Compose Tweet": "Skriv på Tweeter",
-  "Custom URL with": "Tilpasset URL med",
   "Share Your Stream": "Del din stream",
-  "Connect to Twitter": "Opret forbindelse til Twitter",
-  "Enable Tweet Sharing": "Aktivér Tweet-deling",
-  "Tweet when going live": "Tweet når du går live",
-  "Unlink Twitter": "Fjern tilslutning til Twitter",
-  "Tweet & Go Live": "Tweet, og gå live",
-  "Could not connect to Twitter": "Forbindelse til Twitter kunne ikke oprettes",
-  "Use Streamlabs URL": "Brug Streamlabs-URL",
   "X (Twitter) Chat Type": "X (Twitter)-chattype",
   "Disabled": "Deaktiveret",
   "Chat will be disabled": "Chat bliver deaktiveret",
@@ -21,6 +12,5 @@
   "Subscriber Only": "Kun abonnenter",
   "Only viewers that subscribe to you will be able to chat": "Kun seere, der abonnerer på dig, vil kunne chatte",
   "You need X premium account to go live on X.": "Du skal have en X-premiumkonto for at gå live på X.",
-  "You need X premium account to go live on X. Click to learn more": "Du skal have en X-premiumkonto for at gå live på X. Klik for at få mere at vide",
-  "Stream Shift Error: Twitter is not live": "Stream Shift-fejl: Twitter er ikke live"
+  "You need X premium account to go live on X. Click to learn more": "Du skal have en X-premiumkonto for at gå live på X. Klik for at få mere at vide"
 }

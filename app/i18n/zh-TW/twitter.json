@@ -1,14 +1,5 @@
 {
-  "Compose Tweet": "撰寫 Tweet 文章",
-  "Custom URL with": "自訂 URL",
   "Share Your Stream": "分享您的直播",
-  "Connect to Twitter": "連線到 Twitter",
-  "Enable Tweet Sharing": "啟用 Tweet 文章分享",
-  "Tweet when going live": "直播時發送 Tweet 文章",
-  "Unlink Twitter": "取消連結 Twitter 文章",
-  "Tweet & Go Live": "Tweet 文章與開始直播",
-  "Could not connect to Twitter": "無法連線到 Twitter",
-  "Use Streamlabs URL": "使用 Streamlabs URL",
   "X (Twitter) Chat Type": "X (Twitter) 聊天室類型",
   "Disabled": "已停用",
   "Chat will be disabled": "聊天室將停用",
@@ -21,6 +12,5 @@
   "Subscriber Only": "僅限訂閱者",
   "Only viewers that subscribe to you will be able to chat": "只有訂閱您的觀眾才能加入聊天",
   "You need X premium account to go live on X.": "您需要 X Premium 帳戶才能在 X 上直播。",
-  "You need X premium account to go live on X. Click to learn more": "您需要 X Premium 帳戶才能在 X 上直播。按一下以瞭解更多資訊",
-  "Stream Shift Error: Twitter is not live": "Stream Shift 錯誤：Twitter 未開播"
+  "You need X premium account to go live on X. Click to learn more": "您需要 X Premium 帳戶才能在 X 上直播。按一下以瞭解更多資訊"
 }

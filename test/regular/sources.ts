@@ -16,6 +16,7 @@ import {
   select,
   waitForDisplayed,
 } from '../helpers/modules/core';
+import { platform } from 'os';
 
 useWebdriver({ restartAppAfterEachTest: false });
 
@@ -141,7 +142,12 @@ test('Create/Remove Image Slideshow and view Source Properties', async t => {
 test('Create/Remove Text Source and view Source Properties', async t => {
   const sourceName = 'Text Source';
 
-  await addSource('Text (GDI+)', sourceName);
+  if (platform() === 'win32') {
+    await addSource('Text (GDI+)', sourceName);
+  } else {
+    await addSource('Text (FreeType 2)', sourceName);
+  }
+
   await focusMain();
 
   await selectSource(sourceName);
@@ -155,38 +161,39 @@ test('Create/Remove Text Source and view Source Properties', async t => {
   await waitForDisplayed('label=Font Size');
   await waitForDisplayed('label=Text');
 
-  await (await (await select('[data-name=read_from_file')).$('[type=checkbox]')).click();
+  if (platform() === 'win32') {
+    await (await (await select('[data-name=read_from_file')).$('[type=checkbox]')).click();
+    await waitForDisplayed('label=Text File (UTF-8)');
+    await waitForDisplayed('label=Text Transform');
+    await waitForDisplayed('label=Color');
+    await waitForDisplayed('label=Opacity');
 
-  await waitForDisplayed('label=Text File (UTF-8)');
-  await waitForDisplayed('label=Text Transform');
-  await waitForDisplayed('label=Color');
-  await waitForDisplayed('label=Opacity');
+    await (await (await select('[data-name=gradient')).$('[type=checkbox]')).click();
 
-  await (await (await select('[data-name=gradient')).$('[type=checkbox]')).click();
+    await waitForDisplayed('label=Gradient Color');
+    await waitForDisplayed('label=Gradient Opacity');
+    await waitForDisplayed('label=Gradient Direction');
 
-  await waitForDisplayed('label=Gradient Color');
-  await waitForDisplayed('label=Gradient Opacity');
-  await waitForDisplayed('label=Gradient Direction');
+    await waitForDisplayed('label=Background Color');
+    await waitForDisplayed('label=Background Opacity');
+    await waitForDisplayed('label=Alignment');
+    await waitForDisplayed('label=Vertical Alignment');
 
-  await waitForDisplayed('label=Background Color');
-  await waitForDisplayed('label=Background Opacity');
-  await waitForDisplayed('label=Alignment');
-  await waitForDisplayed('label=Vertical Alignment');
+    await (await (await select('[data-name=outline')).$('[type=checkbox]')).click();
 
-  await (await (await select('[data-name=outline')).$('[type=checkbox]')).click();
+    await waitForDisplayed('label=Outline Size');
+    await waitForDisplayed('label=Outline Color');
+    await waitForDisplayed('label=Outline Opacity');
 
-  await waitForDisplayed('label=Outline Size');
-  await waitForDisplayed('label=Outline Color');
-  await waitForDisplayed('label=Outline Opacity');
+    await (await (await select('[data-name=chatlog')).$('[type=checkbox]')).click();
 
-  await (await (await select('[data-name=chatlog')).$('[type=checkbox]')).click();
+    await waitForDisplayed('label=Chatlog Line Limit');
 
-  await waitForDisplayed('label=Chatlog Line Limit');
+    await (await (await select('[data-name=extents')).$('[type=checkbox]')).click();
 
-  await (await (await select('[data-name=extents')).$('[type=checkbox]')).click();
-
-  await waitForDisplayed('label=Width');
-  await waitForDisplayed('label=Height');
+    await waitForDisplayed('label=Width');
+    await waitForDisplayed('label=Height');
+  }
 
   await focusMain();
   await selectSource(sourceName);
@@ -229,8 +236,10 @@ test('Create/Remove Window Capture and view Source Properties', async t => {
   await focusChild();
 
   await waitForDisplayed('label=Window');
-  await waitForDisplayed('label=Capture Method');
-  await waitForDisplayed('label=Window Match Priority');
+  if (platform() === 'win32') {
+    await waitForDisplayed('label=Capture Method');
+    await waitForDisplayed('label=Window Match Priority');
+  }
 
   await focusMain();
   await selectSource(sourceName);
@@ -240,6 +249,10 @@ test('Create/Remove Window Capture and view Source Properties', async t => {
 });
 
 test('Create/Remove Game Capture and view Source Properties', async t => {
+  if (platform() === 'darwin') {
+    t.pass('Game Capture is not supported on macOS');
+    return;
+  }
   const sourceName = 'Game Capture';
 
   await addSource('Game Capture', sourceName);
@@ -274,14 +287,16 @@ test('Create/Remove Video Capture Device and view Source Properties', async t =>
 
   await focusChild();
   await waitForDisplayed('label=Device');
-  await waitForDisplayed('label=Resolution/FPS Type');
-  await waitForDisplayed('label=Resolution');
-  await waitForDisplayed('label=FPS');
-  await waitForDisplayed('label=Video Format');
-  await waitForDisplayed('label=Color Space');
-  await waitForDisplayed('label=Color Range');
-  await waitForDisplayed('label=Buffering');
-  await waitForDisplayed('label=Audio Output Mode');
+  if (platform() === 'win32') {
+    await waitForDisplayed('label=Resolution/FPS Type');
+    await waitForDisplayed('label=Resolution');
+    await waitForDisplayed('label=FPS');
+    await waitForDisplayed('label=Video Format');
+    await waitForDisplayed('label=Color Space');
+    await waitForDisplayed('label=Color Range');
+    await waitForDisplayed('label=Buffering');
+    await waitForDisplayed('label=Audio Output Mode');
+  }
 
   // this test fails on CI for some reason, investigating
   // await (await app.client.$('[data-name=use_custom_audio_device] input')).click();

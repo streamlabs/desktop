@@ -52,13 +52,7 @@ const THEME_MAP = {
 };
 
 export function Themes(p: IOnboardingStepProps) {
-  const {
-    OnboardingV2Service,
-    OnboardingService,
-    SceneCollectionsService,
-    NavigationService,
-    UserService,
-  } = Services;
+  const { OnboardingV2Service, SceneCollectionsService, NavigationService, UserService } = Services;
 
   const [installing, setInstalling] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -84,7 +78,7 @@ export function Themes(p: IOnboardingStepProps) {
     if (themeMetadata.current) return;
     Promise.all(
       idList.map(id => {
-        return OnboardingService.actions.return.fetchThemeData(id);
+        return OnboardingV2Service.actions.return.fetchThemeData(id);
       }),
     )
       .then(metadata => {
@@ -108,7 +102,7 @@ export function Themes(p: IOnboardingStepProps) {
         setProgress(progress.percent * 100),
       );
 
-      return sub.unsubscribe;
+      return () => sub.unsubscribe();
     }
   }, [installing]);
 
@@ -168,7 +162,11 @@ export function Themes(p: IOnboardingStepProps) {
             arrows={false}
           >
             {idList.map(id => (
-              <PreviewCard metadata={themeMetadata.current![id]} installOverlay={installOverlay} />
+              <PreviewCard
+                key={id}
+                metadata={themeMetadata.current![id]}
+                installOverlay={installOverlay}
+              />
             ))}
           </Carousel>
           <a style={{ marginTop: 80, display: 'block' }} onClick={browseOverlays}>
@@ -223,7 +221,7 @@ function PreviewCard(p: {
         {!isVideo(selectedImage) && <img src={selectedImage} className={themeS.bigPreview} />}
         <div className={themeS.imgColumn}>
           {previews.slice(0, 3).map(url => (
-            <div onClick={() => setSelectedImage(url)}>
+            <div key={url} onClick={() => setSelectedImage(url)}>
               {isVideo(url) && <video src={url} controls={false} loop />}
               {!isVideo(url) && <img src={url} />}
             </div>
