@@ -580,13 +580,14 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   /**
    * Validate the display when live output editing is enabled
    * @param display - The display saved for the platform
+   * @remark Use the dual output mode service state to prevent circular references
    * @warning The `get` prefix is required. This class is passed to `injectState` in
    * `useGoLiveSettings`, and slap registers any method not named `get*`/`is*`/`should*` as a
    * mutation. Calling a mutation from a getter dispatches it during the component snapshot,
    * which re-enters `updateUI` and recurses until the stack overflows.
    */
   private getValidatedDisplay(display?: TDisplayOutput): TDisplayType {
-    if (!display || display === 'both' || !this.isDualOutputMode) {
+    if (!display || display === 'both' || !this.dualOutputView.dualOutputMode) {
       return 'horizontal';
     }
 
