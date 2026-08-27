@@ -91,6 +91,7 @@ interface IKickStartStreamSettings {
 export interface IKickStartStreamOptions {
   title: string;
   game: string;
+  gameName?: string;
 }
 
 interface IKickRequestHeaders extends Dictionary<string> {
@@ -422,12 +423,24 @@ export class KickService
    */
   async searchGames(searchString: string): Promise<IGame[]> {
     const host = this.hostsService.streamlabs;
-    const url = `https://${host}/api/v5/slobs/kick/info?category=${searchString}`;
+    const params = new URLSearchParams({ category: searchString });
+    const url = `https://${host}/api/v5/slobs/kick/info?${params.toString()}`;
     const headers = authorizedHeaders(this.userService.apiToken);
     const request = new Request(url, { headers });
 
     return jfetch<IKickStreamInfoResponse>(request)
       .then(async res => {
+        if (searchString === '') {
+          console.debug('Kick search string is empty.');
+          return [] as IGame[];
+        }
+
+        // To prevent errors when the response is not valid return an empty array
+        if (typeof res !== 'object' || res === null) {
+          console.error('Received a non-JSON response fetching Kick categories info.');
+          return [] as IGame[];
+        }
+
         const data = res as IKickStreamInfoResponse;
 
         if (data.categories && data.categories.length > 0) {
@@ -452,7 +465,16 @@ export class KickService
   }
 
   async fetchGame(name: string): Promise<IGame> {
+    // Don't attempt to search for an empty game name
+    // Note: on app start, there will not be a game selected yet
+    if (!name || name === '') return Promise.resolve({ id: '', name: '', image: '' } as IGame);
+
     return (await this.searchGames(name))[0];
+  }
+
+  setGameInfo({ gameId, gameName }: { gameId: string; gameName: string }) {
+    this.UPDATE_STREAM_SETTINGS({ game: gameId });
+    this.SET_GAME_NAME(gameName);
   }
 
   /**
