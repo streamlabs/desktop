@@ -1,23 +1,23 @@
+import { Button, Layout } from 'antd';
+import cx from 'classnames';
+import { useVuex } from 'components-react/hooks';
+import { useRealmObject } from 'components-react/hooks/realm';
+import { Services } from 'components-react/service-provider';
+import HelpTip from 'components-react/shared/HelpTip';
+import Scrollable from 'components-react/shared/Scrollable';
 import React, { memo, useCallback, useEffect, useRef } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
-import cx from 'classnames';
-import { EMenuItemKey, ESubMenuItemKey } from 'services/side-nav';
 import { EDismissable } from 'services/dismissables';
 import { $t } from 'services/i18n';
-import { Services } from 'components-react/service-provider';
-import { useVuex } from 'components-react/hooks';
-import NavTools from './NavTools';
-import styles from './SideNav.m.less';
-import { Layout, Button } from 'antd';
-import Scrollable from 'components-react/shared/Scrollable';
-import HelpTip from 'components-react/shared/HelpTip';
+import { ENavMenuKey, ENavMenuTools, TNavMenuKey } from 'services/nav-menu';
 import FeaturesNav from './FeaturesNav';
-import { useRealmObject } from 'components-react/hooks/realm';
+import styles from './NavMenu.m.less';
+import NavTools from './NavTools';
 
 const { Sider } = Layout;
 
-export default function SideNav() {
-  const { CustomizationService, SideNavService, WindowsService } = Services;
+export default function NavMenu() {
+  const { CustomizationService, NavMenuService, WindowsService } = Services;
 
   const {
     currentMenuItem,
@@ -27,10 +27,10 @@ export default function SideNav() {
     updateStyleBlockers,
     hideStyleBlockers,
   } = useVuex(() => ({
-    currentMenuItem: SideNavService.views.currentMenuItem,
-    setCurrentMenuItem: SideNavService.actions.setCurrentMenuItem,
-    isOpen: SideNavService.views.isOpen,
-    toggleMenuStatus: SideNavService.actions.toggleMenuStatus,
+    currentMenuItem: NavMenuService.views.currentMenuItem,
+    setCurrentMenuItem: NavMenuService.actions.setCurrentMenuItem,
+    isOpen: NavMenuService.views.isOpen,
+    toggleMenuStatus: NavMenuService.actions.toggleMenuStatus,
     updateStyleBlockers: WindowsService.actions.updateStyleBlockers,
     hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
   }));
@@ -79,12 +79,12 @@ export default function SideNav() {
     // when opening/closing the navbar swap the submenu current menu item
     // to correctly display selected color
     const subMenuItems = {
-      [EMenuItemKey.Themes]: ESubMenuItemKey.Scene,
-      [ESubMenuItemKey.Scene]: EMenuItemKey.Themes,
-      [EMenuItemKey.AppStore]: ESubMenuItemKey.AppsStoreHome,
-      [ESubMenuItemKey.AppsStoreHome]: EMenuItemKey.AppStore,
+      [ENavMenuKey.Themes]: ENavMenuTools.Scene,
+      [ENavMenuKey.Scene]: ENavMenuKey.Themes,
+      [ENavMenuKey.AppStore]: ENavMenuTools.AppsStoreHome,
+      [ENavMenuKey.AppsStoreHome]: ENavMenuKey.AppStore,
     };
-    if (Object.keys(subMenuItems).includes(currentMenuItem as EMenuItemKey)) {
+    if (Object.keys(subMenuItems).includes(currentMenuItem as TNavMenuKey)) {
       // TODO: index
       // @ts-ignore
       setCurrentMenuItem(subMenuItems[currentMenuItem]);
@@ -100,19 +100,19 @@ export default function SideNav() {
   }, [updateSubMenu, toggleMenuStatus, updateStyleBlockers]);
 
   return (
-    <Layout hasSider className="side-nav">
+    <Layout hasSider className="nav-menu">
       <Sider
         collapsible
         collapsed={!isOpen}
         trigger={null}
         className={cx(
-          styles.sidenavSider,
+          styles.navMenuSider,
           !isOpen && styles.siderClosed,
           !leftDock && styles.noLeftDock,
         )}
         ref={sider}
       >
-        <Scrollable className={cx(styles.sidenavScroll)}>
+        <Scrollable className={cx(styles.navMenuScroll)}>
           {/* top navigation menu */}
           <FeaturesNav />
 
@@ -127,7 +127,7 @@ export default function SideNav() {
       <Button
         type="primary"
         className={cx(
-          styles.sidenavButton,
+          styles.navMenuButton,
           !isOpen && styles.flipped,
           isOpen && styles.siderOpen,
           leftDock && styles.leftDock,
