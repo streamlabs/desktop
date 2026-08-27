@@ -42,13 +42,12 @@ export const V2_PROTOCOL_VERSION = 1;
  * `minToolVersion`. Tools without one default to 1, so a bump never hides
  * anything from clients that are already out there.
  *
- * 2 — plugin gains audio_set_muted and change_filter.
- * 3 — plugin owns the poll countdown: it posts the question on `poll_started`
- *     and closes the poll with a `poll_chat_process` trigger. An older plugin
- *     ignores those fields and never fires the trigger, so it would open a poll
- *     nothing can close — poll_chat pins this.
+ * Still 1: v2 has not shipped, so there is no client in the wild to be older
+ * than anything. Both clients advertise this very constant, so a pin can only
+ * bite once a release lags the API — bump on the first release that adds a tool
+ * a shipped client cannot run, and pin that tool then, not before.
  */
-export const V2_TOOL_PROTOCOL_VERSION = 3;
+export const V2_TOOL_PROTOCOL_VERSION = 1;
 
 // ─── identity ────────────────────────────────────────────────────────────────
 
