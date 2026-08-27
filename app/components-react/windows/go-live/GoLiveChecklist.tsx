@@ -4,11 +4,7 @@ import React, { HTMLAttributes, useEffect, useMemo } from 'react';
 import { Services } from '../../service-provider';
 import { $t } from '../../../services/i18n';
 import { TGoLiveChecklistItemState } from '../../../services/streaming';
-import {
-  ICustomStreamDestination,
-  TDestinationId,
-  getDestinationId,
-} from '../../../services/settings/streaming';
+import { TDestinationId, getDestinationId } from '../../../services/settings/streaming';
 import cx from 'classnames';
 import GoLiveError from './GoLiveError';
 import MessageLayout from './MessageLayout';

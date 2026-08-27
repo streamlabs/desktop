@@ -293,8 +293,8 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   /**
    * Returns if the user can or should use the restream service
-  */
-get isMultiplatformMode(): boolean {
+   */
+  get isMultiplatformMode(): boolean {
     // Order matters here when checking for which features are enabled.
     // Stream shift mode and live output editing take precedence over
     // dual output mode.
@@ -363,22 +363,7 @@ get isMultiplatformMode(): boolean {
       return false;
     }
     return this.streamSettingsView.state.goLiveSettings?.liveOutputEditing ?? false;
-  /**
-   * The persisted live output editing setting, gated by the feature flag
-   * @remark Use this wherever the persisted setting is read outside of
-   * `settings`, so that a setting persisted while the flag was granted
-   * cannot keep switching on live output editing behavior after it is
-   * revoked.
-   */
-  private get savedLiveOutputEditing(): boolean {
-    if (!this.incrementalRolloutView.featureIsEnabled(EAvailableFeatures.liveOutputEditing)) {
-      return false;
-    }
-    
-    // Read `goLiveSettings` from state directly instead of `this.settings`
-    // to avoid the circular dependency:
-    // settings → savedSettings → getSavedPlatformSettings → settings.
-    return this.streamSettingsView.state.goLiveSettings?.liveOutputEditing ?? false;
+  }
 
   /**
    * Returns if the restream service should be set up when going live

@@ -94,7 +94,7 @@ import { RecordingModeService } from 'services/recording-mode';
 import { MarkersService } from 'services/markers';
 import { byOS, OS } from 'util/operating-systems';
 import { DualOutputService } from 'services/dual-output';
-import { capitalize, get } from 'lodash';
+import { capitalize } from 'lodash';
 import { TwitchService, YoutubeService } from 'app-services';
 import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services/core/signals';
 import { SignalsService } from 'services/signals-manager';
@@ -1230,7 +1230,7 @@ export class StreamingService
       const allStartDestinations = [...updateDestinations.start, ...dualStreamDestinations];
 
       // Add targets to restream in a single request
-      if (willAddTargets) {
+      if (willAddTargets || allStartDestinations.length > 0) {
         // Targets can be added for a display that is not live yet, which means that display needs to
         // go through the full go live flow to create the streaming instance and restream session.
         const displaysToSetup = this.getDisplaysToSetup(
