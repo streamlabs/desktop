@@ -10,7 +10,7 @@ interface IMenuProps extends MenuItemProps {
   type?: 'item' | 'submenu' | 'app';
 }
 
-export default function Menutem(p: IMenuProps) {
+export default function MenuItem(p: IMenuProps) {
   const { title, style, type = 'item' } = p;
 
   return (
@@ -22,7 +22,7 @@ export default function Menutem(p: IMenuProps) {
             p?.className,
             type === 'item' && styles.rootMenuItem,
             type === 'submenu' && styles.submenuItem,
-            type === 'app' && styles.appSidenavItem,
+            type === 'app' && styles.appNavMenuItem,
           )}
           title={false}
         >
