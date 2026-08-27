@@ -1,6 +1,5 @@
 {
   "Banned Media": "封禁的媒體",
-  "Check Banned Media": "檢查封禁的媒體",
   "Price Per Second": "每秒價格",
   "Min. Amount to Share": "分享的最小金額",
   "Max Duration": "最大持續時間",
@@ -8,8 +7,5 @@
   "Spam Security": "垃圾訊息安全性",
   "The time between videos the next video has to buffer.": "視訊與下一視訊之間必須進行緩衝處理的時間。",
   "Manage Media Settings": "管理媒體設定",
-  "The maximum duration in seconds that media can be played, regardless of amount donated. The default value is 60 seconds.": "無論捐贈金額多少，媒體播放以秒數表示的最大持續時間。預設值是 60 秒。",
-  "This slider helps you filter shared media before it can be submitted.\nOff: No security\nLow: 65%+ rating, 5k+ views\nMedium: 75%+ rating, 40k+ views\nHigh: 80%+ rating, 300k+ views\nVery High: 85%+ rating, 900k+ views": "此滑桿協助您在提交媒體之前篩選分享的媒體。\n關閉：不使用安全性\n低：65%+ 評分，5k+ 觀看\n中：75%+ 評分，40k+ 觀看\n高：80%+ 評分，300k+ 觀看\n非常高：85%+ 評分，900k+ 觀看",
-  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "捐贈者進行捐贈以分享媒體必須滿足的最小金額。預設值是 5.00 美元",
-  "In order to control length, you can decide how much it costs per second to share media. Setting this to 0.30 would mean that for $10, media would play for 30 seconds. The default value is 0.10.": "為了控制長度，您可以決定分享媒體的每秒價格是多多。將此設定為 0.30 表示 播放媒體 30 秒需支付 10 美元。預設值是 0.10。"
+  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "捐贈者進行捐贈以分享媒體必須滿足的最小金額。預設值是 5.00 美元"
 }
