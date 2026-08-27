@@ -237,10 +237,12 @@ export default function AiHighlighterToggle({
                   )}
                   {isUpdateMode && (
                     <CloseOutlined
+                      aria-label={$t('Dismiss')}
                       style={{ color: '#BDC2C4', marginLeft: '8px' }}
-                      onClick={() =>
-                        DismissablesService.actions.dismiss(EDismissable.HighlighterBanner)
-                      }
+                      onClick={e => {
+                        e.stopPropagation();
+                        DismissablesService.actions.dismiss(EDismissable.HighlighterBanner);
+                      }}
                     />
                   )}
                 </div>
