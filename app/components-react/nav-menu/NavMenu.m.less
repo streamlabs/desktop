@@ -3,268 +3,55 @@
 @import '../../styles/badges';
 @import '../../styles/ultra';
 
-.nav-menu-sider {
+.nav-menu {
   position: relative;
-  z-index: 990; // allows logout confirmation modal to show above resize bars
   width: 100%;
-  overflow: visible;
-  transition: width 300ms;
 
-  .app-menu-item {
-    padding-left: 40px !important;
+  // The unified Menu fills the bar; rc-menu renders its own flex container.
+  :global(.ant-menu-horizontal) {
+    width: 100%;
   }
 
-  :global(li.ant-menu-item),
-  :global(li.ant-menu-submenu) {
-    background: none;
-    color: var(--paragraph);
-    height: unset !important;
-    min-height: 30px !important;
-    min-width: 200px !important;
-    line-height: normal !important;
-    margin: 10px 0 !important;
-    overflow-wrap: break-word !important;
-    padding-bottom: 0px;
+  // Allow logout confirmation modal to show above resize bars
+  z-index: 990;
+  overflow: visible;
 
-    :active,
-    :link,
-    :focus,
-    :visited {
-      background: none;
+  .link-badge {
+    transform: scale(1.2, 1.2);
+    margin: auto;
+    display: block;
+    border: 1px solid var(--section-alt);
+    font-size: 8px;
+  }
+
+  // Fixed height (matching antd's own @menu-horizontal-line-height) so every
+  // item — icon-only, icon+label, or a raw control like the profile dropdown —
+  // sits at the same vertical position instead of sizing to its own content.
+  :global(.ant-menu-item) {
+    height: 46px;
+    padding: 0 16px !important;
+    background: none !important;
+    color: var(--paragraph) !important;
+    display: flex;
+    align-items: center;
+
+    &:global(.ant-menu-item-selected)::after {
+      display: none;
+    }
+
+    i:not(.link-badge) {
+      font-size: 14px;
     }
 
     svg {
       fill: var(--paragraph);
       width: 14px;
       height: 14px;
-    }
-  }
-
-  :global(li.ant-menu-item):not(.active):hover svg,
-  :global(li.ant-menu-submenu):not(.active):hover svg {
-    fill: var(--title) !important;
-  }
-
-  :global(li.ant-menu-item.ant-menu-item-selected),
-  :global(li.ant-menu-submenu.ant-menu-item-selected) {
-    background: none;
-
-    &::after {
-      display: none;
-    }
-  }
-}
-
-.nav-menu-scroll {
-  min-height: 100%;
-  height: 100%;
-  min-width: 50px;
-  padding-right: 0 !important;
-  display: flex;
-  flex-direction: column;
-
-  :global(.os-content) {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100% !important;
-  }
-}
-
-button.nav-menu-button {
-  height: 100%;
-  background-color: var(--sider);
-  border: 0;
-  border-left: 1px solid var(--border);
-  border-right: 1px solid var(--border);
-  border-radius: 0;
-  padding-right: 3px;
-  padding-left: 3px;
-  padding-bottom: 5px;
-
-  &:hover,
-  &:focus,
-  &:active {
-    background-color: var(--sider);
-    border: 0;
-    border-left: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-  }
-
-  i {
-    color: var(--icon);
-    font-size: 12px;
-  }
-
-  &.left-dock {
-    border-left: 0;
-
-    @media (max-width: 1070px) {
-      border-left: 1px solid var(--border) !important;
-      border-right: 1px solid var(--border) !important;
-    }
-  }
-
-  &.sider-open {
-    border: 0;
-    border-left: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    padding-left: 2px;
-    padding-right: 3px;
-
-    &.left-dock {
-      border-left: 1px solid var(--border) !important;
-
-      @media (min-width: 1070px) {
-        border-right: 0 !important;
-      }
-    }
-  }
-
-  &.flipped {
-    transform: scaleX(-1);
-  }
-}
-
-.sider-closed {
-  width: 50px !important;
-  min-width: 50px !important;
-  max-width: 50px !important;
-}
-
-.top-nav {
-  flex: 1 1 auto;
-  border-right: 0px !important;
-
-  &.closed {
-    :global(.ant-menu-item-icon) {
-      i {
-        font-size: 18px;
-      }
+      margin-right: 10px;
     }
 
-    :global(.ant-menu-item:hover),
-    :global(.ant-menu-submenu:hover) {
-      i,
-      svg {
-        transition: all 0.2s ease-in-out !important;
-        transform: scale(1.2, 1.2) !important;
-      }
-    }
-
-    :global(i.ant-menu-submenu-arrow) {
-      display: none !important;
-    }
-
-    :global(div.ant-menu.ant-menu-sub.ant-menu-inline),
-    :global(span.ant-menu-title-content) {
-      visibility: hidden;
-      opacity: 0;
-    }
-
-    .app-icons {
-      min-width: unset;
-      border-radius: 50%;
-      width: 25px;
-      height: 25px;
-      transform: translate(-18%, 0%);
-      transition: width 0.15s ease-in-out, height 0.15s ease-in-out;
-
-      &:hover {
-        transition: transform 0.2s ease-in-out;
-        transform: scale(1.1, 1.1) translate(-15%, 0%);
-      }
-    }
-
-    :global(li.ant-menu-item),
-    :global(div.ant-menu-submenu-title) {
-      align-items: center;
-      display: flex;
-      overflow: visible;
+    &:hover:not(:active) svg {
+      fill: var(--title);
     }
   }
-
-  &.open {
-    :global(li.ant-menu-item),
-    :global(li.ant-menu-submenu) {
-      overflow: unset !important;
-      text-overflow: unset !important;
-      overflow-wrap: break-word !important;
-      padding-bottom: 0px;
-      white-space: normal !important;
-
-      svg {
-        margin-right: 10px;
-      }
-    }
-
-    .app-icons {
-      border-radius: 50%;
-      width: 17px;
-      height: 17px;
-    }
-
-    :global(div.ant-menu-submenu-title) {
-      padding-left: 16px !important;
-    }
-
-    :global(div.ant-menu.ant-menu-sub.ant-menu-inline),
-    :global(span.ant-menu-title-content) {
-      visibility: visible !important;
-      opacity: 1 !important;
-      overflow: visible;
-      transition: opacity 150ms ease-in 150ms;
-    }
-  }
-
-  :global(.ant-menu-submenu-vertical .ant-menu-submenu-popup) {
-    display: none !important;
-  }
-}
-
-.studio-mode {
-  color: var(--nav-active) !important;
-
-  i {
-    color: var(--nav-active) !important;
-  }
-}
-
-.active {
-  background-color: none;
-  border: none;
-  color: var(--nav-active) !important;
-
-  i {
-    color: var(--nav-active) !important;
-  }
-
-  svg {
-    fill: var(--nav-active) !important;
-  }
-}
-
-.ultra {
-  &:not(.active) {
-    .ultra-text() !important;
-
-    i {
-      .ultra-text('warm') !important;
-    }
-  }
-}
-
-.toggle-error {
-  padding: 0px !important;
-  text-align: unset !important;
-  :global(.ant-message-notice-content) {
-    padding: 4px 16px;
-  }
-}
-
-.beta-tag {
-  border-radius: 4px;
-  background-color: var(--button);
-  color: var(--paragraph);
-  padding: 2px 6px;
-  margin-left: 8px;
 }

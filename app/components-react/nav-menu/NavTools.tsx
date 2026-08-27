@@ -15,7 +15,12 @@ import { Services } from '../service-provider';
 import styles from './NavTools.m.less';
 import PlatformIndicator from './PlatformIndicator';
 
-export default memo(function NavTools() {
+/**
+ * Returns nav tool items (fragment) and any modals that must live outside
+ * the <Menu> element. Called as a hook from NavMenu so that rc-menu's overflow
+ * measurement sees individual items rather than an opaque component.
+ */
+export function useNavTools() {
   const {
     UserService,
     SettingsService,
@@ -56,7 +61,7 @@ export default memo(function NavTools() {
   }
 
   async function openDashboard(page?: string) {
-    UsageStatisticsService.actions.recordClick('SideNav2', page || 'dashboard');
+    UsageStatisticsService.actions.recordClick('NavMenu', page || 'dashboard');
     if (dashboardOpening) return;
     setDashboardOpening(true);
 
@@ -83,12 +88,12 @@ export default memo(function NavTools() {
     : $t('Are you sure you want to log out?');
 
   function openHelp() {
-    UsageStatisticsService.actions.recordClick('SideNav2', 'help');
+    UsageStatisticsService.actions.recordClick('NavMenu', 'help');
     openSettingsWindow(ESettingsCategory.GetSupport);
   }
 
   async function upgradeToPrime() {
-    UsageStatisticsService.actions.recordClick('SideNav2', 'prime');
+    UsageStatisticsService.actions.recordClick('NavMenu', 'prime');
     MagicLinkService.linkToPrime('slobs-side-nav');
   }
 
@@ -107,7 +112,7 @@ export default memo(function NavTools() {
     setShowModal(status);
   };
 
-  return (
+  const items = (
     <>
       <Menu
         key="tools-nav"
@@ -193,7 +198,11 @@ export default memo(function NavTools() {
       />
     </>
   );
-});
+
+  const modals = <>{/* TODO @nav: Add relevant modals */}</>;
+
+  return { items, modals };
+}
 
 function NavToolsItem(p: {
   menuItem: TNavMenuItem;
