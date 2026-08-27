@@ -424,6 +424,11 @@ export class KickService
    * show live approval status.
    */
   async searchGames(searchString: string): Promise<IGame[]> {
+    if (!searchString || searchString === '') {
+      console.debug('Kick search string is empty.');
+      return [] as IGame[];
+    }
+
     const host = this.hostsService.streamlabs;
     const params = new URLSearchParams({ category: searchString });
     const url = `https://${host}/api/v5/slobs/kick/info?${params.toString()}`;
@@ -432,11 +437,6 @@ export class KickService
 
     return jfetch<IKickStreamInfoResponse>(request)
       .then(async res => {
-        if (searchString === '') {
-          console.debug('Kick search string is empty.');
-          return [] as IGame[];
-        }
-
         // To prevent errors when the response is not valid return an empty array
         if (typeof res !== 'object' || res === null) {
           console.error('Received a non-JSON response fetching Kick categories info.');
