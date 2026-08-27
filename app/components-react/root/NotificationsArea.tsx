@@ -161,15 +161,14 @@ export function NotificationsBell() {
 }
 
 /**
- * The actual toast messages (and the YT-not-enabled banner) render here.
- * message.config() below points the app-wide antd message container at
- * this div, so every `message.*` call across the app (StudioEditor,
- * SourceSelector, NavTools, ...) renders here. Rendered once from
- * StudioFooter, inline in the bottom bar.
+ * The actual toast messages (and the YT-not-enabled banner) render here. The
+ * `message.config()` below points the app-wide antd message container at this
+ * div, so every `message.*` call across the app (StudioEditor, SourceSelector,
+ * ToolsNav, ...) renders here.
  *
- * @note The top nav bar sits above the Studio Editor's native display
- * surface, and a toast host floating there would need style blockers
- * to paint above it; the bottom bar doesn't.
+ * @note The top nav bar sits above the Studio Editor's native display surface,
+ * and a toast host floating there would need style blockers to paint above it;
+ * the bottom bar doesn't.
  */
 export function NotificationsToastHost() {
   const { NotificationsService } = Services;
