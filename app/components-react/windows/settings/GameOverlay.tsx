@@ -116,9 +116,7 @@ export function GameOverlay() {
           </div>
           <div style={{ marginBottom: '16px' }}>
             {$t(
-              'The in-game overlay is a new experimental feature that allows you to view chat and events ' +
-                'overlayed on top of your game.  This overlay may not work with certain games running in exclusive ' +
-                'fullscreen mode.  For best results, we recommend running your game in windowed-fullscreen mode.',
+              'The in-game overlay is a new experimental feature that allows you to view chat and events overlayed on top of your game.  This overlay may not work with certain games running in exclusive fullscreen mode.  For best results, we recommend running your game in windowed-fullscreen mode.',
             )}
           </div>
         </div>

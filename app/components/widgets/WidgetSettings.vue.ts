@@ -34,8 +34,7 @@ export default class WidgetSettings<
   requestState: 'success' | 'pending' | 'fail' = 'pending';
 
   fontFamilyTooltip = $t(
-    'The Google Font to use for the text. Visit http://google.com/fonts to find one! Popular Fonts include:' +
-      ' Open Sans, Roboto, Oswald, Lato, and Droid Sans.',
+    'The Google Font to use for the text. Visit http://google.com/fonts to find one! Popular Fonts include: Open Sans, Roboto, Oswald, Lato, and Droid Sans.',
   );
 
   get navItems(): IWidgetNavItem[] {

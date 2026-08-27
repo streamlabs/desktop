@@ -9,6 +9,7 @@ import { ExecutionContext } from 'ava';
 import {
   click,
   clickIfDisplayed,
+  clickWhenDisplayed,
   focusChild,
   focusMain,
   isDisplayed,
@@ -50,21 +51,19 @@ test('OBS Importer', async t => {
     t.fail('Onboarding welcome page not shown');
     return;
   }
-  await click('a=Log In');
-  await isDisplayed('button=Twitch');
+  await clickWhenDisplayed('a=Log In', { timeout: 15000 });
+  await waitForDisplayed('button=Twitch');
 
   await logIn(t, 'twitch', { prime: false }, false, true);
   await sleep(1000);
   await clickIfDisplayed('button=Skip');
+  await waitForDisplayed('h1=Connect Platforms');
   await clickIfDisplayed('button=Skip');
-
   // import from OBS
-  await click('button=Start Import');
-
-  // skip Ultra
+  await clickIfDisplayed('button=Start Import');
   await clickIfDisplayed('button=Skip');
-  // skip Hardware
-  await click('button=Skip');
+  await waitForDisplayed('h1=Set Up Your Mic & Webcam');
+  await clickIfDisplayed('button=Skip');
 
   await waitForDisplayed('[data-name=SceneSelector]');
 
