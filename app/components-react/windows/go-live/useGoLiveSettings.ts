@@ -138,6 +138,11 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
             id: otherEnabledTargetIndex.toString(),
           };
 
+          console.log(
+            'updating ',
+            this.state.customDestinations[otherEnabledTargetIndex]?.name,
+            ' to disabled',
+          );
           alertInfo({
             name: 'both-display-info-alert',
             text: $t(
@@ -258,11 +263,9 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
     (Object.keys(fields) as TCommonFieldName[]).forEach((fieldName: TCommonFieldName) => {
       const view = this.getView();
       const value = fields[fieldName];
-      // In the Edit Stream window, skip platforms using custom fields
-      const platforms =
-        shouldChangeAllPlatforms || this.state.isUpdateMode
-          ? view.platformsWithoutCustomFields
-          : view.enabledPlatforms;
+      const platforms = shouldChangeAllPlatforms
+        ? view.platformsWithoutCustomFields
+        : view.enabledPlatforms;
       platforms.forEach(platform => {
         if (!view.supports(fieldName, [platform])) return;
         const platformSettings = getDefined(this.state.platforms[platform]);
@@ -294,12 +297,6 @@ export class GoLiveSettingsModule {
   state = injectState(GoLiveSettingsState);
 
   cooldownTimer = new Subject<boolean>();
-
-  /**
-   * Whether the targets have already been restored on teardown
-   * @remark `destroy()` fires more than once as slap disposes nested scopes
-   */
-  private targetsRestored = false;
 
   constructor(
     public form: FormInstance,
@@ -385,15 +382,6 @@ export class GoLiveSettingsModule {
      */
     const { dualOutputMode } = DualOutputService.state;
     if (dualOutputMode && settings.streamShift) {
-      settings.streamShift = false;
-    }
-
-    /**
-     * The two features are mutually exclusive, so a persisted pair with both switched on would
-     * disable both cards and leave the user unable to switch either off. Live output editing wins,
-     * matching `isStreamShiftDisabled`. Already gated by the feature flag via `savedLiveOutputEditing`.
-     */
-    if (settings.liveOutputEditing && settings.streamShift) {
       settings.streamShift = false;
     }
 
@@ -702,7 +690,6 @@ export class GoLiveSettingsModule {
   async goLive() {
     if (await this.validate()) {
       Services.StreamingService.actions.goLive(this.state.settings);
-      // await Services.StreamingService.actions.return.goLive(this.state.settings);
     }
   }
   /**
@@ -744,63 +731,6 @@ export class GoLiveSettingsModule {
       );
       this.syncToLiveTargets();
     }
-  }
-
-  /**
-   * Restore targets in the Edit Stream window
-   * @remark The destination switchers in the Edit Stream window persist a target as soon as it is
-   * switched, so a user who toggles one and closes the window without updating would leave the
-   * saved settings claiming a target that never started, or dropping one that is still streaming.
-   * Reset the enabled flags to the snapshot taken when the window opened. `updateStream` refreshes
-   * that snapshot on success, so this is a no-op once an update has actually been applied.
-   * @remark When called from the `destroy()` hook of the Edit Stream window's `extend()`, two rules
-   * apply to anything called from one of those, and getting either wrong fails at window close
-   * where it is easy to miss:
-   *
-   * 1. It runs more than once. `extend()` registers the returned object as a child provider of the
-   *    module (see slap's `useComponentView`), and on unmount both the child provider's own
-   *    `unregister` and the parent module's `childScope.dispose()` reach it.
-   * 2. Module state is already gone. Reading `this.state` throws, because the state controller is
-   *    disposed by the time the `useComponentView` hook runs. Read service state or plain fields
-   *    on the module instead because `activePlatforms` and `activeDestinations` survive since they
-   *    are constructor properties, and the settings are read back from `StreamingService.views`.
-   *
-   * `GoLiveWindow`'s `destroy()` satisfies both without a guard: `resetInfo()` is maintains the same
-   * values and `module.checklist` resolves to streaming service state rather than module state.
-   */
-  restoreTargets() {
-    if (!this.isUpdateMode || !this.activePlatforms || !this.activeDestinations) return;
-    if (this.targetsRestored) return;
-    this.targetsRestored = true;
-
-    const livePlatforms = new Set(this.activePlatforms);
-    const liveDestinations = new Set(
-      this.activeDestinations.map(dest => `${dest.url}/${dest.streamKey}`),
-    );
-
-    const savedSettings = Services.StreamingService.views.savedSettings;
-    if (!savedSettings?.platforms) return;
-
-    // Restore platforms
-    const platforms = cloneDeep(savedSettings.platforms);
-    (Object.keys(platforms) as TPlatform[]).forEach(platform => {
-      const platformSettings = platforms[platform];
-      if (!platformSettings) return;
-      platformSettings.enabled = livePlatforms.has(platform);
-    });
-
-    // Restore custom destinations
-    const customDestinations = (savedSettings.customDestinations ?? []).map(dest => ({
-      ...dest,
-      enabled: liveDestinations.has(`${dest.url}/${dest.streamKey}`),
-    }));
-
-    // Must use `setGoLiveSettings` instead of the module's `updateSettings` because the
-    // module state is already gone when this is called from `destroy()`.
-    Services.StreamSettingsService.actions.setGoLiveSettings({
-      platforms,
-      customDestinations,
-    });
   }
 
   /**
@@ -865,6 +795,22 @@ export class GoLiveSettingsModule {
       this.isPatreonEnabled ||
       this.state.isLiveOutputEditingEnabled ||
       this.isDualOutputMode
+    );
+  }
+
+  /**
+   * Override the default behavior of toggling stream shift so that the user is still
+   * able to toggle stream shift on/off when they have a single platform enabled and
+   * that platform has its display set to 'both'. Otherwise, the isDualOutputMode check
+   * would prevent the user from toggling stream shift on/off.
+   * @remark Retained for `StreamShiftToggle`, which is still the stream shift control on this
+   * branch. The card-based UI that replaces it is not part of this change.
+   */
+  get forceStreamShiftToggleEnabled() {
+    return (
+      this.state.isStreamShiftMode &&
+      this.state.enabledPlatforms.length === 1 &&
+      this.state.settings.platforms[this.state.enabledPlatforms[0]]?.display === 'both'
     );
   }
 

@@ -42,7 +42,6 @@ export const DestinationSwitchers = memo((p: { disabled?: boolean }) => {
     isTikTokGrandfathered,
     activeDisplayPlatforms,
     isUpdateMode,
-    isLiveOutputEditingEnabled,
   } = useGoLiveSettings().extend(module => ({
     get renderedPlatforms() {
       // Some platforms are always shown, even if not linked so add them to the list of platforms to display
@@ -63,33 +62,18 @@ export const DestinationSwitchers = memo((p: { disabled?: boolean }) => {
   enabledDestRef.current = enabledDestinations;
 
   const disabledHorizontalUltraSwitcher = useMemo(() => {
-    // In live output editing, the user is able to toggle platforms freely, so don't disable any switchers
-    if (isLiveOutputEditingEnabled) return null;
-    // In dual output mode, if there is only one platform for a display orientation, disable the switcher for that platform
-    if (
-      isDualOutputMode &&
-      isPrime &&
-      isUpdateMode &&
-      activeDisplayPlatforms.horizontal.length < 2
-    ) {
-      return activeDisplayPlatforms.horizontal[0];
-    }
+    const shouldDisable =
+      isDualOutputMode && isPrime && isUpdateMode && activeDisplayPlatforms.horizontal.length < 2;
 
-    // By default, don't disable any switchers
-    return null;
-  }, [isDualOutputMode, isPrime, isUpdateMode, activeDisplayPlatforms, isLiveOutputEditingEnabled]);
+    return shouldDisable ? activeDisplayPlatforms.horizontal[0] : null;
+  }, [isDualOutputMode, isPrime, isUpdateMode, activeDisplayPlatforms]);
 
   const disabledVerticalUltraSwitcher = useMemo(() => {
-    // In live output editing, the user is able to toggle platforms freely, so don't disable any switchers
-    if (isLiveOutputEditingEnabled) return null;
-    // In dual output mode, if there is only one platform for a display orientation, disable the switcher for that platform
-    if (isDualOutputMode && isPrime && isUpdateMode && activeDisplayPlatforms.vertical.length < 2) {
-      return activeDisplayPlatforms.vertical[0];
-    }
+    const shouldDisable =
+      isDualOutputMode && isPrime && isUpdateMode && activeDisplayPlatforms.vertical.length < 2;
 
-    // By default, don't disable any switchers
-    return null;
-  }, [isDualOutputMode, isPrime, isUpdateMode, activeDisplayPlatforms, isLiveOutputEditingEnabled]);
+    return shouldDisable ? activeDisplayPlatforms.vertical[0] : null;
+  }, [isDualOutputMode, isPrime, isUpdateMode, activeDisplayPlatforms]);
 
   const emitSwitch = useDebounce(500, (ind?: number, enabled?: boolean) => {
     if (ind !== undefined && enabled !== undefined) {
