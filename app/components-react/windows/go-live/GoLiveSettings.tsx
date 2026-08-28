@@ -20,6 +20,8 @@ import { inject } from 'slap';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { MagicLinkService } from 'services/magic-link';
 import { SettingsService } from 'services/settings';
+import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremental-rollout';
+import StreamShiftToggle from 'components-react/shared/StreamShiftToggle';
 
 /**
  * Renders settings for starting the stream
@@ -41,12 +43,15 @@ export default function GoLiveSettings() {
     showTopAddDestination,
     showBottomAddDestination,
     shouldShowSettings,
+    isStreamShiftDisabled,
+    canEditLiveOutputs,
     setPrimaryChat,
   } = useGoLiveSettings().extend(module => {
     return {
       videoEncodingOptimizationService: inject(VideoEncodingOptimizationService),
       settingsService: inject(SettingsService),
       magicLinkService: inject(MagicLinkService),
+      incrementalRolloutService: inject(IncrementalRolloutService),
 
       addDestination() {
         this.settingsService.actions.showSettings('Stream');
@@ -69,6 +74,12 @@ export default function GoLiveSettings() {
         return module.isStreamShiftMode ? true : module.protectedModeEnabled;
       },
 
+      get canEditLiveOutputs() {
+        return this.incrementalRolloutService.views.featureIsEnabled(
+          EAvailableFeatures.liveOutputEditing,
+        );
+      },
+
       async openPlatformSettings() {
         try {
           const link = await this.magicLinkService.getDashboardMagicLink(
@@ -83,6 +94,8 @@ export default function GoLiveSettings() {
   });
 
   const headerText = $t('Destinations');
+
+  const featureCheckboxWidth = isPrime ? 130 : 135;
 
   return (
     <Row gutter={8} className={styles.goLiveSettings}>
@@ -125,6 +138,15 @@ export default function GoLiveSettings() {
                 border={false}
                 disabled={!hasMultiplePlatforms}
               />
+
+              {/* STREAM SHIFT TOGGLE */}
+              {/* Remove after feature flag removed */}
+              {!canEditLiveOutputs && (
+                <StreamShiftToggle
+                  style={{ width: featureCheckboxWidth }}
+                  disabled={isStreamShiftDisabled}
+                />
+              )}
             </div>
           </Scrollable>
         </Col>

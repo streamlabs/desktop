@@ -19,6 +19,8 @@ import PrimaryChatSwitcher from './PrimaryChatSwitcher';
 import { CaretDownOutlined } from '@ant-design/icons';
 import LiveOutputEditingCard from './LiveOutputEditingCard';
 import StreamShiftCard from './StreamShiftCard';
+import styles from './GoLive.m.less';
+import cx from 'classnames';
 
 export default function PlatformSettings() {
   const {
@@ -97,7 +99,7 @@ export default function PlatformSettings() {
   return (
     // minHeight is required for the loading spinner
     <div style={{ minHeight: '150px', height: '100%', flex: 1 }}>
-      {showFeatureToggleCards && (
+      {showFeatureToggleCards && !isUpdateMode && (
         <>
           <h2>{$t('Live Settings')}</h2>
           <div className="flex__horizontal margin">
@@ -107,7 +109,9 @@ export default function PlatformSettings() {
         </>
       )}
 
-      <h2 style={{ marginTop: '15px' }}>{$t('Channel Settings')}</h2>
+      <h2 className={cx({ [styles.sectionTitle]: showFeatureToggleCards && !isUpdateMode })}>
+        {$t('Channel Settings')}
+      </h2>
 
       {/*COMMON FIELDS*/}
       <Section key="common">
