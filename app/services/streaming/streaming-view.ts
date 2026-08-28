@@ -105,6 +105,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       (this.platforms.twitch?.enabled && this.platforms.twitch.game) ||
       (this.platforms.facebook?.enabled && this.platforms.facebook.game) ||
+      (this.platforms.kick?.enabled && this.platforms.kick.game) ||
       ''
     );
   }
@@ -113,6 +114,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       (this.platforms.twitch?.enabled && this.platforms.twitch.gameName) ||
       (this.platforms.facebook?.enabled && this.platforms.facebook.game) ||
+      (this.platforms.kick?.enabled && this.platforms.kick.gameName) ||
       ''
     );
   }
@@ -297,6 +299,9 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * take precedence over dual output mode.
    */
   get isMultiplatformMode(): boolean {
+    // Order matters here when checking for which features are enabled.
+    // Stream shift mode and live output editing take precedence over
+    // dual output mode.
     if (this.isStreamShiftMode) return true;
     if (this.isLiveOutputEditingEnabled) return true;
     if (this.isDualOutputMode) return false;
@@ -588,7 +593,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * which re-enters `updateUI` and recurses until the stack overflows.
    */
   private getValidatedDisplay(display?: TDisplayOutput): TDisplayType {
-    if (!display || display === 'both' || !this.isDualOutputMode) {
+    if (!display || display === 'both' || !this.dualOutputView.dualOutputMode) {
       return 'horizontal';
     }
 
@@ -993,8 +998,11 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
     // Make sure platforms assigned to the vertical display in dual output mode still go live in single output mode
     // Note: This is a check to ensure that the display is valid when live output editing is enabled. If the display
-    // is set to 'both', it will be defaulted to 'horizontal' for single output mode.
-    const display = this.getValidatedDisplay(savedDestinations[platform]?.display);
+    // is set to 'both', it will be defaulted to 'horizontal' for single output mode. Must check for `savedDestinations`
+    // to exist to prevent errors when loading the app when not logged in.
+    const display = savedDestinations
+      ? this.getValidatedDisplay(savedDestinations?.[platform]?.display)
+      : 'horizontal';
 
     return {
       ...settings,

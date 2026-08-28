@@ -4,6 +4,7 @@ import React, { HTMLAttributes, useEffect, useMemo } from 'react';
 import { Services } from '../../service-provider';
 import { $t } from '../../../services/i18n';
 import { TGoLiveChecklistItemState } from '../../../services/streaming';
+import { TDestinationId, getDestinationId } from '../../../services/settings/streaming';
 import cx from 'classnames';
 import GoLiveError from './GoLiveError';
 import MessageLayout from './MessageLayout';
@@ -53,20 +54,20 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
         : [];
     },
 
-    get stopDestinations() {
+    get stopDestinations(): TDestinationId[] {
       return module.activeDestinations
         ? difference(
-            module.activeDestinations.map(dest => `${dest.url}/${dest.streamKey}`),
-            module.enabledCustomDestinations.map(dest => `${dest.url}/${dest.streamKey}`),
+            module.activeDestinations.map(d => getDestinationId(d)),
+            module.enabledCustomDestinations.map(d => getDestinationId(d)),
           )
         : [];
     },
 
-    get startDestinations() {
+    get startDestinations(): TDestinationId[] {
       return module.activeDestinations
         ? difference(
-            module.enabledCustomDestinations.map(dest => `${dest.url}/${dest.streamKey}`),
-            module.activeDestinations.map(dest => `${dest.url}/${dest.streamKey}`),
+            module.enabledCustomDestinations.map(d => getDestinationId(d)),
+            module.activeDestinations.map(d => getDestinationId(d)),
           )
         : [];
     },
@@ -83,11 +84,11 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
         : [];
     },
 
-    get continueDestinations() {
+    get continueDestinations(): TDestinationId[] {
       return module.activeDestinations
         ? intersection(
-            module.enabledCustomDestinations.map(dest => `${dest.url}/${dest.streamKey}`),
-            module.activeDestinations.map(dest => `${dest.url}/${dest.streamKey}`),
+            module.enabledCustomDestinations.map(d => getDestinationId(d)),
+            module.activeDestinations.map(dest => getDestinationId(dest)),
           )
         : [];
     },
