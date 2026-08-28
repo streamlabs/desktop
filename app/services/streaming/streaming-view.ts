@@ -1137,8 +1137,9 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get showFeatureToggleCards() {
-    if (!this.incrementalRolloutView.featureIsEnabled(EAvailableFeatures.liveOutputEditing))
+    if (!this.incrementalRolloutView.featureIsEnabled(EAvailableFeatures.liveOutputEditing)) {
       return false;
+    }
     return !this.isMidStreamMode;
   }
 }
