@@ -33,7 +33,7 @@ export function formatErrorRejectedRequest(
     statusText,
   };
   // Updated the rejected request status if it is returned from the YouTube API
-  const json = e.result.error;
+  const json = e?.result?.error;
   if (json) {
     return {
       ...rejectedRequest,

@@ -712,16 +712,17 @@ export class YoutubeService
     } catch (e: unknown) {
       this.SET_ENABLED_STATUS(false);
 
-      const error = this.createPlatformError(e, { url });
-
-      switch (error.reason) {
-        case 'YOUTUBE_TOKEN_EXPIRED':
+      // `requestYoutube` already created the stream error and logged it so just return the result
+      if (e instanceof StreamError) {
+        if (e.status === 423 || e.reason === EYoutubeErrorReason.Forbidden) {
           return EPlatformCallResult.TokenExpired;
-        case 'YOUTUBE_STREAMING_DISABLED':
+        }
+
+        if (e.reason === EYoutubeErrorReason.LiveStreamingNotEnabled) {
           return EPlatformCallResult.YoutubeStreamingDisabled;
-        default:
-          return EPlatformCallResult.Error;
+        }
       }
+      return EPlatformCallResult.Error;
     }
   }
 
