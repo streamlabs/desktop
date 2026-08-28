@@ -32,6 +32,7 @@
   "Rename Folder": "Omdøb mappe",
   "Name Folder": "Navngiv mappe",
   "Failed to load scene collection.  A new one will be created instead.": "Scenesamlingen kunne ikke indlæses.  I stedet oprettes en ny.",
+  "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.": "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.",
   "New Scene": "Ny scene",
   "Projector": "Projektor",
   "Your Scene Collections:": "Samlinger af dine scener:",
