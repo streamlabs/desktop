@@ -106,6 +106,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       (this.platforms.twitch?.enabled && this.platforms.twitch.game) ||
       (this.platforms.facebook?.enabled && this.platforms.facebook.game) ||
       (this.platforms.kick?.enabled && this.platforms.kick.game) ||
+      (this.platforms.kick?.enabled && this.platforms.kick.game) ||
       ''
     );
   }
@@ -114,6 +115,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       (this.platforms.twitch?.enabled && this.platforms.twitch.gameName) ||
       (this.platforms.facebook?.enabled && this.platforms.facebook.game) ||
+      (this.platforms.kick?.enabled && this.platforms.kick.gameName) ||
       (this.platforms.kick?.enabled && this.platforms.kick.gameName) ||
       ''
     );
@@ -299,6 +301,9 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * take precedence over dual output mode.
    */
   get isMultiplatformMode(): boolean {
+    // Order matters here when checking for which features are enabled.
+    // Stream shift mode and live output editing take precedence over
+    // dual output mode.
     if (this.isStreamShiftMode) return true;
     if (this.isLiveOutputEditingEnabled) return true;
     if (this.isDualOutputMode) return false;
@@ -433,6 +438,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * - Single Output Mode - always returns 'landscape'
    * - Dual Output Mode - returns assigned displays: 'landscape' for horizontal displays and 'portrait' for vertical displays
    * - Live Output Editing - returns 'landscape' in single output mode, and assigned displays in dual output mode
+   * @param platform - The platform to resolve the orientation for
    */
   getPlatformMode(platform: TPlatform): TOutputOrientation {
     if (this.isStreamShiftMode) return 'landscape';
@@ -584,13 +590,14 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * default display instead. Reads `savedLiveOutputEditing` instead of `isLiveOutputEditingEnabled`
    * to avoid the circular dependency: settings → savedSettings → getSavedPlatformSettings → settings
    * @param display - The display saved for the platform
+   * @remark Use the dual output mode service state to prevent circular references
    * @warning The `get` prefix is required. This class is passed to `injectState` in
    * `useGoLiveSettings`, and slap registers any method not named `get*`/`is*`/`should*` as a
    * mutation. Calling a mutation from a getter dispatches it during the component snapshot,
    * which re-enters `updateUI` and recurses until the stack overflows.
    */
-  private getValidatedDisplay(display: TDisplayOutput): TDisplayType {
-    if (this.savedLiveOutputEditing && display === 'both') {
+  private getValidatedDisplay(display?: TDisplayOutput): TDisplayType {
+    if (!display || display === 'both' || !this.dualOutputView.dualOutputMode) {
       return 'horizontal';
     }
 
@@ -616,7 +623,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       // Note: this is to prevent an error where the platform doesn't go live because the display is set to 'both'
       // in dual output mode when live output editing is enabled. It should never happen but to prevent errors indexing
       // `platformDisplays`, default a platform without a display to horizontal
-      const display = p.display ? this.getValidatedDisplay(p.display) : 'horizontal';
+      const display = this.getValidatedDisplay(p.display);
 
       platformDisplays[display].push(platform as TPlatform);
     }

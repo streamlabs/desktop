@@ -65,7 +65,12 @@ import {
 } from 'services/notifications';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
-import { ICustomStreamDestination, StreamSettingsService } from '../settings/streaming';
+import {
+  getDestinationId,
+  ICustomStreamDestination,
+  StreamSettingsService,
+  TDestinationId,
+} from '../settings/streaming';
 import { IStreamShiftTarget, RestreamService } from 'services/restream';
 import Utils from 'services/utils';
 import cloneDeep from 'lodash/cloneDeep';
@@ -1123,9 +1128,7 @@ export class StreamingService
       const live = await this.restreamService.getLiveTargets(enabledPlatforms, enabledDestinations);
 
       const livePlatforms = new Set(live.platforms);
-      const liveDestinations = new Set(
-        live.customDestinations.map(dest => `${dest.url}${dest.streamKey}`),
-      );
+      const liveDestinations = new Set(live.customDestinations.map(d => getDestinationId(d)));
 
       const platforms = cloneDeep(settings.platforms);
       enabledPlatforms.forEach(platform => {
@@ -1136,7 +1139,7 @@ export class StreamingService
 
       const customDestinations = settings.customDestinations.map(dest => ({
         ...dest,
-        enabled: liveDestinations.has(`${dest.url}${dest.streamKey}`),
+        enabled: liveDestinations.has(getDestinationId(dest)),
       }));
 
       this.streamSettingsService.setGoLiveSettings({ platforms, customDestinations });
@@ -1234,7 +1237,7 @@ export class StreamingService
       const allStartDestinations = [...updateDestinations.start, ...dualStreamDestinations];
 
       // Add targets to restream in a single request
-      if (willAddTargets) {
+      if (willAddTargets || allStartDestinations.length > 0) {
         // Targets can be added for a display that is not live yet, which means that display needs to
         // go through the full go live flow to create the streaming instance and restream session.
         const displaysToSetup = this.getDisplaysToSetup(
@@ -1255,11 +1258,12 @@ export class StreamingService
             if (service.afterStopStream) service.afterStopStream();
           });
 
-          this.handleTypedStreamError(
+          const errorType = this.handleTypedStreamError(
             e,
             'RESTREAM_ADD_TARGETS_FAILED',
             $t('Failed to add new targets to the stream'),
           );
+          throwStreamError(errorType);
         }
 
         for (const display of displaysToSetup) {
@@ -1377,7 +1381,7 @@ export class StreamingService
     if (!platforms.length && !destinations.length) return;
 
     const savedSettings = this.views.savedSettings;
-    const failedDestinations = new Set(destinations.map(dest => `${dest.url}${dest.streamKey}`));
+    const failedDestinations = new Set(destinations.map(d => getDestinationId(d)));
 
     // Work with a copy of the saved settings so that they are not updated until all changes are made
     const revertedPlatforms = cloneDeep(savedSettings.platforms);
@@ -1388,7 +1392,7 @@ export class StreamingService
     });
 
     const revertedDestinations = savedSettings.customDestinations.map(dest =>
-      failedDestinations.has(`${dest.url}${dest.streamKey}`) ? { ...dest, enabled: false } : dest,
+      failedDestinations.has(getDestinationId(dest)) ? { ...dest, enabled: false } : dest,
     );
 
     this.streamSettingsService.setGoLiveSettings({
@@ -1433,6 +1437,16 @@ export class StreamingService
           await new Promise(resolve => setTimeout(resolve, 300));
         });
       }
+    }
+
+    // Update checklist for added custom destinations
+    // Note: Custom destinations show as a single checklist item for all custom destinations
+    // because there is nothing to set up for these destinations
+    if (destinations.length) {
+      await this.runCheck('destination', async () => {
+        // Delay for UI animation
+        await new Promise(resolve => setTimeout(resolve, 300));
+      });
     }
   }
 
@@ -1482,6 +1496,35 @@ export class StreamingService
           await new Promise(resolve => setTimeout(resolve, 300));
         });
       }
+    }
+
+    // Stop streaming displays that no longer have any targets
+    if (
+      !this.views.horizontalStream.length &&
+      this.contexts.horizontal.streaming &&
+      this.state.status.horizontal.streaming !== EStreamingState.Offline
+    ) {
+      this.isUpdatingHorizontalStream = true;
+      this.contexts.horizontal.streaming.stop(true);
+    }
+
+    if (
+      !this.views.verticalStream.length &&
+      this.contexts.vertical.streaming &&
+      this.state.status.vertical.streaming !== EStreamingState.Offline
+    ) {
+      this.isUpdatingVerticalStream = true;
+      this.contexts.vertical.streaming.stop(true);
+    }
+
+    // Update checklist for removed custom destinations
+    // Note: Custom destinations show as a single checklist item for all custom destinations
+    // because there is nothing to set up for these destinations
+    if (destinations.length) {
+      await this.runCheck('destination', async () => {
+        // Delay for UI animation
+        await new Promise(resolve => setTimeout(resolve, 300));
+      });
     }
 
     // Stop streaming displays that no longer have any targets
@@ -1563,13 +1606,13 @@ export class StreamingService
     enabledDestinations: ICustomStreamDestination[],
     activeDestinations: ICustomStreamDestination[],
   ) {
-    const active = new Set(activeDestinations.map(dest => `${dest.url}${dest.streamKey}`));
-    const enabled = new Set(enabledDestinations.map(dest => `${dest.url}${dest.streamKey}`));
+    const active = new Set(activeDestinations.map(d => getDestinationId(d)));
+    const enabled = new Set(enabledDestinations.map(d => getDestinationId(d)));
 
     const destinations = enabledDestinations.reduce(
       (acc, dest) => {
-        const url = `${dest.url}${dest.streamKey}`;
-        if (active.has(url)) {
+        const id: TDestinationId = getDestinationId(dest);
+        if (active.has(id)) {
           acc.continue.push(dest);
         } else {
           acc.start.push(dest);
@@ -1584,8 +1627,8 @@ export class StreamingService
     );
 
     destinations.stop = activeDestinations.reduce((acc, dest) => {
-      const url = `${dest.url}${dest.streamKey}`;
-      if (!enabled.has(url)) {
+      const id: TDestinationId = getDestinationId(dest);
+      if (!enabled.has(id)) {
         acc.push(dest);
       }
       return acc;
@@ -2443,7 +2486,7 @@ export class StreamingService
     }
   }
 
-  handleStartLiveOutputEditingStreamContext(display: TDisplayType) {
+  private handleStartLiveOutputEditingStreamContext(display: TDisplayType) {
     this.SET_STREAMING_STATUS(EStreamingState.Live, display, new Date().toISOString());
     this.streamingStatusChange.next(EStreamingState.Live);
     return;

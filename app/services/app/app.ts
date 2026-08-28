@@ -1,5 +1,6 @@
 import uuid from 'uuid/v4';
 import { mutation, StatefulService } from 'services/core/stateful-service';
+import { OnboardingService } from 'services/onboarding';
 import { HotkeysService } from 'services/hotkeys';
 import { UserService } from 'services/user';
 import { ShortcutsService } from 'services/shortcuts';
@@ -72,6 +73,7 @@ export interface IRunInLoadingModeOptions {
  * mainly calls into other services to do the heavy lifting.
  */
 export class AppService extends StatefulService<IAppState> {
+  @Inject() onboardingService: OnboardingService;
   @Inject() sceneCollectionsService: SceneCollectionsService;
   @Inject() hotkeysService: HotkeysService;
   @Inject() userService: UserService;

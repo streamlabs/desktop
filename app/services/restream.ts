@@ -743,15 +743,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   ): Promise<string> {
     const key = streamKey ?? (await this.fetchUserSettings(orientation).then(s => s.streamKey));
 
-    const expectedSuffix = orientation === 'landscape' ? '_landscape' : '_portrait';
-    if (!key.endsWith(expectedSuffix)) {
-      console.error(
-        `Stream key is not in the expected format for ${orientation}, reformatting it.`,
-      );
-      return key.replace(/_[^_]*$/, expectedSuffix);
-    }
-
-    return key;
+    return this.formatOrientationKey(key, orientation);
   }
 
   /**
@@ -963,7 +955,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
       // Await the settings for every display. Otherwise `beforeGoLive` resolves before the
       // stream settings have been written and `createStreaming` reads stale values.
-      await Promise.all(
+      await Promise.allSettled(
         displays.map(async display => {
           const mode = this.getMode(display);
           const settings = await this.fetchUserSettings(mode);
@@ -1033,9 +1025,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
   setupPlatforms(updatedPlatforms?: TPlatform[], display?: TDisplayType) {
     const isEnhancedBroadcasting = this.settingsService.isEnhancedBroadcasting();
     const modesToRestream = this.getModesToRestream();
-    // const modesToRestream = this.streamInfo.isLiveOutputEditingEnabled
-    //   ? this.streamInfo.liveOutputDisplays.map(display => this.getMode(display))
-    //   : this.streamInfo.displaysToRestream.map(display => this.getMode(display));
 
     const targetPlatforms = updatedPlatforms ?? this.streamInfo.enabledPlatforms;
 
@@ -1092,8 +1081,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
         targetInfo.streamKey = `${this.patreonService.state.ingest}/${this.patreonService.state.streamKey}`;
       }
 
-      console.log('RESTREAM targetInfo', targetInfo, 'display', display);
-
       if (updatedPlatforms) {
         const mode = display ? this.getMode(display) : this.getPlatformMode(platform);
         platforms.push({ ...targetInfo, mode });
@@ -1119,8 +1106,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   setupCustomDestinations(customDestinations?: ICustomStreamDestination[], display?: TDisplayType) {
     const isDualOutputMode = this.streamingService.views.isDualOutputMode;
-    // const modesToRestream = this.getModesToRestream();
-    const modesToRestream = this.streamInfo.displaysToRestream.map(d => this.getMode(d));
+    const modesToRestream = this.getModesToRestream();
 
     // When an explicit list is passed, only create targets for that list. Otherwise this is the
     // go live flow, which creates targets for every enabled destination on the stream.

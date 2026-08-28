@@ -61,9 +61,7 @@ export class DismissablesService extends PersistentStatefulService<IDismissables
   }
 
   dismissAll() {
-    Object.keys(EDismissable).forEach((key: keyof typeof EDismissable) =>
-      this.dismiss(EDismissable[key]),
-    );
+    Object.values(EDismissable).forEach((key: EDismissable) => this.dismiss(key));
   }
 
   /**

@@ -84,6 +84,7 @@ interface IKickUpdateStreamResponse {
 interface IKickStartStreamSettings {
   title: string;
   game: string;
+  gameName?: string;
   video?: IVideo;
   mode?: TOutputOrientation;
 }
@@ -110,6 +111,7 @@ export class KickService
       title: '',
       mode: 'landscape',
       game: '',
+      gameName: '',
     },
     ingest: '',
     chatUrl: '',
@@ -422,6 +424,11 @@ export class KickService
    * show live approval status.
    */
   async searchGames(searchString: string): Promise<IGame[]> {
+    if (!searchString || searchString === '') {
+      console.debug('Kick search string is empty.');
+      return [] as IGame[];
+    }
+
     const host = this.hostsService.streamlabs;
     const params = new URLSearchParams({ category: searchString });
     const url = `https://${host}/api/v5/slobs/kick/info?${params.toString()}`;
@@ -615,5 +622,8 @@ export class KickService
   @mutation()
   SET_GAME_NAME(gameName: string) {
     this.state.gameName = gameName;
+    // also mirror into settings so it survives into savedSettings, which clones
+    // state.settings rather than reading the top-level state
+    this.state.settings = { ...this.state.settings, gameName };
   }
 }
