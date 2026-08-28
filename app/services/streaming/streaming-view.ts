@@ -106,7 +106,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       (this.platforms.twitch?.enabled && this.platforms.twitch.game) ||
       (this.platforms.facebook?.enabled && this.platforms.facebook.game) ||
       (this.platforms.kick?.enabled && this.platforms.kick.game) ||
-      (this.platforms.kick?.enabled && this.platforms.kick.game) ||
       ''
     );
   }
@@ -115,7 +114,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       (this.platforms.twitch?.enabled && this.platforms.twitch.gameName) ||
       (this.platforms.facebook?.enabled && this.platforms.facebook.game) ||
-      (this.platforms.kick?.enabled && this.platforms.kick.gameName) ||
       (this.platforms.kick?.enabled && this.platforms.kick.gameName) ||
       ''
     );
