@@ -256,6 +256,7 @@
   "FPS Denominator": "Знаменатель FPS",
   "FPS Value": "Значение FPS",
   "The resolution must be in the format [width]x[height] (i.e. 1920x1080)": "Разрешение нужно указать в формате [ширина]x[высота] (например, 1920x1080)",
+  "Failed to update the video resolution.": "Failed to update the video resolution.",
   "Custom": "Польз.",
   "Custom Base Resolution": "Пользовательское базовое разрешение",
   "Custom Output Resolution": "Пользовательское выходное разрешение",
