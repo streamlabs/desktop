@@ -1,4 +1,4 @@
-import React, { CSSProperties, useEffect, useMemo } from 'react';
+import React, { CSSProperties, useCallback, useMemo } from 'react';
 import { shell } from '@electron/remote';
 import styles from './StreamShiftToggle.m.less';
 import Tooltip from 'components-react/shared/Tooltip';
@@ -16,53 +16,45 @@ interface IStreamShiftToggle {
   disabled?: boolean;
 }
 
+/**
+ * @deprecated This checkbox is currently no longer used but kept for legacy purposes.
+ */
 export default function StreamShiftToggle(p: IStreamShiftToggle) {
   const {
     isPrime,
     isStreamShiftMode,
     setStreamShift,
-    isDualOutputMode,
-    isPatreonEnabled,
-    isStreamShiftDisabled,
-    forceStreamShiftToggleEnabled,
-  } = useGoLiveSettings();
-
-  useEffect(() => {
-    // Ensure that non-ultra users have the stream switcher disabled
-    if (!isPrime && isStreamShiftMode) {
-      setStreamShift(false);
-    }
-  }, [isPrime, isStreamShiftMode]);
+    isStreamShiftEnabled,
+    disableToggle,
+  } = useGoLiveSettings().extend(module => ({
+    get isStreamShiftEnabled() {
+      if (module.isLiveOutputEditingEnabled) return false;
+      if (module.isPatreonEnabled) return false;
+      return module.isStreamShiftMode;
+    },
+    get disableToggle() {
+      if (p?.disabled === true) return true;
+      if (!module.isPrime) return true;
+      if (module.isPatreonEnabled) return true;
+      if (module.isLiveOutputEditingEnabled) return true;
+      if (module.isDualOutputMode) return true;
+      return module.isStreamShiftDisabled;
+    },
+  }));
 
   const label = $t('Stream Shift');
 
-  function handleToggleStreamShift(status?: boolean) {
-    if (disableToggle) return;
-    const newStatus = status ?? !isStreamShiftMode;
-    setStreamShift(newStatus);
-    Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {
-      toggle: newStatus,
-    });
-  }
-
-  const isStreamShiftEnabled = useMemo(() => {
-    return isPatreonEnabled ? false : isStreamShiftMode;
-  }, [isPatreonEnabled, isStreamShiftMode]);
-
-  const disableToggle = useMemo(() => {
-    if (p?.disabled) return true;
-    if (!isPrime) return true;
-    if (isPatreonEnabled) return true;
-    if (isDualOutputMode && !forceStreamShiftToggleEnabled) return true;
-    return isStreamShiftDisabled;
-  }, [
-    p?.disabled,
-    isPatreonEnabled,
-    isDualOutputMode,
-    forceStreamShiftToggleEnabled,
-    isPrime,
-    isStreamShiftDisabled,
-  ]);
+  const handleToggleStreamShift = useCallback(
+    (status?: boolean) => {
+      if (disableToggle) return;
+      const newStatus = status ?? !isStreamShiftMode;
+      setStreamShift(newStatus);
+      Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {
+        toggle: newStatus,
+      });
+    },
+    [isStreamShiftMode, disableToggle, setStreamShift],
+  );
 
   return (
     <div className={styles.streamShiftWrapper}>
@@ -90,9 +82,9 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
             )
           }
           name="streamShift"
-          value={isStreamShiftEnabled}
+          value={disableToggle ? false : isStreamShiftEnabled}
           onChange={handleToggleStreamShift}
-          disabled={disableToggle}
+          disabled={p?.disabled ?? disableToggle}
         />
 
         <Tooltip
@@ -114,31 +106,40 @@ function StreamShiftTooltip() {
     isPrime,
     isDualOutputMode,
     isPatreonEnabled,
-    forceStreamShiftToggleEnabled,
-  } = useGoLiveSettings();
+    isLiveOutputEditingEnabled,
+    showTooltip,
+  } = useGoLiveSettings().extend(module => ({
+    get showTooltip() {
+      if (module.isPatreonEnabled) return true;
+      if (!module.isPrime) return true;
+      if (module.isLiveOutputEditingEnabled) return true;
+      if (module.isDualOutputMode) return true;
+      return false;
+    },
+  }));
 
   const tooltipText = useMemo(() => {
     if (!isPrime) {
-      return { name: 'not-ultra', text: $t('Upgrade to Ultra to switch streams between devices.') };
+      return { name: 'non-ultra', text: $t('Upgrade to Ultra to switch streams between devices.') };
+    }
+
+    if (isDualOutputMode) {
+      return { name: 'dual-output', text: $t('Stream Shift cannot be used with Dual Output') };
     }
 
     if (isPatreonEnabled) {
       return { name: 'patreon', text: $t('Stream Shift cannot be used with Patreon') };
     }
 
-    if (isDualOutputMode && !forceStreamShiftToggleEnabled) {
-      return { name: 'dual-output', text: $t('Stream Shift cannot be used with Dual Output') };
+    if (isLiveOutputEditingEnabled) {
+      return {
+        name: 'live-output',
+        text: $t('Stream Shift cannot be used with Live Output Editing'),
+      };
     }
 
     return { name: 'default', text: '' };
-  }, [isPrime, isPatreonEnabled, isDualOutputMode, forceStreamShiftToggleEnabled]);
-
-  const showTextTooltip = useMemo(() => {
-    if (isPatreonEnabled) return true;
-    if (!isPrime) return true;
-    if (isDualOutputMode && !forceStreamShiftToggleEnabled) return true;
-    return false;
-  }, [isPrime, isPatreonEnabled, isDualOutputMode, forceStreamShiftToggleEnabled]);
+  }, [isPrime, isPatreonEnabled, isDualOutputMode, isLiveOutputEditingEnabled]);
 
   function handleTooltipClick() {
     shell.openExternal(
@@ -146,7 +147,7 @@ function StreamShiftTooltip() {
     );
   }
 
-  return showTextTooltip ? (
+  return showTooltip ? (
     <span data-name={tooltipText.name}>{tooltipText.text}</span>
   ) : (
     <span data-name="explanation" onClick={handleTooltipClick}>

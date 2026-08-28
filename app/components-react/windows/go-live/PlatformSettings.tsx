@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { CommonPlatformFields } from './CommonPlatformFields';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import { $t } from '../../../services/i18n';
@@ -15,11 +15,12 @@ import { InstagramEditStreamInfo } from './platforms/InstagramEditStreamInfo';
 import { KickEditStreamInfo } from './platforms/KickEditStreamInfo';
 import { PatreonEditStreamInfo } from './platforms/PatreonEditStreamInfo';
 import { TInputLayout } from 'components-react/shared/inputs';
-import { SwitcherCard } from './SwitcherCard';
-import UltraIcon from 'components-react/shared/UltraIcon';
 import PrimaryChatSwitcher from './PrimaryChatSwitcher';
 import { CaretDownOutlined } from '@ant-design/icons';
-import { Services } from 'components-react/service-provider';
+import LiveOutputEditingCard from './LiveOutputEditingCard';
+import StreamShiftCard from './StreamShiftCard';
+import styles from './GoLive.m.less';
+import cx from 'classnames';
 
 export default function PlatformSettings() {
   const {
@@ -35,22 +36,13 @@ export default function PlatformSettings() {
     isDualOutputMode,
     isAiHighlighterEnabled,
     isStreamShiftMode,
-    isStreamShiftDisabled,
-    isPatreonEnabled,
     isLiveOutputEditingEnabled,
-    isLiveOutputEditingDisabled,
     enabledPlatformsCount,
     isMidStreamMode,
-    isPrime,
     primaryChat,
     hasMultiplePlatforms,
     setPrimaryChat,
-    setStreamShift,
-    setLiveOutputEditingEnabled,
     showFeatureToggleCards,
-    liveOutputTooltip,
-    streamShiftTooltip,
-    disableStreamShiftTooltip,
   } = useGoLiveSettings().extend(settings => ({
     get descriptionIsRequired() {
       const fbSettings = settings.state.platforms['facebook'];
@@ -60,73 +52,9 @@ export default function PlatformSettings() {
     get layout(): TInputLayout {
       return 'vertical';
     },
-
-    get liveOutputTooltip() {
-      if (!isPrime) {
-        return $t('Upgrade to Ultra to manage live outputs mid-stream.');
-      }
-
-      return '';
-    },
-
-    get streamShiftTooltip() {
-      if (isPatreonEnabled) {
-        return $t('Stream Shift cannot be used with Patreon');
-      }
-
-      if (!isPrime) {
-        return $t('Upgrade to Ultra to switch streams between devices.');
-      }
-
-      if (isDualOutputMode) {
-        return $t('Stream Shift cannot be used with Dual Output');
-      }
-
-      return '';
-    },
-
-    get disableStreamShiftTooltip() {
-      return settings.isPrime && !settings.isStreamShiftDisabled;
-    },
   }));
 
   const layoutMode = 'multiplatformAdvanced';
-
-  const handleToggleStreamShift = useCallback(
-    (status?: boolean) => {
-      if (!isPrime) {
-        // TODO: Comment in when ready
-        // Services.MagicLinkService.actions.linkToPrime('slobs-streamswitcher', {
-        //   event: 'StreamShift',
-        // });
-        return;
-      }
-
-      setStreamShift(status ?? !isStreamShiftMode);
-      Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {
-        toggle: status ?? !isStreamShiftMode,
-      });
-    },
-    [setStreamShift, isStreamShiftMode],
-  );
-
-  const handleToggleLiveOutputEditing = useCallback(
-    (status?: boolean) => {
-      if (!isPrime) {
-        // TODO: Comment in when ready
-        // Services.MagicLinkService.actions.linkToPrime('slobs-live-output-editing', {
-        //   event: 'LiveOutputEditing',
-        // });
-        return;
-      }
-
-      setLiveOutputEditingEnabled(status ?? !isLiveOutputEditingEnabled);
-      Services.UsageStatisticsService.actions.recordAnalyticsEvent('LiveOutputEditing', {
-        toggle: status ?? !isLiveOutputEditingEnabled,
-      });
-    },
-    [setLiveOutputEditingEnabled, isLiveOutputEditingEnabled],
-  );
 
   const createPlatformBinding = useCallback(
     <T extends TPlatform>(platform: T): IPlatformComponentParams<T> => {
@@ -137,6 +65,7 @@ export default function PlatformSettings() {
         isStreamShiftMode,
         isAiHighlighterEnabled,
         isMidStreamMode,
+        isLiveOutputEditingEnabled,
         enabledPlatformsCount,
         get value() {
           return getDefined(settings.platforms[platform]);
@@ -155,6 +84,7 @@ export default function PlatformSettings() {
       isStreamShiftMode,
       isAiHighlighterEnabled,
       isMidStreamMode,
+      isLiveOutputEditingEnabled,
       enabledPlatformsCount,
     ],
   );
@@ -169,47 +99,19 @@ export default function PlatformSettings() {
   return (
     // minHeight is required for the loading spinner
     <div style={{ minHeight: '150px', height: '100%', flex: 1 }}>
-      {showFeatureToggleCards && (
+      {showFeatureToggleCards && !isUpdateMode && (
         <>
           <h2>{$t('Live Settings')}</h2>
           <div className="flex__horizontal margin">
-            <SwitcherCard
-              onClick={() => handleToggleLiveOutputEditing()}
-              value={isLiveOutputEditingEnabled}
-              title={
-                <>
-                  {$t('Live output editing')}
-                  {!isPrime && <UltraIcon type="badge" style={{ marginLeft: '5px' }} />}
-                </>
-              }
-              name="liveOutput"
-              description={$t('Manage output destinations mid-stream.')}
-              icon="icon-output"
-              disabled={isLiveOutputEditingDisabled}
-              tooltip={liveOutputTooltip}
-              tooltipDisabled={isPrime}
-            />
-            <SwitcherCard
-              onClick={() => handleToggleStreamShift()}
-              value={isStreamShiftMode}
-              title={
-                <>
-                  {$t('Stream Shift')}
-                  {!isPrime && <UltraIcon type="badge" style={{ marginLeft: '5px' }} />}
-                </>
-              }
-              name="streamShift"
-              description={$t('Switch between devices while live.')}
-              icon="icon-repeat-2"
-              disabled={isStreamShiftDisabled}
-              tooltip={streamShiftTooltip}
-              tooltipDisabled={disableStreamShiftTooltip}
-            />
+            <LiveOutputEditingCard />
+            <StreamShiftCard />
           </div>
         </>
       )}
 
-      <h2 style={{ marginTop: '15px' }}>{$t('Channel Settings')}</h2>
+      <h2 className={cx({ [styles.sectionTitle]: showFeatureToggleCards && !isUpdateMode })}>
+        {$t('Channel Settings')}
+      </h2>
 
       {/*COMMON FIELDS*/}
       <Section key="common">

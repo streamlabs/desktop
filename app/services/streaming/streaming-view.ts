@@ -425,6 +425,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    */
   get isDualOutputMode(): boolean {
     if (!this.userView.isLoggedIn || !this.info) return false;
+    if (!this.dualOutputView.dualOutputMode) return false;
     return this.shouldSetupDualOutput;
   }
 
@@ -841,16 +842,39 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return commonFields;
   }
 
+  /**
+   * Apply the common title and description to each platform
+   * @remark While live, the common title wins over whatever title a platform is holding, unless that
+   * platform uses custom fields. Deliberately scoped to mid-stream, for the Edit Stream window, the
+   * Go Live window keeps the original backfill. The description uses the backfill in both cases.
+   * @param platforms - The platform settings to apply the common fields to
+   * @return The updated platform settings with common fields applied
+   */
   applyCommonFields(platforms: IGoLiveSettings['platforms']): IGoLiveSettings['platforms'] {
     const commonFields = this.getCommonFields(platforms);
     const result = {} as IGoLiveSettings['platforms'];
+    const useCommonTitle = this.isMidStreamMode;
+
     Object.keys(platforms).forEach(platform => {
       // TODO: index
       // @ts-ignore
       result[platform] = platforms[platform];
+
       // TODO: index
       // @ts-ignore
-      result[platform].title = platforms[platform].title || commonFields.title;
+      const usesCustomFields = platforms[platform].useCustomFields;
+
+      // TODO: index
+      // @ts-ignore
+      result[platform].title =
+        useCommonTitle && !usesCustomFields
+          ? // TODO: index
+            // @ts-ignore
+            commonFields.title || platforms[platform].title
+          : // TODO: index
+            // @ts-ignore
+            platforms[platform].title || commonFields.title;
+
       // TODO: index
       // @ts-ignore
       result[platform].description = platforms[platform].description || commonFields.description;
@@ -999,11 +1023,11 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
     // Make sure platforms assigned to the vertical display in dual output mode still go live in single output mode
     // Note: This is a check to ensure that the display is valid when live output editing is enabled. If the display
-    // is set to 'both', it will be defaulted to 'horizontal' for single output mode. Must check for `savedDestinations`
-    // to exist to prevent errors when loading the app when not logged in.
-    const display = savedDestinations
-      ? this.getValidatedDisplay(savedDestinations?.[platform]?.display)
-      : 'horizontal';
+    // is set to 'both', it will be defaulted to 'horizontal' for single output mode.
+    const display =
+      this.isDualOutputMode && savedDestinations && savedDestinations[platform]?.display
+        ? this.getValidatedDisplay(savedDestinations[platform]?.display)
+        : 'horizontal';
 
     return {
       ...settings,
