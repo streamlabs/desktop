@@ -32,6 +32,7 @@
   "Rename Folder": "Rinomina cartella",
   "Name Folder": "Nomina cartella",
   "Failed to load scene collection.  A new one will be created instead.": "Caricamento della raccolta scene non riuscito.  Ne verrà creata una nuova.",
+  "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.": "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.",
   "New Scene": "Nuova scena",
   "Projector": "Proiettore",
   "Your Scene Collections:": "Le tue raccolte scene:",
