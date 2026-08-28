@@ -58,7 +58,6 @@ export default function GoLiveError() {
         return renderSettingsUpdateError(error);
       case 'RESTREAM_DISABLED':
       case 'RESTREAM_SETUP_FAILED':
-      case 'RESTREAM_UPDATE_FAILED':
         return renderRestreamError(error);
       case 'DUAL_OUTPUT_RESTREAM_DISABLED':
       case 'DUAL_OUTPUT_SETUP_FAILED':
