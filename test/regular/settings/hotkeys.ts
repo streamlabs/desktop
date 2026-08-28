@@ -1,5 +1,6 @@
 import { restartApp, test, TExecutionContext, useWebdriver } from '../../helpers/webdriver';
 import {
+  click,
   clickIfDisplayed,
   clickTab,
   focusChild,

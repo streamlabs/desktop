@@ -22,14 +22,12 @@ import {
   waitForDisplayed,
 } from '../../helpers/modules/core';
 import { logIn } from '../../helpers/modules/user';
-import { releaseUserInPool, reserveUserFromPool, withUser } from '../../helpers/webdriver/user';
-import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import {
-  skipCheckingErrorsInLog,
-  test,
-  TExecutionContext,
-  useWebdriver,
-} from '../../helpers/webdriver';
+  addDummyAccount,
+  releaseUserInPool,
+  reserveUserFromPool,
+  withUser,
+} from '../../helpers/webdriver/user';
 import { sleep } from '../../helpers/sleep';
 import { toggleDualOutputMode } from '../../helpers/modules/dual-output';
 
