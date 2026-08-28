@@ -32,6 +32,7 @@
   "Rename Folder": "폴더 이름 변경",
   "Name Folder": "폴더 이름 짓기",
   "Failed to load scene collection.  A new one will be created instead.": "장면 컬렉션 로드에 실패했습니다.  새로운 장면 컬렉션이 생성됩니다.",
+  "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.": "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.",
   "New Scene": "새로운 장면",
   "Projector": "프로젝터",
   "Your Scene Collections:": "장면 컬렉션:",
