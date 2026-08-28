@@ -1024,7 +1024,6 @@ export class StreamingService
       // call putChannelInfo for each platform
       const platforms = this.views.getEnabledPlatforms(settings.platforms);
       const updatePlatforms = this.parseUpdatePlatforms(platforms, activePlatforms);
-      console.log('updatePlatforms', JSON.stringify(updatePlatforms, null, 2));
 
       // Compare active custom destinations by URL+streamKey to uniquely identify them
       const updateDestinations = this.parseUpdateCustomDestinations(
@@ -1693,10 +1692,6 @@ export class StreamingService
     const resolvedType =
       !forceType && e instanceof StreamError && e.type ? (e.type as TStreamErrorType) : type;
 
-    console.log('e', e);
-    console.log('type', resolvedType);
-    console.log('message', message);
-    console.log('platform', platform);
     // restream errors returns an object with key value pairs for error details
     const messages: string[] = [message];
     const details: string[] = [];

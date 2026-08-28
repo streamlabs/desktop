@@ -116,7 +116,6 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
             ),
           });
 
-          console.log('updating ', otherEnabledTarget, ' to disabled');
           // Update the settings to disable the other enabled platform
           updated = {
             platforms: {
@@ -139,11 +138,6 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
             id: otherEnabledTargetIndex.toString(),
           };
 
-          console.log(
-            'updating ',
-            this.state.customDestinations[otherEnabledTargetIndex]?.name,
-            ' to disabled',
-          );
           alertInfo({
             name: 'both-display-info-alert',
             text: $t(

@@ -390,7 +390,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @param targets - The updated list of targets on the stream
    */
   async removeRuntimeTargets(streamKey: string, targets: { id: number }[]) {
-    console.log('Removing restream targets for', streamKey, targets);
     const headers = authorizedHeaders(
       this.userService.apiToken,
       new Headers({ 'Content-Type': 'application/json' }),
@@ -480,8 +479,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
         ...this.formatRuntimeCustomDestinationData(destination),
       })),
     ];
-
-    console.log('Adding restream targets for', startTargets, displaysToSetup);
 
     if (!startTargets.length) return;
 
@@ -585,10 +582,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
           ),
         ]);
 
-    console.log('Removing restream targets for', platforms, customDestinations, removeAll);
-    console.log('Remote targets:', remoteTargets);
-    console.log('Stream keys to remove:', streamKeysToRemove);
-
     // Every requested key must correspond to a live target. The keys are re-derived from platform
     // state here rather than recorded when the target was created, so a key that has since changed
     // matches nothing, and without this the filter below would quietly drop it, no request would
@@ -610,7 +603,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
     // Group by the mode reported by the server. It is the only reliable record of which stream a
     // target is running on, the locally derived mode can be stale.
     const targetsByMode = this.filterRemoveTargetsByMode(remoteTargets, streamKeysToRemove);
-    console.log('Restream targets grouped by mode:', targetsByMode);
 
     for (const mode of Object.keys(targetsByMode) as TOutputOrientation[]) {
       const stopTargets = targetsByMode[mode];
@@ -1013,7 +1005,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
     // Setup new targets
     const newTargets = [...this.setupPlatforms(), ...this.setupCustomDestinations()];
-    console.log('RESTREAM setupTargets newTargets', JSON.stringify(newTargets, null, 2));
     await this.createTargets(newTargets);
   }
 
@@ -1356,7 +1347,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
         // Preserve targets the status endpoint returned no data for. Dropping them removes the
         // platform from the switch entirely, and drops the relay target on every fetch.
         const targets = this.state.streamShiftTargets.map((t: ITargetLiveData) => {
-          console.log('Stream Shift target data', t, res[t.platform as string]);
+          console.debug('Stream Shift target data', t, res[t.platform as string]);
           if (t.platform === 'relay') return t;
 
           const data = res[t.platform as string]?.[0];
@@ -1509,10 +1500,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
       identifier: this.state.streamShiftStreamId,
       action,
     });
-    console.log('Stream Shift updateStreamShift', action, this.state.streamShiftStreamId);
     const request = new Request(url, { headers, body, method: 'POST' });
     const res = await fetch(request);
-    console.log('res ', res);
     if (!res.ok) throw await res.json();
     return res.json();
   }
