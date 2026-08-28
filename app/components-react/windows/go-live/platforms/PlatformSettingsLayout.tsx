@@ -53,4 +53,5 @@ export interface IPlatformComponentParams<T extends TPlatform> {
   isAiHighlighterEnabled?: boolean;
   isStreamShiftMode?: boolean;
   isMidStreamMode?: boolean;
+  isLiveOutputEditingEnabled?: boolean;
 }

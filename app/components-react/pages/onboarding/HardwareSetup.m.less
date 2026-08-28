@@ -1,0 +1,46 @@
+@import "../../../styles/index";
+
+.content-container {
+  height: calc(100% - 84px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.display {
+  width: 100%;
+  height: 350px;
+  margin-right: 20px;
+}
+
+.placeholder {
+  .radius();
+
+  position: relative;
+  height: 200px;
+  background-color: var(--section);
+  margin-bottom: 16px;
+  width: 340px;
+
+  span {
+    .center();
+
+    width: auto;
+  }
+}
+
+.volmeter {
+  position: relative;
+  background: var(--section);
+  height: 16px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.volmeter-center {
+  display: block;
+  position: absolute;
+  top: 50%;
+  //transform: translate(0, -14%);
+  width: 100%;
+}
