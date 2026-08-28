@@ -19,7 +19,7 @@ export function MacPermissions() {
 
     MacPermissionsService.requestPermissions();
 
-    return sub.unsubscribe;
+    return () => sub.unsubscribe();
   }, []);
 
   return (

@@ -19,6 +19,8 @@ export enum EDismissable {
   TikTokEligible = 'tiktok_eligible',
   TikTokReapply = 'tiktok_reapply',
   EnhancedBroadcasting = 'enhanced_broadcasting',
+  StreamAvatarAutomationsWelcome = 'stream_avatar_automations_welcome',
+  HighlighterBanner = 'highlighter_banner',
 }
 
 interface IDismissablesServiceState {
@@ -59,9 +61,7 @@ export class DismissablesService extends PersistentStatefulService<IDismissables
   }
 
   dismissAll() {
-    Object.keys(EDismissable).forEach((key: keyof typeof EDismissable) =>
-      this.dismiss(EDismissable[key]),
-    );
+    Object.values(EDismissable).forEach((key: EDismissable) => this.dismiss(key));
   }
 
   /**

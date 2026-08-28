@@ -120,13 +120,26 @@ export async function hoverElement(selector: string, waitForOptions?: WaitForOpt
   }
 }
 
-export async function isTooltipDisplayed(
+/**
+ * Hover an element and confirm the expected tooltip mounted
+ * @remark Tooltip visibility cannot be asserted in tests.
+ * `useWebdriver` injects `.ant-tooltip-content{display:none}` on app start because on a user's
+ * first app start, there are dismissible tooltips to guide them. This means test clicks could
+ * be swallowed by tooltips.
+ * Unfortunately, the side effect of this implementation is that asserting on tooltip visibility
+ * with `isDisplayed() === false` will fail no matter what the app renders. Antd still mounts the
+ * overlay on hover, so assert on existence instead.
+ * @param hoverSelector - The element to hover to open the tooltip
+ * @param tooltipSelector - The expected tooltip contents
+ * @returns Whether the tooltip is in the DOM
+ */
+export async function tooltipExists(
   hoverSelector: string,
   tooltipSelector: string,
   waitForOptions?: WaitForOptions,
-): Promise<void> {
+): Promise<boolean> {
   await hoverElement(hoverSelector, waitForOptions);
-  await isDisplayed(tooltipSelector, waitForOptions);
+  return (await select(tooltipSelector)).isExisting();
 }
 
 export async function isDisplayed(selectorOrEl: TSelectorOrEl, waitForOptions?: WaitForOptions) {

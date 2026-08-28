@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import styles from './GoLive.m.less';
 import Scrollable from 'components-react/shared/Scrollable';
 import { useGoLiveSettings } from './useGoLiveSettings';
@@ -14,13 +14,14 @@ import ColorSpaceWarnings from './ColorSpaceWarnings';
 import { DestinationSwitchers } from './DestinationSwitchers';
 import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import cx from 'classnames';
-import StreamShiftToggle from 'components-react/shared/StreamShiftToggle';
 import { CaretDownOutlined } from '@ant-design/icons';
 import * as remote from '@electron/remote';
 import { inject } from 'slap';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { MagicLinkService } from 'services/magic-link';
 import { SettingsService } from 'services/settings';
+import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremental-rollout';
+import StreamShiftToggle from 'components-react/shared/StreamShiftToggle';
 
 /**
  * Renders settings for starting the stream
@@ -38,18 +39,19 @@ export default function GoLiveSettings() {
     recommendedColorSpaceWarnings,
     isPrime,
     shouldShowLeftCol,
-    isStreamShiftDisabled,
-    isUpdateMode,
     addDestination,
     showTopAddDestination,
     showBottomAddDestination,
     shouldShowSettings,
+    isStreamShiftDisabled,
+    canEditLiveOutputs,
     setPrimaryChat,
   } = useGoLiveSettings().extend(module => {
     return {
       videoEncodingOptimizationService: inject(VideoEncodingOptimizationService),
       settingsService: inject(SettingsService),
       magicLinkService: inject(MagicLinkService),
+      incrementalRolloutService: inject(IncrementalRolloutService),
 
       addDestination() {
         this.settingsService.actions.showSettings('Stream');
@@ -69,8 +71,13 @@ export default function GoLiveSettings() {
       },
 
       get shouldShowLeftCol() {
-        if (module.isUpdateMode) return false;
         return module.isStreamShiftMode ? true : module.protectedModeEnabled;
+      },
+
+      get canEditLiveOutputs() {
+        return this.incrementalRolloutService.views.featureIsEnabled(
+          EAvailableFeatures.liveOutputEditing,
+        );
       },
 
       async openPlatformSettings() {
@@ -131,10 +138,15 @@ export default function GoLiveSettings() {
                 border={false}
                 disabled={!hasMultiplePlatforms}
               />
-              <StreamShiftToggle
-                style={{ width: featureCheckboxWidth }}
-                disabled={isStreamShiftDisabled}
-              />
+
+              {/* STREAM SHIFT TOGGLE */}
+              {/* Remove after feature flag removed */}
+              {!canEditLiveOutputs && (
+                <StreamShiftToggle
+                  style={{ width: featureCheckboxWidth }}
+                  disabled={isStreamShiftDisabled}
+                />
+              )}
             </div>
           </Scrollable>
         </Col>
@@ -144,8 +156,7 @@ export default function GoLiveSettings() {
       <Col
         span={shouldShowLeftCol ? 17 : 24}
         className={cx(styles.rightColumn, {
-          [styles.destinationMode]: !shouldShowLeftCol && !isUpdateMode,
-          [styles.updateMode]: isUpdateMode,
+          [styles.destinationMode]: !shouldShowLeftCol,
         })}
       >
         <Spinner visible={isLoading} relative />
@@ -158,7 +169,7 @@ export default function GoLiveSettings() {
             {/*PLATFORM SETTINGS*/}
             <PlatformSettings />
             {/*EXTRAS*/}
-            {!!canUseOptimizedProfile && !isUpdateMode && (
+            {!!canUseOptimizedProfile && (
               <Section title={$t('Extras')}>
                 <OptimizedProfileSwitcher />
               </Section>

@@ -51,9 +51,87 @@ export const errorTypes = {
       return $t('Failed to update Multistream platforms and destinations while live');
     },
   },
+  RESTREAM_INVALID_CONFIG: {
+    get message() {
+      return $t(
+        'Multistream settings are invalid, please check your platforms and destinations and try again',
+      );
+    },
+    get action() {
+      return $t(
+        'confirm the user has Ultra and confirm the settings for enabled platforms and destinations',
+      );
+    },
+  },
+  RESTREAM_STREAM_KEY_MISSING: {
+    get message() {
+      return $t('Multistream stream key does not exist');
+    },
+    get action() {
+      return $t(
+        'there was no Multistream session key, ask the user to end the stream and go live again',
+      );
+    },
+  },
+  RESTREAM_STREAM_KEY_FETCH_FAILED: {
+    get message() {
+      return $t('Cannot add targets in live output editing mode because the stream key is missing');
+    },
+    get action() {
+      return $t(
+        'ask the user to restart the stream and go live again. If in dual output mode, ask the user to stream in single output mode',
+      );
+    },
+  },
+  RESTREAM_DISPLAY_SETUP_FAILED: {
+    get message() {
+      return $t('Failed to start Multistreaming for one of the displays');
+    },
+    get action() {
+      return $t(
+        'confirm if the user is in dual output mode and which displays are currently streaming',
+      );
+    },
+  },
+  RESTREAM_ADD_TARGETS_FAILED: {
+    get message() {
+      return $t('Failed to add the destination to your live stream');
+    },
+    get action() {
+      return $t(
+        'confirm the platform settings for the platform, then try updating the stream again',
+      );
+    },
+  },
+  RESTREAM_NO_ACTIVE_TARGETS: {
+    get message() {
+      return $t('No active Multistream destinations were found for your live stream');
+    },
+    get action() {
+      return $t(
+        'no live destinations so there was nothing to remove. The stream may have already ended on the server',
+      );
+    },
+  },
+  RESTREAM_REMOVE_TARGET_NOT_FOUND: {
+    get message() {
+      return $t('Failed to find the destination to remove on your live stream');
+    },
+    get action() {
+      return $t('one of the platforms requesting removal does not exist');
+    },
+  },
+  RESTREAM_REMOVE_TARGETS_FAILED: {
+    get message() {
+      return $t('Failed to remove the destination from your live stream');
+    },
+    get action() {
+      return $t('failed to remove the platform while live, confirm the stream is still active');
+    },
+  },
   RESTREAM_ENHANCED_BROADCASTING_FAILED: {
     get message() {
-      return $t('Failed to configure the Multistream server for Enhanced Broadcasting');
+      return $t('Failed to multistream because Enhanced Broadcasting is enabled');
     },
     get action() {
       return $t('disable Enhanced Broadcasting for Twitch and try again');
@@ -684,6 +762,39 @@ export function formatUnknownErrorMessage(
     report: messages.user.join('. '),
     details,
   };
+}
+export function throwRestreamError(e: unknown, errorType?: TStreamErrorType, message?: string) {
+  console.error('Restream error:', e);
+
+  const error =
+    e instanceof StreamError
+      ? e
+      : {
+          status: 400,
+          statusText:
+            message ?? $t('Failed to update Multistream platforms and destinations while live'),
+        };
+
+  const type = getRestreamErrorType(e, errorType);
+  const details = formatRestreamErrorMessage(e, message);
+
+  throwStreamError(type, error, details);
+}
+
+function getRestreamErrorType(e: unknown, errorType?: TStreamErrorType): TStreamErrorType {
+  if (e instanceof StreamError) {
+    return e.type;
+  }
+
+  return errorType ?? ('RESTREAM_UPDATE_FAILED' as TStreamErrorType);
+}
+
+function formatRestreamErrorMessage(e: unknown, message?: string) {
+  if (e instanceof StreamError) {
+    return e.details ?? e.statusText;
+  }
+
+  return message ?? $t('Failed to update Multistream platforms and destinations while live');
 }
 
 function obsStringErrorAsMessages(info: { error: string; code: number }) {
