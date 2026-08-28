@@ -55,7 +55,7 @@ Function DisableLicenseLinks
   Push $0
   Push $1
   Push $2
-  ; The licence RichEdit (id 1000) is on the inner dialog (class #32770), a child of
+  ; The license RichEdit (id 1000) is on the inner dialog (class #32770), a child of
   ; $HWNDPARENT -- GetDlgItem on $HWNDPARENT itself returns 0. Same lookup electron-builder
   ; uses in its own LicenseShow (app-builder-lib/out/targets/nsis/nsisLicense.js).
   FindWindow $0 "#32770" "" $HWNDPARENT
