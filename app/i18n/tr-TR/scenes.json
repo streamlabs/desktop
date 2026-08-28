@@ -32,6 +32,7 @@
   "Rename Folder": "Klasörü Yeniden Adlandır",
   "Name Folder": "Klasörü Adlandır",
   "Failed to load scene collection.  A new one will be created instead.": "Sahne koleksiyonu yüklenemedi.  Bunun yerine yeni bir tane oluşturun.",
+  "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.": "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.",
   "New Scene": "Yeni Sahne",
   "Projector": "Projektör",
   "Your Scene Collections:": "Sahne Koleksiyonlarınız:",
