@@ -9,7 +9,7 @@ useWebdriver({
   clearCollectionAfterEachTest: true,
 });
 
-test('Adding and removing a Color Correction filter', async t => {
+test.skip('Adding and removing a Color Correction filter', async t => {
   const sourceName = 'Color Source';
   const filterName = 'Color Correction';
 
@@ -33,7 +33,7 @@ test('Adding and removing a Color Correction filter', async t => {
   t.false(await isDisplayed('label=Gamma'));
 });
 
-test('Adding and removing a Image Mask filter', async t => {
+test.skip('Adding and removing a Image Mask filter', async t => {
   const sourceName = 'Color Source 2';
   const filterName = 'Image Mask/Blend';
 

@@ -17,6 +17,7 @@ import { sleep } from '../../helpers/sleep';
 // TODO: fake hook
 useWebdriver({ pauseIfFailed: false });
 
+// TODO: Restore Alert Box for Twitch and YouTube
 test.skip('Alert Box for Twitch', t => testAlertbox(t, 'twitch'));
 test.skip('Alert Box for YouTube', t => testAlertbox(t, 'youtube'));
 test('Alert Box for Facebook', t => testAlertbox(t, 'facebook'));
