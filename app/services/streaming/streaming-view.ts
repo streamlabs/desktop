@@ -581,9 +581,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   /**
    * Validate the display when live output editing is enabled
-   * @remark Used to ensure a platform with the `both` display, used for dual streaming, uses the
-   * default display instead. Reads `savedLiveOutputEditing` instead of `isLiveOutputEditingEnabled`
-   * to avoid the circular dependency: settings → savedSettings → getSavedPlatformSettings → settings
    * @param display - The display saved for the platform
    * @remark Use the dual output mode service state to prevent circular references
    * @warning The `get` prefix is required. This class is passed to `injectState` in
