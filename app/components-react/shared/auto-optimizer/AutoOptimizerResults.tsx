@@ -16,6 +16,8 @@ function settingsKey(leg: IAutoOptimizerPresentationLeg) {
     leg.preset || '',
     leg.measurementMode,
     leg.estimateReason || '',
+    leg.managedByProvider ? 'provider-encoding' : '',
+    leg.videoSettingsManagedByProvider ? 'provider-video' : '',
     ...(leg.platforms || []).map(platform => platform.id).sort(),
     ...(leg.measuredPlatforms || []).map(platform => `measured:${platform.id}`).sort(),
     ...(leg.estimatedPlatforms || []).map(platform => `estimated:${platform.id}`).sort(),
@@ -41,7 +43,10 @@ function PlatformChips(p: { platforms: Array<{ id: string; label: string }> }) {
   );
 }
 
-function MeasurementProvenance(p: { leg: IAutoOptimizerPresentationLeg }) {
+function MeasurementProvenance(p: {
+  leg: IAutoOptimizerPresentationLeg;
+  standalone?: boolean;
+}) {
   const measured =
     p.leg.measurementMode === 'active' ? p.leg.measuredPlatforms || [] : [];
   const estimated =
@@ -50,9 +55,8 @@ function MeasurementProvenance(p: { leg: IAutoOptimizerPresentationLeg }) {
       : p.leg.platforms || [];
   if (!measured.length && !estimated.length) return null;
 
-  return (
-    <span className={styles.measurementInline}>
-      {' ('}
+  const contents = (
+    <>
       {measured.length > 0 && (
         <>
           {$t('Measured on')} <PlatformChips platforms={measured} />
@@ -64,6 +68,17 @@ function MeasurementProvenance(p: { leg: IAutoOptimizerPresentationLeg }) {
           {$t('Estimated for')} <PlatformChips platforms={estimated} />
         </>
       )}
+    </>
+  );
+
+  if (p.standalone) {
+    return <span className={styles.measurementBlock}>{contents}</span>;
+  }
+
+  return (
+    <span className={styles.measurementInline}>
+      {' ('}
+      {contents}
       {')'}
     </span>
   );
@@ -91,44 +106,43 @@ function ActiveMeasurementExplanation(p: { leg: IAutoOptimizerPresentationLeg })
 function SettingsList(p: { leg: IAutoOptimizerPresentationLeg }) {
   const { leg } = p;
 
-  if (leg.managedByProvider) {
-    return (
-      <>
-        <p>
-          {$t('Twitch will manage the video and encoder settings for this stream.')}
-          <MeasurementProvenance leg={leg} />
-        </p>
-        <EstimateExplanation leg={leg} />
-        <ActiveMeasurementExplanation leg={leg} />
-      </>
-    );
-  }
-
   return (
     <>
       <ul className={styles.settingsList}>
         <li>
           <i className="icon-check" aria-hidden="true" />
-          {$t('Resolution')}: {leg.width}×{leg.height}
+          {$t(leg.managedByProvider ? 'Canvas resolution' : 'Resolution')}: {leg.width}×
+          {leg.height}
         </li>
         <li>
           <i className="icon-check" aria-hidden="true" />
           {$t('Framerate')}: {leg.fps} {$t('fps')}
         </li>
-        <li>
-          <i className="icon-check" aria-hidden="true" />
-          {$t('Bitrate')}: {leg.bitrateKbps} Kbps
-          <MeasurementProvenance leg={leg} />
-        </li>
-        {leg.encoder && (
+        {!leg.managedByProvider && (
+          <li>
+            <i className="icon-check" aria-hidden="true" />
+            {$t('Bitrate')}: {leg.bitrateKbps} Kbps
+            <MeasurementProvenance leg={leg} />
+          </li>
+        )}
+        {!leg.managedByProvider && leg.encoder && (
           <li>
             <i className="icon-check" aria-hidden="true" />
             {$t('Encoder')}: {leg.encoder}
           </li>
         )}
       </ul>
-      <EstimateExplanation leg={leg} />
-      <ActiveMeasurementExplanation leg={leg} />
+      {leg.managedByProvider && (
+        <div className={styles.providerManaged}>
+          <h3>{$t('Twitch Enhanced Broadcasting')}</h3>
+          <p>{$t('Twitch will manage stream output resolutions, bitrates, and encoders.')}</p>
+          <MeasurementProvenance leg={leg} standalone />
+          <EstimateExplanation leg={leg} />
+          <ActiveMeasurementExplanation leg={leg} />
+        </div>
+      )}
+      {!leg.managedByProvider && <EstimateExplanation leg={leg} />}
+      {!leg.managedByProvider && <ActiveMeasurementExplanation leg={leg} />}
     </>
   );
 }
@@ -160,7 +174,11 @@ export function AutoOptimizerResults(p: {
 }) {
   const allSettingsMatch =
     p.legs.length > 0 && p.legs.every(leg => settingsKey(leg) === settingsKey(p.legs[0]));
-  const allProviderManaged = p.legs.length > 0 && p.legs.every(leg => leg.managedByProvider);
+  const allProviderManaged =
+    p.legs.length > 0 &&
+    p.legs.every(
+      leg => leg.managedByProvider && (leg.videoSettingsManagedByProvider ?? leg.managedByProvider),
+    );
   let applyLabel = $t('Save Settings');
   if (p.host === 'go-live') {
     applyLabel = allProviderManaged ? $t('Continue & Go Live') : $t('Save Settings & Go Live');

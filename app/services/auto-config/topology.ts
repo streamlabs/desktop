@@ -62,18 +62,20 @@ function probeCandidates(
   legId: string,
   destinations: IAutoOptimizerDestination[],
   allowed: boolean,
+  type: TAutoOptimizerTopologyType,
 ): IAutoOptimizerProbeCandidate[] {
   if (!allowed) return [];
 
   const platforms = new Set(destinations.map(item => item.platform));
   return probeProviderOrder
     .filter(platform => platforms.has(platform))
-    .map(provider => ({
-      probeId: `${legId}-${provider}`,
-      kind: provider === 'twitch' ? 'twitch-standard' : 'youtube-unbound',
-      legId,
-      provider,
-    }));
+    .map(provider => {
+      let kind: IAutoOptimizerProbeCandidate['kind'] = 'youtube-unbound';
+      if (provider === 'twitch') {
+        kind = type === 'enhanced-broadcasting' ? 'twitch-enhanced-broadcasting' : 'twitch-standard';
+      }
+      return { probeId: `${legId}-${provider}`, kind, legId, provider };
+    });
 }
 
 function uploadRoute(destinations: IAutoOptimizerDestination[]): TAutoOptimizerUploadRoute {
@@ -88,7 +90,7 @@ function completeLeg(
   type: TAutoOptimizerTopologyType,
   allowProbes: boolean,
 ): IAutoOptimizerTopologyLeg {
-  const candidates = probeCandidates(leg.legId, leg.destinations, allowProbes);
+  const candidates = probeCandidates(leg.legId, leg.destinations, allowProbes, type);
   return {
     ...leg,
     route: uploadRoute(leg.destinations),
@@ -139,11 +141,18 @@ export function classifyAutoOptimizerTopology(
     type = 'direct-single';
   }
 
-  // Custom RTMP credentials must never be used for active testing, and the
-  // specialized Twitch output modes do not use the standard ingest path.
-  const allowProbes = !['custom-rtmp', 'mixed', 'enhanced-broadcasting', 'stream-shift'].includes(
-    type,
-  );
+  // Custom RTMP credentials and Stream Shift must never be used for active
+  // testing. Enhanced Broadcasting has a separate workload probe whose V1
+  // safety boundary is one horizontal Twitch-only output.
+  const enhancedBroadcastingProbeEligible =
+    type === 'enhanced-broadcasting' &&
+    !dualOutputMode &&
+    !hasCustom &&
+    platforms.length === 1 &&
+    platforms[0] === 'twitch';
+  const allowProbes =
+    enhancedBroadcastingProbeEligible ||
+    !['custom-rtmp', 'mixed', 'enhanced-broadcasting', 'stream-shift'].includes(type);
 
   const allDestinations: IAutoOptimizerDestination[] = [
     ...platforms.map(destination),

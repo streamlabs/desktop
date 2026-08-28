@@ -29,7 +29,9 @@ export interface IAutoOptimizerPresentationLeg {
   route?: 'direct' | 'cloud-restream';
   estimateReason?: string;
   showMeasurementReason?: boolean;
+  /** Twitch owns bitrate/encoder; this separately controls whether video is also provider-owned. */
   managedByProvider?: boolean;
+  videoSettingsManagedByProvider?: boolean;
   width: number;
   height: number;
   fps: number;

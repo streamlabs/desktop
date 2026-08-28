@@ -31,14 +31,15 @@ export type TAutoOptimizerConfidence = 'high' | 'medium' | 'low';
 export type TAutoOptimizerPromptState = 'unseen' | 'declined' | 'completed';
 export type TAutoOptimizerUploadRoute = 'direct' | 'cloud-restream';
 export type TAutoOptimizerProbeProvider = 'twitch' | 'youtube';
-export type TAutoOptimizerProbeKind = 'twitch-standard' | 'youtube-unbound';
-export type TAutoOptimizerProbeMethod = 'twitch-bandwidth-test' | 'youtube-unbound-ramp';
-export type TAutoOptimizerEncoderFamily =
-  | 'obs_nvenc_h264_tex'
-  | 'qsv'
-  | 'amd'
-  | 'apple'
-  | 'x264';
+export type TAutoOptimizerProbeKind =
+  | 'twitch-standard'
+  | 'twitch-enhanced-broadcasting'
+  | 'youtube-unbound';
+export type TAutoOptimizerProbeMethod =
+  | 'twitch-bandwidth-test'
+  | 'twitch-enhanced-broadcasting-test'
+  | 'youtube-unbound-ramp';
+export type TAutoOptimizerEncoderFamily = 'obs_nvenc_h264_tex' | 'qsv' | 'amd' | 'apple' | 'x264';
 
 export type TAutoOptimizerPlatform =
   | 'twitch'
@@ -76,6 +77,14 @@ export interface IAutoOptimizerProbeEvidence {
   headroomPercent?: number;
   success: boolean;
   ceilingReached?: boolean;
+  /** Exact video tuple exercised by an Enhanced Broadcasting workload test. */
+  testedWidth?: number;
+  testedHeight?: number;
+  testedFpsNum?: number;
+  testedFpsDen?: number;
+  /** Provider ladder shape observed during the Enhanced Broadcasting test. */
+  videoTrackCount?: number;
+  configuredAggregateBitrateKbps?: number;
 }
 
 export interface IAutoOptimizerTopologyLeg {
@@ -236,6 +245,14 @@ export type IAutoConfigActiveProbe =
     }
   | {
       probeId: string;
+      kind: 'twitch-enhanced-broadcasting';
+      legId: string;
+      serviceName: 'Twitch';
+      server: 'auto';
+      streamKey: string;
+    }
+  | {
+      probeId: string;
       kind: 'youtube-unbound';
       legId: string;
       serviceName: 'YouTube - RTMPS';
@@ -281,15 +298,7 @@ export interface IAutoConfigNativeResult {
       mode: TAutoOptimizerMeasurementMode;
       confidence: TAutoOptimizerConfidence;
       reason?: string;
-      probes?: Array<{
-        provider: TAutoOptimizerProbeProvider;
-        method: TAutoOptimizerProbeMethod;
-        measuredKbps?: number;
-        safeKbps?: number;
-        headroomPercent?: number;
-        success: boolean;
-        ceilingReached?: boolean;
-      }>;
+      probes?: IAutoOptimizerProbeEvidence[];
     };
     recommendation: {
       width: number;

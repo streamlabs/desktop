@@ -1,4 +1,6 @@
 import test from 'ava';
+import * as fs from 'fs';
+import * as path from 'path';
 import {
   autoOptimizerErrorMessage,
   autoOptimizerProgressLabel,
@@ -280,6 +282,131 @@ test('Twitch progress identifies the extended same-target confirmation', t => {
       key: 'Confirming your Twitch upload at %{bitrate} Kbps...',
       values: { bitrate: 6000 },
     },
+  );
+});
+
+test('Enhanced Broadcasting progress describes ladder and exact candidates', t => {
+  t.is(
+    autoOptimizerProgressLabel(
+      'bandwidth',
+      progressDetail({
+        code: 'enhanced_broadcasting_requesting_ladder',
+        provider: 'twitch',
+      }),
+    ).key,
+    'Preparing Enhanced Broadcasting settings with Twitch...',
+  );
+  const candidate = progressDetail({
+    code: 'enhanced_broadcasting_testing_candidate',
+    provider: 'twitch',
+    width: 1920,
+    height: 1080,
+    fpsNum: 60,
+    fpsDen: 1,
+  });
+  t.deepEqual(autoOptimizerProgressLabel('bandwidth', candidate), {
+    key: 'Testing Enhanced Broadcasting at %{width}×%{height}, %{fps} FPS...',
+    values: {
+      encoder: 'Encoder',
+      width: 1920,
+      height: 1080,
+      fps: 60,
+      bitrate: 0,
+    },
+  });
+  t.deepEqual(
+    autoOptimizerProgressLabel('bandwidth', {
+      ...candidate,
+      code: 'enhanced_broadcasting_validating_target_cadence',
+    }),
+    {
+      key: 'Validating Enhanced Broadcasting at %{width}×%{height}, %{fps} FPS...',
+      values: {
+        encoder: 'Encoder',
+        width: 1920,
+        height: 1080,
+        fps: 60,
+        bitrate: 0,
+      },
+    },
+  );
+  t.is(
+    autoOptimizerProgressLabel('bandwidth', {
+      ...candidate,
+      code: 'enhanced_broadcasting_candidate_rejected',
+    }).key,
+    '%{width}×%{height}, %{fps} FPS could not keep up. Trying a lower setting...',
+  );
+  t.is(
+    autoOptimizerProgressLabel('bandwidth', {
+      ...candidate,
+      code: 'enhanced_broadcasting_candidate_selected',
+    }).key,
+    'Enhanced Broadcasting passed at %{width}×%{height}, %{fps} FPS.',
+  );
+});
+
+test('Enhanced Broadcasting progress interpolates through the en-US catalog', t => {
+  const VueRuntime = require('vue');
+  const VueI18nRuntime = require('vue-i18n');
+  VueRuntime.use(VueI18nRuntime);
+  const messages = JSON.parse(
+    fs.readFileSync(path.resolve('app/i18n/en-US/streaming.json'), 'utf8'),
+  );
+  const i18n = new VueI18nRuntime({
+    locale: 'en-US',
+    fallbackLocale: 'en-US',
+    messages: { 'en-US': messages },
+  });
+  const candidate = progressDetail({
+    code: 'enhanced_broadcasting_testing_candidate',
+    provider: 'twitch',
+    width: 1920,
+    height: 1080,
+    fpsNum: 60000,
+    fpsDen: 1001,
+  });
+  const label = autoOptimizerProgressLabel('bandwidth', candidate);
+  const codes = [
+    'enhanced_broadcasting_testing_candidate',
+    'enhanced_broadcasting_validating_target_cadence',
+    'enhanced_broadcasting_candidate_rejected',
+    'enhanced_broadcasting_candidate_selected',
+  ] as const;
+  const labels = [
+    autoOptimizerProgressLabel(
+      'bandwidth',
+      progressDetail({ code: 'enhanced_broadcasting_requesting_ladder', provider: 'twitch' }),
+    ),
+    ...codes.map(code =>
+      autoOptimizerProgressLabel('bandwidth', { ...candidate, code }),
+    ),
+    ...codes.map(code =>
+      autoOptimizerProgressLabel('bandwidth', progressDetail({ code, provider: 'twitch' })),
+    ),
+  ];
+
+  labels.forEach(progressLabel => {
+    t.true(
+      Object.prototype.hasOwnProperty.call(messages, progressLabel.key),
+      `Missing en-US progress translation: ${progressLabel.key}`,
+    );
+  });
+
+  [
+    'Canvas resolution',
+    'Twitch Enhanced Broadcasting',
+    'Twitch will manage stream output resolutions, bitrates, and encoders.',
+  ].forEach(key => {
+    t.true(
+      Object.prototype.hasOwnProperty.call(messages, key),
+      `Missing en-US result translation: ${key}`,
+    );
+  });
+
+  t.is(
+    i18n.t(label.key, label.values) as string,
+    'Testing Enhanced Broadcasting at 1920×1080, 59.94 FPS...',
   );
 });
 

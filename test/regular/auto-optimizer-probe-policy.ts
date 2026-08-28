@@ -1,6 +1,7 @@
 import test from 'ava';
 import {
   autoConfigProbeCoverage,
+  autoConfigPhaseStepDisposition,
   autoConfigPhaseStepKey,
   filterAutoConfigTopologyProbes,
   hasRequiredAutoConfigCapabilities,
@@ -8,13 +9,13 @@ import {
   sanitizeAutoConfigProgressDetail,
   sanitizeAutoConfigProbeEvidence,
   sanitizeAutoConfigProbeTargetBitrateKbps,
-  supportedAutoConfigProbeProviders,
+  supportedAutoConfigProbeKinds,
 } from '../../app/services/auto-config/probe-policy';
 import {
   IAutoConfigCapabilities,
   IAutoConfigEvent,
   IAutoOptimizerTopology,
-  TAutoOptimizerProbeProvider,
+  TAutoOptimizerProbeKind,
 } from '../../app/services/auto-config/types';
 
 function capabilities(patch: Partial<IAutoConfigCapabilities> = {}): IAutoConfigCapabilities {
@@ -26,7 +27,12 @@ function capabilities(patch: Partial<IAutoConfigCapabilities> = {}): IAutoConfig
     perUploadLegResults: true,
     desktopOwnedApply: true,
     multipleActiveProbes: true,
-    bandwidthModes: ['estimate', 'twitch-standard-active', 'youtube-unbound-active'],
+    bandwidthModes: [
+      'estimate',
+      'twitch-standard-active',
+      'twitch-enhanced-broadcasting-active',
+      'youtube-unbound-active',
+    ],
     ...patch,
   };
 }
@@ -72,58 +78,58 @@ test('estimate support is required while active provider modes are optional', t 
   t.false(hasRequiredAutoConfigCapabilities(capabilities({ apiVersion: 1 })));
 });
 
-test('YouTube probing requires its flag, confirmation bridge, and multi-probe contract', t => {
+test('active probe kinds require their exact native mode and runtime support', t => {
   const native = capabilities();
 
   t.deepEqual(
     [
-      ...supportedAutoConfigProbeProviders(native, {
+      ...supportedAutoConfigProbeKinds(native, {
         twitchFeatureEnabled: true,
         youtubeFeatureEnabled: true,
         canConfirmYoutubeIngest: true,
       }),
     ],
-    ['twitch', 'youtube'],
+    ['twitch-standard', 'twitch-enhanced-broadcasting', 'youtube-unbound'],
   );
   t.deepEqual(
     [
-      ...supportedAutoConfigProbeProviders(native, {
+      ...supportedAutoConfigProbeKinds(native, {
         twitchFeatureEnabled: true,
         youtubeFeatureEnabled: false,
         canConfirmYoutubeIngest: true,
       }),
     ],
-    ['twitch'],
+    ['twitch-standard', 'twitch-enhanced-broadcasting'],
   );
   t.deepEqual(
     [
-      ...supportedAutoConfigProbeProviders(capabilities({ multipleActiveProbes: false }), {
+      ...supportedAutoConfigProbeKinds(capabilities({ multipleActiveProbes: false }), {
         twitchFeatureEnabled: true,
         youtubeFeatureEnabled: true,
         canConfirmYoutubeIngest: true,
       }),
     ],
-    ['twitch'],
+    ['twitch-standard', 'twitch-enhanced-broadcasting'],
   );
   t.deepEqual(
     [
-      ...supportedAutoConfigProbeProviders(native, {
+      ...supportedAutoConfigProbeKinds(native, {
         twitchFeatureEnabled: true,
         youtubeFeatureEnabled: true,
         canConfirmYoutubeIngest: false,
       }),
     ],
-    ['twitch'],
+    ['twitch-standard', 'twitch-enhanced-broadcasting'],
   );
   t.deepEqual(
     [
-      ...supportedAutoConfigProbeProviders(native, {
+      ...supportedAutoConfigProbeKinds(native, {
         twitchFeatureEnabled: false,
         youtubeFeatureEnabled: true,
         canConfirmYoutubeIngest: true,
       }),
     ],
-    ['youtube'],
+    ['youtube-unbound'],
   );
 });
 
@@ -131,7 +137,7 @@ test('a shared cloud leg retains the supported provider when another is unavaila
   const topology = sharedCloudTopology();
   const filtered = filterAutoConfigTopologyProbes(
     topology,
-    new Set<TAutoOptimizerProbeProvider>(['twitch']),
+    new Set<TAutoOptimizerProbeKind>(['twitch-standard']),
   );
 
   t.is(filtered.legs[0].measurement, 'active');
@@ -143,6 +149,43 @@ test('a shared cloud leg retains the supported provider when another is unavaila
   t.deepEqual(filtered.probeCandidates.map(candidate => candidate.provider), ['twitch']);
   t.is(topology.legs[0].measurement, 'active', 'the classifier output is not mutated');
   t.is(topology.probeCandidates.length, 2);
+});
+
+test('Enhanced Broadcasting requires its exact native capability', t => {
+  const candidate = {
+    probeId: 'horizontal-twitch',
+    kind: 'twitch-enhanced-broadcasting' as const,
+    legId: 'horizontal',
+    provider: 'twitch' as const,
+  };
+  const topology: IAutoOptimizerTopology = {
+    type: 'enhanced-broadcasting',
+    probeCandidates: [candidate],
+    legs: [
+      {
+        legId: 'horizontal',
+        display: 'horizontal',
+        destinations: [{ platform: 'twitch' }],
+        route: 'direct',
+        probeCandidates: [candidate],
+        measurement: 'active',
+      },
+    ],
+  };
+
+  const standardOnly = filterAutoConfigTopologyProbes(
+    topology,
+    new Set<TAutoOptimizerProbeKind>(['twitch-standard']),
+  );
+  t.is(standardOnly.legs[0].measurement, 'estimated');
+  t.deepEqual(standardOnly.probeCandidates, []);
+
+  const enhanced = filterAutoConfigTopologyProbes(
+    topology,
+    new Set<TAutoOptimizerProbeKind>(['twitch-enhanced-broadcasting']),
+  );
+  t.is(enhanced.legs[0].measurement, 'active');
+  t.deepEqual(enhanced.probeCandidates, [candidate]);
 });
 
 test('probe coverage estimates only with zero probes and disables partial promotion', t => {
@@ -165,7 +208,9 @@ test('probe coverage estimates only with zero probes and disables partial promot
 test('partial active provider evidence is accepted only at low confidence', t => {
   const partial = {
     destinations: [{ platform: 'twitch' }, { platform: 'youtube' }],
-    attemptedCandidates: [{ provider: 'twitch' as const }],
+    attemptedCandidates: [
+      { provider: 'twitch' as const, kind: 'twitch-standard' as const },
+    ],
     evidence: [
       {
         provider: 'twitch' as const,
@@ -195,8 +240,8 @@ test('runtime-partial active coverage accepts one prepared success only at low c
   const context = {
     destinations: [{ platform: 'twitch' }, { platform: 'youtube' }],
     attemptedCandidates: [
-      { provider: 'twitch' as const },
-      { provider: 'youtube' as const },
+      { provider: 'twitch' as const, kind: 'twitch-standard' as const },
+      { provider: 'youtube' as const, kind: 'youtube-unbound' as const },
     ],
   };
 
@@ -253,7 +298,7 @@ test('active evidence cannot claim a provider Desktop did not attempt', t => {
   t.false(
     isValidAutoConfigActiveProbeCoverage({
       destinations: [{ platform: 'twitch' }, { platform: 'youtube' }],
-      attemptedCandidates: [{ provider: 'twitch' }],
+      attemptedCandidates: [{ provider: 'twitch', kind: 'twitch-standard' }],
       confidence: 'low',
       evidence: [
         {
@@ -277,10 +322,67 @@ test('active evidence cannot claim a provider Desktop did not attempt', t => {
   );
 });
 
+test('active Twitch evidence must match the exact attempted standard or Enhanced Broadcasting method', t => {
+  const context = {
+    destinations: [{ platform: 'twitch' }],
+    confidence: 'high',
+  };
+  const standardEvidence = {
+    provider: 'twitch' as const,
+    method: 'twitch-bandwidth-test' as const,
+    measuredKbps: 6000,
+    safeKbps: 6000,
+    headroomPercent: 0,
+    success: true,
+  };
+  const enhancedEvidence = {
+    provider: 'twitch' as const,
+    method: 'twitch-enhanced-broadcasting-test' as const,
+    success: true,
+    testedWidth: 1920,
+    testedHeight: 1080,
+    testedFpsNum: 60,
+    testedFpsDen: 1,
+  };
+
+  t.true(
+    isValidAutoConfigActiveProbeCoverage({
+      ...context,
+      attemptedCandidates: [{ provider: 'twitch', kind: 'twitch-standard' }],
+      evidence: [standardEvidence],
+    }),
+  );
+  t.false(
+    isValidAutoConfigActiveProbeCoverage({
+      ...context,
+      attemptedCandidates: [{ provider: 'twitch', kind: 'twitch-standard' }],
+      evidence: [enhancedEvidence],
+    }),
+  );
+  t.true(
+    isValidAutoConfigActiveProbeCoverage({
+      ...context,
+      attemptedCandidates: [
+        { provider: 'twitch', kind: 'twitch-enhanced-broadcasting' },
+      ],
+      evidence: [enhancedEvidence],
+    }),
+  );
+  t.false(
+    isValidAutoConfigActiveProbeCoverage({
+      ...context,
+      attemptedCandidates: [
+        { provider: 'twitch', kind: 'twitch-enhanced-broadcasting' },
+      ],
+      evidence: [standardEvidence],
+    }),
+  );
+});
+
 test('a shared cloud leg remains estimate-only when no provider probe is supported', t => {
   const filtered = filterAutoConfigTopologyProbes(
     sharedCloudTopology(),
-    new Set<TAutoOptimizerProbeProvider>(),
+    new Set<TAutoOptimizerProbeKind>(),
   );
 
   t.is(filtered.legs[0].measurement, 'estimated');
@@ -291,7 +393,7 @@ test('a shared cloud leg remains estimate-only when no provider probe is support
 test('a shared cloud leg retains deterministic candidates when every provider is supported', t => {
   const filtered = filterAutoConfigTopologyProbes(
     sharedCloudTopology(),
-    new Set<TAutoOptimizerProbeProvider>(['youtube', 'twitch']),
+    new Set<TAutoOptimizerProbeKind>(['youtube-unbound', 'twitch-standard']),
   );
 
   t.deepEqual(
@@ -329,7 +431,7 @@ test('multi-leg Dual Output remains estimate-only without an aggregate uplink al
 
   const filtered = filterAutoConfigTopologyProbes(
     topology,
-    new Set<TAutoOptimizerProbeProvider>(['twitch', 'youtube']),
+    new Set<TAutoOptimizerProbeKind>(['twitch-standard', 'youtube-unbound']),
   );
   t.is(filtered.legs[0].measurement, 'estimated');
   t.is(filtered.legs[0].estimateReason, 'dual_output');
@@ -344,7 +446,7 @@ test('a multi-destination leg nested under Dual Output is estimate-only', t => {
 
   const filtered = filterAutoConfigTopologyProbes(
     topology,
-    new Set<TAutoOptimizerProbeProvider>(['twitch', 'youtube']),
+    new Set<TAutoOptimizerProbeKind>(['twitch-standard', 'youtube-unbound']),
   );
 
   t.is(filtered.legs[0].measurement, 'estimated');
@@ -376,7 +478,7 @@ test('YouTube display both cannot create two active probe leases', t => {
 
   const filtered = filterAutoConfigTopologyProbes(
     topology,
-    new Set<TAutoOptimizerProbeProvider>(['youtube']),
+    new Set<TAutoOptimizerProbeKind>(['youtube-unbound']),
   );
 
   t.true(filtered.legs.every(leg => leg.measurement === 'estimated'));
@@ -384,11 +486,43 @@ test('YouTube display both cannot create two active probe leases', t => {
 });
 
 test('sequential provider bandwidth events receive distinct pacing keys', t => {
-  t.is(autoConfigPhaseStepKey('bandwidth', 'twitch'), 'bandwidth:twitch');
-  t.is(autoConfigPhaseStepKey('bandwidth', 'youtube'), 'bandwidth:youtube');
+  t.is(autoConfigPhaseStepKey('bandwidth', 'twitch'), 'bandwidth:twitch:measuring:0');
+  t.is(autoConfigPhaseStepKey('bandwidth', 'youtube'), 'bandwidth:youtube:measuring:0');
   t.not(
     autoConfigPhaseStepKey('bandwidth', 'twitch'),
     autoConfigPhaseStepKey('bandwidth', 'youtube'),
+  );
+  t.is(
+    autoConfigPhaseStepKey(
+      'bandwidth',
+      'twitch',
+      'enhanced_broadcasting_testing_candidate',
+      { width: 1920, height: 1080, fpsNum: 60, fpsDen: 1 },
+    ),
+    'bandwidth:twitch:enhanced_broadcasting_testing_candidate:1920x1080:60/1',
+  );
+  t.not(
+    autoConfigPhaseStepKey(
+      'bandwidth',
+      'twitch',
+      'enhanced_broadcasting_testing_candidate',
+      { width: 1920, height: 1080, fpsNum: 60, fpsDen: 1 },
+    ),
+    autoConfigPhaseStepKey(
+      'bandwidth',
+      'twitch',
+      'enhanced_broadcasting_candidate_rejected',
+      { width: 1920, height: 1080, fpsNum: 60, fpsDen: 1 },
+    ),
+  );
+  t.is(
+    autoConfigPhaseStepKey(
+      'bandwidth',
+      'twitch',
+      'enhanced_broadcasting_validating_target_cadence',
+      { width: 1920, height: 1080, fpsNum: 60, fpsDen: 1 },
+    ),
+    'bandwidth:twitch:enhanced_broadcasting_validating_target_cadence:1920x1080:60/1',
   );
   t.is(autoConfigPhaseStepKey('hardware', 'youtube'), 'hardware');
   t.is(
@@ -397,7 +531,7 @@ test('sequential provider bandwidth events receive distinct pacing keys', t => {
   );
   t.is(
     autoConfigPhaseStepKey('hardware', null, 'hardware_validating_encoder'),
-    'hardware:validating',
+    'hardware:validating:encoder:0x0:0/0',
   );
   t.not(
     autoConfigPhaseStepKey('hardware', null, 'hardware_testing_encoder'),
@@ -405,7 +539,7 @@ test('sequential provider bandwidth events receive distinct pacing keys', t => {
   );
   t.is(
     autoConfigPhaseStepKey('hardware', null, 'hardware_encoder_selected'),
-    'hardware:selected',
+    'hardware:selected:encoder:0x0:0/0',
   );
   const surfaceAttempt = {
     encoderId: 'obs_nvenc_h264_tex',
@@ -421,7 +555,7 @@ test('sequential provider bandwidth events receive distinct pacing keys', t => {
       'hardware_testing_encoder_surfaces',
       surfaceAttempt,
     ),
-    'hardware:surfaces:obs_nvenc_h264_tex:1920x1080:30/1',
+    'hardware:surfaces:obs_nvenc_h264_tex:1920x1080',
   );
   t.is(
     autoConfigPhaseStepKey('hardware', null, 'hardware_validating_target_cadence', {
@@ -445,28 +579,32 @@ test('sequential provider bandwidth events receive distinct pacing keys', t => {
   );
   t.is(
     autoConfigPhaseStepKey('recommendation', null, 'recommendation_selecting_quality'),
-    'recommendation:selecting',
+    'recommendation:selecting:0',
   );
   t.is(
     autoConfigPhaseStepKey('recommendation', null, 'recommendation_quality_selected'),
-    'recommendation:selected',
+    'recommendation',
   );
   t.not(
     autoConfigPhaseStepKey('recommendation', null, 'recommendation_selecting_quality'),
     autoConfigPhaseStepKey('recommendation', null, 'recommendation_quality_selected'),
   );
+  t.is(
+    autoConfigPhaseStepKey('hardware', null, 'hardware_provider_managed'),
+    autoConfigPhaseStepKey('recommendation', null, 'recommendation_provider_managed'),
+  );
   t.is(autoConfigPhaseStepKey('cleanup', null, 'cleanup_resources'), 'cleanup');
   t.is(
     autoConfigPhaseStepKey('hardware', null, 'hardware_encoder_rejected'),
-    'hardware',
+    'hardware:rejected:encoder',
   );
   t.is(
     autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_completed'),
-    'bandwidth:youtube:complete',
+    'bandwidth:youtube:youtube_probe_completed:0',
   );
   t.is(
     autoConfigPhaseStepKey('bandwidth', 'twitch', 'twitch_probe_failed_estimate_used'),
-    'bandwidth:twitch:complete',
+    'bandwidth:twitch:twitch_probe_failed_estimate_used:0',
   );
   t.is(
     autoConfigPhaseStepKey(
@@ -474,12 +612,60 @@ test('sequential provider bandwidth events receive distinct pacing keys', t => {
       'youtube',
       'youtube_probe_source_underfill_completed',
     ),
-    'bandwidth:youtube:complete',
+    'bandwidth:youtube:youtube_probe_source_underfill_completed:0',
   );
   t.not(
     autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_completed'),
     autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_baseline'),
   );
+
+  t.not(
+    autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_baseline', {
+      targetBitrateKbps: 4500,
+    }),
+    autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_baseline', {
+      targetBitrateKbps: 6000,
+    }),
+  );
+  t.is(
+    autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_measuring', {
+      targetBitrateKbps: 4500,
+    }),
+    autoConfigPhaseStepKey('bandwidth', 'youtube', 'unknown_native_code', {
+      targetBitrateKbps: 4500,
+    }),
+  );
+  t.not(
+    autoConfigPhaseStepKey('hardware', null, 'hardware_testing_encoder', {
+      encoderTitle: 'NVIDIA NVENC H.264',
+      width: 1920,
+      height: 1080,
+      fpsNum: 60,
+      fpsDen: 1,
+    }),
+    autoConfigPhaseStepKey('hardware', null, 'hardware_testing_encoder', {
+      encoderTitle: 'Intel QSV H.264',
+      width: 1920,
+      height: 1080,
+      fpsNum: 60,
+      fpsDen: 1,
+    }),
+  );
+  t.not(
+    autoConfigPhaseStepKey('recommendation', null, 'recommendation_selecting_quality', {
+      availableBitrateKbps: 4500,
+    }),
+    autoConfigPhaseStepKey('recommendation', null, 'recommendation_selecting_quality', {
+      availableBitrateKbps: 6000,
+    }),
+  );
+});
+
+test('progress pacing coalesces repeats but preserves A to B to A transitions', t => {
+  t.is(autoConfigPhaseStepDisposition('A', [], 'A'), 'update-displayed');
+  t.is(autoConfigPhaseStepDisposition('A', ['B'], 'B'), 'update-pending-tail');
+  t.is(autoConfigPhaseStepDisposition('A', ['B'], 'A'), 'enqueue');
+  t.is(autoConfigPhaseStepDisposition('A', ['B', 'A'], 'B'), 'enqueue');
 });
 
 test('active probe target bitrate feedback is conservatively validated', t => {
@@ -585,6 +771,18 @@ test('probe evidence is validated and strips attempt-local or unknown fields', t
         success: true,
       },
       {
+        provider: 'twitch',
+        method: 'twitch-enhanced-broadcasting-test',
+        success: true,
+        testedWidth: 1920,
+        testedHeight: 1080,
+        testedFpsNum: 60,
+        testedFpsDen: 1,
+        videoTrackCount: 3,
+        configuredAggregateBitrateKbps: 7800,
+        internalLadder: 'must-not-leak',
+      },
+      {
         provider: 'other',
         method: 'unknown',
         measuredKbps: 1,
@@ -623,6 +821,17 @@ test('probe evidence is validated and strips attempt-local or unknown fields', t
         safeKbps: 8000,
         headroomPercent: 0,
         success: true,
+      },
+      {
+        provider: 'twitch',
+        method: 'twitch-enhanced-broadcasting-test',
+        success: true,
+        testedWidth: 1920,
+        testedHeight: 1080,
+        testedFpsNum: 60,
+        testedFpsDen: 1,
+        videoTrackCount: 3,
+        configuredAggregateBitrateKbps: 7800,
       },
       {
         provider: 'youtube',
@@ -664,6 +873,23 @@ test('malformed probe evidence is discarded at the renderer boundary', t => {
         provider: 'youtube',
         method: 'twitch-bandwidth-test',
         success: false,
+      },
+      {
+        provider: 'twitch',
+        method: 'twitch-enhanced-broadcasting-test',
+        success: true,
+        testedWidth: 1919,
+        testedHeight: 1080,
+        testedFpsNum: 60,
+        testedFpsDen: 1,
+      },
+      {
+        provider: 'twitch',
+        method: 'twitch-enhanced-broadcasting-test',
+        success: true,
+        testedWidth: 1920,
+        testedHeight: 1080,
+        testedFpsNum: 60,
       },
     ]),
     [],

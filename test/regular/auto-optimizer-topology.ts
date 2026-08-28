@@ -148,7 +148,7 @@ test('dual output produces independent direct probe candidates per destination',
   );
 });
 
-test('Enhanced Broadcasting and Stream Shift can never actively probe', t => {
+test('single-canvas Twitch-only Enhanced Broadcasting has its dedicated active probe', t => {
   const enhanced = classifyAutoOptimizerTopology(
     settings({
       platforms: {
@@ -161,6 +161,33 @@ test('Enhanced Broadcasting and Stream Shift can never actively probe', t => {
     }),
     false,
   );
+
+  t.is(enhanced.type, 'enhanced-broadcasting');
+  t.deepEqual(enhanced.probeCandidates, [
+    {
+      probeId: 'horizontal-twitch',
+      kind: 'twitch-enhanced-broadcasting',
+      legId: 'horizontal',
+      provider: 'twitch',
+    },
+  ]);
+  t.is(enhanced.legs[0].measurement, 'active');
+});
+
+test('Enhanced Broadcasting with another destination and Stream Shift remain estimate-only', t => {
+  const enhancedWithYoutube = classifyAutoOptimizerTopology(
+    settings({
+      platforms: {
+        twitch: {
+          enabled: true,
+          useCustomFields: false,
+          isEnhancedBroadcasting: true,
+        } as any,
+        youtube: { enabled: true, useCustomFields: false } as any,
+      },
+    }),
+    false,
+  );
   const streamShift = classifyAutoOptimizerTopology(
     settings({
       platforms: { twitch: { enabled: true, useCustomFields: false } as any },
@@ -169,10 +196,31 @@ test('Enhanced Broadcasting and Stream Shift can never actively probe', t => {
     false,
   );
 
-  t.is(enhanced.type, 'enhanced-broadcasting');
-  t.is(enhanced.probeCandidates.length, 0);
+  t.is(enhancedWithYoutube.type, 'enhanced-broadcasting');
+  t.is(enhancedWithYoutube.probeCandidates.length, 0);
+  t.is(enhancedWithYoutube.legs[0].estimateReason, 'enhanced_broadcasting');
   t.is(streamShift.type, 'stream-shift');
   t.is(streamShift.probeCandidates.length, 0);
+});
+
+test('Enhanced Broadcasting under Dual Output remains estimate-only', t => {
+  const topology = classifyAutoOptimizerTopology(
+    settings({
+      platforms: {
+        twitch: {
+          enabled: true,
+          useCustomFields: false,
+          isEnhancedBroadcasting: true,
+          display: 'horizontal',
+        } as any,
+      },
+    }),
+    true,
+  );
+
+  t.is(topology.type, 'enhanced-broadcasting');
+  t.deepEqual(topology.probeCandidates, []);
+  t.true(topology.legs.every(leg => leg.measurement === 'estimated'));
 });
 
 test('Twitch dual stream is modeled as its single shared upload connection', t => {

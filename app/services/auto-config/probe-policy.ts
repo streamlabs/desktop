@@ -6,6 +6,7 @@ import {
   IAutoOptimizerTopology,
   TAutoOptimizerEncoderFamily,
   TAutoOptimizerPhase,
+  TAutoOptimizerProbeKind,
   TAutoOptimizerProbeMethod,
   TAutoOptimizerProbeProvider,
 } from './types';
@@ -64,7 +65,10 @@ export function autoConfigProbeCoverage(
  */
 export function isValidAutoConfigActiveProbeCoverage(p: {
   destinations: Array<{ platform: string }>;
-  attemptedCandidates: Array<{ provider: TAutoOptimizerProbeProvider }>;
+  attemptedCandidates: Array<{
+    provider: TAutoOptimizerProbeProvider;
+    kind: TAutoOptimizerProbeKind;
+  }>;
   evidence: IAutoOptimizerProbeEvidence[];
   confidence: string | undefined;
 }): boolean {
@@ -76,13 +80,27 @@ export function isValidAutoConfigActiveProbeCoverage(p: {
     ),
   );
   const attemptedProviders = new Set(p.attemptedCandidates.map(candidate => candidate.provider));
+  const methodForKind: Record<TAutoOptimizerProbeKind, TAutoOptimizerProbeMethod> = {
+    'twitch-standard': 'twitch-bandwidth-test',
+    'twitch-enhanced-broadcasting': 'twitch-enhanced-broadcasting-test',
+    'youtube-unbound': 'youtube-unbound-ramp',
+  };
+  const attemptedMethods = new Set(
+    p.attemptedCandidates.map(
+      candidate => `${candidate.provider}:${methodForKind[candidate.kind]}`,
+    ),
+  );
   const successfulProviders = new Set(
     p.evidence.filter(item => item.success).map(item => item.provider),
   );
 
   if (!attemptedProviders.size) return false;
   if ([...attemptedProviders].some(provider => !selectedProviders.has(provider))) return false;
-  if ([...successfulProviders].some(provider => !attemptedProviders.has(provider))) return false;
+  if (
+    p.evidence.some(item => !attemptedMethods.has(`${item.provider}:${item.method}`))
+  ) {
+    return false;
+  }
   if (![...attemptedProviders].some(provider => successfulProviders.has(provider))) return false;
 
   const isPartial =
@@ -108,16 +126,22 @@ export function hasRequiredAutoConfigCapabilities(
 }
 
 /** Active modes are optional enhancements on top of the required estimate mode. */
-export function supportedAutoConfigProbeProviders(
+export function supportedAutoConfigProbeKinds(
   capabilities: IAutoConfigCapabilities,
   runtime: IAutoConfigProbeRuntimeSupport,
-): Set<TAutoOptimizerProbeProvider> {
-  const providers = new Set<TAutoOptimizerProbeProvider>();
+): Set<TAutoOptimizerProbeKind> {
+  const kinds = new Set<TAutoOptimizerProbeKind>();
   if (
     runtime.twitchFeatureEnabled &&
     capabilities.bandwidthModes.includes('twitch-standard-active')
   ) {
-    providers.add('twitch');
+    kinds.add('twitch-standard');
+  }
+  if (
+    runtime.twitchFeatureEnabled &&
+    capabilities.bandwidthModes.includes('twitch-enhanced-broadcasting-active')
+  ) {
+    kinds.add('twitch-enhanced-broadcasting');
   }
   if (
     runtime.youtubeFeatureEnabled &&
@@ -125,9 +149,9 @@ export function supportedAutoConfigProbeProviders(
     capabilities.multipleActiveProbes === true &&
     capabilities.bandwidthModes.includes('youtube-unbound-active')
   ) {
-    providers.add('youtube');
+    kinds.add('youtube-unbound');
   }
-  return providers;
+  return kinds;
 }
 
 /**
@@ -138,7 +162,7 @@ export function supportedAutoConfigProbeProviders(
  */
 export function filterAutoConfigTopologyProbes(
   topology: IAutoOptimizerTopology,
-  supportedProviders: ReadonlySet<TAutoOptimizerProbeProvider>,
+  supportedKinds: ReadonlySet<TAutoOptimizerProbeKind>,
 ): IAutoOptimizerTopology {
   const filtered: IAutoOptimizerTopology = {
     ...topology,
@@ -164,7 +188,7 @@ export function filterAutoConfigTopologyProbes(
     const originalCandidates = leg.probeCandidates;
     const supportedCandidates = unsafeDualOutput
       ? []
-      : originalCandidates.filter(candidate => supportedProviders.has(candidate.provider));
+      : originalCandidates.filter(candidate => supportedKinds.has(candidate.kind));
     leg.probeCandidates = supportedCandidates;
     if (originalCandidates.length) {
       const coverage = autoConfigProbeCoverage(
@@ -179,32 +203,96 @@ export function filterAutoConfigTopologyProbes(
   return filtered;
 }
 
+const EXPLICIT_BANDWIDTH_PROGRESS_CODES = new Set([
+  'twitch_probe_confirming_capacity',
+  'youtube_probe_waiting_for_ingest',
+  'youtube_probe_baseline',
+  'youtube_probe_confirming_stability',
+  'youtube_probe_retrying',
+  'twitch_probe_completed',
+  'youtube_probe_completed',
+  'youtube_probe_source_underfill_completed',
+  'twitch_probe_unstable_estimate_used',
+  'youtube_probe_unstable_estimate_used',
+  'twitch_probe_failed_estimate_used',
+  'youtube_probe_failed_estimate_used',
+]);
+const BITRATE_BANDWIDTH_PROGRESS_CODES = new Set([
+  'twitch_probe_confirming_capacity',
+  'youtube_probe_baseline',
+  'youtube_probe_confirming_stability',
+  'youtube_probe_retrying',
+]);
+
 /** Give real sequential work and terminal decisions distinct readable milestones. */
 export function autoConfigPhaseStepKey(
   phase: TAutoOptimizerPhase,
   provider?: TAutoOptimizerProbeProvider | null,
   code?: string | null,
-  detail?: Pick<
-    IAutoOptimizerProgressDetail,
-    'encoderId' | 'width' | 'height' | 'fpsNum' | 'fpsDen'
+  detail?: Partial<
+    Pick<
+      IAutoOptimizerProgressDetail,
+      | 'encoderId'
+      | 'encoderTitle'
+      | 'width'
+      | 'height'
+      | 'fpsNum'
+      | 'fpsDen'
+      | 'targetBitrateKbps'
+      | 'availableBitrateKbps'
+      | 'selectedBitrateKbps'
+    >
   >,
 ): string {
-  if (
-    phase === 'bandwidth' &&
-    provider &&
-    (code === `${provider}_probe_completed` ||
-      code === `${provider}_probe_failed_estimate_used` ||
-      code === `${provider}_probe_unstable_estimate_used` ||
-      (provider === 'youtube' && code === 'youtube_probe_source_underfill_completed'))
-  ) {
-    return `${phase}:${provider}:complete`;
+  const tuple = detail
+    ? `${detail.width || 0}x${detail.height || 0}:${detail.fpsNum || 0}/${
+        detail.fpsDen || 0
+      }`
+    : '0x0:0/0';
+  const encoder = detail?.encoderTitle || detail?.encoderId || 'encoder';
+
+  if (phase === 'bandwidth' && provider === 'twitch') {
+    if (code === 'enhanced_broadcasting_requesting_ladder') {
+      return 'bandwidth:twitch:enhanced-broadcasting:requesting-ladder';
+    }
+    if (
+      code === 'enhanced_broadcasting_testing_candidate' ||
+      code === 'enhanced_broadcasting_validating_target_cadence' ||
+      code === 'enhanced_broadcasting_candidate_rejected' ||
+      code === 'enhanced_broadcasting_candidate_selected'
+    ) {
+      return `bandwidth:twitch:${code}:${tuple}`;
+    }
   }
-  if (phase === 'bandwidth' && provider) return `${phase}:${provider}`;
+  if (phase === 'bandwidth' && provider) {
+    if (
+      code === 'active_probe_not_eligible' ||
+      code === 'active_probe_set_incomplete' ||
+      code === 'dual_output_multiple_active_legs'
+    ) {
+      return 'bandwidth:estimate';
+    }
+    const status = code && EXPLICIT_BANDWIDTH_PROGRESS_CODES.has(code) ? code : 'measuring';
+    const bitrate =
+      status === 'measuring' || BITRATE_BANDWIDTH_PROGRESS_CODES.has(status)
+        ? detail?.targetBitrateKbps || 0
+        : 0;
+    return `${phase}:${provider}:${status}:${bitrate}`;
+  }
   if (phase === 'hardware' && code === 'hardware_discovering_encoders') {
     return 'hardware:discovering';
   }
+  if (phase === 'hardware' && code === 'hardware_provider_managed') {
+    return 'provider-managed';
+  }
+  if (
+    phase === 'hardware' &&
+    (code === 'hardware_testing_encoder' || code === 'hardware_testing_x264')
+  ) {
+    return `hardware:${code}:${encoder}:${tuple}`;
+  }
   if (phase === 'hardware' && code === 'hardware_validating_encoder') {
-    return 'hardware:validating';
+    return `hardware:validating:${encoder}:${tuple}`;
   }
   if (
     phase === 'hardware' &&
@@ -218,28 +306,56 @@ export function autoConfigPhaseStepKey(
         : code === 'hardware_validating_target_cadence'
         ? 'target-cadence'
         : 'target-cadence-rejected';
-    const attempt = detail
-      ? [
-          detail.encoderId || 'encoder',
-          `${detail.width || 0}x${detail.height || 0}`,
-          `${detail.fpsNum || 0}/${detail.fpsDen || 0}`,
-        ].join(':')
-      : '';
-    return `hardware:${kind}${attempt ? `:${attempt}` : ''}`;
+    if (code === 'hardware_testing_encoder_surfaces') {
+      return `hardware:${kind}:${encoder}:${detail?.width || 0}x${detail?.height || 0}`;
+    }
+    return `hardware:${kind}:${encoder}:${tuple}`;
+  }
+  if (phase === 'hardware' && code === 'hardware_encoder_rejected') {
+    return `hardware:rejected:${encoder}`;
   }
   if (phase === 'hardware' && code === 'hardware_encoder_selected') {
-    return 'hardware:selected';
+    return `hardware:selected:${encoder}:${tuple}`;
   }
   if (phase === 'recommendation' && code === 'recommendation_selecting_quality') {
-    return 'recommendation:selecting';
+    return `recommendation:selecting:${detail?.availableBitrateKbps || 0}`;
   }
   if (phase === 'recommendation' && code === 'recommendation_quality_selected') {
-    return 'recommendation:selected';
+    if (
+      !detail?.width ||
+      !detail?.height ||
+      !detail?.fpsNum ||
+      !detail?.fpsDen ||
+      !detail?.selectedBitrateKbps
+    ) {
+      return 'recommendation';
+    }
+    return `recommendation:selected:${tuple}:${detail?.selectedBitrateKbps || 0}`;
   }
   if (phase === 'recommendation' && code === 'recommendation_provider_managed') {
-    return 'recommendation:provider-managed';
+    return 'provider-managed';
   }
   return String(phase);
+}
+
+export type TAutoConfigPhaseStepDisposition =
+  | 'update-displayed'
+  | 'update-pending-tail'
+  | 'enqueue';
+
+/**
+ * Coalesce only uninterrupted repeats of the same visible status. If another
+ * status is already queued, a return to the currently displayed status is a
+ * real A -> B -> A transition and must be queued again.
+ */
+export function autoConfigPhaseStepDisposition(
+  displayedKey: string | null,
+  pendingKeys: string[],
+  nextKey: string,
+): TAutoConfigPhaseStepDisposition {
+  if (!pendingKeys.length && displayedKey === nextKey) return 'update-displayed';
+  if (pendingKeys[pendingKeys.length - 1] === nextKey) return 'update-pending-tail';
+  return 'enqueue';
 }
 
 /** Validate optional applied video-bitrate feedback from the native probe. */
@@ -309,7 +425,8 @@ function isAutoOptimizerProbeMethod(
   method: unknown,
 ): method is TAutoOptimizerProbeMethod {
   return (
-    (provider === 'twitch' && method === 'twitch-bandwidth-test') ||
+    (provider === 'twitch' &&
+      (method === 'twitch-bandwidth-test' || method === 'twitch-enhanced-broadcasting-test')) ||
     (provider === 'youtube' && method === 'youtube-unbound-ramp')
   );
 }
@@ -331,6 +448,7 @@ export function sanitizeAutoConfigProbeEvidence(value: unknown): IAutoOptimizerP
     ) {
       return [];
     }
+    const enhancedBroadcasting = evidence.method === 'twitch-enhanced-broadcasting-test';
     const hasMeasured = evidence.measuredKbps !== undefined;
     const hasSafe = evidence.safeKbps !== undefined;
     const hasHeadroom = evidence.headroomPercent !== undefined;
@@ -339,7 +457,35 @@ export function sanitizeAutoConfigProbeEvidence(value: unknown): IAutoOptimizerP
       (hasSafe && !isFiniteNonNegative(evidence.safeKbps)) ||
       (hasHeadroom &&
         (!isFiniteNonNegative(evidence.headroomPercent) || evidence.headroomPercent > 100)) ||
-      (evidence.success && (!hasMeasured || !hasSafe || !hasHeadroom))
+      (!enhancedBroadcasting && evidence.success && (!hasMeasured || !hasSafe || !hasHeadroom))
+    ) {
+      return [];
+    }
+
+    const testedWidth = sanitizeProgressInteger(evidence.testedWidth, 16384);
+    const testedHeight = sanitizeProgressInteger(evidence.testedHeight, 16384);
+    const testedFpsNum = sanitizeProgressInteger(evidence.testedFpsNum, 1000000);
+    const testedFpsDen = sanitizeProgressInteger(evidence.testedFpsDen, 1000000);
+    const videoTrackCount = sanitizeProgressInteger(evidence.videoTrackCount, 64);
+    const configuredAggregateBitrateKbps = sanitizeAutoConfigProbeTargetBitrateKbps(
+      evidence.configuredAggregateBitrateKbps,
+    );
+    if (
+      (evidence.testedWidth !== undefined && !testedWidth) ||
+      (evidence.testedHeight !== undefined && !testedHeight) ||
+      (evidence.testedFpsNum !== undefined && !testedFpsNum) ||
+      (evidence.testedFpsDen !== undefined && !testedFpsDen) ||
+      (evidence.videoTrackCount !== undefined && !videoTrackCount) ||
+      (evidence.configuredAggregateBitrateKbps !== undefined && !configuredAggregateBitrateKbps) ||
+      (testedFpsNum && testedFpsDen && testedFpsNum / testedFpsDen > 240) ||
+      (enhancedBroadcasting &&
+        evidence.success &&
+        (!testedWidth ||
+          testedWidth % 2 !== 0 ||
+          !testedHeight ||
+          testedHeight % 2 !== 0 ||
+          !testedFpsNum ||
+          !testedFpsDen))
     ) {
       return [];
     }
@@ -355,6 +501,12 @@ export function sanitizeAutoConfigProbeEvidence(value: unknown): IAutoOptimizerP
         ...(typeof evidence.ceilingReached === 'boolean'
           ? { ceilingReached: evidence.ceilingReached }
           : {}),
+        ...(testedWidth ? { testedWidth } : {}),
+        ...(testedHeight ? { testedHeight } : {}),
+        ...(testedFpsNum ? { testedFpsNum } : {}),
+        ...(testedFpsDen ? { testedFpsDen } : {}),
+        ...(videoTrackCount ? { videoTrackCount } : {}),
+        ...(configuredAggregateBitrateKbps ? { configuredAggregateBitrateKbps } : {}),
       },
     ];
   });

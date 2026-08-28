@@ -5,6 +5,7 @@ import {
   TAutoOptimizerMeasurementMode,
 } from './types';
 import {
+  autoOptimizerHardwareCeilings,
   IAutoOptimizerRequestLimits,
   matchesAutoOptimizerQualityPolicy,
 } from './resolution-policy';
@@ -72,6 +73,7 @@ export function validateAutoConfigRecommendation(
     currentBitrateKbps: number;
     probeEvidence: IAutoOptimizerProbeEvidence[];
     providerOwnsEncoding?: boolean;
+    enhancedBroadcasting?: boolean;
     maxWidth?: number;
     maxHeight?: number;
     maxFpsNum?: number;
@@ -145,13 +147,6 @@ export function validateAutoConfigRecommendation(
     return null;
   }
 
-  if (context.measurementMode === 'active') {
-    const safeValues = context.probeEvidence
-      .filter(item => item.success && Number.isFinite(item.safeKbps))
-      .map(item => item.safeKbps!);
-    if (!safeValues.length || value.bitrateKbps > Math.min(...safeValues)) return null;
-  }
-
   const hasCompleteQualityContext =
     context.maxWidth !== undefined &&
     context.maxHeight !== undefined &&
@@ -161,6 +156,52 @@ export function validateAutoConfigRecommendation(
     context.currentHeight !== undefined &&
     context.currentFpsNum !== undefined &&
     context.currentFpsDen !== undefined;
+
+  if (context.measurementMode === 'active') {
+    const enhancedBroadcastingEvidence = context.probeEvidence.find(
+      item =>
+        item.success &&
+        item.method === 'twitch-enhanced-broadcasting-test' &&
+        item.testedWidth === value.width &&
+        item.testedHeight === value.height &&
+        item.testedFpsNum !== undefined &&
+        item.testedFpsDen !== undefined &&
+        item.testedFpsNum === value.fpsNum &&
+        item.testedFpsDen === value.fpsDen,
+    );
+    if (context.enhancedBroadcasting) {
+      if (!enhancedBroadcastingEvidence || !hasCompleteQualityContext) return null;
+      const canonicalTuple = autoOptimizerHardwareCeilings(
+        {
+          width: context.currentWidth!,
+          height: context.currentHeight!,
+          fpsNum: context.currentFpsNum!,
+          fpsDen: context.currentFpsDen!,
+        },
+        {
+          maxWidth: context.maxWidth!,
+          maxHeight: context.maxHeight!,
+          maxFpsNum: context.maxFpsNum!,
+          maxFpsDen: context.maxFpsDen!,
+        },
+      ).some(
+        tuple =>
+          tuple.width === value.width &&
+          tuple.height === value.height &&
+          tuple.fpsNum === value.fpsNum &&
+          tuple.fpsDen === value.fpsDen,
+      );
+      if (!canonicalTuple) return null;
+      // The provider-owned ladder test proves the exact video workload. It is
+      // not an upload-capacity probe, so it deliberately has no safeKbps.
+    } else {
+      const safeValues = context.probeEvidence
+        .filter(item => item.success && Number.isFinite(item.safeKbps))
+        .map(item => item.safeKbps!);
+      if (!safeValues.length || value.bitrateKbps > Math.min(...safeValues)) return null;
+    }
+  }
+
   const exactEstimatedCurrentFallback =
     context.measurementMode === 'estimated' &&
     hasCompleteQualityContext &&

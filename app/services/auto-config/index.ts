@@ -23,17 +23,17 @@ import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremen
 import { classifyAutoOptimizerTopology, isAutoOptimizerProfileCompatible } from './topology';
 import {
   autoConfigProbeCoverage,
+  autoConfigPhaseStepDisposition,
   autoConfigPhaseStepKey,
   filterAutoConfigTopologyProbes,
   hasRequiredAutoConfigCapabilities,
   isValidAutoConfigActiveProbeCoverage,
   sanitizeAutoConfigProgressDetail,
   sanitizeAutoConfigProbeEvidence,
-  supportedAutoConfigProbeProviders,
+  supportedAutoConfigProbeKinds,
 } from './probe-policy';
 import { validateAutoConfigRecommendation } from './result-policy';
 import {
-  autoOptimizerAcceptedBaseResolution,
   autoOptimizerCanvasAllowsQualityPromotion,
   autoOptimizerDisplayFrameRate,
   autoOptimizerPromotesResolution,
@@ -41,7 +41,9 @@ import {
 } from './resolution-policy';
 import {
   captureRawOutputValues,
+  buildAutoOptimizerVideoSettingsPatches,
   outputTransactionValuesMatch,
+  shouldApplyAutoOptimizerVideoSettings,
   shouldCaptureTargetPresetForRollback,
   TRawOutputValues,
 } from './output-transaction-policy';
@@ -142,11 +144,7 @@ interface IPhaseStep {
   phase: TConcreteAutoOptimizerPhase;
   detail: IAutoOptimizerProgressDetail;
   key: string;
-}
-
-interface IPhaseUpdate {
   progress: number;
-  detail: IAutoOptimizerProgressDetail;
 }
 
 function initialFlowState(): Omit<IAutoOptimizerState, 'promptStates'> {
@@ -258,8 +256,6 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private displayedPhaseStep: IPhaseStep | null = null;
   private displayedPhaseSince = 0;
   private pendingPhaseSteps: IPhaseStep[] = [];
-  private pendingPhaseUpdates = new Map<string, IPhaseUpdate>();
-  private seenPhaseSteps = new Set<string>();
   private phaseDrainPromise: Promise<void> | null = null;
   private youtubeProbeLeases = new Map<string, IYoutubeAutoOptimizerProbeLease>();
   private youtubeConfirmationPromises = new Map<string, Promise<void>>();
@@ -316,7 +312,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         this.dualOutputService.state.dualOutputMode && this.userService.isLoggedIn,
         this.twitchService.views.hasTwitchDualStreamAccess,
       ),
-      supportedAutoConfigProbeProviders(capabilities!, {
+      supportedAutoConfigProbeKinds(capabilities!, {
         twitchFeatureEnabled: this.featureEnabled(EAvailableFeatures.autoOptimizerTwitchProbe),
         youtubeFeatureEnabled: this.featureEnabled(EAvailableFeatures.autoOptimizerYoutubeProbe),
         canConfirmYoutubeIngest:
@@ -354,6 +350,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     try {
       await this.cleanupOptimizerRun();
     } catch (e: unknown) {
+      if (token !== this.runToken) return;
+      await this.waitForPhasePacing(token);
       if (token !== this.runToken) return;
       this.SET_ERROR(this.toError(e, 'cleanup_failed', false));
       return;
@@ -413,12 +411,15 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       this.SET_RESULT(result);
     } catch (e: unknown) {
       if (token !== this.runToken) return;
+      let terminalError = this.toError(e, 'optimization_failed', true);
       try {
         await this.cleanupOptimizerRun(true);
-        this.SET_ERROR(this.toError(e, 'optimization_failed', true));
       } catch (cleanupError: unknown) {
-        this.SET_ERROR(this.toError(cleanupError, 'cleanup_failed', false));
+        terminalError = this.toError(cleanupError, 'cleanup_failed', false);
       }
+      await this.waitForPhasePacing(token);
+      if (token !== this.runToken) return;
+      this.SET_ERROR(terminalError);
     }
   }
 
@@ -440,7 +441,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           this.dualOutputService.state.dualOutputMode && this.userService.isLoggedIn,
           this.twitchService.views.hasTwitchDualStreamAccess,
         ),
-        supportedAutoConfigProbeProviders(capabilities!, {
+        supportedAutoConfigProbeKinds(capabilities!, {
           twitchFeatureEnabled: this.featureEnabled(EAvailableFeatures.autoOptimizerTwitchProbe),
           youtubeFeatureEnabled: this.featureEnabled(
             EAvailableFeatures.autoOptimizerYoutubeProbe,
@@ -658,7 +659,10 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
       for (const candidate of leg.probeCandidates) {
         try {
-          if (candidate.kind === 'twitch-standard') {
+          if (
+            candidate.kind === 'twitch-standard' ||
+            candidate.kind === 'twitch-enhanced-broadcasting'
+          ) {
             const streamKey = await this.twitchService.fetchStreamKey();
             if (!streamKey) throw new Error('Twitch did not return a stream key');
             const probe: IAutoConfigActiveProbe = {
@@ -882,11 +886,10 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       phase: 'preflight',
       detail: emptyProgressDetail(),
       key: autoConfigPhaseStepKey('preflight'),
+      progress: 0,
     };
     this.displayedPhaseSince = Date.now();
     this.pendingPhaseSteps = [];
-    this.pendingPhaseUpdates.clear();
-    this.seenPhaseSteps = new Set<string>([autoConfigPhaseStepKey('preflight')]);
     this.phaseDrainPromise = null;
   }
 
@@ -898,37 +901,34 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   ) {
     if (token !== this.runToken || this.state.stage !== 'running') return;
     const key = autoConfigPhaseStepKey(phase, detail.provider, detail.code, detail);
-    // Rejections can be immediately followed by another real attempt. Keep
-    // that next/previous attempt readable; native retains rejection details in
-    // logs. Terminal selections are shown as truthful one-second milestones.
-    const transientCode = detail.code === 'hardware_encoder_rejected';
-    const retainedDetail =
-      this.displayedPhaseStep?.key === key
-        ? this.displayedPhaseStep.detail
-        : this.pendingPhaseUpdates.get(key)?.detail;
-    const displayDetail = transientCode && retainedDetail ? retainedDetail : detail;
     const step: IPhaseStep = {
       phase,
-      detail: displayDetail,
+      detail,
       key,
+      progress,
     };
 
-    if (step.key === this.displayedPhaseStep?.key) {
+    // Exact repeats may update the progress bar while preserving the original
+    // one-second copy window. Once another status is queued, A -> B -> A is
+    // three real transitions and must remain three queue entries.
+    const disposition = autoConfigPhaseStepDisposition(
+      this.displayedPhaseStep?.key || null,
+      this.pendingPhaseSteps.map(pending => pending.key),
+      step.key,
+    );
+    if (disposition === 'update-displayed') {
       this.displayedPhaseStep = step;
       this.SET_PROGRESS(step.phase, progress, step.detail);
       return;
     }
 
-    if (this.seenPhaseSteps.has(step.key)) {
-      if (this.pendingPhaseSteps.some(pending => pending.key === step.key)) {
-        this.pendingPhaseUpdates.set(step.key, { progress, detail: step.detail });
-      }
+    if (disposition === 'update-pending-tail') {
+      const pendingTail = this.pendingPhaseSteps[this.pendingPhaseSteps.length - 1]!;
+      Object.assign(pendingTail, step);
       return;
     }
 
-    this.seenPhaseSteps.add(step.key);
     this.pendingPhaseSteps.push(step);
-    this.pendingPhaseUpdates.set(step.key, { progress, detail: step.detail });
     this.startPhaseDrain(token);
   }
 
@@ -953,14 +953,9 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       if (!this.isPhasePacingActive(token)) return;
 
       const step = this.pendingPhaseSteps.shift()!;
-      const update = this.pendingPhaseUpdates.get(step.key) || {
-        progress: 0,
-        detail: step.detail,
-      };
-      this.pendingPhaseUpdates.delete(step.key);
-      this.displayedPhaseStep = { ...step, detail: update.detail };
+      this.displayedPhaseStep = step;
       this.displayedPhaseSince = Date.now();
-      this.SET_PROGRESS(step.phase, update.progress, update.detail);
+      this.SET_PROGRESS(step.phase, step.progress, step.detail);
     }
   }
 
@@ -1056,6 +1051,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
             currentBitrateKbps: requested.current.bitrateKbps,
             probeEvidence: evidence,
             providerOwnsEncoding,
+            enhancedBroadcasting: this.state.topology?.type === 'enhanced-broadcasting',
             maxWidth: requested.limits?.maxWidth,
             maxHeight: requested.limits?.maxHeight,
             maxFpsNum: requested.limits?.maxFpsNum,
@@ -1172,6 +1168,11 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       this.state.topology.type === 'enhanced-broadcasting' ||
       (primary.display === 'both' &&
         primary.destinations.some(destination => destination.platform === 'twitch'));
+    const applyVideoSettings = shouldApplyAutoOptimizerVideoSettings(
+      this.state.topology.type,
+      providerOwnsEncoding,
+      result.legs.map(leg => leg.measurement),
+    );
     if (!providerOwnsEncoding && result.legs.some(leg => !leg.encoder)) {
       throw new Error('The optimizer did not return a tested encoder');
     }
@@ -1199,7 +1200,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
     try {
       if (
-        !providerOwnsEncoding &&
+        applyVideoSettings &&
         displaysToApply.some(display => !this.videoSettingsService.contexts[display])
       ) {
         throw new Error('A required video context is unavailable');
@@ -1233,46 +1234,19 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         });
       }
 
-      if (!providerOwnsEncoding) {
+      if (applyVideoSettings) {
         // Testing used disposable native mixes and did not mutate these values.
         // Only this user-approved path may grow Base Canvas. Output resolution
         // may differ per display, while OBS cadence is a shared video setting.
-        const patches: Parameters<
-          VideoSettingsService['applyAutoOptimizerSettings']
-        >[0] = {};
-        result.legs.forEach(leg => {
-          const display: TDisplayType = leg.display === 'vertical' ? 'vertical' : 'horizontal';
-          const current = this.videoSettingsService.state[display];
-          const promotesResolution = autoOptimizerPromotesResolution(
-            current.outputWidth,
-            current.outputHeight,
-            leg.resolution.width,
-            leg.resolution.height,
-          );
-          const base = promotesResolution
-            ? autoOptimizerAcceptedBaseResolution(
-                current.baseWidth,
-                current.baseHeight,
-                leg.resolution.width,
-                leg.resolution.height,
-              )
-            : { width: current.baseWidth, height: current.baseHeight };
-          patches[display] = {
-            ...patches[display],
-            baseWidth: base.width,
-            baseHeight: base.height,
-            outputWidth: leg.resolution.width,
-            outputHeight: leg.resolution.height,
-          };
-        });
-        (['horizontal', 'vertical'] as TDisplayType[]).forEach(display => {
-          if (!this.videoSettingsService.state[display]) return;
-          patches[display] = {
-            ...patches[display],
-            fpsNum: primary.fpsNum,
-            fpsDen: primary.fpsDen,
-          };
-        });
+        const patches = buildAutoOptimizerVideoSettingsPatches(
+          result.legs,
+          {
+            horizontal: this.videoSettingsService.state.horizontal,
+            vertical: this.videoSettingsService.state.vertical,
+          },
+          primary.fpsNum,
+          primary.fpsDen,
+        );
         await this.videoSettingsService.applyAutoOptimizerSettings(patches);
       }
 
@@ -1280,6 +1254,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         result,
         primary,
         providerOwnsEncoding,
+        applyVideoSettings,
         expectedEncoder,
         snapshot,
       );
@@ -1459,6 +1434,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     result: IAutoOptimizerResult,
     primary: IAutoOptimizerLegResult,
     providerOwnsEncoding: boolean,
+    applyVideoSettings: boolean,
     expectedEncoder: EEncoderFamily | null,
     snapshot: ISettingsSnapshot,
   ) {
@@ -1501,7 +1477,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         throw new Error('Failed to enable the recommended encoder preset');
       }
     }
-    if (!providerOwnsEncoding) {
+    if (applyVideoSettings) {
       (['horizontal', 'vertical'] as TDisplayType[]).forEach(display => {
         const state = this.videoSettingsService.state[display];
         if (

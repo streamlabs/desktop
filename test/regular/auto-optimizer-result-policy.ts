@@ -274,3 +274,155 @@ test('provider-managed encoding does not reject an otherwise valid tuple by code
   t.truthy(result);
   t.is(result?.encoder, null);
 });
+
+test('Enhanced Broadcasting accepts only the exact actively tested video tuple', t => {
+  const enhancedContext = {
+    ...activeContext,
+    providerOwnsEncoding: true,
+    enhancedBroadcasting: true,
+    probeEvidence: [
+      {
+        provider: 'twitch' as const,
+        method: 'twitch-enhanced-broadcasting-test' as const,
+        success: true,
+        testedWidth: 1920,
+        testedHeight: 1080,
+        testedFpsNum: 60000,
+        testedFpsDen: 1001,
+        videoTrackCount: 3,
+        configuredAggregateBitrateKbps: 7800,
+      },
+    ],
+  };
+
+  const result = validateAutoConfigRecommendation(
+    recommendation({
+      bitrateKbps: 6000,
+      encoderFamily: 'provider-owned',
+      encoderId: 'provider-owned',
+      codec: 'av1',
+      preset: undefined,
+    }),
+    enhancedContext,
+  );
+  t.truthy(result);
+  t.is(result?.encoder, null);
+  t.is(
+    validateAutoConfigRecommendation(
+      recommendation({ width: 1280, height: 720, bitrateKbps: 6000 }),
+      enhancedContext,
+    ),
+    null,
+  );
+  t.is(
+    validateAutoConfigRecommendation(recommendation({ bitrateKbps: 6000 }), {
+      ...enhancedContext,
+      probeEvidence: activeContext.probeEvidence,
+    }),
+    null,
+  );
+});
+
+test('Enhanced Broadcasting rejects non-canonical and non-exact cadence tuples', t => {
+  const context = {
+    ...activeContext,
+    providerOwnsEncoding: true,
+    enhancedBroadcasting: true,
+  };
+
+  t.is(
+    validateAutoConfigRecommendation(
+      recommendation({ width: 1600, height: 900, fpsNum: 48, fpsDen: 1 }),
+      {
+        ...context,
+        probeEvidence: [
+          {
+            provider: 'twitch',
+            method: 'twitch-enhanced-broadcasting-test',
+            success: true,
+            testedWidth: 1600,
+            testedHeight: 900,
+            testedFpsNum: 48,
+            testedFpsDen: 1,
+          },
+        ],
+      },
+    ),
+    null,
+  );
+  t.is(
+    validateAutoConfigRecommendation(
+      recommendation({ fpsNum: 120000, fpsDen: 2002 }),
+      {
+        ...context,
+        probeEvidence: [
+          {
+            provider: 'twitch',
+            method: 'twitch-enhanced-broadcasting-test',
+            success: true,
+            testedWidth: 1920,
+            testedHeight: 1080,
+            testedFpsNum: 120000,
+            testedFpsDen: 2002,
+          },
+        ],
+      },
+    ),
+    null,
+  );
+  t.is(
+    validateAutoConfigRecommendation(recommendation(), {
+      ...context,
+      probeEvidence: [
+        {
+          provider: 'twitch',
+          method: 'twitch-enhanced-broadcasting-test',
+          success: true,
+          testedWidth: 1920,
+          testedHeight: 1080,
+          testedFpsNum: 120000,
+          testedFpsDen: 2002,
+        },
+      ],
+    }),
+    null,
+  );
+});
+
+test('estimate-only Enhanced Broadcasting cannot promote video settings', t => {
+  t.is(
+    validateAutoConfigRecommendation(recommendation({ bitrateKbps: 2500 }), {
+      ...activeContext,
+      measurementMode: 'estimated',
+      currentBitrateKbps: 2500,
+      probeEvidence: [],
+      providerOwnsEncoding: true,
+      enhancedBroadcasting: true,
+    }),
+    null,
+  );
+  t.is(
+    validateAutoConfigRecommendation(
+      recommendation({
+        width: 1280,
+        height: 720,
+        fpsNum: 60,
+        fpsDen: 1,
+        bitrateKbps: 2500,
+      }),
+      {
+        ...activeContext,
+        measurementMode: 'estimated',
+        currentBitrateKbps: 2500,
+        probeEvidence: [],
+        providerOwnsEncoding: true,
+        enhancedBroadcasting: true,
+        currentWidth: 1280,
+        currentHeight: 720,
+        currentFpsNum: 30,
+        currentFpsDen: 1,
+      },
+    ),
+    null,
+  );
+});

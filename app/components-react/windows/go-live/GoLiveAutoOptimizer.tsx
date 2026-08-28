@@ -146,6 +146,9 @@ export default function GoLiveAutoOptimizer() {
       showMeasurementReason: shouldShowAutoOptimizerMeasurementReason(leg.estimateReason),
       managedByProvider:
         leg.display === 'both' || state.result?.topology === 'enhanced-broadcasting',
+      videoSettingsManagedByProvider:
+        leg.display === 'both' ||
+        (state.result?.topology === 'enhanced-broadcasting' && leg.measurement !== 'active'),
       width: leg.resolution.width,
       height: leg.resolution.height,
       fps: leg.fps,

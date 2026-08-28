@@ -128,6 +128,40 @@ export function autoOptimizerProgressLabel(
   const tuple = detail ? tupleValues(detail) : null;
 
   switch (detail?.code) {
+    case 'enhanced_broadcasting_requesting_ladder':
+      return { key: 'Preparing Enhanced Broadcasting settings with Twitch...' };
+    case 'enhanced_broadcasting_testing_candidate':
+      if (tuple) {
+        return {
+          key: 'Testing Enhanced Broadcasting at %{width}×%{height}, %{fps} FPS...',
+          values: tuple,
+        };
+      }
+      return { key: 'Testing Enhanced Broadcasting performance...' };
+    case 'enhanced_broadcasting_validating_target_cadence':
+      if (tuple) {
+        return {
+          key: 'Validating Enhanced Broadcasting at %{width}×%{height}, %{fps} FPS...',
+          values: tuple,
+        };
+      }
+      return { key: 'Validating Enhanced Broadcasting performance...' };
+    case 'enhanced_broadcasting_candidate_rejected':
+      if (tuple) {
+        return {
+          key: '%{width}×%{height}, %{fps} FPS could not keep up. Trying a lower setting...',
+          values: tuple,
+        };
+      }
+      return { key: 'Trying a lower Enhanced Broadcasting setting...' };
+    case 'enhanced_broadcasting_candidate_selected':
+      if (tuple) {
+        return {
+          key: 'Enhanced Broadcasting passed at %{width}×%{height}, %{fps} FPS.',
+          values: tuple,
+        };
+      }
+      return { key: 'Enhanced Broadcasting test complete.' };
     case 'hardware_discovering_encoders':
       return { key: 'Looking for compatible hardware encoders...' };
     case 'hardware_provider_managed':
