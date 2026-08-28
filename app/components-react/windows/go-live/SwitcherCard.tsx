@@ -149,13 +149,11 @@ export const SwitcherCard = forwardRef<ISwitcherCardHandle, ISwitcherCardProps>(
 });
 
 function SwitcherCardContents(p: ISwitcherCardContentsProps) {
-  // Note on disabling the switch by adding the `ant-switch-disabled` class to it. This ensures that the switch
-  // will appear visually disabled and will not respond to user interactions, but is still clickable programmatically.
+  // Note on disabling the switch by adding the `ant-switch-disabled` class to it instead of the native `disabled` attribute.
   // This is to allow the `onClick` in the parent container to still be triggered even when the switch should be disabled.
-  // The `onClick` on the parent container normally would bubble to a descendent element, except for native form controls
-  // with the HTML `disabled` attribute. Using the `ant-switch-disabled` class allows the `pointer-events` CSS property
-  // to be set to `none` as well as the `cursor` property to be set to `not-allowed`, effectively mimicking the behavior
-  // of a disabled switch without actually using the HTML `disabled` attribute. Custom styles will not allow for both.
+  // Native form controls with the HTML `disabled` attribute never dispatch a `click` event, so the `click` event on a parent
+  // container does not bubble to the descendent element. Using the `ant-switch-disabled` class mimics the appearance
+  // of a disabled switch without actually using the HTML `disabled` attribute.
   return (
     <div
       className={cx(styles.platformSwitcher, { [styles.cardDisabled]: p.disabled }, p.className)}
