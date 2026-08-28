@@ -26,6 +26,7 @@ import { assertIsDefined, getDefined } from 'util/properties-type-guards';
 import Utils from '../utils';
 import { YoutubeUploader } from './youtube/uploader';
 import { formatErrorRejectedRequest, getYoutubeErrorType } from './youtube/errors';
+import { EYoutubeErrorReason } from './youtube/api';
 import { lazyModule } from 'util/lazy-module';
 import * as remote from '@electron/remote';
 import { IVideo } from 'obs-studio-node';
@@ -372,7 +373,7 @@ export class YoutubeService
 
     // YouTube API requests should return a reason, but errors within the app will not have a reason
     // `undefined` reasons will be handled in the below functions to create a consistent error message
-    const reason: string | undefined = e?.result?.error?.errors?.[0]?.reason;
+    const reason: EYoutubeErrorReason | undefined = e?.result?.error?.errors?.[0]?.reason;
     const errorType = reqErrorType || getYoutubeErrorType(e, reqInfo);
     const rejectedRequest = formatErrorRejectedRequest(e, errorType, reason);
 

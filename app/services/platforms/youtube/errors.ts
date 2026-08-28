@@ -1,4 +1,4 @@
-import { endpointErrorTypes, reasonLabels } from './api';
+import { endpointErrorTypes, reasonLabels, EYoutubeErrorReason } from './api';
 import { IRejectedRequest, TStreamErrorType } from 'services/streaming/stream-error';
 import { IPlatformRequest } from '../index';
 import { $t } from 'services/i18n';
@@ -12,7 +12,7 @@ import { $t } from 'services/i18n';
 export function formatErrorRejectedRequest(
   e: any,
   errorType: TStreamErrorType = 'PLATFORM_REQUEST_FAILED',
-  reason?: string,
+  reason?: EYoutubeErrorReason,
 ) {
   const details =
     errorType === 'YOUTUBE_THUMBNAIL_UPLOAD_FAILED'
@@ -59,7 +59,7 @@ export function formatErrorRejectedRequest(
 export function formatErrorDetails(
   e: any,
   errorType: TStreamErrorType = 'PLATFORM_REQUEST_FAILED',
-  reason?: string,
+  reason?: EYoutubeErrorReason,
 ): string | undefined {
   // Show custom thumbnail upload errors but for all other api requests, show the error detail
   // returned from the api
@@ -75,7 +75,7 @@ export function formatErrorDetails(
  * @returns the translated label, or a camelCase split of the reason when it is not in
  * the dictionary
  */
-export function formatYoutubeReasonDetail(e: any, reason?: string): string {
+export function formatYoutubeReasonDetail(e: any, reason?: EYoutubeErrorReason): string {
   if (!reason) {
     // If no reason was returned from the YouTube API, attempt to handle by status code
     const status = e?.result?.error?.status;
@@ -97,7 +97,7 @@ export function formatYoutubeReasonDetail(e: any, reason?: string): string {
 
   // Return the translated label for the reason, or a camelCase split of the reason when it is not in the dictionary
   return (
-    reasonLabels[reason] ??
+    reasonLabels(reason) ??
     reason
       .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
       .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
