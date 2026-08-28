@@ -256,6 +256,7 @@
   "FPS Denominator": "FPS Denominator",
   "FPS Value": "FPS Value",
   "The resolution must be in the format [width]x[height] (i.e. 1920x1080)": "The resolution must be in the format [width]x[height] (i.e. 1920x1080)",
+  "Failed to update the video resolution.": "Failed to update the video resolution.",
   "Custom": "Egyéni",
   "Custom Base Resolution": "Custom Base Resolution",
   "Custom Output Resolution": "Custom Output Resolution",

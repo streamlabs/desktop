@@ -32,6 +32,7 @@
   "Rename Folder": "Cambiar nombre de carpeta",
   "Name Folder": "Asignar nombrar a carpeta",
   "Failed to load scene collection.  A new one will be created instead.": "No se pudo cargar la colección de escenas.  Se creará una nueva.",
+  "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.": "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.",
   "New Scene": "Escena nueva",
   "Projector": "Proyector",
   "Your Scene Collections:": "Sus colecciones de escenas:",

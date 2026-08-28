@@ -256,6 +256,7 @@
   "FPS Denominator": "Jmenovatel PFS",
   "FPS Value": "Hodnota FPS",
   "The resolution must be in the format [width]x[height] (i.e. 1920x1080)": "Rozlišení musí být ve formátu [šířka]x[výška] (tj. 1920x1080)",
+  "Failed to update the video resolution.": "Failed to update the video resolution.",
   "Custom": "Vlastní",
   "Custom Base Resolution": "Vlastní základní rozlišení",
   "Custom Output Resolution": "Vlastní výstupní rozlišení",

@@ -256,6 +256,7 @@
   "FPS Denominator": "FPS-noemer",
   "FPS Value": "FPS-waarde",
   "The resolution must be in the format [width]x[height] (i.e. 1920x1080)": "De resolutie moet in de indeling [breedte] x [hoogte] zijn (bijv. 1920 x 1080)",
+  "Failed to update the video resolution.": "Failed to update the video resolution.",
   "Custom": "Aangepast",
   "Custom Base Resolution": "Aangepaste basisresolutie",
   "Custom Output Resolution": "Aangepaste uitvoerresolutie",

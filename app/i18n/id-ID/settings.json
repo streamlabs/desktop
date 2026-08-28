@@ -256,6 +256,7 @@
   "FPS Denominator": "Denominator FPS",
   "FPS Value": "Nilai FPS",
   "The resolution must be in the format [width]x[height] (i.e. 1920x1080)": "Resolusi harus dalam format [lebar]x[tinggi] (yaitu 1920x1080)",
+  "Failed to update the video resolution.": "Failed to update the video resolution.",
   "Custom": "Khusus",
   "Custom Base Resolution": "Resolusi Dasar Khusus",
   "Custom Output Resolution": "Resolusi Output Khusus",

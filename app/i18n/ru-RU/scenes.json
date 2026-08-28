@@ -32,6 +32,7 @@
   "Rename Folder": "Переименовать папку",
   "Name Folder": "Назвать папку",
   "Failed to load scene collection.  A new one will be created instead.": "Не удалось загрузить коллекцию сцен.  Будет создана новая.",
+  "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.": "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.",
   "New Scene": "Новая сцена",
   "Projector": "Проектор",
   "Your Scene Collections:": "Ваши коллекции сцен:",

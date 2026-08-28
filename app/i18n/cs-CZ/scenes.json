@@ -32,6 +32,7 @@
   "Rename Folder": "Přejmenovat složku",
   "Name Folder": "Pojmenovat složku",
   "Failed to load scene collection.  A new one will be created instead.": "Načtení kolekce scén se nezdařilo.  Místo toho se vytvoří nová.",
+  "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.": "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.",
   "New Scene": "Nová scéna",
   "Projector": "Projektor",
   "Your Scene Collections:": "Vaše kolekce scén:",

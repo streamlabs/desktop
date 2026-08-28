@@ -32,6 +32,7 @@
   "Rename Folder": "Naam van map wijzigen",
   "Name Folder": "Map een naam geven",
   "Failed to load scene collection.  A new one will be created instead.": "Kan scèneverzameling niet laden.  In plaats hiervan wordt een nieuwe gemaakt.",
+  "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.": "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.",
   "New Scene": "Nieuwe scène",
   "Projector": "Projector",
   "Your Scene Collections:": "Uw scèneverzamelingen:",

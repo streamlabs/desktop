@@ -256,6 +256,7 @@
   "FPS Denominator": "FPS-Nenner",
   "FPS Value": "FPS-Wert",
   "The resolution must be in the format [width]x[height] (i.e. 1920x1080)": "Die Auflösung muss im Format [Breite]x[Höhe] (d. h. 1920x1080) angegeben werden",
+  "Failed to update the video resolution.": "Failed to update the video resolution.",
   "Custom": "Benutzerdefiniert",
   "Custom Base Resolution": "Benutzerdefinierte Basisauflösung",
   "Custom Output Resolution": "Benutzerdefinierte Ausgabeauflösung",

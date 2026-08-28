@@ -256,6 +256,7 @@
   "FPS Denominator": "FPS 分母",
   "FPS Value": "FPS 值",
   "The resolution must be in the format [width]x[height] (i.e. 1920x1080)": "分辨率必须采用 [width]x[height] 格式（例如 1920x1080）",
+  "Failed to update the video resolution.": "Failed to update the video resolution.",
   "Custom": "自定义",
   "Custom Base Resolution": "自定义基础分辨率",
   "Custom Output Resolution": "自定义输出分辨率",

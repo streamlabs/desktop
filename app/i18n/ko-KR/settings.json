@@ -256,6 +256,7 @@
   "FPS Denominator": "FPS 분모",
   "FPS Value": "FPS 값",
   "The resolution must be in the format [width]x[height] (i.e. 1920x1080)": "해상도는 [너비]x[높이](예: 1920x1080) 포맷이어야 합니다.",
+  "Failed to update the video resolution.": "Failed to update the video resolution.",
   "Custom": "커스텀",
   "Custom Base Resolution": "기본 해상도 커스텀",
   "Custom Output Resolution": "출력 해상도 커스텀",

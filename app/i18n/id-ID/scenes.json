@@ -32,6 +32,7 @@
   "Rename Folder": "Ganti Nama Folder",
   "Name Folder": "Beri Nama Folder",
   "Failed to load scene collection.  A new one will be created instead.": "Gagal untuk memuat koleksi scene.  Koleksi baru akan dibuat.",
+  "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.": "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.",
   "New Scene": "Scene Baru",
   "Projector": "Proyektor",
   "Your Scene Collections:": "Koleksi Scene Anda:",

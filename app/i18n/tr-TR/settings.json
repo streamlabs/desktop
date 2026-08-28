@@ -256,6 +256,7 @@
   "FPS Denominator": "FPS Paydası",
   "FPS Value": "FPS Değeri",
   "The resolution must be in the format [width]x[height] (i.e. 1920x1080)": "Çözünürlük [genişlik]x[yükseklik] biçiminde olmalıdır (ör. 1920x1080)",
+  "Failed to update the video resolution.": "Failed to update the video resolution.",
   "Custom": "Özel",
   "Custom Base Resolution": "Özel Temel Çözünürlük",
   "Custom Output Resolution": "Özel Çıkış Çözünürlüğü",
