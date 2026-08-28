@@ -75,21 +75,21 @@ export const errorTypes = {
   },
   RESTREAM_STREAM_KEY_FETCH_FAILED: {
     get message() {
-      return $t('Failed to fetch your Multistream stream key');
+      return $t('Cannot add targets in live output editing mode because the stream key is missing');
     },
     get action() {
       return $t(
-        'the request for the Multistream user settings failed. Check the connection to the Streamlabs API and try the update again',
+        'ask the user to restart the stream and go live again. If in dual output mode, ask the user to stream in single output mode',
       );
     },
   },
   RESTREAM_DISPLAY_SETUP_FAILED: {
     get message() {
-      return $t('Failed to start Multistreaming on one of your displays');
+      return $t('Failed to start Multistreaming for one of the displays');
     },
     get action() {
       return $t(
-        'the destinations for a display that was not yet streaming could not be created. The other display may still be live, so confirm the stream status before retrying',
+        'confirm if the user is in dual output mode and which displays are currently streaming',
       );
     },
   },
@@ -99,7 +99,7 @@ export const errorTypes = {
     },
     get action() {
       return $t(
-        'the Multistream server rejected the request to add the destination while live. Confirm the permissions for the destination, then try updating the stream again',
+        'confirm the platform settings for the platform, then try updating the stream again',
       );
     },
   },
@@ -109,7 +109,7 @@ export const errorTypes = {
     },
     get action() {
       return $t(
-        'the Multistream server reported no live destinations, so there was nothing to remove. The stream may have already ended on the server',
+        'no live destinations so there was nothing to remove. The stream may have already ended on the server',
       );
     },
   },
@@ -118,9 +118,7 @@ export const errorTypes = {
       return $t('Failed to find the destination to remove on your live stream');
     },
     get action() {
-      return $t(
-        'the stream key for the destination matches none of the live destinations, most likely because the key changed after the stream started. The destination is still streaming',
-      );
+      return $t('one of the platforms requesting removal does not exist');
     },
   },
   RESTREAM_REMOVE_TARGETS_FAILED: {
@@ -128,14 +126,12 @@ export const errorTypes = {
       return $t('Failed to remove the destination from your live stream');
     },
     get action() {
-      return $t(
-        'the Multistream server rejected the request to remove the destination while live. The destination may still be streaming',
-      );
+      return $t('failed to remove the platform while live, confirm the stream is still active');
     },
   },
   RESTREAM_ENHANCED_BROADCASTING_FAILED: {
     get message() {
-      return $t('Failed to configure the Multistream server for Enhanced Broadcasting');
+      return $t('Failed to multistream because Enhanced Broadcasting is enabled');
     },
     get action() {
       return $t('disable Enhanced Broadcasting for Twitch and try again');
@@ -654,6 +650,39 @@ export function formatUnknownErrorMessage(
     report: messages.user.join('. '),
     details,
   };
+}
+export function throwRestreamError(e: unknown, errorType?: TStreamErrorType, message?: string) {
+  console.error('Restream error:', e);
+
+  const error =
+    e instanceof StreamError
+      ? e
+      : {
+          status: 404,
+          statusText:
+            message ?? $t('Failed to update Multistream platforms and destinations while live'),
+        };
+
+  const type = getRestreamErrorType(e, errorType);
+  const details = formatRestreamErrorMessage(e, message);
+
+  throwStreamError(type, error, details);
+}
+
+function getRestreamErrorType(e: unknown, errorType?: TStreamErrorType): TStreamErrorType {
+  if (e instanceof StreamError) {
+    return e.type;
+  }
+
+  return errorType ?? ('RESTREAM_UPDATE_FAILED' as TStreamErrorType);
+}
+
+function formatRestreamErrorMessage(e: unknown, message?: string) {
+  if (e instanceof StreamError) {
+    return e.details ?? e.statusText;
+  }
+
+  return message ?? $t('Failed to update Multistream platforms and destinations while live');
 }
 
 function obsStringErrorAsMessages(info: { error: string; code: number }) {

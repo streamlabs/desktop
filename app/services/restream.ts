@@ -25,7 +25,7 @@ import { DualOutputService } from 'services/dual-output';
 import { SettingsService } from 'services/settings';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { DiagnosticsService } from './diagnostics';
-import { throwStreamError } from './streaming/stream-error';
+import { StreamError, throwRestreamError } from './streaming/stream-error';
 import { Subject } from 'rxjs';
 import uuid from 'uuid';
 import Utils from './utils';
@@ -425,13 +425,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
       // with an error that does not say which display was missing a key.
       if (!sessionKey) {
         const display = orientation === 'landscape' ? 'horizontal' : 'vertical';
-        throwStreamError(
-          'RESTREAM_STREAM_KEY_MISSING',
-          {},
-          $t('Stream key missing for %{display} display', {
-            display,
-          }),
-        );
+        const details = $t('Stream key missing for %{display} display', { display });
+        throwRestreamError({}, 'RESTREAM_STREAM_KEY_MISSING', details);
       }
 
       console.error(
@@ -513,11 +508,13 @@ export class RestreamService extends StatefulService<IRestreamState> {
         streamKey = await this.resolveStreamKey(mode);
       } catch (e: unknown) {
         console.error('Restream Error: Unable to fetch user stream key for', mode, e);
-        throwStreamError(
-          'RESTREAM_STREAM_KEY_FETCH_FAILED',
-          e,
-          $t('Unable to fetch user stream key for %{mode}', { mode }),
-        );
+
+        const details =
+          e instanceof StreamError
+            ? e.details
+            : $t('Unable to fetch user stream key for %{mode}', { mode });
+
+        throwRestreamError(e, 'RESTREAM_STREAM_KEY_FETCH_FAILED', details);
       }
 
       if (displaysToSetup.includes(display)) {
@@ -529,12 +526,12 @@ export class RestreamService extends StatefulService<IRestreamState> {
         try {
           await this.setupDisplayTargets(platforms, customDestinations, display);
         } catch (e: unknown) {
-          console.error('Restream Error: Unable to create targets for', display, e);
-          throwStreamError(
-            'RESTREAM_DISPLAY_SETUP_FAILED',
-            e,
-            $t('Unable to create targets for %{display}', { display }),
-          );
+          const details =
+            e instanceof StreamError
+              ? e.details
+              : $t('Unable to create targets for %{display}', { display });
+
+          throwRestreamError(e, 'RESTREAM_DISPLAY_SETUP_FAILED', details);
         }
       } else {
         // This display already has a running restream session, so add the targets to it.
@@ -543,9 +540,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
           await this.addRuntimeTargets(streamKey, targetsByMode[mode] as IRestreamRuntimeTarget[]);
         } catch (e: unknown) {
           console.error('Restream Error: Unable to add targets for', display, e);
-          throwStreamError(
-            'RESTREAM_ADD_TARGETS_FAILED',
+
+          throwRestreamError(
             e,
+            'RESTREAM_ADD_TARGETS_FAILED',
             $t('Unable to add targets for %{display}', { display }),
           );
         }
@@ -573,7 +571,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
     if (!remoteTargets.length) {
       console.debug('No active restream targets.');
-      throwStreamError('RESTREAM_NO_ACTIVE_TARGETS', {}, 'No active restream targets.');
+      throwRestreamError({}, 'RESTREAM_NO_ACTIVE_TARGETS', 'No active restream targets.');
     }
 
     // Match the targets to remove against the remote targets by stream key. When removing all
@@ -605,13 +603,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
           'Unable to match %{numTargets} target(s) to remove against the active stream.',
           { numTargets: unmatched.length },
         );
-        throwStreamError(
-          'RESTREAM_REMOVE_TARGET_NOT_FOUND',
-          {
-            statusText: details,
-          },
-          details,
-        );
+        throwRestreamError({}, 'RESTREAM_REMOVE_TARGET_NOT_FOUND', details);
       }
     }
 
@@ -631,11 +623,11 @@ export class RestreamService extends StatefulService<IRestreamState> {
         // that targets are removed from the stream they were added to
         await this.removeRuntimeTargets(streamKey, stopTargets);
       } catch (e: unknown) {
-        console.error('Restream Error: Error removing restream targets for', mode, e);
-        throwStreamError(
-          'RESTREAM_REMOVE_TARGETS_FAILED',
+        const display = mode === 'landscape' ? 'horizontal' : 'vertical';
+        throwRestreamError(
           e,
-          `Unable to remove targets for ${mode}.`,
+          'RESTREAM_REMOVE_TARGETS_FAILED',
+          `Unable to remove targets for ${display}.`,
         );
       }
     }
@@ -768,9 +760,9 @@ export class RestreamService extends StatefulService<IRestreamState> {
       await this.addRuntimeTargets(streamKey, targets as IRestreamRuntimeTarget[]);
     } catch (e: unknown) {
       console.error('Restream Error: Error updating restream targets for', orientation, e);
-      throwStreamError(
-        'RESTREAM_ADD_TARGETS_FAILED',
+      throwRestreamError(
         e,
+        'RESTREAM_ADD_TARGETS_FAILED',
         `Unable to update targets for ${orientation}.`,
       );
     }
@@ -900,8 +892,11 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   async beforeGoLive() {
     if (!this.streamInfo.getIsValidRestreamConfig()) {
-      console.log('Invalid restream config, cannot go live with restream');
-      throwStreamError('RESTREAM_INVALID_CONFIG');
+      throwRestreamError(
+        {},
+        'RESTREAM_INVALID_CONFIG',
+        'Invalid restream config, cannot go live with restream',
+      );
     }
 
     const shouldSwitchStreams = this.state.streamShiftTargets.length > 0;
