@@ -32,6 +32,7 @@
   "Rename Folder": "重新命名資料夾",
   "Name Folder": "命名資料夾",
   "Failed to load scene collection.  A new one will be created instead.": "無法載入場景組合。已改為建立新的場景組合。",
+  "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.": "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.",
   "New Scene": "新場景",
   "Projector": "投影器",
   "Your Scene Collections:": "您的場景組合：",
