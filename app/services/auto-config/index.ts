@@ -516,6 +516,13 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     return true;
   }
 
+  /** Re-arm the one-time Go Live prompt for the currently signed-in account. */
+  resetPromptState(): boolean {
+    if (!this.userService.isLoggedIn || this.state.stage !== 'idle') return false;
+    this.RESET_PROMPT_STATE(this.getIdentityKey());
+    return true;
+  }
+
   /**
    * Consume the profile saved for this confirmed attempt. The compatibility
    * check prevents a stale profile from crossing an unexpected topology change.
@@ -1823,6 +1830,11 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   @mutation()
   private SET_PROMPT_STATE(identity: string, promptState: TAutoOptimizerPromptState) {
     Vue.set(this.state.promptStates, identity, promptState);
+  }
+
+  @mutation()
+  private RESET_PROMPT_STATE(identity: string) {
+    Vue.delete(this.state.promptStates, identity);
   }
 
   @mutation()

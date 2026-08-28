@@ -6,7 +6,7 @@ import { EPlatformCallResult, getPlatformService, TPlatform } from '../../../ser
 import cloneDeep from 'lodash/cloneDeep';
 import namingHelpers from '../../../util/NamingHelpers';
 import { Services } from '../../service-provider';
-import { ObsGenericSettingsForm } from './ObsSettings';
+import { ObsGenericSettingsForm, ObsSettingsSection } from './ObsSettings';
 import styles from './Stream.m.less';
 import cx from 'classnames';
 import { Button, message } from 'antd';
@@ -177,15 +177,21 @@ export function StreamSettings() {
   const controller = useMemo(() => new StreamSettingsController(), []);
   const { StreamingService, StreamSettingsService, UserService, DualOutputService } = Services;
 
-  const { canEditSettings, protectedModeEnabled, needToShowWarning, platforms, isPrime } = useVuex(
-    () => ({
+  const {
+    canEditSettings,
+    protectedModeEnabled,
+    needToShowWarning,
+    platforms,
+    isPrime,
+    isLoggedIn,
+  } = useVuex(() => ({
       canEditSettings: Services.StreamingService.state.streamingStatus === EStreamingState.Offline,
       protectedModeEnabled: Services.StreamSettingsService.protectedModeEnabled,
       needToShowWarning: UserService.isLoggedIn && !StreamSettingsService.protectedModeEnabled,
       platforms: StreamingService.views.allPlatforms,
       isPrime: UserService.views.isPrime,
-    }),
-  );
+      isLoggedIn: UserService.isLoggedIn,
+    }));
 
   // Show a message when the user has unlinked/linked their account on web
   useSubscription(
@@ -302,8 +308,48 @@ export function StreamSettings() {
 
         {/* OBS settings */}
         {!protectedModeEnabled && canEditSettings && <ObsGenericSettingsForm page="Stream" />}
+
+        {isLoggedIn && <AutoOptimizerSettings />}
       </div>
     </StreamSettingsCtx.Provider>
+  );
+}
+
+function AutoOptimizerSettings() {
+  const [resetting, setResetting] = useState(false);
+
+  async function resetAutoOptimizer() {
+    setResetting(true);
+    try {
+      const reset = await Services.AutoConfigService.actions.return.resetPromptState();
+      if (!reset) {
+        message.warning($t('Auto Optimizer is already in progress. Try again after it finishes.'));
+        return;
+      }
+      message.success($t('Auto Optimizer can be offered the next time you go live.'));
+    } catch (error: unknown) {
+      message.error($t('Could not reset Auto Optimizer. Please try again.'));
+    } finally {
+      setResetting(false);
+    }
+  }
+
+  return (
+    <ObsSettingsSection title={$t('Auto Optimizer')} style={{ paddingBottom: 32 }}>
+      <p>
+        {$t(
+          'Allow Auto Optimizer to be offered again the next time you go live. This does not change your current stream settings.',
+        )}
+      </p>
+      <Button
+        data-name="reset-auto-optimizer"
+        loading={resetting}
+        disabled={resetting}
+        onClick={resetAutoOptimizer}
+      >
+        {$t('Run Auto Optimizer Again')}
+      </Button>
+    </ObsSettingsSection>
   );
 }
 
