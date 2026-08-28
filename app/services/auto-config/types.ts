@@ -82,6 +82,8 @@ export interface IAutoOptimizerProbeEvidence {
   testedHeight?: number;
   testedFpsNum?: number;
   testedFpsDen?: number;
+  /** Exact secondary video tuple exercised by a paired Enhanced Broadcasting test. */
+  testedAdditionalVideo?: IAutoConfigAdditionalVideoTuple;
   /** Provider ladder shape observed during the Enhanced Broadcasting test. */
   videoTrackCount?: number;
   configuredAggregateBitrateKbps?: number;
@@ -125,6 +127,8 @@ export interface IAutoOptimizerLegResult {
   fpsNum: number;
   fpsDen: number;
   fps: number;
+  /** Secondary canvas tested concurrently with the primary video on this upload leg. */
+  additionalVideo?: IAutoOptimizerAdditionalVideoResult;
   bitrate: number;
   /** Omitted when the provider owns the encoding ladder. */
   encoder?: IAutoOptimizerEncoderRecommendation;
@@ -177,6 +181,7 @@ export interface IAutoOptimizerProgressDetail {
   height: number | null;
   fpsNum: number | null;
   fpsDen: number | null;
+  additionalVideo: IAutoConfigAdditionalVideoTuple | null;
   selectedBitrateKbps: number | null;
 }
 
@@ -192,6 +197,8 @@ export interface IAutoConfigCapabilities {
 }
 
 export interface IAutoConfigCurrentSettings {
+  /** Registered libobs canvas identity used by active workload probes. */
+  canvasId?: number;
   width: number;
   height: number;
   fpsNum: number;
@@ -202,19 +209,45 @@ export interface IAutoConfigCurrentSettings {
   preset?: string;
 }
 
+export interface IAutoConfigRequestLimits {
+  maxBitrateKbps?: number;
+  /** Highest canvas-bounded video tuple eligible for hardware and bandwidth testing. */
+  maxWidth?: number;
+  maxHeight?: number;
+  maxFpsNum?: number;
+  maxFpsDen?: number;
+}
+
+export interface IAutoConfigAdditionalVideoTuple {
+  display: 'vertical';
+  width: number;
+  height: number;
+  fpsNum: number;
+  fpsDen: number;
+}
+
+export interface IAutoConfigRequestAdditionalVideo {
+  display: 'vertical';
+  current: IAutoConfigCurrentSettings;
+  limits?: IAutoConfigRequestLimits;
+}
+
+export interface IAutoOptimizerAdditionalVideoResult {
+  display: 'vertical';
+  resolution: { width: number; height: number };
+  fpsNum: number;
+  fpsDen: number;
+  fps: number;
+}
+
 export interface IAutoConfigRequestLeg {
   legId: string;
   display: TDisplayType | 'both';
   destinations: IAutoOptimizerDestination[];
   current: IAutoConfigCurrentSettings;
-  limits?: {
-    maxBitrateKbps?: number;
-    /** Highest canvas-bounded video tuple eligible for hardware and bandwidth testing. */
-    maxWidth?: number;
-    maxHeight?: number;
-    maxFpsNum?: number;
-    maxFpsDen?: number;
-  };
+  limits?: IAutoConfigRequestLimits;
+  /** Paired vertical workload sharing this Enhanced Broadcasting output. */
+  additionalVideo?: IAutoConfigRequestAdditionalVideo;
   estimateReason?:
     | 'non_twitch'
     | 'custom_rtmp'
@@ -282,6 +315,7 @@ export interface IAutoConfigEvent {
   height?: number;
   fpsNum?: number;
   fpsDen?: number;
+  additionalVideo?: IAutoConfigAdditionalVideoTuple;
   selectedBitrateKbps?: number;
 }
 
@@ -312,6 +346,7 @@ export interface IAutoConfigNativeResult {
       encoderTitle: string;
       codec: string;
       preset?: string;
+      additionalVideo?: IAutoConfigAdditionalVideoTuple;
     };
   }>;
 }

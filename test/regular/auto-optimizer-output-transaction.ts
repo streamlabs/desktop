@@ -56,12 +56,8 @@ test('Advanced rollback only claims the restorable active Output state', t => {
 
 test('only an active Enhanced Broadcasting workload may apply provider-owned video settings', t => {
   t.true(shouldApplyAutoOptimizerVideoSettings('direct-single', false, ['estimated']));
-  t.true(
-    shouldApplyAutoOptimizerVideoSettings('enhanced-broadcasting', true, ['active']),
-  );
-  t.false(
-    shouldApplyAutoOptimizerVideoSettings('enhanced-broadcasting', true, ['estimated']),
-  );
+  t.true(shouldApplyAutoOptimizerVideoSettings('enhanced-broadcasting', true, ['active']));
+  t.false(shouldApplyAutoOptimizerVideoSettings('enhanced-broadcasting', true, ['estimated']));
   t.false(shouldApplyAutoOptimizerVideoSettings('dual-output', true, ['active']));
 });
 
@@ -108,4 +104,62 @@ test('active Enhanced Broadcasting builds a video-only canvas, output, and share
   });
   t.false('bitrate' in patches.horizontal!);
   t.false('encoder' in patches.horizontal!);
+});
+
+test('paired Enhanced Broadcasting applies distinct horizontal and vertical canvases atomically', t => {
+  const current = {
+    horizontal: {
+      baseWidth: 1280,
+      baseHeight: 720,
+      outputWidth: 1280,
+      outputHeight: 720,
+      fpsNum: 30,
+      fpsDen: 1,
+    },
+    vertical: {
+      baseWidth: 720,
+      baseHeight: 1280,
+      outputWidth: 720,
+      outputHeight: 1280,
+      fpsNum: 30,
+      fpsDen: 1,
+    },
+  };
+  const paired = {
+    display: 'both' as const,
+    resolution: { width: 1920, height: 1080 },
+    additionalVideo: {
+      display: 'vertical' as const,
+      resolution: { width: 1080, height: 1920 },
+    },
+  };
+
+  t.deepEqual(buildAutoOptimizerVideoSettingsPatches([paired], current, 60, 1), {
+    horizontal: {
+      baseWidth: 1920,
+      baseHeight: 1080,
+      outputWidth: 1920,
+      outputHeight: 1080,
+      fpsNum: 60,
+      fpsDen: 1,
+    },
+    vertical: {
+      baseWidth: 1080,
+      baseHeight: 1920,
+      outputWidth: 1080,
+      outputHeight: 1920,
+      fpsNum: 60,
+      fpsDen: 1,
+    },
+  });
+  t.throws(
+    () =>
+      buildAutoOptimizerVideoSettingsPatches(
+        [{ display: 'both', resolution: paired.resolution }],
+        current,
+        60,
+        1,
+      ),
+    { message: 'A paired vertical recommendation is required for Dual Stream' },
+  );
 });

@@ -81,15 +81,7 @@ export default function GoLiveAutoOptimizer() {
     // Vuex mutates a service module in place. Returning that module directly
     // gives React the same object reference after every optimizer mutation, so
     // it skips the render and leaves the intro visible while the worker runs.
-    const {
-      stage,
-      phase,
-      progress,
-      topology,
-      result,
-      error,
-      progressDetail,
-    } = service.state;
+    const { stage, phase, progress, topology, result, error, progressDetail } = service.state;
     return {
       stage,
       phase,
@@ -147,10 +139,20 @@ export default function GoLiveAutoOptimizer() {
       managedByProvider:
         leg.display === 'both' || state.result?.topology === 'enhanced-broadcasting',
       videoSettingsManagedByProvider:
-        leg.display === 'both' ||
-        (state.result?.topology === 'enhanced-broadcasting' && leg.measurement !== 'active'),
+        state.result?.topology === 'enhanced-broadcasting'
+          ? leg.measurement !== 'active'
+          : leg.display === 'both',
       width: leg.resolution.width,
       height: leg.resolution.height,
+      ...(leg.additionalVideo
+        ? {
+            additionalVideo: {
+              display: leg.additionalVideo.display,
+              width: leg.additionalVideo.resolution.width,
+              height: leg.additionalVideo.resolution.height,
+            },
+          }
+        : {}),
       fps: leg.fps,
       bitrateKbps: leg.bitrate,
       encoder: leg.encoder?.title || leg.encoder?.id,

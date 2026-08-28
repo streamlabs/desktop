@@ -10,6 +10,8 @@ function settingsKey(leg: IAutoOptimizerPresentationLeg) {
   return [
     leg.width,
     leg.height,
+    leg.additionalVideo?.width || '',
+    leg.additionalVideo?.height || '',
     leg.fps,
     leg.bitrateKbps,
     leg.encoder || '',
@@ -43,16 +45,10 @@ function PlatformChips(p: { platforms: Array<{ id: string; label: string }> }) {
   );
 }
 
-function MeasurementProvenance(p: {
-  leg: IAutoOptimizerPresentationLeg;
-  standalone?: boolean;
-}) {
-  const measured =
-    p.leg.measurementMode === 'active' ? p.leg.measuredPlatforms || [] : [];
+function MeasurementProvenance(p: { leg: IAutoOptimizerPresentationLeg; standalone?: boolean }) {
+  const measured = p.leg.measurementMode === 'active' ? p.leg.measuredPlatforms || [] : [];
   const estimated =
-    p.leg.measurementMode === 'active'
-      ? p.leg.estimatedPlatforms || []
-      : p.leg.platforms || [];
+    p.leg.measurementMode === 'active' ? p.leg.estimatedPlatforms || [] : p.leg.platforms || [];
   if (!measured.length && !estimated.length) return null;
 
   const contents = (
@@ -109,11 +105,25 @@ function SettingsList(p: { leg: IAutoOptimizerPresentationLeg }) {
   return (
     <>
       <ul className={styles.settingsList}>
-        <li>
-          <i className="icon-check" aria-hidden="true" />
-          {$t(leg.managedByProvider ? 'Canvas resolution' : 'Resolution')}: {leg.width}×
-          {leg.height}
-        </li>
+        {leg.additionalVideo ? (
+          <>
+            <li>
+              <i className="icon-check" aria-hidden="true" />
+              {$t('Horizontal canvas resolution')}: {leg.width}×{leg.height}
+            </li>
+            <li>
+              <i className="icon-check" aria-hidden="true" />
+              {$t('Vertical canvas resolution')}: {leg.additionalVideo.width}×
+              {leg.additionalVideo.height}
+            </li>
+          </>
+        ) : (
+          <li>
+            <i className="icon-check" aria-hidden="true" />
+            {$t(leg.managedByProvider ? 'Canvas resolution' : 'Resolution')}: {leg.width}×
+            {leg.height}
+          </li>
+        )}
         <li>
           <i className="icon-check" aria-hidden="true" />
           {$t('Framerate')}: {leg.fps} {$t('fps')}

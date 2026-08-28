@@ -72,7 +72,8 @@ function probeCandidates(
     .map(provider => {
       let kind: IAutoOptimizerProbeCandidate['kind'] = 'youtube-unbound';
       if (provider === 'twitch') {
-        kind = type === 'enhanced-broadcasting' ? 'twitch-enhanced-broadcasting' : 'twitch-standard';
+        kind =
+          type === 'enhanced-broadcasting' ? 'twitch-enhanced-broadcasting' : 'twitch-standard';
       }
       return { probeId: `${legId}-${provider}`, kind, legId, provider };
     });
@@ -117,11 +118,25 @@ export function classifyAutoOptimizerTopology(
     item => item.enabled && !item.dualStream,
   );
   const twitchSettings = settings.platforms.twitch;
-  const enhancedBroadcasting = Boolean(
-    settings.enhancedBroadcasting || twitchSettings?.isEnhancedBroadcasting,
-  );
   const streamShift = Boolean(settings.streamShift);
   const hasCustom = customDestinations.length > 0;
+  const isSingleConnectionTwitchDual =
+    dualOutputMode &&
+    twitchDualStreamAccess &&
+    !streamShift &&
+    platforms.length === 1 &&
+    platforms[0] === 'twitch' &&
+    twitchSettings?.display === 'both' &&
+    !twitchSettings?.useCustomFields &&
+    !hasCustom;
+  // Twitch Dual Stream is implemented by the same Enhanced Broadcasting
+  // connection with a paired vertical video, even when its persisted toggle is
+  // false. Classify the actual output topology rather than only the form field.
+  const enhancedBroadcasting = Boolean(
+    settings.enhancedBroadcasting ||
+      twitchSettings?.isEnhancedBroadcasting ||
+      isSingleConnectionTwitchDual,
+  );
   const targetCount = platforms.length + customDestinations.length;
 
   let type: TAutoOptimizerTopologyType;
@@ -143,13 +158,16 @@ export function classifyAutoOptimizerTopology(
 
   // Custom RTMP credentials and Stream Shift must never be used for active
   // testing. Enhanced Broadcasting has a separate workload probe whose V1
-  // safety boundary is one horizontal Twitch-only output.
+  // safety boundary is a Twitch-only connection: either one horizontal canvas
+  // or the exact Dual Stream pairing of horizontal and vertical video.
   const enhancedBroadcastingProbeEligible =
     type === 'enhanced-broadcasting' &&
-    !dualOutputMode &&
+    !streamShift &&
     !hasCustom &&
     platforms.length === 1 &&
-    platforms[0] === 'twitch';
+    platforms[0] === 'twitch' &&
+    !twitchSettings?.useCustomFields &&
+    (!dualOutputMode || isSingleConnectionTwitchDual);
   const allowProbes =
     enhancedBroadcastingProbeEligible ||
     !['custom-rtmp', 'mixed', 'enhanced-broadcasting', 'stream-shift'].includes(type);
@@ -160,14 +178,6 @@ export function classifyAutoOptimizerTopology(
   ];
 
   let legs: IAutoOptimizerTopologyLeg[];
-  const isSingleConnectionTwitchDual =
-    dualOutputMode &&
-    twitchDualStreamAccess &&
-    platforms.length === 1 &&
-    platforms[0] === 'twitch' &&
-    twitchSettings?.display === 'both' &&
-    customDestinations.length === 0;
-
   if (isSingleConnectionTwitchDual) {
     legs = [
       completeLeg(

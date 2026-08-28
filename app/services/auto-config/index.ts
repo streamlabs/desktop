@@ -22,6 +22,7 @@ import { $t } from 'services/i18n';
 import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremental-rollout';
 import { classifyAutoOptimizerTopology, isAutoOptimizerProfileCompatible } from './topology';
 import {
+  areAutoConfigActiveCanvasIdentitiesValid,
   autoConfigProbeCoverage,
   autoConfigPhaseStepDisposition,
   autoConfigPhaseStepKey,
@@ -98,9 +99,7 @@ class AutoOptimizerProbeSetupError extends Error {
   readonly retryable = true;
 
   constructor() {
-    super(
-      "We couldn't prepare the bandwidth test. Try again, or continue without optimization.",
-    );
+    super("We couldn't prepare the bandwidth test. Try again, or continue without optimization.");
     this.name = 'AutoOptimizerProbeSetupError';
   }
 }
@@ -178,6 +177,7 @@ function emptyProgressDetail(): IAutoOptimizerProgressDetail {
     height: null,
     fpsNum: null,
     fpsDen: null,
+    additionalVideo: null,
     selectedBitrateKbps: null,
   };
 }
@@ -366,9 +366,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       }
       topology = prepared.topology;
       const request = prepared.request;
-      this.attemptRequestLegs = new Map(
-        request.legs.map(leg => [leg.legId, cloneDeep(leg)]),
-      );
+      this.attemptRequestLegs = new Map(request.legs.map(leg => [leg.legId, cloneDeep(leg)]));
       this.SET_TOPOLOGY(topology);
 
       const native = this.nativeApi();
@@ -443,9 +441,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         ),
         supportedAutoConfigProbeKinds(capabilities!, {
           twitchFeatureEnabled: this.featureEnabled(EAvailableFeatures.autoOptimizerTwitchProbe),
-          youtubeFeatureEnabled: this.featureEnabled(
-            EAvailableFeatures.autoOptimizerYoutubeProbe,
-          ),
+          youtubeFeatureEnabled: this.featureEnabled(EAvailableFeatures.autoOptimizerYoutubeProbe),
           canConfirmYoutubeIngest:
             typeof this.nativeApi().ConfirmAutoConfigProbeIngest === 'function',
         }),
@@ -738,6 +734,19 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     const legs: IAutoConfigRequestLeg[] = topology.legs.map(leg => {
       const display: TDisplayType = leg.display === 'vertical' ? 'vertical' : 'horizontal';
       const video = this.videoSettingsService.state[display];
+      const canvasId = this.videoSettingsService.contexts[display]?.canvasId;
+      const additionalCanvasId = this.videoSettingsService.contexts.vertical?.canvasId;
+      if (
+        topology.type === 'enhanced-broadcasting' &&
+        leg.measurement === 'active' &&
+        !areAutoConfigActiveCanvasIdentitiesValid(
+          canvasId,
+          additionalCanvasId,
+          leg.display === 'both',
+        )
+      ) {
+        throw new AutoOptimizerProbeSetupError();
+      }
       const knownCaps = leg.destinations
         .map(item => PLATFORM_MAX_BITRATE_KBPS[item.platform])
         .filter((value): value is number => typeof value === 'number' && value > 0);
@@ -747,6 +756,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         display: leg.display,
         destinations: leg.destinations,
         current: {
+          canvasId,
           width: video.outputWidth,
           height: video.outputHeight,
           fpsNum: video.fpsNum,
@@ -777,6 +787,40 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           currentFpsDen: video.fpsDen,
           maxBitrateKbps,
         }),
+        ...(leg.display === 'both'
+          ? {
+              additionalVideo: {
+                display: 'vertical' as const,
+                current: {
+                  canvasId: additionalCanvasId,
+                  width: this.videoSettingsService.state.vertical.outputWidth,
+                  height: this.videoSettingsService.state.vertical.outputHeight,
+                  fpsNum: this.videoSettingsService.state.vertical.fpsNum,
+                  fpsDen: this.videoSettingsService.state.vertical.fpsDen,
+                  bitrateKbps: output.streaming.bitrate,
+                  encoderId: output.streaming.encoderId,
+                  codec: 'h264',
+                  preset: output.streaming.preset || undefined,
+                },
+                limits: buildAutoOptimizerRequestLimits({
+                  allowPromotion:
+                    leg.measurement === 'active' &&
+                    leg.estimateReason !== 'partial_provider_probes' &&
+                    autoOptimizerCanvasAllowsQualityPromotion(
+                      this.videoSettingsService.state.vertical.baseWidth,
+                      this.videoSettingsService.state.vertical.baseHeight,
+                      this.videoSettingsService.state.vertical.outputWidth,
+                      this.videoSettingsService.state.vertical.outputHeight,
+                    ),
+                  currentWidth: this.videoSettingsService.state.vertical.outputWidth,
+                  currentHeight: this.videoSettingsService.state.vertical.outputHeight,
+                  currentFpsNum: this.videoSettingsService.state.vertical.fpsNum,
+                  currentFpsDen: this.videoSettingsService.state.vertical.fpsDen,
+                  maxBitrateKbps,
+                }),
+              },
+            }
+          : {}),
         estimateReason: leg.estimateReason as IAutoConfigRequestLeg['estimateReason'],
       };
     });
@@ -833,12 +877,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         : null;
     if (phase) {
       const detail = sanitizeAutoConfigProgressDetail(event, phase);
-      this.queuePhaseProgress(
-        phase,
-        clampProgress(event.progress),
-        token,
-        detail,
-      );
+      this.queuePhaseProgress(phase, clampProgress(event.progress), token, detail);
     }
 
     if (event.type === 'complete' || event.type === 'cancelled') {
@@ -1060,6 +1099,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
             currentHeight: requested.current.height,
             currentFpsNum: requested.current.fpsNum,
             currentFpsDen: requested.current.fpsDen,
+            additionalVideo: requested.additionalVideo,
           })
         : null;
       const valid =
@@ -1093,11 +1133,25 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           },
           fpsNum: recommendation.fpsNum,
           fpsDen: recommendation.fpsDen,
-          fps: autoOptimizerDisplayFrameRate(
-            recommendation.fpsNum,
-            recommendation.fpsDen,
-          ),
+          fps: autoOptimizerDisplayFrameRate(recommendation.fpsNum, recommendation.fpsDen),
           bitrate: recommendation.bitrateKbps,
+          ...(recommendation.additionalVideo
+            ? {
+                additionalVideo: {
+                  display: 'vertical' as const,
+                  resolution: {
+                    width: recommendation.additionalVideo.width,
+                    height: recommendation.additionalVideo.height,
+                  },
+                  fpsNum: recommendation.additionalVideo.fpsNum,
+                  fpsDen: recommendation.additionalVideo.fpsDen,
+                  fps: autoOptimizerDisplayFrameRate(
+                    recommendation.additionalVideo.fpsNum,
+                    recommendation.additionalVideo.fpsDen,
+                  ),
+                },
+              }
+            : {}),
           ...(recommendation.encoder ? { encoder: recommendation.encoder } : {}),
         },
       ];
@@ -1159,7 +1213,12 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     const snapshot = this.captureSettingsSnapshot();
     const primary = result.legs.find(leg => leg.display === 'horizontal') || result.legs[0];
     const frameRateSignatures = new Set(
-      result.legs.map(leg => `${leg.fpsNum}/${leg.fpsDen}`),
+      result.legs.flatMap(leg => [
+        `${leg.fpsNum}/${leg.fpsDen}`,
+        ...(leg.additionalVideo
+          ? [`${leg.additionalVideo.fpsNum}/${leg.additionalVideo.fpsDen}`]
+          : []),
+      ]),
     );
     if (frameRateSignatures.size > 1) {
       throw new Error('This stream topology cannot apply different frame rates per upload leg');
@@ -1177,11 +1236,10 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       throw new Error('The optimizer did not return a tested encoder');
     }
     const encoderSignatures = new Set(
-      result.legs.map(
-        leg =>
-          leg.encoder
-            ? `${leg.encoder.id}:${leg.encoder.family}:${leg.encoder.preset || ''}`
-            : 'provider-managed',
+      result.legs.map(leg =>
+        leg.encoder
+          ? `${leg.encoder.id}:${leg.encoder.family}:${leg.encoder.preset || ''}`
+          : 'provider-managed',
       ),
     );
     if (!providerOwnsEncoding && encoderSignatures.size > 1) {
@@ -1192,8 +1250,10 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       : (primary.encoder!.family as EEncoderFamily);
     const displaysToApply = Array.from(
       new Set(
-        result.legs.map(
-          leg => (leg.display === 'vertical' ? 'vertical' : 'horizontal') as TDisplayType,
+        result.legs.flatMap(leg =>
+          leg.display === 'both'
+            ? (['horizontal', 'vertical'] as TDisplayType[])
+            : [leg.display as TDisplayType],
         ),
       ),
     );
@@ -1453,17 +1513,11 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         output.mode,
         primary.encoder!.id,
       );
-      const rawPreset = presetField
-        ? this.readRawOutputField('Streaming', presetField)
-        : null;
+      const rawPreset = presetField ? this.readRawOutputField('Streaming', presetField) : null;
       let appliedPreset: string;
       try {
         if (typeof rawPreset !== 'string' || !rawPreset) throw new Error('Missing preset');
-        appliedPreset = encoderPresetFromSettingsValue(
-          primary.encoder!.id,
-          output.mode,
-          rawPreset,
-        );
+        appliedPreset = encoderPresetFromSettingsValue(primary.encoder!.id, output.mode, rawPreset);
       } catch (error: unknown) {
         throw new Error('Failed to read the recommended encoder preset');
       }
@@ -1480,46 +1534,49 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     if (applyVideoSettings) {
       (['horizontal', 'vertical'] as TDisplayType[]).forEach(display => {
         const state = this.videoSettingsService.state[display];
-        if (
-          state &&
-          (state.fpsNum !== primary.fpsNum || state.fpsDen !== primary.fpsDen)
-        ) {
+        if (state && (state.fpsNum !== primary.fpsNum || state.fpsDen !== primary.fpsDen)) {
           throw new Error(`Failed to persist the recommended ${display} frame rate`);
         }
         const live = this.videoSettingsService.contexts[display]?.video;
-        if (
-          live &&
-          (live.fpsNum !== primary.fpsNum || live.fpsDen !== primary.fpsDen)
-        ) {
+        if (live && (live.fpsNum !== primary.fpsNum || live.fpsDen !== primary.fpsDen)) {
           throw new Error(`Failed to apply the recommended ${display} frame rate`);
         }
       });
-      result.legs.forEach(leg => {
-        const display: TDisplayType = leg.display === 'vertical' ? 'vertical' : 'horizontal';
-        const state = this.videoSettingsService.state[display];
-        const video = this.videoSettingsService.contexts[display]?.video;
-        const previous =
-          display === 'vertical' ? snapshot.verticalVideo : snapshot.horizontalVideo;
-        const promotedResolution = autoOptimizerPromotesResolution(
-          previous.outputWidth,
-          previous.outputHeight,
-          leg.resolution.width,
-          leg.resolution.height,
-        );
-        if (!state || !video) throw new Error(`The ${display} video context is unavailable`);
-        if (
-          state.outputWidth !== leg.resolution.width ||
-          state.outputHeight !== leg.resolution.height ||
-          (promotedResolution && state.baseWidth < leg.resolution.width) ||
-          (promotedResolution && state.baseHeight < leg.resolution.height) ||
-          video.baseWidth !== state.baseWidth ||
-          video.baseHeight !== state.baseHeight ||
-          video.outputWidth !== leg.resolution.width ||
-          video.outputHeight !== leg.resolution.height
-        ) {
-          throw new Error(`Failed to apply the recommended ${display} video settings`);
-        }
-      });
+      result.legs
+        .flatMap(leg => [
+          {
+            display: (leg.display === 'vertical' ? 'vertical' : 'horizontal') as TDisplayType,
+            resolution: leg.resolution,
+          },
+          ...(leg.additionalVideo
+            ? [{ display: leg.additionalVideo.display, resolution: leg.additionalVideo.resolution }]
+            : []),
+        ])
+        .forEach(({ display, resolution }) => {
+          const state = this.videoSettingsService.state[display];
+          const video = this.videoSettingsService.contexts[display]?.video;
+          const previous =
+            display === 'vertical' ? snapshot.verticalVideo : snapshot.horizontalVideo;
+          const promotedResolution = autoOptimizerPromotesResolution(
+            previous.outputWidth,
+            previous.outputHeight,
+            resolution.width,
+            resolution.height,
+          );
+          if (!state || !video) throw new Error(`The ${display} video context is unavailable`);
+          if (
+            state.outputWidth !== resolution.width ||
+            state.outputHeight !== resolution.height ||
+            (promotedResolution && state.baseWidth < resolution.width) ||
+            (promotedResolution && state.baseHeight < resolution.height) ||
+            video.baseWidth !== state.baseWidth ||
+            video.baseHeight !== state.baseHeight ||
+            video.outputWidth !== resolution.width ||
+            video.outputHeight !== resolution.height
+          ) {
+            throw new Error(`Failed to apply the recommended ${display} video settings`);
+          }
+        });
     }
   }
 

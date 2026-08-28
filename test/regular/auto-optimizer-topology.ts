@@ -195,12 +195,28 @@ test('Enhanced Broadcasting with another destination and Stream Shift remain est
     }),
     false,
   );
+  const enhancedWithStreamShift = classifyAutoOptimizerTopology(
+    settings({
+      platforms: {
+        twitch: {
+          enabled: true,
+          useCustomFields: false,
+          isEnhancedBroadcasting: true,
+        } as any,
+      },
+      streamShift: true,
+    }),
+    false,
+  );
 
   t.is(enhancedWithYoutube.type, 'enhanced-broadcasting');
   t.is(enhancedWithYoutube.probeCandidates.length, 0);
   t.is(enhancedWithYoutube.legs[0].estimateReason, 'enhanced_broadcasting');
   t.is(streamShift.type, 'stream-shift');
   t.is(streamShift.probeCandidates.length, 0);
+  t.is(enhancedWithStreamShift.type, 'enhanced-broadcasting');
+  t.is(enhancedWithStreamShift.probeCandidates.length, 0);
+  t.is(enhancedWithStreamShift.legs[0].measurement, 'estimated');
 });
 
 test('Enhanced Broadcasting under Dual Output remains estimate-only', t => {
@@ -238,14 +254,56 @@ test('Twitch dual stream is modeled as its single shared upload connection', t =
     true,
   );
 
+  t.is(topology.type, 'enhanced-broadcasting');
   t.is(topology.legs.length, 1);
   t.is(topology.legs[0].display, 'both');
   t.is(topology.legs[0].legId, 'twitch-dual');
   t.is(topology.legs[0].route, 'direct');
-  t.deepEqual(
-    topology.probeCandidates.map(candidate => candidate.provider),
-    ['twitch'],
+  t.deepEqual(topology.probeCandidates, [
+    {
+      probeId: 'twitch-dual-twitch',
+      kind: 'twitch-enhanced-broadcasting',
+      legId: 'twitch-dual',
+      provider: 'twitch',
+    },
+  ]);
+  t.is(topology.legs[0].measurement, 'active');
+});
+
+test('Twitch custom fields keep single and paired Enhanced Broadcasting estimate-only', t => {
+  const single = classifyAutoOptimizerTopology(
+    settings({
+      platforms: {
+        twitch: {
+          enabled: true,
+          useCustomFields: true,
+          isEnhancedBroadcasting: true,
+        } as any,
+      },
+    }),
+    false,
   );
+  const paired = classifyAutoOptimizerTopology(
+    settings({
+      platforms: {
+        twitch: {
+          enabled: true,
+          useCustomFields: true,
+          display: 'both',
+          isEnhancedBroadcasting: true,
+        } as any,
+      },
+    }),
+    true,
+    true,
+  );
+
+  t.is(single.type, 'enhanced-broadcasting');
+  t.deepEqual(single.probeCandidates, []);
+  t.is(single.legs[0].measurement, 'estimated');
+  t.is(paired.type, 'enhanced-broadcasting');
+  t.deepEqual(paired.probeCandidates, []);
+  t.is(paired.legs[0].measurement, 'estimated');
 });
 
 test('custom RTMP is never probed even when its URL belongs to YouTube', t => {

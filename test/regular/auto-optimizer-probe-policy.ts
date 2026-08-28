@@ -1,5 +1,6 @@
 import test from 'ava';
 import {
+  areAutoConfigActiveCanvasIdentitiesValid,
   autoConfigProbeCoverage,
   autoConfigPhaseStepDisposition,
   autoConfigPhaseStepKey,
@@ -17,6 +18,20 @@ import {
   IAutoOptimizerTopology,
   TAutoOptimizerProbeKind,
 } from '../../app/services/auto-config/types';
+
+test('zero-based paired Enhanced Broadcasting canvas identities reach native preparation', t => {
+  t.true(areAutoConfigActiveCanvasIdentitiesValid(0, 1, true));
+  t.true(areAutoConfigActiveCanvasIdentitiesValid(0, undefined, false));
+
+  t.false(areAutoConfigActiveCanvasIdentitiesValid(undefined, 1, true));
+  t.false(areAutoConfigActiveCanvasIdentitiesValid(0, undefined, true));
+  t.false(areAutoConfigActiveCanvasIdentitiesValid(-1, 1, true));
+  t.false(areAutoConfigActiveCanvasIdentitiesValid(0, -1, true));
+  t.false(areAutoConfigActiveCanvasIdentitiesValid(0.5, 1, true));
+  t.false(areAutoConfigActiveCanvasIdentitiesValid(0, 1.5, true));
+  t.false(areAutoConfigActiveCanvasIdentitiesValid(0, 0, true));
+  t.false(areAutoConfigActiveCanvasIdentitiesValid(Number.MAX_SAFE_INTEGER + 1, undefined, false));
+});
 
 function capabilities(patch: Partial<IAutoConfigCapabilities> = {}): IAutoConfigCapabilities {
   return {
@@ -146,7 +161,10 @@ test('a shared cloud leg retains the supported provider when another is unavaila
     filtered.legs[0].probeCandidates.map(candidate => candidate.provider),
     ['twitch'],
   );
-  t.deepEqual(filtered.probeCandidates.map(candidate => candidate.provider), ['twitch']);
+  t.deepEqual(
+    filtered.probeCandidates.map(candidate => candidate.provider),
+    ['twitch'],
+  );
   t.is(topology.legs[0].measurement, 'active', 'the classifier output is not mutated');
   t.is(topology.probeCandidates.length, 2);
 });
@@ -208,9 +226,7 @@ test('probe coverage estimates only with zero probes and disables partial promot
 test('partial active provider evidence is accepted only at low confidence', t => {
   const partial = {
     destinations: [{ platform: 'twitch' }, { platform: 'youtube' }],
-    attemptedCandidates: [
-      { provider: 'twitch' as const, kind: 'twitch-standard' as const },
-    ],
+    attemptedCandidates: [{ provider: 'twitch' as const, kind: 'twitch-standard' as const }],
     evidence: [
       {
         provider: 'twitch' as const,
@@ -259,12 +275,8 @@ test('runtime-partial active coverage accepts one prepared success only at low c
       confidence: 'low',
     }),
   );
-  t.false(
-    isValidAutoConfigActiveProbeCoverage({ ...runtimePartial, confidence: 'medium' }),
-  );
-  t.false(
-    isValidAutoConfigActiveProbeCoverage({ ...runtimePartial, confidence: 'high' }),
-  );
+  t.false(isValidAutoConfigActiveProbeCoverage({ ...runtimePartial, confidence: 'medium' }));
+  t.false(isValidAutoConfigActiveProbeCoverage({ ...runtimePartial, confidence: 'high' }));
   t.false(
     isValidAutoConfigActiveProbeCoverage({
       ...context,
@@ -362,18 +374,14 @@ test('active Twitch evidence must match the exact attempted standard or Enhanced
   t.true(
     isValidAutoConfigActiveProbeCoverage({
       ...context,
-      attemptedCandidates: [
-        { provider: 'twitch', kind: 'twitch-enhanced-broadcasting' },
-      ],
+      attemptedCandidates: [{ provider: 'twitch', kind: 'twitch-enhanced-broadcasting' }],
       evidence: [enhancedEvidence],
     }),
   );
   t.false(
     isValidAutoConfigActiveProbeCoverage({
       ...context,
-      attemptedCandidates: [
-        { provider: 'twitch', kind: 'twitch-enhanced-broadcasting' },
-      ],
+      attemptedCandidates: [{ provider: 'twitch', kind: 'twitch-enhanced-broadcasting' }],
       evidence: [standardEvidence],
     }),
   );
@@ -416,10 +424,7 @@ test('multi-leg Dual Output remains estimate-only without an aggregate uplink al
       probeCandidates: [
         {
           probeId: `${index ? 'vertical' : 'horizontal'}-${provider}`,
-          kind:
-            provider === 'twitch'
-              ? ('twitch-standard' as const)
-              : ('youtube-unbound' as const),
+          kind: provider === 'twitch' ? ('twitch-standard' as const) : ('youtube-unbound' as const),
           legId: index ? 'vertical' : 'horizontal',
           provider: provider as 'twitch' | 'youtube',
         },
@@ -493,27 +498,27 @@ test('sequential provider bandwidth events receive distinct pacing keys', t => {
     autoConfigPhaseStepKey('bandwidth', 'youtube'),
   );
   t.is(
-    autoConfigPhaseStepKey(
-      'bandwidth',
-      'twitch',
-      'enhanced_broadcasting_testing_candidate',
-      { width: 1920, height: 1080, fpsNum: 60, fpsDen: 1 },
-    ),
+    autoConfigPhaseStepKey('bandwidth', 'twitch', 'enhanced_broadcasting_testing_candidate', {
+      width: 1920,
+      height: 1080,
+      fpsNum: 60,
+      fpsDen: 1,
+    }),
     'bandwidth:twitch:enhanced_broadcasting_testing_candidate:1920x1080:60/1',
   );
   t.not(
-    autoConfigPhaseStepKey(
-      'bandwidth',
-      'twitch',
-      'enhanced_broadcasting_testing_candidate',
-      { width: 1920, height: 1080, fpsNum: 60, fpsDen: 1 },
-    ),
-    autoConfigPhaseStepKey(
-      'bandwidth',
-      'twitch',
-      'enhanced_broadcasting_candidate_rejected',
-      { width: 1920, height: 1080, fpsNum: 60, fpsDen: 1 },
-    ),
+    autoConfigPhaseStepKey('bandwidth', 'twitch', 'enhanced_broadcasting_testing_candidate', {
+      width: 1920,
+      height: 1080,
+      fpsNum: 60,
+      fpsDen: 1,
+    }),
+    autoConfigPhaseStepKey('bandwidth', 'twitch', 'enhanced_broadcasting_candidate_rejected', {
+      width: 1920,
+      height: 1080,
+      fpsNum: 60,
+      fpsDen: 1,
+    }),
   );
   t.is(
     autoConfigPhaseStepKey(
@@ -523,6 +528,34 @@ test('sequential provider bandwidth events receive distinct pacing keys', t => {
       { width: 1920, height: 1080, fpsNum: 60, fpsDen: 1 },
     ),
     'bandwidth:twitch:enhanced_broadcasting_validating_target_cadence:1920x1080:60/1',
+  );
+  t.not(
+    autoConfigPhaseStepKey('bandwidth', 'twitch', 'enhanced_broadcasting_testing_candidate', {
+      width: 1920,
+      height: 1080,
+      fpsNum: 60,
+      fpsDen: 1,
+      additionalVideo: {
+        display: 'vertical',
+        width: 1080,
+        height: 1920,
+        fpsNum: 60,
+        fpsDen: 1,
+      },
+    }),
+    autoConfigPhaseStepKey('bandwidth', 'twitch', 'enhanced_broadcasting_testing_candidate', {
+      width: 1920,
+      height: 1080,
+      fpsNum: 60,
+      fpsDen: 1,
+      additionalVideo: {
+        display: 'vertical',
+        width: 720,
+        height: 1280,
+        fpsNum: 60,
+        fpsDen: 1,
+      },
+    }),
   );
   t.is(autoConfigPhaseStepKey('hardware', 'youtube'), 'hardware');
   t.is(
@@ -549,12 +582,7 @@ test('sequential provider bandwidth events receive distinct pacing keys', t => {
     fpsDen: 1,
   };
   t.is(
-    autoConfigPhaseStepKey(
-      'hardware',
-      null,
-      'hardware_testing_encoder_surfaces',
-      surfaceAttempt,
-    ),
+    autoConfigPhaseStepKey('hardware', null, 'hardware_testing_encoder_surfaces', surfaceAttempt),
     'hardware:surfaces:obs_nvenc_h264_tex:1920x1080',
   );
   t.is(
@@ -565,12 +593,7 @@ test('sequential provider bandwidth events receive distinct pacing keys', t => {
     'hardware:target-cadence:obs_nvenc_h264_tex:1920x1080:60/1',
   );
   t.not(
-    autoConfigPhaseStepKey(
-      'hardware',
-      null,
-      'hardware_testing_encoder_surfaces',
-      surfaceAttempt,
-    ),
+    autoConfigPhaseStepKey('hardware', null, 'hardware_testing_encoder_surfaces', surfaceAttempt),
     autoConfigPhaseStepKey('hardware', null, 'hardware_testing_encoder_surfaces', {
       ...surfaceAttempt,
       width: 1280,
@@ -607,11 +630,7 @@ test('sequential provider bandwidth events receive distinct pacing keys', t => {
     'bandwidth:twitch:twitch_probe_failed_estimate_used:0',
   );
   t.is(
-    autoConfigPhaseStepKey(
-      'bandwidth',
-      'youtube',
-      'youtube_probe_source_underfill_completed',
-    ),
+    autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_source_underfill_completed'),
     'bandwidth:youtube:youtube_probe_source_underfill_completed:0',
   );
   t.not(
@@ -694,6 +713,13 @@ test('attempt progress detail preserves only bounded native status metadata', t 
     height: 1080,
     fpsNum: 60000,
     fpsDen: 1001,
+    additionalVideo: {
+      display: 'vertical',
+      width: 1080,
+      height: 1920,
+      fpsNum: 60000,
+      fpsDen: 1001,
+    },
     targetBitrateKbps: 6000,
     availableBitrateKbps: 9000,
   };
@@ -710,12 +736,19 @@ test('attempt progress detail preserves only bounded native status metadata', t 
     height: 1080,
     fpsNum: 60000,
     fpsDen: 1001,
+    additionalVideo: {
+      display: 'vertical',
+      width: 1080,
+      height: 1920,
+      fpsNum: 60000,
+      fpsDen: 1001,
+    },
     selectedBitrateKbps: null,
   });
 });
 
 test('malformed progress metadata cannot leak into mirrored UI state', t => {
-  const event = {
+  const event = ({
     schemaVersion: 1,
     sessionId: 'session',
     sequence: 4,
@@ -730,7 +763,8 @@ test('malformed progress metadata cannot leak into mirrored UI state', t => {
     encoderFamily: 'legacy',
     encoderTitle: 'x'.repeat(300),
     width: -1,
-  } as unknown as IAutoConfigEvent;
+    additionalVideo: { display: 'horizontal', width: 1080, height: 1920 },
+  } as unknown) as IAutoConfigEvent;
 
   t.deepEqual(sanitizeAutoConfigProgressDetail(event, 'bandwidth'), {
     code: null,
@@ -744,6 +778,7 @@ test('malformed progress metadata cannot leak into mirrored UI state', t => {
     height: null,
     fpsNum: null,
     fpsDen: null,
+    additionalVideo: null,
     selectedBitrateKbps: null,
   });
 });
@@ -778,6 +813,13 @@ test('probe evidence is validated and strips attempt-local or unknown fields', t
         testedHeight: 1080,
         testedFpsNum: 60,
         testedFpsDen: 1,
+        testedAdditionalVideo: {
+          display: 'vertical',
+          width: 1080,
+          height: 1920,
+          fpsNum: 60,
+          fpsDen: 1,
+        },
         videoTrackCount: 3,
         configuredAggregateBitrateKbps: 7800,
         internalLadder: 'must-not-leak',
@@ -830,6 +872,13 @@ test('probe evidence is validated and strips attempt-local or unknown fields', t
         testedHeight: 1080,
         testedFpsNum: 60,
         testedFpsDen: 1,
+        testedAdditionalVideo: {
+          display: 'vertical',
+          width: 1080,
+          height: 1920,
+          fpsNum: 60,
+          fpsDen: 1,
+        },
         videoTrackCount: 3,
         configuredAggregateBitrateKbps: 7800,
       },
@@ -890,6 +939,22 @@ test('malformed probe evidence is discarded at the renderer boundary', t => {
         testedWidth: 1920,
         testedHeight: 1080,
         testedFpsNum: 60,
+      },
+      {
+        provider: 'twitch',
+        method: 'twitch-enhanced-broadcasting-test',
+        success: true,
+        testedWidth: 1920,
+        testedHeight: 1080,
+        testedFpsNum: 60,
+        testedFpsDen: 1,
+        testedAdditionalVideo: {
+          display: 'horizontal',
+          width: 1080,
+          height: 1920,
+          fpsNum: 60,
+          fpsDen: 1,
+        },
       },
     ]),
     [],

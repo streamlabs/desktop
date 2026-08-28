@@ -1,5 +1,6 @@
 import {
   IAutoConfigCapabilities,
+  IAutoConfigAdditionalVideoTuple,
   IAutoConfigEvent,
   IAutoOptimizerProgressDetail,
   IAutoOptimizerProbeEvidence,
@@ -29,6 +30,27 @@ export interface IAutoConfigProbeCoverage {
   measurement: 'active' | 'estimated';
   estimateReason?: 'probe_disabled' | 'partial_provider_probes';
   allowPromotion: boolean;
+}
+
+/**
+ * Validate the registered canvas identities required before Desktop prepares
+ * an active Enhanced Broadcasting request. OSN object IDs are zero-based, so
+ * zero is a valid live canvas identity; missing, fractional, negative, or
+ * duplicate paired identities remain invalid.
+ */
+export function areAutoConfigActiveCanvasIdentitiesValid(
+  primaryCanvasId: unknown,
+  additionalCanvasId: unknown,
+  paired: boolean,
+): boolean {
+  const isValid = (value: unknown): value is number =>
+    Number.isSafeInteger(value) && Number(value) >= 0;
+
+  return (
+    isValid(primaryCanvasId) &&
+    (!paired ||
+      (isValid(additionalCanvasId) && Number(additionalCanvasId) !== Number(primaryCanvasId)))
+  );
 }
 
 /**
@@ -96,9 +118,7 @@ export function isValidAutoConfigActiveProbeCoverage(p: {
 
   if (!attemptedProviders.size) return false;
   if ([...attemptedProviders].some(provider => !selectedProviders.has(provider))) return false;
-  if (
-    p.evidence.some(item => !attemptedMethods.has(`${item.provider}:${item.method}`))
-  ) {
+  if (p.evidence.some(item => !attemptedMethods.has(`${item.provider}:${item.method}`))) {
     return false;
   }
   if (![...attemptedProviders].some(provider => successfulProviders.has(provider))) return false;
@@ -238,6 +258,7 @@ export function autoConfigPhaseStepKey(
       | 'height'
       | 'fpsNum'
       | 'fpsDen'
+      | 'additionalVideo'
       | 'targetBitrateKbps'
       | 'availableBitrateKbps'
       | 'selectedBitrateKbps'
@@ -245,10 +266,11 @@ export function autoConfigPhaseStepKey(
   >,
 ): string {
   const tuple = detail
-    ? `${detail.width || 0}x${detail.height || 0}:${detail.fpsNum || 0}/${
-        detail.fpsDen || 0
-      }`
+    ? `${detail.width || 0}x${detail.height || 0}:${detail.fpsNum || 0}/${detail.fpsDen || 0}`
     : '0x0:0/0';
+  const additionalTuple = detail?.additionalVideo
+    ? `${detail.additionalVideo.width}x${detail.additionalVideo.height}:${detail.additionalVideo.fpsNum}/${detail.additionalVideo.fpsDen}`
+    : 'none';
   const encoder = detail?.encoderTitle || detail?.encoderId || 'encoder';
 
   if (phase === 'bandwidth' && provider === 'twitch') {
@@ -261,7 +283,9 @@ export function autoConfigPhaseStepKey(
       code === 'enhanced_broadcasting_candidate_rejected' ||
       code === 'enhanced_broadcasting_candidate_selected'
     ) {
-      return `bandwidth:twitch:${code}:${tuple}`;
+      return `bandwidth:twitch:${code}:${tuple}${
+        detail?.additionalVideo ? `:${additionalTuple}` : ''
+      }`;
     }
   }
   if (phase === 'bandwidth' && provider) {
@@ -366,15 +390,35 @@ export function sanitizeAutoConfigProbeTargetBitrateKbps(value: unknown): number
 }
 
 function sanitizeProgressText(value: unknown, maxLength: number): string | null {
-  return typeof value === 'string' && value.length > 0 && value.length <= maxLength
-    ? value
-    : null;
+  return typeof value === 'string' && value.length > 0 && value.length <= maxLength ? value : null;
 }
 
 function sanitizeProgressInteger(value: unknown, maximum: number): number | null {
   return typeof value === 'number' && Number.isInteger(value) && value > 0 && value <= maximum
     ? value
     : null;
+}
+
+function sanitizeAdditionalVideoTuple(value: unknown): IAutoConfigAdditionalVideoTuple | null {
+  if (!value || typeof value !== 'object') return null;
+  const tuple = value as Record<string, unknown>;
+  const width = sanitizeProgressInteger(tuple.width, 16384);
+  const height = sanitizeProgressInteger(tuple.height, 16384);
+  const fpsNum = sanitizeProgressInteger(tuple.fpsNum, 1000000);
+  const fpsDen = sanitizeProgressInteger(tuple.fpsDen, 1000000);
+  if (
+    tuple.display !== 'vertical' ||
+    !width ||
+    width % 2 !== 0 ||
+    !height ||
+    height % 2 !== 0 ||
+    !fpsNum ||
+    !fpsDen ||
+    fpsNum / fpsDen > 240
+  ) {
+    return null;
+  }
+  return { display: 'vertical', width, height, fpsNum, fpsDen };
 }
 
 /**
@@ -402,9 +446,7 @@ export function sanitizeAutoConfigProgressDetail(
     provider,
     targetBitrateKbps:
       provider !== null ? sanitizeAutoConfigProbeTargetBitrateKbps(event.targetBitrateKbps) : null,
-    availableBitrateKbps: sanitizeAutoConfigProbeTargetBitrateKbps(
-      event.availableBitrateKbps,
-    ),
+    availableBitrateKbps: sanitizeAutoConfigProbeTargetBitrateKbps(event.availableBitrateKbps),
     encoderId: sanitizeProgressText(event.encoderId, 256),
     encoderFamily,
     encoderTitle: sanitizeProgressText(event.encoderTitle, 256),
@@ -412,6 +454,7 @@ export function sanitizeAutoConfigProgressDetail(
     height: sanitizeProgressInteger(event.height, 16384),
     fpsNum: sanitizeProgressInteger(event.fpsNum, 1000000),
     fpsDen: sanitizeProgressInteger(event.fpsDen, 1000000),
+    additionalVideo: sanitizeAdditionalVideoTuple(event.additionalVideo),
     selectedBitrateKbps: sanitizeAutoConfigProbeTargetBitrateKbps(event.selectedBitrateKbps),
   };
 }
@@ -470,6 +513,7 @@ export function sanitizeAutoConfigProbeEvidence(value: unknown): IAutoOptimizerP
     const configuredAggregateBitrateKbps = sanitizeAutoConfigProbeTargetBitrateKbps(
       evidence.configuredAggregateBitrateKbps,
     );
+    const testedAdditionalVideo = sanitizeAdditionalVideoTuple(evidence.testedAdditionalVideo);
     if (
       (evidence.testedWidth !== undefined && !testedWidth) ||
       (evidence.testedHeight !== undefined && !testedHeight) ||
@@ -477,6 +521,8 @@ export function sanitizeAutoConfigProbeEvidence(value: unknown): IAutoOptimizerP
       (evidence.testedFpsDen !== undefined && !testedFpsDen) ||
       (evidence.videoTrackCount !== undefined && !videoTrackCount) ||
       (evidence.configuredAggregateBitrateKbps !== undefined && !configuredAggregateBitrateKbps) ||
+      (evidence.testedAdditionalVideo !== undefined && !testedAdditionalVideo) ||
+      (!enhancedBroadcasting && evidence.testedAdditionalVideo !== undefined) ||
       (testedFpsNum && testedFpsDen && testedFpsNum / testedFpsDen > 240) ||
       (enhancedBroadcasting &&
         evidence.success &&
@@ -507,6 +553,7 @@ export function sanitizeAutoConfigProbeEvidence(value: unknown): IAutoOptimizerP
         ...(testedFpsDen ? { testedFpsDen } : {}),
         ...(videoTrackCount ? { videoTrackCount } : {}),
         ...(configuredAggregateBitrateKbps ? { configuredAggregateBitrateKbps } : {}),
+        ...(testedAdditionalVideo ? { testedAdditionalVideo } : {}),
       },
     ];
   });

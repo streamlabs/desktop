@@ -46,6 +46,10 @@ interface IAutoOptimizerVideoSettingsLike {
 interface IAutoOptimizerVideoResultLike {
   display: 'horizontal' | 'vertical' | 'both';
   resolution: { width: number; height: number };
+  additionalVideo?: {
+    display: 'vertical';
+    resolution: { width: number; height: number };
+  };
 }
 
 export type TAutoOptimizerVideoPatches = Partial<
@@ -60,30 +64,43 @@ export function buildAutoOptimizerVideoSettingsPatches(
   fpsDen: number,
 ): TAutoOptimizerVideoPatches {
   const patches: TAutoOptimizerVideoPatches = {};
-  legs.forEach(leg => {
-    const display = leg.display === 'vertical' ? 'vertical' : 'horizontal';
+  const addResolutionPatch = (
+    display: 'horizontal' | 'vertical',
+    resolution: { width: number; height: number },
+  ) => {
     const video = current[display];
     if (!video) return;
     const promotesResolution = autoOptimizerPromotesResolution(
       video.outputWidth,
       video.outputHeight,
-      leg.resolution.width,
-      leg.resolution.height,
+      resolution.width,
+      resolution.height,
     );
     const base = promotesResolution
       ? autoOptimizerAcceptedBaseResolution(
           video.baseWidth,
           video.baseHeight,
-          leg.resolution.width,
-          leg.resolution.height,
+          resolution.width,
+          resolution.height,
         )
       : { width: video.baseWidth, height: video.baseHeight };
     patches[display] = {
       baseWidth: base.width,
       baseHeight: base.height,
-      outputWidth: leg.resolution.width,
-      outputHeight: leg.resolution.height,
+      outputWidth: resolution.width,
+      outputHeight: resolution.height,
     };
+  };
+  legs.forEach(leg => {
+    if (leg.display === 'both') {
+      if (!leg.additionalVideo || leg.additionalVideo.display !== 'vertical') {
+        throw new Error('A paired vertical recommendation is required for Dual Stream');
+      }
+      addResolutionPatch('horizontal', leg.resolution);
+      addResolutionPatch('vertical', leg.additionalVideo.resolution);
+      return;
+    }
+    addResolutionPatch(leg.display, leg.resolution);
   });
   (['horizontal', 'vertical'] as const).forEach(display => {
     if (!current[display]) return;
@@ -102,9 +119,7 @@ function fieldKey(group: string, name: string): string {
 }
 
 /** Snapshot every raw value exposed by the active Output configuration. */
-export function captureRawOutputValues(
-  formData: IOutputFormGroupLike[],
-): TRawOutputValues {
+export function captureRawOutputValues(formData: IOutputFormGroupLike[]): TRawOutputValues {
   const values: TRawOutputValues = {};
   formData.forEach(group => {
     group.parameters.forEach(parameter => {

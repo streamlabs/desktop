@@ -1,5 +1,7 @@
 import {
   IAutoConfigNativeResult,
+  IAutoConfigRequestAdditionalVideo,
+  IAutoConfigAdditionalVideoTuple,
   IAutoOptimizerProbeEvidence,
   TAutoOptimizerEncoderFamily,
   TAutoOptimizerMeasurementMode,
@@ -18,6 +20,7 @@ export interface IValidatedAutoConfigRecommendation {
   fpsNum: number;
   fpsDen: number;
   bitrateKbps: number;
+  additionalVideo?: IAutoConfigAdditionalVideoTuple;
   encoder: {
     id: string;
     family: TAutoOptimizerEncoderFamily;
@@ -48,7 +51,9 @@ const testedEncoderPresets: Record<string, string> = {
 };
 
 function isIntegerInRange(value: unknown, minimum: number, maximum: number): value is number {
-  return typeof value === 'number' && Number.isInteger(value) && value >= minimum && value <= maximum;
+  return (
+    typeof value === 'number' && Number.isInteger(value) && value >= minimum && value <= maximum
+  );
 }
 
 function isBoundedText(value: unknown, maximum: number): value is string {
@@ -56,9 +61,7 @@ function isBoundedText(value: unknown, maximum: number): value is string {
 }
 
 function isSupportedEncoderFamily(value: unknown): value is TAutoOptimizerEncoderFamily {
-  return (
-    typeof value === 'string' && Object.prototype.hasOwnProperty.call(encoderIds, value)
-  );
+  return typeof value === 'string' && Object.prototype.hasOwnProperty.call(encoderIds, value);
 }
 
 /**
@@ -82,6 +85,8 @@ export function validateAutoConfigRecommendation(
     currentHeight?: number;
     currentFpsNum?: number;
     currentFpsDen?: number;
+    /** Paired vertical request which must be proven by the same workload probe. */
+    additionalVideo?: IAutoConfigRequestAdditionalVideo;
   },
 ): IValidatedAutoConfigRecommendation | null {
   const value = recommendation as Partial<TNativeRecommendation> | null | undefined;
@@ -97,6 +102,49 @@ export function validateAutoConfigRecommendation(
     !isIntegerInRange(value.bitrateKbps, 1, 100000)
   ) {
     return null;
+  }
+
+  const additionalValue = value.additionalVideo as
+    | Partial<IAutoConfigAdditionalVideoTuple>
+    | null
+    | undefined;
+  if (Boolean(context.additionalVideo) !== Boolean(additionalValue)) return null;
+
+  let additionalVideo: IAutoConfigAdditionalVideoTuple | undefined;
+  if (context.additionalVideo && additionalValue) {
+    const current = context.additionalVideo.current;
+    const limits = context.additionalVideo.limits;
+    if (
+      additionalValue.display !== 'vertical' ||
+      !isIntegerInRange(additionalValue.width, 2, 16384) ||
+      additionalValue.width % 2 !== 0 ||
+      !isIntegerInRange(additionalValue.height, 2, 16384) ||
+      additionalValue.height % 2 !== 0 ||
+      additionalValue.width !== value.height ||
+      additionalValue.height !== value.width ||
+      !isIntegerInRange(additionalValue.fpsNum, 1, 1000000) ||
+      !isIntegerInRange(additionalValue.fpsDen, 1, 1000000) ||
+      additionalValue.fpsNum / additionalValue.fpsDen > 240 ||
+      additionalValue.fpsNum * value.fpsDen !== value.fpsNum * additionalValue.fpsDen ||
+      (limits?.maxWidth && additionalValue.width > limits.maxWidth) ||
+      (limits?.maxHeight && additionalValue.height > limits.maxHeight) ||
+      (limits?.maxFpsNum &&
+        additionalValue.fpsNum * (limits.maxFpsDen || 1) >
+          limits.maxFpsNum * additionalValue.fpsDen) ||
+      (context.measurementMode === 'estimated' &&
+        (additionalValue.width !== current.width ||
+          additionalValue.height !== current.height ||
+          additionalValue.fpsNum * current.fpsDen !== current.fpsNum * additionalValue.fpsDen))
+    ) {
+      return null;
+    }
+    additionalVideo = {
+      display: 'vertical',
+      width: additionalValue.width,
+      height: additionalValue.height,
+      fpsNum: additionalValue.fpsNum,
+      fpsDen: additionalValue.fpsDen,
+    };
   }
 
   if (
@@ -171,6 +219,12 @@ export function validateAutoConfigRecommendation(
     );
     if (context.enhancedBroadcasting) {
       if (!enhancedBroadcastingEvidence || !hasCompleteQualityContext) return null;
+      if (
+        Boolean(context.additionalVideo) !==
+        Boolean(enhancedBroadcastingEvidence.testedAdditionalVideo)
+      ) {
+        return null;
+      }
       const canonicalTuple = autoOptimizerHardwareCeilings(
         {
           width: context.currentWidth!,
@@ -192,6 +246,49 @@ export function validateAutoConfigRecommendation(
           tuple.fpsDen === value.fpsDen,
       );
       if (!canonicalTuple) return null;
+      if (context.additionalVideo) {
+        const testedAdditional = enhancedBroadcastingEvidence.testedAdditionalVideo;
+        const limits = context.additionalVideo.limits;
+        const hasCompleteAdditionalContext =
+          limits?.maxWidth !== undefined &&
+          limits.maxHeight !== undefined &&
+          limits.maxFpsNum !== undefined &&
+          limits.maxFpsDen !== undefined;
+        if (
+          !additionalVideo ||
+          !testedAdditional ||
+          testedAdditional.display !== 'vertical' ||
+          testedAdditional.width !== additionalVideo.width ||
+          testedAdditional.height !== additionalVideo.height ||
+          testedAdditional.fpsNum !== additionalVideo.fpsNum ||
+          testedAdditional.fpsDen !== additionalVideo.fpsDen ||
+          !hasCompleteAdditionalContext
+        ) {
+          return null;
+        }
+        const canonicalAdditionalTuple = autoOptimizerHardwareCeilings(
+          {
+            width: context.additionalVideo.current.width,
+            height: context.additionalVideo.current.height,
+            fpsNum: context.additionalVideo.current.fpsNum,
+            fpsDen: context.additionalVideo.current.fpsDen,
+          },
+          {
+            maxBitrateKbps: limits!.maxBitrateKbps,
+            maxWidth: limits!.maxWidth!,
+            maxHeight: limits!.maxHeight!,
+            maxFpsNum: limits!.maxFpsNum!,
+            maxFpsDen: limits!.maxFpsDen!,
+          },
+        ).some(
+          tuple =>
+            tuple.width === additionalVideo!.width &&
+            tuple.height === additionalVideo!.height &&
+            tuple.fpsNum === additionalVideo!.fpsNum &&
+            tuple.fpsDen === additionalVideo!.fpsDen,
+        );
+        if (!canonicalAdditionalTuple) return null;
+      }
       // The provider-owned ladder test proves the exact video workload. It is
       // not an upload-capacity probe, so it deliberately has no safeKbps.
     } else {
@@ -245,6 +342,7 @@ export function validateAutoConfigRecommendation(
     fpsNum: value.fpsNum,
     fpsDen: value.fpsDen,
     bitrateKbps: value.bitrateKbps,
+    ...(additionalVideo ? { additionalVideo } : {}),
     encoder: context.providerOwnsEncoding
       ? null
       : {

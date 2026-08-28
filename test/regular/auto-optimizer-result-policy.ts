@@ -62,18 +62,15 @@ test('an exact modern H.264 recommendation is preserved as one tuple', t => {
 
 test('active validation accepts a tested 30 to 60 FPS promotion', t => {
   t.truthy(
-    validateAutoConfigRecommendation(
-      recommendation({ fpsNum: 60, fpsDen: 1 }),
-      {
-        ...activeContext,
-        maxFpsNum: 60,
-        maxFpsDen: 1,
-        currentWidth: 1920,
-        currentHeight: 1080,
-        currentFpsNum: 30,
-        currentFpsDen: 1,
-      },
-    ),
+    validateAutoConfigRecommendation(recommendation({ fpsNum: 60, fpsDen: 1 }), {
+      ...activeContext,
+      maxFpsNum: 60,
+      maxFpsDen: 1,
+      currentWidth: 1920,
+      currentHeight: 1080,
+      currentFpsNum: 30,
+      currentFpsDen: 1,
+    }),
   );
 });
 
@@ -92,17 +89,11 @@ test('estimate-only validation rejects an FPS promotion and preserves current ca
     currentFpsDen: 1,
   };
   t.is(
-    validateAutoConfigRecommendation(
-      recommendation({ fpsNum: 60, fpsDen: 1 }),
-      estimated30Context,
-    ),
+    validateAutoConfigRecommendation(recommendation({ fpsNum: 60, fpsDen: 1 }), estimated30Context),
     null,
   );
   t.truthy(
-    validateAutoConfigRecommendation(
-      recommendation({ fpsNum: 30, fpsDen: 1 }),
-      estimated30Context,
-    ),
+    validateAutoConfigRecommendation(recommendation({ fpsNum: 30, fpsDen: 1 }), estimated30Context),
   );
 });
 
@@ -180,7 +171,10 @@ test('a shared Twitch and YouTube result keeps the lower validated provider targ
   };
 
   t.truthy(validateAutoConfigRecommendation(recommendation({ bitrateKbps: 6000 }), sharedContext));
-  t.is(validateAutoConfigRecommendation(recommendation({ bitrateKbps: 6001 }), sharedContext), null);
+  t.is(
+    validateAutoConfigRecommendation(recommendation({ bitrateKbps: 6001 }), sharedContext),
+    null,
+  );
 });
 
 test('malformed geometry rejects the entire recommendation', t => {
@@ -351,23 +345,20 @@ test('Enhanced Broadcasting rejects non-canonical and non-exact cadence tuples',
     null,
   );
   t.is(
-    validateAutoConfigRecommendation(
-      recommendation({ fpsNum: 120000, fpsDen: 2002 }),
-      {
-        ...context,
-        probeEvidence: [
-          {
-            provider: 'twitch',
-            method: 'twitch-enhanced-broadcasting-test',
-            success: true,
-            testedWidth: 1920,
-            testedHeight: 1080,
-            testedFpsNum: 120000,
-            testedFpsDen: 2002,
-          },
-        ],
-      },
-    ),
+    validateAutoConfigRecommendation(recommendation({ fpsNum: 120000, fpsDen: 2002 }), {
+      ...context,
+      probeEvidence: [
+        {
+          provider: 'twitch',
+          method: 'twitch-enhanced-broadcasting-test',
+          success: true,
+          testedWidth: 1920,
+          testedHeight: 1080,
+          testedFpsNum: 120000,
+          testedFpsDen: 2002,
+        },
+      ],
+    }),
     null,
   );
   t.is(
@@ -422,6 +413,177 @@ test('estimate-only Enhanced Broadcasting cannot promote video settings', t => {
         currentFpsNum: 30,
         currentFpsDen: 1,
       },
+    ),
+    null,
+  );
+});
+
+test('paired Enhanced Broadcasting accepts only the exact concurrent horizontal and vertical tuples', t => {
+  const additionalVideo = {
+    display: 'vertical' as const,
+    current: {
+      canvasId: 2,
+      width: 720,
+      height: 1280,
+      fpsNum: 30000,
+      fpsDen: 1001,
+      bitrateKbps: 2500,
+      encoderId: 'obs_nvenc_h264_tex',
+      codec: 'h264',
+    },
+    limits: {
+      maxWidth: 1080,
+      maxHeight: 1920,
+      maxFpsNum: 60000,
+      maxFpsDen: 1001,
+    },
+  };
+  const pairedRecommendation = recommendation({
+    bitrateKbps: 6000,
+    encoderFamily: 'provider-owned',
+    encoderId: 'provider-owned',
+    codec: 'av1',
+    preset: undefined,
+    additionalVideo: {
+      display: 'vertical',
+      width: 1080,
+      height: 1920,
+      fpsNum: 60000,
+      fpsDen: 1001,
+    },
+  });
+  const context = {
+    ...activeContext,
+    providerOwnsEncoding: true,
+    enhancedBroadcasting: true,
+    additionalVideo,
+    probeEvidence: [
+      {
+        provider: 'twitch' as const,
+        method: 'twitch-enhanced-broadcasting-test' as const,
+        success: true,
+        testedWidth: 1920,
+        testedHeight: 1080,
+        testedFpsNum: 60000,
+        testedFpsDen: 1001,
+        testedAdditionalVideo: {
+          display: 'vertical' as const,
+          width: 1080,
+          height: 1920,
+          fpsNum: 60000,
+          fpsDen: 1001,
+        },
+      },
+    ],
+  };
+
+  const result = validateAutoConfigRecommendation(pairedRecommendation, context);
+  t.deepEqual(result?.additionalVideo, pairedRecommendation.additionalVideo);
+  t.is(result?.encoder, null);
+  t.is(
+    validateAutoConfigRecommendation(
+      { ...pairedRecommendation, additionalVideo: undefined },
+      context,
+    ),
+    null,
+  );
+  t.is(
+    validateAutoConfigRecommendation(pairedRecommendation, {
+      ...context,
+      probeEvidence: context.probeEvidence.map(evidence => ({
+        ...evidence,
+        testedAdditionalVideo: { ...evidence.testedAdditionalVideo, width: 720 },
+      })),
+    }),
+    null,
+  );
+  t.is(
+    validateAutoConfigRecommendation(
+      {
+        ...pairedRecommendation,
+        additionalVideo: { ...pairedRecommendation.additionalVideo!, fpsNum: 30000 },
+      },
+      context,
+    ),
+    null,
+  );
+  const nonTransposedAdditionalVideo = {
+    ...pairedRecommendation.additionalVideo!,
+    width: 720,
+    height: 1280,
+  };
+  t.is(
+    validateAutoConfigRecommendation(
+      {
+        ...pairedRecommendation,
+        additionalVideo: nonTransposedAdditionalVideo,
+      },
+      {
+        ...context,
+        probeEvidence: context.probeEvidence.map(evidence => ({
+          ...evidence,
+          testedAdditionalVideo: nonTransposedAdditionalVideo,
+        })),
+      },
+    ),
+    null,
+  );
+});
+
+test('estimate-only paired Enhanced Broadcasting preserves both current canvases', t => {
+  const context = {
+    ...activeContext,
+    measurementMode: 'estimated' as const,
+    currentBitrateKbps: 2500,
+    currentWidth: 1280,
+    currentHeight: 720,
+    currentFpsNum: 30,
+    currentFpsDen: 1,
+    providerOwnsEncoding: true,
+    enhancedBroadcasting: true,
+    probeEvidence: [] as typeof activeContext.probeEvidence,
+    additionalVideo: {
+      display: 'vertical' as const,
+      current: {
+        width: 720,
+        height: 1280,
+        fpsNum: 30,
+        fpsDen: 1,
+        bitrateKbps: 2500,
+        encoderId: 'obs_nvenc_h264_tex',
+        codec: 'h264',
+      },
+      limits: {
+        maxWidth: 1080,
+        maxHeight: 1920,
+        maxFpsNum: 60,
+        maxFpsDen: 1,
+      },
+    },
+  };
+  const current = recommendation({
+    width: 1280,
+    height: 720,
+    fpsNum: 30,
+    fpsDen: 1,
+    bitrateKbps: 2500,
+    additionalVideo: {
+      display: 'vertical',
+      width: 720,
+      height: 1280,
+      fpsNum: 30,
+      fpsDen: 1,
+    },
+  });
+
+  t.truthy(validateAutoConfigRecommendation(current, context));
+  t.is(
+    validateAutoConfigRecommendation(
+      {
+        ...current,
+        additionalVideo: { ...current.additionalVideo!, width: 1080, height: 1920 },
+      },
+      context,
     ),
     null,
   );

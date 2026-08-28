@@ -40,8 +40,7 @@ export function shouldShowAutoOptimizerMeasurementReason(reason?: string): boole
 const hardwareFailureMessages: Record<string, string> = {
   hardware_no_usable_encoder:
     "We couldn't find an encoder that can stream reliably. Close other apps and try again.",
-  hardware_benchmark_timeout:
-    'The encoder test took too long. Close other apps and try again.',
+  hardware_benchmark_timeout: 'The encoder test took too long. Close other apps and try again.',
   hardware_benchmark_unavailable:
     "We couldn't start the encoder test. Restart Streamlabs Desktop and try again.",
   hardware_benchmark_overloaded:
@@ -83,8 +82,7 @@ export function bandwidthPhaseLabelKey(
   candidates: Array<{ provider: TAutoOptimizerPresentationProbeProvider }> = [],
   targetBitrateKbps?: number | null,
 ): string {
-  const hasTarget =
-    Number.isInteger(targetBitrateKbps) && Number(targetBitrateKbps) > 0;
+  const hasTarget = Number.isInteger(targetBitrateKbps) && Number(targetBitrateKbps) > 0;
   if (activeProvider === 'twitch' && hasTarget) {
     return 'Measuring your Twitch upload at %{bitrate} Kbps...';
   }
@@ -116,6 +114,12 @@ function tupleValues(detail: IAutoOptimizerProgressDetail): Record<string, strin
     fps: Math.round((detail.fpsNum / detail.fpsDen) * 100) / 100,
     encoder: detail.encoderTitle || detail.encoderId || 'Encoder',
     bitrate: detail.selectedBitrateKbps || detail.targetBitrateKbps || 0,
+    ...(detail.additionalVideo
+      ? {
+          additionalWidth: detail.additionalVideo.width,
+          additionalHeight: detail.additionalVideo.height,
+        }
+      : {}),
   };
 }
 
@@ -133,7 +137,9 @@ export function autoOptimizerProgressLabel(
     case 'enhanced_broadcasting_testing_candidate':
       if (tuple) {
         return {
-          key: 'Testing Enhanced Broadcasting at %{width}×%{height}, %{fps} FPS...',
+          key: detail.additionalVideo
+            ? 'Testing Enhanced Broadcasting at %{width}×%{height} horizontal and %{additionalWidth}×%{additionalHeight} vertical, %{fps} FPS...'
+            : 'Testing Enhanced Broadcasting at %{width}×%{height}, %{fps} FPS...',
           values: tuple,
         };
       }
@@ -141,7 +147,9 @@ export function autoOptimizerProgressLabel(
     case 'enhanced_broadcasting_validating_target_cadence':
       if (tuple) {
         return {
-          key: 'Validating Enhanced Broadcasting at %{width}×%{height}, %{fps} FPS...',
+          key: detail.additionalVideo
+            ? 'Validating Enhanced Broadcasting at %{width}×%{height} horizontal and %{additionalWidth}×%{additionalHeight} vertical, %{fps} FPS...'
+            : 'Validating Enhanced Broadcasting at %{width}×%{height}, %{fps} FPS...',
           values: tuple,
         };
       }
@@ -149,7 +157,9 @@ export function autoOptimizerProgressLabel(
     case 'enhanced_broadcasting_candidate_rejected':
       if (tuple) {
         return {
-          key: '%{width}×%{height}, %{fps} FPS could not keep up. Trying a lower setting...',
+          key: detail.additionalVideo
+            ? '%{width}×%{height} horizontal and %{additionalWidth}×%{additionalHeight} vertical at %{fps} FPS could not keep up. Trying a lower setting...'
+            : '%{width}×%{height}, %{fps} FPS could not keep up. Trying a lower setting...',
           values: tuple,
         };
       }
@@ -157,7 +167,9 @@ export function autoOptimizerProgressLabel(
     case 'enhanced_broadcasting_candidate_selected':
       if (tuple) {
         return {
-          key: 'Enhanced Broadcasting passed at %{width}×%{height}, %{fps} FPS.',
+          key: detail.additionalVideo
+            ? 'Enhanced Broadcasting passed at %{width}×%{height} horizontal and %{additionalWidth}×%{additionalHeight} vertical, %{fps} FPS.'
+            : 'Enhanced Broadcasting passed at %{width}×%{height}, %{fps} FPS.',
           values: tuple,
         };
       }
@@ -199,7 +211,8 @@ export function autoOptimizerProgressLabel(
     case 'hardware_target_cadence_rejected':
       if (tuple) {
         return {
-          key: 'Could not validate %{encoder} at %{width}×%{height}, %{fps} FPS. Trying a lower setting...',
+          key:
+            'Could not validate %{encoder} at %{width}×%{height}, %{fps} FPS. Trying a lower setting...',
           values: tuple,
         };
       }
@@ -297,14 +310,8 @@ export function autoOptimizerProgressLabel(
 
   if (phase === 'bandwidth') {
     return {
-      key: bandwidthPhaseLabelKey(
-        detail?.provider,
-        candidates,
-        detail?.targetBitrateKbps,
-      ),
-      ...(detail?.targetBitrateKbps
-        ? { values: { bitrate: detail.targetBitrateKbps } }
-        : {}),
+      key: bandwidthPhaseLabelKey(detail?.provider, candidates, detail?.targetBitrateKbps),
+      ...(detail?.targetBitrateKbps ? { values: { bitrate: detail.targetBitrateKbps } } : {}),
     };
   }
   if (phase === 'preflight') return { key: 'Preparing the optimizer...' };

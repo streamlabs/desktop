@@ -34,6 +34,11 @@ export interface IAutoOptimizerPresentationLeg {
   videoSettingsManagedByProvider?: boolean;
   width: number;
   height: number;
+  additionalVideo?: {
+    display: 'vertical';
+    width: number;
+    height: number;
+  };
   fps: number;
   bitrateKbps: number;
   encoder?: string;

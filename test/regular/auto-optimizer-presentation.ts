@@ -27,6 +27,7 @@ function progressDetail(
     height: null,
     fpsNum: null,
     fpsDen: null,
+    additionalVideo: null,
     selectedBitrateKbps: null,
     ...patch,
   };
@@ -165,7 +166,8 @@ test('paired hardware progress distinguishes resolution surfaces from exact cade
       code: 'hardware_target_cadence_rejected',
     }),
     {
-      key: 'Could not validate %{encoder} at %{width}×%{height}, %{fps} FPS. Trying a lower setting...',
+      key:
+        'Could not validate %{encoder} at %{width}×%{height}, %{fps} FPS. Trying a lower setting...',
       values: {
         encoder: 'NVIDIA NVENC H.264',
         width: 1920,
@@ -346,6 +348,41 @@ test('Enhanced Broadcasting progress describes ladder and exact candidates', t =
   );
 });
 
+test('paired Enhanced Broadcasting progress names both tested canvases', t => {
+  const label = autoOptimizerProgressLabel(
+    'bandwidth',
+    progressDetail({
+      code: 'enhanced_broadcasting_testing_candidate',
+      provider: 'twitch',
+      width: 1920,
+      height: 1080,
+      fpsNum: 60,
+      fpsDen: 1,
+      additionalVideo: {
+        display: 'vertical',
+        width: 1080,
+        height: 1920,
+        fpsNum: 60,
+        fpsDen: 1,
+      },
+    }),
+  );
+
+  t.deepEqual(label, {
+    key:
+      'Testing Enhanced Broadcasting at %{width}×%{height} horizontal and %{additionalWidth}×%{additionalHeight} vertical, %{fps} FPS...',
+    values: {
+      encoder: 'Encoder',
+      width: 1920,
+      height: 1080,
+      fps: 60,
+      bitrate: 0,
+      additionalWidth: 1080,
+      additionalHeight: 1920,
+    },
+  });
+});
+
 test('Enhanced Broadcasting progress interpolates through the en-US catalog', t => {
   const VueRuntime = require('vue');
   const VueI18nRuntime = require('vue-i18n');
@@ -378,9 +415,7 @@ test('Enhanced Broadcasting progress interpolates through the en-US catalog', t 
       'bandwidth',
       progressDetail({ code: 'enhanced_broadcasting_requesting_ladder', provider: 'twitch' }),
     ),
-    ...codes.map(code =>
-      autoOptimizerProgressLabel('bandwidth', { ...candidate, code }),
-    ),
+    ...codes.map(code => autoOptimizerProgressLabel('bandwidth', { ...candidate, code })),
     ...codes.map(code =>
       autoOptimizerProgressLabel('bandwidth', progressDetail({ code, provider: 'twitch' })),
     ),
@@ -395,6 +430,8 @@ test('Enhanced Broadcasting progress interpolates through the en-US catalog', t 
 
   [
     'Canvas resolution',
+    'Horizontal canvas resolution',
+    'Vertical canvas resolution',
     'Twitch Enhanced Broadcasting',
     'Twitch will manage stream output resolutions, bitrates, and encoders.',
   ].forEach(key => {
@@ -473,10 +510,7 @@ test('quality selection reports the bandwidth budget and unknown codes fall back
     },
   );
   t.deepEqual(
-    autoOptimizerProgressLabel(
-      'hardware',
-      progressDetail({ code: 'future_native_status' }),
-    ),
+    autoOptimizerProgressLabel('hardware', progressDetail({ code: 'future_native_status' })),
     { key: 'Checking your hardware...' },
   );
 });
