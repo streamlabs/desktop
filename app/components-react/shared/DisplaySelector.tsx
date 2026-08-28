@@ -31,7 +31,6 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
   } = useGoLiveSettings().extend(module => ({
     get canDualStream() {
       if (!p.platform) return false;
-      if (module.isLiveOutputEditingEnabled) return false;
       return module.getCanDualStream(p.platform);
     },
 
