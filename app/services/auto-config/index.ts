@@ -237,6 +237,9 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   };
 
   static filter(state: IAutoOptimizerState) {
+    // This service can be created lazily while resolving its first RPC, before
+    // that request starts buffering mutations. Initialize transient flow state
+    // here so service initialization never emits an out-of-order reset.
     return {
       ...initialFlowState(),
       promptStates: state.promptStates || {},
@@ -258,11 +261,6 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private probeAbortController: AbortController | null = null;
   /** Exact credential-free native inputs retained only for the active attempt. */
   private attemptRequestLegs = new Map<string, IAutoConfigRequestLeg>();
-
-  init() {
-    super.init();
-    this.RESET_FLOW();
-  }
 
   get views() {
     return new AutoConfigViews(this.state);
