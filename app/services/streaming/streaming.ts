@@ -1472,34 +1472,6 @@ export class StreamingService
       this.rethrowStreamError(e, errorType);
     }
 
-    if (destinations.length > 0) {
-      // Update checklist for added custom destinations
-
-      await this.runCheck('destination', async () => {
-        // Delay for UI animation
-        await new Promise(resolve => setTimeout(resolve, 300));
-      });
-    }
-
-    // Stop streaming displays that no longer have any targets
-    if (
-      !this.views.horizontalStream.length &&
-      this.contexts.horizontal.streaming &&
-      this.state.status.horizontal.streaming !== EStreamingState.Offline
-    ) {
-      this.isUpdatingHorizontalStream = true;
-      this.contexts.horizontal.streaming.stop(true);
-    }
-
-    if (
-      !this.views.verticalStream.length &&
-      this.contexts.vertical.streaming &&
-      this.state.status.vertical.streaming !== EStreamingState.Offline
-    ) {
-      this.isUpdatingVerticalStream = true;
-      this.contexts.vertical.streaming.stop(true);
-    }
-
     // Update checklist for removed custom destinations
     // Note: Custom destinations show as a single checklist item for all custom destinations
     // because there is nothing to set up for these destinations
