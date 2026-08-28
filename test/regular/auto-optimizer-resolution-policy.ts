@@ -200,6 +200,21 @@ test('quality selection mirrors high-FPS preference and insufficient-bandwidth f
   });
 });
 
+test('Twitch quality selection uses the product ladder at every boundary', t => {
+  const ceiling = { width: 1920, height: 1080, fpsNum: 60, fpsDen: 1 };
+  for (const [bitrateKbps, expected] of [
+    [5500, { width: 1920, height: 1080, fpsNum: 60, fpsDen: 1 }],
+    [5499, { width: 1920, height: 1080, fpsNum: 30, fpsDen: 1 }],
+    [5000, { width: 1920, height: 1080, fpsNum: 30, fpsDen: 1 }],
+    [4999, { width: 1280, height: 720, fpsNum: 60, fpsDen: 1 }],
+    [4500, { width: 1280, height: 720, fpsNum: 60, fpsDen: 1 }],
+    [4499, { width: 1280, height: 720, fpsNum: 30, fpsDen: 1 }],
+    [3000, { width: 1280, height: 720, fpsNum: 30, fpsDen: 1 }],
+  ] as const) {
+    t.deepEqual(selectAutoOptimizerQuality(ceiling, bitrateKbps, 'x264', 'twitch'), expected);
+  }
+});
+
 test('result must be selectable from a tested ceiling at the returned safe bitrate', t => {
   const current = { width: 1280, height: 720, fpsNum: 60, fpsDen: 1 };
   const limits = {

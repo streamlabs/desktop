@@ -5,7 +5,6 @@ import {
   autoOptimizerErrorMessage,
   autoOptimizerProgressLabel,
   bandwidthPhaseLabelKey,
-  cloudRestreamConfidenceExplanationKey,
   estimatedProbeProviders,
   shouldShowAutoOptimizerMeasurementReason,
   successfulProbeProviders,
@@ -46,7 +45,12 @@ test('successful measured providers are stable, deduplicated, and omit failures'
 });
 
 test('partial provider provenance separates measured and estimated destinations', t => {
-  const platforms = [{ id: 'twitch' }, { id: 'youtube' }, { id: 'facebook' }];
+  const platforms = [
+    { id: 'twitch' },
+    { id: 'youtube' },
+    { id: 'kick' },
+    { id: 'facebook' },
+  ];
   const evidence = [
     { provider: 'twitch' as const, success: true },
     { provider: 'youtube' as const, success: false },
@@ -54,6 +58,12 @@ test('partial provider provenance separates measured and estimated destinations'
 
   t.deepEqual(successfulProbeProviders(evidence), ['twitch']);
   t.deepEqual(estimatedProbeProviders(platforms, evidence), ['youtube']);
+});
+
+test('estimate-only provenance omits destinations without a V1 bandwidth probe', t => {
+  const platforms = [{ id: 'twitch' }, { id: 'youtube' }, { id: 'kick' }];
+
+  t.deepEqual(estimatedProbeProviders(platforms), ['twitch', 'youtube']);
 });
 
 test('active medium-confidence quality reasons remain visible in results', t => {
@@ -64,16 +74,6 @@ test('active medium-confidence quality reasons remain visible in results', t => 
   t.true(shouldShowAutoOptimizerMeasurementReason('partial_provider_probes'));
   t.false(shouldShowAutoOptimizerMeasurementReason('probe_failed'));
   t.false(shouldShowAutoOptimizerMeasurementReason());
-});
-
-test('generic cloud-restream copy omits medium and low confidence', t => {
-  t.is(cloudRestreamConfidenceExplanationKey(), null);
-  t.is(cloudRestreamConfidenceExplanationKey('medium'), null);
-  t.is(cloudRestreamConfidenceExplanationKey('low'), null);
-  t.is(
-    cloudRestreamConfidenceExplanationKey('high'),
-    'This shared cloud-restream upload was measured indirectly. The result has high confidence.',
-  );
 });
 
 test('bandwidth phase follows the provider currently being probed', t => {
@@ -284,6 +284,33 @@ test('Twitch progress identifies the extended same-target confirmation', t => {
       key: 'Confirming your Twitch upload at %{bitrate} Kbps...',
       values: { bitrate: 6000 },
     },
+  );
+});
+
+test('joint Dual Output progress explains allocation and simultaneous workload testing', t => {
+  t.deepEqual(
+    autoOptimizerProgressLabel(
+      'recommendation',
+      progressDetail({
+        code: 'dual_output_allocating_upload',
+        selectedBitrateKbps: 5000,
+        availableBitrateKbps: 10000,
+      }),
+    ),
+    { key: 'Allocating upload capacity across Twitch and YouTube...' },
+  );
+  t.deepEqual(
+    autoOptimizerProgressLabel(
+      'hardware',
+      progressDetail({
+        code: 'dual_output_testing_workload',
+        width: 1920,
+        height: 1080,
+        fpsNum: 60,
+        fpsDen: 1,
+      }),
+    ),
+    { key: 'Testing Twitch and YouTube together...' },
   );
 });
 

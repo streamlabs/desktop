@@ -18,20 +18,6 @@ const visibleActiveMeasurementReasons = new Set([
   'quality_promotion_tested',
 ]);
 
-/**
- * Generic medium-confidence cloud-restream copy is intentionally omitted: it
- * does not explain an actionable constraint. Low confidence is also omitted
- * by product requirement; high confidence retains its explicit provenance copy.
- */
-export function cloudRestreamConfidenceExplanationKey(
-  confidence?: 'high' | 'medium' | 'low',
-): string | null {
-  if (confidence === 'high') {
-    return 'This shared cloud-restream upload was measured indirectly. The result has high confidence.';
-  }
-  return null;
-}
-
 /** Active medium-confidence reasons that should be explained on the result card. */
 export function shouldShowAutoOptimizerMeasurementReason(reason?: string): boolean {
   return visibleActiveMeasurementReasons.has(reason || '');
@@ -132,6 +118,10 @@ export function autoOptimizerProgressLabel(
   const tuple = detail ? tupleValues(detail) : null;
 
   switch (detail?.code) {
+    case 'dual_output_allocating_upload':
+      return { key: 'Allocating upload capacity across Twitch and YouTube...' };
+    case 'dual_output_testing_workload':
+      return { key: 'Testing Twitch and YouTube together...' };
     case 'enhanced_broadcasting_requesting_ladder':
       return { key: 'Preparing Enhanced Broadcasting settings with Twitch...' };
     case 'enhanced_broadcasting_testing_candidate':

@@ -28,12 +28,16 @@ import {
   autoConfigPhaseStepKey,
   filterAutoConfigTopologyProbes,
   hasRequiredAutoConfigCapabilities,
+  isEligibleAutoConfigDualOutputActiveTopology,
   isValidAutoConfigActiveProbeCoverage,
   sanitizeAutoConfigProgressDetail,
   sanitizeAutoConfigProbeEvidence,
   supportedAutoConfigProbeKinds,
 } from './probe-policy';
-import { validateAutoConfigRecommendation } from './result-policy';
+import {
+  isValidAutoConfigDualOutputResultEnvelope,
+  validateAutoConfigRecommendation,
+} from './result-policy';
 import {
   autoOptimizerCanvasAllowsQualityPromotion,
   autoOptimizerDisplayFrameRate,
@@ -318,6 +322,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         canConfirmYoutubeIngest:
           typeof this.nativeApi().ConfirmAutoConfigProbeIngest === 'function',
       }),
+      { dualOutputActiveProbes: capabilities!.dualOutputActiveProbes === true },
     );
     if (!topology.legs.some(leg => leg.destinations.length > 0)) {
       this.frozenGoLiveSettings = null;
@@ -445,6 +450,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           canConfirmYoutubeIngest:
             typeof this.nativeApi().ConfirmAutoConfigProbeIngest === 'function',
         }),
+        { dualOutputActiveProbes: capabilities!.dualOutputActiveProbes === true },
       ),
     );
     await this.startOptimization();
@@ -630,6 +636,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       return await this.createNativeRequestWithCredentials(sourceTopology, credentialProbes);
     } catch (error: unknown) {
       this.clearActiveProbeCredentials(credentialProbes);
+      await this.releaseYoutubeProbeLeases();
       throw error;
     }
   }
@@ -639,8 +646,16 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     credentialProbes: IAutoConfigActiveProbe[],
   ): Promise<IPreparedAutoConfigRequest> {
     const topology = cloneDeep(sourceTopology);
+    const activeDualOutput = isEligibleAutoConfigDualOutputActiveTopology(topology);
     const requestedActiveProbeCount = topology.probeCandidates.length;
     const activeProbes: IAutoConfigActiveProbe[] = [];
+    if (activeDualOutput) {
+      const horizontalCanvasId = this.videoSettingsService.contexts.horizontal?.canvasId;
+      const verticalCanvasId = this.videoSettingsService.contexts.vertical?.canvasId;
+      if (!areAutoConfigActiveCanvasIdentitiesValid(horizontalCanvasId, verticalCanvasId, true)) {
+        throw new AutoOptimizerProbeSetupError();
+      }
+    }
     this.probeAbortController?.abort();
     const controller = new AbortController();
     this.probeAbortController = controller;
@@ -723,6 +738,14 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       }
     }
     topology.probeCandidates = topology.legs.flatMap(leg => leg.probeCandidates);
+    if (activeDualOutput && activeProbes.length !== requestedActiveProbeCount) {
+      // This topology is one aggregate experiment, not two independently
+      // promotable provider probes. Never pass a partially credentialed pair
+      // to native, and delete any temporary YouTube resource before surfacing
+      // the retryable setup failure.
+      this.clearActiveProbeCredentials(credentialProbes);
+      throw new AutoOptimizerProbeSetupError();
+    }
     if (requestedActiveProbeCount > 0 && activeProbes.length === 0) {
       // Runtime setup failures are actionable and retryable. Falling through to
       // an estimate would hide the provider/API problem and leave the user with
@@ -1062,6 +1085,26 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
   private toPublicResult(nativeResult: IAutoConfigNativeResult): IAutoOptimizerResult {
     const expectedLegs = this.state.topology?.legs || [];
+    const activeDualOutput = Boolean(
+      this.state.topology && isEligibleAutoConfigDualOutputActiveTopology(this.state.topology),
+    );
+    if (
+      activeDualOutput &&
+      !isValidAutoConfigDualOutputResultEnvelope(
+        nativeResult,
+        expectedLegs.map(leg => leg.legId),
+      )
+    ) {
+      return {
+        schemaVersion: 1,
+        topology: this.state.topology?.type || 'direct-single',
+        status: nativeResult.status,
+        legs: [],
+        advice: this.getAdvice(),
+      };
+    }
+    const jointDualOutputActive =
+      activeDualOutput && nativeResult.legs.every(leg => leg.measurement?.mode === 'active');
     const legs: IAutoOptimizerLegResult[] = nativeResult.legs.flatMap(leg => {
       const expected = expectedLegs.find(item => item.legId === leg.legId);
       const requested = this.attemptRequestLegs.get(leg.legId);
@@ -1078,6 +1121,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
               attemptedCandidates: expected.probeCandidates,
               evidence,
               confidence: leg.measurement?.confidence,
+              requireAllProbeCapableDestinations: !activeDualOutput,
             }),
         );
       const providerOwnsEncoding =
@@ -1091,6 +1135,11 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
             probeEvidence: evidence,
             providerOwnsEncoding,
             enhancedBroadcasting: this.state.topology?.type === 'enhanced-broadcasting',
+            qualityProfile:
+              jointDualOutputActive ||
+              expected?.destinations.some(destination => destination.platform === 'twitch')
+                ? 'twitch'
+                : 'generic',
             maxWidth: requested.limits?.maxWidth,
             maxHeight: requested.limits?.maxHeight,
             maxFpsNum: requested.limits?.maxFpsNum,
@@ -1621,6 +1670,10 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     if (confirmations.length) await Promise.allSettled(confirmations);
     this.youtubeConfirmationPromises.clear();
 
+    await this.releaseYoutubeProbeLeases();
+  }
+
+  private async releaseYoutubeProbeLeases(): Promise<void> {
     for (const [probeId, lease] of [...this.youtubeProbeLeases]) {
       try {
         await this.youtubeService.releaseAutoOptimizerProbe(lease);

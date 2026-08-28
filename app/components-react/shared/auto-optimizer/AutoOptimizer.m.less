@@ -158,6 +158,7 @@
 
 .summary-card,
 .advice-card {
+  flex: 0 0 auto;
   width: min(760px, 92%);
   border-radius: 8px;
   box-sizing: border-box;
@@ -169,6 +170,16 @@
   padding: 24px;
   align-items: center;
   background: var(--section);
+}
+
+.split-summary-card {
+  width: min(840px, 100%);
+
+  .kevin-result-frame {
+    width: 130px;
+    max-width: 18%;
+    margin-left: 12px;
+  }
 }
 
 .summary-content {
@@ -245,6 +256,13 @@
   font-size: 12px;
   font-weight: 400;
   line-height: 18px;
+}
+
+.setting-with-measurement {
+  .measurement-block {
+    margin-top: 5px;
+    margin-left: 28px;
+  }
 }
 
 .provider-managed {
@@ -330,12 +348,18 @@
 }
 
 .leg-settings {
+  min-width: 0;
   padding: 12px;
   border-radius: 6px;
   background: var(--background);
 
   h3 {
     margin: 0 0 8px;
+  }
+
+  .settings-list li {
+    line-height: 1.4;
+    overflow-wrap: break-word;
   }
 }
 

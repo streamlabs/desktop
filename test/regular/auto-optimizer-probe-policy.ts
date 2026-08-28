@@ -6,6 +6,7 @@ import {
   autoConfigPhaseStepKey,
   filterAutoConfigTopologyProbes,
   hasRequiredAutoConfigCapabilities,
+  isEligibleAutoConfigDualOutputActiveTopology,
   isValidAutoConfigActiveProbeCoverage,
   sanitizeAutoConfigProgressDetail,
   sanitizeAutoConfigProbeEvidence,
@@ -42,6 +43,7 @@ function capabilities(patch: Partial<IAutoConfigCapabilities> = {}): IAutoConfig
     perUploadLegResults: true,
     desktopOwnedApply: true,
     multipleActiveProbes: true,
+    dualOutputActiveProbes: true,
     bandwidthModes: [
       'estimate',
       'twitch-standard-active',
@@ -50,6 +52,36 @@ function capabilities(patch: Partial<IAutoConfigCapabilities> = {}): IAutoConfig
     ],
     ...patch,
   };
+}
+
+function twitchYoutubeDualOutputTopology(): IAutoOptimizerTopology {
+  const legs = ['twitch', 'youtube'].map((provider, index) => ({
+    legId: index ? 'vertical' : 'horizontal',
+    display: index ? ('vertical' as const) : ('horizontal' as const),
+    destinations: [{ platform: provider as 'twitch' | 'youtube' }],
+    route: 'direct' as const,
+    probeCandidates: [
+      {
+        probeId: `${index ? 'vertical' : 'horizontal'}-${provider}`,
+        kind: provider === 'twitch' ? ('twitch-standard' as const) : ('youtube-unbound' as const),
+        legId: index ? 'vertical' : 'horizontal',
+        provider: provider as 'twitch' | 'youtube',
+      },
+    ],
+    measurement: 'active' as const,
+  }));
+  return {
+    type: 'dual-output',
+    legs,
+    probeCandidates: legs.flatMap(leg => leg.probeCandidates),
+  };
+}
+
+function twitchKickYoutubeDualOutputTopology(): IAutoOptimizerTopology {
+  const topology = twitchYoutubeDualOutputTopology();
+  topology.legs[0].destinations.push({ platform: 'kick' });
+  topology.legs[0].route = 'cloud-restream';
+  return topology;
 }
 
 function sharedCloudTopology(): IAutoOptimizerTopology {
@@ -91,6 +123,11 @@ test('estimate support is required while active provider modes are optional', t 
   );
   t.false(hasRequiredAutoConfigCapabilities(capabilities({ bandwidthModes: [] })));
   t.false(hasRequiredAutoConfigCapabilities(capabilities({ apiVersion: 1 })));
+  t.false(
+    hasRequiredAutoConfigCapabilities(
+      capabilities({ dualOutputActiveProbes: (undefined as unknown) as boolean }),
+    ),
+  );
 });
 
 test('active probe kinds require their exact native mode and runtime support', t => {
@@ -242,6 +279,33 @@ test('partial active provider evidence is accepted only at low confidence', t =>
   t.true(isValidAutoConfigActiveProbeCoverage({ ...partial, confidence: 'low' }));
   t.false(isValidAutoConfigActiveProbeCoverage({ ...partial, confidence: 'medium' }));
   t.false(isValidAutoConfigActiveProbeCoverage({ ...partial, confidence: 'high' }));
+});
+
+test('a joint Dual Output probe represents its canvas without claiming every destination', t => {
+  const evidence = [
+    {
+      provider: 'twitch' as const,
+      method: 'twitch-bandwidth-test' as const,
+      measuredKbps: 6013,
+      safeKbps: 6000,
+      headroomPercent: 0,
+      success: true,
+    },
+  ];
+  const context = {
+    destinations: [{ platform: 'twitch' }, { platform: 'youtube' }, { platform: 'kick' }],
+    attemptedCandidates: [{ provider: 'twitch' as const, kind: 'twitch-standard' as const }],
+    evidence,
+    confidence: 'high',
+  };
+
+  t.false(isValidAutoConfigActiveProbeCoverage(context));
+  t.true(
+    isValidAutoConfigActiveProbeCoverage({
+      ...context,
+      requireAllProbeCapableDestinations: false,
+    }),
+  );
 });
 
 test('runtime-partial active coverage accepts one prepared success only at low confidence', t => {
@@ -412,27 +476,8 @@ test('a shared cloud leg retains deterministic candidates when every provider is
   t.is(filtered.legs[0].estimateReason, undefined);
 });
 
-test('multi-leg Dual Output remains estimate-only without an aggregate uplink allocator', t => {
-  const topology: IAutoOptimizerTopology = {
-    type: 'dual-output',
-    probeCandidates: [],
-    legs: ['twitch', 'youtube'].map((provider, index) => ({
-      legId: index ? 'vertical' : 'horizontal',
-      display: index ? ('vertical' as const) : ('horizontal' as const),
-      destinations: [{ platform: provider as 'twitch' | 'youtube' }],
-      route: 'direct' as const,
-      probeCandidates: [
-        {
-          probeId: `${index ? 'vertical' : 'horizontal'}-${provider}`,
-          kind: provider === 'twitch' ? ('twitch-standard' as const) : ('youtube-unbound' as const),
-          legId: index ? 'vertical' : 'horizontal',
-          provider: provider as 'twitch' | 'youtube',
-        },
-      ],
-      measurement: 'active' as const,
-    })),
-  };
-  topology.probeCandidates = topology.legs.flatMap(leg => leg.probeCandidates);
+test('multi-leg Dual Output remains estimate-only without the native aggregate capability', t => {
+  const topology = twitchYoutubeDualOutputTopology();
 
   const filtered = filterAutoConfigTopologyProbes(
     topology,
@@ -445,13 +490,143 @@ test('multi-leg Dual Output remains estimate-only without an aggregate uplink al
   t.deepEqual(filtered.probeCandidates, []);
 });
 
-test('a multi-destination leg nested under Dual Output is estimate-only', t => {
+test('the exact Twitch and YouTube two-leg Dual Output topology keeps both active probes', t => {
+  const topology = twitchYoutubeDualOutputTopology();
+  t.true(isEligibleAutoConfigDualOutputActiveTopology(topology));
+
+  const filtered = filterAutoConfigTopologyProbes(
+    topology,
+    new Set<TAutoOptimizerProbeKind>(['twitch-standard', 'youtube-unbound']),
+    { dualOutputActiveProbes: true },
+  );
+  t.deepEqual(
+    filtered.legs.map(leg => [leg.display, leg.probeCandidates[0]?.provider, leg.measurement]),
+    [
+      ['horizontal', 'twitch', 'active'],
+      ['vertical', 'youtube', 'active'],
+    ],
+  );
+  t.deepEqual(
+    filtered.probeCandidates.map(candidate => candidate.provider),
+    ['twitch', 'youtube'],
+  );
+});
+
+test('Dual Output keeps one supported probe per canvas when other platforms share it', t => {
+  const topology = twitchKickYoutubeDualOutputTopology();
+  t.true(isEligibleAutoConfigDualOutputActiveTopology(topology));
+
+  const filtered = filterAutoConfigTopologyProbes(
+    topology,
+    new Set<TAutoOptimizerProbeKind>(['twitch-standard', 'youtube-unbound']),
+    { dualOutputActiveProbes: true },
+  );
+  t.deepEqual(
+    filtered.legs.map(leg => ({
+      destinations: leg.destinations.map(destination => destination.platform),
+      providers: leg.probeCandidates.map(candidate => candidate.provider),
+      measurement: leg.measurement,
+      estimateReason: leg.estimateReason,
+    })),
+    [
+      {
+        destinations: ['twitch', 'kick'],
+        providers: ['twitch'],
+        measurement: 'active',
+        estimateReason: undefined,
+      },
+      {
+        destinations: ['youtube'],
+        providers: ['youtube'],
+        measurement: 'active',
+        estimateReason: undefined,
+      },
+    ],
+  );
+});
+
+test('Dual Output selects distinct supported representatives when a canvas has both', t => {
+  const topology = twitchKickYoutubeDualOutputTopology();
+  topology.legs[0].destinations.splice(1, 0, { platform: 'youtube' });
+  topology.legs[0].probeCandidates.push({
+    probeId: 'horizontal-youtube',
+    kind: 'youtube-unbound',
+    legId: 'horizontal',
+    provider: 'youtube',
+  });
+  topology.probeCandidates = topology.legs.flatMap(leg => leg.probeCandidates);
+
+  const filtered = filterAutoConfigTopologyProbes(
+    topology,
+    new Set<TAutoOptimizerProbeKind>(['twitch-standard', 'youtube-unbound']),
+    { dualOutputActiveProbes: true },
+  );
+  t.deepEqual(
+    filtered.legs.map(leg => leg.probeCandidates.map(candidate => candidate.provider)),
+    [['twitch'], ['youtube']],
+  );
+  t.true(isEligibleAutoConfigDualOutputActiveTopology(filtered));
+});
+
+test('Dual Output remains estimate-only when a canvas has no supported representative', t => {
+  const topology = twitchKickYoutubeDualOutputTopology();
+  topology.legs[1].destinations = [{ platform: 'kick' }];
+  topology.legs[1].route = 'direct';
+  topology.legs[1].probeCandidates = [];
+  topology.probeCandidates = topology.legs.flatMap(leg => leg.probeCandidates);
+
+  const filtered = filterAutoConfigTopologyProbes(
+    topology,
+    new Set<TAutoOptimizerProbeKind>(['twitch-standard', 'youtube-unbound']),
+    { dualOutputActiveProbes: true },
+  );
+  t.true(filtered.legs.every(leg => leg.measurement === 'estimated'));
+  t.deepEqual(filtered.probeCandidates, []);
+});
+
+test('the active Dual Output topology requires an exact unique top-level candidate mirror', t => {
+  const duplicate = twitchYoutubeDualOutputTopology();
+  duplicate.probeCandidates = [
+    { ...duplicate.probeCandidates[0] },
+    { ...duplicate.probeCandidates[0] },
+  ];
+  t.false(isEligibleAutoConfigDualOutputActiveTopology(duplicate));
+
+  const tampered = twitchYoutubeDualOutputTopology();
+  tampered.probeCandidates[1] = {
+    ...tampered.probeCandidates[1],
+    legId: 'horizontal',
+  };
+  t.false(isEligibleAutoConfigDualOutputActiveTopology(tampered));
+
+  const reusedProbeId = twitchYoutubeDualOutputTopology();
+  reusedProbeId.legs[1].probeCandidates[0].probeId =
+    reusedProbeId.legs[0].probeCandidates[0].probeId;
+  reusedProbeId.probeCandidates = reusedProbeId.legs.flatMap(leg => leg.probeCandidates);
+  t.false(isEligibleAutoConfigDualOutputActiveTopology(reusedProbeId));
+});
+
+test('the exact Dual Output topology requires both provider probe kinds', t => {
+  for (const kind of ['twitch-standard', 'youtube-unbound'] as const) {
+    const filtered = filterAutoConfigTopologyProbes(
+      twitchYoutubeDualOutputTopology(),
+      new Set<TAutoOptimizerProbeKind>([kind]),
+      { dualOutputActiveProbes: true },
+    );
+    t.true(filtered.legs.every(leg => leg.measurement === 'estimated'));
+    t.true(filtered.legs.every(leg => leg.estimateReason === 'dual_output'));
+    t.deepEqual(filtered.probeCandidates, []);
+  }
+});
+
+test('a single multi-destination leg nested under Dual Output is estimate-only', t => {
   const topology = sharedCloudTopology();
   topology.type = 'dual-output';
 
   const filtered = filterAutoConfigTopologyProbes(
     topology,
     new Set<TAutoOptimizerProbeKind>(['twitch-standard', 'youtube-unbound']),
+    { dualOutputActiveProbes: true },
   );
 
   t.is(filtered.legs[0].measurement, 'estimated');
@@ -484,6 +659,7 @@ test('YouTube display both cannot create two active probe leases', t => {
   const filtered = filterAutoConfigTopologyProbes(
     topology,
     new Set<TAutoOptimizerProbeKind>(['youtube-unbound']),
+    { dualOutputActiveProbes: true },
   );
 
   t.true(filtered.legs.every(leg => leg.measurement === 'estimated'));
@@ -678,6 +854,64 @@ test('sequential provider bandwidth events receive distinct pacing keys', t => {
       availableBitrateKbps: 6000,
     }),
   );
+});
+
+test('joint Dual Output progress follows native hardware and recommendation phases', t => {
+  t.is(
+    autoConfigPhaseStepKey('hardware', null, 'dual_output_testing_workload', {
+      encoderTitle: 'NVIDIA NVENC H.264',
+      width: 1920,
+      height: 1080,
+      fpsNum: 60,
+      fpsDen: 1,
+    }),
+    'hardware:dual-output:workload:NVIDIA NVENC H.264:1920x1080:60/1',
+  );
+  t.is(
+    autoConfigPhaseStepKey('recommendation', null, 'dual_output_allocating_upload', {
+      selectedBitrateKbps: 5000,
+      availableBitrateKbps: 10000,
+    }),
+    'recommendation:dual-output:allocating:5000:10000',
+  );
+
+  const workload = sanitizeAutoConfigProgressDetail(
+    {
+      schemaVersion: 1,
+      sessionId: 'session',
+      sequence: 1,
+      type: 'progress',
+      phase: 'hardware',
+      progress: 20,
+      code: 'dual_output_testing_workload',
+      width: 1920,
+      height: 1080,
+      fpsNum: 60,
+      fpsDen: 1,
+      targetBitrateKbps: 10000,
+    },
+    'hardware',
+  );
+  t.is(workload.provider, null);
+  t.is(workload.targetBitrateKbps, null, 'hardware work does not claim a probe bitrate');
+  t.is(workload.width, 1920);
+
+  const allocation = sanitizeAutoConfigProgressDetail(
+    {
+      schemaVersion: 1,
+      sessionId: 'session',
+      sequence: 2,
+      type: 'progress',
+      phase: 'recommendation',
+      progress: 75,
+      code: 'dual_output_allocating_upload',
+      selectedBitrateKbps: 5000,
+      availableBitrateKbps: 10000,
+    },
+    'recommendation',
+  );
+  t.is(allocation.selectedBitrateKbps, 5000);
+  t.is(allocation.availableBitrateKbps, 10000);
 });
 
 test('progress pacing coalesces repeats but preserves A to B to A transitions', t => {

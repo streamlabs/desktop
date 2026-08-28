@@ -34,9 +34,10 @@ export interface IAutoConfigProbeCoverage {
 
 /**
  * Validate the registered canvas identities required before Desktop prepares
- * an active Enhanced Broadcasting request. OSN object IDs are zero-based, so
- * zero is a valid live canvas identity; missing, fractional, negative, or
- * duplicate paired identities remain invalid.
+ * an active paired-workload request (Enhanced Broadcasting or two-leg Dual
+ * Output). OSN object IDs are zero-based, so zero is a valid live canvas
+ * identity; missing, fractional, negative, or duplicate paired identities
+ * remain invalid.
  */
 export function areAutoConfigActiveCanvasIdentitiesValid(
   primaryCanvasId: unknown,
@@ -81,9 +82,10 @@ export function autoConfigProbeCoverage(
 
 /**
  * Validate active native evidence against the exact attempt Desktop prepared.
- * At least one attempted provider must succeed. Any selected or attempted
- * provider without successful evidence makes the result partial and is
- * accepted only when native lowers confidence to low.
+ * At least one attempted provider must succeed. By default, any selected or
+ * attempted provider without successful evidence makes the result partial and
+ * is accepted only when native lowers confidence to low. A joint Dual Output
+ * attempt may explicitly use one supported provider to represent each canvas.
  */
 export function isValidAutoConfigActiveProbeCoverage(p: {
   destinations: Array<{ platform: string }>;
@@ -93,6 +95,13 @@ export function isValidAutoConfigActiveProbeCoverage(p: {
   }>;
   evidence: IAutoOptimizerProbeEvidence[];
   confidence: string | undefined;
+  /**
+   * A jointly validated Dual Output leg deliberately selects one safe probe
+   * provider to represent the canvas upload. Other probe-capable destinations
+   * on that same canvas are not additional upload legs and do not make the
+   * evidence partial.
+   */
+  requireAllProbeCapableDestinations?: boolean;
 }): boolean {
   const selectedProviders = new Set<TAutoOptimizerProbeProvider>(
     p.destinations.flatMap(destination =>
@@ -125,7 +134,8 @@ export function isValidAutoConfigActiveProbeCoverage(p: {
 
   const isPartial =
     [...attemptedProviders].some(provider => !successfulProviders.has(provider)) ||
-    [...selectedProviders].some(provider => !successfulProviders.has(provider));
+    (p.requireAllProbeCapableDestinations !== false &&
+      [...selectedProviders].some(provider => !successfulProviders.has(provider)));
   return !isPartial || p.confidence === 'low';
 }
 
@@ -141,6 +151,7 @@ export function hasRequiredAutoConfigCapabilities(
       capabilities.awaitableCancel === true &&
       capabilities.perUploadLegResults === true &&
       capabilities.desktopOwnedApply === true &&
+      typeof capabilities.dualOutputActiveProbes === 'boolean' &&
       capabilities.bandwidthModes?.includes('estimate'),
   );
 }
@@ -175,6 +186,107 @@ export function supportedAutoConfigProbeKinds(
 }
 
 /**
+ * Identify the two-canvas shape whose aggregate upload and concurrent encoder
+ * workload the native optimizer can validate as a single attempt. Each canvas
+ * is represented by exactly one supported provider probe. Additional
+ * destinations sharing that canvas are allowed but are not themselves probed.
+ */
+export function isEligibleAutoConfigDualOutputActiveTopology(
+  topology: IAutoOptimizerTopology,
+): boolean {
+  if (
+    topology.type !== 'dual-output' ||
+    topology.legs.length !== 2 ||
+    topology.probeCandidates.length !== 2
+  ) {
+    return false;
+  }
+
+  const displays = new Set(topology.legs.map(leg => leg.display));
+  const legIds = new Set(topology.legs.map(leg => leg.legId));
+  const providers = new Set<TAutoOptimizerProbeProvider>();
+  if (
+    displays.size !== 2 ||
+    !displays.has('horizontal') ||
+    !displays.has('vertical') ||
+    legIds.size !== 2
+  ) {
+    return false;
+  }
+
+  for (const leg of topology.legs) {
+    if (!leg.destinations.length || leg.probeCandidates.length !== 1) return false;
+    const candidate = leg.probeCandidates[0];
+    const carriesProvider = leg.destinations.some(
+      destination => destination.platform === candidate.provider,
+    );
+    if (
+      !carriesProvider ||
+      candidate.legId !== leg.legId ||
+      (candidate.provider === 'twitch' && candidate.kind !== 'twitch-standard') ||
+      (candidate.provider === 'youtube' && candidate.kind !== 'youtube-unbound')
+    ) {
+      return false;
+    }
+    providers.add(candidate.provider);
+  }
+
+  const candidateKey = (candidate: IAutoOptimizerTopology['probeCandidates'][number]) =>
+    `${candidate.probeId}\u0000${candidate.legId}\u0000${candidate.provider}\u0000${candidate.kind}`;
+  const legProbeKeys = topology.legs.flatMap(leg => leg.probeCandidates.map(candidateKey));
+  const topLevelProbeKeys = topology.probeCandidates.map(candidateKey);
+  const probeIds = topology.probeCandidates.map(candidate => candidate.probeId);
+  return (
+    providers.size === 2 &&
+    providers.has('twitch') &&
+    providers.has('youtube') &&
+    new Set(legProbeKeys).size === 2 &&
+    new Set(topLevelProbeKeys).size === 2 &&
+    new Set(probeIds).size === 2 &&
+    topLevelProbeKeys.every(key => legProbeKeys.includes(key))
+  );
+}
+
+/**
+ * Select one supported provider per canvas for the joint two-leg experiment.
+ * Prefer the classifier's deterministic provider order, while requiring the
+ * pair to cover both Twitch and YouTube so native can establish two independent
+ * lower bounds for the shared aggregate allocator.
+ */
+function selectAutoConfigDualOutputProbePair(
+  topology: IAutoOptimizerTopology,
+  supportedKinds: ReadonlySet<TAutoOptimizerProbeKind>,
+): IAutoOptimizerTopology | null {
+  if (topology.type !== 'dual-output' || topology.legs.length !== 2) return null;
+
+  const candidatesByLeg = topology.legs.map(leg =>
+    leg.probeCandidates.filter(candidate => supportedKinds.has(candidate.kind)),
+  );
+  for (const first of candidatesByLeg[0]) {
+    for (const second of candidatesByLeg[1]) {
+      if (first.provider === second.provider) continue;
+      const selectedByLeg = new Map([
+        [first.legId, first],
+        [second.legId, second],
+      ]);
+      const selected: IAutoOptimizerTopology = {
+        ...topology,
+        legs: topology.legs.map(leg => ({
+          ...leg,
+          destinations: leg.destinations.map(destination => ({ ...destination })),
+          probeCandidates: selectedByLeg.has(leg.legId) ? [selectedByLeg.get(leg.legId)!] : [],
+          measurement: 'active',
+          estimateReason: undefined,
+        })),
+        probeCandidates: [first, second],
+      };
+      if (isEligibleAutoConfigDualOutputActiveTopology(selected)) return selected;
+    }
+  }
+  return null;
+}
+
+/**
  * Filter credential-free candidates against the negotiated native/runtime
  * capabilities. Supported provider probes remain useful independently; a
  * shared leg with partial coverage is identified explicitly and cannot promote
@@ -183,6 +295,7 @@ export function supportedAutoConfigProbeKinds(
 export function filterAutoConfigTopologyProbes(
   topology: IAutoOptimizerTopology,
   supportedKinds: ReadonlySet<TAutoOptimizerProbeKind>,
+  options: { dualOutputActiveProbes?: boolean } = {},
 ): IAutoOptimizerTopology {
   const filtered: IAutoOptimizerTopology = {
     ...topology,
@@ -193,30 +306,38 @@ export function filterAutoConfigTopologyProbes(
     })),
     probeCandidates: [],
   };
-  const populatedLegs = filtered.legs.filter(leg => leg.destinations.length > 0);
-  // There is no aggregate uplink allocator for multiple simultaneous outputs.
-  // Sequentially giving each leg the full measured uplink would overcommit the
-  // connection, so every multi-leg Dual Output topology remains estimate-only.
-  // A multi-destination leg nested under Dual Output is also excluded because
-  // the native contract only supports its single direct upload form.
-  const unsafeDualOutput =
-    filtered.type === 'dual-output' &&
-    (populatedLegs.length !== 1 ||
-      populatedLegs[0].route !== 'direct' ||
-      populatedLegs[0].destinations.length !== 1);
+  // Native owns the allocator and simultaneous hardware proof for the two-leg
+  // Twitch/YouTube experiment. When a canvas also targets an unsupported V1
+  // provider, select one supported representative for that canvas instead of
+  // disabling both active measurements.
+  const selectedDualOutput =
+    options.dualOutputActiveProbes === true
+      ? selectAutoConfigDualOutputProbePair(topology, supportedKinds)
+      : null;
+  const unsafeDualOutput = filtered.type === 'dual-output' && !selectedDualOutput;
   filtered.legs.forEach(leg => {
     const originalCandidates = leg.probeCandidates;
-    const supportedCandidates = unsafeDualOutput
-      ? []
+    if (unsafeDualOutput) {
+      leg.probeCandidates = [];
+      leg.measurement = 'estimated';
+      leg.estimateReason = 'dual_output';
+      return;
+    }
+    const selectedLeg = selectedDualOutput?.legs.find(selected => selected.legId === leg.legId);
+    const supportedCandidates = selectedDualOutput
+      ? selectedLeg!.probeCandidates
       : originalCandidates.filter(candidate => supportedKinds.has(candidate.kind));
     leg.probeCandidates = supportedCandidates;
-    if (originalCandidates.length) {
+    if (selectedDualOutput) {
+      leg.measurement = 'active';
+      leg.estimateReason = undefined;
+    } else if (originalCandidates.length) {
       const coverage = autoConfigProbeCoverage(
         originalCandidates.length,
         supportedCandidates.length,
       );
       leg.measurement = coverage.measurement;
-      leg.estimateReason = unsafeDualOutput ? 'dual_output' : coverage.estimateReason;
+      leg.estimateReason = coverage.estimateReason;
     }
   });
   filtered.probeCandidates = filtered.legs.flatMap(leg => leg.probeCandidates);
@@ -243,7 +364,6 @@ const BITRATE_BANDWIDTH_PROGRESS_CODES = new Set([
   'youtube_probe_confirming_stability',
   'youtube_probe_retrying',
 ]);
-
 /** Give real sequential work and terminal decisions distinct readable milestones. */
 export function autoConfigPhaseStepKey(
   phase: TAutoOptimizerPhase,
@@ -273,6 +393,14 @@ export function autoConfigPhaseStepKey(
     : 'none';
   const encoder = detail?.encoderTitle || detail?.encoderId || 'encoder';
 
+  if (phase === 'hardware' && code === 'dual_output_testing_workload') {
+    return `hardware:dual-output:workload:${encoder}:${tuple}`;
+  }
+  if (phase === 'recommendation' && code === 'dual_output_allocating_upload') {
+    return `recommendation:dual-output:allocating:${detail?.selectedBitrateKbps || 0}:${
+      detail?.availableBitrateKbps || 0
+    }`;
+  }
   if (phase === 'bandwidth' && provider === 'twitch') {
     if (code === 'enhanced_broadcasting_requesting_ladder') {
       return 'bandwidth:twitch:enhanced-broadcasting:requesting-ladder';
@@ -430,6 +558,10 @@ export function sanitizeAutoConfigProgressDetail(
   event: IAutoConfigEvent,
   phase: TAutoOptimizerPhase,
 ): IAutoOptimizerProgressDetail {
+  const code =
+    typeof event.code === 'string' && /^[a-z0-9_]+$/.test(event.code) && event.code.length <= 128
+      ? event.code
+      : null;
   const provider =
     phase === 'bandwidth' && (event.provider === 'twitch' || event.provider === 'youtube')
       ? event.provider
@@ -439,10 +571,7 @@ export function sanitizeAutoConfigProgressDetail(
     : null;
 
   return {
-    code:
-      typeof event.code === 'string' && /^[a-z0-9_]+$/.test(event.code) && event.code.length <= 128
-        ? event.code
-        : null,
+    code,
     provider,
     targetBitrateKbps:
       provider !== null ? sanitizeAutoConfigProbeTargetBitrateKbps(event.targetBitrateKbps) : null,

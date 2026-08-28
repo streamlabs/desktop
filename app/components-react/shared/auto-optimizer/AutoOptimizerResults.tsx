@@ -2,7 +2,6 @@ import React from 'react';
 import { Button } from 'antd';
 import { $t } from 'services/i18n';
 import { $i } from 'services/utils';
-import { cloudRestreamConfidenceExplanationKey } from './presentation';
 import { IAutoOptimizerPresentationAdvice, IAutoOptimizerPresentationLeg } from './types';
 import styles from './AutoOptimizer.m.less';
 
@@ -47,8 +46,12 @@ function PlatformChips(p: { platforms: Array<{ id: string; label: string }> }) {
 
 function MeasurementProvenance(p: { leg: IAutoOptimizerPresentationLeg; standalone?: boolean }) {
   const measured = p.leg.measurementMode === 'active' ? p.leg.measuredPlatforms || [] : [];
-  const estimated =
-    p.leg.measurementMode === 'active' ? p.leg.estimatedPlatforms || [] : p.leg.platforms || [];
+  // `platforms` describes every destination that shares this output leg, but
+  // measurement provenance is intentionally limited to probe-capable
+  // providers. Falling back to the full destination list would incorrectly
+  // imply that unsupported V1 providers such as Kick were bandwidth-tested or
+  // estimated.
+  const estimated = p.leg.estimatedPlatforms || [];
   if (!measured.length && !estimated.length) return null;
 
   const contents = (
@@ -92,14 +95,7 @@ function EstimateExplanation(p: { leg: IAutoOptimizerPresentationLeg }) {
   return <p className={styles.estimateExplanation}>{p.leg.estimateReason}</p>;
 }
 
-function ActiveMeasurementExplanation(p: { leg: IAutoOptimizerPresentationLeg }) {
-  if (p.leg.showMeasurementReason) return null;
-  if (p.leg.measurementMode !== 'active' || p.leg.route !== 'cloud-restream') return null;
-  const message = cloudRestreamConfidenceExplanationKey(p.leg.measurementConfidence);
-  return message ? <p className={styles.estimateExplanation}>{$t(message)}</p> : null;
-}
-
-function SettingsList(p: { leg: IAutoOptimizerPresentationLeg }) {
+function SettingsList(p: { leg: IAutoOptimizerPresentationLeg; standaloneMeasurement?: boolean }) {
   const { leg } = p;
 
   return (
@@ -129,10 +125,10 @@ function SettingsList(p: { leg: IAutoOptimizerPresentationLeg }) {
           {$t('Framerate')}: {leg.fps} {$t('fps')}
         </li>
         {!leg.managedByProvider && (
-          <li>
+          <li className={p.standaloneMeasurement ? styles.settingWithMeasurement : undefined}>
             <i className="icon-check" aria-hidden="true" />
             {$t('Bitrate')}: {leg.bitrateKbps} Kbps
-            <MeasurementProvenance leg={leg} />
+            <MeasurementProvenance leg={leg} standalone={p.standaloneMeasurement} />
           </li>
         )}
         {!leg.managedByProvider && leg.encoder && (
@@ -148,11 +144,9 @@ function SettingsList(p: { leg: IAutoOptimizerPresentationLeg }) {
           <p>{$t('Twitch will manage stream output resolutions, bitrates, and encoders.')}</p>
           <MeasurementProvenance leg={leg} standalone />
           <EstimateExplanation leg={leg} />
-          <ActiveMeasurementExplanation leg={leg} />
         </div>
       )}
       {!leg.managedByProvider && <EstimateExplanation leg={leg} />}
-      {!leg.managedByProvider && <ActiveMeasurementExplanation leg={leg} />}
     </>
   );
 }
@@ -189,6 +183,7 @@ export function AutoOptimizerResults(p: {
     p.legs.every(
       leg => leg.managedByProvider && (leg.videoSettingsManagedByProvider ?? leg.managedByProvider),
     );
+  const splitLegLayout = !allSettingsMatch;
   let applyLabel = $t('Save Settings');
   if (p.host === 'go-live') {
     applyLabel = allProviderManaged ? $t('Continue & Go Live') : $t('Save Settings & Go Live');
@@ -197,7 +192,7 @@ export function AutoOptimizerResults(p: {
   return (
     <section className={styles.resultsScreen}>
       <p className={styles.subtitle}>{$t("You're all set!")}</p>
-      <div className={styles.summaryCard}>
+      <div className={`${styles.summaryCard} ${splitLegLayout ? styles.splitSummaryCard : ''}`}>
         <div className={styles.summaryContent}>
           <h2>{$t('Your recommended settings are:')}</h2>
           {allSettingsMatch ? (
@@ -207,7 +202,7 @@ export function AutoOptimizerResults(p: {
               {p.legs.map(leg => (
                 <div key={leg.legId} className={styles.legSettings}>
                   <h3>{leg.label}</h3>
-                  <SettingsList leg={leg} />
+                  <SettingsList leg={leg} standaloneMeasurement />
                 </div>
               ))}
             </div>

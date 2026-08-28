@@ -148,6 +148,43 @@ test('dual output produces independent direct probe candidates per destination',
   );
 });
 
+test('dual output keeps supported probe candidates when another platform shares a canvas', t => {
+  const topology = classifyAutoOptimizerTopology(
+    settings({
+      platforms: {
+        twitch: { enabled: true, useCustomFields: false, display: 'horizontal' } as any,
+        kick: { enabled: true, useCustomFields: false, display: 'horizontal' } as any,
+        youtube: { enabled: true, useCustomFields: false, display: 'vertical' } as any,
+      },
+    }),
+    true,
+  );
+
+  t.is(topology.type, 'dual-output');
+  t.deepEqual(
+    topology.legs.map(leg => ({
+      display: leg.display,
+      route: leg.route,
+      destinations: leg.destinations.map(destination => destination.platform),
+      probes: leg.probeCandidates.map(candidate => candidate.provider),
+    })),
+    [
+      {
+        display: 'horizontal',
+        route: 'cloud-restream',
+        destinations: ['twitch', 'kick'],
+        probes: ['twitch'],
+      },
+      {
+        display: 'vertical',
+        route: 'direct',
+        destinations: ['youtube'],
+        probes: ['youtube'],
+      },
+    ],
+  );
+});
+
 test('single-canvas Twitch-only Enhanced Broadcasting has its dedicated active probe', t => {
   const enhanced = classifyAutoOptimizerTopology(
     settings({

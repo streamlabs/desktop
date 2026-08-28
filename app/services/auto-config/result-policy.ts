@@ -10,6 +10,7 @@ import {
   autoOptimizerHardwareCeilings,
   IAutoOptimizerRequestLimits,
   matchesAutoOptimizerQualityPolicy,
+  TAutoOptimizerQualityProfile,
 } from './resolution-policy';
 
 type TNativeRecommendation = IAutoConfigNativeResult['legs'][number]['recommendation'];
@@ -64,6 +65,140 @@ function isSupportedEncoderFamily(value: unknown): value is TAutoOptimizerEncode
   return typeof value === 'string' && Object.prototype.hasOwnProperty.call(encoderIds, value);
 }
 
+function hasExactAutoConfigDualOutputLegs(
+  result: IAutoConfigNativeResult,
+  expectedLegIds: readonly string[],
+): boolean {
+  return (
+    result.status === 'complete' &&
+    expectedLegIds.length === 2 &&
+    new Set(expectedLegIds).size === 2 &&
+    result.legs.length === 2 &&
+    new Set(result.legs.map(leg => leg.legId)).size === 2 &&
+    expectedLegIds.every(legId => result.legs.some(leg => leg.legId === legId))
+  );
+}
+
+function getAutoConfigDualOutputProviderSafeKbps(
+  result: IAutoConfigNativeResult,
+  provider: 'twitch' | 'youtube',
+): number | null {
+  const expectedMethod =
+    provider === 'twitch' ? 'twitch-bandwidth-test' : 'youtube-unbound-ramp';
+  const matchingLegs = result.legs.filter(
+    leg =>
+      leg.destinations.some(destination => destination.platform === provider) &&
+      leg.measurement?.probes?.some(probe => probe.provider === provider),
+  );
+  if (matchingLegs.length !== 1) return null;
+
+  const probes = matchingLegs[0].measurement?.probes;
+  if (!probes || probes.length !== 1) return null;
+  const probe = probes[0];
+  return probe.provider === provider &&
+    probe.method === expectedMethod &&
+    probe.success === true &&
+    isIntegerInRange(probe.safeKbps, 1, 100000)
+    ? probe.safeKbps
+    : null;
+}
+
+/**
+ * Validate the joint proof required before Desktop trusts an active two-leg
+ * Dual Output recommendation. Per-leg validation cannot prove that the two
+ * encoders and uploads were sustained concurrently within one upload budget.
+ */
+export function isValidAutoConfigDualOutputAggregateResult(
+  result: IAutoConfigNativeResult,
+  expectedLegIds: readonly string[],
+): boolean {
+  if (
+    !hasExactAutoConfigDualOutputLegs(result, expectedLegIds) ||
+    !result.legs.every(leg => leg.measurement?.mode === 'active')
+  ) {
+    return false;
+  }
+
+  const aggregate = result.aggregateUpload;
+  if (
+    !aggregate ||
+    aggregate.method !== 'dual-output-isolated-lower-bound' ||
+    !isIntegerInRange(aggregate.safeVideoKbps, 1, 200000) ||
+    !isIntegerInRange(aggregate.allocatedVideoKbps, 1, 200000) ||
+    aggregate.concurrentHardwareValidated !== true
+  ) {
+    return false;
+  }
+
+  const twitchSafeKbps = getAutoConfigDualOutputProviderSafeKbps(result, 'twitch');
+  const youtubeSafeKbps = getAutoConfigDualOutputProviderSafeKbps(result, 'youtube');
+  if (twitchSafeKbps === null || youtubeSafeKbps === null) return false;
+
+  const expectedSafeVideoKbps = Math.max(twitchSafeKbps, youtubeSafeKbps);
+  const unroundedPerLegKbps = Math.min(
+    twitchSafeKbps,
+    youtubeSafeKbps,
+    Math.floor(expectedSafeVideoKbps / 2),
+  );
+  const expectedPerLegKbps = Math.floor(unroundedPerLegKbps / 100) * 100;
+  const expectedAllocatedVideoKbps = expectedPerLegKbps * 2;
+  if (
+    expectedPerLegKbps < 1 ||
+    aggregate.safeVideoKbps !== expectedSafeVideoKbps ||
+    aggregate.allocatedVideoKbps !== expectedAllocatedVideoKbps
+  ) {
+    return false;
+  }
+
+  const [first, second] = result.legs.map(leg => leg.recommendation);
+  if (!first || !second) return false;
+  if (
+    !isIntegerInRange(first.bitrateKbps, 1, 100000) ||
+    !isIntegerInRange(second.bitrateKbps, 1, 100000) ||
+    !isIntegerInRange(first.fpsNum, 1, 1000000) ||
+    !isIntegerInRange(first.fpsDen, 1, 1000000) ||
+    !isIntegerInRange(second.fpsNum, 1, 1000000) ||
+    !isIntegerInRange(second.fpsDen, 1, 1000000)
+  ) {
+    return false;
+  }
+  const sameFps = first.fpsNum * second.fpsDen === second.fpsNum * first.fpsDen;
+  const sameEncoder =
+    first.encoderId === second.encoderId &&
+    first.encoderFamily === second.encoderFamily &&
+    (first.preset || '') === (second.preset || '');
+  const combinedBitrate = first.bitrateKbps + second.bitrateKbps;
+  return (
+    Number.isSafeInteger(combinedBitrate) &&
+    first.bitrateKbps === expectedPerLegKbps &&
+    second.bitrateKbps === expectedPerLegKbps &&
+    sameFps &&
+    sameEncoder &&
+    combinedBitrate === aggregate.allocatedVideoKbps &&
+    aggregate.allocatedVideoKbps <= aggregate.safeVideoKbps
+  );
+}
+
+/**
+ * Accept either the complete active aggregate proof or a fully estimated,
+ * low-confidence fallback. A mixed active/estimated pair is never valid:
+ * neither leg may promote unless native proved the whole concurrent attempt.
+ */
+export function isValidAutoConfigDualOutputResultEnvelope(
+  result: IAutoConfigNativeResult,
+  expectedLegIds: readonly string[],
+): boolean {
+  if (result.legs.some(leg => leg.measurement?.mode === 'active')) {
+    return isValidAutoConfigDualOutputAggregateResult(result, expectedLegIds);
+  }
+  return (
+    hasExactAutoConfigDualOutputLegs(result, expectedLegIds) &&
+    result.legs.every(
+      leg => leg.measurement?.mode === 'estimated' && leg.measurement?.confidence === 'low',
+    )
+  );
+}
+
 /**
  * Validate the complete native quality tuple at the worker boundary. No field
  * is repaired independently: a malformed or internally inconsistent tuple is
@@ -77,6 +212,8 @@ export function validateAutoConfigRecommendation(
     probeEvidence: IAutoOptimizerProbeEvidence[];
     providerOwnsEncoding?: boolean;
     enhancedBroadcasting?: boolean;
+    /** Native quality ladder selected for the destination or joint allocation. */
+    qualityProfile?: TAutoOptimizerQualityProfile;
     maxWidth?: number;
     maxHeight?: number;
     maxFpsNum?: number;
@@ -331,6 +468,7 @@ export function validateAutoConfigRecommendation(
       } as IAutoOptimizerRequestLimits,
       value.bitrateKbps,
       encoderFamily!,
+      context.qualityProfile,
     )
   ) {
     return null;

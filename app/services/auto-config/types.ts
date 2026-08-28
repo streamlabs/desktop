@@ -193,6 +193,12 @@ export interface IAutoConfigCapabilities {
   perUploadLegResults: boolean;
   desktopOwnedApply: boolean;
   multipleActiveProbes?: boolean;
+  /**
+   * Native can jointly allocate and validate two Dual Output canvas legs when
+   * one uses a Twitch probe and the other uses a YouTube probe. Other
+   * destinations may share either canvas without claiming probe provenance.
+   */
+  dualOutputActiveProbes: boolean;
   bandwidthModes: string[];
 }
 
@@ -324,6 +330,20 @@ export interface IAutoConfigNativeResult {
   sessionId: string;
   status: 'complete' | 'partial' | 'cancelled' | 'failed';
   error?: { code: string };
+  /**
+   * Joint upload/workload proof for an actively measured two-leg Dual Output
+   * result. It is omitted for every other topology.
+   */
+  aggregateUpload?: {
+    /** Native provenance for the isolated per-provider lower-bound allocator. */
+    method: 'dual-output-isolated-lower-bound';
+    /** Maximum combined video bitrate validated across all active upload legs. */
+    safeVideoKbps: number;
+    /** Combined video bitrate explicitly allocated to the returned legs. */
+    allocatedVideoKbps: number;
+    /** Both simultaneous video encoders sustained the recommended workload. */
+    concurrentHardwareValidated: boolean;
+  };
   legs: Array<{
     legId: string;
     display: TDisplayType | 'both';

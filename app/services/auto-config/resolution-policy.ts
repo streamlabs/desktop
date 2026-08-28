@@ -25,6 +25,8 @@ export interface IAutoOptimizerRequestLimitsInput {
   maxBitrateKbps?: number;
 }
 
+export type TAutoOptimizerQualityProfile = 'generic' | 'twitch';
+
 const LANDSCAPE_TIERS: ReadonlyArray<IAutoOptimizerResolution> = [
   { width: 1920, height: 1080 },
   { width: 1280, height: 720 },
@@ -276,12 +278,7 @@ export function autoOptimizerHardwareCeilings(
   if (!isCanonicalAspect(current.width, current.height)) {
     const currentWithinLimits =
       fitsWithin(current, { width: limits.maxWidth, height: limits.maxHeight }) &&
-      frameRateAtMost(
-        current.fpsNum,
-        current.fpsDen,
-        limits.maxFpsNum,
-        limits.maxFpsDen,
-      );
+      frameRateAtMost(current.fpsNum, current.fpsDen, limits.maxFpsNum, limits.maxFpsDen);
     return currentWithinLimits ? [{ ...current }] : [];
   }
 
@@ -325,6 +322,27 @@ export function autoOptimizerMinimumBitrateKbps(
   return Math.max(1, Math.ceil(minimum / 50) * 50);
 }
 
+function twitchMinimumBitrateKbps(video: IAutoOptimizerVideoTuple): number {
+  const longEdge = Math.max(video.width, video.height);
+  const shortEdge = Math.min(video.width, video.height);
+  const highFps = video.fpsNum > 30 * video.fpsDen;
+  if (longEdge === 1920 && shortEdge === 1080) return highFps ? 5500 : 5000;
+  if (longEdge === 1280 && shortEdge === 720) return highFps ? 4500 : 3000;
+  return 0;
+}
+
+function profileMinimumBitrateKbps(
+  video: IAutoOptimizerVideoTuple,
+  encoderFamily: string,
+  profile: TAutoOptimizerQualityProfile,
+): number {
+  if (profile === 'twitch') {
+    const minimum = twitchMinimumBitrateKbps(video);
+    if (minimum > 0) return minimum;
+  }
+  return autoOptimizerMinimumBitrateKbps(video, encoderFamily);
+}
+
 function qualityCandidates(ceiling: IAutoOptimizerVideoTuple): IAutoOptimizerVideoTuple[] {
   if (!isCanonicalAspect(ceiling.width, ceiling.height)) return [{ ...ceiling }];
   const values: IAutoOptimizerVideoTuple[] = [];
@@ -335,11 +353,12 @@ function qualityCandidates(ceiling: IAutoOptimizerVideoTuple): IAutoOptimizerVid
   return uniqueTuples(values);
 }
 
-/** Mirror native's deterministic bandwidth-to-quality selection. */
+/** Mirror native's deterministic generic or Twitch bandwidth-to-quality selection. */
 export function selectAutoOptimizerQuality(
   ceiling: IAutoOptimizerVideoTuple,
   safeVideoBitrateKbps: number,
   encoderFamily: string,
+  profile: TAutoOptimizerQualityProfile = 'generic',
 ): IAutoOptimizerVideoTuple | null {
   const options = qualityCandidates(ceiling);
   if (!options.length) return null;
@@ -347,12 +366,12 @@ export function selectAutoOptimizerQuality(
     .map((option, index) => ({ option, index }))
     .filter(
       ({ option }) =>
-        safeVideoBitrateKbps >= autoOptimizerMinimumBitrateKbps(option, encoderFamily),
+        safeVideoBitrateKbps >= profileMinimumBitrateKbps(option, encoderFamily, profile),
     );
   if (!eligible.length) return options[options.length - 1];
 
   let selected = eligible[0];
-  if (eligible.length > 1) {
+  if (profile === 'generic' && eligible.length > 1) {
     const first = eligible[0].option;
     const second = eligible[1].option;
     const firstLow = first.fpsNum <= 30 * first.fpsDen;
@@ -374,9 +393,15 @@ export function matchesAutoOptimizerQualityPolicy(
   limits: IAutoOptimizerRequestLimits,
   safeVideoBitrateKbps: number,
   encoderFamily: string,
+  profile: TAutoOptimizerQualityProfile = 'generic',
 ): boolean {
   return autoOptimizerHardwareCeilings(current, limits).some(ceiling => {
-    const selected = selectAutoOptimizerQuality(ceiling, safeVideoBitrateKbps, encoderFamily);
+    const selected = selectAutoOptimizerQuality(
+      ceiling,
+      safeVideoBitrateKbps,
+      encoderFamily,
+      profile,
+    );
     return selected !== null && sameTuple(selected, recommendation);
   });
 }
