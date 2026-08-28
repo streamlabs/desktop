@@ -32,6 +32,7 @@
   "Rename Folder": "フォルダー名を変更",
   "Name Folder": "フォルダーに名前を付ける",
   "Failed to load scene collection.  A new one will be created instead.": "シーンコレクションを読み込めませんでした。代わりに新しいシーンコレクションが作成されます。",
+  "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.": "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.",
   "New Scene": "新しいシーン",
   "Projector": "プロジェクター",
   "Your Scene Collections:": "あなたのシーンコレクション：",
