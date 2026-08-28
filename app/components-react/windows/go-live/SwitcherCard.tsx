@@ -149,6 +149,9 @@ export const SwitcherCard = forwardRef<ISwitcherCardHandle, ISwitcherCardProps>(
 });
 
 function SwitcherCardContents(p: ISwitcherCardContentsProps) {
+  // Note on disabling the switch by adding the `ant-switch-disabled` class to it. This ensures that the switch
+  // will appear visually disabled and will not respond to user interactions, but is still clickable programmatically.
+  // This is to allow the onClick in the parent container to still be triggered even when the switch should be disabled.
   return (
     <div
       className={cx(styles.platformSwitcher, { [styles.cardDisabled]: p.disabled }, p.className)}
@@ -169,10 +172,9 @@ function SwitcherCardContents(p: ISwitcherCardContentsProps) {
               <SwitchInput
                 value={p.value}
                 name={p.name}
-                disabled={p.disabled}
+                className={cx({ 'ant-switch-disabled': p.disabled }, p.switchClassName)}
                 label={p.label ?? p.title}
                 nolabel
-                className={p.switchClassName}
                 skipWrapperAttrs={true}
               />
             </Tooltip>
@@ -180,10 +182,9 @@ function SwitcherCardContents(p: ISwitcherCardContentsProps) {
             <SwitchInput
               value={p.value}
               name={p.name}
-              disabled={p.disabled}
+              className={cx({ 'ant-switch-disabled': p.disabled }, p.switchClassName)}
               label={p.label ?? p.title}
               nolabel
-              className={p.switchClassName}
               skipWrapperAttrs={true}
             />
           )}
