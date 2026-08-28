@@ -437,11 +437,6 @@ export class KickService
 
     return jfetch<IKickStreamInfoResponse>(request)
       .then(async res => {
-        if (searchString === '') {
-          console.debug('Kick search string is empty.');
-          return [] as IGame[];
-        }
-
         // To prevent errors when the response is not valid return an empty array
         if (typeof res !== 'object' || res === null) {
           console.error('Received a non-JSON response fetching Kick categories info.');
@@ -480,7 +475,7 @@ export class KickService
   }
 
   setGameInfo({ gameId, gameName }: { gameId: string; gameName: string }) {
-    this.UPDATE_STREAM_SETTINGS({ game: gameId });
+    this.UPDATE_STREAM_SETTINGS({ game: gameId, gameName });
     this.SET_GAME_NAME(gameName);
   }
 
