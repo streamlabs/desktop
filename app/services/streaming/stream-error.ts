@@ -658,7 +658,7 @@ export function throwRestreamError(e: unknown, errorType?: TStreamErrorType, mes
     e instanceof StreamError
       ? e
       : {
-          status: 404,
+          status: 400,
           statusText:
             message ?? $t('Failed to update Multistream platforms and destinations while live'),
         };

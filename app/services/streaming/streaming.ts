@@ -1016,11 +1016,6 @@ export class StreamingService
     this.SET_GO_LIVE_SETTINGS(settings);
 
     if (this.views.isLiveOutputEditingEnabled) {
-      const lifecycle = this.state.info.lifecycle;
-
-      // save current settings in store so we can re-use them if something will go wrong
-      this.SET_GO_LIVE_SETTINGS(settings);
-
       // call putChannelInfo for each platform
       const platforms = this.views.getEnabledPlatforms(settings.platforms);
       const updatePlatforms = this.parseUpdatePlatforms(platforms, activePlatforms);
@@ -1428,20 +1423,10 @@ export class StreamingService
       this.rethrowStreamError(e, errorType);
     }
 
-    if (destinations.length) {
-      // Update checklist for added custom destinations
-      for (const d of destinations) {
-        await this.runCheck('destination', async () => {
-          // Delay for UI animation
-          await new Promise(resolve => setTimeout(resolve, 300));
-        });
-      }
-    }
-
     // Update checklist for added custom destinations
     // Note: Custom destinations show as a single checklist item for all custom destinations
     // because there is nothing to set up for these destinations
-    if (destinations.length) {
+    if (destinations.length > 0) {
       await this.runCheck('destination', async () => {
         // Delay for UI animation
         await new Promise(resolve => setTimeout(resolve, 300));
@@ -1487,14 +1472,13 @@ export class StreamingService
       this.rethrowStreamError(e, errorType);
     }
 
-    if (destinations.length) {
+    if (destinations.length > 0) {
       // Update checklist for added custom destinations
-      for (const d of destinations) {
-        await this.runCheck('destination', async () => {
-          // Delay for UI animation
-          await new Promise(resolve => setTimeout(resolve, 300));
-        });
-      }
+
+      await this.runCheck('destination', async () => {
+        // Delay for UI animation
+        await new Promise(resolve => setTimeout(resolve, 300));
+      });
     }
 
     // Stop streaming displays that no longer have any targets
@@ -1519,7 +1503,7 @@ export class StreamingService
     // Update checklist for removed custom destinations
     // Note: Custom destinations show as a single checklist item for all custom destinations
     // because there is nothing to set up for these destinations
-    if (destinations.length) {
+    if (destinations.length > 0) {
       await this.runCheck('destination', async () => {
         // Delay for UI animation
         await new Promise(resolve => setTimeout(resolve, 300));

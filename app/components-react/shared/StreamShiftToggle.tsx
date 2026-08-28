@@ -53,7 +53,7 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
         toggle: newStatus,
       });
     },
-    [isStreamShiftMode, disableToggle],
+    [isStreamShiftMode, disableToggle, setStreamShift],
   );
 
   return (

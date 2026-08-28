@@ -5,7 +5,6 @@ import { SwitcherCard } from './SwitcherCard';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import { $t } from 'services/i18n/i18n';
 import styles from './GoLive.m.less';
-import cx from 'classnames';
 import { shell } from '@electron/remote';
 
 export default function StreamShiftCard() {
