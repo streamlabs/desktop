@@ -32,6 +32,7 @@
   "Rename Folder": "Renomear Pasta",
   "Name Folder": "Nomear pasta",
   "Failed to load scene collection.  A new one will be created instead.": "Falha ao carregar a coleção de cenas.  Uma nova cena será criada.",
+  "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.": "This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.",
   "New Scene": "Nova Cena",
   "Projector": "Projetor",
   "Your Scene Collections:": "Suas coleções de cena:",
