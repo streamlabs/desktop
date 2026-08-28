@@ -31,7 +31,6 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
   } = useGoLiveSettings().extend(module => ({
     get canDualStream() {
       if (!p.platform) return false;
-      if (module.isLiveOutputEditingEnabled) return false;
       return module.getCanDualStream(p.platform);
     },
 
@@ -88,7 +87,8 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     }
 
     if (isUpdateMode) {
-      // Dual stream is not compatible with live output editing so don't show it in the edit stream window
+      // Don't show Dual stream option in the Edit Stream window because it is not compatible with
+      // live output editing, which is the only time the display toggles are shown in the update window
       return defaultDisplays;
     }
 

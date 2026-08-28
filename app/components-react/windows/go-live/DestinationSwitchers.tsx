@@ -42,7 +42,6 @@ export const DestinationSwitchers = memo((p: { disabled?: boolean }) => {
     isTikTokGrandfathered,
     activeDisplayPlatforms,
     isUpdateMode,
-    isLiveOutputEditingEnabled,
   } = useGoLiveSettings().extend(module => ({
     get renderedPlatforms() {
       // Some platforms are always shown, even if not linked so add them to the list of platforms to display
@@ -62,25 +61,19 @@ export const DestinationSwitchers = memo((p: { disabled?: boolean }) => {
   const enabledDestRef = useRef(enabledDestinations);
   enabledDestRef.current = enabledDestinations;
 
-  // In update mode, prevent toggling off the last enabled platform per display orientation
   const disabledHorizontalUltraSwitcher = useMemo(() => {
-    if (isLiveOutputEditingEnabled) return null;
+    const shouldDisable =
+      isDualOutputMode && isPrime && isUpdateMode && activeDisplayPlatforms.horizontal.length < 2;
 
-    return isDualOutputMode &&
-      isPrime &&
-      isUpdateMode &&
-      activeDisplayPlatforms.horizontal.length < 2
-      ? activeDisplayPlatforms.horizontal[0]
-      : null;
-  }, [isDualOutputMode, isPrime, isUpdateMode, activeDisplayPlatforms, isLiveOutputEditingEnabled]);
+    return shouldDisable ? activeDisplayPlatforms.horizontal[0] : null;
+  }, [isDualOutputMode, isPrime, isUpdateMode, activeDisplayPlatforms]);
 
   const disabledVerticalUltraSwitcher = useMemo(() => {
-    if (isLiveOutputEditingEnabled) return null;
+    const shouldDisable =
+      isDualOutputMode && isPrime && isUpdateMode && activeDisplayPlatforms.vertical.length < 2;
 
-    return isDualOutputMode && isPrime && isUpdateMode && activeDisplayPlatforms.vertical.length < 2
-      ? activeDisplayPlatforms.vertical[0]
-      : null;
-  }, [isDualOutputMode, isPrime, isUpdateMode, activeDisplayPlatforms, isLiveOutputEditingEnabled]);
+    return shouldDisable ? activeDisplayPlatforms.vertical[0] : null;
+  }, [isDualOutputMode, isPrime, isUpdateMode, activeDisplayPlatforms]);
 
   const emitSwitch = useDebounce(500, (ind?: number, enabled?: boolean) => {
     if (ind !== undefined && enabled !== undefined) {
@@ -108,8 +101,7 @@ export const DestinationSwitchers = memo((p: { disabled?: boolean }) => {
         disabledHorizontalUltraSwitcher === platform ||
         disabledVerticalUltraSwitcher === platform
       ) {
-        enabledPlatformsRef.current.push(platform);
-        return;
+        return enabledPlatformsRef.current.includes(platform);
       }
 
       // Only allow non-ultra users to have 2 platforms, or 1 platform and 1 custom destination enabled
