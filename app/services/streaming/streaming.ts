@@ -102,6 +102,7 @@ import {
   shouldStopStreamingContext as shouldStopStreamingOutputContext,
   TStreamingDisplay,
 } from './output-context';
+import { videoOutputCoordinator } from 'services/video-output-coordinator';
 
 type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
 type TOutputContext = TDisplayType | 'enhancedBroadcasting' | 'stream' | 'streamSecond';
@@ -446,7 +447,7 @@ export class StreamingService
       (!this.streamSettingsService.state.protectedModeEnabled &&
         this.userService.state.auth?.primaryPlatform !== 'twitch') // twitch is a special case
     ) {
-      this.finishStartStreaming();
+      await this.finishStartStreaming();
       return;
     }
 
@@ -1558,6 +1559,15 @@ export class StreamingService
   }
 
   async finishStartStreaming(): Promise<unknown> {
+    const releaseOutputStart = videoOutputCoordinator.beginOutputStart();
+    try {
+      return await this.finishStartStreamingWithReservation();
+    } finally {
+      releaseOutputStart();
+    }
+  }
+
+  private async finishStartStreamingWithReservation(): Promise<unknown> {
     // register a promise that we should reject or resolve in the `handleStreamingSignal`
     const startStreamingPromise = new Promise((resolve, reject) => {
       this.resolveStartStreaming = resolve;
@@ -2601,6 +2611,15 @@ export class StreamingService
   }
 
   private async handleStartRecording() {
+    const releaseOutputStart = videoOutputCoordinator.beginOutputStart();
+    try {
+      await this.handleStartRecordingWithReservation();
+    } finally {
+      releaseOutputStart();
+    }
+  }
+
+  private async handleStartRecordingWithReservation() {
     // Only attempt to create recording instances if the recording status is offline
     // This prevents errors when trying to create a recording instance when one already exists
     if (this.isRecording) {
@@ -3308,7 +3327,13 @@ export class StreamingService
    */
 
   startReplayBuffer(): void {
+    void this.startReplayBufferWithReservation();
+  }
+
+  private async startReplayBufferWithReservation(): Promise<void> {
+    let releaseOutputStart = () => {};
     try {
+      releaseOutputStart = videoOutputCoordinator.beginOutputStart();
       // Only attempt to create or start the replay buffer instance if the replay buffer is offline
       if (this.views.isReplayBufferActive) {
         console.warn('Replay buffer is already active');
@@ -3324,12 +3349,12 @@ export class StreamingService
       // recording instance first in the app's current session. A band-aid solution is to always create the
       // horizontal recording instance and then destroy it since we won't be using it.
       if (display === 'vertical' && this.contexts.horizontal.recording === null) {
-        this.createTemporaryHorizontalRecording();
+        await this.createTemporaryHorizontalRecording();
       }
 
       this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Running, display);
       const audioTrack = display === 'horizontal' ? 1 : 2;
-      this.createReplayBuffer({ display, audioTrack });
+      await this.createReplayBuffer({ display, audioTrack });
     } catch (e: unknown) {
       console.error('Error toggling replay buffer:', e);
 
@@ -3351,6 +3376,8 @@ export class StreamingService
         EOutputCode.Error,
         message,
       );
+    } finally {
+      releaseOutputStart();
     }
   }
 
