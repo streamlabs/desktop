@@ -256,6 +256,7 @@
   "FPS Denominator": "FPS-nævneren",
   "FPS Value": "FPS-værdi",
   "The resolution must be in the format [width]x[height] (i.e. 1920x1080)": "Opløsningen skal være i formatet [bredde]x[højde] (f.eks. 1920x1080)",
+  "Failed to update the video resolution.": "Failed to update the video resolution.",
   "Custom": "Brugerdefineret",
   "Custom Base Resolution": "Brugerdefineret basisopløsning",
   "Custom Output Resolution": "Brugerdefineret udgangsopløsning",
