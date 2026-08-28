@@ -1,10 +1,14 @@
 import test from 'ava';
 import {
+  isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope,
   isValidAutoConfigDualOutputAggregateResult,
   isValidAutoConfigDualOutputResultEnvelope,
   validateAutoConfigRecommendation,
 } from '../../app/services/auto-config/result-policy';
-import { IAutoConfigNativeResult } from '../../app/services/auto-config/types';
+import {
+  IAutoConfigNativeResult,
+  IAutoOptimizerTopologyLeg,
+} from '../../app/services/auto-config/types';
 
 type TRecommendation = IAutoConfigNativeResult['legs'][number]['recommendation'];
 
@@ -31,8 +35,8 @@ function dualOutputNativeResult(): IAutoConfigNativeResult {
     status: 'complete',
     aggregateUpload: {
       method: 'dual-output-isolated-lower-bound',
-      safeVideoKbps: 11600,
-      allocatedVideoKbps: 11600,
+      safeVideoKbps: 10000,
+      allocatedVideoKbps: 10000,
       concurrentHardwareValidated: true,
     },
     legs: [
@@ -54,7 +58,7 @@ function dualOutputNativeResult(): IAutoConfigNativeResult {
             },
           ],
         },
-        recommendation: recommendation(),
+        recommendation: recommendation({ bitrateKbps: 5000 }),
       },
       {
         legId: 'vertical',
@@ -67,15 +71,145 @@ function dualOutputNativeResult(): IAutoConfigNativeResult {
             {
               provider: 'youtube',
               method: 'youtube-unbound-ramp',
-              measuredKbps: 11620,
-              safeKbps: 11600,
+              measuredKbps: 10020,
+              safeKbps: 10000,
               headroomPercent: 0,
               success: true,
             },
           ],
         },
-        recommendation: recommendation({ width: 1080, height: 1920 }),
+        recommendation: recommendation({ width: 1080, height: 1920, bitrateKbps: 5000 }),
       },
+    ],
+  };
+}
+
+const enhancedBroadcastingDualOutputLegs: ReadonlyArray<
+  Pick<IAutoOptimizerTopologyLeg, 'legId' | 'display' | 'outputKind'>
+> = [
+  {
+    legId: 'twitch-enhanced-broadcasting',
+    display: 'both',
+    outputKind: 'twitch-enhanced-broadcasting',
+  },
+  {
+    legId: 'horizontal-standard',
+    display: 'horizontal',
+    outputKind: 'standard',
+  },
+];
+
+function enhancedBroadcastingDualOutputNativeResult(
+  includeVertical = false,
+): IAutoConfigNativeResult {
+  const additionalVideo = {
+    display: 'vertical' as const,
+    width: 1080,
+    height: 1920,
+    fpsNum: 60,
+    fpsDen: 1,
+  };
+  const companionLegs: IAutoConfigNativeResult['legs'] = [
+    {
+      legId: 'horizontal-standard',
+      display: 'horizontal',
+      destinations: [{ platform: 'youtube' }, { platform: 'kick' }],
+      measurement: {
+        mode: 'active',
+        confidence: 'high',
+        probes: [
+          {
+            provider: 'youtube',
+            method: 'youtube-unbound-ramp',
+            measuredKbps: 6100,
+            safeKbps: 6000,
+            headroomPercent: 0,
+            success: true,
+          },
+        ],
+      },
+      recommendation: recommendation({ fpsNum: 60, fpsDen: 1, bitrateKbps: 6000 }),
+    },
+  ];
+  if (includeVertical) {
+    companionLegs.push({
+      legId: 'vertical-standard',
+      display: 'vertical',
+      destinations: [{ platform: 'youtube' }],
+      measurement: {
+        mode: 'active',
+        confidence: 'high',
+        probes: [
+          {
+            provider: 'youtube',
+            method: 'youtube-unbound-ramp',
+            measuredKbps: 6100,
+            safeKbps: 6000,
+            headroomPercent: 0,
+            success: true,
+          },
+        ],
+      },
+      recommendation: recommendation({
+        width: 1080,
+        height: 1920,
+        fpsNum: 60,
+        fpsDen: 1,
+        bitrateKbps: 6000,
+      }),
+    });
+  }
+
+  return {
+    schemaVersion: 1,
+    sessionId: 'enhanced-broadcasting-dual-output-session',
+    status: 'complete',
+    combinedWorkload: {
+      method: 'enhanced-broadcasting-dual-output-concurrent',
+      enhancedBroadcastingLegId: 'twitch-enhanced-broadcasting',
+      validated: true,
+      companionLegs: companionLegs.map(leg => ({
+        legId: leg.legId,
+        display: leg.display as 'horizontal' | 'vertical',
+        width: leg.recommendation.width,
+        height: leg.recommendation.height,
+        fpsNum: leg.recommendation.fpsNum,
+        fpsDen: leg.recommendation.fpsDen,
+        bitrateKbps: leg.recommendation.bitrateKbps,
+        encoderId: leg.recommendation.encoderId,
+        preset: leg.recommendation.preset,
+      })),
+    },
+    legs: [
+      {
+        legId: 'twitch-enhanced-broadcasting',
+        display: 'both',
+        destinations: [{ platform: 'twitch' }],
+        measurement: {
+          mode: 'active',
+          confidence: 'high',
+          probes: [
+            {
+              provider: 'twitch',
+              method: 'twitch-enhanced-broadcasting-test',
+              success: true,
+              testedWidth: 1920,
+              testedHeight: 1080,
+              testedFpsNum: 60,
+              testedFpsDen: 1,
+              testedAdditionalVideo: { ...additionalVideo },
+              videoTrackCount: 4,
+              configuredAggregateBitrateKbps: 10000,
+            },
+          ],
+        },
+        recommendation: recommendation({
+          fpsNum: 60,
+          fpsDen: 1,
+          additionalVideo: { ...additionalVideo },
+        }),
+      },
+      ...companionLegs,
     ],
   };
 }
@@ -93,20 +227,20 @@ test('two-leg Dual Output requires one valid aggregate upload and hardware proof
   t.false(isValidAutoConfigDualOutputAggregateResult(hardwareNotConcurrent, expectedLegIds));
 
   const overcommitted = dualOutputNativeResult();
-  overcommitted.aggregateUpload!.safeVideoKbps = 11599;
+  overcommitted.aggregateUpload!.safeVideoKbps = 9999;
   t.false(isValidAutoConfigDualOutputAggregateResult(overcommitted, expectedLegIds));
 
   const underallocated = dualOutputNativeResult();
-  underallocated.aggregateUpload!.allocatedVideoKbps = 11599;
+  underallocated.aggregateUpload!.allocatedVideoKbps = 9999;
   t.false(isValidAutoConfigDualOutputAggregateResult(underallocated, expectedLegIds));
 
   const overallocated = dualOutputNativeResult();
-  overallocated.aggregateUpload!.safeVideoKbps = 12000;
-  overallocated.aggregateUpload!.allocatedVideoKbps = 11700;
+  overallocated.aggregateUpload!.safeVideoKbps = 11000;
+  overallocated.aggregateUpload!.allocatedVideoKbps = 10100;
   t.false(isValidAutoConfigDualOutputAggregateResult(overallocated, expectedLegIds));
 
   const allocationExceedsSafe = dualOutputNativeResult();
-  allocationExceedsSafe.aggregateUpload!.allocatedVideoKbps = 11601;
+  allocationExceedsSafe.aggregateUpload!.allocatedVideoKbps = 10001;
   t.false(isValidAutoConfigDualOutputAggregateResult(allocationExceedsSafe, expectedLegIds));
 
   const wrongMethod = dualOutputNativeResult();
@@ -114,7 +248,7 @@ test('two-leg Dual Output requires one valid aggregate upload and hardware proof
   t.false(isValidAutoConfigDualOutputAggregateResult(wrongMethod, expectedLegIds));
 
   const wrongProviderSafeValue = dualOutputNativeResult();
-  wrongProviderSafeValue.legs[1].measurement.probes![0].safeKbps = 11500;
+  wrongProviderSafeValue.legs[1].measurement.probes![0].safeKbps = 9900;
   t.false(isValidAutoConfigDualOutputAggregateResult(wrongProviderSafeValue, expectedLegIds));
 
   const wrongProvider = dualOutputNativeResult();
@@ -137,14 +271,10 @@ test('two-leg Dual Output requires one valid aggregate upload and hardware proof
 test('two-leg aggregate proof accepts unprobed destinations sharing a measured canvas', t => {
   const result = dualOutputNativeResult();
   result.legs[0].destinations.push({ platform: 'kick' });
-  t.true(
-    isValidAutoConfigDualOutputAggregateResult(result, ['horizontal', 'vertical']),
-  );
+  t.true(isValidAutoConfigDualOutputAggregateResult(result, ['horizontal', 'vertical']));
 
   result.legs[0].measurement.probes![0].provider = 'youtube';
-  t.false(
-    isValidAutoConfigDualOutputAggregateResult(result, ['horizontal', 'vertical']),
-  );
+  t.false(isValidAutoConfigDualOutputAggregateResult(result, ['horizontal', 'vertical']));
 });
 
 test('two-leg Dual Output rejects partial legs and divergent joint recommendations', t => {
@@ -200,6 +330,209 @@ test('two-leg Dual Output accepts only a complete low-confidence estimated fallb
   partialActive.legs[1].measurement.mode = 'estimated';
   partialActive.legs[1].measurement.confidence = 'low';
   t.false(isValidAutoConfigDualOutputResultEnvelope(partialActive, expectedLegIds));
+});
+
+test('mixed Enhanced Broadcasting accepts an exact concurrent companion workload proof', t => {
+  t.true(
+    isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(
+      enhancedBroadcastingDualOutputNativeResult(),
+      enhancedBroadcastingDualOutputLegs,
+    ),
+  );
+
+  const result = enhancedBroadcastingDualOutputNativeResult(true);
+  result.combinedWorkload!.companionLegs.reverse();
+  t.true(
+    isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(result, [
+      ...enhancedBroadcastingDualOutputLegs,
+      {
+        legId: 'vertical-standard',
+        display: 'vertical',
+        outputKind: 'standard',
+      },
+    ]),
+    'proof entries form an exact set and do not depend on native ordering',
+  );
+});
+
+test('mixed Enhanced Broadcasting rejects a missing, unvalidated, or misidentified proof', t => {
+  const missing = enhancedBroadcastingDualOutputNativeResult();
+  delete missing.combinedWorkload;
+  t.false(
+    isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(
+      missing,
+      enhancedBroadcastingDualOutputLegs,
+    ),
+  );
+
+  const unvalidated = enhancedBroadcastingDualOutputNativeResult();
+  unvalidated.combinedWorkload!.validated = false;
+  t.false(
+    isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(
+      unvalidated,
+      enhancedBroadcastingDualOutputLegs,
+    ),
+  );
+
+  const wrongMethod = enhancedBroadcastingDualOutputNativeResult();
+  wrongMethod.combinedWorkload!.method = 'unexpected' as typeof wrongMethod.combinedWorkload.method;
+  t.false(
+    isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(
+      wrongMethod,
+      enhancedBroadcastingDualOutputLegs,
+    ),
+  );
+
+  const wrongEnhancedLeg = enhancedBroadcastingDualOutputNativeResult();
+  wrongEnhancedLeg.combinedWorkload!.enhancedBroadcastingLegId = 'horizontal-standard';
+  t.false(
+    isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(
+      wrongEnhancedLeg,
+      enhancedBroadcastingDualOutputLegs,
+    ),
+  );
+});
+
+test('mixed Enhanced Broadcasting requires an exact unique companion proof set', t => {
+  const missing = enhancedBroadcastingDualOutputNativeResult();
+  missing.combinedWorkload!.companionLegs = [];
+  t.false(
+    isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(
+      missing,
+      enhancedBroadcastingDualOutputLegs,
+    ),
+  );
+
+  const duplicate = enhancedBroadcastingDualOutputNativeResult();
+  duplicate.combinedWorkload!.companionLegs.push({
+    ...duplicate.combinedWorkload!.companionLegs[0],
+  });
+  t.false(
+    isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(
+      duplicate,
+      enhancedBroadcastingDualOutputLegs,
+    ),
+  );
+
+  const extra = enhancedBroadcastingDualOutputNativeResult();
+  extra.combinedWorkload!.companionLegs.push({
+    ...extra.combinedWorkload!.companionLegs[0],
+    legId: 'vertical-standard',
+    display: 'vertical',
+    width: 1080,
+    height: 1920,
+  });
+  t.false(
+    isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(
+      extra,
+      enhancedBroadcastingDualOutputLegs,
+    ),
+  );
+});
+
+test('mixed Enhanced Broadcasting proof must exactly match every standard recommendation tuple', t => {
+  const mismatches: Array<
+    Partial<NonNullable<IAutoConfigNativeResult['combinedWorkload']>['companionLegs'][number]>
+  > = [
+    { display: 'vertical' },
+    { width: 1280 },
+    { height: 720 },
+    { fpsNum: 30 },
+    { fpsDen: 1001 },
+    { bitrateKbps: 5900 },
+    { encoderId: 'obs_x264' },
+    { preset: 'p4' },
+  ];
+
+  mismatches.forEach(patch => {
+    const result = enhancedBroadcastingDualOutputNativeResult();
+    Object.assign(result.combinedWorkload!.companionLegs[0], patch);
+    t.false(
+      isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(
+        result,
+        enhancedBroadcastingDualOutputLegs,
+      ),
+      `accepted mismatched proof ${JSON.stringify(patch)}`,
+    );
+  });
+
+  const missingPreset = enhancedBroadcastingDualOutputNativeResult();
+  delete missingPreset.combinedWorkload!.companionLegs[0].preset;
+  t.false(
+    isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(
+      missingPreset,
+      enhancedBroadcastingDualOutputLegs,
+    ),
+  );
+});
+
+test('mixed Enhanced Broadcasting requires one common standard output configuration', t => {
+  const mismatches: Array<Partial<IAutoConfigNativeResult['legs'][number]['recommendation']>> = [
+    { bitrateKbps: 4500 },
+    { encoderId: 'obs_x264', encoderFamily: 'x264' },
+    { preset: 'veryfast' },
+  ];
+
+  mismatches.forEach(patch => {
+    const result = enhancedBroadcastingDualOutputNativeResult(true);
+    const vertical = result.legs.find(leg => leg.legId === 'vertical-standard')!;
+    Object.assign(vertical.recommendation, patch);
+    const proof = result.combinedWorkload!.companionLegs.find(
+      leg => leg.legId === 'vertical-standard',
+    )!;
+    proof.bitrateKbps = vertical.recommendation.bitrateKbps;
+    proof.encoderId = vertical.recommendation.encoderId;
+    proof.preset = vertical.recommendation.preset;
+
+    t.false(
+      isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(
+        result,
+        enhancedBroadcastingDualOutputLegs.concat({
+          legId: 'vertical-standard',
+          display: 'vertical',
+          outputKind: 'standard',
+        }),
+      ),
+    );
+  });
+});
+
+test('mixed Enhanced Broadcasting requires exact successful paired Twitch evidence', t => {
+  const failed = enhancedBroadcastingDualOutputNativeResult();
+  failed.legs[0].measurement.probes![0].success = false;
+  t.false(
+    isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(
+      failed,
+      enhancedBroadcastingDualOutputLegs,
+    ),
+  );
+
+  const mismatchedPrimary = enhancedBroadcastingDualOutputNativeResult();
+  mismatchedPrimary.legs[0].measurement.probes![0].testedWidth = 1280;
+  t.false(
+    isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(
+      mismatchedPrimary,
+      enhancedBroadcastingDualOutputLegs,
+    ),
+  );
+
+  const missingAdditional = enhancedBroadcastingDualOutputNativeResult();
+  delete missingAdditional.legs[0].measurement.probes![0].testedAdditionalVideo;
+  t.false(
+    isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(
+      missingAdditional,
+      enhancedBroadcastingDualOutputLegs,
+    ),
+  );
+
+  const mismatchedAdditional = enhancedBroadcastingDualOutputNativeResult();
+  mismatchedAdditional.legs[0].measurement.probes![0].testedAdditionalVideo!.width = 720;
+  t.false(
+    isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(
+      mismatchedAdditional,
+      enhancedBroadcastingDualOutputLegs,
+    ),
+  );
 });
 
 const activeContext = {
@@ -301,6 +634,111 @@ test('estimated recommendations cannot independently raise resolution', t => {
   );
 });
 
+test('combined workload promotion requires successful companion bandwidth evidence', t => {
+  const combinedContext = {
+    ...activeContext,
+    combinedWorkloadValidated: true,
+    maxFpsNum: 60,
+    maxFpsDen: 1,
+    currentFpsNum: 30,
+    currentFpsDen: 1,
+  };
+  const promoted = recommendation({ fpsNum: 60, fpsDen: 1 });
+
+  t.is(
+    validateAutoConfigRecommendation(promoted, {
+      ...combinedContext,
+      measurementMode: 'estimated',
+      probeEvidence: [],
+    }),
+    null,
+    'an unsupported-only companion cannot promote from hardware proof alone',
+  );
+  t.is(
+    validateAutoConfigRecommendation(promoted, {
+      ...combinedContext,
+      probeEvidence: [
+        {
+          provider: 'youtube',
+          method: 'youtube-unbound-ramp',
+          safeKbps: 6000,
+          success: false,
+        },
+      ],
+    }),
+    null,
+    'a failed supported probe cannot authorize promotion',
+  );
+  t.is(
+    validateAutoConfigRecommendation(promoted, {
+      ...combinedContext,
+      probeEvidence: [
+        {
+          provider: 'youtube',
+          method: 'youtube-unbound-ramp',
+          safeKbps: promoted.bitrateKbps - 1,
+          success: true,
+        },
+      ],
+    }),
+    null,
+    'successful evidence below the recommendation bitrate is insufficient',
+  );
+  t.truthy(
+    validateAutoConfigRecommendation(promoted, {
+      ...combinedContext,
+      probeEvidence: [
+        {
+          provider: 'youtube',
+          method: 'youtube-unbound-ramp',
+          safeKbps: promoted.bitrateKbps,
+          success: true,
+        },
+      ],
+    }),
+    'the exact supported active proof authorizes the jointly tested promotion',
+  );
+});
+
+test('unsupported combined companions may retain or lower their current tuple', t => {
+  const context = {
+    ...activeContext,
+    measurementMode: 'estimated' as const,
+    combinedWorkloadValidated: true,
+    currentBitrateKbps: 2500,
+    probeEvidence: [] as typeof activeContext.probeEvidence,
+    maxFpsNum: 60,
+    maxFpsDen: 1,
+    currentFpsNum: 30,
+    currentFpsDen: 1,
+  };
+
+  t.truthy(
+    validateAutoConfigRecommendation(
+      recommendation({
+        width: 1280,
+        height: 720,
+        fpsNum: 30,
+        fpsDen: 1,
+        bitrateKbps: 2500,
+      }),
+      context,
+    ),
+  );
+  t.truthy(
+    validateAutoConfigRecommendation(
+      recommendation({
+        width: 960,
+        height: 540,
+        fpsNum: 30,
+        fpsDen: 1,
+        bitrateKbps: 2000,
+      }),
+      context,
+    ),
+  );
+});
+
 test('estimate-only validation preserves the exact high current tuple from the request', t => {
   t.truthy(
     validateAutoConfigRecommendation(
@@ -334,6 +772,26 @@ test('active recommendations cannot exceed the lowest successful safe result', t
     null,
   );
   t.truthy(validateAutoConfigRecommendation(recommendation({ bitrateKbps: 6000 }), activeContext));
+});
+
+test('a 10000 Kbps stability probe can produce only an 8000 Kbps recommendation', t => {
+  const context = {
+    ...activeContext,
+    maxBitrateKbps: 8000,
+    probeEvidence: [
+      {
+        provider: 'youtube' as const,
+        method: 'youtube-unbound-ramp' as const,
+        measuredKbps: 10000,
+        safeKbps: 10000,
+        headroomPercent: 0,
+        success: true,
+      },
+    ],
+  };
+
+  t.truthy(validateAutoConfigRecommendation(recommendation({ bitrateKbps: 8000 }), context));
+  t.is(validateAutoConfigRecommendation(recommendation({ bitrateKbps: 8001 }), context), null);
 });
 
 test('a shared Twitch and YouTube result keeps the lower validated provider target', t => {
@@ -493,9 +951,26 @@ test('provider-managed encoding does not reject an otherwise valid tuple by code
       encoderId: 'obs_nvenc_av1_tex',
       encoderTitle: 'NVIDIA NVENC AV1',
       codec: 'av1',
+      bitrateKbps: 10000,
       preset: undefined,
     }),
-    { ...activeContext, providerOwnsEncoding: true },
+    {
+      ...activeContext,
+      providerOwnsEncoding: true,
+      enhancedBroadcasting: true,
+      maxBitrateKbps: 8000,
+      probeEvidence: [
+        {
+          provider: 'twitch',
+          method: 'twitch-enhanced-broadcasting-test',
+          success: true,
+          testedWidth: 1920,
+          testedHeight: 1080,
+          testedFpsNum: 60000,
+          testedFpsDen: 1001,
+        },
+      ],
+    },
   );
   t.truthy(result);
   t.is(result?.encoder, null);

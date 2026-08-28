@@ -184,6 +184,7 @@ export function AutoOptimizerResults(p: {
       leg => leg.managedByProvider && (leg.videoSettingsManagedByProvider ?? leg.managedByProvider),
     );
   const splitLegLayout = !allSettingsMatch;
+  const denseLegLayout = p.legs.length > 2;
   let applyLabel = $t('Save Settings');
   if (p.host === 'go-live') {
     applyLabel = allProviderManaged ? $t('Continue & Go Live') : $t('Save Settings & Go Live');
@@ -192,7 +193,11 @@ export function AutoOptimizerResults(p: {
   return (
     <section className={styles.resultsScreen}>
       <p className={styles.subtitle}>{$t("You're all set!")}</p>
-      <div className={`${styles.summaryCard} ${splitLegLayout ? styles.splitSummaryCard : ''}`}>
+      <div
+        className={`${styles.summaryCard} ${splitLegLayout ? styles.splitSummaryCard : ''} ${
+          denseLegLayout ? styles.denseSummaryCard : ''
+        }`}
+      >
         <div className={styles.summaryContent}>
           <h2>{$t('Your recommended settings are:')}</h2>
           {allSettingsMatch ? (
@@ -208,13 +213,15 @@ export function AutoOptimizerResults(p: {
             </div>
           )}
         </div>
-        <div className={styles.kevinResultFrame} aria-hidden="true">
-          <img
-            className={styles.kevinResult}
-            src={$i('images/auto-optimizer/kevin-black.png')}
-            alt=""
-          />
-        </div>
+        {!denseLegLayout && (
+          <div className={styles.kevinResultFrame} aria-hidden="true">
+            <img
+              className={styles.kevinResult}
+              src={$i('images/auto-optimizer/kevin-black.png')}
+              alt=""
+            />
+          </div>
+        )}
       </div>
       {p.advice && <AdviceCard advice={p.advice} onAction={p.onAdvice} />}
       <div className={styles.resultActions}>

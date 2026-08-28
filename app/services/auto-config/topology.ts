@@ -48,6 +48,7 @@ function getEstimateReason(type: TAutoOptimizerTopologyType): string {
     case 'dual-output':
       return 'dual_output';
     case 'enhanced-broadcasting':
+    case 'enhanced-broadcasting-dual-output':
       return 'enhanced_broadcasting';
     case 'stream-shift':
       return 'stream_shift';
@@ -73,7 +74,9 @@ function probeCandidates(
       let kind: IAutoOptimizerProbeCandidate['kind'] = 'youtube-unbound';
       if (provider === 'twitch') {
         kind =
-          type === 'enhanced-broadcasting' ? 'twitch-enhanced-broadcasting' : 'twitch-standard';
+          type === 'enhanced-broadcasting' || type === 'enhanced-broadcasting-dual-output'
+            ? 'twitch-enhanced-broadcasting'
+            : 'twitch-standard';
       }
       return { probeId: `${legId}-${provider}`, kind, legId, provider };
     });
@@ -137,10 +140,22 @@ export function classifyAutoOptimizerTopology(
       twitchSettings?.isEnhancedBroadcasting ||
       isSingleConnectionTwitchDual,
   );
+  const isEnhancedBroadcastingDualOutput =
+    dualOutputMode &&
+    twitchDualStreamAccess &&
+    enhancedBroadcasting &&
+    !streamShift &&
+    !hasCustom &&
+    platforms.includes('twitch') &&
+    platforms.some(platform => platform !== 'twitch') &&
+    twitchSettings?.display === 'both' &&
+    !twitchSettings?.useCustomFields;
   const targetCount = platforms.length + customDestinations.length;
 
   let type: TAutoOptimizerTopologyType;
-  if (enhancedBroadcasting) {
+  if (isEnhancedBroadcastingDualOutput) {
+    type = 'enhanced-broadcasting-dual-output';
+  } else if (enhancedBroadcasting) {
     type = 'enhanced-broadcasting';
   } else if (streamShift) {
     type = 'stream-shift';
@@ -168,8 +183,11 @@ export function classifyAutoOptimizerTopology(
     platforms[0] === 'twitch' &&
     !twitchSettings?.useCustomFields &&
     (!dualOutputMode || isSingleConnectionTwitchDual);
+  const enhancedBroadcastingDualOutputProbeEligible =
+    type === 'enhanced-broadcasting-dual-output';
   const allowProbes =
     enhancedBroadcastingProbeEligible ||
+    enhancedBroadcastingDualOutputProbeEligible ||
     !['custom-rtmp', 'mixed', 'enhanced-broadcasting', 'stream-shift'].includes(type);
 
   const allDestinations: IAutoOptimizerDestination[] = [
@@ -178,12 +196,55 @@ export function classifyAutoOptimizerTopology(
   ];
 
   let legs: IAutoOptimizerTopologyLeg[];
-  if (isSingleConnectionTwitchDual) {
+  if (isEnhancedBroadcastingDualOutput) {
+    const byDisplay = {
+      horizontal: [] as IAutoOptimizerDestination[],
+      vertical: [] as IAutoOptimizerDestination[],
+    };
+    platforms
+      .filter(platform => platform !== 'twitch')
+      .forEach(platform => {
+        const display = settings.platforms[platform]?.display ?? 'horizontal';
+        if (display === 'both') {
+          byDisplay.horizontal.push(destination(platform));
+          byDisplay.vertical.push(destination(platform));
+        } else {
+          byDisplay[display].push(destination(platform));
+        }
+      });
+    legs = [
+      completeLeg(
+        {
+          legId: 'twitch-enhanced-broadcasting',
+          display: 'both',
+          outputKind: 'twitch-enhanced-broadcasting',
+          destinations: [destination('twitch')],
+        },
+        type,
+        allowProbes,
+      ),
+      ...(['horizontal', 'vertical'] as const)
+        .filter(display => byDisplay[display].length > 0)
+        .map(display =>
+          completeLeg(
+            {
+              legId: `${display}-standard`,
+              display,
+              outputKind: 'standard',
+              destinations: byDisplay[display],
+            },
+            type,
+            allowProbes,
+          ),
+        ),
+    ];
+  } else if (isSingleConnectionTwitchDual) {
     legs = [
       completeLeg(
         {
           legId: 'twitch-dual',
           display: 'both',
+          outputKind: 'twitch-enhanced-broadcasting',
           destinations: [destination('twitch')],
         },
         type,
@@ -196,6 +257,8 @@ export function classifyAutoOptimizerTopology(
         {
           legId: 'horizontal',
           display: 'horizontal',
+          outputKind:
+            type === 'enhanced-broadcasting' ? 'twitch-enhanced-broadcasting' : 'standard',
           destinations: allDestinations,
         },
         type,
@@ -229,6 +292,8 @@ export function classifyAutoOptimizerTopology(
           {
             legId: display,
             display,
+            outputKind:
+              type === 'enhanced-broadcasting' ? 'twitch-enhanced-broadcasting' : 'standard',
             destinations: byDisplay[display],
           },
           type,
@@ -246,6 +311,7 @@ export function classifyAutoOptimizerTopology(
         {
           legId: 'horizontal',
           display: 'horizontal',
+          outputKind: 'standard',
           destinations: [],
         },
         type,
@@ -284,7 +350,13 @@ export function isAutoOptimizerProfileCompatible(
 
   return topology.legs.every(topologyLeg => {
     const profileLeg = profile.legs.find(leg => leg.legId === topologyLeg.legId);
-    if (!profileLeg || profileLeg.display !== topologyLeg.display) return false;
+    if (
+      !profileLeg ||
+      profileLeg.display !== topologyLeg.display ||
+      profileLeg.outputKind !== topologyLeg.outputKind
+    ) {
+      return false;
+    }
 
     const topologyDestinations = topologyLeg.destinations
       .map(destination => destination.platform)

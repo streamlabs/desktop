@@ -21,8 +21,6 @@ const AUTO_OPTIMIZER_ENCODER_FAMILIES = new Set([
 ]);
 
 export interface IAutoConfigProbeRuntimeSupport {
-  twitchFeatureEnabled: boolean;
-  youtubeFeatureEnabled: boolean;
   canConfirmYoutubeIngest: boolean;
 }
 
@@ -152,6 +150,7 @@ export function hasRequiredAutoConfigCapabilities(
       capabilities.perUploadLegResults === true &&
       capabilities.desktopOwnedApply === true &&
       typeof capabilities.dualOutputActiveProbes === 'boolean' &&
+      typeof capabilities.enhancedBroadcastingDualOutputWorkload === 'boolean' &&
       capabilities.bandwidthModes?.includes('estimate'),
   );
 }
@@ -162,20 +161,13 @@ export function supportedAutoConfigProbeKinds(
   runtime: IAutoConfigProbeRuntimeSupport,
 ): Set<TAutoOptimizerProbeKind> {
   const kinds = new Set<TAutoOptimizerProbeKind>();
-  if (
-    runtime.twitchFeatureEnabled &&
-    capabilities.bandwidthModes.includes('twitch-standard-active')
-  ) {
+  if (capabilities.bandwidthModes.includes('twitch-standard-active')) {
     kinds.add('twitch-standard');
   }
-  if (
-    runtime.twitchFeatureEnabled &&
-    capabilities.bandwidthModes.includes('twitch-enhanced-broadcasting-active')
-  ) {
+  if (capabilities.bandwidthModes.includes('twitch-enhanced-broadcasting-active')) {
     kinds.add('twitch-enhanced-broadcasting');
   }
   if (
-    runtime.youtubeFeatureEnabled &&
     runtime.canConfirmYoutubeIngest &&
     capabilities.multipleActiveProbes === true &&
     capabilities.bandwidthModes.includes('youtube-unbound-active')
@@ -248,6 +240,76 @@ export function isEligibleAutoConfigDualOutputActiveTopology(
 }
 
 /**
+ * Validate the exact V1 physical-output shape for Twitch Dual Stream Enhanced
+ * Broadcasting plus one standard output for each canvas carrying non-Twitch
+ * destinations. The standard outputs may be workload-tested without an active
+ * provider bandwidth probe.
+ */
+export function isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology(
+  topology: IAutoOptimizerTopology,
+): boolean {
+  if (topology.type !== 'enhanced-broadcasting-dual-output' || topology.legs.length < 2) {
+    return false;
+  }
+
+  const enhancedLegs = topology.legs.filter(
+    leg => leg.outputKind === 'twitch-enhanced-broadcasting',
+  );
+  const companionLegs = topology.legs.filter(leg => leg.outputKind === 'standard');
+  if (
+    enhancedLegs.length !== 1 ||
+    companionLegs.length < 1 ||
+    companionLegs.length > 2 ||
+    enhancedLegs[0].display !== 'both' ||
+    enhancedLegs[0].destinations.length !== 1 ||
+    enhancedLegs[0].destinations[0].platform !== 'twitch'
+  ) {
+    return false;
+  }
+
+  const enhancedCandidates = enhancedLegs[0].probeCandidates;
+  if (
+    enhancedCandidates.length !== 1 ||
+    enhancedCandidates[0].legId !== enhancedLegs[0].legId ||
+    enhancedCandidates[0].provider !== 'twitch' ||
+    enhancedCandidates[0].kind !== 'twitch-enhanced-broadcasting'
+  ) {
+    return false;
+  }
+
+  const companionDisplays = new Set<string>();
+  for (const leg of companionLegs) {
+    if (
+      (leg.display !== 'horizontal' && leg.display !== 'vertical') ||
+      companionDisplays.has(leg.display) ||
+      !leg.destinations.length ||
+      leg.destinations.some(destination => destination.platform === 'twitch') ||
+      leg.probeCandidates.some(
+        candidate =>
+          candidate.legId !== leg.legId ||
+          candidate.provider !== 'youtube' ||
+          candidate.kind !== 'youtube-unbound',
+      ) ||
+      leg.probeCandidates.length > 1
+    ) {
+      return false;
+    }
+    companionDisplays.add(leg.display);
+  }
+
+  const candidateKey = (candidate: IAutoOptimizerTopology['probeCandidates'][number]) =>
+    `${candidate.probeId}\u0000${candidate.legId}\u0000${candidate.provider}\u0000${candidate.kind}`;
+  const legCandidates = topology.legs.flatMap(leg => leg.probeCandidates).map(candidateKey);
+  const topLevelCandidates = topology.probeCandidates.map(candidateKey);
+  return (
+    new Set(topology.legs.map(leg => leg.legId)).size === topology.legs.length &&
+    new Set(topLevelCandidates).size === topLevelCandidates.length &&
+    legCandidates.length === topLevelCandidates.length &&
+    topLevelCandidates.every(candidate => legCandidates.includes(candidate))
+  );
+}
+
+/**
  * Select one supported provider per canvas for the joint two-leg experiment.
  * Prefer the classifier's deterministic provider order, while requiring the
  * pair to cover both Twitch and YouTube so native can establish two independent
@@ -295,7 +357,10 @@ function selectAutoConfigDualOutputProbePair(
 export function filterAutoConfigTopologyProbes(
   topology: IAutoOptimizerTopology,
   supportedKinds: ReadonlySet<TAutoOptimizerProbeKind>,
-  options: { dualOutputActiveProbes?: boolean } = {},
+  options: {
+    dualOutputActiveProbes?: boolean;
+    enhancedBroadcastingDualOutputWorkload?: boolean;
+  } = {},
 ): IAutoOptimizerTopology {
   const filtered: IAutoOptimizerTopology = {
     ...topology,
@@ -315,12 +380,19 @@ export function filterAutoConfigTopologyProbes(
       ? selectAutoConfigDualOutputProbePair(topology, supportedKinds)
       : null;
   const unsafeDualOutput = filtered.type === 'dual-output' && !selectedDualOutput;
+  const eligibleEnhancedBroadcastingDualOutput =
+    options.enhancedBroadcastingDualOutputWorkload === true &&
+    supportedKinds.has('twitch-enhanced-broadcasting') &&
+    isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology(topology);
+  const unsafeEnhancedBroadcastingDualOutput =
+    filtered.type === 'enhanced-broadcasting-dual-output' &&
+    !eligibleEnhancedBroadcastingDualOutput;
   filtered.legs.forEach(leg => {
     const originalCandidates = leg.probeCandidates;
-    if (unsafeDualOutput) {
+    if (unsafeDualOutput || unsafeEnhancedBroadcastingDualOutput) {
       leg.probeCandidates = [];
       leg.measurement = 'estimated';
-      leg.estimateReason = 'dual_output';
+      leg.estimateReason = unsafeDualOutput ? 'dual_output' : 'enhanced_broadcasting';
       return;
     }
     const selectedLeg = selectedDualOutput?.legs.find(selected => selected.legId === leg.legId);
@@ -331,6 +403,9 @@ export function filterAutoConfigTopologyProbes(
     if (selectedDualOutput) {
       leg.measurement = 'active';
       leg.estimateReason = undefined;
+    } else if (eligibleEnhancedBroadcastingDualOutput) {
+      leg.measurement = supportedCandidates.length ? 'active' : 'estimated';
+      leg.estimateReason = supportedCandidates.length ? undefined : 'probe_disabled';
     } else if (originalCandidates.length) {
       const coverage = autoConfigProbeCoverage(
         originalCandidates.length,
@@ -407,6 +482,7 @@ export function autoConfigPhaseStepKey(
     }
     if (
       code === 'enhanced_broadcasting_testing_candidate' ||
+      code === 'enhanced_broadcasting_testing_concurrent_outputs' ||
       code === 'enhanced_broadcasting_validating_target_cadence' ||
       code === 'enhanced_broadcasting_candidate_rejected' ||
       code === 'enhanced_broadcasting_candidate_selected'

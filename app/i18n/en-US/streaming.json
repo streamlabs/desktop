@@ -422,6 +422,8 @@
   "Preparing the optimizer...": "Preparing the optimizer...",
   "Allocating upload capacity across Twitch and YouTube...": "Allocating upload capacity across Twitch and YouTube...",
   "Testing Twitch and YouTube together...": "Testing Twitch and YouTube together...",
+  "Testing Enhanced Broadcasting with your other stream outputs...": "Testing Enhanced Broadcasting with your other stream outputs...",
+  "Testing Enhanced Broadcasting and your other stream outputs at %{width}×%{height} horizontal and %{additionalWidth}×%{additionalHeight} vertical, %{fps} FPS...": "Testing Enhanced Broadcasting and your other stream outputs at %{width}×%{height} horizontal and %{additionalWidth}×%{additionalHeight} vertical, %{fps} FPS...",
   "Preparing Enhanced Broadcasting settings with Twitch...": "Preparing Enhanced Broadcasting settings with Twitch...",
   "Testing Enhanced Broadcasting at %{width}×%{height}, %{fps} FPS...": "Testing Enhanced Broadcasting at %{width}×%{height}, %{fps} FPS...",
   "Testing Enhanced Broadcasting at %{width}×%{height} horizontal and %{additionalWidth}×%{additionalHeight} vertical, %{fps} FPS...": "Testing Enhanced Broadcasting at %{width}×%{height} horizontal and %{additionalWidth}×%{additionalHeight} vertical, %{fps} FPS...",

@@ -4,6 +4,7 @@ import {
   isAutoOptimizerProfileCompatible,
 } from '../../app/services/auto-config/topology';
 import { IAutoOptimizerProfile } from '../../app/services/auto-config/types';
+import { autoOptimizerStandardLegForDisplay } from '../../app/services/streaming/auto-optimizer-profile-policy';
 import { IGoLiveSettings } from '../../app/services/streaming';
 
 function settings(patch: Partial<IGoLiveSettings> = {}): IGoLiveSettings {
@@ -276,6 +277,173 @@ test('Enhanced Broadcasting under Dual Output remains estimate-only', t => {
   t.true(topology.legs.every(leg => leg.measurement === 'estimated'));
 });
 
+test('paired Enhanced Broadcasting with a horizontal companion models both real outputs', t => {
+  const topology = classifyAutoOptimizerTopology(
+    settings({
+      platforms: {
+        twitch: {
+          enabled: true,
+          useCustomFields: false,
+          isEnhancedBroadcasting: true,
+          display: 'both',
+        } as any,
+        youtube: {
+          enabled: true,
+          useCustomFields: false,
+          display: 'horizontal',
+        } as any,
+      },
+    }),
+    true,
+    true,
+  );
+
+  t.is(topology.type, 'enhanced-broadcasting-dual-output');
+  t.deepEqual(
+    topology.legs.map(leg => ({
+      legId: leg.legId,
+      display: leg.display,
+      outputKind: leg.outputKind,
+      destinations: leg.destinations.map(destination => destination.platform),
+      probes: leg.probeCandidates.map(candidate => candidate.provider),
+    })),
+    [
+      {
+        legId: 'twitch-enhanced-broadcasting',
+        display: 'both',
+        outputKind: 'twitch-enhanced-broadcasting',
+        destinations: ['twitch'],
+        probes: ['twitch'],
+      },
+      {
+        legId: 'horizontal-standard',
+        display: 'horizontal',
+        outputKind: 'standard',
+        destinations: ['youtube'],
+        probes: ['youtube'],
+      },
+    ],
+  );
+  t.deepEqual(
+    topology.probeCandidates.map(candidate => candidate.probeId),
+    ['twitch-enhanced-broadcasting-twitch', 'horizontal-standard-youtube'],
+  );
+});
+
+test('paired Enhanced Broadcasting with a vertical companion preserves orientation', t => {
+  const topology = classifyAutoOptimizerTopology(
+    settings({
+      platforms: {
+        twitch: {
+          enabled: true,
+          useCustomFields: false,
+          isEnhancedBroadcasting: true,
+          display: 'both',
+        } as any,
+        youtube: {
+          enabled: true,
+          useCustomFields: false,
+          display: 'vertical',
+        } as any,
+      },
+    }),
+    true,
+    true,
+  );
+
+  t.is(topology.type, 'enhanced-broadcasting-dual-output');
+  t.deepEqual(
+    topology.legs.map(leg => [leg.legId, leg.display, leg.outputKind]),
+    [
+      ['twitch-enhanced-broadcasting', 'both', 'twitch-enhanced-broadcasting'],
+      ['vertical-standard', 'vertical', 'standard'],
+    ],
+  );
+  t.deepEqual(
+    topology.probeCandidates.map(candidate => candidate.probeId),
+    ['twitch-enhanced-broadcasting-twitch', 'vertical-standard-youtube'],
+  );
+});
+
+test('paired Enhanced Broadcasting creates one standard output per occupied companion canvas', t => {
+  const topology = classifyAutoOptimizerTopology(
+    settings({
+      platforms: {
+        twitch: {
+          enabled: true,
+          useCustomFields: false,
+          isEnhancedBroadcasting: true,
+          display: 'both',
+        } as any,
+        youtube: {
+          enabled: true,
+          useCustomFields: false,
+          display: 'both',
+        } as any,
+      },
+    }),
+    true,
+    true,
+  );
+
+  t.is(topology.type, 'enhanced-broadcasting-dual-output');
+  t.deepEqual(
+    topology.legs.map(leg => [leg.legId, leg.display, leg.outputKind]),
+    [
+      ['twitch-enhanced-broadcasting', 'both', 'twitch-enhanced-broadcasting'],
+      ['horizontal-standard', 'horizontal', 'standard'],
+      ['vertical-standard', 'vertical', 'standard'],
+    ],
+  );
+  t.deepEqual(
+    topology.probeCandidates.map(candidate => candidate.probeId),
+    [
+      'twitch-enhanced-broadcasting-twitch',
+      'horizontal-standard-youtube',
+      'vertical-standard-youtube',
+    ],
+  );
+});
+
+test('co-destinations share one companion output and only YouTube represents its bandwidth probe', t => {
+  const topology = classifyAutoOptimizerTopology(
+    settings({
+      platforms: {
+        twitch: {
+          enabled: true,
+          useCustomFields: false,
+          isEnhancedBroadcasting: true,
+          display: 'both',
+        } as any,
+        youtube: {
+          enabled: true,
+          useCustomFields: false,
+          display: 'horizontal',
+        } as any,
+        kick: {
+          enabled: true,
+          useCustomFields: false,
+          display: 'horizontal',
+        } as any,
+      },
+    }),
+    true,
+    true,
+  );
+
+  const companionLegs = topology.legs.filter(leg => leg.outputKind === 'standard');
+  t.is(topology.type, 'enhanced-broadcasting-dual-output');
+  t.is(companionLegs.length, 1);
+  t.deepEqual(
+    companionLegs[0].destinations.map(destination => destination.platform),
+    ['youtube', 'kick'],
+  );
+  t.deepEqual(
+    companionLegs[0].probeCandidates.map(candidate => candidate.provider),
+    ['youtube'],
+  );
+});
+
 test('Twitch dual stream is modeled as its single shared upload connection', t => {
   const topology = classifyAutoOptimizerTopology(
     settings({
@@ -415,4 +583,76 @@ test('an optimizer profile is discarded when destinations change in Go Live sett
   });
 
   t.false(isAutoOptimizerProfileCompatible(profileFor(original), edited, false));
+});
+
+test('ordinary output contexts select only matching standard legs from mixed Enhanced Broadcasting', t => {
+  const common = {
+    measurement: 'active' as const,
+    confidence: 'high' as const,
+    resolution: { width: 1920, height: 1080 },
+    fpsNum: 60,
+    fpsDen: 1,
+    fps: 60,
+    bitrate: 6000,
+  };
+  const enhancedLeg: IAutoOptimizerProfile['legs'][number] = {
+    ...common,
+    legId: 'twitch-enhanced-broadcasting',
+    display: 'both',
+    outputKind: 'twitch-enhanced-broadcasting',
+    destinations: [{ platform: 'twitch' }],
+    additionalVideo: {
+      display: 'vertical',
+      resolution: { width: 1080, height: 1920 },
+      fpsNum: 60,
+      fpsDen: 1,
+      fps: 60,
+    },
+  };
+  const horizontalLeg: IAutoOptimizerProfile['legs'][number] = {
+    ...common,
+    legId: 'horizontal-standard',
+    display: 'horizontal',
+    outputKind: 'standard',
+    destinations: [{ platform: 'youtube' }],
+    encoder: {
+      id: 'obs_nvenc_h264_tex',
+      family: 'obs_nvenc_h264_tex',
+      title: 'NVIDIA NVENC H.264',
+      codec: 'h264',
+      preset: 'p5',
+    },
+  };
+  const verticalLeg: IAutoOptimizerProfile['legs'][number] = {
+    ...horizontalLeg,
+    legId: 'vertical-standard',
+    display: 'vertical',
+    resolution: { width: 1080, height: 1920 },
+  };
+  const profile: IAutoOptimizerProfile = {
+    schemaVersion: 1,
+    topology: 'enhanced-broadcasting-dual-output',
+    // Keep the provider-managed leg between the standard legs to prove the
+    // lookup is role-aware rather than relying on array position.
+    legs: [horizontalLeg, enhancedLeg, verticalLeg],
+  };
+
+  t.is(autoOptimizerStandardLegForDisplay(profile, 'horizontal'), horizontalLeg);
+  t.is(autoOptimizerStandardLegForDisplay(profile, 'vertical'), verticalLeg);
+  t.is(
+    autoOptimizerStandardLegForDisplay(
+      { ...profile, legs: [enhancedLeg, verticalLeg] },
+      'horizontal',
+    ),
+    undefined,
+    'the provider-managed both leg must never stand in for a standard output',
+  );
+
+  const providerOnly: IAutoOptimizerProfile = {
+    schemaVersion: 1,
+    topology: 'enhanced-broadcasting',
+    legs: [enhancedLeg],
+  };
+  t.is(autoOptimizerStandardLegForDisplay(providerOnly, 'horizontal'), undefined);
+  t.is(autoOptimizerStandardLegForDisplay(providerOnly, 'vertical'), undefined);
 });

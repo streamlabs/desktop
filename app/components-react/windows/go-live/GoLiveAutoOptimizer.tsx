@@ -136,12 +136,9 @@ export default function GoLiveAutoOptimizer() {
         ? $t(estimateReasonLabels[leg.estimateReason] || leg.estimateReason)
         : undefined,
       showMeasurementReason: shouldShowAutoOptimizerMeasurementReason(leg.estimateReason),
-      managedByProvider:
-        leg.display === 'both' || state.result?.topology === 'enhanced-broadcasting',
+      managedByProvider: leg.outputKind === 'twitch-enhanced-broadcasting',
       videoSettingsManagedByProvider:
-        state.result?.topology === 'enhanced-broadcasting'
-          ? leg.measurement !== 'active'
-          : leg.display === 'both',
+        leg.outputKind === 'twitch-enhanced-broadcasting' && leg.measurement !== 'active',
       width: leg.resolution.width,
       height: leg.resolution.height,
       ...(leg.additionalVideo

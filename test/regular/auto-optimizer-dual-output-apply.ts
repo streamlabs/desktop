@@ -42,8 +42,8 @@ function activeDualOutputResult(): IAutoConfigNativeResult {
     status: 'complete',
     aggregateUpload: {
       method: 'dual-output-isolated-lower-bound',
-      safeVideoKbps: 11600,
-      allocatedVideoKbps: 11600,
+      safeVideoKbps: 10000,
+      allocatedVideoKbps: 10000,
       concurrentHardwareValidated: true,
     },
     legs: [
@@ -65,7 +65,7 @@ function activeDualOutputResult(): IAutoConfigNativeResult {
             },
           ],
         },
-        recommendation: recommendation(1920, 1080),
+        recommendation: recommendation(1920, 1080, { bitrateKbps: 5000 }),
       },
       {
         legId: 'vertical',
@@ -78,14 +78,14 @@ function activeDualOutputResult(): IAutoConfigNativeResult {
             {
               provider: 'youtube',
               method: 'youtube-unbound-ramp',
-              measuredKbps: 11620,
-              safeKbps: 11600,
+              measuredKbps: 10020,
+              safeKbps: 10000,
               headroomPercent: 0,
               success: true,
             },
           ],
         },
-        recommendation: recommendation(1080, 1920),
+        recommendation: recommendation(1080, 1920, { bitrateKbps: 5000 }),
       },
     ],
   };

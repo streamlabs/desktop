@@ -45,12 +45,7 @@ test('successful measured providers are stable, deduplicated, and omit failures'
 });
 
 test('partial provider provenance separates measured and estimated destinations', t => {
-  const platforms = [
-    { id: 'twitch' },
-    { id: 'youtube' },
-    { id: 'kick' },
-    { id: 'facebook' },
-  ];
+  const platforms = [{ id: 'twitch' }, { id: 'youtube' }, { id: 'kick' }, { id: 'facebook' }];
   const evidence = [
     { provider: 'twitch' as const, success: true },
     { provider: 'youtube' as const, success: false },
@@ -87,7 +82,7 @@ test('bandwidth phase follows the provider currently being probed', t => {
     'Measuring your Twitch upload at %{bitrate} Kbps...',
   );
   t.is(
-    bandwidthPhaseLabelKey('youtube', candidates, 12000),
+    bandwidthPhaseLabelKey('youtube', candidates, 10000),
     'Measuring your YouTube upload at %{bitrate} Kbps...',
   );
   t.is(bandwidthPhaseLabelKey('youtube', candidates, 0), 'Connecting to YouTube...');
@@ -410,6 +405,33 @@ test('paired Enhanced Broadcasting progress names both tested canvases', t => {
   });
 });
 
+test('mixed Enhanced Broadcasting progress describes the real concurrent outputs', t => {
+  const label = autoOptimizerProgressLabel(
+    'bandwidth',
+    progressDetail({
+      code: 'enhanced_broadcasting_testing_concurrent_outputs',
+      provider: 'twitch',
+      width: 1920,
+      height: 1080,
+      fpsNum: 60,
+      fpsDen: 1,
+      additionalVideo: {
+        display: 'vertical',
+        width: 1080,
+        height: 1920,
+        fpsNum: 60,
+        fpsDen: 1,
+      },
+    }),
+  );
+
+  t.is(
+    label.key,
+    'Testing Enhanced Broadcasting and your other stream outputs at %{width}×%{height} horizontal and %{additionalWidth}×%{additionalHeight} vertical, %{fps} FPS...',
+  );
+  t.false(label.key.toLowerCase().includes('restream'));
+});
+
 test('Enhanced Broadcasting progress interpolates through the en-US catalog', t => {
   const VueRuntime = require('vue');
   const VueI18nRuntime = require('vue-i18n');
@@ -433,6 +455,7 @@ test('Enhanced Broadcasting progress interpolates through the en-US catalog', t 
   const label = autoOptimizerProgressLabel('bandwidth', candidate);
   const codes = [
     'enhanced_broadcasting_testing_candidate',
+    'enhanced_broadcasting_testing_concurrent_outputs',
     'enhanced_broadcasting_validating_target_cadence',
     'enhanced_broadcasting_candidate_rejected',
     'enhanced_broadcasting_candidate_selected',

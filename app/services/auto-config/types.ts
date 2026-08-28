@@ -23,6 +23,7 @@ export type TAutoOptimizerTopologyType =
   | 'custom-rtmp'
   | 'dual-output'
   | 'enhanced-broadcasting'
+  | 'enhanced-broadcasting-dual-output'
   | 'stream-shift'
   | 'mixed';
 
@@ -30,6 +31,7 @@ export type TAutoOptimizerMeasurementMode = 'active' | 'estimated';
 export type TAutoOptimizerConfidence = 'high' | 'medium' | 'low';
 export type TAutoOptimizerPromptState = 'unseen' | 'declined' | 'completed';
 export type TAutoOptimizerUploadRoute = 'direct' | 'cloud-restream';
+export type TAutoOptimizerOutputKind = 'standard' | 'twitch-enhanced-broadcasting';
 export type TAutoOptimizerProbeProvider = 'twitch' | 'youtube';
 export type TAutoOptimizerProbeKind =
   | 'twitch-standard'
@@ -71,7 +73,10 @@ export interface IAutoOptimizerProbeEvidence {
   method: TAutoOptimizerProbeMethod;
   /** Observed aggregate output throughput, including probe audio. */
   measuredKbps?: number;
-  /** Validated video target after explicit degradation and applicable caps. */
+  /**
+   * Validated video target after transport/provider caps. It may exceed the
+   * final recommendation when a higher probe rung is retained as headroom.
+   */
   safeKbps?: number;
   /** Fixed percentage haircut; current target-validation policies report zero. */
   headroomPercent?: number;
@@ -92,6 +97,8 @@ export interface IAutoOptimizerProbeEvidence {
 export interface IAutoOptimizerTopologyLeg {
   legId: string;
   display: TDisplayType | 'both';
+  /** Physical local output whose concurrent encoder workload must be represented. */
+  outputKind: TAutoOptimizerOutputKind;
   destinations: IAutoOptimizerDestination[];
   route: TAutoOptimizerUploadRoute;
   probeCandidates: IAutoOptimizerProbeCandidate[];
@@ -117,6 +124,7 @@ export interface IAutoOptimizerEncoderRecommendation {
 export interface IAutoOptimizerLegResult {
   legId: string;
   display: TDisplayType | 'both';
+  outputKind: TAutoOptimizerOutputKind;
   destinations: IAutoOptimizerDestination[];
   measurement: TAutoOptimizerMeasurementMode;
   confidence: TAutoOptimizerConfidence;
@@ -199,6 +207,8 @@ export interface IAutoConfigCapabilities {
    * destinations may share either canvas without claiming probe provenance.
    */
   dualOutputActiveProbes: boolean;
+  /** Native can test a paired Twitch ladder together with every standard companion output. */
+  enhancedBroadcastingDualOutputWorkload: boolean;
   bandwidthModes: string[];
 }
 
@@ -216,6 +226,11 @@ export interface IAutoConfigCurrentSettings {
 }
 
 export interface IAutoConfigRequestLimits {
+  /**
+   * Highest bitrate native may return for this Desktop-owned output. Provider
+   * probes may test above it and retain higher capacity evidence so the final
+   * recommendation can include stability headroom.
+   */
   maxBitrateKbps?: number;
   /** Highest canvas-bounded video tuple eligible for hardware and bandwidth testing. */
   maxWidth?: number;
@@ -249,6 +264,7 @@ export interface IAutoOptimizerAdditionalVideoResult {
 export interface IAutoConfigRequestLeg {
   legId: string;
   display: TDisplayType | 'both';
+  outputKind: TAutoOptimizerOutputKind;
   destinations: IAutoOptimizerDestination[];
   current: IAutoConfigCurrentSettings;
   limits?: IAutoConfigRequestLimits;
@@ -343,6 +359,27 @@ export interface IAutoConfigNativeResult {
     allocatedVideoKbps: number;
     /** Both simultaneous video encoders sustained the recommended workload. */
     concurrentHardwareValidated: boolean;
+  };
+  /**
+   * Exact concurrent-workload proof for paired Twitch Enhanced Broadcasting
+   * plus the standard outputs used by non-Twitch Dual Output destinations.
+   * This is hardware evidence only; it does not claim aggregate upload capacity.
+   */
+  combinedWorkload?: {
+    method: 'enhanced-broadcasting-dual-output-concurrent';
+    enhancedBroadcastingLegId: string;
+    validated: boolean;
+    companionLegs: Array<{
+      legId: string;
+      display: TDisplayType;
+      width: number;
+      height: number;
+      fpsNum: number;
+      fpsDen: number;
+      bitrateKbps: number;
+      encoderId: string;
+      preset?: string;
+    }>;
   };
   legs: Array<{
     legId: string;

@@ -103,6 +103,7 @@ import {
   TStreamingDisplay,
 } from './output-context';
 import { videoOutputCoordinator } from 'services/video-output-coordinator';
+import { autoOptimizerStandardLegForDisplay } from './auto-optimizer-profile-policy';
 
 type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
 type TOutputContext = TDisplayType | 'enhancedBroadcasting' | 'stream' | 'streamSecond';
@@ -2966,16 +2967,10 @@ export class StreamingService
 
   private getAutoOptimizerLegForContext(contextName: TOutputContext) {
     const profile = this.state.info.settings?.autoOptimizerProfile;
-    if (!profile || profile.schemaVersion !== 1) return;
-    if (profile.topology === 'enhanced-broadcasting') return;
+    if (contextName === 'enhancedBroadcasting') return;
 
     const display: TDisplayType = contextName === 'vertical' ? 'vertical' : 'horizontal';
-    return profile.legs.find(leg => {
-      // Twitch's dual stream is a provider-owned shared connection. Its
-      // encoder ladder must not be replaced by a single Desktop bitrate.
-      if (leg.display === 'both') return false;
-      return leg.display === display;
-    });
+    return autoOptimizerStandardLegForDisplay(profile, display);
   }
 
   /**

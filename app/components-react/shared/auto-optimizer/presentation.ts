@@ -124,6 +124,15 @@ export function autoOptimizerProgressLabel(
       return { key: 'Testing Twitch and YouTube together...' };
     case 'enhanced_broadcasting_requesting_ladder':
       return { key: 'Preparing Enhanced Broadcasting settings with Twitch...' };
+    case 'enhanced_broadcasting_testing_concurrent_outputs':
+      if (tuple && detail?.additionalVideo) {
+        return {
+          key:
+            'Testing Enhanced Broadcasting and your other stream outputs at %{width}×%{height} horizontal and %{additionalWidth}×%{additionalHeight} vertical, %{fps} FPS...',
+          values: tuple,
+        };
+      }
+      return { key: 'Testing Enhanced Broadcasting with your other stream outputs...' };
     case 'enhanced_broadcasting_testing_candidate':
       if (tuple) {
         return {

@@ -6,7 +6,9 @@ import {
   rawOutputValuesMatch,
   shouldApplyAutoOptimizerVideoSettings,
   shouldCaptureTargetPresetForRollback,
+  selectAutoOptimizerStandardOutputRecommendation,
 } from '../../app/services/auto-config/output-transaction-policy';
+import { IAutoOptimizerLegResult } from '../../app/services/auto-config/types';
 
 function outputForm(preset = 'veryfast', bitrate = 6000) {
   return [
@@ -59,6 +61,80 @@ test('only an active Enhanced Broadcasting workload may apply provider-owned vid
   t.true(shouldApplyAutoOptimizerVideoSettings('enhanced-broadcasting', true, ['active']));
   t.false(shouldApplyAutoOptimizerVideoSettings('enhanced-broadcasting', true, ['estimated']));
   t.false(shouldApplyAutoOptimizerVideoSettings('dual-output', true, ['active']));
+});
+
+test('mixed Enhanced Broadcasting applies one common standard companion output', t => {
+  const standard = (legId: string, display: 'horizontal' | 'vertical') =>
+    ({
+      legId,
+      display,
+      outputKind: 'standard',
+      destinations: [{ platform: 'youtube' }],
+      measurement: 'active',
+      confidence: 'high',
+      resolution:
+        display === 'horizontal' ? { width: 1920, height: 1080 } : { width: 1080, height: 1920 },
+      fpsNum: 60,
+      fpsDen: 1,
+      fps: 60,
+      bitrate: 6000,
+      encoder: {
+        id: 'obs_nvenc_h264_tex',
+        family: 'obs_nvenc_h264_tex',
+        title: 'NVIDIA NVENC H.264',
+        codec: 'h264',
+        preset: 'p5',
+      },
+    } as IAutoOptimizerLegResult);
+  const enhanced: IAutoOptimizerLegResult = {
+    ...standard('twitch-enhanced-broadcasting', 'horizontal'),
+    display: 'both' as const,
+    outputKind: 'twitch-enhanced-broadcasting' as const,
+    destinations: [{ platform: 'twitch' as const }],
+    encoder: undefined,
+  };
+  const horizontal = standard('horizontal-standard', 'horizontal');
+  const vertical = standard('vertical-standard', 'vertical');
+
+  t.is(
+    selectAutoOptimizerStandardOutputRecommendation([enhanced, horizontal, vertical]),
+    horizontal,
+  );
+  t.is(selectAutoOptimizerStandardOutputRecommendation([enhanced]), null);
+  t.throws(() =>
+    selectAutoOptimizerStandardOutputRecommendation([
+      enhanced,
+      horizontal,
+      { ...vertical, bitrate: 4500 },
+    ]),
+  );
+});
+
+test('the apply transaction rejects a standard bitrate above the product ceiling', t => {
+  const leg = {
+    legId: 'youtube',
+    display: 'horizontal',
+    outputKind: 'standard',
+    destinations: [{ platform: 'youtube' }],
+    measurement: 'active',
+    confidence: 'high',
+    resolution: { width: 1920, height: 1080 },
+    fpsNum: 60,
+    fpsDen: 1,
+    fps: 60,
+    bitrate: 8001,
+    encoder: {
+      id: 'obs_nvenc_h264_tex',
+      family: 'obs_nvenc_h264_tex',
+      title: 'NVIDIA NVENC H.264',
+      codec: 'h264',
+      preset: 'p5',
+    },
+  } as IAutoOptimizerLegResult;
+
+  t.throws(() => selectAutoOptimizerStandardOutputRecommendation([leg]), {
+    message: 'The optimizer returned an unsupported streaming bitrate',
+  });
 });
 
 test('active Enhanced Broadcasting builds a video-only canvas, output, and shared-FPS transaction', t => {

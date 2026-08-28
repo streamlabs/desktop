@@ -3,6 +3,7 @@ import {
   IAutoConfigRequestAdditionalVideo,
   IAutoConfigAdditionalVideoTuple,
   IAutoOptimizerProbeEvidence,
+  IAutoOptimizerTopologyLeg,
   TAutoOptimizerEncoderFamily,
   TAutoOptimizerMeasurementMode,
 } from './types';
@@ -12,6 +13,7 @@ import {
   matchesAutoOptimizerQualityPolicy,
   TAutoOptimizerQualityProfile,
 } from './resolution-policy';
+import { AUTO_OPTIMIZER_MAX_RECOMMENDED_BITRATE_KBPS } from './bitrate-policy';
 
 type TNativeRecommendation = IAutoConfigNativeResult['legs'][number]['recommendation'];
 
@@ -83,8 +85,7 @@ function getAutoConfigDualOutputProviderSafeKbps(
   result: IAutoConfigNativeResult,
   provider: 'twitch' | 'youtube',
 ): number | null {
-  const expectedMethod =
-    provider === 'twitch' ? 'twitch-bandwidth-test' : 'youtube-unbound-ramp';
+  const expectedMethod = provider === 'twitch' ? 'twitch-bandwidth-test' : 'youtube-unbound-ramp';
   const matchingLegs = result.legs.filter(
     leg =>
       leg.destinations.some(destination => destination.platform === provider) &&
@@ -200,6 +201,139 @@ export function isValidAutoConfigDualOutputResultEnvelope(
 }
 
 /**
+ * Validate the native proof that Twitch's paired Enhanced Broadcasting ladder
+ * and every standard Dual Output companion encoder sustained the exact returned
+ * workload concurrently. Provider bandwidth evidence remains per leg and is
+ * deliberately not inferred from this hardware proof.
+ */
+export function isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(
+  result: IAutoConfigNativeResult,
+  expectedLegs: readonly Pick<IAutoOptimizerTopologyLeg, 'legId' | 'display' | 'outputKind'>[],
+): boolean {
+  if (
+    result.status !== 'complete' ||
+    result.legs.length !== expectedLegs.length ||
+    new Set(result.legs.map(leg => leg.legId)).size !== result.legs.length ||
+    expectedLegs.some(expected => !result.legs.some(leg => leg.legId === expected.legId))
+  ) {
+    return false;
+  }
+
+  const enhancedExpected = expectedLegs.filter(
+    leg => leg.outputKind === 'twitch-enhanced-broadcasting',
+  );
+  const companionExpected = expectedLegs.filter(leg => leg.outputKind === 'standard');
+  if (
+    enhancedExpected.length !== 1 ||
+    enhancedExpected[0].display !== 'both' ||
+    companionExpected.length < 1 ||
+    companionExpected.length > 2 ||
+    new Set(companionExpected.map(leg => leg.display)).size !== companionExpected.length ||
+    companionExpected.some(leg => leg.display !== 'horizontal' && leg.display !== 'vertical')
+  ) {
+    return false;
+  }
+
+  const proof = result.combinedWorkload;
+  if (
+    !proof ||
+    proof.method !== 'enhanced-broadcasting-dual-output-concurrent' ||
+    proof.validated !== true ||
+    proof.enhancedBroadcastingLegId !== enhancedExpected[0].legId ||
+    !Array.isArray(proof.companionLegs) ||
+    proof.companionLegs.length !== companionExpected.length ||
+    new Set(proof.companionLegs.map(leg => leg.legId)).size !== proof.companionLegs.length
+  ) {
+    return false;
+  }
+
+  const enhancedResult = result.legs.find(leg => leg.legId === enhancedExpected[0].legId);
+  const enhancedRecommendation = enhancedResult?.recommendation;
+  const additionalVideo = enhancedRecommendation?.additionalVideo;
+  if (
+    !enhancedResult ||
+    enhancedResult.display !== 'both' ||
+    enhancedResult.measurement?.mode !== 'active' ||
+    !enhancedRecommendation ||
+    !additionalVideo
+  ) {
+    return false;
+  }
+  const enhancedProbes = enhancedResult.measurement.probes;
+  if (!Array.isArray(enhancedProbes)) return false;
+  const enhancedEvidence = enhancedProbes.find(
+    evidence =>
+      evidence.provider === 'twitch' &&
+      evidence.method === 'twitch-enhanced-broadcasting-test' &&
+      evidence.success === true &&
+      evidence.testedWidth === enhancedRecommendation.width &&
+      evidence.testedHeight === enhancedRecommendation.height &&
+      evidence.testedFpsNum === enhancedRecommendation.fpsNum &&
+      evidence.testedFpsDen === enhancedRecommendation.fpsDen &&
+      evidence.testedAdditionalVideo?.display === additionalVideo.display &&
+      evidence.testedAdditionalVideo.width === additionalVideo.width &&
+      evidence.testedAdditionalVideo.height === additionalVideo.height &&
+      evidence.testedAdditionalVideo.fpsNum === additionalVideo.fpsNum &&
+      evidence.testedAdditionalVideo.fpsDen === additionalVideo.fpsDen,
+  );
+  if (!enhancedEvidence) return false;
+
+  // Desktop has one shared standard streaming encoder/bitrate configuration.
+  // A multi-canvas proof is only actionable when every companion was tested
+  // with that same complete output configuration.
+  const companionOutputSignatures = new Set(
+    companionExpected.map(expected => {
+      const recommendation = result.legs.find(leg => leg.legId === expected.legId)?.recommendation;
+      return recommendation
+        ? `${recommendation.encoderId}\u0000${recommendation.encoderFamily}\u0000${
+            recommendation.preset || ''
+          }\u0000${recommendation.bitrateKbps}`
+        : 'missing';
+    }),
+  );
+  if (companionOutputSignatures.size !== 1 || companionOutputSignatures.has('missing')) {
+    return false;
+  }
+
+  return companionExpected.every(expected => {
+    const leg = result.legs.find(item => item.legId === expected.legId);
+    const tested = proof.companionLegs.find(item => item.legId === expected.legId);
+    if (
+      !leg ||
+      !tested ||
+      leg.display !== expected.display ||
+      tested.display !== expected.display
+    ) {
+      return false;
+    }
+    const recommendation = leg.recommendation;
+    const canvasTuple =
+      expected.display === 'horizontal' ? enhancedRecommendation : additionalVideo;
+    return (
+      isIntegerInRange(tested.width, 2, 16384) &&
+      tested.width % 2 === 0 &&
+      isIntegerInRange(tested.height, 2, 16384) &&
+      tested.height % 2 === 0 &&
+      isIntegerInRange(tested.fpsNum, 1, 1000000) &&
+      isIntegerInRange(tested.fpsDen, 1, 1000000) &&
+      isIntegerInRange(tested.bitrateKbps, 1, 100000) &&
+      isBoundedText(tested.encoderId, 256) &&
+      tested.width === recommendation.width &&
+      tested.height === recommendation.height &&
+      tested.fpsNum === recommendation.fpsNum &&
+      tested.fpsDen === recommendation.fpsDen &&
+      tested.bitrateKbps === recommendation.bitrateKbps &&
+      tested.encoderId === recommendation.encoderId &&
+      (tested.preset || '') === (recommendation.preset || '') &&
+      recommendation.width === canvasTuple.width &&
+      recommendation.height === canvasTuple.height &&
+      recommendation.fpsNum === canvasTuple.fpsNum &&
+      recommendation.fpsDen === canvasTuple.fpsDen
+    );
+  });
+}
+
+/**
  * Validate the complete native quality tuple at the worker boundary. No field
  * is repaired independently: a malformed or internally inconsistent tuple is
  * rejected as a whole.
@@ -212,8 +346,12 @@ export function validateAutoConfigRecommendation(
     probeEvidence: IAutoOptimizerProbeEvidence[];
     providerOwnsEncoding?: boolean;
     enhancedBroadcasting?: boolean;
+    /** Exact companion tuple was jointly proven with the provider-managed ladder. */
+    combinedWorkloadValidated?: boolean;
     /** Native quality ladder selected for the destination or joint allocation. */
     qualityProfile?: TAutoOptimizerQualityProfile;
+    /** Maximum bitrate native was authorized to return for this standard output. */
+    maxBitrateKbps?: number;
     maxWidth?: number;
     maxHeight?: number;
     maxFpsNum?: number;
@@ -237,6 +375,17 @@ export function validateAutoConfigRecommendation(
     !isIntegerInRange(value.fpsDen, 1, 1000000) ||
     value.fpsNum / value.fpsDen > 240 ||
     !isIntegerInRange(value.bitrateKbps, 1, 100000)
+  ) {
+    return null;
+  }
+
+  if (
+    !context.providerOwnsEncoding &&
+    value.bitrateKbps >
+      Math.min(
+        AUTO_OPTIMIZER_MAX_RECOMMENDED_BITRATE_KBPS,
+        context.maxBitrateKbps ?? AUTO_OPTIMIZER_MAX_RECOMMENDED_BITRATE_KBPS,
+      )
   ) {
     return null;
   }
@@ -293,6 +442,7 @@ export function validateAutoConfigRecommendation(
 
   if (
     context.measurementMode === 'estimated' &&
+    !context.combinedWorkloadValidated &&
     ((context.currentWidth && value.width > context.currentWidth) ||
       (context.currentHeight && value.height > context.currentHeight))
   ) {
@@ -341,6 +491,31 @@ export function validateAutoConfigRecommendation(
     context.currentHeight !== undefined &&
     context.currentFpsNum !== undefined &&
     context.currentFpsDen !== undefined;
+
+  if (context.combinedWorkloadValidated) {
+    if (!hasCompleteQualityContext) return null;
+    const promotesCurrentVideo =
+      value.width > context.currentWidth! ||
+      value.height > context.currentHeight! ||
+      value.fpsNum * context.currentFpsDen! > context.currentFpsNum! * value.fpsDen;
+    if (promotesCurrentVideo) {
+      // The concurrent proof establishes encoder capacity only. Raising a
+      // companion's video tuple additionally requires its own supported path
+      // probe to prove that the exact returned bitrate is safe. In this V1
+      // topology YouTube is the only supported standard companion probe.
+      const hasPromotionBandwidthProof =
+        context.measurementMode === 'active' &&
+        context.probeEvidence.some(
+          item =>
+            item.provider === 'youtube' &&
+            item.method === 'youtube-unbound-ramp' &&
+            item.success === true &&
+            isIntegerInRange(item.safeKbps, 1, 100000) &&
+            item.safeKbps! >= value.bitrateKbps,
+        );
+      if (!hasPromotionBandwidthProof) return null;
+    }
+  }
 
   if (context.measurementMode === 'active') {
     const enhancedBroadcastingEvidence = context.probeEvidence.find(
@@ -438,6 +613,7 @@ export function validateAutoConfigRecommendation(
 
   const exactEstimatedCurrentFallback =
     context.measurementMode === 'estimated' &&
+    !context.combinedWorkloadValidated &&
     hasCompleteQualityContext &&
     value.width === context.currentWidth &&
     value.height === context.currentHeight &&
@@ -445,6 +621,7 @@ export function validateAutoConfigRecommendation(
     value.fpsDen === context.currentFpsDen;
   if (
     !context.providerOwnsEncoding &&
+    !context.combinedWorkloadValidated &&
     hasCompleteQualityContext &&
     !exactEstimatedCurrentFallback &&
     !matchesAutoOptimizerQualityPolicy(
@@ -461,6 +638,7 @@ export function validateAutoConfigRecommendation(
         fpsDen: context.currentFpsDen!,
       },
       {
+        maxBitrateKbps: context.maxBitrateKbps,
         maxWidth: context.maxWidth!,
         maxHeight: context.maxHeight!,
         maxFpsNum: context.maxFpsNum!,

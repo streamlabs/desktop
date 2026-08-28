@@ -7,6 +7,7 @@ import {
   filterAutoConfigTopologyProbes,
   hasRequiredAutoConfigCapabilities,
   isEligibleAutoConfigDualOutputActiveTopology,
+  isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology,
   isValidAutoConfigActiveProbeCoverage,
   sanitizeAutoConfigProgressDetail,
   sanitizeAutoConfigProbeEvidence,
@@ -44,6 +45,7 @@ function capabilities(patch: Partial<IAutoConfigCapabilities> = {}): IAutoConfig
     desktopOwnedApply: true,
     multipleActiveProbes: true,
     dualOutputActiveProbes: true,
+    enhancedBroadcastingDualOutputWorkload: true,
     bandwidthModes: [
       'estimate',
       'twitch-standard-active',
@@ -58,6 +60,7 @@ function twitchYoutubeDualOutputTopology(): IAutoOptimizerTopology {
   const legs = ['twitch', 'youtube'].map((provider, index) => ({
     legId: index ? 'vertical' : 'horizontal',
     display: index ? ('vertical' as const) : ('horizontal' as const),
+    outputKind: 'standard' as const,
     destinations: [{ platform: provider as 'twitch' | 'youtube' }],
     route: 'direct' as const,
     probeCandidates: [
@@ -106,12 +109,52 @@ function sharedCloudTopology(): IAutoOptimizerTopology {
       {
         legId: 'horizontal',
         display: 'horizontal',
+        outputKind: 'standard',
         destinations: [{ platform: 'twitch' }, { platform: 'youtube' }],
         route: 'cloud-restream',
         probeCandidates,
         measurement: 'active',
       },
     ],
+  };
+}
+
+function enhancedBroadcastingDualOutputTopology(): IAutoOptimizerTopology {
+  const enhancedCandidate = {
+    probeId: 'twitch-enhanced-broadcasting-twitch',
+    kind: 'twitch-enhanced-broadcasting' as const,
+    legId: 'twitch-enhanced-broadcasting',
+    provider: 'twitch' as const,
+  };
+  const youtubeCandidate = {
+    probeId: 'horizontal-standard-youtube',
+    kind: 'youtube-unbound' as const,
+    legId: 'horizontal-standard',
+    provider: 'youtube' as const,
+  };
+  return {
+    type: 'enhanced-broadcasting-dual-output',
+    legs: [
+      {
+        legId: 'twitch-enhanced-broadcasting',
+        display: 'both',
+        outputKind: 'twitch-enhanced-broadcasting',
+        destinations: [{ platform: 'twitch' }],
+        route: 'direct',
+        probeCandidates: [enhancedCandidate],
+        measurement: 'active',
+      },
+      {
+        legId: 'horizontal-standard',
+        display: 'horizontal',
+        outputKind: 'standard',
+        destinations: [{ platform: 'youtube' }, { platform: 'kick' }],
+        route: 'cloud-restream',
+        probeCandidates: [youtubeCandidate],
+        measurement: 'active',
+      },
+    ],
+    probeCandidates: [enhancedCandidate, youtubeCandidate],
   };
 }
 
@@ -128,16 +171,21 @@ test('estimate support is required while active provider modes are optional', t 
       capabilities({ dualOutputActiveProbes: (undefined as unknown) as boolean }),
     ),
   );
+  t.false(
+    hasRequiredAutoConfigCapabilities(
+      capabilities({
+        enhancedBroadcastingDualOutputWorkload: (undefined as unknown) as boolean,
+      }),
+    ),
+  );
 });
 
-test('active probe kinds require their exact native mode and runtime support', t => {
+test('active probe kinds require their exact native mode and YouTube ingest support', t => {
   const native = capabilities();
 
   t.deepEqual(
     [
       ...supportedAutoConfigProbeKinds(native, {
-        twitchFeatureEnabled: true,
-        youtubeFeatureEnabled: true,
         canConfirmYoutubeIngest: true,
       }),
     ],
@@ -145,19 +193,20 @@ test('active probe kinds require their exact native mode and runtime support', t
   );
   t.deepEqual(
     [
-      ...supportedAutoConfigProbeKinds(native, {
-        twitchFeatureEnabled: true,
-        youtubeFeatureEnabled: false,
-        canConfirmYoutubeIngest: true,
-      }),
+      ...supportedAutoConfigProbeKinds(
+        capabilities({
+          bandwidthModes: ['estimate', 'youtube-unbound-active'],
+        }),
+        {
+          canConfirmYoutubeIngest: true,
+        },
+      ),
     ],
-    ['twitch-standard', 'twitch-enhanced-broadcasting'],
+    ['youtube-unbound'],
   );
   t.deepEqual(
     [
       ...supportedAutoConfigProbeKinds(capabilities({ multipleActiveProbes: false }), {
-        twitchFeatureEnabled: true,
-        youtubeFeatureEnabled: true,
         canConfirmYoutubeIngest: true,
       }),
     ],
@@ -166,22 +215,10 @@ test('active probe kinds require their exact native mode and runtime support', t
   t.deepEqual(
     [
       ...supportedAutoConfigProbeKinds(native, {
-        twitchFeatureEnabled: true,
-        youtubeFeatureEnabled: true,
         canConfirmYoutubeIngest: false,
       }),
     ],
     ['twitch-standard', 'twitch-enhanced-broadcasting'],
-  );
-  t.deepEqual(
-    [
-      ...supportedAutoConfigProbeKinds(native, {
-        twitchFeatureEnabled: false,
-        youtubeFeatureEnabled: true,
-        canConfirmYoutubeIngest: true,
-      }),
-    ],
-    ['youtube-unbound'],
   );
 });
 
@@ -220,6 +257,7 @@ test('Enhanced Broadcasting requires its exact native capability', t => {
       {
         legId: 'horizontal',
         display: 'horizontal',
+        outputKind: 'twitch-enhanced-broadcasting',
         destinations: [{ platform: 'twitch' }],
         route: 'direct',
         probeCandidates: [candidate],
@@ -241,6 +279,65 @@ test('Enhanced Broadcasting requires its exact native capability', t => {
   );
   t.is(enhanced.legs[0].measurement, 'active');
   t.deepEqual(enhanced.probeCandidates, [candidate]);
+});
+
+test('mixed Enhanced Broadcasting keeps only its Twitch and YouTube representatives', t => {
+  const topology = enhancedBroadcastingDualOutputTopology();
+  t.true(isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology(topology));
+
+  const filtered = filterAutoConfigTopologyProbes(
+    topology,
+    new Set<TAutoOptimizerProbeKind>(['twitch-enhanced-broadcasting', 'youtube-unbound']),
+    { enhancedBroadcastingDualOutputWorkload: true },
+  );
+
+  t.true(isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology(filtered));
+  t.deepEqual(
+    filtered.legs.map(leg => ({
+      outputKind: leg.outputKind,
+      destinations: leg.destinations.map(destination => destination.platform),
+      providers: leg.probeCandidates.map(candidate => candidate.provider),
+      measurement: leg.measurement,
+    })),
+    [
+      {
+        outputKind: 'twitch-enhanced-broadcasting',
+        destinations: ['twitch'],
+        providers: ['twitch'],
+        measurement: 'active',
+      },
+      {
+        outputKind: 'standard',
+        destinations: ['youtube', 'kick'],
+        providers: ['youtube'],
+        measurement: 'active',
+      },
+    ],
+  );
+});
+
+test('mixed Enhanced Broadcasting becomes fully estimate-only without concurrent-workload capability', t => {
+  const topology = enhancedBroadcastingDualOutputTopology();
+  const supportedKinds = new Set<TAutoOptimizerProbeKind>([
+    'twitch-enhanced-broadcasting',
+    'youtube-unbound',
+  ]);
+
+  for (const options of [{}, { enhancedBroadcastingDualOutputWorkload: false }]) {
+    const filtered = filterAutoConfigTopologyProbes(topology, supportedKinds, options);
+    t.deepEqual(filtered.probeCandidates, []);
+    t.true(filtered.legs.every(leg => leg.probeCandidates.length === 0));
+    t.true(filtered.legs.every(leg => leg.measurement === 'estimated'));
+    t.true(filtered.legs.every(leg => leg.estimateReason === 'enhanced_broadcasting'));
+  }
+
+  const missingTwitchMode = filterAutoConfigTopologyProbes(
+    topology,
+    new Set<TAutoOptimizerProbeKind>(['youtube-unbound']),
+    { enhancedBroadcastingDualOutputWorkload: true },
+  );
+  t.deepEqual(missingTwitchMode.probeCandidates, []);
+  t.true(missingTwitchMode.legs.every(leg => leg.measurement === 'estimated'));
 });
 
 test('probe coverage estimates only with zero probes and disables partial promotion', t => {
@@ -638,6 +735,7 @@ test('YouTube display both cannot create two active probe leases', t => {
   const legs = ['horizontal', 'vertical'].map(display => ({
     legId: display,
     display: display as 'horizontal' | 'vertical',
+    outputKind: 'standard' as const,
     destinations: [{ platform: 'youtube' as const }],
     route: 'direct' as const,
     probeCandidates: [
@@ -922,7 +1020,7 @@ test('progress pacing coalesces repeats but preserves A to B to A transitions', 
 });
 
 test('active probe target bitrate feedback is conservatively validated', t => {
-  t.is(sanitizeAutoConfigProbeTargetBitrateKbps(12000), 12000);
+  t.is(sanitizeAutoConfigProbeTargetBitrateKbps(10000), 10000);
   t.is(sanitizeAutoConfigProbeTargetBitrateKbps(0), null);
   t.is(sanitizeAutoConfigProbeTargetBitrateKbps(-1), null);
   t.is(sanitizeAutoConfigProbeTargetBitrateKbps(1.5), null);
@@ -991,7 +1089,7 @@ test('malformed progress metadata cannot leak into mirrored UI state', t => {
     progress: 40,
     code: '<script>',
     provider: 'youtube',
-    targetBitrateKbps: 12000,
+    targetBitrateKbps: 10000,
     availableBitrateKbps: Number.POSITIVE_INFINITY,
     encoderId: 'x'.repeat(300),
     encoderFamily: 'legacy',
@@ -1003,7 +1101,7 @@ test('malformed progress metadata cannot leak into mirrored UI state', t => {
   t.deepEqual(sanitizeAutoConfigProgressDetail(event, 'bandwidth'), {
     code: null,
     provider: 'youtube',
-    targetBitrateKbps: 12000,
+    targetBitrateKbps: 10000,
     availableBitrateKbps: null,
     encoderId: null,
     encoderFamily: null,

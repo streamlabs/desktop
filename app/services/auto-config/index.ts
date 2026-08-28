@@ -19,8 +19,8 @@ import { ScenesService } from 'services/scenes';
 import { NavigationService } from 'services/navigation';
 import { byOS, OS } from 'util/operating-systems';
 import { $t } from 'services/i18n';
-import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremental-rollout';
 import { classifyAutoOptimizerTopology, isAutoOptimizerProfileCompatible } from './topology';
+import { autoOptimizerRecommendationBitrateCap } from './bitrate-policy';
 import {
   areAutoConfigActiveCanvasIdentitiesValid,
   autoConfigProbeCoverage,
@@ -29,6 +29,7 @@ import {
   filterAutoConfigTopologyProbes,
   hasRequiredAutoConfigCapabilities,
   isEligibleAutoConfigDualOutputActiveTopology,
+  isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology,
   isValidAutoConfigActiveProbeCoverage,
   sanitizeAutoConfigProgressDetail,
   sanitizeAutoConfigProbeEvidence,
@@ -36,6 +37,7 @@ import {
 } from './probe-policy';
 import {
   isValidAutoConfigDualOutputResultEnvelope,
+  isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope,
   validateAutoConfigRecommendation,
 } from './result-policy';
 import {
@@ -50,6 +52,7 @@ import {
   outputTransactionValuesMatch,
   shouldApplyAutoOptimizerVideoSettings,
   shouldCaptureTargetPresetForRollback,
+  selectAutoOptimizerStandardOutputRecommendation,
   TRawOutputValues,
 } from './output-transaction-policy';
 import {
@@ -81,22 +84,12 @@ export { classifyAutoOptimizerTopology } from './topology';
 // candidates, followed by sequential Twitch and YouTube probes. This is only
 // a final dead-session guard; each real substep continues to update the UI.
 const NATIVE_RUN_TIMEOUT_MS = 420000;
-const FEATURE_READINESS_TIMEOUT_MS = 2000;
 const MIN_PHASE_VISIBLE_MS = 1000;
 const YOUTUBE_INGEST_CONFIRMATION_TIMEOUT_MS = 12000;
 const CLEANUP_PROGRESS_START = 95;
 const CLEANUP_PROGRESS_MAX = 99;
 const CLEANUP_PROGRESS_STEP = 0.2;
 const CLEANUP_PROGRESS_INTERVAL_MS = 1000;
-
-// OBS service metadata supplies caps for Twitch, YouTube and Facebook in the
-// native estimator. These two custom-RTMP integrations do not have rtmp_common
-// metadata, so Desktop supplies their published ceilings. Unknown/custom
-// providers intentionally remain uncapped rather than guessing.
-const PLATFORM_MAX_BITRATE_KBPS: Partial<Record<TAutoOptimizerPlatform, number>> = {
-  kick: 8000,
-  tiktok: 6000,
-};
 
 class AutoOptimizerProbeSetupError extends Error {
   readonly code = 'active_probe_setup_failed';
@@ -237,7 +230,6 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   @Inject() private sourcesService: SourcesService;
   @Inject() private scenesService: ScenesService;
   @Inject() private navigationService: NavigationService;
-  @Inject() private incrementalRolloutService: IncrementalRolloutService;
 
   static defaultState: IAutoOptimizerState = {
     ...initialFlowState(),
@@ -302,9 +294,6 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     this.pendingGoLiveProfile = null;
     if (!this.userService.isLoggedIn) return false;
     if (this.settingsService.views.hasHDRSettings) return false;
-    await this.waitForFeatureFlags();
-    if (!this.featureEnabled(EAvailableFeatures.autoOptimizer)) return false;
-    if (!this.featureEnabled(EAvailableFeatures.autoOptimizerApply)) return false;
     if (this.getPromptState() !== 'unseen') return false;
     const capabilities = this.getNativeCapabilities();
     if (!hasRequiredAutoConfigCapabilities(capabilities)) return false;
@@ -317,12 +306,14 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         this.twitchService.views.hasTwitchDualStreamAccess,
       ),
       supportedAutoConfigProbeKinds(capabilities!, {
-        twitchFeatureEnabled: this.featureEnabled(EAvailableFeatures.autoOptimizerTwitchProbe),
-        youtubeFeatureEnabled: this.featureEnabled(EAvailableFeatures.autoOptimizerYoutubeProbe),
         canConfirmYoutubeIngest:
           typeof this.nativeApi().ConfirmAutoConfigProbeIngest === 'function',
       }),
-      { dualOutputActiveProbes: capabilities!.dualOutputActiveProbes === true },
+      {
+        dualOutputActiveProbes: capabilities!.dualOutputActiveProbes === true,
+        enhancedBroadcastingDualOutputWorkload:
+          capabilities!.enhancedBroadcastingDualOutputWorkload === true,
+      },
     );
     if (!topology.legs.some(leg => leg.destinations.length > 0)) {
       this.frozenGoLiveSettings = null;
@@ -445,12 +436,14 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           this.twitchService.views.hasTwitchDualStreamAccess,
         ),
         supportedAutoConfigProbeKinds(capabilities!, {
-          twitchFeatureEnabled: this.featureEnabled(EAvailableFeatures.autoOptimizerTwitchProbe),
-          youtubeFeatureEnabled: this.featureEnabled(EAvailableFeatures.autoOptimizerYoutubeProbe),
           canConfirmYoutubeIngest:
             typeof this.nativeApi().ConfirmAutoConfigProbeIngest === 'function',
         }),
-        { dualOutputActiveProbes: capabilities!.dualOutputActiveProbes === true },
+        {
+          dualOutputActiveProbes: capabilities!.dualOutputActiveProbes === true,
+          enhancedBroadcastingDualOutputWorkload:
+            capabilities!.enhancedBroadcastingDualOutputWorkload === true,
+        },
       ),
     );
     await this.startOptimization();
@@ -505,9 +498,6 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   async applyAndContinue(): Promise<boolean> {
     if (!this.frozenGoLiveSettings || !this.state.result || this.state.stage !== 'review') {
       return false;
-    }
-    if (!this.featureEnabled(EAvailableFeatures.autoOptimizerApply)) {
-      return this.continueWithoutOptimization();
     }
 
     this.SET_APPLYING();
@@ -647,9 +637,12 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   ): Promise<IPreparedAutoConfigRequest> {
     const topology = cloneDeep(sourceTopology);
     const activeDualOutput = isEligibleAutoConfigDualOutputActiveTopology(topology);
+    const activeEnhancedBroadcastingDualOutput = isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology(
+      topology,
+    );
     const requestedActiveProbeCount = topology.probeCandidates.length;
     const activeProbes: IAutoConfigActiveProbe[] = [];
-    if (activeDualOutput) {
+    if (activeDualOutput || activeEnhancedBroadcastingDualOutput) {
       const horizontalCanvasId = this.videoSettingsService.contexts.horizontal?.canvasId;
       const verticalCanvasId = this.videoSettingsService.contexts.vertical?.canvasId;
       if (!areAutoConfigActiveCanvasIdentitiesValid(horizontalCanvasId, verticalCanvasId, true)) {
@@ -746,6 +739,17 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       this.clearActiveProbeCredentials(credentialProbes);
       throw new AutoOptimizerProbeSetupError();
     }
+    if (
+      activeEnhancedBroadcastingDualOutput &&
+      !activeProbes.some(probe => probe.kind === 'twitch-enhanced-broadcasting')
+    ) {
+      // The paired Twitch ladder owns the canvas recommendation and is the
+      // anchor for the concurrent companion workload. A missing optional
+      // YouTube probe may lower bandwidth confidence; a missing Twitch probe
+      // makes the combined experiment impossible.
+      this.clearActiveProbeCredentials(credentialProbes);
+      throw new AutoOptimizerProbeSetupError();
+    }
     if (requestedActiveProbeCount > 0 && activeProbes.length === 0) {
       // Runtime setup failures are actionable and retryable. Falling through to
       // an estimate would hide the provider/API problem and leave the user with
@@ -760,7 +764,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       const canvasId = this.videoSettingsService.contexts[display]?.canvasId;
       const additionalCanvasId = this.videoSettingsService.contexts.vertical?.canvasId;
       if (
-        topology.type === 'enhanced-broadcasting' &&
+        (topology.type === 'enhanced-broadcasting' ||
+          topology.type === 'enhanced-broadcasting-dual-output') &&
         leg.measurement === 'active' &&
         !areAutoConfigActiveCanvasIdentitiesValid(
           canvasId,
@@ -770,13 +775,14 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       ) {
         throw new AutoOptimizerProbeSetupError();
       }
-      const knownCaps = leg.destinations
-        .map(item => PLATFORM_MAX_BITRATE_KBPS[item.platform])
-        .filter((value): value is number => typeof value === 'number' && value > 0);
-      const maxBitrateKbps = knownCaps.length ? Math.min(...knownCaps) : undefined;
+      const maxBitrateKbps = autoOptimizerRecommendationBitrateCap(
+        leg.outputKind,
+        leg.destinations.map(item => item.platform),
+      );
       return {
         legId: leg.legId,
         display: leg.display,
+        outputKind: leg.outputKind,
         destinations: leg.destinations,
         current: {
           canvasId,
@@ -796,8 +802,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         // tuple, but their request ceiling cannot rise above the current output.
         limits: buildAutoOptimizerRequestLimits({
           allowPromotion:
-            leg.measurement === 'active' &&
-            leg.estimateReason !== 'partial_provider_probes' &&
+            ((leg.measurement === 'active' && leg.estimateReason !== 'partial_provider_probes') ||
+              activeEnhancedBroadcastingDualOutput) &&
             autoOptimizerCanvasAllowsQualityPromotion(
               video.baseWidth,
               video.baseHeight,
@@ -827,8 +833,9 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
                 },
                 limits: buildAutoOptimizerRequestLimits({
                   allowPromotion:
-                    leg.measurement === 'active' &&
-                    leg.estimateReason !== 'partial_provider_probes' &&
+                    ((leg.measurement === 'active' &&
+                      leg.estimateReason !== 'partial_provider_probes') ||
+                      activeEnhancedBroadcastingDualOutput) &&
                     autoOptimizerCanvasAllowsQualityPromotion(
                       this.videoSettingsService.state.vertical.baseWidth,
                       this.videoSettingsService.state.vertical.baseHeight,
@@ -1088,6 +1095,10 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     const activeDualOutput = Boolean(
       this.state.topology && isEligibleAutoConfigDualOutputActiveTopology(this.state.topology),
     );
+    const activeEnhancedBroadcastingDualOutput = Boolean(
+      this.state.topology &&
+        isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology(this.state.topology),
+    );
     if (
       activeDualOutput &&
       !isValidAutoConfigDualOutputResultEnvelope(
@@ -1095,6 +1106,19 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         expectedLegs.map(leg => leg.legId),
       )
     ) {
+      return {
+        schemaVersion: 1,
+        topology: this.state.topology?.type || 'direct-single',
+        status: nativeResult.status,
+        legs: [],
+        advice: this.getAdvice(),
+      };
+    }
+    const combinedWorkloadValidated = Boolean(
+      activeEnhancedBroadcastingDualOutput &&
+        isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(nativeResult, expectedLegs),
+    );
+    if (activeEnhancedBroadcastingDualOutput && !combinedWorkloadValidated) {
       return {
         schemaVersion: 1,
         topology: this.state.topology?.type || 'direct-single',
@@ -1121,25 +1145,26 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
               attemptedCandidates: expected.probeCandidates,
               evidence,
               confidence: leg.measurement?.confidence,
-              requireAllProbeCapableDestinations: !activeDualOutput,
+              requireAllProbeCapableDestinations:
+                !activeDualOutput && !activeEnhancedBroadcastingDualOutput,
             }),
         );
-      const providerOwnsEncoding =
-        this.state.topology?.type === 'enhanced-broadcasting' ||
-        (expected?.display === 'both' &&
-          expected.destinations.some(destination => destination.platform === 'twitch'));
+      const providerOwnsEncoding = expected?.outputKind === 'twitch-enhanced-broadcasting';
       const recommendation = requested
         ? validateAutoConfigRecommendation(leg.recommendation, {
             measurementMode: leg.measurement?.mode,
             currentBitrateKbps: requested.current.bitrateKbps,
             probeEvidence: evidence,
             providerOwnsEncoding,
-            enhancedBroadcasting: this.state.topology?.type === 'enhanced-broadcasting',
+            enhancedBroadcasting: providerOwnsEncoding,
+            combinedWorkloadValidated:
+              combinedWorkloadValidated && expected?.outputKind === 'standard',
             qualityProfile:
               jointDualOutputActive ||
               expected?.destinations.some(destination => destination.platform === 'twitch')
                 ? 'twitch'
                 : 'generic',
+            maxBitrateKbps: requested.limits?.maxBitrateKbps,
             maxWidth: requested.limits?.maxWidth,
             maxHeight: requested.limits?.maxHeight,
             maxFpsNum: requested.limits?.maxFpsNum,
@@ -1168,6 +1193,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         {
           legId: leg.legId,
           display: leg.display,
+          outputKind: expected.outputKind,
           destinations: expected.destinations.map(
             item => ({ platform: normalizePlatform(item.platform) } as IAutoOptimizerDestination),
           ),
@@ -1261,6 +1287,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     await this.videoSettingsService.flushPendingCanvasSettings();
     const snapshot = this.captureSettingsSnapshot();
     const primary = result.legs.find(leg => leg.display === 'horizontal') || result.legs[0];
+    const outputRecommendation = selectAutoOptimizerStandardOutputRecommendation(result.legs);
     const frameRateSignatures = new Set(
       result.legs.flatMap(leg => [
         `${leg.fpsNum}/${leg.fpsDen}`,
@@ -1272,31 +1299,15 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     if (frameRateSignatures.size > 1) {
       throw new Error('This stream topology cannot apply different frame rates per upload leg');
     }
-    const providerOwnsEncoding =
-      this.state.topology.type === 'enhanced-broadcasting' ||
-      (primary.display === 'both' &&
-        primary.destinations.some(destination => destination.platform === 'twitch'));
+    const providerOwnsEncoding = outputRecommendation === null;
     const applyVideoSettings = shouldApplyAutoOptimizerVideoSettings(
       this.state.topology.type,
       providerOwnsEncoding,
       result.legs.map(leg => leg.measurement),
     );
-    if (!providerOwnsEncoding && result.legs.some(leg => !leg.encoder)) {
-      throw new Error('The optimizer did not return a tested encoder');
-    }
-    const encoderSignatures = new Set(
-      result.legs.map(leg =>
-        leg.encoder
-          ? `${leg.encoder.id}:${leg.encoder.family}:${leg.encoder.preset || ''}`
-          : 'provider-managed',
-      ),
-    );
-    if (!providerOwnsEncoding && encoderSignatures.size > 1) {
-      throw new Error('This stream topology cannot apply different encoders per upload leg');
-    }
     const expectedEncoder = providerOwnsEncoding
       ? null
-      : (primary.encoder!.family as EEncoderFamily);
+      : (outputRecommendation!.encoder!.family as EEncoderFamily);
     const displaysToApply = Array.from(
       new Set(
         result.legs.flatMap(leg =>
@@ -1323,22 +1334,22 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         if (shouldCaptureTargetPresetForRollback(snapshot.output.mode)) {
           snapshot.targetPreset = this.captureTargetEncoderPresetSnapshot(
             snapshot.output.mode,
-            primary.encoder!.id,
-            primary.encoder!.family as EEncoderFamily,
+            outputRecommendation!.encoder!.id,
+            outputRecommendation!.encoder!.family as EEncoderFamily,
           );
         } else {
           this.activateEncoderPresetContext(
             snapshot.output.mode,
-            primary.encoder!.id,
-            primary.encoder!.family as EEncoderFamily,
+            outputRecommendation!.encoder!.id,
+            outputRecommendation!.encoder!.family as EEncoderFamily,
           );
         }
         this.outputSettingsService.setSettings({
           streaming: {
-            bitrate: primary.bitrate,
+            bitrate: outputRecommendation!.bitrate,
             encoder: expectedEncoder!,
-            encoderId: primary.encoder!.id,
-            preset: primary.encoder!.preset,
+            encoderId: outputRecommendation!.encoder!.id,
+            preset: outputRecommendation!.encoder!.preset,
           },
         });
       }
@@ -1362,7 +1373,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       this.verifyAppliedSettings(
         result,
         primary,
-        providerOwnsEncoding,
+        outputRecommendation,
         applyVideoSettings,
         expectedEncoder,
         snapshot,
@@ -1542,35 +1553,39 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private verifyAppliedSettings(
     result: IAutoOptimizerResult,
     primary: IAutoOptimizerLegResult,
-    providerOwnsEncoding: boolean,
+    outputRecommendation: IAutoOptimizerLegResult | null,
     applyVideoSettings: boolean,
     expectedEncoder: EEncoderFamily | null,
     snapshot: ISettingsSnapshot,
   ) {
     const output = this.outputSettingsService.getSettings();
-    if (!providerOwnsEncoding && output.streaming.bitrate !== primary.bitrate) {
+    if (outputRecommendation && output.streaming.bitrate !== outputRecommendation.bitrate) {
       throw new Error('Failed to apply the recommended bitrate');
     }
-    if (!providerOwnsEncoding && output.streaming.encoder !== expectedEncoder) {
+    if (outputRecommendation && output.streaming.encoder !== expectedEncoder) {
       throw new Error('Failed to apply the recommended encoder');
     }
-    if (!providerOwnsEncoding && output.streaming.encoderId !== primary.encoder!.id) {
+    if (outputRecommendation && output.streaming.encoderId !== outputRecommendation.encoder!.id) {
       throw new Error('Failed to apply the tested encoder implementation');
     }
-    if (!providerOwnsEncoding) {
+    if (outputRecommendation) {
       const presetField = this.encoderQueryService.resolveStreamingEncoderPreset(
         output.mode,
-        primary.encoder!.id,
+        outputRecommendation.encoder!.id,
       );
       const rawPreset = presetField ? this.readRawOutputField('Streaming', presetField) : null;
       let appliedPreset: string;
       try {
         if (typeof rawPreset !== 'string' || !rawPreset) throw new Error('Missing preset');
-        appliedPreset = encoderPresetFromSettingsValue(primary.encoder!.id, output.mode, rawPreset);
+        appliedPreset = encoderPresetFromSettingsValue(
+          outputRecommendation.encoder!.id,
+          output.mode,
+          rawPreset,
+        );
       } catch (error: unknown) {
         throw new Error('Failed to read the recommended encoder preset');
       }
-      if (appliedPreset !== primary.encoder!.preset) {
+      if (appliedPreset !== outputRecommendation.encoder!.preset) {
         throw new Error('Failed to apply the recommended encoder preset');
       }
       if (
@@ -1691,27 +1706,6 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     return this.userService.isLoggedIn && this.userService.state.userId != null
       ? `account:${this.userService.state.userId}`
       : `install:${this.userService.getLocalUserId()}`;
-  }
-
-  private featureEnabled(feature: EAvailableFeatures): boolean {
-    // Account rollout flags are the kill switches. Signed-out sessions have no
-    // authenticated rollout source, so the optimizer fails closed to the normal Go Live.
-    if (!this.userService.isLoggedIn) return false;
-    return this.incrementalRolloutService.views.featureIsEnabled(feature);
-  }
-
-  private async waitForFeatureFlags(): Promise<void> {
-    let timeout: ReturnType<typeof setTimeout> | null = null;
-    try {
-      await Promise.race([
-        this.incrementalRolloutService.featuresReady,
-        new Promise<void>(resolve => {
-          timeout = setTimeout(resolve, FEATURE_READINESS_TIMEOUT_MS);
-        }),
-      ]);
-    } finally {
-      if (timeout) clearTimeout(timeout);
-    }
   }
 
   private getPromptState(): TAutoOptimizerPromptState {

@@ -2,6 +2,8 @@ import {
   autoOptimizerAcceptedBaseResolution,
   autoOptimizerPromotesResolution,
 } from './resolution-policy';
+import { IAutoOptimizerLegResult } from './types';
+import { AUTO_OPTIMIZER_MAX_RECOMMENDED_BITRATE_KBPS } from './bitrate-policy';
 
 export interface IOutputFormParameterLike {
   name: string;
@@ -32,6 +34,38 @@ export function shouldApplyAutoOptimizerVideoSettings(
       measurementModes.length > 0 &&
       measurementModes.every(mode => mode === 'active'))
   );
+}
+
+/**
+ * Output settings are shared by every standard streaming instance. Select the
+ * one jointly tested companion recommendation only when all standard physical
+ * outputs agree; provider-managed Twitch legs are intentionally ignored.
+ */
+export function selectAutoOptimizerStandardOutputRecommendation(
+  legs: IAutoOptimizerLegResult[],
+): IAutoOptimizerLegResult | null {
+  const standardLegs = legs.filter(leg => leg.outputKind === 'standard');
+  if (!standardLegs.length) return null;
+  if (standardLegs.some(leg => !leg.encoder)) {
+    throw new Error('The optimizer did not return a tested encoder');
+  }
+  if (
+    standardLegs.some(
+      leg => leg.bitrate < 1 || leg.bitrate > AUTO_OPTIMIZER_MAX_RECOMMENDED_BITRATE_KBPS,
+    )
+  ) {
+    throw new Error('The optimizer returned an unsupported streaming bitrate');
+  }
+  const encoderSignatures = new Set(
+    standardLegs.map(
+      leg => `${leg.encoder!.id}:${leg.encoder!.family}:${leg.encoder!.preset || ''}`,
+    ),
+  );
+  const bitrates = new Set(standardLegs.map(leg => leg.bitrate));
+  if (encoderSignatures.size !== 1 || bitrates.size !== 1) {
+    throw new Error('This stream topology cannot apply different standard output settings');
+  }
+  return standardLegs[0];
 }
 
 interface IAutoOptimizerVideoSettingsLike {
