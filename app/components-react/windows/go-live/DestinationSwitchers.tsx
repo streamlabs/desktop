@@ -23,7 +23,7 @@ import AnimatedWrapper from 'components-react/shared/AnimatedWrapper';
 /**
  * Allows enabling/disabling platforms and custom destinations for the stream
  */
-export const DestinationSwitchers = memo((p: { disabled?: boolean }) => {
+export const DestinationSwitchers = memo(() => {
   const {
     enabledPlatforms,
     customDestinations,
@@ -40,8 +40,6 @@ export const DestinationSwitchers = memo((p: { disabled?: boolean }) => {
     isLoading,
     isFacebookGrandfathered,
     isTikTokGrandfathered,
-    activeDisplayPlatforms,
-    isUpdateMode,
   } = useGoLiveSettings().extend(module => ({
     get renderedPlatforms() {
       // Some platforms are always shown, even if not linked so add them to the list of platforms to display
@@ -60,20 +58,6 @@ export const DestinationSwitchers = memo((p: { disabled?: boolean }) => {
   enabledPlatformsRef.current = enabledPlatforms;
   const enabledDestRef = useRef(enabledDestinations);
   enabledDestRef.current = enabledDestinations;
-
-  const disabledHorizontalUltraSwitcher = useMemo(() => {
-    const shouldDisable =
-      isDualOutputMode && isPrime && isUpdateMode && activeDisplayPlatforms.horizontal.length < 2;
-
-    return shouldDisable ? activeDisplayPlatforms.horizontal[0] : null;
-  }, [isDualOutputMode, isPrime, isUpdateMode, activeDisplayPlatforms]);
-
-  const disabledVerticalUltraSwitcher = useMemo(() => {
-    const shouldDisable =
-      isDualOutputMode && isPrime && isUpdateMode && activeDisplayPlatforms.vertical.length < 2;
-
-    return shouldDisable ? activeDisplayPlatforms.vertical[0] : null;
-  }, [isDualOutputMode, isPrime, isUpdateMode, activeDisplayPlatforms]);
 
   const emitSwitch = useDebounce(500, (ind?: number, enabled?: boolean) => {
     if (ind !== undefined && enabled !== undefined) {
@@ -96,14 +80,6 @@ export const DestinationSwitchers = memo((p: { disabled?: boolean }) => {
 
   const togglePlatform = useCallback(
     (platform: TPlatform, enabled: boolean) => {
-      // In update mode, prevent toggling off the last platform for a display orientation
-      if (
-        disabledHorizontalUltraSwitcher === platform ||
-        disabledVerticalUltraSwitcher === platform
-      ) {
-        return enabledPlatformsRef.current.includes(platform);
-      }
-
       // Only allow non-ultra users to have 2 platforms, or 1 platform and 1 custom destination enabled
       if (!isPrime) {
         return toggleNonUltraPlatform(platform, enabled);
@@ -123,7 +99,7 @@ export const DestinationSwitchers = memo((p: { disabled?: boolean }) => {
       emitSwitch();
       return enabledPlatformsRef.current.includes(platform);
     },
-    [emitSwitch, isPrime, disabledHorizontalUltraSwitcher, disabledVerticalUltraSwitcher],
+    [emitSwitch, isPrime],
   );
 
   const toggleNonUltraPlatform = useCallback(
@@ -239,8 +215,7 @@ export const DestinationSwitchers = memo((p: { disabled?: boolean }) => {
         const enabled = isEnabled(platform);
         const disabledByBoth =
           !!nonPrimeBothDisplayPlatform && !enabled && platform !== nonPrimeBothDisplayPlatform;
-        const switchDisabled =
-          p?.disabled || (!enabled && disableNonUltraSwitchers) || disabledByBoth;
+        const switchDisabled = (!enabled && disableNonUltraSwitchers) || disabledByBoth;
         const bothDisplayPlatformLabel = disabledByBoth
           ? platformLabels(nonPrimeBothDisplayPlatform!)
           : undefined;
@@ -255,10 +230,6 @@ export const DestinationSwitchers = memo((p: { disabled?: boolean }) => {
             switchDisabled={switchDisabled}
             bothDisplayPlatformLabel={bothDisplayPlatformLabel}
             showDisplaySelector={visible}
-            showDisabledAlert={
-              disabledHorizontalUltraSwitcher === platform ||
-              disabledVerticalUltraSwitcher === platform
-            }
             isPrime={isPrime}
             username={getUsername(platform)}
             index={ind}
@@ -270,7 +241,6 @@ export const DestinationSwitchers = memo((p: { disabled?: boolean }) => {
       {customDestinations?.map((dest, ind) => {
         const disabledByBoth = !!nonPrimeBothDisplayPlatform && !dest.enabled;
         const switchDisabled =
-          p?.disabled ||
           disableCustomDestinationSwitchers ||
           (!dest.enabled && disableNonUltraSwitchers) ||
           disabledByBoth;
@@ -310,7 +280,6 @@ interface IDestinationSwitcherProps {
   isPrime: boolean;
   username?: string;
   isUnlinked?: boolean;
-  showDisabledAlert?: boolean;
   /** Disable the switch while the go live window is loading/refreshing settings */
   isLoading?: boolean;
 }
@@ -376,18 +345,10 @@ const DestinationSwitcher = memo(
           return onChange(!enabled);
         }
 
-        if (disabled || p.showDisabledAlert) {
-          if (p.showDisabledAlert) {
-            alertInfo({
-              name: 'switcher-info-alert',
-              text: $t('Cannot toggle off only enabled platform for this display orientation.'),
-            });
-          }
-          return enabled;
-        }
+        if (disabled) return enabled;
         return onChange(!enabled);
       },
-      [p.enabled, p.isLoading, onChange, p.bothDisplayPlatformLabel, disabled, p.showDisabledAlert],
+      [p.enabled, p.isLoading, onChange, p.bothDisplayPlatformLabel, disabled],
     );
 
     const { title, description } = useMemo(() => {
