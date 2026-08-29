@@ -5,7 +5,7 @@ import {
   platformList,
   TPlatform,
 } from '../../../services/platforms';
-import { getDestinationId, ICustomStreamDestination } from 'services/settings/streaming';
+import { ICustomStreamDestination } from 'services/settings/streaming';
 import { Services } from '../../service-provider';
 import cloneDeep from 'lodash/cloneDeep';
 import { FormInstance } from 'antd/lib/form';
@@ -138,6 +138,11 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
             id: otherEnabledTargetIndex.toString(),
           };
 
+          console.log(
+            'updating ',
+            this.state.customDestinations[otherEnabledTargetIndex]?.name,
+            ' to disabled',
+          );
           alertInfo({
             name: 'both-display-info-alert',
             text: $t(
@@ -258,11 +263,9 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
     (Object.keys(fields) as TCommonFieldName[]).forEach((fieldName: TCommonFieldName) => {
       const view = this.getView();
       const value = fields[fieldName];
-      // In the Edit Stream window, skip platforms using custom fields
-      const platforms =
-        shouldChangeAllPlatforms || this.state.isUpdateMode
-          ? view.platformsWithoutCustomFields
-          : view.enabledPlatforms;
+      const platforms = shouldChangeAllPlatforms
+        ? view.platformsWithoutCustomFields
+        : view.enabledPlatforms;
       platforms.forEach(platform => {
         if (!view.supports(fieldName, [platform])) return;
         const platformSettings = getDefined(this.state.platforms[platform]);
@@ -295,12 +298,6 @@ export class GoLiveSettingsModule {
 
   cooldownTimer = new Subject<boolean>();
 
-  /**
-   * Whether the targets have already been restored on teardown
-   * @remark `destroy()` fires more than once as slap disposes nested scopes
-   */
-  private targetsRestored = false;
-
   constructor(
     public form: FormInstance,
     public isUpdateMode: boolean,
@@ -318,17 +315,8 @@ export class GoLiveSettingsModule {
       );
     }
 
-    // Determine if TikTok apply notification should be shown
+    // determine if TikTok apply notification should be shown
     Services.TikTokService.actions.handleApplyPrompt();
-
-    // Determine if Stream Shift prompt should be shown
-    // Always check is live because checking also resets the stream shift state for non-ultra users
-    // This is not awaited because it only decides whether the prompt appears and nothing else
-    // that is rendered depends on the result. Also don't check in update mode because any stream
-    // using restream will show as live, because it is live, just not with stream shift.
-    if (!this.isUpdateMode && Services.RestreamService.views.streamShiftStatus !== 'pending') {
-      Services.RestreamService.actions.checkIsLive();
-    }
 
     await this.prepopulate();
   }
@@ -385,15 +373,6 @@ export class GoLiveSettingsModule {
      */
     const { dualOutputMode } = DualOutputService.state;
     if (dualOutputMode && settings.streamShift) {
-      settings.streamShift = false;
-    }
-
-    /**
-     * The two features are mutually exclusive, so a persisted pair with both switched on would
-     * disable both cards and leave the user unable to switch either off. Live output editing wins,
-     * matching `isStreamShiftDisabled`. Already gated by the feature flag via `savedLiveOutputEditing`.
-     */
-    if (settings.liveOutputEditing && settings.streamShift) {
       settings.streamShift = false;
     }
 
@@ -567,18 +546,12 @@ export class GoLiveSettingsModule {
     Services.UserService.actions.setPrimaryPlatform(platform);
   }
 
-  /**
-   * Whether any target has been added to or removed from the stream
-   * @remark Mirrors `shouldUpdateRestream` in the streaming service, so it also answers whether the
-   * restream step will run. Custom destinations are keyed by url and stream key together, the same
-   * way `parseUpdateCustomDestinations` identifies them — the stream key alone is not unique.
-   */
   get isUpdatingTargets() {
     return (
       xorWith(this.activePlatforms, this.state.enabledPlatforms, isEqual).length > 0 ||
       xorWith(
-        this.activeDestinations?.map(d => getDestinationId(d)),
-        this.state.customDestinations.filter(dest => dest.enabled).map(d => getDestinationId(d)),
+        this.activeDestinations?.map(dest => dest.streamKey),
+        this.state.customDestinations.filter(dest => dest.enabled).map(dest => dest.streamKey),
         isEqual,
       ).length > 0
     );
@@ -592,7 +565,9 @@ export class GoLiveSettingsModule {
   isTargetLive(target: TPlatform | number) {
     if (typeof target === 'number') {
       const dest = this.state.customDestinations[target];
-      return this.activeDestinations?.some(d => getDestinationId(d) === getDestinationId(dest));
+      return this.activeDestinations?.some(
+        d => `{${d.url}${d.streamKey}` === `{${dest.url}${dest.streamKey}`,
+      );
     } else {
       return this.activePlatforms?.includes(target);
     }
@@ -600,15 +575,6 @@ export class GoLiveSettingsModule {
 
   setStreamShift(status: boolean) {
     this.state.toggleStreamShift(status);
-
-    // The two features are mutually exclusive. `isLiveOutputEditingDisabled` stops live output
-    // editing being switched on while stream shift is active, so turn it off here to close the
-    // other direction — including when accepting a detected switch, which enables stream shift
-    // without the user touching either toggle.
-    if (status && this.state.isLiveOutputEditingEnabled) {
-      this.state.toggleLiveOutputEditing(false);
-    }
-
     this.save(this.state.settings);
   }
 
@@ -643,13 +609,6 @@ export class GoLiveSettingsModule {
    * Validate the form and show an error message
    */
   async validate() {
-    if (
-      Services.RestreamService.views.streamShiftStatus === 'pending' &&
-      !Services.RestreamService.views.streamShiftForceGoLive
-    ) {
-      return true;
-    }
-
     if (this.getIsInvalidDualStream()) {
       alertInfo({
         name: 'ultra-required-alert',
@@ -659,7 +618,7 @@ export class GoLiveSettingsModule {
       return;
     }
 
-    if (!this.state.settings.streamShift && !this.isPrime && this.state.isDualOutputMode) {
+    if (!this.isPrime && this.state.isDualOutputMode) {
       const totalEnabled =
         this.state.enabledPlatforms.length +
         this.state.customDestinations.filter(d => d.enabled).length;
@@ -702,31 +661,20 @@ export class GoLiveSettingsModule {
   async goLive() {
     if (await this.validate()) {
       Services.StreamingService.actions.goLive(this.state.settings);
-      // await Services.StreamingService.actions.return.goLive(this.state.settings);
     }
   }
   /**
    * Validate the form and send new settings for each eligible platform
    */
   async updateStream() {
-    if (!(await this.validate())) return;
-
-    let updated = false;
-    try {
-      updated = await Services.StreamingService.actions.return.updateStreamSettings(
+    if (
+      (await this.validate()) &&
+      (await Services.StreamingService.actions.return.updateStreamSettings(
         this.state.settings,
         this.activePlatforms,
         this.activeDestinations,
-      );
-    } catch (e: unknown) {
-      // The error is surfaced by the streaming service through the Go Live checklist, so just
-      // stop here. Any stream that was already live is unaffected.
-      console.error('Error updating stream settings', e);
-      this.syncToLiveTargets();
-      return;
-    }
-
-    if (updated) {
+      ))
+    ) {
       message.success($t('Successfully updated'));
 
       // Handle add/remove targets when updating a stream while live
@@ -738,90 +686,7 @@ export class GoLiveSettingsModule {
         this.activePlatforms = this.state.enabledPlatforms;
         this.activeDestinations = this.state.customDestinations.filter(dest => dest.enabled);
       }
-    } else {
-      message.error(
-        $t('Error updating stream settings. Please check your settings and try again.'),
-      );
-      this.syncToLiveTargets();
     }
-  }
-
-  /**
-   * Restore targets in the Edit Stream window
-   * @remark The destination switchers in the Edit Stream window persist a target as soon as it is
-   * switched, so a user who toggles one and closes the window without updating would leave the
-   * saved settings claiming a target that never started, or dropping one that is still streaming.
-   * Reset the enabled flags to the snapshot taken when the window opened. `updateStream` refreshes
-   * that snapshot on success, so this is a no-op once an update has actually been applied.
-   * @remark When called from the `destroy()` hook of the Edit Stream window's `extend()`, two rules
-   * apply to anything called from one of those, and getting either wrong fails at window close
-   * where it is easy to miss:
-   *
-   * 1. It runs more than once. `extend()` registers the returned object as a child provider of the
-   *    module (see slap's `useComponentView`), and on unmount both the child provider's own
-   *    `unregister` and the parent module's `childScope.dispose()` reach it.
-   * 2. Module state is already gone. Reading `this.state` throws, because the state controller is
-   *    disposed by the time the `useComponentView` hook runs. Read service state or plain fields
-   *    on the module instead because `activePlatforms` and `activeDestinations` survive since they
-   *    are constructor properties, and the settings are read back from `StreamingService.views`.
-   *
-   * `GoLiveWindow`'s `destroy()` satisfies both without a guard: `resetInfo()` is maintains the same
-   * values and `module.checklist` resolves to streaming service state rather than module state.
-   */
-  restoreTargets() {
-    if (!this.isUpdateMode || !this.activePlatforms || !this.activeDestinations) return;
-    if (this.targetsRestored) return;
-    this.targetsRestored = true;
-
-    const livePlatforms = new Set(this.activePlatforms);
-    const liveDestinations = new Set(
-      this.activeDestinations.map(dest => `${dest.url}/${dest.streamKey}`),
-    );
-
-    const savedSettings = Services.StreamingService.views.savedSettings;
-    if (!savedSettings?.platforms) return;
-
-    // Restore platforms
-    const platforms = cloneDeep(savedSettings.platforms);
-    (Object.keys(platforms) as TPlatform[]).forEach(platform => {
-      const platformSettings = platforms[platform];
-      if (!platformSettings) return;
-      platformSettings.enabled = livePlatforms.has(platform);
-    });
-
-    // Restore custom destinations
-    const customDestinations = (savedSettings.customDestinations ?? []).map(dest => ({
-      ...dest,
-      enabled: liveDestinations.has(`${dest.url}/${dest.streamKey}`),
-    }));
-
-    // Must use `setGoLiveSettings` instead of the module's `updateSettings` because the
-    // module state is already gone when this is called from `destroy()`.
-    Services.StreamSettingsService.actions.setGoLiveSettings({
-      platforms,
-      customDestinations,
-    });
-  }
-
-  /**
-   * Show the targets that are actually streaming after a failed update
-   * @remark The destination switchers persist its target as soon as it is toggled, before the update runs, so a
-   * failure leaves the switchers showing targets that never started or never stopped. The streaming service already
-   * corrected the saved settings against the server, so read them back here to re-render.
-   * `activePlatforms` and `activeDestinations` update to match so `isTargetLive` and `isUpdatingTargets` show the actual state.
-   */
-  private syncToLiveTargets() {
-    if (!this.isUpdateMode) return;
-
-    const savedSettings = this.state.savedSettings;
-
-    this.state.updateSettings({
-      platforms: savedSettings.platforms,
-      customDestinations: savedSettings.customDestinations,
-    });
-
-    this.activePlatforms = this.state.enabledPlatforms;
-    this.activeDestinations = this.state.customDestinations.filter(dest => dest.enabled);
   }
 
   /**
@@ -860,11 +725,23 @@ export class GoLiveSettingsModule {
   }
 
   get isStreamShiftDisabled() {
+    if (!this.isPrime) return true;
+    return this.isPatreonEnabled;
+  }
+
+  /**
+   * Override the default behavior of toggling stream shift so that the user is still
+   * able to toggle stream shift on/off when they have a single platform enabled and
+   * that platform has its display set to 'both'. Otherwise, the isDualOutputMode check
+   * would prevent the user from toggling stream shift on/off.
+   * Note: This should never happen but is a failsafe in case something goes wrong with
+   * the Go Live window's state.
+   */
+  get forceStreamShiftToggleEnabled() {
     return (
-      !this.isPrime ||
-      this.isPatreonEnabled ||
-      this.state.isLiveOutputEditingEnabled ||
-      this.isDualOutputMode
+      this.state.isStreamShiftMode &&
+      this.state.enabledPlatforms.length === 1 &&
+      this.state.settings.platforms[this.state.enabledPlatforms[0]]?.display === 'both'
     );
   }
 
@@ -879,10 +756,6 @@ export class GoLiveSettingsModule {
 
   get enabledPlatformsCount() {
     return this.state.enabledPlatforms.length;
-  }
-
-  get enabledCustomDestinations() {
-    return this.state.customDestinations.filter(dest => dest.enabled);
   }
 
   get canAddDestinations() {

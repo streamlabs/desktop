@@ -2,6 +2,7 @@ import { SwitchInput } from 'components-react/shared/inputs/SwitchInput';
 import React, { useEffect, useState, memo } from 'react';
 import styles from './AiHighlighterToggle.m.less';
 import { Services } from 'components-react/service-provider';
+import * as remote from '@electron/remote';
 import { useDebounce, useVuex } from 'components-react/hooks';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { Alert, Button } from 'antd';
@@ -14,22 +15,10 @@ import { EAvailableFeatures } from 'services/incremental-rollout';
 import { promptAction } from 'components-react/modals';
 import InputWrapper from 'components-react/shared/inputs/InputWrapper';
 import Translate from 'components-react/shared/Translate';
-import { EDismissable } from 'services/dismissables';
 
-export default function AiHighlighterToggle({
-  cardIsExpanded,
-  isUpdateMode,
-}: {
-  cardIsExpanded: boolean;
-  isUpdateMode?: boolean;
-}) {
+export default function AiHighlighterToggle({ cardIsExpanded }: { cardIsExpanded: boolean }) {
   //TODO M: Probably good way to integrate the highlighter in to GoLiveSettings
-  const {
-    HighlighterService,
-    StreamingService,
-    IncrementalRolloutService,
-    DismissablesService,
-  } = Services;
+  const { HighlighterService, StreamingService, IncrementalRolloutService } = Services;
   const {
     useHighlighter,
     highlighterVersion,
@@ -37,7 +26,6 @@ export default function AiHighlighterToggle({
     isVerticalReplayBuffer,
     outputDisplay,
     gameName,
-    shouldShow,
   } = useVuex(() => {
     return {
       useHighlighter: HighlighterService.views.useAiHighlighter,
@@ -46,7 +34,6 @@ export default function AiHighlighterToggle({
       isVerticalReplayBuffer: StreamingService.views.isVerticalReplayBuffer,
       outputDisplay: StreamingService.views.outputDisplay,
       gameName: StreamingService.views.gameName,
-      shouldShow: DismissablesService.views.shouldShow(EDismissable.HighlighterBanner),
     };
   });
 
@@ -60,8 +47,8 @@ export default function AiHighlighterToggle({
     const supportedGame = isGameSupported(gameName);
     setGameIsSupported(!!supportedGame);
     if (supportedGame) {
+      setIsExpanded(true);
       setGameConfig(getConfigByGame(supportedGame));
-      if (!isUpdateMode) setIsExpanded(true);
     } else {
       setGameConfig(null);
     }
@@ -96,15 +83,18 @@ export default function AiHighlighterToggle({
   }
 
   function getInitialExpandedState() {
-    if (isUpdateMode) return false;
-    if (gameIsSupported) return true;
-    if (useHighlighter) return true;
-    return cardIsExpanded;
+    if (gameIsSupported) {
+      return true;
+    } else {
+      if (useHighlighter) {
+        return true;
+      } else {
+        return cardIsExpanded;
+      }
+    }
   }
   const initialExpandedState = getInitialExpandedState();
   const [isExpanded, setIsExpanded] = useState(initialExpandedState);
-
-  const showHighlighterBanner = shouldShow || !isUpdateMode;
 
   const toggleHighlighter = useDebounce(300, handleToggleHighlighter);
 
@@ -170,7 +160,7 @@ export default function AiHighlighterToggle({
 
   return (
     <div>
-      {gameIsSupported && showHighlighterBanner ? (
+      {gameIsSupported ? (
         <div
           key={'aiSelector'}
           data-name="ai-highlighter-selector"
@@ -372,17 +362,6 @@ export default function AiHighlighterToggle({
                   </>
                 )}
               </>
-            )}
-            {isUpdateMode && (
-              <div className={styles.dismissable}>
-                <a
-                  onClick={() =>
-                    DismissablesService.actions.dismiss(EDismissable.HighlighterBanner)
-                  }
-                >
-                  {$t('Do not ask again')}
-                </a>
-              </div>
             )}
           </div>
         </div>

@@ -58,15 +58,6 @@ export default function GoLiveError() {
         return renderSettingsUpdateError(error);
       case 'RESTREAM_DISABLED':
       case 'RESTREAM_SETUP_FAILED':
-      case 'RESTREAM_UPDATE_FAILED':
-      case 'RESTREAM_INVALID_CONFIG':
-      case 'RESTREAM_STREAM_KEY_MISSING':
-      case 'RESTREAM_STREAM_KEY_FETCH_FAILED':
-      case 'RESTREAM_DISPLAY_SETUP_FAILED':
-      case 'RESTREAM_ADD_TARGETS_FAILED':
-      case 'RESTREAM_NO_ACTIVE_TARGETS':
-      case 'RESTREAM_REMOVE_TARGET_NOT_FOUND':
-      case 'RESTREAM_REMOVE_TARGETS_FAILED':
         return renderRestreamError(error);
       case 'DUAL_OUTPUT_RESTREAM_DISABLED':
       case 'DUAL_OUTPUT_SETUP_FAILED':
@@ -277,16 +268,14 @@ export default function GoLiveError() {
           ]
         : error.details.split('\n');
 
-    // Leave the message to `MessageLayout`, which falls back to the error's own message. Each
-    // restream failure has its own error type, so the headline names what actually went wrong
-    // instead of repeating the same generic line for every one of them.
     return (
-      <MessageLayout error={error} hasButton={true}>
-        <p>
-          {$t(
-            'Please try again. If the issue persists, you can stream directly to a single platform instead or click the button below to bypass and go live.',
-          )}
-        </p>
+      <MessageLayout
+        error={error}
+        hasButton={true}
+        message={$t(
+          'Please try again. If the issue persists, you can stream directly to a single platform instead or click the button below to bypass and go live.',
+        )}
+      >
         {`${$t('Issues')}:`}
         <ul>
           {details.map((detail: string, index: number) => (
