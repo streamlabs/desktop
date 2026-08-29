@@ -47,7 +47,7 @@ export default function PlatformSettings() {
     setPrimaryChat,
     setStreamShift,
     setLiveOutputEditingEnabled,
-    showFeatureToggleCards,
+    canEditLiveOutputs,
     liveOutputTooltip,
     streamShiftTooltip,
     disableStreamShiftTooltip,
@@ -169,7 +169,7 @@ export default function PlatformSettings() {
   return (
     // minHeight is required for the loading spinner
     <div style={{ minHeight: '150px', height: '100%', flex: 1 }}>
-      {showFeatureToggleCards && (
+      {canEditLiveOutputs && (
         <>
           <h2>{$t('Live Settings')}</h2>
           <div className="flex__horizontal margin">

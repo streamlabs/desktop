@@ -42,13 +42,6 @@ export interface ICustomStreamDestination {
   dualStream?: boolean;
 }
 
-// Used for uniquely identifying custom destinations
-export type TDestinationId = `${string}/${string}`;
-
-export function getDestinationId(dest: ICustomStreamDestination): TDestinationId {
-  return `${dest.url}/${dest.streamKey}` as TDestinationId;
-}
-
 /**
  * settings that we keep in the localStorage
  */
