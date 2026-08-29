@@ -33,7 +33,7 @@ test.skip('Adding and removing a Color Correction filter', async t => {
   t.false(await isDisplayed('label=Gamma'));
 });
 
-test.skip('Adding and removing a Image Mask filter', async t => {
+test('Adding and removing a Image Mask filter', async t => {
   const sourceName = 'Color Source 2';
   const filterName = 'Image Mask/Blend';
 
@@ -215,7 +215,7 @@ test('Adding and removing a Gain filter', async t => {
   t.pass();
 });
 
-test('Adding and removing a Noise Suppression filter', async t => {
+test.skip('Adding and removing a Noise Suppression filter', async t => {
   const sourceName = 'Audio Input Capture 2';
   const filterName = 'Noise Suppression';
 

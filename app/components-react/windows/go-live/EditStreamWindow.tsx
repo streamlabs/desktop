@@ -30,12 +30,6 @@ export default function EditStreamWindow() {
     shouldShowChecklist,
     cooldownTimer,
   } = useGoLiveSettingsRoot({ isUpdateMode: true }).extend(module => ({
-    destroy() {
-      // Toggling a target persists it immediately, but it only reaches the stream on Update, so
-      // drop anything the user switched and then closed the window without applying.
-      module.restoreTargets();
-    },
-
     get shouldShowChecklist() {
       return module.lifecycle === 'runChecklist';
     },
@@ -52,12 +46,12 @@ export default function EditStreamWindow() {
     prepopulate();
   });
 
-  // 10-second countdown timer state
+  // 5-second countdown timer state
   const [timer, setTimer] = useState<number | null>(null);
 
   useEffect(() => {
     const subscription = cooldownTimer.subscribe(() => {
-      setTimer(10);
+      setTimer(3);
     });
 
     return () => {
@@ -190,7 +184,7 @@ const EditStreamFooter = memo(function EditStreamFooter(p: { timer: number | nul
   return (
     <Form layout={'inline'}>
       <div className={styles.goLiveFooter}>
-        {p.timer !== null && <GoLiveInfoBanner message={$t('Update takes up to 10 seconds')} />}
+        {p.timer !== null && <GoLiveInfoBanner message={$t('Update takes up to 3 seconds')} />}
       </div>
       {/* CLOSE BUTTON */}
       <Button onClick={closeChildWindow}>{$t('Close')}</Button>

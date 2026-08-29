@@ -116,17 +116,30 @@ button.bottom {
   text-align: right;
 }
 
-.info-banner-wrapper {
+.banner-wrapper {
   flex: 1;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
 }
 
-.info-banner {
+.banner {
   margin-right: 5px;
   height: 32px !important;
   width: unset !important;
+}
+
+.info-banner-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+
+  :global(.info-banner) {
+    margin-right: 5px;
+    height: 32px;
+    width: unset;
+  }
 }
 
 .primary-chat {
@@ -193,12 +206,6 @@ button.bottom {
 
 .confirm-btn {
   width: 141.25px;
-
-  && {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
 }
 
 .footer-content {
@@ -286,39 +293,4 @@ button.bottom {
   display: flex;
   flex-direction: row;
   align-items: center;
-}
-
-.update-btn-tooltip {
-  margin-left: 8px;
-  display: flex;
-}
-
-.spinner {
-  height: 20px;
-  width: 20px;
-}
-
-.update-btn {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  line-height: 1;
-}
-
-.ultra-icon {
-  background: linear-gradient(
-    123.53deg,
-    #2de8b0 25.56%,
-    #cbe953 60.27%,
-    #ffab48 79.52%,
-    #ff5151 96.69%
-  ) !important;
-  background-clip: text !important;
-  color: transparent !important;
-}
-
-.section-title {
-  margin-top: 15px;
 }
