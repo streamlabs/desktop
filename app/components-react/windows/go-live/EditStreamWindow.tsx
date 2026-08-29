@@ -119,9 +119,9 @@ const EditStreamSettings = memo(function EditStreamSettings(p: { timer: number |
     <Row gutter={8} className={styles.goLiveSettings}>
       {/*LEFT COLUMN*/}
       {shouldShowLeftCol && (
-        <Col span={9} className={styles.leftColumn}>
+        <Col span={9} className={cx(styles.leftColumn, styles.updateMode)}>
           <h2>{$t('Update Destinations & Outputs:')}</h2>
-          <Scrollable className={styles.leftColumnScroll}>
+          <Scrollable className={cx(styles.leftColumnScroll, styles.updateMode)}>
             <DestinationSwitchers disabled={p.timer !== null} />
             <div className={styles.leftFooter}>
               <PrimaryChatSwitcher
