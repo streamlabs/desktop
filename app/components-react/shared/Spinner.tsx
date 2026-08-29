@@ -12,18 +12,9 @@ export default function Spinner(
     delay?: number;
     relative?: boolean;
     pageLoader?: boolean;
-    inline?: boolean;
-    width?: string;
-    height?: string;
   } & HTMLAttributes<unknown> = {},
 ) {
-  const defaultProps = {
-    visible: false,
-    delay: 0,
-    relative: false,
-    pageLoader: false,
-    inline: false,
-  };
+  const defaultProps = { visible: false, delay: 0, relative: false, pageLoader: false };
   const p = { ...defaultProps, ...props };
   const timeoutRef = useRef(0);
 
@@ -59,17 +50,12 @@ export default function Spinner(
     [css.hasVisibleSpinner]: visibility.isSpinnerVisible,
     [css.spinnerRelative]: p.relative,
     [css.pageLoader]: p.pageLoader,
-    [css.inline]: p.inline,
   });
 
   return (
     <Animation transitionName="ant-fade">
       {visibility.isContainerVisible && (
-        <div
-          className={classNames}
-          key="spinner"
-          style={{ transitionDelay: `${p.delay}ms`, width: p.width, height: p.height }}
-        >
+        <div className={classNames} key="spinner" style={{ transitionDelay: `${p.delay}ms` }}>
           <div className={css.spinner} dangerouslySetInnerHTML={{ __html: spinnerSvg }}></div>
         </div>
       )}
