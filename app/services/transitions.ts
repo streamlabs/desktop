@@ -253,6 +253,14 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
     this.releaseStudioModeObjects();
   }
 
+  toggleStudioMode() {
+    if (this.state.studioMode) {
+      this.disableStudioMode();
+    } else {
+      this.enableStudioMode();
+    }
+  }
+
   /**
    * While in studio mode, will execute a studio mode transition
    */
