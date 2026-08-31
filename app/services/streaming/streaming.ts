@@ -808,9 +808,11 @@ export class StreamingService
   ) {
     const service = getPlatformService(platform);
 
-    // in dual output mode, assign context by settings
-    // in single output mode, assign context to 'horizontal' by default
-    const display = this.views.getPlatformDisplayType(platform);
+    // In dual output mode, assign context by platform display
+    // In single output mode, assign context to 'horizontal' by default
+    const display = this.views.isDualOutputMode
+      ? this.views.getPlatformDisplayType(platform)
+      : 'horizontal';
 
     try {
       const isStreamShiftStream = this.restreamService.views.hasStreamShiftTargets;
@@ -4264,6 +4266,8 @@ export class StreamingService
    * even if one fails. This prevents orphan contexts that can leave phantom processes or create errors on next startup.
    */
   async shutdown() {
+    const failures: string[] = [];
+
     // InitShutdownSequence is called before this method, so OBS outputs are
     // already being torn down. Skip .stop() calls and directly destroy factory
     // instances to avoid blocking on native calls that may never return.
@@ -4280,10 +4284,15 @@ export class StreamingService
           this.destroyFactoryInstance(type, instance);
         } catch (e: unknown) {
           console.error(`Error destroying ${type} for ${context} during shutdown:`, e);
+          failures.push(`${context}.${type}`);
         }
 
         this.contexts[context][type] = null;
       }
+    }
+
+    if (failures.length) {
+      throw new Error(`Failed to destroy output contexts during shutdown: ${failures.join(', ')}`);
     }
   }
 

@@ -14,7 +14,7 @@ import { useRealmObject } from 'components-react/hooks/realm';
 import { ENotificationType } from 'services/notifications';
 import { Service } from 'services/core/service';
 import { AudioNotificationType } from 'services/audio/audio';
-import { EAvailableFeatures } from 'services/incremental-rollout';
+import DualOutputToggle from 'components-react/shared/DualOutputToggle';
 
 export default function StudioEditor() {
   const {
@@ -51,9 +51,8 @@ export default function StudioEditor() {
   ]);
 
   const sourceId = useMemo(() => {
-    const dualOutputMode = v.showHorizontalDisplay && v.showVerticalDisplay;
-    return v.studioMode && !dualOutputMode ? studioModeTransitionName : undefined;
-  }, [v.showHorizontalDisplay, v.showVerticalDisplay, v.studioMode]);
+    return v.studioMode && !v.dualOutputMode ? studioModeTransitionName : undefined;
+  }, [v.dualOutputMode, v.studioMode, studioModeTransitionName]);
 
   useEffect(() => {
     const timeoutHandles: { [key: number]: NodeJS.Timeout | undefined } = {};
@@ -243,7 +242,7 @@ export default function StudioEditor() {
       {displayEnabled && (
         <div className={cx(styles.studioModeContainer, { [styles.stacked]: studioModeStacked })}>
           {v.studioMode && <StudioModeControls stacked={studioModeStacked} />}
-          {v.dualOutputMode && (
+          {!v.studioMode && (
             <DualOutputControls stacked={studioModeStacked} isRecording={v.isRecording} />
           )}
           <div
@@ -400,10 +399,12 @@ function StudioModeControls(p: { stacked: boolean }) {
 }
 
 function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
-  const showHorizontal = Services.DualOutputService.views.showHorizontalDisplay;
-  const showVertical = Services.DualOutputService.views.showVerticalDisplay;
-
-  const v = useVuex(() => ({ toggleDisplay: Services.DualOutputService.actions.toggleDisplay }));
+  const v = useVuex(() => ({
+    toggleDisplay: Services.DualOutputService.actions.toggleDisplay,
+    dualOutputMode: Services.DualOutputService.views.dualOutputMode,
+    showHorizontal: Services.DualOutputService.views.showHorizontalDisplay,
+    showVertical: Services.DualOutputService.views.showVerticalDisplay,
+  }));
 
   const showRecordingIcons = useMemo(() => {
     return false;
@@ -419,40 +420,50 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
 
   return (
     <div
-      id="dual-output-header"
+      data-name="dual-output-header"
       className={cx(styles.dualOutputHeader, { [styles.stacked]: p.stacked })}
     >
-      <div
-        id="horizontal-display-toggle"
-        className={styles.toggleWrapper}
-        onClick={() => v.toggleDisplay(!showHorizontal, 'horizontal')}
-      >
-        {showRecordingIcons && <DualOutputIcons display="horizontal" />}
-        {showHorizontal ? (
-          <i className={cx('icon-view', styles.displayVisible)} />
-        ) : (
-          <i className="icon-hide" />
-        )}
-        <span className={cx({ [styles.displayVisible]: showHorizontal })}>
-          {$t('Horizontal canvas')}
-        </span>
-      </div>
-
-      <div
-        id="vertical-display-toggle"
-        className={styles.toggleWrapper}
-        onClick={() => v.toggleDisplay(!showVertical, 'vertical')}
-      >
-        {showRecordingIcons && <DualOutputIcons display="vertical" />}
-        {showVertical ? (
-          <i className={cx('icon-view', styles.displayVisible)} />
-        ) : (
-          <i className="icon-hide" />
-        )}
-        <span className={cx({ [styles.displayVisible]: showVertical })}>
-          {$t('Vertical canvas')}
-        </span>
-      </div>
+      {v.dualOutputMode && (
+        <>
+          <div
+            id="horizontal-display-toggle"
+            className={styles.toggleWrapper}
+            role="button"
+            tabIndex={0}
+            aria-label={$t('Toggle horizontal display')}
+            onKeyDown={e => {
+              // Necessary to allow toggling with keyboard for accessibility
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                v.toggleDisplay(!v.showHorizontal, 'horizontal');
+              }
+            }}
+            onClick={() => v.toggleDisplay(!v.showHorizontal, 'horizontal')}
+          >
+            {showRecordingIcons && <DualOutputIcons display="horizontal" />}
+            <i className={cx('icon-desktop', { [styles.displayActive]: v.showHorizontal })} />
+          </div>
+          <div
+            id="vertical-display-toggle"
+            className={styles.toggleWrapper}
+            role="button"
+            tabIndex={0}
+            aria-label={$t('Toggle vertical display')}
+            onKeyDown={e => {
+              // Necessary to allow toggling with keyboard for accessibility
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                v.toggleDisplay(!v.showVertical, 'vertical');
+              }
+            }}
+            onClick={() => v.toggleDisplay(!v.showVertical, 'vertical')}
+          >
+            {showRecordingIcons && <DualOutputIcons display="vertical" />}
+            <i className={cx('icon-phone', { [styles.displayActive]: v.showVertical })} />
+          </div>
+        </>
+      )}
+      <DualOutputToggle type="switch" label={$t('Dual Output')} source="Editor" />
     </div>
   );
 }

@@ -37,8 +37,7 @@ export default function OptimizedProfileSwitcher() {
       },
 
       tooltip: $t(
-        'Optimized encoding provides better quality and/or lower cpu/gpu usage. Depending on the game, ' +
-          'resolution may be changed for a better quality of experience',
+        'Optimized encoding provides better quality and/or lower cpu/gpu usage. Depending on the game, resolution may be changed for a better quality of experience',
       ),
 
       get label(): string {

@@ -81,6 +81,7 @@ export type TUltraRefl =
   | 'slobs-multistream'
   | 'slobs-stream-settings'
   | 'slobs-live-output-editing'
+  | 'slobs-automations'
   | string;
 
 interface IAnalyticsEvent {
@@ -283,7 +284,7 @@ export class UsageStatisticsService extends Service {
   /**
    * Should be called on shutdown to flush all events in the pipeline
    */
-  async flushEvents() {
+  async flushEvents(signal?: AbortSignal) {
     // Correctly handle unsubscribing to prevent memory leaks
     this.ultraSubscription.unsubscribe();
 
@@ -299,7 +300,7 @@ export class UsageStatisticsService extends Service {
     this.recordAnalyticsEvent('Session', session);
 
     // Unthrottled version
-    await this.sendAnalytics();
+    await this.sendAnalytics(signal);
   }
 
   // We can't fetch this before app startup like the rest of sysInfo since it
@@ -349,7 +350,7 @@ export class UsageStatisticsService extends Service {
   /**
    * Should not be called directly except during shutdown.
    */
-  private async sendAnalytics() {
+  private async sendAnalytics(signal?: AbortSignal) {
     if (!this.analyticsEvents.length) return;
 
     const data = { analyticsTokens: [...this.analyticsEvents] };
@@ -363,10 +364,11 @@ export class UsageStatisticsService extends Service {
       method: 'post',
       body: JSON.stringify(data || {}),
     });
-    await fetch(request)
+    await fetch(request, { signal })
       .then(handleResponse)
-      .catch(e => {
+      .catch((e: unknown) => {
         console.error('Error sending analytics events', e);
+        if (signal) throw e;
       });
   }
 

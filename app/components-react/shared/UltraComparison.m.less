@@ -31,6 +31,9 @@
   color: var(--paragraph);
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
   h1 {
     margin-bottom: 8px;
@@ -115,7 +118,8 @@
 .prime-card-container {
   color: var(--title);
   border: 2px solid transparent;
-  background: linear-gradient(var(--background), var(--background)) padding-box, var(--ultra) border-box;
+  background: linear-gradient(var(--background), var(--background)) padding-box,
+    var(--ultra) border-box;
 
   h1 {
     background: var(--ultra);

@@ -181,7 +181,7 @@ test('Recording from Go Live window', async t => {
   await clickGoLive();
   await waitForSettingsWindowLoaded();
 
-  await clickToggle('recording');
+  await clickToggle('recording-toggle');
 
   if (user.type === 'twitch') {
     await fillForm({
@@ -295,7 +295,7 @@ async function validateTitleContainsNoSpaces(t: TExecutionContext, tmpDir: strin
   const files = await readdir(tmpDir);
   t.true(files.length >= 1, `Files that were created:\n${files.join('\n')}`);
   const videoFile = files.find(f => f.endsWith('.mkv'));
-  t.truthy(videoFile, `Expected a .mkv recording file but got ${videoFile}`);
+  t.truthy(videoFile, 'Expected a .mkv recording file');
   if (!videoFile) return;
   t.false(videoFile.includes(' '), `Recording filename should not contain spaces: "${videoFile}"`);
 }
@@ -311,7 +311,6 @@ test('Recording without spaces', async t => {
       await clickCheckbox('RecFileNameWithoutSpace');
     });
 
-    await sleep(1000);
     await validateTitleContainsNoSpaces(t, tmpDir);
   } finally {
     await logOut(t, true);
