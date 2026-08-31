@@ -1,7 +1,6 @@
 export { default as AILanding } from './AILanding';
 export { default as AlertboxLibrary } from './AlertboxLibrary';
 export { default as BrowseOverlays } from './BrowseOverlays';
-export { default as Grow } from './grow/Grow';
 export { default as Highlighter } from './Highlighter';
 export { default as LayoutEditor } from './layout-editor/LayoutEditor';
 export { default as Loader } from './Loader';

@@ -273,7 +273,7 @@ export const SourceDisplayData = (): { [key: string]: ISourceDisplayData } => ({
   },
   audio_line: {
     name: $t('JACK Input Client'),
-    description: $t(''),
+    description: '',
     icon: 'fas fa-file',
     group: 'av',
   },

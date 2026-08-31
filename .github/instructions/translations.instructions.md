@@ -37,7 +37,7 @@ If no such key/value pair has been removed in the PR, it should be flagged as a 
 
 When code reviewing a PR, check for any files added to the `app/i18n/en-US/**` directory, these are new translation files.
 Each new file added there must be added as a `require` in the `fallbackDictionary` of `app/i18n/fallback.ts`.
-Flag any new translation files not included in the `fallbackDirectory` as needing to be included there.
+Flag any new translation files not included in the `fallbackDictionary` as needing to be included there.
 
 # Special Considerations
 

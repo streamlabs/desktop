@@ -11,6 +11,7 @@ import fetch from 'node-fetch';
 
 import {
   ITestStats,
+  killChromedriverOnPort,
   killElectronInstances,
   removeFailedTestFromFile,
   saveFailedTestsToFile,
@@ -21,6 +22,7 @@ import {
 import { skipOnboarding } from '../modules/onboarding';
 import {
   clickButton,
+  clickIfDisplayed,
   closeWindow,
   focusChild,
   focusMain,
@@ -238,6 +240,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     if (options.networkLogging) appArgs.push('--network-logging');
     if (options.noSync) appArgs.push('--nosync');
 
+    killChromedriverOnPort(CHROMEDRIVER_PORT);
     await killElectronInstances();
 
     app = t.context.app = new Application({
@@ -268,6 +271,10 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
             '--app=test-main.js',
             `user-data-dir=${path.join(t.context.cacheDir, 'slobs-client')}`,
           ],
+          // Chromedriver's default --enable-logging makes Chromium write every renderer console
+          // message synchronously to a stderr pipe nobody drains, wedging the main process once
+          // it fills. No test reads browser logs.
+          excludeSwitches: ['enable-logging'],
         },
       },
     });
@@ -298,7 +305,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
 
     if (platform() === 'darwin') {
       // Select the "Continue" button on the macOS permissions page (MacPermissions.tsx), if it exists.
-      await clickButton('Continue');
+      await clickIfDisplayed('button=Continue');
     }
     // Pretty much all tests except for onboarding-specific
     // tests will want to skip this flow, so we do it automatically.
@@ -358,6 +365,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     if (!logs) return;
     lastLogs = logs;
     let ignoringErrors = false;
+    let inMissingTranslation = false;
     const errors = logs
       .slice(logFileLastReadingPos)
       .split('\n')
@@ -381,16 +389,10 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
           return false;
         }
 
-        // TODO: Only enable this check when running tests locally
-        if (record.match(/Missing translation/)) {
-          return false;
-        }
-
-        // RxJS Subscriber.unsubscribe null-dereference during React passive effect cleanup
-        // on app shutdown. This is a teardown race condition triggered by the test harness
-        // forcibly closing the app and is not indicative of a test failure.
-        if (process.platform === 'darwin' && record.match(/Cannot read properties of null \(reading 'closed'\)/)) {
-          ignoringErrors = true;
+        // The key can span lines (OBS compat messages do) and every line is prefixed [error],
+        // so skip continuations up to the one closing the quote.
+        if (inMissingTranslation || record.match(/Missing translation/)) {
+          inMissingTranslation = !record.trimEnd().endsWith('"');
           return false;
         }
 

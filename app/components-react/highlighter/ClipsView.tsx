@@ -482,7 +482,7 @@ function PreviewExportButton({
     <>
       {hasHighlights && (
         <Tooltip
-          title={$t('Export detectected timecodes as markers for editing software')}
+          title={$t('Export detected timecodes as markers for editing software')}
           placement="bottom"
         >
           <Button disabled={!hasHighlights} onClick={() => setModal({ modal: 'exportMarkers' })}>
