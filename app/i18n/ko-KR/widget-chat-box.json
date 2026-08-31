@@ -1,7 +1,6 @@
 {
   "Visual Settings": "비주얼 설정",
   "Font Settings": "폰트 설정",
-  "Chatter": "채팅 참여자",
   "Always Show Messages": "언제나 메시지 표시",
   "Show Moderator Badges": "모더레이터 배지 표시",
   "Show Subscriber Badges": "구독자 배지 표시",
@@ -15,7 +14,6 @@
   "Text Color": "텍스트 색상",
   "Font Size": "폰트 사이즈",
   "Muted Chatters": "음소거된 채팅 참여자",
-  "Hide Commands": "명령 숨김",
   "Background Color": "배경색",
   "Show Platform Icons": "플랫폼 아이콘 표시",
   "Theme": "테마",

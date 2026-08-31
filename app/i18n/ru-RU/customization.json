@@ -1,7 +1,5 @@
 {
   "Show the live dock (chat) on the left side": "Показывать живой чат слева",
-  "Chat Text Size": "Размер текста в чате",
-  "Chat Width": "Ширина чата",
   "Enable BetterTTV emotes for Twitch": "Включить эмодзи BetterTTV для Twitch",
   "Enable FrankerFaceZ emotes for Twitch": "Включить эмодзи FrankerFaceZ для Twitch",
   "Editor Display": "Интерфейс редактора",
@@ -22,9 +20,9 @@
   "Current Tab": "Текущая вкладка",
   "Delete Current Tab": "Удалить текущую вкладку",
   "Enter Target URL": "Введите целевой URL-адрес",
-  "Obsidian Prime": "Obsidian Prime",
-  "Alabaster Prime": "Alabaster Prime",
   "Custom Navigation Bar": "Пользовательская панель навигации",
   "Obsidian Ultra": "Obsidian Ultra",
-  "Alabaster Ultra": "Alabaster Ultra"
+  "Alabaster Ultra": "Alabaster Ultra",
+  "Read": "Read",
+  "Post Comments": "Post Comments"
 }

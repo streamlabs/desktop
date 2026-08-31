@@ -1,14 +1,5 @@
 {
-  "Compose Tweet": "Tweet Oluştur",
-  "Custom URL with": "Özel URL:",
   "Share Your Stream": "Yayınınızı Paylaşın",
-  "Connect to Twitter": "Twitter’a Bağlan",
-  "Enable Tweet Sharing": "Tweet Paylaşımını Etkinleştir",
-  "Tweet when going live": "Canlı yayın başladığında Tweet at",
-  "Unlink Twitter": "Twitter bağlantısını kaldır",
-  "Tweet & Go Live": "Tweet Atın ve Canlı Yayına Başlayın",
-  "Could not connect to Twitter": "Twitter’a bağlanılamadı",
-  "Use Streamlabs URL": "Streamlabs URL’si kullan",
   "X (Twitter) Chat Type": "X (Twitter) Sohbet Türü",
   "Disabled": "Etkin Değil",
   "Chat will be disabled": "Sohbet devre dışı bırakılacak",
@@ -21,6 +12,5 @@
   "Subscriber Only": "Yalnızca Aboneler",
   "Only viewers that subscribe to you will be able to chat": "Yalnızca size abone olan izleyiciler sohbet edebilecek",
   "You need X premium account to go live on X.": "X’te canlı yayın yapmak için X premium hesabına ihtiyacınız var.",
-  "You need X premium account to go live on X. Click to learn more": "X'te canlı yayın yapmak için X premium hesabına ihtiyacınız var. Daha fazlasını öğrenmek için tıklayın",
-  "Stream Shift Error: Twitter is not live": "Stream Shift Hatası: Twitter canlı değil"
+  "You need X premium account to go live on X. Click to learn more": "X'te canlı yayın yapmak için X premium hesabına ihtiyacınız var. Daha fazlasını öğrenmek için tıklayın"
 }

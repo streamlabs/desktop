@@ -1,14 +1,5 @@
 {
-  "Compose Tweet": "ツイートを書く",
-  "Custom URL with": "カスタム URL",
   "Share Your Stream": "ストリームを共有",
-  "Connect to Twitter": "Twitter に接続",
-  "Enable Tweet Sharing": "Tweet 共有を有効化",
-  "Tweet when going live": "ライブ配信の開始時にツイート",
-  "Unlink Twitter": "Twitter のリンクを解除",
-  "Tweet & Go Live": "Tweet & ライブ配信を開始",
-  "Could not connect to Twitter": "Twitter に接続できませんでした",
-  "Use Streamlabs URL": "Streamlabs URL を使用",
   "X (Twitter) Chat Type": "X（Twitter）のチャットタイプ",
   "Disabled": "無効",
   "Chat will be disabled": "チャットが無効になります",
@@ -21,6 +12,5 @@
   "Subscriber Only": "サブスクライバーのみ",
   "Only viewers that subscribe to you will be able to chat": "サブスクライバーの視聴者のみがチャットをすることができます",
   "You need X premium account to go live on X.": "Xでライブを行うにはXプレミアムアカウントが必要です。",
-  "You need X premium account to go live on X. Click to learn more": "Xでライブを行うにはXプレミアムアカウントが必要です。クリックして詳細をご覧ください",
-  "Stream Shift Error: Twitter is not live": "Stream Shift エラー：Twitter はライブ配信されていません"
+  "You need X premium account to go live on X. Click to learn more": "Xでライブを行うにはXプレミアムアカウントが必要です。クリックして詳細をご覧ください"
 }

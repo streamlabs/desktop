@@ -1,7 +1,6 @@
 {
   "Visual Settings": "Configurações visuais",
   "Font Settings": "Configurações de fonte",
-  "Chatter": "Participante do chat",
   "Always Show Messages": "Sempre mostrar mensagens",
   "Show Moderator Badges": "Exibir os distintivos de Moderador",
   "Show Subscriber Badges": "Exibir distintivos de Inscrito",
@@ -15,7 +14,6 @@
   "Text Color": "Cor do Texto",
   "Font Size": "Tamanho da fonte",
   "Muted Chatters": "Participantes silenciados do chat",
-  "Hide Commands": "Ocultar Comandos",
   "Background Color": "Cor de Fundo",
   "Show Platform Icons": "Exibir ícones de plataforma",
   "Theme": "Tema",

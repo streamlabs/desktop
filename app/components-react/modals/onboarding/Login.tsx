@@ -5,7 +5,7 @@ import styles from './Common.m.less';
 import { $t } from 'services/i18n';
 import { platformLabels, EPlatform } from 'services/platforms';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
-import { ExtraPlatformConnect } from 'components-react/pages/onboarding/ExtraPlatformConnect';
+import { ExtraPlatformConnect } from 'components-react/modals/onboarding/ExtraPlatformConnect';
 import { DancingKevins, IOnboardingStepProps, useAuth } from './Onboarding';
 
 type TExtraPlatform = 'nimotv';

@@ -1,5 +1,5 @@
 {
-  "Horizontal canvas": "水平畫布",
-  "Vertical canvas": "豎屏畫布",
+  "Toggle horizontal display": "Toggle horizontal display",
+  "Toggle vertical display": "Toggle vertical display",
   "Error stopping stream: default streams do not exist.": "停止直播時發生錯誤：預設直播不存在。"
 }

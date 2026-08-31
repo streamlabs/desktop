@@ -221,15 +221,16 @@ export async function waitForElectronInstancesExist() {
   const interval = 1000;
   const timeout = 10000;
 
-  let timeleft = timeout;
+  const startedAt = Date.now();
   let tasks: any[] = await getElectronInstances();
 
-  while (tasks.length > 0 && timeleft > 0) {
+  while (tasks.length > 0 && Date.now() - startedAt < timeout) {
     await new Promise(resolve => setTimeout(resolve, interval));
-    timeleft -= interval;
     tasks = await getElectronInstances();
   }
-   if (tasks.length > 0) {
-     throw new Error('Timed out waiting for Electron instances to exit');
-   }
+
+  const elapsed = Date.now() - startedAt;
+  if (tasks.length > 0) {
+    throw new Error(`Timed out waiting for Electron instances to exit after ${elapsed}ms`);
+  }
 }

@@ -1,15 +1,6 @@
 {
-  "YouTube stream status": "YouTube 스트리밍 상태",
-  "Waiting for YouTube to receive the video signal...": "YouTube의 비디오 신호 수신을 대기 중...",
-  "Testing your broadcast...": "방송 테스트 중...",
-  "Finalizing broadcast testing...": "방송 테스트 마무리 중...",
-  "Publishing to your YouTube channel...": "YouTube 채널에 게시하는 중...",
-  "Waiting broadcast to be published...": "방송 게시 대기 중...",
   "You're live!": "라이브가 시작됐습니다!",
-  "Waiting for broadcast to be published...": "방송 게시 대기 중...",
   "Working on your live stream": "라이브 스트리밍 작업 중",
-  "Your stream will start shortly. You can close this window.": "곧 스트리밍이 시작됩니다. 이 창을 닫으셔도 됩니다.",
-  "Go to YouTube Live Dashboard": "YouTube 라이브 대시보드로 이동",
   "Create New Event": "새로운 이벤트 만들기",
   "YouTube Chat": "YouTube 채팅",
   "This action cannot be performed inside Streamlabs Desktop. To interact with chat, you can open this chat in a web browser.": "이 작업은 Streamlabs 데스크톱 내에서 실행할 수 없습니다. 채팅에서 소통하려면 웹 브라우저에서 이 채팅을 열 수 있습니다.",
@@ -49,7 +40,7 @@
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube 썸네일 이미지가 너무 큽니다. 최대 크기는 2MB입니다.",
   "Please upload thumbnail manually on YouTube.": "수동으로 YouTube에 썸네일을 업로드하세요.",
   "Stream Shift Error: YouTube is not live": "Stream Shift 오류: YouTube가 라이브 상태가 아님",
-  "Error starting vertical stream in YouTube dual streaming": "YouTube 듀얼 스트리밍에서 세로 스트림을 시작하는 중 오류 발생",
+  "Error starting vertical stream in YouTube dual streaming.": "Error starting vertical stream in YouTube dual streaming.",
   "YouTube service is temporarily unavailable": "YouTube service is temporarily unavailable",
   "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support": "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support"
 }

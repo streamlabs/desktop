@@ -1,5 +1,4 @@
 {
-  "Edit your stream title on Kick after going live.": "생방송을 시작한 후 Kick에서 스트리밍 제목을 편집합니다.",
   "Kick Category": "Kick 카테고리",
   "Failed to update Kick account. Please unlink and reconnect your Kick account.": "Kick 계정을 업데이트하지 못했습니다. Kick 계정 연결을 해제했다가 다시 연결하세요.",
   "Failed to start Kick stream. Please check permissions with Kick and try again": "Kick 스트리밍을 시작하지 못했습니다. Kick의 권한을 확인한 후 다시 시도하세요.",
@@ -11,5 +10,7 @@
   "Click on the \"eye\" icon to see your stream key": "스트리밍 키를 보려면 '눈' 아이콘을 클릭하세요",
   "Put in 2FA": "2FA 입력",
   "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "2FA가 완료되면 스트리밍 키가 생성되어 해당 채널의 Streamlabs Desktop에서 사용할 수 있습니다. 이제 Kick에서 라이브를 할 수 있습니다.",
-  "Stream Shift Error: Kick is not live": "Stream Shift 오류: Kick이 라이브 상태가 아님"
+  "Stream Shift Error: Kick is not live": "Stream Shift 오류: Kick이 라이브 상태가 아님",
+  "Failed to start stream on Kick.": "Failed to start stream on Kick.",
+  "Permissions to generate stream key for Kick are missing. In order to go live on Kick, you must first generate a stream key on Kick to be available for Streamlabs Desktop. Please follow these steps:": "Permissions to generate stream key for Kick are missing. In order to go live on Kick, you must first generate a stream key on Kick to be available for Streamlabs Desktop. Please follow these steps:"
 }

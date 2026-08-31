@@ -4,7 +4,6 @@
   "Successfully saved %{filename} to %{filepath}": "%{filename} is opgeslagen naar %{filepath}",
   "Successfully loaded %{filename}.overlay": "%{filename}.overlay is geladen",
   "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
-  "This is an experimental feature.  Use at your own risk.": "Dit is een experimentele functie.  Op eigen risico gebruiken.",
   "Export Overlay File": "Overlaybestand exporteren",
   "Import Overlay File": "Overlaybestand importeren",
   "Import Widget File in Current Scene": "Widgetbestand importeren in huidige scène",
@@ -28,5 +27,9 @@
   "Show Components Library": "Toon componentenbibliotheek",
   "Convert Dual Output Scene Collection": "Converteer Dual Output-scèneverzameling",
   "Repair Scene Collection": "Herstel scèneverzameling",
-  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection.",
+  "Reactive Data": "Reactive Data",
+  "Manage your reactive data values": "Manage your reactive data values",
+  "Waiting for schema...": "Waiting for schema...",
+  "Waiting for state...": "Waiting for state..."
 }

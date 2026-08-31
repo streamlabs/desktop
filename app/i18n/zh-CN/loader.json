@@ -1,13 +1,8 @@
 {
-  "You can edit the sounds of your stream alerts from the alertbox properties menu.": "您可以在提醒框属性菜单中编辑直播提醒的声音。",
-  "You can access our theme library from the left sidebar.": "您可以从左侧边栏访问我们的主题库。",
-  "Our 24/7 support staff is available at Discord.gg/stream.": "可以访问 Discord.gg/stream 联系我们的 24/7 支持人员。",
   "Sources are what we call media like text, images, video & audio feeds.": "源即是我们所说的媒体，如文本、图像、视频和音频源。",
   "Undo works in the Editor. Just hit Ctrl + Z!": "在编辑器中可以使用撤消功能。只需按下 Ctrl + Z！",
-  "The sources listed at the top of your sources pane will be layered the highest in your editor.": "源面板顶部列出的源将在编辑器中位于顶层。",
   "Studio Mode is a powerful way to curate a professional-quality stream.": "工作室模式是策划职业级品质直播的好方法。",
   "Cloudbot is a chatbot that can help you moderate your stream.": "Cloudbot 是一个聊天机器人，可以帮助您管理直播。",
-  "The Remote Control feature lets you control your active scene in real-time from your phone.": "远程控制功能可让您通过手机实时控制活动场景。",
   "Set Hotkeys from your settings to control your stream with your keyboard.": "在设置中设置热键以使用键盘控制您的直播。",
   "With Game Overlay you can view chat messages while gaming without switching screens.": "借助游戏叠加层，您可以在玩游戏时查看聊天消息而无需切换屏幕。",
   "The editor is fully customizable. Try repositioning things from the Layout Editor.": "编辑器完全可自定义。试试在布局编辑器中重新排列各元素。",
@@ -20,9 +15,5 @@
   "You can position your chat panel to be either on the left or right side of your screen.": "您可以将聊天面板放置在屏幕左侧或右侧。",
   "Right-click on your camera source to add filters to your webcam.": "右键点击您的摄像头源，为网络摄像头添加滤镜。",
   "You can add and edit stinger transitions by clicking the settings cog near your scene collections.": "点击场景集合旁的设置齿轮，便可以添加和编辑 stinger 过渡效果。",
-  "To crop your webcam, press Alt then drag the bounding box.": "要裁切网络摄像头画面，按下 Alt，然后拖动边界框。",
-  "Widgets are dynamic, interactive overlays you can add to your scene.": "小工具是动态的交互式叠加层，您可以将其添加到场景中。",
-  "Our App Store contains advanced technology to take your stream to the next level.": "我们的应用商店提供可让您的直播效果更上一层楼的各种先进技术。",
-  "With multi-stream, you can stream to YouTube, Twitch, and Facebook at the same time.": "通过多重直播，您可以同时直播至 YouTube、Twitch 和 Facebook。",
-  "You can customize the design of your tip page from the Theme Library.": "您可以从主题库中自定义打赏页面的设计。"
+  "To crop your webcam, press Alt then drag the bounding box.": "要裁切网络摄像头画面，按下 Alt，然后拖动边界框。"
 }

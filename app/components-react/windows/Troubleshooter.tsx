@@ -36,7 +36,7 @@ export default function Troubleshooter() {
       .pipe(debounceTime(500), tap(SettingsService.actions.loadSettingsIntoStore))
       .subscribe();
 
-    return subscription.unsubscribe;
+    return () => subscription.unsubscribe();
   }, []);
 
   function hideParamsForCategory(category: ISettingsSubCategory) {

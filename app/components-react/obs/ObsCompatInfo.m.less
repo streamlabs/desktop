@@ -1,0 +1,46 @@
+@import '../../styles/index';
+
+// Frame for OBS_TEXT_INFO property messages. Geometry matches the shared Callout component;
+// `@radius` is the 4px input radius, callout surfaces use 8px.
+.frame {
+  display: flex;
+  align-items: flex-start;
+  gap: @spacing;
+  padding: 1.5 * @spacing;
+  border: 1px solid;
+  border-radius: 8px;
+  // launch options and URLs are long and unbreakable
+  overflow-wrap: anywhere;
+}
+
+.icon {
+  line-height: inherit;
+}
+
+// libobs severities. The token names invert: `--info` is amber, `--warning` is red.
+.normal {
+  background: var(--callout-semi);
+  border-color: var(--callout-border);
+
+  .icon {
+    color: var(--callout);
+  }
+}
+
+.warning {
+  background: var(--info-semi);
+  border-color: var(--info-border);
+
+  .icon {
+    color: var(--info);
+  }
+}
+
+.error {
+  background: var(--warning-semi);
+  border-color: var(--warning-border);
+
+  .icon {
+    color: var(--warning);
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "Horizontal canvas": "Horizontaal canvas",
-  "Vertical canvas": "Verticaal canvas",
+  "Toggle horizontal display": "Toggle horizontal display",
+  "Toggle vertical display": "Toggle vertical display",
   "Error stopping stream: default streams do not exist.": "Fout bij stoppen van stream: standaardstreams bestaan niet."
 }

@@ -4,7 +4,6 @@
   "Successfully saved %{filename} to %{filepath}": "成功保存 %{filename} 至 %{filepath}",
   "Successfully loaded %{filename}.overlay": "成功载入 %{filename}.叠加",
   "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
-  "This is an experimental feature.  Use at your own risk.": "这是一项实验功能。使用风险自负。",
   "Export Overlay File": "导出叠加文件",
   "Import Overlay File": "导入叠加文件",
   "Import Widget File in Current Scene": "在当前场景中导入小工具文件",
@@ -28,5 +27,9 @@
   "Show Components Library": "显示组件库",
   "Convert Dual Output Scene Collection": "转换 Dual Output 场景集",
   "Repair Scene Collection": "修复场景集",
-  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection.",
+  "Reactive Data": "Reactive Data",
+  "Manage your reactive data values": "Manage your reactive data values",
+  "Waiting for schema...": "Waiting for schema...",
+  "Waiting for state...": "Waiting for state..."
 }

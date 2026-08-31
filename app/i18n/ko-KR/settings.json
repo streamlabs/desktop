@@ -256,6 +256,7 @@
   "FPS Denominator": "FPS 분모",
   "FPS Value": "FPS 값",
   "The resolution must be in the format [width]x[height] (i.e. 1920x1080)": "해상도는 [너비]x[높이](예: 1920x1080) 포맷이어야 합니다.",
+  "Failed to update the video resolution.": "Failed to update the video resolution.",
   "Custom": "커스텀",
   "Custom Base Resolution": "기본 해상도 커스텀",
   "Custom Output Resolution": "출력 해상도 커스텀",
@@ -320,5 +321,11 @@
   "Deleting your cache directory will cause you to lose some settings.": "Deleting your cache directory will cause you to lose some settings.",
   "Do not delete your cache directory unless instructed to do so by a Streamlabs staff member.": "Do not delete your cache directory unless instructed to do so by a Streamlabs staff member.",
   "Enable reporting additional information on a crash (requires restart).": "Enable reporting additional information on a crash (requires restart).",
-  "Use stream output": "Use stream output"
+  "Use stream output": "Use stream output",
+  "Currently Loaded App": "Currently Loaded App",
+  "Token": "Token",
+  "Unload": "Unload",
+  "Invalid Scene Collection": "Invalid Scene Collection",
+  "Successfully converted scene collection.": "Successfully converted scene collection.",
+  "Output Scene": "Output Scene"
 }

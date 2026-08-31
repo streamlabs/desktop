@@ -12,6 +12,9 @@ import {
   WindowsService,
 } from 'app-services';
 import Utils from '../utils';
+import { jfetch } from 'util/requests';
+import { IThemeMetadata } from './theme-metadata';
+import { Subject } from 'rxjs';
 
 export enum EOnboardingSteps {
   Splash = 'Splash',
@@ -240,6 +243,8 @@ export class OnboardingV2Service extends Service {
   singletonPath = false;
   localStorageKey = 'UserHasBeenOnboarded';
 
+  onboardingCompleted = new Subject();
+
   // Uncomment to debug/style a specific step
   // init() {
   //   super.init();
@@ -305,6 +310,13 @@ export class OnboardingV2Service extends Service {
     });
   }
 
+  showSingletonStep(step: EOnboardingSteps) {
+    this.initalizeView({
+      startingStep: { name: step, isSkippable: false },
+      isSingleton: true,
+    });
+  }
+
   takeStep(skipped?: boolean) {
     this.recordOnboardingNavEvent(skipped ? 'skip' : 'continue');
     const nextStep = this.path.takeNextStep(this.modifiers);
@@ -340,6 +352,11 @@ export class OnboardingV2Service extends Service {
     });
   }
 
+  async fetchThemeData(id: string) {
+    const url = `https://overlays.streamlabs.com/api/overlay/${encodeURIComponent(id)}`;
+    return jfetch<IThemeMetadata>(url);
+  }
+
   private initalizeView(config: IOnboardingInitialization) {
     this.windowsService.actions.showModalLayer('main');
     this.singletonPath = config.isSingleton;
@@ -361,6 +378,7 @@ export class OnboardingV2Service extends Service {
     this.windowsService.actions.hideModalLayer('main');
     this.setCurrentStep(null);
     this.path = null;
+    this.onboardingCompleted.next();
   }
 
   private recordOnboardingNavEvent(type: TOnboardingNavigationEvent) {

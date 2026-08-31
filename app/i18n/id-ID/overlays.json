@@ -4,7 +4,6 @@
   "Successfully saved %{filename} to %{filepath}": "Berhasil disimpan %{filename} ke %{filepath}",
   "Successfully loaded %{filename}.overlay": "Tampilan %{filename} berhasil dimuat",
   "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
-  "This is an experimental feature.  Use at your own risk.": "Ini adalah fitur eksperimental. Gunakan dengan risiko sendiri.",
   "Export Overlay File": "Ekspor File Tampilan",
   "Import Overlay File": "Impor File Tampilan",
   "Import Widget File in Current Scene": "Impor File Widget di Scene Saat Ini",
@@ -28,5 +27,9 @@
   "Show Components Library": "Tampilkan Perpustakaan Komponen",
   "Convert Dual Output Scene Collection": "Mengonversi Koleksi Adegan Dual Output",
   "Repair Scene Collection": "Koleksi Adegan Perbaikan",
-  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection.",
+  "Reactive Data": "Reactive Data",
+  "Manage your reactive data values": "Manage your reactive data values",
+  "Waiting for schema...": "Waiting for schema...",
+  "Waiting for state...": "Waiting for state..."
 }
