@@ -1377,8 +1377,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
       },
     });
 
-    this.chatView.webContents.openDevTools();
-
     this.customizationService.settingsChanged.subscribe(
       (changed: DeepPartial<CustomizationState>) => {
         this.handleSettingsChanged(changed);
