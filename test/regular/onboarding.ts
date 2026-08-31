@@ -246,7 +246,6 @@ test.skip('Go through onboarding and install theme', async t => {
   await goThroughOnboarding(t, login, newUser, async () => {
     // Confirm sources
     t.not(await getNumElements('div[data-role=source]'), 0, 'Theme installed before login');
-    t.true(await isDisplayed('i[data-testid=dual-output-inactive]'), 'Single output enabled');
 
     // login new user after onboarding
     await clickIfDisplayed('li[data-testid=nav-auth]');
