@@ -157,7 +157,7 @@ export function ImportStreamModal({
       if (!isInstalled) {
         setPendingImport({ game, filePath: filePath[0], streamId: id });
         setShowingInstallFlow(true);
-        HighlighterService.installStreamlabsReplay({ videoPath: filePath[0], game });
+        HighlighterService.actions.installStreamlabsReplay({ videoPath: filePath[0], game });
         return;
       }
 
