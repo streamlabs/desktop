@@ -46,7 +46,7 @@ export const REPLAY_SETUP_EXE_NAME = 'Streamlabs Highlighter-Setup.exe';
 export const REPLAY_INSTALL_ORIGIN = 'sl_desktop';
 
 // The install origin marker is a hand-off file, so it lives in the current user's temp directory
-// (%TEMP%\Streamlabs\install-origin.json) rather than in either app's data directory. It has to
+// (%TEMP%\Streamlabs_Highlighter\install-origin.json) rather than in either app's data directory. It has to
 // work before Replay is installed at all, and Replay deletes it as soon as it has been read.
 // Deliberately not derived from REPLAY_APP_NAME: this directory name is a contract with Replay and
 // does not follow the app rename.
