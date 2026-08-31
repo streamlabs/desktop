@@ -1,0 +1,38 @@
+@import '../../styles/index';
+@import '../../styles/mixins';
+@import '../../styles/badges';
+@import '../../styles/ultra';
+
+.features-nav {
+  .badge {
+    border-radius: 4px;
+    background-color: var(--button);
+    color: var(--paragraph);
+    padding: 2px 6px;
+    margin-left: 8px;
+  }
+
+  .ultra:not(.active) {
+    .ultra-text() !important;
+
+    i {
+      .ultra-text('warm') !important;
+    }
+  }
+
+  :global(.ant-menu-item) {
+    &.active {
+      color: var(--nav-active) !important;
+
+      svg {
+        fill: var(--nav-active) !important;
+      }
+    }
+
+    @media (max-width: 1200px) {
+      :global(.ant-menu-title-content) {
+        display: none;
+      }
+    }
+  }
+}
