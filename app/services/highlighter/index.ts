@@ -581,9 +581,9 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
    * the install, so Replay can resolve its origin while our exec call is still pending.
    *
    * When the install was triggered from the import dialog, the marker also carries what the user
-   * picked there, under `metadata`: the recording and its game. Those are the exact values we send
-   * via the `import` deeplink the moment the install finishes, so Replay can see it coming — a
-   * marker and a deeplink for the same import, not two unrelated ones.
+   * picked there, under `metadata`: the recording and its game. Those are the exact values Desktop
+   * would otherwise pass via the `import` deeplink once the install finishes, so Replay can see it
+   * coming — the marker is the hand-off for that single import, not a second unrelated one.
    *
    * Best-effort by design. Attribution is never worth failing an install over, so every error is
    * swallowed and only reported to Sentry.
