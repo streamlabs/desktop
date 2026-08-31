@@ -15,6 +15,12 @@ import {
   IYoutubeLiveBroadcast,
   IYoutubeStartStreamOptions,
 } from '../../../services/platforms/youtube';
+import {
+  extractTwitterErrorMessage,
+  ITwitterScheduledBroadcast,
+  ITwitterStartStreamOptions,
+  TWITTER_DEFAULT_DURATION_MS,
+} from '../../../services/platforms/twitter';
 import { message } from 'antd';
 import { $t } from '../../../services/i18n';
 import { IStreamError } from '../../../services/streaming/stream-error';
@@ -56,6 +62,15 @@ export interface IStreamEvent {
     destinationType: TDestinationType;
     destinationId: string;
   };
+  /**
+   * X has no endpoint for fetching a single scheduled broadcast, so we keep
+   * everything the edit form needs on the event itself
+   */
+  twitter?: {
+    description?: string;
+    durationMs: number;
+    manualPublish: boolean;
+  };
 }
 
 /**
@@ -64,6 +79,7 @@ export interface IStreamEvent {
 interface ISchedulerPlatformSettings extends Partial<Record<TPlatform, Object>> {
   youtube?: IYoutubeStartStreamOptions;
   facebook?: IFacebookStartStreamOptions;
+  twitter?: ITwitterStartStreamOptions;
 }
 
 export const StreamSchedulerCtx = React.createContext<StreamSchedulerController | null>(null);
@@ -132,9 +148,14 @@ export class StreamSchedulerController {
     const defaultSettings = {
       facebook: cloneDeep(Services.FacebookService.state.settings) as IFacebookUpdateVideoOptions,
       youtube: cloneDeep(Services.YoutubeService.state.settings),
+      twitter: cloneDeep(Services.TwitterPlatformService.state.settings),
     };
     defaultSettings.youtube.broadcastId = '';
     defaultSettings.facebook.liveVideoId = '';
+    defaultSettings.twitter.broadcastId = '';
+    defaultSettings.twitter.description = '';
+    defaultSettings.twitter.durationMs = TWITTER_DEFAULT_DURATION_MS;
+    defaultSettings.twitter.manualPublish = true;
     return defaultSettings;
   }
 
@@ -162,11 +183,14 @@ export class StreamSchedulerController {
    */
   private async loadEvents() {
     this.reset();
-    // load fb and yt events simultaneously
+    // load fb, yt and x events simultaneously
+    const [fbEvents, ytEvents, twEvents] = await Promise.all([
+      this.fetchFbEvents(),
+      this.fetchYTBEvents(),
+      this.fetchTwitterEvents(),
+    ]);
     // @ts-ignore typescript upgrade
-    const [fbEvents, ytEvents] = await Promise.all([this.fetchFbEvents(), this.fetchYTBEvents()]);
-    // @ts-ignore typescript upgrade
-    this.setEvents([...fbEvents, ...ytEvents]);
+    this.setEvents([...fbEvents, ...ytEvents, ...twEvents]);
   }
 
   private async fetchYTBEvents() {
@@ -201,6 +225,21 @@ export class StreamSchedulerController {
     }
   }
 
+  private async fetchTwitterEvents() {
+    if (!this.platforms.includes('twitter')) return [];
+    const twActions = Services.TwitterPlatformService.actions;
+    try {
+      const broadcasts = await twActions.return.fetchScheduledBroadcasts();
+      return broadcasts.map(broadcast => convertTwitterBroadcastToEvent(broadcast));
+    } catch (e: unknown) {
+      message.error({
+        content: $t('Failed to load X events'),
+        className: styles.schedulerError,
+      });
+      return [];
+    }
+  }
+
   /**
    * Returns linked platforms that support scheduling
    */
@@ -220,6 +259,10 @@ export class StreamSchedulerController {
 
   get ytSettings(): IYoutubeStartStreamOptions {
     return getDefined(this.store.platformSettings.youtube);
+  }
+
+  get twitterSettings(): ITwitterStartStreamOptions {
+    return getDefined(this.store.platformSettings.twitter);
   }
 
   get primaryPlatform() {
@@ -266,6 +309,18 @@ export class StreamSchedulerController {
         event.id,
       );
       this.SHOW_EDIT_EVENT_MODAL(event, ytSettings);
+    } else if (event.platform === 'twitter') {
+      // X has no fetch-one endpoint, so rebuild the form state from the event
+      const twitterEvent = getDefined(event.twitter);
+      this.SHOW_EDIT_EVENT_MODAL(event, {
+        ...this.defaultPlatformSettings.twitter,
+        title: event.title,
+        broadcastId: event.id,
+        description: twitterEvent.description ?? '',
+        scheduledStartTime: event.date,
+        durationMs: twitterEvent.durationMs,
+        manualPublish: twitterEvent.manualPublish,
+      } as ITwitterStartStreamOptions);
     } else {
       const fbDestination = getDefined(event.facebook);
       const fbSettings = await Services.FacebookService.actions.return.fetchStartStreamOptionsForVideo(
@@ -318,6 +373,20 @@ export class StreamSchedulerController {
         ytSettings,
       );
       this.setEvent(video.id, convertYTBroadcastToEvent(video));
+    } else if (selectedPlatform === 'twitter') {
+      const twitterSettings = cloneDeep(streamSettings) as ITwitterStartStreamOptions;
+      twitterSettings.scheduledStartTime = this.store.time;
+      let broadcast!: ITwitterScheduledBroadcast;
+      try {
+        broadcast = await Services.TwitterPlatformService.actions.return.updateScheduledBroadcast(
+          selectedEventId,
+          twitterSettings,
+        );
+      } catch (e: unknown) {
+        this.handleError(e as IStreamError);
+        return;
+      }
+      this.setEvent(broadcast.broadcast_id, convertTwitterBroadcastToEvent(broadcast));
     } else {
       // update FB event
       const event = getDefined(this.selectedEvent);
@@ -351,7 +420,7 @@ export class StreamSchedulerController {
     const service = getPlatformService(selectedPlatform);
 
     assertIsDefined(service.scheduleStream);
-    let video!: IFacebookLiveVideo | IYoutubeLiveBroadcast;
+    let video!: IFacebookLiveVideo | IYoutubeLiveBroadcast | ITwitterScheduledBroadcast;
     try {
       video = await service.scheduleStream(time, streamSettings);
     } catch (e: unknown) {
@@ -371,6 +440,8 @@ export class StreamSchedulerController {
     let event: IStreamEvent;
     if (selectedPlatform === 'youtube') {
       event = convertYTBroadcastToEvent(video as IYoutubeLiveBroadcast);
+    } else if (selectedPlatform === 'twitter') {
+      event = convertTwitterBroadcastToEvent(video as ITwitterScheduledBroadcast);
     } else {
       assertIsDefined(this.fbSettings);
       const fbSettings = getDefined(this.fbSettings);
@@ -401,6 +472,15 @@ export class StreamSchedulerController {
         content: $t(
           'Please schedule no further than 7 days in advance and no sooner than 10 minutes in advance.',
         ),
+        className: styles.schedulerError,
+      });
+    } else if (this.store.selectedPlatform === 'twitter') {
+      // Core relays X's actual complaint (scheduling conflicts, duration limits)
+      // in a nested field; the top-level message is always generic
+      message.error({
+        content:
+          extractTwitterErrorMessage(err) ??
+          $t('Can not schedule the stream for the given date/time'),
         className: styles.schedulerError,
       });
     } else if (err?.status === 423) {
@@ -444,6 +524,8 @@ export class StreamSchedulerController {
     this.showLoader();
     if (selectedPlatform === 'youtube') {
       Services.YoutubeService.actions.return.removeBroadcast(selectedEventId);
+    } else if (selectedPlatform === 'twitter') {
+      Services.TwitterPlatformService.actions.return.removeScheduledBroadcast(selectedEventId);
     } else {
       const event = getDefined(this.selectedEvent);
       const fbOptions = getDefined(event.facebook);
@@ -455,7 +537,10 @@ export class StreamSchedulerController {
 
   private SHOW_EDIT_EVENT_MODAL(
     event: IStreamEvent,
-    platformSettings: IYoutubeStartStreamOptions | IFacebookStartStreamOptions,
+    platformSettings:
+      | IYoutubeStartStreamOptions
+      | IFacebookStartStreamOptions
+      | ITwitterStartStreamOptions,
   ) {
     this.store.setState(s => {
       s.selectedEventId = event.id;
@@ -487,6 +572,8 @@ export class StreamSchedulerController {
       s.time = time;
       if (s.selectedPlatform === 'facebook') {
         getDefined(s.platformSettings.facebook).event_params.start_time = time;
+      } else if (s.selectedPlatform === 'twitter') {
+        getDefined(s.platformSettings.twitter).scheduledStartTime = time;
       } else {
         getDefined(s.platformSettings.youtube).scheduledStartTime = time;
       }
@@ -565,6 +652,30 @@ function convertYTBroadcastToEvent(ytBroadcast: IYoutubeLiveBroadcast): IStreamE
     ).valueOf(),
     title: ytBroadcast.snippet.title,
     status,
+  };
+}
+
+/**
+ * Converts an X scheduled broadcast to IStreamEvent
+ */
+function convertTwitterBroadcastToEvent(broadcast: ITwitterScheduledBroadcast): IStreamEvent {
+  const start = parseInt(broadcast.scheduled_start_ms, 10);
+  const end = parseInt(broadcast.scheduled_end_ms, 10);
+
+  return {
+    platform: 'twitter',
+    // `broadcast_id` is the id used in URLs, on stream/start, and for update/delete
+    id: broadcast.broadcast_id,
+    date: start,
+    title: broadcast.title,
+    // X drops a broadcast from the scheduled list the moment it starts and never
+    // returns it, so anything we can see here is by definition still upcoming
+    status: 'scheduled',
+    twitter: {
+      description: broadcast.description,
+      durationMs: end - start,
+      manualPublish: broadcast.manual_publish ?? true,
+    },
   };
 }
 

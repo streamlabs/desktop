@@ -3,7 +3,7 @@ import { IYoutubeStartStreamOptions, YoutubeService } from './youtube';
 import { FacebookService, IFacebookStartStreamOptions } from './facebook';
 import { ITikTokStartStreamOptions, TikTokService } from './tiktok';
 import { InstagramService, IInstagramStartStreamOptions } from './instagram';
-import { TwitterPlatformService } from './twitter';
+import { ITwitterStartStreamOptions, TwitterPlatformService } from './twitter';
 import { TTwitchOAuthScope } from './twitch/index';
 import { IGoLiveSettings } from 'services/streaming';
 import { WidgetType } from '../widgets';
@@ -166,7 +166,8 @@ export type TStartStreamOptions =
   | Partial<ITikTokStartStreamOptions>
   | Partial<IInstagramStartStreamOptions>
   | Partial<IKickStartStreamOptions>
-  | Partial<IPatreonStartStreamOptions>;
+  | Partial<IPatreonStartStreamOptions>
+  | Partial<ITwitterStartStreamOptions>;
 
 // state applicable for all platforms
 export interface IPlatformState {
