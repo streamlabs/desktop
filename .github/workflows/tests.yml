@@ -4,7 +4,7 @@ on:
   push:
     branches: [staging, master]
   pull_request:
-    branches: [staging, master, sb_gh_actions_tests]
+    branches: [staging, master]
     types: [synchronize, opened, reopened]
   workflow_dispatch:
 
@@ -80,10 +80,37 @@ jobs:
           compression-level: 0
           retention-days: 1
 
-  test:
-    name: 'Frontend Tests'
+  test-github-hosted:
+    name: 'Frontend Tests (GitHub Hosted)'
     needs: prepare-frontend-tests
     runs-on: windows-2022
+    timeout-minutes: 80
+
+    steps:
+      - name: 'Download Test Build'
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-test-build
+          path: ${{ runner.temp }}/frontend-test-artifact
+      - name: 'Prepare Test Runner'
+        run: |
+          $projectDirectory = Join-Path $env:RUNNER_TEMP 'frontend-test-project'
+          New-Item -ItemType Directory -Force -Path $projectDirectory | Out-Null
+          7z x "$env:RUNNER_TEMP\frontend-test-artifact\frontend-test-build.7z" "-o$projectDirectory" -y -bb0
+          Set-Location $projectDirectory
+
+          if (-not (Test-Path package.json)) {
+            throw "Test build does not contain package.json at $projectDirectory"
+          }
+        shell: powershell
+      - name: 'Run Tests'
+        run: yarn test:github-hosted
+        working-directory: ${{ runner.temp }}/frontend-test-project
+
+  test-self-hosted:
+    name: 'Frontend Tests (Custom Runners)'
+    needs: prepare-frontend-tests
+    runs-on: [self-hosted, desktop-frontend]
     timeout-minutes: 80
 
     strategy:
@@ -115,7 +142,7 @@ jobs:
           }
         shell: powershell
       - name: 'Run Tests'
-        run: yarn ci:tests
+        run: node ./test/helpers/runner.js yarn test:self-hosted
         working-directory: ${{ runner.temp }}/frontend-test-project
         env:
           SLOBS_TEST_USER_POOL_TOKEN: ${{ secrets.SLOBS_TEST_USER_POOL_TOKEN }}
@@ -161,7 +188,14 @@ jobs:
     if: always()
     # Note: every required job in this workflow must be accounted in the results collation
     # to work properly as a required check
-    needs: [testable-changes, prepare-frontend-tests, test, es-lint-strict-nulls]
+    needs:
+      [
+        testable-changes,
+        prepare-frontend-tests,
+        test-github-hosted,
+        test-self-hosted,
+        es-lint-strict-nulls,
+      ]
     runs-on: ubuntu-latest
     steps:
       - name: 'Check CI Results'

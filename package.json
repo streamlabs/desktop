@@ -32,6 +32,8 @@
     "typecheck:app": "tsc --noEmit -p tsconfig.json",
     "typecheck:react": "node scripts/typecheck-react.js",
     "test": "tsc -p test && ava -v --timeout=3m ./test-dist/test/regular/**/*.js",
+    "test:github-hosted": "tsc -p test && ava -v --timeout=3m ./test-dist/test/regular/app-shutdown.js ./test-dist/test/regular/file-manager-shutdown.js ./test-dist/test/regular/platform-apps-source-url.js ./test-dist/test/regular/worker-shutdown.js",
+    "test:self-hosted": "tsc -p test && ava -v --timeout=3m ./test-dist/test/regular/**/*.js \"!./test-dist/test/regular/app-shutdown.js\" \"!./test-dist/test/regular/file-manager-shutdown.js\" \"!./test-dist/test/regular/platform-apps-source-url.js\" \"!./test-dist/test/regular/worker-shutdown.js\"",
     "test:file": "tsc -p test && ava -v --timeout=60m",
     "test:stress": "yarn test test-dist/test/stress/index.js",
     "test:screen": "yarn test:file ./test-dist/test/screentest/tests/**/*.js",
