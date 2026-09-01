@@ -143,7 +143,7 @@ export function hasRequiredAutoConfigCapabilities(
 ): boolean {
   return Boolean(
     capabilities &&
-      capabilities.apiVersion === 2 &&
+      capabilities.apiVersion === 1 &&
       capabilities.resultSchemaVersion === 1 &&
       capabilities.previewApplySplit === true &&
       capabilities.awaitableCancel === true &&

@@ -37,7 +37,7 @@ test('zero-based paired Enhanced Broadcasting canvas identities reach native pre
 
 function capabilities(patch: Partial<IAutoConfigCapabilities> = {}): IAutoConfigCapabilities {
   return {
-    apiVersion: 2,
+    apiVersion: 1,
     resultSchemaVersion: 1,
     previewApplySplit: true,
     awaitableCancel: true,
@@ -165,7 +165,7 @@ test('estimate support is required while active provider modes are optional', t 
     ),
   );
   t.false(hasRequiredAutoConfigCapabilities(capabilities({ bandwidthModes: [] })));
-  t.false(hasRequiredAutoConfigCapabilities(capabilities({ apiVersion: 1 })));
+  t.false(hasRequiredAutoConfigCapabilities(capabilities({ apiVersion: 2 })));
   t.false(
     hasRequiredAutoConfigCapabilities(
       capabilities({ dualOutputActiveProbes: (undefined as unknown) as boolean }),
