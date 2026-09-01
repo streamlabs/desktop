@@ -4,7 +4,7 @@ on:
   push:
     branches: [staging, master]
   pull_request:
-    branches: [staging, master]
+    branches: [staging, master, sb_gh_actions_tests]
     types: [synchronize, opened, reopened]
   workflow_dispatch:
 
@@ -83,7 +83,7 @@ jobs:
   test:
     name: 'Frontend Tests'
     needs: prepare-frontend-tests
-    runs-on: [self-hosted, desktop-frontend]
+    runs-on: windows-2022
     timeout-minutes: 80
 
     strategy:
