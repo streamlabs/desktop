@@ -6,6 +6,8 @@ import { Button, Calendar, Modal, Row, Col, Spin } from 'antd';
 import { YoutubeEditStreamInfo } from '../../windows/go-live/platforms/YoutubeEditStreamInfo';
 import { $t } from '../../../services/i18n';
 import { FacebookEditStreamInfo } from '../../windows/go-live/platforms/FacebookEditStreamInfo';
+import { TwitterEditStreamInfo } from '../../windows/go-live/platforms/TwitterEditStreamInfo';
+import Badge from 'components-react/shared/DismissableBadge';
 import { ListInput, TimeInput } from '../../shared/inputs';
 import Form, { useForm } from '../../shared/inputs/Form';
 import { confirmAsync } from '../../modals';
@@ -85,6 +87,7 @@ function SchedulerCalendar() {
           [css.event]: true,
           [css.eventFacebook]: event.platform === 'facebook',
           [css.eventYoutube]: event.platform === 'youtube',
+          [css.eventTwitter]: event.platform === 'twitter',
         })}
         onClick={ev => {
           ev.stopPropagation();
@@ -150,13 +153,15 @@ function EventSettingsModal() {
     selectedPlatform,
     ytSettings,
     fbSettings,
+    twitterSettings,
   } = store.useState(s => ({
     time: s.time,
     isModalVisible: s.isModalVisible,
     isLoading: s.isLoading,
     selectedPlatform: s.selectedPlatform,
-    ytSettings: getDefined(s.platformSettings.youtube),
-    fbSettings: getDefined(s.platformSettings.facebook),
+    ytSettings: s.platformSettings.youtube,
+    fbSettings: s.platformSettings.facebook,
+    twitterSettings: s.platformSettings.twitter,
   }));
 
   // initialize the form
@@ -207,6 +212,16 @@ function EventSettingsModal() {
                   )}
                 </span>
               )}
+              {selectedPlatform === 'twitter' && (
+                <div className={css.betaNotice}>
+                  <Badge content={'Beta'} className={css.betaBadge} />
+                  <span className="whisper">
+                    {$t(
+                      'Scheduling streams to X is a new feature and may not always work as expected',
+                    )}
+                  </span>
+                </div>
+              )}
             </>
           )}
 
@@ -219,7 +234,7 @@ function EventSettingsModal() {
               layoutMode="singlePlatform"
               isUpdateMode={isUpdateMode}
               isScheduleMode={true}
-              value={ytSettings}
+              value={getDefined(ytSettings)}
               onChange={newSettings => updatePlatform('youtube', newSettings)}
             />
           )}
@@ -230,10 +245,21 @@ function EventSettingsModal() {
               layoutMode="singlePlatform"
               isUpdateMode={isUpdateMode}
               isScheduleMode={true}
-              value={fbSettings}
+              value={getDefined(fbSettings)}
               onChange={(newSettings: IFacebookStartStreamOptions | undefined) =>
                 updatePlatform('facebook', newSettings)
               }
+            />
+          )}
+
+          {/* X (TWITTER) SETTINGS */}
+          {selectedPlatform === 'twitter' && (
+            <TwitterEditStreamInfo
+              layoutMode="singlePlatform"
+              isUpdateMode={isUpdateMode}
+              isScheduleMode={true}
+              value={getDefined(twitterSettings)}
+              onChange={newSettings => updatePlatform('twitter', newSettings)}
             />
           )}
         </Spin>

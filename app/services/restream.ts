@@ -276,7 +276,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   get chatUrl() {
     const nightMode = this.customizationService.isDarkTheme ? 'night' : 'day';
     const platforms = this.streamInfo.enabledPlatforms
-      .filter(platform => ['youtube', 'twitch', 'facebook'].includes(platform))
+      .filter(platform => ['youtube', 'twitch', 'facebook', 'twitter'].includes(platform))
       .join(',');
 
     const hasFBTarget = this.streamInfo.enabledPlatforms.includes('facebook' as TPlatform);
