@@ -265,5 +265,5 @@
     "got@^9.6.0": "11.8.5",
     "napi-build-utils": "2.0.0"
   },
-  "packageManager": "yarn@3.1.1"
+  "packageManager": "yarn@4.18.0"
 }
