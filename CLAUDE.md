@@ -11,7 +11,7 @@ relevant service before editing it; prefer targeted reads over broad assumptions
 
 ## Commands
 
-Package manager is **Yarn Berry (3.1.1)** — never use `npm`.
+Package manager is **Yarn Berry (4.18.0)** — never use `npm`.
 
 | Task | Command | Notes |
 | --- | --- | --- |
