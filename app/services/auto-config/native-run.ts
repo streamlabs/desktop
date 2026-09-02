@@ -1,8 +1,8 @@
 import { IAutoConfigNativeResult } from './types';
 
-// Native may spend up to four minutes exhausting bounded encoder/quality
-// candidates, followed by sequential Twitch and YouTube probes. This is only
-// a final dead-session guard; each real substep continues to update the UI.
+// OSN may spend up to four minutes testing bounded encoder and quality
+// candidates, followed by sequential Twitch and YouTube tests. This timeout is
+// only a final guard for a stalled run; normal steps continue to report progress.
 export const AUTO_CONFIG_NATIVE_RUN_TIMEOUT_MS = 420000;
 
 type TNodeObs = typeof import('../../../obs-api').NodeObs;
@@ -10,10 +10,9 @@ export type IAutoConfigApi = TNodeObs['AutoConfig'];
 export type IAutoConfigRun = ReturnType<IAutoConfigApi['run']>;
 
 /**
- * Cross the facade's stop-and-close barrier before relinquishing ownership of
- * a run. The completion callback is deliberately skipped when Close fails so
- * the caller can retain the same handle and retry without releasing provider
- * resources early.
+ * Cancellation waits for OSN to stop and close the test output. Call onClosed
+ * only after cancellation succeeds; on failure, retain the run handle and
+ * provider resources so cleanup can be retried.
  */
 export async function closeAutoConfigRun(run: IAutoConfigRun, onClosed: () => void): Promise<void> {
   await run.cancel();
@@ -21,9 +20,9 @@ export async function closeAutoConfigRun(run: IAutoConfigRun, onClosed: () => vo
 }
 
 /**
- * Await a facade-owned run while retaining Desktop's final dead-session guard.
- * Once the guard fires, a late native result cannot win the race: output must
- * cancel and close before the timeout is reported to the caller.
+ * Wait for the OSN result with Desktop's final timeout guard. After timeout,
+ * ignore any late result and cancel and close the OSN run before reporting
+ * failure.
  */
 export async function awaitAutoConfigRun(
   run: IAutoConfigRun,

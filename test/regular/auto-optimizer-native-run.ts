@@ -21,7 +21,7 @@ function nativeResult(): IAutoConfigNativeResult {
   };
 }
 
-test('native run returns its facade-owned result without cancelling', async t => {
+test('a completed OSN run returns its result without cancellation', async t => {
   let cancelled = false;
   const run: IAutoConfigRun = {
     result: Promise.resolve(nativeResult()),
@@ -35,7 +35,7 @@ test('native run returns its facade-owned result without cancelling', async t =>
   t.false(cancelled);
 });
 
-test('native run timeout waits for cancellation and ignores a late result', async t => {
+test('OSN run timeout waits for cancellation and ignores a late result', async t => {
   const result = deferred<IAutoConfigNativeResult>();
   const cancellation = deferred<void>();
   const order: string[] = [];
@@ -63,7 +63,7 @@ test('native run timeout waits for cancellation and ignores a late result', asyn
   t.deepEqual(order, ['cancel-started', 'cancel-finished', 'rejected']);
 });
 
-test('native close failure keeps the run retryable and defers dependent cleanup', async t => {
+test('OSN cleanup failure keeps the run retryable and defers dependent cleanup', async t => {
   let cancelCalls = 0;
   let closed = false;
   const run: IAutoConfigRun = {

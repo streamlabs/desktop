@@ -96,8 +96,8 @@ function completeOutput(
 }
 
 /**
- * Describe the outputs that Desktop will actually create. This function is
- * deliberately credential-free and is safe to call in any renderer.
+ * Describe the outputs that Desktop will actually create. The result contains
+ * no provider credentials and is safe to construct in any renderer.
  */
 export function describeAutoOptimizerStreamSetup(
   settings: IGoLiveSettings,
@@ -105,9 +105,8 @@ export function describeAutoOptimizerStreamSetup(
   twitchDualStreamAccess = false,
 ): IAutoOptimizerStreamSetup {
   const platforms = enabledPlatforms(settings);
-  // `dualStream` custom entries are implementation details generated for a
-  // platform already represented in `platforms`; counting them would invent a
-  // second upload output.
+  // `dualStream` custom entries duplicate platforms already listed in
+  // `platforms`; ignore them so each real upload output is counted once.
   const customDestinations = settings.customDestinations.filter(
     item => item.enabled && !item.dualStream,
   );
@@ -123,9 +122,9 @@ export function describeAutoOptimizerStreamSetup(
     twitchSettings?.display === 'both' &&
     !twitchSettings?.useCustomFields &&
     !hasCustom;
-  // Twitch Dual Stream is implemented by the same Enhanced Broadcasting
-  // connection with a paired vertical video, even when its persisted toggle is
-  // false. Classify the actual output topology rather than only the form field.
+  // Twitch Dual Stream uses one Enhanced Broadcasting connection carrying
+  // paired horizontal and vertical video. Classify it as Enhanced Broadcasting
+  // even when the persisted toggle is false.
   const enhancedBroadcasting = Boolean(
     settings.enhancedBroadcasting ||
       twitchSettings?.isEnhancedBroadcasting ||
@@ -162,10 +161,10 @@ export function describeAutoOptimizerStreamSetup(
     type = 'direct-single';
   }
 
-  // Custom RTMP credentials and Stream Shift must never be used for active
-  // testing. Enhanced Broadcasting has a separate workload probe whose V1
-  // safety boundary is a Twitch-only connection: either one horizontal canvas
-  // or the exact Dual Stream pairing of horizontal and vertical video.
+  // Custom RTMP destinations and Stream Shift are never used for active
+  // testing. Enhanced Broadcasting can run its workload test only for a
+  // Twitch-only connection with either one horizontal video or paired
+  // horizontal and vertical video.
   const enhancedBroadcastingProbeEligible =
     type === 'enhanced-broadcasting' &&
     !streamShift &&
@@ -292,9 +291,8 @@ export function describeAutoOptimizerStreamSetup(
       );
   }
 
-  // Invalid/empty destination states are rejected by Go Live validation. Keep
-  // the describer total so capability checks and tests never need to handle an
-  // undefined stream setup.
+  // Go Live validation rejects empty destination lists. Return a placeholder
+  // horizontal output here so callers always receive a complete description.
   if (!outputs.length) {
     outputs = [
       completeOutput(
@@ -314,9 +312,8 @@ export function describeAutoOptimizerStreamSetup(
 }
 
 /**
- * An optimizer profile is attempt-scoped. It can be carried through the
- * editable Go Live form only while the outputs it was calculated for are
- * unchanged.
+ * An optimizer profile remains valid only while the Go Live outputs and
+ * destinations it was calculated for remain unchanged.
  */
 export function isAutoOptimizerProfileCompatible(
   profile: IAutoOptimizerProfile,

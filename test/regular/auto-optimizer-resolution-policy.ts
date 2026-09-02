@@ -12,7 +12,7 @@ import {
   selectAutoOptimizerQuality,
 } from '../../app/services/auto-config/resolution-policy';
 
-test('active landscape request permits disposable testing through the highest V1 tier', t => {
+test('active landscape requests may test up to 1920x1080 without changing the canvas', t => {
   t.deepEqual(
     buildAutoOptimizerRequestLimits({
       allowPromotion: true,
@@ -32,7 +32,7 @@ test('active landscape request permits disposable testing through the highest V1
   );
 });
 
-test('active portrait request uses portrait V1 tiers', t => {
+test('active portrait requests use transposed 9:16 resolution tiers', t => {
   t.deepEqual(
     buildAutoOptimizerRequestLimits({
       allowPromotion: true,
@@ -50,7 +50,7 @@ test('active portrait request uses portrait V1 tiers', t => {
   );
 });
 
-test('active request promotes only the supported 30 FPS cadence families', t => {
+test('active requests promote only the supported 30 FPS frame-rate families', t => {
   t.deepEqual(autoOptimizerRequestFrameRateCeiling(true, 1920, 1080, 30, 1), {
     fpsNum: 60,
     fpsDen: 1,
@@ -65,7 +65,7 @@ test('active request promotes only the supported 30 FPS cadence families', t => 
   });
 });
 
-test('estimate-only and custom-aspect requests preserve the exact current cadence', t => {
+test('estimate-only and custom-aspect requests preserve the exact current frame rate', t => {
   t.deepEqual(autoOptimizerRequestFrameRateCeiling(false, 1920, 1080, 30, 1), {
     fpsNum: 30,
     fpsDen: 1,
@@ -80,7 +80,7 @@ test('public frame rate is rounded while the recommendation keeps its exact rati
   t.is(autoOptimizerDisplayFrameRate(60000, 1001), 59.94);
 });
 
-test('estimate-only request retains an exact high current output without applying the V1 cap', t => {
+test('estimate-only requests preserve a current resolution above the active-test ceiling', t => {
   t.deepEqual(
     buildAutoOptimizerRequestLimits({
       allowPromotion: false,
@@ -105,14 +105,14 @@ test('active request can test above a smaller authored canvas without mutating i
   });
 });
 
-test('quality promotion requires a canonical Base Canvas with matching orientation', t => {
+test('quality promotion requires a 16:9 or 9:16 Base Canvas with matching orientation', t => {
   t.true(autoOptimizerCanvasAllowsQualityPromotion(1280, 720, 960, 540));
   t.true(autoOptimizerCanvasAllowsQualityPromotion(720, 1280, 540, 960));
   t.false(autoOptimizerCanvasAllowsQualityPromotion(1600, 1200, 1280, 720));
   t.false(autoOptimizerCanvasAllowsQualityPromotion(1280, 720, 720, 1280));
 });
 
-test('Base Canvas growth follows output-tier promotion, not an existing upscale', t => {
+test('Base Canvas grows only when both recommended output dimensions increase', t => {
   t.true(autoOptimizerPromotesResolution(1280, 720, 1920, 1080));
   t.false(autoOptimizerPromotesResolution(1920, 1080, 1920, 1080));
   t.false(autoOptimizerPromotesResolution(1920, 1080, 1280, 720));
@@ -140,7 +140,7 @@ test('accepted promotion grows Base Canvas without shrinking authored dimensions
   });
 });
 
-test('hardware ceilings contain only exact V1 tiers and broadcast-rate variants', t => {
+test('hardware ceilings contain supported resolution tiers and exact frame-rate variants', t => {
   t.deepEqual(
     autoOptimizerHardwareCeilings(
       { width: 1280, height: 720, fpsNum: 60000, fpsDen: 1001 },

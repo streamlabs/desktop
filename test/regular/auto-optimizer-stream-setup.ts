@@ -80,7 +80,7 @@ test('direct platforms without a safe active probe remain estimate-only', t => {
   t.is(allProbeCandidates(streamSetup).length, 0);
 });
 
-test('standard Twitch and YouTube share one indirect output with ordered candidates', t => {
+test('standard Twitch and YouTube share one cloud output with ordered probe candidates', t => {
   const streamSetup = describeAutoOptimizerStreamSetup(
     settings({
       platforms: {
@@ -100,7 +100,7 @@ test('standard Twitch and YouTube share one indirect output with ordered candida
   );
 });
 
-test('custom and linked destinations are a mixed estimate-only topology', t => {
+test('custom and linked destinations share one mixed setup that remains estimate-only', t => {
   const streamSetup = describeAutoOptimizerStreamSetup(
     settings({
       platforms: {
@@ -442,7 +442,7 @@ test('co-destinations share one companion output and only YouTube represents its
   );
 });
 
-test('Twitch dual stream is modeled as its single shared upload connection', t => {
+test('Twitch Dual Stream uses one Enhanced Broadcasting connection for both canvases', t => {
   const streamSetup = describeAutoOptimizerStreamSetup(
     settings({
       platforms: {
@@ -628,8 +628,8 @@ test('ordinary output contexts select only matching standard outputs from mixed 
   const profile: IAutoOptimizerProfile = {
     schemaVersion: 1,
     streamSetup: 'enhanced-broadcasting-dual-output',
-    // Keep the provider-managed output between the standard outputs to prove the
-    // lookup is role-aware rather than relying on array position.
+    // Place the Twitch Enhanced Broadcasting output between the standard
+    // outputs to verify that lookup uses output kind rather than array position.
     outputs: [horizontalOutput, enhancedOutput, verticalOutput],
   };
 

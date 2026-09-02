@@ -78,9 +78,9 @@ export default function GoLiveAutoOptimizer() {
   const service = Services.AutoConfigService;
   const { continueGoLiveAfterOptimizer } = useGoLiveSettings();
   const state = useVuex(() => {
-    // Vuex mutates a service module in place. Returning that module directly
-    // gives React the same object reference after every optimizer mutation, so
-    // it skips the render and leaves the intro visible while the worker runs.
+    // Vuex mutates the service module in place, so return a new object. Returning
+    // the module itself would preserve its reference and prevent React from
+    // rendering worker updates.
     const { stage, phase, progress, streamSetup, result, error, progressDetail } = service.state;
     return {
       stage,

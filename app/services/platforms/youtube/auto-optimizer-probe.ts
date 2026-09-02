@@ -70,9 +70,9 @@ export interface IYoutubeAutoOptimizerProbeAdapter {
     signal?: AbortSignal,
   ): Promise<TYoutubeAutoOptimizerProbeStreamStatus | null>;
   /**
-   * Find only streams carrying the exact UUID marker created for this probe.
-   * This closes the ambiguous-insert window where YouTube accepted the POST
-   * but the application did not receive or persist the new resource ID.
+   * After a create request has an unknown outcome, find only streams with this
+   * probe's exact UUID title marker. This recovers an accepted stream when its
+   * response or resource ID was lost.
    */
   findStreamIds(probeId: string, signal?: AbortSignal): Promise<string[]>;
   deleteStream(streamId: string): Promise<TYoutubeAutoOptimizerProbeDeleteResult>;
@@ -94,10 +94,10 @@ const DEFAULT_ACTIVE_TIMEOUT_MS = 30_000;
 const DEFAULT_INACTIVE_TIMEOUT_MS = 30_000;
 const DEFAULT_DELETE_TIMEOUT_MS = 10_000;
 const DEFAULT_POLL_INTERVAL_MS = 1_000;
-// An empty-ID journal is deliberately retained after an ambiguous transport
-// failure while a potentially accepted resource may still be becoming visible
-// through liveStreams.list. Startup recovery retries it; only a sufficiently
-// old marker with no exact matches is cleared.
+// If a create request fails before returning a stream ID, retain the journal
+// while YouTube may still be making the stream visible. Startup recovery
+// searches by UUID marker and clears the journal only after its retention
+// period expires with no match.
 const AMBIGUOUS_INSERT_RETENTION_MS = 2 * 60_000;
 
 function createAbortError() {
@@ -111,12 +111,10 @@ function throwIfAborted(signal?: AbortSignal) {
 }
 
 /**
- * `jfetch` rejects HTTP responses with either its plain response-error shape
- * or a native `Response`. An authoritative client-error response proves that
- * the create request reached YouTube and was rejected, so no resource can
- * have been orphaned. Timeout, proxy-style client cancellation, server, and
- * transport failures remain ambiguous because the create may have completed
- * before the failure was returned to us.
+ * A definite HTTP 4xx response means YouTube rejected the create request and
+ * no stream was created. Timeouts, cancellations, 5xx responses, and transport
+ * errors have an unknown outcome because YouTube may have accepted the request
+ * before the failure reached Desktop.
  */
 function isDefiniteHttpRejection(error: unknown): boolean {
   if (!error || (typeof error !== 'object' && typeof error !== 'function')) return false;
@@ -145,9 +143,9 @@ function isJournal(value: unknown): value is IYoutubeAutoOptimizerProbeJournal {
 }
 
 /**
- * Owns the lifecycle of the temporary, unbound YouTube liveStream used by the
- * Auto Optimizer. Credentials are returned to the caller and are never stored
- * by this class. Only identifiers required for crash recovery are journaled.
+ * Manages the temporary, unbound YouTube liveStream used by Auto Optimizer.
+ * Return credentials to the caller without storing them; journal only the
+ * identifiers required for crash recovery.
  */
 export class YoutubeAutoOptimizerProbeManager {
   private readonly activeProbes = new Map<string, IYoutubeAutoOptimizerProbeJournal>();
@@ -474,9 +472,9 @@ export class YoutubeAutoOptimizerProbeManager {
   }
 
   /**
-   * Serialize resource acquisition, recovery, and release. In particular, a
-   * recovery timer must not inspect the empty-ID journal while a create POST
-   * is still pending and then delete the resource accepted by that POST.
+   * Run creation, crash recovery, and cleanup one at a time. Recovery must not
+   * inspect an empty-ID journal while its create request is pending, or it could
+   * delete the stream created by that request.
    */
   private async runExclusive<T>(operation: () => Promise<T>): Promise<T> {
     const previous = this.operationTail;

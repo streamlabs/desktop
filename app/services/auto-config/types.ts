@@ -61,9 +61,9 @@ export interface IAutoOptimizerDestination {
 }
 
 /**
- * Credential-free description of an active probe Desktop may acquire for an
- * output. The array order is the execution order. Credentials are added
- * only to the attempt-scoped native request in the worker renderer.
+ * Describes a provider test that Desktop can prepare without storing
+ * credentials. Entries run in array order; the worker adds credentials only
+ * when building the OSN request for this optimizer run.
  */
 export interface IAutoOptimizerProbeCandidate {
   probeId: string;
@@ -81,7 +81,7 @@ export interface IAutoOptimizerProbeEvidence {
 export interface IAutoOptimizerOutput {
   outputId: string;
   display: TDisplayType | 'both';
-  /** Physical local output whose concurrent encoder workload must be represented. */
+  /** Whether Desktop or Twitch Enhanced Broadcasting manages the encoding settings. */
   outputKind: TAutoOptimizerOutputKind;
   destinations: IAutoOptimizerDestination[];
   probeCandidates: IAutoOptimizerProbeCandidate[];
@@ -115,10 +115,10 @@ export interface IAutoOptimizerOutputResult {
   fpsNum: number;
   fpsDen: number;
   fps: number;
-  /** Secondary canvas tested concurrently with the primary video on this output. */
+  /** Vertical-video recommendation tested alongside this output's horizontal video. */
   additionalVideo?: IAutoOptimizerAdditionalVideoResult;
   bitrate: number;
-  /** Omitted when the provider owns the encoding ladder. */
+  /** Present for standard outputs; omitted when Twitch selects the encoder. */
   encoder?: IAutoOptimizerEncoderRecommendation;
 }
 
@@ -150,7 +150,7 @@ export interface IAutoOptimizerState {
   streamSetup: IAutoOptimizerStreamSetup | null;
   result: IAutoOptimizerResult | null;
   error: IAutoOptimizerError | null;
-  /** Sanitized attempt-local detail for the currently displayed native step. */
+  /** Serializable details for the OSN step currently shown in the UI. */
   progressDetail: IAutoOptimizerProgressDetail | null;
   promptStates: Record<string, TAutoOptimizerPromptState>;
 }
@@ -158,9 +158,9 @@ export interface IAutoOptimizerState {
 export interface IAutoOptimizerProgressDetail {
   code: string | null;
   provider: TAutoOptimizerProbeProvider | null;
-  /** Applied video bitrate for a provider probe; audio is additional. */
+  /** Video bitrate used by the current Twitch or YouTube test; audio is not included. */
   targetBitrateKbps: number | null;
-  /** Safe aggregate upload budget available to recommendation selection. */
+  /** Conservative bandwidth budget used by the current recommendation step. */
   availableBitrateKbps: number | null;
   encoderId: string | null;
   encoderFamily: TAutoOptimizerEncoderFamily | null;
@@ -173,7 +173,7 @@ export interface IAutoOptimizerProgressDetail {
   selectedBitrateKbps: number | null;
 }
 
-/** OSN is the single source of truth for the Auto Optimizer wire contract. */
+/** Reuse OSN's types so Desktop cannot drift from the public API contract. */
 export type IAutoConfigEvent = IOSNAutoConfigEvent;
 export type IAutoConfigNativeResult = IOSNAutoConfigResult;
 

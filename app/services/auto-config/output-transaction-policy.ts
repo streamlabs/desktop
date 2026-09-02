@@ -18,10 +18,10 @@ export interface IOutputFormGroupLike {
 export type TRawOutputValues = Record<string, unknown>;
 
 /**
- * Twitch always owns bitrate and encoder settings for Enhanced Broadcasting,
- * but a successful active workload test still authorizes Desktop to apply the
- * exact tested resolution and shared frame rate. Estimate-only provider-owned
- * results remain non-mutating.
+ * Twitch selects bitrate and encoder settings for Enhanced Broadcasting.
+ * Desktop may apply resolution and shared frame rate only after an active
+ * workload test validates them; estimated Enhanced Broadcasting results do not
+ * change video settings.
  */
 export function shouldApplyAutoOptimizerVideoSettings(
   streamSetup: string,
@@ -37,9 +37,10 @@ export function shouldApplyAutoOptimizerVideoSettings(
 }
 
 /**
- * Output settings are shared by every standard streaming instance. Select the
- * one jointly tested companion recommendation only when all standard physical
- * outputs agree; provider-managed Twitch outputs are intentionally ignored.
+ * All standard streaming instances share one encoder and bitrate configuration.
+ * Apply a standard recommendation only when every standard output returns the
+ * same settings. Ignore Twitch Enhanced Broadcasting outputs because Twitch
+ * configures them.
  */
 export function selectAutoOptimizerStandardOutputRecommendation(
   outputs: IAutoOptimizerOutputResult[],
@@ -90,7 +91,7 @@ export type TAutoOptimizerVideoPatches = Partial<
   Record<'horizontal' | 'vertical', Partial<IAutoOptimizerVideoSettingsLike>>
 >;
 
-/** Build the serialized video-only transaction; Output bitrate/encoder are intentionally absent. */
+/** Build the atomic video update; bitrate and encoder changes are handled separately. */
 export function buildAutoOptimizerVideoSettingsPatches(
   outputs: IAutoOptimizerVideoResultLike[],
   current: Partial<Record<'horizontal' | 'vertical', IAutoOptimizerVideoSettingsLike>>,

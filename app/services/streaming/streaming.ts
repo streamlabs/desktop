@@ -518,9 +518,9 @@ export class StreamingService
       destination.mode = display === 'horizontal' ? 'landscape' : 'portrait';
     });
 
-    // Save enabled platforms for the next app start, but keep the optimizer
-    // profile scoped to this validated Go Live attempt. It may contain
-    // per-output overrides that are invalid for a later topology.
+    // Persist enabled platforms for the next app start, but never persist the
+    // optimizer profile. It is valid only for the exact outputs and destinations
+    // confirmed for this stream.
     const persistedGoLiveSettings = cloneDeep(settings);
     delete persistedGoLiveSettings.autoOptimizerProfile;
     this.streamSettingsService.setSettings({ goLiveSettings: persistedGoLiveSettings });

@@ -1,6 +1,6 @@
 import { IAutoOptimizerProfile } from 'services/auto-config/types';
 
-/** Select only a Desktop-owned output recommendation for a live display context. */
+/** Return the standard recommendation for this display; ignore Twitch-managed outputs. */
 export function autoOptimizerStandardOutputForDisplay(
   profile: IAutoOptimizerProfile | null | undefined,
   display: 'horizontal' | 'vertical',

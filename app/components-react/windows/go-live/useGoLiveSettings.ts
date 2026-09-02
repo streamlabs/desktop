@@ -700,7 +700,7 @@ export class GoLiveSettingsModule {
     return true;
   }
 
-  /** Continue the already validated and frozen confirmation after the optimizer. */
+  /** Start streaming with the settings validated before Auto Optimizer opened. */
   async continueGoLiveAfterOptimizer() {
     await this.startGoLive();
   }

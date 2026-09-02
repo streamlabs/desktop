@@ -44,7 +44,7 @@ const activeContext = {
   currentFpsDen: 1,
 };
 
-test('an exact modern H.264 recommendation is preserved as one tuple', t => {
+test('a valid modern H.264 recommendation is preserved as one settings set', t => {
   t.deepEqual(validateAutoConfigRecommendation(recommendation(), activeContext), {
     width: 1920,
     height: 1080,
@@ -90,7 +90,7 @@ test('Desktop enforces its absolute and request-specific bitrate ceilings', t =>
   t.truthy(validateAutoConfigRecommendation(recommendation({ bitrateKbps: 8000 }), activeContext));
 });
 
-test('estimated recommendations cannot promote bitrate, resolution, or cadence', t => {
+test('estimated recommendations cannot promote bitrate, resolution, or frame rate', t => {
   const estimated = {
     ...activeContext,
     measurementMode: 'estimated' as const,
@@ -147,7 +147,7 @@ test('only tested, applicable H.264 encoder configurations are accepted', t => {
   );
 });
 
-test('provider-owned encoding accepts only a canonical actively tested video tuple', t => {
+test('Twitch Enhanced Broadcasting accepts only video settings validated by its workload test', t => {
   const providerContext = {
     ...activeContext,
     providerOwnsEncoding: true,
@@ -208,7 +208,7 @@ function pairedAdditionalVideo() {
   };
 }
 
-test('paired Enhanced Broadcasting validates both transposed canvas tuples', t => {
+test('paired Enhanced Broadcasting validates transposed horizontal and vertical settings', t => {
   const context = {
     ...activeContext,
     providerOwnsEncoding: true,

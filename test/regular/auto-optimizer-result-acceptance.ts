@@ -98,7 +98,7 @@ function standardNativeResult(): IAutoConfigNativeResult {
   };
 }
 
-test('a complete result is projected from the credential-free attempted output', t => {
+test('a complete OSN result is projected from the saved non-secret request context', t => {
   const context = standardAttempt();
   const serializedContext = JSON.stringify(context);
   t.false(serializedContext.includes('streamKey'));
@@ -144,7 +144,7 @@ test('a complete result is projected from the credential-free attempted output',
   t.false('advice' in result!);
 });
 
-test('incomplete, missing, extra, and duplicate native outputs are rejected', t => {
+test('incomplete, missing, extra, and duplicate OSN outputs are rejected', t => {
   const context = standardAttempt();
   const partial = standardNativeResult();
   partial.status = 'partial';
@@ -167,7 +167,7 @@ test('incomplete, missing, extra, and duplicate native outputs are rejected', t 
   t.is(acceptAutoOptimizerResult(duplicate, context), null);
 });
 
-test('attempt membership, destinations, and exact video display sets are enforced', t => {
+test('saved request outputs, destinations, and exact video display sets are enforced', t => {
   const mismatchedId = standardAttempt();
   mismatchedId.outputs[0].outputId = 'other';
   t.is(acceptAutoOptimizerResult(standardNativeResult(), mismatchedId), null);
@@ -185,7 +185,7 @@ test('attempt membership, destinations, and exact video display sets are enforce
   t.is(acceptAutoOptimizerResult(duplicateDisplay, standardAttempt()), null);
 });
 
-test('standard and provider-owned outputs enforce opposite encoding ownership', t => {
+test('standard results require encoding settings while Twitch-managed results omit them', t => {
   const standardWithoutEncoding = standardNativeResult();
   delete standardWithoutEncoding.outputs[0].encoding;
   t.is(acceptAutoOptimizerResult(standardWithoutEncoding, standardAttempt()), null);
@@ -226,7 +226,7 @@ test('standard and provider-owned outputs enforce opposite encoding ownership', 
   t.is(acceptAutoOptimizerResult(providerResult, providerContext), null);
 });
 
-test('probe evidence and request ceilings remain attempt-relative', t => {
+test('probe evidence and limits must match the saved request context', t => {
   const wrongEvidence = standardNativeResult();
   wrongEvidence.outputs[0].measurement.evidence = [
     {

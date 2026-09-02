@@ -449,9 +449,10 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
   }
 
   /**
-   * Apply a complete user-approved video tuple as one serialized transaction.
-   * This is the only Auto Optimizer path that may grow Base Canvas: benchmarking
-   * uses disposable native mixes and never calls this method.
+   * Apply all user-approved canvas and output resolutions plus the shared frame
+   * rate atomically. Auto Optimizer may grow Base (Canvas) Resolution only
+   * through this method; OSN benchmarks temporary mixes without changing saved
+   * video settings.
    */
   async applyAutoOptimizerSettings(patches: TVideoSettingsPatches): Promise<void> {
     // Bitrate/encoder-only recommendations do not need a video reset and must
@@ -726,11 +727,9 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
   }
 
   /**
-   * Immediately writes one or more display states to their OBS video contexts.
-   * Auto Optimizer uses this after batching per-display output resolution and
-   * frame-rate changes so verification cannot observe a pending debounced write.
-   * Base Canvas changes never use this path; they remain serialized by
-   * queueCanvasSettings().
+   * Write selected display states to their live OBS video contexts immediately,
+   * bypassing the debounced update. Base (Canvas) Resolution changes must
+   * continue through queueCanvasSettings().
    */
   flushObsSettings(displaysToFlush: TDisplayType[], shouldSyncFPS: Boolean = false) {
     Array.from(new Set(displaysToFlush)).forEach(display =>

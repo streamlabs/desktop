@@ -34,8 +34,9 @@ export interface IPreparedAutoConfigProbes {
 }
 
 /**
- * A requested active probe could not be prepared safely. This is retryable:
- * provider credentials, APIs, or an OBS canvas may become available later.
+ * A requested live provider test could not be prepared. The error is retryable
+ * because credentials, provider APIs, or the required OBS canvas may become
+ * available later.
  */
 export class AutoOptimizerProbeSetupError extends Error {
   readonly code = 'active_probe_setup_failed';
@@ -48,9 +49,9 @@ export class AutoOptimizerProbeSetupError extends Error {
 }
 
 /**
- * Owns attempt-scoped provider credentials and temporary YouTube resources.
- * The coordinator must close the native run through cleanupAfterNativeClose()
- * before this object is allowed to delete those provider resources.
+ * Keeps provider credentials and temporary YouTube resources for one optimizer
+ * run. Cleanup must stop and close OSN output before deleting the YouTube
+ * resources.
  */
 export class AutoConfigProbeResources {
   private readonly credentialProbes: IAutoConfigActiveProbe[] = [];
@@ -128,8 +129,8 @@ export class AutoConfigProbeResources {
                 server: lease.server,
                 streamKey: lease.streamKey,
               };
-              // The request owns the only live credential copy. Cleanup and
-              // crash recovery need identifiers only.
+              // After copying credentials into the OSN request object, retain
+              // only identifiers for cleanup and crash recovery.
               lease.server = '';
               lease.streamKey = '';
               this.youtubeLeases.set(lease.probeId, lease);
@@ -233,8 +234,9 @@ export class AutoConfigProbeResources {
   }
 
   /**
-   * Abort provider polling, close native output, and only then delete temporary
-   * provider resources. If native Close fails, all leases remain retryable.
+   * Stop provider polling, wait for OSN output to stop and close, then delete
+   * temporary YouTube resources. If OSN cleanup fails, retain the leases for
+   * retry.
    */
   async cleanupAfterNativeClose(closeNative: () => Promise<void>): Promise<void> {
     if (this.cleanupPromise) return this.cleanupPromise;
@@ -266,8 +268,8 @@ export class AutoConfigProbeResources {
         await this.youtube.releaseAutoOptimizerProbe(lease);
         this.youtubeLeases.delete(probeId);
       } catch (error: unknown) {
-        // Native output is already stopped. Keep the identifier-only lease and
-        // its recovery journal so a later cleanup attempt can retry safely.
+        // OSN output is already stopped, so deletion can be retried later.
+        // Retain the identifier-only lease and crash-recovery journal.
         console.warn('[Auto Optimizer] Deferred YouTube probe cleanup', error);
       }
     }

@@ -49,11 +49,10 @@ function MeasurementProvenance(p: {
   standalone?: boolean;
 }) {
   const measured = p.output.measurementMode === 'active' ? p.output.measuredPlatforms || [] : [];
-  // `platforms` describes every destination that shares this output, but
-  // measurement provenance is intentionally limited to probe-capable
-  // providers. Falling back to the full destination list would incorrectly
-  // imply that unsupported V1 providers such as Kick were bandwidth-tested or
-  // estimated.
+  // `platforms` includes every destination that shares this output. Show
+  // measurement details only for Twitch and YouTube, the providers Auto
+  // Optimizer can test. Using the full destination list would incorrectly claim
+  // that destinations such as Kick were tested or estimated.
   const estimated = p.output.estimatedPlatforms || [];
   if (!measured.length && !estimated.length) return null;
 

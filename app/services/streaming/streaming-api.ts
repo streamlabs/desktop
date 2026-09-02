@@ -93,10 +93,9 @@ export interface IStreamSettings {
 export interface IGoLiveSettings extends IStreamSettings {
   optimizedProfile?: IEncoderProfile;
   /**
-   * A credential-free, per-output recommendation produced immediately
-   * before this Go Live attempt. StreamingService consumes it only while
-   * constructing the matching output; it is not a replacement for persisted
-   * Output/Video settings.
+   * Non-secret recommendations produced for these exact Go Live settings.
+   * StreamingService uses them only while creating the matching outputs; they
+   * do not replace persisted Output or Video settings.
    */
   autoOptimizerProfile?: IAutoOptimizerProfile;
   tweetText?: string;

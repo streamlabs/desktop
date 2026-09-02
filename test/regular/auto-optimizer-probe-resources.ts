@@ -182,7 +182,7 @@ test('YouTube ingest is confirmed once for the exact prepared probe', async t =>
   await resources.cleanupAfterNativeClose(async () => undefined);
 });
 
-test('temporary resources remain retained until native Close succeeds', async t => {
+test('temporary resources remain retained until OSN cleanup succeeds', async t => {
   let releaseCalls = 0;
   const mocks = services({
     release: async () => {

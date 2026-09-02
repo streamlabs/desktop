@@ -117,10 +117,10 @@ function fitTupleToTier(
 }
 
 /**
- * Return the highest canonical V1 output tier that can be tested without
- * changing the authored canvas. OSN owns the disposable benchmark mix, so an
- * active test is deliberately independent of the persistent Base Canvas.
- * Custom-aspect output remains at its current dimensions.
+ * Return the highest supported 16:9 or 9:16 resolution that an active test may
+ * evaluate without changing Base (Canvas) Resolution. OSN uses a temporary
+ * benchmark mix, so the test does not change saved canvas settings. Preserve
+ * the current dimensions for other aspect ratios.
  */
 export function autoOptimizerResolutionCeiling(
   currentWidth: number,
@@ -137,9 +137,9 @@ export function autoOptimizerResolutionCeiling(
 }
 
 /**
- * A promoted output may grow Base Canvas only when both use the same supported
- * V1 aspect/orientation. Otherwise preserving the authored canvas aspect could
- * create a larger render workload than the isolated native test validated.
+ * Allow resolution promotion only when Base (Canvas) Resolution and Output
+ * (Scaled) Resolution are both 16:9 or both 9:16. Otherwise, growing the canvas
+ * while preserving its aspect ratio could exceed the workload tested by OSN.
  */
 export function autoOptimizerCanvasAllowsQualityPromotion(
   baseWidth: number,
@@ -158,7 +158,7 @@ export function autoOptimizerCanvasAllowsQualityPromotion(
   );
 }
 
-/** Whether accepting a recommendation raises the canonical output tier. */
+/** Whether the recommendation increases both output dimensions. */
 export function autoOptimizerPromotesResolution(
   currentWidth: number,
   currentHeight: number,
@@ -168,7 +168,7 @@ export function autoOptimizerPromotesResolution(
   return recommendedWidth > currentWidth && recommendedHeight > currentHeight;
 }
 
-/** Estimate-only routes keep the current output as their promotion ceiling. */
+/** Without active testing, resolution cannot be promoted above the current output. */
 export function autoOptimizerRequestResolutionCeiling(
   allowPromotion: boolean,
   currentWidth: number,
@@ -209,9 +209,9 @@ export function autoOptimizerAcceptedBaseResolution(
 }
 
 /**
- * Active V1 tests may promote only the two supported 30 FPS cadence families.
- * Estimate-only routes, custom-aspect outputs, and every other cadence retain
- * the exact current rational value.
+ * Active tests may promote 30/1 to 60/1 FPS or 30000/1001 to 60000/1001 FPS.
+ * Estimated results, custom aspect ratios, and all other frame rates retain the
+ * exact current numerator and denominator.
  */
 export function autoOptimizerRequestFrameRateCeiling(
   allowPromotion: boolean,
@@ -236,12 +236,12 @@ export function autoOptimizerRequestFrameRateCeiling(
   return { fpsNum: currentFpsNum, fpsDen: currentFpsDen };
 }
 
-/** Round a rational frame rate for the public result without weakening apply precision. */
+/** Round the frame rate for display; retain its numerator and denominator when applying it. */
 export function autoOptimizerDisplayFrameRate(fpsNum: number, fpsDen: number): number {
   return Math.round((fpsNum / fpsDen) * 100) / 100;
 }
 
-/** Construct the complete credential-free limit tuple sent for one output. */
+/** Build the bitrate, resolution, and frame-rate limits for one OSN request output. */
 export function buildAutoOptimizerRequestLimits(
   input: IAutoOptimizerRequestLimitsInput,
 ): IAutoOptimizerRequestLimits {
@@ -267,9 +267,9 @@ export function buildAutoOptimizerRequestLimits(
 }
 
 /**
- * Enumerate the exact quality tuples native may use as a hardware ceiling for
- * this request. Custom-aspect outputs are not converted to a different aspect;
- * their only valid result is the exact current tuple.
+ * Return every resolution and frame-rate combination OSN may benchmark for
+ * this request. Preserve custom aspect ratios; their only valid result is the
+ * exact current settings.
  */
 export function autoOptimizerHardwareCeilings(
   current: IAutoOptimizerVideoTuple,
@@ -353,7 +353,7 @@ function qualityCandidates(ceiling: IAutoOptimizerVideoTuple): IAutoOptimizerVid
   return uniqueTuples(values);
 }
 
-/** Mirror native's deterministic generic or Twitch bandwidth-to-quality selection. */
+/** Apply the same deterministic bandwidth-to-quality policy as OSN. */
 export function selectAutoOptimizerQuality(
   ceiling: IAutoOptimizerVideoTuple,
   safeVideoBitrateKbps: number,
@@ -384,8 +384,8 @@ export function selectAutoOptimizerQuality(
 }
 
 /**
- * Accept only a tuple native can deterministically select from one of the
- * request's possible tested hardware ceilings at the returned safe bitrate.
+ * Accept a recommendation only if OSN could select the same resolution and
+ * frame rate from a tested hardware ceiling at the returned safe bitrate.
  */
 export function matchesAutoOptimizerQualityPolicy(
   recommendation: IAutoOptimizerVideoTuple,

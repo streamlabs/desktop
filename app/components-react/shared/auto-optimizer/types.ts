@@ -28,8 +28,9 @@ export interface IAutoOptimizerPresentationOutput {
   measurementConfidence?: 'high' | 'medium' | 'low';
   estimateReason?: string;
   showMeasurementReason?: boolean;
-  /** Twitch owns bitrate/encoder; this separately controls whether video is also provider-owned. */
+  /** True when Twitch Enhanced Broadcasting selects bitrate and encoder settings. */
   managedByProvider?: boolean;
+  /** True when Desktop must also leave resolution and frame rate unchanged. */
   videoSettingsManagedByProvider?: boolean;
   width: number;
   height: number;

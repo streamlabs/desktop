@@ -311,10 +311,9 @@ export class YoutubeService
   protected init() {
     this.syncSettingsWithLocalStorage();
 
-    // Cleanup is independent of whether the optimizer prompt or rollout flag
-    // is ever used again. A crash-journaled stream is recovered as soon as the
-    // linked YouTube account is ready, and transient/ambiguous cleanup is
-    // retried in the background.
+    // Recover journaled temporary streams as soon as the linked YouTube account
+    // is available, independently of the Auto Optimizer UI. Retry transient or
+    // ambiguous cleanup failures in the background.
     this.userService.userLoginFinished.subscribe(() => this.scheduleAutoOptimizerProbeRecovery());
     this.userService.platformAuthUpdated.subscribe(platform => {
       if (platform === 'youtube') this.scheduleAutoOptimizerProbeRecovery();
@@ -342,11 +341,10 @@ export class YoutubeService
   }
 
   /**
-   * Create a temporary reusable, unbound YouTube liveStream for an isolated
-   * Auto Optimizer bandwidth measurement. Reusability is required only so an
-   * ambiguous insert can be recovered through liveStreams.list; the stream is
-   * never bound to a broadcast and is deleted after the probe. The returned
-   * RTMPS credentials only live in memory and are never copied into state.
+   * Create a temporary, reusable YouTube liveStream for bandwidth testing
+   * without binding it to a broadcast. Reusability allows recovery through
+   * liveStreams.list if the create result is unknown. Delete the stream after
+   * testing; keep its RTMPS credentials only in memory.
    */
   acquireAutoOptimizerProbe(
     options: IYoutubeAutoOptimizerProbeAcquireOptions = {},
@@ -355,9 +353,8 @@ export class YoutubeService
   }
 
   /**
-   * Wait until YouTube confirms that bytes from the native probe reached its
-   * ingest. A bounded timeout returns false; cancellation rejects with an
-   * AbortError.
+   * Wait until YouTube reports receiving data from OSN's temporary test output.
+   * Return false after the timeout; reject with AbortError if cancelled.
    */
   waitForAutoOptimizerProbeActive(
     lease: IYoutubeAutoOptimizerProbeLease,
@@ -367,16 +364,16 @@ export class YoutubeService
   }
 
   /**
-   * Delete the temporary liveStream after native output has stopped. This
-   * waits for YouTube to report a non-active state and verifies deletion.
+   * After OSN's test output stops, wait for YouTube to report the temporary
+   * stream inactive, delete it, and verify that it is gone.
    */
   async releaseAutoOptimizerProbe(lease: IYoutubeAutoOptimizerProbeLease): Promise<void> {
     try {
       await this.getAutoOptimizerProbeManager().release(lease);
       this.pendingAutoOptimizerProbeReleases.delete(lease.probeId);
     } catch (error: unknown) {
-      // Retain identifiers only and retry independently of the optimizer UI.
-      // This matters when the prompt is completed and will never open again.
+      // Keep only identifiers and retry cleanup in the background after the
+      // Auto Optimizer UI closes.
       lease.server = '';
       lease.streamKey = '';
       this.pendingAutoOptimizerProbeReleases.set(lease.probeId, lease);

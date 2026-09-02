@@ -21,11 +21,10 @@ const AUTO_OPTIMIZER_ENCODER_FAMILIES = new Set([
 ]);
 
 /**
- * Validate active native evidence against the exact attempt Desktop prepared.
- * At least one attempted provider must succeed. By default, any selected or
- * attempted provider without successful evidence makes the result partial and
- * is accepted only when native lowers confidence to low. A joint Dual Output
- * attempt may explicitly use one supported provider to represent each canvas.
+ * Validate OSN's bandwidth-test evidence against the providers selected for
+ * this run. At least one selected provider must succeed. Missing evidence makes
+ * the result partial and requires low confidence, except Dual Output may
+ * deliberately select one Twitch or YouTube representative per canvas.
  */
 export function isValidAutoConfigActiveProbeCoverage(p: {
   destinations: Array<{ platform: string }>;
@@ -36,10 +35,9 @@ export function isValidAutoConfigActiveProbeCoverage(p: {
   evidence: IAutoOptimizerProbeEvidence[];
   confidence: string | undefined;
   /**
-   * A jointly validated Dual Output output deliberately selects one safe probe
-   * provider to represent the canvas upload. Other probe-capable destinations
-   * on that same canvas are not additional outputs and do not make the
-   * evidence partial.
+   * For jointly tested Dual Output, one selected Twitch or YouTube test
+   * represents each canvas. Other testable destinations sharing that canvas do
+   * not require separate evidence.
    */
   requireAllProbeCapableDestinations?: boolean;
 }): boolean {
@@ -85,10 +83,10 @@ export function autoConfigProviderForProbeKind(kind: unknown): TAutoOptimizerPro
 }
 
 /**
- * Identify the two-canvas shape whose aggregate upload and concurrent encoder
- * workload the native optimizer can validate as a single attempt. Each canvas
- * is represented by exactly one supported provider probe. Additional
- * destinations sharing that canvas are allowed but are not themselves probed.
+ * Recognize the supported two-canvas Dual Output setup: one Twitch test on one
+ * canvas and one YouTube test on the other. OSN validates their combined upload
+ * budget and concurrent encoder workload; other destinations may share either
+ * canvas without being tested.
  */
 export function isEligibleAutoConfigDualOutputActiveStreamSetup(
   streamSetup: IAutoOptimizerStreamSetup,
@@ -142,10 +140,10 @@ export function isEligibleAutoConfigDualOutputActiveStreamSetup(
 }
 
 /**
- * Validate the exact V1 physical-output shape for Twitch Dual Stream Enhanced
- * Broadcasting plus one standard output for each canvas carrying non-Twitch
- * destinations. The standard outputs may be workload-tested without an active
- * provider bandwidth probe.
+ * Accept the supported Twitch Dual Stream Enhanced Broadcasting setup: one
+ * paired Twitch output plus at most one standard output for each canvas used by
+ * non-Twitch destinations. A standard companion may be workload-tested even
+ * when it has no live bandwidth test.
  */
 export function isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(
   streamSetup: IAutoOptimizerStreamSetup,
@@ -211,10 +209,9 @@ export function isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(
 }
 
 /**
- * Select one supported provider per canvas for the joint two-output experiment.
- * Prefer the classifier's deterministic provider order, while requiring the
- * pair to cover both Twitch and YouTube so native can establish two independent
- * lower bounds for the shared aggregate allocator.
+ * Select one testable provider per canvas for Dual Output. Preserve the
+ * deterministic candidate order, require one Twitch and one YouTube selection,
+ * and let OSN derive the shared upload budget from both measurements.
  */
 function selectAutoConfigDualOutputProbePair(
   streamSetup: IAutoOptimizerStreamSetup,
@@ -248,9 +245,9 @@ function selectAutoConfigDualOutputProbePair(
 }
 
 /**
- * Select the fixed V1 probe plan represented by the paired OSN contract.
- * Provider credentials may still fail at runtime; that resource-stage coverage
- * is handled separately and cannot promote video quality when it is partial.
+ * Select only test combinations supported by the OSN request contract.
+ * Provider credentials can still fail during preparation; partial provider
+ * coverage must not promote video quality.
  */
 export function prepareAutoConfigStreamSetup(
   streamSetup: IAutoOptimizerStreamSetup,
@@ -263,10 +260,10 @@ export function prepareAutoConfigStreamSetup(
       probeCandidates: output.probeCandidates.map(candidate => ({ ...candidate })),
     })),
   };
-  // Native owns the allocator and simultaneous hardware proof for the two-output
-  // Twitch/YouTube experiment. When a canvas also targets an unsupported V1
-  // provider, select one supported representative for that canvas instead of
-  // disabling both active measurements.
+  // OSN allocates bandwidth and validates both encoder workloads together for
+  // Twitch and YouTube Dual Output. If a canvas also targets a destination
+  // without a supported bandwidth test, use one supported provider on that
+  // canvas as its representative instead of disabling both tests.
   const selectedDualOutput = selectAutoConfigDualOutputProbePair(streamSetup);
   const unsafeDualOutput = filtered.type === 'dual-output' && !selectedDualOutput;
   const eligibleEnhancedBroadcastingDualOutput = isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(
@@ -321,7 +318,7 @@ const BITRATE_BANDWIDTH_PROGRESS_CODES = new Set([
   'youtube_probe_confirming_stability',
   'youtube_probe_retrying',
 ]);
-/** Give real sequential work and terminal decisions distinct readable milestones. */
+/** Build stable keys for sequential work and terminal progress states. */
 export function autoConfigPhaseStepKey(
   phase: TAutoOptimizerPhase,
   provider?: TAutoOptimizerProbeProvider | null,
@@ -451,9 +448,8 @@ export type TAutoConfigPhaseStepDisposition =
   | 'enqueue';
 
 /**
- * Coalesce only uninterrupted repeats of the same visible status. If another
- * status is already queued, a return to the currently displayed status is a
- * real A -> B -> A transition and must be queued again.
+ * Merge only consecutive repeats of the same visible status. If another status
+ * is queued, preserve A -> B -> A as three separate transitions.
  */
 export function autoConfigPhaseStepDisposition(
   displayedKey: string | null,
@@ -465,7 +461,7 @@ export function autoConfigPhaseStepDisposition(
   return 'enqueue';
 }
 
-/** Validate optional applied video-bitrate feedback from the native probe. */
+/** Validate the optional video bitrate reported for the current bandwidth test. */
 export function sanitizeAutoConfigProbeTargetBitrateKbps(value: unknown): number | null {
   return typeof value === 'number' && Number.isInteger(value) && value > 0 && value <= 100000
     ? value
@@ -505,9 +501,9 @@ function sanitizeAdditionalVideoTuple(value: unknown): IAutoConfigAdditionalVide
 }
 
 /**
- * Keep native attempt detail serializable and bounded before mirroring it to
- * visible renderers. Unknown codes remain available for diagnostics but never
- * become untranslated UI text.
+ * Before sending OSN progress details to visible renderers, keep only bounded,
+ * serializable fields. Preserve unknown status codes for diagnostics, but never
+ * display them as untranslated UI text.
  */
 export function sanitizeAutoConfigProgressDetail(
   event: IAutoConfigEvent,
@@ -551,10 +547,7 @@ function isAutoOptimizerProbeMethod(
   );
 }
 
-/**
- * Keep only the public provider provenance needed by Desktop presentation and
- * attempt-relative validation.
- */
+/** Keep only the provider evidence needed to display and validate this run's result. */
 export function sanitizeAutoConfigProbeEvidence(value: unknown): IAutoOptimizerProbeEvidence[] {
   if (!Array.isArray(value)) return [];
 

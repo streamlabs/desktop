@@ -29,9 +29,8 @@ export interface IAutoConfigOutputSettingsSnapshot {
 }
 
 /**
- * Exact video settings and registered canvas identity captured together. This
- * prevents a request from combining dimensions from one context generation
- * with a canvas identity from another.
+ * Capture video settings and the registered canvas ID together so a request
+ * cannot combine values from different video-context generations.
  */
 export interface IAutoConfigVideoSnapshot {
   canvasId: number | undefined;
@@ -43,21 +42,21 @@ export interface IAutoConfigVideoSnapshot {
   fpsDen: number;
 }
 
-/** Attempt-scoped provider credentials already acquired for one output. */
+/** Provider credentials acquired for one optimizer run and one output. */
 export interface IAutoConfigPreparedOutputProbes {
   outputId: string;
   probes: IAutoConfigActiveProbe[];
 }
 
 export interface IBuildAutoConfigRequestInput {
-  /** Prepared, credential-free description after runtime probe acquisition. */
+  /** Non-secret output description after provider resources have been prepared. */
   streamSetup: IAutoOptimizerStreamSetup;
   outputProbes: readonly IAutoConfigPreparedOutputProbes[];
   outputSettings: IAutoConfigOutputSettingsSnapshot;
   videos: Record<TDisplayType, IAutoConfigVideoSnapshot>;
 }
 
-/** Exact acceptance inputs retained after OSN has copied the native request. */
+/** Non-secret values retained to validate the result after credentials are discarded. */
 export interface IAutoConfigAttemptContext {
   streamSetup: IAutoOptimizerStreamSetup;
   outputs: IAutoConfigAttemptRequestOutput[];
@@ -141,11 +140,11 @@ export function validateAutoConfigCanvasIdentities(
 }
 
 /**
- * Build the public OSN request after provider credential acquisition. Provider
- * API calls and probe-lease ownership deliberately remain outside this pure
- * function. Probe objects are not cloned: the request owns their attempt-local
- * references so clearing the request after OSN copies it also clears the
- * acquisition-side objects. The returned attempt context never retains them.
+ * Build the OSN request after provider resources and credentials are ready.
+ * This function makes no provider API calls and does not manage resource
+ * lifetime. It passes credential objects directly into the request; after OSN
+ * copies it, the caller must redact those shared objects. The returned
+ * validation context contains no credentials.
  */
 export function buildAutoConfigRequest(
   input: IBuildAutoConfigRequestInput,

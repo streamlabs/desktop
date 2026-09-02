@@ -971,10 +971,10 @@ export class OutputSettingsService extends Service {
     const useAdvanced =
       mode === 'Advanced' ||
       this.settingsService.findSettingValue(output, 'Streaming', 'UseAdvanced') === true;
-    // Simple output normally ignores its advanced encoder controls. Apple is
-    // the exception: its Profile setting is applied even when UseAdvanced is
-    // disabled by the legacy output path. Auto Optimizer enables UseAdvanced
-    // for every tested encoder so the exact benchmark preset reaches Factory.
+    // Simple mode normally ignores advanced encoder controls unless UseAdvanced
+    // is enabled; Apple Profile is the exception and is always applied. Auto
+    // Optimizer enables UseAdvanced for every tested encoder so the selected
+    // preset reaches the encoder factory.
     const presetSettings = encoderRuntimePresetSettings(
       encoderId,
       mode,
@@ -1097,8 +1097,8 @@ export class OutputSettingsService extends Service {
         throw new Error(`Missing streaming encoder preset metadata for ${exactEncoderId}`);
       }
 
-      // Auto Optimizer supplies the exact native encoder id and native preset
-      // value. Ordinary settings callers supply the mode-specific config value.
+      // Auto Optimizer supplies the exact OSN encoder ID and preset. Other
+      // settings callers supply the mode-specific configuration value.
       const presetValue = settingsPatch.encoderId
         ? encoderPresetToSettingsValue(exactEncoderId, currentSettings.mode, settingsPatch.preset)
         : settingsPatch.preset;

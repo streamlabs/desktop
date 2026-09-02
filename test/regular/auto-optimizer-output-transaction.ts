@@ -56,7 +56,7 @@ test('Advanced rollback only claims the restorable active Output state', t => {
   t.true(outputTransactionValuesMatch(expected, active, null, null));
 });
 
-test('only an active Enhanced Broadcasting workload may apply provider-owned video settings', t => {
+test('only actively tested Enhanced Broadcasting results may change Desktop video settings', t => {
   t.true(shouldApplyAutoOptimizerVideoSettings('direct-single', false, ['estimated']));
   t.true(shouldApplyAutoOptimizerVideoSettings('enhanced-broadcasting', true, ['active']));
   t.false(shouldApplyAutoOptimizerVideoSettings('enhanced-broadcasting', true, ['estimated']));

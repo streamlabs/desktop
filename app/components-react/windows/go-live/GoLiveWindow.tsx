@@ -296,8 +296,8 @@ function ModalFooter() {
       return;
     }
 
-    // The streaming service handles the stream shift check internally. This
-    // confirmation path may first open Auto Optimizer when the attempt is eligible.
+    // StreamingService performs the Stream Shift check. This confirmation may
+    // open Auto Optimizer first when the Go Live settings are eligible.
     await confirmGoLive();
   }, [
     isPrime,

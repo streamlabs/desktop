@@ -80,9 +80,9 @@ function isSupportedEncoderFamily(value: unknown): value is TAutoOptimizerEncode
 }
 
 /**
- * Validate the complete native quality tuple at the worker boundary. No field
- * is repaired independently: a malformed or internally inconsistent tuple is
- * rejected as a whole.
+ * Validate resolution, frame rate, bitrate, and encoder as one recommendation.
+ * Reject the whole recommendation if any field is malformed or inconsistent;
+ * do not repair fields independently.
  */
 export function validateAutoConfigRecommendation(
   recommendation: TNativeRecommendation | null | undefined,
@@ -92,9 +92,9 @@ export function validateAutoConfigRecommendation(
     probeEvidence: IAutoOptimizerProbeEvidence[];
     providerOwnsEncoding?: boolean;
     enhancedBroadcasting?: boolean;
-    /** Native quality ladder selected for the destination or joint allocation. */
+    /** Bandwidth-to-quality policy OSN used for this destination or shared allocation. */
     qualityProfile?: TAutoOptimizerQualityProfile;
-    /** Maximum bitrate native was authorized to return for this standard output. */
+    /** Maximum bitrate OSN may return for this standard output. */
     maxBitrateKbps?: number;
     maxWidth?: number;
     maxHeight?: number;
@@ -104,7 +104,7 @@ export function validateAutoConfigRecommendation(
     currentHeight?: number;
     currentFpsNum?: number;
     currentFpsDen?: number;
-    /** Paired vertical request which must be proven by the same workload probe. */
+    /** Vertical settings paired with the horizontal request in the same workload test. */
     additionalVideo?: IAutoConfigRequestAdditionalVideo;
   },
 ): IValidatedAutoConfigRecommendation | null {
@@ -298,8 +298,8 @@ export function validateAutoConfigRecommendation(
         );
         if (!canonicalAdditionalTuple) return null;
       }
-      // The provider-owned ladder test proves the exact video workload. It is
-      // not an upload-capacity probe.
+      // A successful Twitch Enhanced Broadcasting ladder test validates the
+      // exact video workload; it does not measure upload capacity.
     } else {
       if (!context.probeEvidence.some(item => item.success)) return null;
     }

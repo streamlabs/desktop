@@ -44,7 +44,7 @@ test('successful measured providers are stable, deduplicated, and omit failures'
   );
 });
 
-test('partial provider provenance separates measured and estimated destinations', t => {
+test('partial provider evidence separates measured and estimated destinations', t => {
   const platforms = [{ id: 'twitch' }, { id: 'youtube' }, { id: 'kick' }, { id: 'facebook' }];
   const evidence = [
     { platform: 'twitch' as const, success: true },
@@ -55,7 +55,7 @@ test('partial provider provenance separates measured and estimated destinations'
   t.deepEqual(estimatedProbeProviders(platforms, evidence), ['youtube']);
 });
 
-test('estimate-only provenance omits destinations without a V1 bandwidth probe', t => {
+test('estimate-only evidence includes only providers with supported bandwidth tests', t => {
   const platforms = [{ id: 'twitch' }, { id: 'youtube' }, { id: 'kick' }];
 
   t.deepEqual(estimatedProbeProviders(platforms), ['twitch', 'youtube']);
@@ -92,7 +92,7 @@ test('bandwidth phase remains estimate-only when there are no candidates', t => 
   t.is(bandwidthPhaseLabelKey(null, []), 'Estimating safe upload settings...');
 });
 
-test('hardware progress describes the encoder and exact tuple being tested', t => {
+test('hardware progress describes the encoder, resolution, and frame rate being tested', t => {
   t.deepEqual(
     autoOptimizerProgressLabel(
       'hardware',
@@ -120,7 +120,7 @@ test('hardware progress describes the encoder and exact tuple being tested', t =
   );
 });
 
-test('paired hardware progress distinguishes resolution surfaces from exact cadence', t => {
+test('paired hardware progress distinguishes resolution testing from frame-rate validation', t => {
   const surface = progressDetail({
     code: 'hardware_testing_encoder_surfaces',
     encoderId: 'obs_nvenc_h264_tex',
@@ -202,7 +202,7 @@ test('hardware completion reports capability without claiming the final quality 
   );
 });
 
-test('hardware control progress explains the known-main-mix validation', t => {
+test('hardware progress explains validation with the current scene', t => {
   t.deepEqual(
     autoOptimizerProgressLabel(
       'hardware',
@@ -282,7 +282,7 @@ test('Twitch progress identifies the extended same-target confirmation', t => {
   );
 });
 
-test('joint Dual Output progress explains allocation and simultaneous workload testing', t => {
+test('Dual Output progress explains bandwidth allocation and concurrent workload testing', t => {
   t.deepEqual(
     autoOptimizerProgressLabel(
       'recommendation',

@@ -114,9 +114,9 @@ class AutoConfigViews extends ViewHandler<IAutoOptimizerState> {
 }
 
 /**
- * Worker-owned Auto Optimizer coordinator. Only serializable, credential-free
- * progress and results are mirrored to visible renderer processes. The Go Live
- * draft, stream key, native session and rollback snapshot remain in the worker.
+ * Runs Auto Optimizer in the hidden worker. Visible renderers receive only
+ * serializable data with credentials removed; the Go Live draft, credentials,
+ * OSN run handle, and rollback snapshot never leave the worker.
  */
 export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerState> {
   @Inject() private outputSettingsService: OutputSettingsService;
@@ -156,7 +156,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private pendingPhaseSteps: IPhaseStep[] = [];
   private phaseDrainPromise: Promise<void> | null = null;
   private probeResources: AutoConfigProbeResources | null = null;
-  /** Exact credential-free inputs retained only for native-result acceptance. */
+  /** Non-secret request context retained only to validate the OSN result. */
   private attemptContext: IAutoConfigAttemptContext | null = null;
 
   get views() {
@@ -164,8 +164,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   /**
-   * Called after the final Go Live settings have been validated. Returns true
-   * only when the confirmed attempt should pause for Auto Optimizer.
+   * Called after Go Live settings pass final validation. Returns true when Auto
+   * Optimizer opens and streaming must pause.
    */
   async interceptGoLive(settings: IGoLiveSettings): Promise<boolean> {
     const frozen = this.cloneGoLiveSettings(settings);
@@ -177,8 +177,9 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       try {
         await this.cleanupOptimizerRun();
       } catch (e: unknown) {
-        // Keep the newly validated draft even when the old probe could not be
-        // cleaned up. Continuing later must never stream stale selections.
+        // Keep the newly validated draft even when the previous optimizer run
+        // cannot be cleaned up. A later continuation must never stream stale
+        // selections.
         this.frozenGoLiveSettings = this.deepFreeze(frozen);
         this.SET_ERROR(this.toError(e, 'cleanup_failed', false));
         return true;
@@ -221,7 +222,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
     // Move away from the clickable intro before the first await. Besides
     // giving the UI immediate feedback, this makes duplicate clicks idempotent
-    // while the worker starts or cleans up a native session.
+    // while the worker starts or cleans up an OSN run.
     const token = ++this.runToken;
     let streamSetup = cloneDeep(this.state.streamSetup);
     this.SET_RUNNING(streamSetup);
@@ -398,8 +399,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   /**
-   * Consume the profile saved for this confirmed attempt. The compatibility
-   * check prevents a stale profile from crossing an unexpected stream-setup change.
+   * Return and clear the profile saved for this Go Live confirmation. Discard
+   * it if the destinations or output configuration changed after optimization.
    */
   consumePendingGoLiveProfile(settings: IGoLiveSettings): IAutoOptimizerProfile | null {
     const profile = this.pendingGoLiveProfile;
@@ -430,7 +431,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     await this.windowsService.closeChildWindow();
   }
 
-  /** Called when Electron closes the Go Live host without using the in-flow X. */
+  /** Called when Electron closes the Go Live window. */
   async closeFromHost(): Promise<void> {
     this.pendingGoLiveProfile = null;
     if (this.state.stage === 'idle') return;
@@ -464,7 +465,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         preservePrevWindow: true,
       });
     } else {
-      // Browsing overlays leaves the confirmed Go Live attempt. Clear the
+      // Browsing overlays abandons the confirmed Go Live setup. Clear the
       // review synchronously so the next Go Live entry starts with settings.
       // Keep the prompt unseen because no recommendation was applied or skipped.
       ++this.runToken;
@@ -596,9 +597,9 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       progress,
     };
 
-    // Exact repeats may update the progress bar while preserving the original
-    // one-second copy window. Once another status is queued, A -> B -> A is
-    // three real transitions and must remain three queue entries.
+    // Repeated events may update progress without restarting the one-second
+    // minimum display time. If another status is waiting, preserve A -> B -> A
+    // as three separate steps.
     const disposition = autoConfigPhaseStepDisposition(
       this.displayedPhaseStep?.key || null,
       this.pendingPhaseSteps.map(pending => pending.key),
@@ -665,9 +666,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   /**
-   * Keep the blocking provider cleanup legible without implying completion.
-   * Native progress deliberately stops at 95%; Desktop owns the remaining
-   * cleanup band and leaves 100% for the transition to the result screen.
+   * Show provider-resource cleanup in the remaining 95-99% of the progress bar.
+   * Reserve 100% for the transition to the result screen.
    */
   private startCleanupProgress(token: number): () => void {
     const detail: IAutoOptimizerProgressDetail = {
@@ -817,8 +817,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     detail: IAutoOptimizerProgressDetail,
   ) {
     this.state.phase = phase;
-    // Native progress is global to one session. Keep the mirrored bar
-    // monotonic even if a delayed event reports an older percentage.
+    // OSN reports progress for the entire run. Ignore older percentages from
+    // delayed events so the UI never moves backward.
     this.state.progress = Math.max(this.state.progress, progress);
     this.state.progressDetail = detail;
   }

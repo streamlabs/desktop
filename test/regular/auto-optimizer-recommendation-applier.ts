@@ -302,7 +302,7 @@ test('applies one standard recommendation atomically to both Dual Output canvase
   t.deepEqual(profile.outputs, recommendation.outputs);
 });
 
-test('an active provider-owned result applies video only', async t => {
+test('an active Twitch Enhanced Broadcasting result changes resolution and frame rate only', async t => {
   const harness = createDependencies();
   const recommendation = result([
     standardOutput({
@@ -326,7 +326,7 @@ test('an active provider-owned result applies video only', async t => {
   t.is(harness.videoState.vertical.fpsNum, 60);
 });
 
-test('rejects mismatched output cadence before mutating settings', async t => {
+test('rejects mismatched output frame rates before mutating settings', async t => {
   const harness = createDependencies();
   const recommendation = result([
     standardOutput({ outputId: 'horizontal' }),

@@ -35,9 +35,9 @@ function sameDestinations(
 }
 
 /**
- * Accept and project one native result against the exact credential-free
- * attempt Desktop prepared. Any missing, extra, duplicated, or incompatible
- * output rejects the complete result rather than exposing a partial profile.
+ * Validate one OSN result against the exact non-secret request context saved by
+ * Desktop. Reject the result unless every output is present exactly once and
+ * matches the request; never expose a partial profile.
  */
 export function acceptAutoOptimizerResult(
   nativeResult: IAutoConfigNativeResult,

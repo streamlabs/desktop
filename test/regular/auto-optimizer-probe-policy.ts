@@ -140,7 +140,7 @@ test('mixed Enhanced Broadcasting keeps only its Twitch and YouTube representati
   );
 });
 
-test('the exact Twitch and YouTube two-output topology keeps both active probes', t => {
+test('a two-canvas Twitch and YouTube setup keeps one active probe per output', t => {
   const streamSetup = twitchYoutubeDualOutputStreamSetup();
   t.true(isEligibleAutoConfigDualOutputActiveStreamSetup(streamSetup));
 
@@ -219,7 +219,7 @@ test('Dual Output remains estimate-only when a canvas has no supported represent
   t.deepEqual(allProbeCandidates(filtered), []);
 });
 
-test('the active Dual Output topology requires unique per-output probe IDs', t => {
+test('active Dual Output requires a unique probe ID for each output', t => {
   const reusedProbeId = twitchYoutubeDualOutputStreamSetup();
   reusedProbeId.outputs[1].probeCandidates[0].probeId =
     reusedProbeId.outputs[0].probeCandidates[0].probeId;
@@ -264,7 +264,7 @@ test('YouTube display both cannot create two active probe leases', t => {
   t.deepEqual(allProbeCandidates(filtered), []);
 });
 
-test('active evidence stays attempt-bound and partial coverage remains low-confidence', t => {
+test('active evidence matches selected providers and partial coverage requires low confidence', t => {
   const partial = {
     destinations: [{ platform: 'twitch' as const }, { platform: 'youtube' as const }],
     attemptedCandidates: [{ provider: 'twitch' as const, kind: 'twitch-standard' as const }],
@@ -501,7 +501,7 @@ test('sequential provider bandwidth events receive distinct pacing keys', t => {
   );
 });
 
-test('joint Dual Output progress follows native hardware and recommendation phases', t => {
+test('Dual Output progress follows OSN hardware and recommendation phases', t => {
   t.is(
     autoConfigPhaseStepKey('hardware', null, 'dual_output_testing_workload', {
       encoderTitle: 'NVIDIA NVENC H.264',
@@ -560,7 +560,7 @@ test('progress pacing coalesces repeats but preserves A to B to A transitions', 
   t.is(autoConfigPhaseStepDisposition('A', ['B', 'A'], 'B'), 'enqueue');
 });
 
-test('attempt progress detail preserves only bounded native status metadata', t => {
+test('progress sanitization preserves only bounded OSN status fields', t => {
   const event: IAutoConfigEvent = {
     type: 'progress',
     phase: 'hardware',

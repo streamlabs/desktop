@@ -69,7 +69,7 @@ function streamSetup(
   return { type, outputs };
 }
 
-test('builds an active public request while retaining only credential-free attempt inputs', t => {
+test('builds an active OSN request and retains only non-secret validation inputs', t => {
   const preparedStreamSetup = streamSetup([optimizerOutput()]);
   const probe: IAutoConfigActiveProbe = {
     id: 'horizontal-twitch',
@@ -155,7 +155,7 @@ test('applies provider bitrate limits and prevents estimate or partial promotion
   });
 });
 
-test('builds the paired Enhanced Broadcasting video tuple without a Desktop bitrate cap', t => {
+test('builds paired Enhanced Broadcasting video settings without a Desktop bitrate cap', t => {
   const enhanced = optimizerOutput({
     outputId: 'twitch-enhanced-broadcasting',
     display: 'both',

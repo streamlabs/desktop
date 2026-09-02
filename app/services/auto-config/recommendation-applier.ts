@@ -123,11 +123,10 @@ class RecommendationApplyTransaction {
       }
 
       if (!providerOwnsEncoding) {
-        // Simple mode can hide the preset whenever UseAdvanced is disabled,
-        // even when the recommended encoder is already selected. Always
-        // preserve that target value before enabling/mutating its context.
-        // Advanced mode has one shared encoder-settings document, so its
-        // active raw form is the complete rollback source.
+        // In Simple mode, a preset can be hidden while UseAdvanced is off, even
+        // for the selected encoder. Save that preset before enabling or changing
+        // its encoder settings. Advanced mode exposes one shared encoder form,
+        // which is already captured by the rollback snapshot.
         if (shouldCaptureTargetPresetForRollback(snapshot.output.mode)) {
           snapshot.targetPreset = this.captureTargetEncoderPresetSnapshot(
             snapshot.output.mode,
@@ -152,9 +151,10 @@ class RecommendationApplyTransaction {
       }
 
       if (applyVideoSettings) {
-        // Testing used disposable native mixes and did not mutate these values.
-        // Only this user-approved path may grow Base Canvas. Output resolution
-        // may differ per display, while OBS cadence is a shared video setting.
+        // OSN tests temporary mixes and does not change saved video settings.
+        // Only this user-approved step may grow Base (Canvas) Resolution. Each
+        // display may use a different output resolution, but both share one
+        // frame rate.
         const patches = buildAutoOptimizerVideoSettingsPatches(
           result.outputs,
           {

@@ -18,7 +18,7 @@ const visibleActiveMeasurementReasons = new Set([
   'quality_promotion_tested',
 ]);
 
-/** Active medium-confidence reasons that should be explained on the result card. */
+/** Measurement reasons shown for active results with medium confidence. */
 export function shouldShowAutoOptimizerMeasurementReason(reason?: string): boolean {
   return visibleActiveMeasurementReasons.has(reason || '');
 }
@@ -33,7 +33,7 @@ const hardwareFailureMessages: Record<string, string> = {
     'Your encoder could not keep up during the test. Close other apps and try again.',
 };
 
-/** Localize known native failures without hiding useful unknown diagnostics. */
+/** Translate known OSN failures; use the diagnostic message for unknown codes. */
 export function autoOptimizerErrorMessage(
   error: Pick<IAutoOptimizerError, 'code' | 'message'> | null | undefined,
 ): string {
@@ -44,7 +44,7 @@ export function autoOptimizerErrorMessage(
   return error?.message || 'Optimization failed. Please try again.';
 }
 
-/** Providers with successful active evidence, in stable product display order. */
+/** Providers whose live bandwidth tests succeeded, returned in stable UI order. */
 export function successfulProbeProviders(
   evidence: IAutoOptimizerPresentationProbeEvidence[] = [],
 ): TAutoOptimizerPresentationProbeProvider[] {
@@ -52,7 +52,7 @@ export function successfulProbeProviders(
   return providerOrder.filter(provider => successful.has(provider));
 }
 
-/** Selected probe-capable providers without successful active evidence. */
+/** Selected Twitch or YouTube providers without a successful bandwidth test. */
 export function estimatedProbeProviders(
   platforms: Array<{ id: string }> = [],
   evidence: IAutoOptimizerPresentationProbeEvidence[] = [],
@@ -62,7 +62,7 @@ export function estimatedProbeProviders(
   return providerOrder.filter(provider => selected.has(provider) && !measured.has(provider));
 }
 
-/** Translation key for the bandwidth phase when native reports the active provider. */
+/** Choose the bandwidth label from the provider OSN is currently testing. */
 export function bandwidthPhaseLabelKey(
   activeProvider: TAutoOptimizerPresentationProbeProvider | null | undefined,
   candidates: Array<{ provider: TAutoOptimizerPresentationProbeProvider }> = [],
@@ -109,7 +109,7 @@ function tupleValues(detail: IAutoOptimizerProgressDetail): Record<string, strin
   };
 }
 
-/** Map native status codes to localized, user-facing progress copy. */
+/** Convert OSN status codes into localized progress text. */
 export function autoOptimizerProgressLabel(
   phase: TAutoOptimizerPhase,
   detail: IAutoOptimizerProgressDetail | null | undefined,

@@ -1,19 +1,20 @@
 import { TAutoOptimizerOutputKind, TAutoOptimizerPlatform } from './types';
 
-/** Highest bitrate Auto Optimizer may recommend or apply to a Desktop-owned output. */
+/** Highest bitrate Auto Optimizer may recommend or apply to a standard output. */
 export const AUTO_OPTIMIZER_MAX_RECOMMENDED_BITRATE_KBPS = 8000;
 
-// OBS service metadata supplies stricter caps for Twitch, YouTube and Facebook
-// in native. These custom-RTMP integrations do not have rtmp_common metadata,
-// so Desktop supplies their published ceilings here.
+// OSN uses OBS service metadata to enforce lower caps for Twitch, YouTube, and
+// Facebook. Kick and TikTok use custom RTMP and have no rtmp_common metadata,
+// so their published limits are defined here.
 const PLATFORM_MAX_BITRATE_KBPS: Partial<Record<TAutoOptimizerPlatform, number>> = {
   kick: 8000,
   tiktok: 6000,
 };
 
 /**
- * Resolve the recommendation/application ceiling for a Desktop-owned output.
- * Provider-owned Enhanced Broadcasting ladders are intentionally not rewritten.
+ * Return the bitrate limit for standard outputs configured by Desktop. Twitch
+ * Enhanced Broadcasting selects its own bitrate ladder, which Auto Optimizer
+ * does not change.
  */
 export function autoOptimizerRecommendationBitrateCap(
   outputKind: TAutoOptimizerOutputKind,
