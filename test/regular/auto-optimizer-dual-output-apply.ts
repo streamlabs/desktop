@@ -4,12 +4,11 @@ import {
   shouldApplyAutoOptimizerVideoSettings,
 } from '../../app/services/auto-config/output-transaction-policy';
 import {
-  isValidAutoConfigDualOutputResultEnvelope,
+  IAutoConfigRecommendationCandidate,
   validateAutoConfigRecommendation,
 } from '../../app/services/auto-config/result-policy';
-import { IAutoConfigNativeResult } from '../../app/services/auto-config/types';
 
-type TRecommendation = IAutoConfigNativeResult['legs'][number]['recommendation'];
+type TRecommendation = IAutoConfigRecommendationCandidate;
 
 const encoder = {
   encoderId: 'obs_nvenc_h264_tex',
@@ -35,60 +34,17 @@ function recommendation(
   };
 }
 
-function activeDualOutputResult(): IAutoConfigNativeResult {
+function activeDualOutputResult() {
   return {
-    schemaVersion: 1,
-    sessionId: 'active-dual-output',
-    status: 'complete',
-    aggregateUpload: {
-      method: 'dual-output-isolated-lower-bound',
-      safeVideoKbps: 10000,
-      allocatedVideoKbps: 10000,
-      concurrentHardwareValidated: true,
-    },
     legs: [
       {
-        legId: 'horizontal',
-        display: 'horizontal',
-        outputKind: 'standard',
-        destinations: [{ platform: 'twitch' }],
-        measurement: {
-          mode: 'active',
-          confidence: 'high',
-          probes: [
-            {
-              provider: 'twitch',
-              method: 'twitch-bandwidth-test',
-              measuredKbps: 6013,
-              safeKbps: 6000,
-              headroomPercent: 0,
-              success: true,
-              ceilingReached: false,
-            },
-          ],
-        },
+        display: 'horizontal' as const,
+        measurement: 'active' as 'active' | 'estimated',
         recommendation: recommendation(1920, 1080, { bitrateKbps: 5000 }),
       },
       {
-        legId: 'vertical',
-        display: 'vertical',
-        outputKind: 'standard',
-        destinations: [{ platform: 'youtube' }],
-        measurement: {
-          mode: 'active',
-          confidence: 'high',
-          probes: [
-            {
-              provider: 'youtube',
-              method: 'youtube-unbound-ramp',
-              measuredKbps: 10020,
-              safeKbps: 10000,
-              headroomPercent: 0,
-              success: true,
-              ceilingReached: false,
-            },
-          ],
-        },
+        display: 'vertical' as const,
+        measurement: 'active' as 'active' | 'estimated',
         recommendation: recommendation(1080, 1920, { bitrateKbps: 5000 }),
       },
     ],
@@ -116,12 +72,11 @@ const currentVideo = {
 
 test('a proven Twitch and YouTube pair produces one atomic two-canvas video transaction', t => {
   const result = activeDualOutputResult();
-  t.true(isValidAutoConfigDualOutputResultEnvelope(result, ['horizontal', 'vertical']));
   t.true(
     shouldApplyAutoOptimizerVideoSettings(
       'dual-output',
       false,
-      result.legs.map(leg => leg.measurement.mode),
+      result.legs.map(leg => leg.measurement),
     ),
   );
 
@@ -171,12 +126,9 @@ test('a proven Twitch and YouTube pair produces one atomic two-canvas video tran
 
 test('a fully estimated two-leg fallback cannot promote either canvas or shared FPS', t => {
   const result = activeDualOutputResult();
-  delete result.aggregateUpload;
   result.legs.forEach(leg => {
-    leg.measurement.mode = 'estimated';
-    leg.measurement.confidence = 'low';
+    leg.measurement = 'estimated';
   });
-  t.true(isValidAutoConfigDualOutputResultEnvelope(result, ['horizontal', 'vertical']));
 
   const horizontal = validateAutoConfigRecommendation(result.legs[0].recommendation, {
     measurementMode: 'estimated',

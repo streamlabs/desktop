@@ -27,7 +27,9 @@ import {
 import { autoOptimizerRecommendationBitrateCap } from './bitrate-policy';
 import {
   areAutoConfigActiveCanvasIdentitiesValid,
+  autoConfigProviderForProbeKind,
   autoConfigProbeCoverage,
+  credentialFreeAutoConfigRequestOutput,
   autoConfigPhaseStepDisposition,
   autoConfigPhaseStepKey,
   filterAutoConfigTopologyProbes,
@@ -38,11 +40,7 @@ import {
   sanitizeAutoConfigProbeEvidence,
   supportedAutoConfigProbeKinds,
 } from './probe-policy';
-import {
-  isValidAutoConfigDualOutputResultEnvelope,
-  isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope,
-  validateAutoConfigRecommendation,
-} from './result-policy';
+import { validateAutoConfigRecommendation } from './result-policy';
 import {
   autoOptimizerCanvasAllowsQualityPromotion,
   autoOptimizerDisplayFrameRate,
@@ -61,6 +59,7 @@ import {
 import { awaitAutoConfigRun, closeAutoConfigRun, IAutoConfigRun } from './native-run';
 import {
   IAutoConfigActiveProbe,
+  IAutoConfigAttemptRequestLeg,
   IAutoConfigEvent,
   IAutoConfigNativeResult,
   IAutoConfigRequest,
@@ -75,7 +74,6 @@ import {
   IAutoOptimizerState,
   IAutoOptimizerTopology,
   TAutoOptimizerPhase,
-  TAutoOptimizerProbeProvider,
   TAutoOptimizerPromptState,
 } from './types';
 
@@ -223,7 +221,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private youtubeConfirmationPromises = new Map<string, Promise<void>>();
   private probeAbortController: AbortController | null = null;
   /** Exact credential-free native inputs retained only for the active attempt. */
-  private attemptRequestLegs = new Map<string, IAutoConfigRequestLeg>();
+  private attemptRequestLegs = new Map<string, IAutoConfigAttemptRequestLeg>();
 
   get views() {
     return new AutoConfigViews(this.state);
@@ -313,7 +311,12 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       }
       topology = prepared.topology;
       const request = prepared.request;
-      this.attemptRequestLegs = new Map(request.legs.map(leg => [leg.legId, cloneDeep(leg)]));
+      this.attemptRequestLegs = new Map(
+        request.outputs.map(output => [
+          output.outputId,
+          credentialFreeAutoConfigRequestOutput(output),
+        ]),
+      );
       this.SET_TOPOLOGY(topology);
 
       let run: IAutoConfigRun;
@@ -553,6 +556,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       0,
     );
     const activeProbes: IAutoConfigActiveProbe[] = [];
+    const activeProbesByLeg = new Map<string, IAutoConfigActiveProbe[]>();
     if (activeDualOutput || activeEnhancedBroadcastingDualOutput) {
       const horizontalCanvasId = this.videoSettingsService.contexts.horizontal?.canvasId;
       const verticalCanvasId = this.videoSettingsService.contexts.vertical?.canvasId;
@@ -583,16 +587,14 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
             const probe: IAutoConfigActiveProbe =
               candidate.kind === 'twitch-standard'
                 ? {
-                    probeId: candidate.probeId,
+                    id: candidate.probeId,
                     kind: candidate.kind,
-                    legId: candidate.legId,
                     server: 'auto',
                     streamKey,
                   }
                 : {
-                    probeId: candidate.probeId,
+                    id: candidate.probeId,
                     kind: candidate.kind,
-                    legId: candidate.legId,
                     streamKey,
                   };
             credentialProbes.push(probe);
@@ -605,9 +607,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
               signal: controller.signal,
             });
             const probe: IAutoConfigActiveProbe = {
-              probeId: lease.probeId,
+              id: lease.probeId,
               kind: candidate.kind,
-              legId: candidate.legId,
               server: lease.server,
               streamKey: lease.streamKey,
             };
@@ -644,7 +645,9 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         // evidence when another provider is unavailable. OSN lowers confidence
         // for that partial provider set; Desktop keeps the missing provider marked
         // as estimated and prevents quality promotion below.
-        activeProbes.push(...acquired.map(({ probe }) => probe));
+        const probes = acquired.map(({ probe }) => probe);
+        activeProbes.push(...probes);
+        activeProbesByLeg.set(leg.legId, probes);
       }
     }
     if (activeDualOutput && activeProbes.length !== requestedActiveProbeCount) {
@@ -674,7 +677,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     }
 
     const output = this.outputSettingsService.getSettings();
-    const legs: IAutoConfigRequestLeg[] = topology.legs.map(leg => {
+    const outputs: IAutoConfigRequestLeg[] = topology.legs.map(leg => {
       const display: TDisplayType = leg.display === 'vertical' ? 'vertical' : 'horizontal';
       const video = this.videoSettingsService.state[display];
       const canvasId = this.videoSettingsService.contexts[display]?.canvasId;
@@ -696,10 +699,10 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         leg.destinations.map(item => item.platform),
       );
       return {
-        legId: leg.legId,
+        outputId: leg.legId,
         display: leg.display,
         outputKind: leg.outputKind,
-        destinations: leg.destinations,
+        destinations: leg.destinations.map(destination => destination.platform),
         current: {
           canvasId,
           width: video.outputWidth,
@@ -764,16 +767,15 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
             }
           : {}),
         estimateReason: leg.estimateReason as IAutoConfigRequestLeg['estimateReason'],
+        ...(activeProbesByLeg.has(leg.legId) ? { probes: activeProbesByLeg.get(leg.legId)! } : {}),
       };
     });
 
     return {
       topology,
       request: {
-        schemaVersion: 1,
-        topology: topology.type,
-        legs,
-        activeProbes: activeProbes.length ? activeProbes : undefined,
+        streamSetup: topology.type,
+        outputs,
       },
     };
   }
@@ -781,15 +783,14 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private handleNativeEvent(event: IAutoConfigEvent, token: number) {
     if (token !== this.runToken) return;
 
-    const provider: TAutoOptimizerProbeProvider | null =
-      event.provider === 'twitch' || event.provider === 'youtube' ? event.provider : null;
+    const provider = autoConfigProviderForProbeKind(event.probe?.kind);
     if (
       event.code === 'youtube_probe_waiting_for_ingest' &&
       provider === 'youtube' &&
-      typeof event.probeId === 'string' &&
-      event.probeId
+      typeof event.probe?.id === 'string' &&
+      event.probe.id
     ) {
-      this.startYoutubeIngestConfirmation(event.probeId, token);
+      this.startYoutubeIngestConfirmation(event.probe.id, token);
     }
 
     const phase: TConcreteAutoOptimizerPhase | null =
@@ -972,100 +973,108 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       this.state.topology &&
         isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology(this.state.topology),
     );
-    if (
-      activeDualOutput &&
-      !isValidAutoConfigDualOutputResultEnvelope(
-        nativeResult,
-        expectedLegs.map(leg => leg.legId),
-      )
-    ) {
-      return {
-        schemaVersion: 1,
-        topology: this.state.topology?.type || 'direct-single',
-        status: nativeResult.status,
-        legs: [],
-        advice: this.getAdvice(),
-      };
-    }
-    const combinedWorkloadValidated = Boolean(
-      activeEnhancedBroadcastingDualOutput &&
-        isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(nativeResult, expectedLegs),
-    );
-    if (activeEnhancedBroadcastingDualOutput && !combinedWorkloadValidated) {
-      return {
-        schemaVersion: 1,
-        topology: this.state.topology?.type || 'direct-single',
-        status: nativeResult.status,
-        legs: [],
-        advice: this.getAdvice(),
-      };
-    }
     const jointDualOutputActive =
-      activeDualOutput && nativeResult.legs.every(leg => leg.measurement?.mode === 'active');
-    const legs: IAutoOptimizerLegResult[] = nativeResult.legs.flatMap(leg => {
-      const expected = expectedLegs.find(item => item.legId === leg.legId);
-      const requested = this.attemptRequestLegs.get(leg.legId);
-      const evidence = sanitizeAutoConfigProbeEvidence(leg.measurement?.probes);
+      activeDualOutput &&
+      nativeResult.outputs.every(output => output.measurement.mode === 'active');
+    const legs: IAutoOptimizerLegResult[] = nativeResult.outputs.flatMap(output => {
+      const expected = expectedLegs.find(item => item.legId === output.outputId);
+      const requested = this.attemptRequestLegs.get(output.outputId);
+      if (!expected || !requested || expected.display !== requested.display) return [];
+
+      const videosByDisplay = new Map(output.videos.map(video => [video.display, video]));
+      const expectedDisplays =
+        requested.display === 'both'
+          ? (['horizontal', 'vertical'] as const)
+          : ([requested.display] as const);
+      if (
+        output.videos.length !== expectedDisplays.length ||
+        videosByDisplay.size !== output.videos.length ||
+        expectedDisplays.some(display => !videosByDisplay.has(display))
+      ) {
+        return [];
+      }
+
+      const primaryDisplay = requested.display === 'both' ? 'horizontal' : requested.display;
+      const primaryVideo = videosByDisplay.get(primaryDisplay);
+      const additionalVideo = requested.display === 'both' ? videosByDisplay.get('vertical') : null;
+      if (!primaryVideo || (requested.display === 'both' && !additionalVideo)) return [];
+
+      const evidence = sanitizeAutoConfigProbeEvidence(output.measurement.evidence);
       // state.topology is replaced with the prepared attempt topology before
       // native execution. At least one attempted candidate must succeed;
       // failed or missing selected providers are accepted only at low confidence.
       const activeEvidenceValid =
-        leg.measurement?.mode !== 'active' ||
-        Boolean(
-          expected &&
-            isValidAutoConfigActiveProbeCoverage({
-              destinations: expected.destinations,
-              attemptedCandidates: expected.probeCandidates,
-              evidence,
-              confidence: leg.measurement?.confidence,
-              requireAllProbeCapableDestinations:
-                !activeDualOutput && !activeEnhancedBroadcastingDualOutput,
-            }),
-        );
-      const providerOwnsEncoding = expected?.outputKind === 'twitch-enhanced-broadcasting';
-      const recommendation = requested
-        ? validateAutoConfigRecommendation(leg.recommendation, {
-            measurementMode: leg.measurement?.mode,
-            currentBitrateKbps: requested.current.bitrateKbps,
-            probeEvidence: evidence,
-            providerOwnsEncoding,
-            enhancedBroadcasting: providerOwnsEncoding,
-            combinedWorkloadValidated:
-              combinedWorkloadValidated && expected?.outputKind === 'standard',
-            qualityProfile:
-              jointDualOutputActive ||
-              expected?.destinations.some(destination => destination.platform === 'twitch')
-                ? 'twitch'
-                : 'generic',
-            maxBitrateKbps: requested.limits?.maxBitrateKbps,
-            maxWidth: requested.limits?.maxWidth,
-            maxHeight: requested.limits?.maxHeight,
-            maxFpsNum: requested.limits?.maxFpsNum,
-            maxFpsDen: requested.limits?.maxFpsDen,
-            currentWidth: requested.current.width,
-            currentHeight: requested.current.height,
-            currentFpsNum: requested.current.fpsNum,
-            currentFpsDen: requested.current.fpsDen,
-            additionalVideo: requested.additionalVideo,
-          })
-        : null;
+        output.measurement.mode !== 'active' ||
+        isValidAutoConfigActiveProbeCoverage({
+          destinations: expected.destinations,
+          attemptedCandidates: expected.probeCandidates,
+          evidence,
+          confidence: output.measurement.confidence,
+          requireAllProbeCapableDestinations:
+            !activeDualOutput && !activeEnhancedBroadcastingDualOutput,
+        });
+      const providerOwnsEncoding = expected.outputKind === 'twitch-enhanced-broadcasting';
+      // Provider-owned outputs deliberately omit encoding. Standard outputs
+      // must return the exact encoder configuration Desktop can apply.
+      if (providerOwnsEncoding === Boolean(output.encoding)) return [];
+
+      const recommendation = validateAutoConfigRecommendation(
+        {
+          width: primaryVideo.width,
+          height: primaryVideo.height,
+          fpsNum: primaryVideo.fpsNum,
+          fpsDen: primaryVideo.fpsDen,
+          bitrateKbps: output.encoding?.bitrateKbps ?? requested.current.bitrateKbps,
+          encoderId: output.encoding?.encoderId,
+          encoderFamily: output.encoding?.encoderFamily,
+          encoderTitle: output.encoding?.encoderTitle,
+          codec: output.encoding?.codec,
+          preset: output.encoding?.preset,
+          ...(additionalVideo
+            ? {
+                additionalVideo: {
+                  display: 'vertical' as const,
+                  width: additionalVideo.width,
+                  height: additionalVideo.height,
+                  fpsNum: additionalVideo.fpsNum,
+                  fpsDen: additionalVideo.fpsDen,
+                },
+              }
+            : {}),
+        },
+        {
+          measurementMode: output.measurement.mode,
+          currentBitrateKbps: requested.current.bitrateKbps,
+          probeEvidence: evidence,
+          providerOwnsEncoding,
+          enhancedBroadcasting: providerOwnsEncoding,
+          qualityProfile:
+            jointDualOutputActive ||
+            expected.destinations.some(destination => destination.platform === 'twitch')
+              ? 'twitch'
+              : 'generic',
+          maxBitrateKbps: requested.limits?.maxBitrateKbps,
+          maxWidth: requested.limits?.maxWidth,
+          maxHeight: requested.limits?.maxHeight,
+          maxFpsNum: requested.limits?.maxFpsNum,
+          maxFpsDen: requested.limits?.maxFpsDen,
+          currentWidth: requested.current.width,
+          currentHeight: requested.current.height,
+          currentFpsNum: requested.current.fpsNum,
+          currentFpsDen: requested.current.fpsDen,
+          additionalVideo: requested.additionalVideo,
+        },
+      );
       const valid =
-        requested?.display === leg.display &&
-        expected?.display === leg.display &&
-        (expected?.measurement === 'active' || leg.measurement?.mode === 'estimated') &&
+        (expected.measurement === 'active' || output.measurement.mode === 'estimated') &&
         activeEvidenceValid &&
-        typeof leg.legId === 'string' &&
-        Array.isArray(leg.destinations) &&
-        leg.measurement &&
-        ['active', 'estimated'].includes(leg.measurement.mode) &&
-        ['high', 'medium', 'low'].includes(leg.measurement.confidence) &&
         recommendation !== null;
-      if (!valid || !expected || !recommendation) return [];
+      if (!valid || !recommendation) return [];
 
       return [
         {
-          legId: leg.legId,
-          display: leg.display,
+          legId: output.outputId,
+          display: expected.display,
           outputKind: expected.outputKind,
           destinations: expected.destinations.map(
             item =>
@@ -1073,10 +1082,10 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
                 platform: normalizeAutoOptimizerPlatform(item.platform),
               } as IAutoOptimizerDestination),
           ),
-          measurement: leg.measurement.mode,
-          confidence: leg.measurement.confidence,
+          measurement: output.measurement.mode,
+          confidence: output.measurement.confidence,
           probes: evidence,
-          estimateReason: leg.measurement.reason,
+          estimateReason: output.measurement.reason,
           resolution: {
             width: recommendation.width,
             height: recommendation.height,
@@ -1520,7 +1529,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   private clearProbeCredentials(request: IAutoConfigRequest) {
-    this.clearActiveProbeCredentials(request.activeProbes || []);
+    this.clearActiveProbeCredentials(request.outputs.flatMap(output => output.probes || []));
     this.youtubeProbeLeases.forEach(lease => {
       lease.streamKey = '';
       lease.server = '';

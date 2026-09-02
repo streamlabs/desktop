@@ -35,10 +35,10 @@ function progressDetail(
 test('successful measured providers are stable, deduplicated, and omit failures', t => {
   t.deepEqual(
     successfulProbeProviders([
-      { provider: 'youtube', success: true },
-      { provider: 'twitch', success: false },
-      { provider: 'youtube', success: true },
-      { provider: 'twitch', success: true },
+      { platform: 'youtube', success: true },
+      { platform: 'twitch', success: false },
+      { platform: 'youtube', success: true },
+      { platform: 'twitch', success: true },
     ]),
     ['twitch', 'youtube'],
   );
@@ -47,8 +47,8 @@ test('successful measured providers are stable, deduplicated, and omit failures'
 test('partial provider provenance separates measured and estimated destinations', t => {
   const platforms = [{ id: 'twitch' }, { id: 'youtube' }, { id: 'kick' }, { id: 'facebook' }];
   const evidence = [
-    { provider: 'twitch' as const, success: true },
-    { provider: 'youtube' as const, success: false },
+    { platform: 'twitch' as const, success: true },
+    { platform: 'youtube' as const, success: false },
   ];
 
   t.deepEqual(successfulProbeProviders(evidence), ['twitch']);

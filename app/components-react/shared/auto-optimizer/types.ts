@@ -12,7 +12,7 @@ export type TAutoOptimizerMeasurementMode = 'active' | 'estimated';
 export type TAutoOptimizerPresentationProbeProvider = 'twitch' | 'youtube';
 
 export interface IAutoOptimizerPresentationProbeEvidence {
-  provider: TAutoOptimizerPresentationProbeProvider;
+  platform: TAutoOptimizerPresentationProbeProvider;
   success: boolean;
 }
 

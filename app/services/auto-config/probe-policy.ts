@@ -1,6 +1,8 @@
 import {
   IAutoConfigAdditionalVideoTuple,
   IAutoConfigEvent,
+  IAutoConfigAttemptRequestLeg,
+  IAutoConfigRequestLeg,
   IAutoOptimizerProbeCandidate,
   IAutoOptimizerProgressDetail,
   IAutoOptimizerProbeEvidence,
@@ -11,6 +13,36 @@ import {
   TAutoOptimizerProbeMethod,
   TAutoOptimizerProbeProvider,
 } from './types';
+
+/**
+ * Retain only acceptance inputs after OSN has copied the request. Provider
+ * credentials live exclusively in nested probes and must not survive in the
+ * attempt context used to validate the eventual result.
+ */
+export function credentialFreeAutoConfigRequestOutput(
+  output: IAutoConfigRequestLeg,
+): IAutoConfigAttemptRequestLeg {
+  return {
+    outputId: output.outputId,
+    display: output.display,
+    outputKind: output.outputKind,
+    destinations: [...output.destinations],
+    current: { ...output.current },
+    ...(output.limits ? { limits: { ...output.limits } } : {}),
+    ...(output.additionalVideo
+      ? {
+          additionalVideo: {
+            display: output.additionalVideo.display,
+            current: { ...output.additionalVideo.current },
+            ...(output.additionalVideo.limits
+              ? { limits: { ...output.additionalVideo.limits } }
+              : {}),
+          },
+        }
+      : {}),
+    ...(output.estimateReason ? { estimateReason: output.estimateReason } : {}),
+  };
+}
 
 const AUTO_OPTIMIZER_ENCODER_FAMILIES = new Set([
   'obs_nvenc_h264_tex',
@@ -116,12 +148,12 @@ export function isValidAutoConfigActiveProbeCoverage(p: {
     ),
   );
   const successfulProviders = new Set(
-    p.evidence.filter(item => item.success).map(item => item.provider),
+    p.evidence.filter(item => item.success).map(item => item.platform),
   );
 
   if (!attemptedProviders.size) return false;
   if ([...attemptedProviders].some(provider => !selectedProviders.has(provider))) return false;
-  if (p.evidence.some(item => !attemptedMethods.has(`${item.provider}:${item.method}`))) {
+  if (p.evidence.some(item => !attemptedMethods.has(`${item.platform}:${item.method}`))) {
     return false;
   }
   if (![...attemptedProviders].some(provider => successfulProviders.has(provider))) return false;
@@ -143,6 +175,11 @@ export function supportedAutoConfigProbeKinds(): ReadonlySet<TAutoOptimizerProbe
     'twitch-enhanced-broadcasting',
     'youtube-unbound',
   ]);
+}
+
+export function autoConfigProviderForProbeKind(kind: unknown): TAutoOptimizerProbeProvider | null {
+  if (kind === 'twitch-standard' || kind === 'twitch-enhanced-broadcasting') return 'twitch';
+  return kind === 'youtube-unbound' ? 'youtube' : null;
 }
 
 /**
@@ -584,10 +621,7 @@ export function sanitizeAutoConfigProgressDetail(
     typeof event.code === 'string' && /^[a-z0-9_]+$/.test(event.code) && event.code.length <= 128
       ? event.code
       : null;
-  const provider =
-    phase === 'bandwidth' && (event.provider === 'twitch' || event.provider === 'youtube')
-      ? event.provider
-      : null;
+  const provider = phase === 'bandwidth' ? autoConfigProviderForProbeKind(event.probe?.kind) : null;
   const encoderFamily = AUTO_OPTIMIZER_ENCODER_FAMILIES.has(String(event.encoderFamily))
     ? (event.encoderFamily as TAutoOptimizerEncoderFamily)
     : null;
@@ -610,10 +644,6 @@ export function sanitizeAutoConfigProgressDetail(
   };
 }
 
-function isFiniteNonNegative(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
-}
-
 function isAutoOptimizerProbeMethod(
   provider: TAutoOptimizerProbeProvider,
   method: unknown,
@@ -626,8 +656,8 @@ function isAutoOptimizerProbeMethod(
 }
 
 /**
- * Treat native output as untrusted at the renderer boundary. Probe IDs and any
- * unknown fields remain attempt-local and are intentionally not mirrored.
+ * Keep only the public provider provenance needed by Desktop presentation and
+ * attempt-relative validation.
  */
 export function sanitizeAutoConfigProbeEvidence(value: unknown): IAutoOptimizerProbeEvidence[] {
   if (!Array.isArray(value)) return [];
@@ -635,76 +665,19 @@ export function sanitizeAutoConfigProbeEvidence(value: unknown): IAutoOptimizerP
   return value.flatMap(item => {
     if (!item || typeof item !== 'object') return [];
     const evidence = item as Record<string, unknown>;
-    if (evidence.provider !== 'twitch' && evidence.provider !== 'youtube') return [];
+    if (evidence.platform !== 'twitch' && evidence.platform !== 'youtube') return [];
     if (
-      !isAutoOptimizerProbeMethod(evidence.provider, evidence.method) ||
+      !isAutoOptimizerProbeMethod(evidence.platform, evidence.method) ||
       typeof evidence.success !== 'boolean'
-    ) {
-      return [];
-    }
-    const enhancedBroadcasting = evidence.method === 'twitch-enhanced-broadcasting-test';
-    const hasMeasured = evidence.measuredKbps !== undefined;
-    const hasSafe = evidence.safeKbps !== undefined;
-    const hasHeadroom = evidence.headroomPercent !== undefined;
-    if (
-      (hasMeasured && !isFiniteNonNegative(evidence.measuredKbps)) ||
-      (hasSafe && !isFiniteNonNegative(evidence.safeKbps)) ||
-      (hasHeadroom &&
-        (!isFiniteNonNegative(evidence.headroomPercent) || evidence.headroomPercent > 100)) ||
-      (!enhancedBroadcasting && evidence.success && (!hasMeasured || !hasSafe || !hasHeadroom))
-    ) {
-      return [];
-    }
-
-    const testedWidth = sanitizeProgressInteger(evidence.testedWidth, 16384);
-    const testedHeight = sanitizeProgressInteger(evidence.testedHeight, 16384);
-    const testedFpsNum = sanitizeProgressInteger(evidence.testedFpsNum, 1000000);
-    const testedFpsDen = sanitizeProgressInteger(evidence.testedFpsDen, 1000000);
-    const videoTrackCount = sanitizeProgressInteger(evidence.videoTrackCount, 64);
-    const configuredAggregateBitrateKbps = sanitizeAutoConfigProbeTargetBitrateKbps(
-      evidence.configuredAggregateBitrateKbps,
-    );
-    const testedAdditionalVideo = sanitizeAdditionalVideoTuple(evidence.testedAdditionalVideo);
-    if (
-      (evidence.testedWidth !== undefined && !testedWidth) ||
-      (evidence.testedHeight !== undefined && !testedHeight) ||
-      (evidence.testedFpsNum !== undefined && !testedFpsNum) ||
-      (evidence.testedFpsDen !== undefined && !testedFpsDen) ||
-      (evidence.videoTrackCount !== undefined && !videoTrackCount) ||
-      (evidence.configuredAggregateBitrateKbps !== undefined && !configuredAggregateBitrateKbps) ||
-      (evidence.testedAdditionalVideo !== undefined && !testedAdditionalVideo) ||
-      (!enhancedBroadcasting && evidence.testedAdditionalVideo !== undefined) ||
-      (testedFpsNum && testedFpsDen && testedFpsNum / testedFpsDen > 240) ||
-      (enhancedBroadcasting &&
-        evidence.success &&
-        (!testedWidth ||
-          testedWidth % 2 !== 0 ||
-          !testedHeight ||
-          testedHeight % 2 !== 0 ||
-          !testedFpsNum ||
-          !testedFpsDen))
     ) {
       return [];
     }
 
     return [
       {
-        provider: evidence.provider,
+        platform: evidence.platform,
         method: evidence.method,
         success: evidence.success,
-        ...(hasMeasured ? { measuredKbps: evidence.measuredKbps as number } : {}),
-        ...(hasSafe ? { safeKbps: evidence.safeKbps as number } : {}),
-        ...(hasHeadroom ? { headroomPercent: evidence.headroomPercent as number } : {}),
-        ...(typeof evidence.ceilingReached === 'boolean'
-          ? { ceilingReached: evidence.ceilingReached }
-          : {}),
-        ...(testedWidth ? { testedWidth } : {}),
-        ...(testedHeight ? { testedHeight } : {}),
-        ...(testedFpsNum ? { testedFpsNum } : {}),
-        ...(testedFpsDen ? { testedFpsDen } : {}),
-        ...(videoTrackCount ? { videoTrackCount } : {}),
-        ...(configuredAggregateBitrateKbps ? { configuredAggregateBitrateKbps } : {}),
-        ...(testedAdditionalVideo ? { testedAdditionalVideo } : {}),
       },
     ];
   });

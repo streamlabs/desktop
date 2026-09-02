@@ -16,10 +16,8 @@ function deferred<T>() {
 
 function nativeResult(): IAutoConfigNativeResult {
   return {
-    schemaVersion: 1,
-    sessionId: 'session',
     status: 'complete',
-    legs: [],
+    outputs: [],
   };
 }
 

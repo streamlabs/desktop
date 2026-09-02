@@ -48,7 +48,7 @@ export function autoOptimizerErrorMessage(
 export function successfulProbeProviders(
   evidence: IAutoOptimizerPresentationProbeEvidence[] = [],
 ): TAutoOptimizerPresentationProbeProvider[] {
-  const successful = new Set(evidence.filter(item => item.success).map(item => item.provider));
+  const successful = new Set(evidence.filter(item => item.success).map(item => item.platform));
   return providerOrder.filter(provider => successful.has(provider));
 }
 

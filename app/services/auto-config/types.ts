@@ -73,29 +73,9 @@ export interface IAutoOptimizerProbeCandidate {
 }
 
 export interface IAutoOptimizerProbeEvidence {
-  provider: TAutoOptimizerProbeProvider;
+  platform: TAutoOptimizerProbeProvider;
   method: TAutoOptimizerProbeMethod;
-  /** Observed aggregate output throughput, including probe audio. */
-  measuredKbps?: number;
-  /**
-   * Validated video target after transport/provider caps. It may exceed the
-   * final recommendation when a higher probe rung is retained as headroom.
-   */
-  safeKbps?: number;
-  /** Fixed percentage haircut; current target-validation policies report zero. */
-  headroomPercent?: number;
   success: boolean;
-  ceilingReached?: boolean;
-  /** Exact video tuple exercised by an Enhanced Broadcasting workload test. */
-  testedWidth?: number;
-  testedHeight?: number;
-  testedFpsNum?: number;
-  testedFpsDen?: number;
-  /** Exact secondary video tuple exercised by a paired Enhanced Broadcasting test. */
-  testedAdditionalVideo?: IAutoConfigAdditionalVideoTuple;
-  /** Provider ladder shape observed during the Enhanced Broadcasting test. */
-  videoTrackCount?: number;
-  configuredAggregateBitrateKbps?: number;
 }
 
 export interface IAutoOptimizerTopologyLeg {
@@ -197,14 +177,15 @@ export interface IAutoOptimizerProgressDetail {
 export type IAutoConfigEvent = IOSNAutoConfigEvent;
 export type IAutoConfigNativeResult = IOSNAutoConfigResult;
 
-type TOSNAutoConfigRequestLeg = IOSNAutoConfigRequest['legs'][number];
+type TOSNAutoConfigRequestLeg = IOSNAutoConfigRequest['outputs'][number];
 export type IAutoConfigCurrentSettings = TOSNAutoConfigRequestLeg['current'];
 export type IAutoConfigRequestLimits = NonNullable<TOSNAutoConfigRequestLeg['limits']>;
 export type IAutoConfigRequestAdditionalVideo = NonNullable<
   TOSNAutoConfigRequestLeg['additionalVideo']
 >;
 export type IAutoConfigRequestLeg = TOSNAutoConfigRequestLeg;
-export type IAutoConfigActiveProbe = NonNullable<IOSNAutoConfigRequest['activeProbes']>[number];
+export type IAutoConfigAttemptRequestLeg = Omit<IAutoConfigRequestLeg, 'probes'>;
+export type IAutoConfigActiveProbe = NonNullable<TOSNAutoConfigRequestLeg['probes']>[number];
 export type IAutoConfigRequest = IOSNAutoConfigRequest;
 export type IAutoConfigAdditionalVideoTuple = NonNullable<IAutoConfigEvent['additionalVideo']>;
 

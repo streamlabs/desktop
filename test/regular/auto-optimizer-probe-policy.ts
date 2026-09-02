@@ -4,6 +4,7 @@ import {
   autoConfigProbeCoverage,
   autoConfigPhaseStepDisposition,
   autoConfigPhaseStepKey,
+  credentialFreeAutoConfigRequestOutput,
   filterAutoConfigTopologyProbes,
   isEligibleAutoConfigDualOutputActiveTopology,
   isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology,
@@ -15,9 +16,47 @@ import {
 } from '../../app/services/auto-config/probe-policy';
 import {
   IAutoConfigEvent,
+  IAutoConfigRequestLeg,
   IAutoOptimizerTopology,
   TAutoOptimizerProbeKind,
 } from '../../app/services/auto-config/types';
+
+test('retained attempt context contains no provider credentials', t => {
+  const retained = credentialFreeAutoConfigRequestOutput({
+    outputId: 'horizontal',
+    display: 'horizontal',
+    outputKind: 'standard',
+    destinations: ['youtube'],
+    current: {
+      canvasId: 0,
+      width: 1280,
+      height: 720,
+      fpsNum: 30,
+      fpsDen: 1,
+      bitrateKbps: 3000,
+      encoderId: 'obs_nvenc_h264_tex',
+      preset: 'p5',
+    },
+    limits: { maxBitrateKbps: 8000 },
+    estimateReason: 'partial_provider_probes',
+    probes: [
+      {
+        id: 'youtube-probe',
+        kind: 'youtube-unbound',
+        server: 'rtmp://example.test',
+        streamKey: 'secret-key',
+      },
+    ],
+  } as IAutoConfigRequestLeg);
+
+  t.false('probes' in retained);
+  const serialized = JSON.stringify(retained);
+  t.false(serialized.includes('streamKey'));
+  t.false(serialized.includes('server'));
+  t.false(serialized.includes('secret-key'));
+  t.is(retained.current.canvasId, 0);
+  t.deepEqual(retained.destinations, ['youtube']);
+});
 
 function allProbeCandidates(topology: IAutoOptimizerTopology) {
   return topology.legs.flatMap(leg => leg.probeCandidates);
@@ -263,11 +302,8 @@ test('partial active provider evidence is accepted only at low confidence', t =>
     attemptedCandidates: [{ provider: 'twitch' as const, kind: 'twitch-standard' as const }],
     evidence: [
       {
-        provider: 'twitch' as const,
+        platform: 'twitch' as const,
         method: 'twitch-bandwidth-test' as const,
-        measuredKbps: 6013,
-        safeKbps: 6000,
-        headroomPercent: 0,
         success: true,
       },
     ],
@@ -281,11 +317,8 @@ test('partial active provider evidence is accepted only at low confidence', t =>
 test('a joint Dual Output probe represents its canvas without claiming every destination', t => {
   const evidence = [
     {
-      provider: 'twitch' as const,
+      platform: 'twitch' as const,
       method: 'twitch-bandwidth-test' as const,
-      measuredKbps: 6013,
-      safeKbps: 6000,
-      headroomPercent: 0,
       success: true,
     },
   ];
@@ -307,11 +340,8 @@ test('a joint Dual Output probe represents its canvas without claiming every des
 
 test('runtime-partial active coverage accepts one prepared success only at low confidence', t => {
   const twitchEvidence = {
-    provider: 'twitch' as const,
+    platform: 'twitch' as const,
     method: 'twitch-bandwidth-test' as const,
-    measuredKbps: 6013,
-    safeKbps: 6000,
-    headroomPercent: 0,
     success: true,
   };
   const context = {
@@ -326,7 +356,7 @@ test('runtime-partial active coverage accepts one prepared success only at low c
     ...context,
     evidence: [
       twitchEvidence,
-      { provider: 'youtube' as const, method: 'youtube-unbound-ramp' as const, success: false },
+      { platform: 'youtube' as const, method: 'youtube-unbound-ramp' as const, success: false },
     ],
   };
 
@@ -343,8 +373,8 @@ test('runtime-partial active coverage accepts one prepared success only at low c
       ...context,
       confidence: 'low',
       evidence: [
-        { provider: 'twitch', method: 'twitch-bandwidth-test', success: false },
-        { provider: 'youtube', method: 'youtube-unbound-ramp', success: false },
+        { platform: 'twitch', method: 'twitch-bandwidth-test', success: false },
+        { platform: 'youtube', method: 'youtube-unbound-ramp', success: false },
       ],
     }),
   );
@@ -355,11 +385,8 @@ test('runtime-partial active coverage accepts one prepared success only at low c
       evidence: [
         twitchEvidence,
         {
-          provider: 'youtube',
+          platform: 'youtube',
           method: 'youtube-unbound-ramp',
-          measuredKbps: 8000,
-          safeKbps: 8000,
-          headroomPercent: 0,
           success: true,
         },
       ],
@@ -375,19 +402,13 @@ test('active evidence cannot claim a provider Desktop did not attempt', t => {
       confidence: 'low',
       evidence: [
         {
-          provider: 'twitch',
+          platform: 'twitch',
           method: 'twitch-bandwidth-test',
-          measuredKbps: 6000,
-          safeKbps: 6000,
-          headroomPercent: 0,
           success: true,
         },
         {
-          provider: 'youtube',
+          platform: 'youtube',
           method: 'youtube-unbound-ramp',
-          measuredKbps: 8000,
-          safeKbps: 8000,
-          headroomPercent: 0,
           success: true,
         },
       ],
@@ -401,21 +422,14 @@ test('active Twitch evidence must match the exact attempted standard or Enhanced
     confidence: 'high',
   };
   const standardEvidence = {
-    provider: 'twitch' as const,
+    platform: 'twitch' as const,
     method: 'twitch-bandwidth-test' as const,
-    measuredKbps: 6000,
-    safeKbps: 6000,
-    headroomPercent: 0,
     success: true,
   };
   const enhancedEvidence = {
-    provider: 'twitch' as const,
+    platform: 'twitch' as const,
     method: 'twitch-enhanced-broadcasting-test' as const,
     success: true,
-    testedWidth: 1920,
-    testedHeight: 1080,
-    testedFpsNum: 60,
-    testedFpsDen: 1,
   };
 
   t.true(
@@ -834,9 +848,6 @@ test('joint Dual Output progress follows native hardware and recommendation phas
 
   const workload = sanitizeAutoConfigProgressDetail(
     {
-      schemaVersion: 1,
-      sessionId: 'session',
-      sequence: 1,
       type: 'progress',
       phase: 'hardware',
       progress: 20,
@@ -855,9 +866,6 @@ test('joint Dual Output progress follows native hardware and recommendation phas
 
   const allocation = sanitizeAutoConfigProgressDetail(
     {
-      schemaVersion: 1,
-      sessionId: 'session',
-      sequence: 2,
       type: 'progress',
       phase: 'recommendation',
       progress: 75,
@@ -890,9 +898,6 @@ test('active probe target bitrate feedback is conservatively validated', t => {
 
 test('attempt progress detail preserves only bounded native status metadata', t => {
   const event: IAutoConfigEvent = {
-    schemaVersion: 1,
-    sessionId: 'session',
-    sequence: 3,
     type: 'progress',
     phase: 'hardware',
     progress: 25,
@@ -940,14 +945,11 @@ test('attempt progress detail preserves only bounded native status metadata', t 
 
 test('malformed progress metadata cannot leak into mirrored UI state', t => {
   const event = ({
-    schemaVersion: 1,
-    sessionId: 'session',
-    sequence: 4,
     type: 'progress',
     phase: 'bandwidth',
     progress: 40,
     code: '<script>',
-    provider: 'youtube',
+    probe: { id: 'youtube', kind: 'youtube-unbound' },
     targetBitrateKbps: 10000,
     availableBitrateKbps: Number.POSITIVE_INFINITY,
     encoderId: 'x'.repeat(300),
@@ -978,103 +980,56 @@ test('probe evidence is validated and strips attempt-local or unknown fields', t
   t.deepEqual(
     sanitizeAutoConfigProbeEvidence([
       {
-        probeId: 'horizontal-twitch',
-        provider: 'twitch',
+        platform: 'twitch',
         method: 'twitch-bandwidth-test',
-        measuredKbps: 6013,
-        safeKbps: 6000,
-        headroomPercent: 0,
         success: true,
-        ceilingReached: false,
         streamKey: 'must-not-leak',
       },
       {
-        provider: 'youtube',
+        platform: 'youtube',
         method: 'youtube-unbound-ramp',
-        measuredKbps: 7900,
-        safeKbps: 8000,
-        headroomPercent: 0,
         success: true,
       },
       {
-        provider: 'twitch',
+        platform: 'twitch',
         method: 'twitch-enhanced-broadcasting-test',
         success: true,
-        testedWidth: 1920,
-        testedHeight: 1080,
-        testedFpsNum: 60,
-        testedFpsDen: 1,
-        testedAdditionalVideo: {
-          display: 'vertical',
-          width: 1080,
-          height: 1920,
-          fpsNum: 60,
-          fpsDen: 1,
-        },
-        videoTrackCount: 3,
-        configuredAggregateBitrateKbps: 7800,
         internalLadder: 'must-not-leak',
       },
       {
-        provider: 'other',
+        platform: 'other',
         method: 'unknown',
-        measuredKbps: 1,
-        safeKbps: 1,
-        headroomPercent: 0,
         success: true,
       },
       {
-        provider: 'youtube',
+        platform: 'youtube',
         method: 'invalid-negative',
-        measuredKbps: -1,
-        safeKbps: 1,
-        headroomPercent: 0,
         success: false,
       },
       {
-        provider: 'youtube',
+        platform: 'youtube',
         method: 'youtube-unbound-ramp',
         success: false,
       },
     ]),
     [
       {
-        provider: 'twitch',
+        platform: 'twitch',
         method: 'twitch-bandwidth-test',
-        measuredKbps: 6013,
-        safeKbps: 6000,
-        headroomPercent: 0,
         success: true,
-        ceilingReached: false,
       },
       {
-        provider: 'youtube',
+        platform: 'youtube',
         method: 'youtube-unbound-ramp',
-        measuredKbps: 7900,
-        safeKbps: 8000,
-        headroomPercent: 0,
         success: true,
       },
       {
-        provider: 'twitch',
+        platform: 'twitch',
         method: 'twitch-enhanced-broadcasting-test',
         success: true,
-        testedWidth: 1920,
-        testedHeight: 1080,
-        testedFpsNum: 60,
-        testedFpsDen: 1,
-        testedAdditionalVideo: {
-          display: 'vertical',
-          width: 1080,
-          height: 1920,
-          fpsNum: 60,
-          fpsDen: 1,
-        },
-        videoTrackCount: 3,
-        configuredAggregateBitrateKbps: 7800,
       },
       {
-        provider: 'youtube',
+        platform: 'youtube',
         method: 'youtube-unbound-ramp',
         success: false,
       },
@@ -1087,65 +1042,31 @@ test('malformed probe evidence is discarded at the renderer boundary', t => {
   t.deepEqual(
     sanitizeAutoConfigProbeEvidence([
       null,
-      { provider: 'twitch' },
+      { platform: 'twitch' },
       {
-        provider: 'youtube',
+        platform: 'youtube',
         method: 'x'.repeat(65),
-        measuredKbps: 1,
-        safeKbps: 1,
-        headroomPercent: 0,
         success: true,
       },
       {
-        provider: 'youtube',
+        platform: 'youtube',
         method: 'youtube-unbound-ramp',
-        measuredKbps: Number.POSITIVE_INFINITY,
-        safeKbps: 1,
-        headroomPercent: 101,
-        success: true,
+        success: 'yes',
       },
       {
-        provider: 'youtube',
+        platform: 'youtube',
         method: 'unsupported-youtube-method',
         success: false,
       },
       {
-        provider: 'youtube',
+        platform: 'youtube',
         method: 'twitch-bandwidth-test',
         success: false,
       },
       {
-        provider: 'twitch',
-        method: 'twitch-enhanced-broadcasting-test',
+        platform: 'other',
+        method: 'unknown',
         success: true,
-        testedWidth: 1919,
-        testedHeight: 1080,
-        testedFpsNum: 60,
-        testedFpsDen: 1,
-      },
-      {
-        provider: 'twitch',
-        method: 'twitch-enhanced-broadcasting-test',
-        success: true,
-        testedWidth: 1920,
-        testedHeight: 1080,
-        testedFpsNum: 60,
-      },
-      {
-        provider: 'twitch',
-        method: 'twitch-enhanced-broadcasting-test',
-        success: true,
-        testedWidth: 1920,
-        testedHeight: 1080,
-        testedFpsNum: 60,
-        testedFpsDen: 1,
-        testedAdditionalVideo: {
-          display: 'horizontal',
-          width: 1080,
-          height: 1920,
-          fpsNum: 60,
-          fpsDen: 1,
-        },
       },
     ]),
     [],
