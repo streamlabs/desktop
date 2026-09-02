@@ -50,6 +50,7 @@ function activeDualOutputResult(): IAutoConfigNativeResult {
       {
         legId: 'horizontal',
         display: 'horizontal',
+        outputKind: 'standard',
         destinations: [{ platform: 'twitch' }],
         measurement: {
           mode: 'active',
@@ -62,6 +63,7 @@ function activeDualOutputResult(): IAutoConfigNativeResult {
               safeKbps: 6000,
               headroomPercent: 0,
               success: true,
+              ceilingReached: false,
             },
           ],
         },
@@ -70,6 +72,7 @@ function activeDualOutputResult(): IAutoConfigNativeResult {
       {
         legId: 'vertical',
         display: 'vertical',
+        outputKind: 'standard',
         destinations: [{ platform: 'youtube' }],
         measurement: {
           mode: 'active',
@@ -82,6 +85,7 @@ function activeDualOutputResult(): IAutoConfigNativeResult {
               safeKbps: 10000,
               headroomPercent: 0,
               success: true,
+              ceilingReached: false,
             },
           ],
         },

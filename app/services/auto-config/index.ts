@@ -27,7 +27,6 @@ import {
   autoConfigPhaseStepDisposition,
   autoConfigPhaseStepKey,
   filterAutoConfigTopologyProbes,
-  hasRequiredAutoConfigCapabilities,
   isEligibleAutoConfigDualOutputActiveTopology,
   isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology,
   isValidAutoConfigActiveProbeCoverage,
@@ -56,7 +55,12 @@ import {
   TRawOutputValues,
 } from './output-transaction-policy';
 import {
-  IAutoConfigCapabilities,
+  awaitAutoConfigRun,
+  closeAutoConfigRun,
+  IAutoConfigApi,
+  IAutoConfigRun,
+} from './native-run';
+import {
   IAutoConfigActiveProbe,
   IAutoConfigEvent,
   IAutoConfigNativeResult,
@@ -80,10 +84,6 @@ import {
 export * from './types';
 export { classifyAutoOptimizerTopology } from './topology';
 
-// Native may spend up to four minutes exhausting bounded encoder/quality
-// candidates, followed by sequential Twitch and YouTube probes. This is only
-// a final dead-session guard; each real substep continues to update the UI.
-const NATIVE_RUN_TIMEOUT_MS = 420000;
 const MIN_PHASE_VISIBLE_MS = 1000;
 const YOUTUBE_INGEST_CONFIRMATION_TIMEOUT_MS = 12000;
 const CLEANUP_PROGRESS_START = 95;
@@ -102,13 +102,7 @@ class AutoOptimizerProbeSetupError extends Error {
 }
 
 interface INodeObsAutoConfig {
-  GetAutoConfigCapabilities?: () => string;
-  CreateAutoConfigSession?: (requestJson: string, callback: (event: unknown) => void) => string;
-  StartAutoConfigSession?: (sessionId: string) => void;
-  ConfirmAutoConfigProbeIngest?: (sessionId: string, probeId: string, received: boolean) => void;
-  GetAutoConfigResult?: (sessionId: string) => string;
-  CancelAutoConfigSession?: (sessionId: string) => void;
-  CloseAutoConfigSession?: (sessionId: string) => void;
+  AutoConfig?: IAutoConfigApi;
 }
 
 interface ISettingsSnapshot {
@@ -179,14 +173,6 @@ function emptyProgressDetail(): IAutoOptimizerProgressDetail {
   };
 }
 
-function parseJson<T>(value: unknown): T | null {
-  try {
-    if (typeof value === 'string') return JSON.parse(value) as T;
-    if (value && typeof value === 'object') return value as T;
-  } catch (e: unknown) {}
-  return null;
-}
-
 function normalizePlatform(platform: string): TAutoOptimizerPlatform {
   const known: TAutoOptimizerPlatform[] = [
     'twitch',
@@ -248,10 +234,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
   private frozenGoLiveSettings: IGoLiveSettings | null = null;
   private pendingGoLiveProfile: IAutoOptimizerProfile | null = null;
-  private nativeSessionId: string | null = null;
-  private lastEventSequence = -1;
+  private nativeRun: IAutoConfigRun | null = null;
   private runToken = 0;
-  private terminalResolver: (() => void) | null = null;
   private displayedPhaseStep: IPhaseStep | null = null;
   private displayedPhaseSince = 0;
   private pendingPhaseSteps: IPhaseStep[] = [];
@@ -278,7 +262,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       if (this.frozenGoLiveSettings && isEqual(frozen, this.frozenGoLiveSettings)) return true;
       ++this.runToken;
       try {
-        await this.cleanupOptimizerRun(true);
+        await this.cleanupOptimizerRun();
       } catch (e: unknown) {
         // Keep the newly validated draft even when the old probe could not be
         // cleaned up. Continuing later must never stream stale selections.
@@ -293,8 +277,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     if (!this.userService.isLoggedIn) return false;
     if (this.settingsService.views.hasHDRSettings) return false;
     if (this.getPromptState() !== 'unseen') return false;
-    const capabilities = this.getNativeCapabilities();
-    if (!hasRequiredAutoConfigCapabilities(capabilities)) return false;
+    if (!this.nativeApi()) return false;
 
     this.frozenGoLiveSettings = this.deepFreeze(frozen);
     const topology = filterAutoConfigTopologyProbes(
@@ -303,15 +286,9 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         this.dualOutputService.state.dualOutputMode && this.userService.isLoggedIn,
         this.twitchService.views.hasTwitchDualStreamAccess,
       ),
-      supportedAutoConfigProbeKinds(capabilities!, {
-        canConfirmYoutubeIngest:
-          typeof this.nativeApi().ConfirmAutoConfigProbeIngest === 'function',
+      supportedAutoConfigProbeKinds({
+        canConfirmYoutubeIngest: true,
       }),
-      {
-        dualOutputActiveProbes: capabilities!.dualOutputActiveProbes === true,
-        enhancedBroadcastingDualOutputWorkload:
-          capabilities!.enhancedBroadcastingDualOutputWorkload === true,
-      },
     );
     if (!topology.legs.some(leg => leg.destinations.length > 0)) {
       this.frozenGoLiveSettings = null;
@@ -363,28 +340,23 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       this.attemptRequestLegs = new Map(request.legs.map(leg => [leg.legId, cloneDeep(leg)]));
       this.SET_TOPOLOGY(topology);
 
-      const native = this.nativeApi();
-      this.lastEventSequence = -1;
-      let sessionId = '';
+      let run: IAutoConfigRun;
       try {
-        sessionId = native.CreateAutoConfigSession!(JSON.stringify(request), event => {
+        const api = this.nativeApi();
+        if (!api) throw new Error('Native Auto Optimizer is unavailable');
+        run = api.run(request, event => {
           this.handleNativeEvent(event, token);
         });
       } finally {
+        // OSN has copied the request before run() returns. Never retain a
+        // second in-memory copy of provider credentials in Desktop.
         this.clearProbeCredentials(request);
       }
-      if (!sessionId) throw new Error('Native optimizer did not create a session');
+      this.nativeRun = run!;
+      const nativeResult = await awaitAutoConfigRun(run!);
 
-      this.nativeSessionId = sessionId;
-      const terminal = this.createTerminalWaiter();
-      native.StartAutoConfigSession!(sessionId);
-      await terminal;
-
-      if (token !== this.runToken || this.nativeSessionId !== sessionId) return;
-      const nativeResult = parseJson<IAutoConfigNativeResult>(
-        native.GetAutoConfigResult!(sessionId),
-      );
-      if (!this.isValidNativeResult(nativeResult, sessionId)) {
+      if (token !== this.runToken || this.nativeRun !== run!) return;
+      if (!this.isValidNativeResult(nativeResult)) {
         throw new Error('Native optimizer returned an invalid result');
       }
 
@@ -405,7 +377,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       if (token !== this.runToken) return;
       let terminalError = this.toError(e, 'optimization_failed', true);
       try {
-        await this.cleanupOptimizerRun(true);
+        await this.cleanupOptimizerRun();
       } catch (cleanupError: unknown) {
         terminalError = this.toError(cleanupError, 'cleanup_failed', false);
       }
@@ -417,8 +389,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
   async retry(): Promise<void> {
     if (!this.frozenGoLiveSettings) return;
-    const capabilities = this.getNativeCapabilities();
-    if (!hasRequiredAutoConfigCapabilities(capabilities)) {
+    if (!this.nativeApi()) {
       this.SET_ERROR({
         code: 'native_optimizer_unavailable',
         message: 'Auto Optimizer is unavailable. Please continue with your current settings.',
@@ -433,15 +404,9 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           this.dualOutputService.state.dualOutputMode && this.userService.isLoggedIn,
           this.twitchService.views.hasTwitchDualStreamAccess,
         ),
-        supportedAutoConfigProbeKinds(capabilities!, {
-          canConfirmYoutubeIngest:
-            typeof this.nativeApi().ConfirmAutoConfigProbeIngest === 'function',
+        supportedAutoConfigProbeKinds({
+          canConfirmYoutubeIngest: true,
         }),
-        {
-          dualOutputActiveProbes: capabilities!.dualOutputActiveProbes === true,
-          enhancedBroadcastingDualOutputWorkload:
-            capabilities!.enhancedBroadcastingDualOutputWorkload === true,
-        },
       ),
     );
     await this.startOptimization();
@@ -452,7 +417,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     ++this.runToken;
     this.SET_CANCELLING();
     try {
-      await this.cleanupOptimizerRun(true);
+      await this.cleanupOptimizerRun();
       if (topology) this.SET_INTRO(topology);
       else this.RESET_FLOW();
     } catch (e: unknown) {
@@ -465,7 +430,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     ++this.runToken;
     this.SET_CANCELLING();
     try {
-      await this.cleanupOptimizerRun(true);
+      await this.cleanupOptimizerRun();
     } catch (e: unknown) {
       this.SET_ERROR(this.toError(e, 'cleanup_failed', false));
       return false;
@@ -482,7 +447,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     ++this.runToken;
     this.SET_CANCELLING();
     try {
-      await this.cleanupOptimizerRun(true);
+      await this.cleanupOptimizerRun();
     } catch (e: unknown) {
       this.SET_ERROR(this.toError(e, 'cleanup_failed', false));
       return false;
@@ -543,7 +508,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   async close(): Promise<void> {
     ++this.runToken;
     try {
-      await this.cleanupOptimizerRun(true);
+      await this.cleanupOptimizerRun();
     } catch (e: unknown) {
       this.SET_ERROR(this.toError(e, 'cleanup_failed', false));
       return;
@@ -561,7 +526,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
     ++this.runToken;
     try {
-      await this.cleanupOptimizerRun(true);
+      await this.cleanupOptimizerRun();
     } catch (e: unknown) {
       this.SET_ERROR(this.toError(e, 'cleanup_failed', false));
       return;
@@ -600,27 +565,9 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     }
   }
 
-  private nativeApi(): INodeObsAutoConfig {
-    return obs.NodeObs as INodeObsAutoConfig;
-  }
-
-  private getNativeCapabilities(): IAutoConfigCapabilities | null {
-    try {
-      const native = this.nativeApi();
-      const methods: Array<keyof INodeObsAutoConfig> = [
-        'GetAutoConfigCapabilities',
-        'CreateAutoConfigSession',
-        'StartAutoConfigSession',
-        'GetAutoConfigResult',
-        'CancelAutoConfigSession',
-        'CloseAutoConfigSession',
-      ];
-      if (!methods.every(method => typeof native[method] === 'function')) return null;
-      return parseJson<IAutoConfigCapabilities>(native.GetAutoConfigCapabilities!());
-    } catch (e: unknown) {
-      console.warn('[Auto Optimizer] Native capability check failed; continuing normal Go Live');
-      return null;
-    }
+  private nativeApi(): IAutoConfigApi | null {
+    const api = ((obs.NodeObs as unknown) as INodeObsAutoConfig).AutoConfig;
+    return api && typeof api.run === 'function' ? api : null;
   }
 
   private async createNativeRequest(
@@ -674,14 +621,21 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           ) {
             const streamKey = await this.twitchService.fetchStreamKey();
             if (!streamKey) throw new Error('Twitch did not return a stream key');
-            const probe: IAutoConfigActiveProbe = {
-              probeId: candidate.probeId,
-              kind: candidate.kind,
-              legId: candidate.legId,
-              serviceName: 'Twitch',
-              server: 'auto',
-              streamKey,
-            };
+            const probe: IAutoConfigActiveProbe =
+              candidate.kind === 'twitch-standard'
+                ? {
+                    probeId: candidate.probeId,
+                    kind: candidate.kind,
+                    legId: candidate.legId,
+                    server: 'auto',
+                    streamKey,
+                  }
+                : {
+                    probeId: candidate.probeId,
+                    kind: candidate.kind,
+                    legId: candidate.legId,
+                    streamKey,
+                  };
             credentialProbes.push(probe);
             acquired.push({
               candidate,
@@ -695,7 +649,6 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
               probeId: lease.probeId,
               kind: candidate.kind,
               legId: candidate.legId,
-              serviceName: 'YouTube - RTMPS',
               server: lease.server,
               streamKey: lease.streamKey,
             };
@@ -797,9 +750,6 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           fpsDen: video.fpsDen,
           bitrateKbps: output.streaming.bitrate,
           encoderId: output.streaming.encoderId,
-          // V1 deliberately benchmarks and recommends H.264 only. This is a
-          // requested codec, not an inference from an encoder identifier.
-          codec: 'h264',
           preset: output.streaming.preset || undefined,
         },
         // Resolution and frame-rate promotion are permitted only with complete
@@ -833,7 +783,6 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
                   fpsDen: this.videoSettingsService.state.vertical.fpsDen,
                   bitrateKbps: output.streaming.bitrate,
                   encoderId: output.streaming.encoderId,
-                  codec: 'h264',
                   preset: output.streaming.preset || undefined,
                 },
                 limits: buildAutoOptimizerRequestLimits({
@@ -871,26 +820,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     };
   }
 
-  private createTerminalWaiter(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        this.terminalResolver = null;
-        reject(new Error('Auto Optimizer timed out'));
-      }, NATIVE_RUN_TIMEOUT_MS);
-      this.terminalResolver = () => {
-        clearTimeout(timeout);
-        this.terminalResolver = null;
-        resolve();
-      };
-    });
-  }
-
-  private handleNativeEvent(value: unknown, token: number) {
+  private handleNativeEvent(event: IAutoConfigEvent, token: number) {
     if (token !== this.runToken) return;
-    const event = parseJson<IAutoConfigEvent>(value);
-    if (!event || event.schemaVersion !== 1 || event.sessionId !== this.nativeSessionId) return;
-    if (!Number.isInteger(event.sequence) || event.sequence <= this.lastEventSequence) return;
-    this.lastEventSequence = event.sequence;
 
     const provider: TAutoOptimizerProbeProvider | null =
       event.provider === 'twitch' || event.provider === 'youtube' ? event.provider : null;
@@ -900,7 +831,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       typeof event.probeId === 'string' &&
       event.probeId
     ) {
-      this.startYoutubeIngestConfirmation(event.probeId, event.sessionId, token);
+      this.startYoutubeIngestConfirmation(event.probeId, token);
     }
 
     const phase: TConcreteAutoOptimizerPhase | null =
@@ -914,13 +845,9 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       const detail = sanitizeAutoConfigProgressDetail(event, phase);
       this.queuePhaseProgress(phase, clampProgress(event.progress), token, detail);
     }
-
-    if (event.type === 'complete' || event.type === 'cancelled') {
-      this.terminalResolver?.();
-    }
   }
 
-  private startYoutubeIngestConfirmation(probeId: string, sessionId: string, token: number) {
+  private startYoutubeIngestConfirmation(probeId: string, token: number) {
     if (this.youtubeConfirmationPromises.has(probeId)) return;
 
     const lease = this.youtubeProbeLeases.get(probeId);
@@ -939,15 +866,11 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         }
       }
 
-      if (
-        token !== this.runToken ||
-        controller?.signal.aborted ||
-        this.nativeSessionId !== sessionId
-      ) {
+      if (token !== this.runToken || controller?.signal.aborted || !this.nativeRun) {
         return;
       }
       try {
-        this.nativeApi().ConfirmAutoConfigProbeIngest?.(sessionId, probeId, received);
+        this.nativeRun.confirmProbeIngest(probeId, received);
       } catch (error: unknown) {
         console.warn('[Auto Optimizer] Could not confirm YouTube probe ingest', error);
       }
@@ -1084,12 +1007,12 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
   private isValidNativeResult(
     result: IAutoConfigNativeResult | null,
-    sessionId: string,
   ): result is IAutoConfigNativeResult {
     return Boolean(
       result &&
         result.schemaVersion === 1 &&
-        result.sessionId === sessionId &&
+        typeof result.sessionId === 'string' &&
+        result.sessionId.length > 0 &&
         Array.isArray(result.legs) &&
         ['complete', 'partial', 'cancelled', 'failed'].includes(result.status),
     );
@@ -1660,11 +1583,11 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private clearActiveProbeCredentials(probes: IAutoConfigActiveProbe[]) {
     probes.forEach(probe => {
       probe.streamKey = '';
-      probe.server = '';
+      if ('server' in probe) probe.server = '';
     });
   }
 
-  private async cleanupOptimizerRun(cancel = false): Promise<void> {
+  private async cleanupOptimizerRun(): Promise<void> {
     this.attemptRequestLegs.clear();
     this.probeAbortController?.abort();
     this.probeAbortController = null;
@@ -1675,15 +1598,17 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       lease.server = '';
     });
 
-    const sessionId = this.nativeSessionId;
-    if (sessionId) {
-      const native = this.nativeApi();
-      // Native cancellation is awaitable at the IPC boundary. Never delete a
-      // YouTube resource until this call has stopped and released its output.
-      if (cancel) native.CancelAutoConfigSession?.(sessionId);
-      native.CloseAutoConfigSession?.(sessionId);
-      if (this.nativeSessionId === sessionId) this.nativeSessionId = null;
-      this.terminalResolver?.();
+    const run = this.nativeRun;
+    if (run) {
+      // run.result resolves only after OSN has obtained the native result and
+      // closed the session. cancel() likewise stops output and closes before
+      // resolving. Provider-owned resources must remain alive until then.
+      // cancel() is idempotent after a resolved result has already closed the
+      // native session. If its close barrier fails, retain this handle and the
+      // YouTube leases so a later cleanup attempt can retry safely.
+      await closeAutoConfigRun(run, () => {
+        if (this.nativeRun === run) this.nativeRun = null;
+      });
     }
 
     const confirmations = [...this.youtubeConfirmationPromises.values()];

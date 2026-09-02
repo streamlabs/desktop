@@ -1,4 +1,9 @@
 import { TDisplayType } from 'services/settings-v2';
+import type {
+  IAutoConfigEvent as IOSNAutoConfigEvent,
+  IAutoConfigRequest as IOSNAutoConfigRequest,
+  IAutoConfigResult as IOSNAutoConfigResult,
+} from '../../../obs-api';
 
 export type TAutoOptimizerStage =
   | 'idle'
@@ -193,65 +198,20 @@ export interface IAutoOptimizerProgressDetail {
   selectedBitrateKbps: number | null;
 }
 
-export interface IAutoConfigCapabilities {
-  apiVersion: number;
-  resultSchemaVersion: number;
-  previewApplySplit: boolean;
-  awaitableCancel: boolean;
-  perUploadLegResults: boolean;
-  desktopOwnedApply: boolean;
-  multipleActiveProbes?: boolean;
-  /**
-   * Native can jointly allocate and validate two Dual Output canvas legs when
-   * one uses a Twitch probe and the other uses a YouTube probe. Other
-   * destinations may share either canvas without claiming probe provenance.
-   */
-  dualOutputActiveProbes: boolean;
-  /** Native can test a paired Twitch ladder together with every standard companion output. */
-  enhancedBroadcastingDualOutputWorkload: boolean;
-  bandwidthModes: string[];
-}
+/** OSN is the single source of truth for the Auto Optimizer wire contract. */
+export type IAutoConfigEvent = IOSNAutoConfigEvent;
+export type IAutoConfigNativeResult = IOSNAutoConfigResult;
 
-export interface IAutoConfigCurrentSettings {
-  /** Registered libobs canvas identity used by active workload probes. */
-  canvasId?: number;
-  width: number;
-  height: number;
-  fpsNum: number;
-  fpsDen: number;
-  bitrateKbps: number;
-  encoderId: string;
-  codec: string;
-  preset?: string;
-}
-
-export interface IAutoConfigRequestLimits {
-  /**
-   * Highest bitrate native may return for this Desktop-owned output. Provider
-   * probes may test above it and retain higher capacity evidence so the final
-   * recommendation can include stability headroom.
-   */
-  maxBitrateKbps?: number;
-  /** Highest canvas-bounded video tuple eligible for hardware and bandwidth testing. */
-  maxWidth?: number;
-  maxHeight?: number;
-  maxFpsNum?: number;
-  maxFpsDen?: number;
-}
-
-export interface IAutoConfigAdditionalVideoTuple {
-  display: 'vertical';
-  width: number;
-  height: number;
-  fpsNum: number;
-  fpsDen: number;
-}
-
-export interface IAutoConfigRequestAdditionalVideo {
-  display: 'vertical';
-  current: IAutoConfigCurrentSettings;
-  limits?: IAutoConfigRequestLimits;
-}
+type TOSNAutoConfigRequestLeg = IOSNAutoConfigRequest['legs'][number];
+export type IAutoConfigCurrentSettings = TOSNAutoConfigRequestLeg['current'];
+export type IAutoConfigRequestLimits = NonNullable<TOSNAutoConfigRequestLeg['limits']>;
+export type IAutoConfigRequestAdditionalVideo = NonNullable<
+  TOSNAutoConfigRequestLeg['additionalVideo']
+>;
+export type IAutoConfigRequestLeg = TOSNAutoConfigRequestLeg;
+export type IAutoConfigActiveProbe = NonNullable<IOSNAutoConfigRequest['activeProbes']>[number];
+export type IAutoConfigRequest = IOSNAutoConfigRequest;
+export type IAutoConfigAdditionalVideoTuple = NonNullable<IAutoConfigEvent['additionalVideo']>;
 
 export interface IAutoOptimizerAdditionalVideoResult {
   display: 'vertical';
@@ -259,153 +219,6 @@ export interface IAutoOptimizerAdditionalVideoResult {
   fpsNum: number;
   fpsDen: number;
   fps: number;
-}
-
-export interface IAutoConfigRequestLeg {
-  legId: string;
-  display: TDisplayType | 'both';
-  outputKind: TAutoOptimizerOutputKind;
-  destinations: IAutoOptimizerDestination[];
-  current: IAutoConfigCurrentSettings;
-  limits?: IAutoConfigRequestLimits;
-  /** Paired vertical workload sharing this Enhanced Broadcasting output. */
-  additionalVideo?: IAutoConfigRequestAdditionalVideo;
-  estimateReason?:
-    | 'non_twitch'
-    | 'custom_rtmp'
-    | 'cloud_multistream'
-    | 'dual_output'
-    | 'enhanced_broadcasting'
-    | 'stream_shift'
-    | 'mixed_topology'
-    | 'probe_disabled'
-    | 'partial_provider_probes';
-}
-
-export interface IAutoConfigRequest {
-  schemaVersion: 1;
-  topology: TAutoOptimizerTopologyType;
-  legs: IAutoConfigRequestLeg[];
-  activeProbes?: IAutoConfigActiveProbe[];
-}
-
-export type IAutoConfigActiveProbe =
-  | {
-      probeId: string;
-      kind: 'twitch-standard';
-      legId: string;
-      serviceName: 'Twitch';
-      server: 'auto';
-      streamKey: string;
-    }
-  | {
-      probeId: string;
-      kind: 'twitch-enhanced-broadcasting';
-      legId: string;
-      serviceName: 'Twitch';
-      server: 'auto';
-      streamKey: string;
-    }
-  | {
-      probeId: string;
-      kind: 'youtube-unbound';
-      legId: string;
-      serviceName: 'YouTube - RTMPS';
-      server: string;
-      streamKey: string;
-    };
-
-export interface IAutoConfigEvent {
-  schemaVersion: number;
-  sessionId: string;
-  sequence: number;
-  type: 'phase' | 'progress' | 'result' | 'error' | 'cancelled' | 'complete';
-  phase?: 'preflight' | 'hardware' | 'bandwidth' | 'recommendation' | 'cleanup';
-  progress: number;
-  code?: string;
-  legId?: string;
-  measurementMode?: TAutoOptimizerMeasurementMode;
-  probeId?: string;
-  provider?: TAutoOptimizerProbeProvider;
-  targetBitrateKbps?: number;
-  availableBitrateKbps?: number;
-  encoderId?: string;
-  /** Native/provider-owned progress may carry a family outside V1's H.264 allowlist. */
-  encoderFamily?: string;
-  encoderTitle?: string;
-  width?: number;
-  height?: number;
-  fpsNum?: number;
-  fpsDen?: number;
-  additionalVideo?: IAutoConfigAdditionalVideoTuple;
-  selectedBitrateKbps?: number;
-}
-
-export interface IAutoConfigNativeResult {
-  schemaVersion: number;
-  sessionId: string;
-  status: 'complete' | 'partial' | 'cancelled' | 'failed';
-  error?: { code: string };
-  /**
-   * Joint upload/workload proof for an actively measured two-leg Dual Output
-   * result. It is omitted for every other topology.
-   */
-  aggregateUpload?: {
-    /** Native provenance for the isolated per-provider lower-bound allocator. */
-    method: 'dual-output-isolated-lower-bound';
-    /** Maximum combined video bitrate validated across all active upload legs. */
-    safeVideoKbps: number;
-    /** Combined video bitrate explicitly allocated to the returned legs. */
-    allocatedVideoKbps: number;
-    /** Both simultaneous video encoders sustained the recommended workload. */
-    concurrentHardwareValidated: boolean;
-  };
-  /**
-   * Exact concurrent-workload proof for paired Twitch Enhanced Broadcasting
-   * plus the standard outputs used by non-Twitch Dual Output destinations.
-   * This is hardware evidence only; it does not claim aggregate upload capacity.
-   */
-  combinedWorkload?: {
-    method: 'enhanced-broadcasting-dual-output-concurrent';
-    enhancedBroadcastingLegId: string;
-    validated: boolean;
-    companionLegs: Array<{
-      legId: string;
-      display: TDisplayType;
-      width: number;
-      height: number;
-      fpsNum: number;
-      fpsDen: number;
-      bitrateKbps: number;
-      encoderId: string;
-      preset?: string;
-    }>;
-  };
-  legs: Array<{
-    legId: string;
-    display: TDisplayType | 'both';
-    destinations: Array<{ platform: string }>;
-    measurement: {
-      mode: TAutoOptimizerMeasurementMode;
-      confidence: TAutoOptimizerConfidence;
-      reason?: string;
-      probes?: IAutoOptimizerProbeEvidence[];
-    };
-    recommendation: {
-      width: number;
-      height: number;
-      fpsNum: number;
-      fpsDen: number;
-      bitrateKbps: number;
-      encoderId: string;
-      /** Provider-managed results may preserve a codec/family outside V1's H.264 allowlist. */
-      encoderFamily: string;
-      encoderTitle: string;
-      codec: string;
-      preset?: string;
-      additionalVideo?: IAutoConfigAdditionalVideoTuple;
-    };
-  }>;
 }
 
 export interface IAutoOptimizerProfile {

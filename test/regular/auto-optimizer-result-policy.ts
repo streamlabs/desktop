@@ -43,6 +43,7 @@ function dualOutputNativeResult(): IAutoConfigNativeResult {
       {
         legId: 'horizontal',
         display: 'horizontal',
+        outputKind: 'standard',
         destinations: [{ platform: 'twitch' }],
         measurement: {
           mode: 'active',
@@ -55,6 +56,7 @@ function dualOutputNativeResult(): IAutoConfigNativeResult {
               safeKbps: 6000,
               headroomPercent: 0,
               success: true,
+              ceilingReached: false,
             },
           ],
         },
@@ -63,6 +65,7 @@ function dualOutputNativeResult(): IAutoConfigNativeResult {
       {
         legId: 'vertical',
         display: 'vertical',
+        outputKind: 'standard',
         destinations: [{ platform: 'youtube' }],
         measurement: {
           mode: 'active',
@@ -75,6 +78,7 @@ function dualOutputNativeResult(): IAutoConfigNativeResult {
               safeKbps: 10000,
               headroomPercent: 0,
               success: true,
+              ceilingReached: false,
             },
           ],
         },
@@ -113,6 +117,7 @@ function enhancedBroadcastingDualOutputNativeResult(
     {
       legId: 'horizontal-standard',
       display: 'horizontal',
+      outputKind: 'standard',
       destinations: [{ platform: 'youtube' }, { platform: 'kick' }],
       measurement: {
         mode: 'active',
@@ -125,6 +130,7 @@ function enhancedBroadcastingDualOutputNativeResult(
             safeKbps: 6000,
             headroomPercent: 0,
             success: true,
+            ceilingReached: false,
           },
         ],
       },
@@ -135,6 +141,7 @@ function enhancedBroadcastingDualOutputNativeResult(
     companionLegs.push({
       legId: 'vertical-standard',
       display: 'vertical',
+      outputKind: 'standard',
       destinations: [{ platform: 'youtube' }],
       measurement: {
         mode: 'active',
@@ -147,6 +154,7 @@ function enhancedBroadcastingDualOutputNativeResult(
             safeKbps: 6000,
             headroomPercent: 0,
             success: true,
+            ceilingReached: false,
           },
         ],
       },
@@ -184,6 +192,7 @@ function enhancedBroadcastingDualOutputNativeResult(
       {
         legId: 'twitch-enhanced-broadcasting',
         display: 'both',
+        outputKind: 'twitch-enhanced-broadcasting',
         destinations: [{ platform: 'twitch' }],
         measurement: {
           mode: 'active',
@@ -193,6 +202,7 @@ function enhancedBroadcastingDualOutputNativeResult(
               provider: 'twitch',
               method: 'twitch-enhanced-broadcasting-test',
               success: true,
+              ceilingReached: false,
               testedWidth: 1920,
               testedHeight: 1080,
               testedFpsNum: 60,
@@ -223,7 +233,9 @@ test('two-leg Dual Output requires one valid aggregate upload and hardware proof
   t.false(isValidAutoConfigDualOutputAggregateResult(missingAggregate, expectedLegIds));
 
   const hardwareNotConcurrent = dualOutputNativeResult();
-  hardwareNotConcurrent.aggregateUpload!.concurrentHardwareValidated = false;
+  ((hardwareNotConcurrent.aggregateUpload as unknown) as {
+    concurrentHardwareValidated: boolean;
+  }).concurrentHardwareValidated = false;
   t.false(isValidAutoConfigDualOutputAggregateResult(hardwareNotConcurrent, expectedLegIds));
 
   const overcommitted = dualOutputNativeResult();
@@ -366,7 +378,7 @@ test('mixed Enhanced Broadcasting rejects a missing, unvalidated, or misidentifi
   );
 
   const unvalidated = enhancedBroadcastingDualOutputNativeResult();
-  unvalidated.combinedWorkload!.validated = false;
+  ((unvalidated.combinedWorkload as unknown) as { validated: boolean }).validated = false;
   t.false(
     isValidAutoConfigEnhancedBroadcastingDualOutputResultEnvelope(
       unvalidated,

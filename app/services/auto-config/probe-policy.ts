@@ -1,5 +1,4 @@
 import {
-  IAutoConfigCapabilities,
   IAutoConfigAdditionalVideoTuple,
   IAutoConfigEvent,
   IAutoOptimizerProgressDetail,
@@ -137,43 +136,18 @@ export function isValidAutoConfigActiveProbeCoverage(p: {
   return !isPartial || p.confidence === 'low';
 }
 
-/** The session API can still optimize with estimates when no active probe is available. */
-export function hasRequiredAutoConfigCapabilities(
-  capabilities: IAutoConfigCapabilities | null | undefined,
-): boolean {
-  return Boolean(
-    capabilities &&
-      capabilities.apiVersion === 1 &&
-      capabilities.resultSchemaVersion === 1 &&
-      capabilities.previewApplySplit === true &&
-      capabilities.awaitableCancel === true &&
-      capabilities.perUploadLegResults === true &&
-      capabilities.desktopOwnedApply === true &&
-      typeof capabilities.dualOutputActiveProbes === 'boolean' &&
-      typeof capabilities.enhancedBroadcastingDualOutputWorkload === 'boolean' &&
-      capabilities.bandwidthModes?.includes('estimate'),
-  );
-}
-
-/** Active modes are optional enhancements on top of the required estimate mode. */
+/**
+ * The native facade defines the complete Twitch/YouTube probe contract.
+ * YouTube remains additionally gated by the run handle's ingest-confirmation
+ * capability.
+ */
 export function supportedAutoConfigProbeKinds(
-  capabilities: IAutoConfigCapabilities,
   runtime: IAutoConfigProbeRuntimeSupport,
 ): Set<TAutoOptimizerProbeKind> {
   const kinds = new Set<TAutoOptimizerProbeKind>();
-  if (capabilities.bandwidthModes.includes('twitch-standard-active')) {
-    kinds.add('twitch-standard');
-  }
-  if (capabilities.bandwidthModes.includes('twitch-enhanced-broadcasting-active')) {
-    kinds.add('twitch-enhanced-broadcasting');
-  }
-  if (
-    runtime.canConfirmYoutubeIngest &&
-    capabilities.multipleActiveProbes === true &&
-    capabilities.bandwidthModes.includes('youtube-unbound-active')
-  ) {
-    kinds.add('youtube-unbound');
-  }
+  kinds.add('twitch-standard');
+  kinds.add('twitch-enhanced-broadcasting');
+  if (runtime.canConfirmYoutubeIngest) kinds.add('youtube-unbound');
   return kinds;
 }
 
@@ -349,18 +323,14 @@ function selectAutoConfigDualOutputProbePair(
 }
 
 /**
- * Filter credential-free candidates against the negotiated native/runtime
- * capabilities. Supported provider probes remain useful independently; a
- * shared leg with partial coverage is identified explicitly and cannot promote
- * video quality from that incomplete evidence.
+ * Filter credential-free candidates against the providers this Desktop run can
+ * prepare. Supported provider probes remain useful independently; a shared leg
+ * with partial coverage is identified explicitly and cannot promote video
+ * quality from that incomplete evidence.
  */
 export function filterAutoConfigTopologyProbes(
   topology: IAutoOptimizerTopology,
   supportedKinds: ReadonlySet<TAutoOptimizerProbeKind>,
-  options: {
-    dualOutputActiveProbes?: boolean;
-    enhancedBroadcastingDualOutputWorkload?: boolean;
-  } = {},
 ): IAutoOptimizerTopology {
   const filtered: IAutoOptimizerTopology = {
     ...topology,
@@ -375,13 +345,9 @@ export function filterAutoConfigTopologyProbes(
   // Twitch/YouTube experiment. When a canvas also targets an unsupported V1
   // provider, select one supported representative for that canvas instead of
   // disabling both active measurements.
-  const selectedDualOutput =
-    options.dualOutputActiveProbes === true
-      ? selectAutoConfigDualOutputProbePair(topology, supportedKinds)
-      : null;
+  const selectedDualOutput = selectAutoConfigDualOutputProbePair(topology, supportedKinds);
   const unsafeDualOutput = filtered.type === 'dual-output' && !selectedDualOutput;
   const eligibleEnhancedBroadcastingDualOutput =
-    options.enhancedBroadcastingDualOutputWorkload === true &&
     supportedKinds.has('twitch-enhanced-broadcasting') &&
     isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology(topology);
   const unsafeEnhancedBroadcastingDualOutput =
@@ -528,12 +494,9 @@ export function autoConfigPhaseStepKey(
       code === 'hardware_validating_target_cadence' ||
       code === 'hardware_target_cadence_rejected')
   ) {
-    const kind =
-      code === 'hardware_testing_encoder_surfaces'
-        ? 'surfaces'
-        : code === 'hardware_validating_target_cadence'
-        ? 'target-cadence'
-        : 'target-cadence-rejected';
+    let kind = 'target-cadence-rejected';
+    if (code === 'hardware_testing_encoder_surfaces') kind = 'surfaces';
+    else if (code === 'hardware_validating_target_cadence') kind = 'target-cadence';
     if (code === 'hardware_testing_encoder_surfaces') {
       return `hardware:${kind}:${encoder}:${detail?.width || 0}x${detail?.height || 0}`;
     }
