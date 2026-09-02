@@ -1,80 +1,19 @@
 import test from 'ava';
 import {
-  areAutoConfigActiveCanvasIdentitiesValid,
-  autoConfigProbeCoverage,
   autoConfigPhaseStepDisposition,
   autoConfigPhaseStepKey,
-  credentialFreeAutoConfigRequestOutput,
-  filterAutoConfigStreamSetupProbes,
   isEligibleAutoConfigDualOutputActiveStreamSetup,
   isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup,
   isValidAutoConfigActiveProbeCoverage,
+  prepareAutoConfigStreamSetup,
   sanitizeAutoConfigProgressDetail,
   sanitizeAutoConfigProbeEvidence,
-  sanitizeAutoConfigProbeTargetBitrateKbps,
-  supportedAutoConfigProbeKinds,
 } from '../../app/services/auto-config/probe-policy';
-import {
-  IAutoConfigEvent,
-  IAutoConfigRequestOutput,
-  IAutoOptimizerStreamSetup,
-  TAutoOptimizerProbeKind,
-} from '../../app/services/auto-config/types';
-
-test('retained attempt context contains no provider credentials', t => {
-  const retained = credentialFreeAutoConfigRequestOutput({
-    outputId: 'horizontal',
-    display: 'horizontal',
-    outputKind: 'standard',
-    destinations: ['youtube'],
-    current: {
-      canvasId: 0,
-      width: 1280,
-      height: 720,
-      fpsNum: 30,
-      fpsDen: 1,
-      bitrateKbps: 3000,
-      encoderId: 'obs_nvenc_h264_tex',
-      preset: 'p5',
-    },
-    limits: { maxBitrateKbps: 8000 },
-    estimateReason: 'partial_provider_probes',
-    probes: [
-      {
-        id: 'youtube-probe',
-        kind: 'youtube-unbound',
-        server: 'rtmp://example.test',
-        streamKey: 'secret-key',
-      },
-    ],
-  } as IAutoConfigRequestOutput);
-
-  t.false('probes' in retained);
-  const serialized = JSON.stringify(retained);
-  t.false(serialized.includes('streamKey'));
-  t.false(serialized.includes('server'));
-  t.false(serialized.includes('secret-key'));
-  t.is(retained.current.canvasId, 0);
-  t.deepEqual(retained.destinations, ['youtube']);
-});
+import { IAutoConfigEvent, IAutoOptimizerStreamSetup } from '../../app/services/auto-config/types';
 
 function allProbeCandidates(streamSetup: IAutoOptimizerStreamSetup) {
   return streamSetup.outputs.flatMap(output => output.probeCandidates);
 }
-
-test('zero-based paired Enhanced Broadcasting canvas identities reach native preparation', t => {
-  t.true(areAutoConfigActiveCanvasIdentitiesValid(0, 1, true));
-  t.true(areAutoConfigActiveCanvasIdentitiesValid(0, undefined, false));
-
-  t.false(areAutoConfigActiveCanvasIdentitiesValid(undefined, 1, true));
-  t.false(areAutoConfigActiveCanvasIdentitiesValid(0, undefined, true));
-  t.false(areAutoConfigActiveCanvasIdentitiesValid(-1, 1, true));
-  t.false(areAutoConfigActiveCanvasIdentitiesValid(0, -1, true));
-  t.false(areAutoConfigActiveCanvasIdentitiesValid(0.5, 1, true));
-  t.false(areAutoConfigActiveCanvasIdentitiesValid(0, 1.5, true));
-  t.false(areAutoConfigActiveCanvasIdentitiesValid(0, 0, true));
-  t.false(areAutoConfigActiveCanvasIdentitiesValid(Number.MAX_SAFE_INTEGER + 1, undefined, false));
-});
 
 function twitchYoutubeDualOutputStreamSetup(): IAutoOptimizerStreamSetup {
   const outputs = ['twitch', 'youtube'].map((provider, index) => ({
@@ -170,78 +109,11 @@ function enhancedBroadcastingDualOutputStreamSetup(): IAutoOptimizerStreamSetup 
   };
 }
 
-test('the paired native facade supports every V1 probe kind', t => {
-  t.deepEqual(
-    [...supportedAutoConfigProbeKinds()],
-    ['twitch-standard', 'twitch-enhanced-broadcasting', 'youtube-unbound'],
-  );
-});
-
-test('a shared cloud output retains the supported provider when another is unavailable', t => {
-  const streamSetup = sharedCloudStreamSetup();
-  const filtered = filterAutoConfigStreamSetupProbes(
-    streamSetup,
-    new Set<TAutoOptimizerProbeKind>(['twitch-standard']),
-  );
-
-  t.is(filtered.outputs[0].measurement, 'active');
-  t.is(filtered.outputs[0].estimateReason, 'partial_provider_probes');
-  t.deepEqual(
-    filtered.outputs[0].probeCandidates.map(candidate => candidate.provider),
-    ['twitch'],
-  );
-  t.deepEqual(
-    allProbeCandidates(filtered).map(candidate => candidate.provider),
-    ['twitch'],
-  );
-  t.is(streamSetup.outputs[0].measurement, 'active', 'the classifier output is not mutated');
-  t.is(allProbeCandidates(streamSetup).length, 2);
-});
-
-test('Enhanced Broadcasting requires its exact supported probe kind', t => {
-  const candidate = {
-    probeId: 'horizontal-twitch',
-    kind: 'twitch-enhanced-broadcasting' as const,
-    outputId: 'horizontal',
-    provider: 'twitch' as const,
-  };
-  const streamSetup: IAutoOptimizerStreamSetup = {
-    type: 'enhanced-broadcasting',
-    outputs: [
-      {
-        outputId: 'horizontal',
-        display: 'horizontal',
-        outputKind: 'twitch-enhanced-broadcasting',
-        destinations: [{ platform: 'twitch' }],
-        probeCandidates: [candidate],
-        measurement: 'active',
-      },
-    ],
-  };
-
-  const standardOnly = filterAutoConfigStreamSetupProbes(
-    streamSetup,
-    new Set<TAutoOptimizerProbeKind>(['twitch-standard']),
-  );
-  t.is(standardOnly.outputs[0].measurement, 'estimated');
-  t.deepEqual(allProbeCandidates(standardOnly), []);
-
-  const enhanced = filterAutoConfigStreamSetupProbes(
-    streamSetup,
-    new Set<TAutoOptimizerProbeKind>(['twitch-enhanced-broadcasting']),
-  );
-  t.is(enhanced.outputs[0].measurement, 'active');
-  t.deepEqual(allProbeCandidates(enhanced), [candidate]);
-});
-
 test('mixed Enhanced Broadcasting keeps only its Twitch and YouTube representatives', t => {
   const streamSetup = enhancedBroadcastingDualOutputStreamSetup();
   t.true(isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(streamSetup));
 
-  const filtered = filterAutoConfigStreamSetupProbes(
-    streamSetup,
-    new Set<TAutoOptimizerProbeKind>(['twitch-enhanced-broadcasting', 'youtube-unbound']),
-  );
+  const filtered = prepareAutoConfigStreamSetup(streamSetup);
 
   t.true(isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(filtered));
   t.deepEqual(
@@ -268,235 +140,11 @@ test('mixed Enhanced Broadcasting keeps only its Twitch and YouTube representati
   );
 });
 
-test('mixed Enhanced Broadcasting becomes fully estimate-only without its Twitch probe', t => {
-  const streamSetup = enhancedBroadcastingDualOutputStreamSetup();
-  const missingTwitchMode = filterAutoConfigStreamSetupProbes(
-    streamSetup,
-    new Set<TAutoOptimizerProbeKind>(['youtube-unbound']),
-  );
-  t.deepEqual(allProbeCandidates(missingTwitchMode), []);
-  t.true(missingTwitchMode.outputs.every(output => output.measurement === 'estimated'));
-  t.true(
-    missingTwitchMode.outputs.every(output => output.estimateReason === 'enhanced_broadcasting'),
-  );
-});
-
-test('probe coverage estimates only with zero probes and disables partial promotion', t => {
-  t.deepEqual(autoConfigProbeCoverage(2, 0), {
-    measurement: 'estimated',
-    estimateReason: 'probe_disabled',
-    allowPromotion: false,
-  });
-  t.deepEqual(autoConfigProbeCoverage(2, 1), {
-    measurement: 'active',
-    estimateReason: 'partial_provider_probes',
-    allowPromotion: false,
-  });
-  t.deepEqual(autoConfigProbeCoverage(2, 2), {
-    measurement: 'active',
-    allowPromotion: true,
-  });
-});
-
-test('partial active provider evidence is accepted only at low confidence', t => {
-  const partial = {
-    destinations: [{ platform: 'twitch' }, { platform: 'youtube' }],
-    attemptedCandidates: [{ provider: 'twitch' as const, kind: 'twitch-standard' as const }],
-    evidence: [
-      {
-        platform: 'twitch' as const,
-        method: 'twitch-bandwidth-test' as const,
-        success: true,
-      },
-    ],
-  };
-
-  t.true(isValidAutoConfigActiveProbeCoverage({ ...partial, confidence: 'low' }));
-  t.false(isValidAutoConfigActiveProbeCoverage({ ...partial, confidence: 'medium' }));
-  t.false(isValidAutoConfigActiveProbeCoverage({ ...partial, confidence: 'high' }));
-});
-
-test('a joint Dual Output probe represents its canvas without claiming every destination', t => {
-  const evidence = [
-    {
-      platform: 'twitch' as const,
-      method: 'twitch-bandwidth-test' as const,
-      success: true,
-    },
-  ];
-  const context = {
-    destinations: [{ platform: 'twitch' }, { platform: 'youtube' }, { platform: 'kick' }],
-    attemptedCandidates: [{ provider: 'twitch' as const, kind: 'twitch-standard' as const }],
-    evidence,
-    confidence: 'high',
-  };
-
-  t.false(isValidAutoConfigActiveProbeCoverage(context));
-  t.true(
-    isValidAutoConfigActiveProbeCoverage({
-      ...context,
-      requireAllProbeCapableDestinations: false,
-    }),
-  );
-});
-
-test('runtime-partial active coverage accepts one prepared success only at low confidence', t => {
-  const twitchEvidence = {
-    platform: 'twitch' as const,
-    method: 'twitch-bandwidth-test' as const,
-    success: true,
-  };
-  const context = {
-    destinations: [{ platform: 'twitch' }, { platform: 'youtube' }],
-    attemptedCandidates: [
-      { provider: 'twitch' as const, kind: 'twitch-standard' as const },
-      { provider: 'youtube' as const, kind: 'youtube-unbound' as const },
-    ],
-  };
-
-  const runtimePartial = {
-    ...context,
-    evidence: [
-      twitchEvidence,
-      { platform: 'youtube' as const, method: 'youtube-unbound-ramp' as const, success: false },
-    ],
-  };
-
-  t.true(
-    isValidAutoConfigActiveProbeCoverage({
-      ...runtimePartial,
-      confidence: 'low',
-    }),
-  );
-  t.false(isValidAutoConfigActiveProbeCoverage({ ...runtimePartial, confidence: 'medium' }));
-  t.false(isValidAutoConfigActiveProbeCoverage({ ...runtimePartial, confidence: 'high' }));
-  t.false(
-    isValidAutoConfigActiveProbeCoverage({
-      ...context,
-      confidence: 'low',
-      evidence: [
-        { platform: 'twitch', method: 'twitch-bandwidth-test', success: false },
-        { platform: 'youtube', method: 'youtube-unbound-ramp', success: false },
-      ],
-    }),
-  );
-  t.true(
-    isValidAutoConfigActiveProbeCoverage({
-      ...context,
-      confidence: 'medium',
-      evidence: [
-        twitchEvidence,
-        {
-          platform: 'youtube',
-          method: 'youtube-unbound-ramp',
-          success: true,
-        },
-      ],
-    }),
-  );
-});
-
-test('active evidence cannot claim a provider Desktop did not attempt', t => {
-  t.false(
-    isValidAutoConfigActiveProbeCoverage({
-      destinations: [{ platform: 'twitch' }, { platform: 'youtube' }],
-      attemptedCandidates: [{ provider: 'twitch', kind: 'twitch-standard' }],
-      confidence: 'low',
-      evidence: [
-        {
-          platform: 'twitch',
-          method: 'twitch-bandwidth-test',
-          success: true,
-        },
-        {
-          platform: 'youtube',
-          method: 'youtube-unbound-ramp',
-          success: true,
-        },
-      ],
-    }),
-  );
-});
-
-test('active Twitch evidence must match the exact attempted standard or Enhanced Broadcasting method', t => {
-  const context = {
-    destinations: [{ platform: 'twitch' }],
-    confidence: 'high',
-  };
-  const standardEvidence = {
-    platform: 'twitch' as const,
-    method: 'twitch-bandwidth-test' as const,
-    success: true,
-  };
-  const enhancedEvidence = {
-    platform: 'twitch' as const,
-    method: 'twitch-enhanced-broadcasting-test' as const,
-    success: true,
-  };
-
-  t.true(
-    isValidAutoConfigActiveProbeCoverage({
-      ...context,
-      attemptedCandidates: [{ provider: 'twitch', kind: 'twitch-standard' }],
-      evidence: [standardEvidence],
-    }),
-  );
-  t.false(
-    isValidAutoConfigActiveProbeCoverage({
-      ...context,
-      attemptedCandidates: [{ provider: 'twitch', kind: 'twitch-standard' }],
-      evidence: [enhancedEvidence],
-    }),
-  );
-  t.true(
-    isValidAutoConfigActiveProbeCoverage({
-      ...context,
-      attemptedCandidates: [{ provider: 'twitch', kind: 'twitch-enhanced-broadcasting' }],
-      evidence: [enhancedEvidence],
-    }),
-  );
-  t.false(
-    isValidAutoConfigActiveProbeCoverage({
-      ...context,
-      attemptedCandidates: [{ provider: 'twitch', kind: 'twitch-enhanced-broadcasting' }],
-      evidence: [standardEvidence],
-    }),
-  );
-});
-
-test('a shared cloud output remains estimate-only when no provider probe is supported', t => {
-  const filtered = filterAutoConfigStreamSetupProbes(
-    sharedCloudStreamSetup(),
-    new Set<TAutoOptimizerProbeKind>(),
-  );
-
-  t.is(filtered.outputs[0].measurement, 'estimated');
-  t.is(filtered.outputs[0].estimateReason, 'probe_disabled');
-  t.deepEqual(allProbeCandidates(filtered), []);
-});
-
-test('a shared cloud output retains deterministic candidates when every provider is supported', t => {
-  const filtered = filterAutoConfigStreamSetupProbes(
-    sharedCloudStreamSetup(),
-    new Set<TAutoOptimizerProbeKind>(['youtube-unbound', 'twitch-standard']),
-  );
-
-  t.deepEqual(
-    allProbeCandidates(filtered).map(candidate => candidate.provider),
-    ['twitch', 'youtube'],
-  );
-  t.is(filtered.outputs[0].measurement, 'active');
-  t.is(filtered.outputs[0].estimateReason, undefined);
-});
-
 test('the exact Twitch and YouTube two-output topology keeps both active probes', t => {
   const streamSetup = twitchYoutubeDualOutputStreamSetup();
   t.true(isEligibleAutoConfigDualOutputActiveStreamSetup(streamSetup));
 
-  const filtered = filterAutoConfigStreamSetupProbes(
-    streamSetup,
-    new Set<TAutoOptimizerProbeKind>(['twitch-standard', 'youtube-unbound']),
-  );
+  const filtered = prepareAutoConfigStreamSetup(streamSetup);
   t.deepEqual(
     filtered.outputs.map(output => [
       output.display,
@@ -518,10 +166,7 @@ test('Dual Output keeps one supported probe per canvas when other platforms shar
   const streamSetup = twitchKickYoutubeDualOutputStreamSetup();
   t.true(isEligibleAutoConfigDualOutputActiveStreamSetup(streamSetup));
 
-  const filtered = filterAutoConfigStreamSetupProbes(
-    streamSetup,
-    new Set<TAutoOptimizerProbeKind>(['twitch-standard', 'youtube-unbound']),
-  );
+  const filtered = prepareAutoConfigStreamSetup(streamSetup);
   t.deepEqual(
     filtered.outputs.map(output => ({
       destinations: output.destinations.map(destination => destination.platform),
@@ -556,10 +201,7 @@ test('Dual Output selects distinct supported representatives when a canvas has b
     provider: 'youtube',
   });
 
-  const filtered = filterAutoConfigStreamSetupProbes(
-    streamSetup,
-    new Set<TAutoOptimizerProbeKind>(['twitch-standard', 'youtube-unbound']),
-  );
+  const filtered = prepareAutoConfigStreamSetup(streamSetup);
   t.deepEqual(
     filtered.outputs.map(output => output.probeCandidates.map(candidate => candidate.provider)),
     [['twitch'], ['youtube']],
@@ -572,10 +214,7 @@ test('Dual Output remains estimate-only when a canvas has no supported represent
   streamSetup.outputs[1].destinations = [{ platform: 'kick' }];
   streamSetup.outputs[1].probeCandidates = [];
 
-  const filtered = filterAutoConfigStreamSetupProbes(
-    streamSetup,
-    new Set<TAutoOptimizerProbeKind>(['twitch-standard', 'youtube-unbound']),
-  );
+  const filtered = prepareAutoConfigStreamSetup(streamSetup);
   t.true(filtered.outputs.every(output => output.measurement === 'estimated'));
   t.deepEqual(allProbeCandidates(filtered), []);
 });
@@ -587,26 +226,11 @@ test('the active Dual Output topology requires unique per-output probe IDs', t =
   t.false(isEligibleAutoConfigDualOutputActiveStreamSetup(reusedProbeId));
 });
 
-test('the exact Dual Output topology requires both provider probe kinds', t => {
-  for (const kind of ['twitch-standard', 'youtube-unbound'] as const) {
-    const filtered = filterAutoConfigStreamSetupProbes(
-      twitchYoutubeDualOutputStreamSetup(),
-      new Set<TAutoOptimizerProbeKind>([kind]),
-    );
-    t.true(filtered.outputs.every(output => output.measurement === 'estimated'));
-    t.true(filtered.outputs.every(output => output.estimateReason === 'dual_output'));
-    t.deepEqual(allProbeCandidates(filtered), []);
-  }
-});
-
 test('a single multi-destination output nested under Dual Output is estimate-only', t => {
   const streamSetup = sharedCloudStreamSetup();
   streamSetup.type = 'dual-output';
 
-  const filtered = filterAutoConfigStreamSetupProbes(
-    streamSetup,
-    new Set<TAutoOptimizerProbeKind>(['twitch-standard', 'youtube-unbound']),
-  );
+  const filtered = prepareAutoConfigStreamSetup(streamSetup);
 
   t.is(filtered.outputs[0].measurement, 'estimated');
   t.is(filtered.outputs[0].estimateReason, 'dual_output');
@@ -634,13 +258,57 @@ test('YouTube display both cannot create two active probe leases', t => {
     outputs,
   };
 
-  const filtered = filterAutoConfigStreamSetupProbes(
-    streamSetup,
-    new Set<TAutoOptimizerProbeKind>(['youtube-unbound']),
-  );
+  const filtered = prepareAutoConfigStreamSetup(streamSetup);
 
   t.true(filtered.outputs.every(output => output.measurement === 'estimated'));
   t.deepEqual(allProbeCandidates(filtered), []);
+});
+
+test('active evidence stays attempt-bound and partial coverage remains low-confidence', t => {
+  const partial = {
+    destinations: [{ platform: 'twitch' as const }, { platform: 'youtube' as const }],
+    attemptedCandidates: [{ provider: 'twitch' as const, kind: 'twitch-standard' as const }],
+    evidence: [
+      {
+        platform: 'twitch' as const,
+        method: 'twitch-bandwidth-test' as const,
+        success: true,
+      },
+    ],
+  };
+
+  t.true(isValidAutoConfigActiveProbeCoverage({ ...partial, confidence: 'low' }));
+  t.false(isValidAutoConfigActiveProbeCoverage({ ...partial, confidence: 'medium' }));
+  t.false(
+    isValidAutoConfigActiveProbeCoverage({
+      ...partial,
+      confidence: 'low',
+      evidence: [
+        {
+          platform: 'twitch',
+          method: 'twitch-enhanced-broadcasting-test',
+          success: true,
+        },
+      ],
+    }),
+  );
+  t.false(
+    isValidAutoConfigActiveProbeCoverage({
+      ...partial,
+      confidence: 'low',
+      evidence: [
+        ...partial.evidence,
+        { platform: 'youtube', method: 'youtube-unbound-ramp', success: true },
+      ],
+    }),
+  );
+  t.false(
+    isValidAutoConfigActiveProbeCoverage({
+      ...partial,
+      confidence: 'low',
+      evidence: [{ ...partial.evidence[0], success: false }],
+    }),
+  );
 });
 
 test('sequential provider bandwidth events receive distinct pacing keys', t => {
@@ -892,16 +560,6 @@ test('progress pacing coalesces repeats but preserves A to B to A transitions', 
   t.is(autoConfigPhaseStepDisposition('A', ['B', 'A'], 'B'), 'enqueue');
 });
 
-test('active probe target bitrate feedback is conservatively validated', t => {
-  t.is(sanitizeAutoConfigProbeTargetBitrateKbps(10000), 10000);
-  t.is(sanitizeAutoConfigProbeTargetBitrateKbps(0), null);
-  t.is(sanitizeAutoConfigProbeTargetBitrateKbps(-1), null);
-  t.is(sanitizeAutoConfigProbeTargetBitrateKbps(1.5), null);
-  t.is(sanitizeAutoConfigProbeTargetBitrateKbps(Number.POSITIVE_INFINITY), null);
-  t.is(sanitizeAutoConfigProbeTargetBitrateKbps('6000'), null);
-  t.is(sanitizeAutoConfigProbeTargetBitrateKbps(100001), null);
-});
-
 test('attempt progress detail preserves only bounded native status metadata', t => {
   const event: IAutoConfigEvent = {
     type: 'progress',
@@ -949,8 +607,8 @@ test('attempt progress detail preserves only bounded native status metadata', t 
   });
 });
 
-test('malformed progress metadata cannot leak into mirrored UI state', t => {
-  const event = ({
+test('renderer-bound progress and evidence discard malformed or private fields', t => {
+  const malformedEvent = ({
     type: 'progress',
     phase: 'bandwidth',
     progress: 40,
@@ -959,30 +617,18 @@ test('malformed progress metadata cannot leak into mirrored UI state', t => {
     targetBitrateKbps: 10000,
     availableBitrateKbps: Number.POSITIVE_INFINITY,
     encoderId: 'x'.repeat(300),
-    encoderFamily: 'legacy',
-    encoderTitle: 'x'.repeat(300),
     width: -1,
     additionalVideo: { display: 'horizontal', width: 1080, height: 1920 },
   } as unknown) as IAutoConfigEvent;
+  const detail = sanitizeAutoConfigProgressDetail(malformedEvent, 'bandwidth');
+  t.is(detail.provider, 'youtube');
+  t.is(detail.targetBitrateKbps, 10000);
+  t.is(detail.code, null);
+  t.is(detail.availableBitrateKbps, null);
+  t.is(detail.encoderId, null);
+  t.is(detail.width, null);
+  t.is(detail.additionalVideo, null);
 
-  t.deepEqual(sanitizeAutoConfigProgressDetail(event, 'bandwidth'), {
-    code: null,
-    provider: 'youtube',
-    targetBitrateKbps: 10000,
-    availableBitrateKbps: null,
-    encoderId: null,
-    encoderFamily: null,
-    encoderTitle: null,
-    width: null,
-    height: null,
-    fpsNum: null,
-    fpsDen: null,
-    additionalVideo: null,
-    selectedBitrateKbps: null,
-  });
-});
-
-test('probe evidence is validated and strips attempt-local or unknown fields', t => {
   t.deepEqual(
     sanitizeAutoConfigProbeEvidence([
       {
@@ -991,90 +637,9 @@ test('probe evidence is validated and strips attempt-local or unknown fields', t
         success: true,
         streamKey: 'must-not-leak',
       },
-      {
-        platform: 'youtube',
-        method: 'youtube-unbound-ramp',
-        success: true,
-      },
-      {
-        platform: 'twitch',
-        method: 'twitch-enhanced-broadcasting-test',
-        success: true,
-        internalLadder: 'must-not-leak',
-      },
-      {
-        platform: 'other',
-        method: 'unknown',
-        success: true,
-      },
-      {
-        platform: 'youtube',
-        method: 'invalid-negative',
-        success: false,
-      },
-      {
-        platform: 'youtube',
-        method: 'youtube-unbound-ramp',
-        success: false,
-      },
+      { platform: 'youtube', method: 'twitch-bandwidth-test', success: true },
+      { platform: 'youtube', method: 'youtube-unbound-ramp', success: 'yes' },
     ]),
-    [
-      {
-        platform: 'twitch',
-        method: 'twitch-bandwidth-test',
-        success: true,
-      },
-      {
-        platform: 'youtube',
-        method: 'youtube-unbound-ramp',
-        success: true,
-      },
-      {
-        platform: 'twitch',
-        method: 'twitch-enhanced-broadcasting-test',
-        success: true,
-      },
-      {
-        platform: 'youtube',
-        method: 'youtube-unbound-ramp',
-        success: false,
-      },
-    ],
-  );
-});
-
-test('malformed probe evidence is discarded at the renderer boundary', t => {
-  t.deepEqual(sanitizeAutoConfigProbeEvidence(null), []);
-  t.deepEqual(
-    sanitizeAutoConfigProbeEvidence([
-      null,
-      { platform: 'twitch' },
-      {
-        platform: 'youtube',
-        method: 'x'.repeat(65),
-        success: true,
-      },
-      {
-        platform: 'youtube',
-        method: 'youtube-unbound-ramp',
-        success: 'yes',
-      },
-      {
-        platform: 'youtube',
-        method: 'unsupported-youtube-method',
-        success: false,
-      },
-      {
-        platform: 'youtube',
-        method: 'twitch-bandwidth-test',
-        success: false,
-      },
-      {
-        platform: 'other',
-        method: 'unknown',
-        success: true,
-      },
-    ]),
-    [],
+    [{ platform: 'twitch', method: 'twitch-bandwidth-test', success: true }],
   );
 });

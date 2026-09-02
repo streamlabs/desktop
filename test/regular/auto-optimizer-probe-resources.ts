@@ -97,6 +97,36 @@ test('provider resources prepare request probes without retaining YouTube creden
   await resources.cleanupAfterNativeClose(async () => undefined);
 });
 
+test('a shared output keeps one successful provider as partial active coverage', async t => {
+  const mocks = services({
+    acquire: async () => {
+      throw new Error('YouTube unavailable');
+    },
+  });
+  const resources = new AutoConfigProbeResources(mocks.twitch, mocks.youtube);
+  const prepared = await resources.prepare({
+    type: 'cloud-multistream',
+    outputs: [
+      {
+        ...output('shared', 'twitch'),
+        destinations: [{ platform: 'twitch' }, { platform: 'youtube' }],
+        probeCandidates: [
+          output('shared', 'twitch').probeCandidates[0],
+          output('shared', 'youtube').probeCandidates[0],
+        ],
+      },
+    ],
+  });
+
+  t.is(prepared.streamSetup.outputs[0].measurement, 'active');
+  t.is(prepared.streamSetup.outputs[0].estimateReason, 'partial_provider_probes');
+  t.deepEqual(
+    prepared.probesByOutput.get('shared')!.map(probe => probe.kind),
+    ['twitch-standard'],
+  );
+  await resources.cleanupAfterNativeClose(async () => undefined);
+});
+
 test('exact Dual Output preparation rejects a partial provider acquisition', async t => {
   const mocks = services({
     acquire: async () => {
@@ -134,8 +164,16 @@ test('YouTube ingest is confirmed once for the exact prepared probe', async t =>
         resolve();
       },
     };
-    resources.confirmYoutubeIngest('youtube-runtime-id', () => run, () => true);
-    resources.confirmYoutubeIngest('youtube-runtime-id', () => run, () => true);
+    resources.confirmYoutubeIngest(
+      'youtube-runtime-id',
+      () => run,
+      () => true,
+    );
+    resources.confirmYoutubeIngest(
+      'youtube-runtime-id',
+      () => run,
+      () => true,
+    );
   });
 
   resolveConfirmation(true);

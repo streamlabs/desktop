@@ -1,8 +1,6 @@
 import {
   IAutoConfigAdditionalVideoTuple,
   IAutoConfigEvent,
-  IAutoConfigAttemptRequestOutput,
-  IAutoConfigRequestOutput,
   IAutoOptimizerProbeCandidate,
   IAutoOptimizerProgressDetail,
   IAutoOptimizerProbeEvidence,
@@ -14,36 +12,6 @@ import {
   TAutoOptimizerProbeProvider,
 } from './types';
 
-/**
- * Retain only acceptance inputs after OSN has copied the request. Provider
- * credentials live exclusively in nested probes and must not survive in the
- * attempt context used to validate the eventual result.
- */
-export function credentialFreeAutoConfigRequestOutput(
-  output: IAutoConfigRequestOutput,
-): IAutoConfigAttemptRequestOutput {
-  return {
-    outputId: output.outputId,
-    display: output.display,
-    outputKind: output.outputKind,
-    destinations: [...output.destinations],
-    current: { ...output.current },
-    ...(output.limits ? { limits: { ...output.limits } } : {}),
-    ...(output.additionalVideo
-      ? {
-          additionalVideo: {
-            display: output.additionalVideo.display,
-            current: { ...output.additionalVideo.current },
-            ...(output.additionalVideo.limits
-              ? { limits: { ...output.additionalVideo.limits } }
-              : {}),
-          },
-        }
-      : {}),
-    ...(output.estimateReason ? { estimateReason: output.estimateReason } : {}),
-  };
-}
-
 const AUTO_OPTIMIZER_ENCODER_FAMILIES = new Set([
   'obs_nvenc_h264_tex',
   'qsv',
@@ -51,60 +19,6 @@ const AUTO_OPTIMIZER_ENCODER_FAMILIES = new Set([
   'apple',
   'x264',
 ]);
-
-export interface IAutoConfigProbeCoverage {
-  measurement: 'active' | 'estimated';
-  estimateReason?: 'probe_disabled' | 'partial_provider_probes';
-  allowPromotion: boolean;
-}
-
-/**
- * Validate the registered canvas identities required before Desktop prepares
- * an active paired-workload request (Enhanced Broadcasting or two-output Dual
- * Output). OSN object IDs are zero-based, so zero is a valid live canvas
- * identity; missing, fractional, negative, or duplicate paired identities
- * remain invalid.
- */
-export function areAutoConfigActiveCanvasIdentitiesValid(
-  primaryCanvasId: unknown,
-  additionalCanvasId: unknown,
-  paired: boolean,
-): boolean {
-  const isValid = (value: unknown): value is number =>
-    Number.isSafeInteger(value) && Number(value) >= 0;
-
-  return (
-    isValid(primaryCanvasId) &&
-    (!paired ||
-      (isValid(additionalCanvasId) && Number(additionalCanvasId) !== Number(primaryCanvasId)))
-  );
-}
-
-/**
- * Describe how much of an output's provider-probe plan is available. A successful
- * provider remains useful when another provider cannot be prepared, but that
- * partial evidence must not unlock a resolution or frame-rate promotion.
- */
-export function autoConfigProbeCoverage(
-  expectedProbeCount: number,
-  availableProbeCount: number,
-): IAutoConfigProbeCoverage {
-  if (availableProbeCount <= 0) {
-    return {
-      measurement: 'estimated',
-      estimateReason: 'probe_disabled',
-      allowPromotion: false,
-    };
-  }
-  if (availableProbeCount < expectedProbeCount) {
-    return {
-      measurement: 'active',
-      estimateReason: 'partial_provider_probes',
-      allowPromotion: false,
-    };
-  }
-  return { measurement: 'active', allowPromotion: true };
-}
 
 /**
  * Validate active native evidence against the exact attempt Desktop prepared.
@@ -163,18 +77,6 @@ export function isValidAutoConfigActiveProbeCoverage(p: {
     (p.requireAllProbeCapableDestinations !== false &&
       [...selectedProviders].some(provider => !successfulProviders.has(provider)));
   return !isPartial || p.confidence === 'low';
-}
-
-/**
- * The paired V1 native facade defines the complete probe contract, including
- * YouTube ingest confirmation on its run handle.
- */
-export function supportedAutoConfigProbeKinds(): ReadonlySet<TAutoOptimizerProbeKind> {
-  return new Set<TAutoOptimizerProbeKind>([
-    'twitch-standard',
-    'twitch-enhanced-broadcasting',
-    'youtube-unbound',
-  ]);
 }
 
 export function autoConfigProviderForProbeKind(kind: unknown): TAutoOptimizerProbeProvider | null {
@@ -316,13 +218,10 @@ export function isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(
  */
 function selectAutoConfigDualOutputProbePair(
   streamSetup: IAutoOptimizerStreamSetup,
-  supportedKinds: ReadonlySet<TAutoOptimizerProbeKind>,
 ): IAutoOptimizerStreamSetup | null {
   if (streamSetup.type !== 'dual-output' || streamSetup.outputs.length !== 2) return null;
 
-  const candidatesByOutput = streamSetup.outputs.map(output =>
-    output.probeCandidates.filter(candidate => supportedKinds.has(candidate.kind)),
-  );
+  const candidatesByOutput = streamSetup.outputs.map(output => output.probeCandidates);
   for (const first of candidatesByOutput[0]) {
     for (const second of candidatesByOutput[1]) {
       if (first.provider === second.provider) continue;
@@ -349,14 +248,12 @@ function selectAutoConfigDualOutputProbePair(
 }
 
 /**
- * Filter credential-free candidates against the providers this Desktop run can
- * prepare. Supported provider probes remain useful independently; a shared output
- * with partial coverage is identified explicitly and cannot promote video
- * quality from that incomplete evidence.
+ * Select the fixed V1 probe plan represented by the paired OSN contract.
+ * Provider credentials may still fail at runtime; that resource-stage coverage
+ * is handled separately and cannot promote video quality when it is partial.
  */
-export function filterAutoConfigStreamSetupProbes(
+export function prepareAutoConfigStreamSetup(
   streamSetup: IAutoOptimizerStreamSetup,
-  supportedKinds: ReadonlySet<TAutoOptimizerProbeKind>,
 ): IAutoOptimizerStreamSetup {
   const filtered: IAutoOptimizerStreamSetup = {
     ...streamSetup,
@@ -370,11 +267,11 @@ export function filterAutoConfigStreamSetupProbes(
   // Twitch/YouTube experiment. When a canvas also targets an unsupported V1
   // provider, select one supported representative for that canvas instead of
   // disabling both active measurements.
-  const selectedDualOutput = selectAutoConfigDualOutputProbePair(streamSetup, supportedKinds);
+  const selectedDualOutput = selectAutoConfigDualOutputProbePair(streamSetup);
   const unsafeDualOutput = filtered.type === 'dual-output' && !selectedDualOutput;
-  const eligibleEnhancedBroadcastingDualOutput =
-    supportedKinds.has('twitch-enhanced-broadcasting') &&
-    isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(streamSetup);
+  const eligibleEnhancedBroadcastingDualOutput = isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(
+    streamSetup,
+  );
   const unsafeEnhancedBroadcastingDualOutput =
     filtered.type === 'enhanced-broadcasting-dual-output' &&
     !eligibleEnhancedBroadcastingDualOutput;
@@ -389,23 +286,16 @@ export function filterAutoConfigStreamSetupProbes(
     const selectedOutput = selectedDualOutput?.outputs.find(
       selected => selected.outputId === output.outputId,
     );
-    const supportedCandidates = selectedDualOutput
+    const selectedCandidates = selectedDualOutput
       ? selectedOutput!.probeCandidates
-      : originalCandidates.filter(candidate => supportedKinds.has(candidate.kind));
-    output.probeCandidates = supportedCandidates;
+      : originalCandidates;
+    output.probeCandidates = selectedCandidates;
     if (selectedDualOutput) {
       output.measurement = 'active';
       output.estimateReason = undefined;
     } else if (eligibleEnhancedBroadcastingDualOutput) {
-      output.measurement = supportedCandidates.length ? 'active' : 'estimated';
-      output.estimateReason = supportedCandidates.length ? undefined : 'probe_disabled';
-    } else if (originalCandidates.length) {
-      const coverage = autoConfigProbeCoverage(
-        originalCandidates.length,
-        supportedCandidates.length,
-      );
-      output.measurement = coverage.measurement;
-      output.estimateReason = coverage.estimateReason;
+      output.measurement = selectedCandidates.length ? 'active' : 'estimated';
+      output.estimateReason = selectedCandidates.length ? undefined : 'probe_disabled';
     }
   });
   return filtered;

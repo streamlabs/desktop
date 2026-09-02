@@ -1,8 +1,6 @@
 import { TDisplayType } from 'services/settings-v2';
 import { autoOptimizerRecommendationBitrateCap } from './bitrate-policy';
 import {
-  areAutoConfigActiveCanvasIdentitiesValid,
-  credentialFreeAutoConfigRequestOutput,
   isEligibleAutoConfigDualOutputActiveStreamSetup,
   isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup,
 } from './probe-policy';
@@ -79,6 +77,20 @@ export class AutoConfigRequestBuildError extends Error {
   }
 }
 
+function activeCanvasIdentitiesAreValid(
+  primaryCanvasId: unknown,
+  additionalCanvasId: unknown,
+  paired: boolean,
+): boolean {
+  const isValid = (value: unknown): value is number =>
+    Number.isSafeInteger(value) && Number(value) >= 0;
+  return (
+    isValid(primaryCanvasId) &&
+    (!paired ||
+      (isValid(additionalCanvasId) && Number(additionalCanvasId) !== Number(primaryCanvasId)))
+  );
+}
+
 function cloneStreamSetup(streamSetup: IAutoOptimizerStreamSetup): IAutoOptimizerStreamSetup {
   return {
     ...streamSetup,
@@ -90,6 +102,31 @@ function cloneStreamSetup(streamSetup: IAutoOptimizerStreamSetup): IAutoOptimize
   };
 }
 
+function credentialFreeRequestOutput(
+  output: IAutoConfigRequestOutput,
+): IAutoConfigAttemptRequestOutput {
+  return {
+    outputId: output.outputId,
+    display: output.display,
+    outputKind: output.outputKind,
+    destinations: [...output.destinations],
+    current: { ...output.current },
+    ...(output.limits ? { limits: { ...output.limits } } : {}),
+    ...(output.additionalVideo
+      ? {
+          additionalVideo: {
+            display: output.additionalVideo.display,
+            current: { ...output.additionalVideo.current },
+            ...(output.additionalVideo.limits
+              ? { limits: { ...output.additionalVideo.limits } }
+              : {}),
+          },
+        }
+      : {}),
+    ...(output.estimateReason ? { estimateReason: output.estimateReason } : {}),
+  };
+}
+
 export function validateAutoConfigCanvasIdentities(
   streamSetup: IAutoOptimizerStreamSetup,
   videos: Record<TDisplayType, IAutoConfigVideoSnapshot>,
@@ -97,11 +134,7 @@ export function validateAutoConfigCanvasIdentities(
   if (
     (isEligibleAutoConfigDualOutputActiveStreamSetup(streamSetup) ||
       isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(streamSetup)) &&
-    !areAutoConfigActiveCanvasIdentitiesValid(
-      videos.horizontal.canvasId,
-      videos.vertical.canvasId,
-      true,
-    )
+    !activeCanvasIdentitiesAreValid(videos.horizontal.canvasId, videos.vertical.canvasId, true)
   ) {
     throw new AutoConfigRequestBuildError();
   }
@@ -135,7 +168,7 @@ export function buildAutoConfigRequest(
       (streamSetup.type === 'enhanced-broadcasting' ||
         streamSetup.type === 'enhanced-broadcasting-dual-output') &&
       output.measurement === 'active' &&
-      !areAutoConfigActiveCanvasIdentitiesValid(
+      !activeCanvasIdentitiesAreValid(
         video.canvasId,
         additionalVideo.canvasId,
         output.display === 'both',
@@ -230,7 +263,7 @@ export function buildAutoConfigRequest(
     request,
     attemptContext: {
       streamSetup: cloneStreamSetup(streamSetup),
-      outputs: outputs.map(credentialFreeAutoConfigRequestOutput),
+      outputs: outputs.map(credentialFreeRequestOutput),
     },
   };
 }

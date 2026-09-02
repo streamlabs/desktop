@@ -274,6 +274,34 @@ test('applies and verifies one standard recommendation after flushing pending ca
   t.not(profile.outputs, recommendation.outputs);
 });
 
+test('applies one standard recommendation atomically to both Dual Output canvases', async t => {
+  const harness = createDependencies();
+  const recommendation = result([
+    standardOutput({ outputId: 'horizontal', destinations: [{ platform: 'twitch' }] }),
+    standardOutput({
+      outputId: 'vertical',
+      display: 'vertical',
+      resolution: { width: 1080, height: 1920 },
+    }),
+  ]);
+
+  const profile = await applyAutoOptimizerRecommendations(
+    recommendation,
+    'dual-output',
+    harness.dependencies,
+  );
+
+  t.is(harness.outputMutationCount, 2, 'encoder activation and final settings share one output');
+  t.is(harness.output.streaming.bitrate, 6000);
+  t.is(harness.videoState.horizontal.outputWidth, 1920);
+  t.is(harness.videoState.horizontal.outputHeight, 1080);
+  t.is(harness.videoState.vertical.outputWidth, 1080);
+  t.is(harness.videoState.vertical.outputHeight, 1920);
+  t.is(harness.videoState.horizontal.fpsNum, 60);
+  t.is(harness.videoState.vertical.fpsNum, 60);
+  t.deepEqual(profile.outputs, recommendation.outputs);
+});
+
 test('an active provider-owned result applies video only', async t => {
   const harness = createDependencies();
   const recommendation = result([

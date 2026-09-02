@@ -1,7 +1,6 @@
 import { TwitchService } from 'services/platforms/twitch';
 import { IYoutubeAutoOptimizerProbeLease, YoutubeService } from 'services/platforms/youtube';
 import {
-  autoConfigProbeCoverage,
   isEligibleAutoConfigDualOutputActiveStreamSetup,
   isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup,
 } from './probe-policy';
@@ -9,6 +8,19 @@ import { IAutoConfigRun } from './native-run';
 import { IAutoConfigActiveProbe, IAutoOptimizerStreamSetup } from './types';
 
 const YOUTUBE_INGEST_CONFIRMATION_TIMEOUT_MS = 12000;
+
+function probeCoverage(expected: number, available: number) {
+  if (available <= 0) {
+    return { measurement: 'estimated' as const, estimateReason: 'probe_disabled' as const };
+  }
+  if (available < expected) {
+    return {
+      measurement: 'active' as const,
+      estimateReason: 'partial_provider_probes' as const,
+    };
+  }
+  return { measurement: 'active' as const, estimateReason: undefined };
+}
 
 type TTwitchProbeService = Pick<TwitchService, 'fetchStreamKey'>;
 type TYoutubeProbeService = Pick<
@@ -137,7 +149,7 @@ export class AutoConfigProbeResources {
 
         output.probeCandidates = acquired.map(({ candidate }) => candidate);
         if (expectedProbeCount > 0) {
-          const coverage = autoConfigProbeCoverage(expectedProbeCount, acquired.length);
+          const coverage = probeCoverage(expectedProbeCount, acquired.length);
           output.measurement = coverage.measurement;
           output.estimateReason =
             coverage.measurement === 'active' && alreadyPartial

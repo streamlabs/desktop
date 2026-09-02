@@ -63,9 +63,9 @@ test('native run timeout waits for cancellation and ignores a late result', asyn
   t.deepEqual(order, ['cancel-started', 'cancel-finished', 'rejected']);
 });
 
-test('optimizer cleanup retains its run and provider resources until Close can be retried', async t => {
+test('native close failure keeps the run retryable and defers dependent cleanup', async t => {
   let cancelCalls = 0;
-  let releaseCalls = 0;
+  let closed = false;
   const run: IAutoConfigRun = {
     result: new Promise<IAutoConfigNativeResult>(() => undefined),
     confirmProbeIngest: () => undefined,
@@ -74,21 +74,13 @@ test('optimizer cleanup retains its run and provider resources until Close can b
       if (cancelCalls === 1) throw new Error('native close failed');
     },
   };
-  let retainedRun: IAutoConfigRun | null = run;
-  const cleanup = async () => {
-    await closeAutoConfigRun(run, () => {
-      retainedRun = null;
-    });
-    releaseCalls++;
-  };
 
-  const firstError = await t.throwsAsync(cleanup());
-  t.is(firstError?.message, 'native close failed');
-  t.is(retainedRun, run);
-  t.is(releaseCalls, 0);
+  const close = () => closeAutoConfigRun(run, () => (closed = true));
+  const error = await t.throwsAsync(close());
+  t.is(error?.message, 'native close failed');
+  t.false(closed);
 
-  await cleanup();
+  await close();
   t.is(cancelCalls, 2);
-  t.is(retainedRun, null);
-  t.is(releaseCalls, 1);
+  t.true(closed);
 });

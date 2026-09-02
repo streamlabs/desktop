@@ -210,7 +210,7 @@ test('builds the paired Enhanced Broadcasting video tuple without a Desktop bitr
   t.false(JSON.stringify(built.attemptContext).includes('private-enhanced-key'));
 });
 
-test('rejects duplicate registered canvas identities for the exact active Dual Output shape', t => {
+test('paired requests accept zero-based identities and reject invalid canvas identities', t => {
   const horizontal = optimizerOutput();
   const vertical = optimizerOutput({
     outputId: 'vertical',
@@ -226,14 +226,26 @@ test('rejects duplicate registered canvas identities for the exact active Dual O
     ],
   });
 
-  const error = t.throws(() =>
+  const build = (videoSnapshots: ReturnType<typeof videos>) =>
     buildAutoConfigRequest({
       streamSetup: streamSetup([horizontal, vertical], 'dual-output'),
       outputProbes: [],
       outputSettings,
-      videos: videos(0, 0),
-    }),
-  );
-  t.true(error instanceof AutoConfigRequestBuildError);
-  t.is((error as AutoConfigRequestBuildError).code, 'invalid_canvas_identity');
+      videos: videoSnapshots,
+    });
+
+  t.notThrows(() => build(videos(0, 1)));
+  const valid = videos(0, 1);
+  const invalid = [
+    videos(0, 0),
+    { ...valid, horizontal: { ...valid.horizontal, canvasId: undefined } },
+    { ...valid, vertical: { ...valid.vertical, canvasId: undefined } },
+    { ...valid, horizontal: { ...valid.horizontal, canvasId: -1 } },
+    { ...valid, vertical: { ...valid.vertical, canvasId: 1.5 } },
+  ];
+  invalid.forEach(videoSnapshots => {
+    const error = t.throws(() => build(videoSnapshots));
+    t.true(error instanceof AutoConfigRequestBuildError);
+    t.is((error as AutoConfigRequestBuildError).code, 'invalid_canvas_identity');
+  });
 });

@@ -23,9 +23,8 @@ import {
   autoConfigProviderForProbeKind,
   autoConfigPhaseStepDisposition,
   autoConfigPhaseStepKey,
-  filterAutoConfigStreamSetupProbes,
+  prepareAutoConfigStreamSetup,
   sanitizeAutoConfigProgressDetail,
-  supportedAutoConfigProbeKinds,
 } from './probe-policy';
 import { awaitAutoConfigRun, closeAutoConfigRun, IAutoConfigRun } from './native-run';
 import { AutoConfigProbeResources, AutoOptimizerProbeSetupError } from './probe-resources';
@@ -193,13 +192,12 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     if (this.getPromptState() !== 'unseen') return false;
 
     this.frozenGoLiveSettings = this.deepFreeze(frozen);
-    const streamSetup = filterAutoConfigStreamSetupProbes(
+    const streamSetup = prepareAutoConfigStreamSetup(
       describeAutoOptimizerStreamSetup(
         frozen,
         this.dualOutputService.state.dualOutputMode && this.userService.isLoggedIn,
         this.twitchService.views.hasTwitchDualStreamAccess,
       ),
-      supportedAutoConfigProbeKinds(),
     );
     if (!streamSetup.outputs.some(output => output.destinations.length > 0)) {
       this.frozenGoLiveSettings = null;
@@ -300,13 +298,12 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   async retry(): Promise<void> {
     if (!this.frozenGoLiveSettings) return;
     this.SET_INTRO(
-      filterAutoConfigStreamSetupProbes(
+      prepareAutoConfigStreamSetup(
         describeAutoOptimizerStreamSetup(
           this.frozenGoLiveSettings,
           this.dualOutputService.state.dualOutputMode && this.userService.isLoggedIn,
           this.twitchService.views.hasTwitchDualStreamAccess,
         ),
-        supportedAutoConfigProbeKinds(),
       ),
     );
     await this.startOptimization();
