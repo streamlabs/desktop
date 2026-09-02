@@ -3,7 +3,10 @@ import {
   classifyAutoOptimizerTopology,
   isAutoOptimizerProfileCompatible,
 } from '../../app/services/auto-config/topology';
-import { IAutoOptimizerProfile } from '../../app/services/auto-config/types';
+import {
+  IAutoOptimizerProfile,
+  IAutoOptimizerTopology,
+} from '../../app/services/auto-config/types';
 import { autoOptimizerStandardLegForDisplay } from '../../app/services/streaming/auto-optimizer-profile-policy';
 import { IGoLiveSettings } from '../../app/services/streaming';
 
@@ -17,6 +20,10 @@ function settings(patch: Partial<IGoLiveSettings> = {}): IGoLiveSettings {
   } as IGoLiveSettings;
 }
 
+function allProbeCandidates(topology: IAutoOptimizerTopology) {
+  return topology.legs.flatMap(leg => leg.probeCandidates);
+}
+
 test('direct standard Twitch has one direct active probe candidate', t => {
   const topology = classifyAutoOptimizerTopology(
     settings({
@@ -28,9 +35,8 @@ test('direct standard Twitch has one direct active probe candidate', t => {
   );
 
   t.is(topology.type, 'direct-single');
-  t.is(topology.legs[0].route, 'direct');
   t.is(topology.legs[0].measurement, 'active');
-  t.deepEqual(topology.probeCandidates, [
+  t.deepEqual(allProbeCandidates(topology), [
     {
       probeId: 'horizontal-twitch',
       kind: 'twitch-standard',
@@ -51,10 +57,9 @@ test('direct linked YouTube has one direct active probe candidate', t => {
   );
 
   t.is(topology.type, 'direct-single');
-  t.is(topology.legs[0].route, 'direct');
   t.is(topology.legs[0].measurement, 'active');
   t.deepEqual(
-    topology.probeCandidates.map(candidate => candidate.provider),
+    allProbeCandidates(topology).map(candidate => candidate.provider),
     ['youtube'],
   );
 });
@@ -70,10 +75,9 @@ test('direct platforms without a safe active probe remain estimate-only', t => {
   );
 
   t.is(topology.type, 'direct-single');
-  t.is(topology.legs[0].route, 'direct');
   t.is(topology.legs[0].measurement, 'estimated');
   t.is(topology.legs[0].estimateReason, 'non_twitch');
-  t.is(topology.probeCandidates.length, 0);
+  t.is(allProbeCandidates(topology).length, 0);
 });
 
 test('standard Twitch and YouTube share one indirect leg with ordered candidates', t => {
@@ -89,13 +93,11 @@ test('standard Twitch and YouTube share one indirect leg with ordered candidates
 
   t.is(topology.type, 'cloud-multistream');
   t.is(topology.legs.length, 1);
-  t.is(topology.legs[0].route, 'cloud-restream');
   t.is(topology.legs[0].measurement, 'active');
   t.deepEqual(
-    topology.probeCandidates.map(candidate => candidate.provider),
+    allProbeCandidates(topology).map(candidate => candidate.provider),
     ['twitch', 'youtube'],
   );
-  t.deepEqual(topology.legs[0].probeCandidates, topology.probeCandidates);
 });
 
 test('custom and linked destinations are a mixed estimate-only topology', t => {
@@ -110,7 +112,7 @@ test('custom and linked destinations are a mixed estimate-only topology', t => {
   );
 
   t.is(topology.type, 'mixed');
-  t.is(topology.probeCandidates.length, 0);
+  t.is(allProbeCandidates(topology).length, 0);
   t.is(topology.legs[0].measurement, 'estimated');
   t.deepEqual(
     topology.legs[0].destinations.map(item => item.platform),
@@ -138,13 +140,12 @@ test('dual output produces independent direct probe candidates per destination',
     topology.legs.map(leg => leg.display),
     ['horizontal', 'vertical'],
   );
-  t.true(topology.legs.every(leg => leg.route === 'direct'));
   t.deepEqual(
     topology.legs.map(leg => leg.probeCandidates.map(candidate => candidate.provider)),
     [['twitch'], ['youtube']],
   );
   t.deepEqual(
-    topology.probeCandidates.map(candidate => candidate.probeId),
+    allProbeCandidates(topology).map(candidate => candidate.probeId),
     ['horizontal-twitch', 'vertical-youtube'],
   );
 });
@@ -165,20 +166,17 @@ test('dual output keeps supported probe candidates when another platform shares 
   t.deepEqual(
     topology.legs.map(leg => ({
       display: leg.display,
-      route: leg.route,
       destinations: leg.destinations.map(destination => destination.platform),
       probes: leg.probeCandidates.map(candidate => candidate.provider),
     })),
     [
       {
         display: 'horizontal',
-        route: 'cloud-restream',
         destinations: ['twitch', 'kick'],
         probes: ['twitch'],
       },
       {
         display: 'vertical',
-        route: 'direct',
         destinations: ['youtube'],
         probes: ['youtube'],
       },
@@ -201,7 +199,7 @@ test('single-canvas Twitch-only Enhanced Broadcasting has its dedicated active p
   );
 
   t.is(enhanced.type, 'enhanced-broadcasting');
-  t.deepEqual(enhanced.probeCandidates, [
+  t.deepEqual(allProbeCandidates(enhanced), [
     {
       probeId: 'horizontal-twitch',
       kind: 'twitch-enhanced-broadcasting',
@@ -248,12 +246,12 @@ test('Enhanced Broadcasting with another destination and Stream Shift remain est
   );
 
   t.is(enhancedWithYoutube.type, 'enhanced-broadcasting');
-  t.is(enhancedWithYoutube.probeCandidates.length, 0);
+  t.is(allProbeCandidates(enhancedWithYoutube).length, 0);
   t.is(enhancedWithYoutube.legs[0].estimateReason, 'enhanced_broadcasting');
   t.is(streamShift.type, 'stream-shift');
-  t.is(streamShift.probeCandidates.length, 0);
+  t.is(allProbeCandidates(streamShift).length, 0);
   t.is(enhancedWithStreamShift.type, 'enhanced-broadcasting');
-  t.is(enhancedWithStreamShift.probeCandidates.length, 0);
+  t.is(allProbeCandidates(enhancedWithStreamShift).length, 0);
   t.is(enhancedWithStreamShift.legs[0].measurement, 'estimated');
 });
 
@@ -273,7 +271,7 @@ test('Enhanced Broadcasting under Dual Output remains estimate-only', t => {
   );
 
   t.is(topology.type, 'enhanced-broadcasting');
-  t.deepEqual(topology.probeCandidates, []);
+  t.deepEqual(allProbeCandidates(topology), []);
   t.true(topology.legs.every(leg => leg.measurement === 'estimated'));
 });
 
@@ -325,7 +323,7 @@ test('paired Enhanced Broadcasting with a horizontal companion models both real 
     ],
   );
   t.deepEqual(
-    topology.probeCandidates.map(candidate => candidate.probeId),
+    allProbeCandidates(topology).map(candidate => candidate.probeId),
     ['twitch-enhanced-broadcasting-twitch', 'horizontal-standard-youtube'],
   );
 });
@@ -360,7 +358,7 @@ test('paired Enhanced Broadcasting with a vertical companion preserves orientati
     ],
   );
   t.deepEqual(
-    topology.probeCandidates.map(candidate => candidate.probeId),
+    allProbeCandidates(topology).map(candidate => candidate.probeId),
     ['twitch-enhanced-broadcasting-twitch', 'vertical-standard-youtube'],
   );
 });
@@ -396,7 +394,7 @@ test('paired Enhanced Broadcasting creates one standard output per occupied comp
     ],
   );
   t.deepEqual(
-    topology.probeCandidates.map(candidate => candidate.probeId),
+    allProbeCandidates(topology).map(candidate => candidate.probeId),
     [
       'twitch-enhanced-broadcasting-twitch',
       'horizontal-standard-youtube',
@@ -463,8 +461,7 @@ test('Twitch dual stream is modeled as its single shared upload connection', t =
   t.is(topology.legs.length, 1);
   t.is(topology.legs[0].display, 'both');
   t.is(topology.legs[0].legId, 'twitch-dual');
-  t.is(topology.legs[0].route, 'direct');
-  t.deepEqual(topology.probeCandidates, [
+  t.deepEqual(allProbeCandidates(topology), [
     {
       probeId: 'twitch-dual-twitch',
       kind: 'twitch-enhanced-broadcasting',
@@ -504,10 +501,10 @@ test('Twitch custom fields keep single and paired Enhanced Broadcasting estimate
   );
 
   t.is(single.type, 'enhanced-broadcasting');
-  t.deepEqual(single.probeCandidates, []);
+  t.deepEqual(allProbeCandidates(single), []);
   t.is(single.legs[0].measurement, 'estimated');
   t.is(paired.type, 'enhanced-broadcasting');
-  t.deepEqual(paired.probeCandidates, []);
+  t.deepEqual(allProbeCandidates(paired), []);
   t.is(paired.legs[0].measurement, 'estimated');
 });
 
@@ -526,9 +523,8 @@ test('custom RTMP is never probed even when its URL belongs to YouTube', t => {
   );
 
   t.is(topology.type, 'custom-rtmp');
-  t.is(topology.legs[0].route, 'direct');
   t.is(topology.legs[0].measurement, 'estimated');
-  t.is(topology.probeCandidates.length, 0);
+  t.is(allProbeCandidates(topology).length, 0);
 });
 
 function profileFor(settingsValue: IGoLiveSettings): IAutoOptimizerProfile {

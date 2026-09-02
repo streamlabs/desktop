@@ -8,7 +8,6 @@ import {
   IAutoOptimizerTopologyLeg,
   TAutoOptimizerPlatform,
   TAutoOptimizerProbeProvider,
-  TAutoOptimizerUploadRoute,
   TAutoOptimizerTopologyType,
 } from './types';
 
@@ -21,7 +20,7 @@ const supportedPlatforms: TAutoOptimizerPlatform[] = [
   'custom',
 ];
 
-function normalizePlatform(platform: string): TAutoOptimizerPlatform {
+export function normalizeAutoOptimizerPlatform(platform: string): TAutoOptimizerPlatform {
   return supportedPlatforms.includes(platform as TAutoOptimizerPlatform)
     ? (platform as TAutoOptimizerPlatform)
     : 'other';
@@ -34,7 +33,7 @@ function enabledPlatforms(settings: IGoLiveSettings): TPlatform[] {
 }
 
 function destination(platform: string): IAutoOptimizerDestination {
-  return { platform: normalizePlatform(platform) };
+  return { platform: normalizeAutoOptimizerPlatform(platform) };
 }
 
 function getEstimateReason(type: TAutoOptimizerTopologyType): string {
@@ -82,22 +81,14 @@ function probeCandidates(
     });
 }
 
-function uploadRoute(destinations: IAutoOptimizerDestination[]): TAutoOptimizerUploadRoute {
-  return destinations.length > 1 ? 'cloud-restream' : 'direct';
-}
-
 function completeLeg(
-  leg: Omit<
-    IAutoOptimizerTopologyLeg,
-    'route' | 'probeCandidates' | 'measurement' | 'estimateReason'
-  >,
+  leg: Omit<IAutoOptimizerTopologyLeg, 'probeCandidates' | 'measurement' | 'estimateReason'>,
   type: TAutoOptimizerTopologyType,
   allowProbes: boolean,
 ): IAutoOptimizerTopologyLeg {
   const candidates = probeCandidates(leg.legId, leg.destinations, allowProbes, type);
   return {
     ...leg,
-    route: uploadRoute(leg.destinations),
     probeCandidates: candidates,
     measurement: candidates.length ? 'active' : 'estimated',
     estimateReason: candidates.length ? undefined : getEstimateReason(type),
@@ -183,8 +174,7 @@ export function classifyAutoOptimizerTopology(
     platforms[0] === 'twitch' &&
     !twitchSettings?.useCustomFields &&
     (!dualOutputMode || isSingleConnectionTwitchDual);
-  const enhancedBroadcastingDualOutputProbeEligible =
-    type === 'enhanced-broadcasting-dual-output';
+  const enhancedBroadcastingDualOutputProbeEligible = type === 'enhanced-broadcasting-dual-output';
   const allowProbes =
     enhancedBroadcastingProbeEligible ||
     enhancedBroadcastingDualOutputProbeEligible ||
@@ -320,14 +310,7 @@ export function classifyAutoOptimizerTopology(
     ];
   }
 
-  return {
-    type,
-    legs,
-    probeCandidates: legs.reduce<IAutoOptimizerProbeCandidate[]>(
-      (candidates, leg) => candidates.concat(leg.probeCandidates),
-      [],
-    ),
-  };
+  return { type, legs };
 }
 
 /**

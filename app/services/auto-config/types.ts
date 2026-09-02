@@ -35,7 +35,6 @@ export type TAutoOptimizerTopologyType =
 export type TAutoOptimizerMeasurementMode = 'active' | 'estimated';
 export type TAutoOptimizerConfidence = 'high' | 'medium' | 'low';
 export type TAutoOptimizerPromptState = 'unseen' | 'declined' | 'completed';
-export type TAutoOptimizerUploadRoute = 'direct' | 'cloud-restream';
 export type TAutoOptimizerOutputKind = 'standard' | 'twitch-enhanced-broadcasting';
 export type TAutoOptimizerProbeProvider = 'twitch' | 'youtube';
 export type TAutoOptimizerProbeKind =
@@ -105,7 +104,6 @@ export interface IAutoOptimizerTopologyLeg {
   /** Physical local output whose concurrent encoder workload must be represented. */
   outputKind: TAutoOptimizerOutputKind;
   destinations: IAutoOptimizerDestination[];
-  route: TAutoOptimizerUploadRoute;
   probeCandidates: IAutoOptimizerProbeCandidate[];
   measurement: TAutoOptimizerMeasurementMode;
   estimateReason?: string;
@@ -114,8 +112,6 @@ export interface IAutoOptimizerTopologyLeg {
 export interface IAutoOptimizerTopology {
   type: TAutoOptimizerTopologyType;
   legs: IAutoOptimizerTopologyLeg[];
-  /** All leg candidates in deterministic execution order. */
-  probeCandidates: IAutoOptimizerProbeCandidate[];
 }
 
 export interface IAutoOptimizerEncoderRecommendation {
@@ -133,7 +129,6 @@ export interface IAutoOptimizerLegResult {
   destinations: IAutoOptimizerDestination[];
   measurement: TAutoOptimizerMeasurementMode;
   confidence: TAutoOptimizerConfidence;
-  route?: TAutoOptimizerUploadRoute;
   probes?: IAutoOptimizerProbeEvidence[];
   estimateReason?: string;
   resolution: { width: number; height: number };

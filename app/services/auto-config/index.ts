@@ -19,7 +19,11 @@ import { ScenesService } from 'services/scenes';
 import { NavigationService } from 'services/navigation';
 import { byOS, OS } from 'util/operating-systems';
 import { $t } from 'services/i18n';
-import { classifyAutoOptimizerTopology, isAutoOptimizerProfileCompatible } from './topology';
+import {
+  classifyAutoOptimizerTopology,
+  isAutoOptimizerProfileCompatible,
+  normalizeAutoOptimizerPlatform,
+} from './topology';
 import { autoOptimizerRecommendationBitrateCap } from './bitrate-policy';
 import {
   areAutoConfigActiveCanvasIdentitiesValid,
@@ -54,12 +58,7 @@ import {
   selectAutoOptimizerStandardOutputRecommendation,
   TRawOutputValues,
 } from './output-transaction-policy';
-import {
-  awaitAutoConfigRun,
-  closeAutoConfigRun,
-  IAutoConfigApi,
-  IAutoConfigRun,
-} from './native-run';
+import { awaitAutoConfigRun, closeAutoConfigRun, IAutoConfigRun } from './native-run';
 import {
   IAutoConfigActiveProbe,
   IAutoConfigEvent,
@@ -76,7 +75,6 @@ import {
   IAutoOptimizerState,
   IAutoOptimizerTopology,
   TAutoOptimizerPhase,
-  TAutoOptimizerPlatform,
   TAutoOptimizerProbeProvider,
   TAutoOptimizerPromptState,
 } from './types';
@@ -99,10 +97,6 @@ class AutoOptimizerProbeSetupError extends Error {
     super("We couldn't prepare the bandwidth test. Try again, or continue without optimization.");
     this.name = 'AutoOptimizerProbeSetupError';
   }
-}
-
-interface INodeObsAutoConfig {
-  AutoConfig?: IAutoConfigApi;
 }
 
 interface ISettingsSnapshot {
@@ -171,21 +165,6 @@ function emptyProgressDetail(): IAutoOptimizerProgressDetail {
     additionalVideo: null,
     selectedBitrateKbps: null,
   };
-}
-
-function normalizePlatform(platform: string): TAutoOptimizerPlatform {
-  const known: TAutoOptimizerPlatform[] = [
-    'twitch',
-    'youtube',
-    'facebook',
-    'kick',
-    'tiktok',
-    'custom',
-    'other',
-  ];
-  return known.includes(platform as TAutoOptimizerPlatform)
-    ? (platform as TAutoOptimizerPlatform)
-    : 'other';
 }
 
 class AutoConfigViews extends ViewHandler<IAutoOptimizerState> {
@@ -277,7 +256,6 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     if (!this.userService.isLoggedIn) return false;
     if (this.settingsService.views.hasHDRSettings) return false;
     if (this.getPromptState() !== 'unseen') return false;
-    if (!this.nativeApi()) return false;
 
     this.frozenGoLiveSettings = this.deepFreeze(frozen);
     const topology = filterAutoConfigTopologyProbes(
@@ -286,9 +264,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         this.dualOutputService.state.dualOutputMode && this.userService.isLoggedIn,
         this.twitchService.views.hasTwitchDualStreamAccess,
       ),
-      supportedAutoConfigProbeKinds({
-        canConfirmYoutubeIngest: true,
-      }),
+      supportedAutoConfigProbeKinds(),
     );
     if (!topology.legs.some(leg => leg.destinations.length > 0)) {
       this.frozenGoLiveSettings = null;
@@ -342,9 +318,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
       let run: IAutoConfigRun;
       try {
-        const api = this.nativeApi();
-        if (!api) throw new Error('Native Auto Optimizer is unavailable');
-        run = api.run(request, event => {
+        run = obs.NodeObs.AutoConfig.run(request, event => {
           this.handleNativeEvent(event, token);
         });
       } finally {
@@ -356,9 +330,6 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       const nativeResult = await awaitAutoConfigRun(run!);
 
       if (token !== this.runToken || this.nativeRun !== run!) return;
-      if (!this.isValidNativeResult(nativeResult)) {
-        throw new Error('Native optimizer returned an invalid result');
-      }
 
       const result = this.toPublicResult(nativeResult);
       if (!this.isCompleteResultForTopology(result)) {
@@ -389,14 +360,6 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
   async retry(): Promise<void> {
     if (!this.frozenGoLiveSettings) return;
-    if (!this.nativeApi()) {
-      this.SET_ERROR({
-        code: 'native_optimizer_unavailable',
-        message: 'Auto Optimizer is unavailable. Please continue with your current settings.',
-        retryable: false,
-      });
-      return;
-    }
     this.SET_INTRO(
       filterAutoConfigTopologyProbes(
         classifyAutoOptimizerTopology(
@@ -404,9 +367,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           this.dualOutputService.state.dualOutputMode && this.userService.isLoggedIn,
           this.twitchService.views.hasTwitchDualStreamAccess,
         ),
-        supportedAutoConfigProbeKinds({
-          canConfirmYoutubeIngest: true,
-        }),
+        supportedAutoConfigProbeKinds(),
       ),
     );
     await this.startOptimization();
@@ -565,11 +526,6 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     }
   }
 
-  private nativeApi(): IAutoConfigApi | null {
-    const api = ((obs.NodeObs as unknown) as INodeObsAutoConfig).AutoConfig;
-    return api && typeof api.run === 'function' ? api : null;
-  }
-
   private async createNativeRequest(
     sourceTopology: IAutoOptimizerTopology,
   ): Promise<IPreparedAutoConfigRequest> {
@@ -592,7 +548,10 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     const activeEnhancedBroadcastingDualOutput = isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology(
       topology,
     );
-    const requestedActiveProbeCount = topology.probeCandidates.length;
+    const requestedActiveProbeCount = topology.legs.reduce(
+      (count, leg) => count + leg.probeCandidates.length,
+      0,
+    );
     const activeProbes: IAutoConfigActiveProbe[] = [];
     if (activeDualOutput || activeEnhancedBroadcastingDualOutput) {
       const horizontalCanvasId = this.videoSettingsService.contexts.horizontal?.canvasId;
@@ -683,12 +642,11 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       if (acquired.length) {
         // A provider that was prepared successfully still supplies useful path
         // evidence when another provider is unavailable. OSN lowers confidence
-        // for that partial provider set; Desktop keeps the missing route marked
+        // for that partial provider set; Desktop keeps the missing provider marked
         // as estimated and prevents quality promotion below.
         activeProbes.push(...acquired.map(({ probe }) => probe));
       }
     }
-    topology.probeCandidates = topology.legs.flatMap(leg => leg.probeCandidates);
     if (activeDualOutput && activeProbes.length !== requestedActiveProbeCount) {
       // This topology is one aggregate experiment, not two independently
       // promotable provider probes. Never pass a partially credentialed pair
@@ -1005,19 +963,6 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     return token === this.runToken && this.state.stage === 'running';
   }
 
-  private isValidNativeResult(
-    result: IAutoConfigNativeResult | null,
-  ): result is IAutoConfigNativeResult {
-    return Boolean(
-      result &&
-        result.schemaVersion === 1 &&
-        typeof result.sessionId === 'string' &&
-        result.sessionId.length > 0 &&
-        Array.isArray(result.legs) &&
-        ['complete', 'partial', 'cancelled', 'failed'].includes(result.status),
-    );
-  }
-
   private toPublicResult(nativeResult: IAutoConfigNativeResult): IAutoOptimizerResult {
     const expectedLegs = this.state.topology?.legs || [];
     const activeDualOutput = Boolean(
@@ -1123,11 +1068,13 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           display: leg.display,
           outputKind: expected.outputKind,
           destinations: expected.destinations.map(
-            item => ({ platform: normalizePlatform(item.platform) } as IAutoOptimizerDestination),
+            item =>
+              ({
+                platform: normalizeAutoOptimizerPlatform(item.platform),
+              } as IAutoOptimizerDestination),
           ),
           measurement: leg.measurement.mode,
           confidence: leg.measurement.confidence,
-          route: expected.route,
           probes: evidence,
           estimateReason: leg.measurement.reason,
           resolution: {

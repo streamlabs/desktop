@@ -96,7 +96,7 @@ export default function GoLiveAutoOptimizer() {
   const progressLabel = autoOptimizerProgressLabel(
     state.phase,
     state.progressDetail,
-    state.topology?.probeCandidates || [],
+    state.topology?.legs.flatMap(leg => leg.probeCandidates) || [],
   );
   const phaseLabel = state.phase
     ? $t(progressLabel.key, {
@@ -108,7 +108,6 @@ export default function GoLiveAutoOptimizer() {
     : undefined;
 
   const legs = (state.result?.legs || []).map(leg => {
-    const topologyLeg = state.topology?.legs.find(item => item.legId === leg.legId);
     const platforms = Array.from(
       new Set(leg.destinations.map(destination => destination.platform)),
     ).map(platform => ({ id: platform, label: $t(platformLabels[platform]) }));
@@ -131,7 +130,6 @@ export default function GoLiveAutoOptimizer() {
       display: leg.display === 'both' ? ('shared' as const) : leg.display,
       measurementMode: leg.measurement,
       measurementConfidence: leg.confidence,
-      route: leg.route || topologyLeg?.route,
       estimateReason: leg.estimateReason
         ? $t(estimateReasonLabels[leg.estimateReason] || leg.estimateReason)
         : undefined,

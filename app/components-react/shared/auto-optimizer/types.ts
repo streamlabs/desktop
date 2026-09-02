@@ -26,7 +26,6 @@ export interface IAutoOptimizerPresentationLeg {
   display?: 'horizontal' | 'vertical' | 'shared';
   measurementMode: TAutoOptimizerMeasurementMode;
   measurementConfidence?: 'high' | 'medium' | 'low';
-  route?: 'direct' | 'cloud-restream';
   estimateReason?: string;
   showMeasurementReason?: boolean;
   /** Twitch owns bitrate/encoder; this separately controls whether video is also provider-owned. */

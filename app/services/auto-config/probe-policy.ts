@@ -1,6 +1,7 @@
 import {
   IAutoConfigAdditionalVideoTuple,
   IAutoConfigEvent,
+  IAutoOptimizerProbeCandidate,
   IAutoOptimizerProgressDetail,
   IAutoOptimizerProbeEvidence,
   IAutoOptimizerTopology,
@@ -18,10 +19,6 @@ const AUTO_OPTIMIZER_ENCODER_FAMILIES = new Set([
   'apple',
   'x264',
 ]);
-
-export interface IAutoConfigProbeRuntimeSupport {
-  canConfirmYoutubeIngest: boolean;
-}
 
 export interface IAutoConfigProbeCoverage {
   measurement: 'active' | 'estimated';
@@ -137,18 +134,15 @@ export function isValidAutoConfigActiveProbeCoverage(p: {
 }
 
 /**
- * The native facade defines the complete Twitch/YouTube probe contract.
- * YouTube remains additionally gated by the run handle's ingest-confirmation
- * capability.
+ * The paired V1 native facade defines the complete probe contract, including
+ * YouTube ingest confirmation on its run handle.
  */
-export function supportedAutoConfigProbeKinds(
-  runtime: IAutoConfigProbeRuntimeSupport,
-): Set<TAutoOptimizerProbeKind> {
-  const kinds = new Set<TAutoOptimizerProbeKind>();
-  kinds.add('twitch-standard');
-  kinds.add('twitch-enhanced-broadcasting');
-  if (runtime.canConfirmYoutubeIngest) kinds.add('youtube-unbound');
-  return kinds;
+export function supportedAutoConfigProbeKinds(): ReadonlySet<TAutoOptimizerProbeKind> {
+  return new Set<TAutoOptimizerProbeKind>([
+    'twitch-standard',
+    'twitch-enhanced-broadcasting',
+    'youtube-unbound',
+  ]);
 }
 
 /**
@@ -160,11 +154,7 @@ export function supportedAutoConfigProbeKinds(
 export function isEligibleAutoConfigDualOutputActiveTopology(
   topology: IAutoOptimizerTopology,
 ): boolean {
-  if (
-    topology.type !== 'dual-output' ||
-    topology.legs.length !== 2 ||
-    topology.probeCandidates.length !== 2
-  ) {
+  if (topology.type !== 'dual-output' || topology.legs.length !== 2) {
     return false;
   }
 
@@ -197,19 +187,18 @@ export function isEligibleAutoConfigDualOutputActiveTopology(
     providers.add(candidate.provider);
   }
 
-  const candidateKey = (candidate: IAutoOptimizerTopology['probeCandidates'][number]) =>
+  const candidateKey = (candidate: IAutoOptimizerProbeCandidate) =>
     `${candidate.probeId}\u0000${candidate.legId}\u0000${candidate.provider}\u0000${candidate.kind}`;
-  const legProbeKeys = topology.legs.flatMap(leg => leg.probeCandidates.map(candidateKey));
-  const topLevelProbeKeys = topology.probeCandidates.map(candidateKey);
-  const probeIds = topology.probeCandidates.map(candidate => candidate.probeId);
+  const candidates = topology.legs.flatMap(leg => leg.probeCandidates);
+  const candidateKeys = candidates.map(candidateKey);
+  const probeIds = candidates.map(candidate => candidate.probeId);
   return (
     providers.size === 2 &&
     providers.has('twitch') &&
     providers.has('youtube') &&
-    new Set(legProbeKeys).size === 2 &&
-    new Set(topLevelProbeKeys).size === 2 &&
-    new Set(probeIds).size === 2 &&
-    topLevelProbeKeys.every(key => legProbeKeys.includes(key))
+    candidates.length === 2 &&
+    new Set(candidateKeys).size === 2 &&
+    new Set(probeIds).size === 2
   );
 }
 
@@ -271,15 +260,12 @@ export function isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology(
     companionDisplays.add(leg.display);
   }
 
-  const candidateKey = (candidate: IAutoOptimizerTopology['probeCandidates'][number]) =>
+  const candidateKey = (candidate: IAutoOptimizerProbeCandidate) =>
     `${candidate.probeId}\u0000${candidate.legId}\u0000${candidate.provider}\u0000${candidate.kind}`;
-  const legCandidates = topology.legs.flatMap(leg => leg.probeCandidates).map(candidateKey);
-  const topLevelCandidates = topology.probeCandidates.map(candidateKey);
+  const candidateKeys = topology.legs.flatMap(leg => leg.probeCandidates).map(candidateKey);
   return (
     new Set(topology.legs.map(leg => leg.legId)).size === topology.legs.length &&
-    new Set(topLevelCandidates).size === topLevelCandidates.length &&
-    legCandidates.length === topLevelCandidates.length &&
-    topLevelCandidates.every(candidate => legCandidates.includes(candidate))
+    new Set(candidateKeys).size === candidateKeys.length
   );
 }
 
@@ -314,7 +300,6 @@ function selectAutoConfigDualOutputProbePair(
           measurement: 'active',
           estimateReason: undefined,
         })),
-        probeCandidates: [first, second],
       };
       if (isEligibleAutoConfigDualOutputActiveTopology(selected)) return selected;
     }
@@ -339,7 +324,6 @@ export function filterAutoConfigTopologyProbes(
       destinations: leg.destinations.map(destination => ({ ...destination })),
       probeCandidates: leg.probeCandidates.map(candidate => ({ ...candidate })),
     })),
-    probeCandidates: [],
   };
   // Native owns the allocator and simultaneous hardware proof for the two-leg
   // Twitch/YouTube experiment. When a canvas also targets an unsupported V1
@@ -381,7 +365,6 @@ export function filterAutoConfigTopologyProbes(
       leg.estimateReason = coverage.estimateReason;
     }
   });
-  filtered.probeCandidates = filtered.legs.flatMap(leg => leg.probeCandidates);
   return filtered;
 }
 
