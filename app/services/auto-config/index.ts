@@ -4,14 +4,13 @@ import Vue from 'vue';
 import * as obs from '../../../obs-api';
 import { Inject, mutation, PersistentStatefulService, ViewHandler } from 'services/core';
 import { IGoLiveSettings } from 'services/streaming';
-import { ISettingsSubCategory, SettingsService } from 'services/settings';
-import { EEncoderFamily, IOutputSettings, OutputSettingsService } from 'services/settings/output';
+import { SettingsService } from 'services/settings';
+import { OutputSettingsService } from 'services/settings/output';
 import { EncoderQueryService } from 'services/settings/output/encoder-query';
-import { encoderPresetFromSettingsValue } from 'services/settings/output/encoder-settings-policy';
-import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
+import { VideoSettingsService } from 'services/settings-v2/video';
 import { UserService } from 'services/user';
 import { TwitchService } from 'services/platforms/twitch';
-import { IYoutubeAutoOptimizerProbeLease, YoutubeService } from 'services/platforms/youtube';
+import { YoutubeService } from 'services/platforms/youtube';
 import { DualOutputService } from 'services/dual-output';
 import { WindowsService } from 'services/windows';
 import { SourcesService } from 'services/sources';
@@ -19,55 +18,29 @@ import { ScenesService } from 'services/scenes';
 import { NavigationService } from 'services/navigation';
 import { byOS, OS } from 'util/operating-systems';
 import { $t } from 'services/i18n';
+import { describeAutoOptimizerStreamSetup, isAutoOptimizerProfileCompatible } from './stream-setup';
 import {
-  describeAutoOptimizerStreamSetup,
-  isAutoOptimizerProfileCompatible,
-  normalizeAutoOptimizerPlatform,
-} from './stream-setup';
-import { autoOptimizerRecommendationBitrateCap } from './bitrate-policy';
-import {
-  areAutoConfigActiveCanvasIdentitiesValid,
   autoConfigProviderForProbeKind,
-  autoConfigProbeCoverage,
-  credentialFreeAutoConfigRequestOutput,
   autoConfigPhaseStepDisposition,
   autoConfigPhaseStepKey,
   filterAutoConfigStreamSetupProbes,
-  isEligibleAutoConfigDualOutputActiveStreamSetup,
-  isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup,
-  isValidAutoConfigActiveProbeCoverage,
   sanitizeAutoConfigProgressDetail,
-  sanitizeAutoConfigProbeEvidence,
   supportedAutoConfigProbeKinds,
 } from './probe-policy';
-import { validateAutoConfigRecommendation } from './result-policy';
-import {
-  autoOptimizerCanvasAllowsQualityPromotion,
-  autoOptimizerDisplayFrameRate,
-  autoOptimizerPromotesResolution,
-  buildAutoOptimizerRequestLimits,
-} from './resolution-policy';
-import {
-  captureRawOutputValues,
-  buildAutoOptimizerVideoSettingsPatches,
-  outputTransactionValuesMatch,
-  shouldApplyAutoOptimizerVideoSettings,
-  shouldCaptureTargetPresetForRollback,
-  selectAutoOptimizerStandardOutputRecommendation,
-  TRawOutputValues,
-} from './output-transaction-policy';
 import { awaitAutoConfigRun, closeAutoConfigRun, IAutoConfigRun } from './native-run';
+import { AutoConfigProbeResources, AutoOptimizerProbeSetupError } from './probe-resources';
 import {
-  IAutoConfigActiveProbe,
-  IAutoConfigAttemptRequestOutput,
+  buildAutoConfigRequest,
+  IAutoConfigAttemptContext,
+  IAutoConfigVideoSnapshot,
+  validateAutoConfigCanvasIdentities,
+} from './request-builder';
+import { acceptAutoOptimizerResult } from './result-acceptance';
+import { applyAutoOptimizerRecommendations } from './recommendation-applier';
+import {
   IAutoConfigEvent,
-  IAutoConfigNativeResult,
-  IAutoConfigRequest,
-  IAutoConfigRequestOutput,
   IAutoOptimizerAdvice,
-  IAutoOptimizerDestination,
   IAutoOptimizerError,
-  IAutoOptimizerOutputResult,
   IAutoOptimizerProfile,
   IAutoOptimizerProgressDetail,
   IAutoOptimizerResult,
@@ -81,44 +54,10 @@ export * from './types';
 export { describeAutoOptimizerStreamSetup } from './stream-setup';
 
 const MIN_PHASE_VISIBLE_MS = 1000;
-const YOUTUBE_INGEST_CONFIRMATION_TIMEOUT_MS = 12000;
 const CLEANUP_PROGRESS_START = 95;
 const CLEANUP_PROGRESS_MAX = 99;
 const CLEANUP_PROGRESS_STEP = 0.2;
 const CLEANUP_PROGRESS_INTERVAL_MS = 1000;
-
-class AutoOptimizerProbeSetupError extends Error {
-  readonly code = 'active_probe_setup_failed';
-  readonly retryable = true;
-
-  constructor() {
-    super("We couldn't prepare the bandwidth test. Try again, or continue without optimization.");
-    this.name = 'AutoOptimizerProbeSetupError';
-  }
-}
-
-interface ISettingsSnapshot {
-  output: IOutputSettings;
-  rawOutputFormData: ISettingsSubCategory[];
-  rawOutputValues: TRawOutputValues;
-  targetPreset?: ITargetEncoderPresetSnapshot;
-  horizontalVideo: typeof VideoSettingsService.prototype.state.horizontal;
-  verticalVideo: typeof VideoSettingsService.prototype.state.vertical;
-  liveVideoDisplays: TDisplayType[];
-}
-
-interface ITargetEncoderPresetSnapshot {
-  mode: IOutputSettings['mode'];
-  encoderId: string;
-  encoderFamily: EEncoderFamily;
-  field: string;
-  value: string;
-}
-
-interface IPreparedAutoConfigRequest {
-  request: IAutoConfigRequest;
-  streamSetup: IAutoOptimizerStreamSetup;
-}
 
 type TConcreteAutoOptimizerPhase = Exclude<TAutoOptimizerPhase, null>;
 
@@ -217,11 +156,9 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private displayedPhaseSince = 0;
   private pendingPhaseSteps: IPhaseStep[] = [];
   private phaseDrainPromise: Promise<void> | null = null;
-  private youtubeProbeLeases = new Map<string, IYoutubeAutoOptimizerProbeLease>();
-  private youtubeConfirmationPromises = new Map<string, Promise<void>>();
-  private probeAbortController: AbortController | null = null;
-  /** Exact credential-free native inputs retained only for the active attempt. */
-  private attemptRequestOutputs = new Map<string, IAutoConfigAttemptRequestOutput>();
+  private probeResources: AutoConfigProbeResources | null = null;
+  /** Exact credential-free inputs retained only for native-result acceptance. */
+  private attemptContext: IAutoConfigAttemptContext | null = null;
 
   get views() {
     return new AutoConfigViews(this.state);
@@ -306,17 +243,13 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     try {
       const prepared = await this.createNativeRequest(streamSetup);
       if (token !== this.runToken) {
-        this.clearProbeCredentials(prepared.request);
+        this.getProbeResources().redactCredentials();
+        await this.getProbeResources().cleanupAfterNativeClose(async () => undefined);
         return;
       }
       streamSetup = prepared.streamSetup;
       const request = prepared.request;
-      this.attemptRequestOutputs = new Map(
-        request.outputs.map(output => [
-          output.outputId,
-          credentialFreeAutoConfigRequestOutput(output),
-        ]),
-      );
+      this.attemptContext = prepared.attemptContext;
       this.SET_STREAM_SETUP(streamSetup);
 
       let run: IAutoConfigRun;
@@ -327,17 +260,20 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       } finally {
         // OSN has copied the request before run() returns. Never retain a
         // second in-memory copy of provider credentials in Desktop.
-        this.clearProbeCredentials(request);
+        this.getProbeResources().redactCredentials();
       }
       this.nativeRun = run!;
       const nativeResult = await awaitAutoConfigRun(run!);
 
       if (token !== this.runToken || this.nativeRun !== run!) return;
 
-      const result = this.toPublicResult(nativeResult);
-      if (!this.isCompleteResultForStreamSetup(result)) {
+      const accepted = this.attemptContext
+        ? acceptAutoOptimizerResult(nativeResult, this.attemptContext)
+        : null;
+      if (!accepted) {
         throw new Error(nativeResult.error?.code || 'Optimization failed');
       }
+      const result: IAutoOptimizerResult = { ...accepted, advice: this.getAdvice() };
       const stopCleanupProgress = this.startCleanupProgress(token);
       try {
         await this.cleanupOptimizerRun();
@@ -423,14 +359,28 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   async applyAndContinue(): Promise<boolean> {
-    if (!this.frozenGoLiveSettings || !this.state.result || this.state.stage !== 'review') {
+    if (
+      !this.frozenGoLiveSettings ||
+      !this.state.result ||
+      !this.state.streamSetup ||
+      this.state.stage !== 'review'
+    ) {
       return false;
     }
 
     this.SET_APPLYING();
     let profile: IAutoOptimizerProfile;
     try {
-      profile = await this.applyResultTransactionally(this.state.result);
+      profile = await applyAutoOptimizerRecommendations(
+        this.state.result,
+        this.state.streamSetup.type,
+        {
+          outputSettings: this.outputSettingsService,
+          encoderQuery: this.encoderQueryService,
+          settings: this.settingsService,
+          videoSettings: this.videoSettingsService,
+        },
+      );
     } catch (e: unknown) {
       this.SET_ERROR(this.toError(e, 'apply_failed', true));
       return false;
@@ -529,258 +479,67 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     }
   }
 
-  private async createNativeRequest(
-    sourceStreamSetup: IAutoOptimizerStreamSetup,
-  ): Promise<IPreparedAutoConfigRequest> {
-    const credentialProbes: IAutoConfigActiveProbe[] = [];
-    try {
-      return await this.createNativeRequestWithCredentials(sourceStreamSetup, credentialProbes);
-    } catch (error: unknown) {
-      this.clearActiveProbeCredentials(credentialProbes);
-      await this.releaseYoutubeProbeLeases();
-      throw error;
+  private getProbeResources(): AutoConfigProbeResources {
+    if (!this.probeResources) {
+      this.probeResources = new AutoConfigProbeResources(this.twitchService, this.youtubeService);
     }
+    return this.probeResources;
   }
 
-  private async createNativeRequestWithCredentials(
-    sourceStreamSetup: IAutoOptimizerStreamSetup,
-    credentialProbes: IAutoConfigActiveProbe[],
-  ): Promise<IPreparedAutoConfigRequest> {
-    const streamSetup = cloneDeep(sourceStreamSetup);
-    const activeDualOutput = isEligibleAutoConfigDualOutputActiveStreamSetup(streamSetup);
-    const activeEnhancedBroadcastingDualOutput = isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(
-      streamSetup,
-    );
-    const requestedActiveProbeCount = streamSetup.outputs.reduce(
-      (count, output) => count + output.probeCandidates.length,
-      0,
-    );
-    const activeProbes: IAutoConfigActiveProbe[] = [];
-    const activeProbesByOutput = new Map<string, IAutoConfigActiveProbe[]>();
-    if (activeDualOutput || activeEnhancedBroadcastingDualOutput) {
-      const horizontalCanvasId = this.videoSettingsService.contexts.horizontal?.canvasId;
-      const verticalCanvasId = this.videoSettingsService.contexts.vertical?.canvasId;
-      if (!areAutoConfigActiveCanvasIdentitiesValid(horizontalCanvasId, verticalCanvasId, true)) {
-        throw new AutoOptimizerProbeSetupError();
-      }
-    }
-    this.probeAbortController?.abort();
-    const controller = new AbortController();
-    this.probeAbortController = controller;
-
-    for (const output of streamSetup.outputs) {
-      const expectedProbeCount = output.probeCandidates.length;
-      const alreadyPartial = output.estimateReason === 'partial_provider_probes';
-      const acquired: Array<{
-        candidate: typeof output.probeCandidates[number];
-        probe: IAutoConfigActiveProbe;
-      }> = [];
-
-      for (const candidate of output.probeCandidates) {
-        try {
-          if (
-            candidate.kind === 'twitch-standard' ||
-            candidate.kind === 'twitch-enhanced-broadcasting'
-          ) {
-            const streamKey = await this.twitchService.fetchStreamKey();
-            if (!streamKey) throw new Error('Twitch did not return a stream key');
-            const probe: IAutoConfigActiveProbe =
-              candidate.kind === 'twitch-standard'
-                ? {
-                    id: candidate.probeId,
-                    kind: candidate.kind,
-                    server: 'auto',
-                    streamKey,
-                  }
-                : {
-                    id: candidate.probeId,
-                    kind: candidate.kind,
-                    streamKey,
-                  };
-            credentialProbes.push(probe);
-            acquired.push({
-              candidate,
-              probe,
-            });
-          } else {
-            const lease = await this.youtubeService.acquireAutoOptimizerProbe({
-              signal: controller.signal,
-            });
-            const probe: IAutoConfigActiveProbe = {
-              id: lease.probeId,
-              kind: candidate.kind,
-              server: lease.server,
-              streamKey: lease.streamKey,
-            };
-            // The native request now owns the only in-memory credential copy.
-            // A deferred API cleanup retains identifiers only.
-            lease.server = '';
-            lease.streamKey = '';
-            this.youtubeProbeLeases.set(lease.probeId, lease);
-            credentialProbes.push(probe);
-            acquired.push({
-              candidate: { ...candidate, probeId: lease.probeId },
-              probe,
-            });
-          }
-        } catch (error: unknown) {
-          if ((error as { name?: string } | null)?.name === 'AbortError') throw error;
-          console.warn(
-            `[Auto Optimizer] ${candidate.provider} bandwidth probe unavailable; using estimate`,
-          );
-        }
-      }
-
-      output.probeCandidates = acquired.map(({ candidate }) => candidate);
-      if (expectedProbeCount > 0) {
-        const coverage = autoConfigProbeCoverage(expectedProbeCount, acquired.length);
-        output.measurement = coverage.measurement;
-        output.estimateReason =
-          coverage.measurement === 'active' && alreadyPartial
-            ? 'partial_provider_probes'
-            : coverage.estimateReason;
-      }
-      if (acquired.length) {
-        // A provider that was prepared successfully still supplies useful path
-        // evidence when another provider is unavailable. OSN lowers confidence
-        // for that partial provider set; Desktop keeps the missing provider marked
-        // as estimated and prevents quality promotion below.
-        const probes = acquired.map(({ probe }) => probe);
-        activeProbes.push(...probes);
-        activeProbesByOutput.set(output.outputId, probes);
-      }
-    }
-    if (activeDualOutput && activeProbes.length !== requestedActiveProbeCount) {
-      // This stream setup is one aggregate experiment, not two independently
-      // promotable provider probes. Never pass a partially credentialed pair
-      // to native, and delete any temporary YouTube resource before surfacing
-      // the retryable setup failure.
-      this.clearActiveProbeCredentials(credentialProbes);
-      throw new AutoOptimizerProbeSetupError();
-    }
-    if (
-      activeEnhancedBroadcastingDualOutput &&
-      !activeProbes.some(probe => probe.kind === 'twitch-enhanced-broadcasting')
-    ) {
-      // The paired Twitch ladder owns the canvas recommendation and is the
-      // anchor for the concurrent companion workload. A missing optional
-      // YouTube probe may lower bandwidth confidence; a missing Twitch probe
-      // makes the combined experiment impossible.
-      this.clearActiveProbeCredentials(credentialProbes);
-      throw new AutoOptimizerProbeSetupError();
-    }
-    if (requestedActiveProbeCount > 0 && activeProbes.length === 0) {
-      // Runtime setup failures are actionable and retryable. Falling through to
-      // an estimate would hide the provider/API problem and leave the user with
-      // no explanation for why a requested measurement never ran.
-      throw new AutoOptimizerProbeSetupError();
-    }
-
-    const outputSettings = this.outputSettingsService.getSettings();
-    const outputs: IAutoConfigRequestOutput[] = streamSetup.outputs.map(output => {
-      const display: TDisplayType = output.display === 'vertical' ? 'vertical' : 'horizontal';
+  private getAutoConfigVideoSnapshots(): Record<
+    'horizontal' | 'vertical',
+    IAutoConfigVideoSnapshot
+  > {
+    const snapshot = (display: 'horizontal' | 'vertical'): IAutoConfigVideoSnapshot => {
       const video = this.videoSettingsService.state[display];
-      const canvasId = this.videoSettingsService.contexts[display]?.canvasId;
-      const additionalCanvasId = this.videoSettingsService.contexts.vertical?.canvasId;
-      if (
-        (streamSetup.type === 'enhanced-broadcasting' ||
-          streamSetup.type === 'enhanced-broadcasting-dual-output') &&
-        output.measurement === 'active' &&
-        !areAutoConfigActiveCanvasIdentitiesValid(
-          canvasId,
-          additionalCanvasId,
-          output.display === 'both',
-        )
-      ) {
-        throw new AutoOptimizerProbeSetupError();
-      }
-      const maxBitrateKbps = autoOptimizerRecommendationBitrateCap(
-        output.outputKind,
-        output.destinations.map(item => item.platform),
-      );
       return {
-        outputId: output.outputId,
-        display: output.display,
-        outputKind: output.outputKind,
-        destinations: output.destinations.map(destination => destination.platform),
-        current: {
-          canvasId,
-          width: video.outputWidth,
-          height: video.outputHeight,
-          fpsNum: video.fpsNum,
-          fpsDen: video.fpsDen,
-          bitrateKbps: outputSettings.streaming.bitrate,
-          encoderId: outputSettings.streaming.encoderId,
-          preset: outputSettings.streaming.preset || undefined,
-        },
-        // Resolution and frame-rate promotion are permitted only with complete
-        // provider coverage. Partial and estimate-only paths may lower a tested
-        // tuple, but their request ceiling cannot rise above the current output.
-        limits: buildAutoOptimizerRequestLimits({
-          allowPromotion:
-            ((output.measurement === 'active' &&
-              output.estimateReason !== 'partial_provider_probes') ||
-              activeEnhancedBroadcastingDualOutput) &&
-            autoOptimizerCanvasAllowsQualityPromotion(
-              video.baseWidth,
-              video.baseHeight,
-              video.outputWidth,
-              video.outputHeight,
-            ),
-          currentWidth: video.outputWidth,
-          currentHeight: video.outputHeight,
-          currentFpsNum: video.fpsNum,
-          currentFpsDen: video.fpsDen,
-          maxBitrateKbps,
-        }),
-        ...(output.display === 'both'
-          ? {
-              additionalVideo: {
-                display: 'vertical' as const,
-                current: {
-                  canvasId: additionalCanvasId,
-                  width: this.videoSettingsService.state.vertical.outputWidth,
-                  height: this.videoSettingsService.state.vertical.outputHeight,
-                  fpsNum: this.videoSettingsService.state.vertical.fpsNum,
-                  fpsDen: this.videoSettingsService.state.vertical.fpsDen,
-                  bitrateKbps: outputSettings.streaming.bitrate,
-                  encoderId: outputSettings.streaming.encoderId,
-                  preset: outputSettings.streaming.preset || undefined,
-                },
-                limits: buildAutoOptimizerRequestLimits({
-                  allowPromotion:
-                    ((output.measurement === 'active' &&
-                      output.estimateReason !== 'partial_provider_probes') ||
-                      activeEnhancedBroadcastingDualOutput) &&
-                    autoOptimizerCanvasAllowsQualityPromotion(
-                      this.videoSettingsService.state.vertical.baseWidth,
-                      this.videoSettingsService.state.vertical.baseHeight,
-                      this.videoSettingsService.state.vertical.outputWidth,
-                      this.videoSettingsService.state.vertical.outputHeight,
-                    ),
-                  currentWidth: this.videoSettingsService.state.vertical.outputWidth,
-                  currentHeight: this.videoSettingsService.state.vertical.outputHeight,
-                  currentFpsNum: this.videoSettingsService.state.vertical.fpsNum,
-                  currentFpsDen: this.videoSettingsService.state.vertical.fpsDen,
-                  maxBitrateKbps,
-                }),
-              },
-            }
-          : {}),
-        estimateReason: output.estimateReason as IAutoConfigRequestOutput['estimateReason'],
-        ...(activeProbesByOutput.has(output.outputId)
-          ? { probes: activeProbesByOutput.get(output.outputId)! }
-          : {}),
+        canvasId: this.videoSettingsService.contexts[display]?.canvasId,
+        baseWidth: video.baseWidth,
+        baseHeight: video.baseHeight,
+        outputWidth: video.outputWidth,
+        outputHeight: video.outputHeight,
+        fpsNum: video.fpsNum,
+        fpsDen: video.fpsDen,
       };
-    });
-
-    return {
-      streamSetup,
-      request: {
-        streamSetup: streamSetup.type,
-        outputs,
-      },
     };
+    return {
+      horizontal: snapshot('horizontal'),
+      vertical: snapshot('vertical'),
+    };
+  }
+
+  private async createNativeRequest(
+    sourceStreamSetup: IAutoOptimizerStreamSetup,
+  ): Promise<
+    ReturnType<typeof buildAutoConfigRequest> & { streamSetup: IAutoOptimizerStreamSetup }
+  > {
+    const resources = this.getProbeResources();
+    const videos = this.getAutoConfigVideoSnapshots();
+    try {
+      // Reject an unusable OBS environment before acquiring provider resources.
+      validateAutoConfigCanvasIdentities(sourceStreamSetup, videos);
+    } catch (error: unknown) {
+      throw new AutoOptimizerProbeSetupError();
+    }
+
+    const prepared = await resources.prepare(sourceStreamSetup);
+    try {
+      return {
+        ...buildAutoConfigRequest({
+          streamSetup: prepared.streamSetup,
+          outputProbes: [...prepared.probesByOutput].map(([outputId, probes]) => ({
+            outputId,
+            probes,
+          })),
+          outputSettings: this.outputSettingsService.getSettings(),
+          videos,
+        }),
+        streamSetup: prepared.streamSetup,
+      };
+    } catch (error: unknown) {
+      await resources.cleanupAfterNativeClose(async () => undefined);
+      throw new AutoOptimizerProbeSetupError();
+    }
   }
 
   private handleNativeEvent(event: IAutoConfigEvent, token: number) {
@@ -793,7 +552,11 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       typeof event.probe?.id === 'string' &&
       event.probe.id
     ) {
-      this.startYoutubeIngestConfirmation(event.probe.id, token);
+      this.getProbeResources().confirmYoutubeIngest(
+        event.probe.id,
+        () => this.nativeRun,
+        () => token === this.runToken && this.state.stage === 'running',
+      );
     }
 
     const phase: TConcreteAutoOptimizerPhase | null =
@@ -807,37 +570,6 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       const detail = sanitizeAutoConfigProgressDetail(event, phase);
       this.queuePhaseProgress(phase, clampProgress(event.progress), token, detail);
     }
-  }
-
-  private startYoutubeIngestConfirmation(probeId: string, token: number) {
-    if (this.youtubeConfirmationPromises.has(probeId)) return;
-
-    const lease = this.youtubeProbeLeases.get(probeId);
-    const controller = this.probeAbortController;
-    const confirmation = (async () => {
-      let received = false;
-      if (lease && controller && !controller.signal.aborted) {
-        try {
-          received = await this.youtubeService.waitForAutoOptimizerProbeActive(lease, {
-            signal: controller.signal,
-            timeoutMs: YOUTUBE_INGEST_CONFIRMATION_TIMEOUT_MS,
-          });
-        } catch (error: unknown) {
-          if ((error as { name?: string } | null)?.name === 'AbortError') return;
-          console.warn('[Auto Optimizer] YouTube ingest confirmation failed', error);
-        }
-      }
-
-      if (token !== this.runToken || controller?.signal.aborted || !this.nativeRun) {
-        return;
-      }
-      try {
-        this.nativeRun.confirmProbeIngest(probeId, received);
-      } catch (error: unknown) {
-        console.warn('[Auto Optimizer] Could not confirm YouTube probe ingest', error);
-      }
-    })();
-    this.youtubeConfirmationPromises.set(probeId, confirmation);
   }
 
   private beginPhasePacing() {
@@ -967,179 +699,6 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     return token === this.runToken && this.state.stage === 'running';
   }
 
-  private toPublicResult(nativeResult: IAutoConfigNativeResult): IAutoOptimizerResult {
-    const expectedOutputs = this.state.streamSetup?.outputs || [];
-    const activeDualOutput = Boolean(
-      this.state.streamSetup &&
-        isEligibleAutoConfigDualOutputActiveStreamSetup(this.state.streamSetup),
-    );
-    const activeEnhancedBroadcastingDualOutput = Boolean(
-      this.state.streamSetup &&
-        isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(this.state.streamSetup),
-    );
-    const jointDualOutputActive =
-      activeDualOutput &&
-      nativeResult.outputs.every(output => output.measurement.mode === 'active');
-    const outputs: IAutoOptimizerOutputResult[] = nativeResult.outputs.flatMap(output => {
-      const expected = expectedOutputs.find(item => item.outputId === output.outputId);
-      const requested = this.attemptRequestOutputs.get(output.outputId);
-      if (!expected || !requested || expected.display !== requested.display) return [];
-
-      const videosByDisplay = new Map(output.videos.map(video => [video.display, video]));
-      const expectedDisplays =
-        requested.display === 'both'
-          ? (['horizontal', 'vertical'] as const)
-          : ([requested.display] as const);
-      if (
-        output.videos.length !== expectedDisplays.length ||
-        videosByDisplay.size !== output.videos.length ||
-        expectedDisplays.some(display => !videosByDisplay.has(display))
-      ) {
-        return [];
-      }
-
-      const primaryDisplay = requested.display === 'both' ? 'horizontal' : requested.display;
-      const primaryVideo = videosByDisplay.get(primaryDisplay);
-      const additionalVideo = requested.display === 'both' ? videosByDisplay.get('vertical') : null;
-      if (!primaryVideo || (requested.display === 'both' && !additionalVideo)) return [];
-
-      const evidence = sanitizeAutoConfigProbeEvidence(output.measurement.evidence);
-      // state.streamSetup is replaced with the prepared attempt stream setup before
-      // native execution. At least one attempted candidate must succeed;
-      // failed or missing selected providers are accepted only at low confidence.
-      const activeEvidenceValid =
-        output.measurement.mode !== 'active' ||
-        isValidAutoConfigActiveProbeCoverage({
-          destinations: expected.destinations,
-          attemptedCandidates: expected.probeCandidates,
-          evidence,
-          confidence: output.measurement.confidence,
-          requireAllProbeCapableDestinations:
-            !activeDualOutput && !activeEnhancedBroadcastingDualOutput,
-        });
-      const providerOwnsEncoding = expected.outputKind === 'twitch-enhanced-broadcasting';
-      // Provider-owned outputs deliberately omit encoding. Standard outputs
-      // must return the exact encoder configuration Desktop can apply.
-      if (providerOwnsEncoding === Boolean(output.encoding)) return [];
-
-      const recommendation = validateAutoConfigRecommendation(
-        {
-          width: primaryVideo.width,
-          height: primaryVideo.height,
-          fpsNum: primaryVideo.fpsNum,
-          fpsDen: primaryVideo.fpsDen,
-          bitrateKbps: output.encoding?.bitrateKbps ?? requested.current.bitrateKbps,
-          encoderId: output.encoding?.encoderId,
-          encoderFamily: output.encoding?.encoderFamily,
-          encoderTitle: output.encoding?.encoderTitle,
-          codec: output.encoding?.codec,
-          preset: output.encoding?.preset,
-          ...(additionalVideo
-            ? {
-                additionalVideo: {
-                  display: 'vertical' as const,
-                  width: additionalVideo.width,
-                  height: additionalVideo.height,
-                  fpsNum: additionalVideo.fpsNum,
-                  fpsDen: additionalVideo.fpsDen,
-                },
-              }
-            : {}),
-        },
-        {
-          measurementMode: output.measurement.mode,
-          currentBitrateKbps: requested.current.bitrateKbps,
-          probeEvidence: evidence,
-          providerOwnsEncoding,
-          enhancedBroadcasting: providerOwnsEncoding,
-          qualityProfile:
-            jointDualOutputActive ||
-            expected.destinations.some(destination => destination.platform === 'twitch')
-              ? 'twitch'
-              : 'generic',
-          maxBitrateKbps: requested.limits?.maxBitrateKbps,
-          maxWidth: requested.limits?.maxWidth,
-          maxHeight: requested.limits?.maxHeight,
-          maxFpsNum: requested.limits?.maxFpsNum,
-          maxFpsDen: requested.limits?.maxFpsDen,
-          currentWidth: requested.current.width,
-          currentHeight: requested.current.height,
-          currentFpsNum: requested.current.fpsNum,
-          currentFpsDen: requested.current.fpsDen,
-          additionalVideo: requested.additionalVideo,
-        },
-      );
-      const valid =
-        (expected.measurement === 'active' || output.measurement.mode === 'estimated') &&
-        activeEvidenceValid &&
-        recommendation !== null;
-      if (!valid || !recommendation) return [];
-
-      return [
-        {
-          outputId: output.outputId,
-          display: expected.display,
-          outputKind: expected.outputKind,
-          destinations: expected.destinations.map(
-            item =>
-              ({
-                platform: normalizeAutoOptimizerPlatform(item.platform),
-              } as IAutoOptimizerDestination),
-          ),
-          measurement: output.measurement.mode,
-          confidence: output.measurement.confidence,
-          probes: evidence,
-          estimateReason: output.measurement.reason,
-          resolution: {
-            width: recommendation.width,
-            height: recommendation.height,
-          },
-          fpsNum: recommendation.fpsNum,
-          fpsDen: recommendation.fpsDen,
-          fps: autoOptimizerDisplayFrameRate(recommendation.fpsNum, recommendation.fpsDen),
-          bitrate: recommendation.bitrateKbps,
-          ...(recommendation.additionalVideo
-            ? {
-                additionalVideo: {
-                  display: 'vertical' as const,
-                  resolution: {
-                    width: recommendation.additionalVideo.width,
-                    height: recommendation.additionalVideo.height,
-                  },
-                  fpsNum: recommendation.additionalVideo.fpsNum,
-                  fpsDen: recommendation.additionalVideo.fpsDen,
-                  fps: autoOptimizerDisplayFrameRate(
-                    recommendation.additionalVideo.fpsNum,
-                    recommendation.additionalVideo.fpsDen,
-                  ),
-                },
-              }
-            : {}),
-          ...(recommendation.encoder ? { encoder: recommendation.encoder } : {}),
-        },
-      ];
-    });
-
-    return {
-      schemaVersion: 1,
-      streamSetup: this.state.streamSetup?.type || 'direct-single',
-      status: nativeResult.status,
-      outputs,
-      advice: this.getAdvice(),
-    };
-  }
-
-  private isCompleteResultForStreamSetup(result: IAutoOptimizerResult): boolean {
-    if (result.status !== 'complete' || !this.state.streamSetup) return false;
-    const expectedIds = this.state.streamSetup.outputs.map(output => output.outputId);
-    const returnedIds = result.outputs.map(output => output.outputId);
-    return (
-      returnedIds.length === expectedIds.length &&
-      new Set(returnedIds).size === returnedIds.length &&
-      expectedIds.every(outputId => returnedIds.includes(outputId))
-    );
-  }
-
   private getAdvice(): IAutoOptimizerAdvice | undefined {
     const hasVideoCapture = this.sourcesService.views.sources.some(source =>
       ['dshow_input', 'macos_avcapture', 'av_capture_input'].includes(source.type),
@@ -1165,438 +724,20 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     return undefined;
   }
 
-  private async applyResultTransactionally(
-    result: IAutoOptimizerResult,
-  ): Promise<IAutoOptimizerProfile> {
-    if (!result.outputs.length || !this.state.streamSetup) {
-      throw new Error('No recommendations to apply');
-    }
-    // A Settings-window canvas edit may still be inside its 200 ms batching
-    // window when the user accepts the result. Apply it before capturing the
-    // rollback snapshot or computing the non-shrinking accepted Base Canvas.
-    await this.videoSettingsService.flushPendingCanvasSettings();
-    const snapshot = this.captureSettingsSnapshot();
-    const primary =
-      result.outputs.find(output => output.display === 'horizontal') || result.outputs[0];
-    const outputRecommendation = selectAutoOptimizerStandardOutputRecommendation(result.outputs);
-    const frameRateSignatures = new Set(
-      result.outputs.flatMap(output => [
-        `${output.fpsNum}/${output.fpsDen}`,
-        ...(output.additionalVideo
-          ? [`${output.additionalVideo.fpsNum}/${output.additionalVideo.fpsDen}`]
-          : []),
-      ]),
-    );
-    if (frameRateSignatures.size > 1) {
-      throw new Error('This stream setup cannot apply different frame rates per output');
-    }
-    const providerOwnsEncoding = outputRecommendation === null;
-    const applyVideoSettings = shouldApplyAutoOptimizerVideoSettings(
-      this.state.streamSetup.type,
-      providerOwnsEncoding,
-      result.outputs.map(output => output.measurement),
-    );
-    const expectedEncoder = providerOwnsEncoding
-      ? null
-      : (outputRecommendation!.encoder!.family as EEncoderFamily);
-    const displaysToApply = Array.from(
-      new Set(
-        result.outputs.flatMap(output =>
-          output.display === 'both'
-            ? (['horizontal', 'vertical'] as TDisplayType[])
-            : [output.display as TDisplayType],
-        ),
-      ),
-    );
-
-    try {
-      if (
-        applyVideoSettings &&
-        displaysToApply.some(display => !this.videoSettingsService.contexts[display])
-      ) {
-        throw new Error('A required video context is unavailable');
-      }
-      if (!providerOwnsEncoding) {
-        // Simple mode can hide the preset whenever UseAdvanced is disabled,
-        // even when the recommended encoder is already selected. Always
-        // preserve that target value before enabling/mutating its context.
-        // Advanced mode has one shared encoder-settings document, so its
-        // active raw form is the complete rollback source.
-        if (shouldCaptureTargetPresetForRollback(snapshot.output.mode)) {
-          snapshot.targetPreset = this.captureTargetEncoderPresetSnapshot(
-            snapshot.output.mode,
-            outputRecommendation!.encoder!.id,
-            outputRecommendation!.encoder!.family as EEncoderFamily,
-          );
-        } else {
-          this.activateEncoderPresetContext(
-            snapshot.output.mode,
-            outputRecommendation!.encoder!.id,
-            outputRecommendation!.encoder!.family as EEncoderFamily,
-          );
-        }
-        this.outputSettingsService.setSettings({
-          streaming: {
-            bitrate: outputRecommendation!.bitrate,
-            encoder: expectedEncoder!,
-            encoderId: outputRecommendation!.encoder!.id,
-            preset: outputRecommendation!.encoder!.preset,
-          },
-        });
-      }
-
-      if (applyVideoSettings) {
-        // Testing used disposable native mixes and did not mutate these values.
-        // Only this user-approved path may grow Base Canvas. Output resolution
-        // may differ per display, while OBS cadence is a shared video setting.
-        const patches = buildAutoOptimizerVideoSettingsPatches(
-          result.outputs,
-          {
-            horizontal: this.videoSettingsService.state.horizontal,
-            vertical: this.videoSettingsService.state.vertical,
-          },
-          primary.fpsNum,
-          primary.fpsDen,
-        );
-        await this.videoSettingsService.applyAutoOptimizerSettings(patches);
-      }
-
-      this.verifyAppliedSettings(
-        result,
-        primary,
-        outputRecommendation,
-        applyVideoSettings,
-        expectedEncoder,
-        snapshot,
-      );
-      return {
-        schemaVersion: 1,
-        streamSetup: this.state.streamSetup.type,
-        outputs: cloneDeep(result.outputs),
-      };
-    } catch (e: unknown) {
-      let fullyRestored = false;
-      try {
-        await this.restoreSettingsSnapshot(snapshot);
-        fullyRestored = this.matchesSettingsSnapshot(snapshot);
-      } catch (restoreError: unknown) {
-        console.error('[Auto Optimizer] Failed to restore Output settings', restoreError);
-      }
-      if (!fullyRestored) {
-        throw new Error('Auto Optimizer failed and could not fully restore previous settings');
-      }
-      throw e;
-    }
-  }
-
-  private captureSettingsSnapshot(): ISettingsSnapshot {
-    const rawOutputFormData = cloneDeep(this.settingsService.state.Output.formData);
-    return {
-      output: cloneDeep(this.outputSettingsService.getSettings()),
-      rawOutputFormData,
-      rawOutputValues: captureRawOutputValues(rawOutputFormData),
-      horizontalVideo: cloneDeep(this.videoSettingsService.state.horizontal),
-      verticalVideo: cloneDeep(this.videoSettingsService.state.vertical),
-      liveVideoDisplays: (['horizontal', 'vertical'] as TDisplayType[]).filter(
-        display => !!this.videoSettingsService.contexts[display],
-      ),
-    };
-  }
-
-  private async restoreSettingsSnapshot(snapshot: ISettingsSnapshot): Promise<void> {
-    if (snapshot.targetPreset) {
-      this.activateTargetEncoderPreset(snapshot.targetPreset);
-      this.setRawOutputField('Streaming', snapshot.targetPreset.field, snapshot.targetPreset.value);
-    }
-    this.restoreRawOutputForm(snapshot.rawOutputFormData);
-    await this.videoSettingsService.applyAutoOptimizerSettings({
-      horizontal: snapshot.horizontalVideo,
-      vertical: snapshot.verticalVideo,
-    });
-  }
-
-  private matchesSettingsSnapshot(snapshot: ISettingsSnapshot): boolean {
-    const actualTargetPreset = snapshot.targetPreset
-      ? this.readDormantTargetPreset(snapshot.targetPreset)
-      : null;
-    return (
-      isEqual(this.outputSettingsService.getSettings(), snapshot.output) &&
-      outputTransactionValuesMatch(
-        snapshot.rawOutputValues,
-        this.settingsService.state.Output.formData,
-        snapshot.targetPreset ? snapshot.targetPreset.value : null,
-        actualTargetPreset,
-      ) &&
-      isEqual(this.videoSettingsService.state.horizontal, snapshot.horizontalVideo) &&
-      isEqual(this.videoSettingsService.state.vertical, snapshot.verticalVideo) &&
-      snapshot.liveVideoDisplays.every(display =>
-        this.obsVideoMatches(
-          display === 'horizontal' ? snapshot.horizontalVideo : snapshot.verticalVideo,
-          display,
-        ),
-      )
-    );
-  }
-
-  private captureTargetEncoderPresetSnapshot(
-    mode: IOutputSettings['mode'],
-    encoderId: string,
-    encoderFamily: EEncoderFamily,
-  ): ITargetEncoderPresetSnapshot {
-    const field = this.encoderQueryService.resolveStreamingEncoderPreset(mode, encoderId);
-    if (!field) throw new Error(`No preset field is available for encoder ${encoderId}`);
-
-    const target: ITargetEncoderPresetSnapshot = {
-      mode,
-      encoderId,
-      encoderFamily,
-      field,
-      value: '',
-    };
-    this.activateEncoderPresetContext(mode, encoderId, encoderFamily);
-    const value = this.readRawOutputField('Streaming', field);
-    if (typeof value !== 'string') {
-      throw new Error(`Could not read the current preset for encoder ${encoderId}`);
-    }
-    target.value = value;
-    return target;
-  }
-
-  private activateTargetEncoderPreset(target: ITargetEncoderPresetSnapshot) {
-    this.activateEncoderPresetContext(target.mode, target.encoderId, target.encoderFamily);
-  }
-
-  private activateEncoderPresetContext(
-    mode: IOutputSettings['mode'],
-    encoderId: string,
-    encoderFamily: EEncoderFamily,
-  ) {
-    if (this.outputSettingsService.getSettings().mode !== mode) {
-      throw new Error('Output mode changed during Auto Optimizer apply');
-    }
-    this.outputSettingsService.setSettings({
-      streaming: {
-        encoder: encoderFamily,
-        encoderId,
-      },
-    });
-    if (mode === 'Simple') {
-      const useAdvanced = this.readRawOutputField('Streaming', 'UseAdvanced');
-      if (useAdvanced !== true) this.setRawOutputField('Streaming', 'UseAdvanced', true);
-    }
-    if (this.outputSettingsService.getSettings().streaming.encoderId !== encoderId) {
-      throw new Error(`Could not activate encoder ${encoderId}`);
-    }
-  }
-
-  private readDormantTargetPreset(target: ITargetEncoderPresetSnapshot): string | null {
-    // Target snapshots are intentionally Simple-only: these are distinct
-    // config keys and remain meaningful after the original encoder is restored.
-    const activeFormData = cloneDeep(this.settingsService.state.Output.formData);
-    try {
-      this.activateTargetEncoderPreset(target);
-      const value = this.readRawOutputField('Streaming', target.field);
-      return typeof value === 'string' ? value : null;
-    } finally {
-      // Dormant verification must not leave the target encoder selected.
-      this.restoreRawOutputForm(activeFormData);
-    }
-  }
-
-  private restoreRawOutputForm(formData: ISettingsSubCategory[]) {
-    // The first Advanced-mode save switches the encoder. OBS intentionally
-    // discards encoder-property values from that same save and creates the
-    // selected encoder with defaults. The second save restores those values
-    // now that the original encoder is active. This is harmless in Simple mode.
-    this.settingsService.setSettings('Output', cloneDeep(formData));
-    this.settingsService.setSettings('Output', cloneDeep(formData));
-  }
-
-  private readRawOutputField(subCategory: string, field: string): unknown {
-    return this.settingsService.findSettingValue(
-      this.settingsService.state.Output.formData,
-      subCategory,
-      field,
-    );
-  }
-
-  private setRawOutputField(subCategory: string, field: string, value: string | boolean) {
-    const formData = cloneDeep(this.settingsService.state.Output.formData);
-    const setting = this.settingsService.findSetting(formData, subCategory, field);
-    if (!setting) throw new Error(`Output setting ${subCategory}.${field} is unavailable`);
-    setting.value = value;
-    this.settingsService.setSettings('Output', formData);
-  }
-
-  private obsVideoMatches(expected: ISettingsSnapshot['horizontalVideo'], display: TDisplayType) {
-    const actual = this.videoSettingsService.contexts[display]?.video;
-    if (!actual) return false;
-    return (
-      actual.baseWidth === expected.baseWidth &&
-      actual.baseHeight === expected.baseHeight &&
-      actual.outputWidth === expected.outputWidth &&
-      actual.outputHeight === expected.outputHeight &&
-      actual.fpsNum === expected.fpsNum &&
-      actual.fpsDen === expected.fpsDen
-    );
-  }
-
-  private verifyAppliedSettings(
-    result: IAutoOptimizerResult,
-    primary: IAutoOptimizerOutputResult,
-    outputRecommendation: IAutoOptimizerOutputResult | null,
-    applyVideoSettings: boolean,
-    expectedEncoder: EEncoderFamily | null,
-    snapshot: ISettingsSnapshot,
-  ) {
-    const output = this.outputSettingsService.getSettings();
-    if (outputRecommendation && output.streaming.bitrate !== outputRecommendation.bitrate) {
-      throw new Error('Failed to apply the recommended bitrate');
-    }
-    if (outputRecommendation && output.streaming.encoder !== expectedEncoder) {
-      throw new Error('Failed to apply the recommended encoder');
-    }
-    if (outputRecommendation && output.streaming.encoderId !== outputRecommendation.encoder!.id) {
-      throw new Error('Failed to apply the tested encoder implementation');
-    }
-    if (outputRecommendation) {
-      const presetField = this.encoderQueryService.resolveStreamingEncoderPreset(
-        output.mode,
-        outputRecommendation.encoder!.id,
-      );
-      const rawPreset = presetField ? this.readRawOutputField('Streaming', presetField) : null;
-      let appliedPreset: string;
-      try {
-        if (typeof rawPreset !== 'string' || !rawPreset) throw new Error('Missing preset');
-        appliedPreset = encoderPresetFromSettingsValue(
-          outputRecommendation.encoder!.id,
-          output.mode,
-          rawPreset,
-        );
-      } catch (error: unknown) {
-        throw new Error('Failed to read the recommended encoder preset');
-      }
-      if (appliedPreset !== outputRecommendation.encoder!.preset) {
-        throw new Error('Failed to apply the recommended encoder preset');
-      }
-      if (
-        output.mode === 'Simple' &&
-        this.readRawOutputField('Streaming', 'UseAdvanced') !== true
-      ) {
-        throw new Error('Failed to enable the recommended encoder preset');
-      }
-    }
-    if (applyVideoSettings) {
-      (['horizontal', 'vertical'] as TDisplayType[]).forEach(display => {
-        const state = this.videoSettingsService.state[display];
-        if (state && (state.fpsNum !== primary.fpsNum || state.fpsDen !== primary.fpsDen)) {
-          throw new Error(`Failed to persist the recommended ${display} frame rate`);
-        }
-        const live = this.videoSettingsService.contexts[display]?.video;
-        if (live && (live.fpsNum !== primary.fpsNum || live.fpsDen !== primary.fpsDen)) {
-          throw new Error(`Failed to apply the recommended ${display} frame rate`);
-        }
-      });
-      result.outputs
-        .flatMap(output => [
-          {
-            display: (output.display === 'vertical' ? 'vertical' : 'horizontal') as TDisplayType,
-            resolution: output.resolution,
-          },
-          ...(output.additionalVideo
-            ? [
-                {
-                  display: output.additionalVideo.display,
-                  resolution: output.additionalVideo.resolution,
-                },
-              ]
-            : []),
-        ])
-        .forEach(({ display, resolution }) => {
-          const state = this.videoSettingsService.state[display];
-          const video = this.videoSettingsService.contexts[display]?.video;
-          const previous =
-            display === 'vertical' ? snapshot.verticalVideo : snapshot.horizontalVideo;
-          const promotedResolution = autoOptimizerPromotesResolution(
-            previous.outputWidth,
-            previous.outputHeight,
-            resolution.width,
-            resolution.height,
-          );
-          if (!state || !video) throw new Error(`The ${display} video context is unavailable`);
-          if (
-            state.outputWidth !== resolution.width ||
-            state.outputHeight !== resolution.height ||
-            (promotedResolution && state.baseWidth < resolution.width) ||
-            (promotedResolution && state.baseHeight < resolution.height) ||
-            video.baseWidth !== state.baseWidth ||
-            video.baseHeight !== state.baseHeight ||
-            video.outputWidth !== resolution.width ||
-            video.outputHeight !== resolution.height
-          ) {
-            throw new Error(`Failed to apply the recommended ${display} video settings`);
-          }
-        });
-    }
-  }
-
-  private clearProbeCredentials(request: IAutoConfigRequest) {
-    this.clearActiveProbeCredentials(request.outputs.flatMap(output => output.probes || []));
-    this.youtubeProbeLeases.forEach(lease => {
-      lease.streamKey = '';
-      lease.server = '';
-    });
-  }
-
-  private clearActiveProbeCredentials(probes: IAutoConfigActiveProbe[]) {
-    probes.forEach(probe => {
-      probe.streamKey = '';
-      if ('server' in probe) probe.server = '';
-    });
-  }
-
   private async cleanupOptimizerRun(): Promise<void> {
-    this.attemptRequestOutputs.clear();
-    this.probeAbortController?.abort();
-    this.probeAbortController = null;
-    // Redact credentials even when setup failed or was cancelled before native
-    // session creation. Release only needs the exact journaled identifiers.
-    this.youtubeProbeLeases.forEach(lease => {
-      lease.streamKey = '';
-      lease.server = '';
-    });
-
-    const run = this.nativeRun;
-    if (run) {
-      // run.result resolves only after OSN has obtained the native result and
-      // closed the session. cancel() likewise stops output and closes before
-      // resolving. Provider-owned resources must remain alive until then.
-      // cancel() is idempotent after a resolved result has already closed the
-      // native session. If its close barrier fails, retain this handle and the
-      // YouTube leases so a later cleanup attempt can retry safely.
+    this.attemptContext = null;
+    const closeNative = async () => {
+      const run = this.nativeRun;
+      if (!run) return;
       await closeAutoConfigRun(run, () => {
         if (this.nativeRun === run) this.nativeRun = null;
       });
-    }
+    };
 
-    const confirmations = [...this.youtubeConfirmationPromises.values()];
-    if (confirmations.length) await Promise.allSettled(confirmations);
-    this.youtubeConfirmationPromises.clear();
-
-    await this.releaseYoutubeProbeLeases();
-  }
-
-  private async releaseYoutubeProbeLeases(): Promise<void> {
-    for (const [probeId, lease] of [...this.youtubeProbeLeases]) {
-      try {
-        await this.youtubeService.releaseAutoOptimizerProbe(lease);
-        this.youtubeProbeLeases.delete(probeId);
-      } catch (error: unknown) {
-        // Native output is already stopped. Keep the non-secret lease and its
-        // recovery journal so a later attempt can retry without blocking the
-        // user from reviewing or applying an otherwise valid recommendation.
-        console.warn('[Auto Optimizer] Deferred YouTube probe cleanup', error);
-      }
+    if (this.probeResources) {
+      await this.probeResources.cleanupAfterNativeClose(closeNative);
+    } else {
+      await closeNative();
     }
   }
 
