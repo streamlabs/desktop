@@ -125,11 +125,16 @@ export function describeAutoOptimizerStreamSetup(
   // Twitch Dual Stream uses one Enhanced Broadcasting connection carrying
   // paired horizontal and vertical video. Classify it as Enhanced Broadcasting
   // even when the persisted toggle is false.
-  const enhancedBroadcasting = Boolean(
-    settings.enhancedBroadcasting ||
-      twitchSettings?.isEnhancedBroadcasting ||
-      isSingleConnectionTwitchDual,
-  );
+  // Stream Shift uses a standard encoded output. Its UI disables Enhanced
+  // Broadcasting without clearing the saved preference, so ignore that
+  // preference while describing the optimizer run.
+  const enhancedBroadcasting =
+    !streamShift &&
+    Boolean(
+      settings.enhancedBroadcasting ||
+        twitchSettings?.isEnhancedBroadcasting ||
+        isSingleConnectionTwitchDual,
+    );
   const isEnhancedBroadcastingDualOutput =
     dualOutputMode &&
     twitchDualStreamAccess &&
@@ -147,8 +152,6 @@ export function describeAutoOptimizerStreamSetup(
     type = 'enhanced-broadcasting-dual-output';
   } else if (enhancedBroadcasting) {
     type = 'enhanced-broadcasting';
-  } else if (streamShift) {
-    type = 'stream-shift';
   } else if (dualOutputMode) {
     type = hasCustom && platforms.length > 0 ? 'mixed' : 'dual-output';
   } else if (hasCustom && platforms.length > 0) {
@@ -161,10 +164,9 @@ export function describeAutoOptimizerStreamSetup(
     type = 'direct-single';
   }
 
-  // Custom RTMP destinations and Stream Shift are never used for active
-  // testing. Enhanced Broadcasting can run its workload test only for a
-  // Twitch-only connection with either one horizontal video or paired
-  // horizontal and vertical video.
+  // Custom RTMP destinations are never used for active testing. Enhanced
+  // Broadcasting can run its workload test only for a Twitch-only connection
+  // with either one horizontal video or paired horizontal and vertical video.
   const enhancedBroadcastingProbeEligible =
     type === 'enhanced-broadcasting' &&
     !streamShift &&
@@ -177,7 +179,7 @@ export function describeAutoOptimizerStreamSetup(
   const allowProbes =
     enhancedBroadcastingProbeEligible ||
     enhancedBroadcastingDualOutputProbeEligible ||
-    !['custom-rtmp', 'mixed', 'enhanced-broadcasting', 'stream-shift'].includes(type);
+    !['custom-rtmp', 'mixed', 'enhanced-broadcasting'].includes(type);
 
   const allDestinations: IAutoOptimizerDestination[] = [
     ...platforms.map(destination),

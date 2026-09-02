@@ -210,7 +210,7 @@ test('single-canvas Twitch-only Enhanced Broadcasting has its dedicated active p
   t.is(enhanced.outputs[0].measurement, 'active');
 });
 
-test('Enhanced Broadcasting with another destination and Stream Shift remain estimate-only', t => {
+test('Enhanced Broadcasting with another destination remains estimate-only', t => {
   const enhancedWithYoutube = describeAutoOptimizerStreamSetup(
     settings({
       platforms: {
@@ -224,14 +224,14 @@ test('Enhanced Broadcasting with another destination and Stream Shift remain est
     }),
     false,
   );
-  const streamShift = describeAutoOptimizerStreamSetup(
-    settings({
-      platforms: { twitch: { enabled: true, useCustomFields: false } as any },
-      streamShift: true,
-    }),
-    false,
-  );
-  const enhancedWithStreamShift = describeAutoOptimizerStreamSetup(
+
+  t.is(enhancedWithYoutube.type, 'enhanced-broadcasting');
+  t.is(allProbeCandidates(enhancedWithYoutube).length, 0);
+  t.is(enhancedWithYoutube.outputs[0].estimateReason, 'enhanced_broadcasting');
+});
+
+test('Stream Shift uses a regular Twitch probe and ignores the saved Enhanced Broadcasting preference', t => {
+  const streamSetup = describeAutoOptimizerStreamSetup(
     settings({
       platforms: {
         twitch: {
@@ -241,18 +241,43 @@ test('Enhanced Broadcasting with another destination and Stream Shift remain est
         } as any,
       },
       streamShift: true,
+      enhancedBroadcasting: true,
     }),
     false,
   );
 
-  t.is(enhancedWithYoutube.type, 'enhanced-broadcasting');
-  t.is(allProbeCandidates(enhancedWithYoutube).length, 0);
-  t.is(enhancedWithYoutube.outputs[0].estimateReason, 'enhanced_broadcasting');
-  t.is(streamShift.type, 'stream-shift');
-  t.is(allProbeCandidates(streamShift).length, 0);
-  t.is(enhancedWithStreamShift.type, 'enhanced-broadcasting');
-  t.is(allProbeCandidates(enhancedWithStreamShift).length, 0);
-  t.is(enhancedWithStreamShift.outputs[0].measurement, 'estimated');
+  t.is(streamSetup.type, 'direct-single');
+  t.is(streamSetup.outputs[0].outputKind, 'standard');
+  t.is(streamSetup.outputs[0].measurement, 'active');
+  t.deepEqual(allProbeCandidates(streamSetup), [
+    {
+      probeId: 'horizontal-twitch',
+      kind: 'twitch-standard',
+      outputId: 'horizontal',
+      provider: 'twitch',
+    },
+  ]);
+});
+
+test('Stream Shift uses the same cloud provider probes as an ordinary stream', t => {
+  const ordinarySettings = settings({
+    platforms: {
+      twitch: { enabled: true, useCustomFields: false } as any,
+      youtube: { enabled: true, useCustomFields: false } as any,
+    },
+  });
+  const ordinary = describeAutoOptimizerStreamSetup(ordinarySettings, false);
+  const streamShift = describeAutoOptimizerStreamSetup(
+    { ...ordinarySettings, streamShift: true },
+    false,
+  );
+
+  t.deepEqual(streamShift, ordinary);
+  t.is(streamShift.type, 'cloud-multistream');
+  t.deepEqual(
+    allProbeCandidates(streamShift).map(candidate => candidate.provider),
+    ['twitch', 'youtube'],
+  );
 });
 
 test('Enhanced Broadcasting under Dual Output remains estimate-only', t => {
@@ -564,6 +589,18 @@ test('an optimizer profile remains compatible when only stream metadata changes'
   });
 
   t.true(isAutoOptimizerProfileCompatible(profileFor(original), edited, false));
+});
+
+test('an optimizer profile remains compatible when Stream Shift is toggled', t => {
+  const ordinary = settings({
+    platforms: {
+      twitch: { enabled: true, useCustomFields: false } as any,
+    },
+  });
+  const streamShift = { ...ordinary, streamShift: true };
+
+  t.true(isAutoOptimizerProfileCompatible(profileFor(ordinary), streamShift, false));
+  t.true(isAutoOptimizerProfileCompatible(profileFor(streamShift), ordinary, false));
 });
 
 test('an optimizer profile is discarded when destinations change in Go Live settings', t => {
