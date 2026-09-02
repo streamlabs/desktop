@@ -81,12 +81,12 @@ export default function GoLiveAutoOptimizer() {
     // Vuex mutates a service module in place. Returning that module directly
     // gives React the same object reference after every optimizer mutation, so
     // it skips the render and leaves the intro visible while the worker runs.
-    const { stage, phase, progress, topology, result, error, progressDetail } = service.state;
+    const { stage, phase, progress, streamSetup, result, error, progressDetail } = service.state;
     return {
       stage,
       phase,
       progress,
-      topology,
+      streamSetup,
       result,
       error,
       progressDetail,
@@ -96,7 +96,7 @@ export default function GoLiveAutoOptimizer() {
   const progressLabel = autoOptimizerProgressLabel(
     state.phase,
     state.progressDetail,
-    state.topology?.legs.flatMap(leg => leg.probeCandidates) || [],
+    state.streamSetup?.outputs.flatMap(output => output.probeCandidates) || [],
   );
   const phaseLabel = state.phase
     ? $t(progressLabel.key, {
@@ -107,16 +107,16 @@ export default function GoLiveAutoOptimizer() {
       })
     : undefined;
 
-  const legs = (state.result?.legs || []).map(leg => {
+  const outputs = (state.result?.outputs || []).map(output => {
     const platforms = Array.from(
-      new Set(leg.destinations.map(destination => destination.platform)),
+      new Set(output.destinations.map(destination => destination.platform)),
     ).map(platform => ({ id: platform, label: $t(platformLabels[platform]) }));
-    const measuredProviders = successfulProbeProviders(leg.probes || []);
-    const estimatedProviders = estimatedProbeProviders(platforms, leg.probes || []);
+    const measuredProviders = successfulProbeProviders(output.probes || []);
+    const estimatedProviders = estimatedProbeProviders(platforms, output.probes || []);
 
     return {
-      legId: leg.legId,
-      label: destinationLabel(leg.destinations),
+      outputId: output.outputId,
+      label: destinationLabel(output.destinations),
       platforms,
       measuredPlatforms: measuredProviders.map(platform => ({
         id: platform,
@@ -126,32 +126,32 @@ export default function GoLiveAutoOptimizer() {
         id: platform,
         label: $t(platformLabels[platform]),
       })),
-      probeEvidence: leg.probes,
-      display: leg.display === 'both' ? ('shared' as const) : leg.display,
-      measurementMode: leg.measurement,
-      measurementConfidence: leg.confidence,
-      estimateReason: leg.estimateReason
-        ? $t(estimateReasonLabels[leg.estimateReason] || leg.estimateReason)
+      probeEvidence: output.probes,
+      display: output.display === 'both' ? ('shared' as const) : output.display,
+      measurementMode: output.measurement,
+      measurementConfidence: output.confidence,
+      estimateReason: output.estimateReason
+        ? $t(estimateReasonLabels[output.estimateReason] || output.estimateReason)
         : undefined,
-      showMeasurementReason: shouldShowAutoOptimizerMeasurementReason(leg.estimateReason),
-      managedByProvider: leg.outputKind === 'twitch-enhanced-broadcasting',
+      showMeasurementReason: shouldShowAutoOptimizerMeasurementReason(output.estimateReason),
+      managedByProvider: output.outputKind === 'twitch-enhanced-broadcasting',
       videoSettingsManagedByProvider:
-        leg.outputKind === 'twitch-enhanced-broadcasting' && leg.measurement !== 'active',
-      width: leg.resolution.width,
-      height: leg.resolution.height,
-      ...(leg.additionalVideo
+        output.outputKind === 'twitch-enhanced-broadcasting' && output.measurement !== 'active',
+      width: output.resolution.width,
+      height: output.resolution.height,
+      ...(output.additionalVideo
         ? {
             additionalVideo: {
-              display: leg.additionalVideo.display,
-              width: leg.additionalVideo.resolution.width,
-              height: leg.additionalVideo.resolution.height,
+              display: output.additionalVideo.display,
+              width: output.additionalVideo.resolution.width,
+              height: output.additionalVideo.resolution.height,
             },
           }
         : {}),
-      fps: leg.fps,
-      bitrateKbps: leg.bitrate,
-      encoder: leg.encoder?.title || leg.encoder?.id,
-      preset: leg.encoder?.preset,
+      fps: output.fps,
+      bitrateKbps: output.bitrate,
+      encoder: output.encoder?.title || output.encoder?.id,
+      preset: output.encoder?.preset,
     };
   });
 
@@ -165,7 +165,7 @@ export default function GoLiveAutoOptimizer() {
       stage={state.stage}
       phaseLabel={phaseLabel}
       progress={state.progress}
-      legs={legs}
+      outputs={outputs}
       advice={state.result?.advice}
       errorMessage={$t(autoOptimizerErrorMessage(state.error))}
       canRetry={state.error?.retryable}

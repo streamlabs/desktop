@@ -1,12 +1,12 @@
 import {
   IAutoConfigAdditionalVideoTuple,
   IAutoConfigEvent,
-  IAutoConfigAttemptRequestLeg,
-  IAutoConfigRequestLeg,
+  IAutoConfigAttemptRequestOutput,
+  IAutoConfigRequestOutput,
   IAutoOptimizerProbeCandidate,
   IAutoOptimizerProgressDetail,
   IAutoOptimizerProbeEvidence,
-  IAutoOptimizerTopology,
+  IAutoOptimizerStreamSetup,
   TAutoOptimizerEncoderFamily,
   TAutoOptimizerPhase,
   TAutoOptimizerProbeKind,
@@ -20,8 +20,8 @@ import {
  * attempt context used to validate the eventual result.
  */
 export function credentialFreeAutoConfigRequestOutput(
-  output: IAutoConfigRequestLeg,
-): IAutoConfigAttemptRequestLeg {
+  output: IAutoConfigRequestOutput,
+): IAutoConfigAttemptRequestOutput {
   return {
     outputId: output.outputId,
     display: output.display,
@@ -60,7 +60,7 @@ export interface IAutoConfigProbeCoverage {
 
 /**
  * Validate the registered canvas identities required before Desktop prepares
- * an active paired-workload request (Enhanced Broadcasting or two-leg Dual
+ * an active paired-workload request (Enhanced Broadcasting or two-output Dual
  * Output). OSN object IDs are zero-based, so zero is a valid live canvas
  * identity; missing, fractional, negative, or duplicate paired identities
  * remain invalid.
@@ -81,7 +81,7 @@ export function areAutoConfigActiveCanvasIdentitiesValid(
 }
 
 /**
- * Describe how much of a leg's provider-probe plan is available. A successful
+ * Describe how much of an output's provider-probe plan is available. A successful
  * provider remains useful when another provider cannot be prepared, but that
  * partial evidence must not unlock a resolution or frame-rate promotion.
  */
@@ -122,9 +122,9 @@ export function isValidAutoConfigActiveProbeCoverage(p: {
   evidence: IAutoOptimizerProbeEvidence[];
   confidence: string | undefined;
   /**
-   * A jointly validated Dual Output leg deliberately selects one safe probe
+   * A jointly validated Dual Output output deliberately selects one safe probe
    * provider to represent the canvas upload. Other probe-capable destinations
-   * on that same canvas are not additional upload legs and do not make the
+   * on that same canvas are not additional outputs and do not make the
    * evidence partial.
    */
   requireAllProbeCapableDestinations?: boolean;
@@ -188,34 +188,34 @@ export function autoConfigProviderForProbeKind(kind: unknown): TAutoOptimizerPro
  * is represented by exactly one supported provider probe. Additional
  * destinations sharing that canvas are allowed but are not themselves probed.
  */
-export function isEligibleAutoConfigDualOutputActiveTopology(
-  topology: IAutoOptimizerTopology,
+export function isEligibleAutoConfigDualOutputActiveStreamSetup(
+  streamSetup: IAutoOptimizerStreamSetup,
 ): boolean {
-  if (topology.type !== 'dual-output' || topology.legs.length !== 2) {
+  if (streamSetup.type !== 'dual-output' || streamSetup.outputs.length !== 2) {
     return false;
   }
 
-  const displays = new Set(topology.legs.map(leg => leg.display));
-  const legIds = new Set(topology.legs.map(leg => leg.legId));
+  const displays = new Set(streamSetup.outputs.map(output => output.display));
+  const outputIds = new Set(streamSetup.outputs.map(output => output.outputId));
   const providers = new Set<TAutoOptimizerProbeProvider>();
   if (
     displays.size !== 2 ||
     !displays.has('horizontal') ||
     !displays.has('vertical') ||
-    legIds.size !== 2
+    outputIds.size !== 2
   ) {
     return false;
   }
 
-  for (const leg of topology.legs) {
-    if (!leg.destinations.length || leg.probeCandidates.length !== 1) return false;
-    const candidate = leg.probeCandidates[0];
-    const carriesProvider = leg.destinations.some(
+  for (const output of streamSetup.outputs) {
+    if (!output.destinations.length || output.probeCandidates.length !== 1) return false;
+    const candidate = output.probeCandidates[0];
+    const carriesProvider = output.destinations.some(
       destination => destination.platform === candidate.provider,
     );
     if (
       !carriesProvider ||
-      candidate.legId !== leg.legId ||
+      candidate.outputId !== output.outputId ||
       (candidate.provider === 'twitch' && candidate.kind !== 'twitch-standard') ||
       (candidate.provider === 'youtube' && candidate.kind !== 'youtube-unbound')
     ) {
@@ -225,8 +225,8 @@ export function isEligibleAutoConfigDualOutputActiveTopology(
   }
 
   const candidateKey = (candidate: IAutoOptimizerProbeCandidate) =>
-    `${candidate.probeId}\u0000${candidate.legId}\u0000${candidate.provider}\u0000${candidate.kind}`;
-  const candidates = topology.legs.flatMap(leg => leg.probeCandidates);
+    `${candidate.probeId}\u0000${candidate.outputId}\u0000${candidate.provider}\u0000${candidate.kind}`;
+  const candidates = streamSetup.outputs.flatMap(output => output.probeCandidates);
   const candidateKeys = candidates.map(candidateKey);
   const probeIds = candidates.map(candidate => candidate.probeId);
   return (
@@ -245,32 +245,32 @@ export function isEligibleAutoConfigDualOutputActiveTopology(
  * destinations. The standard outputs may be workload-tested without an active
  * provider bandwidth probe.
  */
-export function isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology(
-  topology: IAutoOptimizerTopology,
+export function isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(
+  streamSetup: IAutoOptimizerStreamSetup,
 ): boolean {
-  if (topology.type !== 'enhanced-broadcasting-dual-output' || topology.legs.length < 2) {
+  if (streamSetup.type !== 'enhanced-broadcasting-dual-output' || streamSetup.outputs.length < 2) {
     return false;
   }
 
-  const enhancedLegs = topology.legs.filter(
-    leg => leg.outputKind === 'twitch-enhanced-broadcasting',
+  const enhancedOutputs = streamSetup.outputs.filter(
+    output => output.outputKind === 'twitch-enhanced-broadcasting',
   );
-  const companionLegs = topology.legs.filter(leg => leg.outputKind === 'standard');
+  const companionOutputs = streamSetup.outputs.filter(output => output.outputKind === 'standard');
   if (
-    enhancedLegs.length !== 1 ||
-    companionLegs.length < 1 ||
-    companionLegs.length > 2 ||
-    enhancedLegs[0].display !== 'both' ||
-    enhancedLegs[0].destinations.length !== 1 ||
-    enhancedLegs[0].destinations[0].platform !== 'twitch'
+    enhancedOutputs.length !== 1 ||
+    companionOutputs.length < 1 ||
+    companionOutputs.length > 2 ||
+    enhancedOutputs[0].display !== 'both' ||
+    enhancedOutputs[0].destinations.length !== 1 ||
+    enhancedOutputs[0].destinations[0].platform !== 'twitch'
   ) {
     return false;
   }
 
-  const enhancedCandidates = enhancedLegs[0].probeCandidates;
+  const enhancedCandidates = enhancedOutputs[0].probeCandidates;
   if (
     enhancedCandidates.length !== 1 ||
-    enhancedCandidates[0].legId !== enhancedLegs[0].legId ||
+    enhancedCandidates[0].outputId !== enhancedOutputs[0].outputId ||
     enhancedCandidates[0].provider !== 'twitch' ||
     enhancedCandidates[0].kind !== 'twitch-enhanced-broadcasting'
   ) {
@@ -278,67 +278,71 @@ export function isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology(
   }
 
   const companionDisplays = new Set<string>();
-  for (const leg of companionLegs) {
+  for (const output of companionOutputs) {
     if (
-      (leg.display !== 'horizontal' && leg.display !== 'vertical') ||
-      companionDisplays.has(leg.display) ||
-      !leg.destinations.length ||
-      leg.destinations.some(destination => destination.platform === 'twitch') ||
-      leg.probeCandidates.some(
+      (output.display !== 'horizontal' && output.display !== 'vertical') ||
+      companionDisplays.has(output.display) ||
+      !output.destinations.length ||
+      output.destinations.some(destination => destination.platform === 'twitch') ||
+      output.probeCandidates.some(
         candidate =>
-          candidate.legId !== leg.legId ||
+          candidate.outputId !== output.outputId ||
           candidate.provider !== 'youtube' ||
           candidate.kind !== 'youtube-unbound',
       ) ||
-      leg.probeCandidates.length > 1
+      output.probeCandidates.length > 1
     ) {
       return false;
     }
-    companionDisplays.add(leg.display);
+    companionDisplays.add(output.display);
   }
 
   const candidateKey = (candidate: IAutoOptimizerProbeCandidate) =>
-    `${candidate.probeId}\u0000${candidate.legId}\u0000${candidate.provider}\u0000${candidate.kind}`;
-  const candidateKeys = topology.legs.flatMap(leg => leg.probeCandidates).map(candidateKey);
+    `${candidate.probeId}\u0000${candidate.outputId}\u0000${candidate.provider}\u0000${candidate.kind}`;
+  const candidateKeys = streamSetup.outputs
+    .flatMap(output => output.probeCandidates)
+    .map(candidateKey);
   return (
-    new Set(topology.legs.map(leg => leg.legId)).size === topology.legs.length &&
-    new Set(candidateKeys).size === candidateKeys.length
+    new Set(streamSetup.outputs.map(output => output.outputId)).size ===
+      streamSetup.outputs.length && new Set(candidateKeys).size === candidateKeys.length
   );
 }
 
 /**
- * Select one supported provider per canvas for the joint two-leg experiment.
+ * Select one supported provider per canvas for the joint two-output experiment.
  * Prefer the classifier's deterministic provider order, while requiring the
  * pair to cover both Twitch and YouTube so native can establish two independent
  * lower bounds for the shared aggregate allocator.
  */
 function selectAutoConfigDualOutputProbePair(
-  topology: IAutoOptimizerTopology,
+  streamSetup: IAutoOptimizerStreamSetup,
   supportedKinds: ReadonlySet<TAutoOptimizerProbeKind>,
-): IAutoOptimizerTopology | null {
-  if (topology.type !== 'dual-output' || topology.legs.length !== 2) return null;
+): IAutoOptimizerStreamSetup | null {
+  if (streamSetup.type !== 'dual-output' || streamSetup.outputs.length !== 2) return null;
 
-  const candidatesByLeg = topology.legs.map(leg =>
-    leg.probeCandidates.filter(candidate => supportedKinds.has(candidate.kind)),
+  const candidatesByOutput = streamSetup.outputs.map(output =>
+    output.probeCandidates.filter(candidate => supportedKinds.has(candidate.kind)),
   );
-  for (const first of candidatesByLeg[0]) {
-    for (const second of candidatesByLeg[1]) {
+  for (const first of candidatesByOutput[0]) {
+    for (const second of candidatesByOutput[1]) {
       if (first.provider === second.provider) continue;
-      const selectedByLeg = new Map([
-        [first.legId, first],
-        [second.legId, second],
+      const selectedByOutput = new Map([
+        [first.outputId, first],
+        [second.outputId, second],
       ]);
-      const selected: IAutoOptimizerTopology = {
-        ...topology,
-        legs: topology.legs.map(leg => ({
-          ...leg,
-          destinations: leg.destinations.map(destination => ({ ...destination })),
-          probeCandidates: selectedByLeg.has(leg.legId) ? [selectedByLeg.get(leg.legId)!] : [],
+      const selected: IAutoOptimizerStreamSetup = {
+        ...streamSetup,
+        outputs: streamSetup.outputs.map(output => ({
+          ...output,
+          destinations: output.destinations.map(destination => ({ ...destination })),
+          probeCandidates: selectedByOutput.has(output.outputId)
+            ? [selectedByOutput.get(output.outputId)!]
+            : [],
           measurement: 'active',
           estimateReason: undefined,
         })),
       };
-      if (isEligibleAutoConfigDualOutputActiveTopology(selected)) return selected;
+      if (isEligibleAutoConfigDualOutputActiveStreamSetup(selected)) return selected;
     }
   }
   return null;
@@ -346,60 +350,62 @@ function selectAutoConfigDualOutputProbePair(
 
 /**
  * Filter credential-free candidates against the providers this Desktop run can
- * prepare. Supported provider probes remain useful independently; a shared leg
+ * prepare. Supported provider probes remain useful independently; a shared output
  * with partial coverage is identified explicitly and cannot promote video
  * quality from that incomplete evidence.
  */
-export function filterAutoConfigTopologyProbes(
-  topology: IAutoOptimizerTopology,
+export function filterAutoConfigStreamSetupProbes(
+  streamSetup: IAutoOptimizerStreamSetup,
   supportedKinds: ReadonlySet<TAutoOptimizerProbeKind>,
-): IAutoOptimizerTopology {
-  const filtered: IAutoOptimizerTopology = {
-    ...topology,
-    legs: topology.legs.map(leg => ({
-      ...leg,
-      destinations: leg.destinations.map(destination => ({ ...destination })),
-      probeCandidates: leg.probeCandidates.map(candidate => ({ ...candidate })),
+): IAutoOptimizerStreamSetup {
+  const filtered: IAutoOptimizerStreamSetup = {
+    ...streamSetup,
+    outputs: streamSetup.outputs.map(output => ({
+      ...output,
+      destinations: output.destinations.map(destination => ({ ...destination })),
+      probeCandidates: output.probeCandidates.map(candidate => ({ ...candidate })),
     })),
   };
-  // Native owns the allocator and simultaneous hardware proof for the two-leg
+  // Native owns the allocator and simultaneous hardware proof for the two-output
   // Twitch/YouTube experiment. When a canvas also targets an unsupported V1
   // provider, select one supported representative for that canvas instead of
   // disabling both active measurements.
-  const selectedDualOutput = selectAutoConfigDualOutputProbePair(topology, supportedKinds);
+  const selectedDualOutput = selectAutoConfigDualOutputProbePair(streamSetup, supportedKinds);
   const unsafeDualOutput = filtered.type === 'dual-output' && !selectedDualOutput;
   const eligibleEnhancedBroadcastingDualOutput =
     supportedKinds.has('twitch-enhanced-broadcasting') &&
-    isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology(topology);
+    isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(streamSetup);
   const unsafeEnhancedBroadcastingDualOutput =
     filtered.type === 'enhanced-broadcasting-dual-output' &&
     !eligibleEnhancedBroadcastingDualOutput;
-  filtered.legs.forEach(leg => {
-    const originalCandidates = leg.probeCandidates;
+  filtered.outputs.forEach(output => {
+    const originalCandidates = output.probeCandidates;
     if (unsafeDualOutput || unsafeEnhancedBroadcastingDualOutput) {
-      leg.probeCandidates = [];
-      leg.measurement = 'estimated';
-      leg.estimateReason = unsafeDualOutput ? 'dual_output' : 'enhanced_broadcasting';
+      output.probeCandidates = [];
+      output.measurement = 'estimated';
+      output.estimateReason = unsafeDualOutput ? 'dual_output' : 'enhanced_broadcasting';
       return;
     }
-    const selectedLeg = selectedDualOutput?.legs.find(selected => selected.legId === leg.legId);
+    const selectedOutput = selectedDualOutput?.outputs.find(
+      selected => selected.outputId === output.outputId,
+    );
     const supportedCandidates = selectedDualOutput
-      ? selectedLeg!.probeCandidates
+      ? selectedOutput!.probeCandidates
       : originalCandidates.filter(candidate => supportedKinds.has(candidate.kind));
-    leg.probeCandidates = supportedCandidates;
+    output.probeCandidates = supportedCandidates;
     if (selectedDualOutput) {
-      leg.measurement = 'active';
-      leg.estimateReason = undefined;
+      output.measurement = 'active';
+      output.estimateReason = undefined;
     } else if (eligibleEnhancedBroadcastingDualOutput) {
-      leg.measurement = supportedCandidates.length ? 'active' : 'estimated';
-      leg.estimateReason = supportedCandidates.length ? undefined : 'probe_disabled';
+      output.measurement = supportedCandidates.length ? 'active' : 'estimated';
+      output.estimateReason = supportedCandidates.length ? undefined : 'probe_disabled';
     } else if (originalCandidates.length) {
       const coverage = autoConfigProbeCoverage(
         originalCandidates.length,
         supportedCandidates.length,
       );
-      leg.measurement = coverage.measurement;
-      leg.estimateReason = coverage.estimateReason;
+      output.measurement = coverage.measurement;
+      output.estimateReason = coverage.estimateReason;
     }
   });
   return filtered;

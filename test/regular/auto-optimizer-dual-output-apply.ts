@@ -36,7 +36,7 @@ function recommendation(
 
 function activeDualOutputResult() {
   return {
-    legs: [
+    outputs: [
       {
         display: 'horizontal' as const,
         measurement: 'active' as 'active' | 'estimated',
@@ -76,11 +76,11 @@ test('a proven Twitch and YouTube pair produces one atomic two-canvas video tran
     shouldApplyAutoOptimizerVideoSettings(
       'dual-output',
       false,
-      result.legs.map(leg => leg.measurement),
+      result.outputs.map(output => output.measurement),
     ),
   );
 
-  const recommendations = result.legs.map(leg => leg.recommendation!);
+  const recommendations = result.outputs.map(output => output.recommendation!);
   t.true(
     recommendations.every(
       value =>
@@ -92,11 +92,11 @@ test('a proven Twitch and YouTube pair produces one atomic two-canvas video tran
   );
 
   const patches = buildAutoOptimizerVideoSettingsPatches(
-    result.legs.map(leg => ({
-      display: leg.display,
+    result.outputs.map(output => ({
+      display: output.display,
       resolution: {
-        width: leg.recommendation!.width,
-        height: leg.recommendation!.height,
+        width: output.recommendation!.width,
+        height: output.recommendation!.height,
       },
     })),
     currentVideo,
@@ -124,13 +124,13 @@ test('a proven Twitch and YouTube pair produces one atomic two-canvas video tran
   });
 });
 
-test('a fully estimated two-leg fallback cannot promote either canvas or shared FPS', t => {
+test('a fully estimated two-output fallback cannot promote either canvas or shared FPS', t => {
   const result = activeDualOutputResult();
-  result.legs.forEach(leg => {
-    leg.measurement = 'estimated';
+  result.outputs.forEach(output => {
+    output.measurement = 'estimated';
   });
 
-  const horizontal = validateAutoConfigRecommendation(result.legs[0].recommendation, {
+  const horizontal = validateAutoConfigRecommendation(result.outputs[0].recommendation, {
     measurementMode: 'estimated',
     currentBitrateKbps: 2500,
     probeEvidence: [],
@@ -143,7 +143,7 @@ test('a fully estimated two-leg fallback cannot promote either canvas or shared 
     currentFpsNum: 30,
     currentFpsDen: 1,
   });
-  const vertical = validateAutoConfigRecommendation(result.legs[1].recommendation, {
+  const vertical = validateAutoConfigRecommendation(result.outputs[1].recommendation, {
     measurementMode: 'estimated',
     currentBitrateKbps: 2500,
     probeEvidence: [],

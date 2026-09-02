@@ -5,9 +5,9 @@ import {
   autoConfigPhaseStepDisposition,
   autoConfigPhaseStepKey,
   credentialFreeAutoConfigRequestOutput,
-  filterAutoConfigTopologyProbes,
-  isEligibleAutoConfigDualOutputActiveTopology,
-  isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology,
+  filterAutoConfigStreamSetupProbes,
+  isEligibleAutoConfigDualOutputActiveStreamSetup,
+  isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup,
   isValidAutoConfigActiveProbeCoverage,
   sanitizeAutoConfigProgressDetail,
   sanitizeAutoConfigProbeEvidence,
@@ -16,8 +16,8 @@ import {
 } from '../../app/services/auto-config/probe-policy';
 import {
   IAutoConfigEvent,
-  IAutoConfigRequestLeg,
-  IAutoOptimizerTopology,
+  IAutoConfigRequestOutput,
+  IAutoOptimizerStreamSetup,
   TAutoOptimizerProbeKind,
 } from '../../app/services/auto-config/types';
 
@@ -47,7 +47,7 @@ test('retained attempt context contains no provider credentials', t => {
         streamKey: 'secret-key',
       },
     ],
-  } as IAutoConfigRequestLeg);
+  } as IAutoConfigRequestOutput);
 
   t.false('probes' in retained);
   const serialized = JSON.stringify(retained);
@@ -58,8 +58,8 @@ test('retained attempt context contains no provider credentials', t => {
   t.deepEqual(retained.destinations, ['youtube']);
 });
 
-function allProbeCandidates(topology: IAutoOptimizerTopology) {
-  return topology.legs.flatMap(leg => leg.probeCandidates);
+function allProbeCandidates(streamSetup: IAutoOptimizerStreamSetup) {
+  return streamSetup.outputs.flatMap(output => output.probeCandidates);
 }
 
 test('zero-based paired Enhanced Broadcasting canvas identities reach native preparation', t => {
@@ -76,9 +76,9 @@ test('zero-based paired Enhanced Broadcasting canvas identities reach native pre
   t.false(areAutoConfigActiveCanvasIdentitiesValid(Number.MAX_SAFE_INTEGER + 1, undefined, false));
 });
 
-function twitchYoutubeDualOutputTopology(): IAutoOptimizerTopology {
-  const legs = ['twitch', 'youtube'].map((provider, index) => ({
-    legId: index ? 'vertical' : 'horizontal',
+function twitchYoutubeDualOutputStreamSetup(): IAutoOptimizerStreamSetup {
+  const outputs = ['twitch', 'youtube'].map((provider, index) => ({
+    outputId: index ? 'vertical' : 'horizontal',
     display: index ? ('vertical' as const) : ('horizontal' as const),
     outputKind: 'standard' as const,
     destinations: [{ platform: provider as 'twitch' | 'youtube' }],
@@ -86,7 +86,7 @@ function twitchYoutubeDualOutputTopology(): IAutoOptimizerTopology {
       {
         probeId: `${index ? 'vertical' : 'horizontal'}-${provider}`,
         kind: provider === 'twitch' ? ('twitch-standard' as const) : ('youtube-unbound' as const),
-        legId: index ? 'vertical' : 'horizontal',
+        outputId: index ? 'vertical' : 'horizontal',
         provider: provider as 'twitch' | 'youtube',
       },
     ],
@@ -94,36 +94,36 @@ function twitchYoutubeDualOutputTopology(): IAutoOptimizerTopology {
   }));
   return {
     type: 'dual-output',
-    legs,
+    outputs,
   };
 }
 
-function twitchKickYoutubeDualOutputTopology(): IAutoOptimizerTopology {
-  const topology = twitchYoutubeDualOutputTopology();
-  topology.legs[0].destinations.push({ platform: 'kick' });
-  return topology;
+function twitchKickYoutubeDualOutputStreamSetup(): IAutoOptimizerStreamSetup {
+  const streamSetup = twitchYoutubeDualOutputStreamSetup();
+  streamSetup.outputs[0].destinations.push({ platform: 'kick' });
+  return streamSetup;
 }
 
-function sharedCloudTopology(): IAutoOptimizerTopology {
+function sharedCloudStreamSetup(): IAutoOptimizerStreamSetup {
   const probeCandidates = [
     {
       probeId: 'horizontal-twitch',
       kind: 'twitch-standard' as const,
-      legId: 'horizontal',
+      outputId: 'horizontal',
       provider: 'twitch' as const,
     },
     {
       probeId: 'horizontal-youtube',
       kind: 'youtube-unbound' as const,
-      legId: 'horizontal',
+      outputId: 'horizontal',
       provider: 'youtube' as const,
     },
   ];
   return {
     type: 'cloud-multistream',
-    legs: [
+    outputs: [
       {
-        legId: 'horizontal',
+        outputId: 'horizontal',
         display: 'horizontal',
         outputKind: 'standard',
         destinations: [{ platform: 'twitch' }, { platform: 'youtube' }],
@@ -134,24 +134,24 @@ function sharedCloudTopology(): IAutoOptimizerTopology {
   };
 }
 
-function enhancedBroadcastingDualOutputTopology(): IAutoOptimizerTopology {
+function enhancedBroadcastingDualOutputStreamSetup(): IAutoOptimizerStreamSetup {
   const enhancedCandidate = {
     probeId: 'twitch-enhanced-broadcasting-twitch',
     kind: 'twitch-enhanced-broadcasting' as const,
-    legId: 'twitch-enhanced-broadcasting',
+    outputId: 'twitch-enhanced-broadcasting',
     provider: 'twitch' as const,
   };
   const youtubeCandidate = {
     probeId: 'horizontal-standard-youtube',
     kind: 'youtube-unbound' as const,
-    legId: 'horizontal-standard',
+    outputId: 'horizontal-standard',
     provider: 'youtube' as const,
   };
   return {
     type: 'enhanced-broadcasting-dual-output',
-    legs: [
+    outputs: [
       {
-        legId: 'twitch-enhanced-broadcasting',
+        outputId: 'twitch-enhanced-broadcasting',
         display: 'both',
         outputKind: 'twitch-enhanced-broadcasting',
         destinations: [{ platform: 'twitch' }],
@@ -159,7 +159,7 @@ function enhancedBroadcastingDualOutputTopology(): IAutoOptimizerTopology {
         measurement: 'active',
       },
       {
-        legId: 'horizontal-standard',
+        outputId: 'horizontal-standard',
         display: 'horizontal',
         outputKind: 'standard',
         destinations: [{ platform: 'youtube' }, { platform: 'kick' }],
@@ -177,39 +177,39 @@ test('the paired native facade supports every V1 probe kind', t => {
   );
 });
 
-test('a shared cloud leg retains the supported provider when another is unavailable', t => {
-  const topology = sharedCloudTopology();
-  const filtered = filterAutoConfigTopologyProbes(
-    topology,
+test('a shared cloud output retains the supported provider when another is unavailable', t => {
+  const streamSetup = sharedCloudStreamSetup();
+  const filtered = filterAutoConfigStreamSetupProbes(
+    streamSetup,
     new Set<TAutoOptimizerProbeKind>(['twitch-standard']),
   );
 
-  t.is(filtered.legs[0].measurement, 'active');
-  t.is(filtered.legs[0].estimateReason, 'partial_provider_probes');
+  t.is(filtered.outputs[0].measurement, 'active');
+  t.is(filtered.outputs[0].estimateReason, 'partial_provider_probes');
   t.deepEqual(
-    filtered.legs[0].probeCandidates.map(candidate => candidate.provider),
+    filtered.outputs[0].probeCandidates.map(candidate => candidate.provider),
     ['twitch'],
   );
   t.deepEqual(
     allProbeCandidates(filtered).map(candidate => candidate.provider),
     ['twitch'],
   );
-  t.is(topology.legs[0].measurement, 'active', 'the classifier output is not mutated');
-  t.is(allProbeCandidates(topology).length, 2);
+  t.is(streamSetup.outputs[0].measurement, 'active', 'the classifier output is not mutated');
+  t.is(allProbeCandidates(streamSetup).length, 2);
 });
 
 test('Enhanced Broadcasting requires its exact supported probe kind', t => {
   const candidate = {
     probeId: 'horizontal-twitch',
     kind: 'twitch-enhanced-broadcasting' as const,
-    legId: 'horizontal',
+    outputId: 'horizontal',
     provider: 'twitch' as const,
   };
-  const topology: IAutoOptimizerTopology = {
+  const streamSetup: IAutoOptimizerStreamSetup = {
     type: 'enhanced-broadcasting',
-    legs: [
+    outputs: [
       {
-        legId: 'horizontal',
+        outputId: 'horizontal',
         display: 'horizontal',
         outputKind: 'twitch-enhanced-broadcasting',
         destinations: [{ platform: 'twitch' }],
@@ -219,37 +219,37 @@ test('Enhanced Broadcasting requires its exact supported probe kind', t => {
     ],
   };
 
-  const standardOnly = filterAutoConfigTopologyProbes(
-    topology,
+  const standardOnly = filterAutoConfigStreamSetupProbes(
+    streamSetup,
     new Set<TAutoOptimizerProbeKind>(['twitch-standard']),
   );
-  t.is(standardOnly.legs[0].measurement, 'estimated');
+  t.is(standardOnly.outputs[0].measurement, 'estimated');
   t.deepEqual(allProbeCandidates(standardOnly), []);
 
-  const enhanced = filterAutoConfigTopologyProbes(
-    topology,
+  const enhanced = filterAutoConfigStreamSetupProbes(
+    streamSetup,
     new Set<TAutoOptimizerProbeKind>(['twitch-enhanced-broadcasting']),
   );
-  t.is(enhanced.legs[0].measurement, 'active');
+  t.is(enhanced.outputs[0].measurement, 'active');
   t.deepEqual(allProbeCandidates(enhanced), [candidate]);
 });
 
 test('mixed Enhanced Broadcasting keeps only its Twitch and YouTube representatives', t => {
-  const topology = enhancedBroadcastingDualOutputTopology();
-  t.true(isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology(topology));
+  const streamSetup = enhancedBroadcastingDualOutputStreamSetup();
+  t.true(isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(streamSetup));
 
-  const filtered = filterAutoConfigTopologyProbes(
-    topology,
+  const filtered = filterAutoConfigStreamSetupProbes(
+    streamSetup,
     new Set<TAutoOptimizerProbeKind>(['twitch-enhanced-broadcasting', 'youtube-unbound']),
   );
 
-  t.true(isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology(filtered));
+  t.true(isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(filtered));
   t.deepEqual(
-    filtered.legs.map(leg => ({
-      outputKind: leg.outputKind,
-      destinations: leg.destinations.map(destination => destination.platform),
-      providers: leg.probeCandidates.map(candidate => candidate.provider),
-      measurement: leg.measurement,
+    filtered.outputs.map(output => ({
+      outputKind: output.outputKind,
+      destinations: output.destinations.map(destination => destination.platform),
+      providers: output.probeCandidates.map(candidate => candidate.provider),
+      measurement: output.measurement,
     })),
     [
       {
@@ -269,14 +269,16 @@ test('mixed Enhanced Broadcasting keeps only its Twitch and YouTube representati
 });
 
 test('mixed Enhanced Broadcasting becomes fully estimate-only without its Twitch probe', t => {
-  const topology = enhancedBroadcastingDualOutputTopology();
-  const missingTwitchMode = filterAutoConfigTopologyProbes(
-    topology,
+  const streamSetup = enhancedBroadcastingDualOutputStreamSetup();
+  const missingTwitchMode = filterAutoConfigStreamSetupProbes(
+    streamSetup,
     new Set<TAutoOptimizerProbeKind>(['youtube-unbound']),
   );
   t.deepEqual(allProbeCandidates(missingTwitchMode), []);
-  t.true(missingTwitchMode.legs.every(leg => leg.measurement === 'estimated'));
-  t.true(missingTwitchMode.legs.every(leg => leg.estimateReason === 'enhanced_broadcasting'));
+  t.true(missingTwitchMode.outputs.every(output => output.measurement === 'estimated'));
+  t.true(
+    missingTwitchMode.outputs.every(output => output.estimateReason === 'enhanced_broadcasting'),
+  );
 });
 
 test('probe coverage estimates only with zero probes and disables partial promotion', t => {
@@ -462,20 +464,20 @@ test('active Twitch evidence must match the exact attempted standard or Enhanced
   );
 });
 
-test('a shared cloud leg remains estimate-only when no provider probe is supported', t => {
-  const filtered = filterAutoConfigTopologyProbes(
-    sharedCloudTopology(),
+test('a shared cloud output remains estimate-only when no provider probe is supported', t => {
+  const filtered = filterAutoConfigStreamSetupProbes(
+    sharedCloudStreamSetup(),
     new Set<TAutoOptimizerProbeKind>(),
   );
 
-  t.is(filtered.legs[0].measurement, 'estimated');
-  t.is(filtered.legs[0].estimateReason, 'probe_disabled');
+  t.is(filtered.outputs[0].measurement, 'estimated');
+  t.is(filtered.outputs[0].estimateReason, 'probe_disabled');
   t.deepEqual(allProbeCandidates(filtered), []);
 });
 
-test('a shared cloud leg retains deterministic candidates when every provider is supported', t => {
-  const filtered = filterAutoConfigTopologyProbes(
-    sharedCloudTopology(),
+test('a shared cloud output retains deterministic candidates when every provider is supported', t => {
+  const filtered = filterAutoConfigStreamSetupProbes(
+    sharedCloudStreamSetup(),
     new Set<TAutoOptimizerProbeKind>(['youtube-unbound', 'twitch-standard']),
   );
 
@@ -483,20 +485,24 @@ test('a shared cloud leg retains deterministic candidates when every provider is
     allProbeCandidates(filtered).map(candidate => candidate.provider),
     ['twitch', 'youtube'],
   );
-  t.is(filtered.legs[0].measurement, 'active');
-  t.is(filtered.legs[0].estimateReason, undefined);
+  t.is(filtered.outputs[0].measurement, 'active');
+  t.is(filtered.outputs[0].estimateReason, undefined);
 });
 
-test('the exact Twitch and YouTube two-leg Dual Output topology keeps both active probes', t => {
-  const topology = twitchYoutubeDualOutputTopology();
-  t.true(isEligibleAutoConfigDualOutputActiveTopology(topology));
+test('the exact Twitch and YouTube two-output topology keeps both active probes', t => {
+  const streamSetup = twitchYoutubeDualOutputStreamSetup();
+  t.true(isEligibleAutoConfigDualOutputActiveStreamSetup(streamSetup));
 
-  const filtered = filterAutoConfigTopologyProbes(
-    topology,
+  const filtered = filterAutoConfigStreamSetupProbes(
+    streamSetup,
     new Set<TAutoOptimizerProbeKind>(['twitch-standard', 'youtube-unbound']),
   );
   t.deepEqual(
-    filtered.legs.map(leg => [leg.display, leg.probeCandidates[0]?.provider, leg.measurement]),
+    filtered.outputs.map(output => [
+      output.display,
+      output.probeCandidates[0]?.provider,
+      output.measurement,
+    ]),
     [
       ['horizontal', 'twitch', 'active'],
       ['vertical', 'youtube', 'active'],
@@ -509,19 +515,19 @@ test('the exact Twitch and YouTube two-leg Dual Output topology keeps both activ
 });
 
 test('Dual Output keeps one supported probe per canvas when other platforms share it', t => {
-  const topology = twitchKickYoutubeDualOutputTopology();
-  t.true(isEligibleAutoConfigDualOutputActiveTopology(topology));
+  const streamSetup = twitchKickYoutubeDualOutputStreamSetup();
+  t.true(isEligibleAutoConfigDualOutputActiveStreamSetup(streamSetup));
 
-  const filtered = filterAutoConfigTopologyProbes(
-    topology,
+  const filtered = filterAutoConfigStreamSetupProbes(
+    streamSetup,
     new Set<TAutoOptimizerProbeKind>(['twitch-standard', 'youtube-unbound']),
   );
   t.deepEqual(
-    filtered.legs.map(leg => ({
-      destinations: leg.destinations.map(destination => destination.platform),
-      providers: leg.probeCandidates.map(candidate => candidate.provider),
-      measurement: leg.measurement,
-      estimateReason: leg.estimateReason,
+    filtered.outputs.map(output => ({
+      destinations: output.destinations.map(destination => destination.platform),
+      providers: output.probeCandidates.map(candidate => candidate.provider),
+      measurement: output.measurement,
+      estimateReason: output.estimateReason,
     })),
     [
       {
@@ -541,75 +547,75 @@ test('Dual Output keeps one supported probe per canvas when other platforms shar
 });
 
 test('Dual Output selects distinct supported representatives when a canvas has both', t => {
-  const topology = twitchKickYoutubeDualOutputTopology();
-  topology.legs[0].destinations.splice(1, 0, { platform: 'youtube' });
-  topology.legs[0].probeCandidates.push({
+  const streamSetup = twitchKickYoutubeDualOutputStreamSetup();
+  streamSetup.outputs[0].destinations.splice(1, 0, { platform: 'youtube' });
+  streamSetup.outputs[0].probeCandidates.push({
     probeId: 'horizontal-youtube',
     kind: 'youtube-unbound',
-    legId: 'horizontal',
+    outputId: 'horizontal',
     provider: 'youtube',
   });
 
-  const filtered = filterAutoConfigTopologyProbes(
-    topology,
+  const filtered = filterAutoConfigStreamSetupProbes(
+    streamSetup,
     new Set<TAutoOptimizerProbeKind>(['twitch-standard', 'youtube-unbound']),
   );
   t.deepEqual(
-    filtered.legs.map(leg => leg.probeCandidates.map(candidate => candidate.provider)),
+    filtered.outputs.map(output => output.probeCandidates.map(candidate => candidate.provider)),
     [['twitch'], ['youtube']],
   );
-  t.true(isEligibleAutoConfigDualOutputActiveTopology(filtered));
+  t.true(isEligibleAutoConfigDualOutputActiveStreamSetup(filtered));
 });
 
 test('Dual Output remains estimate-only when a canvas has no supported representative', t => {
-  const topology = twitchKickYoutubeDualOutputTopology();
-  topology.legs[1].destinations = [{ platform: 'kick' }];
-  topology.legs[1].probeCandidates = [];
+  const streamSetup = twitchKickYoutubeDualOutputStreamSetup();
+  streamSetup.outputs[1].destinations = [{ platform: 'kick' }];
+  streamSetup.outputs[1].probeCandidates = [];
 
-  const filtered = filterAutoConfigTopologyProbes(
-    topology,
+  const filtered = filterAutoConfigStreamSetupProbes(
+    streamSetup,
     new Set<TAutoOptimizerProbeKind>(['twitch-standard', 'youtube-unbound']),
   );
-  t.true(filtered.legs.every(leg => leg.measurement === 'estimated'));
+  t.true(filtered.outputs.every(output => output.measurement === 'estimated'));
   t.deepEqual(allProbeCandidates(filtered), []);
 });
 
 test('the active Dual Output topology requires unique per-output probe IDs', t => {
-  const reusedProbeId = twitchYoutubeDualOutputTopology();
-  reusedProbeId.legs[1].probeCandidates[0].probeId =
-    reusedProbeId.legs[0].probeCandidates[0].probeId;
-  t.false(isEligibleAutoConfigDualOutputActiveTopology(reusedProbeId));
+  const reusedProbeId = twitchYoutubeDualOutputStreamSetup();
+  reusedProbeId.outputs[1].probeCandidates[0].probeId =
+    reusedProbeId.outputs[0].probeCandidates[0].probeId;
+  t.false(isEligibleAutoConfigDualOutputActiveStreamSetup(reusedProbeId));
 });
 
 test('the exact Dual Output topology requires both provider probe kinds', t => {
   for (const kind of ['twitch-standard', 'youtube-unbound'] as const) {
-    const filtered = filterAutoConfigTopologyProbes(
-      twitchYoutubeDualOutputTopology(),
+    const filtered = filterAutoConfigStreamSetupProbes(
+      twitchYoutubeDualOutputStreamSetup(),
       new Set<TAutoOptimizerProbeKind>([kind]),
     );
-    t.true(filtered.legs.every(leg => leg.measurement === 'estimated'));
-    t.true(filtered.legs.every(leg => leg.estimateReason === 'dual_output'));
+    t.true(filtered.outputs.every(output => output.measurement === 'estimated'));
+    t.true(filtered.outputs.every(output => output.estimateReason === 'dual_output'));
     t.deepEqual(allProbeCandidates(filtered), []);
   }
 });
 
-test('a single multi-destination leg nested under Dual Output is estimate-only', t => {
-  const topology = sharedCloudTopology();
-  topology.type = 'dual-output';
+test('a single multi-destination output nested under Dual Output is estimate-only', t => {
+  const streamSetup = sharedCloudStreamSetup();
+  streamSetup.type = 'dual-output';
 
-  const filtered = filterAutoConfigTopologyProbes(
-    topology,
+  const filtered = filterAutoConfigStreamSetupProbes(
+    streamSetup,
     new Set<TAutoOptimizerProbeKind>(['twitch-standard', 'youtube-unbound']),
   );
 
-  t.is(filtered.legs[0].measurement, 'estimated');
-  t.is(filtered.legs[0].estimateReason, 'dual_output');
+  t.is(filtered.outputs[0].measurement, 'estimated');
+  t.is(filtered.outputs[0].estimateReason, 'dual_output');
   t.deepEqual(allProbeCandidates(filtered), []);
 });
 
 test('YouTube display both cannot create two active probe leases', t => {
-  const legs = ['horizontal', 'vertical'].map(display => ({
-    legId: display,
+  const outputs = ['horizontal', 'vertical'].map(display => ({
+    outputId: display,
     display: display as 'horizontal' | 'vertical',
     outputKind: 'standard' as const,
     destinations: [{ platform: 'youtube' as const }],
@@ -617,23 +623,23 @@ test('YouTube display both cannot create two active probe leases', t => {
       {
         probeId: `${display}-youtube`,
         kind: 'youtube-unbound' as const,
-        legId: display,
+        outputId: display,
         provider: 'youtube' as const,
       },
     ],
     measurement: 'active' as const,
   }));
-  const topology: IAutoOptimizerTopology = {
+  const streamSetup: IAutoOptimizerStreamSetup = {
     type: 'dual-output',
-    legs,
+    outputs,
   };
 
-  const filtered = filterAutoConfigTopologyProbes(
-    topology,
+  const filtered = filterAutoConfigStreamSetupProbes(
+    streamSetup,
     new Set<TAutoOptimizerProbeKind>(['youtube-unbound']),
   );
 
-  t.true(filtered.legs.every(leg => leg.measurement === 'estimated'));
+  t.true(filtered.outputs.every(output => output.measurement === 'estimated'));
   t.deepEqual(allProbeCandidates(filtered), []);
 });
 

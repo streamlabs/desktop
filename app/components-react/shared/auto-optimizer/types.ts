@@ -16,8 +16,8 @@ export interface IAutoOptimizerPresentationProbeEvidence {
   success: boolean;
 }
 
-export interface IAutoOptimizerPresentationLeg {
-  legId: string;
+export interface IAutoOptimizerPresentationOutput {
+  outputId: string;
   label: string;
   platforms?: Array<{ id: string; label: string }>;
   measuredPlatforms?: Array<{ id: string; label: string }>;
@@ -55,7 +55,7 @@ export interface IAutoOptimizerFlowProps {
   stage: TAutoOptimizerStage;
   phaseLabel?: string;
   progress?: number;
-  legs?: IAutoOptimizerPresentationLeg[];
+  outputs?: IAutoOptimizerPresentationOutput[];
   advice?: IAutoOptimizerPresentationAdvice | null;
   errorMessage?: string;
   canRetry?: boolean;

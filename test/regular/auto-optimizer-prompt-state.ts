@@ -76,7 +76,7 @@ test('initializing Auto Optimizer restores prompt history without mutating flow 
             phase: 'bandwidth',
             progress: 63,
             progressDetail: { code: 'testing' },
-            topology: { kind: 'standard' },
+            streamSetup: { kind: 'standard' },
             result: { profile: 'stale' },
             error: { code: 'stale_error' },
             promptStates: {
@@ -110,7 +110,7 @@ test('initializing Auto Optimizer restores prompt history without mutating flow 
             phase: state.phase,
             progress: state.progress,
             progressDetail: state.progressDetail,
-            topology: state.topology,
+            streamSetup: state.streamSetup,
             result: state.result,
             error: state.error,
           },
@@ -129,7 +129,7 @@ test('initializing Auto Optimizer restores prompt history without mutating flow 
       phase: string | null;
       progress: number;
       progressDetail: unknown;
-      topology: unknown;
+      streamSetup: unknown;
       result: unknown;
       error: unknown;
     };
@@ -143,7 +143,7 @@ test('initializing Auto Optimizer restores prompt history without mutating flow 
     phase: null,
     progress: 0,
     progressDetail: null,
-    topology: null,
+    streamSetup: null,
     result: null,
     error: null,
   });

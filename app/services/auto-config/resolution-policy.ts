@@ -241,7 +241,7 @@ export function autoOptimizerDisplayFrameRate(fpsNum: number, fpsDen: number): n
   return Math.round((fpsNum / fpsDen) * 100) / 100;
 }
 
-/** Construct the complete credential-free limit tuple sent for one upload leg. */
+/** Construct the complete credential-free limit tuple sent for one output. */
 export function buildAutoOptimizerRequestLimits(
   input: IAutoOptimizerRequestLimitsInput,
 ): IAutoOptimizerRequestLimits {

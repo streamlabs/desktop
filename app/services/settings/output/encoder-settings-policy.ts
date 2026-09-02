@@ -84,10 +84,7 @@ const encoderFamilyById: Record<string, string> = {
 };
 
 /** Translate a tested concrete encoder ID to the value stored by each OBS mode. */
-export function encoderIdToSettingsValue(
-  encoderId: string,
-  mode: TEncoderSettingsMode,
-): string {
+export function encoderIdToSettingsValue(encoderId: string, mode: TEncoderSettingsMode): string {
   return mode === 'Simple' ? concreteToSimple[encoderId] || encoderId : encoderId;
 }
 
@@ -105,10 +102,7 @@ export function encoderSettingsValueToFamily(encoder: string): string | undefine
 }
 
 /** Raw Output field that stores the tested encoder's preset in each mode. */
-export function encoderPresetField(
-  encoderId: string,
-  mode: TEncoderSettingsMode,
-): string | null {
+export function encoderPresetField(encoderId: string, mode: TEncoderSettingsMode): string | null {
   return presetPolicies[encoderId]?.[mode].field || null;
 }
 
@@ -126,9 +120,7 @@ export function encoderRuntimePresetSettings(
 ): Record<string, string> {
   const nativeField = encoderNativePresetField(encoderId);
   const shouldApply =
-    mode === 'Advanced' ||
-    useAdvanced ||
-    encoderSettingsValueToFamily(encoderId) === 'apple';
+    mode === 'Advanced' || useAdvanced || encoderSettingsValueToFamily(encoderId) === 'apple';
   if (!shouldApply || !nativeField || typeof configuredPreset !== 'string') return {};
   return {
     [nativeField]: encoderPresetFromSettingsValue(encoderId, mode, configuredPreset),

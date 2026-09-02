@@ -2,7 +2,7 @@ import {
   autoOptimizerAcceptedBaseResolution,
   autoOptimizerPromotesResolution,
 } from './resolution-policy';
-import { IAutoOptimizerLegResult } from './types';
+import { IAutoOptimizerOutputResult } from './types';
 import { AUTO_OPTIMIZER_MAX_RECOMMENDED_BITRATE_KBPS } from './bitrate-policy';
 
 export interface IOutputFormParameterLike {
@@ -24,13 +24,13 @@ export type TRawOutputValues = Record<string, unknown>;
  * results remain non-mutating.
  */
 export function shouldApplyAutoOptimizerVideoSettings(
-  topology: string,
+  streamSetup: string,
   providerOwnsEncoding: boolean,
   measurementModes: string[],
 ): boolean {
   return (
     !providerOwnsEncoding ||
-    (topology === 'enhanced-broadcasting' &&
+    (streamSetup === 'enhanced-broadcasting' &&
       measurementModes.length > 0 &&
       measurementModes.every(mode => mode === 'active'))
   );
@@ -39,33 +39,33 @@ export function shouldApplyAutoOptimizerVideoSettings(
 /**
  * Output settings are shared by every standard streaming instance. Select the
  * one jointly tested companion recommendation only when all standard physical
- * outputs agree; provider-managed Twitch legs are intentionally ignored.
+ * outputs agree; provider-managed Twitch outputs are intentionally ignored.
  */
 export function selectAutoOptimizerStandardOutputRecommendation(
-  legs: IAutoOptimizerLegResult[],
-): IAutoOptimizerLegResult | null {
-  const standardLegs = legs.filter(leg => leg.outputKind === 'standard');
-  if (!standardLegs.length) return null;
-  if (standardLegs.some(leg => !leg.encoder)) {
+  outputs: IAutoOptimizerOutputResult[],
+): IAutoOptimizerOutputResult | null {
+  const standardOutputs = outputs.filter(output => output.outputKind === 'standard');
+  if (!standardOutputs.length) return null;
+  if (standardOutputs.some(output => !output.encoder)) {
     throw new Error('The optimizer did not return a tested encoder');
   }
   if (
-    standardLegs.some(
-      leg => leg.bitrate < 1 || leg.bitrate > AUTO_OPTIMIZER_MAX_RECOMMENDED_BITRATE_KBPS,
+    standardOutputs.some(
+      output => output.bitrate < 1 || output.bitrate > AUTO_OPTIMIZER_MAX_RECOMMENDED_BITRATE_KBPS,
     )
   ) {
     throw new Error('The optimizer returned an unsupported streaming bitrate');
   }
   const encoderSignatures = new Set(
-    standardLegs.map(
-      leg => `${leg.encoder!.id}:${leg.encoder!.family}:${leg.encoder!.preset || ''}`,
+    standardOutputs.map(
+      output => `${output.encoder!.id}:${output.encoder!.family}:${output.encoder!.preset || ''}`,
     ),
   );
-  const bitrates = new Set(standardLegs.map(leg => leg.bitrate));
+  const bitrates = new Set(standardOutputs.map(output => output.bitrate));
   if (encoderSignatures.size !== 1 || bitrates.size !== 1) {
     throw new Error('This stream topology cannot apply different standard output settings');
   }
-  return standardLegs[0];
+  return standardOutputs[0];
 }
 
 interface IAutoOptimizerVideoSettingsLike {
@@ -92,7 +92,7 @@ export type TAutoOptimizerVideoPatches = Partial<
 
 /** Build the serialized video-only transaction; Output bitrate/encoder are intentionally absent. */
 export function buildAutoOptimizerVideoSettingsPatches(
-  legs: IAutoOptimizerVideoResultLike[],
+  outputs: IAutoOptimizerVideoResultLike[],
   current: Partial<Record<'horizontal' | 'vertical', IAutoOptimizerVideoSettingsLike>>,
   fpsNum: number,
   fpsDen: number,
@@ -125,16 +125,16 @@ export function buildAutoOptimizerVideoSettingsPatches(
       outputHeight: resolution.height,
     };
   };
-  legs.forEach(leg => {
-    if (leg.display === 'both') {
-      if (!leg.additionalVideo || leg.additionalVideo.display !== 'vertical') {
+  outputs.forEach(output => {
+    if (output.display === 'both') {
+      if (!output.additionalVideo || output.additionalVideo.display !== 'vertical') {
         throw new Error('A paired vertical recommendation is required for Dual Stream');
       }
-      addResolutionPatch('horizontal', leg.resolution);
-      addResolutionPatch('vertical', leg.additionalVideo.resolution);
+      addResolutionPatch('horizontal', output.resolution);
+      addResolutionPatch('vertical', output.additionalVideo.resolution);
       return;
     }
-    addResolutionPatch(leg.display, leg.resolution);
+    addResolutionPatch(output.display, output.resolution);
   });
   (['horizontal', 'vertical'] as const).forEach(display => {
     if (!current[display]) return;

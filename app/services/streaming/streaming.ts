@@ -103,7 +103,7 @@ import {
   TStreamingDisplay,
 } from './output-context';
 import { videoOutputCoordinator } from 'services/video-output-coordinator';
-import { autoOptimizerStandardLegForDisplay } from './auto-optimizer-profile-policy';
+import { autoOptimizerStandardOutputForDisplay } from './auto-optimizer-profile-policy';
 
 type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
 type TOutputContext = TDisplayType | 'enhancedBroadcasting' | 'stream' | 'streamSecond';
@@ -520,7 +520,7 @@ export class StreamingService
 
     // Save enabled platforms for the next app start, but keep the optimizer
     // profile scoped to this validated Go Live attempt. It may contain
-    // per-leg overrides that are invalid for a later topology.
+    // per-output overrides that are invalid for a later topology.
     const persistedGoLiveSettings = cloneDeep(settings);
     delete persistedGoLiveSettings.autoOptimizerProfile;
     this.streamSettingsService.setSettings({ goLiveSettings: persistedGoLiveSettings });
@@ -2897,7 +2897,7 @@ export class StreamingService
 
     const instance = this.contexts[contextName][type];
     const autoOptimizerLeg =
-      type === 'streaming' ? this.getAutoOptimizerLegForContext(contextName) : undefined;
+      type === 'streaming' ? this.getAutoOptimizerOutputForContext(contextName) : undefined;
 
     // TODO: Revisit after merge video encoder backend changes to see if this should be surfaced to the user
     if (!instance) {
@@ -2922,7 +2922,7 @@ export class StreamingService
             encoderSettings = this.outputSettingsService.getStreamingVideoEncoderSettings(mode);
             if (autoOptimizerLeg) {
               // Output settings are global, while Dual Output can create one
-              // encoder per display. Apply only the per-leg bitrate here; the
+              // encoder per display. Apply only the per-output bitrate here; the
               // encoder ID is persisted transactionally when it is common and
               // remains under the existing factory's compatibility checks.
               encoderSettings = {
@@ -2965,12 +2965,12 @@ export class StreamingService
     return instance;
   }
 
-  private getAutoOptimizerLegForContext(contextName: TOutputContext) {
+  private getAutoOptimizerOutputForContext(contextName: TOutputContext) {
     const profile = this.state.info.settings?.autoOptimizerProfile;
     if (contextName === 'enhancedBroadcasting') return;
 
     const display: TDisplayType = contextName === 'vertical' ? 'vertical' : 'horizontal';
-    return autoOptimizerStandardLegForDisplay(profile, display);
+    return autoOptimizerStandardOutputForDisplay(profile, display);
   }
 
   /**

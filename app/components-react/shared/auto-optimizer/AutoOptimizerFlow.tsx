@@ -33,7 +33,7 @@ export function AutoOptimizerFlow(p: IAutoOptimizerFlowProps) {
       )}
       {['review', 'applying'].includes(p.stage) && (
         <AutoOptimizerResults
-          legs={p.legs || []}
+          outputs={p.outputs || []}
           advice={p.advice}
           applying={applying}
           host={host}

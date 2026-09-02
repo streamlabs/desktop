@@ -8,7 +8,7 @@ import {
   shouldCaptureTargetPresetForRollback,
   selectAutoOptimizerStandardOutputRecommendation,
 } from '../../app/services/auto-config/output-transaction-policy';
-import { IAutoOptimizerLegResult } from '../../app/services/auto-config/types';
+import { IAutoOptimizerOutputResult } from '../../app/services/auto-config/types';
 
 function outputForm(preset = 'veryfast', bitrate = 6000) {
   return [
@@ -64,9 +64,9 @@ test('only an active Enhanced Broadcasting workload may apply provider-owned vid
 });
 
 test('mixed Enhanced Broadcasting applies one common standard companion output', t => {
-  const standard = (legId: string, display: 'horizontal' | 'vertical') =>
+  const standard = (outputId: string, display: 'horizontal' | 'vertical') =>
     ({
-      legId,
+      outputId,
       display,
       outputKind: 'standard',
       destinations: [{ platform: 'youtube' }],
@@ -85,8 +85,8 @@ test('mixed Enhanced Broadcasting applies one common standard companion output',
         codec: 'h264',
         preset: 'p5',
       },
-    } as IAutoOptimizerLegResult);
-  const enhanced: IAutoOptimizerLegResult = {
+    } as IAutoOptimizerOutputResult);
+  const enhanced: IAutoOptimizerOutputResult = {
     ...standard('twitch-enhanced-broadcasting', 'horizontal'),
     display: 'both' as const,
     outputKind: 'twitch-enhanced-broadcasting' as const,
@@ -111,8 +111,8 @@ test('mixed Enhanced Broadcasting applies one common standard companion output',
 });
 
 test('the apply transaction rejects a standard bitrate above the product ceiling', t => {
-  const leg = {
-    legId: 'youtube',
+  const output = {
+    outputId: 'youtube',
     display: 'horizontal',
     outputKind: 'standard',
     destinations: [{ platform: 'youtube' }],
@@ -130,9 +130,9 @@ test('the apply transaction rejects a standard bitrate above the product ceiling
       codec: 'h264',
       preset: 'p5',
     },
-  } as IAutoOptimizerLegResult;
+  } as IAutoOptimizerOutputResult;
 
-  t.throws(() => selectAutoOptimizerStandardOutputRecommendation([leg]), {
+  t.throws(() => selectAutoOptimizerStandardOutputRecommendation([output]), {
     message: 'The optimizer returned an unsupported streaming bitrate',
   });
 });

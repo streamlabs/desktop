@@ -22,7 +22,7 @@ export type TAutoOptimizerPhase =
   | 'cleanup'
   | null;
 
-export type TAutoOptimizerTopologyType =
+export type TAutoOptimizerStreamSetupType =
   | 'direct-single'
   | 'cloud-multistream'
   | 'custom-rtmp'
@@ -62,13 +62,13 @@ export interface IAutoOptimizerDestination {
 
 /**
  * Credential-free description of an active probe Desktop may acquire for an
- * upload leg. The array order is the execution order. Credentials are added
+ * output. The array order is the execution order. Credentials are added
  * only to the attempt-scoped native request in the worker renderer.
  */
 export interface IAutoOptimizerProbeCandidate {
   probeId: string;
   kind: TAutoOptimizerProbeKind;
-  legId: string;
+  outputId: string;
   provider: TAutoOptimizerProbeProvider;
 }
 
@@ -78,8 +78,8 @@ export interface IAutoOptimizerProbeEvidence {
   success: boolean;
 }
 
-export interface IAutoOptimizerTopologyLeg {
-  legId: string;
+export interface IAutoOptimizerOutput {
+  outputId: string;
   display: TDisplayType | 'both';
   /** Physical local output whose concurrent encoder workload must be represented. */
   outputKind: TAutoOptimizerOutputKind;
@@ -89,9 +89,9 @@ export interface IAutoOptimizerTopologyLeg {
   estimateReason?: string;
 }
 
-export interface IAutoOptimizerTopology {
-  type: TAutoOptimizerTopologyType;
-  legs: IAutoOptimizerTopologyLeg[];
+export interface IAutoOptimizerStreamSetup {
+  type: TAutoOptimizerStreamSetupType;
+  outputs: IAutoOptimizerOutput[];
 }
 
 export interface IAutoOptimizerEncoderRecommendation {
@@ -102,8 +102,8 @@ export interface IAutoOptimizerEncoderRecommendation {
   preset: string;
 }
 
-export interface IAutoOptimizerLegResult {
-  legId: string;
+export interface IAutoOptimizerOutputResult {
+  outputId: string;
   display: TDisplayType | 'both';
   outputKind: TAutoOptimizerOutputKind;
   destinations: IAutoOptimizerDestination[];
@@ -115,7 +115,7 @@ export interface IAutoOptimizerLegResult {
   fpsNum: number;
   fpsDen: number;
   fps: number;
-  /** Secondary canvas tested concurrently with the primary video on this upload leg. */
+  /** Secondary canvas tested concurrently with the primary video on this output. */
   additionalVideo?: IAutoOptimizerAdditionalVideoResult;
   bitrate: number;
   /** Omitted when the provider owns the encoding ladder. */
@@ -131,9 +131,9 @@ export interface IAutoOptimizerAdvice {
 
 export interface IAutoOptimizerResult {
   schemaVersion: 1;
-  topology: TAutoOptimizerTopologyType;
+  streamSetup: TAutoOptimizerStreamSetupType;
   status: 'complete' | 'partial' | 'cancelled' | 'failed';
-  legs: IAutoOptimizerLegResult[];
+  outputs: IAutoOptimizerOutputResult[];
   advice?: IAutoOptimizerAdvice;
 }
 
@@ -147,7 +147,7 @@ export interface IAutoOptimizerState {
   stage: TAutoOptimizerStage;
   phase: TAutoOptimizerPhase;
   progress: number;
-  topology: IAutoOptimizerTopology | null;
+  streamSetup: IAutoOptimizerStreamSetup | null;
   result: IAutoOptimizerResult | null;
   error: IAutoOptimizerError | null;
   /** Sanitized attempt-local detail for the currently displayed native step. */
@@ -177,15 +177,15 @@ export interface IAutoOptimizerProgressDetail {
 export type IAutoConfigEvent = IOSNAutoConfigEvent;
 export type IAutoConfigNativeResult = IOSNAutoConfigResult;
 
-type TOSNAutoConfigRequestLeg = IOSNAutoConfigRequest['outputs'][number];
-export type IAutoConfigCurrentSettings = TOSNAutoConfigRequestLeg['current'];
-export type IAutoConfigRequestLimits = NonNullable<TOSNAutoConfigRequestLeg['limits']>;
+type TOSNAutoConfigRequestOutput = IOSNAutoConfigRequest['outputs'][number];
+export type IAutoConfigCurrentSettings = TOSNAutoConfigRequestOutput['current'];
+export type IAutoConfigRequestLimits = NonNullable<TOSNAutoConfigRequestOutput['limits']>;
 export type IAutoConfigRequestAdditionalVideo = NonNullable<
-  TOSNAutoConfigRequestLeg['additionalVideo']
+  TOSNAutoConfigRequestOutput['additionalVideo']
 >;
-export type IAutoConfigRequestLeg = TOSNAutoConfigRequestLeg;
-export type IAutoConfigAttemptRequestLeg = Omit<IAutoConfigRequestLeg, 'probes'>;
-export type IAutoConfigActiveProbe = NonNullable<TOSNAutoConfigRequestLeg['probes']>[number];
+export type IAutoConfigRequestOutput = TOSNAutoConfigRequestOutput;
+export type IAutoConfigAttemptRequestOutput = Omit<IAutoConfigRequestOutput, 'probes'>;
+export type IAutoConfigActiveProbe = NonNullable<TOSNAutoConfigRequestOutput['probes']>[number];
 export type IAutoConfigRequest = IOSNAutoConfigRequest;
 export type IAutoConfigAdditionalVideoTuple = NonNullable<IAutoConfigEvent['additionalVideo']>;
 
@@ -199,6 +199,6 @@ export interface IAutoOptimizerAdditionalVideoResult {
 
 export interface IAutoOptimizerProfile {
   schemaVersion: 1;
-  topology: TAutoOptimizerTopologyType;
-  legs: IAutoOptimizerLegResult[];
+  streamSetup: TAutoOptimizerStreamSetupType;
+  outputs: IAutoOptimizerOutputResult[];
 }

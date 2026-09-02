@@ -2,26 +2,26 @@ import React from 'react';
 import { Button } from 'antd';
 import { $t } from 'services/i18n';
 import { $i } from 'services/utils';
-import { IAutoOptimizerPresentationAdvice, IAutoOptimizerPresentationLeg } from './types';
+import { IAutoOptimizerPresentationAdvice, IAutoOptimizerPresentationOutput } from './types';
 import styles from './AutoOptimizer.m.less';
 
-function settingsKey(leg: IAutoOptimizerPresentationLeg) {
+function settingsKey(output: IAutoOptimizerPresentationOutput) {
   return [
-    leg.width,
-    leg.height,
-    leg.additionalVideo?.width || '',
-    leg.additionalVideo?.height || '',
-    leg.fps,
-    leg.bitrateKbps,
-    leg.encoder || '',
-    leg.preset || '',
-    leg.measurementMode,
-    leg.estimateReason || '',
-    leg.managedByProvider ? 'provider-encoding' : '',
-    leg.videoSettingsManagedByProvider ? 'provider-video' : '',
-    ...(leg.platforms || []).map(platform => platform.id).sort(),
-    ...(leg.measuredPlatforms || []).map(platform => `measured:${platform.id}`).sort(),
-    ...(leg.estimatedPlatforms || []).map(platform => `estimated:${platform.id}`).sort(),
+    output.width,
+    output.height,
+    output.additionalVideo?.width || '',
+    output.additionalVideo?.height || '',
+    output.fps,
+    output.bitrateKbps,
+    output.encoder || '',
+    output.preset || '',
+    output.measurementMode,
+    output.estimateReason || '',
+    output.managedByProvider ? 'provider-encoding' : '',
+    output.videoSettingsManagedByProvider ? 'provider-video' : '',
+    ...(output.platforms || []).map(platform => platform.id).sort(),
+    ...(output.measuredPlatforms || []).map(platform => `measured:${platform.id}`).sort(),
+    ...(output.estimatedPlatforms || []).map(platform => `estimated:${platform.id}`).sort(),
   ].join(':');
 }
 
@@ -44,14 +44,17 @@ function PlatformChips(p: { platforms: Array<{ id: string; label: string }> }) {
   );
 }
 
-function MeasurementProvenance(p: { leg: IAutoOptimizerPresentationLeg; standalone?: boolean }) {
-  const measured = p.leg.measurementMode === 'active' ? p.leg.measuredPlatforms || [] : [];
-  // `platforms` describes every destination that shares this output leg, but
+function MeasurementProvenance(p: {
+  output: IAutoOptimizerPresentationOutput;
+  standalone?: boolean;
+}) {
+  const measured = p.output.measurementMode === 'active' ? p.output.measuredPlatforms || [] : [];
+  // `platforms` describes every destination that shares this output, but
   // measurement provenance is intentionally limited to probe-capable
   // providers. Falling back to the full destination list would incorrectly
   // imply that unsupported V1 providers such as Kick were bandwidth-tested or
   // estimated.
-  const estimated = p.leg.estimatedPlatforms || [];
+  const estimated = p.output.estimatedPlatforms || [];
   if (!measured.length && !estimated.length) return null;
 
   const contents = (
@@ -83,70 +86,73 @@ function MeasurementProvenance(p: { leg: IAutoOptimizerPresentationLeg; standalo
   );
 }
 
-function EstimateExplanation(p: { leg: IAutoOptimizerPresentationLeg }) {
-  if (!p.leg.estimateReason) return null;
+function EstimateExplanation(p: { output: IAutoOptimizerPresentationOutput }) {
+  if (!p.output.estimateReason) return null;
   if (
-    p.leg.measurementMode !== 'estimated' &&
-    p.leg.measurementConfidence !== 'low' &&
-    !p.leg.showMeasurementReason
+    p.output.measurementMode !== 'estimated' &&
+    p.output.measurementConfidence !== 'low' &&
+    !p.output.showMeasurementReason
   ) {
     return null;
   }
-  return <p className={styles.estimateExplanation}>{p.leg.estimateReason}</p>;
+  return <p className={styles.estimateExplanation}>{p.output.estimateReason}</p>;
 }
 
-function SettingsList(p: { leg: IAutoOptimizerPresentationLeg; standaloneMeasurement?: boolean }) {
-  const { leg } = p;
+function SettingsList(p: {
+  output: IAutoOptimizerPresentationOutput;
+  standaloneMeasurement?: boolean;
+}) {
+  const { output } = p;
 
   return (
     <>
       <ul className={styles.settingsList}>
-        {leg.additionalVideo ? (
+        {output.additionalVideo ? (
           <>
             <li>
               <i className="icon-check" aria-hidden="true" />
-              {$t('Horizontal canvas resolution')}: {leg.width}×{leg.height}
+              {$t('Horizontal canvas resolution')}: {output.width}×{output.height}
             </li>
             <li>
               <i className="icon-check" aria-hidden="true" />
-              {$t('Vertical canvas resolution')}: {leg.additionalVideo.width}×
-              {leg.additionalVideo.height}
+              {$t('Vertical canvas resolution')}: {output.additionalVideo.width}×
+              {output.additionalVideo.height}
             </li>
           </>
         ) : (
           <li>
             <i className="icon-check" aria-hidden="true" />
-            {$t(leg.managedByProvider ? 'Canvas resolution' : 'Resolution')}: {leg.width}×
-            {leg.height}
+            {$t(output.managedByProvider ? 'Canvas resolution' : 'Resolution')}: {output.width}×
+            {output.height}
           </li>
         )}
         <li>
           <i className="icon-check" aria-hidden="true" />
-          {$t('Framerate')}: {leg.fps} {$t('fps')}
+          {$t('Framerate')}: {output.fps} {$t('fps')}
         </li>
-        {!leg.managedByProvider && (
+        {!output.managedByProvider && (
           <li className={p.standaloneMeasurement ? styles.settingWithMeasurement : undefined}>
             <i className="icon-check" aria-hidden="true" />
-            {$t('Bitrate')}: {leg.bitrateKbps} Kbps
-            <MeasurementProvenance leg={leg} standalone={p.standaloneMeasurement} />
+            {$t('Bitrate')}: {output.bitrateKbps} Kbps
+            <MeasurementProvenance output={output} standalone={p.standaloneMeasurement} />
           </li>
         )}
-        {!leg.managedByProvider && leg.encoder && (
+        {!output.managedByProvider && output.encoder && (
           <li>
             <i className="icon-check" aria-hidden="true" />
-            {$t('Encoder')}: {leg.encoder}
+            {$t('Encoder')}: {output.encoder}
           </li>
         )}
       </ul>
-      {leg.managedByProvider && (
+      {output.managedByProvider && (
         <div className={styles.providerManaged}>
           <h3>{$t('Twitch Enhanced Broadcasting')}</h3>
           <p>{$t('Twitch will manage stream output resolutions, bitrates, and encoders.')}</p>
-          <MeasurementProvenance leg={leg} standalone />
-          <EstimateExplanation leg={leg} />
+          <MeasurementProvenance output={output} standalone />
+          <EstimateExplanation output={output} />
         </div>
       )}
-      {!leg.managedByProvider && <EstimateExplanation leg={leg} />}
+      {!output.managedByProvider && <EstimateExplanation output={output} />}
     </>
   );
 }
@@ -168,7 +174,7 @@ function AdviceCard(p: { advice: IAutoOptimizerPresentationAdvice; onAction?(): 
 }
 
 export function AutoOptimizerResults(p: {
-  legs: IAutoOptimizerPresentationLeg[];
+  outputs: IAutoOptimizerPresentationOutput[];
   advice?: IAutoOptimizerPresentationAdvice | null;
   applying: boolean;
   host: 'go-live' | 'settings' | 'onboarding';
@@ -177,14 +183,17 @@ export function AutoOptimizerResults(p: {
   onAdvice?(): void;
 }) {
   const allSettingsMatch =
-    p.legs.length > 0 && p.legs.every(leg => settingsKey(leg) === settingsKey(p.legs[0]));
+    p.outputs.length > 0 &&
+    p.outputs.every(output => settingsKey(output) === settingsKey(p.outputs[0]));
   const allProviderManaged =
-    p.legs.length > 0 &&
-    p.legs.every(
-      leg => leg.managedByProvider && (leg.videoSettingsManagedByProvider ?? leg.managedByProvider),
+    p.outputs.length > 0 &&
+    p.outputs.every(
+      output =>
+        output.managedByProvider &&
+        (output.videoSettingsManagedByProvider ?? output.managedByProvider),
     );
-  const splitLegLayout = !allSettingsMatch;
-  const denseLegLayout = p.legs.length > 2;
+  const splitOutputLayout = !allSettingsMatch;
+  const denseOutputLayout = p.outputs.length > 2;
   let applyLabel = $t('Save Settings');
   if (p.host === 'go-live') {
     applyLabel = allProviderManaged ? $t('Continue & Go Live') : $t('Save Settings & Go Live');
@@ -194,26 +203,26 @@ export function AutoOptimizerResults(p: {
     <section className={styles.resultsScreen}>
       <p className={styles.subtitle}>{$t("You're all set!")}</p>
       <div
-        className={`${styles.summaryCard} ${splitLegLayout ? styles.splitSummaryCard : ''} ${
-          denseLegLayout ? styles.denseSummaryCard : ''
+        className={`${styles.summaryCard} ${splitOutputLayout ? styles.splitSummaryCard : ''} ${
+          denseOutputLayout ? styles.denseSummaryCard : ''
         }`}
       >
         <div className={styles.summaryContent}>
           <h2>{$t('Your recommended settings are:')}</h2>
           {allSettingsMatch ? (
-            <SettingsList leg={p.legs[0]} />
+            <SettingsList output={p.outputs[0]} />
           ) : (
-            <div className={styles.legGrid}>
-              {p.legs.map(leg => (
-                <div key={leg.legId} className={styles.legSettings}>
-                  <h3>{leg.label}</h3>
-                  <SettingsList leg={leg} standaloneMeasurement />
+            <div className={styles.outputGrid}>
+              {p.outputs.map(output => (
+                <div key={output.outputId} className={styles.outputSettings}>
+                  <h3>{output.label}</h3>
+                  <SettingsList output={output} standaloneMeasurement />
                 </div>
               ))}
             </div>
           )}
         </div>
-        {!denseLegLayout && (
+        {!denseOutputLayout && (
           <div className={styles.kevinResultFrame} aria-hidden="true">
             <img
               className={styles.kevinResult}
@@ -227,7 +236,7 @@ export function AutoOptimizerResults(p: {
       <div className={styles.resultActions}>
         <Button
           className={styles.primaryButton}
-          disabled={p.applying || p.legs.length === 0}
+          disabled={p.applying || p.outputs.length === 0}
           onClick={p.onApply}
         >
           {p.applying ? $t('Saving Settings...') : applyLabel}

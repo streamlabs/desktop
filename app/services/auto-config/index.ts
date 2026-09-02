@@ -20,10 +20,10 @@ import { NavigationService } from 'services/navigation';
 import { byOS, OS } from 'util/operating-systems';
 import { $t } from 'services/i18n';
 import {
-  classifyAutoOptimizerTopology,
+  describeAutoOptimizerStreamSetup,
   isAutoOptimizerProfileCompatible,
   normalizeAutoOptimizerPlatform,
-} from './topology';
+} from './stream-setup';
 import { autoOptimizerRecommendationBitrateCap } from './bitrate-policy';
 import {
   areAutoConfigActiveCanvasIdentitiesValid,
@@ -32,9 +32,9 @@ import {
   credentialFreeAutoConfigRequestOutput,
   autoConfigPhaseStepDisposition,
   autoConfigPhaseStepKey,
-  filterAutoConfigTopologyProbes,
-  isEligibleAutoConfigDualOutputActiveTopology,
-  isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology,
+  filterAutoConfigStreamSetupProbes,
+  isEligibleAutoConfigDualOutputActiveStreamSetup,
+  isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup,
   isValidAutoConfigActiveProbeCoverage,
   sanitizeAutoConfigProgressDetail,
   sanitizeAutoConfigProbeEvidence,
@@ -59,26 +59,26 @@ import {
 import { awaitAutoConfigRun, closeAutoConfigRun, IAutoConfigRun } from './native-run';
 import {
   IAutoConfigActiveProbe,
-  IAutoConfigAttemptRequestLeg,
+  IAutoConfigAttemptRequestOutput,
   IAutoConfigEvent,
   IAutoConfigNativeResult,
   IAutoConfigRequest,
-  IAutoConfigRequestLeg,
+  IAutoConfigRequestOutput,
   IAutoOptimizerAdvice,
   IAutoOptimizerDestination,
   IAutoOptimizerError,
-  IAutoOptimizerLegResult,
+  IAutoOptimizerOutputResult,
   IAutoOptimizerProfile,
   IAutoOptimizerProgressDetail,
   IAutoOptimizerResult,
   IAutoOptimizerState,
-  IAutoOptimizerTopology,
+  IAutoOptimizerStreamSetup,
   TAutoOptimizerPhase,
   TAutoOptimizerPromptState,
 } from './types';
 
 export * from './types';
-export { classifyAutoOptimizerTopology } from './topology';
+export { describeAutoOptimizerStreamSetup } from './stream-setup';
 
 const MIN_PHASE_VISIBLE_MS = 1000;
 const YOUTUBE_INGEST_CONFIRMATION_TIMEOUT_MS = 12000;
@@ -117,7 +117,7 @@ interface ITargetEncoderPresetSnapshot {
 
 interface IPreparedAutoConfigRequest {
   request: IAutoConfigRequest;
-  topology: IAutoOptimizerTopology;
+  streamSetup: IAutoOptimizerStreamSetup;
 }
 
 type TConcreteAutoOptimizerPhase = Exclude<TAutoOptimizerPhase, null>;
@@ -135,7 +135,7 @@ function initialFlowState(): Omit<IAutoOptimizerState, 'promptStates'> {
     phase: null,
     progress: 0,
     progressDetail: null,
-    topology: null,
+    streamSetup: null,
     result: null,
     error: null,
   };
@@ -221,7 +221,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private youtubeConfirmationPromises = new Map<string, Promise<void>>();
   private probeAbortController: AbortController | null = null;
   /** Exact credential-free native inputs retained only for the active attempt. */
-  private attemptRequestLegs = new Map<string, IAutoConfigAttemptRequestLeg>();
+  private attemptRequestOutputs = new Map<string, IAutoConfigAttemptRequestOutput>();
 
   get views() {
     return new AutoConfigViews(this.state);
@@ -256,25 +256,25 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     if (this.getPromptState() !== 'unseen') return false;
 
     this.frozenGoLiveSettings = this.deepFreeze(frozen);
-    const topology = filterAutoConfigTopologyProbes(
-      classifyAutoOptimizerTopology(
+    const streamSetup = filterAutoConfigStreamSetupProbes(
+      describeAutoOptimizerStreamSetup(
         frozen,
         this.dualOutputService.state.dualOutputMode && this.userService.isLoggedIn,
         this.twitchService.views.hasTwitchDualStreamAccess,
       ),
       supportedAutoConfigProbeKinds(),
     );
-    if (!topology.legs.some(leg => leg.destinations.length > 0)) {
+    if (!streamSetup.outputs.some(output => output.destinations.length > 0)) {
       this.frozenGoLiveSettings = null;
       return false;
     }
 
-    this.SET_INTRO(topology);
+    this.SET_INTRO(streamSetup);
     return true;
   }
 
   async startOptimization(): Promise<void> {
-    if (!this.frozenGoLiveSettings || !this.state.topology) {
+    if (!this.frozenGoLiveSettings || !this.state.streamSetup) {
       this.SET_ERROR({
         code: 'missing_go_live_settings',
         message: 'Go Live settings are no longer available. Please reopen Go Live.',
@@ -288,8 +288,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     // giving the UI immediate feedback, this makes duplicate clicks idempotent
     // while the worker starts or cleans up a native session.
     const token = ++this.runToken;
-    let topology = cloneDeep(this.state.topology);
-    this.SET_RUNNING(topology);
+    let streamSetup = cloneDeep(this.state.streamSetup);
+    this.SET_RUNNING(streamSetup);
     this.beginPhasePacing();
 
     try {
@@ -304,20 +304,20 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     if (token !== this.runToken) return;
 
     try {
-      const prepared = await this.createNativeRequest(topology);
+      const prepared = await this.createNativeRequest(streamSetup);
       if (token !== this.runToken) {
         this.clearProbeCredentials(prepared.request);
         return;
       }
-      topology = prepared.topology;
+      streamSetup = prepared.streamSetup;
       const request = prepared.request;
-      this.attemptRequestLegs = new Map(
+      this.attemptRequestOutputs = new Map(
         request.outputs.map(output => [
           output.outputId,
           credentialFreeAutoConfigRequestOutput(output),
         ]),
       );
-      this.SET_TOPOLOGY(topology);
+      this.SET_STREAM_SETUP(streamSetup);
 
       let run: IAutoConfigRun;
       try {
@@ -335,7 +335,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       if (token !== this.runToken || this.nativeRun !== run!) return;
 
       const result = this.toPublicResult(nativeResult);
-      if (!this.isCompleteResultForTopology(result)) {
+      if (!this.isCompleteResultForStreamSetup(result)) {
         throw new Error(nativeResult.error?.code || 'Optimization failed');
       }
       const stopCleanupProgress = this.startCleanupProgress(token);
@@ -364,8 +364,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   async retry(): Promise<void> {
     if (!this.frozenGoLiveSettings) return;
     this.SET_INTRO(
-      filterAutoConfigTopologyProbes(
-        classifyAutoOptimizerTopology(
+      filterAutoConfigStreamSetupProbes(
+        describeAutoOptimizerStreamSetup(
           this.frozenGoLiveSettings,
           this.dualOutputService.state.dualOutputMode && this.userService.isLoggedIn,
           this.twitchService.views.hasTwitchDualStreamAccess,
@@ -377,12 +377,12 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   async cancelOptimization(): Promise<void> {
-    const topology = this.state.topology;
+    const streamSetup = this.state.streamSetup;
     ++this.runToken;
     this.SET_CANCELLING();
     try {
       await this.cleanupOptimizerRun();
-      if (topology) this.SET_INTRO(topology);
+      if (streamSetup) this.SET_INTRO(streamSetup);
       else this.RESET_FLOW();
     } catch (e: unknown) {
       this.SET_ERROR(this.toError(e, 'cleanup_failed', false));
@@ -452,7 +452,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
   /**
    * Consume the profile saved for this confirmed attempt. The compatibility
-   * check prevents a stale profile from crossing an unexpected topology change.
+   * check prevents a stale profile from crossing an unexpected stream-setup change.
    */
   consumePendingGoLiveProfile(settings: IGoLiveSettings): IAutoOptimizerProfile | null {
     const profile = this.pendingGoLiveProfile;
@@ -530,11 +530,11 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   private async createNativeRequest(
-    sourceTopology: IAutoOptimizerTopology,
+    sourceStreamSetup: IAutoOptimizerStreamSetup,
   ): Promise<IPreparedAutoConfigRequest> {
     const credentialProbes: IAutoConfigActiveProbe[] = [];
     try {
-      return await this.createNativeRequestWithCredentials(sourceTopology, credentialProbes);
+      return await this.createNativeRequestWithCredentials(sourceStreamSetup, credentialProbes);
     } catch (error: unknown) {
       this.clearActiveProbeCredentials(credentialProbes);
       await this.releaseYoutubeProbeLeases();
@@ -543,20 +543,20 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   private async createNativeRequestWithCredentials(
-    sourceTopology: IAutoOptimizerTopology,
+    sourceStreamSetup: IAutoOptimizerStreamSetup,
     credentialProbes: IAutoConfigActiveProbe[],
   ): Promise<IPreparedAutoConfigRequest> {
-    const topology = cloneDeep(sourceTopology);
-    const activeDualOutput = isEligibleAutoConfigDualOutputActiveTopology(topology);
-    const activeEnhancedBroadcastingDualOutput = isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology(
-      topology,
+    const streamSetup = cloneDeep(sourceStreamSetup);
+    const activeDualOutput = isEligibleAutoConfigDualOutputActiveStreamSetup(streamSetup);
+    const activeEnhancedBroadcastingDualOutput = isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(
+      streamSetup,
     );
-    const requestedActiveProbeCount = topology.legs.reduce(
-      (count, leg) => count + leg.probeCandidates.length,
+    const requestedActiveProbeCount = streamSetup.outputs.reduce(
+      (count, output) => count + output.probeCandidates.length,
       0,
     );
     const activeProbes: IAutoConfigActiveProbe[] = [];
-    const activeProbesByLeg = new Map<string, IAutoConfigActiveProbe[]>();
+    const activeProbesByOutput = new Map<string, IAutoConfigActiveProbe[]>();
     if (activeDualOutput || activeEnhancedBroadcastingDualOutput) {
       const horizontalCanvasId = this.videoSettingsService.contexts.horizontal?.canvasId;
       const verticalCanvasId = this.videoSettingsService.contexts.vertical?.canvasId;
@@ -568,15 +568,15 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     const controller = new AbortController();
     this.probeAbortController = controller;
 
-    for (const leg of topology.legs) {
-      const expectedProbeCount = leg.probeCandidates.length;
-      const alreadyPartial = leg.estimateReason === 'partial_provider_probes';
+    for (const output of streamSetup.outputs) {
+      const expectedProbeCount = output.probeCandidates.length;
+      const alreadyPartial = output.estimateReason === 'partial_provider_probes';
       const acquired: Array<{
-        candidate: typeof leg.probeCandidates[number];
+        candidate: typeof output.probeCandidates[number];
         probe: IAutoConfigActiveProbe;
       }> = [];
 
-      for (const candidate of leg.probeCandidates) {
+      for (const candidate of output.probeCandidates) {
         try {
           if (
             candidate.kind === 'twitch-standard' ||
@@ -631,11 +631,11 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         }
       }
 
-      leg.probeCandidates = acquired.map(({ candidate }) => candidate);
+      output.probeCandidates = acquired.map(({ candidate }) => candidate);
       if (expectedProbeCount > 0) {
         const coverage = autoConfigProbeCoverage(expectedProbeCount, acquired.length);
-        leg.measurement = coverage.measurement;
-        leg.estimateReason =
+        output.measurement = coverage.measurement;
+        output.estimateReason =
           coverage.measurement === 'active' && alreadyPartial
             ? 'partial_provider_probes'
             : coverage.estimateReason;
@@ -647,11 +647,11 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         // as estimated and prevents quality promotion below.
         const probes = acquired.map(({ probe }) => probe);
         activeProbes.push(...probes);
-        activeProbesByLeg.set(leg.legId, probes);
+        activeProbesByOutput.set(output.outputId, probes);
       }
     }
     if (activeDualOutput && activeProbes.length !== requestedActiveProbeCount) {
-      // This topology is one aggregate experiment, not two independently
+      // This stream setup is one aggregate experiment, not two independently
       // promotable provider probes. Never pass a partially credentialed pair
       // to native, and delete any temporary YouTube resource before surfacing
       // the retryable setup failure.
@@ -676,49 +676,50 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       throw new AutoOptimizerProbeSetupError();
     }
 
-    const output = this.outputSettingsService.getSettings();
-    const outputs: IAutoConfigRequestLeg[] = topology.legs.map(leg => {
-      const display: TDisplayType = leg.display === 'vertical' ? 'vertical' : 'horizontal';
+    const outputSettings = this.outputSettingsService.getSettings();
+    const outputs: IAutoConfigRequestOutput[] = streamSetup.outputs.map(output => {
+      const display: TDisplayType = output.display === 'vertical' ? 'vertical' : 'horizontal';
       const video = this.videoSettingsService.state[display];
       const canvasId = this.videoSettingsService.contexts[display]?.canvasId;
       const additionalCanvasId = this.videoSettingsService.contexts.vertical?.canvasId;
       if (
-        (topology.type === 'enhanced-broadcasting' ||
-          topology.type === 'enhanced-broadcasting-dual-output') &&
-        leg.measurement === 'active' &&
+        (streamSetup.type === 'enhanced-broadcasting' ||
+          streamSetup.type === 'enhanced-broadcasting-dual-output') &&
+        output.measurement === 'active' &&
         !areAutoConfigActiveCanvasIdentitiesValid(
           canvasId,
           additionalCanvasId,
-          leg.display === 'both',
+          output.display === 'both',
         )
       ) {
         throw new AutoOptimizerProbeSetupError();
       }
       const maxBitrateKbps = autoOptimizerRecommendationBitrateCap(
-        leg.outputKind,
-        leg.destinations.map(item => item.platform),
+        output.outputKind,
+        output.destinations.map(item => item.platform),
       );
       return {
-        outputId: leg.legId,
-        display: leg.display,
-        outputKind: leg.outputKind,
-        destinations: leg.destinations.map(destination => destination.platform),
+        outputId: output.outputId,
+        display: output.display,
+        outputKind: output.outputKind,
+        destinations: output.destinations.map(destination => destination.platform),
         current: {
           canvasId,
           width: video.outputWidth,
           height: video.outputHeight,
           fpsNum: video.fpsNum,
           fpsDen: video.fpsDen,
-          bitrateKbps: output.streaming.bitrate,
-          encoderId: output.streaming.encoderId,
-          preset: output.streaming.preset || undefined,
+          bitrateKbps: outputSettings.streaming.bitrate,
+          encoderId: outputSettings.streaming.encoderId,
+          preset: outputSettings.streaming.preset || undefined,
         },
         // Resolution and frame-rate promotion are permitted only with complete
         // provider coverage. Partial and estimate-only paths may lower a tested
         // tuple, but their request ceiling cannot rise above the current output.
         limits: buildAutoOptimizerRequestLimits({
           allowPromotion:
-            ((leg.measurement === 'active' && leg.estimateReason !== 'partial_provider_probes') ||
+            ((output.measurement === 'active' &&
+              output.estimateReason !== 'partial_provider_probes') ||
               activeEnhancedBroadcastingDualOutput) &&
             autoOptimizerCanvasAllowsQualityPromotion(
               video.baseWidth,
@@ -732,7 +733,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           currentFpsDen: video.fpsDen,
           maxBitrateKbps,
         }),
-        ...(leg.display === 'both'
+        ...(output.display === 'both'
           ? {
               additionalVideo: {
                 display: 'vertical' as const,
@@ -742,14 +743,14 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
                   height: this.videoSettingsService.state.vertical.outputHeight,
                   fpsNum: this.videoSettingsService.state.vertical.fpsNum,
                   fpsDen: this.videoSettingsService.state.vertical.fpsDen,
-                  bitrateKbps: output.streaming.bitrate,
-                  encoderId: output.streaming.encoderId,
-                  preset: output.streaming.preset || undefined,
+                  bitrateKbps: outputSettings.streaming.bitrate,
+                  encoderId: outputSettings.streaming.encoderId,
+                  preset: outputSettings.streaming.preset || undefined,
                 },
                 limits: buildAutoOptimizerRequestLimits({
                   allowPromotion:
-                    ((leg.measurement === 'active' &&
-                      leg.estimateReason !== 'partial_provider_probes') ||
+                    ((output.measurement === 'active' &&
+                      output.estimateReason !== 'partial_provider_probes') ||
                       activeEnhancedBroadcastingDualOutput) &&
                     autoOptimizerCanvasAllowsQualityPromotion(
                       this.videoSettingsService.state.vertical.baseWidth,
@@ -766,15 +767,17 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
               },
             }
           : {}),
-        estimateReason: leg.estimateReason as IAutoConfigRequestLeg['estimateReason'],
-        ...(activeProbesByLeg.has(leg.legId) ? { probes: activeProbesByLeg.get(leg.legId)! } : {}),
+        estimateReason: output.estimateReason as IAutoConfigRequestOutput['estimateReason'],
+        ...(activeProbesByOutput.has(output.outputId)
+          ? { probes: activeProbesByOutput.get(output.outputId)! }
+          : {}),
       };
     });
 
     return {
-      topology,
+      streamSetup,
       request: {
-        streamSetup: topology.type,
+        streamSetup: streamSetup.type,
         outputs,
       },
     };
@@ -965,20 +968,21 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   private toPublicResult(nativeResult: IAutoConfigNativeResult): IAutoOptimizerResult {
-    const expectedLegs = this.state.topology?.legs || [];
+    const expectedOutputs = this.state.streamSetup?.outputs || [];
     const activeDualOutput = Boolean(
-      this.state.topology && isEligibleAutoConfigDualOutputActiveTopology(this.state.topology),
+      this.state.streamSetup &&
+        isEligibleAutoConfigDualOutputActiveStreamSetup(this.state.streamSetup),
     );
     const activeEnhancedBroadcastingDualOutput = Boolean(
-      this.state.topology &&
-        isEligibleAutoConfigEnhancedBroadcastingDualOutputTopology(this.state.topology),
+      this.state.streamSetup &&
+        isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(this.state.streamSetup),
     );
     const jointDualOutputActive =
       activeDualOutput &&
       nativeResult.outputs.every(output => output.measurement.mode === 'active');
-    const legs: IAutoOptimizerLegResult[] = nativeResult.outputs.flatMap(output => {
-      const expected = expectedLegs.find(item => item.legId === output.outputId);
-      const requested = this.attemptRequestLegs.get(output.outputId);
+    const outputs: IAutoOptimizerOutputResult[] = nativeResult.outputs.flatMap(output => {
+      const expected = expectedOutputs.find(item => item.outputId === output.outputId);
+      const requested = this.attemptRequestOutputs.get(output.outputId);
       if (!expected || !requested || expected.display !== requested.display) return [];
 
       const videosByDisplay = new Map(output.videos.map(video => [video.display, video]));
@@ -1000,7 +1004,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       if (!primaryVideo || (requested.display === 'both' && !additionalVideo)) return [];
 
       const evidence = sanitizeAutoConfigProbeEvidence(output.measurement.evidence);
-      // state.topology is replaced with the prepared attempt topology before
+      // state.streamSetup is replaced with the prepared attempt stream setup before
       // native execution. At least one attempted candidate must succeed;
       // failed or missing selected providers are accepted only at low confidence.
       const activeEvidenceValid =
@@ -1073,7 +1077,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
       return [
         {
-          legId: output.outputId,
+          outputId: output.outputId,
           display: expected.display,
           outputKind: expected.outputKind,
           destinations: expected.destinations.map(
@@ -1118,21 +1122,21 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
     return {
       schemaVersion: 1,
-      topology: this.state.topology?.type || 'direct-single',
+      streamSetup: this.state.streamSetup?.type || 'direct-single',
       status: nativeResult.status,
-      legs,
+      outputs,
       advice: this.getAdvice(),
     };
   }
 
-  private isCompleteResultForTopology(result: IAutoOptimizerResult): boolean {
-    if (result.status !== 'complete' || !this.state.topology) return false;
-    const expectedIds = this.state.topology.legs.map(leg => leg.legId);
-    const returnedIds = result.legs.map(leg => leg.legId);
+  private isCompleteResultForStreamSetup(result: IAutoOptimizerResult): boolean {
+    if (result.status !== 'complete' || !this.state.streamSetup) return false;
+    const expectedIds = this.state.streamSetup.outputs.map(output => output.outputId);
+    const returnedIds = result.outputs.map(output => output.outputId);
     return (
       returnedIds.length === expectedIds.length &&
       new Set(returnedIds).size === returnedIds.length &&
-      expectedIds.every(legId => returnedIds.includes(legId))
+      expectedIds.every(outputId => returnedIds.includes(outputId))
     );
   }
 
@@ -1164,40 +1168,43 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private async applyResultTransactionally(
     result: IAutoOptimizerResult,
   ): Promise<IAutoOptimizerProfile> {
-    if (!result.legs.length || !this.state.topology) throw new Error('No recommendations to apply');
+    if (!result.outputs.length || !this.state.streamSetup) {
+      throw new Error('No recommendations to apply');
+    }
     // A Settings-window canvas edit may still be inside its 200 ms batching
     // window when the user accepts the result. Apply it before capturing the
     // rollback snapshot or computing the non-shrinking accepted Base Canvas.
     await this.videoSettingsService.flushPendingCanvasSettings();
     const snapshot = this.captureSettingsSnapshot();
-    const primary = result.legs.find(leg => leg.display === 'horizontal') || result.legs[0];
-    const outputRecommendation = selectAutoOptimizerStandardOutputRecommendation(result.legs);
+    const primary =
+      result.outputs.find(output => output.display === 'horizontal') || result.outputs[0];
+    const outputRecommendation = selectAutoOptimizerStandardOutputRecommendation(result.outputs);
     const frameRateSignatures = new Set(
-      result.legs.flatMap(leg => [
-        `${leg.fpsNum}/${leg.fpsDen}`,
-        ...(leg.additionalVideo
-          ? [`${leg.additionalVideo.fpsNum}/${leg.additionalVideo.fpsDen}`]
+      result.outputs.flatMap(output => [
+        `${output.fpsNum}/${output.fpsDen}`,
+        ...(output.additionalVideo
+          ? [`${output.additionalVideo.fpsNum}/${output.additionalVideo.fpsDen}`]
           : []),
       ]),
     );
     if (frameRateSignatures.size > 1) {
-      throw new Error('This stream topology cannot apply different frame rates per upload leg');
+      throw new Error('This stream setup cannot apply different frame rates per output');
     }
     const providerOwnsEncoding = outputRecommendation === null;
     const applyVideoSettings = shouldApplyAutoOptimizerVideoSettings(
-      this.state.topology.type,
+      this.state.streamSetup.type,
       providerOwnsEncoding,
-      result.legs.map(leg => leg.measurement),
+      result.outputs.map(output => output.measurement),
     );
     const expectedEncoder = providerOwnsEncoding
       ? null
       : (outputRecommendation!.encoder!.family as EEncoderFamily);
     const displaysToApply = Array.from(
       new Set(
-        result.legs.flatMap(leg =>
-          leg.display === 'both'
+        result.outputs.flatMap(output =>
+          output.display === 'both'
             ? (['horizontal', 'vertical'] as TDisplayType[])
-            : [leg.display as TDisplayType],
+            : [output.display as TDisplayType],
         ),
       ),
     );
@@ -1243,7 +1250,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         // Only this user-approved path may grow Base Canvas. Output resolution
         // may differ per display, while OBS cadence is a shared video setting.
         const patches = buildAutoOptimizerVideoSettingsPatches(
-          result.legs,
+          result.outputs,
           {
             horizontal: this.videoSettingsService.state.horizontal,
             vertical: this.videoSettingsService.state.vertical,
@@ -1264,8 +1271,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       );
       return {
         schemaVersion: 1,
-        topology: this.state.topology.type,
-        legs: cloneDeep(result.legs),
+        streamSetup: this.state.streamSetup.type,
+        outputs: cloneDeep(result.outputs),
       };
     } catch (e: unknown) {
       let fullyRestored = false;
@@ -1436,8 +1443,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
   private verifyAppliedSettings(
     result: IAutoOptimizerResult,
-    primary: IAutoOptimizerLegResult,
-    outputRecommendation: IAutoOptimizerLegResult | null,
+    primary: IAutoOptimizerOutputResult,
+    outputRecommendation: IAutoOptimizerOutputResult | null,
     applyVideoSettings: boolean,
     expectedEncoder: EEncoderFamily | null,
     snapshot: ISettingsSnapshot,
@@ -1490,14 +1497,19 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
           throw new Error(`Failed to apply the recommended ${display} frame rate`);
         }
       });
-      result.legs
-        .flatMap(leg => [
+      result.outputs
+        .flatMap(output => [
           {
-            display: (leg.display === 'vertical' ? 'vertical' : 'horizontal') as TDisplayType,
-            resolution: leg.resolution,
+            display: (output.display === 'vertical' ? 'vertical' : 'horizontal') as TDisplayType,
+            resolution: output.resolution,
           },
-          ...(leg.additionalVideo
-            ? [{ display: leg.additionalVideo.display, resolution: leg.additionalVideo.resolution }]
+          ...(output.additionalVideo
+            ? [
+                {
+                  display: output.additionalVideo.display,
+                  resolution: output.additionalVideo.resolution,
+                },
+              ]
             : []),
         ])
         .forEach(({ display, resolution }) => {
@@ -1544,7 +1556,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   private async cleanupOptimizerRun(): Promise<void> {
-    this.attemptRequestLegs.clear();
+    this.attemptRequestOutputs.clear();
     this.probeAbortController?.abort();
     this.probeAbortController = null;
     // Redact credentials even when setup failed or was cancelled before native
@@ -1630,34 +1642,34 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   @mutation()
-  private SET_INTRO(topology: IAutoOptimizerTopology) {
+  private SET_INTRO(streamSetup: IAutoOptimizerStreamSetup) {
     Object.assign(this.state, {
       stage: 'intro',
       phase: null,
       progress: 0,
       progressDetail: null,
-      topology,
+      streamSetup,
       result: null,
       error: null,
     });
   }
 
   @mutation()
-  private SET_RUNNING(topology: IAutoOptimizerTopology) {
+  private SET_RUNNING(streamSetup: IAutoOptimizerStreamSetup) {
     Object.assign(this.state, {
       stage: 'running',
       phase: 'preflight',
       progress: 0,
       progressDetail: emptyProgressDetail(),
-      topology,
+      streamSetup,
       result: null,
       error: null,
     });
   }
 
   @mutation()
-  private SET_TOPOLOGY(topology: IAutoOptimizerTopology) {
-    this.state.topology = topology;
+  private SET_STREAM_SETUP(streamSetup: IAutoOptimizerStreamSetup) {
+    this.state.streamSetup = streamSetup;
   }
 
   @mutation()
