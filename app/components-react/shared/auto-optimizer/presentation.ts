@@ -1,6 +1,6 @@
 import {
   IAutoOptimizerPresentationProbeEvidence,
-  TAutoOptimizerPresentationProbeProvider,
+  TAutoOptimizerPresentationProbePlatform,
 } from './types';
 import {
   IAutoOptimizerError,
@@ -8,7 +8,7 @@ import {
   TAutoOptimizerPhase,
 } from 'services/auto-config/types';
 
-const providerOrder: TAutoOptimizerPresentationProbeProvider[] = ['twitch', 'youtube'];
+const probePlatformOrder: TAutoOptimizerPresentationProbePlatform[] = ['twitch', 'youtube'];
 
 const visibleActiveMeasurementReasons = new Set([
   'connection_variability_detected',
@@ -44,46 +44,46 @@ export function autoOptimizerErrorMessage(
   return error?.message || 'Optimization failed. Please try again.';
 }
 
-/** Providers whose live bandwidth tests succeeded, returned in stable UI order. */
-export function successfulProbeProviders(
+/** Platforms whose live bandwidth probes succeeded, returned in stable UI order. */
+export function successfulProbePlatforms(
   evidence: IAutoOptimizerPresentationProbeEvidence[] = [],
-): TAutoOptimizerPresentationProbeProvider[] {
+): TAutoOptimizerPresentationProbePlatform[] {
   const successful = new Set(evidence.filter(item => item.success).map(item => item.platform));
-  return providerOrder.filter(provider => successful.has(provider));
+  return probePlatformOrder.filter(platform => successful.has(platform));
 }
 
-/** Selected Twitch or YouTube providers without a successful bandwidth test. */
-export function estimatedProbeProviders(
+/** Selected Twitch or YouTube platforms without a successful bandwidth probe. */
+export function estimatedProbePlatforms(
   platforms: Array<{ id: string }> = [],
   evidence: IAutoOptimizerPresentationProbeEvidence[] = [],
-): TAutoOptimizerPresentationProbeProvider[] {
+): TAutoOptimizerPresentationProbePlatform[] {
   const selected = new Set(platforms.map(platform => platform.id));
-  const measured = new Set(successfulProbeProviders(evidence));
-  return providerOrder.filter(provider => selected.has(provider) && !measured.has(provider));
+  const measured = new Set(successfulProbePlatforms(evidence));
+  return probePlatformOrder.filter(platform => selected.has(platform) && !measured.has(platform));
 }
 
-/** Choose the bandwidth label from the provider OSN is currently testing. */
+/** Choose the bandwidth label from the platform OSN is currently testing. */
 export function bandwidthPhaseLabelKey(
-  activeProvider: TAutoOptimizerPresentationProbeProvider | null | undefined,
-  candidates: Array<{ provider: TAutoOptimizerPresentationProbeProvider }> = [],
+  activePlatform: TAutoOptimizerPresentationProbePlatform | null | undefined,
+  candidates: Array<{ platform: TAutoOptimizerPresentationProbePlatform }> = [],
   targetBitrateKbps?: number | null,
 ): string {
   const hasTarget = Number.isInteger(targetBitrateKbps) && Number(targetBitrateKbps) > 0;
-  if (activeProvider === 'twitch' && hasTarget) {
+  if (activePlatform === 'twitch' && hasTarget) {
     return 'Measuring your Twitch upload at %{bitrate} Kbps...';
   }
-  if (activeProvider === 'youtube' && hasTarget) {
+  if (activePlatform === 'youtube' && hasTarget) {
     return 'Measuring your YouTube upload at %{bitrate} Kbps...';
   }
-  if (activeProvider === 'twitch') return 'Measuring your Twitch upload...';
-  if (activeProvider === 'youtube') return 'Connecting to YouTube...';
+  if (activePlatform === 'twitch') return 'Measuring your Twitch upload...';
+  if (activePlatform === 'youtube') return 'Connecting to YouTube...';
 
-  const providers = new Set(candidates.map(candidate => candidate.provider));
-  if (providers.has('twitch') && providers.has('youtube')) {
+  const platforms = new Set(candidates.map(candidate => candidate.platform));
+  if (platforms.has('twitch') && platforms.has('youtube')) {
     return 'Measuring your Twitch and YouTube uploads...';
   }
-  if (providers.has('twitch')) return 'Measuring your Twitch upload...';
-  if (providers.has('youtube')) return 'Measuring your YouTube upload...';
+  if (platforms.has('twitch')) return 'Measuring your Twitch upload...';
+  if (platforms.has('youtube')) return 'Measuring your YouTube upload...';
   return 'Estimating safe upload settings...';
 }
 
@@ -113,7 +113,7 @@ function tupleValues(detail: IAutoOptimizerProgressDetail): Record<string, strin
 export function autoOptimizerProgressLabel(
   phase: TAutoOptimizerPhase,
   detail: IAutoOptimizerProgressDetail | null | undefined,
-  candidates: Array<{ provider: TAutoOptimizerPresentationProbeProvider }> = [],
+  candidates: Array<{ platform: TAutoOptimizerPresentationProbePlatform }> = [],
 ): IAutoOptimizerProgressLabel {
   const tuple = detail ? tupleValues(detail) : null;
 
@@ -309,7 +309,7 @@ export function autoOptimizerProgressLabel(
 
   if (phase === 'bandwidth') {
     return {
-      key: bandwidthPhaseLabelKey(detail?.provider, candidates, detail?.targetBitrateKbps),
+      key: bandwidthPhaseLabelKey(detail?.platform, candidates, detail?.targetBitrateKbps),
       ...(detail?.targetBitrateKbps ? { values: { bitrate: detail.targetBitrateKbps } } : {}),
     };
   }

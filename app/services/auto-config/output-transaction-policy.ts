@@ -25,11 +25,11 @@ export type TRawOutputValues = Record<string, unknown>;
  */
 export function shouldApplyAutoOptimizerVideoSettings(
   streamSetup: string,
-  providerOwnsEncoding: boolean,
+  twitchManagesEncoding: boolean,
   measurementModes: string[],
 ): boolean {
   return (
-    !providerOwnsEncoding ||
+    !twitchManagesEncoding ||
     (streamSetup === 'enhanced-broadcasting' &&
       measurementModes.length > 0 &&
       measurementModes.every(mode => mode === 'active'))

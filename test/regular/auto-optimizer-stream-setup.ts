@@ -41,7 +41,7 @@ test('direct standard Twitch has one direct active probe candidate', t => {
       probeId: 'horizontal-twitch',
       kind: 'twitch-standard',
       outputId: 'horizontal',
-      provider: 'twitch',
+      platform: 'twitch',
     },
   ]);
 });
@@ -59,7 +59,7 @@ test('direct linked YouTube has one direct active probe candidate', t => {
   t.is(streamSetup.type, 'direct-single');
   t.is(streamSetup.outputs[0].measurement, 'active');
   t.deepEqual(
-    allProbeCandidates(streamSetup).map(candidate => candidate.provider),
+    allProbeCandidates(streamSetup).map(candidate => candidate.platform),
     ['youtube'],
   );
 });
@@ -95,7 +95,7 @@ test('standard Twitch and YouTube share one cloud output with ordered probe cand
   t.is(streamSetup.outputs.length, 1);
   t.is(streamSetup.outputs[0].measurement, 'active');
   t.deepEqual(
-    allProbeCandidates(streamSetup).map(candidate => candidate.provider),
+    allProbeCandidates(streamSetup).map(candidate => candidate.platform),
     ['twitch', 'youtube'],
   );
 });
@@ -141,7 +141,7 @@ test('dual output produces independent direct probe candidates per destination',
     ['horizontal', 'vertical'],
   );
   t.deepEqual(
-    streamSetup.outputs.map(output => output.probeCandidates.map(candidate => candidate.provider)),
+    streamSetup.outputs.map(output => output.probeCandidates.map(candidate => candidate.platform)),
     [['twitch'], ['youtube']],
   );
   t.deepEqual(
@@ -167,7 +167,7 @@ test('dual output keeps supported probe candidates when another platform shares 
     streamSetup.outputs.map(output => ({
       display: output.display,
       destinations: output.destinations.map(destination => destination.platform),
-      probes: output.probeCandidates.map(candidate => candidate.provider),
+      probes: output.probeCandidates.map(candidate => candidate.platform),
     })),
     [
       {
@@ -204,7 +204,7 @@ test('single-canvas Twitch-only Enhanced Broadcasting has its dedicated active p
       probeId: 'horizontal-twitch',
       kind: 'twitch-enhanced-broadcasting',
       outputId: 'horizontal',
-      provider: 'twitch',
+      platform: 'twitch',
     },
   ]);
   t.is(enhanced.outputs[0].measurement, 'active');
@@ -254,12 +254,12 @@ test('Stream Shift uses a regular Twitch probe and ignores the saved Enhanced Br
       probeId: 'horizontal-twitch',
       kind: 'twitch-standard',
       outputId: 'horizontal',
-      provider: 'twitch',
+      platform: 'twitch',
     },
   ]);
 });
 
-test('Stream Shift uses the same cloud provider probes as an ordinary stream', t => {
+test('Stream Shift uses the same platform bandwidth probes as an ordinary stream', t => {
   const ordinarySettings = settings({
     platforms: {
       twitch: { enabled: true, useCustomFields: false } as any,
@@ -275,7 +275,7 @@ test('Stream Shift uses the same cloud provider probes as an ordinary stream', t
   t.deepEqual(streamShift, ordinary);
   t.is(streamShift.type, 'cloud-multistream');
   t.deepEqual(
-    allProbeCandidates(streamShift).map(candidate => candidate.provider),
+    allProbeCandidates(streamShift).map(candidate => candidate.platform),
     ['twitch', 'youtube'],
   );
 });
@@ -328,7 +328,7 @@ test('paired Enhanced Broadcasting with a horizontal companion models both real 
       display: output.display,
       outputKind: output.outputKind,
       destinations: output.destinations.map(destination => destination.platform),
-      probes: output.probeCandidates.map(candidate => candidate.provider),
+      probes: output.probeCandidates.map(candidate => candidate.platform),
     })),
     [
       {
@@ -462,7 +462,7 @@ test('co-destinations share one companion output and only YouTube represents its
     ['youtube', 'kick'],
   );
   t.deepEqual(
-    companionOutputs[0].probeCandidates.map(candidate => candidate.provider),
+    companionOutputs[0].probeCandidates.map(candidate => candidate.platform),
     ['youtube'],
   );
 });
@@ -491,7 +491,7 @@ test('Twitch Dual Stream uses one Enhanced Broadcasting connection for both canv
       probeId: 'twitch-dual-twitch',
       kind: 'twitch-enhanced-broadcasting',
       outputId: 'twitch-dual',
-      provider: 'twitch',
+      platform: 'twitch',
     },
   ]);
   t.is(streamSetup.outputs[0].measurement, 'active');
@@ -678,14 +678,14 @@ test('ordinary output contexts select only matching standard outputs from mixed 
       'horizontal',
     ),
     undefined,
-    'the provider-managed both output must never stand in for a standard output',
+    'the Twitch-managed both output must never stand in for a standard output',
   );
 
-  const providerOnly: IAutoOptimizerProfile = {
+  const twitchManagedOnly: IAutoOptimizerProfile = {
     schemaVersion: 1,
     streamSetup: 'enhanced-broadcasting',
     outputs: [enhancedOutput],
   };
-  t.is(autoOptimizerStandardOutputForDisplay(providerOnly, 'horizontal'), undefined);
-  t.is(autoOptimizerStandardOutputForDisplay(providerOnly, 'vertical'), undefined);
+  t.is(autoOptimizerStandardOutputForDisplay(twitchManagedOnly, 'horizontal'), undefined);
+  t.is(autoOptimizerStandardOutputForDisplay(twitchManagedOnly, 'vertical'), undefined);
 });

@@ -20,7 +20,7 @@ import { byOS, OS } from 'util/operating-systems';
 import { $t } from 'services/i18n';
 import { describeAutoOptimizerStreamSetup, isAutoOptimizerProfileCompatible } from './stream-setup';
 import {
-  autoConfigProviderForProbeKind,
+  autoConfigPlatformForProbeKind,
   autoConfigPhaseStepDisposition,
   autoConfigPhaseStepKey,
   prepareAutoConfigStreamSetup,
@@ -88,7 +88,7 @@ function clampProgress(progress: unknown): number {
 function emptyProgressDetail(): IAutoOptimizerProgressDetail {
   return {
     code: null,
-    provider: null,
+    platform: null,
     targetBitrateKbps: null,
     availableBitrateKbps: null,
     encoderId: null,
@@ -258,7 +258,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         });
       } finally {
         // OSN has copied the request before run() returns. Never retain a
-        // second in-memory copy of provider credentials in Desktop.
+        // second in-memory copy of platform credentials in Desktop.
         this.getProbeResources().redactCredentials();
       }
       this.nativeRun = run!;
@@ -514,7 +514,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     const resources = this.getProbeResources();
     const videos = this.getAutoConfigVideoSnapshots();
     try {
-      // Reject an unusable OBS environment before acquiring provider resources.
+      // Reject an unusable OBS environment before acquiring platform resources.
       validateAutoConfigCanvasIdentities(sourceStreamSetup, videos);
     } catch (error: unknown) {
       throw new AutoOptimizerProbeSetupError();
@@ -543,10 +543,10 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private handleNativeEvent(event: IAutoConfigEvent, token: number) {
     if (token !== this.runToken) return;
 
-    const provider = autoConfigProviderForProbeKind(event.probe?.kind);
+    const platform = autoConfigPlatformForProbeKind(event.probe?.kind);
     if (
       event.code === 'youtube_probe_waiting_for_ingest' &&
-      provider === 'youtube' &&
+      platform === 'youtube' &&
       typeof event.probe?.id === 'string' &&
       event.probe.id
     ) {
@@ -589,7 +589,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     detail: IAutoOptimizerProgressDetail,
   ) {
     if (token !== this.runToken || this.state.stage !== 'running') return;
-    const key = autoConfigPhaseStepKey(phase, detail.provider, detail.code, detail);
+    const key = autoConfigPhaseStepKey(phase, detail.platform, detail.code, detail);
     const step: IPhaseStep = {
       phase,
       detail,
@@ -666,7 +666,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   /**
-   * Show provider-resource cleanup in the remaining 95-99% of the progress bar.
+   * Show platform-resource cleanup in the remaining 95-99% of the progress bar.
    * Reserve 100% for the transition to the result screen.
    */
   private startCleanupProgress(token: number): () => void {

@@ -42,14 +42,14 @@ export interface IAutoConfigVideoSnapshot {
   fpsDen: number;
 }
 
-/** Provider credentials acquired for one optimizer run and one output. */
+/** Platform credentials acquired for one optimizer run and one output. */
 export interface IAutoConfigPreparedOutputProbes {
   outputId: string;
   probes: IAutoConfigActiveProbe[];
 }
 
 export interface IBuildAutoConfigRequestInput {
-  /** Non-secret output description after provider resources have been prepared. */
+  /** Non-secret output description after platform resources have been prepared. */
   streamSetup: IAutoOptimizerStreamSetup;
   outputProbes: readonly IAutoConfigPreparedOutputProbes[];
   outputSettings: IAutoConfigOutputSettingsSnapshot;
@@ -140,8 +140,8 @@ export function validateAutoConfigCanvasIdentities(
 }
 
 /**
- * Build the OSN request after provider resources and credentials are ready.
- * This function makes no provider API calls and does not manage resource
+ * Build the OSN request after platform resources and credentials are ready.
+ * This function makes no platform API calls and does not manage resource
  * lifetime. It passes credential objects directly into the request; after OSN
  * copies it, the caller must redact those shared objects. The returned
  * validation context contains no credentials.

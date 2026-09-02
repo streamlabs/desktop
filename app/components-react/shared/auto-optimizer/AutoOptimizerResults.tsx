@@ -17,8 +17,8 @@ function settingsKey(output: IAutoOptimizerPresentationOutput) {
     output.preset || '',
     output.measurementMode,
     output.estimateReason || '',
-    output.managedByProvider ? 'provider-encoding' : '',
-    output.videoSettingsManagedByProvider ? 'provider-video' : '',
+    output.encodingManagedByTwitch ? 'twitch-encoding' : '',
+    output.preserveVideoSettings ? 'preserve-video-settings' : '',
     ...(output.platforms || []).map(platform => platform.id).sort(),
     ...(output.measuredPlatforms || []).map(platform => `measured:${platform.id}`).sort(),
     ...(output.estimatedPlatforms || []).map(platform => `estimated:${platform.id}`).sort(),
@@ -50,7 +50,7 @@ function MeasurementProvenance(p: {
 }) {
   const measured = p.output.measurementMode === 'active' ? p.output.measuredPlatforms || [] : [];
   // `platforms` includes every destination that shares this output. Show
-  // measurement details only for Twitch and YouTube, the providers Auto
+  // measurement details only for Twitch and YouTube, the platforms Auto
   // Optimizer can test. Using the full destination list would incorrectly claim
   // that destinations such as Kick were tested or estimated.
   const estimated = p.output.estimatedPlatforms || [];
@@ -121,37 +121,37 @@ function SettingsList(p: {
         ) : (
           <li>
             <i className="icon-check" aria-hidden="true" />
-            {$t(output.managedByProvider ? 'Canvas resolution' : 'Resolution')}: {output.width}×
-            {output.height}
+            {$t(output.encodingManagedByTwitch ? 'Canvas resolution' : 'Resolution')}:{' '}
+            {output.width}×{output.height}
           </li>
         )}
         <li>
           <i className="icon-check" aria-hidden="true" />
           {$t('Framerate')}: {output.fps} {$t('fps')}
         </li>
-        {!output.managedByProvider && (
+        {!output.encodingManagedByTwitch && (
           <li className={p.standaloneMeasurement ? styles.settingWithMeasurement : undefined}>
             <i className="icon-check" aria-hidden="true" />
             {$t('Bitrate')}: {output.bitrateKbps} Kbps
             <MeasurementProvenance output={output} standalone={p.standaloneMeasurement} />
           </li>
         )}
-        {!output.managedByProvider && output.encoder && (
+        {!output.encodingManagedByTwitch && output.encoder && (
           <li>
             <i className="icon-check" aria-hidden="true" />
             {$t('Encoder')}: {output.encoder}
           </li>
         )}
       </ul>
-      {output.managedByProvider && (
-        <div className={styles.providerManaged}>
+      {output.encodingManagedByTwitch && (
+        <div className={styles.twitchManaged}>
           <h3>{$t('Twitch Enhanced Broadcasting')}</h3>
           <p>{$t('Twitch will manage stream output resolutions, bitrates, and encoders.')}</p>
           <MeasurementProvenance output={output} standalone />
           <EstimateExplanation output={output} />
         </div>
       )}
-      {!output.managedByProvider && <EstimateExplanation output={output} />}
+      {!output.encodingManagedByTwitch && <EstimateExplanation output={output} />}
     </>
   );
 }
@@ -184,18 +184,18 @@ export function AutoOptimizerResults(p: {
   const allSettingsMatch =
     p.outputs.length > 0 &&
     p.outputs.every(output => settingsKey(output) === settingsKey(p.outputs[0]));
-  const allProviderManaged =
+  const nothingToApply =
     p.outputs.length > 0 &&
     p.outputs.every(
       output =>
-        output.managedByProvider &&
-        (output.videoSettingsManagedByProvider ?? output.managedByProvider),
+        output.encodingManagedByTwitch &&
+        (output.preserveVideoSettings ?? output.encodingManagedByTwitch),
     );
   const splitOutputLayout = !allSettingsMatch;
   const denseOutputLayout = p.outputs.length > 2;
   let applyLabel = $t('Save Settings');
   if (p.host === 'go-live') {
-    applyLabel = allProviderManaged ? $t('Continue & Go Live') : $t('Save Settings & Go Live');
+    applyLabel = nothingToApply ? $t('Continue & Go Live') : $t('Save Settings & Go Live');
   }
 
   return (

@@ -4,10 +4,10 @@ import { AutoOptimizerHeader } from './AutoOptimizerHeader';
 import { AutoOptimizerIntro } from './AutoOptimizerIntro';
 import { AutoOptimizerProgress } from './AutoOptimizerProgress';
 import { AutoOptimizerResults } from './AutoOptimizerResults';
-import { IAutoOptimizerFlowProps } from './types';
+import { IAutoOptimizerProps } from './types';
 import styles from './AutoOptimizer.m.less';
 
-export function AutoOptimizerFlow(p: IAutoOptimizerFlowProps) {
+export function AutoOptimizer(p: IAutoOptimizerProps) {
   const host = p.host || 'go-live';
   const applying = p.stage === 'applying';
 

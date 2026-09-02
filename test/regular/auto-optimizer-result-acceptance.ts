@@ -24,7 +24,7 @@ function standardAttempt(): IAutoConfigAttemptContext {
               probeId: 'horizontal-twitch',
               kind: 'twitch-standard',
               outputId: 'horizontal',
-              provider: 'twitch',
+              platform: 'twitch',
             },
           ],
           measurement: 'active',
@@ -190,40 +190,40 @@ test('standard results require encoding settings while Twitch-managed results om
   delete standardWithoutEncoding.outputs[0].encoding;
   t.is(acceptAutoOptimizerResult(standardWithoutEncoding, standardAttempt()), null);
 
-  const providerContext = standardAttempt();
-  providerContext.streamSetup.type = 'enhanced-broadcasting';
-  providerContext.streamSetup.outputs[0] = {
-    ...providerContext.streamSetup.outputs[0],
+  const twitchManagedContext = standardAttempt();
+  twitchManagedContext.streamSetup.type = 'enhanced-broadcasting';
+  twitchManagedContext.streamSetup.outputs[0] = {
+    ...twitchManagedContext.streamSetup.outputs[0],
     outputKind: 'twitch-enhanced-broadcasting',
     probeCandidates: [],
     measurement: 'estimated',
     estimateReason: 'enhanced_broadcasting',
   };
-  providerContext.outputs[0] = {
-    ...providerContext.outputs[0],
+  twitchManagedContext.outputs[0] = {
+    ...twitchManagedContext.outputs[0],
     outputKind: 'twitch-enhanced-broadcasting',
     estimateReason: 'enhanced_broadcasting',
   };
-  const providerResult = standardNativeResult();
-  providerResult.outputs[0].videos[0] = {
+  const twitchManagedResult = standardNativeResult();
+  twitchManagedResult.outputs[0].videos[0] = {
     display: 'horizontal',
     width: 1280,
     height: 720,
     fpsNum: 30,
     fpsDen: 1,
   };
-  providerResult.outputs[0].measurement = {
+  twitchManagedResult.outputs[0].measurement = {
     mode: 'estimated',
     confidence: 'medium',
     reason: 'enhanced_broadcasting',
   };
-  delete providerResult.outputs[0].encoding;
-  const accepted = acceptAutoOptimizerResult(providerResult, providerContext);
+  delete twitchManagedResult.outputs[0].encoding;
+  const accepted = acceptAutoOptimizerResult(twitchManagedResult, twitchManagedContext);
   t.truthy(accepted);
   t.false('encoder' in accepted!.outputs[0]);
 
-  providerResult.outputs[0].encoding = standardNativeResult().outputs[0].encoding;
-  t.is(acceptAutoOptimizerResult(providerResult, providerContext), null);
+  twitchManagedResult.outputs[0].encoding = standardNativeResult().outputs[0].encoding;
+  t.is(acceptAutoOptimizerResult(twitchManagedResult, twitchManagedContext), null);
 });
 
 test('probe evidence and limits must match the saved request context', t => {

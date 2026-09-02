@@ -9,10 +9,10 @@ export type TAutoOptimizerStage =
   | 'error';
 
 export type TAutoOptimizerMeasurementMode = 'active' | 'estimated';
-export type TAutoOptimizerPresentationProbeProvider = 'twitch' | 'youtube';
+export type TAutoOptimizerPresentationProbePlatform = 'twitch' | 'youtube';
 
 export interface IAutoOptimizerPresentationProbeEvidence {
-  platform: TAutoOptimizerPresentationProbeProvider;
+  platform: TAutoOptimizerPresentationProbePlatform;
   success: boolean;
 }
 
@@ -29,9 +29,9 @@ export interface IAutoOptimizerPresentationOutput {
   estimateReason?: string;
   showMeasurementReason?: boolean;
   /** True when Twitch Enhanced Broadcasting selects bitrate and encoder settings. */
-  managedByProvider?: boolean;
-  /** True when Desktop must also leave resolution and frame rate unchanged. */
-  videoSettingsManagedByProvider?: boolean;
+  encodingManagedByTwitch?: boolean;
+  /** True when Desktop must leave resolution and frame rate unchanged. */
+  preserveVideoSettings?: boolean;
   width: number;
   height: number;
   additionalVideo?: {
@@ -52,7 +52,7 @@ export interface IAutoOptimizerPresentationAdvice {
   actionLabel: string;
 }
 
-export interface IAutoOptimizerFlowProps {
+export interface IAutoOptimizerProps {
   stage: TAutoOptimizerStage;
   phaseLabel?: string;
   progress?: number;

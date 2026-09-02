@@ -9,7 +9,7 @@ import {
   TAutoOptimizerPhase,
   TAutoOptimizerProbeKind,
   TAutoOptimizerProbeMethod,
-  TAutoOptimizerProbeProvider,
+  TAutoOptimizerProbePlatform,
 } from './types';
 
 const AUTO_OPTIMIZER_ENCODER_FAMILIES = new Set([
@@ -21,15 +21,15 @@ const AUTO_OPTIMIZER_ENCODER_FAMILIES = new Set([
 ]);
 
 /**
- * Validate OSN's bandwidth-test evidence against the providers selected for
- * this run. At least one selected provider must succeed. Missing evidence makes
+ * Validate OSN's bandwidth-test evidence against the platforms selected for
+ * this run. At least one selected platform must succeed. Missing evidence makes
  * the result partial and requires low confidence, except Dual Output may
  * deliberately select one Twitch or YouTube representative per canvas.
  */
 export function isValidAutoConfigActiveProbeCoverage(p: {
   destinations: Array<{ platform: string }>;
   attemptedCandidates: Array<{
-    provider: TAutoOptimizerProbeProvider;
+    platform: TAutoOptimizerProbePlatform;
     kind: TAutoOptimizerProbeKind;
   }>;
   evidence: IAutoOptimizerProbeEvidence[];
@@ -41,14 +41,14 @@ export function isValidAutoConfigActiveProbeCoverage(p: {
    */
   requireAllProbeCapableDestinations?: boolean;
 }): boolean {
-  const selectedProviders = new Set<TAutoOptimizerProbeProvider>(
+  const selectedPlatforms = new Set<TAutoOptimizerProbePlatform>(
     p.destinations.flatMap(destination =>
       destination.platform === 'twitch' || destination.platform === 'youtube'
         ? [destination.platform]
         : [],
     ),
   );
-  const attemptedProviders = new Set(p.attemptedCandidates.map(candidate => candidate.provider));
+  const attemptedPlatforms = new Set(p.attemptedCandidates.map(candidate => candidate.platform));
   const methodForKind: Record<TAutoOptimizerProbeKind, TAutoOptimizerProbeMethod> = {
     'twitch-standard': 'twitch-bandwidth-test',
     'twitch-enhanced-broadcasting': 'twitch-enhanced-broadcasting-test',
@@ -56,28 +56,28 @@ export function isValidAutoConfigActiveProbeCoverage(p: {
   };
   const attemptedMethods = new Set(
     p.attemptedCandidates.map(
-      candidate => `${candidate.provider}:${methodForKind[candidate.kind]}`,
+      candidate => `${candidate.platform}:${methodForKind[candidate.kind]}`,
     ),
   );
-  const successfulProviders = new Set(
+  const successfulPlatforms = new Set(
     p.evidence.filter(item => item.success).map(item => item.platform),
   );
 
-  if (!attemptedProviders.size) return false;
-  if ([...attemptedProviders].some(provider => !selectedProviders.has(provider))) return false;
+  if (!attemptedPlatforms.size) return false;
+  if ([...attemptedPlatforms].some(platform => !selectedPlatforms.has(platform))) return false;
   if (p.evidence.some(item => !attemptedMethods.has(`${item.platform}:${item.method}`))) {
     return false;
   }
-  if (![...attemptedProviders].some(provider => successfulProviders.has(provider))) return false;
+  if (![...attemptedPlatforms].some(platform => successfulPlatforms.has(platform))) return false;
 
   const isPartial =
-    [...attemptedProviders].some(provider => !successfulProviders.has(provider)) ||
+    [...attemptedPlatforms].some(platform => !successfulPlatforms.has(platform)) ||
     (p.requireAllProbeCapableDestinations !== false &&
-      [...selectedProviders].some(provider => !successfulProviders.has(provider)));
+      [...selectedPlatforms].some(platform => !successfulPlatforms.has(platform)));
   return !isPartial || p.confidence === 'low';
 }
 
-export function autoConfigProviderForProbeKind(kind: unknown): TAutoOptimizerProbeProvider | null {
+export function autoConfigPlatformForProbeKind(kind: unknown): TAutoOptimizerProbePlatform | null {
   if (kind === 'twitch-standard' || kind === 'twitch-enhanced-broadcasting') return 'twitch';
   return kind === 'youtube-unbound' ? 'youtube' : null;
 }
@@ -97,7 +97,7 @@ export function isEligibleAutoConfigDualOutputActiveStreamSetup(
 
   const displays = new Set(streamSetup.outputs.map(output => output.display));
   const outputIds = new Set(streamSetup.outputs.map(output => output.outputId));
-  const providers = new Set<TAutoOptimizerProbeProvider>();
+  const probePlatforms = new Set<TAutoOptimizerProbePlatform>();
   if (
     displays.size !== 2 ||
     !displays.has('horizontal') ||
@@ -110,29 +110,29 @@ export function isEligibleAutoConfigDualOutputActiveStreamSetup(
   for (const output of streamSetup.outputs) {
     if (!output.destinations.length || output.probeCandidates.length !== 1) return false;
     const candidate = output.probeCandidates[0];
-    const carriesProvider = output.destinations.some(
-      destination => destination.platform === candidate.provider,
+    const carriesProbePlatform = output.destinations.some(
+      destination => destination.platform === candidate.platform,
     );
     if (
-      !carriesProvider ||
+      !carriesProbePlatform ||
       candidate.outputId !== output.outputId ||
-      (candidate.provider === 'twitch' && candidate.kind !== 'twitch-standard') ||
-      (candidate.provider === 'youtube' && candidate.kind !== 'youtube-unbound')
+      (candidate.platform === 'twitch' && candidate.kind !== 'twitch-standard') ||
+      (candidate.platform === 'youtube' && candidate.kind !== 'youtube-unbound')
     ) {
       return false;
     }
-    providers.add(candidate.provider);
+    probePlatforms.add(candidate.platform);
   }
 
   const candidateKey = (candidate: IAutoOptimizerProbeCandidate) =>
-    `${candidate.probeId}\u0000${candidate.outputId}\u0000${candidate.provider}\u0000${candidate.kind}`;
+    `${candidate.probeId}\u0000${candidate.outputId}\u0000${candidate.platform}\u0000${candidate.kind}`;
   const candidates = streamSetup.outputs.flatMap(output => output.probeCandidates);
   const candidateKeys = candidates.map(candidateKey);
   const probeIds = candidates.map(candidate => candidate.probeId);
   return (
-    providers.size === 2 &&
-    providers.has('twitch') &&
-    providers.has('youtube') &&
+    probePlatforms.size === 2 &&
+    probePlatforms.has('twitch') &&
+    probePlatforms.has('youtube') &&
     candidates.length === 2 &&
     new Set(candidateKeys).size === 2 &&
     new Set(probeIds).size === 2
@@ -171,7 +171,7 @@ export function isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(
   if (
     enhancedCandidates.length !== 1 ||
     enhancedCandidates[0].outputId !== enhancedOutputs[0].outputId ||
-    enhancedCandidates[0].provider !== 'twitch' ||
+    enhancedCandidates[0].platform !== 'twitch' ||
     enhancedCandidates[0].kind !== 'twitch-enhanced-broadcasting'
   ) {
     return false;
@@ -187,7 +187,7 @@ export function isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(
       output.probeCandidates.some(
         candidate =>
           candidate.outputId !== output.outputId ||
-          candidate.provider !== 'youtube' ||
+          candidate.platform !== 'youtube' ||
           candidate.kind !== 'youtube-unbound',
       ) ||
       output.probeCandidates.length > 1
@@ -198,7 +198,7 @@ export function isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(
   }
 
   const candidateKey = (candidate: IAutoOptimizerProbeCandidate) =>
-    `${candidate.probeId}\u0000${candidate.outputId}\u0000${candidate.provider}\u0000${candidate.kind}`;
+    `${candidate.probeId}\u0000${candidate.outputId}\u0000${candidate.platform}\u0000${candidate.kind}`;
   const candidateKeys = streamSetup.outputs
     .flatMap(output => output.probeCandidates)
     .map(candidateKey);
@@ -209,7 +209,7 @@ export function isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(
 }
 
 /**
- * Select one testable provider per canvas for Dual Output. Preserve the
+ * Select one testable platform per canvas for Dual Output. Preserve the
  * deterministic candidate order, require one Twitch and one YouTube selection,
  * and let OSN derive the shared upload budget from both measurements.
  */
@@ -221,7 +221,7 @@ function selectAutoConfigDualOutputProbePair(
   const candidatesByOutput = streamSetup.outputs.map(output => output.probeCandidates);
   for (const first of candidatesByOutput[0]) {
     for (const second of candidatesByOutput[1]) {
-      if (first.provider === second.provider) continue;
+      if (first.platform === second.platform) continue;
       const selectedByOutput = new Map([
         [first.outputId, first],
         [second.outputId, second],
@@ -246,7 +246,7 @@ function selectAutoConfigDualOutputProbePair(
 
 /**
  * Select only test combinations supported by the OSN request contract.
- * Provider credentials can still fail during preparation; partial provider
+ * Platform credentials can still fail during preparation; partial platform
  * coverage must not promote video quality.
  */
 export function prepareAutoConfigStreamSetup(
@@ -262,7 +262,7 @@ export function prepareAutoConfigStreamSetup(
   };
   // OSN allocates bandwidth and validates both encoder workloads together for
   // Twitch and YouTube Dual Output. If a canvas also targets a destination
-  // without a supported bandwidth test, use one supported provider on that
+  // without a supported bandwidth test, use one supported platform on that
   // canvas as its representative instead of disabling both tests.
   const selectedDualOutput = selectAutoConfigDualOutputProbePair(streamSetup);
   const unsafeDualOutput = filtered.type === 'dual-output' && !selectedDualOutput;
@@ -321,7 +321,7 @@ const BITRATE_BANDWIDTH_PROGRESS_CODES = new Set([
 /** Build stable keys for sequential work and terminal progress states. */
 export function autoConfigPhaseStepKey(
   phase: TAutoOptimizerPhase,
-  provider?: TAutoOptimizerProbeProvider | null,
+  platform?: TAutoOptimizerProbePlatform | null,
   code?: string | null,
   detail?: Partial<
     Pick<
@@ -355,7 +355,7 @@ export function autoConfigPhaseStepKey(
       detail?.availableBitrateKbps || 0
     }`;
   }
-  if (phase === 'bandwidth' && provider === 'twitch') {
+  if (phase === 'bandwidth' && platform === 'twitch') {
     if (code === 'enhanced_broadcasting_requesting_ladder') {
       return 'bandwidth:twitch:enhanced-broadcasting:requesting-ladder';
     }
@@ -371,7 +371,7 @@ export function autoConfigPhaseStepKey(
       }`;
     }
   }
-  if (phase === 'bandwidth' && provider) {
+  if (phase === 'bandwidth' && platform) {
     if (
       code === 'active_probe_not_eligible' ||
       code === 'active_probe_set_incomplete' ||
@@ -384,13 +384,13 @@ export function autoConfigPhaseStepKey(
       status === 'measuring' || BITRATE_BANDWIDTH_PROGRESS_CODES.has(status)
         ? detail?.targetBitrateKbps || 0
         : 0;
-    return `${phase}:${provider}:${status}:${bitrate}`;
+    return `${phase}:${platform}:${status}:${bitrate}`;
   }
   if (phase === 'hardware' && code === 'hardware_discovering_encoders') {
     return 'hardware:discovering';
   }
   if (phase === 'hardware' && code === 'hardware_provider_managed') {
-    return 'provider-managed';
+    return 'twitch-managed';
   }
   if (
     phase === 'hardware' &&
@@ -437,7 +437,7 @@ export function autoConfigPhaseStepKey(
     return `recommendation:selected:${tuple}:${detail?.selectedBitrateKbps || 0}`;
   }
   if (phase === 'recommendation' && code === 'recommendation_provider_managed') {
-    return 'provider-managed';
+    return 'twitch-managed';
   }
   return String(phase);
 }
@@ -513,16 +513,16 @@ export function sanitizeAutoConfigProgressDetail(
     typeof event.code === 'string' && /^[a-z0-9_]+$/.test(event.code) && event.code.length <= 128
       ? event.code
       : null;
-  const provider = phase === 'bandwidth' ? autoConfigProviderForProbeKind(event.probe?.kind) : null;
+  const platform = phase === 'bandwidth' ? autoConfigPlatformForProbeKind(event.probe?.kind) : null;
   const encoderFamily = AUTO_OPTIMIZER_ENCODER_FAMILIES.has(String(event.encoderFamily))
     ? (event.encoderFamily as TAutoOptimizerEncoderFamily)
     : null;
 
   return {
     code,
-    provider,
+    platform,
     targetBitrateKbps:
-      provider !== null ? sanitizeAutoConfigProbeTargetBitrateKbps(event.targetBitrateKbps) : null,
+      platform !== null ? sanitizeAutoConfigProbeTargetBitrateKbps(event.targetBitrateKbps) : null,
     availableBitrateKbps: sanitizeAutoConfigProbeTargetBitrateKbps(event.availableBitrateKbps),
     encoderId: sanitizeProgressText(event.encoderId, 256),
     encoderFamily,
@@ -537,17 +537,17 @@ export function sanitizeAutoConfigProgressDetail(
 }
 
 function isAutoOptimizerProbeMethod(
-  provider: TAutoOptimizerProbeProvider,
+  platform: TAutoOptimizerProbePlatform,
   method: unknown,
 ): method is TAutoOptimizerProbeMethod {
   return (
-    (provider === 'twitch' &&
+    (platform === 'twitch' &&
       (method === 'twitch-bandwidth-test' || method === 'twitch-enhanced-broadcasting-test')) ||
-    (provider === 'youtube' && method === 'youtube-unbound-ramp')
+    (platform === 'youtube' && method === 'youtube-unbound-ramp')
   );
 }
 
-/** Keep only the provider evidence needed to display and validate this run's result. */
+/** Keep only the platform evidence needed to display and validate this run's result. */
 export function sanitizeAutoConfigProbeEvidence(value: unknown): IAutoOptimizerProbeEvidence[] {
   if (!Array.isArray(value)) return [];
 

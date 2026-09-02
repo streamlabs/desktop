@@ -34,8 +34,8 @@ export interface IPreparedAutoConfigProbes {
 }
 
 /**
- * A requested live provider test could not be prepared. The error is retryable
- * because credentials, provider APIs, or the required OBS canvas may become
+ * A requested platform bandwidth probe could not be prepared. The error is retryable
+ * because credentials, platform APIs, or the required OBS canvas may become
  * available later.
  */
 export class AutoOptimizerProbeSetupError extends Error {
@@ -49,7 +49,7 @@ export class AutoOptimizerProbeSetupError extends Error {
 }
 
 /**
- * Keeps provider credentials and temporary YouTube resources for one optimizer
+ * Keeps platform credentials and temporary YouTube resources for one optimizer
  * run. Cleanup must stop and close OSN output before deleting the YouTube
  * resources.
  */
@@ -143,7 +143,7 @@ export class AutoConfigProbeResources {
           } catch (error: unknown) {
             if ((error as { name?: string } | null)?.name === 'AbortError') throw error;
             console.warn(
-              `[Auto Optimizer] ${candidate.provider} bandwidth probe unavailable; using estimate`,
+              `[Auto Optimizer] ${candidate.platform} bandwidth probe unavailable; using estimate`,
             );
           }
         }
@@ -234,7 +234,7 @@ export class AutoConfigProbeResources {
   }
 
   /**
-   * Stop provider polling, wait for OSN output to stop and close, then delete
+   * Stop platform API polling, wait for OSN output to stop and close, then delete
    * temporary YouTube resources. If OSN cleanup fails, retain the leases for
    * retry.
    */

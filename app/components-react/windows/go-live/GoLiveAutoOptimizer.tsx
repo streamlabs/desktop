@@ -1,27 +1,24 @@
 import React from 'react';
 import {
-  AutoOptimizerFlow,
+  AutoOptimizer,
   autoOptimizerErrorMessage,
   autoOptimizerProgressLabel,
-  estimatedProbeProviders,
+  estimatedProbePlatforms,
   shouldShowAutoOptimizerMeasurementReason,
-  successfulProbeProviders,
+  successfulProbePlatforms,
 } from 'components-react/shared/auto-optimizer';
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
+import { platformLabels as getPlatformLabel } from 'services/platforms';
 import { TAutoOptimizerPlatform } from 'services/auto-config';
 import { useGoLiveSettings } from './useGoLiveSettings';
 
-const platformLabels: Record<TAutoOptimizerPlatform, string> = {
-  twitch: 'Twitch',
-  youtube: 'YouTube',
-  facebook: 'Facebook',
-  kick: 'Kick',
-  tiktok: 'TikTok',
-  custom: 'Custom RTMP',
-  other: 'Other platform',
-};
+function autoOptimizerPlatformLabel(platform: TAutoOptimizerPlatform): string {
+  if (platform === 'custom') return $t('Custom RTMP');
+  if (platform === 'other') return $t('Other platform');
+  return getPlatformLabel(platform);
+}
 
 const estimateReasonLabels: Record<string, string> = {
   non_twitch: 'Estimated from your current settings, hardware, and platform limits.',
@@ -33,7 +30,7 @@ const estimateReasonLabels: Record<string, string> = {
   mixed_topology: 'Estimated for this combination of stream destinations.',
   probe_disabled: 'Estimated because active bandwidth testing was unavailable.',
   partial_provider_probes:
-    'Not all selected platforms could be tested. The recommendation uses the successful provider measurement and estimates the remaining provider route, so confidence is low.',
+    "Not all selected platforms could be tested. The recommendation uses the successful bandwidth probe and estimates the untested platform's upload route, so confidence is low.",
   probe_failed: 'Estimated because active bandwidth testing could not be completed.',
   probe_source_underfill:
     'The YouTube test did not fully reach its target bitrate and showed no clear signs of network congestion. This recommendation uses the highest upload rate that was verified and may be conservative.',
@@ -44,7 +41,7 @@ const estimateReasonLabels: Record<string, string> = {
   insufficient_bandwidth:
     'The measured upload bandwidth is below the recommended minimum for streaming.',
   indirect_provider_probe_failed:
-    'Estimated because at least one provider bandwidth test could not be completed.',
+    'Estimated because at least one platform bandwidth probe could not be completed.',
   hardware_encoder_unavailable_fallback:
     'Estimated with a compatible encoder because your current encoder is unavailable.',
   hardware_benchmark_ceiling:
@@ -69,7 +66,7 @@ const estimateReasonLabels: Record<string, string> = {
 
 function destinationLabel(destinations: Array<{ platform: TAutoOptimizerPlatform }>) {
   const labels = Array.from(
-    new Set(destinations.map(destination => $t(platformLabels[destination.platform]))),
+    new Set(destinations.map(destination => autoOptimizerPlatformLabel(destination.platform))),
   );
   return labels.length ? labels.join(', ') : $t('Stream output');
 }
@@ -110,21 +107,21 @@ export default function GoLiveAutoOptimizer() {
   const outputs = (state.result?.outputs || []).map(output => {
     const platforms = Array.from(
       new Set(output.destinations.map(destination => destination.platform)),
-    ).map(platform => ({ id: platform, label: $t(platformLabels[platform]) }));
-    const measuredProviders = successfulProbeProviders(output.probes || []);
-    const estimatedProviders = estimatedProbeProviders(platforms, output.probes || []);
+    ).map(platform => ({ id: platform, label: autoOptimizerPlatformLabel(platform) }));
+    const measuredProbePlatforms = successfulProbePlatforms(output.probes || []);
+    const estimatedPlatformsForOutput = estimatedProbePlatforms(platforms, output.probes || []);
 
     return {
       outputId: output.outputId,
       label: destinationLabel(output.destinations),
       platforms,
-      measuredPlatforms: measuredProviders.map(platform => ({
+      measuredPlatforms: measuredProbePlatforms.map(platform => ({
         id: platform,
-        label: $t(platformLabels[platform]),
+        label: autoOptimizerPlatformLabel(platform),
       })),
-      estimatedPlatforms: estimatedProviders.map(platform => ({
+      estimatedPlatforms: estimatedPlatformsForOutput.map(platform => ({
         id: platform,
-        label: $t(platformLabels[platform]),
+        label: autoOptimizerPlatformLabel(platform),
       })),
       probeEvidence: output.probes,
       display: output.display === 'both' ? ('shared' as const) : output.display,
@@ -134,8 +131,8 @@ export default function GoLiveAutoOptimizer() {
         ? $t(estimateReasonLabels[output.estimateReason] || output.estimateReason)
         : undefined,
       showMeasurementReason: shouldShowAutoOptimizerMeasurementReason(output.estimateReason),
-      managedByProvider: output.outputKind === 'twitch-enhanced-broadcasting',
-      videoSettingsManagedByProvider:
+      encodingManagedByTwitch: output.outputKind === 'twitch-enhanced-broadcasting',
+      preserveVideoSettings:
         output.outputKind === 'twitch-enhanced-broadcasting' && output.measurement !== 'active',
       width: output.resolution.width,
       height: output.resolution.height,
@@ -161,7 +158,7 @@ export default function GoLiveAutoOptimizer() {
   };
 
   return (
-    <AutoOptimizerFlow
+    <AutoOptimizer
       stage={state.stage}
       phaseLabel={phaseLabel}
       progress={state.progress}

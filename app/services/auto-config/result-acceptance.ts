@@ -118,8 +118,8 @@ export function acceptAutoOptimizerResult(
         requireAllProbeCapableDestinations:
           !activeDualOutput && !activeEnhancedBroadcastingDualOutput,
       });
-    const providerOwnsEncoding = expected.outputKind === 'twitch-enhanced-broadcasting';
-    if (providerOwnsEncoding === Boolean(nativeOutput.encoding)) return null;
+    const twitchManagesEncoding = expected.outputKind === 'twitch-enhanced-broadcasting';
+    if (twitchManagesEncoding === Boolean(nativeOutput.encoding)) return null;
 
     const recommendation = validateAutoConfigRecommendation(
       {
@@ -149,8 +149,8 @@ export function acceptAutoOptimizerResult(
         measurementMode: nativeOutput.measurement.mode,
         currentBitrateKbps: requested.current.bitrateKbps,
         probeEvidence: evidence,
-        providerOwnsEncoding,
-        enhancedBroadcasting: providerOwnsEncoding,
+        twitchManagesEncoding,
+        enhancedBroadcasting: twitchManagesEncoding,
         qualityProfile:
           jointDualOutputActive ||
           expected.destinations.some(destination => destination.platform === 'twitch')

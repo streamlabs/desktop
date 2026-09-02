@@ -1,3 +1,3 @@
-export { AutoOptimizerFlow } from './AutoOptimizerFlow';
+export { AutoOptimizer } from './AutoOptimizer';
 export * from './presentation';
 export * from './types';

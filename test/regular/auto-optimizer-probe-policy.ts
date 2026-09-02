@@ -16,17 +16,17 @@ function allProbeCandidates(streamSetup: IAutoOptimizerStreamSetup) {
 }
 
 function twitchYoutubeDualOutputStreamSetup(): IAutoOptimizerStreamSetup {
-  const outputs = ['twitch', 'youtube'].map((provider, index) => ({
+  const outputs = ['twitch', 'youtube'].map((platform, index) => ({
     outputId: index ? 'vertical' : 'horizontal',
     display: index ? ('vertical' as const) : ('horizontal' as const),
     outputKind: 'standard' as const,
-    destinations: [{ platform: provider as 'twitch' | 'youtube' }],
+    destinations: [{ platform: platform as 'twitch' | 'youtube' }],
     probeCandidates: [
       {
-        probeId: `${index ? 'vertical' : 'horizontal'}-${provider}`,
-        kind: provider === 'twitch' ? ('twitch-standard' as const) : ('youtube-unbound' as const),
+        probeId: `${index ? 'vertical' : 'horizontal'}-${platform}`,
+        kind: platform === 'twitch' ? ('twitch-standard' as const) : ('youtube-unbound' as const),
         outputId: index ? 'vertical' : 'horizontal',
-        provider: provider as 'twitch' | 'youtube',
+        platform: platform as 'twitch' | 'youtube',
       },
     ],
     measurement: 'active' as const,
@@ -49,13 +49,13 @@ function sharedCloudStreamSetup(): IAutoOptimizerStreamSetup {
       probeId: 'horizontal-twitch',
       kind: 'twitch-standard' as const,
       outputId: 'horizontal',
-      provider: 'twitch' as const,
+      platform: 'twitch' as const,
     },
     {
       probeId: 'horizontal-youtube',
       kind: 'youtube-unbound' as const,
       outputId: 'horizontal',
-      provider: 'youtube' as const,
+      platform: 'youtube' as const,
     },
   ];
   return {
@@ -78,13 +78,13 @@ function enhancedBroadcastingDualOutputStreamSetup(): IAutoOptimizerStreamSetup 
     probeId: 'twitch-enhanced-broadcasting-twitch',
     kind: 'twitch-enhanced-broadcasting' as const,
     outputId: 'twitch-enhanced-broadcasting',
-    provider: 'twitch' as const,
+    platform: 'twitch' as const,
   };
   const youtubeCandidate = {
     probeId: 'horizontal-standard-youtube',
     kind: 'youtube-unbound' as const,
     outputId: 'horizontal-standard',
-    provider: 'youtube' as const,
+    platform: 'youtube' as const,
   };
   return {
     type: 'enhanced-broadcasting-dual-output',
@@ -120,20 +120,20 @@ test('mixed Enhanced Broadcasting keeps only its Twitch and YouTube representati
     filtered.outputs.map(output => ({
       outputKind: output.outputKind,
       destinations: output.destinations.map(destination => destination.platform),
-      providers: output.probeCandidates.map(candidate => candidate.provider),
+      probePlatforms: output.probeCandidates.map(candidate => candidate.platform),
       measurement: output.measurement,
     })),
     [
       {
         outputKind: 'twitch-enhanced-broadcasting',
         destinations: ['twitch'],
-        providers: ['twitch'],
+        probePlatforms: ['twitch'],
         measurement: 'active',
       },
       {
         outputKind: 'standard',
         destinations: ['youtube', 'kick'],
-        providers: ['youtube'],
+        probePlatforms: ['youtube'],
         measurement: 'active',
       },
     ],
@@ -148,7 +148,7 @@ test('a two-canvas Twitch and YouTube setup keeps one active probe per output', 
   t.deepEqual(
     filtered.outputs.map(output => [
       output.display,
-      output.probeCandidates[0]?.provider,
+      output.probeCandidates[0]?.platform,
       output.measurement,
     ]),
     [
@@ -157,7 +157,7 @@ test('a two-canvas Twitch and YouTube setup keeps one active probe per output', 
     ],
   );
   t.deepEqual(
-    allProbeCandidates(filtered).map(candidate => candidate.provider),
+    allProbeCandidates(filtered).map(candidate => candidate.platform),
     ['twitch', 'youtube'],
   );
 });
@@ -170,20 +170,20 @@ test('Dual Output keeps one supported probe per canvas when other platforms shar
   t.deepEqual(
     filtered.outputs.map(output => ({
       destinations: output.destinations.map(destination => destination.platform),
-      providers: output.probeCandidates.map(candidate => candidate.provider),
+      probePlatforms: output.probeCandidates.map(candidate => candidate.platform),
       measurement: output.measurement,
       estimateReason: output.estimateReason,
     })),
     [
       {
         destinations: ['twitch', 'kick'],
-        providers: ['twitch'],
+        probePlatforms: ['twitch'],
         measurement: 'active',
         estimateReason: undefined,
       },
       {
         destinations: ['youtube'],
-        providers: ['youtube'],
+        probePlatforms: ['youtube'],
         measurement: 'active',
         estimateReason: undefined,
       },
@@ -198,12 +198,12 @@ test('Dual Output selects distinct supported representatives when a canvas has b
     probeId: 'horizontal-youtube',
     kind: 'youtube-unbound',
     outputId: 'horizontal',
-    provider: 'youtube',
+    platform: 'youtube',
   });
 
   const filtered = prepareAutoConfigStreamSetup(streamSetup);
   t.deepEqual(
-    filtered.outputs.map(output => output.probeCandidates.map(candidate => candidate.provider)),
+    filtered.outputs.map(output => output.probeCandidates.map(candidate => candidate.platform)),
     [['twitch'], ['youtube']],
   );
   t.true(isEligibleAutoConfigDualOutputActiveStreamSetup(filtered));
@@ -248,7 +248,7 @@ test('YouTube display both cannot create two active probe leases', t => {
         probeId: `${display}-youtube`,
         kind: 'youtube-unbound' as const,
         outputId: display,
-        provider: 'youtube' as const,
+        platform: 'youtube' as const,
       },
     ],
     measurement: 'active' as const,
@@ -264,10 +264,10 @@ test('YouTube display both cannot create two active probe leases', t => {
   t.deepEqual(allProbeCandidates(filtered), []);
 });
 
-test('active evidence matches selected providers and partial coverage requires low confidence', t => {
+test('active evidence matches selected platforms and partial coverage requires low confidence', t => {
   const partial = {
     destinations: [{ platform: 'twitch' as const }, { platform: 'youtube' as const }],
-    attemptedCandidates: [{ provider: 'twitch' as const, kind: 'twitch-standard' as const }],
+    attemptedCandidates: [{ platform: 'twitch' as const, kind: 'twitch-standard' as const }],
     evidence: [
       {
         platform: 'twitch' as const,
@@ -311,7 +311,7 @@ test('active evidence matches selected providers and partial coverage requires l
   );
 });
 
-test('sequential provider bandwidth events receive distinct pacing keys', t => {
+test('sequential platform bandwidth events receive distinct pacing keys', t => {
   t.is(autoConfigPhaseStepKey('bandwidth', 'twitch'), 'bandwidth:twitch:measuring:0');
   t.is(autoConfigPhaseStepKey('bandwidth', 'youtube'), 'bandwidth:youtube:measuring:0');
   t.not(
@@ -534,7 +534,7 @@ test('Dual Output progress follows OSN hardware and recommendation phases', t =>
     },
     'hardware',
   );
-  t.is(workload.provider, null);
+  t.is(workload.platform, null);
   t.is(workload.targetBitrateKbps, null, 'hardware work does not claim a probe bitrate');
   t.is(workload.width, 1920);
 
@@ -586,7 +586,7 @@ test('progress sanitization preserves only bounded OSN status fields', t => {
 
   t.deepEqual(sanitizeAutoConfigProgressDetail(event, 'hardware'), {
     code: 'hardware_testing_encoder',
-    provider: null,
+    platform: null,
     targetBitrateKbps: null,
     availableBitrateKbps: 9000,
     encoderId: 'obs_nvenc_h264_tex',
@@ -621,7 +621,7 @@ test('renderer-bound progress and evidence discard malformed or private fields',
     additionalVideo: { display: 'horizontal', width: 1080, height: 1920 },
   } as unknown) as IAutoConfigEvent;
   const detail = sanitizeAutoConfigProgressDetail(malformedEvent, 'bandwidth');
-  t.is(detail.provider, 'youtube');
+  t.is(detail.platform, 'youtube');
   t.is(detail.targetBitrateKbps, 10000);
   t.is(detail.code, null);
   t.is(detail.availableBitrateKbps, null);

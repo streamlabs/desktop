@@ -95,13 +95,13 @@ class RecommendationApplyTransaction {
       throw new Error('This stream setup cannot apply different frame rates per output');
     }
 
-    const providerOwnsEncoding = outputRecommendation === null;
+    const twitchManagesEncoding = outputRecommendation === null;
     const applyVideoSettings = shouldApplyAutoOptimizerVideoSettings(
       streamSetupType,
-      providerOwnsEncoding,
+      twitchManagesEncoding,
       result.outputs.map(output => output.measurement),
     );
-    const expectedEncoder = providerOwnsEncoding
+    const expectedEncoder = twitchManagesEncoding
       ? null
       : (outputRecommendation!.encoder!.family as EEncoderFamily);
     const displaysToApply = Array.from(
@@ -122,7 +122,7 @@ class RecommendationApplyTransaction {
         throw new Error('A required video context is unavailable');
       }
 
-      if (!providerOwnsEncoding) {
+      if (!twitchManagesEncoding) {
         // In Simple mode, a preset can be hidden while UseAdvanced is off, even
         // for the selected encoder. Save that preset before enabling or changing
         // its encoder settings. Advanced mode exposes one shared encoder form,

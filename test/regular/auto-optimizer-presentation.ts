@@ -5,9 +5,9 @@ import {
   autoOptimizerErrorMessage,
   autoOptimizerProgressLabel,
   bandwidthPhaseLabelKey,
-  estimatedProbeProviders,
+  estimatedProbePlatforms,
   shouldShowAutoOptimizerMeasurementReason,
-  successfulProbeProviders,
+  successfulProbePlatforms,
 } from '../../app/components-react/shared/auto-optimizer/presentation';
 import { IAutoOptimizerProgressDetail } from '../../app/services/auto-config/types';
 
@@ -16,7 +16,7 @@ function progressDetail(
 ): IAutoOptimizerProgressDetail {
   return {
     code: null,
-    provider: null,
+    platform: null,
     targetBitrateKbps: null,
     availableBitrateKbps: null,
     encoderId: null,
@@ -32,9 +32,9 @@ function progressDetail(
   };
 }
 
-test('successful measured providers are stable, deduplicated, and omit failures', t => {
+test('successfully measured platforms are stable, deduplicated, and omit failures', t => {
   t.deepEqual(
-    successfulProbeProviders([
+    successfulProbePlatforms([
       { platform: 'youtube', success: true },
       { platform: 'twitch', success: false },
       { platform: 'youtube', success: true },
@@ -44,21 +44,21 @@ test('successful measured providers are stable, deduplicated, and omit failures'
   );
 });
 
-test('partial provider evidence separates measured and estimated destinations', t => {
+test('partial platform evidence separates measured and estimated destinations', t => {
   const platforms = [{ id: 'twitch' }, { id: 'youtube' }, { id: 'kick' }, { id: 'facebook' }];
   const evidence = [
     { platform: 'twitch' as const, success: true },
     { platform: 'youtube' as const, success: false },
   ];
 
-  t.deepEqual(successfulProbeProviders(evidence), ['twitch']);
-  t.deepEqual(estimatedProbeProviders(platforms, evidence), ['youtube']);
+  t.deepEqual(successfulProbePlatforms(evidence), ['twitch']);
+  t.deepEqual(estimatedProbePlatforms(platforms, evidence), ['youtube']);
 });
 
-test('estimate-only evidence includes only providers with supported bandwidth tests', t => {
+test('estimate-only evidence includes only platforms with supported bandwidth probes', t => {
   const platforms = [{ id: 'twitch' }, { id: 'youtube' }, { id: 'kick' }];
 
-  t.deepEqual(estimatedProbeProviders(platforms), ['twitch', 'youtube']);
+  t.deepEqual(estimatedProbePlatforms(platforms), ['twitch', 'youtube']);
 });
 
 test('active medium-confidence quality reasons remain visible in results', t => {
@@ -71,8 +71,8 @@ test('active medium-confidence quality reasons remain visible in results', t => 
   t.false(shouldShowAutoOptimizerMeasurementReason());
 });
 
-test('bandwidth phase follows the provider currently being probed', t => {
-  const candidates = [{ provider: 'twitch' as const }, { provider: 'youtube' as const }];
+test('bandwidth phase follows the platform currently being probed', t => {
+  const candidates = [{ platform: 'twitch' as const }, { platform: 'youtube' as const }];
 
   t.is(bandwidthPhaseLabelKey(null, candidates), 'Measuring your Twitch and YouTube uploads...');
   t.is(bandwidthPhaseLabelKey('twitch', candidates), 'Measuring your Twitch upload...');
@@ -234,7 +234,7 @@ test('YouTube progress distinguishes connection, baseline, retry, and ramp state
   t.is(
     autoOptimizerProgressLabel(
       'bandwidth',
-      progressDetail({ code: 'youtube_probe_waiting_for_ingest', provider: 'youtube' }),
+      progressDetail({ code: 'youtube_probe_waiting_for_ingest', platform: 'youtube' }),
     ).key,
     'Connecting to YouTube...',
   );
@@ -243,7 +243,7 @@ test('YouTube progress distinguishes connection, baseline, retry, and ramp state
       'bandwidth',
       progressDetail({
         code: 'youtube_probe_baseline',
-        provider: 'youtube',
+        platform: 'youtube',
         targetBitrateKbps: 1500,
       }),
     ),
@@ -257,7 +257,7 @@ test('YouTube progress distinguishes connection, baseline, retry, and ramp state
       'bandwidth',
       progressDetail({
         code: 'youtube_probe_retrying',
-        provider: 'youtube',
+        platform: 'youtube',
         targetBitrateKbps: 6000,
       }),
     ).key,
@@ -271,7 +271,7 @@ test('Twitch progress identifies the extended same-target confirmation', t => {
       'bandwidth',
       progressDetail({
         code: 'twitch_probe_confirming_capacity',
-        provider: 'twitch',
+        platform: 'twitch',
         targetBitrateKbps: 6000,
       }),
     ),
@@ -315,14 +315,14 @@ test('Enhanced Broadcasting progress describes ladder and exact candidates', t =
       'bandwidth',
       progressDetail({
         code: 'enhanced_broadcasting_requesting_ladder',
-        provider: 'twitch',
+        platform: 'twitch',
       }),
     ).key,
     'Preparing Enhanced Broadcasting settings with Twitch...',
   );
   const candidate = progressDetail({
     code: 'enhanced_broadcasting_testing_candidate',
-    provider: 'twitch',
+    platform: 'twitch',
     width: 1920,
     height: 1080,
     fpsNum: 60,
@@ -375,7 +375,7 @@ test('paired Enhanced Broadcasting progress names both tested canvases', t => {
     'bandwidth',
     progressDetail({
       code: 'enhanced_broadcasting_testing_candidate',
-      provider: 'twitch',
+      platform: 'twitch',
       width: 1920,
       height: 1080,
       fpsNum: 60,
@@ -410,7 +410,7 @@ test('mixed Enhanced Broadcasting progress describes the real concurrent outputs
     'bandwidth',
     progressDetail({
       code: 'enhanced_broadcasting_testing_concurrent_outputs',
-      provider: 'twitch',
+      platform: 'twitch',
       width: 1920,
       height: 1080,
       fpsNum: 60,
@@ -446,7 +446,7 @@ test('Enhanced Broadcasting progress interpolates through the en-US catalog', t 
   });
   const candidate = progressDetail({
     code: 'enhanced_broadcasting_testing_candidate',
-    provider: 'twitch',
+    platform: 'twitch',
     width: 1920,
     height: 1080,
     fpsNum: 60000,
@@ -463,11 +463,11 @@ test('Enhanced Broadcasting progress interpolates through the en-US catalog', t 
   const labels = [
     autoOptimizerProgressLabel(
       'bandwidth',
-      progressDetail({ code: 'enhanced_broadcasting_requesting_ladder', provider: 'twitch' }),
+      progressDetail({ code: 'enhanced_broadcasting_requesting_ladder', platform: 'twitch' }),
     ),
     ...codes.map(code => autoOptimizerProgressLabel('bandwidth', { ...candidate, code })),
     ...codes.map(code =>
-      autoOptimizerProgressLabel('bandwidth', progressDetail({ code, provider: 'twitch' })),
+      autoOptimizerProgressLabel('bandwidth', progressDetail({ code, platform: 'twitch' })),
     ),
   ];
 
@@ -504,11 +504,11 @@ test('final resource cleanup has an explicit progress label', t => {
   );
 });
 
-test('terminal provider progress states remain truthful and readable', t => {
+test('terminal platform progress states remain truthful and readable', t => {
   t.is(
     autoOptimizerProgressLabel(
       'bandwidth',
-      progressDetail({ code: 'youtube_probe_completed', provider: 'youtube' }),
+      progressDetail({ code: 'youtube_probe_completed', platform: 'youtube' }),
     ).key,
     'YouTube upload test complete.',
   );
@@ -517,7 +517,7 @@ test('terminal provider progress states remain truthful and readable', t => {
       'bandwidth',
       progressDetail({
         code: 'youtube_probe_source_underfill_completed',
-        provider: 'youtube',
+        platform: 'youtube',
       }),
     ).key,
     'YouTube upload test complete. Full connection capacity could not be measured.',
@@ -525,21 +525,21 @@ test('terminal provider progress states remain truthful and readable', t => {
   t.is(
     autoOptimizerProgressLabel(
       'bandwidth',
-      progressDetail({ code: 'twitch_probe_unstable_estimate_used', provider: 'twitch' }),
+      progressDetail({ code: 'twitch_probe_unstable_estimate_used', platform: 'twitch' }),
     ).key,
     'Your Twitch upload was unstable. Using an estimate...',
   );
   t.is(
     autoOptimizerProgressLabel(
       'bandwidth',
-      progressDetail({ code: 'youtube_probe_failed_estimate_used', provider: 'youtube' }),
+      progressDetail({ code: 'youtube_probe_failed_estimate_used', platform: 'youtube' }),
     ).key,
     "Couldn't complete the YouTube upload test. Using an estimate...",
   );
   t.is(
     autoOptimizerProgressLabel(
       'bandwidth',
-      progressDetail({ code: 'active_probe_not_eligible', provider: 'youtube' }),
+      progressDetail({ code: 'active_probe_not_eligible', platform: 'youtube' }),
     ).key,
     'Estimating safe upload settings...',
   );

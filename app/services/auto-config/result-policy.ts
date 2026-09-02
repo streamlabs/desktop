@@ -90,7 +90,7 @@ export function validateAutoConfigRecommendation(
     measurementMode: TAutoOptimizerMeasurementMode;
     currentBitrateKbps: number;
     probeEvidence: IAutoOptimizerProbeEvidence[];
-    providerOwnsEncoding?: boolean;
+    twitchManagesEncoding?: boolean;
     enhancedBroadcasting?: boolean;
     /** Bandwidth-to-quality policy OSN used for this destination or shared allocation. */
     qualityProfile?: TAutoOptimizerQualityProfile;
@@ -124,7 +124,7 @@ export function validateAutoConfigRecommendation(
   }
 
   if (
-    !context.providerOwnsEncoding &&
+    !context.twitchManagesEncoding &&
     value.bitrateKbps >
       Math.min(
         AUTO_OPTIMIZER_MAX_RECOMMENDED_BITRATE_KBPS,
@@ -205,7 +205,7 @@ export function validateAutoConfigRecommendation(
   const preset = value.preset;
 
   if (
-    !context.providerOwnsEncoding &&
+    !context.twitchManagesEncoding &&
     (!isBoundedText(encoderId, 256) ||
       !isBoundedText(encoderTitle, 256) ||
       value.codec !== 'h264' ||
@@ -313,7 +313,7 @@ export function validateAutoConfigRecommendation(
     value.fpsNum === context.currentFpsNum &&
     value.fpsDen === context.currentFpsDen;
   if (
-    !context.providerOwnsEncoding &&
+    !context.twitchManagesEncoding &&
     hasCompleteQualityContext &&
     !exactEstimatedCurrentFallback &&
     !matchesAutoOptimizerQualityPolicy(
@@ -351,7 +351,7 @@ export function validateAutoConfigRecommendation(
     fpsDen: value.fpsDen,
     bitrateKbps: value.bitrateKbps,
     ...(additionalVideo ? { additionalVideo } : {}),
-    encoder: context.providerOwnsEncoding
+    encoder: context.twitchManagesEncoding
       ? null
       : {
           id: encoderId!,

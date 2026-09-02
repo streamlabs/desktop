@@ -7,7 +7,7 @@ import {
   IAutoOptimizerProfile,
   IAutoOptimizerStreamSetup,
   TAutoOptimizerPlatform,
-  TAutoOptimizerProbeProvider,
+  TAutoOptimizerProbePlatform,
   TAutoOptimizerStreamSetupType,
 } from './types';
 
@@ -56,7 +56,7 @@ function getEstimateReason(type: TAutoOptimizerStreamSetupType): string {
   }
 }
 
-const probeProviderOrder: TAutoOptimizerProbeProvider[] = ['twitch', 'youtube'];
+const probePlatformOrder: TAutoOptimizerProbePlatform[] = ['twitch', 'youtube'];
 
 function probeCandidates(
   outputId: string,
@@ -67,17 +67,17 @@ function probeCandidates(
   if (!allowed) return [];
 
   const platforms = new Set(destinations.map(item => item.platform));
-  return probeProviderOrder
+  return probePlatformOrder
     .filter(platform => platforms.has(platform))
-    .map(provider => {
+    .map(platform => {
       let kind: IAutoOptimizerProbeCandidate['kind'] = 'youtube-unbound';
-      if (provider === 'twitch') {
+      if (platform === 'twitch') {
         kind =
           type === 'enhanced-broadcasting' || type === 'enhanced-broadcasting-dual-output'
             ? 'twitch-enhanced-broadcasting'
             : 'twitch-standard';
       }
-      return { probeId: `${outputId}-${provider}`, kind, outputId, provider };
+      return { probeId: `${outputId}-${platform}`, kind, outputId, platform };
     });
 }
 
@@ -97,7 +97,7 @@ function completeOutput(
 
 /**
  * Describe the outputs that Desktop will actually create. The result contains
- * no provider credentials and is safe to construct in any renderer.
+ * no platform credentials and is safe to construct in any renderer.
  */
 export function describeAutoOptimizerStreamSetup(
   settings: IGoLiveSettings,

@@ -54,7 +54,7 @@ function optimizerOutput(patch: Partial<IAutoOptimizerOutput> = {}): IAutoOptimi
         probeId: 'horizontal-twitch',
         kind: 'twitch-standard',
         outputId: 'horizontal',
-        provider: 'twitch',
+        platform: 'twitch',
       },
     ],
     measurement: 'active',
@@ -114,7 +114,7 @@ test('builds an active OSN request and retains only non-secret validation inputs
   t.false(retained.includes('server'));
 });
 
-test('applies provider bitrate limits and prevents estimate or partial promotion', t => {
+test('applies platform bitrate limits and prevents estimate or partial promotion', t => {
   const estimated = optimizerOutput({
     destinations: [{ platform: 'tiktok' }],
     probeCandidates: [],
@@ -165,7 +165,7 @@ test('builds paired Enhanced Broadcasting video settings without a Desktop bitra
         probeId: 'twitch-enhanced-broadcasting-twitch',
         kind: 'twitch-enhanced-broadcasting',
         outputId: 'twitch-enhanced-broadcasting',
-        provider: 'twitch',
+        platform: 'twitch',
       },
     ],
   });
@@ -221,7 +221,7 @@ test('paired requests accept zero-based identities and reject invalid canvas ide
         probeId: 'vertical-youtube',
         kind: 'youtube-unbound',
         outputId: 'vertical',
-        provider: 'youtube',
+        platform: 'youtube',
       },
     ],
   });

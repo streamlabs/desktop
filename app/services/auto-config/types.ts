@@ -36,7 +36,7 @@ export type TAutoOptimizerMeasurementMode = 'active' | 'estimated';
 export type TAutoOptimizerConfidence = 'high' | 'medium' | 'low';
 export type TAutoOptimizerPromptState = 'unseen' | 'declined' | 'completed';
 export type TAutoOptimizerOutputKind = 'standard' | 'twitch-enhanced-broadcasting';
-export type TAutoOptimizerProbeProvider = 'twitch' | 'youtube';
+export type TAutoOptimizerProbePlatform = 'twitch' | 'youtube';
 export type TAutoOptimizerProbeKind =
   | 'twitch-standard'
   | 'twitch-enhanced-broadcasting'
@@ -61,7 +61,7 @@ export interface IAutoOptimizerDestination {
 }
 
 /**
- * Describes a provider test that Desktop can prepare without storing
+ * Describes a platform bandwidth probe that Desktop can prepare without storing
  * credentials. Entries run in array order; the worker adds credentials only
  * when building the OSN request for this optimizer run.
  */
@@ -69,11 +69,11 @@ export interface IAutoOptimizerProbeCandidate {
   probeId: string;
   kind: TAutoOptimizerProbeKind;
   outputId: string;
-  provider: TAutoOptimizerProbeProvider;
+  platform: TAutoOptimizerProbePlatform;
 }
 
 export interface IAutoOptimizerProbeEvidence {
-  platform: TAutoOptimizerProbeProvider;
+  platform: TAutoOptimizerProbePlatform;
   method: TAutoOptimizerProbeMethod;
   success: boolean;
 }
@@ -157,7 +157,7 @@ export interface IAutoOptimizerState {
 
 export interface IAutoOptimizerProgressDetail {
   code: string | null;
-  provider: TAutoOptimizerProbeProvider | null;
+  platform: TAutoOptimizerProbePlatform | null;
   /** Video bitrate used by the current Twitch or YouTube test; audio is not included. */
   targetBitrateKbps: number | null;
   /** Conservative bandwidth budget used by the current recommendation step. */

@@ -12,7 +12,7 @@ export type IAutoConfigRun = ReturnType<IAutoConfigApi['run']>;
 /**
  * Cancellation waits for OSN to stop and close the test output. Call onClosed
  * only after cancellation succeeds; on failure, retain the run handle and
- * provider resources so cleanup can be retried.
+ * platform resources so cleanup can be retried.
  */
 export async function closeAutoConfigRun(run: IAutoConfigRun, onClosed: () => void): Promise<void> {
   await run.cancel();

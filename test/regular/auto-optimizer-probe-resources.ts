@@ -13,20 +13,20 @@ import {
 
 function output(
   outputId: string,
-  provider: 'twitch' | 'youtube',
+  platform: 'twitch' | 'youtube',
   display: 'horizontal' | 'vertical' = 'horizontal',
 ): IAutoOptimizerOutput {
   return {
     outputId,
     display,
     outputKind: 'standard',
-    destinations: [{ platform: provider }],
+    destinations: [{ platform }],
     probeCandidates: [
       {
-        probeId: `${provider}-${outputId}`,
-        kind: provider === 'twitch' ? 'twitch-standard' : 'youtube-unbound',
+        probeId: `${platform}-${outputId}`,
+        kind: platform === 'twitch' ? 'twitch-standard' : 'youtube-unbound',
         outputId,
-        provider,
+        platform,
       },
     ],
     measurement: 'active',
@@ -64,7 +64,7 @@ function services(
   };
 }
 
-test('provider resources prepare request probes without retaining YouTube credentials', async t => {
+test('platform resources prepare request probes without retaining YouTube credentials', async t => {
   const mocks = services();
   const resources = new AutoConfigProbeResources(mocks.twitch, mocks.youtube);
   const streamSetup: IAutoOptimizerStreamSetup = {
@@ -97,7 +97,7 @@ test('provider resources prepare request probes without retaining YouTube creden
   await resources.cleanupAfterNativeClose(async () => undefined);
 });
 
-test('a shared output keeps one successful provider as partial active coverage', async t => {
+test('a shared output keeps one successful platform as partial active coverage', async t => {
   const mocks = services({
     acquire: async () => {
       throw new Error('YouTube unavailable');
@@ -127,7 +127,7 @@ test('a shared output keeps one successful provider as partial active coverage',
   await resources.cleanupAfterNativeClose(async () => undefined);
 });
 
-test('exact Dual Output preparation rejects a partial provider acquisition', async t => {
+test('exact Dual Output preparation rejects partial platform resource acquisition', async t => {
   const mocks = services({
     acquire: async () => {
       throw new Error('YouTube unavailable');

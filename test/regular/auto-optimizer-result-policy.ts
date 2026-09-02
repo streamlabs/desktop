@@ -61,7 +61,7 @@ test('a valid modern H.264 recommendation is preserved as one settings set', t =
   });
 });
 
-test('an active standard recommendation requires successful provider evidence', t => {
+test('an active standard recommendation requires successful platform evidence', t => {
   t.is(
     validateAutoConfigRecommendation(recommendation(), {
       ...activeContext,
@@ -148,9 +148,9 @@ test('only tested, applicable H.264 encoder configurations are accepted', t => {
 });
 
 test('Twitch Enhanced Broadcasting accepts only video settings validated by its workload test', t => {
-  const providerContext = {
+  const twitchManagedContext = {
     ...activeContext,
-    providerOwnsEncoding: true,
+    twitchManagesEncoding: true,
     enhancedBroadcasting: true,
     probeEvidence: [
       {
@@ -160,7 +160,7 @@ test('Twitch Enhanced Broadcasting accepts only video settings validated by its 
       },
     ],
   };
-  const providerRecommendation = recommendation({
+  const twitchManagedRecommendation = recommendation({
     bitrateKbps: 3000,
     encoderId: undefined,
     encoderFamily: undefined,
@@ -168,19 +168,19 @@ test('Twitch Enhanced Broadcasting accepts only video settings validated by its 
     codec: undefined,
     preset: undefined,
   });
-  const valid = validateAutoConfigRecommendation(providerRecommendation, providerContext);
+  const valid = validateAutoConfigRecommendation(twitchManagedRecommendation, twitchManagedContext);
   t.truthy(valid);
   t.is(valid?.encoder, null);
   t.is(
     validateAutoConfigRecommendation(
-      { ...providerRecommendation, width: 1600, height: 900 },
-      providerContext,
+      { ...twitchManagedRecommendation, width: 1600, height: 900 },
+      twitchManagedContext,
     ),
     null,
   );
   t.is(
-    validateAutoConfigRecommendation(providerRecommendation, {
-      ...providerContext,
+    validateAutoConfigRecommendation(twitchManagedRecommendation, {
+      ...twitchManagedContext,
       probeEvidence: [],
     }),
     null,
@@ -211,7 +211,7 @@ function pairedAdditionalVideo() {
 test('paired Enhanced Broadcasting validates transposed horizontal and vertical settings', t => {
   const context = {
     ...activeContext,
-    providerOwnsEncoding: true,
+    twitchManagesEncoding: true,
     enhancedBroadcasting: true,
     probeEvidence: [
       {
@@ -256,7 +256,7 @@ test('estimate-only paired Enhanced Broadcasting preserves both current canvases
   const context = {
     ...activeContext,
     measurementMode: 'estimated' as const,
-    providerOwnsEncoding: true,
+    twitchManagesEncoding: true,
     enhancedBroadcasting: true,
     probeEvidence: [] as typeof activeContext.probeEvidence,
     additionalVideo: pairedAdditionalVideo(),
