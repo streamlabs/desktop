@@ -662,11 +662,19 @@ export class GoLiveSettingsModule {
   }
 
   private async startGoLive() {
+    if (!this.state.getMetadata?.()) return;
+
+    const settings = this.state.settings;
     const autoOptimizerProfile = await Services.AutoConfigService.actions.return.consumePendingGoLiveProfile(
-      this.state.settings,
+      settings,
     );
+
+    // Closing the reusable Go Live window destroys this scoped state while
+    // worker-owned Auto Optimizer actions may still be resolving over IPC.
+    if (!this.state.getMetadata?.()) return;
+
     Services.StreamingService.actions.goLive({
-      ...this.state.settings,
+      ...settings,
       autoOptimizerProfile: autoOptimizerProfile || undefined,
     });
   }

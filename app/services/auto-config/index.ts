@@ -160,6 +160,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private pendingGoLiveProfile: IAutoOptimizerProfile | null = null;
   private nativeRun: IAutoConfigRun | null = null;
   private runToken = 0;
+  private recommendationApplication: Promise<IAutoOptimizerProfile> | null = null;
+  private cleanupPromise: Promise<void> | null = null;
   private displayedPhaseStep: IPhaseStep | null = null;
   private displayedPhaseSince = 0;
   private pendingPhaseSteps: IPhaseStep[] = [];
@@ -188,10 +190,11 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       ) {
         return true;
       }
-      ++this.runToken;
+      const token = ++this.runToken;
       try {
-        await this.cleanupOptimizerRun();
+        if (!(await this.cleanupOptimizerRunIfCurrent(token))) return true;
       } catch (e: unknown) {
+        if (token !== this.runToken) return true;
         // Keep the newly validated draft even when the previous optimizer run
         // cannot be cleaned up. A later continuation must never stream stale
         // selections.
@@ -350,13 +353,14 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   async cancelOptimization(): Promise<void> {
     const streamSetup = this.state.streamSetup;
     const host = this.state.host;
-    ++this.runToken;
+    const token = ++this.runToken;
     this.SET_CANCELLING();
     try {
-      await this.cleanupOptimizerRun();
+      if (!(await this.cleanupOptimizerRunIfCurrent(token))) return;
       if (streamSetup && host) this.SET_INTRO(streamSetup, host);
       else this.RESET_FLOW();
     } catch (e: unknown) {
+      if (token !== this.runToken) return;
       this.SET_ERROR(this.toError(e, 'cleanup_failed', false));
     }
   }
@@ -365,15 +369,16 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     if (
       this.state.host !== 'go-live' ||
       !this.frozenStreamSettings ||
-      this.state.stage === 'cancelling'
+      !['intro', 'running', 'review'].includes(this.state.stage)
     ) {
       return false;
     }
-    ++this.runToken;
+    const token = ++this.runToken;
     this.SET_CANCELLING();
     try {
-      await this.cleanupOptimizerRun();
+      if (!(await this.cleanupOptimizerRunIfCurrent(token))) return false;
     } catch (e: unknown) {
+      if (token !== this.runToken) return false;
       this.SET_ERROR(this.toError(e, 'cleanup_failed', false));
       return false;
     }
@@ -388,15 +393,16 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     if (
       this.state.host !== 'go-live' ||
       !this.frozenStreamSettings ||
-      this.state.stage === 'cancelling'
+      this.state.stage !== 'error'
     ) {
       return false;
     }
-    ++this.runToken;
+    const token = ++this.runToken;
     this.SET_CANCELLING();
     try {
-      await this.cleanupOptimizerRun();
+      if (!(await this.cleanupOptimizerRunIfCurrent(token))) return false;
     } catch (e: unknown) {
+      if (token !== this.runToken) return false;
       this.SET_ERROR(this.toError(e, 'cleanup_failed', false));
       return false;
     }
@@ -416,23 +422,31 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       return false;
     }
 
+    const result = this.state.result;
+    const streamSetupType = this.state.streamSetup.type;
+    const token = ++this.runToken;
     this.SET_APPLYING();
+    const application = applyAutoOptimizerRecommendations(result, streamSetupType, {
+      outputSettings: this.outputSettingsService,
+      encoderQuery: this.encoderQueryService,
+      settings: this.settingsService,
+      videoSettings: this.videoSettingsService,
+    });
+    this.recommendationApplication = application;
+
     let profile: IAutoOptimizerProfile;
     try {
-      profile = await applyAutoOptimizerRecommendations(
-        this.state.result,
-        this.state.streamSetup.type,
-        {
-          outputSettings: this.outputSettingsService,
-          encoderQuery: this.encoderQueryService,
-          settings: this.settingsService,
-          videoSettings: this.videoSettingsService,
-        },
-      );
+      profile = await application;
     } catch (e: unknown) {
+      if (token !== this.runToken) return false;
       this.SET_ERROR(this.toError(e, 'apply_failed', true));
       return false;
+    } finally {
+      if (this.recommendationApplication === application) {
+        this.recommendationApplication = null;
+      }
     }
+    if (token !== this.runToken) return false;
 
     this.pendingGoLiveProfile = profile;
     this.setPromptState('completed');
@@ -469,10 +483,11 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
   async dismiss(): Promise<void> {
     const host = this.state.host;
-    ++this.runToken;
+    const token = ++this.runToken;
     try {
-      await this.cleanupOptimizerRun();
+      if (!(await this.cleanupOptimizerRunIfCurrent(token))) return;
     } catch (e: unknown) {
+      if (token !== this.runToken) return;
       this.SET_ERROR(this.toError(e, 'cleanup_failed', false));
       return;
     }
@@ -485,15 +500,16 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   /** Clean up a run when the window presenting it is closed. */
   async closeFromHost(host: TAutoOptimizerHost): Promise<void> {
     if (this.state.host !== host) return;
-    if (host === 'go-live') this.pendingGoLiveProfile = null;
 
-    ++this.runToken;
+    const token = ++this.runToken;
     try {
-      await this.cleanupOptimizerRun();
+      if (!(await this.cleanupOptimizerRunIfCurrent(token))) return;
     } catch (e: unknown) {
+      if (token !== this.runToken) return;
       this.SET_ERROR(this.toError(e, 'cleanup_failed', false));
       return;
     }
+    if (host === 'go-live') this.pendingGoLiveProfile = null;
     this.frozenStreamSettings = null;
     this.RESET_FLOW();
   }
@@ -794,7 +810,40 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     return undefined;
   }
 
+  private async waitForRecommendationApplication(): Promise<void> {
+    const application = this.recommendationApplication;
+    if (!application) return;
+
+    // Settings application is transactional and cannot be interrupted safely.
+    // Teardown still waits for a failed transaction to finish rolling back.
+    try {
+      await application;
+    } catch {
+      // The action that started the transaction owns its error presentation.
+    }
+  }
+
+  private async cleanupOptimizerRunIfCurrent(token: number): Promise<boolean> {
+    await this.waitForRecommendationApplication();
+    if (token !== this.runToken) return false;
+
+    await this.cleanupOptimizerRun();
+    return token === this.runToken;
+  }
+
   private async cleanupOptimizerRun(): Promise<void> {
+    if (this.cleanupPromise) return this.cleanupPromise;
+
+    const cleanup = this.performOptimizerCleanup();
+    this.cleanupPromise = cleanup;
+    try {
+      await cleanup;
+    } finally {
+      if (this.cleanupPromise === cleanup) this.cleanupPromise = null;
+    }
+  }
+
+  private async performOptimizerCleanup(): Promise<void> {
     this.attemptContext = null;
     const closeNative = async () => {
       const run = this.nativeRun;
