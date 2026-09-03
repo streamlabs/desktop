@@ -4,7 +4,6 @@
   "Successfully saved %{filename} to %{filepath}": "%{filename} が %{filepath} に保存されました",
   "Successfully loaded %{filename}.overlay": "%{filename}.オーバーレイが正常に読み込まれました",
   "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
-  "This is an experimental feature.  Use at your own risk.": "これは実験的な機能です。自己責任で使用してください。",
   "Export Overlay File": "オーバーレイ ファイルをエクスポート",
   "Import Overlay File": "オーバーレイ ファイルをインポート",
   "Import Widget File in Current Scene": "現在のシーンのウィジェットファイルをインポート",
@@ -28,5 +27,9 @@
   "Show Components Library": "コンポーネントライブラリを表示",
   "Convert Dual Output Scene Collection": "Dual Outputシーンコレクションを変換",
   "Repair Scene Collection": "シーンコレクションを修正",
-  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection."
+  "The scene collection is not a dual output scene collection.": "The scene collection is not a dual output scene collection.",
+  "Reactive Data": "Reactive Data",
+  "Manage your reactive data values": "Manage your reactive data values",
+  "Waiting for schema...": "Waiting for schema...",
+  "Waiting for state...": "Waiting for state..."
 }

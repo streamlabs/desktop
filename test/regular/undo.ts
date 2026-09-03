@@ -8,7 +8,8 @@ import {
   duplicateScene,
   sceneExisting,
 } from '../helpers/modules/scenes';
-import { focusMain, click, isDisplayed, useMainWindow, getClient } from '../helpers/modules/core';
+import { focusMain, useMainWindow, getClient } from '../helpers/modules/core';
+import { toggleDualOutputMode } from '../helpers/modules/dual-output';
 import { getApiClient } from '../helpers/api-client';
 import { logIn, logOut, releaseUserInPool } from '../helpers/webdriver/user';
 
@@ -259,9 +260,7 @@ test('Editor commands', async t => {
 
   // New source
   const user = await logIn(t);
-  await focusMain();
-  await click('[data-name=dual-output-toggle]');
-  await isDisplayed('div#vertical-display');
+  await toggleDualOutputMode();
 
   await addSource('Color Block', 'Block 2');
   await focusMain();

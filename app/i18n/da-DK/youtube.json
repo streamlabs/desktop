@@ -1,15 +1,6 @@
 {
-  "YouTube stream status": "YouTube-stream-status",
-  "Waiting for YouTube to receive the video signal...": "Venter på at YouTubemodtager videosignalet ...",
-  "Testing your broadcast...": "Tester din udsendelse ...",
-  "Finalizing broadcast testing...": "Afslutter transmissionstest ...",
-  "Publishing to your YouTube channel...": "Udgiver på din YouTube-kanal ...",
-  "Waiting broadcast to be published...": "Ventetid før udsendelsen bliver offentliggjort ...",
   "You're live!": "Du er live!",
-  "Waiting for broadcast to be published...": "Venter på at udsendelsen bliver offentliggjort ...",
   "Working on your live stream": "Arbejder med din live stream",
-  "Your stream will start shortly. You can close this window.": "Din stream starter snart. Du kan lukke dette vindue.",
-  "Go to YouTube Live Dashboard": "Gå til YouTube Live Dashboard",
   "Create New Event": "Opret ny begivenhed",
   "YouTube Chat": "YouTube chat",
   "This action cannot be performed inside Streamlabs Desktop. To interact with chat, you can open this chat in a web browser.": "Denne handling kan ikke udføres i Streamlabs Desktop. For at deltage i chatten skal du åbne den i en webbrowser.",
@@ -49,7 +40,7 @@
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube-miniaturebilledet er for stort. Maksimal størrelse er 2 MB.",
   "Please upload thumbnail manually on YouTube.": "Upload miniaturebilledet manuelt på YouTube.",
   "Stream Shift Error: YouTube is not live": "Stream Shift-fejl: YouTube er ikke live",
-  "Error starting vertical stream in YouTube dual streaming": "Error starting vertical stream in YouTube dual streaming",
+  "Error starting vertical stream in YouTube dual streaming.": "Error starting vertical stream in YouTube dual streaming.",
   "YouTube service is temporarily unavailable": "YouTube service is temporarily unavailable",
   "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support": "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support"
 }

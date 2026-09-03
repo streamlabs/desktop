@@ -22,7 +22,7 @@ import { ScenesService } from '../../app/services/api/external-api/scenes';
  * CASE 2: Old user logged in during onboarding, theme installed (Go through onboarding and install theme)
  * CASE 3: New user logged in during onboarding, no theme installed (Go through onboarding as a new user)
  * CASE 4: New user logged in during onboarding, theme installed (Go through onboarding as a new user and install theme)
- * CASE 5: No user logged in during onboarding, no theme installed, then log in new user (Login new user after onboarding skipped)
+ * CASE 5: New user, no theme installed, skip hardware config
  * CASE 6: No user logged in during onboarding, theme installed, then log in new user (Login new user after onboarding skipped and theme installed)
  * CASE 7: No user logged in during onboarding, no theme installed, then log in an old user (Scene-collections cloud-backup) <- tested in the cloud-backup test
  */
@@ -31,10 +31,24 @@ import { ScenesService } from '../../app/services/api/external-api/scenes';
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver({ skipOnboarding: false, noSync: true });
 
-async function confirmDefaultSources(t: TExecutionContext, hasDefaultSources = true) {
+enum HardwareConfigButtons {
+  Continue = 'Continue',
+  Skip = 'Skip',
+}
+
+enum DefaultSourcesCheck {
+  HasDefaultSources,
+  CheckOverlaySources,
+  NoDefaultSources,
+}
+
+async function confirmDefaultSources(
+  t: TExecutionContext,
+  defaultSourcesCheck = DefaultSourcesCheck.HasDefaultSources,
+) {
   const api = await getApiClient();
   const scenesService = api.getResource<ScenesService>('ScenesService');
-  const defaultSources = ['Game Capture', 'Webcam', 'Alert Box'];
+  const defaultSources = ['Webcam'];
   const numDefaultSources = defaultSources.length;
 
   const numSceneItems = scenesService.activeScene
@@ -50,22 +64,34 @@ async function confirmDefaultSources(t: TExecutionContext, hasDefaultSources = t
       return sources;
     }, {} as { [sourceId: string]: number });
 
-  if (hasDefaultSources) {
-    // confirm this is a single output scene collection by confirming that each source
-    // is only used by a single scene item. This is because dual output scene collection
-    // scene items share a single source.
-    for (const [sourceId, count] of Object.entries(numSceneItems)) {
-      t.is(count, 1, `Scene has only once scene item with source ${sourceId}`);
-    }
+  switch (defaultSourcesCheck) {
+    case DefaultSourcesCheck.HasDefaultSources:
+      // confirm this is a single output scene collection by confirming that each source
+      // is only used by a single scene item. This is because dual output scene collection
+      // scene items share a single source.
+      for (const [sourceId, count] of Object.entries(numSceneItems)) {
+        t.is(count, 1, `Scene has only once scene item with source ${sourceId}`);
+      }
 
-    t.is(Object.keys(numSceneItems).length, numDefaultSources, 'Scene has correct default sources');
-  } else {
-    // overlays installed during onboarding should have default sources more or less sources than the defaults
-    const numDefaultSources = Object.keys(numSceneItems).filter(
-      name => defaultSources.includes(name) && numSceneItems[name] > 1,
-    ).length;
+      t.is(
+        Object.keys(numSceneItems).length,
+        numDefaultSources,
+        'Scene has correct default sources',
+      );
+      break;
+    case DefaultSourcesCheck.CheckOverlaySources:
+      {
+        // overlays installed during onboarding should have default sources more or less sources than the defaults
+        const numDefaultSources = Object.keys(numSceneItems).filter(
+          name => defaultSources.includes(name) && numSceneItems[name] > 1,
+        ).length;
 
-    t.not(Object.keys(numSceneItems).length, numDefaultSources, 'Scene has no default sources');
+        t.not(Object.keys(numSceneItems).length, numDefaultSources, 'Scene has no default sources');
+      }
+      break;
+    case DefaultSourcesCheck.NoDefaultSources:
+      t.is(Object.keys(numSceneItems).length, 0, 'Scene should have no default sources');
+      break;
   }
 }
 
@@ -80,13 +106,14 @@ async function goThroughOnboarding(
   t: TExecutionContext,
   login = false,
   newUser = false,
-  installTheme = false,
   fn: () => Promise<void>,
 ) {
   await focusMain();
 
-  // TODO: This page is no longer shown in the new onboarding flow. We should remove this.
-  if (!(await isDisplayed('h2=Live Streaming'))) return;
+  if (!(await isDisplayed('h1=Welcome to Streamlabs Desktop'))) {
+    t.fail('Onboarding welcome page not shown');
+    return;
+  }
   await clickWhenDisplayed('a=Log In', { timeout: 5000 });
 
   // Complete login
@@ -98,15 +125,18 @@ async function goThroughOnboarding(
     // We seem to skip the login step after login internally
     await clickIfDisplayed('button=Skip');
 
+    await waitForDisplayed('h1=Connect Platforms');
+    await clickIfDisplayed('button=Skip');
+
+    await waitForDisplayed('h1=Choose Your Plan');
+    await clickIfDisplayed('button=Skip');
     // Finish onboarding flow
     await withPoolUser(user, async () => {
-      await finishOnboarding(installTheme);
       await fn();
     });
   } else {
     // skip login
     await clickIfDisplayed('button=Skip');
-    await finishOnboarding(installTheme);
     await fn();
   }
 
@@ -117,23 +147,27 @@ async function goThroughOnboarding(
  * Helper function to go through the onboarding flow from the login step to the end
  * @param installTheme - Whether to install a theme during onboarding
  */
-async function finishOnboarding(installTheme = false) {
-  // Skip hardware config
+async function finishOnboarding(
+  installTheme = false,
+  HardwareConfigButton: HardwareConfigButtons = HardwareConfigButtons.Continue,
+) {
   await waitForDisplayed('h1=Set Up Your Mic & Webcam');
-  await clickIfDisplayed('button=Skip');
+  await clickIfDisplayed(`button=${HardwareConfigButton}`);
 
-  // Theme install
-  if (installTheme) {
-    await waitForDisplayed('h1=Add your first theme');
-    await clickWhenDisplayed('button=Install');
-    await waitForDisplayed('span=100%');
-  } else {
-    await waitForDisplayed('h1=Add your first theme');
-    await clickIfDisplayed('button=Skip');
+  if (HardwareConfigButton !== HardwareConfigButtons.Skip) {
+    // Theme install
+    if (installTheme) {
+      await waitForDisplayed('h1=Choose Your Overlay');
+      await clickWhenDisplayed(
+        '//div[contains(@class,"slick-active")]//button[normalize-space(.)="Install"]',
+        { timeout: 15000 },
+      );
+      await waitForDisplayed('span=100%');
+    } else {
+      await waitForDisplayed('h1=Choose Your Overlay');
+      await clickIfDisplayed('button=Skip');
+    }
   }
-
-  // Skip purchasing prime
-  await clickWhenDisplayed('div[data-testid=choose-free-plan-btn]', { timeout: 60000 });
 
   await isDisplayed('span=Sources');
 }
@@ -168,19 +202,9 @@ test('Go through onboarding', async t => {
   t.true(await isDisplayed('button=Instagram'), 'Shows Instagram button');
   t.true(await isDisplayed('button=X'), 'Shows X (Twitter) button');
   t.true(await isDisplayed('button=Kick'), 'Shows Kick button');
-  t.true(await isDisplayed('button=dlive'), 'Shows Dlive button');
   t.true(await isDisplayed('button=NimoTV'), 'Shows NimoTV button');
 
-  // Check for all the login buttons
-  t.true(await isDisplayed('button=Log in with Twitch'), 'Shows Twitch button');
-  t.true(await isDisplayed('button=Log in with YouTube'), 'Shows YouTube button');
-  t.true(await isDisplayed('button=Log in with Facebook'), 'Shows Facebook button');
-  t.true(await isDisplayed('button=Log in with TikTok'), 'Shows TikTok button');
-
-  // Check for all the login icons
-  t.true(await isDisplayed('[data-testid=platform-icon-button-nimotv]'), 'Shows NimoTV button');
-
-  t.true(await isDisplayed('a=Sign up'), 'Has a link to go back to Sign Up');
+  t.true(await isDisplayed('button=Back'), 'Has a link to go back to Sign Up');
 
   // Complete login
   await waitForDisplayed('button=Twitch');
@@ -219,9 +243,8 @@ test('Go through onboarding', async t => {
 test.skip('Go through onboarding and install theme', async t => {
   const login = false;
   const newUser = true;
-  const installTheme = true;
 
-  await goThroughOnboarding(t, login, newUser, installTheme, async () => {
+  await goThroughOnboarding(t, login, newUser, async () => {
     // Confirm sources and dual output status
     t.not(await getNumElements('div[data-role=source]'), 0, 'Theme installed before login');
     t.true(await isDisplayed('i[data-testid=dual-output-inactive]'), 'Single output enabled');
@@ -247,7 +270,8 @@ test('Go through onboarding as a new user', async t => {
   const newUser = true;
   const installTheme = false;
 
-  await goThroughOnboarding(t, login, newUser, installTheme, async () => {
+  await goThroughOnboarding(t, login, newUser, async () => {
+    await finishOnboarding(installTheme);
     // Confirm sources and dual output status
     await confirmDefaultSources(t);
     t.true(await isDisplayed('i[data-testid=dual-output-inactive]'), 'Single output enabled.');
@@ -262,33 +286,28 @@ test.skip('Go through onboarding as a new user and install theme', async t => {
   const login = true;
   const newUser = true;
   const installTheme = true;
-  const hasDefaultSources = false;
 
-  await goThroughOnboarding(t, login, newUser, installTheme, async () => {
+  await goThroughOnboarding(t, login, newUser, async () => {
+    await finishOnboarding(installTheme);
     // Confirm sources and dual output status
-    await confirmDefaultSources(t, hasDefaultSources);
+    await confirmDefaultSources(t, DefaultSourcesCheck.CheckOverlaySources);
     t.true(await isDisplayed('i[data-testid=dual-output-inactive]'), 'Single output enabled.');
   });
 
   t.pass();
 });
 
-// CASE 5: No user logged in during onboarding, no theme installed, then log in new user
+// CASE 5: New user, no theme installed, skip hardware config
 test('Login new user after onboarding skipped', async t => {
   const login = false;
   const newUser = false;
   const installTheme = false;
 
-  await goThroughOnboarding(t, login, newUser, installTheme, async () => {
-    // login new user after onboarding
-    await clickIfDisplayed('li[data-testid=nav-auth]');
-
-    await isDisplayed('button=Log in with Twitch');
-    await logIn(t, 'twitch', { prime: false }, false, false, true);
-    await sleep(1000);
+  await goThroughOnboarding(t, login, newUser, async () => {
+    await finishOnboarding(installTheme, HardwareConfigButtons.Skip);
 
     // Confirm switched to scene with default sources and dual output status
-    await confirmDefaultSources(t);
+    await confirmDefaultSources(t, DefaultSourcesCheck.NoDefaultSources);
     t.true(await isDisplayed('i[data-testid=dual-output-inactive]'), 'Dual output not enabled.');
   });
 

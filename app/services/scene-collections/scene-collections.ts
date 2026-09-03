@@ -54,6 +54,7 @@ import {
   SceneCollectionMigrationError,
   SceneCollectionOperationalError,
 } from './errors';
+import { ENotificationType, NotificationsService } from 'services/notifications';
 
 const uuid = window['require']('uuid/v4');
 
@@ -92,6 +93,9 @@ interface ILoadedCollectionData {
 
 const DEFAULT_COLLECTION_NAME = 'Scenes';
 
+const COORDINATE_MIGRATION_BLOCKED_NOTIFICATION_CODE =
+  'SCENE_COLLECTION_COORDINATE_MIGRATION_BLOCKED';
+
 /**
  * V2 of the scene collections service:
  * - Completely asynchronous
@@ -118,6 +122,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   @Inject() private widgetsService: WidgetsService;
   @Inject() private virtualWebcamService: VirtualWebcamService;
   @Inject() private fileManagerService: FileManagerService;
+  @Inject() private notificationsService: NotificationsService;
 
   collectionAdded = new Subject<ISceneCollectionsManifestEntry>();
   collectionRemoved = new Subject<ISceneCollectionsManifestEntry>();
@@ -132,6 +137,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    */
   private collectionLoaded = false;
   private coordinateMigrationBlockedCollectionId: string | null = null;
+  private coordinateMigrationBlockedNotificationId: number | null = null;
 
   /**
    * Whether the error dialogue is currently open.
@@ -321,6 +327,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
       this.setupEmptyCollection();
     }
 
+    this.setCoordinateMigrationBlockedCollection(null);
     this.collectionLoaded = true;
     await this.save();
     this.collectionSwitched.next(collection);
@@ -518,6 +525,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
 
     this.collectionSwitched.next(collection);
 
+    this.setCoordinateMigrationBlockedCollection(null);
     this.collectionLoaded = true;
     await this.save();
   }
@@ -659,6 +667,9 @@ export class SceneCollectionsService extends Service implements ISceneCollection
         await this.handleCollectionLoadError();
         this.setupEmptyCollection();
       }
+      if (this.activeCollection?.id === id) {
+        this.setCoordinateMigrationBlockedCollection(null);
+      }
       this.collectionLoaded = true;
       return;
     }
@@ -714,7 +725,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
         if (migrationFallbackData) {
           await this.deloadPartialApplicationState();
           await this.loadDataIntoApplicationState(migrationFallbackData, false);
-          this.coordinateMigrationBlockedCollectionId = id;
+          this.setCoordinateMigrationBlockedCollection(id);
           this.collectionLoaded = true;
           console.error(
             'Coordinate migration was not persisted because the collection did not load completely.',
@@ -738,14 +749,14 @@ export class SceneCollectionsService extends Service implements ISceneCollection
       console.error('Scene collection was loaded but there were no scenes.');
       this.setupEmptyCollection();
       this.collectionLoaded = true;
-      if (loadedResult.coordinateMigrationRequired) {
-        this.coordinateMigrationBlockedCollectionId = id;
-      }
+      this.setCoordinateMigrationBlockedCollection(
+        loadedResult.coordinateMigrationRequired ? id : null,
+      );
       return;
     }
 
     this.stateService.writeDataToCollectionFile(id, loadedData, true);
-    this.coordinateMigrationBlockedCollectionId = null;
+    this.setCoordinateMigrationBlockedCollection(null);
     this.collectionLoaded = true;
 
     if (loadedResult.coordinateMigrationRequired) {
@@ -825,6 +836,33 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     );
   }
 
+  private setCoordinateMigrationBlockedCollection(id: string | null) {
+    this.coordinateMigrationBlockedCollectionId = id;
+
+    if (id) {
+      if (this.coordinateMigrationBlockedNotificationId != null) return;
+
+      const notification = this.notificationsService.push({
+        code: COORDINATE_MIGRATION_BLOCKED_NOTIFICATION_CODE,
+        type: ENotificationType.WARNING,
+        lifeTime: -1,
+        playSound: false,
+        message: $t(
+          'This scene collection could not be upgraded. To prevent data loss, changes to it will not be saved until it can be loaded completely.',
+        ),
+      });
+      this.coordinateMigrationBlockedNotificationId = notification.id;
+      return;
+    }
+
+    if (this.coordinateMigrationBlockedNotificationId != null) {
+      // Marking the warning as read removes the persistent toast while retaining
+      // notification history. A later blocked migration can create a fresh warning.
+      this.notificationsService.markAsRead(this.coordinateMigrationBlockedNotificationId);
+      this.coordinateMigrationBlockedNotificationId = null;
+    }
+  }
+
   private async restorePreviousCollection(
     previousCollectionId: string | undefined,
     previousCollectionData: string | undefined,
@@ -837,9 +875,9 @@ export class SceneCollectionsService extends Service implements ISceneCollection
       await this.deloadPartialApplicationState();
       await this.setActiveCollection(previousCollectionId);
       await this.loadDataIntoApplicationState(previousCollectionData, false);
-      this.coordinateMigrationBlockedCollectionId = migrationWasBlocked
-        ? previousCollectionId
-        : null;
+      this.setCoordinateMigrationBlockedCollection(
+        migrationWasBlocked ? previousCollectionId : null,
+      );
       this.collectionLoaded = true;
     } catch (rollbackError: unknown) {
       throw new SceneCollectionOperationalError(

@@ -1,14 +1,5 @@
 {
-  "Compose Tweet": "Tweet schrijven",
-  "Custom URL with": "Aangepaste URL met",
   "Share Your Stream": "Uw stream delen",
-  "Connect to Twitter": "Verbinden met Twitter",
-  "Enable Tweet Sharing": "Delen van tweets inschakelen",
-  "Tweet when going live": "Tweeten bij live gaan",
-  "Unlink Twitter": "Twitter ontkoppelen",
-  "Tweet & Go Live": "Tweeten en live gaan",
-  "Could not connect to Twitter": "Kan geen verbinding maken met Twitter",
-  "Use Streamlabs URL": "Streamlabs-URL gebruiken",
   "X (Twitter) Chat Type": "X (Twitter) Type chat",
   "Disabled": "Uitgeschakeld",
   "Chat will be disabled": "Chat wordt uitgeschakeld",
@@ -21,6 +12,5 @@
   "Subscriber Only": "Alleen voor abonnees",
   "Only viewers that subscribe to you will be able to chat": "Alleen kijkers die zich op je kanaal hebben geabonneerd, kunnen chatten.",
   "You need X premium account to go live on X.": "Je hebt een X premium account nodig om live te gaan op X.",
-  "You need X premium account to go live on X. Click to learn more": "Je hebt een X premium account nodig om live te gaan op X. Klik hier voor meer info.",
-  "Stream Shift Error: Twitter is not live": "Stream Shift fout: Twitter is niet live"
+  "You need X premium account to go live on X. Click to learn more": "Je hebt een X premium account nodig om live te gaan op X. Klik hier voor meer info."
 }

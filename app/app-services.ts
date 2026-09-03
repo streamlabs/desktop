@@ -20,7 +20,7 @@ export { ShortcutsService } from 'services/shortcuts';
 export { CustomizationService } from 'services/customization';
 export { LayoutService } from 'services/layout';
 export { NotificationsService } from 'services/notifications';
-export { OnboardingService } from 'services/onboarding';
+export { ObsModuleLoadNotificationsService } from 'services/obs-module-load-notifications-service';
 export { NavigationService } from 'services/navigation';
 export { PerformanceService } from 'services/performance';
 export { SettingsService, OutputSettingsService, EncoderQueryService } from 'services/settings';
@@ -162,11 +162,11 @@ import { TcpServerService } from './services/api/tcp-server';
 import { MagicLinkService } from './services/magic-link';
 import { UsageStatisticsService } from './services/usage-statistics';
 import { NotificationsService } from './services/notifications';
+import { ObsModuleLoadNotificationsService } from 'services/obs-module-load-notifications-service';
 import { MediaBackupService } from './services/media-backup';
 import { HotkeysService } from './services/hotkeys';
 import { WidgetsService } from './services/widgets';
 import { HostsService } from './services/hosts';
-import { OnboardingService } from './services/onboarding';
 import { CacheUploaderService } from './services/cache-uploader';
 import { StreamlabelsService } from './services/streamlabels';
 import { SceneCollectionsService } from './services/scene-collections';
@@ -258,11 +258,11 @@ export const AppServices = {
   MediaGalleryService,
   UsageStatisticsService,
   NotificationsService,
+  ObsModuleLoadNotificationsService,
   MediaBackupService,
   HotkeysService,
   WidgetsService,
   HostsService,
-  OnboardingService,
   CacheUploaderService,
   StreamlabelsService,
   SceneCollectionsService,

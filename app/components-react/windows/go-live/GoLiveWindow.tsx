@@ -276,18 +276,16 @@ function ModalFooter() {
   }, [isCoolingDown]);
 
   const handleGoLive = useCallback(async () => {
-    if (!isPrime) {
-      // Check to see if the user has a valid display assignment
-      if (!hasValidDisplayAssignment) {
-        alertInfo({
-          name: 'dual-output-info-alert',
-          text: $t(
-            'To use Dual Output you must stream to at least one horizontal and one vertical platform.',
-          ),
-        });
+    // Check to see if the user has at least one horizontal and one vertical target
+    if (!hasValidDisplayAssignment) {
+      alertInfo({
+        name: 'dual-output-info-alert',
+        text: $t(
+          'To use Dual Output you must stream to at least one horizontal and one vertical platform.',
+        ),
+      });
 
-        return;
-      }
+      return;
     }
 
     // Check for incompatible codec before going live (non-stream-shift case)

@@ -1,16 +1,13 @@
 {
-  "You do not have any notifications": "Nemáte žádná oznámení",
   "Your stream is currently offline": "Váš stream je momentálně offline",
   "Your stream is experiencing issues": "Ve vašem streamu došlo k problémům",
   "Your stream is experiencing minor issues": "Ve vašem streamu došlo k menším problémům",
   "Live Stats": "Statistiky živého vysílání",
   "Performance Notifications": "Upozornění na výkon",
   "Click on a stat to add it to your footer": "Kliknutím na statistiku ji přidáte na zápatí",
-  "Click to add this info to your footer": "Kliknutím přidáte tyto informace na zápatí",
   "When Streamlabs detects performance issues with your stream, such as dropped frames, lagged frames, or a stream disconnection, troubleshooting notifications will be sent to you here.": "Kdykoli software Streamlabs zjistí problémy s výkonem v kontextu vašeho streamování, jako jsou nechtěně vynechané snímky, snímky se zpožděním nebo odpojení streamu, odešle vám oznámení s radami pro řešení problému.",
   "Click to add %{stat} info to your footer": "Kliknutím přidáte statistiku %{stat} na zápatí",
   "CPU": "CPU",
   "FPS": "FPS",
-  "dropped frames": "vynechané snímky",
   "bandwidth": "rychlost připojení"
 }

@@ -256,6 +256,7 @@
   "FPS Denominator": "Знаменатель FPS",
   "FPS Value": "Значение FPS",
   "The resolution must be in the format [width]x[height] (i.e. 1920x1080)": "Разрешение нужно указать в формате [ширина]x[высота] (например, 1920x1080)",
+  "Failed to update the video resolution.": "Failed to update the video resolution.",
   "Custom": "Польз.",
   "Custom Base Resolution": "Пользовательское базовое разрешение",
   "Custom Output Resolution": "Пользовательское выходное разрешение",
@@ -320,5 +321,11 @@
   "Deleting your cache directory will cause you to lose some settings.": "Deleting your cache directory will cause you to lose some settings.",
   "Do not delete your cache directory unless instructed to do so by a Streamlabs staff member.": "Do not delete your cache directory unless instructed to do so by a Streamlabs staff member.",
   "Enable reporting additional information on a crash (requires restart).": "Enable reporting additional information on a crash (requires restart).",
-  "Use stream output": "Use stream output"
+  "Use stream output": "Use stream output",
+  "Currently Loaded App": "Currently Loaded App",
+  "Token": "Token",
+  "Unload": "Unload",
+  "Invalid Scene Collection": "Invalid Scene Collection",
+  "Successfully converted scene collection.": "Successfully converted scene collection.",
+  "Output Scene": "Output Scene"
 }

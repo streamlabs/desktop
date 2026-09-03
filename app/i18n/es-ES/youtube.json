@@ -1,15 +1,6 @@
 {
-  "YouTube stream status": "Estado de stream de YouTube",
-  "Waiting for YouTube to receive the video signal...": "Esperando a que YouTube reciba la señal de vídeo...",
-  "Testing your broadcast...": "Probando su transmisión...",
-  "Finalizing broadcast testing...": "Finalizando pruebas de transmisión...",
-  "Publishing to your YouTube channel...": "Publicando en su canal de YouTube...",
-  "Waiting broadcast to be published...": "Esperando a que se publique la transmisión...",
   "You're live!": "¡Está en directo!",
-  "Waiting for broadcast to be published...": "Esperando a que se publique la transmisión...",
   "Working on your live stream": "Trabajando en su stream en tiempo real",
-  "Your stream will start shortly. You can close this window.": "Su stream se iniciará enseguida. Puede cerrar esta ventana.",
-  "Go to YouTube Live Dashboard": "Ir a panel de YouTube en directo",
   "Create New Event": "Crear evento nuevo",
   "YouTube Chat": "Chat de YouTube",
   "This action cannot be performed inside Streamlabs Desktop. To interact with chat, you can open this chat in a web browser.": "Esta acción no se puede realizar dentro de Streamlabs Desktop. Para interactuar con el chat, puede abrir este chat en un navegador web.",
@@ -49,7 +40,7 @@
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "La imagen en miniatura de YouTube es demasiado grande. El tamaño máximo es de 2 MB.",
   "Please upload thumbnail manually on YouTube.": "Sube la miniatura manualmente en YouTube.",
   "Stream Shift Error: YouTube is not live": "Error de Stream Shift: YouTube no está transmitiendo en directo",
-  "Error starting vertical stream in YouTube dual streaming": "Error al iniciar el stream vertical en el streaming dual de YouTube",
+  "Error starting vertical stream in YouTube dual streaming.": "Error starting vertical stream in YouTube dual streaming.",
   "YouTube service is temporarily unavailable": "YouTube service is temporarily unavailable",
   "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support": "YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support"
 }

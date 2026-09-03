@@ -8,7 +8,6 @@
   "Browse the Gallery": "Procházet galerii",
   "Cancel": "Zrušit",
   "OK": "OK",
-  "Select": "Vybrat",
   "You don't have any uploaded files!": "Nemáte žádné odeslané soubory!",
   "You don't have any uploaded images!": "Nemáte žádné odeslané obrázky!",
   "You don't have any uploaded sounds!": "Nemáte žádné odeslané zvuky!",
@@ -19,7 +18,6 @@
   "Stock Files": "Zdrojové soubory",
   "My Uploads": "Moje odeslané soubory",
   "Not a supported file type": "Nepodporovaný typ souboru",
-  "Downloading...": "Stahování...",
   "Uploading...": "Odesílání...",
   "URL Copied": "Adresa URL zkopírována",
   "Failed to copy URL": "Zkopírování adresy URL se nezdařilo",
@@ -29,7 +27,9 @@
   "No Sound": "Bez zvuku",
   "No Media": "Žádné médium",
   "Change Link": "Změnit odkaz",
-  "Pick From Gallery": "Vybrat z galerie",
   "Clear Link": "Vymazat odkaz",
-  "Media URL": "Adresa URL média"
+  "Media URL": "Adresa URL média",
+  "Only .jpeg and .png is supported": "Only .jpeg and .png is supported",
+  "This file could not be uploaded": "This file could not be uploaded",
+  "You must have Streamlabs Ultra to use this media": "You must have Streamlabs Ultra to use this media"
 }

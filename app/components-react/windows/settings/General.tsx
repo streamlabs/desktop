@@ -9,6 +9,7 @@ import path from 'path';
 import { getDefined } from '../../../util/properties-type-guards';
 import { useVuex } from 'components-react/hooks';
 import { useRealmObject } from 'components-react/hooks/realm';
+import { EOnboardingSteps } from 'services/onboarding/onboarding-v2';
 
 export function GeneralSettings() {
   return (
@@ -44,7 +45,7 @@ function ExtraSettings() {
     UserService,
     CustomizationService,
     AppService,
-    OnboardingService,
+    OnboardingV2Service,
     WindowsService,
     StreamlabelsService,
     RecordingModeService,
@@ -70,14 +71,13 @@ function ExtraSettings() {
   }
 
   function configureDefaults() {
-    OnboardingService.actions.start({ isHardware: true });
+    OnboardingV2Service.actions.showSingletonStep(EOnboardingSteps.Devices);
     WindowsService.actions.closeChildWindow();
   }
 
   function importFromObs() {
     // TODO: there's no check that OBS is installed like in Onboarding
-    OnboardingService.actions.setImport('obs');
-    OnboardingService.actions.start({ isImport: true });
+    OnboardingV2Service.actions.showObsImport();
     WindowsService.actions.closeChildWindow();
   }
 

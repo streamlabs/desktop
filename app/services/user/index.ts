@@ -21,7 +21,6 @@ import Utils from 'services/utils';
 import { WindowsService } from 'services/windows';
 import { $t, I18nService } from 'services/i18n';
 import uuid from 'uuid/v4';
-import { OnboardingService } from 'services/onboarding';
 import { NavigationService } from 'services/navigation';
 import { SettingsService } from 'services/settings';
 import * as obs from '../../../obs-api';
@@ -39,7 +38,7 @@ import { JsonrpcService } from 'services/api/jsonrpc';
 import * as remote from '@electron/remote';
 import { TikTokService } from 'services/platforms/tiktok';
 import { TTikTokLiveScopeTypes } from 'services/platforms/tiktok/api';
-import { UsageStatisticsService } from 'app-services';
+import { OnboardingV2Service, UsageStatisticsService } from 'app-services';
 import { debounce } from 'lodash-decorators';
 import { getOS, OS } from 'util/operating-systems';
 import { URLSearchParams } from 'url';
@@ -314,7 +313,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   @Inject() private customizationService: CustomizationService;
   @Inject() private sceneCollectionsService: SceneCollectionsService;
   @Inject() private windowsService: WindowsService;
-  @Inject() private onboardingService: OnboardingService;
+  @Inject() private onboardingV2Service: OnboardingV2Service;
   @Inject() private navigationService: NavigationService;
   @Inject() private settingsService: SettingsService;
   @Inject() private streamSettingsService: StreamSettingsService;
@@ -614,7 +613,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       this.sceneCollectionsService.newUserFirstLogin = true;
     }
 
-    if (!isOnboardingTest) this.onboardingService.finish();
+    if (!isOnboardingTest) this.onboardingV2Service.actions.closeOnboarding();
   }
 
   /**
@@ -1136,7 +1135,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
 
   async showLogin() {
     if (this.isLoggedIn) await this.logOut();
-    this.onboardingService.start({ isLogin: true });
+    this.onboardingV2Service.actions.showLogin();
   }
 
   /**

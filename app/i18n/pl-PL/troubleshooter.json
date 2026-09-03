@@ -1,9 +1,7 @@
 {
   "Troubleshooter": "Narzędzie do rozwiązywania problemów",
   "Open Settings": "Otwórz ustawienia",
-  " Streamlabs has detected dropped frames": "Streamlabs wykrył zgubione klatki",
   "What does this mean?": "Co to znaczy?",
-  " Some frames have not been uploaded. This problem is usually related to a poor network connection.": " Część klatek nie zostało przesłanych. Ten problem jest zwykle powiązany ze słabym połączeniem sieciowym.",
   "What can I do?": "Co mogę zrobić?",
   "Check the health of your Internet connection": "Sprawdź stan połączenia z internetem",
   "Change your ingest server": "Zmień serwer przyjmujący Twoje dane",
@@ -23,5 +21,7 @@
   "Disable FreeSync or GSync in your Driver": "Wyłącz FreeSync lub GSync w swoim sterowniku",
   "Lower graphics settings until you stop lagging frames": "Zmniejsz ustawienia graficzne, aż klatki przestaną się opóźniać",
   "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "Wyłącz sprzętowe dekodowanie przy każdym źródle mediów (To przeniesie zużycie na CPU z GPU)",
-  "CPU usage threshold in Dual Output mode": "Próg użycia procesora w trybie Dual Output"
+  "CPU usage threshold in Dual Output mode": "Próg użycia procesora w trybie Dual Output",
+  "Streamlabs has detected dropped frames": "Streamlabs has detected dropped frames",
+  "Some frames have not been uploaded. This problem is usually related to a poor network connection.": "Some frames have not been uploaded. This problem is usually related to a poor network connection."
 }

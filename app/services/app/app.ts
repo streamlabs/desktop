@@ -1,6 +1,5 @@
 import uuid from 'uuid/v4';
 import { mutation, StatefulService } from 'services/core/stateful-service';
-import { OnboardingService } from 'services/onboarding';
 import { HotkeysService } from 'services/hotkeys';
 import { UserService } from 'services/user';
 import { ShortcutsService } from 'services/shortcuts';
@@ -49,6 +48,7 @@ import { NavigationService } from 'services/navigation';
 import { StreamingService } from 'services/streaming';
 import { VirtualWebcamService } from 'services/virtual-webcam';
 import { WebsocketService } from 'services/websocket';
+import { ObsModuleLoadNotificationsService } from 'services/obs-module-load-notifications-service';
 import {
   executeImmediateShutdownSteps,
   IWorkerShutdownPlan,
@@ -73,7 +73,6 @@ export interface IRunInLoadingModeOptions {
  * mainly calls into other services to do the heavy lifting.
  */
 export class AppService extends StatefulService<IAppState> {
-  @Inject() onboardingService: OnboardingService;
   @Inject() sceneCollectionsService: SceneCollectionsService;
   @Inject() hotkeysService: HotkeysService;
   @Inject() userService: UserService;
@@ -113,6 +112,7 @@ export class AppService extends StatefulService<IAppState> {
   @Inject() private streamingService: StreamingService;
   @Inject() private virtualWebcamService: VirtualWebcamService;
   @Inject() private websocketService: WebsocketService;
+  @Inject() private obsModuleLoadNotificationsService: ObsModuleLoadNotificationsService;
 
   static initialState: IAppState = {
     loading: true,
@@ -164,6 +164,7 @@ export class AppService extends StatefulService<IAppState> {
       // TODO: We should come up with a better way to handle this.
       await this.sceneCollectionsService.initialize();
     }
+    await this.obsModuleLoadNotificationsService.refreshModuleLoadNotifications();
 
     this.dismissablesService.initialize();
 

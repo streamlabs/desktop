@@ -14,12 +14,20 @@
   "Select an Event": "Выберите событие",
   "Trigger Type": "Тип триггера",
   "Trigger Name": "Имя триггера",
-  "Select a Trigger Type": "Выберите тип триггера",
   "Triggers are set up and ready to go! Feel free to uncheck the ones you don't want.": "Триггеры настроены и готовы к работе! Снимите флажки с тех, которые вы не хотите использовать.",
   "Global": "Глобальные",
   "Triggered when a player reaches a cumulative total number of events.": "Срабатывает, когда игрок достигает совокупного количества событий.",
   "Triggered when a player achieves a consecutive number of events without interruption.": "Срабатывает, когда игрок достигает определенного количества событий подряд без перерыва.",
   "No triggers available.": "Доступные триггеры отсутствуют.",
   "Animation Settings": "Настройки анимации",
-  "Real time alerts reacting to your in game events.": "Оповещения в реальном времени, реагирующие на события в игре."
+  "Real time alerts reacting to your in game events.": "Оповещения в реальном времени, реагирующие на события в игре.",
+  "Event Type": "Event Type",
+  "General Game Settings": "General Game Settings",
+  "Enable All": "Enable All",
+  "Disable All": "Disable All",
+  "Total Amount": "Total Amount",
+  "Level Range Type": "Level Range Type",
+  "Action Settings": "Action Settings",
+  "Text To Speech": "Text To Speech",
+  "Voice": "Voice"
 }

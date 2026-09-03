@@ -9,10 +9,6 @@ import { $t } from 'services/i18n';
 import styles from './Common.m.less';
 import Tabs from 'components-react/shared/Tabs';
 import { invalidFps, IVideoInfoValue, TDisplayType, ObsSetting } from 'services/settings-v2/video';
-import { AuthModal } from 'components-react/shared/AuthModal';
-import Utils from 'services/utils';
-import DualOutputToggle from '../../shared/DualOutputToggle';
-import { ObsGenericSettingsForm } from './ObsSettings';
 
 const CANVAS_RES_OPTIONS = [
   { label: '1920x1080', value: '1920x1080' },
@@ -57,15 +53,9 @@ const FPS_OPTIONS = [
 
 class VideoSettingsModule {
   service = Services.VideoSettingsService;
-  userService = Services.UserService;
   dualOutputService = Services.DualOutputService;
   streamingService = Services.StreamingService;
   virtualWebcamService = Services.VirtualWebcamService;
-  tiktokService = Services.TikTokService;
-
-  get display(): TDisplayType {
-    return this.state.display;
-  }
 
   get cantEditFields(): boolean {
     return (
@@ -96,8 +86,6 @@ class VideoSettingsModule {
 
   state = injectState({
     display: 'horizontal' as TDisplayType,
-    showModal: false,
-    showDualOutputSettings: this.dualOutputService.views.dualOutputMode,
     customBaseRes: !this.baseResOptions.find(
       opt => opt.value === this.service.values.horizontal.baseRes,
     ),
@@ -348,14 +336,12 @@ class VideoSettingsModule {
           settings[`${otherPrefix}Height`] = Number(height);
         }
       }
-      Promise.resolve(this.service.actions.setSettings(settings, display)).catch(
-        (error: unknown) => {
-          message.error({
-            content:
-              error instanceof Error ? error.message : $t('Failed to update the video resolution.'),
-          });
-        },
-      );
+      this.service.actions.return.setSettings(settings, display).catch((error: unknown) => {
+        message.error({
+          content:
+            error instanceof Error ? error.message : $t('Failed to update the video resolution.'),
+        });
+      });
     }
   }
 
@@ -480,100 +466,17 @@ class VideoSettingsModule {
     this.state.setFpsDen(this.service.values[display].fpsDen);
     this.state.setFpsInt(this.service.values[display].fpsInt);
   }
-
-  toggleDualOutput(value: boolean) {
-    if (this.userService.isLoggedIn) {
-      this.setShowDualOutput();
-    } else {
-      this.handleShowModal(value);
-    }
-  }
-
-  setShowDualOutput() {
-    if (Services.StreamingService.views.isMidStreamMode) {
-      message.error({
-        content: $t('Cannot toggle Dual Output while live.'),
-      });
-    } else if (Services.TransitionsService.views.studioMode) {
-      message.error({
-        content: $t('Cannot toggle Dual Output while in Studio Mode.'),
-      });
-    } else {
-      // show warning message if selective recording is active
-      if (
-        !this.dualOutputService.views.dualOutputMode &&
-        Services.StreamingService.state.selectiveRecording
-      ) {
-        remote.dialog
-          .showMessageBox(Utils.getChildWindow(), {
-            title: 'Vertical Display Disabled',
-            message: $t(
-              'Dual Output can’t be displayed - Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable selective recording from Sources to set up Dual Output.',
-            ),
-            buttons: [$t('OK')],
-          })
-          .catch(() => {});
-      }
-
-      // toggle dual output
-      this.dualOutputService.actions.setDualOutputModeIfPossible(
-        !this.dualOutputService.views.dualOutputMode,
-      );
-      this.state.setShowDualOutputSettings(!this.state.showDualOutputSettings);
-      Services.UsageStatisticsService.recordFeatureUsage('DualOutput');
-      Services.UsageStatisticsService.recordAnalyticsEvent('DualOutput', {
-        type: 'ToggleOnDualOutput',
-        source: 'VideoSettings',
-        isPrime: this.userService.isPrime,
-        platforms: this.streamingService.views.linkedPlatforms,
-        tiktokStatus: this.tiktokService.scope,
-      });
-    }
-  }
-
-  handleShowModal(status: boolean) {
-    Services.WindowsService.actions.updateStyleBlockers('child', status);
-    this.state.setShowModal(status);
-  }
-
-  handleAuth() {
-    Services.WindowsService.actions.closeChildWindow();
-    this.userService.actions.showLogin();
-    const onboardingCompleted = Services.OnboardingService.onboardingCompleted.subscribe(() => {
-      Services.DualOutputService.actions.setDualOutputModeIfPossible();
-      Services.SettingsService.actions.showSettings('Video');
-      onboardingCompleted.unsubscribe();
-    });
-  }
 }
 
 export function VideoSettings() {
-  const {
-    values,
-    metadata,
-    showDualOutputSettings,
-    showModal,
-    cantEditFields,
-    onChange,
-    setDisplay,
-    toggleDualOutput,
-    handleAuth,
-    handleShowModal,
-  } = useModule(VideoSettingsModule);
+  const { values, metadata, onChange, setDisplay } = useModule(VideoSettingsModule);
 
   return (
     <>
       <div className={styles.videoSettingsHeader}>
         <h2>{$t('Video')}</h2>
-        <DualOutputToggle
-          value={showDualOutputSettings}
-          onChange={toggleDualOutput}
-          disabled={cantEditFields}
-          placement="bottomRight"
-          lightShadow
-        />
+        <Tabs onChange={setDisplay} />
       </div>
-      {showDualOutputSettings && <Tabs onChange={setDisplay} />}
 
       <div className={styles.formSection}>
         <FormFactory
@@ -584,13 +487,6 @@ export function VideoSettings() {
           name="video-settings"
         />
       </div>
-      <AuthModal
-        id="login-modal"
-        prompt={$t('Please log in to enable dual output. Would you like to log in now?')}
-        showModal={showModal}
-        handleShowModal={handleShowModal}
-        handleAuth={handleAuth}
-      />
     </>
   );
 }

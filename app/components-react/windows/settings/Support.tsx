@@ -152,14 +152,14 @@ function QuickfixSection() {
 }
 
 function ImportSection() {
-  const { HostsService, OnboardingService, UrlService, WindowsService } = Services;
-  const { obsImported } = useVuex(() => ({
-    obsImported: OnboardingService.state.importedFrom === 'obs',
+  const { HostsService, OnboardingV2Service, UrlService, WindowsService } = Services;
+  const { obsInstalled } = useVuex(() => ({
+    obsInstalled: OnboardingV2Service.modifiers.obsInstalled,
   }));
 
   function importFromObs() {
-    OnboardingService.actions.setImport('obs');
-    OnboardingService.actions.start({ isImport: true });
+    if (!obsInstalled) return;
+    OnboardingV2Service.actions.showObsImport();
     WindowsService.actions.closeChildWindow();
   }
 
@@ -167,31 +167,11 @@ function ImportSection() {
     <ObsSettingsSection title={$t('Import your settings')}>
       <div className={styles.sectionGrid}>
         <h3>{$t('OBS Importer')}</h3>
-        {obsImported ? (
-          <p>{$t('Import your native OBS settings and sources.')}</p>
-        ) : (
-          <p>{$t('Import your OBS settings and sources with one click.')}</p>
-        )}
-        {obsImported ? (
-          <SupportLinks
-            inline
-            links={[
-              {
-                label: $t('Imported from OBS'),
-                icon: 'icon-download',
-                disabled: true,
-                className: styles.obsImportSuccess,
-                onClick: () => {},
-              },
-            ]}
-          />
-        ) : (
-          <SupportLinks
-            inline
-            links={[{ label: $t('OBS Import'), icon: 'icon-download', onClick: importFromObs }]}
-          />
-        )}
-
+        <p>{$t('Import your native OBS settings and sources.')}</p>
+        <SupportLinks
+          inline
+          links={[{ label: $t('OBS Import'), icon: 'icon-download', onClick: importFromObs }]}
+        />
         <h3>{$t('Streamelements Importer')}</h3>
         <p>
           {$t(

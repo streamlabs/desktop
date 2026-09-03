@@ -78,8 +78,7 @@ export class MediaShareService extends WidgetSettingsService<IMediaShareData> {
       pricePerSecond: {
         title: $t('Price Per Second'),
         tooltip: $t(
-          'In order to control length, you can decide how much it costs per second to share media. Setting this to 0.30' +
-            ' would mean that for $10, media would play for 30 seconds. The default value is 0.10.',
+          'In order to control length, you can decide how much it costs per second to share media. Setting this to 0.30 would mean that for $10, media would play for 30 seconds. The default value is 0.10.',
         ),
       },
       minAmount: {
@@ -91,8 +90,7 @@ export class MediaShareService extends WidgetSettingsService<IMediaShareData> {
       maxDuration: {
         title: $t('Max Duration'),
         tooltip: $t(
-          'The maximum duration in seconds that media can be played, regardless of amount donated.' +
-            ' The default value is 60 seconds.',
+          'The maximum duration in seconds that media can be played, regardless of amount donated. The default value is 60 seconds.',
         ),
         isInteger: true,
       },

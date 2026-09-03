@@ -465,6 +465,7 @@ export class Scene {
 
   addSources(nodes: TSceneNodeInfo[]) {
     const obsSceneItems: Dictionary<obs.ISceneItem> = {};
+    const obsScene = this.getObsScene();
 
     // tslint:disable-next-line:no-parameter-reassignment TODO
     nodes = nodes.filter(sceneNode => {
@@ -494,7 +495,7 @@ export class Scene {
         blendingMethod: sceneNode.blendingMethod!,
       };
 
-      obsSceneItems[sceneNode.id] = this.getObsScene().add(source.getObsInput(), transform, video);
+      obsSceneItems[sceneNode.id] = obsScene.add(source.getObsInput(), transform, video);
       return true;
     });
 
