@@ -14,10 +14,9 @@ import { initStore, useController } from '../hooks/zustand';
 import { useVuex } from '../hooks';
 import Translate from 'components-react/shared/Translate';
 import uuid from 'uuid/v4';
-import { EMenuItemKey } from 'services/side-nav';
+import { ENavMenuKey } from 'services/nav-menu';
 import { $i } from 'services/utils';
 import { IRecordingEntry } from 'services/recording-mode';
-import { EAvailableFeatures } from 'services/incremental-rollout';
 import { EAiDetectionState, EGame } from 'services/highlighter/models/ai-highlighter.models';
 import {
   EHighlighterView,
@@ -39,7 +38,6 @@ class RecordingHistoryController {
   private NotificationsService = Services.NotificationsService;
   private HighlighterService = Services.HighlighterService;
   private NavigationService = Services.NavigationService;
-  private IncrementalRolloutService = Services.IncrementalRolloutService;
   store = initStore<IRecordingHistoryStore>({
     showSLIDModal: false,
     showEditModal: false,
@@ -154,7 +152,7 @@ class RecordingHistoryController {
         {
           view: EHighlighterView.STREAM,
         },
-        EMenuItemKey.Highlighter,
+        ENavMenuKey.Highlighter,
       );
       return;
     }

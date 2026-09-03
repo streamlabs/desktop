@@ -10,7 +10,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import { getConfigByGame } from 'services/highlighter/models/game-config.models';
 import { $t } from 'services/i18n/index';
-import { EMenuItemKey } from 'services/side-nav';
+import { ENavMenuKey, TNavMenuKey } from 'services/nav-menu';
 import { IOverlayCollectionParams, TOverlayType } from 'services/user';
 import { $i } from 'services/utils';
 import { WidgetDisplayData } from 'services/widgets';
@@ -66,7 +66,6 @@ export default function AILanding() {
     NavigationService,
     PlatformAppsService,
     ScenesService,
-    SideNavService,
     SourcesService,
     UsageStatisticsService,
     UserService,
@@ -115,8 +114,7 @@ export default function AILanding() {
     trackEvent('browse-overlays');
     const type: TOverlayType = 'overlays';
     const params: IOverlayCollectionParams = { collection: 'reactive-overlays' };
-    NavigationService.actions.navigate('BrowseOverlays', { type, ...params });
-    SideNavService.actions.setCurrentMenuItem(EMenuItemKey.Themes);
+    NavigationService.actions.navigate('BrowseOverlays', { type, ...params }, ENavMenuKey.Themes);
   }
 
   const [addWidgetState, setAddWidgetState] = useState<'idle' | 'loading' | 'success'>('idle');
@@ -169,8 +167,11 @@ export default function AILanding() {
   async function onLaunchAgentClick() {
     trackEvent('launch-agent');
     await PlatformAppsService.actions.return.refreshProductionApps();
-    NavigationService.actions.navigate('PlatformAppMainPage', { appId: AGENT_APP_ID });
-    SideNavService.actions.setCurrentMenuItem(`sub-${AGENT_APP_ID}`);
+    NavigationService.actions.navigate(
+      'PlatformAppMainPage',
+      { appId: AGENT_APP_ID },
+      `sub-${AGENT_APP_ID}` as TNavMenuKey,
+    );
   }
 
   const showcasedGames = [

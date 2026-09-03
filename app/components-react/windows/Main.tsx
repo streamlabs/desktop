@@ -8,7 +8,7 @@ import { useDebounce, useVuex } from 'components-react/hooks';
 import * as appPages from 'components-react/pages';
 import TitleBar from 'components-react/shared/TitleBar';
 import { Services } from 'components-react/service-provider';
-import SideNav from 'components-react/sidebar/SideNav';
+import NavMenu from 'components-react/nav-menu/NavMenu';
 import LiveDock from 'components-react/root/LiveDock';
 import StudioFooter from 'components-react/root/StudioFooter';
 import Loader from 'components-react/pages/Loader';
@@ -280,8 +280,8 @@ export default function Main() {
         })}
       >
         {page !== 'Onboarding' && !showLoadingSpinner && (
-          <div className={styles.sideNavContainer}>
-            <SideNav />
+          <div className={styles.navMenuContainer}>
+            <NavMenu />
           </div>
         )}
         {renderDock && leftDock && (

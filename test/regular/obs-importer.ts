@@ -82,7 +82,7 @@ test('OBS Importer', async t => {
   await switchCollection('Collection 2');
 
   // check settings
-  await (await client.$('.side-nav .icon-settings')).click();
+  await (await client.$('.nav-menu .icon-settings')).click();
   await focusChild();
   await (await client.$('li=Output')).click();
   const form = new FormMonkey(t);
