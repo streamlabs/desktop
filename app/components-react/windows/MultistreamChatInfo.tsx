@@ -37,7 +37,7 @@ export default function MultistreamChatInfo() {
       icon: 'twitter',
       name: $t('X (Twitter)'),
       read: true,
-      write: false,
+      write: true,
     },
     {
       icon: 'instagram',
@@ -55,7 +55,7 @@ export default function MultistreamChatInfo() {
       icon: 'kick',
       name: $t('Kick'),
       read: true,
-      write: false,
+      write: true,
     },
   ];
 

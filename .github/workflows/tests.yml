@@ -1,0 +1,173 @@
+name: 'Frontend Tests'
+
+on:
+  push:
+    branches: [staging, master]
+  pull_request:
+    branches: [staging, master]
+    types: [synchronize, opened, reopened]
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: true
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  testable-changes:
+    name: 'Detect Changes Requiring Testing'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d
+        id: filter
+        with:
+          predicate-quantifier: 'every'
+          filters: |
+            src:
+              - '!app/i18n/**'
+              - '!.github/instructions/**'
+              - '!**/*.md'
+              - '!*.yml'
+              - '!package.json'
+              - '!yarn.lock'
+    outputs:
+      has-testable-changes: ${{ steps.filter.outputs.src }}
+
+  prepare-frontend-tests:
+    name: 'Prepare Frontend Tests'
+    needs: testable-changes
+    if: needs.testable-changes.outputs.has-testable-changes == 'true' || github.event_name == 'push'
+    runs-on: windows-2022
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.18.0'
+          cache: 'yarn'
+      - name: 'Install Dependencies'
+        run: yarn install --immutable 2>&1
+      - name: 'Install Visual Studio Redistributable DLLs'
+        run: |
+          $url = "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+          $output = "$env:TEMP\vc_redist.x64.exe"
+          Invoke-WebRequest -Uri $url -OutFile $output
+          Start-Process -FilePath $output -ArgumentList "/install", "/quiet", "/norestart" -Wait
+        shell: powershell
+      - name: 'Install Electron'
+        run: node node_modules/electron/install.js
+      - name: 'Compile Assets'
+        run: yarn ci:compile
+      - name: 'Package Test Build'
+        run: 7z a -t7z -mx=1 -bb0 "$env:RUNNER_TEMP\frontend-test-build.7z" . '-xr!.git'
+        shell: powershell
+      - name: 'Upload Test Build'
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-test-build
+          path: ${{ runner.temp }}/frontend-test-build.7z
+          compression-level: 0
+          retention-days: 1
+
+  test:
+    name: 'Frontend Tests'
+    needs: prepare-frontend-tests
+    runs-on: [self-hosted, desktop-frontend]
+    timeout-minutes: 80
+
+    strategy:
+      matrix:
+        chunk: [1, 2, 3, 4]
+      max-parallel: 4
+      fail-fast: false
+
+    steps:
+      - name: 'Download Test Build'
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-test-build
+          path: ${{ runner.temp }}/frontend-test-artifact
+      - name: 'Prepare Test Runner'
+        run: |
+          'obs64','crash-handler','crash-handler-process','chromedriver','electron' | ForEach-Object {
+            Get-Process -Name $_ -ErrorAction Ignore | Stop-Process -Force -ErrorAction Ignore
+          }
+          Remove-Item -Recurse -Force "$env:TEMP\slobs-test*" -ErrorAction Ignore
+
+          $projectDirectory = Join-Path $env:RUNNER_TEMP 'frontend-test-project'
+          New-Item -ItemType Directory -Force -Path $projectDirectory | Out-Null
+          7z x "$env:RUNNER_TEMP\frontend-test-artifact\frontend-test-build.7z" "-o$projectDirectory" -y -bb0
+          Set-Location $projectDirectory
+
+          if (-not (Test-Path package.json)) {
+            throw "Test build does not contain package.json at $projectDirectory"
+          }
+        shell: powershell
+      - name: 'Run Tests'
+        run: yarn ci:tests
+        working-directory: ${{ runner.temp }}/frontend-test-project
+        env:
+          SLOBS_TEST_USER_POOL_TOKEN: ${{ secrets.SLOBS_TEST_USER_POOL_TOKEN }}
+          BROWSER_SOURCE_HARDWARE_ACCELERATION: 'OFF'
+          SLOBS_TEST_STREAM_KEY: ${{ secrets.SLOBS_TEST_STREAM_KEY }}
+          SLOBS_TEST_RUN_CHUNK: '${{ matrix.chunk }}/4'
+
+  es-lint-strict-nulls:
+    name: 'Check ESLint and Strict Nulls Regression'
+    needs: testable-changes
+    if: needs.testable-changes.outputs.has-testable-changes == 'true' || github.event_name == 'push'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.18.0'
+          cache: 'yarn'
+      - name: 'Install Dependencies'
+        run: yarn install --immutable 2>&1
+      - name: 'ESLint'
+        run: yarn eslint
+      - name: 'Check regressions in files with strictNullChecks'
+        run: yarn compile:strictnulls
+
+  # mac-os:
+  #   name: 'MacOS'
+  #   runs-on: macOs-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: 'Install Dependencies'
+  #       run: yarn install --immutable --network-timeout 1000000 2>&1
+  #     - name: 'Install Electron'
+  #       run: node node_modules/electron/install.js
+  #     - name: 'ESLint'
+  #       run: yarn eslint
+  #     - name: 'Compile Assets'
+  #       run: yarn ci:compile
+
+  results:
+    name: 'CI Results'
+    if: always()
+    # Note: every required job in this workflow must be accounted in the results collation
+    # to work properly as a required check
+    needs: [testable-changes, prepare-frontend-tests, test, es-lint-strict-nulls]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check CI Results'
+        run: |
+          if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}; then
+            echo "One or more required jobs failed or were cancelled."
+            exit 1
+          fi
+          echo "All required jobs succeeded or were skipped."
