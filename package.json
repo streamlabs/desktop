@@ -163,6 +163,7 @@
     "cross-env": "7.0.3",
     "css-element-queries": "1.2.3",
     "css-loader": "2.1.1",
+    "deasync": "0.1.31",
     "dotenv": "8.2.0",
     "electron": "43.2.0",
     "electron-builder": "26.15.7",
@@ -254,7 +255,6 @@
     "zustand": "^4.4.1"
   },
   "optionalDependencies": {
-    "deasync": "0.1.31",
     "node-gyp": "12.2.0",
     "node-win32-np": "1.0.6"
   },
