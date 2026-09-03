@@ -410,17 +410,16 @@ module.exports = async (basePath: string) => {
     e.returnValue = bundleNames;
   });
 
-  electron.session.defaultSession?.protocol.registerFileProtocol('slbundle', (request, cb) => {
+  electron.session.defaultSession?.protocol.handle('slbundle', request => {
     const url = new URL(request.url);
     const bundleName = url.pathname.replace('/', '') as TBundleName;
 
     if (!useLocalBundles && bundlePathsMap[bundleName]) {
-      cb({ path: bundlePathsMap[bundleName] });
-      return;
+      return electron.net.fetch(bundlePathsMap[bundleName]);
     }
 
     console.log(`Using local bundle for ${bundleName}`);
-    cb({ path: path.join(localBase, localManifest[bundleName]) });
+    return electron.net.fetch(path.join(localBase, localManifest[bundleName]));
   });
 
   // Use a local web server to serve source maps in development.

@@ -67,9 +67,10 @@ export class AuthorizationModule extends Module {
       win.webContents.openDevTools({ mode: 'detach' });
     }
 
-    win.webContents.session.protocol.registerFileProtocol('slobs-oauth', req => {
+    win.webContents.session.protocol.handle('slobs-oauth', req => {
       eventHandler({ type: EAuthWindowEventType.AuthRedirect, url: req.url });
       win.close();
+      return new Response();
     });
 
     win.on('closed', () => {
