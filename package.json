@@ -260,7 +260,7 @@
   "resolutions": {
     "minimist": "1.2.6",
     "xmlhttprequest-ssl": "1.6.2",
-    "ws@~6.1.0": "6.2.2",
+    "ws@~6.1.0": "8.21.0",
     "got@^9.6.0": "11.8.5",
     "napi-build-utils": "2.0.0"
   },
