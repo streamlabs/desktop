@@ -1374,7 +1374,7 @@ export class StreamingService
     const destinations = settings.platforms;
     const platforms = (Object.keys(destinations) as TPlatform[]).filter(
       dest => destinations[dest]?.enabled && this.views.supports('stream-schedule', [dest]),
-    ) as ('facebook' | 'youtube')[];
+    ) as TPlatform[];
     for (const platform of platforms) {
       const service = getPlatformService(platform);
       assertIsDefined(service.scheduleStream);

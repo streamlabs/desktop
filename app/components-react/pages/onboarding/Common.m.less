@@ -1,0 +1,60 @@
+.title-container {
+  width: 100%;
+  text-align: center;
+  font-size: 52px;
+
+  h1 {
+    display: inline-block;
+    font-size: 52px;
+  }
+
+  margin-bottom: 40px;
+  // margin-top: 144px;
+}
+
+.subtitle-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 35px;
+}
+
+.option-card {
+  position: relative;
+  background: var(--teal);
+  padding: 16px;
+  overflow: hidden;
+  height: 80px;
+  border-radius: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 280px;
+  border: none;
+  color: var(--action-button-text);
+
+  &:hover {
+    cursor: pointer;
+  }
+
+  h2 {
+    font-size: 20px;
+    margin-bottom: 0;
+  }
+
+  svg,
+  i {
+    position: absolute;
+    bottom: -50%;
+    right: 0;
+    opacity: 0.25;
+  }
+
+  i {
+    color: #000;
+  }
+}
+
+.onboarding-button {
+  padding: 12px 24px !important;
+  line-height: normal !important;
+}
