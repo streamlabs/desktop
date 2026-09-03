@@ -34,6 +34,14 @@ export type TAutoOptimizerStreamSetupType =
 
 export type TAutoOptimizerMeasurementMode = 'active' | 'estimated';
 export type TAutoOptimizerConfidence = 'high' | 'medium' | 'low';
+export type TAutoOptimizerHost = 'go-live' | 'settings';
+export type TAutoOptimizerLaunchResult =
+  | 'opened'
+  | 'busy'
+  | 'not-logged-in'
+  | 'output-active'
+  | 'hdr'
+  | 'no-destinations';
 export type TAutoOptimizerPromptState = 'unseen' | 'declined' | 'completed';
 export type TAutoOptimizerOutputKind = 'standard' | 'twitch-enhanced-broadcasting';
 export type TAutoOptimizerProbePlatform = 'twitch' | 'youtube';
@@ -144,6 +152,8 @@ export interface IAutoOptimizerError {
 }
 
 export interface IAutoOptimizerState {
+  /** Window currently presenting the transient optimizer run. */
+  host: TAutoOptimizerHost | null;
   stage: TAutoOptimizerStage;
   phase: TAutoOptimizerPhase;
   progress: number;

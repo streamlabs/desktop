@@ -3,7 +3,7 @@ import isEqual from 'lodash/isEqual';
 import Vue from 'vue';
 import * as obs from '../../../obs-api';
 import { Inject, mutation, PersistentStatefulService, ViewHandler } from 'services/core';
-import { IGoLiveSettings } from 'services/streaming';
+import { IGoLiveSettings, StreamingService } from 'services/streaming';
 import { SettingsService } from 'services/settings';
 import { OutputSettingsService } from 'services/settings/output';
 import { EncoderQueryService } from 'services/settings/output/encoder-query';
@@ -45,6 +45,8 @@ import {
   IAutoOptimizerResult,
   IAutoOptimizerState,
   IAutoOptimizerStreamSetup,
+  TAutoOptimizerHost,
+  TAutoOptimizerLaunchResult,
   TAutoOptimizerPhase,
   TAutoOptimizerPromptState,
 } from './types';
@@ -69,6 +71,7 @@ interface IPhaseStep {
 
 function initialFlowState(): Omit<IAutoOptimizerState, 'promptStates'> {
   return {
+    host: null,
     stage: 'idle',
     phase: null,
     progress: 0,
@@ -108,6 +111,10 @@ class AutoConfigViews extends ViewHandler<IAutoOptimizerState> {
     return this.state.stage !== 'idle';
   }
 
+  isOpenFor(host: TAutoOptimizerHost) {
+    return this.isOpen && this.state.host === host;
+  }
+
   get canCancel() {
     return this.state.stage === 'running';
   }
@@ -115,10 +122,12 @@ class AutoConfigViews extends ViewHandler<IAutoOptimizerState> {
 
 /**
  * Runs Auto Optimizer in the hidden worker. Visible renderers receive only
- * serializable data with credentials removed; the Go Live draft, credentials,
- * OSN run handle, and rollback snapshot never leave the worker.
+ * serializable data with credentials removed; selected stream settings,
+ * credentials, the OSN run handle, and rollback snapshots never leave the
+ * worker.
  */
 export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerState> {
+  @Inject() private streamingService: StreamingService;
   @Inject() private outputSettingsService: OutputSettingsService;
   @Inject() private encoderQueryService: EncoderQueryService;
   @Inject() private settingsService: SettingsService;
@@ -147,7 +156,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     };
   }
 
-  private frozenGoLiveSettings: IGoLiveSettings | null = null;
+  private frozenStreamSettings: IGoLiveSettings | null = null;
   private pendingGoLiveProfile: IAutoOptimizerProfile | null = null;
   private nativeRun: IAutoConfigRun | null = null;
   private runToken = 0;
@@ -168,11 +177,17 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
    * Optimizer opens and streaming must pause.
    */
   async interceptGoLive(settings: IGoLiveSettings): Promise<boolean> {
-    const frozen = this.cloneGoLiveSettings(settings);
+    const frozen = this.cloneStreamSettings(settings);
     if (this.state.stage !== 'idle') {
       // Repeated confirmation for the same draft resumes its current flow. A
       // genuinely new draft must never receive a stale recommendation.
-      if (this.frozenGoLiveSettings && isEqual(frozen, this.frozenGoLiveSettings)) return true;
+      if (
+        this.state.host === 'go-live' &&
+        this.frozenStreamSettings &&
+        isEqual(frozen, this.frozenStreamSettings)
+      ) {
+        return true;
+      }
       ++this.runToken;
       try {
         await this.cleanupOptimizerRun();
@@ -180,40 +195,60 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         // Keep the newly validated draft even when the previous optimizer run
         // cannot be cleaned up. A later continuation must never stream stale
         // selections.
-        this.frozenGoLiveSettings = this.deepFreeze(frozen);
+        this.frozenStreamSettings = this.deepFreeze(frozen);
+        this.SET_HOST('go-live');
         this.SET_ERROR(this.toError(e, 'cleanup_failed', false));
         return true;
       }
-      this.frozenGoLiveSettings = null;
+      this.frozenStreamSettings = null;
       this.RESET_FLOW();
     }
-    this.pendingGoLiveProfile = null;
+    if (this.pendingGoLiveProfile) {
+      const profileIsCompatible =
+        this.userService.isLoggedIn &&
+        !this.settingsService.views.hasHDRSettings &&
+        isAutoOptimizerProfileCompatible(
+          this.pendingGoLiveProfile,
+          frozen,
+          this.dualOutputService.state.dualOutputMode && this.userService.isLoggedIn,
+          this.twitchService.views.hasTwitchDualStreamAccess,
+        );
+      if (profileIsCompatible) return false;
+      this.pendingGoLiveProfile = null;
+    }
     if (!this.userService.isLoggedIn) return false;
     if (this.settingsService.views.hasHDRSettings) return false;
     if (this.getPromptState() !== 'unseen') return false;
 
-    this.frozenGoLiveSettings = this.deepFreeze(frozen);
-    const streamSetup = prepareAutoConfigStreamSetup(
-      describeAutoOptimizerStreamSetup(
-        frozen,
-        this.dualOutputService.state.dualOutputMode && this.userService.isLoggedIn,
-        this.twitchService.views.hasTwitchDualStreamAccess,
-      ),
-    );
-    if (!streamSetup.outputs.some(output => output.destinations.length > 0)) {
-      this.frozenGoLiveSettings = null;
-      return false;
-    }
+    return this.initializeFlow(frozen, 'go-live') === 'opened';
+  }
 
-    this.SET_INTRO(streamSetup);
-    return true;
+  /** Start an explicit optimizer run for the currently saved stream setup. */
+  openFromSettings(): TAutoOptimizerLaunchResult {
+    if (this.state.stage !== 'idle') return 'busy';
+    if (!this.userService.isLoggedIn) return 'not-logged-in';
+    if (!this.streamingService.views.isIdle || this.streamingService.views.isReplayBufferActive) {
+      return 'output-active';
+    }
+    // Auto Optimizer currently benchmarks an SDR H.264 pipeline. P010 and
+    // I010 settings need a format-aware hardware workload before they can be
+    // recommended safely.
+    if (this.settingsService.views.hasHDRSettings) return 'hdr';
+
+    this.pendingGoLiveProfile = null;
+    const result = this.initializeFlow(
+      this.cloneStreamSettings(this.streamingService.views.savedSettings),
+      'settings',
+    );
+    if (result === 'opened') void this.startOptimization();
+    return result;
   }
 
   async startOptimization(): Promise<void> {
-    if (!this.frozenGoLiveSettings || !this.state.streamSetup) {
+    if (!this.frozenStreamSettings || !this.state.streamSetup) {
       this.SET_ERROR({
-        code: 'missing_go_live_settings',
-        message: 'Go Live settings are no longer available. Please reopen Go Live.',
+        code: 'missing_stream_settings',
+        message: 'Stream settings are no longer available. Close Auto Optimizer and try again.',
         retryable: false,
       });
       return;
@@ -297,26 +332,29 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   async retry(): Promise<void> {
-    if (!this.frozenGoLiveSettings) return;
+    const host = this.state.host;
+    if (!this.frozenStreamSettings || !host) return;
     this.SET_INTRO(
       prepareAutoConfigStreamSetup(
         describeAutoOptimizerStreamSetup(
-          this.frozenGoLiveSettings,
+          this.frozenStreamSettings,
           this.dualOutputService.state.dualOutputMode && this.userService.isLoggedIn,
           this.twitchService.views.hasTwitchDualStreamAccess,
         ),
       ),
+      host,
     );
     await this.startOptimization();
   }
 
   async cancelOptimization(): Promise<void> {
     const streamSetup = this.state.streamSetup;
+    const host = this.state.host;
     ++this.runToken;
     this.SET_CANCELLING();
     try {
       await this.cleanupOptimizerRun();
-      if (streamSetup) this.SET_INTRO(streamSetup);
+      if (streamSetup && host) this.SET_INTRO(streamSetup, host);
       else this.RESET_FLOW();
     } catch (e: unknown) {
       this.SET_ERROR(this.toError(e, 'cleanup_failed', false));
@@ -324,7 +362,13 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   async skipAndContinue(): Promise<boolean> {
-    if (!this.frozenGoLiveSettings || this.state.stage === 'cancelling') return false;
+    if (
+      this.state.host !== 'go-live' ||
+      !this.frozenStreamSettings ||
+      this.state.stage === 'cancelling'
+    ) {
+      return false;
+    }
     ++this.runToken;
     this.SET_CANCELLING();
     try {
@@ -334,14 +378,20 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       return false;
     }
     this.setPromptState('declined');
-    this.frozenGoLiveSettings = null;
+    this.frozenStreamSettings = null;
     this.pendingGoLiveProfile = null;
     this.RESET_FLOW();
     return true;
   }
 
   async continueWithoutOptimization(): Promise<boolean> {
-    if (!this.frozenGoLiveSettings || this.state.stage === 'cancelling') return false;
+    if (
+      this.state.host !== 'go-live' ||
+      !this.frozenStreamSettings ||
+      this.state.stage === 'cancelling'
+    ) {
+      return false;
+    }
     ++this.runToken;
     this.SET_CANCELLING();
     try {
@@ -350,15 +400,15 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       this.SET_ERROR(this.toError(e, 'cleanup_failed', false));
       return false;
     }
-    this.frozenGoLiveSettings = null;
+    this.frozenStreamSettings = null;
     this.pendingGoLiveProfile = null;
     this.RESET_FLOW();
     return true;
   }
 
-  async applyAndContinue(): Promise<boolean> {
+  async applyRecommendations(): Promise<boolean> {
     if (
-      !this.frozenGoLiveSettings ||
+      !this.frozenStreamSettings ||
       !this.state.result ||
       !this.state.streamSetup ||
       this.state.stage !== 'review'
@@ -386,7 +436,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
     this.pendingGoLiveProfile = profile;
     this.setPromptState('completed');
-    this.frozenGoLiveSettings = null;
+    this.frozenStreamSettings = null;
     this.RESET_FLOW();
     return true;
   }
@@ -417,7 +467,8 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       : null;
   }
 
-  async close(): Promise<void> {
+  async dismiss(): Promise<void> {
+    const host = this.state.host;
     ++this.runToken;
     try {
       await this.cleanupOptimizerRun();
@@ -425,16 +476,16 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       this.SET_ERROR(this.toError(e, 'cleanup_failed', false));
       return;
     }
-    this.frozenGoLiveSettings = null;
-    this.pendingGoLiveProfile = null;
+    this.frozenStreamSettings = null;
+    if (host === 'go-live') this.pendingGoLiveProfile = null;
     this.RESET_FLOW();
-    await this.windowsService.closeChildWindow();
+    if (host === 'go-live') await this.windowsService.closeChildWindow();
   }
 
-  /** Called when Electron closes the Go Live window. */
-  async closeFromHost(): Promise<void> {
-    this.pendingGoLiveProfile = null;
-    if (this.state.stage === 'idle') return;
+  /** Clean up a run when the window presenting it is closed. */
+  async closeFromHost(host: TAutoOptimizerHost): Promise<void> {
+    if (this.state.host !== host) return;
+    if (host === 'go-live') this.pendingGoLiveProfile = null;
 
     ++this.runToken;
     try {
@@ -443,7 +494,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       this.SET_ERROR(this.toError(e, 'cleanup_failed', false));
       return;
     }
-    this.frozenGoLiveSettings = null;
+    this.frozenStreamSettings = null;
     this.RESET_FLOW();
   }
 
@@ -465,16 +516,38 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         preservePrevWindow: true,
       });
     } else {
-      // Browsing overlays abandons the confirmed Go Live setup. Clear the
-      // review synchronously so the next Go Live entry starts with settings.
-      // Keep the prompt unseen because no recommendation was applied or skipped.
+      const host = this.state.host;
+      // Browsing overlays abandons the current review. Clear it synchronously
+      // and keep the prompt unseen because no recommendation was applied or
+      // skipped.
       ++this.runToken;
-      this.frozenGoLiveSettings = null;
-      this.pendingGoLiveProfile = null;
+      this.frozenStreamSettings = null;
+      if (host === 'go-live') this.pendingGoLiveProfile = null;
       this.RESET_FLOW();
       this.navigationService.navigate('BrowseOverlays');
       this.windowsService.closeChildWindow();
     }
+  }
+
+  private initializeFlow(
+    settings: IGoLiveSettings,
+    host: TAutoOptimizerHost,
+  ): TAutoOptimizerLaunchResult {
+    this.frozenStreamSettings = this.deepFreeze(settings);
+    const streamSetup = prepareAutoConfigStreamSetup(
+      describeAutoOptimizerStreamSetup(
+        settings,
+        this.dualOutputService.state.dualOutputMode && this.userService.isLoggedIn,
+        this.twitchService.views.hasTwitchDualStreamAccess,
+      ),
+    );
+    if (!streamSetup.outputs.some(output => output.destinations.length > 0)) {
+      this.frozenStreamSettings = null;
+      return 'no-destinations';
+    }
+
+    this.SET_INTRO(streamSetup, host);
+    return 'opened';
   }
 
   private getProbeResources(): AutoConfigProbeResources {
@@ -752,7 +825,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     this.SET_PROMPT_STATE(this.getIdentityKey(), promptState);
   }
 
-  private cloneGoLiveSettings(settings: IGoLiveSettings): IGoLiveSettings {
+  private cloneStreamSettings(settings: IGoLiveSettings): IGoLiveSettings {
     const copy = cloneDeep(settings);
     Object.values(copy.platforms).forEach(platform => {
       if (platform) delete platform.video;
@@ -780,8 +853,14 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   }
 
   @mutation()
-  private SET_INTRO(streamSetup: IAutoOptimizerStreamSetup) {
+  private SET_HOST(host: TAutoOptimizerHost) {
+    this.state.host = host;
+  }
+
+  @mutation()
+  private SET_INTRO(streamSetup: IAutoOptimizerStreamSetup, host: TAutoOptimizerHost) {
     Object.assign(this.state, {
+      host,
       stage: 'intro',
       phase: null,
       progress: 0,

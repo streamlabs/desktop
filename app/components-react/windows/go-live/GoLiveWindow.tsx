@@ -27,7 +27,7 @@ import GoLiveAutoOptimizer from './GoLiveAutoOptimizer';
 export default function GoLiveWindow() {
   const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
     destroy() {
-      void Services.AutoConfigService.actions.return.closeFromHost();
+      void Services.AutoConfigService.actions.return.closeFromHost('go-live');
       // clear failed checks and warnings on window close
       if (module.checklist.startVideoTransmission !== 'done') {
         Services.StreamingService.actions.resetInfo();
@@ -37,7 +37,7 @@ export default function GoLiveWindow() {
 
   const shouldShowSettings = ['empty', 'prepopulate', 'waitForNewSettings'].includes(lifecycle);
   const shouldShowChecklist = ['runChecklist', 'live'].includes(lifecycle);
-  const optimizerOpen = useVuex(() => Services.AutoConfigService.views.isOpen);
+  const optimizerOpen = useVuex(() => Services.AutoConfigService.views.isOpenFor('go-live'));
 
   return (
     <ModalLayout
