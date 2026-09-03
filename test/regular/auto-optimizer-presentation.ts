@@ -9,7 +9,7 @@ import {
   shouldShowAutoOptimizerMeasurementReason,
   successfulProbePlatforms,
 } from '../../app/components-react/shared/auto-optimizer/presentation';
-import { IAutoOptimizerProgressDetail } from '../../app/services/auto-config/types';
+import { IAutoOptimizerProgressDetail } from '../../app/services/auto-optimizer/types';
 
 function progressDetail(
   patch: Partial<IAutoOptimizerProgressDetail> = {},

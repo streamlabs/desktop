@@ -321,7 +321,7 @@ function AutoOptimizerSettings() {
   async function resetAutoOptimizer() {
     setResetting(true);
     try {
-      const reset = await Services.AutoConfigService.actions.return.resetPromptState();
+      const reset = await Services.AutoOptimizerService.actions.return.resetPromptState();
       if (!reset) {
         message.warning($t('Auto Optimizer is already in progress. Try again after it finishes.'));
         return;

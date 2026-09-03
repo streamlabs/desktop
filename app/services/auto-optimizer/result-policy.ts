@@ -1,6 +1,6 @@
 import {
-  IAutoConfigRequestAdditionalVideo,
-  IAutoConfigAdditionalVideoTuple,
+  IAutoOptimizerRequestAdditionalVideo,
+  IAutoOptimizerAdditionalVideoTuple,
   IAutoOptimizerProbeEvidence,
   TAutoOptimizerEncoderFamily,
   TAutoOptimizerMeasurementMode,
@@ -13,7 +13,7 @@ import {
 } from './resolution-policy';
 import { AUTO_OPTIMIZER_MAX_RECOMMENDED_BITRATE_KBPS } from './bitrate-policy';
 
-export interface IAutoConfigRecommendationCandidate {
+export interface IAutoOptimizerRecommendationCandidate {
   width: number;
   height: number;
   fpsNum: number;
@@ -24,18 +24,18 @@ export interface IAutoConfigRecommendationCandidate {
   encoderTitle?: string;
   codec?: string;
   preset?: string;
-  additionalVideo?: IAutoConfigAdditionalVideoTuple;
+  additionalVideo?: IAutoOptimizerAdditionalVideoTuple;
 }
 
-type TNativeRecommendation = IAutoConfigRecommendationCandidate;
+type TNativeRecommendation = IAutoOptimizerRecommendationCandidate;
 
-export interface IValidatedAutoConfigRecommendation {
+export interface IValidatedAutoOptimizerRecommendation {
   width: number;
   height: number;
   fpsNum: number;
   fpsDen: number;
   bitrateKbps: number;
-  additionalVideo?: IAutoConfigAdditionalVideoTuple;
+  additionalVideo?: IAutoOptimizerAdditionalVideoTuple;
   encoder: {
     id: string;
     family: TAutoOptimizerEncoderFamily;
@@ -84,7 +84,7 @@ function isSupportedEncoderFamily(value: unknown): value is TAutoOptimizerEncode
  * Reject the whole recommendation if any field is malformed or inconsistent;
  * do not repair fields independently.
  */
-export function validateAutoConfigRecommendation(
+export function validateAutoOptimizerRecommendation(
   recommendation: TNativeRecommendation | null | undefined,
   context: {
     measurementMode: TAutoOptimizerMeasurementMode;
@@ -105,9 +105,9 @@ export function validateAutoConfigRecommendation(
     currentFpsNum?: number;
     currentFpsDen?: number;
     /** Vertical settings paired with the horizontal request in the same workload test. */
-    additionalVideo?: IAutoConfigRequestAdditionalVideo;
+    additionalVideo?: IAutoOptimizerRequestAdditionalVideo;
   },
-): IValidatedAutoConfigRecommendation | null {
+): IValidatedAutoOptimizerRecommendation | null {
   const value = recommendation as Partial<TNativeRecommendation> | null | undefined;
   if (
     !value ||
@@ -135,12 +135,12 @@ export function validateAutoConfigRecommendation(
   }
 
   const additionalValue = value.additionalVideo as
-    | Partial<IAutoConfigAdditionalVideoTuple>
+    | Partial<IAutoOptimizerAdditionalVideoTuple>
     | null
     | undefined;
   if (Boolean(context.additionalVideo) !== Boolean(additionalValue)) return null;
 
-  let additionalVideo: IAutoConfigAdditionalVideoTuple | undefined;
+  let additionalVideo: IAutoOptimizerAdditionalVideoTuple | undefined;
   if (context.additionalVideo && additionalValue) {
     const current = context.additionalVideo.current;
     const limits = context.additionalVideo.limits;

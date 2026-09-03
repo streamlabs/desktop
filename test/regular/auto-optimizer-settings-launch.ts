@@ -10,7 +10,7 @@ test('Settings launch enforces runtime eligibility and owns the opened flow', as
 
   const result = (await t.context.app.client.execute(`
     return (() => {
-      const service = window.servicesManager.getResource('AutoConfigService');
+      const service = window.servicesManager.getResource('AutoOptimizerService');
       const prototype = Object.getPrototypeOf(service);
       const openFromSettings = prototype.openFromSettings;
 
@@ -110,7 +110,7 @@ test('applying from Settings completes the shared prompt and retains a Go Live p
 
   const result = (await t.context.app.client.execute(`
     return (async () => {
-      const service = window.servicesManager.getResource('AutoConfigService');
+      const service = window.servicesManager.getResource('AutoOptimizerService');
       const prototype = Object.getPrototypeOf(service);
       const mutations = prototype.originalMethods;
       const output = {

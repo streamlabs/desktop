@@ -2,11 +2,11 @@ import test from 'ava';
 import {
   describeAutoOptimizerStreamSetup,
   isAutoOptimizerProfileCompatible,
-} from '../../app/services/auto-config/stream-setup';
+} from '../../app/services/auto-optimizer/stream-setup';
 import {
   IAutoOptimizerProfile,
   IAutoOptimizerStreamSetup,
-} from '../../app/services/auto-config/types';
+} from '../../app/services/auto-optimizer/types';
 import { autoOptimizerStandardOutputForDisplay } from '../../app/services/streaming/auto-optimizer-profile-policy';
 import { IGoLiveSettings } from '../../app/services/streaming';
 

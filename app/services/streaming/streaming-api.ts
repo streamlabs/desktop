@@ -13,7 +13,7 @@ import { IPatreonStartStreamOptions } from 'services/platforms/patreon';
 import { IVideo } from 'obs-studio-node';
 import { TDisplayType } from 'services/settings-v2';
 import { ITargetLiveData } from 'services/restream';
-import type { IAutoOptimizerProfile } from 'services/auto-config/types';
+import type { IAutoOptimizerProfile } from 'services/auto-optimizer/types';
 
 export enum EStreamingState {
   Offline = 'offline',

@@ -1,15 +1,15 @@
 import test from 'ava';
 import {
   acceptAutoOptimizerResult,
-  IAutoConfigAttemptContext,
-} from '../../app/services/auto-config/result-acceptance';
-import { IAutoConfigNativeResult } from '../../app/services/auto-config/types';
+  IAutoOptimizerAttemptContext,
+} from '../../app/services/auto-optimizer/result-acceptance';
+import { IAutoOptimizerNativeResult } from '../../app/services/auto-optimizer/types';
 
 function copy<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
-function standardAttempt(): IAutoConfigAttemptContext {
+function standardAttempt(): IAutoOptimizerAttemptContext {
   return {
     streamSetup: {
       type: 'direct-single',
@@ -59,7 +59,7 @@ function standardAttempt(): IAutoConfigAttemptContext {
   };
 }
 
-function standardNativeResult(): IAutoConfigNativeResult {
+function standardNativeResult(): IAutoOptimizerNativeResult {
   return {
     status: 'complete',
     outputs: [

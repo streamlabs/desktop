@@ -85,11 +85,11 @@ export default function Settings() {
     WindowsService,
     DismissablesService,
     UsageStatisticsService,
-    AutoConfigService,
+    AutoOptimizerService,
   } = Services;
 
   const currentTab = useRealmObject(NavigationService.state).currentSettingsTab;
-  const optimizerOpen = useVuex(() => AutoConfigService.views.isOpenFor('settings'));
+  const optimizerOpen = useVuex(() => AutoOptimizerService.views.isOpenFor('settings'));
 
   const { isPrime, isLoggedIn, username, platform, showDismissable } = useVuex(() => ({
     isPrime: UserService.views.isPrime,
@@ -106,7 +106,7 @@ export default function Settings() {
     SettingsService.actions.loadSettingsIntoStore();
 
     return () => {
-      void AutoConfigService.actions.return.closeFromHost('settings');
+      void AutoOptimizerService.actions.return.closeFromHost('settings');
     };
   }, []);
 

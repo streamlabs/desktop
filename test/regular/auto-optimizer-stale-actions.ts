@@ -10,7 +10,7 @@ test('closing Auto Optimizer waits for recommendation application and invalidate
 
   const result = (await t.context.app.client.execute(`
     return (async () => {
-      const service = window.servicesManager.getResource('AutoConfigService');
+      const service = window.servicesManager.getResource('AutoOptimizerService');
       const prototype = Object.getPrototypeOf(service);
       const mutations = prototype.originalMethods;
       let releaseApplication;
@@ -188,7 +188,7 @@ test('a stale Skip cannot mutate state after Close joins its cleanup', async t =
 
   const result = (await t.context.app.client.execute(`
     return (async () => {
-      const service = window.servicesManager.getResource('AutoConfigService');
+      const service = window.servicesManager.getResource('AutoOptimizerService');
       const prototype = Object.getPrototypeOf(service);
       const mutations = prototype.originalMethods;
       let releaseCleanup;

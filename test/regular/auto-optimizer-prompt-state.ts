@@ -10,7 +10,7 @@ test('resetting the Auto Optimizer prompt is identity-scoped and idle-only', asy
 
   const result = (await t.context.app.client.execute(`
     return (() => {
-      const service = window.servicesManager.getResource('AutoConfigService');
+      const service = window.servicesManager.getResource('AutoOptimizerService');
       const prototype = Object.getPrototypeOf(service);
       const resetPromptState = prototype.resetPromptState;
       const resetPromptStateMutation = prototype.originalMethods.RESET_PROMPT_STATE;
@@ -62,7 +62,7 @@ test('initializing Auto Optimizer restores prompt history without mutating flow 
 
   const result = (await t.context.app.client.execute(`
     return (() => {
-      const service = window.servicesManager.getResource('AutoConfigService');
+      const service = window.servicesManager.getResource('AutoOptimizerService');
       const Service = service.constructor;
       const prototype = Object.getPrototypeOf(service);
       const storageKey = Service.localStorageKey;

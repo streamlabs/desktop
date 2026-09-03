@@ -1,15 +1,18 @@
 import test from 'ava';
 import {
-  autoConfigPhaseStepDisposition,
-  autoConfigPhaseStepKey,
-  isEligibleAutoConfigDualOutputActiveStreamSetup,
-  isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup,
-  isValidAutoConfigActiveProbeCoverage,
-  prepareAutoConfigStreamSetup,
-  sanitizeAutoConfigProgressDetail,
-  sanitizeAutoConfigProbeEvidence,
-} from '../../app/services/auto-config/probe-policy';
-import { IAutoConfigEvent, IAutoOptimizerStreamSetup } from '../../app/services/auto-config/types';
+  autoOptimizerPhaseStepDisposition,
+  autoOptimizerPhaseStepKey,
+  isEligibleAutoOptimizerDualOutputActiveStreamSetup,
+  isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup,
+  isValidAutoOptimizerActiveProbeCoverage,
+  prepareAutoOptimizerStreamSetup,
+  sanitizeAutoOptimizerProgressDetail,
+  sanitizeAutoOptimizerProbeEvidence,
+} from '../../app/services/auto-optimizer/probe-policy';
+import {
+  IAutoOptimizerEvent,
+  IAutoOptimizerStreamSetup,
+} from '../../app/services/auto-optimizer/types';
 
 function allProbeCandidates(streamSetup: IAutoOptimizerStreamSetup) {
   return streamSetup.outputs.flatMap(output => output.probeCandidates);
@@ -111,11 +114,11 @@ function enhancedBroadcastingDualOutputStreamSetup(): IAutoOptimizerStreamSetup 
 
 test('mixed Enhanced Broadcasting keeps only its Twitch and YouTube representatives', t => {
   const streamSetup = enhancedBroadcastingDualOutputStreamSetup();
-  t.true(isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(streamSetup));
+  t.true(isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup(streamSetup));
 
-  const filtered = prepareAutoConfigStreamSetup(streamSetup);
+  const filtered = prepareAutoOptimizerStreamSetup(streamSetup);
 
-  t.true(isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(filtered));
+  t.true(isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup(filtered));
   t.deepEqual(
     filtered.outputs.map(output => ({
       outputKind: output.outputKind,
@@ -142,9 +145,9 @@ test('mixed Enhanced Broadcasting keeps only its Twitch and YouTube representati
 
 test('a two-canvas Twitch and YouTube setup keeps one active probe per output', t => {
   const streamSetup = twitchYoutubeDualOutputStreamSetup();
-  t.true(isEligibleAutoConfigDualOutputActiveStreamSetup(streamSetup));
+  t.true(isEligibleAutoOptimizerDualOutputActiveStreamSetup(streamSetup));
 
-  const filtered = prepareAutoConfigStreamSetup(streamSetup);
+  const filtered = prepareAutoOptimizerStreamSetup(streamSetup);
   t.deepEqual(
     filtered.outputs.map(output => [
       output.display,
@@ -164,9 +167,9 @@ test('a two-canvas Twitch and YouTube setup keeps one active probe per output', 
 
 test('Dual Output keeps one supported probe per canvas when other platforms share it', t => {
   const streamSetup = twitchKickYoutubeDualOutputStreamSetup();
-  t.true(isEligibleAutoConfigDualOutputActiveStreamSetup(streamSetup));
+  t.true(isEligibleAutoOptimizerDualOutputActiveStreamSetup(streamSetup));
 
-  const filtered = prepareAutoConfigStreamSetup(streamSetup);
+  const filtered = prepareAutoOptimizerStreamSetup(streamSetup);
   t.deepEqual(
     filtered.outputs.map(output => ({
       destinations: output.destinations.map(destination => destination.platform),
@@ -201,12 +204,12 @@ test('Dual Output selects distinct supported representatives when a canvas has b
     platform: 'youtube',
   });
 
-  const filtered = prepareAutoConfigStreamSetup(streamSetup);
+  const filtered = prepareAutoOptimizerStreamSetup(streamSetup);
   t.deepEqual(
     filtered.outputs.map(output => output.probeCandidates.map(candidate => candidate.platform)),
     [['twitch'], ['youtube']],
   );
-  t.true(isEligibleAutoConfigDualOutputActiveStreamSetup(filtered));
+  t.true(isEligibleAutoOptimizerDualOutputActiveStreamSetup(filtered));
 });
 
 test('Dual Output remains estimate-only when a canvas has no supported representative', t => {
@@ -214,7 +217,7 @@ test('Dual Output remains estimate-only when a canvas has no supported represent
   streamSetup.outputs[1].destinations = [{ platform: 'kick' }];
   streamSetup.outputs[1].probeCandidates = [];
 
-  const filtered = prepareAutoConfigStreamSetup(streamSetup);
+  const filtered = prepareAutoOptimizerStreamSetup(streamSetup);
   t.true(filtered.outputs.every(output => output.measurement === 'estimated'));
   t.deepEqual(allProbeCandidates(filtered), []);
 });
@@ -223,14 +226,14 @@ test('active Dual Output requires a unique probe ID for each output', t => {
   const reusedProbeId = twitchYoutubeDualOutputStreamSetup();
   reusedProbeId.outputs[1].probeCandidates[0].probeId =
     reusedProbeId.outputs[0].probeCandidates[0].probeId;
-  t.false(isEligibleAutoConfigDualOutputActiveStreamSetup(reusedProbeId));
+  t.false(isEligibleAutoOptimizerDualOutputActiveStreamSetup(reusedProbeId));
 });
 
 test('a single multi-destination output nested under Dual Output is estimate-only', t => {
   const streamSetup = sharedCloudStreamSetup();
   streamSetup.type = 'dual-output';
 
-  const filtered = prepareAutoConfigStreamSetup(streamSetup);
+  const filtered = prepareAutoOptimizerStreamSetup(streamSetup);
 
   t.is(filtered.outputs[0].measurement, 'estimated');
   t.is(filtered.outputs[0].estimateReason, 'dual_output');
@@ -258,7 +261,7 @@ test('YouTube display both cannot create two active probe leases', t => {
     outputs,
   };
 
-  const filtered = prepareAutoConfigStreamSetup(streamSetup);
+  const filtered = prepareAutoOptimizerStreamSetup(streamSetup);
 
   t.true(filtered.outputs.every(output => output.measurement === 'estimated'));
   t.deepEqual(allProbeCandidates(filtered), []);
@@ -277,10 +280,10 @@ test('active evidence matches selected platforms and partial coverage requires l
     ],
   };
 
-  t.true(isValidAutoConfigActiveProbeCoverage({ ...partial, confidence: 'low' }));
-  t.false(isValidAutoConfigActiveProbeCoverage({ ...partial, confidence: 'medium' }));
+  t.true(isValidAutoOptimizerActiveProbeCoverage({ ...partial, confidence: 'low' }));
+  t.false(isValidAutoOptimizerActiveProbeCoverage({ ...partial, confidence: 'medium' }));
   t.false(
-    isValidAutoConfigActiveProbeCoverage({
+    isValidAutoOptimizerActiveProbeCoverage({
       ...partial,
       confidence: 'low',
       evidence: [
@@ -293,7 +296,7 @@ test('active evidence matches selected platforms and partial coverage requires l
     }),
   );
   t.false(
-    isValidAutoConfigActiveProbeCoverage({
+    isValidAutoOptimizerActiveProbeCoverage({
       ...partial,
       confidence: 'low',
       evidence: [
@@ -303,7 +306,7 @@ test('active evidence matches selected platforms and partial coverage requires l
     }),
   );
   t.false(
-    isValidAutoConfigActiveProbeCoverage({
+    isValidAutoOptimizerActiveProbeCoverage({
       ...partial,
       confidence: 'low',
       evidence: [{ ...partial.evidence[0], success: false }],
@@ -312,14 +315,14 @@ test('active evidence matches selected platforms and partial coverage requires l
 });
 
 test('sequential platform bandwidth events receive distinct pacing keys', t => {
-  t.is(autoConfigPhaseStepKey('bandwidth', 'twitch'), 'bandwidth:twitch:measuring:0');
-  t.is(autoConfigPhaseStepKey('bandwidth', 'youtube'), 'bandwidth:youtube:measuring:0');
+  t.is(autoOptimizerPhaseStepKey('bandwidth', 'twitch'), 'bandwidth:twitch:measuring:0');
+  t.is(autoOptimizerPhaseStepKey('bandwidth', 'youtube'), 'bandwidth:youtube:measuring:0');
   t.not(
-    autoConfigPhaseStepKey('bandwidth', 'twitch'),
-    autoConfigPhaseStepKey('bandwidth', 'youtube'),
+    autoOptimizerPhaseStepKey('bandwidth', 'twitch'),
+    autoOptimizerPhaseStepKey('bandwidth', 'youtube'),
   );
   t.is(
-    autoConfigPhaseStepKey('bandwidth', 'twitch', 'enhanced_broadcasting_testing_candidate', {
+    autoOptimizerPhaseStepKey('bandwidth', 'twitch', 'enhanced_broadcasting_testing_candidate', {
       width: 1920,
       height: 1080,
       fpsNum: 60,
@@ -328,13 +331,13 @@ test('sequential platform bandwidth events receive distinct pacing keys', t => {
     'bandwidth:twitch:enhanced_broadcasting_testing_candidate:1920x1080:60/1',
   );
   t.not(
-    autoConfigPhaseStepKey('bandwidth', 'twitch', 'enhanced_broadcasting_testing_candidate', {
+    autoOptimizerPhaseStepKey('bandwidth', 'twitch', 'enhanced_broadcasting_testing_candidate', {
       width: 1920,
       height: 1080,
       fpsNum: 60,
       fpsDen: 1,
     }),
-    autoConfigPhaseStepKey('bandwidth', 'twitch', 'enhanced_broadcasting_candidate_rejected', {
+    autoOptimizerPhaseStepKey('bandwidth', 'twitch', 'enhanced_broadcasting_candidate_rejected', {
       width: 1920,
       height: 1080,
       fpsNum: 60,
@@ -342,7 +345,7 @@ test('sequential platform bandwidth events receive distinct pacing keys', t => {
     }),
   );
   t.is(
-    autoConfigPhaseStepKey(
+    autoOptimizerPhaseStepKey(
       'bandwidth',
       'twitch',
       'enhanced_broadcasting_validating_target_cadence',
@@ -351,7 +354,7 @@ test('sequential platform bandwidth events receive distinct pacing keys', t => {
     'bandwidth:twitch:enhanced_broadcasting_validating_target_cadence:1920x1080:60/1',
   );
   t.not(
-    autoConfigPhaseStepKey('bandwidth', 'twitch', 'enhanced_broadcasting_testing_candidate', {
+    autoOptimizerPhaseStepKey('bandwidth', 'twitch', 'enhanced_broadcasting_testing_candidate', {
       width: 1920,
       height: 1080,
       fpsNum: 60,
@@ -364,7 +367,7 @@ test('sequential platform bandwidth events receive distinct pacing keys', t => {
         fpsDen: 1,
       },
     }),
-    autoConfigPhaseStepKey('bandwidth', 'twitch', 'enhanced_broadcasting_testing_candidate', {
+    autoOptimizerPhaseStepKey('bandwidth', 'twitch', 'enhanced_broadcasting_testing_candidate', {
       width: 1920,
       height: 1080,
       fpsNum: 60,
@@ -378,21 +381,21 @@ test('sequential platform bandwidth events receive distinct pacing keys', t => {
       },
     }),
   );
-  t.is(autoConfigPhaseStepKey('hardware', 'youtube'), 'hardware');
+  t.is(autoOptimizerPhaseStepKey('hardware', 'youtube'), 'hardware');
   t.is(
-    autoConfigPhaseStepKey('hardware', null, 'hardware_discovering_encoders'),
+    autoOptimizerPhaseStepKey('hardware', null, 'hardware_discovering_encoders'),
     'hardware:discovering',
   );
   t.is(
-    autoConfigPhaseStepKey('hardware', null, 'hardware_validating_encoder'),
+    autoOptimizerPhaseStepKey('hardware', null, 'hardware_validating_encoder'),
     'hardware:validating:encoder:0x0:0/0',
   );
   t.not(
-    autoConfigPhaseStepKey('hardware', null, 'hardware_testing_encoder'),
-    autoConfigPhaseStepKey('hardware', null, 'hardware_validating_encoder'),
+    autoOptimizerPhaseStepKey('hardware', null, 'hardware_testing_encoder'),
+    autoOptimizerPhaseStepKey('hardware', null, 'hardware_validating_encoder'),
   );
   t.is(
-    autoConfigPhaseStepKey('hardware', null, 'hardware_encoder_selected'),
+    autoOptimizerPhaseStepKey('hardware', null, 'hardware_encoder_selected'),
     'hardware:selected:encoder:0x0:0/0',
   );
   const surfaceAttempt = {
@@ -403,87 +406,97 @@ test('sequential platform bandwidth events receive distinct pacing keys', t => {
     fpsDen: 1,
   };
   t.is(
-    autoConfigPhaseStepKey('hardware', null, 'hardware_testing_encoder_surfaces', surfaceAttempt),
+    autoOptimizerPhaseStepKey(
+      'hardware',
+      null,
+      'hardware_testing_encoder_surfaces',
+      surfaceAttempt,
+    ),
     'hardware:surfaces:obs_nvenc_h264_tex:1920x1080',
   );
   t.is(
-    autoConfigPhaseStepKey('hardware', null, 'hardware_validating_target_cadence', {
+    autoOptimizerPhaseStepKey('hardware', null, 'hardware_validating_target_cadence', {
       ...surfaceAttempt,
       fpsNum: 60,
     }),
     'hardware:target-cadence:obs_nvenc_h264_tex:1920x1080:60/1',
   );
   t.not(
-    autoConfigPhaseStepKey('hardware', null, 'hardware_testing_encoder_surfaces', surfaceAttempt),
-    autoConfigPhaseStepKey('hardware', null, 'hardware_testing_encoder_surfaces', {
+    autoOptimizerPhaseStepKey(
+      'hardware',
+      null,
+      'hardware_testing_encoder_surfaces',
+      surfaceAttempt,
+    ),
+    autoOptimizerPhaseStepKey('hardware', null, 'hardware_testing_encoder_surfaces', {
       ...surfaceAttempt,
       width: 1280,
       height: 720,
     }),
   );
   t.is(
-    autoConfigPhaseStepKey('recommendation', null, 'recommendation_selecting_quality'),
+    autoOptimizerPhaseStepKey('recommendation', null, 'recommendation_selecting_quality'),
     'recommendation:selecting:0',
   );
   t.is(
-    autoConfigPhaseStepKey('recommendation', null, 'recommendation_quality_selected'),
+    autoOptimizerPhaseStepKey('recommendation', null, 'recommendation_quality_selected'),
     'recommendation',
   );
   t.not(
-    autoConfigPhaseStepKey('recommendation', null, 'recommendation_selecting_quality'),
-    autoConfigPhaseStepKey('recommendation', null, 'recommendation_quality_selected'),
+    autoOptimizerPhaseStepKey('recommendation', null, 'recommendation_selecting_quality'),
+    autoOptimizerPhaseStepKey('recommendation', null, 'recommendation_quality_selected'),
   );
   t.is(
-    autoConfigPhaseStepKey('hardware', null, 'hardware_provider_managed'),
-    autoConfigPhaseStepKey('recommendation', null, 'recommendation_provider_managed'),
+    autoOptimizerPhaseStepKey('hardware', null, 'hardware_provider_managed'),
+    autoOptimizerPhaseStepKey('recommendation', null, 'recommendation_provider_managed'),
   );
-  t.is(autoConfigPhaseStepKey('cleanup', null, 'cleanup_resources'), 'cleanup');
+  t.is(autoOptimizerPhaseStepKey('cleanup', null, 'cleanup_resources'), 'cleanup');
   t.is(
-    autoConfigPhaseStepKey('hardware', null, 'hardware_encoder_rejected'),
+    autoOptimizerPhaseStepKey('hardware', null, 'hardware_encoder_rejected'),
     'hardware:rejected:encoder',
   );
   t.is(
-    autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_completed'),
+    autoOptimizerPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_completed'),
     'bandwidth:youtube:youtube_probe_completed:0',
   );
   t.is(
-    autoConfigPhaseStepKey('bandwidth', 'twitch', 'twitch_probe_failed_estimate_used'),
+    autoOptimizerPhaseStepKey('bandwidth', 'twitch', 'twitch_probe_failed_estimate_used'),
     'bandwidth:twitch:twitch_probe_failed_estimate_used:0',
   );
   t.is(
-    autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_source_underfill_completed'),
+    autoOptimizerPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_source_underfill_completed'),
     'bandwidth:youtube:youtube_probe_source_underfill_completed:0',
   );
   t.not(
-    autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_completed'),
-    autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_baseline'),
+    autoOptimizerPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_completed'),
+    autoOptimizerPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_baseline'),
   );
 
   t.not(
-    autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_baseline', {
+    autoOptimizerPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_baseline', {
       targetBitrateKbps: 4500,
     }),
-    autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_baseline', {
+    autoOptimizerPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_baseline', {
       targetBitrateKbps: 6000,
     }),
   );
   t.is(
-    autoConfigPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_measuring', {
+    autoOptimizerPhaseStepKey('bandwidth', 'youtube', 'youtube_probe_measuring', {
       targetBitrateKbps: 4500,
     }),
-    autoConfigPhaseStepKey('bandwidth', 'youtube', 'unknown_native_code', {
+    autoOptimizerPhaseStepKey('bandwidth', 'youtube', 'unknown_native_code', {
       targetBitrateKbps: 4500,
     }),
   );
   t.not(
-    autoConfigPhaseStepKey('hardware', null, 'hardware_testing_encoder', {
+    autoOptimizerPhaseStepKey('hardware', null, 'hardware_testing_encoder', {
       encoderTitle: 'NVIDIA NVENC H.264',
       width: 1920,
       height: 1080,
       fpsNum: 60,
       fpsDen: 1,
     }),
-    autoConfigPhaseStepKey('hardware', null, 'hardware_testing_encoder', {
+    autoOptimizerPhaseStepKey('hardware', null, 'hardware_testing_encoder', {
       encoderTitle: 'Intel QSV H.264',
       width: 1920,
       height: 1080,
@@ -492,10 +505,10 @@ test('sequential platform bandwidth events receive distinct pacing keys', t => {
     }),
   );
   t.not(
-    autoConfigPhaseStepKey('recommendation', null, 'recommendation_selecting_quality', {
+    autoOptimizerPhaseStepKey('recommendation', null, 'recommendation_selecting_quality', {
       availableBitrateKbps: 4500,
     }),
-    autoConfigPhaseStepKey('recommendation', null, 'recommendation_selecting_quality', {
+    autoOptimizerPhaseStepKey('recommendation', null, 'recommendation_selecting_quality', {
       availableBitrateKbps: 6000,
     }),
   );
@@ -503,7 +516,7 @@ test('sequential platform bandwidth events receive distinct pacing keys', t => {
 
 test('Dual Output progress follows OSN hardware and recommendation phases', t => {
   t.is(
-    autoConfigPhaseStepKey('hardware', null, 'dual_output_testing_workload', {
+    autoOptimizerPhaseStepKey('hardware', null, 'dual_output_testing_workload', {
       encoderTitle: 'NVIDIA NVENC H.264',
       width: 1920,
       height: 1080,
@@ -513,14 +526,14 @@ test('Dual Output progress follows OSN hardware and recommendation phases', t =>
     'hardware:dual-output:workload:NVIDIA NVENC H.264:1920x1080:60/1',
   );
   t.is(
-    autoConfigPhaseStepKey('recommendation', null, 'dual_output_allocating_upload', {
+    autoOptimizerPhaseStepKey('recommendation', null, 'dual_output_allocating_upload', {
       selectedBitrateKbps: 5000,
       availableBitrateKbps: 10000,
     }),
     'recommendation:dual-output:allocating:5000:10000',
   );
 
-  const workload = sanitizeAutoConfigProgressDetail(
+  const workload = sanitizeAutoOptimizerProgressDetail(
     {
       type: 'progress',
       phase: 'hardware',
@@ -538,7 +551,7 @@ test('Dual Output progress follows OSN hardware and recommendation phases', t =>
   t.is(workload.targetBitrateKbps, null, 'hardware work does not claim a probe bitrate');
   t.is(workload.width, 1920);
 
-  const allocation = sanitizeAutoConfigProgressDetail(
+  const allocation = sanitizeAutoOptimizerProgressDetail(
     {
       type: 'progress',
       phase: 'recommendation',
@@ -554,14 +567,14 @@ test('Dual Output progress follows OSN hardware and recommendation phases', t =>
 });
 
 test('progress pacing coalesces repeats but preserves A to B to A transitions', t => {
-  t.is(autoConfigPhaseStepDisposition('A', [], 'A'), 'update-displayed');
-  t.is(autoConfigPhaseStepDisposition('A', ['B'], 'B'), 'update-pending-tail');
-  t.is(autoConfigPhaseStepDisposition('A', ['B'], 'A'), 'enqueue');
-  t.is(autoConfigPhaseStepDisposition('A', ['B', 'A'], 'B'), 'enqueue');
+  t.is(autoOptimizerPhaseStepDisposition('A', [], 'A'), 'update-displayed');
+  t.is(autoOptimizerPhaseStepDisposition('A', ['B'], 'B'), 'update-pending-tail');
+  t.is(autoOptimizerPhaseStepDisposition('A', ['B'], 'A'), 'enqueue');
+  t.is(autoOptimizerPhaseStepDisposition('A', ['B', 'A'], 'B'), 'enqueue');
 });
 
 test('progress sanitization preserves only bounded OSN status fields', t => {
-  const event: IAutoConfigEvent = {
+  const event: IAutoOptimizerEvent = {
     type: 'progress',
     phase: 'hardware',
     progress: 25,
@@ -584,7 +597,7 @@ test('progress sanitization preserves only bounded OSN status fields', t => {
     availableBitrateKbps: 9000,
   };
 
-  t.deepEqual(sanitizeAutoConfigProgressDetail(event, 'hardware'), {
+  t.deepEqual(sanitizeAutoOptimizerProgressDetail(event, 'hardware'), {
     code: 'hardware_testing_encoder',
     platform: null,
     targetBitrateKbps: null,
@@ -619,8 +632,8 @@ test('renderer-bound progress and evidence discard malformed or private fields',
     encoderId: 'x'.repeat(300),
     width: -1,
     additionalVideo: { display: 'horizontal', width: 1080, height: 1920 },
-  } as unknown) as IAutoConfigEvent;
-  const detail = sanitizeAutoConfigProgressDetail(malformedEvent, 'bandwidth');
+  } as unknown) as IAutoOptimizerEvent;
+  const detail = sanitizeAutoOptimizerProgressDetail(malformedEvent, 'bandwidth');
   t.is(detail.platform, 'youtube');
   t.is(detail.targetBitrateKbps, 10000);
   t.is(detail.code, null);
@@ -630,7 +643,7 @@ test('renderer-bound progress and evidence discard malformed or private fields',
   t.is(detail.additionalVideo, null);
 
   t.deepEqual(
-    sanitizeAutoConfigProbeEvidence([
+    sanitizeAutoOptimizerProbeEvidence([
       {
         platform: 'twitch',
         method: 'twitch-bandwidth-test',

@@ -1,12 +1,12 @@
 import test from 'ava';
 import {
-  IAutoConfigRecommendationCandidate,
-  validateAutoConfigRecommendation,
-} from '../../app/services/auto-config/result-policy';
+  IAutoOptimizerRecommendationCandidate,
+  validateAutoOptimizerRecommendation,
+} from '../../app/services/auto-optimizer/result-policy';
 
 function recommendation(
-  patch: Partial<IAutoConfigRecommendationCandidate> = {},
-): IAutoConfigRecommendationCandidate {
+  patch: Partial<IAutoOptimizerRecommendationCandidate> = {},
+): IAutoOptimizerRecommendationCandidate {
   return {
     width: 1920,
     height: 1080,
@@ -45,7 +45,7 @@ const activeContext = {
 };
 
 test('a valid modern H.264 recommendation is preserved as one settings set', t => {
-  t.deepEqual(validateAutoConfigRecommendation(recommendation(), activeContext), {
+  t.deepEqual(validateAutoOptimizerRecommendation(recommendation(), activeContext), {
     width: 1920,
     height: 1080,
     fpsNum: 60,
@@ -63,31 +63,33 @@ test('a valid modern H.264 recommendation is preserved as one settings set', t =
 
 test('an active standard recommendation requires successful platform evidence', t => {
   t.is(
-    validateAutoConfigRecommendation(recommendation(), {
+    validateAutoOptimizerRecommendation(recommendation(), {
       ...activeContext,
       probeEvidence: [{ platform: 'twitch', method: 'twitch-bandwidth-test', success: false }],
     }),
     null,
   );
   t.is(
-    validateAutoConfigRecommendation(recommendation(), { ...activeContext, probeEvidence: [] }),
+    validateAutoOptimizerRecommendation(recommendation(), { ...activeContext, probeEvidence: [] }),
     null,
   );
 });
 
 test('Desktop enforces its absolute and request-specific bitrate ceilings', t => {
   t.is(
-    validateAutoConfigRecommendation(recommendation({ bitrateKbps: 8100 }), activeContext),
+    validateAutoOptimizerRecommendation(recommendation({ bitrateKbps: 8100 }), activeContext),
     null,
   );
   t.is(
-    validateAutoConfigRecommendation(recommendation({ bitrateKbps: 6000 }), {
+    validateAutoOptimizerRecommendation(recommendation({ bitrateKbps: 6000 }), {
       ...activeContext,
       maxBitrateKbps: 5000,
     }),
     null,
   );
-  t.truthy(validateAutoConfigRecommendation(recommendation({ bitrateKbps: 8000 }), activeContext));
+  t.truthy(
+    validateAutoOptimizerRecommendation(recommendation({ bitrateKbps: 8000 }), activeContext),
+  );
 });
 
 test('estimated recommendations cannot promote bitrate, resolution, or frame rate', t => {
@@ -97,23 +99,23 @@ test('estimated recommendations cannot promote bitrate, resolution, or frame rat
     currentBitrateKbps: 3000,
     probeEvidence: [] as typeof activeContext.probeEvidence,
   };
-  t.is(validateAutoConfigRecommendation(recommendation(), estimated), null);
+  t.is(validateAutoOptimizerRecommendation(recommendation(), estimated), null);
   t.is(
-    validateAutoConfigRecommendation(
+    validateAutoOptimizerRecommendation(
       recommendation({ width: 1280, height: 720, fpsNum: 30, bitrateKbps: 3100 }),
       estimated,
     ),
     null,
   );
   t.is(
-    validateAutoConfigRecommendation(
+    validateAutoOptimizerRecommendation(
       recommendation({ width: 1280, height: 720, fpsNum: 60, bitrateKbps: 3000 }),
       estimated,
     ),
     null,
   );
   t.truthy(
-    validateAutoConfigRecommendation(
+    validateAutoOptimizerRecommendation(
       recommendation({ width: 1280, height: 720, fpsNum: 30, bitrateKbps: 3000 }),
       estimated,
     ),
@@ -121,21 +123,21 @@ test('estimated recommendations cannot promote bitrate, resolution, or frame rat
 });
 
 test('malformed geometry and values outside attempted ceilings are rejected', t => {
-  t.is(validateAutoConfigRecommendation(recommendation({ width: 1919 }), activeContext), null);
-  t.is(validateAutoConfigRecommendation(recommendation({ height: 1082 }), activeContext), null);
-  t.is(validateAutoConfigRecommendation(recommendation({ fpsNum: 61 }), activeContext), null);
-  t.is(validateAutoConfigRecommendation(recommendation({ fpsDen: 0 }), activeContext), null);
+  t.is(validateAutoOptimizerRecommendation(recommendation({ width: 1919 }), activeContext), null);
+  t.is(validateAutoOptimizerRecommendation(recommendation({ height: 1082 }), activeContext), null);
+  t.is(validateAutoOptimizerRecommendation(recommendation({ fpsNum: 61 }), activeContext), null);
+  t.is(validateAutoOptimizerRecommendation(recommendation({ fpsDen: 0 }), activeContext), null);
 });
 
 test('only tested, applicable H.264 encoder configurations are accepted', t => {
-  t.is(validateAutoConfigRecommendation(recommendation({ codec: 'hevc' }), activeContext), null);
+  t.is(validateAutoOptimizerRecommendation(recommendation({ codec: 'hevc' }), activeContext), null);
   t.is(
-    validateAutoConfigRecommendation(recommendation({ encoderId: 'jim_nvenc' }), activeContext),
+    validateAutoOptimizerRecommendation(recommendation({ encoderId: 'jim_nvenc' }), activeContext),
     null,
   );
-  t.is(validateAutoConfigRecommendation(recommendation({ preset: 'p7' }), activeContext), null);
+  t.is(validateAutoOptimizerRecommendation(recommendation({ preset: 'p7' }), activeContext), null);
   t.truthy(
-    validateAutoConfigRecommendation(
+    validateAutoOptimizerRecommendation(
       recommendation({
         encoderId: 'com.apple.videotoolbox.videoencoder.ave.avc',
         encoderFamily: 'apple',
@@ -168,18 +170,21 @@ test('Twitch Enhanced Broadcasting accepts only video settings validated by its 
     codec: undefined,
     preset: undefined,
   });
-  const valid = validateAutoConfigRecommendation(twitchManagedRecommendation, twitchManagedContext);
+  const valid = validateAutoOptimizerRecommendation(
+    twitchManagedRecommendation,
+    twitchManagedContext,
+  );
   t.truthy(valid);
   t.is(valid?.encoder, null);
   t.is(
-    validateAutoConfigRecommendation(
+    validateAutoOptimizerRecommendation(
       { ...twitchManagedRecommendation, width: 1600, height: 900 },
       twitchManagedContext,
     ),
     null,
   );
   t.is(
-    validateAutoConfigRecommendation(twitchManagedRecommendation, {
+    validateAutoOptimizerRecommendation(twitchManagedRecommendation, {
       ...twitchManagedContext,
       probeEvidence: [],
     }),
@@ -232,16 +237,16 @@ test('paired Enhanced Broadcasting validates transposed horizontal and vertical 
       fpsDen: 1,
     },
   });
-  t.truthy(validateAutoConfigRecommendation(candidate, context));
+  t.truthy(validateAutoOptimizerRecommendation(candidate, context));
   t.is(
-    validateAutoConfigRecommendation(
+    validateAutoOptimizerRecommendation(
       { ...candidate, additionalVideo: { ...candidate.additionalVideo!, fpsNum: 30 } },
       context,
     ),
     null,
   );
   t.is(
-    validateAutoConfigRecommendation(
+    validateAutoOptimizerRecommendation(
       {
         ...candidate,
         additionalVideo: { ...candidate.additionalVideo!, width: 720, height: 1280 },
@@ -262,7 +267,7 @@ test('estimate-only paired Enhanced Broadcasting preserves both current canvases
     additionalVideo: pairedAdditionalVideo(),
   };
   t.truthy(
-    validateAutoConfigRecommendation(
+    validateAutoOptimizerRecommendation(
       recommendation({
         width: 1280,
         height: 720,
@@ -280,7 +285,7 @@ test('estimate-only paired Enhanced Broadcasting preserves both current canvases
     ),
   );
   t.is(
-    validateAutoConfigRecommendation(
+    validateAutoOptimizerRecommendation(
       recommendation({
         bitrateKbps: 3000,
         additionalVideo: {

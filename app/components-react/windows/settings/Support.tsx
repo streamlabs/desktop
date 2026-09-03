@@ -61,14 +61,14 @@ function SupportLinks(p: { inline?: boolean; links: TSupportLink[] }) {
 }
 
 function QuickfixSection() {
-  const { AutoConfigService, UserService } = Services;
+  const { AutoOptimizerService, UserService } = Services;
   const { isPrime } = useVuex(() => ({
     isPrime: UserService.views.isPrime,
   }));
 
   async function runAutoOptimizer() {
     try {
-      const result = await AutoConfigService.actions.return.openFromSettings();
+      const result = await AutoOptimizerService.actions.return.openFromSettings();
       if (result === 'opened') return;
 
       const warning = {

@@ -1,15 +1,15 @@
 import test from 'ava';
 import { IYoutubeAutoOptimizerProbeLease } from '../../app/services/platforms/youtube';
 import {
-  AutoConfigProbeResources,
+  AutoOptimizerProbeResources,
   AutoOptimizerProbeSetupError,
-} from '../../app/services/auto-config/probe-resources';
-import { IAutoConfigRun } from '../../app/services/auto-config/native-run';
+} from '../../app/services/auto-optimizer/probe-resources';
+import { IAutoOptimizerRun } from '../../app/services/auto-optimizer/native-run';
 import {
-  IAutoConfigNativeResult,
+  IAutoOptimizerNativeResult,
   IAutoOptimizerOutput,
   IAutoOptimizerStreamSetup,
-} from '../../app/services/auto-config/types';
+} from '../../app/services/auto-optimizer/types';
 
 function output(
   outputId: string,
@@ -66,7 +66,7 @@ function services(
 
 test('platform resources prepare request probes without retaining YouTube credentials', async t => {
   const mocks = services();
-  const resources = new AutoConfigProbeResources(mocks.twitch, mocks.youtube);
+  const resources = new AutoOptimizerProbeResources(mocks.twitch, mocks.youtube);
   const streamSetup: IAutoOptimizerStreamSetup = {
     type: 'cloud-multistream',
     outputs: [
@@ -103,7 +103,7 @@ test('a shared output keeps one successful platform as partial active coverage',
       throw new Error('YouTube unavailable');
     },
   });
-  const resources = new AutoConfigProbeResources(mocks.twitch, mocks.youtube);
+  const resources = new AutoOptimizerProbeResources(mocks.twitch, mocks.youtube);
   const prepared = await resources.prepare({
     type: 'cloud-multistream',
     outputs: [
@@ -133,7 +133,7 @@ test('exact Dual Output preparation rejects partial platform resource acquisitio
       throw new Error('YouTube unavailable');
     },
   });
-  const resources = new AutoConfigProbeResources(mocks.twitch, mocks.youtube);
+  const resources = new AutoOptimizerProbeResources(mocks.twitch, mocks.youtube);
   const streamSetup: IAutoOptimizerStreamSetup = {
     type: 'dual-output',
     outputs: [output('horizontal', 'twitch'), output('vertical', 'youtube', 'vertical')],
@@ -149,13 +149,13 @@ test('YouTube ingest is confirmed once for the exact prepared probe', async t =>
     resolveConfirmation = resolve;
   });
   const mocks = services({ wait: () => confirmation });
-  const resources = new AutoConfigProbeResources(mocks.twitch, mocks.youtube);
+  const resources = new AutoOptimizerProbeResources(mocks.twitch, mocks.youtube);
   await resources.prepare({ type: 'direct-single', outputs: [output('youtube', 'youtube')] });
 
   let confirms = 0;
   const confirmed = new Promise<void>(resolve => {
-    const run: IAutoConfigRun = {
-      result: new Promise<IAutoConfigNativeResult>(() => undefined),
+    const run: IAutoOptimizerRun = {
+      result: new Promise<IAutoOptimizerNativeResult>(() => undefined),
       cancel: async () => undefined,
       confirmProbeIngest: (probeId, received) => {
         confirms++;
@@ -189,7 +189,7 @@ test('temporary resources remain retained until OSN cleanup succeeds', async t =
       releaseCalls++;
     },
   });
-  const resources = new AutoConfigProbeResources(mocks.twitch, mocks.youtube);
+  const resources = new AutoOptimizerProbeResources(mocks.twitch, mocks.youtube);
   const prepared = await resources.prepare({
     type: 'direct-single',
     outputs: [output('youtube', 'youtube')],

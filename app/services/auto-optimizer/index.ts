@@ -20,24 +20,24 @@ import { byOS, OS } from 'util/operating-systems';
 import { $t } from 'services/i18n';
 import { describeAutoOptimizerStreamSetup, isAutoOptimizerProfileCompatible } from './stream-setup';
 import {
-  autoConfigPlatformForProbeKind,
-  autoConfigPhaseStepDisposition,
-  autoConfigPhaseStepKey,
-  prepareAutoConfigStreamSetup,
-  sanitizeAutoConfigProgressDetail,
+  autoOptimizerPlatformForProbeKind,
+  autoOptimizerPhaseStepDisposition,
+  autoOptimizerPhaseStepKey,
+  prepareAutoOptimizerStreamSetup,
+  sanitizeAutoOptimizerProgressDetail,
 } from './probe-policy';
-import { awaitAutoConfigRun, closeAutoConfigRun, IAutoConfigRun } from './native-run';
-import { AutoConfigProbeResources, AutoOptimizerProbeSetupError } from './probe-resources';
+import { awaitAutoOptimizerRun, closeAutoOptimizerRun, IAutoOptimizerRun } from './native-run';
+import { AutoOptimizerProbeResources, AutoOptimizerProbeSetupError } from './probe-resources';
 import {
-  buildAutoConfigRequest,
-  IAutoConfigAttemptContext,
-  IAutoConfigVideoSnapshot,
-  validateAutoConfigCanvasIdentities,
+  buildAutoOptimizerRequest,
+  IAutoOptimizerAttemptContext,
+  IAutoOptimizerVideoSnapshot,
+  validateAutoOptimizerCanvasIdentities,
 } from './request-builder';
 import { acceptAutoOptimizerResult } from './result-acceptance';
 import { applyAutoOptimizerRecommendations } from './recommendation-applier';
 import {
-  IAutoConfigEvent,
+  IAutoOptimizerEvent,
   IAutoOptimizerAdvice,
   IAutoOptimizerError,
   IAutoOptimizerProfile,
@@ -106,7 +106,7 @@ function emptyProgressDetail(): IAutoOptimizerProgressDetail {
   };
 }
 
-class AutoConfigViews extends ViewHandler<IAutoOptimizerState> {
+class AutoOptimizerViews extends ViewHandler<IAutoOptimizerState> {
   get isOpen() {
     return this.state.stage !== 'idle';
   }
@@ -126,7 +126,7 @@ class AutoConfigViews extends ViewHandler<IAutoOptimizerState> {
  * credentials, the OSN run handle, and rollback snapshots never leave the
  * worker.
  */
-export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerState> {
+export class AutoOptimizerService extends PersistentStatefulService<IAutoOptimizerState> {
   @Inject() private streamingService: StreamingService;
   @Inject() private outputSettingsService: OutputSettingsService;
   @Inject() private encoderQueryService: EncoderQueryService;
@@ -158,7 +158,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
 
   private frozenStreamSettings: IGoLiveSettings | null = null;
   private pendingGoLiveProfile: IAutoOptimizerProfile | null = null;
-  private nativeRun: IAutoConfigRun | null = null;
+  private nativeRun: IAutoOptimizerRun | null = null;
   private runToken = 0;
   private recommendationApplication: Promise<IAutoOptimizerProfile> | null = null;
   private cleanupPromise: Promise<void> | null = null;
@@ -166,12 +166,12 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private displayedPhaseSince = 0;
   private pendingPhaseSteps: IPhaseStep[] = [];
   private phaseDrainPromise: Promise<void> | null = null;
-  private probeResources: AutoConfigProbeResources | null = null;
+  private probeResources: AutoOptimizerProbeResources | null = null;
   /** Non-secret request context retained only to validate the OSN result. */
-  private attemptContext: IAutoConfigAttemptContext | null = null;
+  private attemptContext: IAutoOptimizerAttemptContext | null = null;
 
   get views() {
-    return new AutoConfigViews(this.state);
+    return new AutoOptimizerViews(this.state);
   }
 
   /**
@@ -289,9 +289,9 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
       this.attemptContext = prepared.attemptContext;
       this.SET_STREAM_SETUP(streamSetup);
 
-      let run: IAutoConfigRun;
+      let run: IAutoOptimizerRun;
       try {
-        run = obs.NodeObs.AutoConfig.run(request, event => {
+        run = obs.NodeObs.AutoOptimizer.run(request, event => {
           this.handleNativeEvent(event, token);
         });
       } finally {
@@ -300,7 +300,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         this.getProbeResources().redactCredentials();
       }
       this.nativeRun = run!;
-      const nativeResult = await awaitAutoConfigRun(run!);
+      const nativeResult = await awaitAutoOptimizerRun(run!);
 
       if (token !== this.runToken || this.nativeRun !== run!) return;
 
@@ -338,7 +338,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     const host = this.state.host;
     if (!this.frozenStreamSettings || !host) return;
     this.SET_INTRO(
-      prepareAutoConfigStreamSetup(
+      prepareAutoOptimizerStreamSetup(
         describeAutoOptimizerStreamSetup(
           this.frozenStreamSettings,
           this.dualOutputService.state.dualOutputMode && this.userService.isLoggedIn,
@@ -550,7 +550,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     host: TAutoOptimizerHost,
   ): TAutoOptimizerLaunchResult {
     this.frozenStreamSettings = this.deepFreeze(settings);
-    const streamSetup = prepareAutoConfigStreamSetup(
+    const streamSetup = prepareAutoOptimizerStreamSetup(
       describeAutoOptimizerStreamSetup(
         settings,
         this.dualOutputService.state.dualOutputMode && this.userService.isLoggedIn,
@@ -566,18 +566,21 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     return 'opened';
   }
 
-  private getProbeResources(): AutoConfigProbeResources {
+  private getProbeResources(): AutoOptimizerProbeResources {
     if (!this.probeResources) {
-      this.probeResources = new AutoConfigProbeResources(this.twitchService, this.youtubeService);
+      this.probeResources = new AutoOptimizerProbeResources(
+        this.twitchService,
+        this.youtubeService,
+      );
     }
     return this.probeResources;
   }
 
-  private getAutoConfigVideoSnapshots(): Record<
+  private getAutoOptimizerVideoSnapshots(): Record<
     'horizontal' | 'vertical',
-    IAutoConfigVideoSnapshot
+    IAutoOptimizerVideoSnapshot
   > {
-    const snapshot = (display: 'horizontal' | 'vertical'): IAutoConfigVideoSnapshot => {
+    const snapshot = (display: 'horizontal' | 'vertical'): IAutoOptimizerVideoSnapshot => {
       const video = this.videoSettingsService.state[display];
       return {
         canvasId: this.videoSettingsService.contexts[display]?.canvasId,
@@ -598,13 +601,13 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
   private async createNativeRequest(
     sourceStreamSetup: IAutoOptimizerStreamSetup,
   ): Promise<
-    ReturnType<typeof buildAutoConfigRequest> & { streamSetup: IAutoOptimizerStreamSetup }
+    ReturnType<typeof buildAutoOptimizerRequest> & { streamSetup: IAutoOptimizerStreamSetup }
   > {
     const resources = this.getProbeResources();
-    const videos = this.getAutoConfigVideoSnapshots();
+    const videos = this.getAutoOptimizerVideoSnapshots();
     try {
       // Reject an unusable OBS environment before acquiring platform resources.
-      validateAutoConfigCanvasIdentities(sourceStreamSetup, videos);
+      validateAutoOptimizerCanvasIdentities(sourceStreamSetup, videos);
     } catch (error: unknown) {
       throw new AutoOptimizerProbeSetupError();
     }
@@ -612,7 +615,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     const prepared = await resources.prepare(sourceStreamSetup);
     try {
       return {
-        ...buildAutoConfigRequest({
+        ...buildAutoOptimizerRequest({
           streamSetup: prepared.streamSetup,
           outputProbes: [...prepared.probesByOutput].map(([outputId, probes]) => ({
             outputId,
@@ -629,10 +632,10 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     }
   }
 
-  private handleNativeEvent(event: IAutoConfigEvent, token: number) {
+  private handleNativeEvent(event: IAutoOptimizerEvent, token: number) {
     if (token !== this.runToken) return;
 
-    const platform = autoConfigPlatformForProbeKind(event.probe?.kind);
+    const platform = autoOptimizerPlatformForProbeKind(event.probe?.kind);
     if (
       event.code === 'youtube_probe_waiting_for_ingest' &&
       platform === 'youtube' &&
@@ -654,7 +657,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
         ? event.phase
         : null;
     if (phase) {
-      const detail = sanitizeAutoConfigProgressDetail(event, phase);
+      const detail = sanitizeAutoOptimizerProgressDetail(event, phase);
       this.queuePhaseProgress(phase, clampProgress(event.progress), token, detail);
     }
   }
@@ -663,7 +666,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     this.displayedPhaseStep = {
       phase: 'preflight',
       detail: emptyProgressDetail(),
-      key: autoConfigPhaseStepKey('preflight'),
+      key: autoOptimizerPhaseStepKey('preflight'),
       progress: 0,
     };
     this.displayedPhaseSince = Date.now();
@@ -678,7 +681,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     detail: IAutoOptimizerProgressDetail,
   ) {
     if (token !== this.runToken || this.state.stage !== 'running') return;
-    const key = autoConfigPhaseStepKey(phase, detail.platform, detail.code, detail);
+    const key = autoOptimizerPhaseStepKey(phase, detail.platform, detail.code, detail);
     const step: IPhaseStep = {
       phase,
       detail,
@@ -689,7 +692,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     // Repeated events may update progress without restarting the one-second
     // minimum display time. If another status is waiting, preserve A -> B -> A
     // as three separate steps.
-    const disposition = autoConfigPhaseStepDisposition(
+    const disposition = autoOptimizerPhaseStepDisposition(
       this.displayedPhaseStep?.key || null,
       this.pendingPhaseSteps.map(pending => pending.key),
       step.key,
@@ -848,7 +851,7 @@ export class AutoConfigService extends PersistentStatefulService<IAutoOptimizerS
     const closeNative = async () => {
       const run = this.nativeRun;
       if (!run) return;
-      await closeAutoConfigRun(run, () => {
+      await closeAutoOptimizerRun(run, () => {
         if (this.nativeRun === run) this.nativeRun = null;
       });
     };

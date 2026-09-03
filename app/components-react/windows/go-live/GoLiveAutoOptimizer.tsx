@@ -4,7 +4,7 @@ import { Services } from 'components-react/service-provider';
 import { useGoLiveSettings } from './useGoLiveSettings';
 
 export default function GoLiveAutoOptimizer() {
-  const service = Services.AutoConfigService;
+  const service = Services.AutoOptimizerService;
   const { continueGoLiveAfterOptimizer } = useGoLiveSettings();
 
   const continueAfter = async (action: () => Promise<boolean>) => {

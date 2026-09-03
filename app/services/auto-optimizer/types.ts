@@ -1,8 +1,8 @@
 import { TDisplayType } from 'services/settings-v2';
 import type {
-  IAutoConfigEvent as IOSNAutoConfigEvent,
-  IAutoConfigRequest as IOSNAutoConfigRequest,
-  IAutoConfigResult as IOSNAutoConfigResult,
+  IAutoOptimizerEvent as IOSNAutoOptimizerEvent,
+  IAutoOptimizerRequest as IOSNAutoOptimizerRequest,
+  IAutoOptimizerResult as IOSNAutoOptimizerResult,
 } from '../../../obs-api';
 
 export type TAutoOptimizerStage =
@@ -179,25 +179,31 @@ export interface IAutoOptimizerProgressDetail {
   height: number | null;
   fpsNum: number | null;
   fpsDen: number | null;
-  additionalVideo: IAutoConfigAdditionalVideoTuple | null;
+  additionalVideo: IAutoOptimizerAdditionalVideoTuple | null;
   selectedBitrateKbps: number | null;
 }
 
 /** Reuse OSN's types so Desktop cannot drift from the public API contract. */
-export type IAutoConfigEvent = IOSNAutoConfigEvent;
-export type IAutoConfigNativeResult = IOSNAutoConfigResult;
+export type IAutoOptimizerEvent = IOSNAutoOptimizerEvent;
+export type IAutoOptimizerNativeResult = IOSNAutoOptimizerResult;
 
-type TOSNAutoConfigRequestOutput = IOSNAutoConfigRequest['outputs'][number];
-export type IAutoConfigCurrentSettings = TOSNAutoConfigRequestOutput['current'];
-export type IAutoConfigRequestLimits = NonNullable<TOSNAutoConfigRequestOutput['limits']>;
-export type IAutoConfigRequestAdditionalVideo = NonNullable<
-  TOSNAutoConfigRequestOutput['additionalVideo']
+type TOSNAutoOptimizerRequestOutput = IOSNAutoOptimizerRequest['outputs'][number];
+export type IAutoOptimizerCurrentSettings = TOSNAutoOptimizerRequestOutput['current'];
+export type IAutoOptimizerNativeRequestLimits = NonNullable<
+  TOSNAutoOptimizerRequestOutput['limits']
 >;
-export type IAutoConfigRequestOutput = TOSNAutoConfigRequestOutput;
-export type IAutoConfigAttemptRequestOutput = Omit<IAutoConfigRequestOutput, 'probes'>;
-export type IAutoConfigActiveProbe = NonNullable<TOSNAutoConfigRequestOutput['probes']>[number];
-export type IAutoConfigRequest = IOSNAutoConfigRequest;
-export type IAutoConfigAdditionalVideoTuple = NonNullable<IAutoConfigEvent['additionalVideo']>;
+export type IAutoOptimizerRequestAdditionalVideo = NonNullable<
+  TOSNAutoOptimizerRequestOutput['additionalVideo']
+>;
+export type IAutoOptimizerRequestOutput = TOSNAutoOptimizerRequestOutput;
+export type IAutoOptimizerAttemptRequestOutput = Omit<IAutoOptimizerRequestOutput, 'probes'>;
+export type IAutoOptimizerActiveProbe = NonNullable<
+  TOSNAutoOptimizerRequestOutput['probes']
+>[number];
+export type IAutoOptimizerRequest = IOSNAutoOptimizerRequest;
+export type IAutoOptimizerAdditionalVideoTuple = NonNullable<
+  IAutoOptimizerEvent['additionalVideo']
+>;
 
 export interface IAutoOptimizerAdditionalVideoResult {
   display: 'vertical';

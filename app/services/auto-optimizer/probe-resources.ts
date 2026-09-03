@@ -1,11 +1,11 @@
 import { TwitchService } from 'services/platforms/twitch';
 import { IYoutubeAutoOptimizerProbeLease, YoutubeService } from 'services/platforms/youtube';
 import {
-  isEligibleAutoConfigDualOutputActiveStreamSetup,
-  isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup,
+  isEligibleAutoOptimizerDualOutputActiveStreamSetup,
+  isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup,
 } from './probe-policy';
-import { IAutoConfigRun } from './native-run';
-import { IAutoConfigActiveProbe, IAutoOptimizerStreamSetup } from './types';
+import { IAutoOptimizerRun } from './native-run';
+import { IAutoOptimizerActiveProbe, IAutoOptimizerStreamSetup } from './types';
 
 const YOUTUBE_INGEST_CONFIRMATION_TIMEOUT_MS = 12000;
 
@@ -28,9 +28,9 @@ type TYoutubeProbeService = Pick<
   'acquireAutoOptimizerProbe' | 'waitForAutoOptimizerProbeActive' | 'releaseAutoOptimizerProbe'
 >;
 
-export interface IPreparedAutoConfigProbes {
+export interface IPreparedAutoOptimizerProbes {
   streamSetup: IAutoOptimizerStreamSetup;
-  probesByOutput: ReadonlyMap<string, IAutoConfigActiveProbe[]>;
+  probesByOutput: ReadonlyMap<string, IAutoOptimizerActiveProbe[]>;
 }
 
 /**
@@ -53,8 +53,8 @@ export class AutoOptimizerProbeSetupError extends Error {
  * run. Cleanup must stop and close OSN output before deleting the YouTube
  * resources.
  */
-export class AutoConfigProbeResources {
-  private readonly credentialProbes: IAutoConfigActiveProbe[] = [];
+export class AutoOptimizerProbeResources {
+  private readonly credentialProbes: IAutoOptimizerActiveProbe[] = [];
   private readonly youtubeLeases = new Map<string, IYoutubeAutoOptimizerProbeLease>();
   private readonly confirmations = new Map<string, Promise<void>>();
   private abortController: AbortController | null = null;
@@ -65,7 +65,9 @@ export class AutoConfigProbeResources {
     private readonly youtube: TYoutubeProbeService,
   ) {}
 
-  async prepare(sourceStreamSetup: IAutoOptimizerStreamSetup): Promise<IPreparedAutoConfigProbes> {
+  async prepare(
+    sourceStreamSetup: IAutoOptimizerStreamSetup,
+  ): Promise<IPreparedAutoOptimizerProbes> {
     this.abortController?.abort();
     const controller = new AbortController();
     this.abortController = controller;
@@ -77,15 +79,15 @@ export class AutoConfigProbeResources {
         probeCandidates: output.probeCandidates.map(candidate => ({ ...candidate })),
       })),
     };
-    const activeDualOutput = isEligibleAutoConfigDualOutputActiveStreamSetup(streamSetup);
-    const activeEnhancedBroadcastingDualOutput = isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(
+    const activeDualOutput = isEligibleAutoOptimizerDualOutputActiveStreamSetup(streamSetup);
+    const activeEnhancedBroadcastingDualOutput = isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup(
       streamSetup,
     );
     const requestedProbeCount = streamSetup.outputs.reduce(
       (count, output) => count + output.probeCandidates.length,
       0,
     );
-    const probesByOutput = new Map<string, IAutoConfigActiveProbe[]>();
+    const probesByOutput = new Map<string, IAutoOptimizerActiveProbe[]>();
 
     try {
       for (const output of streamSetup.outputs) {
@@ -93,7 +95,7 @@ export class AutoConfigProbeResources {
         const alreadyPartial = output.estimateReason === 'partial_provider_probes';
         const acquired: Array<{
           candidate: typeof output.probeCandidates[number];
-          probe: IAutoConfigActiveProbe;
+          probe: IAutoOptimizerActiveProbe;
         }> = [];
 
         for (const candidate of output.probeCandidates) {
@@ -104,7 +106,7 @@ export class AutoConfigProbeResources {
             ) {
               const streamKey = await this.twitch.fetchStreamKey();
               if (!streamKey) throw new Error('Twitch did not return a stream key');
-              const probe: IAutoConfigActiveProbe =
+              const probe: IAutoOptimizerActiveProbe =
                 candidate.kind === 'twitch-standard'
                   ? {
                       id: candidate.probeId,
@@ -123,7 +125,7 @@ export class AutoConfigProbeResources {
               const lease = await this.youtube.acquireAutoOptimizerProbe({
                 signal: controller.signal,
               });
-              const probe: IAutoConfigActiveProbe = {
+              const probe: IAutoOptimizerActiveProbe = {
                 id: lease.probeId,
                 kind: candidate.kind,
                 server: lease.server,
@@ -201,7 +203,7 @@ export class AutoConfigProbeResources {
 
   confirmYoutubeIngest(
     probeId: string,
-    getRun: () => IAutoConfigRun | null,
+    getRun: () => IAutoOptimizerRun | null,
     isCurrentAttempt: () => boolean,
   ): void {
     if (this.confirmations.has(probeId)) return;

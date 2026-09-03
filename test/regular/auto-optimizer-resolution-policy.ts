@@ -10,7 +10,7 @@ import {
   buildAutoOptimizerRequestLimits,
   matchesAutoOptimizerQualityPolicy,
   selectAutoOptimizerQuality,
-} from '../../app/services/auto-config/resolution-policy';
+} from '../../app/services/auto-optimizer/resolution-policy';
 
 test('active landscape requests may test up to 1920x1080 without changing the canvas', t => {
   t.deepEqual(

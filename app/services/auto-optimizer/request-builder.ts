@@ -1,18 +1,18 @@
 import { TDisplayType } from 'services/settings-v2';
 import { autoOptimizerRecommendationBitrateCap } from './bitrate-policy';
 import {
-  isEligibleAutoConfigDualOutputActiveStreamSetup,
-  isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup,
+  isEligibleAutoOptimizerDualOutputActiveStreamSetup,
+  isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup,
 } from './probe-policy';
 import {
   autoOptimizerCanvasAllowsQualityPromotion,
   buildAutoOptimizerRequestLimits,
 } from './resolution-policy';
 import {
-  IAutoConfigActiveProbe,
-  IAutoConfigAttemptRequestOutput,
-  IAutoConfigRequest,
-  IAutoConfigRequestOutput,
+  IAutoOptimizerActiveProbe,
+  IAutoOptimizerAttemptRequestOutput,
+  IAutoOptimizerRequest,
+  IAutoOptimizerRequestOutput,
   IAutoOptimizerStreamSetup,
 } from './types';
 
@@ -20,7 +20,7 @@ import {
  * Narrow immutable view of Output settings used by request construction. The
  * service layer adapts its larger IOutputSettings object to this boundary.
  */
-export interface IAutoConfigOutputSettingsSnapshot {
+export interface IAutoOptimizerOutputSettingsSnapshot {
   streaming: {
     bitrate: number;
     encoderId: string;
@@ -32,7 +32,7 @@ export interface IAutoConfigOutputSettingsSnapshot {
  * Capture video settings and the registered canvas ID together so a request
  * cannot combine values from different video-context generations.
  */
-export interface IAutoConfigVideoSnapshot {
+export interface IAutoOptimizerVideoSnapshot {
   canvasId: number | undefined;
   baseWidth: number;
   baseHeight: number;
@@ -43,36 +43,36 @@ export interface IAutoConfigVideoSnapshot {
 }
 
 /** Platform credentials acquired for one optimizer run and one output. */
-export interface IAutoConfigPreparedOutputProbes {
+export interface IAutoOptimizerPreparedOutputProbes {
   outputId: string;
-  probes: IAutoConfigActiveProbe[];
+  probes: IAutoOptimizerActiveProbe[];
 }
 
-export interface IBuildAutoConfigRequestInput {
+export interface IBuildAutoOptimizerRequestInput {
   /** Non-secret output description after platform resources have been prepared. */
   streamSetup: IAutoOptimizerStreamSetup;
-  outputProbes: readonly IAutoConfigPreparedOutputProbes[];
-  outputSettings: IAutoConfigOutputSettingsSnapshot;
-  videos: Record<TDisplayType, IAutoConfigVideoSnapshot>;
+  outputProbes: readonly IAutoOptimizerPreparedOutputProbes[];
+  outputSettings: IAutoOptimizerOutputSettingsSnapshot;
+  videos: Record<TDisplayType, IAutoOptimizerVideoSnapshot>;
 }
 
 /** Non-secret values retained to validate the result after credentials are discarded. */
-export interface IAutoConfigAttemptContext {
+export interface IAutoOptimizerAttemptContext {
   streamSetup: IAutoOptimizerStreamSetup;
-  outputs: IAutoConfigAttemptRequestOutput[];
+  outputs: IAutoOptimizerAttemptRequestOutput[];
 }
 
-export interface IBuiltAutoConfigRequest {
-  request: IAutoConfigRequest;
-  attemptContext: IAutoConfigAttemptContext;
+export interface IBuiltAutoOptimizerRequest {
+  request: IAutoOptimizerRequest;
+  attemptContext: IAutoOptimizerAttemptContext;
 }
 
-export class AutoConfigRequestBuildError extends Error {
+export class AutoOptimizerRequestBuildError extends Error {
   readonly code = 'invalid_canvas_identity';
 
   constructor() {
     super('Auto Optimizer requires valid registered canvas identities for this active test');
-    this.name = 'AutoConfigRequestBuildError';
+    this.name = 'AutoOptimizerRequestBuildError';
   }
 }
 
@@ -102,8 +102,8 @@ function cloneStreamSetup(streamSetup: IAutoOptimizerStreamSetup): IAutoOptimize
 }
 
 function credentialFreeRequestOutput(
-  output: IAutoConfigRequestOutput,
-): IAutoConfigAttemptRequestOutput {
+  output: IAutoOptimizerRequestOutput,
+): IAutoOptimizerAttemptRequestOutput {
   return {
     outputId: output.outputId,
     display: output.display,
@@ -126,16 +126,16 @@ function credentialFreeRequestOutput(
   };
 }
 
-export function validateAutoConfigCanvasIdentities(
+export function validateAutoOptimizerCanvasIdentities(
   streamSetup: IAutoOptimizerStreamSetup,
-  videos: Record<TDisplayType, IAutoConfigVideoSnapshot>,
+  videos: Record<TDisplayType, IAutoOptimizerVideoSnapshot>,
 ) {
   if (
-    (isEligibleAutoConfigDualOutputActiveStreamSetup(streamSetup) ||
-      isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(streamSetup)) &&
+    (isEligibleAutoOptimizerDualOutputActiveStreamSetup(streamSetup) ||
+      isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup(streamSetup)) &&
     !activeCanvasIdentitiesAreValid(videos.horizontal.canvasId, videos.vertical.canvasId, true)
   ) {
-    throw new AutoConfigRequestBuildError();
+    throw new AutoOptimizerRequestBuildError();
   }
 }
 
@@ -146,19 +146,19 @@ export function validateAutoConfigCanvasIdentities(
  * copies it, the caller must redact those shared objects. The returned
  * validation context contains no credentials.
  */
-export function buildAutoConfigRequest(
-  input: IBuildAutoConfigRequestInput,
-): IBuiltAutoConfigRequest {
+export function buildAutoOptimizerRequest(
+  input: IBuildAutoOptimizerRequestInput,
+): IBuiltAutoOptimizerRequest {
   const { streamSetup, outputSettings, videos } = input;
-  const activeEnhancedBroadcastingDualOutput = isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(
+  const activeEnhancedBroadcastingDualOutput = isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup(
     streamSetup,
   );
-  validateAutoConfigCanvasIdentities(streamSetup, videos);
+  validateAutoOptimizerCanvasIdentities(streamSetup, videos);
 
   const probesByOutput = new Map(
     input.outputProbes.map(prepared => [prepared.outputId, prepared.probes] as const),
   );
-  const outputs: IAutoConfigRequestOutput[] = streamSetup.outputs.map(output => {
+  const outputs: IAutoOptimizerRequestOutput[] = streamSetup.outputs.map(output => {
     const display: TDisplayType = output.display === 'vertical' ? 'vertical' : 'horizontal';
     const video = videos[display];
     const additionalVideo = videos.vertical;
@@ -173,7 +173,7 @@ export function buildAutoConfigRequest(
         output.display === 'both',
       )
     ) {
-      throw new AutoConfigRequestBuildError();
+      throw new AutoOptimizerRequestBuildError();
     }
 
     const maxBitrateKbps = autoOptimizerRecommendationBitrateCap(
@@ -249,12 +249,12 @@ export function buildAutoConfigRequest(
             },
           }
         : {}),
-      estimateReason: output.estimateReason as IAutoConfigRequestOutput['estimateReason'],
+      estimateReason: output.estimateReason as IAutoOptimizerRequestOutput['estimateReason'],
       ...(probes?.length ? { probes } : {}),
     };
   });
 
-  const request: IAutoConfigRequest = {
+  const request: IAutoOptimizerRequest = {
     streamSetup: streamSetup.type,
     outputs,
   };

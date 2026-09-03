@@ -3,7 +3,7 @@ import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
 import { platformLabels as getPlatformLabel } from 'services/platforms';
-import { TAutoOptimizerHost, TAutoOptimizerPlatform } from 'services/auto-config';
+import { TAutoOptimizerHost, TAutoOptimizerPlatform } from 'services/auto-optimizer';
 import { AutoOptimizer } from './AutoOptimizer';
 import {
   autoOptimizerErrorMessage,
@@ -80,7 +80,7 @@ function destinationLabel(destinations: Array<{ platform: TAutoOptimizerPlatform
 
 /** Connects the shared presentation to worker-owned Auto Optimizer state. */
 export function ConnectedAutoOptimizer(p: IConnectedAutoOptimizerProps) {
-  const service = Services.AutoConfigService;
+  const service = Services.AutoOptimizerService;
   const state = useVuex(() => {
     // Vuex mutates the service module in place, so return a new object. Returning
     // the module itself would preserve its reference and prevent React from

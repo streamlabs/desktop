@@ -6,7 +6,7 @@ import {
   IAutoOptimizerError,
   IAutoOptimizerProgressDetail,
   TAutoOptimizerPhase,
-} from 'services/auto-config/types';
+} from 'services/auto-optimizer/types';
 
 const probePlatformOrder: TAutoOptimizerPresentationProbePlatform[] = ['twitch', 'youtube'];
 

@@ -1,4 +1,4 @@
-import { IAutoOptimizerProfile } from 'services/auto-config/types';
+import { IAutoOptimizerProfile } from 'services/auto-optimizer/types';
 
 /** Return the standard recommendation for this display; ignore Twitch-managed outputs. */
 export function autoOptimizerStandardOutputForDisplay(

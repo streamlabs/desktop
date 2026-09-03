@@ -3,7 +3,7 @@ import { ConnectedAutoOptimizer } from 'components-react/shared/auto-optimizer';
 import { Services } from 'components-react/service-provider';
 
 export default function SettingsAutoOptimizer() {
-  const service = Services.AutoConfigService;
+  const service = Services.AutoOptimizerService;
 
   return (
     <ConnectedAutoOptimizer

@@ -1,20 +1,23 @@
-import { IAutoConfigNativeResult } from './types';
+import { IAutoOptimizerNativeResult } from './types';
 
 // OSN may spend up to four minutes testing bounded encoder and quality
 // candidates, followed by sequential Twitch and YouTube tests. This timeout is
 // only a final guard for a stalled run; normal steps continue to report progress.
-export const AUTO_CONFIG_NATIVE_RUN_TIMEOUT_MS = 420000;
+export const AUTO_OPTIMIZER_NATIVE_RUN_TIMEOUT_MS = 420000;
 
 type TNodeObs = typeof import('../../../obs-api').NodeObs;
-export type IAutoConfigApi = TNodeObs['AutoConfig'];
-export type IAutoConfigRun = ReturnType<IAutoConfigApi['run']>;
+export type IAutoOptimizerApi = TNodeObs['AutoOptimizer'];
+export type IAutoOptimizerRun = ReturnType<IAutoOptimizerApi['run']>;
 
 /**
  * Cancellation waits for OSN to stop and close the test output. Call onClosed
  * only after cancellation succeeds; on failure, retain the run handle and
  * platform resources so cleanup can be retried.
  */
-export async function closeAutoConfigRun(run: IAutoConfigRun, onClosed: () => void): Promise<void> {
+export async function closeAutoOptimizerRun(
+  run: IAutoOptimizerRun,
+  onClosed: () => void,
+): Promise<void> {
   await run.cancel();
   onClosed();
 }
@@ -24,19 +27,19 @@ export async function closeAutoConfigRun(run: IAutoConfigRun, onClosed: () => vo
  * ignore any late result and cancel and close the OSN run before reporting
  * failure.
  */
-export async function awaitAutoConfigRun(
-  run: IAutoConfigRun,
-  timeoutMs = AUTO_CONFIG_NATIVE_RUN_TIMEOUT_MS,
-): Promise<IAutoConfigNativeResult> {
+export async function awaitAutoOptimizerRun(
+  run: IAutoOptimizerRun,
+  timeoutMs = AUTO_OPTIMIZER_NATIVE_RUN_TIMEOUT_MS,
+): Promise<IAutoOptimizerNativeResult> {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   let timedOut = false;
 
-  const pendingResult = () => new Promise<IAutoConfigNativeResult>(() => undefined);
+  const pendingResult = () => new Promise<IAutoOptimizerNativeResult>(() => undefined);
   const guardedResult = run.result.then(
     result => (timedOut ? pendingResult() : result),
     error => (timedOut ? pendingResult() : Promise.reject(error)),
   );
-  const timeoutResult = new Promise<IAutoConfigNativeResult>((_resolve, reject) => {
+  const timeoutResult = new Promise<IAutoOptimizerNativeResult>((_resolve, reject) => {
     timeout = setTimeout(async () => {
       timedOut = true;
       try {

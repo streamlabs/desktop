@@ -665,7 +665,7 @@ export class GoLiveSettingsModule {
     if (!this.state.getMetadata?.()) return;
 
     const settings = this.state.settings;
-    const autoOptimizerProfile = await Services.AutoConfigService.actions.return.consumePendingGoLiveProfile(
+    const autoOptimizerProfile = await Services.AutoOptimizerService.actions.return.consumePendingGoLiveProfile(
       settings,
     );
 
@@ -697,7 +697,7 @@ export class GoLiveSettingsModule {
     if (!(await this.validate())) return false;
 
     try {
-      if (await Services.AutoConfigService.actions.return.interceptGoLive(this.state.settings)) {
+      if (await Services.AutoOptimizerService.actions.return.interceptGoLive(this.state.settings)) {
         return false;
       }
     } catch (e: unknown) {

@@ -1,21 +1,21 @@
 import {
-  IAutoConfigNativeResult,
+  IAutoOptimizerNativeResult,
   IAutoOptimizerDestination,
   IAutoOptimizerOutputResult,
   IAutoOptimizerResult,
 } from './types';
-import type { IAutoConfigAttemptContext } from './request-builder';
+import type { IAutoOptimizerAttemptContext } from './request-builder';
 import {
-  isEligibleAutoConfigDualOutputActiveStreamSetup,
-  isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup,
-  isValidAutoConfigActiveProbeCoverage,
-  sanitizeAutoConfigProbeEvidence,
+  isEligibleAutoOptimizerDualOutputActiveStreamSetup,
+  isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup,
+  isValidAutoOptimizerActiveProbeCoverage,
+  sanitizeAutoOptimizerProbeEvidence,
 } from './probe-policy';
-import { validateAutoConfigRecommendation } from './result-policy';
+import { validateAutoOptimizerRecommendation } from './result-policy';
 import { autoOptimizerDisplayFrameRate } from './resolution-policy';
 import { normalizeAutoOptimizerPlatform } from './stream-setup';
 
-export type { IAutoConfigAttemptContext } from './request-builder';
+export type { IAutoOptimizerAttemptContext } from './request-builder';
 
 function uniqueByOutputId<T extends { outputId: string }>(outputs: T[]): Map<string, T> | null {
   const byId = new Map(outputs.map(output => [output.outputId, output]));
@@ -24,7 +24,7 @@ function uniqueByOutputId<T extends { outputId: string }>(outputs: T[]): Map<str
 
 function sameDestinations(
   expected: IAutoOptimizerDestination[],
-  requested: IAutoConfigAttemptContext['outputs'][number]['destinations'],
+  requested: IAutoOptimizerAttemptContext['outputs'][number]['destinations'],
 ): boolean {
   const expectedPlatforms = expected.map(destination => destination.platform).sort();
   const requestedPlatforms = [...requested].sort();
@@ -40,8 +40,8 @@ function sameDestinations(
  * matches the request; never expose a partial profile.
  */
 export function acceptAutoOptimizerResult(
-  nativeResult: IAutoConfigNativeResult,
-  context: IAutoConfigAttemptContext,
+  nativeResult: IAutoOptimizerNativeResult,
+  context: IAutoOptimizerAttemptContext,
 ): IAutoOptimizerResult | null {
   if (
     nativeResult.status !== 'complete' ||
@@ -67,8 +67,8 @@ export function acceptAutoOptimizerResult(
     return null;
   }
 
-  const activeDualOutput = isEligibleAutoConfigDualOutputActiveStreamSetup(context.streamSetup);
-  const activeEnhancedBroadcastingDualOutput = isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(
+  const activeDualOutput = isEligibleAutoOptimizerDualOutputActiveStreamSetup(context.streamSetup);
+  const activeEnhancedBroadcastingDualOutput = isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup(
     context.streamSetup,
   );
   const jointDualOutputActive =
@@ -107,10 +107,10 @@ export function acceptAutoOptimizerResult(
       requested.display === 'both' ? videosByDisplay.get('vertical') : undefined;
     if (!primaryVideo || (requested.display === 'both' && !additionalVideo)) return null;
 
-    const evidence = sanitizeAutoConfigProbeEvidence(nativeOutput.measurement.evidence);
+    const evidence = sanitizeAutoOptimizerProbeEvidence(nativeOutput.measurement.evidence);
     const activeEvidenceValid =
       nativeOutput.measurement.mode !== 'active' ||
-      isValidAutoConfigActiveProbeCoverage({
+      isValidAutoOptimizerActiveProbeCoverage({
         destinations: expected.destinations,
         attemptedCandidates: expected.probeCandidates,
         evidence,
@@ -121,7 +121,7 @@ export function acceptAutoOptimizerResult(
     const twitchManagesEncoding = expected.outputKind === 'twitch-enhanced-broadcasting';
     if (twitchManagesEncoding === Boolean(nativeOutput.encoding)) return null;
 
-    const recommendation = validateAutoConfigRecommendation(
+    const recommendation = validateAutoOptimizerRecommendation(
       {
         width: primaryVideo.width,
         height: primaryVideo.height,

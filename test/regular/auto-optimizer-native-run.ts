@@ -1,10 +1,10 @@
 import test from 'ava';
 import {
-  awaitAutoConfigRun,
-  closeAutoConfigRun,
-  IAutoConfigRun,
-} from '../../app/services/auto-config/native-run';
-import { IAutoConfigNativeResult } from '../../app/services/auto-config/types';
+  awaitAutoOptimizerRun,
+  closeAutoOptimizerRun,
+  IAutoOptimizerRun,
+} from '../../app/services/auto-optimizer/native-run';
+import { IAutoOptimizerNativeResult } from '../../app/services/auto-optimizer/types';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -14,7 +14,7 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
-function nativeResult(): IAutoConfigNativeResult {
+function nativeResult(): IAutoOptimizerNativeResult {
   return {
     status: 'complete',
     outputs: [],
@@ -23,7 +23,7 @@ function nativeResult(): IAutoConfigNativeResult {
 
 test('a completed OSN run returns its result without cancellation', async t => {
   let cancelled = false;
-  const run: IAutoConfigRun = {
+  const run: IAutoOptimizerRun = {
     result: Promise.resolve(nativeResult()),
     confirmProbeIngest: () => undefined,
     cancel: async () => {
@@ -31,15 +31,15 @@ test('a completed OSN run returns its result without cancellation', async t => {
     },
   };
 
-  t.is(await awaitAutoConfigRun(run, 100), await run.result);
+  t.is(await awaitAutoOptimizerRun(run, 100), await run.result);
   t.false(cancelled);
 });
 
 test('OSN run timeout waits for cancellation and ignores a late result', async t => {
-  const result = deferred<IAutoConfigNativeResult>();
+  const result = deferred<IAutoOptimizerNativeResult>();
   const cancellation = deferred<void>();
   const order: string[] = [];
-  const run: IAutoConfigRun = {
+  const run: IAutoOptimizerRun = {
     result: result.promise,
     confirmProbeIngest: () => undefined,
     cancel: async () => {
@@ -50,7 +50,7 @@ test('OSN run timeout waits for cancellation and ignores a late result', async t
     },
   };
 
-  const guarded = awaitAutoConfigRun(run, 1).catch(error => {
+  const guarded = awaitAutoOptimizerRun(run, 1).catch(error => {
     order.push('rejected');
     throw error;
   });
@@ -66,8 +66,8 @@ test('OSN run timeout waits for cancellation and ignores a late result', async t
 test('OSN cleanup failure keeps the run retryable and defers dependent cleanup', async t => {
   let cancelCalls = 0;
   let closed = false;
-  const run: IAutoConfigRun = {
-    result: new Promise<IAutoConfigNativeResult>(() => undefined),
+  const run: IAutoOptimizerRun = {
+    result: new Promise<IAutoOptimizerNativeResult>(() => undefined),
     confirmProbeIngest: () => undefined,
     cancel: async () => {
       cancelCalls++;
@@ -75,7 +75,7 @@ test('OSN cleanup failure keeps the run retryable and defers dependent cleanup',
     },
   };
 
-  const close = () => closeAutoConfigRun(run, () => (closed = true));
+  const close = () => closeAutoOptimizerRun(run, () => (closed = true));
   const error = await t.throwsAsync(close());
   t.is(error?.message, 'native close failed');
   t.false(closed);

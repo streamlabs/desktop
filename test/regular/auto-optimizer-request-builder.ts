@@ -1,17 +1,17 @@
 import test from 'ava';
 import {
-  AutoConfigRequestBuildError,
-  buildAutoConfigRequest,
-  IAutoConfigOutputSettingsSnapshot,
-  IAutoConfigVideoSnapshot,
-} from '../../app/services/auto-config/request-builder';
+  AutoOptimizerRequestBuildError,
+  buildAutoOptimizerRequest,
+  IAutoOptimizerOutputSettingsSnapshot,
+  IAutoOptimizerVideoSnapshot,
+} from '../../app/services/auto-optimizer/request-builder';
 import {
-  IAutoConfigActiveProbe,
+  IAutoOptimizerActiveProbe,
   IAutoOptimizerOutput,
   IAutoOptimizerStreamSetup,
-} from '../../app/services/auto-config/types';
+} from '../../app/services/auto-optimizer/types';
 
-const outputSettings: IAutoConfigOutputSettingsSnapshot = {
+const outputSettings: IAutoOptimizerOutputSettingsSnapshot = {
   streaming: {
     bitrate: 3000,
     encoderId: 'obs_nvenc_h264_tex',
@@ -22,8 +22,8 @@ const outputSettings: IAutoConfigOutputSettingsSnapshot = {
 function video(
   canvasId: number | undefined,
   portrait = false,
-  patch: Partial<IAutoConfigVideoSnapshot> = {},
-): IAutoConfigVideoSnapshot {
+  patch: Partial<IAutoOptimizerVideoSnapshot> = {},
+): IAutoOptimizerVideoSnapshot {
   return {
     canvasId,
     baseWidth: portrait ? 720 : 1280,
@@ -71,14 +71,14 @@ function streamSetup(
 
 test('builds an active OSN request and retains only non-secret validation inputs', t => {
   const preparedStreamSetup = streamSetup([optimizerOutput()]);
-  const probe: IAutoConfigActiveProbe = {
+  const probe: IAutoOptimizerActiveProbe = {
     id: 'horizontal-twitch',
     kind: 'twitch-standard',
     server: 'auto',
     streamKey: 'private-stream-key',
   };
 
-  const built = buildAutoConfigRequest({
+  const built = buildAutoOptimizerRequest({
     streamSetup: preparedStreamSetup,
     outputProbes: [{ outputId: 'horizontal', probes: [probe] }],
     outputSettings,
@@ -121,7 +121,7 @@ test('applies platform bitrate limits and prevents estimate or partial promotion
     measurement: 'estimated',
     estimateReason: 'non_twitch',
   });
-  const estimatedRequest = buildAutoConfigRequest({
+  const estimatedRequest = buildAutoOptimizerRequest({
     streamSetup: streamSetup([estimated]),
     outputProbes: [],
     outputSettings,
@@ -136,7 +136,7 @@ test('applies platform bitrate limits and prevents estimate or partial promotion
     maxFpsDen: 1,
   });
 
-  const partialRequest = buildAutoConfigRequest({
+  const partialRequest = buildAutoOptimizerRequest({
     streamSetup: streamSetup([
       optimizerOutput({
         estimateReason: 'partial_provider_probes',
@@ -169,12 +169,12 @@ test('builds paired Enhanced Broadcasting video settings without a Desktop bitra
       },
     ],
   });
-  const probe: IAutoConfigActiveProbe = {
+  const probe: IAutoOptimizerActiveProbe = {
     id: 'twitch-enhanced-broadcasting-twitch',
     kind: 'twitch-enhanced-broadcasting',
     streamKey: 'private-enhanced-key',
   };
-  const built = buildAutoConfigRequest({
+  const built = buildAutoOptimizerRequest({
     streamSetup: streamSetup([enhanced], 'enhanced-broadcasting'),
     outputProbes: [{ outputId: enhanced.outputId, probes: [probe] }],
     outputSettings,
@@ -227,7 +227,7 @@ test('paired requests accept zero-based identities and reject invalid canvas ide
   });
 
   const build = (videoSnapshots: ReturnType<typeof videos>) =>
-    buildAutoConfigRequest({
+    buildAutoOptimizerRequest({
       streamSetup: streamSetup([horizontal, vertical], 'dual-output'),
       outputProbes: [],
       outputSettings,
@@ -245,7 +245,7 @@ test('paired requests accept zero-based identities and reject invalid canvas ide
   ];
   invalid.forEach(videoSnapshots => {
     const error = t.throws(() => build(videoSnapshots));
-    t.true(error instanceof AutoConfigRequestBuildError);
-    t.is((error as AutoConfigRequestBuildError).code, 'invalid_canvas_identity');
+    t.true(error instanceof AutoOptimizerRequestBuildError);
+    t.is((error as AutoOptimizerRequestBuildError).code, 'invalid_canvas_identity');
   });
 });

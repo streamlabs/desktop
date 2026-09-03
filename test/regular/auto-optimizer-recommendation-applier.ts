@@ -3,11 +3,11 @@ import { cloneDeep } from 'lodash';
 import {
   applyAutoOptimizerRecommendations,
   IAutoOptimizerRecommendationApplierDependencies,
-} from '../../app/services/auto-config/recommendation-applier';
+} from '../../app/services/auto-optimizer/recommendation-applier';
 import {
   IAutoOptimizerOutputResult,
   IAutoOptimizerResult,
-} from '../../app/services/auto-config/types';
+} from '../../app/services/auto-optimizer/types';
 
 interface IMockOptions {
   corruptAppliedLiveVideo?: boolean;

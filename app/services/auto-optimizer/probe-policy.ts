@@ -1,6 +1,6 @@
 import {
-  IAutoConfigAdditionalVideoTuple,
-  IAutoConfigEvent,
+  IAutoOptimizerAdditionalVideoTuple,
+  IAutoOptimizerEvent,
   IAutoOptimizerProbeCandidate,
   IAutoOptimizerProgressDetail,
   IAutoOptimizerProbeEvidence,
@@ -26,7 +26,7 @@ const AUTO_OPTIMIZER_ENCODER_FAMILIES = new Set([
  * the result partial and requires low confidence, except Dual Output may
  * deliberately select one Twitch or YouTube representative per canvas.
  */
-export function isValidAutoConfigActiveProbeCoverage(p: {
+export function isValidAutoOptimizerActiveProbeCoverage(p: {
   destinations: Array<{ platform: string }>;
   attemptedCandidates: Array<{
     platform: TAutoOptimizerProbePlatform;
@@ -77,7 +77,9 @@ export function isValidAutoConfigActiveProbeCoverage(p: {
   return !isPartial || p.confidence === 'low';
 }
 
-export function autoConfigPlatformForProbeKind(kind: unknown): TAutoOptimizerProbePlatform | null {
+export function autoOptimizerPlatformForProbeKind(
+  kind: unknown,
+): TAutoOptimizerProbePlatform | null {
   if (kind === 'twitch-standard' || kind === 'twitch-enhanced-broadcasting') return 'twitch';
   return kind === 'youtube-unbound' ? 'youtube' : null;
 }
@@ -88,7 +90,7 @@ export function autoConfigPlatformForProbeKind(kind: unknown): TAutoOptimizerPro
  * budget and concurrent encoder workload; other destinations may share either
  * canvas without being tested.
  */
-export function isEligibleAutoConfigDualOutputActiveStreamSetup(
+export function isEligibleAutoOptimizerDualOutputActiveStreamSetup(
   streamSetup: IAutoOptimizerStreamSetup,
 ): boolean {
   if (streamSetup.type !== 'dual-output' || streamSetup.outputs.length !== 2) {
@@ -145,7 +147,7 @@ export function isEligibleAutoConfigDualOutputActiveStreamSetup(
  * non-Twitch destinations. A standard companion may be workload-tested even
  * when it has no live bandwidth test.
  */
-export function isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(
+export function isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup(
   streamSetup: IAutoOptimizerStreamSetup,
 ): boolean {
   if (streamSetup.type !== 'enhanced-broadcasting-dual-output' || streamSetup.outputs.length < 2) {
@@ -213,7 +215,7 @@ export function isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(
  * deterministic candidate order, require one Twitch and one YouTube selection,
  * and let OSN derive the shared upload budget from both measurements.
  */
-function selectAutoConfigDualOutputProbePair(
+function selectAutoOptimizerDualOutputProbePair(
   streamSetup: IAutoOptimizerStreamSetup,
 ): IAutoOptimizerStreamSetup | null {
   if (streamSetup.type !== 'dual-output' || streamSetup.outputs.length !== 2) return null;
@@ -238,7 +240,7 @@ function selectAutoConfigDualOutputProbePair(
           estimateReason: undefined,
         })),
       };
-      if (isEligibleAutoConfigDualOutputActiveStreamSetup(selected)) return selected;
+      if (isEligibleAutoOptimizerDualOutputActiveStreamSetup(selected)) return selected;
     }
   }
   return null;
@@ -249,7 +251,7 @@ function selectAutoConfigDualOutputProbePair(
  * Platform credentials can still fail during preparation; partial platform
  * coverage must not promote video quality.
  */
-export function prepareAutoConfigStreamSetup(
+export function prepareAutoOptimizerStreamSetup(
   streamSetup: IAutoOptimizerStreamSetup,
 ): IAutoOptimizerStreamSetup {
   const filtered: IAutoOptimizerStreamSetup = {
@@ -264,9 +266,9 @@ export function prepareAutoConfigStreamSetup(
   // Twitch and YouTube Dual Output. If a canvas also targets a destination
   // without a supported bandwidth test, use one supported platform on that
   // canvas as its representative instead of disabling both tests.
-  const selectedDualOutput = selectAutoConfigDualOutputProbePair(streamSetup);
+  const selectedDualOutput = selectAutoOptimizerDualOutputProbePair(streamSetup);
   const unsafeDualOutput = filtered.type === 'dual-output' && !selectedDualOutput;
-  const eligibleEnhancedBroadcastingDualOutput = isEligibleAutoConfigEnhancedBroadcastingDualOutputStreamSetup(
+  const eligibleEnhancedBroadcastingDualOutput = isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup(
     streamSetup,
   );
   const unsafeEnhancedBroadcastingDualOutput =
@@ -319,7 +321,7 @@ const BITRATE_BANDWIDTH_PROGRESS_CODES = new Set([
   'youtube_probe_retrying',
 ]);
 /** Build stable keys for sequential work and terminal progress states. */
-export function autoConfigPhaseStepKey(
+export function autoOptimizerPhaseStepKey(
   phase: TAutoOptimizerPhase,
   platform?: TAutoOptimizerProbePlatform | null,
   code?: string | null,
@@ -442,7 +444,7 @@ export function autoConfigPhaseStepKey(
   return String(phase);
 }
 
-export type TAutoConfigPhaseStepDisposition =
+export type TAutoOptimizerPhaseStepDisposition =
   | 'update-displayed'
   | 'update-pending-tail'
   | 'enqueue';
@@ -451,18 +453,18 @@ export type TAutoConfigPhaseStepDisposition =
  * Merge only consecutive repeats of the same visible status. If another status
  * is queued, preserve A -> B -> A as three separate transitions.
  */
-export function autoConfigPhaseStepDisposition(
+export function autoOptimizerPhaseStepDisposition(
   displayedKey: string | null,
   pendingKeys: string[],
   nextKey: string,
-): TAutoConfigPhaseStepDisposition {
+): TAutoOptimizerPhaseStepDisposition {
   if (!pendingKeys.length && displayedKey === nextKey) return 'update-displayed';
   if (pendingKeys[pendingKeys.length - 1] === nextKey) return 'update-pending-tail';
   return 'enqueue';
 }
 
 /** Validate the optional video bitrate reported for the current bandwidth test. */
-export function sanitizeAutoConfigProbeTargetBitrateKbps(value: unknown): number | null {
+export function sanitizeAutoOptimizerProbeTargetBitrateKbps(value: unknown): number | null {
   return typeof value === 'number' && Number.isInteger(value) && value > 0 && value <= 100000
     ? value
     : null;
@@ -478,7 +480,7 @@ function sanitizeProgressInteger(value: unknown, maximum: number): number | null
     : null;
 }
 
-function sanitizeAdditionalVideoTuple(value: unknown): IAutoConfigAdditionalVideoTuple | null {
+function sanitizeAdditionalVideoTuple(value: unknown): IAutoOptimizerAdditionalVideoTuple | null {
   if (!value || typeof value !== 'object') return null;
   const tuple = value as Record<string, unknown>;
   const width = sanitizeProgressInteger(tuple.width, 16384);
@@ -505,15 +507,16 @@ function sanitizeAdditionalVideoTuple(value: unknown): IAutoConfigAdditionalVide
  * serializable fields. Preserve unknown status codes for diagnostics, but never
  * display them as untranslated UI text.
  */
-export function sanitizeAutoConfigProgressDetail(
-  event: IAutoConfigEvent,
+export function sanitizeAutoOptimizerProgressDetail(
+  event: IAutoOptimizerEvent,
   phase: TAutoOptimizerPhase,
 ): IAutoOptimizerProgressDetail {
   const code =
     typeof event.code === 'string' && /^[a-z0-9_]+$/.test(event.code) && event.code.length <= 128
       ? event.code
       : null;
-  const platform = phase === 'bandwidth' ? autoConfigPlatformForProbeKind(event.probe?.kind) : null;
+  const platform =
+    phase === 'bandwidth' ? autoOptimizerPlatformForProbeKind(event.probe?.kind) : null;
   const encoderFamily = AUTO_OPTIMIZER_ENCODER_FAMILIES.has(String(event.encoderFamily))
     ? (event.encoderFamily as TAutoOptimizerEncoderFamily)
     : null;
@@ -522,8 +525,10 @@ export function sanitizeAutoConfigProgressDetail(
     code,
     platform,
     targetBitrateKbps:
-      platform !== null ? sanitizeAutoConfigProbeTargetBitrateKbps(event.targetBitrateKbps) : null,
-    availableBitrateKbps: sanitizeAutoConfigProbeTargetBitrateKbps(event.availableBitrateKbps),
+      platform !== null
+        ? sanitizeAutoOptimizerProbeTargetBitrateKbps(event.targetBitrateKbps)
+        : null,
+    availableBitrateKbps: sanitizeAutoOptimizerProbeTargetBitrateKbps(event.availableBitrateKbps),
     encoderId: sanitizeProgressText(event.encoderId, 256),
     encoderFamily,
     encoderTitle: sanitizeProgressText(event.encoderTitle, 256),
@@ -532,7 +537,7 @@ export function sanitizeAutoConfigProgressDetail(
     fpsNum: sanitizeProgressInteger(event.fpsNum, 1000000),
     fpsDen: sanitizeProgressInteger(event.fpsDen, 1000000),
     additionalVideo: sanitizeAdditionalVideoTuple(event.additionalVideo),
-    selectedBitrateKbps: sanitizeAutoConfigProbeTargetBitrateKbps(event.selectedBitrateKbps),
+    selectedBitrateKbps: sanitizeAutoOptimizerProbeTargetBitrateKbps(event.selectedBitrateKbps),
   };
 }
 
@@ -548,7 +553,7 @@ function isAutoOptimizerProbeMethod(
 }
 
 /** Keep only the platform evidence needed to display and validate this run's result. */
-export function sanitizeAutoConfigProbeEvidence(value: unknown): IAutoOptimizerProbeEvidence[] {
+export function sanitizeAutoOptimizerProbeEvidence(value: unknown): IAutoOptimizerProbeEvidence[] {
   if (!Array.isArray(value)) return [];
 
   return value.flatMap(item => {

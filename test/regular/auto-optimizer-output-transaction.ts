@@ -7,8 +7,8 @@ import {
   shouldApplyAutoOptimizerVideoSettings,
   shouldCaptureTargetPresetForRollback,
   selectAutoOptimizerStandardOutputRecommendation,
-} from '../../app/services/auto-config/output-transaction-policy';
-import { IAutoOptimizerOutputResult } from '../../app/services/auto-config/types';
+} from '../../app/services/auto-optimizer/output-transaction-policy';
+import { IAutoOptimizerOutputResult } from '../../app/services/auto-optimizer/types';
 
 function outputForm(preset = 'veryfast', bitrate = 6000) {
   return [
