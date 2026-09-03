@@ -101,7 +101,7 @@ export { PatchNotesService } from 'services/patch-notes';
 export { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 export { StreamingService } from 'services/streaming';
 export { StreamlabelsService } from 'services/streamlabels';
-export { AutoConfigService } from 'services/auto-config';
+export { AutoOptimizerService } from 'services/auto-optimizer';
 export { PlatformAppsService } from 'services/platform-apps';
 export { PlatformAppStoreService } from 'services/platform-app-store';
 export { PlatformAppAssetsService } from 'services/platform-apps/platform-app-assets-service';
@@ -182,7 +182,7 @@ import { LayoutService } from './services/layout';
 import { ProjectorService } from './services/projector';
 import { ObsImporterService } from 'services/obs-importer';
 import { DefaultHardwareService, HardwareService } from 'services/hardware';
-import { AutoConfigService } from 'services/auto-config';
+import { AutoOptimizerService } from 'services/auto-optimizer';
 import { MacPermissionsService } from 'services/mac-permissions';
 import { IncrementalRolloutService } from './services/incremental-rollout';
 import { RecordingModeService } from 'services/recording-mode';
@@ -277,7 +277,7 @@ export const AppServices = {
   ObsImporterService,
   TwitchStudioImporterService,
   DefaultHardwareService,
-  AutoConfigService,
+  AutoOptimizerService,
   MacPermissionsService,
   IncrementalRolloutService,
   RecordingModeService,

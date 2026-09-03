@@ -18,6 +18,7 @@ import PlatformLogo from 'components-react/shared/PlatformLogo';
 import DismissableBadge from 'components-react/shared/DismissableBadge';
 import SearchablePages from 'components-react/shared/SearchablePages';
 import Utils from 'services/utils';
+import SettingsAutoOptimizer from './settings/SettingsAutoOptimizer';
 
 export interface ISettingsProps {
   globalSearchStr: string;
@@ -84,9 +85,11 @@ export default function Settings() {
     WindowsService,
     DismissablesService,
     UsageStatisticsService,
+    AutoOptimizerService,
   } = Services;
 
   const currentTab = useRealmObject(NavigationService.state).currentSettingsTab;
+  const optimizerOpen = useVuex(() => AutoOptimizerService.views.isOpenFor('settings'));
 
   const { isPrime, isLoggedIn, username, platform, showDismissable } = useVuex(() => ({
     isPrime: UserService.views.isPrime,
@@ -101,6 +104,10 @@ export default function Settings() {
   useEffect(() => {
     // Make sure we have the latest settings
     SettingsService.actions.loadSettingsIntoStore();
+
+    return () => {
+      void AutoOptimizerService.actions.return.closeFromHost('settings');
+    };
   }, []);
 
   function setCurrentTab(value: TCategoryName) {
@@ -170,63 +177,73 @@ export default function Settings() {
   const SettingsContent = SETTINGS_CONFIG[currentTab].component;
 
   return (
-    <ModalLayout bodyClassName={styles.settings}>
-      <Scrollable className={styles.settingsNav}>
-        <div style={{ padding: '0 24px 12px 24px' }}>
-          <TextInput
-            prefix={<i className="icon-search" />}
-            placeholder={$t('Search')}
-            value={searchStr}
-            onChange={onSearchInput}
-            uncontrolled={false}
-            nowrap
-          />
-        </div>
-        <Menu
-          mode="inline"
-          selectedKeys={[currentTab]}
-          onClick={handleMenuNavigation}
-          style={{ paddingBottom: '46px' }}
-        >
-          {categories.map(cat => {
-            const config = SETTINGS_CONFIG[cat];
-            if (!config.shouldShow || config.shouldShow()) {
-              return (
-                <Menu.Item key={cat} icon={<i className={config.icon} />}>
-                  <div
-                    style={{ display: 'flex' }}
-                    onClick={() => dismiss(cat)}
-                    data-name="settings-nav-item"
-                  >
-                    {$t(cat)}
-                    {config.dismissable && showDismissable(config.dismissable) && (
-                      <DismissableBadge dismissableKey={config.dismissable} />
-                    )}
-                  </div>
-                </Menu.Item>
-              );
-            }
-          })}
-        </Menu>
-        <div className={styles.settingsAuth} onClick={handleAuth}>
-          <i className={isLoggedIn ? 'fas fa-sign-out-alt' : 'fas fa-sign-in-alt'} />
-          <strong>{isLoggedIn ? $t('Log Out') : $t('Log In')}</strong>
-          {isLoggedIn && platform && <PlatformLogo platform={platform} size="small" />}
-          {isLoggedIn && <span>{username}</span>}
-        </div>
-      </Scrollable>
-      <Scrollable className={styles.settingsContainer} snapToWindowEdge>
-        <div className={styles.settingsContent}>
-          <SearchablePages
-            onSearchCompleted={handleSearchCompleted}
-            pages={categories}
-            page={currentTab}
-            searchStr={searchStr}
-          >
-            <SettingsContent globalSearchStr={searchStr} />
-          </SearchablePages>
-        </div>
-      </Scrollable>
+    <ModalLayout
+      bodyClassName={optimizerOpen ? undefined : styles.settings}
+      bodyStyle={optimizerOpen ? { position: 'relative' } : undefined}
+      hideFooter={optimizerOpen}
+    >
+      {optimizerOpen ? (
+        <SettingsAutoOptimizer />
+      ) : (
+        <>
+          <Scrollable className={styles.settingsNav}>
+            <div style={{ padding: '0 24px 12px 24px' }}>
+              <TextInput
+                prefix={<i className="icon-search" />}
+                placeholder={$t('Search')}
+                value={searchStr}
+                onChange={onSearchInput}
+                uncontrolled={false}
+                nowrap
+              />
+            </div>
+            <Menu
+              mode="inline"
+              selectedKeys={[currentTab]}
+              onClick={handleMenuNavigation}
+              style={{ paddingBottom: '46px' }}
+            >
+              {categories.map(cat => {
+                const config = SETTINGS_CONFIG[cat];
+                if (!config.shouldShow || config.shouldShow()) {
+                  return (
+                    <Menu.Item key={cat} icon={<i className={config.icon} />}>
+                      <div
+                        style={{ display: 'flex' }}
+                        onClick={() => dismiss(cat)}
+                        data-name="settings-nav-item"
+                      >
+                        {$t(cat)}
+                        {config.dismissable && showDismissable(config.dismissable) && (
+                          <DismissableBadge dismissableKey={config.dismissable} />
+                        )}
+                      </div>
+                    </Menu.Item>
+                  );
+                }
+              })}
+            </Menu>
+            <div className={styles.settingsAuth} onClick={handleAuth}>
+              <i className={isLoggedIn ? 'fas fa-sign-out-alt' : 'fas fa-sign-in-alt'} />
+              <strong>{isLoggedIn ? $t('Log Out') : $t('Log In')}</strong>
+              {isLoggedIn && platform && <PlatformLogo platform={platform} size="small" />}
+              {isLoggedIn && <span>{username}</span>}
+            </div>
+          </Scrollable>
+          <Scrollable className={styles.settingsContainer} snapToWindowEdge>
+            <div className={styles.settingsContent}>
+              <SearchablePages
+                onSearchCompleted={handleSearchCompleted}
+                pages={categories}
+                page={currentTab}
+                searchStr={searchStr}
+              >
+                <SettingsContent globalSearchStr={searchStr} />
+              </SearchablePages>
+            </div>
+          </Scrollable>
+        </>
+      )}
     </ModalLayout>
   );
 }

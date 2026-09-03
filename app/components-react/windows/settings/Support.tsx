@@ -1,5 +1,5 @@
 import * as remote from '@electron/remote';
-import { Button } from 'antd';
+import { Button, message } from 'antd';
 import cx from 'classnames';
 import React, { useMemo, useState } from 'react';
 import { getOS, OS } from 'util/operating-systems';
@@ -61,16 +61,40 @@ function SupportLinks(p: { inline?: boolean; links: TSupportLink[] }) {
 }
 
 function QuickfixSection() {
-  const { UserService } = Services;
+  const { AutoOptimizerService, UserService } = Services;
   const { isPrime } = useVuex(() => ({
     isPrime: UserService.views.isPrime,
   }));
 
+  async function runAutoOptimizer() {
+    try {
+      const result = await AutoOptimizerService.actions.return.openFromSettings();
+      if (result === 'opened') return;
+
+      const warning = {
+        busy: $t('Auto Optimizer is already in progress. Try again after it finishes.'),
+        'not-logged-in': $t('Log in to run Auto Optimizer.'),
+        'output-active': $t(
+          'Stop streaming, recording, or Replay Buffer before running Auto Optimizer.',
+        ),
+        hdr: $t('Auto Optimizer is not available while a 10-bit video format is configured.'),
+        'no-destinations': $t(
+          'Connect at least one streaming destination before running Auto Optimizer.',
+        ),
+      }[result];
+
+      message.warning(warning);
+    } catch (error: unknown) {
+      console.error('Could not open Auto Optimizer from Settings', error);
+      message.warning($t('Could not start Auto Optimizer. Please try again.'));
+    }
+  }
+
   return (
     <ObsSettingsSection title={$t('Fix common issues')} style={{ marginBottom: 20 }}>
-      <div className={styles.sectionGrid}>
+      <div className={styles.quickfixGroups}>
         {!isPrime && (
-          <>
+          <div className={styles.quickfixGroup}>
             <h3>{$t('Restore Ultra benefits')}</h3>
             <p>
               {$t(
@@ -78,7 +102,6 @@ function QuickfixSection() {
               )}
             </p>
             <SupportLinks
-              inline
               links={[
                 {
                   label: $t('Restore Ultra'),
@@ -88,34 +111,41 @@ function QuickfixSection() {
                 },
               ]}
             />
-          </>
+          </div>
         )}
 
-        <h3>{$t('Optimize your stream settings')}</h3>
-        <p>{$t('Optimize your stream quality with settings that fit your hardware.')}</p>
-        <SupportLinks
-          inline
-          links={[
-            {
-              label: $t('Stream Settings Guide'),
-              href:
-                'https://streamlabs.com/content-hub/post/how-to-optimize-your-settings-for-streamlabs-desktop',
-            },
-          ]}
-        />
+        <div className={styles.quickfixGroup}>
+          <h3>{$t('Optimize your stream settings')}</h3>
+          <p>{$t('Optimize your stream quality with settings that fit your hardware.')}</p>
+          <SupportLinks
+            links={[
+              {
+                label: $t('Run Auto Optimizer'),
+                icon: 'fas fa-play',
+                onClick: runAutoOptimizer,
+              },
+              {
+                label: $t('Stream Settings Guide'),
+                href:
+                  'https://streamlabs.com/content-hub/post/how-to-optimize-your-settings-for-streamlabs-desktop',
+              },
+            ]}
+          />
+        </div>
 
-        <h3>{$t('Optimize your game settings')}</h3>
-        <p>{$t('Fine tune your game settings to ensure maximum stream and game performance.')}</p>
-        <SupportLinks
-          inline
-          links={[
-            {
-              label: $t('Game Settings Guide'),
-              href:
-                'https://streamlabs.com/content-hub/post/how-to-optimize-game-settings-for-live-streaming',
-            },
-          ]}
-        />
+        <div className={styles.quickfixGroup}>
+          <h3>{$t('Optimize your game settings')}</h3>
+          <p>{$t('Fine tune your game settings to ensure maximum stream and game performance.')}</p>
+          <SupportLinks
+            links={[
+              {
+                label: $t('Game Settings Guide'),
+                href:
+                  'https://streamlabs.com/content-hub/post/how-to-optimize-game-settings-for-live-streaming',
+              },
+            ]}
+          />
+        </div>
       </div>
     </ObsSettingsSection>
   );

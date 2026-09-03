@@ -107,6 +107,7 @@ import {
   TStreamingDisplay,
 } from './output-context';
 import { videoOutputCoordinator } from 'services/video-output-coordinator';
+import { autoOptimizerStandardOutputForDisplay } from './auto-optimizer-profile-policy';
 
 type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
 type TOutputContext = TDisplayType | 'enhancedBroadcasting' | 'stream' | 'streamSecond';
@@ -521,8 +522,12 @@ export class StreamingService
       destination.mode = display === 'horizontal' ? 'landscape' : 'portrait';
     });
 
-    // save enabled platforms to reuse setting with the next app start
-    this.streamSettingsService.setSettings({ goLiveSettings: settings });
+    // Persist enabled platforms for the next app start, but never persist the
+    // optimizer profile. It is valid only for the exact outputs and destinations
+    // confirmed for this stream.
+    const persistedGoLiveSettings = cloneDeep(settings);
+    delete persistedGoLiveSettings.autoOptimizerProfile;
+    this.streamSettingsService.setSettings({ goLiveSettings: persistedGoLiveSettings });
 
     // save current settings in store so we can re-use them if something will go wrong
     this.SET_GO_LIVE_SETTINGS(settings);
@@ -548,7 +553,9 @@ export class StreamingService
      * Saved any settings updated during the `beforeGoLive` process for the platforms.
      * This is important for dual streaming and multistreaming.
      */
-    this.SET_GO_LIVE_SETTINGS(this.views.savedSettings);
+    const refreshedSettings = this.views.savedSettings;
+    refreshedSettings.autoOptimizerProfile = settings.autoOptimizerProfile;
+    this.SET_GO_LIVE_SETTINGS(refreshedSettings);
 
     /**
      * SET DUAL OUTPUT SETTINGS
@@ -596,7 +603,8 @@ export class StreamingService
               });
             }
 
-            const updatedSettings = { ...settings, currentCustomDestinations };
+            const updatedSettings = cloneDeep({ ...settings, currentCustomDestinations });
+            delete updatedSettings.autoOptimizerProfile;
             this.streamSettingsService.setSettings({ goLiveSettings: updatedSettings });
           }
 
@@ -636,7 +644,8 @@ export class StreamingService
               destination.video = this.videoSettingsService.contexts.vertical;
             });
 
-            const updatedSettings = { ...settings, currentCustomDestinations };
+            const updatedSettings = cloneDeep({ ...settings, currentCustomDestinations });
+            delete updatedSettings.autoOptimizerProfile;
             this.streamSettingsService.setSettings({ goLiveSettings: updatedSettings });
           }
 
@@ -2900,6 +2909,8 @@ export class StreamingService
         : this.outputSettingsService.getRecordingSettings(display);
 
     const instance = this.contexts[contextName][type];
+    const autoOptimizerLeg =
+      type === 'streaming' ? this.getAutoOptimizerOutputForContext(contextName) : undefined;
 
     // TODO: Revisit after merge video encoder backend changes to see if this should be surfaced to the user
     if (!instance) {
@@ -2922,6 +2933,16 @@ export class StreamingService
         switch (type) {
           case 'streaming':
             encoderSettings = this.outputSettingsService.getStreamingVideoEncoderSettings(mode);
+            if (autoOptimizerLeg) {
+              // Output settings are global, while Dual Output can create one
+              // encoder per display. Apply only the per-output bitrate here; the
+              // encoder ID is persisted transactionally when it is common and
+              // remains under the existing factory's compatibility checks.
+              encoderSettings = {
+                ...encoderSettings,
+                bitrate: autoOptimizerLeg.bitrate,
+              };
+            }
             break;
           case 'recording':
             encoderSettings = this.outputSettingsService.getRecordingVideoEncoderSettings(mode);
@@ -2955,6 +2976,14 @@ export class StreamingService
     });
 
     return instance;
+  }
+
+  private getAutoOptimizerOutputForContext(contextName: TOutputContext) {
+    const profile = this.state.info.settings?.autoOptimizerProfile;
+    if (contextName === 'enhancedBroadcasting') return;
+
+    const display: TDisplayType = contextName === 'vertical' ? 'vertical' : 'horizontal';
+    return autoOptimizerStandardOutputForDisplay(profile, display);
   }
 
   /**

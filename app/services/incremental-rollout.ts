@@ -27,6 +27,7 @@ export enum EAvailableFeatures {
   twitchDualStream = 'slobs--twitch-dual-stream',
   twitchDualStreamPreview = 'slobs--twitch-dual-stream-preview',
   liveOutputEditing = 'slobs--live-output-editing',
+  patreon = 'slobs--patreon',
 
   /**
    * There are two flags because one is used for beta access and

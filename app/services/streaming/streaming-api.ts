@@ -13,6 +13,7 @@ import { IPatreonStartStreamOptions } from 'services/platforms/patreon';
 import { IVideo } from 'obs-studio-node';
 import { TDisplayType } from 'services/settings-v2';
 import { ITargetLiveData } from 'services/restream';
+import type { IAutoOptimizerProfile } from 'services/auto-optimizer/types';
 
 export enum EStreamingState {
   Offline = 'offline',
@@ -91,6 +92,12 @@ export interface IStreamSettings {
 
 export interface IGoLiveSettings extends IStreamSettings {
   optimizedProfile?: IEncoderProfile;
+  /**
+   * Non-secret recommendations produced for these exact Go Live settings.
+   * StreamingService uses them only while creating the matching outputs; they
+   * do not replace persisted Output or Video settings.
+   */
+  autoOptimizerProfile?: IAutoOptimizerProfile;
   tweetText?: string;
   prepopulateOptions?: {
     youtube?: Partial<IYoutubeStartStreamOptions>;

@@ -655,14 +655,58 @@ export class GoLiveSettingsModule {
     }
   }
 
+  private async startGoLive() {
+    if (!this.state.getMetadata?.()) return;
+
+    const settings = this.state.settings;
+    const autoOptimizerProfile = await Services.AutoOptimizerService.actions.return.consumePendingGoLiveProfile(
+      settings,
+    );
+
+    // Closing the reusable Go Live window destroys this scoped state while
+    // worker-owned Auto Optimizer actions may still be resolving over IPC.
+    if (!this.state.getMetadata?.()) return;
+
+    Services.StreamingService.actions.goLive({
+      ...settings,
+      autoOptimizerProfile: autoOptimizerProfile || undefined,
+    });
+  }
+
   /**
-   * Validate the form and start streaming
+   * Validate the form and start streaming without opening a new optimizer flow.
+   * Error retry and bypass actions use this path after the initial confirmation.
    */
   async goLive() {
-    if (await this.validate()) {
-      Services.StreamingService.actions.goLive(this.state.settings);
-    }
+    if (!(await this.validate())) return;
+    await this.startGoLive();
   }
+
+  /**
+   * Validate the final Go Live selections and offer Auto Optimizer before the
+   * streaming checklist starts. Eligibility failures fail open to normal Go Live.
+   * Returns true only when streaming was started immediately.
+   */
+  async confirmGoLive(): Promise<boolean> {
+    if (!(await this.validate())) return false;
+
+    try {
+      if (await Services.AutoOptimizerService.actions.return.interceptGoLive(this.state.settings)) {
+        return false;
+      }
+    } catch (e: unknown) {
+      console.warn('[Auto Optimizer] Eligibility check failed; continuing normal Go Live', e);
+    }
+
+    await this.startGoLive();
+    return true;
+  }
+
+  /** Start streaming with the settings validated before Auto Optimizer opened. */
+  async continueGoLiveAfterOptimizer() {
+    await this.startGoLive();
+  }
+
   /**
    * Validate the form and send new settings for each eligible platform
    */
