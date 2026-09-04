@@ -41,13 +41,17 @@ jobs:
               - '!*.yml'
               - '!package.json'
               - '!yarn.lock'
+            deps:
+              - 'package.json'
+              - 'yarn.lock'
     outputs:
       has-testable-changes: ${{ steps.filter.outputs.src }}
+      has-dependency-changes: ${{ steps.filter.outputs.deps }}
 
   prepare-frontend-tests:
     name: 'Prepare Frontend Tests'
     needs: testable-changes
-    if: needs.testable-changes.outputs.has-testable-changes == 'true' || github.event_name == 'push'
+    if: needs.testable-changes.outputs.has-testable-changes == 'true' || needs.testable-changes.outputs.has-dependency-changes == 'true' || github.event_name == 'push'
     runs-on: windows-2022
     timeout-minutes: 80
     steps:
@@ -79,7 +83,31 @@ jobs:
           path: ${{ runner.temp }}/frontend-test-build.7z
           compression-level: 0
           retention-days: 1
+  verify-game-capture-binary-signatures:
+    name: 'Verify Game Capture Binary Signatures'
+    needs: [testable-changes, prepare-frontend-tests]
+    if: needs.testable-changes.outputs.has-testable-changes == 'true' || needs.testable-changes.outputs.has-dependency-changes == 'true' || github.event_name == 'push'
+    runs-on: windows-2022
+    steps:
+      - name: 'Download Test Build'
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-test-build
+          path: ${{ runner.temp }}/frontend-test-artifact
+      - name: 'Prepare Test Runner'
+        run: |
+          $projectDirectory = Join-Path $env:RUNNER_TEMP 'frontend-test-project'
+          New-Item -ItemType Directory -Force -Path $projectDirectory | Out-Null
+          7z x "$env:RUNNER_TEMP\frontend-test-artifact\frontend-test-build.7z" "-o$projectDirectory" -y -bb0
+          Set-Location $projectDirectory
 
+          if (-not (Test-Path package.json)) {
+            throw "Test build does not contain package.json at $projectDirectory"
+          }
+        shell: powershell
+      - name: 'Run Game Capture Binary Signature Verification'
+        run: yarn ts-node scripts/ci/verify_game_signatures.ts
+        working-directory: ${{ runner.temp }}/frontend-test-project
   test:
     name: 'Frontend Tests'
     needs: prepare-frontend-tests
@@ -161,7 +189,7 @@ jobs:
     if: always()
     # Note: every required job in this workflow must be accounted in the results collation
     # to work properly as a required check
-    needs: [testable-changes, prepare-frontend-tests, test, es-lint-strict-nulls]
+    needs: [testable-changes, prepare-frontend-tests, verify-game-capture-binary-signatures, test, es-lint-strict-nulls]
     runs-on: ubuntu-latest
     steps:
       - name: 'Check CI Results'
