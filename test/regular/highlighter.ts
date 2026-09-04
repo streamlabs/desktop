@@ -23,7 +23,7 @@ useWebdriver();
 
 test('Highlighter save and export', async t => {
   await logIn();
-  const recordingDir = await setTemporaryRecordingPath();
+  const recordingDir = await setTemporaryRecordingPath(false, t.context.cacheDir);
 
   await showPage('Highlighter');
   await clickButton('Configure');

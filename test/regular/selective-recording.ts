@@ -19,7 +19,7 @@ test('Selective Recording', async t => {
   const sourceType = 'Browser Source';
   const sourceName = `Example ${sourceType}`;
   const { client } = t.context.app;
-  const tmpDir = await setTemporaryRecordingPath();
+  const tmpDir = await setTemporaryRecordingPath(false, t.context.cacheDir);
 
   // TODO: Why does Simple mode `Same as stream` not work with Selective Recording?
   // All other encoders work. For temp testing purposes, change the recording quality
