@@ -7,6 +7,7 @@ import { $t } from 'services/i18n';
 import { DualOutputService } from 'services/dual-output';
 import { SceneCollectionsService } from 'services/scene-collections';
 import partition from 'lodash/partition';
+import { orderNodesByDisplay } from 'services/dual-output/node-order';
 
 /**
  * Creates a folder
@@ -69,13 +70,7 @@ export class CreateFolderCommand extends Command {
         this.verticalFolderId,
       );
 
-      // place vertical folder correctly in node list
-      const numHorizontalNodes = scene
-        .getModel()
-        .nodes.filter(node => node.display === 'horizontal').length;
-      const verticalFolderSelection = scene.getSelection(this.verticalFolderId);
-      verticalFolderSelection.freeze();
-      verticalFolderSelection.placeAfter(scene.getNodesIds()[numHorizontalNodes]);
+      orderNodesByDisplay(scene);
     }
 
     if (this.items) {

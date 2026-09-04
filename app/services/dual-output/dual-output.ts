@@ -29,6 +29,7 @@ import { NotificationsService, ENotificationType } from 'services/notifications'
 import { $t } from 'services/i18n';
 import { JsonrpcService } from 'services/api/jsonrpc';
 import { CustomizationService, CustomizationState } from 'services/customization';
+import { orderNodesByDisplay } from './node-order';
 
 interface IDisplayVideoSettings {
   horizontal: IVideoInfo;
@@ -538,15 +539,12 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     // the reordering of the nodes below is replicated from the copy nodes command
     const scene = this.scenesService.views.getScene(sceneId);
     const selection = new Selection(scene.id, scene.getNodes());
-    const verticalNodes = [] as TSceneNode[];
-
     const initialNodeOrder = scene.getNodesIds();
     const nodeIdsMap: Dictionary<string> = {};
 
     selection.getNodes().forEach(node => {
       const verticalNode = this.createPartnerNode(node);
       nodeIdsMap[node.id] = verticalNode.id;
-      verticalNodes.push(verticalNode);
     });
 
     // recreate parent/child relationships
@@ -563,8 +561,10 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
       this.sceneNodeHandled.next();
     });
 
-    const order = compact(scene.getNodesIds().map(origNodeId => nodeIdsMap[origNodeId]));
-    scene.setNodesOrder(order.concat(initialNodeOrder));
+    // Reparenting inserts every child immediately after its new parent, which can
+    // reverse sibling order. Rebuild both display blocks from the original order.
+    const verticalNodeOrder = compact(initialNodeOrder.map(nodeId => nodeIdsMap[nodeId]));
+    scene.setNodesOrder(initialNodeOrder.concat(verticalNodeOrder));
   }
 
   /**
@@ -838,19 +838,11 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
 
       if (!copiedSceneItem) return null;
 
-      // Dual output scenes should be ordered so that all of the vertical nodes are
-      // after all of the horizontal nodes. So place the vertical node at the correct position.
-      const selection = scene.getSelection(copiedSceneItem.id);
+      // Keep both display blocks in a consistent order while preserving the
+      // new item's top-most position within each display.
+      orderNodesByDisplay(scene);
 
-      const numHorizontalNodes = this.scenesService.views.activeScene.nodes.filter(
-        n => n.display === 'horizontal',
-      ).length;
-
-      // place the vertical node after the last horizontal node
-      selection.freeze();
-      selection.placeAfter(scene.getNodesIds()[numHorizontalNodes]);
-
-      this.sceneCollectionsService.createNodeMapEntry(sceneId, sceneItem.id, copiedSceneItem.id);
+      this.sceneCollectionsService.createNodeMapEntry(scene.id, sceneItem.id, copiedSceneItem.id);
       return copiedSceneItem;
     }
   }
