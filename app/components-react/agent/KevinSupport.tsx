@@ -36,6 +36,16 @@ const suggestedPrompts = () => [
 //        [label](url)              **bold**        *italic*      `code`
 const INLINE_MD = /\[([^\]]+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`/g;
 
+// ponytail: agent text is server-provided; only http(s) may reach openExternal.
+function safeHttpUrl(raw: string): string | null {
+  try {
+    const u = new URL(raw);
+    return u.protocol === 'http:' || u.protocol === 'https:' ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * ponytail: the agent's technical-assistant mode emits inline markdown only —
  * links, emphasis, the odd code span — never lists or headings, because its
@@ -58,11 +68,24 @@ function renderText(text: string): React.ReactNode[] {
     const key = `${match.index}`;
 
     if (url) {
-      nodes.push(
-        <a key={key} onClick={() => remote.shell.openExternal(url)} className={styles.link}>
-          {label}
-        </a>,
-      );
+      const safe = safeHttpUrl(url);
+      if (!safe) {
+        nodes.push(match[0]);
+      } else {
+        nodes.push(
+          <a
+            key={key}
+            href={safe}
+            onClick={e => {
+              e.preventDefault();
+              remote.shell.openExternal(safe);
+            }}
+            className={styles.link}
+          >
+            {label}
+          </a>,
+        );
+      }
     } else if (bold) {
       // Recurse so `**[label](url)**` stays a link instead of rendering raw.
       nodes.push(<strong key={key}>{renderText(bold)}</strong>);

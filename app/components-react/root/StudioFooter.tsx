@@ -162,7 +162,12 @@ function StudioFooterComponent() {
         <PerformanceMetrics mode="limited" className="performance-metrics" />
         {isLoggedIn && (
           <Tooltip placement="top" title={$t('Streamlabs Desktop Support')}>
-            <button className={styles.kevinIcon} onClick={openKevinSupport}>
+            <button
+              type="button"
+              aria-label={$t('Streamlabs Desktop Support')}
+              className={styles.kevinIcon}
+              onClick={openKevinSupport}
+            >
               <KevinChatIcon />
             </button>
           </Tooltip>

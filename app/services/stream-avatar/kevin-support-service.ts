@@ -220,12 +220,13 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
         // Quota is answered by the upgrade modal, not by a red line: showing
         // both says the same thing twice, and only one of them is actionable.
         if (p.code === 'rate_limit') return;
-        if (p.code === 'auth') this.SET_ERROR(p.message);
+        this.SET_ERROR(p.message || $t('Something went wrong. Please try again.'));
       });
 
       socket.on('disconnect', (reason: string) => {
         this.log('--', 'disconnect', { reason });
         this.SET_CONNECTED(false);
+        this.SET_CONNECTING(false);
         this.SET_PENDING(false);
         // Prompts belong to a live session; a stale one cannot be answered.
         this.CLEAR_APPROVALS();
@@ -280,13 +281,15 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
   }
 
   /**
-   * Wire tracing. Always on: this socket is low-traffic (text chat plus the
-   * occasional tool call), and the failure mode it exists to catch — a packet
-   * the server sent to a room this device never joined — is otherwise
-   * completely silent on the client.
+   * Wire tracing. Event names are always logged: this socket is low-traffic
+   * (text chat plus the occasional tool call), and the failure mode it exists
+   * to catch — a packet the server sent to a room this device never joined —
+   * is otherwise completely silent on the client. Payload detail (chat text,
+   * tool arguments) is dev-only, so production logs never carry it.
    */
   private log(direction: 'in' | 'out' | '--', event: string, detail?: unknown) {
-    const body = detail === undefined ? '' : ` ${JSON.stringify(detail).slice(0, 400)}`;
+    const body =
+      detail === undefined || !Utils.isDevMode() ? '' : ` ${JSON.stringify(detail).slice(0, 400)}`;
     console.log(`[KevinSupport ${direction}] ${event}${body}`);
   }
 
