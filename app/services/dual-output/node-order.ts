@@ -76,55 +76,40 @@ export function getValidatedDualOutputNodeOrder(
   }
 
   const horizontalNodes = nodes.filter(node => node.display === 'horizontal');
-  const horizontalNodeIds = new Set(horizontalNodes.map(node => node.id));
-  const ancestorsByNodeId = new Map<string, Set<string>>();
+  // A valid flattened folder tree is a depth-first preorder. Each folder is
+  // pushed and popped at most once, keeping hierarchy validation linear.
+  const openFolderIds: string[] = [];
 
   for (const node of horizontalNodes) {
-    const ancestors = new Set<string>();
-    let parentId = node.parentId;
+    const parentId = node.parentId || '';
 
-    while (parentId) {
-      if (ancestors.has(parentId) || parentId === node.id) {
-        return { isValid: false, reason: 'the horizontal folder hierarchy contains a cycle' };
-      }
-
+    if (parentId) {
       const parent = nodesById.get(parentId);
-      if (!parent || !horizontalNodeIds.has(parentId) || !parent.isFolder()) {
+      if (!parent || parent.display !== 'horizontal' || !parent.isFolder()) {
         return { isValid: false, reason: 'a horizontal node has an invalid parent' };
       }
 
-      ancestors.add(parentId);
-      parentId = parent.parentId;
+      while (openFolderIds.length && openFolderIds.at(-1) !== parentId) {
+        openFolderIds.pop();
+      }
+
+      if (!openFolderIds.length) {
+        return {
+          isValid: false,
+          reason: 'the horizontal folder hierarchy is not depth-first and contiguous',
+        };
+      }
+    } else {
+      openFolderIds.length = 0;
     }
 
-    ancestorsByNodeId.set(node.id, ancestors);
-
     const verticalNode = nodesById.get(nodeMap[node.id])!;
-    const expectedVerticalParentId = node.parentId ? nodeMap[node.parentId] : '';
+    const expectedVerticalParentId = parentId ? nodeMap[parentId] : '';
     if ((verticalNode.parentId || '') !== (expectedVerticalParentId || '')) {
       return { isValid: false, reason: 'mapped nodes do not have mirrored parents' };
     }
-  }
 
-  for (let folderIndex = 0; folderIndex < horizontalNodes.length; folderIndex++) {
-    const folder = horizontalNodes[folderIndex];
-    if (!folder.isFolder()) continue;
-
-    const descendantIndices = horizontalNodes.reduce((indices, node, nodeIndex) => {
-      if (ancestorsByNodeId.get(node.id)!.has(folder.id)) indices.push(nodeIndex);
-      return indices;
-    }, [] as number[]);
-
-    if (
-      descendantIndices.some((nodeIndex, descendantIndex) => {
-        return nodeIndex !== folderIndex + descendantIndex + 1;
-      })
-    ) {
-      return {
-        isValid: false,
-        reason: 'the horizontal folder hierarchy is not depth-first and contiguous',
-      };
-    }
+    if (node.isFolder()) openFolderIds.push(node.id);
   }
 
   const horizontalOrder = horizontalNodes.map(node => node.id);

@@ -349,6 +349,95 @@ test('Collection load does not normalize an unmirrored folder hierarchy', async 
   );
 });
 
+test('Dual output validation does not normalize a non-contiguous folder hierarchy', async t => {
+  const client = await getApiClient();
+  const scenesService = client.getResource<ScenesService>('ScenesService');
+  const dualOutputService = client.getResource<DualOutputService>('DualOutputService');
+  const sceneCollectionsService = client.getResource<SceneCollectionsService>(
+    'SceneCollectionsService',
+  );
+  const scene = scenesService.createScene('Non-contiguous Folder Scene');
+  const rootItem = scene.createAndAddSource('Root Item', 'color_source');
+  const folder = scene.createFolder('Folder');
+  const folderItem1 = scene.createAndAddSource('Folder Item1', 'color_source');
+  folderItem1.setParent(folder.id);
+  const folderItem2 = scene.createAndAddSource('Folder Item2', 'color_source');
+  folderItem2.setParent(folder.id);
+
+  dualOutputService.convertSingleOutputToDualOutputCollection();
+
+  const nodeMap = sceneCollectionsService.sceneNodeMaps[scene.id];
+  const horizontalNodeIds = [folder.id, folderItem1.id, rootItem.id, folderItem2.id];
+  const verticalNodeIds = [folder.id, folderItem1.id, folderItem2.id, rootItem.id].map(
+    nodeId => nodeMap[nodeId],
+  );
+
+  // Root Item closes Folder's subtree before Folder Item2 tries to re-enter it.
+  // Keep the mapped parents valid so the preorder check is the only reason to
+  // reject normalization.
+  scene.setNodesOrder(horizontalNodeIds.concat(verticalNodeIds));
+  const unsafeOrder = scene.getNodes().map(node => node.id);
+
+  dualOutputService.validateDualOutputCollection();
+
+  t.deepEqual(
+    scene.getNodes().map(node => node.id),
+    unsafeOrder,
+    'Validation leaves z-order untouched when a closed folder subtree is reopened',
+  );
+  t.is(
+    scene.getNode(folderItem2.id).parentId,
+    folder.id,
+    'Validation does not mutate the malformed horizontal hierarchy',
+  );
+  t.is(
+    scene.getNode(nodeMap[folderItem2.id]).parentId,
+    nodeMap[folder.id],
+    'The rejected hierarchy still has mirrored vertical parents',
+  );
+});
+
+test('Dual output validation does not normalize a child-before-parent hierarchy', async t => {
+  const client = await getApiClient();
+  const scenesService = client.getResource<ScenesService>('ScenesService');
+  const dualOutputService = client.getResource<DualOutputService>('DualOutputService');
+  const sceneCollectionsService = client.getResource<SceneCollectionsService>(
+    'SceneCollectionsService',
+  );
+  const scene = scenesService.createScene('Child Before Parent Scene');
+  const rootItem = scene.createAndAddSource('Root Item', 'color_source');
+  const folder = scene.createFolder('Folder');
+  const folderItem = scene.createAndAddSource('Folder Item', 'color_source');
+  folderItem.setParent(folder.id);
+
+  dualOutputService.convertSingleOutputToDualOutputCollection();
+
+  const nodeMap = sceneCollectionsService.sceneNodeMaps[scene.id];
+  const horizontalNodeIds = [folderItem.id, folder.id, rootItem.id];
+  const verticalNodeIds = [folder.id, folderItem.id, rootItem.id].map(nodeId => nodeMap[nodeId]);
+
+  scene.setNodesOrder(horizontalNodeIds.concat(verticalNodeIds));
+  const unsafeOrder = scene.getNodes().map(node => node.id);
+
+  dualOutputService.validateDualOutputCollection();
+
+  t.deepEqual(
+    scene.getNodes().map(node => node.id),
+    unsafeOrder,
+    'Validation leaves z-order untouched when a child precedes its parent folder',
+  );
+  t.is(
+    scene.getNode(folderItem.id).parentId,
+    folder.id,
+    'Validation does not mutate the child-before-parent hierarchy',
+  );
+  t.is(
+    scene.getNode(nodeMap[folderItem.id]).parentId,
+    nodeMap[folder.id],
+    'The rejected hierarchy still has mirrored vertical parents',
+  );
+});
+
 test('New source is top-most in both displays for an inactive scene', async t => {
   const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
