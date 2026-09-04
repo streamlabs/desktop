@@ -160,7 +160,6 @@ function StudioFooterComponent() {
           />
         </Tooltip>
         <PerformanceMetrics mode="limited" className="performance-metrics" />
-        <NotificationsArea />
         {isLoggedIn && (
           <Tooltip placement="top" title={$t('Streamlabs Desktop Support')}>
             <button className={styles.kevinIcon} onClick={openKevinSupport}>
@@ -168,6 +167,7 @@ function StudioFooterComponent() {
             </button>
           </Tooltip>
         )}
+        <NotificationsArea />
       </div>
 
       <div className={styles.navRight}>

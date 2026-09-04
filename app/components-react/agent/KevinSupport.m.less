@@ -1,10 +1,15 @@
 @import '../../styles/index';
 @import '../../styles/ultra';
+// index.less doesn't pull in the raw color atoms — @navy and @white below need
+// this directly.
+@import '../../styles/colors';
 
 // Figma tokens map onto the night-theme palette 1:1:
 //   background/base #17242D -> --background   (content area)
 //   background/dark #09161D -> --section      (composer strip)
 //   stroke/default  #2B383F -> --border
+//   surface/dropdown #2B383F -> --section-alt (bot bubble fill, @dark-4)
+//   navy/navy       #233A4A -> @navy          (user bubble fill, fixed dark)
 .window {
   // Nothing inside may make the page itself scrollable: the window's title bar
   // sits above this element in normal flow, so a scrolled document hides it.
@@ -26,7 +31,7 @@
   flex-direction: column;
   gap: 20px;
   min-height: 0;
-  padding: 16px 24px;
+  padding: 20px 24px;
 }
 
 // -- empty state -------------------------------------------------------------
@@ -110,7 +115,9 @@
 
 .message {
   display: flex;
-  margin-bottom: 12px;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 20px;
 }
 
 .from-user {
@@ -121,20 +128,35 @@
   justify-content: flex-start;
 }
 
+// The Figma badge draws at roughly 16x14 inside its 28px frame; the top margin
+// nudges it down onto the bubble's first line of text instead of its own top.
+.avatar {
+  flex-shrink: 0;
+  width: 16px;
+  height: 14px;
+  margin-top: 7px;
+}
+
 .bubble {
-  max-width: 80%;
-  padding: 8px 12px;
+  max-width: 550px;
+  padding: 10px 14px;
   color: var(--title);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  background-color: var(--section);
+  background-color: var(--section-alt);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 0 12px 12px 12px;
 
   .from-user & {
-    background-color: var(--button);
+    // @navy is a fixed dark fill in every theme (the codebase already does
+    // this for --info-badge), so `color` has to be a literal white too --
+    // inheriting var(--title) would go unreadable in the day theme.
+    background-color: @navy;
+    border-color: #587070; // Figma stroke/focus -- no palette atom for it
+    color: @white;
+    border-radius: 12px 12px 0 12px;
   }
 }
 
@@ -182,6 +204,9 @@
 }
 
 .send {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   flex-shrink: 0;
   height: 36px;
   padding: 8px 16px;
@@ -192,6 +217,9 @@
 .approval {
   .bubble {
     max-width: 100%;
+    // The bubble's default radius rounds its bottom-left corner, which would
+    // clip the straight warning accent below -- square both left corners here.
+    border-radius: 0 12px 12px 0;
     border-left: 3px solid var(--warning);
   }
 }
