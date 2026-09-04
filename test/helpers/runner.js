@@ -27,7 +27,7 @@ const {
 let retryingFailed = false;
 
 const RUN_TESTS_CMD = !args.length
-  ? `yarn test --timeout=${TIMEOUT}m --color `
+  ? `yarn test --timeout=${TIMEOUT}m --color -v`
   : args.join(' ') + ' ';
 
 (async function main() {
