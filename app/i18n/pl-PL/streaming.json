@@ -113,6 +113,7 @@
   "Can not schedule the stream for the given date/time": "Nie można zaplanować streamu w danym dniu/godzinie",
   "Failed to load YouTube events": "Nie udało się wczytać wydarzeń z YouTube’a",
   "Failed to load Facebook events": "Nie udało się wczytać wydarzeń z Facebooka",
+  "Failed to load X events": "Failed to load X events",
   "Grow faster and reach a wider audience by streaming to multiple destinations at once, including Twitch, YouTube, TikTok, Kick, and more. Get unlimited multistreaming with Streamlabs Ultra.": "Rozwijaj się szybciej i docieraj do szerszego grona odbiorców, streamując jednocześnie do wielu miejsc, w tym na Twitcha, YouTube, TikToka, Kicka i inne. Zyskaj nielimitowany multistreaming dzięki Streamlabs Ultra.",
   "Learn more about Ultra": "Dowiedz się więcej o Ultra",
   "Why Streamlabs Multistream?": "Dlaczego Streamlabs Multistream?",
@@ -276,5 +277,6 @@
   "An unknown error occurred. Please try again.": "An unknown error occurred. Please try again.",
   "You could try locking and unlocking your computer to fix this error.": "You could try locking and unlocking your computer to fix this error.",
   "%{videoCodec} codec is not supported for Dual Output streaming to more than two destinations. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported for Dual Output streaming to more than two destinations. Would you like to proceed with the H.264 codec or select another codec?",
-  "Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming.": "Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming."
+  "Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming.": "Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming.",
+  "Twitch requires two factor authentication to be enabled on your account in order to stream to Twitch. Please enable two factor authentication and try again.": "Twitch requires two factor authentication to be enabled on your account in order to stream to Twitch. Please enable two factor authentication and try again."
 }
