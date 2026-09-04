@@ -113,6 +113,7 @@
   "Can not schedule the stream for the given date/time": "해당 날짜/시간에는 스트리밍 예약 불가",
   "Failed to load YouTube events": "YouTube 이벤트 로드 불가",
   "Failed to load Facebook events": "Facebook 이벤트 로드 불가",
+  "Failed to load X events": "Failed to load X events",
   "Grow faster and reach a wider audience by streaming to multiple destinations at once, including Twitch, YouTube, TikTok, Kick, and more. Get unlimited multistreaming with Streamlabs Ultra.": "Twitch, YouTube, TikTok, Kick 등 여러 플랫폼으로 동시에 스트리밍하여 더 빠르게 성장하고 더 많은 시청자에게 다가가세요. Streamlabs Ultra로 무제한 멀티스트리밍을 이용하세요.",
   "Learn more about Ultra": "Ultra에 대해 더 알아보기",
   "Why Streamlabs Multistream?": "왜 Streamlabs 멀티스트림인가요?",
@@ -276,5 +277,6 @@
   "An unknown error occurred. Please try again.": "An unknown error occurred. Please try again.",
   "You could try locking and unlocking your computer to fix this error.": "You could try locking and unlocking your computer to fix this error.",
   "%{videoCodec} codec is not supported for Dual Output streaming to more than two destinations. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported for Dual Output streaming to more than two destinations. Would you like to proceed with the H.264 codec or select another codec?",
-  "Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming.": "Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming."
+  "Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming.": "Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming.",
+  "Twitch requires two factor authentication to be enabled on your account in order to stream to Twitch. Please enable two factor authentication and try again.": "Twitch requires two factor authentication to be enabled on your account in order to stream to Twitch. Please enable two factor authentication and try again."
 }
