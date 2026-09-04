@@ -1,19 +1,17 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
 import { Header, IOnboardingStepProps } from './Onboarding';
 import styles from './Common.m.less';
 import { UltraComparison } from 'components-react/shared/UltraComparison';
+import { useSubscription } from 'components-react/hooks/useSubscription';
 
 export function Ultra(p: IOnboardingStepProps) {
   const { UserService, OnboardingV2Service } = Services;
 
-  useEffect(() => {
-    const sub = UserService.subscribedToPrime.subscribe(() => {
-      OnboardingV2Service.actions.takeStep();
-    });
-    return () => sub.unsubscribe();
-  }, []);
+  useSubscription(UserService.subscribedToPrime, () => {
+    OnboardingV2Service.actions.takeStep();
+  });
 
   function clickFree() {
     OnboardingV2Service.actions.takeStep();
