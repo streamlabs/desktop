@@ -9,6 +9,7 @@ import Scrollable from 'components-react/shared/Scrollable';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import KevinSvg from 'components-react/shared/KevinSvg';
 import UltraIcon from 'components-react/shared/UltraIcon';
+import { KevinChatIcon, SendIcon } from 'components-react/shared/icons';
 import {
   INTERACTION_LIMITS,
   ULTRA_PLUS_TIER,
@@ -19,11 +20,17 @@ import {
 import styles from './KevinSupport.m.less';
 
 // $t() must be called at render time, not module load, so the strings pick up a
-// language change — and inline so they stay extractable.
+// language change — and inline so they stay extractable. The chip's label and
+// the message it sends are independent strings: a short label reads well as a
+// pill, but the agent needs the actual question spelled out.
 const suggestedPrompts = () => [
-  $t('Set up alerts & widgets'),
-  $t('Connect streaming platform'),
-  $t('Intelligent Streaming Agent'),
+  { label: $t('Setup alerts & widgets'), prompt: $t('How do I setup alerts & widgets?') },
+  { label: $t('Mute mic'), prompt: $t('Mute my microphone') },
+  {
+    label: $t('Connect streaming platforms'),
+    prompt: $t('How do I connect more streaming platforms?'),
+  },
+  { label: $t('Sidekick'), prompt: $t('How do I setup Streamlabs Sidekick?') },
 ];
 
 //        [label](url)              **bold**        *italic*      `code`
@@ -213,7 +220,7 @@ export default function KevinSupport() {
 
         {isEmpty ? (
           <div className={styles.emptyState}>
-            <KevinSvg style={{ width: 36, height: 32, fill: 'var(--paragraph)' }} />
+            <KevinChatIcon style={{ width: 40, height: 38, color: 'var(--paragraph)' }} />
             <h2 className={styles.emptyTitle}>{$t('How can we help you today?')}</h2>
             <p className={styles.emptyBody}>
               {$t(
@@ -236,6 +243,9 @@ export default function KevinSupport() {
                       message.isUser ? styles.fromUser : styles.fromAgent,
                     )}
                   >
+                    {!message.isUser && (
+                      <KevinSvg className={styles.avatar} style={{ fill: 'var(--teal)' }} />
+                    )}
                     <div className={styles.bubble}>{renderText(message.text)}</div>
                   </div>
                 ))}
@@ -254,6 +264,7 @@ export default function KevinSupport() {
                     key={approval.approvalId}
                     className={cx(styles.message, styles.fromAgent, styles.approval)}
                   >
+                    <KevinSvg className={styles.avatar} style={{ fill: 'var(--teal)' }} />
                     <div className={styles.bubble}>
                       <div className={styles.approvalSummary}>{approval.summary}</div>
                       {approval.risk === 'irreversible' && (
@@ -302,6 +313,7 @@ export default function KevinSupport() {
 
                 {pending && pendingApprovals.length === 0 && (
                   <div className={cx(styles.message, styles.fromAgent)}>
+                    <KevinSvg className={styles.avatar} style={{ fill: 'var(--teal)' }} />
                     <div className={styles.bubble}>
                       <i className="fa fa-spinner fa-pulse" />
                     </div>
@@ -316,9 +328,9 @@ export default function KevinSupport() {
           <div className={styles.suggestions}>
             <span className={styles.suggestionsTitle}>{$t('Suggested Prompts')}</span>
             <div className={styles.promptRow}>
-              {suggestedPrompts().map(prompt => (
-                <button key={prompt} className={styles.prompt} onClick={() => send(prompt)}>
-                  {prompt}
+              {suggestedPrompts().map(({ label, prompt }) => (
+                <button key={label} className={styles.prompt} onClick={() => send(prompt)}>
+                  {label}
                 </button>
               ))}
             </div>
@@ -344,6 +356,7 @@ export default function KevinSupport() {
           onClick={() => send(draft)}
         >
           {$t('Send')}
+          <SendIcon />
         </button>
       </div>
     </ModalLayout>
