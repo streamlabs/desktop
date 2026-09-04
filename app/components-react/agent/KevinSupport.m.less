@@ -1,0 +1,328 @@
+@import '../../styles/index';
+@import '../../styles/ultra';
+// index.less doesn't pull in the raw color atoms — @navy and @white below need
+// this directly.
+@import '../../styles/colors';
+
+// Figma tokens map onto the night-theme palette 1:1:
+//   background/base #17242D -> --background   (content area)
+//   background/dark #09161D -> --section      (composer strip)
+//   stroke/default  #2B383F -> --border
+//   surface/dropdown #2B383F -> --section-alt (bot bubble fill, @dark-4)
+//   navy/navy       #233A4A -> @navy          (user bubble fill, fixed dark)
+.window {
+  // Nothing inside may make the page itself scrollable: the window's title bar
+  // sits above this element in normal flow, so a scrolled document hides it.
+  overflow: hidden;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--background);
+}
+
+.content {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 0;
+  padding: 20px 24px;
+}
+
+// -- empty state -------------------------------------------------------------
+
+.empty-state {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 0;
+  padding: 16px 0;
+  text-align: center;
+}
+
+.empty-title {
+  .weight(@bold);
+
+  margin: 6px 0 0;
+  color: var(--title);
+  font-size: 18px;
+}
+
+.empty-body {
+  max-width: 420px;
+  margin: 0;
+  color: var(--paragraph);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+// -- suggested prompts -------------------------------------------------------
+
+.suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.suggestions-title {
+  .weight(@bold);
+
+  color: var(--paragraph);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.prompt-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.prompt {
+  .weight(@medium);
+
+  padding: 8px 12px;
+  color: var(--title);
+  font-size: 12px;
+  background-color: var(--section);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--teal);
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+// -- transcript --------------------------------------------------------------
+
+.messages {
+  flex: 1 0 0;
+  min-height: 0;
+}
+
+.message {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.from-user {
+  justify-content: flex-end;
+}
+
+.from-agent {
+  justify-content: flex-start;
+}
+
+// The Figma badge draws at roughly 16x14 inside its 28px frame; the top margin
+// nudges it down onto the bubble's first line of text instead of its own top.
+.avatar {
+  flex-shrink: 0;
+  width: 16px;
+  height: 14px;
+  margin-top: 7px;
+}
+
+.bubble {
+  max-width: 550px;
+  padding: 10px 14px;
+  color: var(--title);
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background-color: var(--section-alt);
+  border: 1px solid var(--border);
+  border-radius: 0 12px 12px 12px;
+
+  .from-user & {
+    // @navy is a fixed dark fill in every theme (the codebase already does
+    // this for --info-badge), so `color` has to be a literal white too --
+    // inheriting var(--title) would go unreadable in the day theme.
+    background-color: @navy;
+    border-color: #587070; // Figma stroke/focus -- no palette atom for it
+    color: @white;
+    border-radius: 12px 12px 0 12px;
+  }
+}
+
+.link {
+  color: var(--teal);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+// -- errors ------------------------------------------------------------------
+
+.error {
+  padding: 8px 24px;
+  color: var(--warning);
+  font-size: 12px;
+}
+
+// -- composer ----------------------------------------------------------------
+
+.composer {
+  display: flex;
+  flex-shrink: 0;
+  gap: 12px;
+  align-items: flex-end;
+  padding: 12px 16px;
+  background-color: var(--section);
+  border-top: 1px solid var(--border);
+}
+
+.input {
+  flex: 1 0 0;
+  min-width: 0;
+  padding: 8px 12px !important;
+  color: var(--title);
+  font-size: 13px;
+  background-color: var(--background) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 6px !important;
+  resize: none;
+
+  &:focus {
+    border-color: var(--focus-border) !important;
+    box-shadow: none !important;
+  }
+}
+
+.send {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 36px;
+  padding: 8px 16px;
+}
+
+/* Inline tool-approval card. Shares the agent bubble, but wider and with a
+   left accent so it reads as a decision point rather than another reply. */
+.approval {
+  .bubble {
+    max-width: 100%;
+    // The bubble's default radius rounds its bottom-left corner, which would
+    // clip the straight warning accent below -- square both left corners here.
+    border-radius: 0 12px 12px 0;
+    border-left: 3px solid var(--warning);
+  }
+}
+
+.approvalSummary {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.approvalWarning {
+  color: var(--warning);
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.approvalActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+
+  button {
+    margin: 0;
+  }
+}
+
+/* Shown when an approval is the only thing in the window, so the card is not
+   floating with no explanation of where it came from. */
+.approvalContext {
+  color: var(--paragraph);
+  font-size: 12px;
+  text-align: center;
+  padding: 12px 16px 4px;
+}
+
+// -- interaction quota --------------------------------------------------------
+// Mirrors the Automations usage meter (EditAutomations.m.less) so the two read
+// as the same control. Right-aligned and out of the flex flow so it sits in the
+// window's top-right corner without taking height from the conversation.
+
+.usage-meter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-bottom: -8px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.usage-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.usage-text {
+  color: var(--title);
+}
+
+.usage-info {
+  color: var(--icon);
+  cursor: help;
+}
+
+.usage-track {
+  width: 140px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.usage-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--teal);
+  transition: width 150ms ease;
+}
+
+// Spent, not merely nearly spent. The bar is the thing seen at a glance, so it
+// should not still read as healthy on the request that gets refused.
+.usage-fill-full {
+  background: var(--warning);
+}
+
+.upgrade-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover .upgrade-text {
+    opacity: 0.85;
+  }
+}
+
+.upgrade-text {
+  .ultra-text('warm');
+}
+
+.at-cap-note {
+  color: var(--paragraph);
+}

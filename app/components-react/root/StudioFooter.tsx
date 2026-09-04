@@ -14,6 +14,7 @@ import { Tooltip } from 'antd';
 import { confirmAsync } from 'components-react/modals';
 import RecordingSwitcher from 'components-react/windows/go-live/RecordingSwitcher';
 import { EAvailableFeatures } from 'services/incremental-rollout';
+import { KevinChatIcon } from 'components-react/shared/icons';
 
 function StudioFooterComponent() {
   const {
@@ -95,6 +96,22 @@ function StudioFooterComponent() {
     UsageStatisticsService.actions.recordFeatureUsage('PerformanceStatistics');
   }, []);
 
+  const openKevinSupport = useCallback(() => {
+    // A one-off window, not showWindow(): there is only one shared `child` window,
+    // so showWindow would close whatever the user already had open. Support needs
+    // to sit alongside the thing being asked about. The fixed windowId means a
+    // second click restores and focuses the existing window instead of duplicating.
+    WindowsService.actions.createOneOffWindow(
+      {
+        componentName: 'KevinSupport',
+        title: $t('Streamlabs Desktop Support'),
+        queryParams: {},
+        size: { width: 900, height: 640, minWidth: 560, minHeight: 420 },
+      },
+      'kevin-support',
+    );
+  }, []);
+
   const toggleReplayBuffer = useCallback(() => {
     if (replayBufferStatus === EReplayBufferState.Offline) {
       StreamingService.actions.startReplayBuffer();
@@ -143,6 +160,18 @@ function StudioFooterComponent() {
           />
         </Tooltip>
         <PerformanceMetrics mode="limited" className="performance-metrics" />
+        {isLoggedIn && (
+          <Tooltip placement="top" title={$t('Streamlabs Desktop Support')}>
+            <button
+              type="button"
+              aria-label={$t('Streamlabs Desktop Support')}
+              className={styles.kevinIcon}
+              onClick={openKevinSupport}
+            >
+              <KevinChatIcon />
+            </button>
+          </Tooltip>
+        )}
         <NotificationsArea />
       </div>
 

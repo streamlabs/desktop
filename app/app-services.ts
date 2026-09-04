@@ -67,6 +67,8 @@ export { StreamAvatarService } from 'services/stream-avatar/stream-avatar-servic
 export { StreamAvatarApiService } from 'services/stream-avatar/stream-avatar-api-service';
 export { AutomationsService } from 'services/stream-avatar/automations-service';
 export { AutomationsEngineService } from 'services/stream-avatar/automations-engine-service';
+export { KevinSupportService } from 'services/stream-avatar/kevin-support-service';
+export { AgentToolsService } from 'services/stream-avatar/v2/agent-tools';
 export { OnboardingV2Service } from 'services/onboarding/onboarding-v2';
 
 // ONLINE SERVICES
@@ -214,6 +216,8 @@ import { VirtualWebcamService } from 'services/virtual-webcam';
 import { StreamAvatarApiService } from 'services/stream-avatar/stream-avatar-api-service';
 import { AutomationsService } from 'services/stream-avatar/automations-service';
 import { AutomationsEngineService } from 'services/stream-avatar/automations-engine-service';
+import { KevinSupportService } from 'services/stream-avatar/kevin-support-service';
+import { AgentToolsService } from 'services/stream-avatar/v2/agent-tools';
 
 export const AppServices = {
   AppService,
@@ -305,4 +309,6 @@ export const AppServices = {
   StreamAvatarApiService,
   AutomationsService,
   AutomationsEngineService,
+  KevinSupportService,
+  AgentToolsService,
 };

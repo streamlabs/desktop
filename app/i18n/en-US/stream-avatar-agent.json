@@ -1,0 +1,10 @@
+{
+  "Allow this action?": "Allow this action?",
+  "Your avatar wants to: %{action}": "Your avatar wants to: %{action}",
+  "Your avatar is asking permission for something you requested by voice.": "Your avatar is asking permission for something you requested by voice.",
+  "This cannot be undone.": "This cannot be undone.",
+  "This will be visible to your viewers.": "This will be visible to your viewers.",
+  "Allow once": "Allow once",
+  "Always allow": "Always allow",
+  "Deny": "Deny"
+}

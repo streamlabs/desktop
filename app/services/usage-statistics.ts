@@ -62,6 +62,7 @@ export type TAnalyticsEvent =
   | 'WidgetRemoved'
   | 'GamePulse'
   | 'Automations'
+  | 'SupportChat'
   | 'LiveOutputEditing';
 
 // Refls are used as uuids for ultra components and should be updated for new ulta components.
@@ -82,6 +83,7 @@ export type TUltraRefl =
   | 'slobs-stream-settings'
   | 'slobs-live-output-editing'
   | 'slobs-automations'
+  | 'slobs-support-chat'
   | string;
 
 interface IAnalyticsEvent {
