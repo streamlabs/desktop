@@ -432,7 +432,10 @@ test('New source is top-most in both displays for an inactive scene', async t =>
   );
 });
 
-test('Paired folder grouping remains atomic and ordered', async t => {
+async function confirmSingleDisplayFolderGrouping(
+  t: TExecutionContext,
+  selectedDisplay: 'horizontal' | 'vertical',
+) {
   const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
   const dualOutputService = client.getResource<DualOutputService>('DualOutputService');
@@ -440,16 +443,21 @@ test('Paired folder grouping remains atomic and ordered', async t => {
     'SceneCollectionsService',
   );
   const editorCommandsService = client.getResource<EditorCommandsService>('EditorCommandsService');
-  const scene = scenesService.createScene('Folder Scene');
-  scene.createAndAddSource('Item1', 'color_source');
-  scene.createAndAddSource('Item2', 'color_source');
-  scene.createAndAddSource('Item3', 'color_source');
+  const collectionId = sceneCollectionsService.activeCollection.id;
+  const scene = scenesService.createScene(`${selectedDisplay} Folder Scene`);
+  const item1 = scene.createAndAddSource('Item1', 'color_source');
+  const item2 = scene.createAndAddSource('Item2', 'color_source');
+  const item3 = scene.createAndAddSource('Item3', 'color_source');
   dualOutputService.convertSingleOutputToDualOutputCollection();
+  dualOutputService.toggleDualOutputMode(true);
+  dualOutputService.toggleDisplay(selectedDisplay === 'horizontal', 'horizontal');
+  dualOutputService.toggleDisplay(selectedDisplay === 'vertical', 'vertical');
 
   const selectedNodeIds = scene
-    .getNodes()
-    .filter(node => node.name === 'Item3')
+    .getSourceSelectorNodes()
+    .filter(node => node.name === 'Item3' || node.name === 'Item2')
     .map(node => node.id);
+  t.is(selectedNodeIds.length, 2, `Selection contains only ${selectedDisplay} nodes`);
   const selection = scene.getSelection(selectedNodeIds);
   const serializedSelection = {
     _type: 'HELPER',
@@ -477,12 +485,21 @@ test('Paired folder grouping remains atomic and ordered', async t => {
   );
   t.deepEqual(
     horizontalFolder.getNodes().map(node => `${node.display}:${node.name}`),
-    ['horizontal:Item3'],
+    ['horizontal:Item3', 'horizontal:Item2'],
   );
   t.deepEqual(
     verticalFolder.getNodes().map(node => `${node.display}:${node.name}`),
-    ['vertical:Item3'],
+    ['vertical:Item3', 'vertical:Item2'],
   );
+  [item3, item2].forEach(item => {
+    t.is(scene.getNode(item.id).parentId, horizontalFolder.id);
+    t.is(
+      scene.getNode(sceneCollectionsService.sceneNodeMaps[scene.id][item.id]).parentId,
+      verticalFolder.id,
+    );
+  });
+  t.is(scene.getNode(item1.id).parentId, '');
+  t.is(scene.getNode(sceneCollectionsService.sceneNodeMaps[scene.id][item1.id]).parentId, '');
   confirmNodeOrder(
     t,
     scene,
@@ -520,11 +537,11 @@ test('Paired folder grouping remains atomic and ordered', async t => {
   const restoredVerticalFolder = scene.getFolder(verticalFolder.id);
   t.deepEqual(
     restoredHorizontalFolder.getNodes().map(node => `${node.display}:${node.name}`),
-    ['horizontal:Item3'],
+    ['horizontal:Item3', 'horizontal:Item2'],
   );
   t.deepEqual(
     restoredVerticalFolder.getNodes().map(node => `${node.display}:${node.name}`),
-    ['vertical:Item3'],
+    ['vertical:Item3', 'vertical:Item2'],
   );
   t.is(
     sceneCollectionsService.sceneNodeMaps[scene.id][horizontalFolder.id],
@@ -537,4 +554,44 @@ test('Paired folder grouping remains atomic and ordered', async t => {
     ['Newest Folder', 'Item3', 'Item2', 'Item1'],
     ['Newest Folder', 'Item3', 'Item2', 'Item1'],
   );
+
+  // A valid mirrored hierarchy allows collection-load validation to repair
+  // persisted vertical sibling order.
+  const restoredNodeMap = sceneCollectionsService.sceneNodeMaps[scene.id];
+  scene.getNode(restoredNodeMap[item3.id]).placeAfter(restoredNodeMap[item2.id]);
+  t.deepEqual(
+    restoredVerticalFolder.getNodes().map(node => node.name),
+    ['Item2', 'Item3'],
+    'Vertical sibling order is deliberately corrupted before reload',
+  );
+
+  dualOutputService.toggleDualOutputMode(false);
+  await sceneCollectionsService.create({ name: `${selectedDisplay} Folder Other Collection` });
+  await sceneCollectionsService.load(collectionId);
+
+  const reloadedScene = (scenesService as any).getScene(scene.id) as Scene;
+  const reloadedNodeMap = sceneCollectionsService.sceneNodeMaps[scene.id];
+  const reloadedHorizontalFolder = reloadedScene.getFolder(horizontalFolder.id);
+  const reloadedVerticalFolder = reloadedScene.getFolder(verticalFolder.id);
+  t.deepEqual(
+    reloadedHorizontalFolder.getNodes().map(node => `${node.display}:${node.name}`),
+    ['horizontal:Item3', 'horizontal:Item2'],
+  );
+  t.deepEqual(
+    reloadedVerticalFolder.getNodes().map(node => `${node.display}:${node.name}`),
+    ['vertical:Item3', 'vertical:Item2'],
+    'Collection load accepts the mirrored hierarchy and repairs vertical sibling order',
+  );
+  [item3, item2].forEach(item => {
+    t.is(reloadedScene.getNode(item.id).parentId, reloadedHorizontalFolder.id);
+    t.is(reloadedScene.getNode(reloadedNodeMap[item.id]).parentId, reloadedVerticalFolder.id);
+  });
+}
+
+test('Horizontal-only folder grouping remains mirrored, atomic, and ordered', async t => {
+  await confirmSingleDisplayFolderGrouping(t, 'horizontal');
+});
+
+test('Vertical-only folder grouping remains mirrored, atomic, and ordered', async t => {
+  await confirmSingleDisplayFolderGrouping(t, 'vertical');
 });
