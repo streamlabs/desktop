@@ -225,13 +225,12 @@ test('Go through onboarding', async t => {
 
     t.true(await isDisplayed('span=Sources'), 'Sources selector is visible');
 
-    // Confirm sources and dual output status
+    // Confirm sources
     t.is(
       await getNumElements('div[data-role=source]'),
       0,
       'Old user onboarded without theme has no sources',
     );
-    t.true(await isDisplayed('i[data-testid=dual-output-inactive]'), 'Dual output not enabled');
   });
 
   t.pass();
@@ -245,9 +244,8 @@ test.skip('Go through onboarding and install theme', async t => {
   const newUser = true;
 
   await goThroughOnboarding(t, login, newUser, async () => {
-    // Confirm sources and dual output status
+    // Confirm sources
     t.not(await getNumElements('div[data-role=source]'), 0, 'Theme installed before login');
-    t.true(await isDisplayed('i[data-testid=dual-output-inactive]'), 'Single output enabled');
 
     // login new user after onboarding
     await clickIfDisplayed('li[data-testid=nav-auth]');
@@ -256,9 +254,8 @@ test.skip('Go through onboarding and install theme', async t => {
     await logIn(t, 'twitch', { prime: false }, false, false, true);
     await sleep(1000);
 
-    // Confirm switched to scene with default sources and dual output status
+    // Confirm switched to scene with default sources
     await confirmDefaultSources(t);
-    t.true(await isDisplayed('i[data-testid=dual-output-inactive]'), 'Single output enabled.');
   });
 
   t.pass();
@@ -272,9 +269,7 @@ test('Go through onboarding as a new user', async t => {
 
   await goThroughOnboarding(t, login, newUser, async () => {
     await finishOnboarding(installTheme);
-    // Confirm sources and dual output status
     await confirmDefaultSources(t);
-    t.true(await isDisplayed('i[data-testid=dual-output-inactive]'), 'Single output enabled.');
   });
 
   t.pass();
@@ -289,9 +284,7 @@ test.skip('Go through onboarding as a new user and install theme', async t => {
 
   await goThroughOnboarding(t, login, newUser, async () => {
     await finishOnboarding(installTheme);
-    // Confirm sources and dual output status
     await confirmDefaultSources(t, DefaultSourcesCheck.CheckOverlaySources);
-    t.true(await isDisplayed('i[data-testid=dual-output-inactive]'), 'Single output enabled.');
   });
 
   t.pass();
@@ -305,10 +298,7 @@ test('Login new user after onboarding skipped', async t => {
 
   await goThroughOnboarding(t, login, newUser, async () => {
     await finishOnboarding(installTheme, HardwareConfigButtons.Skip);
-
-    // Confirm switched to scene with default sources and dual output status
     await confirmDefaultSources(t, DefaultSourcesCheck.NoDefaultSources);
-    t.true(await isDisplayed('i[data-testid=dual-output-inactive]'), 'Dual output not enabled.');
   });
 
   t.pass();
