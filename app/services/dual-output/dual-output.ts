@@ -29,7 +29,7 @@ import { NotificationsService, ENotificationType } from 'services/notifications'
 import { $t } from 'services/i18n';
 import { JsonrpcService } from 'services/api/jsonrpc';
 import { CustomizationService, CustomizationState } from 'services/customization';
-import { orderNodesByDisplay } from './node-order';
+import { getValidatedDualOutputNodeOrder, orderNodesByDisplay } from './node-order';
 
 interface IDisplayVideoSettings {
   horizontal: IVideoInfo;
@@ -729,6 +729,23 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     horizontalNodeIds.forEach((horizontalId: string) => {
       this.sceneCollectionsService.removeNodeMapEntry(sceneId, horizontalId);
     });
+
+    const scene = this.scenesService.views.getScene(sceneId)!;
+    // Validation and stale-entry cleanup can replace the per-scene map object,
+    // so fetch it once more before repairing an order loaded from disk.
+    const refreshedNodeMap = this.views.sceneNodeMaps[sceneId];
+    const validatedOrder = getValidatedDualOutputNodeOrder(scene, refreshedNodeMap);
+    if ('reason' in validatedOrder) {
+      console.warn(
+        `Skipping dual output node-order repair for scene ${sceneId}: ${validatedOrder.reason}`,
+      );
+    } else {
+      const currentOrder = scene.getNodesIds();
+      if (validatedOrder.nodeIds.some((nodeId, index) => nodeId !== currentOrder[index])) {
+        scene.setNodesOrder(validatedOrder.nodeIds);
+        console.info(`Repaired dual output node order for scene ${sceneId}`);
+      }
+    }
 
     this.SET_IS_LOADING(false);
   }

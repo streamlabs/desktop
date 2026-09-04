@@ -166,6 +166,189 @@ test('Convert single output collection to dual output', async (t: TExecutionCont
   });
 });
 
+test('Collection load repairs persisted vertical z-order', async t => {
+  const client = await getApiClient();
+  const scenesService = client.getResource<ScenesService>('ScenesService');
+  const dualOutputService = client.getResource<DualOutputService>('DualOutputService');
+  const sceneCollectionsService = client.getResource<SceneCollectionsService>(
+    'SceneCollectionsService',
+  );
+  const collectionId = sceneCollectionsService.activeCollection.id;
+  const scene = scenesService.createScene('Load Repair Scene');
+  const item1 = scene.createAndAddSource('Item1', 'color_source');
+  scene.createAndAddSource('Item2', 'color_source');
+  const folder = scene.createFolder('Folder');
+  const nestedFolder = scene.createFolder('Nested Folder');
+  nestedFolder.setParent(folder.id);
+  const folderItem1 = scene.createAndAddSource('Folder Item1', 'color_source');
+  folderItem1.setParent(nestedFolder.id);
+  const folderItem2 = scene.createAndAddSource('Folder Item2', 'color_source');
+  folderItem2.setParent(nestedFolder.id);
+  const item3 = scene.createAndAddSource('Item3', 'color_source');
+
+  dualOutputService.convertSingleOutputToDualOutputCollection();
+
+  const nodeMap = sceneCollectionsService.sceneNodeMaps[scene.id];
+  const expectedNodeMap = { ...nodeMap };
+  const expectedOrder = [
+    'Item3',
+    'Folder',
+    'Nested Folder',
+    'Folder Item2',
+    'Folder Item1',
+    'Item2',
+    'Item1',
+  ];
+
+  // Recreate the persisted shape produced by the old insertion code: the
+  // horizontal item is top-most, while its vertical partner is at the bottom.
+  scene.getNode(nodeMap[item3.id]).placeAfter(nodeMap[item1.id]);
+  scene.getNode(nodeMap[folderItem2.id]).placeAfter(nodeMap[folderItem1.id]);
+  confirmNodeOrder(t, scene, expectedOrder, [
+    'Folder',
+    'Nested Folder',
+    'Folder Item1',
+    'Folder Item2',
+    'Item2',
+    'Item1',
+    'Item3',
+  ]);
+
+  // Switching away persists the bad order. Loading the collection exercises
+  // the normal validateDualOutputCollection path rather than calling the
+  // validator directly from the test.
+  const otherCollection = await sceneCollectionsService.create({
+    name: 'Load Repair Other Collection',
+  });
+  await sceneCollectionsService.load(collectionId);
+
+  const restoredScene = (scenesService as any).getScene(scene.id) as Scene;
+  confirmNodeOrder(t, restoredScene, expectedOrder, expectedOrder);
+
+  const restoredNodeMap = sceneCollectionsService.sceneNodeMaps[scene.id];
+  t.deepEqual(
+    restoredNodeMap,
+    expectedNodeMap,
+    'Collection load repairs only order and preserves every existing node pair',
+  );
+  const restoredVerticalFolder = restoredScene.getFolder(restoredNodeMap[nestedFolder.id]);
+  t.is(
+    restoredVerticalFolder.parentId,
+    restoredNodeMap[folder.id],
+    'Collection load preserves the mirrored nested-folder relationship',
+  );
+  t.deepEqual(
+    restoredVerticalFolder.getNodes().map(node => node.name),
+    ['Folder Item2', 'Folder Item1'],
+    'Collection load restores nested vertical sibling z-order from the horizontal folder',
+  );
+
+  // Switching away saves the repaired order. A second load verifies that the
+  // repair is durable and idempotent through the normal persistence path.
+  await sceneCollectionsService.load(otherCollection.id);
+  await sceneCollectionsService.load(collectionId);
+  const reloadedScene = (scenesService as any).getScene(scene.id) as Scene;
+  confirmNodeOrder(t, reloadedScene, expectedOrder, expectedOrder);
+});
+
+test('Collection load does not normalize order with a malformed node map', async t => {
+  const client = await getApiClient();
+  const scenesService = client.getResource<ScenesService>('ScenesService');
+  const dualOutputService = client.getResource<DualOutputService>('DualOutputService');
+  const sceneCollectionsService = client.getResource<SceneCollectionsService>(
+    'SceneCollectionsService',
+  );
+  const collectionId = sceneCollectionsService.activeCollection.id;
+  const scene = scenesService.createScene('Malformed Map Scene');
+  const item1 = scene.createAndAddSource('Item1', 'color_source');
+  const item2 = scene.createAndAddSource('Item2', 'color_source');
+  const folder = scene.createFolder('Folder');
+  const folderItem = scene.createAndAddSource('Folder Item', 'color_source');
+  folderItem.setParent(folder.id);
+
+  dualOutputService.convertSingleOutputToDualOutputCollection();
+
+  const nodeMap = sceneCollectionsService.sceneNodeMaps[scene.id];
+  const verticalFolderId = nodeMap[folder.id];
+  const verticalFolderItemId = nodeMap[folderItem.id];
+
+  // Keep the map complete and bijective, but swap a folder and item partner.
+  // Existing collection validation intentionally leaves these present nodes in
+  // place; z-order normalization must decline to infer an order from this map.
+  sceneCollectionsService.createNodeMapEntry(scene.id, folder.id, verticalFolderItemId);
+  sceneCollectionsService.createNodeMapEntry(scene.id, folderItem.id, verticalFolderId);
+
+  scene.getNode(nodeMap[item2.id]).placeAfter(nodeMap[item1.id]);
+  const malformedOrder = scene.getNodes().map(node => node.id);
+
+  await sceneCollectionsService.create({ name: 'Malformed Map Other Collection' });
+  await sceneCollectionsService.load(collectionId);
+
+  const restoredScene = (scenesService as any).getScene(scene.id) as Scene;
+  t.deepEqual(
+    restoredScene.getNodes().map(node => node.id),
+    malformedOrder,
+    'Load leaves z-order untouched when pair types make the node map unsafe to normalize',
+  );
+  t.is(
+    sceneCollectionsService.sceneNodeMaps[scene.id][folder.id],
+    verticalFolderItemId,
+    'Existing validation semantics leave the malformed folder mapping intact',
+  );
+  t.is(
+    sceneCollectionsService.sceneNodeMaps[scene.id][folderItem.id],
+    verticalFolderId,
+    'Existing validation semantics leave the malformed item mapping intact',
+  );
+});
+
+test('Collection load does not normalize an unmirrored folder hierarchy', async t => {
+  const client = await getApiClient();
+  const scenesService = client.getResource<ScenesService>('ScenesService');
+  const dualOutputService = client.getResource<DualOutputService>('DualOutputService');
+  const sceneCollectionsService = client.getResource<SceneCollectionsService>(
+    'SceneCollectionsService',
+  );
+  const collectionId = sceneCollectionsService.activeCollection.id;
+  const scene = scenesService.createScene('Unmirrored Folder Scene');
+  scene.createAndAddSource('Root Item', 'color_source');
+  const folder = scene.createFolder('Folder');
+  const folderItem = scene.createAndAddSource('Folder Item', 'color_source');
+  folderItem.setParent(folder.id);
+
+  dualOutputService.convertSingleOutputToDualOutputCollection();
+
+  const nodeMap = sceneCollectionsService.sceneNodeMaps[scene.id];
+  const verticalFolderItem = scene.getNode(nodeMap[folderItem.id]);
+  verticalFolderItem.detachParent();
+
+  const horizontalNodeIds = scene
+    .getNodes()
+    .filter(node => node.display === 'horizontal')
+    .map(node => node.id);
+  const verticalNodeIds = scene
+    .getNodes()
+    .filter(node => node.display === 'vertical')
+    .map(node => node.id);
+  scene.setNodesOrder(verticalNodeIds.concat(horizontalNodeIds));
+  const unsafeOrder = scene.getNodes().map(node => node.id);
+
+  await sceneCollectionsService.create({ name: 'Unmirrored Folder Other Collection' });
+  await sceneCollectionsService.load(collectionId);
+
+  const restoredScene = (scenesService as any).getScene(scene.id) as Scene;
+  t.deepEqual(
+    restoredScene.getNodes().map(node => node.id),
+    unsafeOrder,
+    'Load leaves z-order untouched when mapped folder relationships are not mirrored',
+  );
+  t.is(
+    restoredScene.getNode(nodeMap[folderItem.id]).parentId,
+    '',
+    'Load does not infer or mutate a malformed vertical parent relationship',
+  );
+});
+
 test('New source is top-most in both displays for an inactive scene', async t => {
   const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
