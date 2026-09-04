@@ -412,6 +412,15 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     // remove [vue-i18n] warnings
     const displayLogs = logs
       .split('\n')
+      .map(str => {
+        // red for errors
+        if (str.match('[error]')) return `\e[0;31m${str}`;
+        // yellow for debug since it sometimes conveys error messages
+        if (str.match('[debug]')) return `\e[0;33m${str}`;
+        // default white for info tags which can usually be ignored
+        if (str.match('[info]')) return `\e[0;37m${str}`;
+        return str;
+      })
       .filter(str => !str.match('Fall back to translate'))
       .join('\n');
 
