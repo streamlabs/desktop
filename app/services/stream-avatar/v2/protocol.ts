@@ -12,7 +12,8 @@
 // (SWC/ESM, Vite/esbuild, Electron tsc):
 //   - no imports, no runtime dependencies;
 //   - no `enum` / `const enum` (isolatedModules); unions + `as const` only;
-//   - nothing repo-specific, including in comments.
+//   - no repo-specific code, imports, or identifiers (the file list above is
+//     the sync manifest, not a dependency).
 //
 // Design rules for the protocol itself:
 //   - NO `emit` in either direction ever takes an acknowledgement callback.
