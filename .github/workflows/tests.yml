@@ -83,7 +83,7 @@ jobs:
           path: ${{ runner.temp }}/frontend-test-build.7z
           compression-level: 0
           retention-days: 1
-  verify-game-capture-binary-signatures:
+  verify-binary:
     name: 'Verify Game Capture Binary Signatures'
     needs: [testable-changes, prepare-frontend-tests]
     if: needs.testable-changes.outputs.has-testable-changes == 'true' || needs.testable-changes.outputs.has-dependency-changes == 'true' || github.event_name == 'push'
@@ -108,6 +108,16 @@ jobs:
       - name: 'Run Game Capture Binary Signature Verification'
         run: yarn ts-node scripts/ci/verify_game_signatures.ts
         working-directory: ${{ runner.temp }}/frontend-test-project
+      - name: 'Verify HEVC Encoder is present'
+        run: |
+          output=$(./ffmpeg.exe -hide_banner -encoders 2>/dev/null | grep hevc)
+          if [ -z "$output" ]; then
+            echo "HEVC encoder not found in ffmpeg encoders list. This may indicate that the HEVC encoder is missing or not properly configured."
+            exit 1
+          fi
+          echo "HEVC encoder found: $output"
+        working-directory: ${{ runner.temp }}/frontend-test-project/node_modules/obs-studio-node
+        shell: bash
   test:
     name: 'Frontend Tests'
     needs: prepare-frontend-tests
@@ -189,7 +199,7 @@ jobs:
     if: always()
     # Note: every required job in this workflow must be accounted in the results collation
     # to work properly as a required check
-    needs: [testable-changes, prepare-frontend-tests, verify-game-capture-binary-signatures, test, es-lint-strict-nulls]
+    needs: [testable-changes, prepare-frontend-tests, verify-binary, test, es-lint-strict-nulls]
     runs-on: ubuntu-latest
     steps:
       - name: 'Check CI Results'
