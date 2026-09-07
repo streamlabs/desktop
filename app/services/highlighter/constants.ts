@@ -32,15 +32,15 @@ export const AI_HIGHLIGHTER_BUILDS_URL_STAGING =
 export const AI_HIGHLIGHTER_BUILDS_URL_PRODUCTION =
   'https://cdn-highlighter-builds.streamlabs.com/production/manifest_win_x86_64.json';
 
-export const HIGHLIGHTER_SETUP_URL_STAGING =
-  'https://cdn-highlighter-desktop.streamlabs.com/streamlabs-highlighter/staging/win32/x64/Streamlabs%20Highlighter-Setup.exe';
+export const REPLAY_SETUP_URL_STAGING =
+  'https://cdn-highlighter-desktop.streamlabs.com/staging/win32/x64/G+HUB+Replay-Setup.exe';
 
-export const HIGHLIGHTER_SETUP_URL_PRODUCTION =
-  'https://cdn-highlighter-desktop.streamlabs.com/streamlabs-highlighter/production/win32/x64/Streamlabs%20Highlighter-Setup.exe';
+export const REPLAY_SETUP_URL_PRODUCTION =
+  'https://cdn-highlighter-desktop.streamlabs.com/production/win32/x64/G+HUB+Replay-Setup.exe';
 
-export const REPLAY_PROTOCOL = 'streamlabs-highlighter';
-export const REPLAY_APP_NAME = 'Streamlabs Highlighter';
-export const REPLAY_SETUP_EXE_NAME = 'Streamlabs Highlighter-Setup.exe';
+export const REPLAY_PROTOCOL = 'ghub-replay';
+export const REPLAY_APP_NAME = 'Replay';
+export const REPLAY_SETUP_EXE_NAME = 'G HUB Replay-Setup.exe';
 
 // Origin slug Replay attributes an install to when Streamlabs Desktop installed it.
 export const REPLAY_INSTALL_ORIGIN = 'sl_desktop';
@@ -50,5 +50,5 @@ export const REPLAY_INSTALL_ORIGIN = 'sl_desktop';
 // work before Replay is installed at all, and Replay deletes it as soon as it has been read.
 // Deliberately not derived from REPLAY_APP_NAME: this directory name is a contract with Replay and
 // does not follow the app rename.
-export const REPLAY_INSTALL_ORIGIN_DIR_NAME = 'Streamlabs_Highlighter';
+export const REPLAY_INSTALL_ORIGIN_DIR_NAME = 'GHUB_Replay';
 export const REPLAY_INSTALL_ORIGIN_FILE_NAME = 'install-origin.json';

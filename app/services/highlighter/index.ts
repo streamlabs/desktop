@@ -15,8 +15,8 @@ import os from 'os';
 import {
   SCRUB_SPRITE_DIRECTORY,
   SUPPORTED_FILE_TYPES,
-  HIGHLIGHTER_SETUP_URL_STAGING,
-  HIGHLIGHTER_SETUP_URL_PRODUCTION,
+  REPLAY_SETUP_URL_STAGING,
+  REPLAY_SETUP_URL_PRODUCTION,
   REPLAY_PROTOCOL,
   REPLAY_SETUP_EXE_NAME,
   REPLAY_INSTALL_ORIGIN,
@@ -407,9 +407,9 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
   private getReplaySetupUrl(): string {
     if (Utils.getHighlighterEnvironment() === 'production') {
-      return HIGHLIGHTER_SETUP_URL_PRODUCTION;
+      return REPLAY_SETUP_URL_PRODUCTION;
     }
-    return HIGHLIGHTER_SETUP_URL_STAGING;
+    return REPLAY_SETUP_URL_STAGING;
   }
 
   /**

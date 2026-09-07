@@ -3,7 +3,7 @@ import { Services } from 'components-react/service-provider';
 import { ListInput, TextInput } from 'components-react/shared/inputs';
 import Form from 'components-react/shared/inputs/Form';
 import * as remote from '@electron/remote';
-import { SUPPORTED_FILE_TYPES } from 'services/highlighter/constants';
+import { REPLAY_APP_NAME, SUPPORTED_FILE_TYPES } from 'services/highlighter/constants';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import {
   IStreamInfoForAiHighlighter,
@@ -377,9 +377,15 @@ export function ImportStreamModal({
       </div>
       <div className={styles.explainerTextWrapper}>
         {replayInstalled ? (
-          <p className={styles.explainerText}> Continuing will open Streamlabs Highlighter</p>
+          <p className={styles.explainerText}>
+            {' '}
+            {$t('Continuing will open %{appName}', { appName: REPLAY_APP_NAME })}
+          </p>
         ) : (
-          <p className={styles.explainerText}> Continuing will install Streamlabs Highlighter</p>
+          <p className={styles.explainerText}>
+            {' '}
+            {$t('Continuing will install %{appName}', { appName: REPLAY_APP_NAME })}
+          </p>
         )}
       </div>
     </HypeWrapper>

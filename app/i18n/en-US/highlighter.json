@@ -184,6 +184,8 @@
   "Open %{appName}": "Open %{appName}",
   "Install %{appName}": "Install %{appName}",
   "%{appName} has been installed and is now running.": "%{appName} has been installed and is now running.",
+  "Continuing will open %{appName}": "Continuing will open %{appName}",
+  "Continuing will install %{appName}": "Continuing will install %{appName}",
   "Installing Highlighter": "Installing Highlighter",
   "Installation interrupted": "Installation interrupted",
   "It seems the installation didn't finish.": "It seems the installation didn't finish.",
