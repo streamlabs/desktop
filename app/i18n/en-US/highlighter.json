@@ -183,6 +183,7 @@
   "Install %{appName} to import and detect game highlights.": "Install %{appName} to import and detect game highlights.",
   "Open %{appName}": "Open %{appName}",
   "Install %{appName}": "Install %{appName}",
+  "Open %{appName} to import and detect game highlights.": "Open %{appName} to import and detect game highlights.",
   "%{appName} has been installed and is now running.": "%{appName} has been installed and is now running.",
   "Continuing will open %{appName}": "Continuing will open %{appName}",
   "Continuing will install %{appName}": "Continuing will install %{appName}",

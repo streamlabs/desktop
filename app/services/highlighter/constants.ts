@@ -42,11 +42,18 @@ export const REPLAY_PROTOCOL = 'ghub-replay';
 export const REPLAY_APP_NAME = 'Replay';
 export const REPLAY_SETUP_EXE_NAME = 'G HUB Replay-Setup.exe';
 
+// The standalone app Replay replaces. Users who still have it keep their data by migrating from
+// inside it — Highlighter merges and installs Replay itself — so Desktop hands them over instead
+// of installing Replay behind its back. This protocol is what REPLAY_PROTOCOL held before the
+// rename, and it is all we have to detect the legacy app with.
+export const HIGHLIGHTER_PROTOCOL = 'streamlabs-highlighter';
+export const HIGHLIGHTER_APP_NAME = 'Streamlabs Highlighter';
+
 // Origin slug Replay attributes an install to when Streamlabs Desktop installed it.
 export const REPLAY_INSTALL_ORIGIN = 'sl_desktop';
 
 // The install origin marker is a hand-off file, so it lives in the current user's temp directory
-// (%TEMP%\Streamlabs_Highlighter\install-origin.json) rather than in either app's data directory. It has to
+// (%TEMP%\GHUB_Replay\install-origin.json) rather than in either app's data directory. It has to
 // work before Replay is installed at all, and Replay deletes it as soon as it has been read.
 // Deliberately not derived from REPLAY_APP_NAME: this directory name is a contract with Replay and
 // does not follow the app rename.
