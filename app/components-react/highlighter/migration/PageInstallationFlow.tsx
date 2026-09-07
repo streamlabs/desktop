@@ -37,7 +37,10 @@ export default function PageInstallationFlow(props: IPageInstallationFlowProps) 
   const isStaging = Utils.getHighlighterEnvironment() !== 'production';
 
   return (
-    <>
+    <div
+      className={cx(styles.appDetection, installedApp !== null && styles.appDetectionReady)}
+      aria-hidden={installedApp === null}
+    >
       <FeatureCarousel
         title={appName}
         description={$t(
@@ -76,7 +79,7 @@ export default function PageInstallationFlow(props: IPageInstallationFlowProps) 
           )}
         </div>
       </FeatureCarousel>
-    </>
+    </div>
   );
 }
 

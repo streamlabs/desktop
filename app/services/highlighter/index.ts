@@ -1595,23 +1595,13 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           }
 
           if (this.getClips(this.views.clips, streamId).length === 0) {
-            if (streamId) {
-              this.navigationService.actions.navigate(
-                'Highlighter',
-                {
-                  view: EHighlighterView.STREAM,
-                },
-                EMenuItemKey.Highlighter,
-              );
-            } else {
-              this.navigationService.actions.navigate(
-                'Highlighter',
-                {
-                  view: EHighlighterView.SETTINGS,
-                },
-                EMenuItemKey.Highlighter,
-              );
-            }
+            this.navigationService.actions.navigate(
+              'Highlighter',
+              {
+                view: EHighlighterView.STREAM,
+              },
+              EMenuItemKey.Highlighter,
+            );
           }
         } catch (error: unknown) {
           console.error('Error deleting clip or folder:', error);
