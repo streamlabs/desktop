@@ -27,7 +27,6 @@ import {
   SimpleRecordingFactory,
   AdvancedReplayBufferFactory,
   SimpleReplayBufferFactory,
-  ISettings,
   EScaleType,
 } from '../../../obs-api';
 import { Inject } from 'services/core/injector';
@@ -2356,7 +2355,7 @@ export class StreamingService
         // stream audio track
         const audioTrack = index ?? stream.audioTrack ?? this.getStreamingAudioTrack();
 
-        this.validateOrCreateAudioTrack(audioTrack);
+        await this.validateOrCreateAudioTrack(audioTrack);
         stream.audioTrack = audioTrack;
       }
 
@@ -2369,7 +2368,7 @@ export class StreamingService
 
       // Twitch VOD audio track
       if (stream.enableTwitchVOD && stream.twitchTrack) {
-        this.validateOrCreateAudioTrack(stream.twitchTrack);
+        await this.validateOrCreateAudioTrack(stream.twitchTrack);
       } else if (stream.enableTwitchVOD) {
         console.error('Twitch VOD is enabled but no Twitch audio track is set.');
         this.rejectStartStreaming();
@@ -2394,8 +2393,11 @@ export class StreamingService
         | IEnhancedBroadcastingSimpleStreaming;
 
       stream.audioEncoder = AudioEncoderFactory.create(
-        this.outputSettingsService.getRecordingAudioEncoderSettings(),
+        'ffmpeg_aac',
         `audio-encoder-streaming-${display}`,
+      );
+      stream.audioEncoder.bitrate = Number(
+        this.settingsService.views.values.Output.ABitrate ?? 160,
       );
       this.contexts[contextName].streaming = stream as
         | ISimpleStreaming
@@ -2836,6 +2838,8 @@ export class StreamingService
         this.outputSettingsService.getRecordingAudioEncoderSettings(),
         `audio-encoder-recording-${display}`,
       );
+      // Simple standalone recording has always used 192 Kbps. Stream quality shares stream audio.
+      recording.audioEncoder.bitrate = 192;
 
       // to prevent reference errors, cast the recording instance
       this.contexts[display].recording = recording as ISimpleRecording;
@@ -2918,28 +2922,22 @@ export class StreamingService
         key === 'videoEncoder' &&
         (contextName !== 'enhancedBroadcasting' || isEnhancedBroadcastingContext)
       ) {
-        let encoderSettings: ISettings | undefined;
-        switch (type) {
-          case 'streaming':
-            encoderSettings = this.outputSettingsService.getStreamingVideoEncoderSettings(mode);
-            break;
-          case 'recording':
-            encoderSettings = this.outputSettingsService.getRecordingVideoEncoderSettings(mode);
-            break;
-        }
+        const encoderSettings =
+          type === 'streaming'
+            ? this.outputSettingsService.getStreamingVideoEncoderSettings(
+                mode,
+                settings.videoEncoder,
+              )
+            : this.outputSettingsService.getRecordingVideoEncoderSettings(
+                mode,
+                settings.videoEncoder,
+              );
 
-        if (encoderSettings) {
-          instance.videoEncoder = VideoEncoderFactory.create(
-            settings.videoEncoder,
-            `video-encoder-${type}-${contextName}`,
-            encoderSettings,
-          );
-        } else {
-          instance.videoEncoder = VideoEncoderFactory.create(
-            settings.videoEncoder,
-            `video-encoder-${type}-${contextName}`,
-          );
-        }
+        instance.videoEncoder = VideoEncoderFactory.create(
+          settings.videoEncoder,
+          `video-encoder-${type}-${contextName}`,
+          encoderSettings,
+        );
 
         if (instance.videoEncoder.lastError) {
           console.error(
@@ -3563,7 +3561,41 @@ export class StreamingService
 
     const context = contextName || display;
     const mode = this.outputSettingsService.getSettings().mode;
-    const validOutput = this.validateOutputInstance(mode, context, type);
+    let validOutput = this.validateOutputInstance(mode, context, type);
+
+    if (validOutput) {
+      const outputTypes: Array<'streaming' | 'recording'> =
+        type === 'recording' ? ['streaming', 'recording'] : ['streaming'];
+      const encoderChanged = outputTypes.some(outputType => {
+        const encoder = this.contexts[context][outputType]?.videoEncoder;
+        const outputSettings =
+          outputType === 'streaming'
+            ? this.outputSettingsService.getStreamingSettings(display)
+            : this.outputSettingsService.getRecordingSettings(display);
+        return encoder && encoder.id !== outputSettings.videoEncoder;
+      });
+      if (encoderChanged) {
+        const encoderActive = outputTypes.some(
+          outputType => this.contexts[context][outputType]?.videoEncoder?.active,
+        );
+        const canDestroy =
+          !encoderActive &&
+          (this.isDisplayContext(context)
+            ? this.canDestroyDisplayOutputContext(context)
+            : !this.isStreaming);
+        if (!canDestroy) {
+          throw new Error('Stop active outputs before changing the selected encoder.');
+        }
+        // Recording and replay can borrow the stream encoder. Recreate their
+        // complete idle context using the existing output teardown order.
+        await this.handleDestroyOutputContexts(context);
+        validOutput = false;
+      }
+    }
+
+    if (validOutput) {
+      await this.updateOutputEncoderSettings(context, type);
+    }
 
     // If the instance matches the mode, return to validate it
     if (validOutput && start) {
@@ -3611,6 +3643,70 @@ export class StreamingService
     }
   }
 
+  private async updateOutputEncoderSettings(
+    contextName: TOutputContext,
+    type: 'streaming' | 'recording',
+  ) {
+    if (type === 'recording' && this.contexts[contextName].streaming) {
+      await this.updateOutputEncoderSettings(contextName, 'streaming');
+    }
+    const instance = this.contexts[contextName][type];
+    if (!instance) return;
+    const mode = this.outputSettingsService.getSettings().mode;
+    const display = this.isDisplayContext(contextName) ? contextName : 'horizontal';
+    const settings =
+      type === 'streaming'
+        ? this.outputSettingsService.getStreamingSettings(display)
+        : this.outputSettingsService.getRecordingSettings(display);
+    const encoder = instance.videoEncoder;
+
+    // A recording or replay buffer can retain the streaming dependency. Reuse its
+    // encoder, but keep settings fixed while an output is using it.
+    if (encoder && !encoder.active && encoder.id === settings.videoEncoder) {
+      encoder.update(
+        type === 'streaming'
+          ? this.outputSettingsService.getStreamingVideoEncoderSettings(mode, settings.videoEncoder)
+          : this.outputSettingsService.getRecordingVideoEncoderSettings(
+              mode,
+              settings.videoEncoder,
+            ),
+      );
+      if (type === 'streaming' && 'enforceServiceBitrate' in settings) {
+        const stream = instance as ISimpleStreaming | IAdvancedStreaming;
+        if (settings.enforceServiceBitrate !== undefined) {
+          stream.enforceServiceBitrate = settings.enforceServiceBitrate;
+        }
+      }
+      if (
+        type === 'streaming' &&
+        this.isSimpleStreaming(instance as ISimpleStreaming) &&
+        'useAdvanced' in settings
+      ) {
+        const stream = instance as ISimpleStreaming;
+        stream.useAdvanced = settings.useAdvanced;
+        stream.customEncSettings = settings.customEncSettings ?? '';
+        stream.audioEncoder.bitrate = Number(
+          this.settingsService.views.values.Output.ABitrate ?? 160,
+        );
+      }
+    }
+
+    if (type === 'streaming' && this.isAdvancedStreaming(instance as IAdvancedStreaming)) {
+      const stream = instance as IAdvancedStreaming;
+      if (stream.audioTrack) await this.validateOrCreateAudioTrack(stream.audioTrack);
+      if (stream.enableTwitchVOD && stream.twitchTrack) {
+        await this.validateOrCreateAudioTrack(stream.twitchTrack);
+      }
+    } else if (type === 'recording' && this.isAdvancedRecording(instance as IAdvancedRecording)) {
+      const recording = instance as IAdvancedRecording;
+      for (let index = 1; index <= 6; index++) {
+        if (recording.mixer & (1 << (index - 1))) {
+          await this.validateOrCreateAudioTrack(index);
+        }
+      }
+    }
+  }
+
   private validateOutputInstance(
     mode: 'Simple' | 'Advanced',
     contextName: TOutputContext,
@@ -3639,28 +3735,30 @@ export class StreamingService
    * audio track.
    * @param index - The index of the audio track
    */
-  async validateOrCreateAudioTrack(index: number) {
+  private async validateOrCreateAudioTrack(index: number) {
+    const output = this.settingsService.state.Output.formData;
+    const category = `Audio - Track ${index}`;
+    const bitrate = Number(
+      this.settingsService.findSettingValue(output, category, `Track${index}Bitrate`) ?? 160,
+    );
+    const name = this.settingsService.findSettingValue(output, category, `Track${index}Name`) ?? '';
+    let track;
     try {
-      const existingTrack = AudioTrackFactory.getAtIndex(index);
-      if (existingTrack) return;
+      track = AudioTrackFactory.getAtIndex(index);
     } catch (e: unknown) {
-      // Continue to create track if the audio track does not exist. This is not a bug.
-      // This call to get at index will throw an error if the track does not exist,
-      // so we can catch the error and create the track if it does not exist.
+      // getAtIndex throws when no track has been registered at this index.
       console.info('Audio track does not exist, creating new track at index', index);
     }
 
-    this.createAudioTrack(index);
-  }
-
-  /**
-   * Create an audio track
-   * @param index - index of the audio track to create
-   */
-  private createAudioTrack(index: number) {
-    const trackName = `track${index}`;
-    const track = AudioTrackFactory.create(160, trackName);
-    AudioTrackFactory.setAtIndex(track, index);
+    if (track) {
+      // Outputs own their active audio encoders. Refresh the shared configuration for
+      // the next output start without replacing the track or changing live encoders.
+      track.bitrate = bitrate;
+      track.name = name;
+    } else {
+      track = AudioTrackFactory.create(bitrate, name);
+      AudioTrackFactory.setAtIndex(track, index);
+    }
   }
 
   private isDisplayContext(context: TOutputContext): context is TDisplayType {
@@ -3707,7 +3805,8 @@ export class StreamingService
       | IAdvancedStreaming
       | IEnhancedBroadcastingSimpleStreaming
       | IEnhancedBroadcastingAdvancedStreaming
-      | null,
+      | null
+      | undefined,
   ): instance is IEnhancedBroadcastingSimpleStreaming | IEnhancedBroadcastingAdvancedStreaming {
     if (!instance) return false;
     return 'additionalVideo' in instance;

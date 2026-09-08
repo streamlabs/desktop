@@ -10,6 +10,7 @@ import {
   ISettings,
 } from 'obs-studio-node';
 import { EncoderQueryService } from './encoder-query';
+import { NodeObs } from '../../../../obs-api';
 import {
   EObsSimpleEncoder,
   legacyEncoderAliasToObsEncoderIdOrSelf,
@@ -882,7 +883,9 @@ export class OutputSettingsService extends Service {
 
   getRecordingAudioEncoderSettings() {
     const output = this.settingsService.state.Output.formData;
-    return this.settingsService.findSettingValue(output, 'Recording', 'RecAAudio') ?? 'ffmpeg_aac';
+    return (
+      this.settingsService.findSettingValue(output, 'Recording', 'RecAEncoder') ?? 'ffmpeg_aac'
+    );
   }
 
   private requireStreamingEncoderFamily(
@@ -940,45 +943,12 @@ export class OutputSettingsService extends Service {
     return codec;
   }
 
-  getStreamingVideoEncoderSettings(mode: TOutputSettingsMode): ISettings {
-    const output = this.settingsService.state.Output.formData;
-
-    const bitrate =
-      this.settingsService.findSettingValue(output, 'Streaming', 'bitrate') ??
-      this.settingsService.findSettingValue(output, 'Streaming', 'VBitrate');
-
-    if (mode === 'Simple') {
-      return { bitrate };
-    }
-
-    // TODO: these are only being fetched in advanced mode
-    const rateControl = this.settingsService.findSettingValue(output, 'Streaming', 'rate_control');
-    const keyintSec = this.settingsService.findSettingValue(output, 'Streaming', 'keyint_sec');
-    const x264opts = this.settingsService.findSettingValue(output, 'Streaming', 'x264opts');
-
-    return {
-      rate_control: rateControl,
-      bitrate,
-      keyint_sec: keyintSec,
-      x264opts,
-    };
+  getStreamingVideoEncoderSettings(mode: TOutputSettingsMode, encoderId: string): ISettings {
+    return NodeObs.OBS_settings_getEncoderSettings(encoderId, 'streaming', mode);
   }
 
-  getRecordingVideoEncoderSettings(mode: TOutputSettingsMode): ISettings {
-    const output = this.settingsService.state.Output.formData;
-    const video = this.settingsService.state.Video.formData;
-    const streaming = this.getStreamingEncoderSettings(output, video);
-    const recording = this.getRecordingEncoderSettings(output, video, mode, streaming);
-
-    const encoderSettings: ISettings = {
-      bitrate: recording.bitrate,
-    };
-
-    if (recording.rateControl != null) {
-      encoderSettings.rate_control = recording.rateControl;
-    }
-
-    return encoderSettings;
+  getRecordingVideoEncoderSettings(mode: TOutputSettingsMode, encoderId: string): ISettings {
+    return NodeObs.OBS_settings_getEncoderSettings(encoderId, 'recording', mode);
   }
 
   /**
