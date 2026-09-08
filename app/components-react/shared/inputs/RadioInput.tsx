@@ -13,7 +13,6 @@ export interface ICustomRadioOption {
   defaultValue?: string;
   icon?: string;
   tooltip?: string;
-  disabled?: boolean;
   children?: React.ReactNode;
 }
 
@@ -96,22 +95,14 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
               <Radio
                 key={option.value}
                 value={option.value}
-                disabled={option.disabled ?? p.disabled}
+                disabled={p.disabled}
                 children={
                   option?.tooltip ? (
                     <Tooltip title={option?.tooltip} placement="topRight">
-                      <i
-                        className={cx(option.icon, styles.iconToggle, {
-                          [styles.disabled]: option.disabled ?? p.disabled,
-                        })}
-                      />
+                      <i className={cx(option.icon, styles.iconToggle)} />
                     </Tooltip>
                   ) : (
-                    <i
-                      className={cx(option.icon, styles.iconToggle, {
-                        [styles.disabled]: option.disabled ?? p.disabled,
-                      })}
-                    />
+                    <i className={cx(option.icon, styles.iconToggle)} />
                   )
                 }
               />
