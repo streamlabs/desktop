@@ -599,7 +599,7 @@ export class StreamingService
           const isVerticalDualStreamDestination =
             this.views.hasDualStream &&
             this.views.activeDisplayPlatforms.vertical.length === 1 &&
-            currentCustomDestinations.length > 0;
+            this.views.activeDisplayDestinations.vertical.length === 0;
 
           if (isVerticalCustomDestination || isVerticalDualStreamDestination) {
             // set the OBS context to custom ingest mode in order to update settings
