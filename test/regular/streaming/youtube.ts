@@ -1,4 +1,4 @@
-import { logIn } from '../../helpers/modules/user';
+import { addCustomDestination, logIn } from '../../helpers/modules/user';
 import {
   skipCheckingErrorsInLog,
   test,
@@ -19,6 +19,7 @@ import {
 
 import {
   click,
+  clickButton,
   closeWindow,
   focusChild,
   focusMain,
@@ -29,8 +30,9 @@ import {
 import * as moment from 'moment';
 import { fillForm, useForm } from '../../helpers/modules/forms';
 import { ListInputController } from '../../helpers/modules/forms/list';
-import { logOut } from '../../helpers/webdriver/user';
-import { toggleDualOutputMode } from '../../helpers/modules/dual-output';
+import { logOut, releaseUserInPool } from '../../helpers/webdriver/user';
+import { goLiveWithDualOutput, toggleDualOutputMode } from '../../helpers/modules/dual-output';
+import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -39,10 +41,11 @@ useWebdriver();
 // Some accounts in the user pool may not be enabled for live streaming or need to be reauthed
 async function logInYouTubeEnabledAccount(
   t: TExecutionContext,
-  retries: number = 3,
+  retries: number = 5,
+  ultra: boolean = false,
 ): Promise<boolean | void> {
   // only exclude multistream accounts on the first attempt to expand the user pool on later attempts
-  const multistream = retries === 3 ? false : undefined;
+  const multistream = retries === 5 ? false : undefined;
   if (retries === 0) {
     t.fail(
       'No YouTube accounts with live streaming enabled are currently available in the user pool',
@@ -50,7 +53,12 @@ async function logInYouTubeEnabledAccount(
     return;
   }
 
-  await logIn('youtube', { multistream, streamingIsDisabled: false, notStreamable: false });
+  await logIn('youtube', {
+    prime: ultra,
+    multistream: ultra || multistream,
+    streamingIsDisabled: false,
+    notStreamable: false,
+  });
   await prepareToGoLive();
   await clickGoLive();
 
@@ -58,13 +66,13 @@ async function logInYouTubeEnabledAccount(
   if (!isEnabled) {
     await logOut(t);
     // try again to get an account that has streaming enabled
-    return await logInYouTubeEnabledAccount(t, retries - 1);
+    return await logInYouTubeEnabledAccount(t, retries - 1, ultra);
   }
 
   await closeWindow('child');
 
   // return true if we had a retry so that we can skip checking errors in the log for account reasons
-  const retried = retries !== 3;
+  const retried = retries !== 5;
 
   if (retried) {
     skipCheckingErrorsInLog();
@@ -84,11 +92,16 @@ test('Streaming to Youtube', async t => {
 
   t.true(await chatIsVisible(), 'Chat should be visible');
   await stopStream();
+});
 
+test('YouTube Dual Stream', async t => {
+  await logInYouTubeEnabledAccount(t, 5, true);
   await toggleDualOutputMode();
   await clickGoLive();
   await waitForSettingsWindowLoaded();
   await fillForm({
+    title: 'SLOBS Test Stream',
+    description: 'SLOBS Test Stream Description',
     youtubeDisplay: 'both',
   });
   await waitForSettingsWindowLoaded();
@@ -96,7 +109,32 @@ test('Streaming to Youtube', async t => {
   await waitForStreamStart();
   await stopStream();
 
-  t.pass('Streamed to YouTube single output and dual stream successfully');
+  const { user, name } = await addCustomDestination(t);
+
+  try {
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+    await fillForm({ [name]: true });
+    await waitForSettingsWindowLoaded();
+
+    // Test custom destination with horizontal display
+    await fillForm({
+      youtubeDisplay: 'both',
+      [`${name}Display`]: 'horizontal',
+    });
+    await goLiveWithDualOutput('youtube');
+
+    // Test custom destination with vertical display
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+    await goLiveWithDualOutput('youtube');
+  } finally {
+    await showSettingsWindow('Stream', async () => {
+      await click('i.fa-trash');
+      await clickButton('Close');
+    });
+    await releaseUserInPool(user);
+  }
 });
 
 // TODO flaky
