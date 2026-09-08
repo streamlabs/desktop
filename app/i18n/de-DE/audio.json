@@ -44,5 +44,6 @@
   "Mic/Auxiliary Device 2": "MIC/AUX-Gerät 2",
   "Mic/Auxiliary Device 3": "MIC/AUX-Gerät 3",
   "Recording Audio Encoder": "Audio-Encoder für Aufnahme",
-  "Enable Muted Notifications": "Stummgeschaltete Benachrichtigungen aktivieren"
+  "Enable Muted Notifications": "Stummgeschaltete Benachrichtigungen aktivieren",
+  "Audio Track (Format FLV does not support multiple audio tracks per recording)": "Audio Track (Format FLV does not support multiple audio tracks per recording)"
 }

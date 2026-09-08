@@ -12,5 +12,14 @@
   "Subscriber Only": "Yalnızca Aboneler",
   "Only viewers that subscribe to you will be able to chat": "Yalnızca size abone olan izleyiciler sohbet edebilecek",
   "You need X premium account to go live on X.": "X’te canlı yayın yapmak için X premium hesabına ihtiyacınız var.",
-  "You need X premium account to go live on X. Click to learn more": "X'te canlı yayın yapmak için X premium hesabına ihtiyacınız var. Daha fazlasını öğrenmek için tıklayın"
+  "You need X premium account to go live on X. Click to learn more": "X'te canlı yayın yapmak için X premium hesabına ihtiyacınız var. Daha fazlasını öğrenmek için tıklayın",
+  "Scheduled Broadcast": "Scheduled Broadcast",
+  "Don't use a scheduled broadcast": "Don't use a scheduled broadcast",
+  "Duration": "Duration",
+  "%{minutes} min": "%{minutes} min",
+  "%{hours} hr": "%{hours} hr",
+  "%{hours} hr %{minutes} min": "%{hours} hr %{minutes} min",
+  "Publish when I start streaming": "Publish when I start streaming",
+  "When off, X publishes the broadcast at the scheduled time instead of waiting for you to go live": "When off, X publishes the broadcast at the scheduled time instead of waiting for you to go live",
+  "Scheduling streams to X is a new feature and may not always work as expected": "Scheduling streams to X is a new feature and may not always work as expected"
 }

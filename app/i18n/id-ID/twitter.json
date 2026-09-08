@@ -12,5 +12,14 @@
   "Subscriber Only": "Hanya untuk Pelanggan",
   "Only viewers that subscribe to you will be able to chat": "Hanya pemirsa yang berlangganan kepada Anda yang dapat mengobrol",
   "You need X premium account to go live on X.": "Anda memerlukan akun premium X untuk menyiarkan langsung di X.",
-  "You need X premium account to go live on X. Click to learn more": "Anda memerlukan akun premium X untuk menyiarkan langsung di X. Klik untuk mempelajari lebih lanjut"
+  "You need X premium account to go live on X. Click to learn more": "Anda memerlukan akun premium X untuk menyiarkan langsung di X. Klik untuk mempelajari lebih lanjut",
+  "Scheduled Broadcast": "Scheduled Broadcast",
+  "Don't use a scheduled broadcast": "Don't use a scheduled broadcast",
+  "Duration": "Duration",
+  "%{minutes} min": "%{minutes} min",
+  "%{hours} hr": "%{hours} hr",
+  "%{hours} hr %{minutes} min": "%{hours} hr %{minutes} min",
+  "Publish when I start streaming": "Publish when I start streaming",
+  "When off, X publishes the broadcast at the scheduled time instead of waiting for you to go live": "When off, X publishes the broadcast at the scheduled time instead of waiting for you to go live",
+  "Scheduling streams to X is a new feature and may not always work as expected": "Scheduling streams to X is a new feature and may not always work as expected"
 }
