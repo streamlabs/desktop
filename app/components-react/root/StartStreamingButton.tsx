@@ -76,6 +76,7 @@ function StartStreamingButton(p: { disabled?: boolean }) {
     }
   }, [delaySecondsRemaining, streamingStatus, delayEnabled]);
 
+  // Do not use useSubscription here because the cleanup needs both cancel toggling and unsubscribe from the event
   useEffect(() => {
     // Check for stream shift status on mount. This will happen on app launch because the main window is always active
     if (isPrime && streamingStatus === EStreamingState.Offline) {

@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { Subscription } from 'rxjs';
+import React, { useState } from 'react';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import { Services } from 'components-react/service-provider';
 import InputWrapper from 'components-react/shared/inputs/InputWrapper';
@@ -8,8 +7,9 @@ import { AnchorPositions, AnchorPoint } from 'util/ScalableRectangle';
 import { useVuex } from 'components-react/hooks';
 import { NumberInput } from 'components-react/shared/inputs';
 import Form, { useForm } from 'components-react/shared/inputs/Form';
+import { useSubscription } from 'components-react/hooks/useSubscription';
 
-const dirMap = (dir: string) =>
+const dirMap = (dir: keyof ICrop) =>
   ({
     left: $t('Left'),
     right: $t('Right'),
@@ -26,10 +26,7 @@ export default function EditTransform() {
   const transform = selection.getItems()[0].transform;
   const form = useForm();
 
-  useEffect(() => {
-    const subscription = SourcesService.sourceRemoved.subscribe(cancel);
-    return () => subscription.unsubscribe();
-  }, []);
+  useSubscription(SourcesService.sourceRemoved, cancel);
 
   async function invalidForm() {
     try {
@@ -177,7 +174,7 @@ function CropInput(p: {
   return (
     <InputWrapper label={$t('Crop')}>
       <div>
-        {['left', 'right', 'top', 'bottom'].map((dir: keyof ICrop) => (
+        {(['left', 'right', 'top', 'bottom'] as Array<keyof ICrop>).map((dir: keyof ICrop) => (
           <div
             style={{
               marginBottom: '8px',
