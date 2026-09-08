@@ -54,6 +54,7 @@ export default function StudioEditor() {
     return v.studioMode && !v.dualOutputMode ? studioModeTransitionName : undefined;
   }, [v.dualOutputMode, v.studioMode, studioModeTransitionName]);
 
+  // Do not use useSubscription here because the cleanup needs do more than cancel the audio subscription
   useEffect(() => {
     const timeoutHandles: { [key: number]: NodeJS.Timeout | undefined } = {};
 
