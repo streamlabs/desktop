@@ -1,28 +1,3 @@
-// stream-avatar `/v2` wire protocol — SHARED CONTRACT.
-//
-// This file is byte-identical in three repos:
-//   stream-avatar-api/src/features/session/v2/protocol.ts
-//   stream-avatar/src/lib/v2/protocol.ts
-//   desktop/app/services/stream-avatar/v2/protocol.ts
-//
-// Edit one, copy to the other two, and `node check-protocol-sync.mjs` from the
-// monorepo root will verify. CI runs it; drift is a build failure.
-//
-// Constraints this file must respect to stay portable across all three builds
-// (SWC/ESM, Vite/esbuild, Electron tsc):
-//   - no imports, no runtime dependencies;
-//   - no `enum` / `const enum` (isolatedModules); unions + `as const` only;
-//   - no repo-specific code, imports, or identifiers (the file list above is
-//     the sync manifest, not a dependency).
-//
-// Design rules for the protocol itself:
-//   - NO `emit` in either direction ever takes an acknowledgement callback.
-//     Every request/response pair is two named events correlated by an id in
-//     the payload, so a reply may arrive on a different socket than the request
-//     was sent to, may be cancelled, and survives a reconnect.
-//   - Every payload that belongs to an agent run carries `runId`.
-//   - Risk and policy are server-owned. Nothing a model emits is trusted here.
-
 /** Socket.IO namespace. Legacy clients stay on "/". */
 export const V2_NAMESPACE = '/v2';
 
@@ -42,11 +17,6 @@ export const V2_PROTOCOL_VERSION = 1;
  * Bump whenever a device gains a new executable tool, and pin the new tool with
  * `minToolVersion`. Tools without one default to 1, so a bump never hides
  * anything from clients that are already out there.
- *
- * Still 1: v2 has not shipped, so there is no client in the wild to be older
- * than anything. Both clients advertise this very constant, so a pin can only
- * bite once a release lags the API — bump on the first release that adds a tool
- * a shipped client cannot run, and pin that tool then, not before.
  */
 export const V2_TOOL_PROTOCOL_VERSION = 1;
 
