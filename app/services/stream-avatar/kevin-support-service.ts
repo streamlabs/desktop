@@ -103,6 +103,10 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
 
     this.userService.userLogout.subscribe(() => {
       this.disconnect();
+      // The minted JWT outlives the session it was minted for, so an account
+      // switch would reconnect this socket as the previous user. AutomationsService
+      // clears it on logout for the same reason.
+      this.streamAvatarApiService.clearToken();
       this.RESET();
     });
 
@@ -269,6 +273,14 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
           this.log('--', 'connect_error', { error: String(e) });
           settle(new Error('connect_error'));
         });
+
+        // A refusal during the handshake — bad protocol version, internal error
+        // — is terminal: v2:ready will never arrive. Without this the connect
+        // sits here for the full CONNECT_TIMEOUT_MS and then reports a generic
+        // failure instead of what the server actually said. The handler
+        // registered above runs first and has already recorded that message; a
+        // v2:error after v2:ready lands on a settled promise and does nothing.
+        socket.on('v2:error', () => settle(new Error('v2:error')));
       });
     } catch (e: unknown) {
       console.error('[KevinSupport] connect failed', e);
@@ -277,7 +289,12 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
       this.SET_CONNECTING(false);
       this.SET_CONNECTED(false);
       this.SET_PENDING(false);
-      this.SET_ERROR($t('Could not connect to Streamlabs Desktop Support. Please try again.'));
+      // Keep whatever the v2:error handler recorded — that is the server saying
+      // why. The generic line is for a socket that never got far enough to say
+      // anything, and overwriting with it was how a real reason got lost.
+      if (!this.state.error) {
+        this.SET_ERROR($t('Could not connect to Streamlabs Desktop Support. Please try again.'));
+      }
     }
   }
 

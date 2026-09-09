@@ -366,7 +366,10 @@ export class AgentToolsService extends Service {
   }
 
   canExecute(tool: string): boolean {
-    return tool in this.handlers;
+    // Own-property, not `in`: the tool name comes off the socket, and `in`
+    // walks the prototype — 'toString' would report as executable and then
+    // dispatch to Object.prototype.toString as though it were a tool.
+    return Object.prototype.hasOwnProperty.call(this.handlers, tool);
   }
 
   /**
@@ -374,7 +377,12 @@ export class AgentToolsService extends Service {
    * parked on this call's id, so it must always get an answer.
    */
   async execute(tool: string, args: Record<string, unknown>): Promise<V2ToolOutcome> {
-    const handler = this.handlers[tool];
+    // Read the getter once — it rebuilds the map on every access — and guard it
+    // the same way canExecute does, since this is reachable on its own.
+    const handlers = this.handlers;
+    const handler = Object.prototype.hasOwnProperty.call(handlers, tool)
+      ? handlers[tool]
+      : undefined;
     if (!handler) {
       return { ok: false, code: 'unknown_tool', message: `Desktop cannot run ${tool}.` };
     }

@@ -173,7 +173,7 @@ function StudioFooterComponent() {
         <PerformanceMetrics mode="limited" className="performance-metrics" />
         {isLoggedIn && (
           // The wrapper exists only to give the approval bubble something to
-          // measure — the bubble itself portals out of the footer, which clips.
+          // measure; the bubble positions itself `fixed`, since the footer clips.
           <div className={styles.kevinAnchor} ref={kevinAnchorRef}>
             <KevinApprovalBubble anchorRef={kevinAnchorRef} />
             <Tooltip placement="top" title={$t('Streamlabs Desktop Support')}>
