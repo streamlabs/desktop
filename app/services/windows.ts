@@ -141,6 +141,11 @@ export interface IWindowOptions extends Electron.BrowserWindowConstructorOptions
   };
   scaleFactor: number;
   isShown: boolean;
+  /**
+   * Live focus state, not a construction option — same as scaleFactor above.
+   * Only maintained for one-off windows; main and child never set it.
+   */
+  isFocused?: boolean;
   title?: string;
   center?: boolean;
   position?: {
@@ -491,6 +496,18 @@ export class WindowsService extends StatefulService<IWindowsState> {
       delete this.windows[windowId];
       this.DELETE_ONE_OFF_WINDOW(windowId);
     });
+
+    // Focus is state a renderer can read: webContents.isFocused() is a pull and
+    // only reachable from the worker. Lets a component in another window tell
+    // "this window is buried" from "this window is closed".
+    const setFocused = (isFocused: boolean) => {
+      // A blur can land after 'closed' deleted the entry, and UPDATE spreads
+      // over `undefined` happily — which would resurrect a ghost window.
+      if (!this.state[windowId]) return;
+      this.UPDATE_ONE_OFF_WINDOW(windowId, { isFocused });
+    };
+    newWindow.on('focus', () => setFocused(true));
+    newWindow.on('blur', () => setFocused(false));
 
     this.updateScaleFactor(windowId);
     newWindow.on('move', () => this.updateScaleFactor(windowId));

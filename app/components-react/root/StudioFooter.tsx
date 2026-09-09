@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import cx from 'classnames';
 import { EStreamQuality } from '../../services/performance';
 import { EStreamingState, EReplayBufferState, ERecordingState } from '../../services/streaming';
@@ -15,6 +15,7 @@ import { confirmAsync } from 'components-react/modals';
 import RecordingSwitcher from 'components-react/windows/go-live/RecordingSwitcher';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 import { KevinChatIcon } from 'components-react/shared/icons';
+import KevinApprovalBubble from 'components-react/agent/KevinApprovalBubble';
 
 function StudioFooterComponent() {
   const {
@@ -98,6 +99,8 @@ function StudioFooterComponent() {
     UsageStatisticsService.actions.recordFeatureUsage('PerformanceStatistics');
   }, []);
 
+  const kevinAnchorRef = useRef<HTMLDivElement>(null);
+
   const openKevinSupport = useCallback(() => {
     // A one-off window, not showWindow(): there is only one shared `child` window,
     // so showWindow would close whatever the user already had open. Support needs
@@ -169,16 +172,21 @@ function StudioFooterComponent() {
         </Tooltip>
         <PerformanceMetrics mode="limited" className="performance-metrics" />
         {isLoggedIn && (
-          <Tooltip placement="top" title={$t('Streamlabs Desktop Support')}>
-            <button
-              type="button"
-              aria-label={$t('Streamlabs Desktop Support')}
-              className={styles.kevinIcon}
-              onClick={openKevinSupport}
-            >
-              <KevinChatIcon />
-            </button>
-          </Tooltip>
+          // The wrapper exists only to give the approval bubble something to
+          // measure — the bubble itself portals out of the footer, which clips.
+          <div className={styles.kevinAnchor} ref={kevinAnchorRef}>
+            <KevinApprovalBubble anchorRef={kevinAnchorRef} />
+            <Tooltip placement="top" title={$t('Streamlabs Desktop Support')}>
+              <button
+                type="button"
+                aria-label={$t('Streamlabs Desktop Support')}
+                className={styles.kevinIcon}
+                onClick={openKevinSupport}
+              >
+                <KevinChatIcon />
+              </button>
+            </Tooltip>
+          </div>
         )}
         <NotificationsArea />
       </div>

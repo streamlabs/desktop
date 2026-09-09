@@ -4,7 +4,6 @@ import { Inject } from 'services/core/injector';
 import { UserService } from 'services/user';
 import { $t } from 'services/i18n';
 import { HostsService } from 'services/hosts';
-import { WindowsService } from 'services/windows';
 import Utils from 'services/utils';
 import { importSocketIOClient } from 'util/slow-imports';
 import { StreamAvatarApiService } from './stream-avatar-api-service';
@@ -94,7 +93,6 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
   @Inject() private userService: UserService;
   @Inject() private hostsService: HostsService;
   @Inject() private agentToolsService: AgentToolsService;
-  @Inject() private windowsService: WindowsService;
 
   private io: SocketIOClientStatic;
   private socket: SocketIOClient.Socket | null = null;
@@ -197,8 +195,11 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
           risk: p?.risk,
           summary: p?.summary,
         });
+        // Nothing is opened or focused here. The footer bubble
+        // (KevinApprovalBubble) shows the prompt whenever the support window is
+        // closed or buried, so a decision no longer costs the streamer a window
+        // jumping in front of whatever they were doing mid-stream.
         this.ADD_APPROVAL(p);
-        this.surfaceApproval();
       });
       socket.on('v2:approval.resolved', (p: { approvalId: string }) =>
         this.REMOVE_APPROVAL(p.approvalId),
@@ -308,33 +309,6 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
       if (name && !known.has(name)) this.log('in', `${name} (UNHANDLED)`, packet?.data?.[1]);
       original(packet);
     };
-  }
-
-  /**
-   * Desktop handles every approval whenever it is connected — including ones
-   * raised by a voice request through the avatar plugin. That only works if the
-   * support window is actually visible, so an incoming approval opens it.
-   *
-   * The fixed 'kevin-support' windowId means this restores and focuses the
-   * existing window rather than spawning a second one, so it is safe to call on
-   * every approval.
-   */
-  private surfaceApproval() {
-    try {
-      this.windowsService.createOneOffWindow(
-        {
-          componentName: 'KevinSupport',
-          title: $t('Streamlabs Desktop Support'),
-          queryParams: {},
-          size: { width: 900, height: 640, minWidth: 560, minHeight: 420 },
-        },
-        'kevin-support',
-      );
-    } catch (e: unknown) {
-      // Never let a windowing failure swallow the approval; it is still in
-      // state, and the prompt will show whenever the window is next opened.
-      console.error('[KevinSupport] could not surface approval window', e);
-    }
   }
 
   /** Stable per-install id so a reconnect is recognised as the same device. */
