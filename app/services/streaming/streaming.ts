@@ -3670,6 +3670,7 @@ export class StreamingService
               mode,
               settings.videoEncoder,
             ),
+        true,
       );
       if (type === 'streaming' && 'enforceServiceBitrate' in settings) {
         const stream = instance as ISimpleStreaming | IAdvancedStreaming;

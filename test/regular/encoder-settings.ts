@@ -2,6 +2,8 @@ import { execFileSync } from 'child_process';
 import { ensureDir, readdir, writeFile } from 'fs-extra';
 import * as path from 'path';
 import { platform } from 'os';
+import type { ServicesManager } from '../../app/services-manager';
+import type { StreamingService } from '../../app/services/streaming/streaming';
 import { SettingsService } from '../../app/services/settings';
 import { VideoSettingsService } from '../../app/services/settings-v2/video';
 import { ScenesService } from '../../app/services/api/external-api/scenes';
@@ -28,6 +30,18 @@ const FFPROBE_EXE = path.resolve(
   'obs-studio-node',
   platform() === 'darwin' ? path.join('Frameworks', 'ffprobe') : 'ffprobe.exe',
 );
+
+function requireFfprobe() {
+  try {
+    execFileSync(FFPROBE_EXE, ['-version'], { stdio: 'ignore', timeout: 10000 });
+  } catch (error: unknown) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Recording tests require ffprobe at "${FFPROBE_EXE}". ` +
+        `Restore the ffprobe binary bundled with obs-studio-node. ${reason}`,
+    );
+  }
+}
 
 function probe(file: string, args: string[]) {
   return JSON.parse(
@@ -117,43 +131,68 @@ interface IEncoderSettings {
   recordingId: string;
   streaming: Dictionary<any>;
   recording: Dictionary<any>;
-  streamingAudioBitrate: number;
-  recordingAudioBitrate: number;
-  tracks: Array<{ bitrate: number; name: string }>;
+  streamingPreset: string;
+  streamingAudioBitrate?: number;
+  recordingAudioBitrate?: number;
+  tracks: Array<{ bitrate: number; name: string } | null>;
 }
 
+// Native encoders belong to the worker. Read the private context here and return
+// only plain values so the test checks encoder input rather than saved UI values.
 async function inspectEncoders(t: TExecutionContext): Promise<IEncoderSettings> {
   t.true(await focusWindow('worker'), 'worker window is available');
   try {
-    return (await t.context.app.client.execute(`
-      const streaming = window.servicesManager.getResource('StreamingService');
-      const osn = window.require('obs-studio-node');
-      const context = streaming.contexts.horizontal;
-      return {
-        streamingId: context.streaming.videoEncoder.id,
-        recordingId: context.recording.videoEncoder.id,
-        streaming: context.streaming.videoEncoder.settings,
-        recording: context.recording.videoEncoder.settings,
-        streamingAudioBitrate: context.streaming.audioEncoder?.bitrate,
-        recordingAudioBitrate: context.recording.audioEncoder?.bitrate,
-        tracks: osn.AudioTrackFactory.audioTracks.map(track =>
-          track ? { bitrate: track.bitrate, name: track.name } : null),
-      };
-    `)) as IEncoderSettings;
+    return await t.context.app.client.execute(
+      (): IEncoderSettings => {
+        const servicesManager = (window as typeof window & { servicesManager: ServicesManager })
+          .servicesManager;
+        const streaming = servicesManager.getResource('StreamingService') as StreamingService;
+        const osn = require('obs-studio-node') as typeof import('obs-studio-node');
+        const context = streaming['contexts'].horizontal;
+        return {
+          streamingId: context.streaming.videoEncoder.id,
+          recordingId: context.recording.videoEncoder.id,
+          streaming: context.streaming.videoEncoder.settings,
+          recording: context.recording.videoEncoder.settings,
+          streamingPreset: context.streaming.videoEncoder.properties.get('preset').value,
+          streamingAudioBitrate:
+            'audioEncoder' in context.streaming
+              ? context.streaming.audioEncoder.bitrate
+              : undefined,
+          recordingAudioBitrate:
+            'audioEncoder' in context.recording
+              ? context.recording.audioEncoder.bitrate
+              : undefined,
+          tracks: osn.AudioTrackFactory.audioTracks.map(track =>
+            track ? { bitrate: track.bitrate, name: track.name } : null,
+          ),
+        };
+      },
+    );
   } finally {
     await focusMain();
   }
 }
 
+// Use this private method only to test existing inactive encoders. Normal
+// recording/replay stop destroys contexts once all outputs are offline. Leaving
+// replay running keeps shared encoders active and prevents their settings changing.
 async function createOutputContexts(t: TExecutionContext) {
   t.true(await focusWindow('worker'), 'worker window is available');
   try {
-    await t.context.app.client.execute(`
-      const streaming = window.servicesManager.getResource('StreamingService');
-      return streaming.validateOrCreateOutputInstance({
-        display: 'horizontal', type: 'recording', audioTrack: 1, start: false,
-      }).then(() => true);
-    `);
+    // Return the promise directly: an async callback would be compiled with an
+    // external TypeScript helper that WebDriver does not send to the worker.
+    await t.context.app.client.execute(() => {
+      const servicesManager = (window as typeof window & { servicesManager: ServicesManager })
+        .servicesManager;
+      const streaming = servicesManager.getResource('StreamingService') as StreamingService;
+      return streaming['validateOrCreateOutputInstance']({
+        display: 'horizontal',
+        type: 'recording',
+        audioTrack: 1,
+        start: false,
+      });
+    });
   } finally {
     await focusMain();
   }
@@ -193,7 +232,10 @@ async function createRecordingFile(
       try {
         media = probe(filePath, ['-show_streams']);
       } catch (error: unknown) {
-        // The recording can still be writing the MP4 trailer after the stop signal.
+        // Retry failed media reads while the MP4 trailer is being written, but
+        // propagate launch failures, timeouts and invalid JSON immediately.
+        const exitStatus = (error as { status?: number })?.status;
+        if (typeof exitStatus !== 'number' || exitStatus <= 0) throw error;
       }
       if (media) {
         await clearNotifications();
@@ -235,6 +277,7 @@ function validateAudioBitrates(t: TExecutionContext, streams: any[], bitrates: n
 }
 
 test('Saved advanced encoder settings reach recording and streaming encoders', async t => {
+  requireFfprobe();
   const { settings, directory } = await prepareRecording(t, 'Advanced');
   const streamingSettings = {
     rate_control: 'CBR',
@@ -268,10 +311,10 @@ test('Saved advanced encoder settings reach recording and streaming encoders', a
     [320, 160],
     [160, 320],
   ]) {
-    // Recording and replay can retain idle output contexts. Changes must also
-    // apply when starting those contexts, including the existing audio tracks.
-    await createOutputContexts(t);
     const keyframeInterval = bitrates[0] === 320 ? 1 : 2;
+    // Cover normal creation first, then settings changes on existing inactive
+    // encoders and audio tracks before the next recording.
+    if (keyframeInterval === 2) await createOutputContexts(t);
     saveOutputSettings(settings, {
       Reckeyint_sec: keyframeInterval,
       Track1Bitrate: String(bitrates[0]),
@@ -313,8 +356,11 @@ test('Saved advanced encoder settings reach recording and streaming encoders', a
 });
 
 test('Simple recording preserves stream audio bitrate and the selected streaming preset', async t => {
+  requireFfprobe();
   const { settings, directory } = await prepareRecording(t, 'Simple');
   settings.setSettingValue('Output', 'RecQuality', 'Stream');
+  // The existing Simple output must pick up advanced options and audio bitrate
+  // changes before sharing its encoders with the recording.
   await createOutputContexts(t);
   settings.setSettingValue('Output', 'UseAdvanced', true);
   saveOutputSettings(settings, {
@@ -334,10 +380,18 @@ test('Simple recording preserves stream audio bitrate and the selected streaming
   validateAudioBitrates(t, shared.streams, [320]);
 
   await createOutputContexts(t);
+  const advanced = await inspectEncoders(t);
+  t.is(advanced.streaming.preset, 'fast');
+  t.is(advanced.streaming.x264opts, 'keyint=60 scenecut=0');
   settings.setSettingValue('Output', 'UseAdvanced', false);
+  await createOutputContexts(t);
+  const inactive = await inspectEncoders(t);
+  t.false('preset' in inactive.streaming);
+  t.false('x264opts' in inactive.streaming);
+  t.is(inactive.streamingPreset, 'veryfast');
   const defaults = await createRecordingFile(t, directory);
-  t.is(defaults.encoders.streaming.preset, 'veryfast');
-  t.false(defaults.encoders.streaming.x264opts.split(/\s+/).includes('keyint=60'));
+  t.is(defaults.encoders.streamingPreset, 'veryfast');
+  t.false((defaults.encoders.streaming.x264opts ?? '').split(/\s+/).includes('keyint=60'));
 
   settings.setSettingValue('Output', 'RecQuality', 'HQ');
   const standalone = await createRecordingFile(t, directory);
@@ -351,6 +405,7 @@ test('Simple recording preserves stream audio bitrate and the selected streaming
 });
 
 test('Advanced recording and replay preserve shared streaming encoder settings', async t => {
+  requireFfprobe();
   const { settings, directory } = await prepareRecording(t, 'Advanced');
   settings.setSettingValue('Output', 'RecEncoder', 'none');
   settings.setSettingValue('Output', 'RecRB', true);
@@ -365,7 +420,6 @@ test('Advanced recording and replay preserve shared streaming encoder settings',
     profile: 'high',
     x264opts: 'scenecut=0',
   });
-  await createOutputContexts(t);
   saveOutputSettings(settings, { Track1Bitrate: '320', Track1Name: 'Shared audio' });
   await startReplayBuffer();
   try {
