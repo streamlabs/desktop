@@ -772,25 +772,27 @@ export class RestreamService extends StatefulService<IRestreamState> {
       // in dual output mode, we need to set the ingest for each display
       const displays = this.streamInfo.displaysToRestream;
 
-      displays.forEach(async display => {
-        const mode = this.getMode(display);
-        const settings = await this.fetchUserSettings(mode);
+      await Promise.all(
+        displays.map(async display => {
+          const mode = this.getMode(display);
+          const settings = await this.fetchUserSettings(mode);
 
-        this.streamSettingsService.setSettings(
-          {
-            streamType: 'rtmp_custom',
-          },
-          display,
-        );
+          this.streamSettingsService.setSettings(
+            {
+              streamType: 'rtmp_custom',
+            },
+            display,
+          );
 
-        this.streamSettingsService.setSettings(
-          {
-            key: settings.streamKey,
-            server: ingest,
-          },
-          display,
-        );
-      });
+          this.streamSettingsService.setSettings(
+            {
+              key: settings.streamKey,
+              server: ingest,
+            },
+            display,
+          );
+        }),
+      );
     } else {
       // in single output mode, we just set the ingest for the default display
       this.streamSettingsService.setSettings({
