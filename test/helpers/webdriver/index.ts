@@ -215,6 +215,35 @@ export async function debugPause() {
   await new Promise(() => {});
 }
 
+/**
+ * Screenshot the app as it stands when a test fails.
+ *
+ * @remarks Must opt-in by setting the screenshot directory with `SLOBS_FAIL_SCREENSHOT_DIR`, so a normal test run
+ * does not capture screenshots for every test. The file is named after the test (`<kebab-test-name>.png`) limited to 80 chars.
+ *
+ * Called from `afterEach.always` before the teardown stops the app, which is the last moment the failing UI still exists.
+ * This should never throw so a failed capture does not register as real failure.
+ */
+async function saveFailureScreenshot(t: TExecutionContext) {
+  const dir = process.env.SLOBS_FAIL_SCREENSHOT_DIR;
+  if (!dir) return;
+
+  try {
+    const imgTitle = t.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 80);
+
+    fs.mkdirSync(dir, { recursive: true });
+    const filePath = path.join(dir, `${imgTitle}.png`);
+    await t.context.app.client.saveScreenshot(filePath);
+    console.log(`Failure screenshot: ${filePath}`);
+  } catch (e: unknown) {
+    console.log(`Could not capture a failure screenshot for test ${t.title}:`, e);
+  }
+}
+
 export function useWebdriver(options: ITestRunnerOptions = {}) {
   // tslint:disable-next-line:no-parameter-reassignment TODO
   options = Object.assign({}, DEFAULT_OPTIONS, options);
@@ -456,6 +485,10 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
 
   test.afterEach.always(async t => {
     await checkErrorsInLogFile(t);
+
+    // Capture the failing UI before the teardown below stops the app. Off unless SLOBS_FAIL_SCREENSHOT_DIR is set.
+    if (!testPassed && appIsRunning) await saveFailureScreenshot(t);
+
     if (!testPassed && options.pauseIfFailed) {
       console.log('Test execution has been paused due `pauseIfFailed` enabled');
       await sleep(ALMOST_INFINITY);
