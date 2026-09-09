@@ -789,7 +789,7 @@ export class GoLiveSettingsModule {
     // Restore custom destinations
     const customDestinations = (savedSettings.customDestinations ?? []).map(dest => ({
       ...dest,
-      enabled: liveDestinations.has(`${dest.url}/${dest.streamKey}`),
+      enabled: liveDestinations.has(getDestinationId(dest)),
     }));
 
     // Must use `setGoLiveSettings` instead of the module's `updateSettings` because the

@@ -619,7 +619,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
         throwRestreamError(
           e,
           'RESTREAM_REMOVE_TARGETS_FAILED',
-          `Unable to remove targets for ${display}.`,
+          $t('Unable to remove targets for %{display} display.', { display }),
         );
       }
     }
@@ -755,7 +755,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       throwRestreamError(
         e,
         'RESTREAM_ADD_TARGETS_FAILED',
-        `Unable to update targets for ${orientation}.`,
+        $t('Unable to update targets for %{orientation}.', { orientation }),
       );
     }
   }
@@ -940,9 +940,9 @@ export class RestreamService extends StatefulService<IRestreamState> {
         ? this.streamInfo.liveOutputDisplays
         : this.streamInfo.displaysToRestream;
 
-      // Await the settings for every display. Otherwise `beforeGoLive` resolves before the
+      // Await the settings for every display with `allSettled`. Otherwise `beforeGoLive` resolves before the
       // stream settings have been written and `createStreaming` reads stale values.
-      await Promise.all(
+      await Promise.allSettled(
         displays.map(async display => {
           const mode = this.getMode(display);
           const settings = await this.fetchUserSettings(mode);
