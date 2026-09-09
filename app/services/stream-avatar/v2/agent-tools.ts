@@ -233,6 +233,37 @@ export class AgentToolsService extends Service {
         return { saved: true };
       },
 
+      // Shows what replay_save already wrote; it does not capture one. Saving
+      // is asynchronous — the file only lands on replayBufferFileWrite — so
+      // folding a save in here would race the 15s tool timeout and switch to a
+      // scene still playing the previous replay.
+      watch_replay: async () => {
+        // An Instant Replay source is a plain ffmpeg_source wearing the
+        // 'replay' properties manager. There is no OBS type id for it, so the
+        // manager tag is the only thing that identifies one.
+        const source = this.sourcesService.views.sources.find(
+          s => s.propertiesManagerType === 'replay',
+        );
+        if (!source) {
+          throw new Error(
+            'No Instant Replay source found. The streamer needs to add one (Add Source → Instant Replay) before this can do anything.',
+          );
+        }
+
+        // first scene wins when the source sits in several. Pick the
+        // one nearest the active scene if that ever turns out to matter.
+        const [item] = this.scenesService.views.getSceneItemsBySourceId(source.sourceId);
+        if (!item) {
+          throw new Error(
+            `The Instant Replay source "${source.name}" is not in any scene, so there is nowhere to switch to.`,
+          );
+        }
+
+        const scene = this.scenesService.views.getScene(item.sceneId);
+        this.scenesService.makeSceneActive(item.sceneId);
+        return { scene: scene?.name ?? item.sceneId, source: source.name };
+      },
+
       mic_enhance: async args => {
         const problem = String(args.problem ?? 'general');
 

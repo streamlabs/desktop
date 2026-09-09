@@ -19,7 +19,7 @@ interface IAutomationsState {
 
 const RETRY_BASE_DELAY_MS = 2000;
 const RETRY_MAX_DELAY_MS = 30000;
-// ponytail: give up after this many auto-retries. Without a cap a client whose
+// give up after this many auto-retries. Without a cap a client whose
 // fetch fails for a non-transient reason (403, bad account state) polls
 // /automations + /token every 30s for the whole session. The window has a
 // "retry" button, and login re-arms the counter.

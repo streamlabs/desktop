@@ -36,7 +36,7 @@ const suggestedPrompts = () => [
 //        [label](url)              **bold**        *italic*      `code`
 const INLINE_MD = /\[([^\]]+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`/g;
 
-// ponytail: agent text is server-provided; only http(s) may reach openExternal.
+// agent text is server-provided; only http(s) may reach openExternal.
 function safeHttpUrl(raw: string): string | null {
   try {
     const u = new URL(raw);
@@ -47,7 +47,7 @@ function safeHttpUrl(raw: string): string | null {
 }
 
 /**
- * ponytail: the agent's technical-assistant mode emits inline markdown only —
+ * the agent's technical-assistant mode emits inline markdown only —
  * links, emphasis, the odd code span — never lists or headings, because its
  * system prompt forbids them. So one regex pass beats pulling in react-markdown.
  * Swap in a real renderer if replies ever start using block-level markdown.
