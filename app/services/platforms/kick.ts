@@ -467,11 +467,14 @@ export class KickService
   }
 
   async fetchGame(name: string): Promise<IGame> {
+    const defaultGame: IGame = { id: '', name: '', image: '' };
+
     // Don't attempt to search for an empty game name
     // Note: on app start, there will not be a game selected yet
-    if (!name || name === '') return Promise.resolve({ id: '', name: '', image: '' } as IGame);
+    if (!name || name === '') return Promise.resolve(defaultGame);
 
-    return (await this.searchGames(name))[0];
+    const games = await this.searchGames(name);
+    return games && games.length > 0 ? games[0] : defaultGame;
   }
 
   setGameInfo({ gameId, gameName }: { gameId: string; gameName: string }) {
