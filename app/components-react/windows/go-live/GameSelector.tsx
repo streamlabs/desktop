@@ -123,6 +123,15 @@ export default function GameSelector(p: TProps) {
       });
     }
 
+    if (isKick) {
+      // Kick's API requires the category id, but this component renders the name,
+      // so the service has to track both
+      Services.KickService.actions.setGameInfo({
+        gameId: game?.value ?? '',
+        gameName: game?.label ?? '',
+      });
+    }
+
     if (!game) return;
     setGames([game]);
   }

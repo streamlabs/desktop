@@ -23,6 +23,7 @@ import { InstagramService } from './platforms/instagram';
 import { PlatformAppsService } from './platform-apps';
 import { DualOutputService } from 'services/dual-output';
 import { SettingsService } from 'services/settings';
+import { UsageStatisticsService } from 'services/usage-statistics';
 import { throwStreamError } from './streaming/stream-error';
 import { Subject } from 'rxjs';
 import uuid from 'uuid';
@@ -30,6 +31,7 @@ import Utils from './utils';
 import { $t } from './i18n';
 import { RealmObject } from './realm';
 import { ObjectSchema } from 'realm';
+import { TSocketEvent } from './websocket';
 
 interface IIngestServer {
   name: string;
@@ -160,6 +162,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @Inject() platformAppsService: PlatformAppsService;
   @Inject() dualOutputService: DualOutputService;
   @Inject() settingsService: SettingsService;
+  @Inject() usageStatisticsService: UsageStatisticsService;
 
   settings: IUserSettingsResponse;
 
@@ -1299,6 +1302,86 @@ export class RestreamService extends StatefulService<IRestreamState> {
     this.SET_STREAM_SWITCHER_STREAM_ID();
     this.SET_STREAM_SWITCHER_TARGETS([]);
     this.SET_STREAM_SWITCHER_FORCE_GO_LIVE(true);
+  }
+
+  /**
+   * Infer the type of the remote device from its stream identifier
+   * @remarks Mobile identifiers contain uppercase characters, desktop identifiers do not.
+   * Note: because the event's stream id is from the device that requested the switch, it is not
+   * possible to know what type of device the stream will be switching from. We can only identify
+   * the type of device the stream is switching to.
+   */
+  private getStreamShiftDeviceType(id: string): 'mobile' | 'desktop' {
+    return /[A-Z]/.test(id) ? 'mobile' : 'desktop';
+  }
+
+  /**
+   * Handle an incoming stream shift socket event
+   * @returns A message to show the user, or an empty string when no alert should be shown
+   */
+  async handleStreamShiftEvent(event: TSocketEvent): Promise<string> {
+    if (this.state.streamShiftForceGoLive) return '';
+    if (event.type !== 'streamSwitchRequest' && event.type !== 'switchActionComplete') {
+      return '';
+    }
+
+    const streamShiftStreamId = this.state.streamShiftStreamId;
+    console.debug('Event ID: ' + event.data.identifier, '\n Stream ID: ' + streamShiftStreamId);
+    const isIncomingStream: boolean =
+      (streamShiftStreamId && event.data.identifier === streamShiftStreamId) || false;
+
+    // Handle stream shift request events
+    if (event.type === 'streamSwitchRequest') {
+      if (isIncomingStream) {
+        // Don't record the request from this device because the other device will record it
+        this.confirmStreamShift('approved');
+      } else {
+        this.recordStreamShiftAnalytics('request', event.data.identifier);
+      }
+
+      // Currently no alert is shown for stream shift requests, so this is a placeholder message
+      return $t('Switch Stream');
+    }
+
+    // Handle stream shift completed events
+    if (event.type === 'switchActionComplete') {
+      // End the stream on this device if switching the stream to another device
+      // Only record analytics if the stream was switched from this device to a different one
+
+      if (!isIncomingStream) {
+        this.endStreamShiftStream(event.data.identifier);
+        this.recordStreamShiftAnalytics('complete', event.data.identifier);
+      }
+
+      // Notify the user
+      if (isIncomingStream) {
+        // close go live window
+        return $t(
+          'Your stream has been switched to Streamlabs Desktop from another device. Enjoy your stream!',
+        );
+      }
+
+      return this.getStreamShiftDeviceType(event.data.identifier) === 'mobile'
+        ? $t('Your stream has been successfully switched to Streamlabs Mobile. Enjoy your stream!')
+        : $t(
+            'Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!',
+          );
+    }
+
+    // Placeholder for a default return value when no stream shift event is handled
+    return '';
+  }
+
+  /**
+   * @param id - The stream identifier of the device the stream is switching to
+   */
+  recordStreamShiftAnalytics(action: 'request' | 'complete', id: string) {
+    if (Utils.isTestMode()) return;
+
+    this.usageStatisticsService.recordAnalyticsEvent('StreamShift', {
+      stream: `desktop-${this.getStreamShiftDeviceType(id)}`,
+      action,
+    });
   }
 
   /**

@@ -267,6 +267,7 @@ export class StreamingService
         facebook: 'not-started',
         twitter: 'not-started',
         instagram: 'not-started',
+        destination: 'not-started',
         setupMultistream: 'not-started',
         setupDualOutput: 'not-started',
         startVideoTransmission: 'not-started',

@@ -60,6 +60,7 @@ export interface IStreamInfo {
     facebook: TGoLiveChecklistItemState;
     twitter: TGoLiveChecklistItemState;
     instagram: TGoLiveChecklistItemState;
+    destination: TGoLiveChecklistItemState;
     setupMultistream: TGoLiveChecklistItemState;
     setupDualOutput: TGoLiveChecklistItemState;
     startVideoTransmission: TGoLiveChecklistItemState;
