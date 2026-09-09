@@ -38,5 +38,7 @@
   "ask the user to restart the stream and go live again. If in dual output mode, ask the user to stream in single output mode": "ask the user to restart the stream and go live again. If in dual output mode, ask the user to stream in single output mode",
   "confirm if the user is in dual output mode and which displays are currently streaming": "confirm if the user is in dual output mode and which displays are currently streaming",
   "confirm the platform settings for the platform, then try updating the stream again": "confirm the platform settings for the platform, then try updating the stream again",
-  "no live destinations so there was nothing to remove. The stream may have already ended on the server": "no live destinations so there was nothing to remove. The stream may have already ended on the server"
+  "no live destinations so there was nothing to remove. The stream may have already ended on the server": "no live destinations so there was nothing to remove. The stream may have already ended on the server",
+  "Unable to remove targets for %{display} display.": "Unable to remove targets for %{display} display.",
+  "Unable to update targets for %{orientation}.": "Unable to update targets for %{orientation}."
 }
