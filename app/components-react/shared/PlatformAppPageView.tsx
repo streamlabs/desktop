@@ -26,6 +26,7 @@ export default function PlatformAppPageView(p: {
     delisted: PlatformAppsService.views.getDelisted(p.appId),
   }));
 
+  // Do not use useSubscription here because the cleanup needs to also unmount the container and clear the interval
   useEffect(() => {
     mountContainer();
 
