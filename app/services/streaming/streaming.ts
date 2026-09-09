@@ -1113,16 +1113,22 @@ export class StreamingService
    */
   private async syncTargetsToLive(settings: IGoLiveSettings) {
     try {
-      const enabledPlatforms = this.views.getEnabledPlatforms(settings.platforms);
-      const enabledDestinations = settings.customDestinations.filter(dest => dest.enabled);
+      // Check every linked platform and custom destination against the server, not just the
+      // ones still marked enabled in `settings`. A failed stop leaves its target disabled here
+      // even though it's still live, so restricting the query to enabled targets would never ask
+      // the server about it and it could never be re-enabled to match reality.
+      const allPlatforms = (Object.keys(settings.platforms) as TPlatform[]).filter(platform =>
+        this.views.linkedPlatforms.includes(platform),
+      );
+      const allDestinations = settings.customDestinations;
 
-      const live = await this.restreamService.getLiveTargets(enabledPlatforms, enabledDestinations);
+      const live = await this.restreamService.getLiveTargets(allPlatforms, allDestinations);
 
       const livePlatforms = new Set(live.platforms);
       const liveDestinations = new Set(live.customDestinations.map(d => getDestinationId(d)));
 
       const platforms = cloneDeep(settings.platforms);
-      enabledPlatforms.forEach(platform => {
+      allPlatforms.forEach(platform => {
         const platformSettings = platforms[platform];
         if (!platformSettings) return;
         platformSettings.enabled = livePlatforms.has(platform);
@@ -3442,6 +3448,11 @@ export class StreamingService
             // the display status is `Offline` so the streaming instance is destroyed correctly.
             this.SET_STREAMING_STATUS(nextState, context, time);
             await this.handleDestroyOutputContexts(context);
+
+            // Update number of streaming instances
+            this.numInstances = Object.values(this.contexts).filter(
+              c => c.streaming !== null && c.streaming !== undefined,
+            ).length;
             this.streamingStatusChange.next(nextState);
             return;
           }

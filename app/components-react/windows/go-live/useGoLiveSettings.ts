@@ -773,9 +773,7 @@ export class GoLiveSettingsModule {
     this.targetsRestored = true;
 
     const livePlatforms = new Set(this.activePlatforms);
-    const liveDestinations = new Set(
-      this.activeDestinations.map(dest => `${dest.url}/${dest.streamKey}`),
-    );
+    const liveDestinations = new Set(this.activeDestinations.map(dest => getDestinationId(dest)));
 
     const savedSettings = Services.StreamingService.views.savedSettings;
     if (!savedSettings?.platforms) return;

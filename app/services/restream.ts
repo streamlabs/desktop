@@ -942,7 +942,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
       // Await the settings for every display. Otherwise `beforeGoLive` resolves before the
       // stream settings have been written and `createStreaming` reads stale values.
-      await Promise.allSettled(
+      await Promise.all(
         displays.map(async display => {
           const mode = this.getMode(display);
           const settings = await this.fetchUserSettings(mode);
@@ -1293,11 +1293,12 @@ export class RestreamService extends StatefulService<IRestreamState> {
       // and show as a new live stream immediately after the previous one ended. To prevent it from
       // accidentally being identified as a stream shift stream, force the stream to go live if the
       // app recently went live with live output editing enabled.
-      if (this.streamInfo.isLiveOutputEditingEnabled) {
+      const lastStream = this.diagnosticsService?.lastStream;
+      if (this.streamInfo.isLiveOutputEditingEnabled && lastStream?.endTime) {
         // If the last stream ended within the last minute, assume it is still in the cooldown period
+
         const streamEndedRecently =
-          this.diagnosticsService.lastStream &&
-          Date.now() - new Date(this.diagnosticsService.lastStream.endTime).getTime() < 60 * 1000;
+          lastStream && Date.now() - new Date(lastStream.endTime).getTime() < 60 * 1000;
 
         if (streamEndedRecently) {
           this.SET_STREAM_SWITCHER_FORCE_GO_LIVE(true);

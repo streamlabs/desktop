@@ -66,7 +66,7 @@ export default function EditStreamWindow() {
   }, []);
 
   useEffect(() => {
-    // 3-second countdown timer for cooldown after adding/removing targets
+    // 10-second countdown timer for cooldown after adding/removing targets
     if (timer && timer > 0) {
       const timeout = setTimeout(() => {
         setTimer(timer - 1);
@@ -119,9 +119,9 @@ const EditStreamSettings = memo(function EditStreamSettings(p: { timer: number |
     <Row gutter={8} className={styles.goLiveSettings}>
       {/*LEFT COLUMN*/}
       {shouldShowLeftCol && (
-        <Col span={9} className={cx(styles.leftColumn, styles.updateMode)}>
+        <Col span={9} className={styles.leftColumn}>
           <h2>{$t('Update Destinations & Outputs:')}</h2>
-          <Scrollable className={cx(styles.leftColumnScroll, styles.updateMode)}>
+          <Scrollable className={styles.leftColumnScroll}>
             <DestinationSwitchers disabled={p.timer !== null} />
             <div className={styles.leftFooter}>
               <PrimaryChatSwitcher
