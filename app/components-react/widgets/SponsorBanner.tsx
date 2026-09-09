@@ -40,9 +40,9 @@ export function SponsorBanner() {
   const w = useSponsorBanner();
 
   const positions = useMemo(() => {
-    if (!w.hasLoadedSettings()) return ['1'];
+    if (w.state.isLoading || !w.settings) return ['1'];
     return w.settings.placement_options === 'double' ? ['1', '2'] : ['1'];
-  }, [w.settings, w.hasLoadedSettings]);
+  }, [w.state.isLoading, w.settings]);
 
   return (
     <WidgetLayout>
@@ -54,14 +54,14 @@ export function SponsorBanner() {
         <Menu.Item key="visual">{$t('Visual Settings')}</Menu.Item>
       </Menu>
       <Form>
-        {w.hasLoadedSettings() && w.selectedTab === 'general' && (
+        {!w.state.isLoading && w.settings && w.selectedTab === 'general' && (
           <FormFactory
             metadata={w.generalMeta}
             values={w.formSettings}
             onChange={w.updateSetting}
           />
         )}
-        {w.hasLoadedSettings() && ['1', '2'].includes(w.selectedTab) && (
+        {!w.state.isLoading && w.settings && ['1', '2'].includes(w.selectedTab) && (
           <ImageSection
             key={w.selectedTab}
             placement={w.selectedTab as '1' | '2'}
@@ -69,7 +69,7 @@ export function SponsorBanner() {
             updateSetting={w.updateSetting}
           />
         )}
-        {w.hasLoadedSettings() && w.selectedTab === 'visual' && (
+        {!w.state.isLoading && w.settings && w.selectedTab === 'visual' && (
           <FormFactory metadata={w.visualMeta} values={w.formSettings} onChange={w.updateSetting} />
         )}
       </Form>

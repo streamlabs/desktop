@@ -68,8 +68,9 @@ export function GenericGoal() {
     };
   }
 
-  // Note: the loading state `w.state.isLoading` must be checked directly for reactivity. `w.hasLoadedSettings` is only called
-  // once and on component load will always show the loading state as false
+  // Note: `w.state.isLoading` and `w.settings` are checked directly (not via `w.hasLoadedSettings()`)
+  // because plain methods aren't tracked by the reactivity system, so a method-gated render never
+  // re-renders when loading finishes
   return (
     <WidgetLayout>
       <Menu onClick={e => w.setSelectedTab(e.key)} selectedKeys={[w.selectedTab]}>
@@ -77,7 +78,7 @@ export function GenericGoal() {
         {!isCharity && <Menu.Item key="goal">{$t('Goal Settings')}</Menu.Item>}
       </Menu>
       <Form>
-        {!w.state.isLoading && w.hasLoadedSettings() && w.selectedTab === 'goal' && !hasGoal && (
+        {!w.state.isLoading && w.settings && w.selectedTab === 'goal' && !hasGoal && (
           <>
             <FormFactory
               metadata={w.createGoalMeta}
@@ -93,10 +94,10 @@ export function GenericGoal() {
             </Button>
           </>
         )}
-        {!w.state.isLoading && w.hasLoadedSettings() && w.selectedTab === 'goal' && hasGoal && (
+        {!w.state.isLoading && w.settings && w.selectedTab === 'goal' && hasGoal && (
           <DisplayGoal goal={w.goalSettings} resetGoal={w.resetGoal} />
         )}
-        {!w.state.isLoading && w.hasLoadedSettings() && w.selectedTab === 'general' && (
+        {!w.state.isLoading && w.settings && w.selectedTab === 'general' && (
           <FormFactory
             metadata={w.visualMeta}
             values={w.settings}

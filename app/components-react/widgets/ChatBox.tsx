@@ -39,7 +39,7 @@ export function ChatBox() {
   const w = useChatBox();
   return (
     <WidgetLayout>
-      {w.hasLoadedSettings() && (
+      {!w.state.isLoading && w.settings && (
         <FormFactory metadata={w.meta} values={w.settings} onChange={w.updateSetting} />
       )}
     </WidgetLayout>
