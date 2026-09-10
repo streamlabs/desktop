@@ -52,7 +52,13 @@ const THEME_MAP = {
 };
 
 export function Themes(p: IOnboardingStepProps) {
-  const { OnboardingV2Service, SceneCollectionsService, NavigationService, UserService } = Services;
+  const {
+    OnboardingV2Service,
+    OnboardingService,
+    SceneCollectionsService,
+    NavigationService,
+    UserService,
+  } = Services;
 
   const [installing, setInstalling] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -78,7 +84,7 @@ export function Themes(p: IOnboardingStepProps) {
     if (themeMetadata.current) return;
     Promise.all(
       idList.map(id => {
-        return OnboardingV2Service.actions.return.fetchThemeData(id);
+        return OnboardingService.actions.return.fetchThemeData(id);
       }),
     )
       .then(metadata => {

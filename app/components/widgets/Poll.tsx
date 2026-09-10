@@ -14,7 +14,7 @@ import { $t } from 'services/i18n';
 export default class Poll extends WidgetSettings<IPollData, PollService> {
   UserService = Services.UserService;
   TwitchService = Services.TwitchService;
-  OnboardingV2Service = Services.OnboardingV2Service;
+  OnboardingService = Services.OnboardingService;
   WindowsService = Services.WindowsService;
 
   get hasPollScopes() {
@@ -40,7 +40,7 @@ export default class Poll extends WidgetSettings<IPollData, PollService> {
   }
 
   reauth() {
-    this.OnboardingV2Service.actions.showLogin();
+    this.OnboardingService.actions.start({ isLogin: true });
     this.WindowsService.closeChildWindow();
   }
 

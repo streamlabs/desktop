@@ -1,4 +1,5 @@
 @import "../../../styles/index.less";
+@import "../../../styles/colors.less";
 
 // the Foundation library interferes with some calendar styles
 // so we need to add some css fixes here
@@ -63,6 +64,30 @@
 
 .event--youtube {
   background-color: var(--youtube-transparent);
+  &:hover {
+    color: white;
+  }
+}
+
+.beta-notice {
+  display: flex;
+  // top-aligned so the badge tracks the first line when the text wraps
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.beta-badge {
+  // the badge ellipsises its own text, so it must not be allowed to shrink
+  flex-shrink: 0;
+  // spacing comes from the flex gap instead of the base .badge left margin
+  margin-left: 0;
+}
+
+.event--twitter {
+  // there's no --twitter-transparent to match the two above, so derive it here
+  // from @twitter rather than adding a global just for this
+  background-color: fade(@twitter, 50%);
   &:hover {
     color: white;
   }

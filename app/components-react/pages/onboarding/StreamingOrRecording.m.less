@@ -1,0 +1,148 @@
+@import '../../../styles/index';
+@import '../../../styles/badges';
+
+.logo {
+  margin-top: 40px;
+}
+
+.title-container {
+  position: absolute;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  top: 144px;
+  height: calc(~'100% - 144px');
+  row-gap: 60px;
+
+  @media (max-height: 600px) {
+    top: 100px;
+  }
+}
+
+.title {
+  font-size: 48px;
+
+  @media (max-height: 600px) {
+    display: none;
+  }
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--paragraph);
+  margin-top: 32px;
+  margin-bottom: 32px;
+}
+
+.option-container {
+  display: flex;
+  justify-content: center;
+  column-gap: 24px;
+  width: 100%;
+}
+
+.option {
+  text-align: center;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--paragraph);
+  background-color: var(--border);
+  padding-left: 18px;
+  padding-right: 18px;
+
+  @media (min-width: 801px) {
+    width: 350px;
+  }
+
+  border-radius: 100px;
+
+  border: 2px solid transparent;
+  box-shadow: 0px 4px 20px 0px var(--shadow);
+
+  transition-property: transform background-color border;
+  transition-duration: 0.5s;
+  transform: 0.6;
+
+  h2 {
+    color: var(--paragraph);
+    margin-top: 8px;
+  }
+
+  i {
+    font-size: 24px;
+    margin-right: 8px;
+  }
+
+  &:hover {
+    h2 {
+      color: var(--title);
+    }
+
+    i {
+      color: var(--title);
+    }
+  }
+
+  &.active {
+    border: 2px solid var(--teal);
+    background-color: var(--section);
+
+    i {
+      color: var(--teal);
+    }
+
+    h2 {
+      color: var(--title);
+    }
+  }
+}
+
+.button-container {
+  flex: 1;
+  opacity: 0;
+  cursor: inherit;
+
+  &.active {
+    cursor: pointer;
+    opacity: 1;
+  }
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  height: 100%;
+  width: 100%;
+
+  svg {
+    fill: var(--section-alt);
+    transform: rotateY(180deg);
+    transition: all 0.5s ease-in-out;
+  }
+
+  img {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    transition: all 0.5s ease-in-out;
+  }
+}
+
+@media (max-height: 750px) {
+  .footer {
+    img {
+      transform: scale(0.5) translate(-50%, 50%);
+    }
+
+    svg {
+      transform: rotateY(180deg) translateX(40%);
+    }
+  }
+}

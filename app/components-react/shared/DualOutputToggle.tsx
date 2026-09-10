@@ -46,7 +46,8 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
     TransitionsService,
     UserService,
     WindowsService,
-    OnboardingV2Service,
+    OnboardingService,
+    SettingsService,
     UsageStatisticsService,
   } = Services;
 
@@ -79,9 +80,9 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
     }
 
     UserService.actions.showLogin();
-
-    const onboardingCompleted = OnboardingV2Service.onboardingCompleted.subscribe(() => {
+    const onboardingCompleted = OnboardingService.onboardingCompleted.subscribe(() => {
       DualOutputService.actions.setDualOutputModeIfPossible();
+      SettingsService.actions.showSettings('Video');
       onboardingCompleted.unsubscribe();
     });
   }, []);

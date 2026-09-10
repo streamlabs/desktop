@@ -15318,8 +15318,6 @@ __metadata:
     webpack-merge: 5.2.0
     zustand: ^4.4.1
   dependenciesMeta:
-    deasync:
-      optional: true
     node-gyp:
       optional: true
     node-win32-np:

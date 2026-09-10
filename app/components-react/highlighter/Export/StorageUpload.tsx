@@ -110,7 +110,7 @@ export default function StorageUpload(p: { onClose: () => void; platform: EUploa
 }
 
 export function GetSLID(p: { onLogin?: () => void }) {
-  const { UserService, OnboardingV2Service } = Services;
+  const { UserService, OnboardingService } = Services;
 
   async function clickLink(signup?: boolean) {
     let resp: EPlatformCallResult;
@@ -126,7 +126,7 @@ export function GetSLID(p: { onLogin?: () => void }) {
     if (platform) {
       UserService.actions.setPrimaryPlatform(platform);
     } else {
-      OnboardingV2Service.actions.showLogin();
+      OnboardingService.actions.start({ isLogin: true });
     }
     if (p.onLogin) p.onLogin();
   }
