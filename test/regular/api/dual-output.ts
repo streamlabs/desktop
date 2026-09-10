@@ -10,6 +10,9 @@ import { click, focusMain, waitForDisplayed } from '../../helpers/modules/core';
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
+testSelectionAfterDisablingDualOutput(false);
+testSelectionAfterDisablingDualOutput(true);
+
 async function setDualOutputMode(status: boolean) {
   const client = await getApiClient();
   // The RPC fallback exposes this private method; its loading-mode decorator returns a promise.
@@ -22,7 +25,7 @@ async function setDualOutputMode(status: boolean) {
   await focusMain();
 }
 
-for (const horizontalVisible of [false, true]) {
+function testSelectionAfterDisablingDualOutput(horizontalVisible: boolean) {
   test(`Selection after disabling dual output with horizontal ${
     horizontalVisible ? 'visible' : 'hidden'
   }`, async t => {
