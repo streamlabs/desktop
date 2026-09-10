@@ -4,31 +4,22 @@ import { test, useWebdriver, TExecutionContext } from '../../helpers/webdriver';
 import { ScenesService, Scene, SceneItem } from 'services/scenes';
 import { VideoSettingsService } from 'services/settings-v2/video';
 import { SelectionService } from 'services/api/external-api/selection';
-import { click, focusMain, focusWindow, waitForDisplayed } from '../../helpers/modules/core';
+import { click, focusMain, waitForDisplayed } from '../../helpers/modules/core';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
-async function setDualOutputMode(t: TExecutionContext, status: boolean) {
-  try {
-    t.true(await focusWindow('worker'), 'Worker window is available');
-    // Exercise the normal mode transition without requiring a provider login.
-    await t.context.app.client.execute(`
-      window.servicesManager.getResource('DualOutputService').setDualOutputMode(${status}, true);
-      0;
-    `);
-    await t.context.app.client.waitUntil(
-      () =>
-        t.context.app.client.execute(`
-          const dualOutput = window.servicesManager.getResource('DualOutputService');
-          return dualOutput.views.dualOutputMode === ${status} && !dualOutput.views.isLoading;
-        `),
-      { timeout: 10000, timeoutMsg: 'Dual output mode transition did not complete' },
-    );
-  } finally {
-    await focusMain();
-  }
+async function setDualOutputMode(status: boolean) {
+  const client = await getApiClient();
+  // The RPC fallback exposes this private method; its loading-mode decorator returns a promise.
+  const dualOutput = client.getResource<{
+    setDualOutputMode(status: boolean, skipShowVideoSettings: boolean): Promise<void>;
+  }>('DualOutputService');
+
+  // Exercise the normal mode transition without requiring a provider login.
+  await dualOutput.setDualOutputMode(status, true);
+  await focusMain();
 }
 
 for (const horizontalVisible of [false, true]) {
@@ -44,7 +35,7 @@ for (const horizontalVisible of [false, true]) {
     const horizontalItem = scene.createAndAddSource('Selection target', 'color_source');
     horizontalItem.fitToScreen();
 
-    await setDualOutputMode(t, true);
+    await setDualOutputMode(true);
     dualOutputService.toggleDisplay(horizontalVisible, 'horizontal');
     const verticalItem = scene.getItems().find(item => item.display === 'vertical');
     t.truthy(verticalItem, 'Dual output created a vertical partner');
@@ -54,7 +45,7 @@ for (const horizontalVisible of [false, true]) {
       'Dual output source rows follow the visible displays',
     );
 
-    await setDualOutputMode(t, false);
+    await setDualOutputMode(false);
     await waitForDisplayed('#horizontal-display');
     t.deepEqual(
       scene.getSourceSelectorNodes().map(node => node.id),
@@ -76,7 +67,7 @@ for (const horizontalVisible of [false, true]) {
     await waitForDisplayed('.ant-tree-node-selected [data-name="Selection target"]');
     t.deepEqual(selection.getIds(), [horizontalItem.id], 'Canvas selection highlights the list');
 
-    await setDualOutputMode(t, true);
+    await setDualOutputMode(true);
     t.is(
       dualOutputService.state.videoSettings.activeDisplays.horizontal,
       horizontalVisible,
