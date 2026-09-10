@@ -488,7 +488,29 @@ export class YoutubeService
     this.setPlatformContext('youtube');
   }
 
+  /**
+   * Prepare the stream for live output editing
+   * @remark Live output editing cannot dual stream. As a safety measure, if there is
+   * any local vertical broadcast data on state, clear it
+   */
+  async setupLiveOutputStream(options?: IGoLiveSettings): Promise<void> {
+    if (!this.state.verticalStreamKey && !this.state.verticalBroadcast.id) return;
+
+    const destinations = this.streamingService.views.customDestinations.filter(
+      dest => dest.streamKey !== this.state.verticalStreamKey,
+    );
+
+    this.SET_VERTICAL_BROADCAST({} as IYoutubeLiveBroadcast);
+    this.SET_VERTICAL_STREAM_KEY('');
+    this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
+  }
+
   async setupDualStream(goLiveSettings: IGoLiveSettings) {
+    // Live output editing currently cannot use dual stream so guard against it
+    if (goLiveSettings.liveOutputEditing) {
+      return;
+    }
+
     const ytSettings = getDefined(goLiveSettings.platforms.youtube);
     const title = makeVerticalTitle(ytSettings.title);
 
@@ -627,7 +649,10 @@ export class YoutubeService
       );
     }
 
-    if (ytSettings.display === 'both') {
+    // Live output editing is checked first so dual stream is never set up when live output editing is enabled.
+    if (goLiveSettings.liveOutputEditing) {
+      await this.setupLiveOutputStream(goLiveSettings);
+    } else if (ytSettings.display === 'both') {
       try {
         // Prevent rate limit errors by delaying the dual stream setup by 1 second
         await new Promise<void>(resolve => {
