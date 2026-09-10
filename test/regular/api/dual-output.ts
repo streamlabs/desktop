@@ -3,10 +3,92 @@ import { getApiClient } from '../../helpers/api-client';
 import { test, useWebdriver, TExecutionContext } from '../../helpers/webdriver';
 import { ScenesService, Scene, SceneItem } from 'services/scenes';
 import { VideoSettingsService } from 'services/settings-v2/video';
+import { SelectionService } from 'services/api/external-api/selection';
+import { click, focusMain, focusWindow, waitForDisplayed } from '../../helpers/modules/core';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
+
+async function setDualOutputMode(t: TExecutionContext, status: boolean) {
+  try {
+    t.true(await focusWindow('worker'), 'Worker window is available');
+    // Exercise the normal mode transition without requiring a provider login.
+    await t.context.app.client.execute(`
+      window.servicesManager.getResource('DualOutputService').setDualOutputMode(${status}, true);
+      0;
+    `);
+    await t.context.app.client.waitUntil(
+      () =>
+        t.context.app.client.execute(`
+          const dualOutput = window.servicesManager.getResource('DualOutputService');
+          return dualOutput.views.dualOutputMode === ${status} && !dualOutput.views.isLoading;
+        `),
+      { timeout: 10000, timeoutMsg: 'Dual output mode transition did not complete' },
+    );
+  } finally {
+    await focusMain();
+  }
+}
+
+for (const horizontalVisible of [false, true]) {
+  test(`Selection after disabling dual output with horizontal ${
+    horizontalVisible ? 'visible' : 'hidden'
+  }`, async t => {
+    const client = await getApiClient();
+    const scenesService = client.getResource<ScenesService>('ScenesService');
+    const dualOutputService = client.getResource<DualOutputService>('DualOutputService');
+    const selection = client.getResource<SelectionService>('SelectionService');
+    const scene = scenesService.createScene('Selection transition');
+    scenesService.makeSceneActive(scene.id);
+    const horizontalItem = scene.createAndAddSource('Selection target', 'color_source');
+    horizontalItem.fitToScreen();
+
+    await setDualOutputMode(t, true);
+    dualOutputService.toggleDisplay(horizontalVisible, 'horizontal');
+    const verticalItem = scene.getItems().find(item => item.display === 'vertical');
+    t.truthy(verticalItem, 'Dual output created a vertical partner');
+    t.deepEqual(
+      scene.getSourceSelectorNodes().map(node => node.id),
+      [horizontalVisible ? horizontalItem.id : verticalItem.id],
+      'Dual output source rows follow the visible displays',
+    );
+
+    await setDualOutputMode(t, false);
+    await waitForDisplayed('#horizontal-display');
+    t.deepEqual(
+      scene.getSourceSelectorNodes().map(node => node.id),
+      [horizontalItem.id],
+      'Single output source rows always use horizontal items',
+    );
+
+    await click('[data-name="Selection target"]');
+    t.deepEqual(selection.getIds(), [horizontalItem.id], 'List selects only the visible item');
+
+    selection.reset();
+    await t.context.app.client.waitUntil(async () => {
+      const selectedRows = await t.context.app.client.$$(
+        '.ant-tree-node-selected [data-name="Selection target"]',
+      );
+      return selectedRows.length === 0;
+    });
+    await click('#horizontal-display');
+    await waitForDisplayed('.ant-tree-node-selected [data-name="Selection target"]');
+    t.deepEqual(selection.getIds(), [horizontalItem.id], 'Canvas selection highlights the list');
+
+    await setDualOutputMode(t, true);
+    t.is(
+      dualOutputService.state.videoSettings.activeDisplays.horizontal,
+      horizontalVisible,
+      'The saved horizontal display preference is preserved',
+    );
+    t.deepEqual(
+      scene.getSourceSelectorNodes().map(node => node.id),
+      [horizontalVisible ? horizontalItem.id : verticalItem.id],
+      'Re-enabling dual output restores the corresponding source rows',
+    );
+  });
+}
 
 function confirmDualOutputSources(t: TExecutionContext, scene: Scene) {
   const numSceneItems = scene
