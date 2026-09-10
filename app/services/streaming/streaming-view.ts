@@ -195,9 +195,21 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     );
   }
 
+  /**
+   * Whether a platform is set to dual stream to both displays
+   * @remark The saved `both` display is deliberately left intact in `getSavedPlatformSettings`
+   * because reassigning it would destroy the user's dual stream choice.
+   * @param platform - The platform to check
+   */
+  isDualStreaming(platform: TPlatform): boolean {
+    if (this.isLiveOutputEditingEnabled) return false;
+    return this.settings.platforms[platform]?.display === 'both';
+  }
+
   get isTwitchDualStreamEnabled() {
     // Twitch dual stream requires enhanced broadcasting, which is not available with live output editing
     // because enhanced broadcasting cannot use restream service due to api requirements
+    // Note: redundant with the guard inside `isDualStreaming`, kept as defence in depth
     if (this.isLiveOutputEditingEnabled) {
       return false;
     }
@@ -209,7 +221,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       this.settings.platforms?.twitch &&
       this.enabledPlatforms.includes('twitch') &&
-      this.settings.platforms?.twitch.display === 'both'
+      this.isDualStreaming('twitch')
     );
   }
 
@@ -221,7 +233,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       this.settings.platforms?.youtube &&
       this.enabledPlatforms.includes('youtube') &&
-      this.settings.platforms?.youtube?.display === 'both'
+      this.isDualStreaming('youtube')
     );
   }
 
@@ -473,7 +485,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
         // if the platform is set to 'both' display, add it to both horizontal and vertical
         // for analytics purposes
-        if (this.settings.platforms[platform]?.display === 'both') {
+        if (this.isDualStreaming(platform)) {
           displayPlatforms.vertical.push(platform);
         }
 
@@ -577,8 +589,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   get hasDualStream() {
     return this.enabledPlatforms.some(
       (platform: TPlatform) =>
-        this.supports('dualStream', [platform]) &&
-        this.settings.platforms[platform]?.display === 'both',
+        this.supports('dualStream', [platform]) && this.isDualStreaming(platform),
     );
   }
 
