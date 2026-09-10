@@ -851,9 +851,12 @@ export class StreamingService
       // in osn is what actually determines if the stream will use enhanced broadcasting.
       if (platform === 'twitch') {
         // Enhanced broadcasting is unavailable while live output editing is enabled because it
-        // uses its own video context and stream, which cannot be edited mid-stream
+        // uses its own video context and stream, which cannot be edited mid-stream.
+        // It is also unavailable during a stream shift, which always goes out through the
+        // restream service.
         const isEnhancedBroadcasting =
           !this.views.isLiveOutputEditingEnabled &&
+          !this.views.isStreamShiftMode &&
           (this.views.isTwitchDualStreamEnabled ||
             settings.platforms.twitch?.isEnhancedBroadcasting ||
             false);
@@ -2587,9 +2590,14 @@ export class StreamingService
   }
 
   private async createEnhancedBroadcastMultistream() {
-    const display = this.settingsService.views.values.Stream.server.includes('streamlabs')
-      ? 'horizontal'
-      : 'vertical';
+    // The enhanced broadcasting instance carries Twitch, so it has to use the canvas Twitch is
+    // assigned to. Outside dual output mode there is only the horizontal canvas.
+    // Note: do not infer this from the horizontal display's ingest server. When both displays
+    // are being restreamed, the horizontal server is a Streamlabs ingest whether or not Twitch
+    // is on that display, so Twitch on the vertical display would be sent landscape.
+    const display = this.views.isDualOutputMode
+      ? this.views.getPlatformDisplayType('twitch')
+      : 'horizontal';
 
     const outputSettings =
       display === 'horizontal'

@@ -215,6 +215,8 @@ export interface IPlatformService {
 
   setupStreamShiftStream?: (options: IGoLiveSettings) => Promise<void>;
 
+  setupLiveOutputStream?: (options: IGoLiveSettings) => Promise<void>;
+
   postNotification?: (message: string) => void;
 
   formatError?: (e: any, platform: TPlatform, errorType?: TStreamErrorType) => never;
