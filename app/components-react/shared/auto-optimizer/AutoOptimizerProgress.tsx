@@ -5,6 +5,7 @@ import { $i } from 'services/utils';
 import styles from './AutoOptimizer.m.less';
 
 export function AutoOptimizerProgress(p: {
+  children?: React.ReactNode;
   phaseLabel?: string;
   progress?: number;
   cancelling: boolean;
@@ -48,6 +49,7 @@ export function AutoOptimizerProgress(p: {
           {$t('Skip')}
         </button>
       )}
+      {p.children}
     </section>
   );
 }

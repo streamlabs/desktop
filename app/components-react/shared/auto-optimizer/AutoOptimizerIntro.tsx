@@ -5,6 +5,7 @@ import { $i } from 'services/utils';
 import styles from './AutoOptimizer.m.less';
 
 export function AutoOptimizerIntro(p: {
+  children?: React.ReactNode;
   host: 'go-live' | 'settings' | 'onboarding';
   onStart(): void;
   onSkip(): void;
@@ -31,6 +32,7 @@ export function AutoOptimizerIntro(p: {
           {$t('Skip')}
         </button>
       )}
+      {p.children}
     </section>
   );
 }

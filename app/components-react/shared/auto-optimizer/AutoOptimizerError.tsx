@@ -4,6 +4,7 @@ import { $t } from 'services/i18n';
 import styles from './AutoOptimizer.m.less';
 
 export function AutoOptimizerError(p: {
+  children?: React.ReactNode;
   message?: string;
   canRetry: boolean;
   canContinue: boolean;
@@ -26,6 +27,7 @@ export function AutoOptimizerError(p: {
             {$t('Continue without optimization')}
           </Button>
         )}
+        {p.children}
       </div>
     </section>
   );

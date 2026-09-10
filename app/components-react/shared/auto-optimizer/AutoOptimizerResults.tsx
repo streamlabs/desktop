@@ -173,6 +173,7 @@ function AdviceCard(p: { advice: IAutoOptimizerPresentationAdvice; onAction?(): 
 }
 
 export function AutoOptimizerResults(p: {
+  children?: React.ReactNode;
   outputs: IAutoOptimizerPresentationOutput[];
   advice?: IAutoOptimizerPresentationAdvice | null;
   applying: boolean;
@@ -250,6 +251,7 @@ export function AutoOptimizerResults(p: {
             {$t('Skip')}
           </button>
         )}
+        {p.children}
       </div>
     </section>
   );
