@@ -278,6 +278,11 @@ export class WindowsService extends StatefulService<IWindowsState> {
     }
   }
 
+  private setOneOffFocused(windowId: string, isFocused: boolean) {
+    if (!this.state[windowId]) return;
+    this.UPDATE_ONE_OFF_WINDOW(windowId, { isFocused });
+  }
+
   getWindowIdFromElectronId(electronWindowId: number) {
     return Object.keys(this.windows).find(win => this.windows[win].id === electronWindowId);
   }
@@ -497,17 +502,8 @@ export class WindowsService extends StatefulService<IWindowsState> {
       this.DELETE_ONE_OFF_WINDOW(windowId);
     });
 
-    // Focus is state a renderer can read: webContents.isFocused() is a pull and
-    // only reachable from the worker. Lets a component in another window tell
-    // "this window is buried" from "this window is closed".
-    const setFocused = (isFocused: boolean) => {
-      // A blur can land after 'closed' deleted the entry, and UPDATE spreads
-      // over `undefined` happily — which would resurrect a ghost window.
-      if (!this.state[windowId]) return;
-      this.UPDATE_ONE_OFF_WINDOW(windowId, { isFocused });
-    };
-    newWindow.on('focus', () => setFocused(true));
-    newWindow.on('blur', () => setFocused(false));
+    newWindow.on('focus', () => this.setOneOffFocused(windowId, true));
+    newWindow.on('blur', () => this.setOneOffFocused(windowId, false));
 
     this.updateScaleFactor(windowId);
     newWindow.on('move', () => this.updateScaleFactor(windowId));

@@ -25,19 +25,6 @@ export const INTERACTION_LIMITS: Record<string, number> = {
 /** Matches automations-limits: only 'free' and 'ultra' come back from the API today. */
 export const ULTRA_PLUS_TIER = 'ultra_plus';
 
-/**
- * The tier this user is on.
- *
- * `views.tier` already resolves the whole ladder -- 'free' when logged out,
- * the server's tier when it has one, otherwise 'ultra' for a Prime account --
- * so reading it directly is both correct and the same thing enabledUsage() does
- * for Automations. An earlier isPrime wrapper here returned 'free' for anyone
- * whose tier was set but whose isPrime flag was not.
- */
-export function supportTier(): string {
-  return Services.UserService.views.tier;
-}
-
 /** Sends the user to checkout for whatever tier sits above the one they are on. */
 export function upgrade(currentTier: string) {
   const toUltraPlus = currentTier === 'ultra';

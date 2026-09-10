@@ -10,13 +10,7 @@ import { ModalLayout } from 'components-react/shared/ModalLayout';
 import KevinSvg from 'components-react/shared/KevinSvg';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import { KevinChatIcon, SendIcon } from 'components-react/shared/icons';
-import {
-  INTERACTION_LIMITS,
-  ULTRA_PLUS_TIER,
-  promptUpgrade,
-  supportTier,
-  upgrade,
-} from './support-limits';
+import { INTERACTION_LIMITS, ULTRA_PLUS_TIER, promptUpgrade, upgrade } from './support-limits';
 import styles from './KevinSupport.m.less';
 
 // $t() must be called at render time, not module load, so the strings pick up a
@@ -109,9 +103,8 @@ function renderText(text: string): React.ReactNode[] {
  * actually applies rather than one derived here. The tier constants are only
  * used to name the next tier's allowance in the tooltip and the upsell.
  */
-function UsageMeter(p: { rateLimit: { current: number; maximum: number } | null }) {
-  const tier = supportTier();
-  const atTopTier = tier === ULTRA_PLUS_TIER;
+function UsageMeter(p: { tier: string; rateLimit: { current: number; maximum: number } | null }) {
+  const atTopTier = p.tier === ULTRA_PLUS_TIER;
 
   // The server reports the real counts, but only once it has handled a request,
   // so waiting for them left the meter absent until after the first message --
@@ -120,7 +113,7 @@ function UsageMeter(p: { rateLimit: { current: number; maximum: number } | null 
   // Automations meter derives its numbers locally, and the server's figures
   // replace it the moment they arrive.
   const current = p.rateLimit?.current ?? 0;
-  const maximum = p.rateLimit?.maximum ?? INTERACTION_LIMITS[tier] ?? INTERACTION_LIMITS.free;
+  const maximum = p.rateLimit?.maximum ?? INTERACTION_LIMITS[p.tier] ?? INTERACTION_LIMITS.free;
 
   const pct = maximum > 0 ? Math.min(100, Math.round((current / maximum) * 100)) : 0;
   // maximum > 0 guards the degenerate case: 0 >= 0 would offer an upgrade to
@@ -154,10 +147,12 @@ function UsageMeter(p: { rateLimit: { current: number; maximum: number } | null 
       </div>
 
       {atCap && !atTopTier && (
-        <span className={styles.upgradeLink} onClick={() => upgrade(tier)}>
+        <span className={styles.upgradeLink} onClick={() => upgrade(p.tier)}>
           <UltraIcon type="badge" />
           <span className={styles.upgradeText}>
-            {tier === 'ultra' ? $t('Upgrade to Ultra+ for more') : $t('Upgrade to Ultra for more')}
+            {p.tier === 'ultra'
+              ? $t('Upgrade to Ultra+ for more')
+              : $t('Upgrade to Ultra for more')}
           </span>
         </span>
       )}
@@ -169,18 +164,28 @@ function UsageMeter(p: { rateLimit: { current: number; maximum: number } | null 
 }
 
 export default function KevinSupport() {
-  const { KevinSupportService } = Services;
+  const { KevinSupportService, UserService } = Services;
 
-  const { messages, pending, error, pendingApprovals, rateLimit, rateLimitRefusals } = useVuex(
-    () => ({
-      messages: KevinSupportService.state.messages,
-      pending: KevinSupportService.state.pending,
-      error: KevinSupportService.state.error,
-      pendingApprovals: KevinSupportService.state.pendingApprovals,
-      rateLimit: KevinSupportService.state.rateLimit,
-      rateLimitRefusals: KevinSupportService.state.rateLimitRefusals,
-    }),
-  );
+  const {
+    messages,
+    pending,
+    error,
+    pendingApprovals,
+    rateLimit,
+    rateLimitRefusals,
+    tier,
+  } = useVuex(() => ({
+    messages: KevinSupportService.state.messages,
+    pending: KevinSupportService.state.pending,
+    error: KevinSupportService.state.error,
+    pendingApprovals: KevinSupportService.state.pendingApprovals,
+    rateLimit: KevinSupportService.state.rateLimit,
+    rateLimitRefusals: KevinSupportService.state.rateLimitRefusals,
+    // Read reactively: a subscription that lapses while the window is open has
+    // to move the meter and the upsell with it, which a one-shot call at render
+    // time never would.
+    tier: UserService.views.tier,
+  }));
 
   const [draft, setDraft] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
@@ -206,7 +211,7 @@ export default function KevinSupport() {
   // the quota error is no longer shown as a banner, so this modal is the only
   // thing that tells them why nothing happened.
   useEffect(() => {
-    if (rateLimitRefusals > 0) promptUpgrade(supportTier());
+    if (rateLimitRefusals > 0) promptUpgrade(tier);
   }, [rateLimitRefusals]);
 
   useEffect(() => {
@@ -239,7 +244,7 @@ export default function KevinSupport() {
   return (
     <ModalLayout hideFooter className={styles.window} bodyClassName={styles.body}>
       <div className={styles.content}>
-        <UsageMeter rateLimit={rateLimit} />
+        <UsageMeter tier={tier} rateLimit={rateLimit} />
 
         {isEmpty ? (
           <div className={styles.emptyState}>
