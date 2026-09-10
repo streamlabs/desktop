@@ -336,9 +336,12 @@ export class GoLiveSettingsModule {
   /**
    * Fetch settings for each platform
    */
-  async prepopulate() {
+  async prepopulate(options?: { preserveCommonFields?: boolean }) {
     const { StreamingService, RestreamService, DualOutputService } = Services;
     const { isMultiplatformMode } = StreamingService.views;
+
+    // Snapshot the common fields `updateSettings` below replaces every platform's settings
+    const editedCommonFields = options?.preserveCommonFields ? this.state.commonFields : undefined;
 
     this.state.setNeedPrepopulate(true);
     await StreamingService.actions.return.prepopulateInfo();
@@ -358,16 +361,18 @@ export class GoLiveSettingsModule {
     };
 
     if (this.state.isUpdateMode && !view.isMidStreamMode) {
-      (Object.keys(settings.platforms) as (keyof typeof settings.platforms)[]).forEach(
-        (platform: TPlatform) => {
-          // In multi-platform mode, allow deleting all platform settings, including primary
-          if (!isMultiplatformMode && this.state.isPrimaryPlatform(platform)) {
-            return;
-          }
+      if (!view.isMidStreamMode) {
+        (Object.keys(settings.platforms) as (keyof typeof settings.platforms)[]).forEach(
+          (platform: TPlatform) => {
+            // In multi-platform mode, allow deleting all platform settings, including primary
+            if (!isMultiplatformMode && this.state.isPrimaryPlatform(platform)) {
+              return;
+            }
 
-          delete settings.platforms[platform];
-        },
-      );
+            delete settings.platforms[platform];
+          },
+        );
+      }
     }
 
     // prefill the form if `prepopulateOptions` provided
@@ -398,6 +403,15 @@ export class GoLiveSettingsModule {
     }
 
     this.state.updateSettings(settings);
+
+    // Prepopulating rebuilds each platform's settings from the service, which drops a title or
+    // description the user has typed but not submitted. Put the typed values back.
+    if (editedCommonFields) {
+      this.state.updateCommonFields({
+        title: editedCommonFields.title || this.state.commonFields.title,
+        description: editedCommonFields.description || this.state.commonFields.description,
+      });
+    }
 
     /* If the user was in dual output before but doesn't have restream
      * we should disable one of the platforms if they have two enabled
@@ -500,7 +514,10 @@ export class GoLiveSettingsModule {
     }
 
     this.save(this.state.settings);
-    this.prepopulate();
+
+    // Keep whatever the user has typed into the shared title/description. Every other caller of
+    // `prepopulate` is a window opening, where the fetched values should win instead.
+    this.prepopulate({ preserveCommonFields: true });
   }
 
   switchCustomDestination(destInd: number, enabled: boolean) {
