@@ -2,24 +2,24 @@ import { execFileSync } from 'child_process';
 import { ensureDir, readdir, writeFile } from 'fs-extra';
 import * as path from 'path';
 import { platform } from 'os';
-import type { ServicesManager } from '../../app/services-manager';
-import type { StreamingService } from '../../app/services/streaming/streaming';
-import { SettingsService } from '../../app/services/settings';
-import { VideoSettingsService } from '../../app/services/settings-v2/video';
-import { ScenesService } from '../../app/services/api/external-api/scenes';
-import { IAudioServiceApi } from '../../app/services/audio';
-import { NotificationsService } from '../../app/services/notifications';
-import { IObsListInput } from '../../app/components/obs/inputs/ObsInput';
-import { getApiClient } from '../helpers/api-client';
-import { focusMain, focusWindow, waitForDisplayed } from '../helpers/modules/core';
-import { startRecording, stopRecording } from '../helpers/modules/streaming';
+import type { ServicesManager } from '../../../app/services-manager';
+import type { StreamingService } from '../../../app/services/streaming/streaming';
+import { SettingsService } from '../../../app/services/settings';
+import { VideoSettingsService } from '../../../app/services/settings-v2/video';
+import { ScenesService } from '../../../app/services/api/external-api/scenes';
+import { IAudioServiceApi } from '../../../app/services/audio';
+import { NotificationsService } from '../../../app/services/notifications';
+import { IObsListInput } from '../../../app/components/obs/inputs/ObsInput';
+import { getApiClient } from '../../helpers/api-client';
+import { focusMain, focusWindow, waitForDisplayed } from '../../helpers/modules/core';
+import { startRecording, stopRecording } from '../../helpers/modules/streaming';
 import {
   startReplayBuffer,
   saveReplayBuffer,
   stopReplayBuffer,
-} from '../helpers/modules/replay-buffer';
-import { sleep } from '../helpers/sleep';
-import { test, TExecutionContext, useWebdriver } from '../helpers/webdriver';
+} from '../../helpers/modules/replay-buffer';
+import { sleep } from '../../helpers/sleep';
+import { test, TExecutionContext, useWebdriver } from '../../helpers/webdriver';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
