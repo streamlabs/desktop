@@ -90,6 +90,8 @@
   "Missing required oauth scope": "Missing required oauth scope",
   "Failed to fetch platform settings": "Failed to fetch platform settings",
   "Failed to update platform settings": "Failed to update platform settings",
+  "Stream key missing. Relogin or remerge to refresh it.": "Stream key missing. Relogin or remerge to refresh it.",
+  "Server url missing. Relogin or remerge to refresh it.": "Server url missing. Relogin or remerge to refresh it.",
   "The Multistream server is temporarily unavailable": "The Multistream server is temporarily unavailable",
   "Failed to configure the Multistream server": "Failed to configure the Multistream server",
   "disable Enhanced Broadcasting for Twitch and try again": "disable Enhanced Broadcasting for Twitch and try again",

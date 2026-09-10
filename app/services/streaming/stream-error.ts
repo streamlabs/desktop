@@ -36,6 +36,16 @@ export const errorTypes = {
       return $t('Failed to update platform settings');
     },
   },
+  STREAM_KEY_MISSING: {
+    get message() {
+      return $t('Stream key missing. Relogin or remerge to refresh it.');
+    },
+  },
+  STREAM_SERVER_MISSING: {
+    get message() {
+      return $t('Server url missing. Relogin or remerge to refresh it.');
+    },
+  },
   RESTREAM_DISABLED: {
     get message() {
       return $t('The Multistream server is temporarily unavailable');
