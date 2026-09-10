@@ -111,6 +111,30 @@ const SUPPORT_TICKET_URL =
   'https://support.streamlabs.com/hc/en-us/requests/new?ticket_form_id=473667';
 
 /**
+ * Coarse buckets for the `tool_executed` analytics event, so a chart can say
+ * "audio is where people need help" without listing thirteen tool names.
+ *
+ * Keep in step with `handlers` below -- a tool missing from here is not an error,
+ * it just lands in 'other', which is how the avatar plugin's COMMAND_GROUPS reads
+ * its own map too.
+ */
+export const TOOL_GROUPS: Record<string, string> = {
+  scene_list: 'scene',
+  scene_switch: 'scene',
+  source_list: 'source',
+  source_set_visible: 'source',
+  source_set_muted: 'audio',
+  mic_enhance: 'audio',
+  stream_status: 'stream_control',
+  stream_stop: 'stream_control',
+  stream_health: 'stream_control',
+  replay_save: 'clip',
+  watch_replay: 'clip',
+  diagnostics_report: 'support',
+  support_open_ticket: 'support',
+};
+
+/**
  * The tools the agent may execute on this machine.
  *
  * Hand-written rather than generated from the `platform-apps` `@apiMethod()`

@@ -4,10 +4,14 @@ import { Inject } from 'services/core/injector';
 import { UserService } from 'services/user';
 import { $t } from 'services/i18n';
 import { HostsService } from 'services/hosts';
+import { UsageStatisticsService } from 'services/usage-statistics';
 import Utils from 'services/utils';
 import { importSocketIOClient } from 'util/slow-imports';
+// Type-only: the action vocabulary lives with the component-side helpers, and a
+// type import is erased, so nothing in the services layer depends on React at runtime.
+import type { TApprovalSurface, TSupportChatAction } from 'components-react/agent/kevin-analytics';
 import { StreamAvatarApiService } from './stream-avatar-api-service';
-import { AgentToolsService } from './v2/agent-tools';
+import { AgentToolsService, TOOL_GROUPS } from './v2/agent-tools';
 import {
   V2_NAMESPACE,
   V2_PROTOCOL_VERSION,
@@ -93,6 +97,7 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
   @Inject() private userService: UserService;
   @Inject() private hostsService: HostsService;
   @Inject() private agentToolsService: AgentToolsService;
+  @Inject() private usageStatisticsService: UsageStatisticsService;
 
   private io: SocketIOClientStatic;
   private socket: SocketIOClient.Socket | null = null;
@@ -203,6 +208,11 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
         // (KevinApprovalBubble) shows the prompt whenever the support window is
         // closed or buried, so a decision no longer costs the streamer a window
         // jumping in front of whatever they were doing mid-stream.
+        //
+        // Tracked here and not in ADD_APPROVAL (mutations stay pure) and not on
+        // the v2:ready replay below, which re-sends every still-live prompt --
+        // counting those would turn one reconnect into a spike of new requests.
+        this.track('approval_requested', { tool: p.tool, risk: p.risk });
         this.ADD_APPROVAL(p);
       });
       socket.on('v2:approval.resolved', (p: { approvalId: string }) =>
@@ -312,6 +322,17 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
   }
 
   /**
+   * Feature analytics, worker-side. No `.actions` — we are already in the worker,
+   * so this is a plain call on the singleton, the way AutomationsEngineService
+   * records 'automation_fired'. Nothing here reports errors: connection failures
+   * and caught exceptions stay in the log above. `success` and `reason` are
+   * outcome fields on a usage event, which is a different thing.
+   */
+  private track(action: TSupportChatAction, payload?: Record<string, unknown>) {
+    this.usageStatisticsService.recordAnalyticsEvent('SupportChat', { action, ...payload });
+  }
+
+  /**
    * Catch-all so we can see events the server sends that we do NOT handle.
    * socket.io v2 exposes onevent rather than onAny.
    */
@@ -362,6 +383,9 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
 
   private handleRunEnded(packet: V2RunEndedPayload) {
     this.SET_PENDING(false);
+    // Paired with message_sent, this is the answer rate: how often a question
+    // actually produced a finished reply rather than being cancelled or lost.
+    this.track('run_ended', { reason: packet.reason });
     if (packet.reason === 'error' && packet.message) this.SET_ERROR(packet.message);
   }
 
@@ -380,6 +404,20 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
         };
 
     this.log('out', 'v2:tool.result', { callId: invoke.callId, ok: outcome.ok });
+    // Here rather than inside AgentToolsService.execute(): the unknown_tool
+    // fallback above short-circuits execute entirely, and a tool the server
+    // thinks we have but we do not is exactly the failure worth seeing.
+    //
+    // `code` is 'unknown_tool' | 'failed', and absent on success, so a chart of
+    // failure reasons does not have to filter out a null bucket. Narrowed with
+    // `in` rather than on `outcome.ok`: strictNullChecks is off for this file,
+    // and the boolean discriminant does not narrow the union without it.
+    this.track('tool_executed', {
+      tool: invoke.tool,
+      tool_group: TOOL_GROUPS[invoke.tool] ?? 'other',
+      success: outcome.ok,
+      ...('code' in outcome ? { code: outcome.code } : {}),
+    });
     this.socket?.emit('v2:tool.result', { callId: invoke.callId, outcome });
   }
 
@@ -402,15 +440,36 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
     this.SET_PENDING(true);
     this.log('out', 'v2:input.text', { text: trimmed.slice(0, 80) });
     this.socket.emit('v2:input.text', { text: trimmed, responseType: 'text' });
+    // Below the guard above, so a send dropped for want of a socket is not
+    // counted as one. No payload: the count is the signal, and nothing about
+    // what was typed belongs in analytics.
+    this.track('message_sent');
   }
 
   /**
    * Answers a pending approval. Called from a UI window through
    * `KevinSupportService.actions.resolveApproval(...)`, since the prompt cannot
    * render in the worker.
+   *
+   * `surface` is passed in because the chat window and the footer bubble reach
+   * this method identically — it is the only way to tell whether the bubble is
+   * earning its keep.
    */
-  resolveApproval(approvalId: string, decision: V2ApprovalDecision) {
+  resolveApproval(
+    approvalId: string,
+    decision: V2ApprovalDecision,
+    surface: TApprovalSurface = 'chat',
+  ) {
     this.log('out', 'v2:approval.resolve', { approvalId, decision });
+    // Read before REMOVE_APPROVAL drops the entry: the caller only knows the id,
+    // and which tool was being gated is the whole point of the event.
+    const approval = this.state.pendingApprovals.find(a => a.approvalId === approvalId);
+    this.track('approval_resolved', {
+      tool: approval?.tool ?? 'unknown',
+      risk: approval?.risk ?? 'unknown',
+      decision,
+      surface,
+    });
     this.socket?.emit('v2:approval.resolve', { approvalId, decision });
     // Optimistic: the server confirms with v2:approval.resolved, but the
     // prompt should not linger while that round-trips.

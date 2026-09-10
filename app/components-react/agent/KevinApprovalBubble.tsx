@@ -81,7 +81,11 @@ export default function KevinApprovalBubble({ anchorRef }: Props) {
             <button
               className="button button--action"
               onClick={() =>
-                KevinSupportService.actions.resolveApproval(approval.approvalId, 'approve')
+                KevinSupportService.actions.resolveApproval(
+                  approval.approvalId,
+                  'approve',
+                  'footer',
+                )
               }
             >
               {$t('Allow once')}
@@ -89,7 +93,7 @@ export default function KevinApprovalBubble({ anchorRef }: Props) {
             <button
               className="button button--default"
               onClick={() =>
-                KevinSupportService.actions.resolveApproval(approval.approvalId, 'always')
+                KevinSupportService.actions.resolveApproval(approval.approvalId, 'always', 'footer')
               }
             >
               {$t('Always allow')}
@@ -97,7 +101,7 @@ export default function KevinApprovalBubble({ anchorRef }: Props) {
             <button
               className="button button--default"
               onClick={() =>
-                KevinSupportService.actions.resolveApproval(approval.approvalId, 'deny')
+                KevinSupportService.actions.resolveApproval(approval.approvalId, 'deny', 'footer')
               }
             >
               {$t('Deny')}

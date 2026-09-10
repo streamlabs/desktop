@@ -16,6 +16,7 @@ import RecordingSwitcher from 'components-react/windows/go-live/RecordingSwitche
 import { EAvailableFeatures } from 'services/incremental-rollout';
 import { KevinChatIcon } from 'components-react/shared/icons';
 import KevinApprovalBubble from 'components-react/agent/KevinApprovalBubble';
+import { KevinAnalytics } from 'components-react/agent/kevin-analytics';
 
 function StudioFooterComponent() {
   const {
@@ -115,6 +116,11 @@ function StudioFooterComponent() {
       },
       'kevin-support',
     );
+    // Tracked on the click, not on the window's mount effect: the fixed windowId
+    // means a second click only refocuses, so the component never remounts and
+    // the reach for support would go unrecorded.
+    KevinAnalytics.chatOpened();
+    UsageStatisticsService.actions.recordFeatureUsage('KevinSupportChat');
   }, []);
 
   const toggleReplayBuffer = useCallback(() => {

@@ -147,7 +147,7 @@ function UsageMeter(p: { tier: string; rateLimit: { current: number; maximum: nu
       </div>
 
       {atCap && !atTopTier && (
-        <span className={styles.upgradeLink} onClick={() => upgrade(p.tier)}>
+        <span className={styles.upgradeLink} onClick={() => upgrade(p.tier, 'meter')}>
           <UltraIcon type="badge" />
           <span className={styles.upgradeText}>
             {p.tier === 'ultra'
@@ -310,6 +310,7 @@ export default function KevinSupport() {
                             KevinSupportService.actions.resolveApproval(
                               approval.approvalId,
                               'approve',
+                              'chat',
                             )
                           }
                         >
@@ -321,6 +322,7 @@ export default function KevinSupport() {
                             KevinSupportService.actions.resolveApproval(
                               approval.approvalId,
                               'always',
+                              'chat',
                             )
                           }
                         >
@@ -329,7 +331,11 @@ export default function KevinSupport() {
                         <button
                           className="button button--default"
                           onClick={() =>
-                            KevinSupportService.actions.resolveApproval(approval.approvalId, 'deny')
+                            KevinSupportService.actions.resolveApproval(
+                              approval.approvalId,
+                              'deny',
+                              'chat',
+                            )
                           }
                         >
                           {$t('Deny')}

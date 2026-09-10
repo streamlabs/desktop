@@ -4,6 +4,7 @@ import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import { promptAction } from 'components-react/modals';
+import { KevinAnalytics, TUpsellSource } from './kevin-analytics';
 
 /**
  * Support-chat interaction allowances, mirroring the server's RateLimitService.
@@ -26,8 +27,14 @@ export const INTERACTION_LIMITS: Record<string, number> = {
 export const ULTRA_PLUS_TIER = 'ultra_plus';
 
 /** Sends the user to checkout for whatever tier sits above the one they are on. */
-export function upgrade(currentTier: string) {
+export function upgrade(currentTier: string, source: TUpsellSource) {
   const toUltraPlus = currentTier === 'ultra';
+
+  KevinAnalytics.upsellClicked({
+    tier: currentTier,
+    target: toUltraPlus ? ULTRA_PLUS_TIER : 'ultra',
+    source,
+  });
 
   // A distinct refl from Automations' 'slobs-automations', so the two upsells
   // are separable in the Ultra conversion funnel rather than one blended number.
@@ -46,8 +53,14 @@ export function upgrade(currentTier: string) {
  */
 export function promptUpgrade(tier: string) {
   const max = INTERACTION_LIMITS[tier] ?? INTERACTION_LIMITS.free;
+  const atTopTier = tier === ULTRA_PLUS_TIER;
 
-  if (tier === ULTRA_PLUS_TIER) {
+  // Ahead of the branch, so the Ultra+ toast counts as a limit hit too. The
+  // recordShown below deliberately stays where it is -- it pairs with the
+  // recordUltra that linkToPrime fires, and only the modal has a click to pair with.
+  KevinAnalytics.limitReached({ tier, max, surface: atTopTier ? 'toast' : 'modal' });
+
+  if (atTopTier) {
     message.warning($t("You've used all %{max} of this month's support interactions.", { max }), 5);
     return;
   }
@@ -70,7 +83,7 @@ export function promptUpgrade(tier: string) {
         ),
     icon: <UltraIcon type="badge" />,
     btnText: toUltraPlus ? $t('Upgrade to Ultra+') : $t('Upgrade to Ultra'),
-    fn: () => upgrade(tier),
+    fn: () => upgrade(tier, 'modal'),
     cancelBtnPosition: 'left',
     cancelBtnText: $t('Not now'),
   });
