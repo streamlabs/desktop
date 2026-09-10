@@ -5,8 +5,9 @@ export type TValidatedNodeOrder =
   | { isValid: false; reason: string };
 
 /**
- * Group dual-output nodes by display without changing either display's z-order.
- * Scene nodes are stored from top to bottom, so the filters below are stable.
+ * Restore the canonical dual-output storage layout: every horizontal node
+ * precedes every vertical node. The stable partition preserves each display's
+ * top-to-bottom z-order.
  */
 export function orderNodesByDisplay(scene: Scene) {
   const nodes = scene.getNodes();
