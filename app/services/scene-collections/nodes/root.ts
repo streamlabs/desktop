@@ -81,7 +81,6 @@ export class RootNode extends Node<ISchema, ISceneCollectionLoadContext> {
       transitions,
       hotkeys,
       guestCam,
-      nodeMap,
       relativeCoordinates: true,
       baseResolution: this.videoSettingsService.baseResolutions?.horizontal,
       baseResolutions: this.videoSettingsService.baseResolutions,
@@ -89,6 +88,10 @@ export class RootNode extends Node<ISchema, ISceneCollectionLoadContext> {
       dualOutputMode: this.dualOutputService.views.dualOutputMode,
       operatingSystem: process.platform as OS,
     };
+
+    if (nodeMap.data) {
+      this.data.nodeMap = nodeMap;
+    }
   }
   /**
    * In order to load the root node without errors on startup

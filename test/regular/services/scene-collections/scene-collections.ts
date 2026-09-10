@@ -28,7 +28,7 @@ function copyFile(src: string, dest: string) {
 /**
  * Confirm if the scene collection is a vanilla or dual output collection
  * @remark - The identifiers of a dual output scene collection is the existence of
- * the sceneNodeMaps property in the scene collections manifest, and the nodeMaps
+ * the sceneNodeMaps property in the scene collections manifest, and the nodeMap
  * property in the scene collection json.
  * @param t - execution context
  * @param fileName - name of the json file to read
@@ -42,26 +42,21 @@ function confirmIsCollectionType(
   dualOutput?: boolean,
 ) {
   const filePath = path.join(t.context.cacheDir, 'slobs-client', 'SceneCollections', fileName);
+  const data = JSON.parse(fs.readFileSync(filePath).toString());
+  const root = fileName === 'manifest.json' && data?.collections ? data.collections[0] : data;
+  const hasProperty = Object.prototype.hasOwnProperty.call(root, propName);
 
-  try {
-    const data = JSON.parse(fs.readFileSync(filePath).toString());
-    const root = fileName === 'manifest.json' && data?.collections ? data?.collections[0] : data;
-
-    if (dualOutput) {
-      // dual output: has sceneNodeMaps prop in manifest, has nodeMap node in collection
-      t.true(root.hasOwnProperty(propName), `Expected ${fileName} to have property ${propName}`);
-    } else {
-      // single output: no sceneNodeMaps prop in manifest, no nodeMap node in collection
-      t.true(
-        !root.hasOwnProperty(propName),
-        `Expected ${fileName} to not have property ${propName}`,
-      );
-    }
-  } catch (e: unknown) {
-    console.log('Error: ', e);
+  if (dualOutput) {
+    // dual output: has sceneNodeMaps prop in manifest, has nodeMap node in collection
+    t.true(hasProperty, `Expected ${fileName} to have property ${propName}`);
+  } else {
+    // single output: no sceneNodeMaps prop in manifest, no nodeMap node in collection
+    t.false(hasProperty, `Expected ${fileName} to not have property ${propName}`);
   }
 }
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver({
   skipOnboarding: true,
   clearCollectionAfterEachTest: false,

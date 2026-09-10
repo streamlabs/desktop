@@ -9,6 +9,10 @@ import {
   ERecSplitType,
   ISettings,
 } from 'obs-studio-node';
+import {
+  encoderRuntimePresetSettings,
+  encoderPresetToSettingsValue,
+} from './encoder-settings-policy';
 import { EncoderQueryService } from './encoder-query';
 import {
   EObsSimpleEncoder,
@@ -31,6 +35,7 @@ export enum EEncoderFamily {
   nvenc = 'nvenc',
   jim_nvenc = 'jim_nvenc',
   amd = 'amd',
+  apple = 'apple',
   ffmpeg_aom_av1 = 'ffmpeg_aom_av1',
   ffmpeg_svt_av1 = 'ffmpeg_svt_av1',
   obs_nvenc_av1_tex = 'obs_nvenc_av1_tex',
@@ -184,6 +189,8 @@ export interface IRecordingEncoderSettings extends IEncoderSettings {
 }
 
 export interface IStreamingEncoderSettings extends IEncoderSettings {
+  /** Exact mode-specific or concrete encoder setting value. */
+  encoderId: string;
   preset: string;
   // Deprecated compatibility flag for callers that only need enabled/disabled state.
   // Advanced streaming runtime settings use RescaleFilter via IAdvancedStreamingOutputSettings.
@@ -227,6 +234,7 @@ export const encoderFieldsMap = {
   [EEncoderFamily.jim_nvenc]: { preset: 'preset' },
   [EEncoderFamily.qsv]: { preset: 'target_usage' },
   [EEncoderFamily.amd]: { preset: 'QualityPreset' },
+  [EEncoderFamily.apple]: { preset: 'profile' },
   [EEncoderFamily.ffmpeg_aom_av1]: { preset: 'preset' },
   [EEncoderFamily.ffmpeg_svt_av1]: { preset: 'preset' },
   [EEncoderFamily.obs_nvenc_av1_tex]: { preset: 'preset' },
@@ -277,7 +285,7 @@ export class OutputSettingsService extends Service {
       'Base',
     );
 
-    const streaming = this.getStreamingEncoderSettings(output, video);
+    const streaming = this.getStreamingEncoderSettings(output, video, mode);
     const recording = this.getRecordingEncoderSettings(output, video, mode, streaming);
     const replayBuffer = {
       enabled: this.settingsService.findSettingValue(output, 'Replay Buffer', 'RecRB'),
@@ -599,9 +607,11 @@ export class OutputSettingsService extends Service {
       'Mode',
     );
 
-    const encoder =
-      this.settingsService.findSettingValue(output, 'Streaming', 'Encoder') ||
-      this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder');
+    const encoder = this.settingsService.findSettingValue(
+      output,
+      'Streaming',
+      mode === 'Advanced' ? 'Encoder' : 'StreamEncoder',
+    );
 
     const resolvedEncoder = this.encoderQueryService.resolveStreamingEncoderId(mode, encoder);
 
@@ -729,6 +739,7 @@ export class OutputSettingsService extends Service {
   private getStreamingEncoderSettings(
     output: ISettingsSubCategory[],
     video: ISettingsSubCategory[],
+    mode: TOutputSettingsMode,
   ): IStreamingEncoderSettings {
     /**
      * Returns some information about the user's streaming settings.
@@ -736,15 +747,11 @@ export class OutputSettingsService extends Service {
      *
      * P.S. Settings needs a refactor... badly
      */
-    const mode: TOutputSettingsMode = this.settingsService.findSettingValue(
-      output,
-      'Untitled',
-      'Mode',
-    );
     const encoder =
       mode === 'Advanced'
         ? this.settingsService.findSettingValue(output, 'Streaming', 'Encoder')
         : this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder');
+    const encoderId = this.encoderQueryService.resolveStreamingEncoderId(mode, encoder);
 
     const encoderFamily = this.requireStreamingEncoderFamily(mode, encoder);
     const encoderCodec = this.requireStreamingEncoderCodec(mode, encoder);
@@ -787,6 +794,7 @@ export class OutputSettingsService extends Service {
 
     return {
       encoder: encoderFamily,
+      encoderId,
       codec: encoderCodec,
       preset,
       bitrate,
@@ -947,8 +955,35 @@ export class OutputSettingsService extends Service {
       this.settingsService.findSettingValue(output, 'Streaming', 'bitrate') ??
       this.settingsService.findSettingValue(output, 'Streaming', 'VBitrate');
 
+    const encoderSetting = this.settingsService.findSettingValue(
+      output,
+      'Streaming',
+      mode === 'Advanced' ? 'Encoder' : 'StreamEncoder',
+    );
+    const encoderId = this.encoderQueryService.resolveStreamingEncoderId(mode, encoderSetting);
+    const configuredPresetField = this.encoderQueryService.resolveStreamingEncoderPreset(
+      mode,
+      encoderSetting,
+    );
+    const configuredPreset = configuredPresetField
+      ? this.settingsService.findSettingValue(output, 'Streaming', configuredPresetField)
+      : undefined;
+    const useAdvanced =
+      mode === 'Advanced' ||
+      this.settingsService.findSettingValue(output, 'Streaming', 'UseAdvanced') === true;
+    // Simple mode normally ignores advanced encoder controls unless UseAdvanced
+    // is enabled; Apple Profile is the exception and is always applied. Auto
+    // Optimizer enables UseAdvanced for every tested encoder so the selected
+    // preset reaches the encoder factory.
+    const presetSettings = encoderRuntimePresetSettings(
+      encoderId,
+      mode,
+      configuredPreset,
+      useAdvanced,
+    );
+
     if (mode === 'Simple') {
-      return { bitrate };
+      return { bitrate, ...presetSettings };
     }
 
     // TODO: these are only being fetched in advanced mode
@@ -961,13 +996,14 @@ export class OutputSettingsService extends Service {
       bitrate,
       keyint_sec: keyintSec,
       x264opts,
+      ...presetSettings,
     };
   }
 
   getRecordingVideoEncoderSettings(mode: TOutputSettingsMode): ISettings {
     const output = this.settingsService.state.Output.formData;
     const video = this.settingsService.state.Video.formData;
-    const streaming = this.getStreamingEncoderSettings(output, video);
+    const streaming = this.getStreamingEncoderSettings(output, video, mode);
     const recording = this.getRecordingEncoderSettings(output, video, mode, streaming);
 
     const encoderSettings: ISettings = {
@@ -1027,11 +1063,22 @@ export class OutputSettingsService extends Service {
     currentSettings: IOutputSettings,
     settingsPatch: Partial<IStreamingEncoderSettings>,
   ) {
-    if (settingsPatch.encoder) {
+    const requestedEncoder =
+      settingsPatch.encoderId || settingsPatch.encoder || currentSettings.streaming.encoderId;
+    const encoderSetting = this.resolveStreamingEncoderSettingValue(
+      currentSettings.mode,
+      requestedEncoder,
+    );
+    const exactEncoderId = this.encoderQueryService.resolveStreamingEncoderId(
+      currentSettings.mode,
+      encoderSetting,
+    );
+
+    if (settingsPatch.encoderId || settingsPatch.encoder) {
       if (currentSettings.mode === 'Advanced') {
-        this.settingsService.setSettingValue('Output', 'Encoder', settingsPatch.encoder);
+        this.settingsService.setSettingValue('Output', 'Encoder', encoderSetting);
       } else {
-        this.settingsService.setSettingValue('Output', 'StreamEncoder', settingsPatch.encoder);
+        this.settingsService.setSettingValue('Output', 'StreamEncoder', encoderSetting);
       }
     }
 
@@ -1042,13 +1089,20 @@ export class OutputSettingsService extends Service {
     }
 
     if (settingsPatch.preset) {
-      const presetField =
-        encoder &&
-        (this.encoderQueryService.resolveStreamingEncoderPreset(currentSettings.mode, encoder) ||
-          encoderFieldsMap[encoder]?.preset);
-      if (presetField) {
-        this.settingsService.setSettingValue('Output', presetField, settingsPatch.preset);
+      const presetField = this.encoderQueryService.resolveStreamingEncoderPreset(
+        currentSettings.mode,
+        exactEncoderId,
+      );
+      if (!presetField) {
+        throw new Error(`Missing streaming encoder preset metadata for ${exactEncoderId}`);
       }
+
+      // Auto Optimizer supplies the exact OSN encoder ID and preset. Other
+      // settings callers supply the mode-specific configuration value.
+      const presetValue = settingsPatch.encoderId
+        ? encoderPresetToSettingsValue(exactEncoderId, currentSettings.mode, settingsPatch.preset)
+        : settingsPatch.preset;
+      this.settingsService.setSettingValue('Output', presetField, presetValue);
     }
 
     if (
@@ -1089,6 +1143,26 @@ export class OutputSettingsService extends Service {
         this.settingsService.setSettingValue('Output', 'VBitrate', settingsPatch.bitrate);
       }
     }
+  }
+
+  private resolveStreamingEncoderSettingValue(
+    mode: TOutputSettingsMode,
+    requestedEncoder: string,
+  ): string {
+    const encoders = this.encoderQueryService.getAvailableStreamingEncoderMetadata(mode);
+    const exactEncoderId = this.encoderQueryService.resolveStreamingEncoderId(
+      mode,
+      requestedEncoder,
+    );
+    const encoder = encoders.find(
+      option =>
+        option.id === exactEncoderId ||
+        option.name === requestedEncoder ||
+        option.family === requestedEncoder,
+    );
+
+    // Preserve an unknown concrete id instead of inventing backend metadata.
+    return encoder?.name || requestedEncoder;
   }
 
   private setRecordingEncoderSettings(
