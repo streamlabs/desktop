@@ -387,6 +387,7 @@ class SourceSelectorController {
        * clicking on the source selector selects both sources
        */
       if (
+        this.isDualOutputActive &&
         this.dualOutputService.views.hasNodeMap(this.scene.id) &&
         this.dualOutputService.views.activeDisplays.horizontal &&
         this.dualOutputService.views.activeDisplays.vertical
@@ -504,6 +505,7 @@ class SourceSelectorController {
      * in the vertical display, convert the vertical node id to the horizontal node id.
      */
     if (
+      this.isDualOutputActive &&
       this.dualOutputService.views.activeDisplays.horizontal &&
       this.dualOutputService.views.activeDisplays.vertical
     ) {
