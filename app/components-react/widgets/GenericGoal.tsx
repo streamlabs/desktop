@@ -68,9 +68,6 @@ export function GenericGoal() {
     };
   }
 
-  // Note: `w.state.isLoading` and `w.settings` are checked directly (not via `w.hasLoadedSettings()`)
-  // because plain methods aren't tracked by the reactivity system, so a method-gated render never
-  // re-renders when loading finishes
   return (
     <WidgetLayout>
       <Menu onClick={e => w.setSelectedTab(e.key)} selectedKeys={[w.selectedTab]}>
