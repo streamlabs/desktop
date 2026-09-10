@@ -178,6 +178,7 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
 
       socket.on('v2:run.started', (p: { runId: string }) => {
         this.log('in', 'v2:run.started', p);
+        this.SET_ERROR(null);
         this.SET_PENDING(true);
       });
 
