@@ -582,26 +582,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     );
   }
 
-  /**
-   * Validate the display when live output editing is enabled
-   * @remark Used to ensure a platform with the `both` display, used for dual streaming, uses the
-   * default display instead. Reads `savedLiveOutputEditing` instead of `isLiveOutputEditingEnabled`
-   * to avoid the circular dependency: settings → savedSettings → getSavedPlatformSettings → settings
-   * @param display - The display saved for the platform
-   * @remark Use the dual output mode service state to prevent circular references
-   * @warning The `get` prefix is required. This class is passed to `injectState` in
-   * `useGoLiveSettings`, and slap registers any method not named `get*`/`is*`/`should*` as a
-   * mutation. Calling a mutation from a getter dispatches it during the component snapshot,
-   * which re-enters `updateUI` and recurses until the stack overflows.
-   */
-  private getValidatedDisplay(display?: TDisplayOutput): TDisplayType {
-    if (!display || display === 'both' || !this.dualOutputView.dualOutputMode) {
-      return 'horizontal';
-    }
-
-    return display as TDisplayType;
-  }
-
   get shouldSetupDualOutput(): boolean {
     if (this.dualOutputView.dualOutputMode) return true;
     // Read from state to avoid circular dependency:
@@ -618,10 +598,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       const p = platforms[platform as TPlatform];
       if (!p?.enabled || !this.isPlatformLinked(platform as TPlatform)) continue;
 
-      // Note: this is to prevent an error where the platform doesn't go live because the display is set to 'both'
-      // in dual output mode when live output editing is enabled. It should never happen but to prevent errors indexing
-      // `platformDisplays`, default a platform without a display to horizontal
-      const display = this.getValidatedDisplay(p.display);
+      const display = p.display ?? 'horizontal';
+
+      // Any enabled platform with 'both' display automatically enables dual output mode
+      if (display === 'both') return true;
 
       platformDisplays[display].push(platform as TPlatform);
     }
@@ -657,6 +637,8 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     );
   }
 
+  // TODO: cleanup — dead code, no callers. Diagnostics uses the identically named
+  // `OutputSettingsService.getIsEnhancedBroadcasting`, not this one. Delete it.
   getIsEnhancedBroadcasting(): boolean {
     return Services.SettingsService.isEnhancedBroadcasting();
   }
@@ -664,6 +646,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   /**
    * Check for multistreaming with Twitch enhanced broadcasting
    */
+  // TODO: cleanup — this is a method rather than a getter, so it is unmemoized, and every call
+  // reaches native OBS through `SettingsService.isEnhancedBroadcasting()`. It runs on each go
+  // live from both `twitch.beforeGoLive` and `createEnhancedBroadcastDualOutput`. Convert to a
+  // getter, or read the per-stream `StreamingService.state.enhancedBroadcasting` decision.
   isEnhancedBroadcastingMultistream(): boolean {
     // Enhanced broadcasting is not available while live output editing is enabled because it uses
     // its own video context and stream, which cannot be edited mid-stream
@@ -1021,12 +1007,17 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       settings['liveVideoId'] = '';
     }
 
-    // Make sure platforms assigned to the vertical display in dual output mode still go live in single output mode
-    // Note: This is a check to ensure that the display is valid when live output editing is enabled. If the display
-    // is set to 'both', it will be defaulted to 'horizontal' for single output mode.
+    // make sure platforms assigned to the vertical display in dual output mode still go live in
+    // single output mode
+    // Note: `both` is deliberately passed through. It must not be collapsed here, because this
+    // value seeds the Go Live window and is written straight back by `save()`, so coercing it
+    // would overwrite the user's saved dual stream choice. Live output editing's inability to
+    // dual stream is enforced where the display is used, not where it is stored.
+    // The `?? 'horizontal'` matters: without it a platform with no saved display yields
+    // `undefined` here, and callers that index by display rather than defaulting it break.
     const display =
-      this.isDualOutputMode && savedDestinations && savedDestinations[platform]?.display
-        ? this.getValidatedDisplay(savedDestinations[platform]?.display)
+      this.isDualOutputMode && savedDestinations
+        ? savedDestinations[platform]?.display ?? 'horizontal'
         : 'horizontal';
 
     return {
