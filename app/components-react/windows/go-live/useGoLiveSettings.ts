@@ -361,18 +361,16 @@ export class GoLiveSettingsModule {
     };
 
     if (this.state.isUpdateMode && !view.isMidStreamMode) {
-      if (!view.isMidStreamMode) {
-        (Object.keys(settings.platforms) as (keyof typeof settings.platforms)[]).forEach(
-          (platform: TPlatform) => {
-            // In multi-platform mode, allow deleting all platform settings, including primary
-            if (!isMultiplatformMode && this.state.isPrimaryPlatform(platform)) {
-              return;
-            }
+      (Object.keys(settings.platforms) as (keyof typeof settings.platforms)[]).forEach(
+        (platform: TPlatform) => {
+          // In multi-platform mode, allow deleting all platform settings, including primary
+          if (!isMultiplatformMode && this.state.isPrimaryPlatform(platform)) {
+            return;
+          }
 
-            delete settings.platforms[platform];
-          },
-        );
-      }
+          delete settings.platforms[platform];
+        },
+      );
     }
 
     // prefill the form if `prepopulateOptions` provided
