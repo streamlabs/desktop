@@ -13,6 +13,7 @@ import { $t } from 'services/i18n';
 import namingHelpers from 'util/NamingHelpers';
 import uuid from 'uuid/v4';
 import { DualOutputService } from 'services/dual-output';
+import { orderNodesByDisplay } from 'services/dual-output/node-order';
 import { SceneCollectionsService } from 'services/scene-collections';
 import { TDisplayType } from 'services/settings-v2/video';
 import { InitAfter, ViewHandler } from 'services/core';
@@ -553,6 +554,7 @@ export class ScenesService extends StatefulService<IScenesState> {
 
     if (this.dualOutputService.views.hasSceneNodeMaps) {
       this.dualOutputService.createPartnerNode(sceneItem);
+      orderNodesByDisplay(scene);
       /* For some reason dragging items after enabling dual output makes them
        * duplicate, associate selection on switch to mitigate this issue
        */
