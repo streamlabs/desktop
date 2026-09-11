@@ -1,8 +1,8 @@
 import { Subject } from 'rxjs';
 import { ObjectSchema } from 'realm';
 import { Inject, Service } from 'services/core';
-import { SideNavService } from 'app-services';
-import { EMenuItemKey } from './side-nav';
+import { NavMenuService } from 'app-services';
+import { TNavMenuKey } from './nav-menu';
 import { RealmObject } from './realm';
 import { TCategoryName } from './settings';
 
@@ -48,19 +48,15 @@ class NavigationServiceEphemeralState extends RealmObject {
 NavigationServiceEphemeralState.register();
 
 export class NavigationService extends Service {
-  @Inject() sideNavService: SideNavService;
+  @Inject() navMenuService: NavMenuService;
 
   state = NavigationServiceEphemeralState.inject();
 
   navigated = new Subject<INavigationState>();
 
-  navigate(
-    page: TAppPage,
-    params: Dictionary<string | boolean> = {},
-    setMenuItem: EMenuItemKey | undefined = undefined,
-  ) {
+  navigate(page: TAppPage, params: Dictionary<string | boolean> = {}, setMenuItem?: TNavMenuKey) {
     if (setMenuItem) {
-      this.sideNavService.setCurrentMenuItem(setMenuItem);
+      this.navMenuService.setCurrentMenuItem(setMenuItem);
     }
     this.setPageNavigation(page, params);
     this.navigated.next(this.state);
@@ -68,7 +64,7 @@ export class NavigationService extends Service {
 
   navigateApp(appId: string, key?: string) {
     this.navigate('PlatformAppMainPage', { appId });
-    this.sideNavService.setCurrentMenuItem(key ?? appId);
+    this.navMenuService.setCurrentMenuItem(key ?? appId);
   }
 
   private setPageNavigation(page: TAppPage, params: Dictionary<string | boolean>) {

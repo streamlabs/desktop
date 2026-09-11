@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import styles from './SideNav.m.less';
+import styles from './NavMenu.m.less';
 import { useVuex } from 'components-react/hooks';
 import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
@@ -7,13 +7,13 @@ import MenuItem from 'components-react/shared/MenuItem';
 import { EAppPageSlot, ILoadedApp } from 'services/platform-apps';
 import { Menu } from 'util/menus/Menu';
 import cx from 'classnames';
-import { EMenuItemKey } from 'services/side-nav';
+import { ENavMenuFeatures } from 'services/nav-menu';
 interface IAppsNav {
   type?: 'enabled' | 'selected';
 }
 
 export default memo(function AppsNav(p: IAppsNav) {
-  const { NavigationService, PlatformAppsService, SideNavService, HighlighterService } = Services;
+  const { NavigationService, PlatformAppsService, NavMenuService, HighlighterService } = Services;
   const { type = 'selected' } = p;
 
   const aiHighlighterApp: ILoadedApp = {
@@ -45,9 +45,9 @@ export default memo(function AppsNav(p: IAppsNav) {
   };
 
   const { currentMenuItem, apps, isOpen, navigateApp, enabledApps } = useVuex(() => ({
-    currentMenuItem: SideNavService.views.currentMenuItem,
-    apps: SideNavService.views.apps,
-    isOpen: SideNavService.views.isOpen,
+    currentMenuItem: NavMenuService.views.currentMenuItem,
+    apps: NavMenuService.views.apps,
+    isOpen: NavMenuService.views.isOpen,
     navigateApp: NavigationService.actions.navigateApp,
     enabledApps: (HighlighterService.views.highlighterVersion !== ''
       ? [...PlatformAppsService.views.enabledApps, aiHighlighterApp]
@@ -146,7 +146,7 @@ export default memo(function AppsNav(p: IAppsNav) {
                   NavigationService.navigate(
                     'Highlighter',
                     { view: 'settings' },
-                    EMenuItemKey.Highlighter,
+                    ENavMenuFeatures.Highlighter,
                   );
                 } else {
                   app?.id && navigateApp(app?.id, `sub-${app?.id}`);

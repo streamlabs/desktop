@@ -5,7 +5,7 @@ import { Row, Col, Select } from 'antd';
 import { CheckboxInput, ListInput, SliderInput, SwitchInput } from '../../shared/inputs';
 import { getDefined } from '../../../util/properties-type-guards';
 import { ObsSettingsSection } from './ObsSettings';
-import { ENavName, EMenuItemKey, IAppMenuItem, menuTitles } from 'services/side-nav';
+import { ENavName, ENavMenuKey, IAppMenuItem, menuTitles } from 'services/nav-menu';
 import { useVuex } from 'components-react/hooks';
 import styles from './Appearance.m.less';
 import cx from 'classnames';
@@ -24,7 +24,7 @@ export function AppearanceSettings() {
     WindowsService,
     UserService,
     MagicLinkService,
-    SideNavService,
+    NavMenuService,
     PlatformAppsService,
     LayoutService,
   } = Services;
@@ -52,23 +52,23 @@ export function AppearanceSettings() {
     toggleMenuItem,
     setCompactView,
   } = useVuex(() => ({
-    compactView: SideNavService.views.compactView,
-    menuItemStatus: SideNavService.views.menuItemStatus,
+    compactView: NavMenuService.views.compactView,
+    menuItemStatus: NavMenuService.views.menuItemStatus,
     apps: PlatformAppsService.views.enabledApps.filter(app => {
       return !!app?.manifest?.pages.find(page => {
         return page.slot === EAppPageSlot.TopNav;
       });
     }),
-    displayedApps: SideNavService.views.apps,
-    showCustomEditor: SideNavService.views.showCustomEditor,
+    displayedApps: NavMenuService.views.apps,
+    showCustomEditor: NavMenuService.views.showCustomEditor,
     isLoggedIn: UserService.views.isLoggedIn,
     isPrime: UserService.views.isPrime,
     currentTab: LayoutService.state.currentTab,
-    toggleApp: SideNavService.actions.toggleApp,
-    replaceApp: SideNavService.actions.replaceApp,
-    toggleSidebarSubMenu: SideNavService.actions.toggleSidebarSubmenu,
-    toggleMenuItem: SideNavService.actions.toggleMenuItem,
-    setCompactView: SideNavService.actions.setCompactView,
+    toggleApp: NavMenuService.actions.toggleApp,
+    replaceApp: NavMenuService.actions.replaceApp,
+    toggleSidebarSubMenu: NavMenuService.actions.toggleSidebarSubmenu,
+    toggleMenuItem: NavMenuService.actions.toggleMenuItem,
+    setCompactView: NavMenuService.actions.setCompactView,
   }));
 
   function openFFZSettings() {
@@ -180,17 +180,17 @@ export function AppearanceSettings() {
           className={cx(styles.settingsCheckbox)}
           disabled={!isLoggedIn}
         />
-        {/* SIDENAV SETTINGS */}
-        <Row className={styles.sidenavSettings}>
+        {/* NAV MENU SETTINGS */}
+        <Row className={styles.navMenuSettings}>
           <Col flex={1} className={styles.menuControls}>
             <SwitchInput
-              label={menuTitles(EMenuItemKey.Editor)}
+              label={menuTitles(ENavMenuKey.Editor)}
               layout="horizontal"
-              onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.Editor)}
+              onChange={() => toggleMenuItem(ENavName.FeaturesNav, ENavMenuKey.Editor)}
               value={
                 // TODO: index
                 // @ts-ignore
-                menuItemStatus[EMenuItemKey.Editor]
+                menuItemStatus[ENavMenuKey.Editor]
               }
               disabled={!isLoggedIn || compactView || currentTab === 'default'}
             />
@@ -204,73 +204,73 @@ export function AppearanceSettings() {
               }
             />
             <SwitchInput
-              label={menuTitles(EMenuItemKey.StudioMode)}
+              label={menuTitles(ENavMenuKey.StudioMode)}
               layout="horizontal"
-              onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.StudioMode)}
+              onChange={() => toggleMenuItem(ENavName.FeaturesNav, ENavMenuKey.StudioMode)}
               value={
                 // TODO: index
                 // @ts-ignore
-                menuItemStatus[EMenuItemKey.StudioMode]
+                menuItemStatus[ENavMenuKey.StudioMode]
               }
               disabled={!isLoggedIn || compactView}
             />
             <SwitchInput
-              label={menuTitles(EMenuItemKey.LayoutEditor)}
+              label={menuTitles(ENavMenuKey.LayoutEditor)}
               layout="horizontal"
-              onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.LayoutEditor)}
+              onChange={() => toggleMenuItem(ENavName.FeaturesNav, ENavMenuKey.LayoutEditor)}
               value={
                 // TODO: index
                 // @ts-ignore
-                menuItemStatus[EMenuItemKey.LayoutEditor]
+                menuItemStatus[ENavMenuKey.LayoutEditor]
               }
               disabled={!isLoggedIn || compactView}
             />
             <SwitchInput
-              label={menuTitles(EMenuItemKey.Themes)}
+              label={menuTitles(ENavMenuKey.Themes)}
               layout="horizontal"
-              onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.Themes)}
+              onChange={() => toggleMenuItem(ENavName.FeaturesNav, ENavMenuKey.Themes)}
               value={
                 // TODO: index
                 // @ts-ignore
-                menuItemStatus[EMenuItemKey.Themes]
+                menuItemStatus[ENavMenuKey.Themes]
               }
               disabled={!isLoggedIn || compactView}
             />
             <SwitchInput
-              label={menuTitles(EMenuItemKey.Highlighter)}
+              label={menuTitles(ENavMenuKey.Highlighter)}
               layout="horizontal"
-              onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.Highlighter)}
+              onChange={() => toggleMenuItem(ENavName.FeaturesNav, ENavMenuKey.Highlighter)}
               value={
                 // TODO:
                 // @ts-ignore
-                menuItemStatus[EMenuItemKey.Highlighter]
+                menuItemStatus[ENavMenuKey.Highlighter]
               }
               disabled={!isLoggedIn || compactView}
             />
             <SwitchInput
-              label={menuTitles(EMenuItemKey.RecordingHistory)}
+              label={menuTitles(ENavMenuKey.RecordingHistory)}
               layout="horizontal"
-              onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.RecordingHistory)}
+              onChange={() => toggleMenuItem(ENavName.FeaturesNav, ENavMenuKey.RecordingHistory)}
               value={
                 // TODO:
                 // @ts-ignore
-                menuItemStatus[EMenuItemKey.RecordingHistory]
+                menuItemStatus[ENavMenuKey.RecordingHistory]
               }
               disabled={!isLoggedIn || compactView}
             />
           </Col>
 
-          {/* SIDENAV APPS SETTINGS */}
+          {/* NAV MENU APPS SETTINGS */}
           <Col flex={5}>
             <Scrollable style={{ height: '100%', right: '5px' }} snapToWindowEdge>
               <SwitchInput
-                label={menuTitles(EMenuItemKey.AppStore)}
+                label={menuTitles(ENavMenuKey.AppStore)}
                 layout="horizontal"
-                onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.AppStore)}
+                onChange={() => toggleMenuItem(ENavName.FeaturesNav, ENavMenuKey.AppStore)}
                 value={
                   // TODO:
                   // @ts-ignore
-                  menuItemStatus[EMenuItemKey.AppStore]
+                  menuItemStatus[ENavMenuKey.AppStore]
                 }
                 disabled={!isLoggedIn || compactView}
               />

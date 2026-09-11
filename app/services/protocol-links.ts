@@ -9,7 +9,7 @@ import { UserService } from 'services/user';
 import { SettingsService, TCategoryName } from './settings';
 import { byOS, OS } from 'util/operating-systems';
 import { GuestCamService } from './guest-cam';
-import { SideNavService, ESideNavKey, ProtocolLinkKeyMap } from './side-nav';
+import { NavMenuService, ENavMenuKey, ProtocolLinkKeyMap } from './nav-menu';
 import { Subject } from 'rxjs';
 
 function protocolHandler(base: string) {
@@ -41,7 +41,7 @@ export class ProtocolLinksService extends Service {
   @Inject() userService: UserService;
   @Inject() settingsService: SettingsService;
   @Inject() guestCamService: GuestCamService;
-  @Inject() sideNavService: SideNavService;
+  @Inject() navMenuService: NavMenuService;
 
   // Maps base URL components to handler function names
   private handlers: Dictionary<string>;
@@ -99,10 +99,10 @@ export class ProtocolLinksService extends Service {
       const menuItem =
         // TODO: index
         // @ts-ignore
-        ProtocolLinkKeyMap[parts[1]] ?? this.sideNavService.views.isOpen
-          ? ESideNavKey.Scene
-          : ESideNavKey.Themes;
-      this.sideNavService.setCurrentMenuItem(menuItem);
+        ProtocolLinkKeyMap[parts[1]] ?? this.navMenuService.views.isOpen
+          ? ENavMenuKey.Scene
+          : ENavMenuKey.Themes;
+      this.navMenuService.setCurrentMenuItem(menuItem);
     }
   }
 
@@ -128,11 +128,11 @@ export class ProtocolLinksService extends Service {
 
     if (this.platformAppsService.views.getApp(appId)) {
       this.navigationService.navigate('PlatformAppMainPage', { appId });
-      this.sideNavService.setCurrentMenuItem(appId);
+      this.navMenuService.setCurrentMenuItem(appId);
       this.appProtocolLink.next({ ...info, appId });
     } else {
       this.navigationService.navigate('PlatformAppStore', { appId });
-      this.sideNavService.setCurrentMenuItem(ESideNavKey.AppsStoreHome);
+      this.navMenuService.setCurrentMenuItem(ENavMenuKey.AppsStoreHome);
     }
   }
 
