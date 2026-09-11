@@ -30,6 +30,8 @@ const suggestedPrompts = () => [
 //        [label](url)              **bold**        *italic*      `code`
 const INLINE_MD = /\[([^\]]+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`/g;
 
+const MAX_MESSAGE_LENGTH = 255;
+
 // agent text is server-provided; only http(s) may reach openExternal.
 function safeHttpUrl(raw: string): string | null {
   try {
@@ -383,6 +385,7 @@ export default function KevinSupport() {
           placeholder={$t('Type your message...')}
           autoSize={{ minRows: 1, maxRows: 5 }}
           bordered={false}
+          maxLength={MAX_MESSAGE_LENGTH}
         />
         <button
           className={cx('button button--action', styles.send)}
