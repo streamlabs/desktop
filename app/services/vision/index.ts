@@ -223,6 +223,11 @@ export class VisionService extends Service {
         return;
       }
 
+      if (!this.userService.isLoggedIn) {
+        this.log('Vision is not supported for logged-out users.');
+        return;
+      }
+
       const { isEnabled } = this.enabledState;
 
       this.log('ensureRunning(): ' + JSON.stringify({ isEnabled, debugMode }));
