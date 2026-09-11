@@ -51,6 +51,7 @@
   background: transparent;
   border: none;
   color: var(--paragraph);
+  position: relative;
 
   &:hover {
     cursor: pointer;
@@ -64,6 +65,19 @@
   &:focus-visible {
     outline: 1px solid var(--teal);
   }
+}
+
+/* The approval bubble can't draw over an Electron BrowserView, so on pages that
+   mount one this dot is the only approval signal. See KevinApprovalBubble.tsx. */
+.kevin-badge {
+  position: absolute;
+  top: 2px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 100%;
+  background-color: var(--warning);
+  border: 1px solid var(--section);
 }
 
 .warning {

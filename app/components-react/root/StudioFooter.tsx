@@ -28,6 +28,7 @@ function StudioFooterComponent() {
     PerformanceService,
     SettingsService,
     UserService,
+    KevinSupportService,
   } = Services;
 
   const {
@@ -40,6 +41,7 @@ function StudioFooterComponent() {
     replayBufferStatus,
     isReplayBufferActive,
     isLiveOutputEditingEnabled,
+    hasPendingApproval,
   } = useVuex(
     () => ({
       streamingStatus: StreamingService.views.streamingStatus,
@@ -51,6 +53,11 @@ function StudioFooterComponent() {
       replayBufferStatus: StreamingService.views.replayBufferStatus,
       isReplayBufferActive: StreamingService.views.isReplayBufferActive,
       isLiveOutputEditingEnabled: StreamingService.views.isLiveOutputEditingEnabled,
+      // Same predicate the bubble uses: nothing to flag while the streamer is
+      // already looking at the chat, where the card lives.
+      hasPendingApproval:
+        KevinSupportService.state.pendingApprovals.length > 0 &&
+        !WindowsService.state['kevin-support']?.isFocused,
     }),
     false,
   );
@@ -101,6 +108,12 @@ function StudioFooterComponent() {
   }, []);
 
   const kevinAnchorRef = useRef<HTMLDivElement>(null);
+
+  // The dot is the whole notification wherever the bubble is suppressed, so it
+  // needs a text equivalent rather than being colour alone.
+  const kevinLabel = hasPendingApproval
+    ? $t('Streamlabs Desktop Support — approval needed')
+    : $t('Streamlabs Desktop Support');
 
   const openKevinSupport = useCallback(() => {
     // A one-off window, not showWindow(): there is only one shared `child` window,
@@ -182,14 +195,17 @@ function StudioFooterComponent() {
           // measure; the bubble positions itself `fixed`, since the footer clips.
           <div className={styles.kevinAnchor} ref={kevinAnchorRef}>
             <KevinApprovalBubble anchorRef={kevinAnchorRef} />
-            <Tooltip placement="top" title={$t('Streamlabs Desktop Support')}>
+            <Tooltip placement="top" title={kevinLabel}>
               <button
                 type="button"
-                aria-label={$t('Streamlabs Desktop Support')}
+                aria-label={kevinLabel}
                 className={styles.kevinIcon}
                 onClick={openKevinSupport}
               >
                 <KevinChatIcon />
+                {/* The bubble can't draw over an Electron BrowserView, so on any
+                    page that mounts one this dot is the only approval signal. */}
+                {hasPendingApproval && <span className={styles.kevinBadge} />}
               </button>
             </Tooltip>
           </div>

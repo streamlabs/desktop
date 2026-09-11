@@ -1,13 +1,28 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
 import { $t } from 'services/i18n';
+import {
+  browserViewRects,
+  isCoveredByBrowserView,
+  IViewRect,
+} from 'components-react/shared/browser-view-rects';
 import styles from './KevinApprovalBubble.m.less';
 
 interface Props {
   /** The footer icon this points at. Measured, never positioned against. */
   anchorRef: React.RefObject<HTMLElement>;
 }
+
+/** Must match `.bubble` in KevinApprovalBubble.m.less. */
+const BUBBLE_WIDTH = 320;
+/** Must match the `bottom` offset applied below. */
+const ANCHOR_GAP = 10;
+// ponytail: a fixed cap rather than the rendered height. The bubble grows with the
+// number of pending approvals, but anything covering it is essentially always the
+// whole page container, so an exact height buys nothing — and measuring the bubble
+// to decide whether to draw the bubble flickers.
+const BUBBLE_MAX_HEIGHT = 240;
 
 /**
  * The approval prompt, shown above the Kevin icon in the studio footer.
@@ -28,6 +43,15 @@ interface Props {
  * the two differ in everything but the three buttons: that one is a turn in a
  * conversation, this one is a floating callout with no room for an avatar or a
  * lead-in. Both call the same `resolveApproval`, which is the part that matters.
+ *
+ * It draws nothing when an Electron BrowserView covers where it would land —
+ * plugin pages, the app store, Alertbox Library, a Browser editor element. Those
+ * are composited by the OS above the entire host page, so no z-index reaches over
+ * them and the bubble would render as the arrow alone. The fallback is the dot on
+ * the footer icon (StudioFooter.tsx), which is below every such view and always
+ * visible; clicking it opens the chat window, which is a real BrowserWindow and
+ * carries the same card. The alternative was blanking the plugin for as long as
+ * the approval sat unanswered, which is worse than one extra click.
  */
 export default function KevinApprovalBubble({ anchorRef }: Props) {
   const { KevinSupportService, WindowsService } = Services;
@@ -57,7 +81,28 @@ export default function KevinApprovalBubble({ anchorRef }: Props) {
     return () => window.removeEventListener('resize', measure);
   }, [show, anchorRef]);
 
-  if (!show || !anchor) return <></>;
+  // This subscription is also what re-renders on navigation: moving to a plugin
+  // page fires no resize, so nothing else here would notice the page went native.
+  const [views, setViews] = useState<IViewRect[]>([]);
+
+  useEffect(() => {
+    const subscription = browserViewRects.subscribe(setViews);
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const occluded =
+    !!anchor &&
+    isCoveredByBrowserView(
+      {
+        left: anchor.left,
+        top: anchor.top - ANCHOR_GAP - BUBBLE_MAX_HEIGHT,
+        width: BUBBLE_WIDTH,
+        height: BUBBLE_MAX_HEIGHT,
+      },
+      views,
+    );
+
+  if (!show || !anchor || occluded) return <></>;
 
   return (
     // role="alert" rather than "alertdialog": the content is what should be
@@ -66,7 +111,7 @@ export default function KevinApprovalBubble({ anchorRef }: Props) {
     <div
       className={styles.bubble}
       role="alert"
-      style={{ left: anchor.left, bottom: window.innerHeight - anchor.top + 10 }}
+      style={{ left: anchor.left, bottom: window.innerHeight - anchor.top + ANCHOR_GAP }}
     >
       {pendingApprovals.map(approval => (
         <div key={approval.approvalId} className={styles.approval}>
