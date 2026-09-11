@@ -1,0 +1,95 @@
+@import '../../styles/index';
+
+/**
+ * A callout above the footer's Kevin icon, pointing down at it.
+ *
+ * `fixed`, not `absolute`: the footer clips on both axes (`overflow-y: hidden`
+ * on `.footer`, `overflow-x: auto` on it and on `.footer--left`), so a child
+ * positioned above the bar disappears. Fixed escapes ancestor overflow, and no
+ * ancestor sets a transform that would turn it back into a containing block.
+ * The component sets left/bottom from the icon's measured rect.
+ *
+ * Kept in the React tree rather than portalled to document.body: the theme is a
+ * class on the main window's root div, and everything below reads its CSS vars.
+ * Portalling out renders the card unstyled and light against a dark app.
+ *
+ * Deliberately the same fills, border and radius as the inline card in
+ * KevinSupport.m.less, so the two read as one component in two places.
+ */
+.bubble {
+  position: fixed;
+  width: 320px;
+  padding: 12px 14px;
+  background-color: var(--section-alt);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  color: var(--title);
+  font-size: 14px;
+  line-height: 1.5;
+  // Above the footer and the OBS display, below a real modal (.ant-modal-wrap
+  // is 1003 in Main.m.less).
+  z-index: 1002;
+  cursor: default;
+
+  // The arrow, pointing down at the icon. Two triangles so the border reads as
+  // a continuous outline rather than stopping where the bubble ends. Nothing
+  // here may sit inside an overflow container -- both are outside the box, and
+  // an `overflow` on this element would clip them and add a stray scrollbar.
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 18px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+  }
+
+  &::before {
+    border-width: 8px 8px 0 8px;
+    border-color: var(--border) transparent transparent transparent;
+  }
+
+  &::after {
+    border-width: 7px 7px 0 7px;
+    border-color: var(--section-alt) transparent transparent transparent;
+    left: 19px;
+  }
+}
+
+/* Left accent marks a decision point, matching `.approval` in
+   KevinSupport.m.less. Stacked when one turn proposes more than one. */
+.approval {
+  padding-left: 10px;
+  border-left: 3px solid var(--warning);
+
+  & + & {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+}
+
+.summary {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.warning {
+  color: var(--warning);
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+
+  button {
+    margin: 0;
+  }
+}

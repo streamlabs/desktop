@@ -83,6 +83,14 @@ export class EditAutomations extends ReactComponent {}
 
 @Component({
   props: {
+    name: { default: 'KevinSupport' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+  },
+})
+export class KevinSupport extends ReactComponent {}
+
+@Component({
+  props: {
     name: { default: 'GoLiveWindow' },
     wrapperStyles: { default: () => ({ height: '100%' }) },
   },
