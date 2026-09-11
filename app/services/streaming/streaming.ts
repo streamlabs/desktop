@@ -783,10 +783,16 @@ export class StreamingService
     } catch (e: unknown) {
       console.error('Error starting video transmission: ', e);
 
-      const failureType =
-        e && (e as any).message && (e as any).message.includes('encoder')
-          ? 'INVALID_ENCODER'
-          : 'UNKNOWN_ERROR';
+      // A blank stream key or server url fails here as a bare `UNKNOWN_ERROR`, which tells the
+      // user nothing. Name the missing field instead when that is what went wrong.
+      const missingSetting = this.getMissingStreamSetting();
+
+      let failureType: TStreamErrorType = 'UNKNOWN_ERROR';
+      if (e && (e as any).message && (e as any).message.includes('encoder')) {
+        failureType = 'INVALID_ENCODER';
+      } else if (missingSetting) {
+        failureType = missingSetting === 'key' ? 'STREAM_KEY_MISSING' : 'STREAM_SERVER_MISSING';
+      }
 
       const errorType = this.handleTypedStreamError(
         e,
@@ -4397,6 +4403,37 @@ export class StreamingService
   private streamErrorUserMessage = '';
   private streamErrorReportMessage = '';
 
+  /**
+   * Whether an output failed because its stream settings were incomplete
+   * @remark OBS signals returns a generic `InvalidStream`/`BadPath` error when the stream failed to
+   * start due to misconfigured settings. Check for a missing key or url to surface that specific error,
+   * which is more helpful for the user.
+   * @param context - The output context that failed, as reported on the signal
+   * @returns The missing field, or `null` when the settings are complete
+   */
+  private getMissingStreamSetting(context?: string): 'key' | 'server' | null {
+    // The enhanced broadcasting instance streams Twitch, so it uses Twitch's display
+    let display: TDisplayType = 'horizontal';
+    if (context === 'vertical') {
+      display = 'vertical';
+    } else if (context === 'enhancedBroadcasting') {
+      display = this.views.getPlatformDisplayType('twitch');
+    }
+
+    const settings =
+      display === 'vertical'
+        ? this.settingsService.views.values.StreamSecond
+        : this.settingsService.views.values.Stream;
+
+    if (!settings.key) return 'key';
+
+    // `rtmp_common` resolves the ingest from the service, so an empty server is only a problem
+    // for a custom ingest
+    if (!settings.server && settings.streamType !== 'rtmp_common') return 'server';
+
+    return null;
+  }
+
   private handleOBSOutputError(info: IOBSOutputSignalInfo, platform?: string) {
     console.log('OBS Output Error signal: ', info);
 
@@ -4429,7 +4466,20 @@ export class StreamingService
     let showNativeErrorMessage = false;
     let diagReportMessage = this.streamErrorUserMessage;
 
-    if (info.code === EOutputCode.BadPath) {
+    // Surface a more specific error for a missing stream key or server url
+    const missingSetting =
+      info.code === EOutputCode.InvalidStream || info.code === EOutputCode.BadPath
+        ? this.getMissingStreamSetting(info.service)
+        : null;
+
+    if (missingSetting) {
+      const messages = formatStreamErrorMessage(
+        missingSetting === 'key' ? 'STREAM_KEY_MISSING' : 'STREAM_SERVER_MISSING',
+      );
+
+      errorText = messages.user;
+      diagReportMessage = messages.report;
+    } else if (info.code === EOutputCode.BadPath) {
       errorText = $t(
         'Invalid Path or Connection URL.  Please check your settings to confirm that they are valid.',
       );
