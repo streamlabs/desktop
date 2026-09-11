@@ -106,20 +106,20 @@ export function Jar() {
         <Menu.Item key="images">{$t('Images')}</Menu.Item>
       </Menu>
       <Form>
-        {w.hasLoadedSettings() && w.selectedTab === 'jar' && (
+        {!w.state.isLoading && w.settings && w.selectedTab === 'jar' && (
           <FormFactory metadata={w.jarMeta} values={mutableSettings} onChange={w.updateSetting} />
         )}
-        {w.hasLoadedSettings() && w.selectedTab === 'font' && (
+        {!w.state.isLoading && w.settings && w.selectedTab === 'font' && (
           <FormFactory metadata={w.fontMeta} values={mutableSettings} onChange={w.updateSetting} />
         )}
-        {w.hasLoadedSettings() && w.selectedTab === 'jar-image' && (
+        {!w.state.isLoading && w.settings && w.selectedTab === 'jar-image' && (
           <FormFactory
             metadata={w.getJarImageMeta(w.staticConfig?.data.options.jar_types ?? [])}
             values={mutableSettings}
             onChange={w.updateSetting}
           />
         )}
-        {w.hasLoadedSettings() && w.selectedTab === 'images' && (
+        {!w.state.isLoading && w.settings && w.selectedTab === 'images' && (
           <FormFactory
             metadata={w.imagesMeta}
             values={mutableSettings}
@@ -162,7 +162,7 @@ export class JarModule extends WidgetModule<IJarState> {
 
   get jarMeta() {
     // Check that settings are loaded first, otherwise querying types will throw an error.
-    if (!this.hasLoadedSettings()) return {};
+    if (this.state.isLoading || !this.settings) return {};
 
     return fromMeta({
       _enabled_events: {
@@ -238,7 +238,7 @@ export class JarModule extends WidgetModule<IJarState> {
       result[`${type}_image_src`] = metadata.any({ type: 'mediaurl', label });
     });
 
-    if (this.hasLoadedSettings()) {
+    if (!this.state.isLoading && this.settings) {
       this.settings.types.tips.tiers.forEach((tier, tierIdx) => {
         const label = $t('Tips over', { amount: tier.minimum_amount });
         result[`tips_tier_${tierIdx}_image_src`] = metadata.any({ type: 'mediaurl', label });

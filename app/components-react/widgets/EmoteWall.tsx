@@ -23,7 +23,7 @@ export function EmoteWall() {
   const w = useEmoteWall();
   return (
     <WidgetLayout>
-      {w.hasLoadedSettings() && (
+      {!w.state.isLoading && w.settings && (
         <FormFactory metadata={w.meta} values={w.settings} onChange={w.updateSetting} />
       )}
     </WidgetLayout>

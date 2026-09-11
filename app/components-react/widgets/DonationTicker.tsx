@@ -35,7 +35,7 @@ export function DonationTicker() {
   const w = useDonationTicker();
   return (
     <WidgetLayout>
-      {w.hasLoadedSettings() && (
+      {!w.state.isLoading && w.settings && (
         <>
           <TextInput
             label={$t('Message Format')}

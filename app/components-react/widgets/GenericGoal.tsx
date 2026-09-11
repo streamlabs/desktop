@@ -75,7 +75,7 @@ export function GenericGoal() {
         {!isCharity && <Menu.Item key="goal">{$t('Goal Settings')}</Menu.Item>}
       </Menu>
       <Form>
-        {w.hasLoadedSettings() && w.selectedTab === 'goal' && !hasGoal && (
+        {!w.state.isLoading && w.settings && w.selectedTab === 'goal' && !hasGoal && (
           <>
             <FormFactory
               metadata={w.createGoalMeta}
@@ -91,10 +91,10 @@ export function GenericGoal() {
             </Button>
           </>
         )}
-        {w.hasLoadedSettings() && w.selectedTab === 'goal' && hasGoal && (
+        {!w.state.isLoading && w.settings && w.selectedTab === 'goal' && hasGoal && (
           <DisplayGoal goal={w.goalSettings} resetGoal={w.resetGoal} />
         )}
-        {w.hasLoadedSettings() && w.selectedTab === 'general' && (
+        {!w.state.isLoading && w.settings && w.selectedTab === 'general' && (
           <FormFactory
             metadata={w.visualMeta}
             values={w.settings}

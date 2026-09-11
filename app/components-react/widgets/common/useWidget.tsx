@@ -168,18 +168,6 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
   }
 
   /**
-   * Checks if the widget has loaded settings, and narrows the type of `this.settings` accordingly.
-   *
-   * NOTE: Since the type is narrowed via the `this` value, the static analysis will not work with
-   * object destructuring! Make sure to keep/use a reference to the module instance.
-   */
-  hasLoadedSettings(): this is this & {
-    settings: TWidgetState['data']['settings'];
-  } {
-    return !!this.settings && !this.state.isLoading;
-  }
-
-  /**
    * returns widget's settings from the store
    */
   get settings(): TWidgetState['data']['settings'] | null {
