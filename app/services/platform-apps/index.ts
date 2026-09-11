@@ -312,7 +312,6 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
   async refreshProductionApps() {
     this.unloadAllApps();
     this.loadProductionApps();
-    this.navMenuService.actions.updateAllApps(this.state.loadedApps);
   }
 
   /**
