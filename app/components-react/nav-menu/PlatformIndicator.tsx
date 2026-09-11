@@ -10,6 +10,7 @@ import styles from './PlatformIndicator.m.less';
 
 interface IPlatformIndicatorProps {
   platform: IPlatformAuth | undefined;
+  displayName?: string;
 }
 
 interface IMultiPlatformIndicatorProps {
@@ -17,13 +18,15 @@ interface IMultiPlatformIndicatorProps {
   enabledPlatforms: [TPlatform, IPlatformFlags][];
 }
 
-export default function PlatformIndicator({ platform }: IPlatformIndicatorProps) {
-  const { StreamSettingsService, RestreamService } = Services;
-  const restreamEnabled = RestreamService.views.canEnableRestream;
-  const { platforms, customDestinations } = useVuex(() => ({
-    platforms: StreamSettingsService.views.settings.goLiveSettings?.platforms,
-    customDestinations: StreamSettingsService.views.settings.goLiveSettings?.customDestinations,
-  }));
+/** The maximum number of destinations to display. A max of 6 display without wrapping. */
+const MAX_DISPLAYED_DESTINATIONS = 6;
+
+export default function PlatformIndicator(p: IPlatformIndicatorProps) {
+  const { platforms, customDestinations } = useVuex(() => {
+    const { platforms, customDestinations } =
+      Services.StreamSettingsService.views.settings.goLiveSettings ?? {};
+    return { platforms, customDestinations };
+  });
 
   const enabledPlatformsTuple: [TPlatform, IPlatformFlags][] = platforms
     ? (Object.entries(platforms).filter(([_, p]) => p.enabled) as [TPlatform, IPlatformFlags][])
@@ -42,25 +45,22 @@ export default function PlatformIndicator({ platform }: IPlatformIndicatorProps)
   }
 
   // TODO: do we need to check for protected mode
-  return <SinglePlatformIndicator platform={platform} />;
+  return <SinglePlatformIndicator {...p} />;
 }
 
-const SinglePlatformIndicator = ({ platform }: Pick<IPlatformIndicatorProps, 'platform'>) => {
-  const username = platform?.type === 'instagram' ? undefined : platform?.username;
-
+const SinglePlatformIndicator = (p: IPlatformIndicatorProps) => {
   return (
     <>
-      {platform && (
+      {p.platform && (
         <PlatformLogo
-          platform={platform?.type!}
+          platform={p.platform?.type!}
           className={cx(
             styles.platformLogo,
-            styles[`platform-logo-${platform?.type ?? 'default'}`],
+            styles[`platform-logo-${p.platform?.type ?? 'default'}`],
           )}
         />
       )}
-      <span className={styles.username}>{username || $t('Log Out')}</span>
-      <i className={cx('icon-logout', styles.loginArrow)} />
+      <span className={styles.username}>{p.displayName ?? $t('Logged In')}</span>
     </>
   );
 };
@@ -69,20 +69,12 @@ const MultiPlatformIndicator = ({
   hasCustomDestinations,
   enabledPlatforms,
 }: IMultiPlatformIndicatorProps) => {
-  const displayedDestinations = (hasCustomDestinations ? 1 : 0) + enabledPlatforms.length;
-  // I found that 6 is the max we should be displaying without wrapping, logged in text hidden at 4
-  const platformsToDisplay = enabledPlatforms.slice(0, 6 - (hasCustomDestinations ? 1 : 0));
+  const offset = hasCustomDestinations ? 1 : 0;
+  const platformsToDisplay = enabledPlatforms.slice(0, MAX_DISPLAYED_DESTINATIONS - offset);
+  const displayedDestinations = enabledPlatforms.length + offset;
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'row',
-        flex: 1,
-        justifyContent: 'space-between',
-        alignItems: 'center',
-      }}
-    >
+    <div className={styles.platformIconsContainer}>
       <div className={styles.platformIcons}>
         {platformsToDisplay.map(([platform, _]) => (
           <PlatformLogo
@@ -98,7 +90,6 @@ const MultiPlatformIndicator = ({
           {$t('Logged In')}
         </div>
       )}
-      <i className={cx('icon-logout', styles.loginArrow)} />
     </div>
   );
 };

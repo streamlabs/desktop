@@ -12,7 +12,7 @@ import StartStreamingButton from './StartStreamingButton';
 import { Tooltip } from 'antd';
 import { confirmAsync } from 'components-react/modals';
 import RecordingSwitcher from 'components-react/windows/go-live/RecordingSwitcher';
-import { EAvailableFeatures } from 'services/incremental-rollout';
+import { NotificationsToastHost } from 'components-react/root/NotificationsArea';
 
 function StudioFooterComponent() {
   const {
@@ -142,6 +142,7 @@ function StudioFooterComponent() {
           />
         </Tooltip>
         <PerformanceMetrics mode="limited" className="performance-metrics" />
+        <NotificationsToastHost />
       </div>
 
       <div className={styles.navRight}>
