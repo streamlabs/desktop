@@ -168,6 +168,18 @@
 // Feature Carousel
 // =================================================================================================
 
+.app-detection {
+  width: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+
+.app-detection-ready {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .carousel-wrapper {
   display: flex;
   background-color: var(--dark-background);

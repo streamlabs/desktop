@@ -26,6 +26,9 @@ export interface IEnv {
   SLD_GUEST_CAM_HASH: string;
   CI: boolean;
   HIGHLIGHTER_ENV: 'production' | 'staging' | 'local';
+  // Dev only: absolute path to a locally built Streamlabs Replay installer. When set, the Replay
+  // install flow runs that exe instead of downloading one from the CDN.
+  HIGHLIGHTER_LOCAL_SETUP_PATH?: string;
   PRODUCT_UPDATES: boolean;
   AVATAR_ENV?: 'production' | 'staging' | 'local';
 }

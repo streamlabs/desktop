@@ -32,12 +32,30 @@ export const AI_HIGHLIGHTER_BUILDS_URL_STAGING =
 export const AI_HIGHLIGHTER_BUILDS_URL_PRODUCTION =
   'https://cdn-highlighter-builds.streamlabs.com/production/manifest_win_x86_64.json';
 
-export const HIGHLIGHTER_SETUP_URL_STAGING =
-  'https://cdn-highlighter-desktop.streamlabs.com/streamlabs-highlighter/staging/win32/x64/Streamlabs%20Highlighter-Setup.exe';
+export const REPLAY_SETUP_URL_STAGING =
+  'https://cdn-highlighter-desktop.streamlabs.com/staging/win32/x64/G+HUB+Replay-Setup.exe';
 
-export const HIGHLIGHTER_SETUP_URL_PRODUCTION =
-  'https://cdn-highlighter-desktop.streamlabs.com/streamlabs-highlighter/production/win32/x64/Streamlabs%20Highlighter-Setup.exe';
+export const REPLAY_SETUP_URL_PRODUCTION =
+  'https://cdn-highlighter-desktop.streamlabs.com/production/win32/x64/G+HUB+Replay-Setup.exe';
 
-export const REPLAY_PROTOCOL = 'streamlabs-highlighter';
-export const REPLAY_APP_NAME = 'Streamlabs Highlighter';
-export const REPLAY_SETUP_EXE_NAME = 'Streamlabs Highlighter-Setup.exe';
+export const REPLAY_PROTOCOL = 'ghub-replay';
+export const REPLAY_APP_NAME = 'Replay';
+export const REPLAY_SETUP_EXE_NAME = 'G HUB Replay-Setup.exe';
+
+// The standalone app Replay replaces. Users who still have it keep their data by migrating from
+// inside it — Highlighter merges and installs Replay itself — so Desktop hands them over instead
+// of installing Replay behind its back. This protocol is what REPLAY_PROTOCOL held before the
+// rename, and it is all we have to detect the legacy app with.
+export const HIGHLIGHTER_PROTOCOL = 'streamlabs-highlighter';
+export const HIGHLIGHTER_APP_NAME = 'Streamlabs Highlighter';
+
+// Origin slug Replay attributes an install to when Streamlabs Desktop installed it.
+export const REPLAY_INSTALL_ORIGIN = 'sl_desktop';
+
+// The install origin marker is a hand-off file, so it lives in the current user's temp directory
+// (%TEMP%\GHUB_Replay\install-origin.json) rather than in either app's data directory. It has to
+// work before Replay is installed at all, and Replay deletes it as soon as it has been read.
+// Deliberately not derived from REPLAY_APP_NAME: this directory name is a contract with Replay and
+// does not follow the app rename.
+export const REPLAY_INSTALL_ORIGIN_DIR_NAME = 'GHUB_Replay';
+export const REPLAY_INSTALL_ORIGIN_FILE_NAME = 'install-origin.json';

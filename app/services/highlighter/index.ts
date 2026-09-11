@@ -15,10 +15,14 @@ import os from 'os';
 import {
   SCRUB_SPRITE_DIRECTORY,
   SUPPORTED_FILE_TYPES,
-  HIGHLIGHTER_SETUP_URL_STAGING,
-  HIGHLIGHTER_SETUP_URL_PRODUCTION,
+  REPLAY_SETUP_URL_STAGING,
+  REPLAY_SETUP_URL_PRODUCTION,
   REPLAY_PROTOCOL,
+  HIGHLIGHTER_PROTOCOL,
   REPLAY_SETUP_EXE_NAME,
+  REPLAY_INSTALL_ORIGIN,
+  REPLAY_INSTALL_ORIGIN_DIR_NAME,
+  REPLAY_INSTALL_ORIGIN_FILE_NAME,
 } from './constants';
 import { pmap } from 'util/pmap';
 import { RenderingClip } from './rendering/rendering-clip';
@@ -55,7 +59,9 @@ import {
   EHighlighterView,
   ITempRecordingInfo,
   IReplayInstallState,
+  IReplayInstallOriginMetadata,
   EReplayInstallStep,
+  TInstalledHighlighterApp,
   TOpenedFrom,
 } from './models/highlighter.models';
 import {
@@ -340,10 +346,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   // =================================================================================================
 
   /**
-   * Checks if Streamlabs Replay is installed by verifying the Windows deeplink protocol registration
-   * @returns Promise<boolean> - true if the ${REPLAY_PROTOCOL} protocol is registered, false otherwise
+   * Checks whether an app is installed by looking up its deeplink protocol handler in the Windows
+   * Registry. Registering the protocol is the only trace either app leaves that we can rely on.
+   * @returns Promise<boolean> - true if the protocol is registered to an executable
    */
-  async isStreamlabsReplayInstalled(): Promise<boolean> {
+  private async isProtocolRegistered(protocol: string): Promise<boolean> {
     // Only check on Windows
     if (getOS() !== OS.Windows) {
       return false;
@@ -352,7 +359,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     try {
       // Query the Windows Registry for the protocol handler command
       const { stdout, stderr } = await execAsync(
-        `reg query "HKEY_CLASSES_ROOT\\${REPLAY_PROTOCOL}\\shell\\open\\command" /ve`,
+        `reg query "HKEY_CLASSES_ROOT\\${protocol}\\shell\\open\\command" /ve`,
         {
           timeout: 5000,
         },
@@ -371,6 +378,39 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       // If the registry key doesn't exist, reg query will throw an error
       return false;
     }
+  }
+
+  /**
+   * Checks if Streamlabs Replay is installed by verifying the Windows deeplink protocol registration
+   * @returns Promise<boolean> - true if the ${REPLAY_PROTOCOL} protocol is registered, false otherwise
+   */
+  async isStreamlabsReplayInstalled(): Promise<boolean> {
+    return this.isProtocolRegistered(REPLAY_PROTOCOL);
+  }
+
+  /**
+   * Checks if the standalone Streamlabs Highlighter app — the one Replay replaces — is installed.
+   * @returns Promise<boolean> - true if the ${HIGHLIGHTER_PROTOCOL} protocol is registered
+   */
+  async isStreamlabsHighlighterInstalled(): Promise<boolean> {
+    return this.isProtocolRegistered(HIGHLIGHTER_PROTOCOL);
+  }
+
+  /**
+   * Single source of truth for which app Desktop should talk to.
+   *
+   * Replay wins whenever it exists, so a user who has both is never sent backwards. Highlighter
+   * only answers when Replay is absent, and that user is handed to Highlighter rather than having
+   * Replay installed underneath them: Highlighter is where the data merge happens, and it installs
+   * Replay at the end of it.
+   *
+   * The Highlighter lookup is skipped entirely once Replay is found — that is the common case and
+   * it should not pay for a second registry query.
+   */
+  async getInstalledHighlighterApp(): Promise<TInstalledHighlighterApp> {
+    if (await this.isStreamlabsReplayInstalled()) return 'replay';
+    if (await this.isStreamlabsHighlighterInstalled()) return 'highlighter';
+    return 'none';
   }
 
   /**
@@ -403,9 +443,9 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
   private getReplaySetupUrl(): string {
     if (Utils.getHighlighterEnvironment() === 'production') {
-      return HIGHLIGHTER_SETUP_URL_PRODUCTION;
+      return REPLAY_SETUP_URL_PRODUCTION;
     }
-    return HIGHLIGHTER_SETUP_URL_STAGING;
+    return REPLAY_SETUP_URL_STAGING;
   }
 
   /**
@@ -508,13 +548,137 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   }
 
   /**
+   * Dev-only escape hatch for testing the install flow against a locally built Replay installer
+   * instead of the CDN one. Set HIGHLIGHTER_LOCAL_SETUP_PATH to the setup exe before launching, e.g.
+   *
+   *   set "HIGHLIGHTER_LOCAL_SETUP_PATH=C:\path\to\Streamlabs Highlighter-0.0.16 Setup.exe"
+   *
+   * Read from remote.process.env at runtime (via Utils.env), so it takes effect on the next
+   * `yarn start` with no rebuild — unlike HIGHLIGHTER_ENV, which webpack bakes in at compile time.
+   *
+   * Gated on dev mode: a local build is not signed by Logitech, so this path skips the Authenticode
+   * check, and that check must stay unconditional in shipped builds.
+   *
+   * Throws if the path is set but missing, rather than silently falling back to the CDN download —
+   * a typo should be visible, not quietly ignored.
+   */
+  private async getLocalReplaySetupPath(): Promise<string | null> {
+    if (!Utils.isDevMode()) return null;
+
+    const configuredPath = Utils.env.HIGHLIGHTER_LOCAL_SETUP_PATH?.trim();
+    if (!configuredPath) return null;
+
+    // Tolerate a value pasted with surrounding quotes, which is easy to do for a path with spaces
+    const setupPath = path.resolve(configuredPath.replace(/^"(.*)"$/, '$1'));
+
+    if (!(await fs.pathExists(setupPath))) {
+      throw new Error(
+        `HIGHLIGHTER_LOCAL_SETUP_PATH is set but no installer exists at "${setupPath}".`,
+      );
+    }
+
+    return setupPath;
+  }
+
+  /**
+   * Where Replay looks for the install origin marker, given who we are running as.
+   *
+   * Replay reads exactly one location: the current user's temp directory. A parent writing under a
+   * different identity gets a different %TEMP% — SYSTEM and services land in C:\Windows\TEMP or a
+   * profile under the Windows directory — and the marker would sit somewhere Replay never reads.
+   * Elevation alone is fine: "run as administrator" from the user's own account keeps the profile.
+   *
+   * Throws rather than returning a path we know Replay will not read.
+   */
+  private getReplayInstallOriginMarkerPath(): string {
+    const isInside = (child: string, parent: string) => {
+      const relativePath = path.relative(parent, child);
+      return (
+        relativePath !== '' && !relativePath.startsWith('..') && !path.isAbsolute(relativePath)
+      );
+    };
+
+    const temp = remote.app.getPath('temp');
+    const home = remote.app.getPath('home');
+    const systemRoot = remote.process.env.SystemRoot ?? 'C:\\Windows';
+
+    if (!isInside(temp, home) || isInside(home, systemRoot)) {
+      throw new Error(`"${temp}" is not the desktop user's temp directory`);
+    }
+
+    return path.join(temp, REPLAY_INSTALL_ORIGIN_DIR_NAME, REPLAY_INSTALL_ORIGIN_FILE_NAME);
+  }
+
+  /**
+   * Writes the marker Streamlabs Replay reads on first run to attribute the install to
+   * Streamlabs Desktop.
+   *
+   * Must run before the installer is executed: Squirrel's Setup.exe launches Replay at the end of
+   * the install, so Replay can resolve its origin while our exec call is still pending.
+   *
+   * When the install was triggered from the import dialog, the marker also carries what the user
+   * picked there, under `metadata`: the recording and its game. Those are the exact values Desktop
+   * would otherwise pass via the `import` deeplink once the install finishes, so Replay can see it
+   * coming — the marker is the hand-off for that single import, not a second unrelated one.
+   *
+   * Best-effort by design. Attribution is never worth failing an install over, so every error is
+   * swallowed and only reported to Sentry.
+   */
+  private async writeReplayInstallOriginMarker(
+    metadata?: IReplayInstallOriginMetadata,
+  ): Promise<void> {
+    try {
+      const markerPath = this.getReplayInstallOriginMarkerPath();
+
+      const videoPath = metadata?.videoPath?.trim();
+      const game = metadata?.game;
+
+      // Only carry entries we actually have: an absent key is easier for Replay to reason about
+      // than one holding an empty value.
+      const markerMetadata = {
+        ...(videoPath ? { videoPath } : {}),
+        ...(game ? { game } : {}),
+      };
+      const hasMetadata = Object.keys(markerMetadata).length > 0;
+
+      // outputJson creates the containing directory if it does not exist yet.
+      // `metadata` itself is omitted when there is nothing to hand over, so Replay never has to
+      // tell an empty object apart from a missing one.
+      await fs.outputJson(markerPath, {
+        version: 1,
+        origin: REPLAY_INSTALL_ORIGIN,
+        createdAt: new Date().toISOString(),
+        ...(hasMetadata ? { metadata: markerMetadata } : {}),
+      });
+
+      // Replay logs the path it looked at on every launch until the origin settles. Two paths that
+      // do not match is the whole diagnosis, so log ours and the identity that wrote it.
+      console.log(
+        `Wrote Streamlabs Replay install origin marker to "${markerPath}" as "${
+          os.userInfo().username
+        }"${hasMetadata ? ` with ${JSON.stringify(markerMetadata)}` : ''}`,
+      );
+    } catch (error: unknown) {
+      Sentry.withScope(scope => {
+        scope.setTag('feature', 'highlighter');
+        scope.setTag('replayInstallPhase', 'write-install-origin');
+        console.error('Failed to write Streamlabs Replay install origin marker:', error);
+      });
+    }
+  }
+
+  /**
    * Downloads and installs Streamlabs Replay.
    * Fakes progress increments during the download/install phases,
    * verifies the deeplink registry after install, and auto-launches the app.
+   *
+   * @param originMetadata - Optional hand-off data for the install origin marker: the video and
+   * game the import dialog wants Replay to open with. Passing it here is what replaces the import
+   * deeplink — Replay reads the marker on its first launch, so nothing is sent afterwards.
    */
   private replayInstallAbortController: AbortController | null = null;
 
-  async installStreamlabsReplay(): Promise<boolean> {
+  async installStreamlabsReplay(originMetadata?: IReplayInstallOriginMetadata): Promise<boolean> {
     if (getOS() !== OS.Windows) {
       Sentry.withScope(scope => {
         scope.setTag('feature', 'highlighter');
@@ -551,17 +715,28 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       // --- Downloading phase ---
       this.SET_REPLAY_INSTALL({ step: 'downloading', progress: 0, error: null });
 
-      const setupUrl = this.getReplaySetupUrl();
+      // Dev only. When set, this is a locally built installer we neither downloaded nor own,
+      // so the download, the signature check and the cleanup below are all skipped for it.
+      const localSetupPath = await this.getLocalReplaySetupPath();
+      let setupPath: string;
 
-      // Download the setup exe to temp directory
-      const tempDir = os.tmpdir();
-      const setupPath = path.join(tempDir, REPLAY_SETUP_EXE_NAME);
+      if (localSetupPath) {
+        console.info('Installing Streamlabs Replay from local build:', localSetupPath);
+        setupPath = localSetupPath;
+        this.setReplayDownloadProgress(94);
+      } else {
+        const setupUrl = this.getReplaySetupUrl();
 
-      await downloadFile(setupUrl, setupPath, (progress: IDownloadProgress) => {
-        // Map download progress to 0-94%
-        const downloadPercent = progress.percent * 94;
-        this.setReplayDownloadProgress(downloadPercent);
-      });
+        // Download the setup exe to temp directory
+        const tempDir = os.tmpdir();
+        setupPath = path.join(tempDir, REPLAY_SETUP_EXE_NAME);
+
+        await downloadFile(setupUrl, setupPath, (progress: IDownloadProgress) => {
+          // Map download progress to 0-94%
+          const downloadPercent = progress.percent * 94;
+          this.setReplayDownloadProgress(downloadPercent);
+        });
+      }
 
       clearProgress();
 
@@ -573,8 +748,18 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         return false;
       }
 
-      // Verify the Authenticode signature before execution
-      await this.verifyAuthenticodeSignature(setupPath);
+      if (localSetupPath) {
+        // A local build is not signed by Logitech, so the check would always fail here
+        console.warn('Skipping installer signature verification for local Streamlabs Replay build');
+      } else {
+        // Verify the Authenticode signature before execution
+        await this.verifyAuthenticodeSignature(setupPath);
+      }
+
+      // Attribute this install to Streamlabs Desktop before the installer runs, and hand over
+      // whatever we already know about what comes next (the video and game to import).
+      // Best-effort: this never throws and never blocks the install.
+      await this.writeReplayInstallOriginMarker(originMetadata);
 
       // --- Installing phase ---
       this.SET_REPLAY_INSTALL({ step: 'installing', progress: 94 });
@@ -636,11 +821,13 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         });
       }
 
-      // Clean up setup file
-      try {
-        await fs.remove(setupPath);
-      } catch {
-        // Non-critical cleanup
+      // Clean up setup file. Never for a local build — that is the developer's own artifact.
+      if (!localSetupPath) {
+        try {
+          await fs.remove(setupPath);
+        } catch {
+          // Non-critical cleanup
+        }
       }
 
       // Track installation finished successfully
@@ -701,71 +888,101 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   }
 
   /**
-   * Opens Streamlabs Replay or starts installation if not installed
-   * @param source - Where the action was initiated from ('page' or 'modal')
-   * @returns Promise<boolean> - true if Replay was opened, false if installation was started
+   * Launches an app through its deeplink protocol, falling back to the bare scheme.
+   * @returns Promise<boolean> - false when neither form could be opened, which in practice means
+   * the protocol is registered but the app itself is gone.
    */
-  async openReplay(source: 'page' | 'modal'): Promise<boolean> {
-    const isInstalled = await this.isStreamlabsReplayInstalled();
-
-    if (isInstalled) {
-      // Track opening Replay
-      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
-        type: 'ReplayOpen',
-        source,
+  private async openProtocol(protocol: string): Promise<boolean> {
+    try {
+      await remote.shell.openExternal(`${protocol}://open`);
+      return true;
+    } catch (error: unknown) {
+      Sentry.withScope(scope => {
+        scope.setTag('feature', 'highlighter');
+        console.error(`Failed to open "${protocol}":`, error);
       });
-
-      // Open Streamlabs Replay via deeplink
       try {
-        await remote.shell.openExternal(`${REPLAY_PROTOCOL}://open`);
+        await remote.shell.openExternal(`${protocol}:`);
         return true;
-      } catch (error: unknown) {
+      } catch (fallbackError: unknown) {
         Sentry.withScope(scope => {
           scope.setTag('feature', 'highlighter');
-          console.error('Failed to open Streamlabs Replay:', error);
+          console.error(`Failed to open "${protocol}" with fallback:`, fallbackError);
         });
-        try {
-          await remote.shell.openExternal(`${REPLAY_PROTOCOL}:`);
-          return true;
-        } catch (fallbackError: unknown) {
-          Sentry.withScope(scope => {
-            scope.setTag('feature', 'highlighter');
-            console.error('Failed to open Streamlabs Replay with fallback:', fallbackError);
-          });
-          // Protocol is registered but app is missing — start installation
-          this.installStreamlabsReplay();
-          return false;
-        }
+        return false;
       }
-    } else {
-      // Track installation click
-      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
-        type: 'ReplayInstallationClick',
-        source,
-      });
-
-      // Start installation flow for Streamlabs Replay (don't await so UI can update)
-      this.installStreamlabsReplay();
-      return false;
     }
   }
 
   /**
-   * Opens Streamlabs Replay with an import deeplink
+   * Opens whichever app the user should land in, installing Replay when there is none.
+   *
+   * - Replay installed -> open Replay (whether or not Highlighter is also still around).
+   * - Only Highlighter installed -> open Highlighter. It owns the data merge and installs Replay
+   *   at the end of it, so Desktop must not install Replay behind its back.
+   * - Neither -> install Replay.
+   *
+   * A protocol that is registered but will not launch means the app was removed without
+   * unregistering, so it falls through to the install.
+   *
+   * @param source - Where the action was initiated from ('page' or 'modal')
+   * @returns Promise<boolean> - true if an app was opened, false if installation was started
+   */
+  async openReplay(source: 'page' | 'modal'): Promise<boolean> {
+    const app = await this.getInstalledHighlighterApp();
+
+    if (app === 'replay') {
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'ReplayOpen',
+        source,
+      });
+      if (await this.openProtocol(REPLAY_PROTOCOL)) return true;
+    } else if (app === 'highlighter') {
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'HighlighterAppOpen',
+        source,
+      });
+      if (await this.openProtocol(HIGHLIGHTER_PROTOCOL)) return true;
+    }
+
+    // Track installation click
+    this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+      type: 'ReplayInstallationClick',
+      source,
+    });
+
+    // Start installation flow for Streamlabs Replay (don't await so UI can update)
+    this.installStreamlabsReplay();
+    return false;
+  }
+
+  /**
+   * Opens the installed app with an import deeplink.
+   *
+   * Both apps take the same `import` route and the same params, so the only thing that varies is
+   * the protocol. A Highlighter user is deeplinked into Highlighter rather than Replay: the import
+   * lands in the app that still holds their data.
+   *
+   * Callers gate on {@link getInstalledHighlighterApp} first — with nothing installed there is no
+   * app to deeplink into, and that path runs the installer instead.
+   *
    * @param videoPath - Path to the video file to import
    * @param game - The game type for the video
    * @param openedFrom - Where the import was initiated from
    * @param streamId - Optional stream ID for tracking
    * @param title - Optional title for the recording
    */
-  openReplayImport(
+  async openReplayImport(
     videoPath: string,
     game: string,
     openedFrom: TOpenedFrom,
     streamId?: string,
     title?: string,
-  ): void {
-    let deeplink = `${REPLAY_PROTOCOL}://import?path=${encodeURIComponent(
+  ): Promise<void> {
+    const app = await this.getInstalledHighlighterApp();
+    const protocol = app === 'highlighter' ? HIGHLIGHTER_PROTOCOL : REPLAY_PROTOCOL;
+
+    let deeplink = `${protocol}://import?path=${encodeURIComponent(
       videoPath,
     )}&game=${encodeURIComponent(game)}`;
 
@@ -775,8 +992,10 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
     remote.shell.openExternal(deeplink);
 
+    // Tracked as a separate event rather than a flag on ReplayImport so a migration-era Highlighter
+    // import never inflates the Replay import numbers.
     this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
-      type: 'ReplayImport',
+      type: app === 'highlighter' ? 'HighlighterAppImport' : 'ReplayImport',
       openedFrom,
       streamId,
       game,
@@ -1376,23 +1595,13 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           }
 
           if (this.getClips(this.views.clips, streamId).length === 0) {
-            if (streamId) {
-              this.navigationService.actions.navigate(
-                'Highlighter',
-                {
-                  view: EHighlighterView.STREAM,
-                },
-                EMenuItemKey.Highlighter,
-              );
-            } else {
-              this.navigationService.actions.navigate(
-                'Highlighter',
-                {
-                  view: EHighlighterView.SETTINGS,
-                },
-                EMenuItemKey.Highlighter,
-              );
-            }
+            this.navigationService.actions.navigate(
+              'Highlighter',
+              {
+                view: EHighlighterView.STREAM,
+              },
+              EMenuItemKey.Highlighter,
+            );
           }
         } catch (error: unknown) {
           console.error('Error deleting clip or folder:', error);
@@ -1810,7 +2019,10 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     );
 
     if (migrationEnabled) {
-      await this.installStreamlabsReplay();
+      // Routes through openReplay rather than installing directly, so a user who still has the
+      // standalone Highlighter app is sent there to migrate instead of getting Replay installed
+      // underneath them.
+      await this.openReplay('page');
     } else {
       this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
         type: 'Installation',
