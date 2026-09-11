@@ -973,13 +973,13 @@ export class StreamingService
     }
 
     // send analytics for YouTube
-    if (settings.platforms.youtube?.enabled && settings.platforms.youtube.display === 'both') {
+    if (settings.platforms.youtube?.enabled && this.views.isDualStreaming('youtube')) {
       this.usageStatisticsService.recordFeatureUsage('StreamToYouTubeBothOutputs');
     }
 
     // send analytics for Twitch
     if (settings.platforms.twitch?.enabled) {
-      if (settings.platforms.twitch.display === 'both') {
+      if (this.views.isDualStreaming('twitch')) {
         this.usageStatisticsService.recordFeatureUsage('StreamToTwitchBothOutputs');
       } else if (this.state.enhancedBroadcasting) {
         // Note: use the service state because the Twitch settings stores the user's enhanced broadcasting setting

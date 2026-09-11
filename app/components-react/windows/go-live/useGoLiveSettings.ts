@@ -644,8 +644,7 @@ export class GoLiveSettingsModule {
     // Go Live window.
     const willDualStream = this.state.enabledPlatforms.some(
       (platform: TPlatform) =>
-        this.state.getCanDualStream(platform) &&
-        this.state.settings.platforms[platform]?.display === 'both',
+        this.state.getCanDualStream(platform) && this.state.isDualStreaming(platform),
     );
 
     const numTargets =
@@ -946,9 +945,7 @@ export class GoLiveSettingsModule {
   get nonPrimeBothDisplayPlatform(): TPlatform | null {
     if (this.isPrime) return null;
     return (
-      this.state.enabledPlatforms.find(
-        platform => this.state.settings.platforms[platform]?.display === 'both',
-      ) ?? null
+      this.state.enabledPlatforms.find(platform => this.state.isDualStreaming(platform)) ?? null
     );
   }
 

@@ -246,7 +246,7 @@ export class TwitchService
     // depends on whether this stream is an enhanced broadcast — deciding afterwards means the
     // check answers for the previous stream instead of this one.
     if (channelInfo) {
-      if (this.streamingService.views.isLiveOutputEditingEnabled) {
+      if (goLiveSettings?.liveOutputEditing) {
         await this.setupLiveOutputStream(goLiveSettings);
       } else if (channelInfo.display === 'both') {
         await this.setupDualStream(goLiveSettings);
