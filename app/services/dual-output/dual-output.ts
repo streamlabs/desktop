@@ -681,56 +681,123 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
    */
   validateSceneNodes(sceneId: string) {
     this.SET_IS_LOADING(true);
-    const sceneNodes = this.scenesService.views.getSceneNodesBySceneId(sceneId);
-    if (!sceneNodes) return;
-    const corruptedNodeIds = new Set<string>();
+    try {
+      const sceneNodes = this.scenesService.views.getSceneNodesBySceneId(sceneId);
+      if (!sceneNodes) return;
+      const corruptedNodeIds = new Set<string>();
 
-    const sceneNodeMap = this.views.sceneNodeMaps[sceneId];
-    const invertedSceneNodeMap = invert(sceneNodeMap);
+      const sceneNodeMap = this.views.sceneNodeMaps[sceneId];
+      const invertedSceneNodeMap = invert(sceneNodeMap);
 
-    // The keys in the nodemap are the ids for the horizontal nodes. Initialize with all keys
-    // and delete entries as nodes are visited; whatever remains are stale entries whose
-    // horizontal node no longer exists in the scene.
-    const horizontalNodeIds = new Set<string>(Object.keys(sceneNodeMap));
+      // The keys in the nodemap are the ids for the horizontal nodes. Initialize with all keys
+      // and delete entries as nodes are visited; whatever remains are stale entries whose
+      // horizontal node no longer exists in the scene.
+      const horizontalNodeIds = new Set<string>(Object.keys(sceneNodeMap));
 
-    // Iterate over the scene nodes in reverse order to automatically handle correctly ordering
-    // any nodes created as a part of the validation process. This optimizes validation by skipping
-    // an extra loop over the nodes to reorder them.
-    forEachRight(sceneNodes, (node: TSceneNode, index: number) => {
-      // don't handle corrupted nodes
-      if (corruptedNodeIds.has(node.id)) return;
+      // Iterate over the scene nodes in reverse order to automatically handle correctly ordering
+      // any nodes created as a part of the validation process. This optimizes validation by skipping
+      // an extra loop over the nodes to reorder them.
+      forEachRight(sceneNodes, (node: TSceneNode, index: number) => {
+        // don't handle corrupted nodes
+        if (corruptedNodeIds.has(node.id)) return;
 
-      // confirm partner node exists
-      const nodeMap = node?.display === 'vertical' ? invertedSceneNodeMap : sceneNodeMap;
-      const partnerNode = this.validatePartnerNode(node, nodeMap, sceneNodes);
+        // confirm partner node exists
+        const nodeMap = node?.display === 'vertical' ? invertedSceneNodeMap : sceneNodeMap;
+        const partnerNode = this.validatePartnerNode(node, nodeMap, sceneNodes);
 
-      // Remove from horizontal node ids because we have confirmed this entry.
-      // Any nodes added as a horizontal partner node for a vertical node do not need
-      // to be validated again in the node map
-      if (node.display === 'horizontal') {
-        horizontalNodeIds.delete(node.id);
-      }
+        // Either side confirms the horizontal entry. Source reconciliation may
+        // replace the vertical item and skip its horizontal partner later in this
+        // traversal, so mark the pair now to retain its valid map entry.
+        const horizontalNode = node.display === 'horizontal' ? node : partnerNode;
+        if (horizontalNode.display === 'horizontal') horizontalNodeIds.delete(horizontalNode.id);
 
-      // confirm source and output for scene items
-      if (node.isItem() && partnerNode.isItem()) {
-        this.validateOutput(node, sceneId);
-        const corruptedNode: SceneItem = this.validateSource(node, partnerNode);
-        if (corruptedNode) {
-          corruptedNodeIds.add(corruptedNode.id);
+        // confirm source and output for scene items
+        if (node.isItem() && partnerNode.isItem()) {
+          this.validateOutput(node, sceneId);
+          const corruptedNode: SceneItem = this.validateSource(node, partnerNode);
+          if (corruptedNode) {
+            corruptedNodeIds.add(corruptedNode.id);
+          }
         }
+
+        this.sceneNodeHandled.next(index);
+      });
+
+      // After confirming all of the scene items, `horizontalNodeIds` should be empty.
+      // If there are any remaining entries, these are stale entries in the scene node map.
+      // To repair the scene node map, delete these incorrect entries.
+      horizontalNodeIds.forEach((horizontalId: string) => {
+        this.sceneCollectionsService.removeNodeMapEntry(sceneId, horizontalId);
+      });
+
+      this.repairCrossDisplayItemParents(sceneId);
+    } finally {
+      this.SET_IS_LOADING(false);
+    }
+  }
+
+  /**
+   * Older source repair placed recreated items next to their partner, inheriting
+   * that partner's folder. Repair those saved cross-display parents without
+   * changing valid per-display layouts or the items' transforms and visibility.
+   */
+  private repairCrossDisplayItemParents(sceneId: string) {
+    const scene = this.scenesService.views.getScene(sceneId);
+    const nodes = scene.getNodes();
+    const nodesById = new Map(nodes.map(node => [node.id, node]));
+    const nodeMap = this.views.sceneNodeMaps[sceneId];
+    const invertedNodeMap = invert(nodeMap);
+    const verticalReferences = new Map<string, number>();
+    Object.values(nodeMap).forEach(id => {
+      verticalReferences.set(id, (verticalReferences.get(id) ?? 0) + 1);
+    });
+    const repairedParents = new Map<string, string>();
+
+    nodes.forEach(node => {
+      if (!node.isItem() || !node.parentId) return;
+      const parent = nodesById.get(node.parentId);
+      if (!parent?.isFolder() || parent.display === node.display) return;
+
+      const parentMap = node.display === 'vertical' ? nodeMap : invertedNodeMap;
+      const reverseParentMap = node.display === 'vertical' ? invertedNodeMap : nodeMap;
+      const mappedParent = nodesById.get(parentMap[parent.id]);
+      if (
+        !mappedParent?.isFolder() ||
+        mappedParent.display !== node.display ||
+        reverseParentMap[mappedParent.id] !== parent.id ||
+        verticalReferences.get(node.display === 'vertical' ? mappedParent.id : parent.id) !== 1
+      ) {
+        throw new Error(`Cannot repair folder for scene item ${node.id}: invalid paired folder`);
       }
-
-      this.sceneNodeHandled.next(index);
+      repairedParents.set(node.id, mappedParent.id);
     });
 
-    // After confirming all of the scene items, `horizontalNodeIds` should be empty.
-    // If there are any remaining entries, these are stale entries in the scene node map.
-    // To repair the scene node map, delete these incorrect entries.
-    horizontalNodeIds.forEach((horizontalId: string) => {
-      this.sceneCollectionsService.removeNodeMapEntry(sceneId, horizontalId);
-    });
+    if (!repairedParents.size) return;
 
-    this.SET_IS_LOADING(false);
+    // Plan the final preorder before mutating. Keep every root and sibling in
+    // its existing relative order, including children already in the target folder.
+    const children = new Map<string, TSceneNode[]>();
+    nodes.forEach(node => {
+      const parentId = repairedParents.get(node.id) ?? node.parentId ?? '';
+      if (!children.has(parentId)) children.set(parentId, []);
+      children.get(parentId)!.push(node);
+    });
+    const pending = [...(children.get('') ?? [])].reverse();
+    const order: string[] = [];
+    const visited = new Set<string>();
+    while (pending.length) {
+      const node = pending.pop()!;
+      if (visited.has(node.id)) break;
+      visited.add(node.id);
+      order.push(node.id);
+      pending.push(...[...(children.get(node.id) ?? [])].reverse());
+    }
+    if (order.length !== nodes.length) {
+      throw new Error(`Cannot repair folders in scene ${sceneId}: invalid scene hierarchy`);
+    }
+
+    repairedParents.forEach((parentId, nodeId) => scene.getItem(nodeId)!.setParent(parentId));
+    scene.setNodesOrder(order);
   }
 
   /**
@@ -776,6 +843,9 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     const matchVisibility = node.display === 'horizontal';
     const { visible, ...settings } = Object.assign(verticalNode.getSettings());
     const verticalNodeId = verticalNode.id;
+    const scene = verticalNode.getScene();
+    const parentId = verticalNode.parentId;
+    const nodeOrder = scene.getNodesIds();
 
     // remove old node
     this.sceneCollectionsService.removeNodeMapEntry(horizontalNode.sceneId, horizontalNode.id);
@@ -791,6 +861,12 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     const context = this.videoSettingsService.contexts[newPartner.display];
     newPartner.setSettings({ ...settings, output: context });
     newPartner.setVisibility(visible);
+
+    // Source reconciliation replaces the OBS item, not its authored location in
+    // the scene tree. createPartnerNode's placement inherits the other display's
+    // parent, so restore both the original parent and the complete node order.
+    newPartner.setParent(parentId);
+    scene.setNodesOrder(nodeOrder);
 
     return partnerNode;
   }
