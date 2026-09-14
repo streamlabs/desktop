@@ -8,6 +8,11 @@ if (process.platform !== 'win32') {
 }
 // Expected Authenticode publisher (certificate simple name) of the game capture binaries.
 const GAME_CAPTURE_PUBLISHER = 'OBS Project, LLC';
+// Allowlisted signer certificate thumbprints for OBS Project, LLC game capture binaries.
+// Add the new thumbprint here before rotating OBS's code-signing certificate in CI.
+const GAME_CAPTURE_SIGNER_THUMBPRINTS = [
+  'F776B38AB738AE9717D728170216559926661C440D9E71A70D5EEBD4908D42E7',
+];
 
 // List of the binaries needed for game capture
 const gameCaptureDependencies = [
@@ -20,7 +25,8 @@ const gameCaptureDependencies = [
 ];
 
 // Verifies the Authenticode signature of Windows game capture binaries using PowerShell.
-// Exits the process with code 1 if a binary is unsigned/tampered/untrusted or not published by 'OBS Project, LLC'.
+// Exits the process with code 1 if a binary is unsigned/tampered/untrusted or not signed by the
+// expected OBS Project, LLC certificate identity.
 async function verifyGameCaptureBinarySignatures(dir: string): Promise<void> {
   for (const bin of gameCaptureDependencies) {
     const filePath = path.join(dir, 'data', 'obs-plugins', 'win-capture', bin);
@@ -34,7 +40,8 @@ async function verifyGameCaptureBinarySignatures(dir: string): Promise<void> {
     // The publisher is compared against the certificate's simple name rather than against the
     // raw Subject DN: Windows quotes any RDN value containing a comma, so the DN reads
     // CN="OBS Project, LLC", ... and a bare `CN=OBS Project, LLC` pattern never matches it.
-    // Exit codes: 1 = unsigned/tampered/untrusted, 2 = wrong publisher, 0 = valid.
+    // Exit codes: 1 = unsigned/tampered/untrusted, 2 = wrong publisher, 3 = unexpected signer
+    // certificate, 0 = valid.
     const script = [
       "$ErrorActionPreference = 'Stop'",
       `try { $sig = Get-AuthenticodeSignature -LiteralPath '${escapedPath}' } catch { [Console]::Error.WriteLine($_.Exception.Message); exit 1 }`,
@@ -42,6 +49,10 @@ async function verifyGameCaptureBinarySignatures(dir: string): Promise<void> {
       "if ($sig.Status -ne 'Valid') { [Console]::Error.WriteLine(\"status=$($sig.Status): $($sig.StatusMessage)\"); exit 1 }",
       "$cn = $sig.SignerCertificate.GetNameInfo([System.Security.Cryptography.X509Certificates.X509NameType]::SimpleName, $false)",
       `if ($cn -cne '${GAME_CAPTURE_PUBLISHER}') { [Console]::Error.WriteLine("publisher=$cn"); exit 2 }`,
+      '$sha256 = [System.Security.Cryptography.SHA256]::Create()',
+      '$thumbprint = [BitConverter]::ToString($sha256.ComputeHash($sig.SignerCertificate.RawData)).Replace("-", "").ToUpperInvariant()',
+      'if ([string]::IsNullOrWhiteSpace($thumbprint)) { [Console]::Error.WriteLine("thumbprint=missing"); exit 3 }',
+      `if (@(${GAME_CAPTURE_SIGNER_THUMBPRINTS.map(thumbprint => `'${thumbprint}'`).join(', ')}) -notcontains $thumbprint) { [Console]::Error.WriteLine("thumbprint=$thumbprint"); exit 3 }`,
       'exit 0',
     ].join('; ');
     const encodedCommand = Buffer.from(script, 'utf16le').toString('base64');
@@ -79,6 +90,10 @@ async function verifyGameCaptureBinarySignatures(dir: string): Promise<void> {
       } else if (err.exitCode === 2) {
         console.error(
           `Signature verification failed for ${bin}: publisher is not "${GAME_CAPTURE_PUBLISHER}" (${detail})`,
+        );
+      } else if (err.exitCode === 3) {
+        console.error(
+          `Signature verification failed for ${bin}: signer certificate is not allowlisted (${detail})`,
         );
       } else {
         console.error(
