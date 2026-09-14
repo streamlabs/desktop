@@ -101,6 +101,7 @@ import { SignalsService } from 'services/signals-manager';
 import { TSocketEvent } from 'services/websocket';
 import { HighlighterService } from 'services/highlighter';
 import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremental-rollout';
+import { createStreamingSignalHandler } from './streaming-output-lifecycle';
 
 type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
 type TOutputContext = TDisplayType | 'enhancedBroadcasting';
@@ -2571,8 +2572,8 @@ export class StreamingService
         (this.isDisplayContext(contextName) &&
           this.state.status[contextName].streaming === EStreamingState.Offline);
 
-      // OBS can briefly emit deactivate/offline while a reconnect timer is still armed.
-      // If the instance still exists, force-stopping it cancels that pending reconnect.
+      // Stop retained instances too, so a pending reconnect is cancelled even if
+      // the display's status has already changed to Offline.
       streaming.stop(forceStop);
       stopped = true;
     });
@@ -2805,9 +2806,7 @@ export class StreamingService
       this.contexts[contextName].streaming.video = this.videoSettingsService.contexts[display];
     }
 
-    this.contexts[contextName].streaming.signalHandler = async (signal: EOutputSignal) => {
-      await this.handleSignal(signal, contextName);
-    };
+    this.configureStreamingSignals(contextName);
 
     const streamSettings =
       display === 'horizontal'
@@ -3314,6 +3313,17 @@ export class StreamingService
     return instance;
   }
 
+  private configureStreamingSignals(context: TOutputContext) {
+    const streaming = this.contexts[context].streaming;
+    if (!streaming) return;
+
+    streaming.signalHandler = createStreamingSignalHandler({
+      isCurrent: () => this.contexts[context].streaming === streaming,
+      handleSignal: signal => this.handleSignal(signal, context),
+      handleStopped: signal => this.handleStreamingStopped(signal, context),
+    });
+  }
+
   /**
    * Signal handler for the Factory API for streaming, recording, and replay buffer
    * @param info - The signal info
@@ -3360,7 +3370,6 @@ export class StreamingService
       [EOBSOutputSignal.Start]: EStreamingState.Live,
       [EOBSOutputSignal.Stopping]: EStreamingState.Ending,
       [EOBSOutputSignal.Stop]: EStreamingState.Offline,
-      [EOBSOutputSignal.Deactivate]: EStreamingState.Offline,
       [EOBSOutputSignal.Reconnect]: EStreamingState.Reconnecting,
       [EOBSOutputSignal.ReconnectSuccess]: EStreamingState.Live,
     } as Dictionary<EStreamingState>)[info.signal];
@@ -3427,104 +3436,18 @@ export class StreamingService
         this.sendStreamEndEvent();
       }
     } else if (info.signal === EOBSOutputSignal.Stop) {
-      // Do nothing except change the signal
-      // Note: The `stop` signal will be sent before the `deactivate` signal.
-      // Error handling with a stop signal is handled in the `signalHandler`
-    } else if (info.signal === EOBSOutputSignal.Deactivate) {
-      // The `deactivate` signal is sent after the `stop` signal
-
-      // Even though this flag is checked with `isLiveOutputEditingEnabled`, check for it here to preserve the
-      // existing behavior of what is currently live. This is to preserve testing the if/else logic for only
-      // users with the flag. In other places, the `isLiveOutputEditingEnabled` check is enough to gate the logic.
-      if (
-        this.incrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.liveOutputEditing)
-      ) {
-        if (this.views.isLiveOutputEditingEnabled) {
-          // When live output editing, if a display has no targets left the streaming context
-          // and it is not being used for recording or replay buffer, that display's streaming instance
-          // should be cleaned up
-          const isUpdatingTarget =
-            (this.isUpdatingHorizontalStream && context === 'horizontal') ||
-            (this.isUpdatingVerticalStream && context === 'vertical');
-
-          if (this.isUpdatingHorizontalStream && context === 'horizontal') {
-            this.isUpdatingHorizontalStream = false;
-          }
-          if (this.isUpdatingVerticalStream && context === 'vertical') {
-            this.isUpdatingVerticalStream = false;
-          }
-
-          if (isUpdatingTarget) {
-            // This display lost its last target while the other display keeps streaming, so only
-            // destroy this display's contexts. `handleCleanupStreamingInstances` below would stop
-            // every other streaming context, which would end the stream on the display that is
-            // still live. Set the status before destroying so that `handleDestroyOutputContexts`
-            // the display status is `Offline` so the streaming instance is destroyed correctly.
-            this.SET_STREAMING_STATUS(nextState, context, time);
-            await this.handleDestroyOutputContexts(context);
-
-            // Update number of streaming instances
-            this.numInstances = Object.values(this.contexts).filter(
-              c => c.streaming !== null && c.streaming !== undefined,
-            ).length;
-            this.streamingStatusChange.next(nextState);
-            return;
-          }
-        } else {
-          // Reset mid-stream update flags
-          if (this.isUpdatingHorizontalStream && context === 'horizontal') {
-            this.isUpdatingHorizontalStream = false;
-          }
-          if (this.isUpdatingVerticalStream && context === 'vertical') {
-            this.isUpdatingVerticalStream = false;
-          }
-        }
-      }
-
-      // Handle stopping recording and replay buffer started by AI Highlighter.
-      // handleStopStreaming already stops these for the normal recordWhenStreaming/
-      // replayBufferWhileStreaming settings, so only stop here for outputs that
-      // the highlighter started (which handleStopStreaming doesn't know about).
-      if (this.highlighterService.shouldStartHighlighterOutputs) {
-        if (this.isRecording) {
-          await this.toggleRecording();
-        }
-
-        if (this.isReplayBufferActive) {
-          this.stopReplayBuffer();
-        }
-      }
-
-      // Handle Twitch dual streaming separately because it does use the horizontal streaming instance
-      // so we can't rely on the horizontal streaming instance signals
-      if (context === 'enhancedBroadcasting' && this.views.isTwitchDualStreaming) {
-        this.SET_STREAMING_STATUS(EStreamingState.Offline, 'horizontal', new Date().toISOString());
-        this.streamingStatusChange.next(EStreamingState.Offline);
-
-        await this.handleDestroyOutputContexts('enhancedBroadcasting');
-        await this.handleDestroyOutputContexts('horizontal');
-        await this.handleDestroyOutputContexts('vertical');
-        return;
-      }
-
-      // For the UI, set the streaming status to offline on the `deactivate` signal
-      if (
-        context === 'horizontal' ||
-        (context === 'vertical' && !this.contexts.horizontal.streaming)
-      ) {
-        // The vertical stream will only exist in dual output mode and is destroyed before the vertical stream
-        // The horizontal stream is destroyed as a part of the cleanup of streaming instances
-        this.handleCleanupStreamingInstances({ skipHorizontal: context === 'horizontal' });
-      }
-
-      // Ensure instances for the recording and replay buffer are destroyed for the display context
-      await this.handleDestroyOutputContexts(context);
+      // Publish Offline now; instance cleanup waits for capture deactivation.
+      // Error handling with a stop signal is handled in the `signalHandler`.
     } else if (info.signal === EOBSOutputSignal.Reconnect) {
       this.sendReconnectingNotification();
     } else if (info.signal === EOBSOutputSignal.ReconnectSuccess) {
       this.clearReconnectingNotification();
     }
 
+    this.updateStreamingStatus(nextState, context, time);
+  }
+
+  private updateStreamingStatus(nextState: EStreamingState, context: TOutputContext, time: string) {
     if (this.isDisplayContext(context)) {
       this.SET_STREAMING_STATUS(nextState, context, time);
       this.streamingStatusChange.next(nextState);
@@ -3558,6 +3481,100 @@ export class StreamingService
         }
       });
       if (updated) this.streamingStatusChange.next(nextState);
+    }
+  }
+
+  /** Called once terminal Stop and capture deactivation have both been observed. */
+  private async handleStreamingStopped(info: EOutputSignal, context: TOutputContext) {
+    try {
+      // Error Stop signals take a separate reporting path, so publish their
+      // terminal state here too before checking whether contexts can be released.
+      this.updateStreamingStatus(EStreamingState.Offline, context, new Date().toISOString());
+
+      // Even though this flag is checked with `isLiveOutputEditingEnabled`, check for it here to preserve the
+      // existing behavior of what is currently live. This is to preserve testing the if/else logic for only
+      // users with the flag. In other places, the `isLiveOutputEditingEnabled` check is enough to gate the logic.
+      if (
+        this.incrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.liveOutputEditing)
+      ) {
+        if (this.views.isLiveOutputEditingEnabled) {
+          // When live output editing, if a display has no targets left the streaming context
+          // and it is not being used for recording or replay buffer, that display's streaming instance
+          // should be cleaned up
+          const isUpdatingTarget =
+            (this.isUpdatingHorizontalStream && context === 'horizontal') ||
+            (this.isUpdatingVerticalStream && context === 'vertical');
+
+          if (this.isUpdatingHorizontalStream && context === 'horizontal') {
+            this.isUpdatingHorizontalStream = false;
+          }
+          if (this.isUpdatingVerticalStream && context === 'vertical') {
+            this.isUpdatingVerticalStream = false;
+          }
+
+          if (isUpdatingTarget) {
+            // This display lost its last target while the other display keeps streaming, so only
+            // destroy this display's contexts. `handleCleanupStreamingInstances` below would stop
+            // every other streaming context, which would end the stream on the display that is
+            // still live. The status is already Offline so `handleDestroyOutputContexts`
+            // can release this display's streaming instance.
+            await this.handleDestroyOutputContexts(context);
+
+            // Update number of streaming instances
+            this.numInstances = Object.values(this.contexts).filter(
+              c => c.streaming !== null && c.streaming !== undefined,
+            ).length;
+            return;
+          }
+        } else {
+          // Reset mid-stream update flags
+          if (this.isUpdatingHorizontalStream && context === 'horizontal') {
+            this.isUpdatingHorizontalStream = false;
+          }
+          if (this.isUpdatingVerticalStream && context === 'vertical') {
+            this.isUpdatingVerticalStream = false;
+          }
+        }
+      }
+
+      // Handle stopping recording and replay buffer started by AI Highlighter.
+      // handleStopStreaming already stops these for the normal recordWhenStreaming/
+      // replayBufferWhileStreaming settings, so only stop here for outputs that
+      // the highlighter started (which handleStopStreaming doesn't know about).
+      if (this.highlighterService.shouldStartHighlighterOutputs) {
+        if (this.isRecording) {
+          await this.toggleRecording();
+        }
+
+        if (this.isReplayBufferActive) {
+          this.stopReplayBuffer();
+        }
+      }
+
+      // Handle Twitch dual streaming separately because it does not use the horizontal streaming instance
+      // so we can't rely on the horizontal streaming instance signals
+      if (context === 'enhancedBroadcasting' && this.views.isTwitchDualStreaming) {
+        await this.handleDestroyOutputContexts('enhancedBroadcasting');
+        await this.handleDestroyOutputContexts('horizontal');
+        await this.handleDestroyOutputContexts('vertical');
+        return;
+      }
+
+      if (
+        context === 'horizontal' ||
+        (context === 'vertical' && !this.contexts.horizontal.streaming)
+      ) {
+        // The primary output has stopped; finish its companion outputs as well.
+        this.handleCleanupStreamingInstances({ skipHorizontal: context === 'horizontal' });
+      }
+
+      // Ensure instances for the recording and replay buffer are destroyed for the display context
+      await this.handleDestroyOutputContexts(context);
+    } catch (e: unknown) {
+      console.error('Error cleaning up stopped streaming output:', e);
+      await this.handleFactoryOutputError(info, context, EOBSOutputType.Streaming);
+      this.RESET_STREAM_INFO();
+      this.rejectStartStreaming();
     }
   }
 
@@ -5011,7 +5028,7 @@ export class StreamingService
    * @remark Call this anywhere the stream is torn down. These flags change how the `start` and
    * `stopping` signals are handled, so one left set after its display is gone would misroute the
    * next legitimate signal. `isUpdatingHorizontalStream` and `isUpdatingVerticalStream` are
-   * otherwise only cleared on the `deactivate` signal, which never arrives if the stop fails.
+   * otherwise only cleared by terminal stopped-output cleanup.
    */
   private resetLiveOutputEditing() {
     this.addingDisplayTargets.clear();
