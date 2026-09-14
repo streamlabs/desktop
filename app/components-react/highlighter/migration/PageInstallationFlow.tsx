@@ -45,7 +45,7 @@ export default function PageInstallationFlow(props: IPageInstallationFlowProps) 
         title={appName}
         description={$t(
           'Turn your streams into TikTok and YouTube videos with the click of a button.',
-          { appName: REPLAY_APP_NAME },
+          { appName },
         )}
         features={CAROUSEL_FEATURES}
       >
