@@ -1,22 +1,19 @@
-import { debugPause, skipCheckingErrorsInLog, test, useWebdriver } from '../helpers/webdriver';
-import { sceneExisting, switchCollection } from '../helpers/modules/scenes';
-import { sourceIsExisting } from '../helpers/modules/sources';
-import { getApiClient } from '../helpers/api-client';
-import { WidgetsService } from '../../app/services/widgets';
-import { EWidgetType } from '../helpers/widget-helpers';
-import { FormMonkey } from '../helpers/form-monkey';
 import { ExecutionContext } from 'ava';
+import { WidgetsService } from '../../app/services/widgets';
+import { getApiClient } from '../helpers/api-client';
+import { FormMonkey } from '../helpers/form-monkey';
 import {
-  click,
   clickIfDisplayed,
-  clickWhenDisplayed,
   focusChild,
   focusMain,
-  isDisplayed,
-  waitForDisplayed,
+  waitForDisplayed
 } from '../helpers/modules/core';
-import { logIn } from '../helpers/webdriver/user';
+import { advancePastOnboardingLogin } from '../helpers/modules/onboarding';
+import { sceneExisting, switchCollection } from '../helpers/modules/scenes';
+import { sourceIsExisting } from '../helpers/modules/sources';
 import { sleep } from '../helpers/sleep';
+import { skipCheckingErrorsInLog, test, useWebdriver } from '../helpers/webdriver';
+import { EWidgetType } from '../helpers/widget-helpers';
 
 const path = require('path');
 
@@ -47,18 +44,11 @@ test('OBS Importer', async t => {
 
   const client = t.context.app.client;
 
-  if (!(await isDisplayed('h1=Welcome to Streamlabs Desktop', { timeout: 15000 }))) {
-    t.fail('Onboarding welcome page not shown');
-    return;
-  }
-  await clickWhenDisplayed('button=Get Started', { timeout: 15000 });
-  await waitForDisplayed('button=Twitch');
+  await advancePastOnboardingLogin(t);
 
-  await logIn(t, 'twitch', { prime: false }, false, true);
-  await sleep(1000);
-  await clickIfDisplayed('button=Skip');
   await waitForDisplayed('h1=Connect Platforms');
   await clickIfDisplayed('button=Skip');
+
   // import from OBS
   await clickIfDisplayed('button=Start Import');
   await clickIfDisplayed('button=Skip');

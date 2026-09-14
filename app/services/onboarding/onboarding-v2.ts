@@ -265,6 +265,10 @@ export class OnboardingV2Service extends Service {
   }
 
   showOnboardingIfNecessary() {
+    if (Utils.env.SLD_TESTS_SKIP_ONBOARDING) {
+      this.appService.setOnboarded(true);
+      return;
+    }
     if (!Utils.env.SLD_FORCE_ONBOARDING_STEP && localStorage.getItem(this.localStorageKey)) {
       return;
     }
@@ -279,12 +283,17 @@ export class OnboardingV2Service extends Service {
       );
 
       if (isValidStep) {
+        console.log('Forcing onboarding step:', Utils.env.SLD_FORCE_ONBOARDING_STEP);
         this.initalizeView({
           startingStep: { name: Utils.env.SLD_FORCE_ONBOARDING_STEP as EOnboardingSteps },
           isSingleton: true,
         });
         return;
       }
+
+      console.log('Unknown step, forcing full onboarding', Utils.env.SLD_FORCE_ONBOARDING_STEP);
+    } else {
+      console.log('Starting onboarding flow');
     }
 
     this.initalizeView({

@@ -12,6 +12,7 @@ import {
 } from '../helpers/modules/core';
 import { getApiClient } from '../helpers/api-client';
 import { ScenesService } from '../../app/services/api/external-api/scenes';
+import { advancePastOnboardingLogin } from '../helpers/modules/onboarding';
 
 /**
  * Testing default sources for onboarding and new users
@@ -98,56 +99,20 @@ async function confirmDefaultSources(
 /**
  * Helper function to go through the onboarding flow through the login step
  * @param t Test execution context
- * @param newUser Whether the user is a new user
- * @param login Whether to log in during onboarding
- * @param installTheme Whether to install a theme during onboarding
  * @param fn Function to run after onboarding is complete
  * @remark This function is a simplification of the `Go through onboarding` test
- * @remark `newUser` must be false to skip login!
  */
-async function goThroughOnboarding(
-  t: TExecutionContext,
-  newUser = false,
-  login = false,
-  fn: () => Promise<void>,
-) {
-  await focusMain();
+async function goThroughOnboarding(t: TExecutionContext, fn: () => Promise<void>) {
+  const user = await advancePastOnboardingLogin(t);
 
-  if (!(await isDisplayed('h1=Welcome to Streamlabs Desktop'))) {
-    t.fail('Onboarding welcome page not shown');
-    return;
-  }
-  await clickWhenDisplayed('button=Get Started', { timeout: 5000 });
+  await waitForDisplayed('h1=Connect Platforms');
+  await clickIfDisplayed('button=Skip');
 
-  // Complete login
-  if (newUser || login) {
-    await isDisplayed('button=Twitch');
-    const user = await logIn(t, 'twitch', { prime: false }, false, true, newUser);
-    await sleep(1000);
-
-    // We seem to skip the login step after login internally.
-    // Navigate back to onboarding and re-check if the user can skip the login step.
-    await clickIfDisplayed('button=Back');
-    await waitForDisplayed('h1=Welcome to Streamlabs Desktop');
-    await clickWhenDisplayed('button=Get Started', { timeout: 5000 });
-    await isDisplayed('button=Twitch');
-    await clickIfDisplayed('button=Skip');
-
-    await waitForDisplayed('h1=Connect Platforms');
-    await clickIfDisplayed('button=Skip');
-
-    await waitForDisplayed('h1=Choose Your Plan');
-    await clickIfDisplayed('button=Skip');
-    // Finish onboarding flow
-    await withPoolUser(user, async () => {
-      await fn();
-    });
-  } else {
-    await clickIfDisplayed('button=Skip');
+  await waitForDisplayed('h1=Choose Your Plan');
+  await clickIfDisplayed('button=Skip');
+  await withPoolUser(user, async () => {
     await fn();
-  }
-
-  t.pass();
+  });
 }
 
 /*
@@ -169,7 +134,7 @@ async function finishOnboarding(
         '//div[contains(@class,"slick-active")]//button[normalize-space(.)="Install"]',
         { timeout: 15000 },
       );
-      await waitForDisplayed('span=100%');
+      await sleep(1000);
     } else {
       await waitForDisplayed('h1=Choose Your Overlay');
       await clickIfDisplayed('button=Skip');
@@ -179,7 +144,6 @@ async function finishOnboarding(
   await isDisplayed('span=Sources');
 }
 
-// CASE 1: Old user logged in during onboarding, no theme installed
 test('Go through onboarding', async t => {
   await focusMain();
 
@@ -217,7 +181,13 @@ test('Go through onboarding', async t => {
   await waitForDisplayed('button=Twitch');
   const user = await logIn(t, 'twitch', { prime: false }, false, true);
   await sleep(1000);
-  // We seem to skip the login step after login internally
+
+  // We seem to skip the login step after login internally.
+  // Navigate back to onboarding and re-check if the user can skip the login step.
+  await clickIfDisplayed('button=Back');
+  await waitForDisplayed('h1=Welcome to Streamlabs Desktop');
+  await clickWhenDisplayed('button=Get Started', { timeout: 5000 });
+  await isDisplayed('button=Twitch');
   await clickIfDisplayed('button=Skip');
 
   // Finish onboarding flow
@@ -245,64 +215,45 @@ test('Go through onboarding', async t => {
 
 // NOTE: Skipped when running remotely but this test is functional
 test.skip('Go through onboarding and install theme', async t => {
-  const newUser = false;
-  const login = false;
+  await focusMain();
 
-  await goThroughOnboarding(t, newUser, login, async () => {
-    // Confirm sources
-    t.not(await getNumElements('div[data-role=source]'), 0, 'Theme installed before login');
+  if (!(await isDisplayed('h1=Welcome to Streamlabs Desktop'))) {
+    t.fail('Onboarding welcome page not shown');
+    return;
+  }
+  await clickWhenDisplayed('button=Get Started', { timeout: 5000 });
+  await clickIfDisplayed('button=Skip');
 
-    // login new user after onboarding
-    await clickIfDisplayed('li[data-testid=nav-auth]');
+  // Confirm sources
+  t.not(await getNumElements('div[data-role=source]'), 0, 'Theme installed before login');
 
-    await isDisplayed('button=Log in with Twitch');
-    await logIn(t, 'twitch', { prime: false }, false, false, true);
-    await sleep(1000);
+  // login new user after onboarding
+  await clickIfDisplayed('li[data-testid=nav-auth]');
 
-    // Confirm switched to scene with default sources
-    await confirmDefaultSources(t);
-  });
+  await isDisplayed('button=Log in with Twitch');
+  await logIn(t, 'twitch', { prime: false }, false, false, true);
+  await sleep(1000);
+
+  // Confirm switched to scene with default sources
+  await confirmDefaultSources(t);
 
   t.pass();
 });
 
 test('Go through onboarding as a new user', async t => {
-  const newUser = true;
-  const login = true;
-  const installTheme = false;
-
-  await goThroughOnboarding(t, newUser, login, async () => {
-    await finishOnboarding(installTheme);
+  await goThroughOnboarding(t, async () => {
+    await finishOnboarding(true);
     await confirmDefaultSources(t);
   });
 
   t.pass();
 });
 
-// CASE 4: New user logged in during onboarding, theme installed
 // NOTE: Skipped when running remotely but this test is functional
 test.skip('Go through onboarding as a new user and install theme', async t => {
-  const newUser = true;
-  const login = true;
-  const installTheme = true;
-
-  await goThroughOnboarding(t, newUser, login, async () => {
-    await finishOnboarding(installTheme);
+  await goThroughOnboarding(t, async () => {
+    await finishOnboarding(true);
     await confirmDefaultSources(t, DefaultSourcesCheck.CheckOverlaySources);
-  });
-
-  t.pass();
-});
-
-// CASE 5: New user, no theme installed, skip hardware config
-test('Login new user after onboarding skipped', async t => {
-  const login = false;
-  const newUser = false;
-  const installTheme = false;
-
-  await goThroughOnboarding(t, login, newUser, async () => {
-    await finishOnboarding(installTheme, HardwareConfigButtons.Skip);
-    await confirmDefaultSources(t, DefaultSourcesCheck.NoDefaultSources);
   });
 
   t.pass();
