@@ -229,11 +229,13 @@ async function saveFailureScreenshot(t: TExecutionContext) {
   if (!dir) return;
 
   try {
-    const imgTitle = t.title
+    const parsedTitle = t.title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
       .slice(0, 80);
+
+    const imgTitle = parsedTitle || `test-failure${Date.now()}`;
 
     fs.mkdirSync(dir, { recursive: true });
     const filePath = path.join(dir, `${imgTitle}.png`);
