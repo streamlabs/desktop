@@ -51,7 +51,7 @@ test('OBS Importer', async t => {
     t.fail('Onboarding welcome page not shown');
     return;
   }
-  await clickWhenDisplayed('a=Log In', { timeout: 15000 });
+  await clickWhenDisplayed('button=Get Started', { timeout: 15000 });
   await waitForDisplayed('button=Twitch');
 
   await logIn(t, 'twitch', { prime: false }, false, true);
