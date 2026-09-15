@@ -51,6 +51,32 @@ export interface IReplayInstallState {
   error: string | null;
 }
 
+/**
+ * Which of the two apps Desktop should talk to.
+ *
+ * Replay replaces the standalone Highlighter app, but Highlighter users migrate from inside
+ * Highlighter so they keep their data — it merges and installs Replay itself. So a user who only
+ * has Highlighter gets sent there rather than having Replay installed underneath them, and Replay
+ * wins as soon as it exists.
+ */
+export type TInstalledHighlighterApp = 'replay' | 'highlighter' | 'none';
+
+/**
+ * Extra hand-off data written into the install origin marker Replay reads on first run.
+ *
+ * Everything here is optional and best-effort: it describes what Desktop is about to ask Replay
+ * to do once the install finishes, so Replay launch the onboarding with more context.
+ */
+export interface IReplayInstallOriginMetadata {
+  /**
+   * Absolute path of the recording the user picked in the import dialog — the same path Desktop
+   * sends via the `import` deeplink.
+   */
+  videoPath?: string;
+  /** Game the user picked for that recording */
+  game?: EGame;
+}
+
 // CLIP
 export interface INewClipData {
   path: string;

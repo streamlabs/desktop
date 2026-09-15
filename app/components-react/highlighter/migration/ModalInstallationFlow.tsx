@@ -2,28 +2,35 @@ import React, { useEffect } from 'react';
 import { Button } from 'antd';
 import cx from 'classnames';
 import styles from './MigrationNotice.m.less';
-import { REPLAY_APP_NAME } from 'services/highlighter/constants';
+import { HIGHLIGHTER_APP_NAME, REPLAY_APP_NAME } from 'services/highlighter/constants';
 import { $t } from 'services/i18n';
 import Translate from 'components-react/shared/Translate';
 import SectionHeader from './SectionHeader';
 import { useInstallState, getStatusText } from './useInstallState';
+import { IReplayInstallOriginMetadata } from 'services/highlighter/models/highlighter.models';
 
 interface IModalInstallationFlowProps {
   onCancel: () => void;
   onInstallComplete?: () => void;
+  /** Hand-off data for the install origin marker, so a retry writes the same marker as the first
+   * attempt. */
+  installOriginMetadata?: IReplayInstallOriginMetadata;
 }
 
 export default function ModalInstallationFlow(props: IModalInstallationFlowProps) {
   const {
     step,
     progress,
+    installedApp,
     isInstalled,
     isInstalling,
     isRecorderRunning,
     handleOpenOrInstall,
     handleRetry,
     handleCancel,
-  } = useInstallState();
+  } = useInstallState(props.installOriginMetadata);
+
+  const appName = installedApp === 'highlighter' ? HIGHLIGHTER_APP_NAME : REPLAY_APP_NAME;
 
   useEffect(() => {
     if (step === 'done' && props.onInstallComplete) {
@@ -57,14 +64,11 @@ export default function ModalInstallationFlow(props: IModalInstallationFlowProps
 
     return (
       <div className={styles.migrationNoticeModal}>
-        <SectionHeader
-          title={$t('%{appName} is required', { appName: REPLAY_APP_NAME })}
-          onClose={props.onCancel}
-        />
+        <SectionHeader title={$t('%{appName} is required', { appName })} onClose={props.onCancel} />
         <p className={styles.subtitle}>
-          {$t('Install %{appName} to import and detect game highlights.', {
-            appName: REPLAY_APP_NAME,
-          })}
+          {installedApp === 'highlighter'
+            ? $t('Open %{appName} to import and detect game highlights.', { appName })
+            : $t('Install %{appName} to import and detect game highlights.', { appName })}
         </p>
         <div className={styles.actions}>
           <Button
@@ -72,9 +76,11 @@ export default function ModalInstallationFlow(props: IModalInstallationFlowProps
             onClick={() => handleOpenOrInstall('modal')}
             style={{ width: '100%' }}
           >
-            {isInstalled
-              ? $t('Open %{appName}', { appName: REPLAY_APP_NAME })
-              : $t('Install %{appName}', { appName: REPLAY_APP_NAME })}
+            {installedApp === 'replay' && $t('Open %{appName}', { appName: REPLAY_APP_NAME })}
+            {installedApp === 'highlighter' &&
+              $t('Open %{appName}', { appName: HIGHLIGHTER_APP_NAME })}
+            {(installedApp === 'none' || installedApp === null) &&
+              $t('Install %{appName}', { appName: REPLAY_APP_NAME })}
           </Button>
         </div>
       </div>
