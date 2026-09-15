@@ -33,10 +33,10 @@ export const AI_HIGHLIGHTER_BUILDS_URL_PRODUCTION =
   'https://cdn-highlighter-builds.streamlabs.com/production/manifest_win_x86_64.json';
 
 export const REPLAY_SETUP_URL_STAGING =
-  'https://cdn-highlighter-desktop.streamlabs.com/staging/win32/x64/G+HUB+Replay-Setup.exe';
+  'https://cdn-highlighter-desktop.streamlabs.com/replay/staging/win32/x64/G+HUB+Replay-Setup.exe';
 
 export const REPLAY_SETUP_URL_PRODUCTION =
-  'https://cdn-highlighter-desktop.streamlabs.com/production/win32/x64/G+HUB+Replay-Setup.exe';
+  'https://cdn-highlighter-desktop.streamlabs.com/replay/production/win32/x64/G+HUB+Replay-Setup.exe';
 
 export const REPLAY_PROTOCOL = 'ghub-replay';
 export const REPLAY_APP_NAME = 'Replay';
