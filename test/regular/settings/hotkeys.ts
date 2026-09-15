@@ -94,7 +94,7 @@ test('Binds a hotkey', async t => {
 const openHotkeySettings = async (t: TExecutionContext) => {
   const { app } = t.context;
   await focusMain();
-  await (await app.client.$('.side-nav .icon-settings')).click();
+  await (await app.client.$('.nav-menu .icon-settings')).click();
 
   await focusChild();
 

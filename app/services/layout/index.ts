@@ -15,7 +15,7 @@ import {
   TLayoutElement,
 } from './layout-data';
 import { UsageStatisticsService } from 'services/usage-statistics';
-import { menuTitles } from 'services/side-nav/menu-data';
+import { menuTitles } from 'services/nav-menu/menu-data';
 
 export { ELayout, ELayoutElement };
 

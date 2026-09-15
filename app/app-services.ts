@@ -58,7 +58,7 @@ export { MetricsService } from 'services/metrics';
 export { HighlighterService } from 'services/highlighter';
 export { DiagnosticsService } from 'services/diagnostics';
 export { RecordingModeService } from 'services/recording-mode';
-export { SideNavService } from 'services/side-nav';
+export { NavMenuService } from 'services/nav-menu';
 export { VideoSettingsService } from 'services/settings-v2/video';
 export { SettingsManagerService } from 'services/settings-manager';
 export { MarkersService } from 'services/markers';
@@ -191,7 +191,7 @@ import { OverlaysPersistenceService } from 'services/scene-collections/overlays'
 import { PlatformAppStoreService } from 'services/platform-app-store';
 import { GameOverlayService } from 'services/game-overlay';
 import { GuestCamService } from 'services/guest-cam';
-import { SideNavService } from './services/side-nav';
+import { NavMenuService } from './services/nav-menu';
 import { VideoSettingsService } from 'services/settings-v2/video';
 import { SettingsManagerService } from 'services/settings-manager';
 import { DualOutputService } from 'services/dual-output';
@@ -287,7 +287,7 @@ export const AppServices = {
   GameOverlayService,
   GuestCamService,
   HardwareService,
-  SideNavService,
+  NavMenuService,
   VideoSettingsService,
   SettingsManagerService,
   DualOutputService,

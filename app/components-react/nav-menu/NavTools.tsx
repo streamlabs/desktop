@@ -1,21 +1,28 @@
-import React, { memo, useMemo, useEffect, useRef, useState } from 'react';
-import cx from 'classnames';
-import electron from 'electron';
-import Utils from 'services/utils';
-import { $t } from 'services/i18n';
-import throttle from 'lodash/throttle';
-import { Services } from '../service-provider';
-import { useVuex } from '../hooks';
-import styles from './NavTools.m.less';
 import * as remote from '@electron/remote';
 import { Badge, Menu } from 'antd';
-import { EMenuItemKey, ENavName, IMenuItem, IParentMenuItem, menuTitles } from 'services/side-nav';
-import SubMenu from 'components-react/shared/SubMenu';
-import MenuItem from 'components-react/shared/MenuItem';
-import UltraIcon from 'components-react/shared/UltraIcon';
-import PlatformIndicator from './PlatformIndicator';
+import cx from 'classnames';
 import { AuthModal } from 'components-react/shared/AuthModal';
+import MenuItem from 'components-react/shared/MenuItem';
+import SubMenu from 'components-react/shared/SubMenu';
+import UltraIcon from 'components-react/shared/UltraIcon';
+import electron from 'electron';
+import throttle from 'lodash/throttle';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { $t } from 'services/i18n';
+import {
+  ENavMenuKey,
+  ENavName,
+  IMenuItem,
+  IParentMenuItem,
+  menuTitles,
+  TNavMenuKey,
+} from 'services/nav-menu';
 import { ESettingsCategory, TCategoryName } from 'services/settings';
+import Utils from 'services/utils';
+import { useVuex } from '../hooks';
+import { Services } from '../service-provider';
+import styles from './NavTools.m.less';
+import PlatformIndicator from './PlatformIndicator';
 
 export default memo(function NavTools() {
   const {
@@ -23,9 +30,8 @@ export default memo(function NavTools() {
     SettingsService,
     MagicLinkService,
     UsageStatisticsService,
-    SideNavService,
+    NavMenuService,
     WindowsService,
-    UrlService,
   } = Services;
 
   const isDevMode = useMemo(() => Utils.isDevMode(), []);
@@ -42,10 +48,10 @@ export default memo(function NavTools() {
     () => ({
       isLoggedIn: UserService.views.isLoggedIn,
       isPrime: UserService.views.isPrime,
-      menuItems: SideNavService.views.state[ENavName.BottomNav].menuItems,
-      isOpen: SideNavService.views.isOpen,
-      openMenuItems: SideNavService.views.getExpandedMenuItems(ENavName.BottomNav),
-      expandMenuItem: SideNavService.actions.expandMenuItem,
+      menuItems: NavMenuService.views.state[ENavName.ToolsNav].menuItems,
+      isOpen: NavMenuService.views.isOpen,
+      openMenuItems: NavMenuService.views.getExpandedMenuItems(ENavName.ToolsNav),
+      expandMenuItem: NavMenuService.actions.expandMenuItem,
       updateStyleBlockers: WindowsService.actions.updateStyleBlockers,
     }),
     false,
@@ -125,7 +131,7 @@ export default memo(function NavTools() {
   return (
     <>
       <Menu
-        key={ENavName.BottomNav}
+        key={ENavName.ToolsNav}
         forceSubMenuRender
         mode="inline"
         className={cx(styles.bottomNav, !isOpen && styles.closed, isOpen && styles.open)}
@@ -133,10 +139,10 @@ export default memo(function NavTools() {
         getPopupContainer={triggerNode => triggerNode}
       >
         {menuItems.map((menuItem: IParentMenuItem | IMenuItem) => {
-          if (isDevMode && menuItem.key === EMenuItemKey.DevTools) {
+          if (isDevMode && menuItem.key === ENavMenuKey.DevTools) {
             <></>;
             return <NavToolsItem key={menuItem.key} menuItem={menuItem} onClick={openDevTools} />;
-          } else if (!isPrime && menuItem.key === EMenuItemKey.GetPrime) {
+          } else if (!isPrime && menuItem.key === ENavMenuKey.GetPrime) {
             return (
               <NavToolsItem
                 key={menuItem.key}
@@ -152,7 +158,7 @@ export default memo(function NavTools() {
                 className={styles.badgeScale}
               />
             );
-          } else if (isLoggedIn && menuItem.key === EMenuItemKey.Dashboard) {
+          } else if (isLoggedIn && menuItem.key === ENavMenuKey.Dashboard) {
             return (
               <SubMenu
                 key={menuItem.key}
@@ -166,7 +172,7 @@ export default memo(function NavTools() {
                 }
                 onTitleClick={() => {
                   !isOpen && throttledOpenDashboard();
-                  expandMenuItem(ENavName.BottomNav, menuItem.key as EMenuItemKey);
+                  expandMenuItem(ENavName.ToolsNav, menuItem.key as TNavMenuKey);
                 }}
               >
                 <DashboardSubMenu
@@ -176,11 +182,11 @@ export default memo(function NavTools() {
                 />
               </SubMenu>
             );
-          } else if (menuItem.key === EMenuItemKey.GetHelp) {
+          } else if (menuItem.key === ENavMenuKey.GetHelp) {
             return (
               <NavToolsItem key={menuItem.key} menuItem={menuItem} onClick={() => openHelp()} />
             );
-          } else if (menuItem.key === EMenuItemKey.Settings) {
+          } else if (menuItem.key === ENavMenuKey.Settings) {
             return (
               <NavToolsItem
                 key={menuItem.key}
@@ -188,7 +194,7 @@ export default memo(function NavTools() {
                 onClick={() => openSettingsWindow()}
               />
             );
-          } else if (menuItem.key === EMenuItemKey.Login) {
+          } else if (menuItem.key === ENavMenuKey.Login) {
             return (
               <LoginMenuItem
                 key={menuItem.key}
@@ -268,13 +274,13 @@ function LoginMenuItem(p: {
   handleShowModal: (status: boolean) => void;
 }) {
   const { menuItem, handleAuth, handleShowModal } = p;
-  const { UserService, SideNavService } = Services;
+  const { UserService, NavMenuService } = Services;
 
   const { isLoggedIn, platform, isOpen } = useVuex(
     () => ({
       isLoggedIn: UserService.views.isLoggedIn,
       platform: UserService.views.auth?.platforms[UserService.views.auth?.primaryPlatform],
-      isOpen: SideNavService.views.isOpen,
+      isOpen: NavMenuService.views.isOpen,
     }),
     false,
   );
