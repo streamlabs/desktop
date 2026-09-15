@@ -39,6 +39,7 @@ import {
   RecentEventsWindow,
   EditTransform,
   EditAutomations,
+  KevinSupport,
   Blank,
   Main,
   MultistreamChatInfo,
@@ -99,6 +100,7 @@ export function getComponents() {
     PlatformAppPopOut,
     EditTransform,
     EditAutomations,
+    KevinSupport,
     OverlayPlaceholder,
     BrowserSourceInteraction,
     EventFilterMenu,
@@ -139,6 +141,11 @@ export interface IWindowOptions extends Electron.BrowserWindowConstructorOptions
   };
   scaleFactor: number;
   isShown: boolean;
+  /**
+   * Live focus state, not a construction option — same as scaleFactor above.
+   * Only maintained for one-off windows; main and child never set it.
+   */
+  isFocused?: boolean;
   title?: string;
   center?: boolean;
   position?: {
@@ -269,6 +276,11 @@ export class WindowsService extends StatefulService<IWindowsState> {
       const currentDisplay = remote.screen.getDisplayMatching(bounds);
       this.UPDATE_SCALE_FACTOR(windowId, currentDisplay.scaleFactor);
     }
+  }
+
+  private setOneOffFocused(windowId: string, isFocused: boolean) {
+    if (!this.state[windowId]) return;
+    this.UPDATE_ONE_OFF_WINDOW(windowId, { isFocused });
   }
 
   getWindowIdFromElectronId(electronWindowId: number) {
@@ -489,6 +501,9 @@ export class WindowsService extends StatefulService<IWindowsState> {
       delete this.windows[windowId];
       this.DELETE_ONE_OFF_WINDOW(windowId);
     });
+
+    newWindow.on('focus', () => this.setOneOffFocused(windowId, true));
+    newWindow.on('blur', () => this.setOneOffFocused(windowId, false));
 
     this.updateScaleFactor(windowId);
     newWindow.on('move', () => this.updateScaleFactor(windowId));
