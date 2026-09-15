@@ -38,7 +38,9 @@ export default function PageInstallationFlow(props: IPageInstallationFlowProps) 
 
   return (
     <div
-      className={cx(styles.appDetection, installedApp !== null && styles.appDetectionReady)}
+      className={cx(styles.appDetection, {
+        [styles.appDetectionReady]: installedApp !== null,
+      })}
       aria-hidden={installedApp === null}
     >
       <FeatureCarousel
@@ -232,10 +234,9 @@ function PageInstallCta({
           <div className={styles.progressBarRow}>
             <div className={styles.progressTrack}>
               <div
-                className={cx(
-                  styles.progressFill,
-                  step !== 'downloading' && styles.progressFillPulse,
-                )}
+                className={cx(styles.progressFill, {
+                  [styles.progressFillPulse]: step !== 'downloading',
+                })}
                 style={{ width: step === 'downloading' ? `${progress}%` : '100%' }}
               />
             </div>
