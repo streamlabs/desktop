@@ -23,6 +23,8 @@ interface IScenario {
   context: TContext;
   stages: Array<Array<string | IScenarioSignal>>;
   highlighter?: boolean;
+  liveOutputEditing?: boolean;
+  updatingDisplay?: 'horizontal' | 'vertical';
   retainedRestart?: {
     startupSignals: Array<string | IScenarioSignal>;
     stages: Array<Array<string | IScenarioSignal>>;
@@ -44,6 +46,8 @@ interface ISnapshot {
   outputRetained: boolean;
   nativeStarts: number;
   goLiveRejected: boolean;
+  updatingDisplays: string[];
+  numInstances: number;
 }
 
 interface IScenarioResult {
@@ -114,6 +118,61 @@ test('Streaming terminal cleanup still stops the companion in both signal orders
     t.is(stopped.highlighterRecordingStops, 1, label);
     t.is(stopped.highlighterReplayStops, 1, label);
     t.deepEqual(stopped.outputErrors, [], label);
+  }
+});
+
+test('Live output editing waits for terminal stop and preserves the companion and highlighter', async t => {
+  const displays: Array<'horizontal' | 'vertical'> = ['horizontal', 'vertical'];
+  for (const context of displays) {
+    for (const highlighter of [false, true]) {
+      for (const signals of [
+        ['stop', 'deactivate'],
+        ['deactivate', 'stop'],
+      ]) {
+        const label = `${context}, highlighter=${highlighter}: ${signals.join(', ')}`;
+        const companion = context === 'horizontal' ? 'vertical' : 'horizontal';
+        const { snapshots, error } = await runScenario(t, {
+          setup: 'dual',
+          context,
+          highlighter,
+          liveOutputEditing: true,
+          updatingDisplay: context,
+          stages: [
+            ['deactivate', 'reconnect'],
+            ['activate', 'reconnect_success'],
+            ...signals.map(signal => [signal]),
+          ],
+        });
+        t.falsy(error, label);
+        const [retrying, recovered, pending, stopped] = snapshots;
+        t.is(retrying[context], 'reconnecting', label);
+        t.is(recovered[context], 'live', label);
+        for (const snapshot of [retrying, recovered, pending]) {
+          t.deepEqual(snapshot.stopped, [], label);
+          t.deepEqual(snapshot.destroyed, [], label);
+          t.is(snapshot[companion], 'live', label);
+          t.is(snapshot.highlighterRecordingStops, 0, label);
+          t.is(snapshot.highlighterReplayStops, 0, label);
+          t.deepEqual(snapshot.updatingDisplays, [context], label);
+          t.is(snapshot.numInstances, 2, label);
+        }
+        t.is(stopped[context], 'offline', label);
+        t.is(stopped[companion], 'live', label);
+        t.deepEqual(stopped.stopped, [], label);
+        t.is(stopped.highlighterRecordingStops, 0, label);
+        t.is(stopped.highlighterReplayStops, 0, label);
+        t.deepEqual(stopped.updatingDisplays, [], label);
+        t.deepEqual(stopped.outputErrors, [], label);
+
+        // Active highlighter recording/replay still owns the horizontal wrapper.
+        // Otherwise only the display that lost its last target can be destroyed.
+        const retained = highlighter && context === 'horizontal';
+        t.is(stopped.outputRetained, retained, label);
+        t.deepEqual(stopped.destroyed, retained ? [] : [`${context}/streaming`], label);
+        t.is(stopped.numInstances, retained ? 2 : 1, label);
+        t.is(stopped.recording, highlighter ? 'recording' : 'offline', label);
+      }
+    }
   }
 });
 
@@ -292,7 +351,16 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
           isDualOutputMode: input.setup !== 'single',
           isTwitchDualStreaming: enhanced,
           isTwitchDualStreamEnabled: enhanced,
+          isLiveOutputEditingEnabled: !!input.liveOutputEditing,
         },
+        incrementalRolloutService: {
+          views: {
+            featureIsEnabled: (feature: string) =>
+              feature === 'slobs--live-output-editing' && !!input.liveOutputEditing,
+          },
+        },
+        isUpdatingHorizontalStream: input.updatingDisplay === 'horizontal',
+        isUpdatingVerticalStream: input.updatingDisplay === 'vertical',
         numInstances: input.setup === 'dual' ? 2 : 1,
         outputSettingsService: { getSettings: () => ({ mode: 'Simple' }) },
         highlighterService: { shouldStartHighlighterOutputs: !!input.highlighter },
@@ -373,6 +441,11 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
         outputRetained: contexts[input.context].streaming === originalOutput,
         nativeStarts,
         goLiveRejected,
+        updatingDisplays: [
+          ...(fixture.isUpdatingHorizontalStream ? ['horizontal'] : []),
+          ...(fixture.isUpdatingVerticalStream ? ['vertical'] : []),
+        ],
+        numInstances: fixture.numInstances,
       });
 
       try {
