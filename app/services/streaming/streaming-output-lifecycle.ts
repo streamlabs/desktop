@@ -7,7 +7,7 @@ interface IStreamingSignalHandlers {
   handleStopped(signal: EOutputSignal): Promise<void>;
 }
 
-/** Keep capture teardown during reconnect separate from terminal output cleanup. */
+/** Track one explicit streaming start attempt, including failure before Starting. */
 export function createStreamingSignalHandler(handlers: IStreamingSignalHandlers) {
   let captureActive = false;
   let stopSignal: EOutputSignal | undefined;
@@ -15,17 +15,14 @@ export function createStreamingSignalHandler(handlers: IStreamingSignalHandlers)
   let pending = Promise.resolve();
 
   return (signal: EOutputSignal): Promise<void> => {
-    // OSN does not await signal callbacks. Serialize each instance so an awaited
-    // stop/error handler finishes before its terminal cleanup or a later start.
+    // OSN does not await signal callbacks. Serialize this attempt so an awaited
+    // stop/error handler finishes before its terminal cleanup.
     const handled = pending.then(async () => {
       if (!handlers.isCurrent()) return;
 
-      if (signal.signal === EOBSOutputSignal.Starting) {
-        stopSignal = undefined;
-        cleanupDelivered = false;
-      } else if (cleanupDelivered) {
-        return;
-      }
+      // Starting is a notification, not an attempt boundary: startup can fail
+      // before it, and delayed capture emits Activate before Starting.
+      if (cleanupDelivered) return;
 
       if (signal.signal === EOBSOutputSignal.Activate) {
         captureActive = true;
@@ -41,9 +38,10 @@ export function createStreamingSignalHandler(handlers: IStreamingSignalHandlers)
         await handlers.handleSignal(signal);
       }
 
-      // Cancelling/exhausting retries may emit Stop without another Deactivate:
-      // capture already ended on the original disconnection. Failed startup
-      // similarly has no active capture to wait for.
+      // When capture has already deactivated during reconnect, cancelling or
+      // exhausting retries emits Stop without another Deactivate. Libobs's
+      // obs_output_end_data_capture_internal returns after signalling Stop
+      // for inactive capture. Failed startup also has no capture to wait for.
       if (stopSignal && !captureActive && !cleanupDelivered && handlers.isCurrent()) {
         cleanupDelivered = true;
         await handlers.handleStopped(stopSignal);

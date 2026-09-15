@@ -2806,8 +2806,6 @@ export class StreamingService
       this.contexts[contextName].streaming.video = this.videoSettingsService.contexts[display];
     }
 
-    this.configureStreamingSignals(contextName);
-
     const streamSettings =
       display === 'horizontal'
         ? this.settingsService.views.values.Stream
@@ -2865,7 +2863,7 @@ export class StreamingService
 
     if (start) {
       try {
-        this.contexts[contextName].streaming.start();
+        this.startStreamingOutput(contextName);
       } catch (e: unknown) {
         console.error('Error starting streaming:', e);
         // Surface YouTube vertical display error to the user
@@ -3317,11 +3315,21 @@ export class StreamingService
     const streaming = this.contexts[context].streaming;
     if (!streaming) return;
 
-    streaming.signalHandler = createStreamingSignalHandler({
-      isCurrent: () => this.contexts[context].streaming === streaming,
+    const signalHandler: (signal: EOutputSignal) => Promise<void> = createStreamingSignalHandler({
+      // A retained instance can have queued work from its previous handler.
+      isCurrent: () =>
+        this.contexts[context].streaming === streaming && streaming.signalHandler === signalHandler,
       handleSignal: signal => this.handleSignal(signal, context),
       handleStopped: signal => this.handleStreamingStopped(signal, context),
     });
+    streaming.signalHandler = signalHandler;
+  }
+
+  private startStreamingOutput(context: TOutputContext) {
+    // Recording/replay can retain a stopped streaming instance. Every explicit
+    // start needs a fresh lifecycle before native code can emit any signals.
+    this.configureStreamingSignals(context);
+    this.contexts[context].streaming?.start();
   }
 
   /**
@@ -3969,7 +3977,11 @@ export class StreamingService
     // If the instance matches the mode, return to validate it
     if (validOutput && start) {
       try {
-        this.contexts[context][type]?.start();
+        if (type === 'streaming') {
+          this.startStreamingOutput(context);
+        } else {
+          this.contexts[context][type]?.start();
+        }
       } catch (e: unknown) {
         console.error(`Error starting validated ${type} instance:`, e);
 

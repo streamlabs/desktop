@@ -23,6 +23,11 @@ interface IScenario {
   context: TContext;
   stages: Array<Array<string | IScenarioSignal>>;
   highlighter?: boolean;
+  retainedRestart?: {
+    startupSignals: Array<string | IScenarioSignal>;
+    stages: Array<Array<string | IScenarioSignal>>;
+  };
+  replaceHandlerWithQueuedSignals?: boolean;
 }
 
 interface ISnapshot {
@@ -35,6 +40,10 @@ interface ISnapshot {
   highlighterReplayStops: number;
   streamEndEvents: number;
   outputErrors: string[];
+  recording: string;
+  outputRetained: boolean;
+  nativeStarts: number;
+  goLiveRejected: boolean;
 }
 
 interface IScenarioResult {
@@ -150,6 +159,75 @@ test('Failed terminal Stop reports its error once and still cleans up after deac
   t.deepEqual(stopped.outputErrors, ['stop: Injected terminal disconnection']);
 });
 
+test('Retained Dual Output restart rejects Go Live when startup fails before Starting', async t => {
+  skipCheckingErrorsInLog(); // The real error router logs the injected startup failure.
+  const { snapshots, error } = await runScenario(t, {
+    setup: 'dual',
+    context: 'horizontal',
+    stages: [['stop', 'deactivate']],
+    retainedRestart: {
+      startupSignals: [{ signal: 'stop', code: -1, error: 'Injected retained startup failure' }],
+      stages: [],
+    },
+  });
+  t.falsy(error);
+  const [retained, failed] = snapshots;
+  t.true(retained.outputRetained, 'ongoing recording retains the stopped streaming wrapper');
+  t.is(retained.recording, 'recording');
+  t.is(failed.nativeStarts, 1, 'the real validation path starts the retained instance');
+  t.true(failed.goLiveRejected, 'the real output-error handler rejects the Go Live promise');
+  t.deepEqual(failed.outputErrors, ['stop: Injected retained startup failure']);
+  t.true(failed.stopped.includes('vertical'), 'the second attempt stops its running companion');
+  t.is(failed.horizontal, 'offline');
+  t.is(failed.recording, 'offline');
+  t.true(failed.destroyed.includes('horizontal/recording'));
+  t.false(failed.outputRetained);
+});
+
+test('Delayed retained restart observes Activate before Starting and waits for Deactivate', async t => {
+  const { snapshots, error } = await runScenario(t, {
+    setup: 'dual',
+    context: 'horizontal',
+    stages: [['stop', 'deactivate']],
+    retainedRestart: {
+      startupSignals: ['activate', 'starting'],
+      stages: [['stop'], ['deactivate']],
+    },
+  });
+  t.falsy(error);
+  const [retained, restarted, pending, stopped] = snapshots;
+  t.true(retained.outputRetained);
+  t.is(restarted.nativeStarts, 1);
+  t.is(restarted.horizontal, 'starting');
+  t.deepEqual(restarted.stopped, []);
+  t.deepEqual(pending.stopped, [], 'active capture prevents premature companion cleanup');
+  t.deepEqual(pending.destroyed, []);
+  t.deepEqual(stopped.stopped, ['vertical']);
+  t.true(stopped.outputRetained, 'recording still retains the wrapper after the second stop');
+  t.is(stopped.recording, 'recording');
+  t.deepEqual(stopped.outputErrors, []);
+});
+
+test('Queued callbacks from the same streaming instance cannot affect its replacement handler', async t => {
+  const { snapshots, error } = await runScenario(t, {
+    setup: 'dual',
+    context: 'horizontal',
+    replaceHandlerWithQueuedSignals: true,
+    stages: [['starting'], ['stop'], ['deactivate']],
+  });
+  t.falsy(error);
+  const [restarted, pending, stopped] = snapshots;
+  t.true(restarted.outputRetained);
+  t.is(restarted.horizontal, 'starting');
+  t.deepEqual(restarted.stopped, []);
+  t.deepEqual(restarted.destroyed, []);
+  t.deepEqual(pending.stopped, [], 'old deactivation must not clear new capture activity');
+  t.deepEqual(pending.destroyed, []);
+  t.deepEqual(stopped.stopped, ['vertical']);
+  t.false(stopped.outputRetained);
+  t.deepEqual(stopped.outputErrors, []);
+});
+
 async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<IScenarioResult> {
   t.true(await focusWindow('worker'), 'worker window is available');
   try {
@@ -167,8 +245,19 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
       let highlighterRecordingStops = 0;
       let highlighterReplayStops = 0;
       let streamEndEvents = 0;
+      let nativeStarts = 0;
+      let goLiveRejected = false;
+      let rejectGoLive: () => void = (): void => undefined;
+      // This mirrors finishStartStreaming's pending promise; the real error handler
+      // must invoke its rejection callback when the retained native start fails.
+      new Promise<void>((_resolve, reject) => {
+        rejectGoLive = reject;
+      }).catch(() => {
+        goLiveRejected = true;
+      });
       const enhanced = input.setup === 'enhancedBroadcasting';
       const createOutput = (context: string) => ({
+        useAdvanced: false,
         stop: () => stopped.push(context),
       });
       const createContext = (streaming: unknown = null) => ({
@@ -205,6 +294,7 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
           isTwitchDualStreamEnabled: enhanced,
         },
         numInstances: input.setup === 'dual' ? 2 : 1,
+        outputSettingsService: { getSettings: () => ({ mode: 'Simple' }) },
         highlighterService: { shouldStartHighlighterOutputs: !!input.highlighter },
         streamingStatusChange: { next: (status: string) => published.push(status) },
         SET_STREAMING_STATUS(status: string, context: 'horizontal' | 'vertical') {
@@ -224,10 +314,16 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
           highlighterReplayStops++;
           fixture.state.status.horizontal.replayBuffer = 'offline';
         },
-        destroyOutputContextIfExists(context: keyof typeof contexts, type: 'streaming') {
+        destroyOutputContextIfExists(
+          context: keyof typeof contexts,
+          type: 'streaming' | 'recording' | 'replayBuffer',
+        ) {
           if (contexts[context][type]) {
             destroyed.push(`${context}/${type}`);
             contexts[context][type] = null;
+            if (context === 'horizontal' || context === 'vertical') {
+              fixture.state.status[context][type] = 'offline';
+            }
           }
           return Promise.resolve();
         },
@@ -235,16 +331,34 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
           outputErrors.push(`${info.signal}: ${info.error}`);
           return Promise.resolve();
         },
+        createOBSError(
+          _type: string,
+          _context: string,
+          signal: string,
+          _code: number,
+          error: string,
+        ) {
+          outputErrors.push(`${signal}: ${error}`);
+        },
+        resetInfo: () => Promise.resolve(),
         RESET_STREAM_INFO: (): void => undefined,
-        rejectStartStreaming: (): void => undefined,
+        rejectStartStreaming: () => rejectGoLive(),
       };
       Object.setPrototypeOf(fixture, prototype);
       if (input.highlighter) {
         fixture.state.status.horizontal.recording = 'recording';
         fixture.state.status.horizontal.replayBuffer = 'running';
       }
+      if (input.retainedRestart) {
+        fixture.state.status.horizontal.recording = 'recording';
+        contexts.horizontal.recording = {};
+        // Keep the real failure routing for retained restarts, including companion
+        // cleanup and Go Live rejection. Only reporting and native release are fake.
+        delete fixture.handleFactoryOutputError;
+      }
 
       const snapshots: ISnapshot[] = [];
+      const originalOutput = contexts[input.context].streaming;
       const snapshot = () => ({
         horizontal: fixture.state.status.horizontal.streaming,
         vertical: fixture.state.status.vertical.streaming,
@@ -255,6 +369,10 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
         highlighterReplayStops,
         streamEndEvents,
         outputErrors: outputErrors.slice(),
+        recording: fixture.state.status.horizontal.recording,
+        outputRetained: contexts[input.context].streaming === originalOutput,
+        nativeStarts,
+        goLiveRejected,
       });
 
       try {
@@ -262,31 +380,75 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
         const output = fixture.contexts[input.context].streaming;
         // Establish real capture activity through the callback before testing a
         // disconnect. Activate does not rerun Desktop's Go Live startup workflow.
-        const activated = output.signalHandler({
+        let activated = output.signalHandler({
           type: 'streaming',
           signal: 'activate',
           code: 0,
           error: '',
         }) as Promise<void>;
-        input.stages
-          .reduce(
+        const emit = (signal: string | IScenarioSignal) =>
+          output.signalHandler(
+            typeof signal === 'string'
+              ? { type: 'streaming', signal, code: 0, error: '' }
+              : { type: 'streaming', ...signal },
+          ) as Promise<void>;
+        if (input.replaceHandlerWithQueuedSignals) {
+          activated = activated.then(() => {
+            const oldHandler = output.signalHandler;
+            const obsoleteSignals = Promise.all([
+              oldHandler({ type: 'streaming', signal: 'stop', code: 0, error: '' }),
+              oldHandler({ type: 'streaming', signal: 'deactivate', code: 0, error: '' }),
+            ]);
+            // Replace synchronously before either old queued callback executes.
+            fixture.configureStreamingSignals(input.context);
+            return Promise.all([obsoleteSignals, emit('activate')]).then((): void => undefined);
+          });
+        }
+        const deliverStages = (stages: IScenario['stages'], ready = Promise.resolve()) =>
+          stages.reduce(
             (chain, signals) =>
               chain.then(() =>
                 // Queue each stage together to exercise the actual per-instance serialization.
-                Promise.all(
-                  signals.map(signal =>
-                    output.signalHandler(
-                      typeof signal === 'string'
-                        ? { type: 'streaming', signal, code: 0, error: '' }
-                        : { type: 'streaming', ...signal },
-                    ),
-                  ),
-                ).then(() => {
+                Promise.all(signals.map(emit)).then(() => {
                   snapshots.push(snapshot());
                 }),
               ),
-            activated,
-          )
+            ready,
+          );
+        deliverStages(input.stages, activated)
+          .then(() => {
+            if (!input.retainedRestart) return;
+            if (contexts.horizontal.streaming !== output) {
+              throw new Error('The first stop did not retain the horizontal streaming wrapper');
+            }
+            // A second Go Live has already started a fresh vertical companion when
+            // the real Dual Output handler reaches horizontal instance validation.
+            contexts.vertical.streaming = createOutput('vertical');
+            fixture.state.status.vertical.streaming = 'starting';
+            stopped.length = 0;
+            destroyed.length = 0;
+            published.length = 0;
+            outputErrors.length = 0;
+            let startSignals = Promise.resolve();
+            output.start = () => {
+              nativeStarts++;
+              startSignals = Promise.all(input.retainedRestart.startupSignals.map(emit)).then(
+                (): void => undefined,
+              );
+            };
+            return fixture
+              .validateOrCreateOutputInstance({
+                display: 'horizontal',
+                context: 'horizontal',
+                type: 'streaming',
+                start: true,
+              })
+              .then(() => startSignals)
+              .then(() => {
+                snapshots.push(snapshot());
+                return deliverStages(input.retainedRestart.stages);
+              });
+          })
           .then(() => done({ snapshots }))
           .catch((error: Error) => done({ snapshots, error: error.message }));
       } catch (error: unknown) {

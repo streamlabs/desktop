@@ -9,21 +9,25 @@ function outputSignal(signal: EOBSOutputSignal, code = 0, error = ''): EOutputSi
 
 function createLifecycle() {
   const state = {
-    current: true,
     calls: [] as string[],
     stopped: [] as EOutputSignal[],
   };
-  const handle = createStreamingSignalHandler({
-    isCurrent: () => state.current,
-    handleSignal: async signal => {
-      state.calls.push(signal.signal);
-    },
-    handleStopped: async signal => {
-      state.calls.push('cleanup');
-      state.stopped.push(signal);
-    },
-  });
-  return { state, handle };
+  let currentHandler: ReturnType<typeof createStreamingSignalHandler> | undefined;
+  const createHandler = () => {
+    const handle: ReturnType<typeof createStreamingSignalHandler> = createStreamingSignalHandler({
+      isCurrent: () => currentHandler === handle,
+      handleSignal: async signal => {
+        state.calls.push(signal.signal);
+      },
+      handleStopped: async signal => {
+        state.calls.push('cleanup');
+        state.stopped.push(signal);
+      },
+    });
+    currentHandler = handle;
+    return handle;
+  };
+  return { state, handle: createHandler(), createHandler };
 }
 
 function deferred() {
@@ -71,6 +75,42 @@ test('Streaming stop waits for active capture to deactivate before cleanup', asy
   t.is(state.stopped[0], stop);
 });
 
+for (const emitStart of [false, true]) {
+  test(`Activate before Starting preserves capture with Start=${emitStart}`, async t => {
+    const { state, handle } = createLifecycle();
+    const stop = outputSignal(EOBSOutputSignal.Stop);
+    await handle(outputSignal(EOBSOutputSignal.Activate));
+    await handle(outputSignal(EOBSOutputSignal.Starting));
+    if (emitStart) await handle(outputSignal(EOBSOutputSignal.Start));
+    await handle(stop);
+    const expected = ['activate', 'starting', ...(emitStart ? ['start'] : []), 'stop'];
+
+    t.deepEqual(state.calls, expected);
+    t.deepEqual(state.stopped, []);
+
+    await handle(outputSignal(EOBSOutputSignal.Deactivate));
+    t.deepEqual(state.calls, [...expected, 'cleanup']);
+    t.deepEqual(state.stopped, [stop]);
+  });
+}
+
+test('Repeated Starting preserves active capture and a pending terminal stop', async t => {
+  const { state, handle } = createLifecycle();
+  const stop = outputSignal(EOBSOutputSignal.Stop, -5, 'Connection lost');
+  await handle(outputSignal(EOBSOutputSignal.Activate));
+  await handle(outputSignal(EOBSOutputSignal.Starting));
+  await handle(outputSignal(EOBSOutputSignal.Starting));
+  await handle(stop);
+  await handle(outputSignal(EOBSOutputSignal.Starting));
+  await handle(outputSignal(EOBSOutputSignal.Starting));
+
+  t.deepEqual(state.stopped, []);
+
+  await handle(outputSignal(EOBSOutputSignal.Deactivate));
+  t.deepEqual(state.stopped, [stop]);
+  t.is(state.calls[state.calls.length - 1], 'cleanup');
+});
+
 test('Streaming capture deactivation waits for terminal stop before cleanup', async t => {
   const { state, handle } = createLifecycle();
   const stop = outputSignal(EOBSOutputSignal.Stop, -5, 'Connection lost');
@@ -93,6 +133,21 @@ test('Streaming startup failure cleans up without capture activation', async t =
 
   t.deepEqual(state.calls, ['starting', 'stop', 'cleanup']);
   t.deepEqual(state.stopped, [stop]);
+});
+
+test('Fresh streaming attempts handle Stop errors without receiving Starting', async t => {
+  const { state, handle, createHandler } = createLifecycle();
+  const firstStop = outputSignal(EOBSOutputSignal.Stop, -2, 'Connection failed');
+  const nextStop = outputSignal(EOBSOutputSignal.Stop, -3, 'Invalid stream');
+  await handle(firstStop);
+
+  t.deepEqual(state.calls, ['stop', 'cleanup']);
+  t.deepEqual(state.stopped, [firstStop]);
+
+  const nextAttempt = createHandler();
+  await nextAttempt(nextStop);
+  t.deepEqual(state.calls, ['stop', 'cleanup', 'stop', 'cleanup']);
+  t.deepEqual(state.stopped, [firstStop, nextStop]);
 });
 
 for (const [description, code] of [
@@ -124,39 +179,47 @@ test('Streaming terminal cleanup is delivered once despite duplicate and late si
   await handle(outputSignal(EOBSOutputSignal.Deactivate));
   await handle(stop);
   await handle(outputSignal(EOBSOutputSignal.Reconnect));
+  await handle(outputSignal(EOBSOutputSignal.Starting));
   await handle(outputSignal(EOBSOutputSignal.Activate));
+  await handle(outputSignal(EOBSOutputSignal.Starting));
   await handle(outputSignal(EOBSOutputSignal.ReconnectSuccess));
 
   t.deepEqual(state.calls, completedCalls);
   t.deepEqual(state.stopped, [stop]);
 });
 
-test('A retained streaming instance starts a fresh lifecycle after terminal cleanup', async t => {
-  const { state, handle } = createLifecycle();
+test('A retained streaming instance uses a fresh handler for its next explicit start', async t => {
+  const { state, handle, createHandler } = createLifecycle();
   const firstStop = outputSignal(EOBSOutputSignal.Stop, -2, 'Connection failed');
   const secondStop = outputSignal(EOBSOutputSignal.Stop);
   await handle(outputSignal(EOBSOutputSignal.Starting));
   await handle(firstStop);
   state.calls.length = 0;
 
-  await handle(outputSignal(EOBSOutputSignal.Starting));
-  await handle(outputSignal(EOBSOutputSignal.Activate));
-  await handle(outputSignal(EOBSOutputSignal.Start));
+  const nextAttempt = createHandler();
+  await nextAttempt(outputSignal(EOBSOutputSignal.Starting));
+  await nextAttempt(outputSignal(EOBSOutputSignal.Activate));
+  await nextAttempt(outputSignal(EOBSOutputSignal.Start));
   t.deepEqual(state.calls, ['starting', 'activate', 'start']);
   t.deepEqual(state.stopped, [firstStop]);
 
-  await handle(secondStop);
-  await handle(outputSignal(EOBSOutputSignal.Deactivate));
+  await handle(outputSignal(EOBSOutputSignal.Starting));
+  await handle(outputSignal(EOBSOutputSignal.Activate));
+  t.deepEqual(state.calls, ['starting', 'activate', 'start']);
+
+  await nextAttempt(secondStop);
+  await nextAttempt(outputSignal(EOBSOutputSignal.Deactivate));
   t.deepEqual(state.calls, ['starting', 'activate', 'start', 'stop', 'cleanup']);
   t.deepEqual(state.stopped, [firstStop, secondStop]);
 });
 
-test('Queued streaming callbacks wait for stop and cleanup before restarting', async t => {
+test('Queued streaming callbacks wait for stop handling and terminal cleanup', async t => {
   const stopEntered = deferred();
   const releaseStop = deferred();
   const cleanupEntered = deferred();
   const releaseCleanup = deferred();
   const calls: string[] = [];
+  let lateSignalSettled = false;
   const handle = createStreamingSignalHandler({
     isCurrent: () => true,
     handleSignal: async signal => {
@@ -177,38 +240,36 @@ test('Queued streaming callbacks wait for stop and cleanup before restarting', a
   await handle(outputSignal(EOBSOutputSignal.Activate));
   const stopping = handle(outputSignal(EOBSOutputSignal.Stop));
   const deactivating = handle(outputSignal(EOBSOutputSignal.Deactivate));
-  const restarting = handle(outputSignal(EOBSOutputSignal.Starting));
+  const lateStarting = handle(outputSignal(EOBSOutputSignal.Starting)).then(() => {
+    lateSignalSettled = true;
+  });
 
   await stopEntered.promise;
   t.deepEqual(calls, ['activate', 'stop']);
+  t.false(lateSignalSettled);
   releaseStop.resolve();
   await cleanupEntered.promise;
   t.deepEqual(calls, ['activate', 'stop', 'stop finished', 'cleanup']);
+  t.false(lateSignalSettled);
 
   releaseCleanup.resolve();
-  await Promise.all([stopping, deactivating, restarting]);
-  t.deepEqual(calls, [
-    'activate',
-    'stop',
-    'stop finished',
-    'cleanup',
-    'cleanup finished',
-    'starting',
-  ]);
+  await Promise.all([stopping, deactivating, lateStarting]);
+  t.deepEqual(calls, ['activate', 'stop', 'stop finished', 'cleanup', 'cleanup finished']);
+  t.true(lateSignalSettled);
 });
 
-test('Queued callbacks from a replaced streaming instance are ignored before delivery', async t => {
-  const { state, handle } = createLifecycle();
+test('A fresh attempt invalidates queued callbacks from the same retained output', async t => {
+  const { state, handle, createHandler } = createLifecycle();
   const starting = handle(outputSignal(EOBSOutputSignal.Starting));
   const stopping = handle(outputSignal(EOBSOutputSignal.Stop));
-  state.current = false;
+  const nextAttempt = createHandler();
 
-  await Promise.all([starting, stopping]);
-  t.deepEqual(state.calls, []);
+  await Promise.all([starting, stopping, nextAttempt(outputSignal(EOBSOutputSignal.Starting))]);
+  t.deepEqual(state.calls, ['starting']);
   t.deepEqual(state.stopped, []);
 });
 
-test('Replaced streaming instances cannot clean up or deliver signals after an await', async t => {
+test('Replaced streaming attempts cannot clean up or deliver signals after an await', async t => {
   const stopEntered = deferred();
   const releaseStop = deferred();
   const calls: string[] = [];
@@ -225,12 +286,12 @@ test('Replaced streaming instances cannot clean up or deliver signals after an a
     },
   });
   const stopping = handle(outputSignal(EOBSOutputSignal.Stop));
-  const restarting = handle(outputSignal(EOBSOutputSignal.Starting));
+  const lateStarting = handle(outputSignal(EOBSOutputSignal.Starting));
   await stopEntered.promise;
   current = false;
   releaseStop.resolve();
 
-  await Promise.all([stopping, restarting]);
+  await Promise.all([stopping, lateStarting]);
   t.deepEqual(calls, ['stop']);
 });
 
