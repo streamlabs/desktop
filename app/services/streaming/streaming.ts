@@ -3311,12 +3311,14 @@ export class StreamingService
     return instance;
   }
 
+  /** Install a fresh attempt's callback on the current streaming instance. */
   private configureStreamingSignals(context: TOutputContext) {
     const streaming = this.contexts[context].streaming;
     if (!streaming) return;
 
     const signalHandler: (signal: EOutputSignal) => Promise<void> = createStreamingSignalHandler({
-      // A retained instance can have queued work from its previous handler.
+      // Callback identity invalidates queued JavaScript work from a retained
+      // instance's previous attempt; it does not drain OSN's native signal queue.
       isCurrent: () =>
         this.contexts[context].streaming === streaming && streaming.signalHandler === signalHandler,
       handleSignal: signal => this.handleSignal(signal, context),
@@ -3325,9 +3327,13 @@ export class StreamingService
     streaming.signalHandler = signalHandler;
   }
 
+  /**
+   * Begin an explicit streaming attempt, including on an instance retained by recording/replay.
+   * Install its handler before native start can emit an early Stop or delayed Activate.
+   * Does nothing if the context no longer has a streaming instance.
+   * Native start exceptions propagate to the caller's existing error handling.
+   */
   private startStreamingOutput(context: TOutputContext) {
-    // Recording/replay can retain a stopped streaming instance. Every explicit
-    // start needs a fresh lifecycle before native code can emit any signals.
     this.configureStreamingSignals(context);
     this.contexts[context].streaming?.start();
   }
@@ -3335,7 +3341,7 @@ export class StreamingService
   /**
    * Signal handler for the Factory API for streaming, recording, and replay buffer
    * @param info - The signal info
-   * @param display - The context to handle the signal for
+   * @param context - The context to handle the signal for
    */
   private async handleSignal(info: EOutputSignal, context: TOutputContext) {
     const type = info.type as EOBSOutputType;
@@ -3455,6 +3461,7 @@ export class StreamingService
     this.updateStreamingStatus(nextState, context, time);
   }
 
+  /** Publish an output's state to the display contexts whose stream status it owns. */
   private updateStreamingStatus(nextState: EStreamingState, context: TOutputContext, time: string) {
     if (this.isDisplayContext(context)) {
       this.SET_STREAMING_STATUS(nextState, context, time);
@@ -3492,7 +3499,7 @@ export class StreamingService
     }
   }
 
-  /** Called once terminal Stop and capture deactivation have both been observed. */
+  /** Finalize terminal Stop when capture is inactive, including startup failure before Activate. */
   private async handleStreamingStopped(info: EOutputSignal, context: TOutputContext) {
     try {
       // Error Stop signals take a separate reporting path, so publish their

@@ -1,13 +1,46 @@
 import type { EOutputSignal } from 'obs-studio-node';
 import { EOBSOutputSignal } from '../core/signals';
 
+/** Application callbacks owned by one output instance and one explicit start attempt. */
 interface IStreamingSignalHandlers {
+  /**
+   * Whether the captured instance and this attempt's callback are still current.
+   * Checked before queued delivery and again before terminal cleanup. Returning
+   * false skips work at that checkpoint; it cannot cancel a callback already running.
+   */
   isCurrent(): boolean;
+
+  /**
+   * Handle an accepted native signal other than Deactivate, including error Stop.
+   * Awaited before checking terminal cleanup and before delivering the next signal.
+   * Rejection propagates to the delivery's promise and skips its cleanup check.
+   */
   handleSignal(signal: EOutputSignal): Promise<void>;
+
+  /**
+   * Finalize a terminally stopped attempt once capture is inactive or never activated.
+   * Receives the saved Stop signal, even if a later Deactivate permits cleanup.
+   * Invoked at most once per attempt. The attempt closes before this callback is
+   * awaited, so rejection propagates to the delivery's promise without retrying cleanup.
+   */
   handleStopped(signal: EOutputSignal): Promise<void>;
 }
 
-/** Track one explicit streaming start attempt, including failure before Starting. */
+/**
+ * Track capture and terminal stop for one explicit streaming start attempt.
+ *
+ * Install a fresh handler before every native start, including a retained output's
+ * restart. Keep that handler for automatic reconnects within the attempt. Starting
+ * does not reset it: startup can fail before Starting or activate delayed capture first.
+ *
+ * Callbacks are awaited in arrival order, so they must not wait for a later signal
+ * delivered through the same handler. Rejections leave later deliveries runnable;
+ * after terminal cleanup begins, all further signals for this attempt are ignored.
+ *
+ * @param handlers Callbacks for checking ownership, delivering signals, and cleanup.
+ * @returns A native signal callback whose promise resolves after queued handling,
+ * or rejects with a callback failure. OSN itself does not await this promise.
+ */
 export function createStreamingSignalHandler(handlers: IStreamingSignalHandlers) {
   let captureActive = false;
   let stopSignal: EOutputSignal | undefined;
