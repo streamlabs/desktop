@@ -113,6 +113,7 @@
   "Can not schedule the stream for the given date/time": "無法將直播排定於指定的日期/時間",
   "Failed to load YouTube events": "無法載入 YouTube 事件",
   "Failed to load Facebook events": "無法載入 Facebook 事件",
+  "Failed to load X events": "Failed to load X events",
   "Grow faster and reach a wider audience by streaming to multiple destinations at once, including Twitch, YouTube, TikTok, Kick, and more. Get unlimited multistreaming with Streamlabs Ultra.": "同時直播至 Twitch、YouTube、TikTok、Kick 等多個平台，更快成長並觸及更多觀眾。使用 Streamlabs Ultra，即可享有無限制的多平台直播。",
   "Learn more about Ultra": "深入瞭解 Ultra",
   "Why Streamlabs Multistream?": "為什麼選擇 Streamlabs 多平台直播？",
@@ -276,5 +277,6 @@
   "An unknown error occurred. Please try again.": "An unknown error occurred. Please try again.",
   "You could try locking and unlocking your computer to fix this error.": "You could try locking and unlocking your computer to fix this error.",
   "%{videoCodec} codec is not supported for Dual Output streaming to more than two destinations. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported for Dual Output streaming to more than two destinations. Would you like to proceed with the H.264 codec or select another codec?",
-  "Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming.": "Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming."
+  "Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming.": "Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming.",
+  "Twitch requires two factor authentication to be enabled on your account in order to stream to Twitch. Please enable two factor authentication and try again.": "Twitch requires two factor authentication to be enabled on your account in order to stream to Twitch. Please enable two factor authentication and try again."
 }

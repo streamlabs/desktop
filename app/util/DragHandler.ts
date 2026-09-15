@@ -80,7 +80,6 @@ export class DragHandler {
   snapDistance: number;
 
   // Sources
-  private draggedSource: SceneItem;
   private otherSources: SceneItem[];
 
   // Mouse properties
@@ -91,9 +90,14 @@ export class DragHandler {
   /**
    * @param startEvent the mouse event for this drag
    * @param options drag handler options
+   * @param draggedSource the selected visual item under the cursor on this display
    */
 
-  constructor(startEvent: IMouseEvent, options: IDragHandlerOptions) {
+  constructor(
+    startEvent: IMouseEvent,
+    options: IDragHandlerOptions,
+    private draggedSource: SceneItem,
+  ) {
     // Load some settings we care about
     this.snapEnabled = this.settingsService.views.values.General.SnappingEnabled;
     this.renderedSnapDistance = this.settingsService.views.values.General.SnapDistance;
@@ -117,37 +121,6 @@ export class DragHandler {
 
     this.snapDistance =
       (this.renderedSnapDistance * this.scaleFactor * this.baseWidth) / this.displaySize.x;
-
-    // Load some attributes about sources
-    const lastDragged = this.selectionService.views.globalSelection.getLastSelected();
-
-    if (lastDragged.isItem()) {
-      /**
-       * In dual output mode, the last selected node may be in a different display than the mouse event.
-       * Dragging scene items in the display should only transform the nodes in the display with the mouse event.
-       * So if the displays for the mouse event and last selected node don't match, use the node's partner
-       * in the other display.
-       *
-       * If there are any issues finding the partner node, use the last dragged source as a default.
-       * While it's not ideal, this will prevent errors from attempting to work with undefined values.
-       */
-      if (startEvent.display !== lastDragged.display) {
-        const dualOutputNodeId = this.dualOutputService.views.getDualOutputNodeId(lastDragged.id);
-        // confirm the partner id was found
-        if (dualOutputNodeId) {
-          const dualOutputNode = this.selectionService.views.globalSelection
-            .getItems()
-            .find(item => item.id === dualOutputNodeId);
-
-          // confirm the partner node was found, or use the last selected node as a default
-          this.draggedSource = dualOutputNode ?? lastDragged;
-        } else {
-          this.draggedSource = lastDragged;
-        }
-      } else {
-        this.draggedSource = lastDragged;
-      }
-    }
 
     this.otherSources = this.selectionService.views.globalSelection
       .clone()
@@ -179,6 +152,8 @@ export class DragHandler {
    */
   //
   move(event: IMouseEvent) {
+    if (event.display !== this.draggedSource.display) return false;
+
     const rect = new ScalableRectangle(this.draggedSource.rectangle);
     const denormalize = rect.normalize();
 

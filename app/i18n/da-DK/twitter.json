@@ -12,5 +12,14 @@
   "Subscriber Only": "Kun abonnenter",
   "Only viewers that subscribe to you will be able to chat": "Kun seere, der abonnerer på dig, vil kunne chatte",
   "You need X premium account to go live on X.": "Du skal have en X-premiumkonto for at gå live på X.",
-  "You need X premium account to go live on X. Click to learn more": "Du skal have en X-premiumkonto for at gå live på X. Klik for at få mere at vide"
+  "You need X premium account to go live on X. Click to learn more": "Du skal have en X-premiumkonto for at gå live på X. Klik for at få mere at vide",
+  "Scheduled Broadcast": "Scheduled Broadcast",
+  "Don't use a scheduled broadcast": "Don't use a scheduled broadcast",
+  "Duration": "Duration",
+  "%{minutes} min": "%{minutes} min",
+  "%{hours} hr": "%{hours} hr",
+  "%{hours} hr %{minutes} min": "%{hours} hr %{minutes} min",
+  "Publish when I start streaming": "Publish when I start streaming",
+  "When off, X publishes the broadcast at the scheduled time instead of waiting for you to go live": "When off, X publishes the broadcast at the scheduled time instead of waiting for you to go live",
+  "Scheduling streams to X is a new feature and may not always work as expected": "Scheduling streams to X is a new feature and may not always work as expected"
 }
