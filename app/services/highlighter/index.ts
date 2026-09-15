@@ -586,7 +586,15 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
    * Replay reads exactly one location: the current user's temp directory. A parent writing under a
    * different identity gets a different %TEMP% — SYSTEM and services land in C:\Windows\TEMP or a
    * profile under the Windows directory — and the marker would sit somewhere Replay never reads.
-   * Elevation alone is fine: "run as administrator" from the user's own account keeps the profile.
+   * Those identities are recognised by their profile: SYSTEM sits in
+   * C:\Windows\system32\config\systemprofile and the service accounts in C:\Windows\ServiceProfiles,
+   * both under %SystemRoot%. Elevation alone is fine: "run as administrator" from the user's own
+   * account keeps the profile.
+   *
+   * Deliberately does not require temp to sit under the home directory. %TEMP% is an ordinary
+   * per-user environment variable, and redirecting it to another drive or an enterprise-managed
+   * path is a supported configuration — Replay, running as the same user, resolves the same
+   * redirected path, so the hand-off still works.
    *
    * Throws rather than returning a path we know Replay will not read.
    */
@@ -602,7 +610,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     const home = remote.app.getPath('home');
     const systemRoot = remote.process.env.SystemRoot ?? 'C:\\Windows';
 
-    if (!isInside(temp, home) || isInside(home, systemRoot)) {
+    if (isInside(home, systemRoot)) {
       throw new Error(`"${temp}" is not the desktop user's temp directory`);
     }
 
@@ -663,6 +671,10 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         scope.setTag('feature', 'highlighter');
         scope.setTag('replayInstallPhase', 'write-install-origin');
         console.error('Failed to write Streamlabs Replay install origin marker:', error);
+        // Captured explicitly on top of the console line: a silently lost marker costs the user
+        // their import hand-off, so it is worth a real exception event — with a stack and grouped
+        // by what actually failed — rather than only the message event the console patch sends.
+        Sentry.captureException(error);
       });
     }
   }
