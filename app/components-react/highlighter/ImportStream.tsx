@@ -49,7 +49,7 @@ export function ImportStreamModal({
   } | null>(null);
 
   useEffect(() => {
-    HighlighterService.getInstalledHighlighterApp().then(app => {
+    HighlighterService.actions.return.getInstalledHighlighterApp().then(app => {
       setInstalledApp(app);
     });
   }, []);
@@ -161,7 +161,7 @@ export function ImportStreamModal({
       //
       // With either app installed the import is deeplinked, and the service picks the protocol —
       // a Highlighter user is sent to Highlighter, where their data still lives.
-      const app = await HighlighterService.getInstalledHighlighterApp();
+      const app = await HighlighterService.actions.return.getInstalledHighlighterApp();
       if (app === 'none') {
         setPendingImport({ game, filePath: filePath[0], streamId: id });
         setShowingInstallFlow(true);
