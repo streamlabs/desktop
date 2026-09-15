@@ -36,6 +36,8 @@ function StartStreamingButton(p: { disabled?: boolean }) {
     isPrime,
     primaryPlatform,
     isMultiplatformMode,
+    protectedModeEnabled,
+    isTwitchUnprotectedStream,
   } = useVuex(
     () => ({
       streamingStatus: StreamingService.views.streamingStatus,
@@ -48,6 +50,8 @@ function StartStreamingButton(p: { disabled?: boolean }) {
       isPrime: UserService.state.isPrime,
       primaryPlatform: UserService.state.auth?.primaryPlatform,
       isMultiplatformMode: StreamingService.views.isMultiplatformMode,
+      protectedModeEnabled: StreamSettingsService.views.protectedModeEnabled,
+      isTwitchUnprotectedStream: StreamingService.views.isTwitchUnprotectedStream,
     }),
     false,
   );
@@ -161,6 +165,48 @@ function StartStreamingButton(p: { disabled?: boolean }) {
       : $t('Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!');
   }, []);
 
+  const shouldShowGoLiveWindow = useMemo(() => {
+    if (!UserService.isLoggedIn) return false;
+    const primaryPlatform = UserService.state.auth?.primaryPlatform;
+    const updateStreamInfoOnLive = CustomizationService.state.updateStreamInfoOnLive;
+
+    if (!primaryPlatform) return false;
+
+    // When streaming via API, this is protected mode
+    if (protectedModeEnabled) {
+      if (StreamingService.views.isDualOutputMode) {
+        return true;
+      }
+
+      if (
+        !!UserService.state.auth?.platforms &&
+        StreamingService.views.isMultiplatformMode &&
+        Object.keys(UserService.state.auth?.platforms).length > 1
+      ) {
+        return true;
+      }
+    } else {
+      // Otherwise, the user is in unprotected mode.
+      // For Twitch, we can show the Go Live window even with protected mode off
+      // This is mainly for legacy reasons.
+      if (isTwitchUnprotectedStream) {
+        return StreamingService.views.isMultiplatformMode || updateStreamInfoOnLive;
+      } else {
+        // Must check for protected mode again because `isSafeToModifyStreamKey` may return true
+        // because it does not check for protected mode, and it shouldn't
+        return protectedModeEnabled && StreamSettingsService.isSafeToModifyStreamKey();
+      }
+    }
+  }, [
+    isLoggedIn,
+    protectedModeEnabled,
+    primaryPlatform,
+    isDualOutputMode,
+    isMultiplatformMode,
+    updateStreamInfoOnLive,
+    isTwitchUnprotectedStream,
+  ]);
+
   const handleToggleStreaming = useCallback(async () => {
     if (StreamingService.isStreaming) {
       StreamingService.toggleStreaming();
@@ -207,7 +253,7 @@ function StartStreamingButton(p: { disabled?: boolean }) {
         if (!goLive) return;
       }
 
-      if (shouldShowGoLiveWindow()) {
+      if (shouldShowGoLiveWindow) {
         if (!StreamingService.views.hasPendingChecks()) {
           StreamingService.actions.resetInfo();
         }
@@ -216,7 +262,14 @@ function StartStreamingButton(p: { disabled?: boolean }) {
         StreamingService.actions.goLive();
       }
     }
-  }, [streamingStatus, streamShiftStatus, isDualOutputMode, isLoggedIn, isPrime]);
+  }, [
+    streamingStatus,
+    streamShiftStatus,
+    isDualOutputMode,
+    isLoggedIn,
+    isPrime,
+    shouldShowGoLiveWindow,
+  ]);
 
   // Wrap the toggleStreaming function in a debounce to prevent multiple rapid clicks
   // and also to cancel the action on unmount to prevent memory leaks and state updates on unmounted components
@@ -246,37 +299,6 @@ function StartStreamingButton(p: { disabled?: boolean }) {
       return false;
     }
   }, []);
-
-  const shouldShowGoLiveWindow = useCallback(() => {
-    if (!UserService.isLoggedIn) return false;
-    const primaryPlatform = UserService.state.auth?.primaryPlatform;
-    const updateStreamInfoOnLive = CustomizationService.state.updateStreamInfoOnLive;
-
-    if (!primaryPlatform) return false;
-
-    if (StreamingService.views.isDualOutputMode) {
-      return true;
-    }
-
-    if (
-      !!UserService.state.auth?.platforms &&
-      StreamingService.views.isMultiplatformMode &&
-      Object.keys(UserService.state.auth?.platforms).length > 1
-    ) {
-      return true;
-    }
-
-    if (primaryPlatform === 'twitch') {
-      // For Twitch, we can show the Go Live window even with protected mode off
-      // This is mainly for legacy reasons.
-      return StreamingService.views.isMultiplatformMode || updateStreamInfoOnLive;
-    } else {
-      return (
-        StreamSettingsService.state.protectedModeEnabled &&
-        StreamSettingsService.isSafeToModifyStreamKey()
-      );
-    }
-  }, [primaryPlatform, isMultiplatformMode, updateStreamInfoOnLive]);
 
   return (
     <button
