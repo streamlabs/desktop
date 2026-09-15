@@ -874,6 +874,54 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     return settings;
   }
 
+  /**
+   * Validate the credentials for unprotected mode across various streaming platforms.
+   * @remarks Protect against incorrect assignment of server URLs when setting the stream type
+   * in unprotected mode. This is not perfect, but better than nothing.
+   * @returns If the server url is valid.
+   */
+  validateUnprotectedModeCredentials(): boolean {
+    const settings = this.views.values.Stream;
+    // TODO: The backend is setting the service value with the platform label instead of the
+    // lower case platform type. Need backend fix
+    const service = settings.service;
+
+    // Always assume that the user provided the correct server url for rtmp custom
+    // because we have no way to validate this.
+    if (settings.service === 'rtmp_custom') return true;
+
+    // Only kick does not have the service name in its server url
+    const hasValidUrl =
+      service === 'kick'
+        ? settings.server.includes('live-video')
+        : settings.server.includes(service);
+
+    // Right now, only map for Twitch, YouTube, and Facebook
+    if (!hasValidUrl) {
+      const serverMap: Dictionary<string> = {
+        Twitch: 'rtmp://live.twitch.tv/app/',
+        ['YouTube - RTMPS']: 'rtmps://a.rtmps.youtube.com:443/live2/',
+        Facebook: 'rtmps://rtmp-api.facebook.com:443/rtmp/',
+      };
+      const serverUrl = serverMap[service];
+      if (!serverUrl) {
+        // Don't throw the error here, just log it for future debugging.
+        console.error(
+          'Unable to set valid server URL for the current streaming service: ',
+          service,
+        );
+        return false;
+      }
+
+      // Update server url if possible
+      this.setSettingsPatch({ Stream: { server: serverUrl } });
+
+      return true;
+    }
+
+    return false;
+  }
+
   validateEncoders() {
     this.ensureValidEncoder();
     this.ensureValidRecordingEncoder();

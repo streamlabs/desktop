@@ -433,6 +433,12 @@ export class StreamingService
       this.userService.setPrimaryPlatform('twitch');
     }
 
+    if (!this.streamSettingsService.state.protectedModeEnabled) {
+      // Validate the current stream settings before proceeding
+      // This is a band-aid solution until the backend fixes are made
+      this.settingsService.validateUnprotectedModeCredentials();
+    }
+
     // don't interact with API in logged out mode and when protected mode is disabled
     if (
       !this.userService.isLoggedIn ||
@@ -4037,6 +4043,21 @@ export class StreamingService
         if (messages.details) details = messages.details;
 
         showNativeErrorMessage = details !== '';
+      } else if (
+        this.settingsService.views.values.Stream.key === '' ||
+        this.settingsService.views.values.StreamSecond.key === ''
+      ) {
+        if (this.views.isDualOutputMode) {
+          const display = info.service === 'vertical' ? 'vertical' : 'horizontal';
+          errorText = $t(
+            'The stream key is missing for the %{display} output. Please configure your streaming settings.',
+            { display },
+          );
+          diagReportMessage = diagReportMessage.concat(errorText);
+        } else {
+          errorText = $t('The stream key is missing . Please configure your streaming settings.');
+          diagReportMessage = diagReportMessage.concat(errorText);
+        }
       } else {
         // Only retry in dual output and if recording or replay buffer fails to start and the error is unknown
         if (
