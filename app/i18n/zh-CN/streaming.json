@@ -113,6 +113,7 @@
   "Can not schedule the stream for the given date/time": "无法为给定的日期/时间安排直播",
   "Failed to load YouTube events": "无法加载 YouTube 事件",
   "Failed to load Facebook events": "无法加载 Facebook 事件",
+  "Failed to load X events": "Failed to load X events",
   "Grow faster and reach a wider audience by streaming to multiple destinations at once, including Twitch, YouTube, TikTok, Kick, and more. Get unlimited multistreaming with Streamlabs Ultra.": "通过同时向 Twitch、YouTube、TikTok、Kick 等多个平台直播，实现更快速的增长并触达更广泛的受众。使用 Streamlabs Ultra 获取无限多重直播功能。",
   "Learn more about Ultra": "了解更多关于 Ultra 的信息",
   "Why Streamlabs Multistream?": "为什么选择 Streamlabs 多重直播？",
@@ -276,5 +277,6 @@
   "An unknown error occurred. Please try again.": "An unknown error occurred. Please try again.",
   "You could try locking and unlocking your computer to fix this error.": "You could try locking and unlocking your computer to fix this error.",
   "%{videoCodec} codec is not supported for Dual Output streaming to more than two destinations. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported for Dual Output streaming to more than two destinations. Would you like to proceed with the H.264 codec or select another codec?",
-  "Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming.": "Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming."
+  "Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming.": "Assign one destination to Horizontal and one to Vertical to go live, or upgrade to Ultra to enable multistreaming.",
+  "Twitch requires two factor authentication to be enabled on your account in order to stream to Twitch. Please enable two factor authentication and try again.": "Twitch requires two factor authentication to be enabled on your account in order to stream to Twitch. Please enable two factor authentication and try again."
 }

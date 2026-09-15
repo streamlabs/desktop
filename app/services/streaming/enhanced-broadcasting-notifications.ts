@@ -60,7 +60,9 @@ function sortResolutionChanges(resolutionChanges: IResolutionChange[]): IResolut
   return [...resolutionChanges].sort((a, b) => canvasOrder[a.canvas] - canvasOrder[b.canvas]);
 }
 
-function isResolutionChangeSignal(info: IResolutionChangeSignal): boolean {
+function isResolutionChangeSignal(
+  info: IResolutionChangeSignal,
+): info is IResolutionChangeSignal & { error: string } {
   if (info.type && info.type !== 'streaming') return false;
 
   return info.signal === RESOLUTION_CHANGE_SIGNAL && !!info.error;
