@@ -9,8 +9,8 @@ if (process.platform !== 'win32') {
 // Expected Authenticode publisher (certificate simple name) of the game capture binaries.
 const GAME_CAPTURE_PUBLISHER = 'OBS Project, LLC';
 // Allowlisted signer certificate thumbprints for OBS Project, LLC game capture binaries.
-// Hashes have been computed using SHA256 for the binaries shipped with the current release of obs-studio-node.
-// If you update the binaries, you must update this list with the new thumbprints.
+// SHA256 fingerprints of the signer certificates used by the binaries shipped with the
+// current release of obs-studio-node. Add an entry when the signing certificate changes.
 const GAME_CAPTURE_SIGNER_THUMBPRINTS = [
   'F776B38AB738AE9717D728170216559926661C440D9E71A70D5EEBD4908D42E7', // signed-game-binaries-32.1.1
   'A0F5601CFC70A8E4D58D08522A5B2CB204547AB5ECB3F4B53E2BF5465B64D2CC', // signed-game-binaries-32.1.1

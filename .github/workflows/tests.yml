@@ -42,8 +42,7 @@ jobs:
               - '!package.json'
               - '!yarn.lock'
             deps:
-              - 'package.json'
-              - 'yarn.lock'
+              - '{package.json,yarn.lock}'
     outputs:
       has-testable-changes: ${{ steps.filter.outputs.src }}
       has-dependency-changes: ${{ steps.filter.outputs.deps }}
@@ -114,8 +113,7 @@ jobs:
         working-directory: ${{ runner.temp }}/frontend-test-project
       - name: 'Verify HEVC Encoder is present'
         run: |
-          output=$(./ffmpeg.exe -hide_banner -encoders 2>/dev/null | grep hevc)
-          if [ -z "$output" ]; then
+          if ! output=$(./ffmpeg.exe -hide_banner -encoders 2>/dev/null | grep hevc); then
             echo "HEVC encoder not found in ffmpeg encoders list. This may indicate that the HEVC encoder is missing or not properly configured."
             exit 1
           fi
