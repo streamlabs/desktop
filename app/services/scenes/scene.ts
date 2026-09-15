@@ -151,9 +151,7 @@ export class Scene {
   getSourceSelectorNodes(): TSceneNode[] {
     let nodes = this.getNodes();
 
-    const populateWithVerticalNodes =
-      !this.dualOutputService.views.activeDisplays.horizontal &&
-      this.dualOutputService.views.activeDisplays.vertical;
+    const populateWithVerticalNodes = this.dualOutputService.views.onlyVerticalDisplayActive;
 
     nodes = nodes.filter(node => {
       // if only the vertical display is active
