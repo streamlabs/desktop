@@ -1,9 +1,9 @@
-import * as path from 'path';
-import execa from 'execa';
-import { promises as fs } from 'fs';
+const path = require('path');
+const execa = require('execa');
+const fs = require('fs').promises;
 
 if (process.platform !== 'win32') {
-  console.error('verify_game_signatures.ts can only be run on Windows runners.');
+  console.error('verify_game_signatures.js can only be run on Windows runners.');
   process.exit(1);
 }
 // Expected Authenticode publisher (certificate simple name) of the game capture binaries.
@@ -31,7 +31,7 @@ const gameCaptureDependencies = [
 // Verifies the Authenticode signature of Windows game capture binaries using PowerShell.
 // Exits the process with code 1 if a binary is unsigned/tampered/untrusted or not signed by the
 // expected OBS Project, LLC certificate identity.
-async function verifyGameCaptureBinarySignatures(dir: string): Promise<void> {
+async function verifyGameCaptureBinarySignatures(dir) {
   for (const bin of gameCaptureDependencies) {
     const filePath = path.join(dir, 'data', 'obs-plugins', 'win-capture', bin);
     try {
@@ -70,8 +70,7 @@ async function verifyGameCaptureBinarySignatures(dir: string): Promise<void> {
           timeout: 30000,
         },
       );
-    } catch (e: unknown) {
-      const err = e as { exitCode?: number; timedOut?: boolean; stderr?: string };
+    } catch (err) {
       // powershell.exe wraps redirected stderr in a CLIXML envelope; drop it so the real
       // message (status=..., publisher=...) is what gets logged.
       const stderr = err.stderr || '';

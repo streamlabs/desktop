@@ -109,7 +109,7 @@ jobs:
         with:
           node-version: '22.18.0'
       - name: 'Run Game Capture Binary Signature Verification'
-        run: yarn ts-node scripts/ci/verify_game_signatures.ts
+        run: node scripts/ci/verify_game_signatures.js
         working-directory: ${{ runner.temp }}/frontend-test-project
       - name: 'Verify HEVC Encoder is present'
         run: |
