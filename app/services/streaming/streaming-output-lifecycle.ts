@@ -26,21 +26,7 @@ interface IStreamingSignalHandlers {
   handleStopped(signal: EOutputSignal): Promise<void>;
 }
 
-/**
- * Track capture and terminal stop for one explicit streaming start attempt.
- *
- * Install a fresh handler before every native start, including a retained output's
- * restart. Keep that handler for automatic reconnects within the attempt. Starting
- * does not reset it: startup can fail before Starting or activate delayed capture first.
- *
- * Callbacks are awaited in arrival order, so they must not wait for a later signal
- * delivered through the same handler. Rejections leave later deliveries runnable;
- * after terminal cleanup begins, all further signals for this attempt are ignored.
- *
- * @param handlers Callbacks for checking ownership, delivering signals, and cleanup.
- * @returns A native signal callback whose promise resolves after queued handling,
- * or rejects with a callback failure. OSN itself does not await this promise.
- */
+/** Track one explicit streaming start attempt, including failure before Starting. */
 export function createStreamingSignalHandler(handlers: IStreamingSignalHandlers) {
   let captureActive = false;
   let stopSignal: EOutputSignal | undefined;
