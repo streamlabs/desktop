@@ -18,6 +18,9 @@ const GAME_CAPTURE_SIGNER_THUMBPRINTS = [
   '9BC0CC37980FC4C62E8E46723627F83CA3ACB51BB8A869F4EE94B30A71B441AE', // signed-game-binaries-31.1.2
 ];
 
+// PowerShell script that performs the actual Authenticode check for one binary.
+const VERIFY_SCRIPT = path.join(__dirname, 'verify_game_signature.ps1');
+
 // List of the binaries needed for game capture
 const gameCaptureDependencies = [
   'get-graphics-offsets32.exe',
@@ -40,31 +43,25 @@ async function verifyGameCaptureBinarySignatures(dir) {
       console.error(`Signature verification failed for ${bin}: file not found at ${filePath}`);
       process.exit(1);
     }
-    const escapedPath = filePath.replace(/'/g, "''");
-    // The publisher is compared against the certificate's simple name rather than against the
-    // raw Subject DN: Windows quotes any RDN value containing a comma, so the DN reads
-    // CN="OBS Project, LLC", ... and a bare `CN=OBS Project, LLC` pattern never matches it.
-    // Exit codes: 1 = unsigned/tampered/untrusted, 2 = wrong publisher, 3 = unexpected signer
-    // certificate, 0 = valid.
-    const script = [
-      "$ErrorActionPreference = 'Stop'",
-      `try { $sig = Get-AuthenticodeSignature -LiteralPath '${escapedPath}' } catch { [Console]::Error.WriteLine($_.Exception.Message); exit 1 }`,
-      'if ($null -eq $sig -or $null -eq $sig.SignerCertificate) { [Console]::Error.WriteLine("no signature"); exit 1 }',
-      "if ($sig.Status -ne 'Valid') { [Console]::Error.WriteLine(\"status=$($sig.Status): $($sig.StatusMessage)\"); exit 1 }",
-      "$cn = $sig.SignerCertificate.GetNameInfo([System.Security.Cryptography.X509Certificates.X509NameType]::SimpleName, $false)",
-      `if ($cn -cne '${GAME_CAPTURE_PUBLISHER}') { [Console]::Error.WriteLine("publisher=$cn"); exit 2 }`,
-      '$sha256 = [System.Security.Cryptography.SHA256]::Create()',
-      '$thumbprint = [BitConverter]::ToString($sha256.ComputeHash($sig.SignerCertificate.RawData)).Replace("-", "").ToUpperInvariant()',
-      'if ([string]::IsNullOrWhiteSpace($thumbprint)) { [Console]::Error.WriteLine("thumbprint=missing"); exit 3 }',
-      `if (@(${GAME_CAPTURE_SIGNER_THUMBPRINTS.map(thumbprint => `'${thumbprint}'`).join(', ')}) -notcontains $thumbprint) { [Console]::Error.WriteLine("thumbprint=$thumbprint"); exit 3 }`,
-      'exit 0',
-    ].join('; ');
-    const encodedCommand = Buffer.from(script, 'utf16le').toString('base64');
-
+    // Exit codes from the PowerShell script: 1 = unsigned/tampered/untrusted, 2 = wrong
+    // publisher, 3 = unexpected signer certificate, 0 = valid.
     try {
       await execa(
         'powershell',
-        ['-NonInteractive', '-NoProfile', '-EncodedCommand', encodedCommand],
+        [
+          '-NonInteractive',
+          '-NoProfile',
+          '-ExecutionPolicy',
+          'Bypass',
+          '-File',
+          VERIFY_SCRIPT,
+          '-FilePath',
+          filePath,
+          '-ExpectedPublisher',
+          GAME_CAPTURE_PUBLISHER,
+          '-AllowedThumbprints',
+          GAME_CAPTURE_SIGNER_THUMBPRINTS.join(','),
+        ],
         {
           stdio: 'pipe',
           timeout: 30000,
