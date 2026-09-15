@@ -258,23 +258,25 @@ export function StreamSettings() {
             <IngestServerSetting disabled={!canEditSettings} />
 
             {canEditSettings && (
-              <Tooltip
-                title="Stream to a single custom ingest without any linked platforms. Add a custom destination to multistream to a custom RTMP."
-                lightShadow
-                placement="rightBottom"
-              >
-                <a
-                  className={styles.customDest}
-                  onClick={disableProtectedMode}
-                  style={{ marginBottom: '10px' }}
+              <div>
+                <Tooltip
+                  title="Stream to a single custom ingest without any linked platforms. Add a custom destination to multistream to a custom RTMP."
+                  lightShadow
+                  placement="topLeft"
                 >
-                  {$t('Stream to custom ingest')}
-                </a>
-                <i
-                  className="icon-information"
-                  style={{ marginLeft: '7px', fontWeight: 'unset' }}
-                />
-              </Tooltip>
+                  <a
+                    className={styles.customDest}
+                    onClick={disableProtectedMode}
+                    style={{ marginBottom: '10px' }}
+                  >
+                    {$t('Stream to custom ingest')}
+                  </a>
+                  <i
+                    className="icon-information"
+                    style={{ marginLeft: '7px', fontWeight: 'unset' }}
+                  />
+                </Tooltip>
+              </div>
             )}
           </div>
         )}
