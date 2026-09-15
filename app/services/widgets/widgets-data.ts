@@ -767,3 +767,12 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
     supportedOS: [OS.Windows],
   },
 });
+
+export function getWidgetName(widgetType: WidgetType): string {
+  const widget = WidgetDefinitions[widgetType];
+  if (!widget) {
+    console.error(`Unknown widget type: ${widgetType}`);
+  }
+
+  return widget?.name || $t('Widget');
+}
