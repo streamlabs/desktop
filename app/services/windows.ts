@@ -56,7 +56,6 @@ import EventFilterMenu from 'components/windows/EventFilterMenu';
 import OverlayPlaceholder from 'components/windows/OverlayPlaceholder';
 import BrowserSourceInteraction from 'components/windows/BrowserSourceInteraction';
 
-import StreamBoss from 'components/widgets/StreamBoss.vue';
 import MediaShare from 'components/widgets/MediaShare';
 import AlertBox from 'components/widgets/AlertBox.vue';
 import SpinWheel from 'components/widgets/SpinWheel.vue';
@@ -107,7 +106,6 @@ export function getComponents() {
     GameOverlayEventFeed,
     AdvancedStatistics,
     MultistreamChatInfo,
-    StreamBoss,
     MediaShare,
     AlertBox,
     SpinWheel,

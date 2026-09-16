@@ -56,6 +56,8 @@ export enum WidgetType {
   GamePulseWidget = 25,
 }
 
+export type TWidgetType = keyof typeof WidgetType;
+
 // TODO: there's some duplication between this and `WidgetsService.playAlert`
 export const makeWidgetTesters = (host: string): IWidgetTester[] => {
   const prefix = `https://${host}/api/v5/widgets/desktop/test`;
