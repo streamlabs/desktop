@@ -877,7 +877,10 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   /**
    * Validate the credentials for unprotected mode across various streaming platforms.
    * @remarks Protect against incorrect assignment of server URLs when setting the stream type
-   * in unprotected mode. This is not perfect, but better than nothing.
+   * in unprotected mode. The stream type may be `rtmp_custom` or `rtmp_common`. For `rtmp_common`,
+   * specific rtmp urls are expected for each service. This validation is band-aid until the backend
+   * fix is released.
+   * TODO: Remove when BE fix is released.
    * @returns If the server url is valid.
    */
   validateUnprotectedModeCredentials(): boolean {

@@ -222,6 +222,7 @@ export function StreamSettings() {
     StreamSettingsService.actions.setSettings({
       protectedModeEnabled: false,
       streamType: 'rtmp_custom',
+      // TODO: BE fix to verify, maybe the server url should not be cleared here?
       server: '',
     });
 
@@ -233,6 +234,7 @@ export function StreamSettings() {
   function enableProtectedMode() {
     StreamSettingsService.actions.setSettings({
       protectedModeEnabled: true,
+      // TODO: BE fix to verify, maybe the stream key should not be cleared here?
       key: '',
       streamType: 'rtmp_common',
     });

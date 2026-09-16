@@ -433,6 +433,7 @@ export class StreamingService
       this.userService.setPrimaryPlatform('twitch');
     }
 
+    // TODO: Remove when BE fix is released.
     if (!this.streamSettingsService.state.protectedModeEnabled) {
       // Validate the current stream settings before proceeding
       // This is a band-aid solution until the backend fixes are made
