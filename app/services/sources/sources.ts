@@ -884,11 +884,9 @@ export class SourcesService extends StatefulService<ISourcesState> {
     const componentName = this.widgetsService.getWidgetComponent(widgetType);
 
     // React widgets are in the WidgetsWindow component
-    const isLegacyAlertbox = this.customizationService.state.legacyAlertbox;
     const isReactComponent =
-      this.incrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.reactWidgets) &&
       reactWidgets.includes(componentName as TWidgetType) &&
-      (!isLegacyAlertbox || componentName !== 'AlertBox');
+      (!this.customizationService.state.legacyAlertbox || componentName !== 'AlertBox');
     const windowComponentName = isReactComponent ? 'WidgetWindow' : componentName;
 
     const defaultVueWindowSize = { width: 920, height: 1024 };
