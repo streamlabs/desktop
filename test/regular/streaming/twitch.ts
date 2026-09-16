@@ -104,6 +104,12 @@ test('Migrate the twitch account to the protected mode', async t => {
   await showSettingsWindow('Stream');
   t.true(await isDisplayed('button=Use recommended settings'), 'Protected mode should be disabled');
 
+  // A custom ingest stream goes to the user's own server, so no linked platform's chat belongs to
+  // it. Twitch declares the `refresh-chat` live dock feature unconditionally, so `a=Refresh Chat`
+  // is present in protected mode whether or not a stream is running — it going away here is what
+  // proves the unprotected-mode gate fired rather than the stream simply having stopped.
+  t.false(await chatIsVisible(), 'Chat should not be visible in unprotected mode');
+
   // use recommended settings
   await clickButton('Use recommended settings');
   // setup custom server
@@ -122,6 +128,7 @@ test('Migrate the twitch account to the protected mode', async t => {
   // check that settings have been switched to the Custom Ingest mode
   await showSettingsWindow('Stream');
   t.true(await isDisplayed('button=Use recommended settings'), 'Protected mode should be disabled');
+  t.false(await chatIsVisible(), 'Chat should not be visible in unprotected mode');
 });
 
 // TODO: Re-enable after reauthing userpool
