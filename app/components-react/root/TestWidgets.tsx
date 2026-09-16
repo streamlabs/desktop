@@ -28,6 +28,7 @@ export default function TestWidgets(p: { testers?: string[] }) {
     !!SourcesService.views.sources.some(s => s.propertiesManagerType === 'smartBrowserSource'),
   );
 
+  // Do not use the useSubscription hook here so that the subscribe/unsubscribe is handled in sequence
   useEffect(() => {
     const addSub = SourcesService.sourceAdded.subscribe(source => {
       if (isReactiveSource(source)) {

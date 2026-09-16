@@ -4,7 +4,7 @@
 ## Prepare electron source 
 Get source and update it with commands
 ```
-git clone https://github.com/stream-labs/electron.git
+git clone https://github.com/streamlabs/electron.git
 cd electron 
 git checkout sl_2-0-x
 git remote add upstream https://github.com/electron/electron.git
@@ -35,7 +35,7 @@ Last command print in log paths to tar.gz zip and sha256 files what need to be u
 Do not commit changes in electron.gyp and package.json if you do not want manualy merge next time. 
 
 ## Upload files to github 
-* Go to `https://github.com/stream-labs/electron/releases`
+* Go to `https://github.com/streamlabs/electron/releases`
 * Create new release with save version as set in `package.json` - `2.0.16-streamlabs`
 * upload tgz package file 
 * upload relese zip file 

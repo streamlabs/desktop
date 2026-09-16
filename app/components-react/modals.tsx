@@ -1,3 +1,4 @@
+import React from 'react';
 import { Services } from './service-provider';
 import { Modal, Button, message } from 'antd';
 import Utils from '../services/utils';
@@ -5,11 +6,11 @@ import { ModalFuncProps } from 'antd/lib/modal';
 import { $t } from '../services/i18n';
 import { TextInput } from './shared/inputs/TextInput';
 import Form, { useForm } from './shared/inputs/Form';
-import React, { useEffect } from 'react';
 import { Observable, Subject } from 'rxjs';
 import { FormProps } from 'antd/es';
 import { ModalLayout } from './shared/ModalLayout';
 import styles from './shared/Modals.m.less';
+import { useSubscription } from './hooks/useSubscription';
 
 /**
  * Show an Confirmation modal and return a Promise<confirmed: boolean>
@@ -210,11 +211,8 @@ export function DefaultPromptForm(
 ) {
   const form = useForm();
 
-  useEffect(() => {
-    const subscription = p.submitEmitter.subscribe(() => {
-      onFinish();
-    });
-    return () => subscription.unsubscribe();
+  useSubscription(p.submitEmitter, () => {
+    onFinish();
   });
 
   function onChange(newVal: string) {

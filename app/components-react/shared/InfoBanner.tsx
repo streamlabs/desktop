@@ -1,4 +1,4 @@
-import React, { CSSProperties } from 'react';
+import React, { CSSProperties, ReactNode } from 'react';
 import styles from './InfoBanner.m.less';
 import cx from 'classnames';
 import { EDismissable } from 'services/dismissables';
@@ -7,7 +7,7 @@ import { Services } from 'components-react/service-provider';
 
 interface IInfoBannerProps {
   id?: string;
-  message: string | JSX.Element;
+  message: string | JSX.Element | ReactNode;
   type?: 'info' | 'warning';
   style?: CSSProperties;
   className?: string;

@@ -35,12 +35,87 @@ export enum ETwitterChatType {
 export interface ITwitterStartStreamOptions {
   title: string;
   chatType: ETwitterChatType;
+  /**
+   * A scheduled broadcast to go live on. Empty means "no scheduled broadcast",
+   * in which case X creates an ad-hoc one.
+   *
+   * Named `broadcastId` deliberately: `StreamInfoView.getSavedPlatformSettings`
+   * clears a field with this name for every platform between sessions, which is
+   * the behavior we want.
+   */
+  broadcastId?: string;
+
+  // Below here is only used by the Stream Scheduler, never by go-live.
+  description?: string;
+  /** Epoch ms */
+  scheduledStartTime?: number;
+  /** Added to `scheduledStartTime` to produce the required end time */
+  durationMs?: number;
+  /** `true` publishes once we start streaming, `false` at the scheduled time */
+  manualPublish?: boolean;
 }
 
 interface ITwitterStartStreamResponse {
   id: string;
   key: string;
   rtmp: string;
+}
+
+/**
+ * A scheduled broadcast as returned by core.
+ *
+ * `description` and `manual_publish` are genuinely optional: when they aren't set
+ * on the broadcast they're omitted from the response rather than returned null.
+ */
+export interface ITwitterScheduledBroadcast {
+  /** The id to use in URLs, on stream/start, and for update/delete */
+  broadcast_id: string;
+  scheduled_broadcast_id: string;
+  source_id: string;
+  state: string;
+  title: string;
+  /** Epoch ms, as a string */
+  scheduled_start_ms: string;
+  scheduled_end_ms: string;
+  description?: string;
+  manual_publish?: boolean;
+}
+
+/** Most X endpoints on core wrap their payload in this. stream/start does not. */
+interface ITwitterCoreResponse<TData> {
+  success: boolean;
+  message: string;
+  data: TData;
+}
+
+export const TWITTER_TITLE_MAX_LENGTH = 280;
+export const TWITTER_DESCRIPTION_MAX_LENGTH = 1000;
+export const TWITTER_DEFAULT_DURATION_MS = 60 * 60 * 1000;
+
+/**
+ * Pull the most specific error message out of a failed core request.
+ *
+ * Core relays X's real complaint (e.g. "Broadcast duration exceeds 1.days") in
+ * `data.errors[].message`, while the top-level `message` stays generic. Core's own
+ * validation failures use a different envelope again, with no `data` at all.
+ */
+export function extractTwitterErrorMessage(e: unknown): string | undefined {
+  const result = (e as any)?.result;
+  if (!result) return undefined;
+
+  const xErrors = result.data?.errors;
+  if (Array.isArray(xErrors)) {
+    const messages = xErrors.map((err: any) => err?.message).filter(Boolean);
+    if (messages.length) return messages.join('. ');
+  }
+
+  // Core-side validation: { message, errors: { field: [msg, ...] } }
+  if (result.errors && !Array.isArray(result.errors)) {
+    const messages = Object.values(result.errors as Dictionary<string[]>).flat();
+    if (messages.length) return messages.join(' ');
+  }
+
+  return result.message;
 }
 
 @InheritMutations()
@@ -54,7 +129,12 @@ export class TwitterPlatformService
     ingest: '',
   };
 
-  readonly capabilities = new Set<TPlatformCapability>(['title', 'viewerCount', 'chat']);
+  readonly capabilities = new Set<TPlatformCapability>([
+    'title',
+    'viewerCount',
+    'chat',
+    'stream-schedule',
+  ]);
   readonly liveDockFeatures = new Set<TLiveDockFeature>([
     'refresh-chat-streaming',
     'chat-streaming',
@@ -195,9 +275,107 @@ export class TwitterPlatformService
     const body = new FormData();
     body.append('title', opts.title);
     body.append('chat_option', opts.chatType.toString());
+    // Binds this stream to an existing scheduled broadcast. Core then polls X for
+    // our ingest and publishes the broadcast once it arrives; nothing else to call.
+    if (opts.broadcastId) body.append('broadcast_id', opts.broadcastId);
     const request = new Request(url, { headers, method: 'POST', body });
 
+    // Note: unlike the /scheduled endpoints, this response is not wrapped in the
+    // { success, message, data } envelope.
     return jfetch<ITwitterStartStreamResponse>(request);
+  }
+
+  /**
+   * Request one of the enveloped X endpoints on core and unwrap `data`
+   */
+  private async requestScheduled<T>(path: string, init?: RequestInit): Promise<T> {
+    const host = this.hostsService.streamlabs;
+    const headers = authorizedHeaders(this.userService.apiToken!);
+    if (init?.body) headers.append('Content-Type', 'application/json');
+    const url = `https://${host}/api/v5/slobs/twitter/scheduled${path}`;
+    const response = await jfetch<ITwitterCoreResponse<T>>(new Request(url, { headers, ...init }));
+
+    return response.data;
+  }
+
+  /**
+   * Create a scheduled broadcast. Implements the `stream-schedule` capability.
+   */
+  async scheduleStream(
+    startTime: number,
+    options: ITwitterStartStreamOptions,
+  ): Promise<ITwitterScheduledBroadcast> {
+    const endTime = startTime + (options.durationMs ?? TWITTER_DEFAULT_DURATION_MS);
+
+    return this.requestScheduled<ITwitterScheduledBroadcast>('', {
+      method: 'POST',
+      body: JSON.stringify({
+        scheduled_start_ms: String(startTime),
+        scheduled_end_ms: String(endTime),
+        title: options.title,
+        description: options.description,
+        manual_publish: options.manualPublish ?? true,
+      }),
+    });
+  }
+
+  /**
+   * All upcoming scheduled broadcasts.
+   *
+   * Note this only ever returns broadcasts that haven't started — a broadcast
+   * disappears from the list the moment it goes live, and never comes back.
+   */
+  async fetchScheduledBroadcasts(): Promise<ITwitterScheduledBroadcast[]> {
+    const broadcasts: ITwitterScheduledBroadcast[] = [];
+    let token = '';
+
+    // `next_token` is non-null even on the last page that has results, so we page
+    // until a page comes back empty rather than until the token is null.
+    for (let page = 0; page < 10; page++) {
+      const query = `?max_results=100${token ? `&pagination_token=${token}` : ''}`;
+      const data = await this.requestScheduled<{
+        broadcasts: ITwitterScheduledBroadcast[];
+        next_token: string | null;
+      }>(query);
+
+      if (!data.broadcasts?.length) break;
+      broadcasts.push(...data.broadcasts);
+      if (!data.next_token) break;
+      token = data.next_token;
+    }
+
+    return broadcasts;
+  }
+
+  /**
+   * Partial updates are fine here — core handles X's full-replacement rule
+   */
+  async updateScheduledBroadcast(
+    broadcastId: string,
+    options: Partial<ITwitterStartStreamOptions>,
+  ): Promise<ITwitterScheduledBroadcast> {
+    const body: Dictionary<unknown> = {};
+    if (options.title !== undefined) body.title = options.title;
+    if (options.description !== undefined) body.description = options.description;
+    if (options.manualPublish !== undefined) body.manual_publish = options.manualPublish;
+    if (options.scheduledStartTime !== undefined) {
+      const duration = options.durationMs ?? TWITTER_DEFAULT_DURATION_MS;
+      body.scheduled_start_ms = String(options.scheduledStartTime);
+      body.scheduled_end_ms = String(options.scheduledStartTime + duration);
+    }
+
+    return this.requestScheduled<ITwitterScheduledBroadcast>(`/${broadcastId}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  /**
+   * Note core answers this with success even when the broadcast doesn't exist,
+   * so a resolved promise doesn't prove anything was actually removed.
+   */
+  async removeScheduledBroadcast(broadcastId: string): Promise<void> {
+    await this.requestScheduled<{ success: boolean }>(`/${broadcastId}`, { method: 'DELETE' });
   }
 
   async endStream(id: string) {

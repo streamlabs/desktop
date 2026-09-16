@@ -36,6 +36,7 @@ function StudioFooterComponent() {
     replayBufferEnabled,
     replayBufferStatus,
     isReplayBufferActive,
+    isLiveOutputEditingEnabled,
   } = useVuex(
     () => ({
       streamingStatus: StreamingService.views.streamingStatus,
@@ -46,6 +47,7 @@ function StudioFooterComponent() {
       replayBufferEnabled: SettingsService.views.values.Output.RecRB,
       replayBufferStatus: StreamingService.views.replayBufferStatus,
       isReplayBufferActive: StreamingService.views.isReplayBufferActive,
+      isLiveOutputEditingEnabled: StreamingService.views.isLiveOutputEditingEnabled,
     }),
     false,
   );
@@ -109,6 +111,12 @@ function StudioFooterComponent() {
     }
     StreamingService.actions.saveReplay();
   }, [replayBufferSaving, replayBufferStopping]);
+
+  const openEditStream = useCallback(() => {
+    if (streamingStatus === EStreamingState.Live) {
+      StreamingService.actions.showEditStream();
+    }
+  }, [streamingStatus]);
 
   const showRecordingModeDisableModal = useCallback(async () => {
     const result = await confirmAsync({
@@ -195,6 +203,18 @@ function StudioFooterComponent() {
                 <i className="icon-date" />
               </button>
             </Tooltip>
+          </div>
+        )}
+        {isLiveOutputEditingEnabled && streamingStatus === EStreamingState.Live && (
+          <div className={styles.navItem}>
+            <button
+              style={{ minWidth: '130px' }}
+              className={'button button--action'}
+              onClick={openEditStream}
+              data-name="ManageStreamButton"
+            >
+              {$t('Manage Stream')}
+            </button>
           </div>
         )}
         {!recordingModeEnabled && (

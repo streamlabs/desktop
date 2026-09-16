@@ -1,9 +1,10 @@
 # Run this script as administrator to setup enviroment on new CI machine:
-# powershell install.ps1 your_azure_token host_user host_password
+# powershell install.ps1 your_gh_token host_user host_password
 
 $token=$args[0]
 $username=$args[1]
 $password=$args[2]
+$runnerName=$args[3]
 
 if (-Not($token) -Or -Not($username) -Or -Not($password)) {
   echo "Provide a token, system user name and password";
@@ -11,25 +12,35 @@ if (-Not($token) -Or -Not($username) -Or -Not($password)) {
   exit;
 }
 
+if (-Not($runnerName)) {
+  echo "No runner name provided, defaulting to Computer Name"
+  $runnerName=$env:COMPUTERNAME
+}
+
 # change dir to the script's dir
 cd $PSScriptRoot;
 
 # define paths
-$workingDir = "C:\agent"
-$agentPath = "$workingDir\run.cmd"
-$registerAgentScriptName = "register-agent.ps1"
-
+$workingDir = "C:\actions-runner"
 
 # save token and working dir to env variable
-[System.Environment]::SetEnvironmentVariable('AZURE_PIPELINES_TOKEN', $token, [System.EnvironmentVariableTarget]::User)
-[System.Environment]::SetEnvironmentVariable('AZURE_PIPELINES_WORKING_DIR', $workingDir, [System.EnvironmentVariableTarget]::User)
+[System.Environment]::SetEnvironmentVariable('GH_WORKING_DIR', $workingDir, [System.EnvironmentVariableTarget]::User)
 
-echo "Download and install Azure Agent"
+echo "Download and install GH Actions Runner"
 cd /
 Remove-Item -Recurse -Force -ErrorAction Ignore agent
-mkdir agent ; cd agent;
-Invoke-WebRequest -Uri https://download.agent.dev.azure.com/agent/5.275.0/vsts-agent-win-x64-5.275.0.zip -OutFile "$PWD\agent.zip"
-Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD\agent.zip", "$PWD")
+Remove-Item -Recurse -Force -ErrorAction Ignore actions-runner
+
+$ErrorActionPreference = 'Stop'
+# Create a folder under the drive root
+New-Item -ItemType Directory -Force actions-runner | Out-Null
+cd actions-runner
+# Download the latest runner package
+Invoke-WebRequest -Uri https://github.com/actions/runner/releases/download/v2.336.0/actions-runner-win-x64-2.336.0.zip -OutFile actions-runner-win-x64-2.336.0.zip
+# Optional: Validate the hash
+if((Get-FileHash -Path actions-runner-win-x64-2.336.0.zip -Algorithm SHA256).Hash.ToUpper() -ne 'd59123a43003e357b0805b5d0f611d0bd2f65ab67d51bd070dd4e7a0f685c162'.ToUpper()){ throw 'Computed checksum did not match' }
+# Extract the installer
+Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD/actions-runner-win-x64-2.336.0.zip", "$PWD")
 
 # lets us configure the screen resolution
 echo "Download and install Amazon DCV Server"
@@ -61,7 +72,20 @@ choco install yarn
 
 echo "Install Git for Windows"
 choco install git.install
-git config --global core.autocrlf false # setup line-ednings transform
+
+# Git's default PATH entry (<Git>\cmd) has git.exe but not bash.exe. The Actions
+# runner resolves `shell: bash` off PATH, so add <Git>\bin explicitly.
+# Deliberately NOT adding <Git>\usr\bin - it shadows Windows' find.exe/sort.exe.
+$gitBin = "$env:ProgramFiles\Git\bin"
+$machinePath = [System.Environment]::GetEnvironmentVariable('Path', 'Machine')
+if ($machinePath -notlike "*$gitBin*") {
+  [System.Environment]::SetEnvironmentVariable('Path', "$machinePath;$gitBin", 'Machine')
+}
+
+# setup line-endings transform
+$env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' +
+              [System.Environment]::GetEnvironmentVariable('Path','User')
+git config --global core.autocrlf false 
 
 echo "Install 7zip"
 choco install 7zip
@@ -76,15 +100,14 @@ echo "Install Visual Studio 2019 Build Tools"
 choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools;includeRecommended;includeOptional"
 
 # run registration script
-echo "Configure Azure Agent"
-."$workingDir\$registerAgentScriptName"
+echo "Configure GH Actions"
+cmd.exe /c "$workingDir\config.cmd --unattended --replace --url https://github.com/streamlabs/desktop --token $token --labels desktop-frontend --name $runnerName --work _work"
 
-# Disable the lock screen to prevent the PC locking after the end of the RDP session
-Set-ItemProperty "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization" -Name 'NoLockScreen' -Value 1;
+# Disable the lock screen UI
+$personalizationKey = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization"
+New-Item -Path $personalizationKey -Force | Out-Null
+Set-ItemProperty $personalizationKey -Name 'NoLockScreen' -Value 1 -Type DWord
 
-# Azure Agent has --AutoLogon option to add Agent to autostartup
-# But it doesn't allow to pass any arguments to the Agent
-# So call own implementation of AutoLogon here
 echo "Setup auto-login when system starts"
 $RegPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
 Set-ItemProperty $RegPath "AutoAdminLogon" -Value "1" -type String
@@ -96,14 +119,17 @@ Set-ItemProperty $RegPath "DefaultPassword" -Value "$password" -type String
 # Use the example below to run restart all agents
 #   $LiveCred = Get-Credential
 #   Invoke-Command -Computer Agent1, Agent2, Agent3 -Credential $LiveCred -ScriptBlock {Restart-Computer -Force}
-Enable-PSRemoting -Force
+Enable-PSRemoting -Force -SkipNetworkProfileCheck
 Set-Item -Force wsman:\localhost\client\trustedhosts *
-New-NetFirewallRule -DisplayName "Allow inbound TCP port 5985" -Direction inbound -LocalPort 5985 -Protocol TCP -Action Allow
+if (-Not (Get-NetFirewallRule -DisplayName "Allow inbound TCP port 5985" -ErrorAction Ignore)) {
+  New-NetFirewallRule -DisplayName "Allow inbound TCP port 5985" -Direction inbound -LocalPort 5985 -Protocol TCP -Action Allow
+}
 Restart-Service WinRM
 
 echo "Setup agent autostart"
 $autoStartupRegPath = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run"
-Set-ItemProperty $autoStartupRegPath -Name 'RegisterAzureAgent' -Value "powershell $workingDir\startup.ps1";
+Set-ItemProperty $autoStartupRegPath -Name 'StartGHRunner' -Value "powershell $workingDir\startup.ps1";
 
 
 echo "Installation completed. Restart PC to take effect"
+

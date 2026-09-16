@@ -37,15 +37,6 @@ interface IYoutubeServiceState extends IPlatformState {
   broadcastStatus: TBroadcastLifecycleStatus | '';
   settings: IYoutubeStartStreamOptions;
   categories: IYoutubeCategory[];
-  backupStreamSettings?: IBackUpStreamSettings;
-}
-
-interface IBackUpStreamSettings {
-  service: string;
-  key: string;
-  server: string;
-  streamType: 'rtmp_common' | 'rtmp_custom' | 'whip_custom';
-  context: TDisplayType;
 }
 
 export interface IYoutubeStartStreamOptions extends IExtraBroadcastSettings {
@@ -488,7 +479,29 @@ export class YoutubeService
     this.setPlatformContext('youtube');
   }
 
+  /**
+   * Prepare the stream for live output editing
+   * @remark Live output editing cannot dual stream. As a safety measure, if there is
+   * any local vertical broadcast data on state, clear it
+   */
+  async setupLiveOutputStream(options?: IGoLiveSettings): Promise<void> {
+    if (!this.state.verticalStreamKey && !this.state.verticalBroadcast.id) return;
+
+    const destinations = this.streamingService.views.customDestinations.filter(
+      dest => dest.streamKey !== this.state.verticalStreamKey,
+    );
+
+    this.SET_VERTICAL_BROADCAST({} as IYoutubeLiveBroadcast);
+    this.SET_VERTICAL_STREAM_KEY('');
+    this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
+  }
+
   async setupDualStream(goLiveSettings: IGoLiveSettings) {
+    // Live output editing currently cannot use dual stream so guard against it
+    if (goLiveSettings.liveOutputEditing) {
+      return;
+    }
+
     const ytSettings = getDefined(goLiveSettings.platforms.youtube);
     const title = makeVerticalTitle(ytSettings.title);
 
@@ -602,17 +615,6 @@ export class YoutubeService
     // setup key and platform type in the OBS settings
     const streamKey = stream.cdn.ingestionInfo.streamName;
 
-    //save user's current rtmp_common settings to restore after Go Live since they are overwritten here
-    const currentSettings = this.streamSettingsService.settings;
-    if (!this.state.backupStreamSettings) {
-      this.state.backupStreamSettings = {} as IBackUpStreamSettings;
-    }
-    this.state.backupStreamSettings.service = currentSettings.service;
-    this.state.backupStreamSettings.key = currentSettings.key;
-    this.state.backupStreamSettings.server = currentSettings.server;
-    this.state.backupStreamSettings.streamType = currentSettings.streamType;
-    this.state.backupStreamSettings.context = !context ? 'horizontal' : context;
-
     if (!this.streamingService.views.isMultiplatformMode) {
       // Note: This was previously changed to `rtmp_custom` for dual streaming but
       // it now works with `rtmp_common` as well.
@@ -627,7 +629,10 @@ export class YoutubeService
       );
     }
 
-    if (ytSettings.display === 'both') {
+    // Live output editing is checked first so dual stream is never set up when live output editing is enabled.
+    if (goLiveSettings.liveOutputEditing) {
+      await this.setupLiveOutputStream(goLiveSettings);
+    } else if (ytSettings.display === 'both') {
       try {
         // Prevent rate limit errors by delaying the dual stream setup by 1 second
         await new Promise<void>(resolve => {
@@ -684,20 +689,6 @@ export class YoutubeService
     this.SET_VERTICAL_BROADCAST({} as IYoutubeLiveBroadcast);
     this.SET_VERTICAL_STREAM_KEY('');
     this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
-
-    //restore user's previous settings in case they were overwritten on Go Live
-    if (this.state.backupStreamSettings) {
-      this.streamSettingsService.setSettings(
-        {
-          platform: 'youtube',
-          service: this.state.backupStreamSettings.service,
-          key: this.state.backupStreamSettings.key,
-          streamType: this.state.backupStreamSettings.streamType,
-          server: this.state.backupStreamSettings.server,
-        },
-        this.state.backupStreamSettings.context,
-      );
-    }
   }
 
   /**
