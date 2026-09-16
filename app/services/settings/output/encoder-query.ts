@@ -39,9 +39,12 @@ const platformServiceConfig: Record<TPlatform, { streamType: string; service?: s
 };
 
 interface ICacheEntry {
-  key: string;
   encoders: IEncoderOption[];
   options: IObsListOption<string>[];
+}
+
+function intersectEncoders(a: IEncoderOption[], b: IEncoderOption[]): IEncoderOption[] {
+  return a.filter(encoder => b.some(other => other.name === encoder.name));
 }
 
 function findEncoder(
@@ -64,58 +67,92 @@ function findEncoder(
 export class EncoderQueryService extends Service {
   @Inject() private streamingService: StreamingService;
 
-  private streamingEncoderCache: ICacheEntry | null = null;
-  private recordingEncoderCache: ICacheEntry | null = null;
+  private streamingEncoderCache = new Map<string, ICacheEntry>();
+  private recordingEncoderCache = new Map<string, ICacheEntry>();
 
   getAvailableStreamingEncoders(mode: TOutputSettingsMode): IObsListOption<string>[] {
-    const platform = this.getPrimaryPlatform();
-    const cacheKey = `${mode}:${platform || 'none'}`;
+    return this.getStreamingEncoderEntry(mode).options;
+  }
 
-    if (this.streamingEncoderCache?.key === cacheKey) {
-      return this.streamingEncoderCache.options;
-    }
+  /** Drops memoized encoder lists. Only needed if the registered encoder set itself changes. */
+  clearCache() {
+    this.streamingEncoderCache.clear();
+    this.recordingEncoderCache.clear();
+  }
+
+  private getStreamingEncoderEntry(mode: TOutputSettingsMode): ICacheEntry {
+    const targets = this.getTargetPlatforms();
+    // Keyed on the full target set, so enabling or disabling a platform lands on a
+    // different entry instead of reusing a list filtered for a different destination.
+    const cacheKey = `${mode}:${targets.join('+') || 'none'}`;
+
+    const cached = this.streamingEncoderCache.get(cacheKey);
+    if (cached) return cached;
 
     try {
-      const existing = this.streamingService.getStreamingInstance();
-      if (existing && hasGetAvailableEncoders(existing)) {
-        const encoders = existing.getAvailableEncoders();
-        const options = mapEncoders(encoders);
-        this.streamingEncoderCache = { key: cacheKey, encoders, options };
-        return options;
+      // While live the running output already carries the real service. Read it straight
+      // through rather than caching, so the list is not still live-derived once we stop.
+      const live = this.streamingService.isIdle
+        ? null
+        : this.streamingService.getStreamingInstance();
+      if (live && hasGetAvailableEncoders(live)) {
+        const encoders = live.getAvailableEncoders();
+        return { encoders, options: mapEncoders(encoders) };
       }
 
-      if (mode === 'Simple') {
-        const instance = SimpleStreamingFactory.create();
-        let service: any = null;
-        try {
-          service = this.setupTempStreamingService(instance);
-          if (!hasGetAvailableEncoders(instance)) return [];
-          const encoders = instance.getAvailableEncoders();
-          const options = mapEncoders(encoders);
-          this.streamingEncoderCache = { key: cacheKey, encoders, options };
-          return options;
-        } finally {
-          SimpleStreamingFactory.destroy(instance);
-          if (service) ServiceFactory.destroy(service);
-        }
-      } else {
-        const instance = AdvancedStreamingFactory.create();
-        let service: any = null;
-        try {
-          service = this.setupTempStreamingService(instance);
-          if (!hasGetAvailableEncoders(instance)) return [];
-          const encoders = instance.getAvailableEncoders();
-          const options = mapEncoders(encoders);
-          this.streamingEncoderCache = { key: cacheKey, encoders, options };
-          return options;
-        } finally {
-          AdvancedStreamingFactory.destroy(instance);
-          if (service) ServiceFactory.destroy(service);
-        }
-      }
+      const encoders = this.queryEncodersForTargets(mode, targets);
+      if (!encoders.length) return { encoders: [], options: [] };
+
+      const entry = { encoders, options: mapEncoders(encoders) };
+      this.streamingEncoderCache.set(cacheKey, entry);
+      return entry;
     } catch (e: unknown) {
       console.error('Error querying available streaming encoders', e);
-      return [];
+      return { encoders: [], options: [] };
+    }
+  }
+
+  /**
+   * Every target receives the same encoded stream, so the usable set is the
+   * intersection of what each enabled platform accepts. Custom destinations are
+   * unconstrained and do not narrow it.
+   */
+  private queryEncodersForTargets(
+    mode: TOutputSettingsMode,
+    targets: TPlatform[],
+  ): IEncoderOption[] {
+    if (!targets.length) return this.queryEncodersForPlatform(mode, null);
+
+    let usable: IEncoderOption[] | null = null;
+    for (const platform of targets) {
+      const encoders = this.queryEncodersForPlatform(mode, platform);
+      // A platform we cannot query must not silently empty the list.
+      if (!encoders.length) continue;
+      usable = usable ? intersectEncoders(usable, encoders) : encoders;
+    }
+
+    return usable ?? [];
+  }
+
+  private queryEncodersForPlatform(
+    mode: TOutputSettingsMode,
+    platform: TPlatform | null,
+  ): IEncoderOption[] {
+    const instance: any =
+      mode === 'Simple' ? SimpleStreamingFactory.create() : AdvancedStreamingFactory.create();
+    let service: any = null;
+
+    try {
+      service = this.setupTempStreamingService(instance, platform);
+      if (!hasGetAvailableEncoders(instance)) return [];
+      return instance.getAvailableEncoders();
+    } finally {
+      if (mode === 'Simple') {
+        SimpleStreamingFactory.destroy(instance);
+      } else {
+        AdvancedStreamingFactory.destroy(instance);
+      }
+      if (service) ServiceFactory.destroy(service);
     }
   }
 
@@ -123,71 +160,66 @@ export class EncoderQueryService extends Service {
     mode: TOutputSettingsMode,
     format: ERecordingFormat,
   ): IObsListOption<string>[] {
+    return this.getRecordingEncoderEntry(mode, format).options;
+  }
+
+  private getRecordingEncoderEntry(
+    mode: TOutputSettingsMode,
+    format: ERecordingFormat,
+  ): ICacheEntry {
     const cacheKey = `${mode}:${format}`;
 
-    if (this.recordingEncoderCache?.key === cacheKey) {
-      return this.recordingEncoderCache.options;
-    }
+    const cached = this.recordingEncoderCache.get(cacheKey);
+    if (cached) return cached;
 
     try {
-      const existing = this.streamingService.getRecordingInstance();
-      if (existing) {
-        existing.format = format;
-        if (hasGetAvailableEncoders(existing)) {
-          const encoders = existing.getAvailableEncoders();
-          const options = mapEncoders(encoders);
-          this.recordingEncoderCache = { key: cacheKey, encoders, options };
-          return options;
-        }
-      }
+      const encoders = this.queryRecordingEncoders(mode, format);
+      if (!encoders.length) return { encoders: [], options: [] };
 
-      if (mode === 'Simple') {
-        const instance = SimpleRecordingFactory.create();
-        try {
-          instance.format = format;
-          if (!hasGetAvailableEncoders(instance)) return [];
-          const encoders = instance.getAvailableEncoders();
-          const options = mapEncoders(encoders);
-          this.recordingEncoderCache = { key: cacheKey, encoders, options };
-          return options;
-        } finally {
-          SimpleRecordingFactory.destroy(instance);
-        }
-      } else {
-        const instance = AdvancedRecordingFactory.create();
-        try {
-          instance.format = format;
-          if (!hasGetAvailableEncoders(instance)) return [];
-          const encoders = instance.getAvailableEncoders();
-          const options = mapEncoders(encoders);
-          this.recordingEncoderCache = { key: cacheKey, encoders, options };
-          return options;
-        } finally {
-          AdvancedRecordingFactory.destroy(instance);
-        }
-      }
+      const entry = { encoders, options: mapEncoders(encoders) };
+      this.recordingEncoderCache.set(cacheKey, entry);
+      return entry;
     } catch (e: unknown) {
       console.error('Error querying available recording encoders', e);
-      return [];
+      return { encoders: [], options: [] };
+    }
+  }
+
+  private queryRecordingEncoders(
+    mode: TOutputSettingsMode,
+    format: ERecordingFormat,
+  ): IEncoderOption[] {
+    const existing = this.streamingService.getRecordingInstance();
+    if (existing) {
+      existing.format = format;
+      if (hasGetAvailableEncoders(existing)) return existing.getAvailableEncoders();
+    }
+
+    const instance: any =
+      mode === 'Simple' ? SimpleRecordingFactory.create() : AdvancedRecordingFactory.create();
+
+    try {
+      instance.format = format;
+      if (!hasGetAvailableEncoders(instance)) return [];
+      return instance.getAvailableEncoders();
+    } finally {
+      if (mode === 'Simple') {
+        SimpleRecordingFactory.destroy(instance);
+      } else {
+        AdvancedRecordingFactory.destroy(instance);
+      }
     }
   }
 
   getAvailableStreamingEncoderMetadata(mode: TOutputSettingsMode): IEncoderOption[] {
-    const platform = this.getPrimaryPlatform();
-    const cacheKey = `${mode}:${platform || 'none'}`;
-
-    this.getAvailableStreamingEncoders(mode);
-    return this.streamingEncoderCache?.key === cacheKey ? this.streamingEncoderCache.encoders : [];
+    return this.getStreamingEncoderEntry(mode).encoders;
   }
 
   getAvailableRecordingEncoderMetadata(
     mode: TOutputSettingsMode,
     format: ERecordingFormat,
   ): IEncoderOption[] {
-    const cacheKey = `${mode}:${format}`;
-
-    this.getAvailableRecordingEncoders(mode, format);
-    return this.recordingEncoderCache?.key === cacheKey ? this.recordingEncoderCache.encoders : [];
+    return this.getRecordingEncoderEntry(mode, format).encoders;
   }
 
   resolveStreamingEncoderId(mode: TOutputSettingsMode, selectedEncoder: string): string {
@@ -258,9 +290,8 @@ export class EncoderQueryService extends Service {
    * Creates a temp OBS service and assigns it to the streaming instance.
    * Returns the created service so the caller can destroy it after use.
    */
-  private setupTempStreamingService(instance: any): any {
+  private setupTempStreamingService(instance: any, platform: TPlatform | null): any {
     try {
-      const platform = this.getPrimaryPlatform();
       const legacySettings = ServiceFactory.legacySettings;
 
       if (platform) {
@@ -284,13 +315,12 @@ export class EncoderQueryService extends Service {
     }
   }
 
-  private getPrimaryPlatform(): TPlatform | null {
+  /** Sorted so that the same set of platforms always produces the same cache key. */
+  private getTargetPlatforms(): TPlatform[] {
     try {
-      const enabledPlatforms = this.streamingService.views.enabledPlatforms;
-      if (!enabledPlatforms.length) return null;
-      return enabledPlatforms[0];
+      return [...this.streamingService.views.enabledPlatforms].sort();
     } catch (e: unknown) {
-      return null;
+      return [];
     }
   }
 }
