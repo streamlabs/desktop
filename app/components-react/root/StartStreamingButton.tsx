@@ -197,6 +197,8 @@ function StartStreamingButton(p: { disabled?: boolean }) {
         return protectedModeEnabled && StreamSettingsService.isSafeToModifyStreamKey();
       }
     }
+
+    return true;
   }, [
     isLoggedIn,
     protectedModeEnabled,
