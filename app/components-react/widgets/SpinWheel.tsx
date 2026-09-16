@@ -317,7 +317,7 @@ export class SpinWheelModule extends WidgetModule<ISpinWheelState> {
 
   addCategory() {
     this.replaceSettings({
-      categories: [...this.categories, { color: '#ffffff', prize: 'DONUT', key: uuid() }],
+      categories: [...this.categories, { color: '#ffffff', prize: $t('DONUT'), key: uuid() }],
     });
   }
 
