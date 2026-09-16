@@ -179,7 +179,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns if streaming to Twitch in unprotected mode
    */
   get isTwitchUnprotectedStream() {
-    console.log('this.streamSettingsView.settings.server', this.streamSettingsView.settings.server);
     return (
       !this.protectedModeEnabled &&
       this.isPrimaryPlatform('twitch') &&

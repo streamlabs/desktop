@@ -4056,7 +4056,7 @@ export class StreamingService
           );
           diagReportMessage = diagReportMessage.concat(errorText);
         } else {
-          errorText = $t('The stream key is missing . Please configure your streaming settings.');
+          errorText = $t('The stream key is missing. Please configure your streaming settings.');
           diagReportMessage = diagReportMessage.concat(errorText);
         }
       } else {
