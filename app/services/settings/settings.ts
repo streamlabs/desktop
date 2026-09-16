@@ -436,8 +436,10 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     }
 
     // Replace encoder dropdown options with results from getAvailableEncoders().
-    // Skip during save-triggered reloads to avoid blocking the worker on every keystroke.
-    if (categoryName === 'Output' && !this.isSaving) {
+    // Must run on save-triggered reloads too, otherwise the store is repopulated with
+    // the raw unfiltered OBS list and the dropdown loses its per-destination filtering.
+    // EncoderQueryService memoizes the query, so repeats cost nothing.
+    if (categoryName === 'Output') {
       settings = this.replaceEncoderOptions(settings);
     }
 
@@ -819,8 +821,10 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
             streamEncoderSetting.options = streamEncoderOptions;
           }
 
-          // Rebuilding options from OSN can make old saved values disappear from the list.
-          // Canonicalize legacy values before falling back to the first available encoder.
+          // Canonicalize legacy saved values so they still resolve against rebuilt options.
+          // An unresolvable value is left alone: this is a read path, and overwriting it
+          // here silently discards the user's encoder on the next save. validateEncoders()
+          // owns that decision and tells the user about it.
           const streamEncoderValue = resolveAvailableEncoderOptionValue(
             streamEncoderOptions,
             streamEncoderSetting.value,
@@ -828,8 +832,6 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
 
           if (streamEncoderValue) {
             streamEncoderSetting.value = streamEncoderValue;
-          } else {
-            streamEncoderSetting.value = streamEncoderOptions[0].value;
           }
         }
       }
@@ -900,24 +902,29 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     const encoderSetting: IObsListInput<string> =
       this.findSetting(this.state.Output.formData, 'Streaming', 'Encoder') ??
       this.findSetting(this.state.Output.formData, 'Streaming', 'StreamEncoder');
+    const mode: string = this.findSettingValue(this.state.Output.formData, 'Untitled', 'Mode');
+
+    // Query the encoder list directly rather than trusting the options already in the
+    // store, which can be a stale list built for a different set of destinations.
+    const availableEncoders = this.encoderQueryService.getAvailableStreamingEncoders(
+      mode as TOutputSettingsMode,
+    );
     const encoderValue = resolveAvailableEncoderOptionValue(
-      encoderSetting.options,
+      availableEncoders.length ? availableEncoders : encoderSetting.options,
       encoderSetting.value,
     );
 
-    // The backend incorrectly defaults to obs_x264 in Simple mode rather x264.
-    // In this case we shouldn't do anything here.
-    if (encoderSetting.value === 'obs_x264') return;
+    // The backend incorrectly defaults to obs_x264 in Simple mode rather than x264.
+    if (mode !== 'Advanced' && encoderSetting.value === 'obs_x264') return;
 
     if (encoderValue) {
       encoderSetting.value = encoderValue;
       return;
     }
 
-    console.warn(
+    console.error(
       `The selected encoder ${encoderSetting.value} is not valid for the current configuration. Resetting to a valid encoder.`,
     );
-    const mode: string = this.findSettingValue(this.state.Output.formData, 'Untitled', 'Mode');
 
     const encoderMessage =
       getOS() === OS.Windows
