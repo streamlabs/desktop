@@ -15,7 +15,7 @@ import { VideoSettingsService } from 'services/settings-v2';
 import { SourceFiltersService } from 'services/source-filters';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { UserService } from 'services/user';
-import { WidgetDisplayData, WidgetsService, WidgetType } from 'services/widgets';
+import { TWidgetType, WidgetDisplayData, WidgetsService, WidgetType } from 'services/widgets';
 import { WindowsService } from 'services/windows';
 import namingHelpers from 'util/NamingHelpers';
 import { assertIsDefined } from 'util/properties-type-guards';
@@ -135,6 +135,31 @@ export const macSources: TSourceType[] = [
   'syphon-input',
   'decklink-input',
   'mediasoupconnector',
+];
+
+export const reactWidgets: TWidgetType[] = [
+  'AlertBox',
+  'BitGoal',
+  'CharityGoal',
+  'ChatBox',
+  'Credits',
+  'CustomWidget',
+  'DonationGoal',
+  'DonationTicker',
+  'EmoteWall',
+  'EventList',
+  'FollowerGoal',
+  'GamePulseWidget',
+  'SponsorBanner',
+  'StreamBoss',
+  'SubGoal',
+  'SubscriberGoal',
+  'SuperchatGoal',
+  'TipJar',
+  'ViewerCount',
+  // 'ChatHighlight',
+  // 'MediaShare',
+  // 'Poll',
 ];
 
 class SourcesViews extends ViewHandler<ISourcesState> {
@@ -859,37 +884,11 @@ export class SourcesService extends StatefulService<ISourcesState> {
     const componentName = this.widgetsService.getWidgetComponent(widgetType);
 
     // React widgets are in the WidgetsWindow component
-    let reactWidgets = [
-      'AlertBox',
-      'BitGoal',
-      'DonationGoal',
-      'CharityGoal',
-      'FollowerGoal',
-      'SubGoal',
-      'SubscriberGoal',
-      'SuperchatGoal',
-      'ChatBox',
-      // TODO:
-      // 'ChatHighlight',
-      'Credits',
-      'DonationTicker',
-      'EmoteWall',
-      'EventList',
-      // 'MediaShare',
-      // 'Poll',
-      // 'SpinWheel',
-      'SponsorBanner',
-      'StreamBoss',
-      'TipJar',
-      'ViewerCount',
-      'CustomWidget',
-      'GamePulseWidget',
-    ];
     const isLegacyAlertbox = this.customizationService.state.legacyAlertbox;
-    if (isLegacyAlertbox) reactWidgets = reactWidgets.filter(w => w !== 'AlertBox');
     const isReactComponent =
       this.incrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.reactWidgets) &&
-      reactWidgets.includes(componentName);
+      reactWidgets.includes(componentName as TWidgetType) &&
+      (!isLegacyAlertbox || componentName !== 'AlertBox');
     const windowComponentName = isReactComponent ? 'WidgetWindow' : componentName;
 
     const defaultVueWindowSize = { width: 920, height: 1024 };

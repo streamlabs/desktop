@@ -534,6 +534,8 @@ export function getWidgetsConfig(
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/streamboss/settings`,
       settingsUpdateEvent: 'streambossSettingsUpdate',
       goalUrl: `https://${host}/api/v5/slobs/widget/streamboss`,
+      goalCreateEvent: 'newStreamboss',
+      goalResetEvent: 'streambossEnd',
       customCodeAllowed: true,
       customFieldsAllowed: true,
       testers: ['follow', 'sub', 'donation', 'bits', 'power_up'],

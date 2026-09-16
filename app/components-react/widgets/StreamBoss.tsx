@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
 import { Button, Menu, message } from 'antd';
+import { Services } from 'components-react/service-provider';
+import Form from 'components-react/shared/inputs/Form';
+import FormFactory, { TInputValue } from 'components-react/shared/inputs/FormFactory';
+import React, { useState } from 'react';
+import { Subscription } from 'rxjs';
 import { $t } from 'services/i18n';
+import { TPlatform } from 'services/platforms';
+import { assertIsDefined } from 'util/properties-type-guards';
+import { authorizedHeaders, jfetch } from 'util/requests';
+import { IBaseMetadata, metadata } from '../shared/inputs/metadata';
 import { IWidgetCommonState, useWidget, WidgetModule } from './common/useWidget';
 import { WidgetLayout } from './common/WidgetLayout';
-import FormFactory, { TInputValue } from 'components-react/shared/inputs/FormFactory';
-import Form from 'components-react/shared/inputs/Form';
-import { IBaseMetadata, metadata } from '../shared/inputs/metadata';
-import { authorizedHeaders, jfetch } from 'util/requests';
-import { Services } from 'components-react/service-provider';
-import { assertIsDefined } from 'util/properties-type-guards';
-import { TPlatform } from 'services/platforms';
 import styles from './GenericGoal.m.less';
 
 type TStreamBossMode = 'fixed' | 'incremental' | 'overkill';
@@ -167,6 +168,31 @@ export class StreamBossModule extends WidgetModule<IStreamBossState> {
     return Services.UserService;
   }
 
+  get WebsocketService() {
+    return Services.WebsocketService;
+  }
+
+  private goalSocketSubscription: Subscription | null = null;
+
+  async init() {
+    await super.init();
+
+    // The Stream Boss goal (current boss health/name) is mutated by viewer
+    // actions and the web dashboard, independently of the widget settings.
+    // Keep an open settings window in sync by reloading whenever the boss
+    // is (re)spawned or defeated.
+    this.goalSocketSubscription = this.WebsocketService.socketEvent.subscribe(event => {
+      const { goalCreateEvent, goalResetEvent, settingsUpdateEvent } = this.config;
+      if (![goalCreateEvent, goalResetEvent, settingsUpdateEvent].includes(event.type)) return;
+      this.reload();
+    });
+  }
+
+  destroy() {
+    super.destroy();
+    this.goalSocketSubscription?.unsubscribe();
+  }
+
   get goalSettings() {
     return this.widgetData.goal;
   }
@@ -277,11 +303,15 @@ export class StreamBossModule extends WidgetModule<IStreamBossState> {
     );
   }
 
-  resetGoal() {
+  async resetGoal() {
     const url = this.config.goalUrl;
     if (!url) return;
-    jfetch(new Request(url, { method: 'DELETE', headers: this.headers }));
-    this.setGoalData(null);
+    try {
+      await jfetch(new Request(url, { method: 'DELETE', headers: this.headers }));
+      this.setGoalData(null);
+    } catch {
+      message.error({ content: $t('Failed to reset Stream Boss, please try again.'), duration: 2 });
+    }
   }
 
   async saveGoal(options: Dictionary<TInputValue>) {
