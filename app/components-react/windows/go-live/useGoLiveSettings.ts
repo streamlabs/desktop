@@ -57,10 +57,20 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
    * Update settings for a specific platform
    */
   updatePlatform(platform: TPlatform, patch: Partial<IGoLiveSettings['platforms'][TPlatform]>) {
+    // A scheduled broadcast arrives from YouTube has its own title and description, so
+    // mark YouTube as using custom fields. Without this the shared title is applied over the
+    // scheduled one and going live renames the event. This must be handled when updating the platform,
+    // not when prepopulating the go live window or getting the platform's saved settings, because
+    // the scheduled stream is only selected after the user has opened the go live window.
+    const platformPatch =
+      platform === 'youtube' && patch && 'broadcastId' in patch && patch.broadcastId
+        ? { ...patch, useCustomFields: true }
+        : patch;
+
     let updated = {
       platforms: {
         ...this.state.platforms,
-        [platform]: { ...this.state.platforms[platform], ...patch },
+        [platform]: { ...this.state.platforms[platform], ...platformPatch },
       },
     };
 
