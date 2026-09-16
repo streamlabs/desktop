@@ -891,7 +891,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
 
     // Always assume that the user provided the correct server url for rtmp custom
     // because we have no way to validate this.
-    if (settings.service === 'rtmp_custom') return true;
+    if (settings.streamType === 'rtmp_custom') return true;
 
     // Only kick does not have the service name in its server url
     const hasValidUrl =
