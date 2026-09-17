@@ -11,5 +11,6 @@
   "Switch to Streamlabs Desktop": "Skift til Streamlabs Desktop",
   "Upgrade to Ultra to switch streams between devices.": "Opgrader til Ultra for at skifte stream mellem enheder.",
   "Force Start": "Gennemtving start",
+  "Switch Stream": "Switch Stream",
   "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you're sure you're not live and it has been incorrectly detected, choose \"Force Start\" below.": "Der er registreret en stream på en anden enhed. Vil du gerne skifte din stream til Streamlabs Desktop? Hvis du ikke ønsker at fortsætte denne stream, skal du afslutte den fra den aktuelle streamingkilde. Hvis du er sikker på, at du ikke er live, og at den er fejlregistreret, skal du vælge \"Gennemtving start\" nedenfor."
 }

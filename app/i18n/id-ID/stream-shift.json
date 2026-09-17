@@ -11,5 +11,6 @@
   "Switch to Streamlabs Desktop": "Beralih ke Streamlabs Desktop",
   "Upgrade to Ultra to switch streams between devices.": "Tingkatkan ke Ultra untuk mengganti aliran langsung antar perangkat.",
   "Force Start": "Paksa Mulai",
+  "Switch Stream": "Switch Stream",
   "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you're sure you're not live and it has been incorrectly detected, choose \"Force Start\" below.": "Aliran pada perangkat lain telah terdeteksi. Apakah Anda ingin mengalihkan aliran langsung Anda ke Streamlabs Desktop? Jika Anda tidak ingin melanjutkan aliran langsung ini, silakan akhiri dari sumber aliran langsung saat ini. Jika Anda yakin Anda tidak sedang dalam keadaan hidup dan terdeteksi secara tidak benar, pilih \"Paksa Mulai\" di bawah ini."
 }

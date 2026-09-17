@@ -7,6 +7,7 @@
   "Set Stream Boss Health": "Atur Kesehatan Boss Streaming",
   "Goal": "Tujuan",
   "Manage Battle": "Kelola Perang",
+  "Boss Settings": "Boss Settings",
   "Starting Health": "Kesehatan saat Dimulai",
   "Fixed": "Diperbaiki",
   "The boss will spawn with the set amount of health everytime.": "Boss akan selalu lahir kembali dengan jumlah kesehatan yang ditetapkan.",
@@ -31,5 +32,6 @@
   "Health Bar Background Color": "Warna Latar Belakang Bilah Kesehatan",
   "Font": "Font",
   "The boss will have additional health each time he is defeated. The amount is set below.": "Boss akan memiliki kesehatan tambahan setiap kali dikalahkan. Jumlahnya ditetapkan di bawah.",
-  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "Kesehatan boss akan berubah tergantung pada seberapa besar kerusakan yang terjadi pada pukulan mematikan. Kerusakan berlebihan yang dikalikan dengan angka pengali akan menjadi kesehatan baru boss. Misalnya, kerusakan 150 dengan kesehatan yang tersisa 100 dan pengali yang ditetapkan adalah 3 akan menyebabkan bos baru memiliki kesehatan 150 saat hidup kembali.\nTetapkan angka pengali Anda di bawah."
+  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "Kesehatan boss akan berubah tergantung pada seberapa besar kerusakan yang terjadi pada pukulan mematikan. Kerusakan berlebihan yang dikalikan dengan angka pengali akan menjadi kesehatan baru boss. Misalnya, kerusakan 150 dengan kesehatan yang tersisa 100 dan pengali yang ditetapkan adalah 3 akan menyebabkan bos baru memiliki kesehatan 150 saat hidup kembali.\nTetapkan angka pengali Anda di bawah.",
+  "Failed to reset Stream Boss, please try again.": "Failed to reset Stream Boss, please try again."
 }

@@ -21,5 +21,6 @@
   "Authentication Error": "Authenticatiefout",
   "Diagnostic Report Uploaded Successfully": "Diagnostisch rapport is geüpload",
   "Copy Report ID": "Rapport-ID kopiëren",
-  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "Het diagnoserapport is veilig geüpload en de onderstaande rapport-ID is naar je klembord gekopieerd. Geef het rapport-ID door aan het Streamlabs Streamer Success-team."
+  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "Het diagnoserapport is veilig geüpload en de onderstaande rapport-ID is naar je klembord gekopieerd. Geef het rapport-ID door aan het Streamlabs Streamer Success-team.",
+  "Unknown %{platform} error": "Unknown %{platform} error"
 }
