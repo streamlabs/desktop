@@ -43,6 +43,13 @@ interface ICacheEntry {
   options: IObsListOption<string>[];
 }
 
+interface IStreamingEncoderResult {
+  // null = the query failed; [] = a confirmed empty intersection. Callers that need to
+  // fall back only on failure (not on a real empty result) rely on this distinction.
+  encoders: IEncoderOption[] | null;
+  options: IObsListOption<string>[];
+}
+
 function intersectEncoders(a: IEncoderOption[], b: IEncoderOption[]): IEncoderOption[] {
   return a.filter(encoder => b.some(other => other.name === encoder.name));
 }
@@ -74,31 +81,47 @@ export class EncoderQueryService extends Service {
     return this.getStreamingEncoderEntry(mode).options;
   }
 
+  /**
+   * Like getAvailableStreamingEncoders, but returns `fallback` only when the query itself
+   * failed. A confirmed empty intersection is returned as an empty list rather than swapped
+   * for `fallback`, so a validator can still tell "nothing usable" from "couldn't ask".
+   */
+  getAvailableStreamingEncodersOrFallback(
+    mode: TOutputSettingsMode,
+    fallback: IObsListOption<string>[],
+  ): IObsListOption<string>[] {
+    const entry = this.getStreamingEncoderEntry(mode);
+    return entry.encoders === null ? fallback : entry.options;
+  }
+
   /** Drops memoized encoder lists. Only needed if the registered encoder set itself changes. */
   clearCache() {
     this.streamingEncoderCache.clear();
     this.recordingEncoderCache.clear();
   }
 
-  private getStreamingEncoderEntry(mode: TOutputSettingsMode): ICacheEntry {
+  private getStreamingEncoderEntry(mode: TOutputSettingsMode): IStreamingEncoderResult {
     const targets = this.getTargetPlatforms();
     // Keyed on the full target set, so enabling or disabling a platform lands on a
     // different entry instead of reusing a list filtered for a different destination.
     const cacheKey = `${mode}:${targets.join('+') || 'none'}`;
 
-    const cached = this.streamingEncoderCache.get(cacheKey);
-    if (cached) return cached;
-
     try {
-      // While live the running output already carries the real service. Read it straight
-      // through rather than caching, so the list is not still live-derived once we stop.
-      const live = this.streamingService.isIdle
-        ? null
-        : this.streamingService.getStreamingInstance();
-      if (live && hasGetAvailableEncoders(live)) {
-        const encoders = live.getAvailableEncoders();
-        return { encoders, options: mapEncoders(encoders) };
+      // While actively streaming, the running output already carries the real service:
+      // read it straight through ahead of the cache, so an active output is never served
+      // a cached or stale list. Recording-only sessions (isStreaming false even though a
+      // streaming dependency exists for the recording) fall through to the query below,
+      // so they still get the target-set intersection instead of this shortcut.
+      if (this.streamingService.isStreaming) {
+        const live = this.streamingService.getStreamingInstance();
+        if (live && hasGetAvailableEncoders(live)) {
+          const encoders = live.getAvailableEncoders();
+          return { encoders, options: mapEncoders(encoders) };
+        }
       }
+
+      const cached = this.streamingEncoderCache.get(cacheKey);
+      if (cached) return cached;
 
       const encoders = this.queryEncodersForTargets(mode, targets);
       if (!encoders.length) return { encoders: [], options: [] };
@@ -108,7 +131,8 @@ export class EncoderQueryService extends Service {
       return entry;
     } catch (e: unknown) {
       console.error('Error querying available streaming encoders', e);
-      return { encoders: [], options: [] };
+      // null (not []) marks this a failed query rather than a confirmed empty intersection.
+      return { encoders: null, options: [] };
     }
   }
 
@@ -212,7 +236,7 @@ export class EncoderQueryService extends Service {
   }
 
   getAvailableStreamingEncoderMetadata(mode: TOutputSettingsMode): IEncoderOption[] {
-    return this.getStreamingEncoderEntry(mode).encoders;
+    return this.getStreamingEncoderEntry(mode).encoders ?? [];
   }
 
   getAvailableRecordingEncoderMetadata(

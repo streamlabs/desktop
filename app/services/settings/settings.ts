@@ -905,12 +905,15 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     const mode: string = this.findSettingValue(this.state.Output.formData, 'Untitled', 'Mode');
 
     // Query the encoder list directly rather than trusting the options already in the
-    // store, which can be a stale list built for a different set of destinations.
-    const availableEncoders = this.encoderQueryService.getAvailableStreamingEncoders(
+    // store, which can be a stale list built for a different set of destinations. Only
+    // fall back to the stored options if the query itself failed — a confirmed empty
+    // intersection must not be papered over with the stale/unfiltered list.
+    const availableEncoders = this.encoderQueryService.getAvailableStreamingEncodersOrFallback(
       mode as TOutputSettingsMode,
+      encoderSetting.options,
     );
     const encoderValue = resolveAvailableEncoderOptionValue(
-      availableEncoders.length ? availableEncoders : encoderSetting.options,
+      availableEncoders,
       encoderSetting.value,
     );
 
