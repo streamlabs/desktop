@@ -1553,6 +1553,12 @@ export class StreamingService
 
   async finishStartStreaming(): Promise<unknown> {
     if (!this.streamSettingsService.protectedModeEnabled) {
+      if (this.streamSettingsService.settings.streamType === 'rtmp_common') {
+        // Older profiles may contain a server from another service. Let OSN normalize
+        // the saved selection and reload it before any output inherits the settings.
+        this.settingsService.setSettings('Stream', this.settingsService.state.Stream.formData);
+      }
+
       // Recompute for every attempt, including direct/forced starts and retries.
       // Keep the saved native preference so returning to common Twitch restores it.
       this.SET_ENHANCED_BROADCASTING(
