@@ -259,6 +259,9 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns if the non-ultra user has a valid display assignment to go live
    */
   get hasValidDisplayAssignment(): boolean {
+    // Custom ingest uses one OBS destination, independent of saved platform/display assignments.
+    if (!this.protectedModeEnabled) return true;
+
     if (this.userView.isPrime) {
       // For ultra users single output mode, no display validation is needed
       if (!this.isDualOutputMode) return true;
