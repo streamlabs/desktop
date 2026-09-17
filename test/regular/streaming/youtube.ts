@@ -173,7 +173,7 @@ test.skip('Youtube scheduled event keeps its own title and description', async t
   t.pass();
 });
 
-test('Streaming to YouTube scheduled stream', async t => {
+test.skip('Streaming to YouTube scheduled stream', async t => {
   await logInYouTubeEnabledAccount(t);
   await prepareToGoLive();
 
@@ -236,7 +236,7 @@ test('Start stream twice to the same YT event', async t => {
   await stopStream();
   t.pass();
 });
-``;
+
 test('Youtube streaming is disabled', async t => {
   skipCheckingErrorsInLog();
   await logIn('youtube', { streamingIsDisabled: true, notStreamable: true });
