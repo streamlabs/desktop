@@ -131,7 +131,7 @@ class LiveDockController {
   }
 
   get chatTabs(): { name: string; value: string }[] {
-    if (!this.userService.state.auth) return [];
+    if (!this.userService.state.auth || !this.enabledPlatforms.length) return [];
 
     const hasMultistreamChat =
       (this.restreamService.views.canEnableRestream &&
@@ -388,9 +388,10 @@ function LiveDock() {
   }, [enabledPlatforms, primaryPlatform]);
 
   const chat = useMemo(() => {
-    const primaryChat = primaryStreaming ? primaryPlatform : (enabledPlatforms[0] as TPlatform);
+    const primaryChat = primaryStreaming ? primaryPlatform : enabledPlatforms[0];
+    if (!primaryChat) return <OfflineChat chatEnabled={true} />;
 
-    const service = getPlatformService(primaryChat!);
+    const service = getPlatformService(primaryChat);
 
     if (!service.hasCapability('chat') && !service.hasLiveDockFeature('chat-offline')) {
       return <OfflineChat chatEnabled={false} primaryPlatform={primaryChat} />;
