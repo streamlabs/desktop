@@ -1,6 +1,7 @@
 {
   "Add Category": "Categorie toevoegen",
   "Add Section": "Sectie toevoegen",
+  "DONUT": "DONUT",
   "Clear All": "Alles wissen",
   "Manage Spin Wheel": "Draaiwiel beheren",
   "Categories": "Categorieën",
@@ -30,5 +31,6 @@
   "Center Image Size": "Grootte middenafbeelding",
   "Center Image Border Enabled": "Rand middenafbeelding ingeschakeld",
   "Center Image Border Color": "Randkleur middenafbeelding",
-  "Center Image Border Width": "Randbreedte middenafbeelding"
+  "Center Image Border Width": "Randbreedte middenafbeelding",
+  "Add categories before adding new sections.": "Add categories before adding new sections."
 }
