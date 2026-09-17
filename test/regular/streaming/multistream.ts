@@ -529,19 +529,6 @@ test(
       t.is(streamType, 'rtmp_custom', 'Going live should leave the custom server context alone');
       t.is(server, 'rtmp://live.twitch.tv/app/', 'Going live should not overwrite the server url');
       t.is(key, user.streamKey, 'Going live should not overwrite the stream key');
-
-      /*
-       * This is the only unprotected go-live path that reaches `validateUnprotectedModeCredentials`,
-       * so it is the only one that trips the guard bug documented in
-       * `test/regular/settings/streaming.ts`: the early return meant to skip custom ingest tests
-       * `settings.service === 'rtmp_custom'`, comparing the OBS service *name* against a
-       * *streamType* value, so it never matches. Validation falls through to the service lookup,
-       * finds no mapping, and logs `Unable to set valid server URL for the current streaming
-       * service:  undefined` — the `undefined` being the unset service name, the same bug from the
-       * other side. The assertions above prove nothing was actually rewritten. Remove this skip
-       * once that guard checks `streamType`, alongside the one in `settings/streaming.ts`.
-       */
-      skipCheckingErrorsInLog();
     } finally {
       await releaseUserInPool(user);
     }

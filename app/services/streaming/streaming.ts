@@ -83,6 +83,7 @@ import { authorizedHeaders } from 'util/requests';
 import { HostsService } from '../hosts';
 import { assertIsDefined, getDefined } from 'util/properties-type-guards';
 import { StreamInfoView } from './streaming-view';
+import { isCommonTwitchService } from './stream-destination';
 import { GrowService } from 'services/grow/grow';
 import * as remote from '@electron/remote';
 import { RecordingModeService } from 'services/recording-mode';
@@ -433,21 +434,12 @@ export class StreamingService
       this.userService.setPrimaryPlatform('twitch');
     }
 
-    // TODO: Remove when BE fix is released.
-    if (!this.streamSettingsService.state.protectedModeEnabled) {
-      // Validate the current stream settings before proceeding
-      // This is a band-aid solution until the backend fixes are made
-      this.settingsService.validateUnprotectedModeCredentials();
-    }
-
-    // don't interact with API in logged out mode and when protected mode is disabled
+    // Only a Twitch destination may use Twitch's metadata API in unprotected mode.
     if (
       !this.userService.isLoggedIn ||
-      (!this.streamSettingsService.state.protectedModeEnabled &&
-        this.userService.state.auth?.primaryPlatform !== 'twitch') // twitch is a special case
+      (!this.views.protectedModeEnabled && !this.views.isTwitchUnprotectedStream)
     ) {
-      this.finishStartStreaming();
-      return;
+      return this.finishStartStreaming();
     }
 
     // clear the current stream info
@@ -848,9 +840,11 @@ export class StreamingService
       // in osn is what actually determines if the stream will use enhanced broadcasting.
       if (platform === 'twitch') {
         const isEnhancedBroadcasting =
-          this.views.isTwitchDualStreamEnabled ||
-          settings.platforms.twitch?.isEnhancedBroadcasting ||
-          false;
+          (this.views.protectedModeEnabled ||
+            isCommonTwitchService(this.streamSettingsService.settings)) &&
+          (this.views.isTwitchDualStreamEnabled ||
+            settings.platforms.twitch?.isEnhancedBroadcasting ||
+            false);
 
         this.SET_ENHANCED_BROADCASTING(isEnhancedBroadcasting);
       }
@@ -1558,6 +1552,15 @@ export class StreamingService
   }
 
   async finishStartStreaming(): Promise<unknown> {
+    if (!this.streamSettingsService.protectedModeEnabled) {
+      // Recompute for every attempt, including direct/forced starts and retries.
+      // Keep the saved native preference so returning to common Twitch restores it.
+      this.SET_ENHANCED_BROADCASTING(
+        isCommonTwitchService(this.streamSettingsService.settings) &&
+          this.settingsService.isEnhancedBroadcasting(),
+      );
+    }
+
     // register a promise that we should reject or resolve in the `handleStreamingSignal`
     const startStreamingPromise = new Promise((resolve, reject) => {
       this.resolveStartStreaming = resolve;
@@ -1634,7 +1637,7 @@ export class StreamingService
 
     startStreamingPromise
       .then(() => {
-        if (this.views.settings.streamShift) {
+        if (this.views.protectedModeEnabled && this.views.settings.streamShift) {
           // Remove the pending state to show the correct text in the start streaming button
           this.restreamService.setStreamShiftStatus('inactive');
 
