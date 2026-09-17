@@ -7,6 +7,7 @@
   "Set Stream Boss Health": "ストリームボスのヘルスを設定",
   "Goal": "目標",
   "Manage Battle": "バトルを管理",
+  "Boss Settings": "Boss Settings",
   "Starting Health": "開始ヘルス",
   "Fixed": "固定",
   "The boss will spawn with the set amount of health everytime.": "ボスは設定されたヘルス量でいつでもスポーンします",
@@ -31,5 +32,6 @@
   "Health Bar Background Color": "ヘルスバーの背景色",
   "Font": "フォント",
   "The boss will have additional health each time he is defeated. The amount is set below.": "ボスは、負けた時に毎回ヘルスが増加します。量は以下のように設定されます。",
-  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "ボスのヘルスは、殺害時に与えられたダメージの量によって変わります。乗数で掛けた余剰ダメージが、ボスの新しいヘルスになります。つまり、150 ダメージ、残り 100 ヘルス、乗数 3 の場合、新しいボスはスポーンした時に 150 ヘルス保有していることになります。 \n 以下のように乗数を設定します。"
+  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "ボスのヘルスは、殺害時に与えられたダメージの量によって変わります。乗数で掛けた余剰ダメージが、ボスの新しいヘルスになります。つまり、150 ダメージ、残り 100 ヘルス、乗数 3 の場合、新しいボスはスポーンした時に 150 ヘルス保有していることになります。 \n 以下のように乗数を設定します。",
+  "Failed to reset Stream Boss, please try again.": "Failed to reset Stream Boss, please try again."
 }
