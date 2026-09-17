@@ -5,7 +5,7 @@ import { useRealmObject } from 'components-react/hooks/realm';
 import { Services } from 'components-react/service-provider';
 import { SwitchInput } from 'components-react/shared/inputs';
 import Scrollable from 'components-react/shared/Scrollable';
-import { Modal, Tooltip } from 'antd';
+import { message, Modal, Tooltip } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import { getConfigByGame } from 'services/highlighter/models/game-config.models';
@@ -84,6 +84,7 @@ export default function AILanding() {
   const visionActions = VisionService.actions;
   const visionState = useRealmObject(VisionService.state);
 
+  const isLoggedIn = useVuex(() => UserService.views.isLoggedIn);
   const visionEnabledState = useRealmObject(VisionService.enabledState);
   const enabled = visionEnabledState.isEnabled;
 
@@ -106,6 +107,10 @@ export default function AILanding() {
   }, []);
 
   function onToggleAiClick(isEnabled?: boolean) {
+    if (!isLoggedIn) {
+      message.error($t('Please log in to use Streamlabs AI.'), 3);
+      return;
+    }
     const newIsEnabled = isEnabled ?? !enabled;
     trackEvent('enabled', { enabled: String(newIsEnabled) });
     visionActions.setIsEnabled(newIsEnabled);
@@ -263,7 +268,7 @@ export default function AILanding() {
           >
             <SwitchInput
               label={$t('Turn On AI')}
-              disabled={visionState.isStarting}
+              disabled={!isLoggedIn || visionState.isStarting}
               value={enabled}
             />
           </div>
