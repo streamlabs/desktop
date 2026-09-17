@@ -714,7 +714,7 @@ export class YoutubeService
 
       // `requestYoutube` already created the stream error and logged it so just return the result
       if (e instanceof StreamError) {
-        if (e.status === 423 || e.reason === EYoutubeErrorReason.Forbidden) {
+        if (e.status === 401 || e.status === 423 || e.reason === EYoutubeErrorReason.Forbidden) {
           return EPlatformCallResult.TokenExpired;
         }
 

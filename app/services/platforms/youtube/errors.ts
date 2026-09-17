@@ -37,7 +37,7 @@ export function formatErrorRejectedRequest(
   if (json) {
     return {
       ...rejectedRequest,
-      status: json.status,
+      status: json.status ?? e?.status ?? json.code,
     };
   }
 
@@ -78,8 +78,9 @@ export function formatErrorDetails(
 export function formatYoutubeReasonDetail(e: any, reason?: EYoutubeErrorReason): string {
   if (!reason) {
     // If no reason was returned from the YouTube API, attempt to handle by status code
-    const status = e?.result?.error?.status;
+    const status = e?.result?.error?.status ?? e?.status ?? e?.result?.error?.code;
     switch (status) {
+      case 401:
       case 423:
         console.error('YouTube API Error 423: YouTube token expired, need to refresh', e);
         return $t('YouTube token expired, please re-merge your account');
