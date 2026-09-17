@@ -357,7 +357,7 @@ export class YoutubeService
     reqInfo: IPlatformRequest | string,
     reqErrorType?: TStreamErrorType,
     fn?: (p: IPlatformErrorCallbackProps) => void,
-  ): StreamError {
+  ): StreamError | undefined {
     // Always log the error to the console for debugging purposes
     const consoleError =
       typeof reqInfo !== 'string'
@@ -1045,6 +1045,8 @@ export class YoutubeService
         url: `${this.apiBase}/${endpoint}`,
       });
     } catch (e: unknown) {
+      // Intentionally show the error and retry to both notify the user that there was an issue
+      // and attempt to correct it to prevent distruption
       this.createPlatformError(
         e,
         'Error updating broadcast',

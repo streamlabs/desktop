@@ -161,7 +161,7 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
     console.error(`${platformLabels(platform)} Error: `, e);
 
     if (e instanceof StreamError) {
-      throwStreamError(e.type, e, e.message);
+      throwStreamError(e.type, { ...e, platform }, e.details);
     }
 
     const message =
