@@ -59,7 +59,9 @@ const TwitchRequiredFields = memo((p: IPlatformComponentParams<'twitch'>) => {
         <GameSelector key="twitch-game" platform="twitch" {...bind.game} layout="vertical" />
         <TwitchTagsInput label={$t('Twitch Tags')} {...bind.tags} layout="vertical" />
       </div>
-      {p.isAiHighlighterEnabled && <AiHighlighterToggle key="ai-toggle" cardIsExpanded={false} />}
+      {p.isAiHighlighterEnabled && (
+        <AiHighlighterToggle key="ai-toggle" cardIsExpanded={false} isUpdateMode={p.isUpdateMode} />
+      )}
     </>
   );
 });
@@ -75,20 +77,36 @@ const TwitchOptionalFields = memo((p: IPlatformComponentParams<'twitch'>) => {
   }, [twSettings?.display]);
 
   const enhancedBroadcastingTooltipText = useMemo(() => {
-    return p.isDualOutputMode
-      ? $t(
-          'Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch',
-        )
-      : $t(
-          'Enhanced broadcasting automatically optimizes your settings to encode and send multiple video qualities to Twitch. Selecting this option will send basic information about your computer and software setup.',
-        );
-  }, [p.isDualOutputMode]);
+    if (p.isLiveOutputEditingEnabled) {
+      return $t('Enhanced broadcasting is not available for live output editing');
+    }
+
+    if (p.isDualOutputMode) {
+      return $t(
+        'Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch',
+      );
+    }
+
+    return $t(
+      'Enhanced broadcasting automatically optimizes your settings to encode and send multiple video qualities to Twitch. Selecting this option will send basic information about your computer and software setup.',
+    );
+  }, [p.isDualOutputMode, p.isLiveOutputEditingEnabled]);
 
   const enhancedBroadcastingEnabled = useMemo(() => {
+    if (p.isLiveOutputEditingEnabled) return false;
     if (isDualStream) return true;
     if (p.isStreamShiftMode) return false;
     return twSettings?.isEnhancedBroadcasting;
-  }, [isDualStream, twSettings?.isEnhancedBroadcasting, p.isStreamShiftMode]);
+  }, [
+    isDualStream,
+    twSettings?.isEnhancedBroadcasting,
+    p.isStreamShiftMode,
+    p.isLiveOutputEditingEnabled,
+  ]);
+
+  const disableEnhancedBroadcasting = useMemo(() => {
+    return isDualStream || p.isStreamShiftMode || p.isLiveOutputEditingEnabled || p.isUpdateMode;
+  }, [isDualStream, p.isStreamShiftMode, p.isLiveOutputEditingEnabled, p.isUpdateMode]);
 
   return (
     <>
@@ -109,7 +127,7 @@ const TwitchOptionalFields = memo((p: IPlatformComponentParams<'twitch'>) => {
               label={$t('Enhanced broadcasting')}
               tooltip={enhancedBroadcastingTooltipText}
               {...bind.isEnhancedBroadcasting}
-              disabled={isDualStream || p.isStreamShiftMode}
+              disabled={disableEnhancedBroadcasting}
               value={enhancedBroadcastingEnabled}
               tooltipIcon={
                 <i

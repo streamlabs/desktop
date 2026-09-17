@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
-import { EReplayInstallStep } from 'services/highlighter/models/highlighter.models';
+import {
+  EReplayInstallStep,
+  IReplayInstallOriginMetadata,
+} from 'services/highlighter/models/highlighter.models';
 import { REPLAY_APP_NAME } from 'services/highlighter/constants';
 import { $t } from 'services/i18n';
 
-export function useInstallState() {
+/**
+ * @param installOriginMetadata - Hand-off data for the install origin marker, passed on again when
+ * the user retries a failed install so the retry writes the same marker as the first attempt.
+ */
+export function useInstallState(installOriginMetadata?: IReplayInstallOriginMetadata) {
   const { HighlighterService } = Services;
 
   const [isInstalled, setIsInstalled] = useState<boolean | null>(null);
@@ -37,7 +44,7 @@ export function useInstallState() {
   }
 
   function handleRetry() {
-    HighlighterService.actions.installStreamlabsReplay();
+    HighlighterService.actions.installStreamlabsReplay(installOriginMetadata);
   }
 
   function handleCancel() {

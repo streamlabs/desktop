@@ -3,12 +3,15 @@ import { Services } from 'components-react/service-provider';
 import ModalInstallationFlow from './ModalInstallationFlow';
 import PageInstallationFlow from './PageInstallationFlow';
 import { EAvailableFeatures } from 'services/incremental-rollout';
+import { IReplayInstallOriginMetadata } from 'services/highlighter/models/highlighter.models';
 
 interface IMigrationNoticeProps {
   variant?: 'page' | 'modal';
   onShowAllClips?: () => void;
   onCancel?: () => void;
   onInstallComplete?: () => void;
+  /** Hand-off data for the install origin marker, used when the user retries a failed install. */
+  installOriginMetadata?: IReplayInstallOriginMetadata;
 }
 
 export default function MigrationNotice(props: IMigrationNoticeProps) {
@@ -37,7 +40,11 @@ export default function MigrationNotice(props: IMigrationNoticeProps) {
 
   if (variant === 'modal') {
     return (
-      <ModalInstallationFlow onCancel={handleCancel} onInstallComplete={props.onInstallComplete} />
+      <ModalInstallationFlow
+        onCancel={handleCancel}
+        onInstallComplete={props.onInstallComplete}
+        installOriginMetadata={props.installOriginMetadata}
+      />
     );
   }
 

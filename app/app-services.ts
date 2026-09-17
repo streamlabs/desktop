@@ -68,6 +68,8 @@ export { StreamAvatarService } from 'services/stream-avatar/stream-avatar-servic
 export { StreamAvatarApiService } from 'services/stream-avatar/stream-avatar-api-service';
 export { AutomationsService } from 'services/stream-avatar/automations-service';
 export { AutomationsEngineService } from 'services/stream-avatar/automations-engine-service';
+export { KevinSupportService } from 'services/stream-avatar/kevin-support-service';
+export { AgentToolsService } from 'services/stream-avatar/v2/agent-tools';
 export { OnboardingV2Service } from 'services/onboarding/onboarding-v2';
 
 // ONLINE SERVICES
@@ -118,10 +120,8 @@ export { SseService } from 'services/server-sent-events';
 
 // WIDGETS
 export { WidgetSource, WidgetsService } from './services/widgets';
-export { StreamBossService } from 'services/widgets/settings/stream-boss';
 export { MediaShareService } from 'services/widgets/settings/media-share';
 export { AlertBoxService } from 'services/widgets/settings/alert-box';
-export { SpinWheelService } from 'services/widgets/settings/spin-wheel';
 export { PollService } from 'services/widgets/settings/poll';
 export { ChatHighlightService } from 'services/widgets/settings/chat-highlight';
 
@@ -179,7 +179,6 @@ import { AudioService } from './services/audio';
 import { SourceFiltersService } from './services/source-filters';
 import { DiagnosticsService } from './services/diagnostics';
 import { WebsocketService } from './services/websocket';
-import { SpinWheelService } from 'services/widgets/settings/spin-wheel';
 import { LayoutService } from './services/layout';
 import { ProjectorService } from './services/projector';
 import { ObsImporterService } from 'services/obs-importer';
@@ -216,6 +215,8 @@ import { VirtualWebcamService } from 'services/virtual-webcam';
 import { StreamAvatarApiService } from 'services/stream-avatar/stream-avatar-api-service';
 import { AutomationsService } from 'services/stream-avatar/automations-service';
 import { AutomationsEngineService } from 'services/stream-avatar/automations-engine-service';
+import { KevinSupportService } from 'services/stream-avatar/kevin-support-service';
+import { AgentToolsService } from 'services/stream-avatar/v2/agent-tools';
 
 export const AppServices = {
   AppService,
@@ -274,7 +275,6 @@ export const AppServices = {
   SourceFiltersService,
   DiagnosticsService,
   WebsocketService,
-  SpinWheelService,
   LayoutService,
   ProjectorService,
   ObsImporterService,
@@ -308,4 +308,6 @@ export const AppServices = {
   StreamAvatarApiService,
   AutomationsService,
   AutomationsEngineService,
+  KevinSupportService,
+  AgentToolsService,
 };
