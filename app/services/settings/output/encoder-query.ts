@@ -149,38 +149,42 @@ export class EncoderQueryService extends Service {
     mode: TOutputSettingsMode,
     targets: TPlatform[],
   ): IEncoderOption[] | null {
-    if (!targets.length) {
-      // With no targets there is no intersection, so an empty list here can only mean the
-      // single unfiltered query produced nothing — a failure, not a confirmed empty result.
-      const unfiltered = this.queryEncodersForPlatform(mode, null);
-      return unfiltered.length ? unfiltered : null;
-    }
+    if (!targets.length) return this.queryEncodersForPlatform(mode, null);
 
     let usable: IEncoderOption[] | null = null;
     for (const platform of targets) {
       const encoders = this.queryEncodersForPlatform(mode, platform);
-      // A platform we cannot query must not silently empty the list.
-      if (!encoders.length) continue;
-      usable = usable ? intersectEncoders(usable, encoders) : encoders;
+      // A target we could not query is skipped; one that genuinely supports nothing
+      // empties the intersection.
+      if (encoders === null) continue;
+      usable = usable === null ? encoders : intersectEncoders(usable, encoders);
     }
 
-    // null here means no target ever produced a list to intersect (every platform
-    // query came back empty); an assigned but empty `usable` is a real intersection.
+    // null here means no target produced an answer at all.
     return usable;
   }
 
+  /**
+   * Returns null when the target could not be queried at all — no query method, or the
+   * query threw. An empty array is a real answer: the platform supports no encoders.
+   */
   private queryEncodersForPlatform(
     mode: TOutputSettingsMode,
     platform: TPlatform | null,
-  ): IEncoderOption[] {
+  ): IEncoderOption[] | null {
     const instance: any =
       mode === 'Simple' ? SimpleStreamingFactory.create() : AdvancedStreamingFactory.create();
     let service: any = null;
 
     try {
       service = this.setupTempStreamingService(instance, platform);
-      if (!hasGetAvailableEncoders(instance)) return [];
+      if (!hasGetAvailableEncoders(instance)) return null;
       return instance.getAvailableEncoders();
+    } catch (e: unknown) {
+      // Contained per target so one failure cannot discard the narrowing the other
+      // targets already contributed.
+      console.error(`Error querying available encoders for ${platform ?? 'no platform'}`, e);
+      return null;
     } finally {
       if (mode === 'Simple') {
         SimpleStreamingFactory.destroy(instance);
