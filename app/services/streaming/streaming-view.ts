@@ -19,6 +19,7 @@ import difference from 'lodash/difference';
 import { Services } from '../../components-react/service-provider';
 import { getDefined } from '../../util/properties-type-guards';
 import { TDisplayType } from 'services/settings-v2';
+import { isTwitchStreamDestination } from './stream-destination';
 
 /**
  * The stream info view is responsible for keeping
@@ -150,6 +151,9 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns a list of enabled for streaming platforms
    */
   get enabledPlatforms(): TPlatform[] {
+    // Unprotected mode has one OBS destination. Only the Twitch metadata flow
+    // may use a linked account; saved protected-mode targets are not active.
+    if (!this.protectedModeEnabled) return this.isTwitchUnprotectedStream ? ['twitch'] : [];
     return this.getEnabledPlatforms(this.settings.platforms);
   }
 
@@ -181,8 +185,9 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   get isTwitchUnprotectedStream() {
     return (
       !this.protectedModeEnabled &&
+      this.userView.isLoggedIn &&
       this.isPrimaryPlatform('twitch') &&
-      this.streamSettingsView.settings.server.includes('twitch')
+      isTwitchStreamDestination(this.streamSettingsView.settings)
     );
   }
 
@@ -205,6 +210,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get isTwitchDualStreamEnabled() {
+    if (!this.protectedModeEnabled) return false;
     if (!this.twitchView.hasTwitchDualStreamAccess) {
       return false;
     }
@@ -253,6 +259,9 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns if the non-ultra user has a valid display assignment to go live
    */
   get hasValidDisplayAssignment(): boolean {
+    // Custom ingest uses one OBS destination, independent of saved platform/display assignments.
+    if (!this.protectedModeEnabled) return true;
+
     if (this.userView.isPrime) {
       // For ultra users single output mode, no display validation is needed
       if (!this.isDualOutputMode) return true;
@@ -320,7 +329,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    */
   get isStreamShiftMode(): boolean {
     return (
-      (this.userView.isPrime && this.settings.streamShift && this.enabledPlatforms.length > 0) ||
+      (this.protectedModeEnabled &&
+        this.userView.isPrime &&
+        this.settings.streamShift &&
+        this.enabledPlatforms.length > 0) ||
       false
     );
   }
@@ -352,6 +364,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns if the restream service should be set up when going live
    */
   get shouldSetupRestream(): boolean {
+    if (!this.protectedModeEnabled) return false;
     // The stream switcher uses the restream service
     if (this.isStreamShiftMode) return true;
 
@@ -403,7 +416,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns if dual output mode is on. Dual output mode is only available to logged in users
    */
   get isDualOutputMode(): boolean {
-    if (!this.userView.isLoggedIn || !this.info) return false;
+    if (!this.protectedModeEnabled || !this.userView.isLoggedIn || !this.info) return false;
     return this.shouldSetupDualOutput;
   }
 

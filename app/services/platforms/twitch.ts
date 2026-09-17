@@ -269,7 +269,10 @@ export class TwitchService
       const channelInfo = goLiveSettings?.platforms.twitch;
 
       if (channelInfo) {
-        if (channelInfo?.display === 'both') {
+        if (
+          channelInfo?.display === 'both' &&
+          this.streamingService.views.isTwitchDualStreamEnabled
+        ) {
           try {
             await this.setupDualStream(goLiveSettings);
           } catch (e: unknown) {

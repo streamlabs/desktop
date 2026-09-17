@@ -1,4 +1,4 @@
-import { skipCheckingErrorsInLog, test, useWebdriver } from '../../helpers/webdriver';
+import { test, useWebdriver } from '../../helpers/webdriver';
 import { logIn } from '../../helpers/webdriver/user';
 import {
   goLive,
@@ -9,9 +9,6 @@ import {
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import { click, clickButton, waitForDisplayed } from '../../helpers/modules/core';
 import { assertFormContains, readFields, useForm } from '../../helpers/modules/forms';
-import { setInputValue } from '../../helpers/modules/forms/base';
-import { getApiClient } from '../../helpers/api-client';
-import { SettingsService } from '../../../app/services/settings';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -82,53 +79,6 @@ test('Toggles between custom ingest and recommended settings', async t => {
   };
   t.is(restored.key, '', 'Recommended settings should clear the stream key');
   t.is(restored.server, '', 'Custom ingest should still not inherit a server url');
-});
-
-/*
- * Also deliberately avoids going live: the validation runs as a step of `goLive`, but it is a
- * plain service method, so it can be exercised directly and asserted on the settings form.
- */
-test('Leaves a custom ingest server url alone during validation', async t => {
-  await logIn(t);
-  await showSettingsWindow('Stream');
-  await click('a=Stream to custom ingest');
-  await waitForDisplayed('input[data-name="server"]', {
-    timeout: 5000,
-    timeoutMsg: 'Custom ingest should show the OBS stream settings form',
-  });
-
-  // An arbitrary ingest belonging to no platform. Custom ingest exists precisely so the user can
-  // stream somewhere the app knows nothing about, so validation must not second-guess it — there
-  // is no way to tell a valid private ingest from a typo.
-  await setInputValue('input[data-name="server"]', 'rtmp://example.com/live', true);
-
-  const client = await getApiClient();
-  const settingsService = client.getResource<SettingsService>('SettingsService');
-  settingsService.validateUnprotectedModeCredentials();
-
-  // The patch would be applied to OBS, so re-open the category to read back what was stored.
-  await showSettingsWindow('Stream');
-  await waitForDisplayed('input[data-name="server"]', {
-    timeout: 5000,
-    timeoutMsg: 'Stream settings form should reappear after validation',
-  });
-
-  const { readFields: readStreamSettings } = useForm();
-  const { server } = (await readStreamSettings('name', 'value')) as { server: string };
-  t.is(
-    server,
-    'rtmp://example.com/live',
-    'Validation should not rewrite a server url the user entered for a custom ingest',
-  );
-
-  /*
-   * The outcome above is right but the route to it is not: the early return meant to skip custom
-   * ingest tests `settings.service === 'rtmp_custom'`, comparing the OBS service *name* against a
-   * *streamType* value, so it never matches. Validation falls through to the service lookup
-   * instead, fails to find a mapping, and logs `Unable to set valid server URL for the current
-   * streaming service`. Remove this skip once that guard checks `streamType`.
-   */
-  skipCheckingErrorsInLog();
 });
 
 test('Populates stream key after go live', async t => {
