@@ -81,6 +81,8 @@ export function formatYoutubeReasonDetail(e: any, reason?: EYoutubeErrorReason):
     const status = e?.result?.error?.status ?? e?.status ?? e?.result?.error?.code;
     switch (status) {
       case 401:
+        console.error('YouTube API Error 401: YouTube forbidden', e);
+        return $t('YouTube permission denied by API');
       case 423:
         console.error('YouTube API Error 423: YouTube token expired, need to refresh', e);
         return $t('YouTube token expired, please re-merge your account');
