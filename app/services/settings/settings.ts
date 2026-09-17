@@ -811,16 +811,21 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
         | undefined;
 
       if (streamEncoderSetting) {
-        const streamEncoderOptions = this.encoderQueryService.getAvailableStreamingEncoders(mode);
+        // Fall back to the existing options only if the query itself failed; a confirmed
+        // empty intersection must actually empty the dropdown, not keep the raw OBS list.
+        const streamEncoderOptions = this.encoderQueryService.getAvailableStreamingEncodersOrFallback(
+          mode,
+          streamEncoderSetting.options || [],
+        );
+
+        // Only update options if values actually differ to avoid triggering re-renders
+        const oldValues = (streamEncoderSetting.options || []).map((o: any) => o.value).join(',');
+        const newValues = streamEncoderOptions.map(o => o.value).join(',');
+        if (oldValues !== newValues) {
+          streamEncoderSetting.options = streamEncoderOptions;
+        }
 
         if (streamEncoderOptions.length > 0) {
-          // Only update options if values actually differ to avoid triggering re-renders
-          const oldValues = (streamEncoderSetting.options || []).map((o: any) => o.value).join(',');
-          const newValues = streamEncoderOptions.map(o => o.value).join(',');
-          if (oldValues !== newValues) {
-            streamEncoderSetting.options = streamEncoderOptions;
-          }
-
           // Canonicalize legacy saved values so they still resolve against rebuilt options.
           // An unresolvable value is left alone: this is a read path, and overwriting it
           // here silently discards the user's encoder on the next save. validateEncoders()

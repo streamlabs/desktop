@@ -124,7 +124,11 @@ export class EncoderQueryService extends Service {
       if (cached) return cached;
 
       const encoders = this.queryEncodersForTargets(mode, targets);
-      if (!encoders.length) return { encoders: [], options: [] };
+      if (encoders === null) {
+        // No target could be queried: a soft failure, not a confirmed empty
+        // intersection, so it must not be memoized here.
+        return { encoders: null, options: [] };
+      }
 
       const entry = { encoders, options: mapEncoders(encoders) };
       this.streamingEncoderCache.set(cacheKey, entry);
@@ -144,7 +148,7 @@ export class EncoderQueryService extends Service {
   private queryEncodersForTargets(
     mode: TOutputSettingsMode,
     targets: TPlatform[],
-  ): IEncoderOption[] {
+  ): IEncoderOption[] | null {
     if (!targets.length) return this.queryEncodersForPlatform(mode, null);
 
     let usable: IEncoderOption[] | null = null;
@@ -155,7 +159,9 @@ export class EncoderQueryService extends Service {
       usable = usable ? intersectEncoders(usable, encoders) : encoders;
     }
 
-    return usable ?? [];
+    // null here means no target ever produced a list to intersect (every platform
+    // query came back empty); an assigned but empty `usable` is a real intersection.
+    return usable;
   }
 
   private queryEncodersForPlatform(
@@ -198,8 +204,6 @@ export class EncoderQueryService extends Service {
 
     try {
       const encoders = this.queryRecordingEncoders(mode, format);
-      if (!encoders.length) return { encoders: [], options: [] };
-
       const entry = { encoders, options: mapEncoders(encoders) };
       this.recordingEncoderCache.set(cacheKey, entry);
       return entry;
