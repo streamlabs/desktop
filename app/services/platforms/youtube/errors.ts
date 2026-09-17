@@ -147,7 +147,15 @@ export function getYoutubeErrorType(e: any, reqInfo?: IPlatformRequest | string)
 
   // Everything after `/youtube/v3/` and before the query string identifies the endpoint
   const path = url.match(/\/youtube\/v3\/([^?]*)/)?.[1];
+  const method = typeof reqInfo === 'string' ? 'GET' : reqInfo?.method?.toUpperCase() ?? 'GET';
+  const operations: Record<string, string> = {
+    GET: 'list',
+    POST: 'insert',
+    PUT: 'update',
+    DELETE: 'delete',
+  };
+  const endpoint = path?.includes('/') ? path : `${path}/${operations[method]}`;
 
   // Map the endpoint to a corresponding error type
-  return path ? endpointErrorTypes[path] : 'PLATFORM_REQUEST_FAILED';
+  return endpointErrorTypes[endpoint] ?? 'PLATFORM_REQUEST_FAILED';
 }

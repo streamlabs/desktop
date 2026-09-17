@@ -1046,7 +1046,7 @@ export class YoutubeService
       });
     } catch (e: unknown) {
       // Intentionally show the error and retry to both notify the user that there was an issue
-      // and attempt to correct it to prevent distruption
+      // and attempt to correct it to prevent disruption
       this.createPlatformError(
         e,
         'Error updating broadcast',
