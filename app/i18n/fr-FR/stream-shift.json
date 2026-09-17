@@ -11,5 +11,6 @@
   "Switch to Streamlabs Desktop": "Basculer sur Streamlabs Desktop",
   "Upgrade to Ultra to switch streams between devices.": "Passe à Ultra pour basculer ton stream entre plusieurs dispositifs.",
   "Force Start": "Forcer le démarrage",
+  "Switch Stream": "Switch Stream",
   "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you're sure you're not live and it has been incorrectly detected, choose \"Force Start\" below.": "Un stream sur un autre dispositif a été détecté. Veux-tu basculer ton stream sur Streamlabs Desktop ? Si tu ne veux pas continuer ce stream, arrête-le depuis la source de streaming actuelle. Si tu es sûr de ne pas être en direct et qu’il a été mal détecté, clique sur « Forcer le démarrage » ci-dessous."
 }
