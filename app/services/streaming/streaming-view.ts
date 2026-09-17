@@ -179,11 +179,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns if streaming to Twitch in unprotected mode
    */
   get isTwitchUnprotectedStream() {
-    return (
-      !this.protectedModeEnabled &&
-      this.isPrimaryPlatform('twitch') &&
-      this.streamSettingsView.settings.server.includes('twitch')
-    );
+    return !this.protectedModeEnabled && this.streamSettingsView.settings.server.includes('twitch');
   }
 
   /*

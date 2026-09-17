@@ -144,7 +144,7 @@ export default function GoLiveSettings() {
       <Col
         span={shouldShowLeftCol ? 17 : 24}
         className={cx(styles.rightColumn, {
-          [styles.destinationMode]: !shouldShowLeftCol && !isUpdateMode,
+          [styles.unprotectedMode]: !shouldShowLeftCol && !isUpdateMode,
           [styles.updateMode]: isUpdateMode,
         })}
       >

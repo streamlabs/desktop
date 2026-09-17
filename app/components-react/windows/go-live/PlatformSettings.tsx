@@ -25,6 +25,7 @@ export default function PlatformSettings() {
   const {
     settings,
     enabledPlatforms,
+    validEnabledPlatforms,
     getPlatformDisplayName,
     updatePlatform,
     commonFields,
@@ -87,6 +88,11 @@ export default function PlatformSettings() {
 
     get disableStreamShiftTooltip() {
       return settings.isPrime && !settings.isStreamShiftDisabled;
+    },
+
+    // In unprotected mode, only Twitch can show in the go live window
+    get validEnabledPlatforms() {
+      return !settings.protectedModeEnabled ? ['twitch' as TPlatform] : settings.enabledPlatforms;
     },
   }));
 
@@ -234,7 +240,7 @@ export default function PlatformSettings() {
       </Section>
 
       {/*SETTINGS FOR EACH ENABLED PLATFORM*/}
-      {enabledPlatforms.map((platform: TPlatform) => (
+      {validEnabledPlatforms.map((platform: TPlatform) => (
         <Section
           title={$t('%{platform} Settings', { platform: getPlatformDisplayName(platform) })}
           key={platform}

@@ -222,8 +222,6 @@ export function StreamSettings() {
     StreamSettingsService.actions.setSettings({
       protectedModeEnabled: false,
       streamType: 'rtmp_custom',
-      // TODO: BE fix to verify, maybe the server url should not be cleared here?
-      server: '',
     });
 
     if (DualOutputService.views.dualOutputMode) {

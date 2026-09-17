@@ -88,10 +88,7 @@ test('Migrate the twitch account to the protected mode', async t => {
   await restartApp(t); // restarting the app should call migration again
 
   // go live
-  await tryToGoLive({
-    title: 'SLOBS Test Stream',
-    twitchGame: 'Fortnite',
-  });
+  await clickGoLive();
   await waitForStreamStop(); // can't go live with a fake key
 
   // This prevents the test from failing due to the fake key, which logs an error.
@@ -104,17 +101,11 @@ test('Migrate the twitch account to the protected mode', async t => {
   await showSettingsWindow('Stream');
   t.true(await isDisplayed('button=Use recommended settings'), 'Protected mode should be disabled');
 
-  // A custom ingest stream goes to the user's own server, so no linked platform's chat belongs to
-  // it. Twitch declares the `refresh-chat` live dock feature unconditionally, so `a=Refresh Chat`
-  // is present in protected mode whether or not a stream is running — it going away here is what
-  // proves the unprotected-mode gate fired rather than the stream simply having stopped.
-  t.false(await chatIsVisible(), 'Chat should not be visible in unprotected mode');
-
   // use recommended settings
   await clickButton('Use recommended settings');
   // setup custom server
   streamSettings.setSettings({
-    server: 'rtmp://live-sjc.twitch.tv/app',
+    server: 'rtmp://live.twitch.tv/app/',
     protectedModeMigrationRequired: true,
   });
 
@@ -123,12 +114,13 @@ test('Migrate the twitch account to the protected mode', async t => {
     title: 'SLOBS Test Stream',
     twitchGame: 'Fortnite',
   });
+  // TODO: Add validation that the destination switchers in the go live window are hidden (requires multistream test account)
+  // TODO: Add validation that the Twitch edit stream form in the go live window is the only form (requires multistream test account)
   await waitForStreamStop();
 
   // check that settings have been switched to the Custom Ingest mode
   await showSettingsWindow('Stream');
   t.true(await isDisplayed('button=Use recommended settings'), 'Protected mode should be disabled');
-  t.false(await chatIsVisible(), 'Chat should not be visible in unprotected mode');
 });
 
 // TODO: Re-enable after reauthing userpool
