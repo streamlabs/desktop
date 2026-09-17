@@ -149,7 +149,12 @@ export class EncoderQueryService extends Service {
     mode: TOutputSettingsMode,
     targets: TPlatform[],
   ): IEncoderOption[] | null {
-    if (!targets.length) return this.queryEncodersForPlatform(mode, null);
+    if (!targets.length) {
+      // With no targets there is no intersection, so an empty list here can only mean the
+      // single unfiltered query produced nothing — a failure, not a confirmed empty result.
+      const unfiltered = this.queryEncodersForPlatform(mode, null);
+      return unfiltered.length ? unfiltered : null;
+    }
 
     let usable: IEncoderOption[] | null = null;
     for (const platform of targets) {
