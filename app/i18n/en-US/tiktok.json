@@ -26,5 +26,6 @@
   "Request streaming access through Streamlabs": "Request streaming access through Streamlabs",
   "Request access to stream without a stream key directly through Streamlabs. You must stream at least 50% gaming content continuously. <link>Learn more</link>": "Request access to stream without a stream key directly through Streamlabs. You must stream at least 50% gaming content continuously. <link>Learn more</link>",
   "Open TikTok Live Manager": "Open TikTok Live Manager",
-  "Your TikTok account is not enabled for live streaming.": "Your TikTok account is not enabled for live streaming."
+  "Your TikTok account is not enabled for live streaming.": "Your TikTok account is not enabled for live streaming.",
+  "The TikTok stream form is missing a server url or stream key, which are required to go live to TikTok.": "The TikTok stream form is missing a server url or stream key, which are required to go live to TikTok."
 }
