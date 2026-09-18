@@ -120,7 +120,7 @@ class RecordingHistoryController {
       {
         value: 'typestudio',
         label: 'Podcast Edtior',
-        description: $t('Polish your videos with text-based and AI powered Podcast Editor'),
+        description: $t('Polish your videos with text-based and AI-powered Podcast Editor'),
         src: 'podcast-editor.png',
       },
     ];

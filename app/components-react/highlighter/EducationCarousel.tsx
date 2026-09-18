@@ -80,7 +80,7 @@ const Language = ({ falseLanguage = 'German' }: { falseLanguage?: string }) => {
       <div className={styles.contentWrapper}>
         <SlideTitle
           headline={$t('Game language must be English')}
-          subHeadline={$t('Ai Highlighter only works, if the game language is set to english.')}
+          subHeadline={$t('AI Highlighter only works, if the game language is set to english.')}
           custom={
             <a onClick={openHowToChangeLanguage}> {$t('How to change the game language?')}</a>
           }
