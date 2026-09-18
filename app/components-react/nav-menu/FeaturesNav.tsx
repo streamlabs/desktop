@@ -1,21 +1,21 @@
 import React, { memo, useMemo, useCallback } from 'react';
 import {
   ENavName,
-  EMenuItemKey,
+  ENavMenuKey,
   IMenuItem,
   IParentMenuItem,
   TExternalLinkType,
   menuTitles,
   compactMenuItemKeys,
-  ESubMenuItemKey,
-} from 'services/side-nav';
+  TNavMenuKey,
+} from 'services/nav-menu';
 import { $t } from 'services/i18n';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 import { TAppPage } from 'services/navigation';
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
 import { Menu, message } from 'antd';
-import styles from './SideNav.m.less';
+import styles from './NavMenu.m.less';
 import SubMenu from 'components-react/shared/SubMenu';
 import MenuItem from 'components-react/shared/MenuItem';
 import AppsNav from './AppsNav';
@@ -55,7 +55,7 @@ export default memo(function FeaturesNav() {
   );
 
   const handleNavigation = useCallback((menuItem: IMenuItem, key?: string) => {
-    if (menuItem.key === EMenuItemKey.StudioMode) {
+    if (menuItem.key === ENavMenuKey.StudioMode) {
       // if studio mode, toggle studio mode
       toggleStudioMode();
       return;
@@ -75,7 +75,7 @@ export default memo(function FeaturesNav() {
     IncrementalRolloutService,
     HighlighterService,
     NavigationService,
-    SideNavService,
+    NavMenuService,
     TransitionsService,
     UsageStatisticsService,
     UserService,
@@ -101,18 +101,18 @@ export default memo(function FeaturesNav() {
   } = useVuex(() => ({
     featureIsEnabled: (feature: EAvailableFeatures) =>
       IncrementalRolloutService.views.featureIsEnabled(feature),
-    currentMenuItem: SideNavService.views.currentMenuItem,
-    setCurrentMenuItem: SideNavService.actions.setCurrentMenuItem,
+    currentMenuItem: NavMenuService.views.currentMenuItem,
+    setCurrentMenuItem: NavMenuService.actions.setCurrentMenuItem,
     loggedIn: UserService.views.isLoggedIn,
-    menu: SideNavService.state[ENavName.TopNav],
-    compactView: SideNavService.views.compactView,
-    isOpen: SideNavService.views.isOpen,
-    openMenuItems: SideNavService.views.getExpandedMenuItems(ENavName.TopNav),
-    expandMenuItem: SideNavService.actions.expandMenuItem,
+    menu: NavMenuService.state[ENavName.FeaturesNav],
+    compactView: NavMenuService.views.compactView,
+    isOpen: NavMenuService.views.isOpen,
+    openMenuItems: NavMenuService.views.getExpandedMenuItems(ENavName.FeaturesNav),
+    expandMenuItem: NavMenuService.actions.expandMenuItem,
     studioMode: TransitionsService.views.studioMode,
-    showCustomEditor: SideNavService.views.showCustomEditor,
-    loggedOutMenuItemKeys: SideNavService.views.loggedOutMenuItemKeys,
-    loggedOutMenuItemTargets: SideNavService.views.loggedOutMenuItemTargets,
+    showCustomEditor: NavMenuService.views.showCustomEditor,
+    loggedOutMenuItemKeys: NavMenuService.views.loggedOutMenuItemKeys,
+    loggedOutMenuItemTargets: NavMenuService.views.loggedOutMenuItemTargets,
   }));
 
   /**
@@ -124,16 +124,16 @@ export default memo(function FeaturesNav() {
   const menuItems = useMemo(
     () =>
       menu.menuItems.filter(menuItem => {
-        if (!menuItem.isActive && menuItem.key !== EMenuItemKey.Editor) {
+        if (!menuItem.isActive && menuItem.key !== ENavMenuKey.Editor) {
           return false;
         }
         if (!loggedIn && !loggedOutMenuItemKeys.has(menuItem.key)) {
           return false;
         }
-        if (menuItem.key === EMenuItemKey.AI && !VisionService.isSupportedForOs()) {
+        if (menuItem.key === ENavMenuKey.AI && !VisionService.isSupportedForOs()) {
           return false;
         }
-        if (menuItem.key === EMenuItemKey.ThemeAudit && !themeAuditEnabled) {
+        if (menuItem.key === ENavMenuKey.ThemeAudit && !themeAuditEnabled) {
           return false;
         }
         if (compactView && !compactMenuItemKeys.has(menuItem.key)) {
@@ -145,8 +145,8 @@ export default memo(function FeaturesNav() {
   );
 
   const menuBadges = useMemo(
-    (): Partial<Record<EMenuItemKey | ESubMenuItemKey, string | undefined>> => ({
-      [EMenuItemKey.Highlighter]: (() => {
+    (): Partial<Record<TNavMenuKey, string | undefined>> => ({
+      [ENavMenuKey.Highlighter]: (() => {
         if (HighlighterService.aiHighlighterFeatureEnabled) {
           const env = Utils.getHighlighterEnvironment();
           return env === 'production' ? 'beta' : env;
@@ -157,24 +157,24 @@ export default memo(function FeaturesNav() {
   );
 
   const menuStyles = useMemo(
-    (): Partial<Record<EMenuItemKey | ESubMenuItemKey, any>> => ({
-      [EMenuItemKey.AI]: isVisionRunning && styles.ultra,
-      [EMenuItemKey.StudioMode]: studioMode && styles.active,
+    (): Partial<Record<TNavMenuKey, any>> => ({
+      [ENavMenuKey.AI]: isVisionRunning && styles.ultra,
+      [ENavMenuKey.StudioMode]: studioMode && styles.active,
     }),
     [isVisionRunning, studioMode],
   );
 
   const layoutEditorItem = useMemo(() => {
-    return menu.menuItems.find(menuItem => menuItem.key === EMenuItemKey.LayoutEditor);
+    return menu.menuItems.find(menuItem => menuItem.key === ENavMenuKey.LayoutEditor);
   }, []);
 
   const studioModeItem = useMemo(() => {
-    return menu.menuItems.find(menuItem => menuItem.key === EMenuItemKey.StudioMode);
+    return menu.menuItems.find(menuItem => menuItem.key === ENavMenuKey.StudioMode);
   }, []);
 
   return (
     <Menu
-      key={ENavName.TopNav}
+      key={ENavName.FeaturesNav}
       forceSubMenuRender
       mode="inline"
       className={cx(
@@ -183,11 +183,11 @@ export default memo(function FeaturesNav() {
         !isOpen && styles.siderClosed && styles.closed,
       )}
       defaultOpenKeys={openMenuItems && openMenuItems}
-      defaultSelectedKeys={[EMenuItemKey.Editor]}
+      defaultSelectedKeys={[ENavMenuKey.Editor]}
       getPopupContainer={triggerNode => triggerNode}
     >
       {menuItems.map(menuItem => {
-        if (menuItem.key === EMenuItemKey.Editor && loggedIn) {
+        if (menuItem.key === ENavMenuKey.Editor && loggedIn) {
           // if there are multiple editor screens and the menu is closed, show them in the sidebar
           // if there are multiple editor screens and the menu is open, show them in a submenu
           if (showCustomEditor && !isOpen && !compactView) {
@@ -200,7 +200,7 @@ export default memo(function FeaturesNav() {
                 icon={menuItem?.icon && <i className={menuItem.icon} />}
                 onTitleClick={() => {
                   !isOpen && handleNavigation(menuItem, menuItem.key);
-                  expandMenuItem(ENavName.TopNav, menuItem.key as EMenuItemKey);
+                  expandMenuItem(ENavName.FeaturesNav, menuItem.key as TNavMenuKey);
                 }}
                 className={cx(
                   !isOpen && styles.closed,
@@ -242,7 +242,7 @@ export default memo(function FeaturesNav() {
                 menuItem?.subMenuItems[0]?.target &&
                   !isOpen &&
                   handleNavigation(menuItem?.subMenuItems[0], menuItem.key);
-                expandMenuItem(ENavName.TopNav, menuItem.key as EMenuItemKey);
+                expandMenuItem(ENavName.FeaturesNav, menuItem.key as TNavMenuKey);
               }}
               className={cx(
                 !isOpen && styles.closed,
@@ -262,7 +262,7 @@ export default memo(function FeaturesNav() {
               ))}
 
               {/* handle show apps in the submenu */}
-              {menuItem.key === EMenuItemKey.AppStore && <AppsNav type="enabled" />}
+              {menuItem.key === ENavMenuKey.AppStore && <AppsNav type="enabled" />}
             </SubMenu>
           );
         } else {
@@ -270,8 +270,7 @@ export default memo(function FeaturesNav() {
 
           const isHidden =
             isOpen &&
-            (menuItem.key === EMenuItemKey.LayoutEditor ||
-              menuItem.key === EMenuItemKey.StudioMode);
+            (menuItem.key === ENavMenuKey.LayoutEditor || menuItem.key === ENavMenuKey.StudioMode);
 
           return (
             !isHidden && (
@@ -305,11 +304,11 @@ const FeaturesNavItem = memo(
     badge?: string;
     className?: string;
   }) => {
-    const { SideNavService, TransitionsService, DualOutputService } = Services;
+    const { NavMenuService, TransitionsService, DualOutputService } = Services;
     const { isSubMenuItem, isOpen, menuItem, badge, handleNavigation, className } = p;
 
     const { currentMenuItem, studioMode, dualOutputMode, showBothDisplays } = useVuex(() => ({
-      currentMenuItem: SideNavService.views.currentMenuItem,
+      currentMenuItem: NavMenuService.views.currentMenuItem,
       studioMode: TransitionsService.views.studioMode,
       dualOutputMode: DualOutputService.views.dualOutputMode,
       showBothDisplays: DualOutputService.views.showBothDisplays,
@@ -319,8 +318,8 @@ const FeaturesNavItem = memo(
 
     const disabled = useMemo(() => {
       return (
-        (menuItem.key === EMenuItemKey.StudioMode && dualOutputMode) ||
-        (menuItem.key === EMenuItemKey.StudioMode && showBothDisplays)
+        (menuItem.key === ENavMenuKey.StudioMode && dualOutputMode) ||
+        (menuItem.key === ENavMenuKey.StudioMode && showBothDisplays)
       );
     }, [menuItem, dualOutputMode, showBothDisplays]);
 
@@ -341,7 +340,7 @@ const FeaturesNavItem = memo(
           className,
           !isSubMenuItem && !isOpen && styles.closed,
           !isSubMenuItem &&
-            menuItem.key === EMenuItemKey.StudioMode &&
+            menuItem.key === ENavMenuKey.StudioMode &&
             studioMode &&
             styles.studioMode,
           currentMenuItem === menuItem.key && styles.active,
