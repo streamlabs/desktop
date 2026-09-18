@@ -19,9 +19,7 @@ import {
   testFn,
   waitForElectronInstancesExist,
 } from './runner-utils';
-import { skipOnboarding } from '../modules/onboarding';
 import {
-  clickButton,
   clickIfDisplayed,
   closeWindow,
   focusChild,
@@ -277,6 +275,9 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     app = t.context.app = new Application({
       port: CHROMEDRIVER_PORT,
       logLevel: CHROMEDRIVER_DEBUG ? 'debug' : 'silent',
+      runnerEnv: {
+        SLD_TESTS_SKIP_ONBOARDING: options.skipOnboarding ? 'true' : '',
+      },
       capabilities: {
         browserName: 'chrome',
         'goog:chromeOptions': {
@@ -341,8 +342,6 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     // Pretty much all tests except for onboarding-specific
     // tests will want to skip this flow, so we do it automatically.
     await waitForLoader();
-
-    if (options.skipOnboarding) await skipOnboarding();
 
     // disable the popups that prevents context menu to be shown
     const client = await getApiClient();
