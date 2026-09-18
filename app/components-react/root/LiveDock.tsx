@@ -102,6 +102,14 @@ class LiveDockController {
     return this.streamingService.views.enabledPlatforms;
   }
 
+  /**
+   * In unprotected mode the stream goes to a custom ingest, so no linked platform's chat belongs
+   * to it. The dock falls back to the offline chat placeholder instead.
+   */
+  get protectedModeEnabled() {
+    return this.streamingService.views.protectedModeEnabled;
+  }
+
   get defaultPlatformChatVisible() {
     return this.store.selectedChat === 'default';
   }
@@ -326,6 +334,7 @@ function LiveDock() {
     streamingStatus,
     enabledPlatforms,
     primaryPlatform,
+    protectedModeEnabled,
   } = useVuex(() =>
     pick(ctrl, [
       'isStreaming',
@@ -340,6 +349,7 @@ function LiveDock() {
       'streamingStatus',
       'enabledPlatforms',
       'primaryPlatform',
+      'protectedModeEnabled',
     ]),
   );
 
@@ -458,14 +468,16 @@ function LiveDock() {
             )}
           </div>
           <div className="flex">
-            {(hasLiveDockFeature('refresh-chat') ||
-              (hasLiveDockFeature('refresh-chat-streaming') && isStreaming) ||
-              (hasLiveDockFeature('refresh-chat-restreaming') && isRestreaming)) && (
-              <a onClick={() => ctrl.refreshChat()}>{$t('Refresh Chat')}</a>
-            )}
+            {protectedModeEnabled &&
+              (hasLiveDockFeature('refresh-chat') ||
+                (hasLiveDockFeature('refresh-chat-streaming') && isStreaming) ||
+                (hasLiveDockFeature('refresh-chat-restreaming') && isRestreaming)) && (
+                <a onClick={() => ctrl.refreshChat()}>{$t('Refresh Chat')}</a>
+              )}
           </div>
         </div>
         {!hideStyleBlockers &&
+          protectedModeEnabled &&
           (hasLiveDockFeature('chat-offline') ||
             (isStreaming && hasLiveDockFeature('chat-streaming')) ||
             !hasLiveDockFeature('chat-streaming')) && (
@@ -485,8 +497,9 @@ function LiveDock() {
         {/* Although technically there are no style blocking elements here we want it to mirror
           the behavior of our chat pane */}
         {!hideStyleBlockers &&
-          !hasLiveDockFeature('chat-offline') &&
-          (!ctrl.platform || (hasLiveDockFeature('chat-streaming') && !isStreaming)) && (
+          (!protectedModeEnabled ||
+            (!hasLiveDockFeature('chat-offline') &&
+              (!ctrl.platform || (hasLiveDockFeature('chat-streaming') && !isStreaming)))) && (
             <OfflineChat chatEnabled={true} primaryPlatform={ctrl.platform} />
           )}
       </div>
@@ -498,6 +511,12 @@ function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
   const ctrl = useController(LiveDockCtx);
   return (
     <div className="flex">
+      {/*
+        `disabledOverflow` keeps every tab rendered. A horizontal antd Menu otherwise gets
+        `maxCount: Overflow.RESPONSIVE` and collapses tabs that don't fit behind an ellipsis
+        indicator, leaving them in the DOM but `aria-hidden` and zero-height. In a dock this
+        narrow that fired with only two tabs, hiding the Multichat tab entirely.
+      */}
       <Menu
         defaultSelectedKeys={[p.visibleChat]}
         onClick={ev => p.setChat(ev.key)}

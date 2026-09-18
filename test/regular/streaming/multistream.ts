@@ -9,14 +9,17 @@ import {
   switchAdvancedMode,
   waitForSettingsWindowLoaded,
   waitForStreamStart,
+  waitForStreamStop,
 } from '../../helpers/modules/streaming';
 import { assertFormContains, fillForm, useForm } from '../../helpers/modules/forms';
+import { setInputValue } from '../../helpers/modules/forms/base';
 import {
   click,
   clickButton,
   clickWhenDisplayed,
   focusChild,
   focusMain,
+  getClient,
   isDisplayed,
   tooltipExists,
   waitForDisplayed,
@@ -37,6 +40,16 @@ import {
 } from '../../helpers/webdriver';
 import { sleep } from '../../helpers/sleep';
 import { toggleDualOutputMode } from '../../helpers/modules/dual-output';
+import { getApiClient } from '../../helpers/api-client';
+import { StreamingService } from '../../../app/services/streaming';
+// The enum has to come from `streaming-api`, not the barrel above. `StreamingService` is only ever
+// used as a type here so TypeScript elides that import, but an enum is a runtime value: importing
+// it from the barrel pulls `streaming.ts` into the ava process, which resolves
+// `services/core/stateful-service` through a webpack alias node knows nothing about. The test file
+// then dies at require time with `Cannot find module`, reported as `Couldn't find any matching
+// tests`. `api/streaming.ts` and `dual-output-end-stream.ts` import it from `streaming-api` too.
+import { EStreamingState } from '../../../app/services/streaming/streaming-api';
+import { WindowsService } from '../../../app/services/windows';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -50,7 +63,7 @@ async function enableAllPlatforms() {
   }
 }
 
-async function goLiveWithMultistream() {
+async function goLiveWithMultistream(t: TExecutionContext) {
   await submit();
   await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
 
@@ -71,8 +84,17 @@ async function goLiveWithMultistream() {
   }
 
   await waitForDisplayed("h1=You're live!", { timeout: 60000 });
-  // Confirm chat loads
-  await chatIsVisible(true);
+
+  // Confirm chat loads. `chatIsVisible` swallows its own timeout and returns false, so this has
+  // to be asserted — calling it bare checks nothing.
+  // When the bypass fired above, YouTube was dropped and this is a single Twitch target, so the
+  // Multistream tab is legitimately absent; assert the platform chat for that case rather than
+  // dropping the multistream assertion altogether.
+  if (bypassPrompted) {
+    t.true(await chatIsVisible(), 'Chat should load after going live');
+  } else {
+    t.true(await chatIsVisible(true), 'Multistream chat should load after going live');
+  }
 }
 
 async function goLiveWithStreamShift(
@@ -206,7 +228,10 @@ test(
     await enableAllPlatforms();
 
     // Shows primary chat switcher when multiple platforms are enabled
-    t.true(await isDisplayed('[data-name="primaryChat"]'), 'Shows primary chat switcher');
+    await waitForDisplayed('[data-name="primaryChat"]', {
+      timeout: 1000,
+      timeoutMsg: 'Primary chat switcher did not appear in go live window',
+    });
 
     // add settings
     await fillForm({
@@ -216,7 +241,7 @@ test(
       primaryChat: 'YouTube',
     });
 
-    await goLiveWithMultistream();
+    await goLiveWithMultistream(t);
     await stopStream();
 
     t.pass();
@@ -258,7 +283,7 @@ test.skip(
     await youtubeForm.fillForm(youtubeSettings);
     await youtubeForm.assertFormContains(youtubeSettings);
 
-    await goLiveWithMultistream();
+    await goLiveWithMultistream(t);
     await stopStream();
 
     t.pass();
