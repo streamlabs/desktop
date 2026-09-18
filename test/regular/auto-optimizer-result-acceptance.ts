@@ -226,6 +226,31 @@ test('standard results require encoding settings while Twitch-managed results om
   t.is(acceptAutoOptimizerResult(twitchManagedResult, twitchManagedContext), null);
 });
 
+test('measured Enhanced Broadcasting fallback explanations survive result acceptance', t => {
+  const context = standardAttempt();
+  context.streamSetup.type = 'enhanced-broadcasting';
+  context.streamSetup.outputs[0].outputKind = 'twitch-enhanced-broadcasting';
+  context.streamSetup.outputs[0].probeCandidates[0].kind = 'twitch-enhanced-broadcasting';
+  context.outputs[0].outputKind = 'twitch-enhanced-broadcasting';
+  const nativeResult = standardNativeResult();
+  delete nativeResult.outputs[0].encoding;
+  nativeResult.outputs[0].measurement.evidence![0].method = 'twitch-enhanced-broadcasting-test';
+
+  for (const reason of [
+    'enhanced_broadcasting_transport_fallback',
+    'enhanced_broadcasting_workload_fallback',
+    'enhanced_broadcasting_transport_and_workload_fallback',
+  ]) {
+    nativeResult.outputs[0].measurement.reason = reason;
+    const accepted = acceptAutoOptimizerResult(nativeResult, context);
+    t.truthy(accepted);
+    t.is(accepted!.outputs[0].estimateReason, reason);
+    t.is(accepted!.outputs[0].measurement, 'active');
+    t.is(accepted!.outputs[0].confidence, 'high');
+    t.false('encoder' in accepted!.outputs[0]);
+  }
+});
+
 test('probe evidence and limits must match the saved request context', t => {
   const wrongEvidence = standardNativeResult();
   wrongEvidence.outputs[0].measurement.evidence = [

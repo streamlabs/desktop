@@ -27,6 +27,12 @@ const estimateReasonLabels: Record<string, string> = {
   cloud_multistream: 'Estimated for the shared cloud multistream upload.',
   dual_output: 'Estimated for this Dual Output stream.',
   enhanced_broadcasting: 'Estimated without changing the Enhanced Broadcasting ladder.',
+  enhanced_broadcasting_transport_fallback:
+    'Upload instability was detected while testing higher-quality settings. The recommended settings passed without dropped frames.',
+  enhanced_broadcasting_workload_fallback:
+    'Higher-quality settings did not pass the performance test. The recommended settings passed.',
+  enhanced_broadcasting_transport_and_workload_fallback:
+    'Higher-quality settings encountered upload instability and performance issues during testing. The recommended settings passed.',
   stream_shift: 'Estimated without connecting to Stream Shift.',
   mixed_topology: 'Estimated for this combination of stream destinations.',
   probe_disabled: 'Estimated because active bandwidth testing was unavailable.',

@@ -54,7 +54,7 @@ import {
 export * from './types';
 export { describeAutoOptimizerStreamSetup } from './stream-setup';
 
-const MIN_PHASE_VISIBLE_MS = 1000;
+const MIN_PHASE_VISIBLE_MS = 2000;
 const CLEANUP_PROGRESS_START = 95;
 const CLEANUP_PROGRESS_MAX = 99;
 const CLEANUP_PROGRESS_STEP = 0.2;
@@ -689,8 +689,8 @@ export class AutoOptimizerService extends PersistentStatefulService<IAutoOptimiz
       progress,
     };
 
-    // Repeated events may update progress without restarting the one-second
-    // minimum display time. If another status is waiting, preserve A -> B -> A
+    // Repeated events may update progress without restarting the minimum
+    // display time. If another status is waiting, preserve A -> B -> A
     // as three separate steps.
     const disposition = autoOptimizerPhaseStepDisposition(
       this.displayedPhaseStep?.key || null,

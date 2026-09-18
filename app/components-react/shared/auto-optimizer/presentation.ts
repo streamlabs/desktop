@@ -16,9 +16,12 @@ const visibleActiveMeasurementReasons = new Set([
   'probe_source_underfill',
   'partial_provider_probes',
   'quality_promotion_tested',
+  'enhanced_broadcasting_transport_fallback',
+  'enhanced_broadcasting_workload_fallback',
+  'enhanced_broadcasting_transport_and_workload_fallback',
 ]);
 
-/** Measurement reasons shown for active results with medium confidence. */
+/** Explanations that remain visible for successful measured results. */
 export function shouldShowAutoOptimizerMeasurementReason(reason?: string): boolean {
   return visibleActiveMeasurementReasons.has(reason || '');
 }

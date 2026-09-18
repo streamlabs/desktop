@@ -71,6 +71,17 @@ test('active medium-confidence quality reasons remain visible in results', t => 
   t.false(shouldShowAutoOptimizerMeasurementReason());
 });
 
+test('measured Enhanced Broadcasting results explain rejected higher-quality settings', t => {
+  t.true(shouldShowAutoOptimizerMeasurementReason('enhanced_broadcasting_transport_fallback'));
+  t.true(shouldShowAutoOptimizerMeasurementReason('enhanced_broadcasting_workload_fallback'));
+  t.true(
+    shouldShowAutoOptimizerMeasurementReason(
+      'enhanced_broadcasting_transport_and_workload_fallback',
+    ),
+  );
+  t.false(shouldShowAutoOptimizerMeasurementReason());
+});
+
 test('bandwidth phase follows the platform currently being probed', t => {
   const candidates = [{ platform: 'twitch' as const }, { platform: 'youtube' as const }];
 
@@ -484,6 +495,9 @@ test('Enhanced Broadcasting progress interpolates through the en-US catalog', t 
     'Vertical canvas resolution',
     'Twitch Enhanced Broadcasting',
     'Twitch will manage stream output resolutions, bitrates, and encoders.',
+    'Upload instability was detected while testing higher-quality settings. The recommended settings passed without dropped frames.',
+    'Higher-quality settings did not pass the performance test. The recommended settings passed.',
+    'Higher-quality settings encountered upload instability and performance issues during testing. The recommended settings passed.',
   ].forEach(key => {
     t.true(
       Object.prototype.hasOwnProperty.call(messages, key),
