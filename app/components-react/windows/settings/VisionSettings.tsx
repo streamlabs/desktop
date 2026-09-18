@@ -79,10 +79,10 @@ function VisionInfo({
   const isRunning = useMemo(() => status === 'running', [status]);
 
   return (
-    <ObsSettingsSection title="Streamlabs AI">
+    <ObsSettingsSection title="Streamlabs Vision">
       <div style={{ marginBottom: 16 }}>
         <SwitchInput
-          label={$t('Turn On AI')}
+          label={$t('Turn On Vision')}
           disabled={!isLoggedIn || starting}
           value={enabled}
           onChange={() => setIsEnabled(!enabled)}
@@ -161,7 +161,7 @@ function openLink(url: string) {
   remote.shell.openExternal(url);
 }
 
-export function AISettings() {
+export function VisionSettings() {
   const { UsageStatisticsService, UserService, VisionService } = Services;
   const actions = VisionService.actions;
   const state = useRealmObject(VisionService.state);
@@ -171,9 +171,9 @@ export function AISettings() {
   const enabled = visionEnabledState.isEnabled;
 
   function trackEvent(type: string, data?: Record<string, any>) {
-    UsageStatisticsService.actions.recordAnalyticsEvent('AiFeature', {
+    UsageStatisticsService.actions.recordAnalyticsEvent('VisionFeature', {
       type,
-      source: 'AiSettings',
+      source: 'VisionSettings',
       ...(data ?? {}),
     });
   }
@@ -181,7 +181,7 @@ export function AISettings() {
   useEffect(() => {
     if (state.hasFailedToUpdate) {
       message.error({
-        content: $t('There was an error installing Streamlabs AI.'),
+        content: $t('There was an error installing Streamlabs Vision.'),
       });
     }
   }, [state.hasFailedToUpdate]);

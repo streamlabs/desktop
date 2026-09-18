@@ -25,7 +25,7 @@ export enum EMenuItemKey {
   GetHelp = 'get-help',
   Settings = 'settings',
   Login = 'login',
-  AI = 'ai',
+  Vision = 'vision',
 }
 
 /**
@@ -130,7 +130,7 @@ export const compactMenuItemKeys: Set<EMenuItemKey | ESubMenuItemKey> = new Set(
   EMenuItemKey.Themes,
   EMenuItemKey.AppStore,
   EMenuItemKey.Highlighter,
-  EMenuItemKey.AI,
+  EMenuItemKey.Vision,
   EMenuItemKey.RecordingHistory,
 ]);
 
@@ -147,7 +147,7 @@ export const menuTitles = (item: EMenuItemKey | ESubMenuItemKey | string) => {
     [EMenuItemKey.Themes]: $t('Overlays'),
     [EMenuItemKey.AppStore]: $t('App Store'),
     [EMenuItemKey.Highlighter]: $t('Highlighter'),
-    [EMenuItemKey.AI]: $t('AI'),
+    [EMenuItemKey.Vision]: $t('Vision'),
     [EMenuItemKey.RecordingHistory]: $t('Recordings'),
     [EMenuItemKey.ThemeAudit]: $t('Theme Audit'),
     [EMenuItemKey.DevTools]: 'Dev Tools',
@@ -184,7 +184,7 @@ export const SideBarTopNavData = () => {
       menuItems[EMenuItemKey.Themes],
       menuItems[EMenuItemKey.AppStore],
       menuItems[EMenuItemKey.Highlighter],
-      menuItems[EMenuItemKey.AI],
+      menuItems[EMenuItemKey.Vision],
       menuItems[EMenuItemKey.RecordingHistory],
       menuItems[EMenuItemKey.ThemeAudit],
     ],
@@ -270,9 +270,9 @@ export const SideNavMenuItems = (): TMenuItems => {
       isActive: true,
       isExpanded: false,
     },
-    [EMenuItemKey.AI]: {
-      key: EMenuItemKey.AI,
-      target: 'AILanding',
+    [EMenuItemKey.Vision]: {
+      key: EMenuItemKey.Vision,
+      target: 'VisionLanding',
       icon: 'icon-ai',
       trackingTarget: 'ai',
       isActive: true,

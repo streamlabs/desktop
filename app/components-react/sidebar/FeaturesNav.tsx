@@ -130,7 +130,7 @@ export default memo(function FeaturesNav() {
         if (!loggedIn && !loggedOutMenuItemKeys.has(menuItem.key)) {
           return false;
         }
-        if (menuItem.key === EMenuItemKey.AI && !VisionService.isSupportedForOs()) {
+        if (menuItem.key === EMenuItemKey.Vision && !VisionService.isSupportedForOs()) {
           return false;
         }
         if (menuItem.key === EMenuItemKey.ThemeAudit && !themeAuditEnabled) {
@@ -158,7 +158,7 @@ export default memo(function FeaturesNav() {
 
   const menuStyles = useMemo(
     (): Partial<Record<EMenuItemKey | ESubMenuItemKey, any>> => ({
-      [EMenuItemKey.AI]: isVisionRunning && styles.ultra,
+      [EMenuItemKey.Vision]: isVisionRunning && styles.ultra,
       [EMenuItemKey.StudioMode]: studioMode && styles.active,
     }),
     [isVisionRunning, studioMode],
