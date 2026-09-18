@@ -342,6 +342,10 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     // might have an invalid encoder selected. Resetting to x264 if they have an incompatible
     // encoder selected is a simple way to ensure they can stream and record without encoder issues.
     this.userService.userLoginFinished.subscribe(() => {
+      // Encoder answers are memoized for the life of this service; login is the one
+      // lifecycle event already wired to validation, so use it to bound how long a
+      // stale answer can survive.
+      this.encoderQueryService.clearCache();
       this.validateEncoders();
     });
 
@@ -811,32 +815,34 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
         | undefined;
 
       if (streamEncoderSetting) {
-        // Fall back to the existing options only if the query itself failed; a confirmed
-        // empty intersection must actually empty the dropdown, not keep the raw OBS list.
-        const streamEncoderOptions = this.encoderQueryService.getAvailableStreamingEncodersOrFallback(
+        // null only when the query itself failed; keep the existing options untouched in
+        // that case rather than blank the dropdown or fall back to the raw OBS list.
+        const streamEncoderOptions = this.encoderQueryService.getAvailableStreamingEncoderOptions(
           mode,
-          streamEncoderSetting.options || [],
+          streamEncoderSetting.value,
         );
 
-        // Only update options if values actually differ to avoid triggering re-renders
-        const oldValues = (streamEncoderSetting.options || []).map((o: any) => o.value).join(',');
-        const newValues = streamEncoderOptions.map(o => o.value).join(',');
-        if (oldValues !== newValues) {
-          streamEncoderSetting.options = streamEncoderOptions;
-        }
+        if (streamEncoderOptions !== null) {
+          // Only update options if values actually differ to avoid triggering re-renders
+          const oldValues = (streamEncoderSetting.options || []).map((o: any) => o.value).join(',');
+          const newValues = streamEncoderOptions.map(o => o.value).join(',');
+          if (oldValues !== newValues) {
+            streamEncoderSetting.options = streamEncoderOptions;
+          }
 
-        if (streamEncoderOptions.length > 0) {
-          // Canonicalize legacy saved values so they still resolve against rebuilt options.
-          // An unresolvable value is left alone: this is a read path, and overwriting it
-          // here silently discards the user's encoder on the next save. validateEncoders()
-          // owns that decision and tells the user about it.
-          const streamEncoderValue = resolveAvailableEncoderOptionValue(
-            streamEncoderOptions,
-            streamEncoderSetting.value,
-          );
+          if (streamEncoderOptions.length > 0) {
+            // Canonicalize legacy saved values so they still resolve against rebuilt options.
+            // An unresolvable value is left alone: this is a read path, and overwriting it
+            // here silently discards the user's encoder on the next save. validateEncoders()
+            // owns that decision and tells the user about it.
+            const streamEncoderValue = resolveAvailableEncoderOptionValue(
+              streamEncoderOptions,
+              streamEncoderSetting.value,
+            );
 
-          if (streamEncoderValue) {
-            streamEncoderSetting.value = streamEncoderValue;
+            if (streamEncoderValue) {
+              streamEncoderSetting.value = streamEncoderValue;
+            }
           }
         }
       }
@@ -909,26 +915,20 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       this.findSetting(this.state.Output.formData, 'Streaming', 'StreamEncoder');
     const mode: string = this.findSettingValue(this.state.Output.formData, 'Untitled', 'Mode');
 
-    // Query the encoder list directly rather than trusting the options already in the
-    // store, which can be a stale list built for a different set of destinations. Only
-    // fall back to the stored options if the query itself failed — a confirmed empty
-    // intersection must not be papered over with the stale/unfiltered list.
-    const availableEncoders = this.encoderQueryService.getAvailableStreamingEncodersOrFallback(
-      mode as TOutputSettingsMode,
-      encoderSetting.options,
-    );
-    const encoderValue = resolveAvailableEncoderOptionValue(
-      availableEncoders,
-      encoderSetting.value,
-    );
-
     // The backend incorrectly defaults to obs_x264 in Simple mode rather than x264.
     if (mode !== 'Advanced' && encoderSetting.value === 'obs_x264') return;
 
-    if (encoderValue) {
-      encoderSetting.value = encoderValue;
-      return;
-    }
+    // Checked against the device, not the target-set intersection: a destination
+    // rejecting an encoder doesn't mean the machine can't run it, and this dialog's
+    // wording specifically claims the machine cannot.
+    const isAvailable = this.encoderQueryService.isStreamingEncoderAvailable(
+      mode as TOutputSettingsMode,
+      encoderSetting.value,
+    );
+
+    // null means the device could not be queried; leave the setting untouched rather
+    // than reset an encoder we simply failed to ask about.
+    if (isAvailable === null || isAvailable) return;
 
     console.error(
       `The selected encoder ${encoderSetting.value} is not valid for the current configuration. Resetting to a valid encoder.`,

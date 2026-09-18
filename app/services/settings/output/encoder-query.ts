@@ -82,16 +82,47 @@ export class EncoderQueryService extends Service {
   }
 
   /**
-   * Like getAvailableStreamingEncoders, but returns `fallback` only when the query itself
-   * failed. A confirmed empty intersection is returned as an empty list rather than swapped
-   * for `fallback`, so a validator can still tell "nothing usable" from "couldn't ask".
+   * The dropdown list: the intersection of what every enabled target platform accepts,
+   * with the currently selected encoder's option re-appended from the device list when
+   * the intersection dropped it, so a value the user actually has selected does not just
+   * vanish from the options. Returns null only when both the intersection and device
+   * queries failed outright — callers should leave existing options untouched in that case.
    */
-  getAvailableStreamingEncodersOrFallback(
+  getAvailableStreamingEncoderOptions(
     mode: TOutputSettingsMode,
-    fallback: IObsListOption<string>[],
-  ): IObsListOption<string>[] {
-    const entry = this.getStreamingEncoderEntry(mode);
-    return entry.encoders === null ? fallback : entry.options;
+    selectedEncoder: string | undefined,
+  ): IObsListOption<string>[] | null {
+    const targetEntry = this.getStreamingEncoderEntry(mode);
+    const deviceEntry = this.getDeviceStreamingEncoderEntry(mode);
+
+    if (targetEntry.encoders === null && deviceEntry.encoders === null) return null;
+
+    const options = targetEntry.encoders === null ? [] : targetEntry.options;
+
+    if (
+      selectedEncoder &&
+      deviceEntry.encoders &&
+      !options.some(o => o.value === selectedEncoder)
+    ) {
+      const deviceEncoder = findEncoder(deviceEntry.encoders, selectedEncoder);
+      if (deviceEncoder) {
+        return [...options, { description: deviceEncoder.title, value: deviceEncoder.name }];
+      }
+    }
+
+    return options;
+  }
+
+  /**
+   * Whether `encoder` is usable on this machine at all, independent of which targets are
+   * currently enabled. Resolved against the device list, not the target-set intersection,
+   * since an encoder a destination rejects is still an encoder the machine can run. null
+   * means the device could not be queried — callers must not treat that as unavailable.
+   */
+  isStreamingEncoderAvailable(mode: TOutputSettingsMode, encoder: string): boolean | null {
+    const deviceEntry = this.getDeviceStreamingEncoderEntry(mode);
+    if (deviceEntry.encoders === null) return null;
+    return findEncoder(deviceEntry.encoders, encoder) !== undefined;
   }
 
   /** Drops memoized encoder lists. Only needed if the registered encoder set itself changes. */
@@ -105,7 +136,26 @@ export class EncoderQueryService extends Service {
     // Keyed on the full target set, so enabling or disabling a platform lands on a
     // different entry instead of reusing a list filtered for a different destination.
     const cacheKey = `${mode}:${targets.join('+') || 'none'}`;
+    return this.resolveStreamingEncoderEntry(cacheKey, () =>
+      this.queryEncodersForTargets(mode, targets),
+    );
+  }
 
+  /**
+   * The device entry: what this machine can encode with, unfiltered by any enabled
+   * target. This is the source of truth for encoder metadata and availability — only the
+   * dropdown options should ever be narrowed by the target-set intersection.
+   */
+  private getDeviceStreamingEncoderEntry(mode: TOutputSettingsMode): IStreamingEncoderResult {
+    return this.resolveStreamingEncoderEntry(`${mode}:device`, () =>
+      this.queryEncodersForPlatform(mode, null),
+    );
+  }
+
+  private resolveStreamingEncoderEntry(
+    cacheKey: string,
+    query: () => IEncoderOption[] | null,
+  ): IStreamingEncoderResult {
     try {
       // While actively streaming, the running output already carries the real service:
       // read it straight through ahead of the cache, so an active output is never served
@@ -123,9 +173,9 @@ export class EncoderQueryService extends Service {
       const cached = this.streamingEncoderCache.get(cacheKey);
       if (cached) return cached;
 
-      const encoders = this.queryEncodersForTargets(mode, targets);
+      const encoders = query();
       if (encoders === null) {
-        // No target could be queried: a soft failure, not a confirmed empty
+        // The query failed outright: a soft failure, not a confirmed empty
         // intersection, so it must not be memoized here.
         return { encoders: null, options: [] };
       }
@@ -172,11 +222,12 @@ export class EncoderQueryService extends Service {
     mode: TOutputSettingsMode,
     platform: TPlatform | null,
   ): IEncoderOption[] | null {
-    const instance: any =
-      mode === 'Simple' ? SimpleStreamingFactory.create() : AdvancedStreamingFactory.create();
+    let instance: any;
     let service: any = null;
 
     try {
+      instance =
+        mode === 'Simple' ? SimpleStreamingFactory.create() : AdvancedStreamingFactory.create();
       service = this.setupTempStreamingService(instance, platform);
       if (!hasGetAvailableEncoders(instance)) return null;
       return instance.getAvailableEncoders();
@@ -186,10 +237,13 @@ export class EncoderQueryService extends Service {
       console.error(`Error querying available encoders for ${platform ?? 'no platform'}`, e);
       return null;
     } finally {
-      if (mode === 'Simple') {
-        SimpleStreamingFactory.destroy(instance);
-      } else {
-        AdvancedStreamingFactory.destroy(instance);
+      // create() may have thrown before assigning an instance; nothing to destroy then.
+      if (instance) {
+        if (mode === 'Simple') {
+          SimpleStreamingFactory.destroy(instance);
+        } else {
+          AdvancedStreamingFactory.destroy(instance);
+        }
       }
       if (service) ServiceFactory.destroy(service);
     }
@@ -249,7 +303,7 @@ export class EncoderQueryService extends Service {
   }
 
   getAvailableStreamingEncoderMetadata(mode: TOutputSettingsMode): IEncoderOption[] {
-    return this.getStreamingEncoderEntry(mode).encoders ?? [];
+    return this.getDeviceStreamingEncoderEntry(mode).encoders ?? [];
   }
 
   getAvailableRecordingEncoderMetadata(

@@ -206,6 +206,10 @@ export enum EIncompatibleRestreamCodec {
   ffmpeg_svt_av1 = 'ffmpeg_svt_av1',
   obs_nvenc_av1_tex = 'obs_nvenc_av1_tex',
   obs_nvenc_hevc_tex = 'obs_nvenc_hevc_tex',
+  obs_qsv11_hevc = 'obs_qsv11_hevc',
+  obs_qsv11_av1 = 'obs_qsv11_av1',
+  h265_texture_amf = 'h265_texture_amf',
+  av1_texture_amf = 'av1_texture_amf',
 }
 
 export const incompatibleRestreamCodecs = (codec: EIncompatibleRestreamCodec) => {
@@ -214,6 +218,10 @@ export const incompatibleRestreamCodecs = (codec: EIncompatibleRestreamCodec) =>
     [EIncompatibleRestreamCodec.ffmpeg_svt_av1]: 'AV1',
     [EIncompatibleRestreamCodec.obs_nvenc_av1_tex]: 'NVIDIA AV1',
     [EIncompatibleRestreamCodec.obs_nvenc_hevc_tex]: 'NVIDIA HEVC',
+    [EIncompatibleRestreamCodec.obs_qsv11_hevc]: 'QuickSync HEVC',
+    [EIncompatibleRestreamCodec.obs_qsv11_av1]: 'QuickSync AV1',
+    [EIncompatibleRestreamCodec.h265_texture_amf]: 'AMD HEVC',
+    [EIncompatibleRestreamCodec.av1_texture_amf]: 'AMD AV1',
   }[codec];
 };
 
