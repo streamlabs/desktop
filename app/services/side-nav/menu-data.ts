@@ -274,7 +274,7 @@ export const SideNavMenuItems = (): TMenuItems => {
       key: EMenuItemKey.Vision,
       target: 'VisionLanding',
       icon: 'icon-ai',
-      trackingTarget: 'ai',
+      trackingTarget: 'vision',
       isActive: true,
       isExpanded: false,
     },
