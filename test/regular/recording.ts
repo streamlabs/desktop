@@ -127,7 +127,10 @@ test('Recording', async t => {
   await setOutputResolution('100x100');
 
   // Simple Recording
-  const tmpDir = await setTemporaryRecordingPath();
+  const tmpDir = await setTemporaryRecordingPath(
+    false,
+    path.join(t.context.cacheDir, 'slobs-client'),
+  );
   const numSimpleFormats = await createRecordingFiles();
   await validateRecordingFiles(t, tmpDir, numSimpleFormats);
 
@@ -165,7 +168,10 @@ test('Recording with two contexts active', async t => {
 
   // low resolution reduces CPU usage
   await setOutputResolution('100x100');
-  const tmpDir = await setTemporaryRecordingPath(true);
+  const tmpDir = await setTemporaryRecordingPath(
+    true,
+    path.join(t.context.cacheDir, 'slobs-client'),
+  );
 
   const numFiles = await createRecordingFiles(true);
   await validateRecordingFiles(t, tmpDir, numFiles, true);
@@ -176,7 +182,10 @@ test('Recording with two contexts active', async t => {
 test('Recording from Go Live window', async t => {
   const user = await logIn(t);
   await prepareToGoLive();
-  const tmpDir = await setTemporaryRecordingPath();
+  const tmpDir = await setTemporaryRecordingPath(
+    false,
+    path.join(t.context.cacheDir, 'slobs-client'),
+  );
 
   await clickGoLive();
   await waitForSettingsWindowLoaded();
@@ -278,7 +287,10 @@ test('Recording with rescaling', async t => {
     await setOutputResolution('1920x1080'); // Not using 100x100 since we are rescaling resolution.
 
     // Advanced Recording
-    const tmpDir = await setTemporaryRecordingPath(true);
+    const tmpDir = await setTemporaryRecordingPath(
+      true,
+      path.join(t.context.cacheDir, 'slobs-client'),
+    );
     await createRecordingWithFormParms({
       RecFormat: 'mkv',
       RecRescale: true,
@@ -306,7 +318,10 @@ test('Recording without spaces', async t => {
     // low resolution reduces CPU usage
     await setOutputResolution('100x100');
 
-    const tmpDir = await setTemporaryRecordingPath(true);
+    const tmpDir = await setTemporaryRecordingPath(
+      true,
+      path.join(t.context.cacheDir, 'slobs-client'),
+    );
     await createRecordingWithFormParms({ RecFormat: 'mkv' }, async () => {
       await clickCheckbox('RecFileNameWithoutSpace');
     });

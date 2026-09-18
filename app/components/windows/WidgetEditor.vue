@@ -4,11 +4,10 @@
       <div class="top-settings" v-if="properties">
         <generic-form :value="topProperties" @input="onPropsInputHandler" />
 
-        <div class="ant-alert ant-alert-info" role="alert" v-if="shouldShowAlertboxSwitcher">
+        <div class="ant-alert ant-alert-info" role="alert" v-if="props.isAlertBox">
           <div class="ant-alert-content">
             <div
               class="ant-alert-message"
-              v-if="props.isAlertBox"
               style="cursor: pointer"
               @click="switchToNewAlertboxUI()"
             >

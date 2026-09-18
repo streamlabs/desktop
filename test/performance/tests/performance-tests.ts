@@ -134,7 +134,7 @@ test('Empty collection (logged-in twitch)', async t => {
 });
 
 test('Recording', async t => {
-  await setTemporaryRecordingPath();
+  await setTemporaryRecordingPath(false, path.join(t.context.cacheDir, 'slobs-client'));
   await setOutputResolution('100x100');
   const api = await getApiClient();
   const scenesService = api.getResource<ScenesService>('ScenesService');

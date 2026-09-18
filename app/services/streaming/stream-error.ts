@@ -36,6 +36,16 @@ export const errorTypes = {
       return $t('Failed to update platform settings');
     },
   },
+  STREAM_KEY_MISSING: {
+    get message() {
+      return $t('Stream key missing. Relogin or remerge to refresh it.');
+    },
+  },
+  STREAM_SERVER_MISSING: {
+    get message() {
+      return $t('Server url missing. Relogin or remerge to refresh it.');
+    },
+  },
   RESTREAM_DISABLED: {
     get message() {
       return $t('The Multistream server is temporarily unavailable');
@@ -51,9 +61,87 @@ export const errorTypes = {
       return $t('Failed to update Multistream platforms and destinations while live');
     },
   },
+  RESTREAM_INVALID_CONFIG: {
+    get message() {
+      return $t(
+        'Multistream settings are invalid, please check your platforms and destinations and try again',
+      );
+    },
+    get action() {
+      return $t(
+        'confirm the user has Ultra and confirm the settings for enabled platforms and destinations',
+      );
+    },
+  },
+  RESTREAM_STREAM_KEY_MISSING: {
+    get message() {
+      return $t('Multistream stream key does not exist');
+    },
+    get action() {
+      return $t(
+        'there was no Multistream session key, ask the user to end the stream and go live again',
+      );
+    },
+  },
+  RESTREAM_STREAM_KEY_FETCH_FAILED: {
+    get message() {
+      return $t('Cannot add targets in live output editing mode because the stream key is missing');
+    },
+    get action() {
+      return $t(
+        'ask the user to restart the stream and go live again. If in dual output mode, ask the user to stream in single output mode',
+      );
+    },
+  },
+  RESTREAM_DISPLAY_SETUP_FAILED: {
+    get message() {
+      return $t('Failed to start Multistreaming for one of the displays');
+    },
+    get action() {
+      return $t(
+        'confirm if the user is in dual output mode and which displays are currently streaming',
+      );
+    },
+  },
+  RESTREAM_ADD_TARGETS_FAILED: {
+    get message() {
+      return $t('Failed to add the destination to your live stream');
+    },
+    get action() {
+      return $t(
+        'confirm the platform settings for the platform, then try updating the stream again',
+      );
+    },
+  },
+  RESTREAM_NO_ACTIVE_TARGETS: {
+    get message() {
+      return $t('No active Multistream destinations were found for your live stream');
+    },
+    get action() {
+      return $t(
+        'no live destinations so there was nothing to remove. The stream may have already ended on the server',
+      );
+    },
+  },
+  RESTREAM_REMOVE_TARGET_NOT_FOUND: {
+    get message() {
+      return $t('Failed to find the destination to remove on your live stream');
+    },
+    get action() {
+      return $t('one of the platforms requesting removal does not exist');
+    },
+  },
+  RESTREAM_REMOVE_TARGETS_FAILED: {
+    get message() {
+      return $t('Failed to remove the destination from your live stream');
+    },
+    get action() {
+      return $t('failed to remove the platform while live, confirm the stream is still active');
+    },
+  },
   RESTREAM_ENHANCED_BROADCASTING_FAILED: {
     get message() {
-      return $t('Failed to configure the Multistream server for Enhanced Broadcasting');
+      return $t('Failed to multistream because Enhanced Broadcasting is enabled');
     },
     get action() {
       return $t('disable Enhanced Broadcasting for Twitch and try again');
@@ -92,6 +180,110 @@ export const errorTypes = {
       return $t(
         'YouTube backend error return from API call. Disable YouTube to allow the user to stream. Refer user to YouTube support',
       );
+    },
+  },
+  YOUTUBE_CREATE_BROADCAST_FAILED: {
+    get message() {
+      return $t('Failed to create the YouTube broadcast');
+    },
+    get action() {
+      return $t('confirm the channel is under its broadcast limit');
+    },
+  },
+  YOUTUBE_UPDATE_BROADCAST_FAILED: {
+    get message() {
+      return $t('Failed to update the YouTube broadcast');
+    },
+    get action() {
+      return $t('confirm their current and upcoming broadcasts in YouTube Studio');
+    },
+  },
+  YOUTUBE_DELETE_BROADCAST_FAILED: {
+    get message() {
+      return $t('Failed to delete the YouTube broadcast');
+    },
+    get action() {
+      return $t('confirm their current and upcoming broadcasts in YouTube Studio');
+    },
+  },
+  YOUTUBE_BIND_STREAM_FAILED: {
+    get message() {
+      return $t('Failed to bind the stream to the YouTube broadcast');
+    },
+    get action() {
+      return $t('confirm their current and upcoming broadcasts in YouTube Studio');
+    },
+  },
+  YOUTUBE_TRANSITION_BROADCAST_FAILED: {
+    get message() {
+      return $t('Failed to change the status of the YouTube broadcast');
+    },
+    get action() {
+      return $t('confirm the broadcast is currently live or that it exists in YouTube Studio');
+    },
+  },
+  YOUTUBE_FETCH_BROADCASTS_FAILED: {
+    get message() {
+      return $t('Failed to fetch your YouTube broadcasts');
+    },
+    get action() {
+      return $t('confirm the account is enabled for live streaming');
+    },
+  },
+  YOUTUBE_CREATE_STREAM_FAILED: {
+    get message() {
+      return $t('Failed to create the YouTube stream');
+    },
+    get action() {
+      return $t('confirm their current and upcoming broadcasts in YouTube Studio');
+    },
+  },
+  YOUTUBE_FETCH_STREAM_FAILED: {
+    get message() {
+      return $t('Failed to fetch the YouTube stream');
+    },
+    get action() {
+      return $t('confirm their current and upcoming broadcasts in YouTube Studio');
+    },
+  },
+  YOUTUBE_UPDATE_VIDEO_FAILED: {
+    get message() {
+      return $t('Failed to update the YouTube video settings');
+    },
+    get action() {
+      return $t('confirm their current and upcoming broadcasts in YouTube Studio');
+    },
+  },
+  YOUTUBE_FETCH_VIDEO_FAILED: {
+    get message() {
+      return $t('Failed to fetch the YouTube video');
+    },
+    get action() {
+      return $t('confirm their videos and current and upcoming broadcasts in YouTube Studio');
+    },
+  },
+  YOUTUBE_UPLOAD_VIDEO_FAILED: {
+    get message() {
+      return $t('Failed to upload the video to YouTube');
+    },
+    get action() {
+      return $t('confirm their videos and current and upcoming broadcasts in YouTube Studio');
+    },
+  },
+  YOUTUBE_FETCH_CATEGORIES_FAILED: {
+    get message() {
+      return $t('Failed to fetch YouTube categories');
+    },
+    get action() {
+      return $t('confirm the account is enabled for live streaming');
+    },
+  },
+  YOUTUBE_FETCH_CHANNEL_FAILED: {
+    get message() {
+      return $t('Failed to fetch your YouTube channel');
+    },
+    get action() {
+      return $t('confirm the account is enabled for live streaming');
     },
   },
   FACEBOOK_STREAMING_DISABLED: {
@@ -269,6 +461,11 @@ export interface IRejectedRequest {
   status?: number;
   statusText?: string;
   platform?: TPlatform;
+  /**
+   * Machine-readable reason from the platform, e.g. YouTube's `error.errors[0].reason`.
+   * Callers use it to react to a specific failure without re-parsing the response.
+   */
+  reason?: string;
 }
 
 export interface IStreamError extends IRejectedRequest {
@@ -292,6 +489,7 @@ export class StreamError extends Error implements IRejectedRequest {
   public status?: number;
   public statusText?: string;
   public platform?: TPlatform;
+  public reason?: string;
 
   /**
    * returns serializable representation of the error
@@ -302,6 +500,7 @@ export class StreamError extends Error implements IRejectedRequest {
       message: this.message,
       details: this.details,
       platform: this.platform,
+      reason: this.reason,
     };
   };
 
@@ -319,11 +518,12 @@ export class StreamError extends Error implements IRejectedRequest {
     this.url = rejectedRequest?.url;
     this.status = rejectedRequest?.status;
     this.statusText = rejectedRequest?.statusText;
+    this.reason = rejectedRequest?.reason;
     this.platform = rejectedRequest?.platform ?? getPlatform(this?.url);
 
-    // TODO: remove sensitive data from YT requests
+    // Remove sensitive query params from the URL for YouTube errors
     if (this.platform === 'youtube') {
-      this.url = '';
+      this.url = this.url?.replace(/\?.*$/, '');
     }
 
     // don't allow to call 'new' outside this file
@@ -572,6 +772,39 @@ export function formatUnknownErrorMessage(
     report: messages.user.join('. '),
     details,
   };
+}
+export function throwRestreamError(e: unknown, errorType?: TStreamErrorType, message?: string) {
+  console.error('Restream error:', e);
+
+  const error =
+    e instanceof StreamError
+      ? e
+      : {
+          status: 400,
+          statusText:
+            message ?? $t('Failed to update Multistream platforms and destinations while live'),
+        };
+
+  const type = getRestreamErrorType(e, errorType);
+  const details = formatRestreamErrorMessage(e, message);
+
+  throwStreamError(type, error, details);
+}
+
+function getRestreamErrorType(e: unknown, errorType?: TStreamErrorType): TStreamErrorType {
+  if (e instanceof StreamError) {
+    return e.type;
+  }
+
+  return errorType ?? ('RESTREAM_UPDATE_FAILED' as TStreamErrorType);
+}
+
+function formatRestreamErrorMessage(e: unknown, message?: string) {
+  if (e instanceof StreamError) {
+    return e.details ?? e.statusText;
+  }
+
+  return message ?? $t('Failed to update Multistream platforms and destinations while live');
 }
 
 function obsStringErrorAsMessages(info: { error: string; code: number }) {

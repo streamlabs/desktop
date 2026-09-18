@@ -39,6 +39,7 @@ import {
   RecentEventsWindow,
   EditTransform,
   EditAutomations,
+  KevinSupport,
   Blank,
   Main,
   MultistreamChatInfo,
@@ -55,10 +56,8 @@ import EventFilterMenu from 'components/windows/EventFilterMenu';
 import OverlayPlaceholder from 'components/windows/OverlayPlaceholder';
 import BrowserSourceInteraction from 'components/windows/BrowserSourceInteraction';
 
-import StreamBoss from 'components/widgets/StreamBoss.vue';
 import MediaShare from 'components/widgets/MediaShare';
 import AlertBox from 'components/widgets/AlertBox.vue';
-import SpinWheel from 'components/widgets/SpinWheel.vue';
 import Poll from 'components/widgets/Poll';
 import ChatHighlight from 'components/widgets/ChatHighlight';
 
@@ -99,16 +98,15 @@ export function getComponents() {
     PlatformAppPopOut,
     EditTransform,
     EditAutomations,
+    KevinSupport,
     OverlayPlaceholder,
     BrowserSourceInteraction,
     EventFilterMenu,
     GameOverlayEventFeed,
     AdvancedStatistics,
     MultistreamChatInfo,
-    StreamBoss,
     MediaShare,
     AlertBox,
-    SpinWheel,
     Poll,
     ChatHighlight,
     WelcomeToPrime,
@@ -139,6 +137,11 @@ export interface IWindowOptions extends Electron.BrowserWindowConstructorOptions
   };
   scaleFactor: number;
   isShown: boolean;
+  /**
+   * Live focus state, not a construction option — same as scaleFactor above.
+   * Only maintained for one-off windows; main and child never set it.
+   */
+  isFocused?: boolean;
   title?: string;
   center?: boolean;
   position?: {
@@ -269,6 +272,11 @@ export class WindowsService extends StatefulService<IWindowsState> {
       const currentDisplay = remote.screen.getDisplayMatching(bounds);
       this.UPDATE_SCALE_FACTOR(windowId, currentDisplay.scaleFactor);
     }
+  }
+
+  private setOneOffFocused(windowId: string, isFocused: boolean) {
+    if (!this.state[windowId]) return;
+    this.UPDATE_ONE_OFF_WINDOW(windowId, { isFocused });
   }
 
   getWindowIdFromElectronId(electronWindowId: number) {
@@ -489,6 +497,9 @@ export class WindowsService extends StatefulService<IWindowsState> {
       delete this.windows[windowId];
       this.DELETE_ONE_OFF_WINDOW(windowId);
     });
+
+    newWindow.on('focus', () => this.setOneOffFocused(windowId, true));
+    newWindow.on('blur', () => this.setOneOffFocused(windowId, false));
 
     this.updateScaleFactor(windowId);
     newWindow.on('move', () => this.updateScaleFactor(windowId));

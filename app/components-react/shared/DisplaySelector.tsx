@@ -25,11 +25,24 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     canDualStream,
     updateCustomDestinationDisplayAndSaveSettings,
     updatePlatformDisplayAndSaveSettings,
+    isLiveOutputEditingEnabled,
+    isUpdateMode,
+    isLive,
   } = useGoLiveSettings().extend(module => ({
     get canDualStream() {
       if (!p.platform) return false;
+      if (module.isLiveOutputEditingEnabled) return false;
       return module.getCanDualStream(p.platform);
     },
+
+    get isLive(): boolean {
+      return (
+        module.isUpdateMode &&
+        module.isLiveOutputEditingEnabled &&
+        !!module.isTargetLive(p.platform ?? p.index)
+      );
+    },
+
     get display(): TDisplayOutput {
       const defaultDisplay = p.platform
         ? module.settings.platforms[p.platform]?.display
@@ -57,6 +70,29 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       },
     ];
 
+    if (isLive) {
+      // A live target cannot change display without restarting its stream, so offer only the
+      // display it is already using and explain how to change it
+      const activeDisplay =
+        defaultDisplays.find(option => option.value === display) ?? defaultDisplays[0];
+
+      return [
+        {
+          ...activeDisplay,
+          disabled: true,
+          tooltip: $t(
+            'Go offline to change orientation, then select a new resolution and go live again',
+          ),
+        },
+      ];
+    }
+
+    if (isUpdateMode) {
+      // Don't show Dual stream option in the Edit Stream window because it is not compatible with
+      // live output editing, which is the only time the display toggles are shown in the update window
+      return defaultDisplays;
+    }
+
     if (canDualStream) {
       const tooltip = p?.platform
         ? $t('Stream both horizontally and vertically to %{platform}', {
@@ -76,7 +112,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     }
 
     return defaultDisplays;
-  }, [canDualStream]);
+  }, [canDualStream, isLiveOutputEditingEnabled, isUpdateMode, isLive, display, p.platform]);
 
   const onChange = useCallback(
     (val: string) => {

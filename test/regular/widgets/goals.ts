@@ -3,7 +3,11 @@ import { addSource } from '../../helpers/modules/sources';
 import { logIn } from '../../helpers/webdriver/user';
 import { waitForWidgetSettingsSync } from '../../helpers/widget-helpers';
 import { assertFormContains, fillForm, useForm } from '../../helpers/modules/forms';
+import { closeWindow } from '../../helpers/modules/core';
+import { platform } from 'os';
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
 testGoal('Tip Goal');
@@ -73,6 +77,9 @@ function testGoal(goalType: string) {
     await fillForm('visualSettingsForm', testSet2);
     await waitForWidgetSettingsSync(t);
     await assertFormContains(testSet2);
+    if (platform() !== 'darwin') {
+      await closeWindow('child');
+    }
 
     t.pass();
   });

@@ -1,5 +1,5 @@
 import * as remote from '@electron/remote';
-import { WidgetDefinitions, WidgetType } from '../../../services/widgets';
+import { WidgetDefinitions, WidgetType, getWidgetName } from '../../../services/widgets';
 import { Services } from '../../service-provider';
 import { throttle } from 'lodash-decorators';
 import { assertIsDefined, getDefined } from '../../../util/properties-type-guards';
@@ -138,10 +138,37 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
 
     // load settings from the server to the store
     this.state.type = widget.type;
-    const data = await this.fetchData();
-    this.setData(data);
-    this.setPrevSettings(data);
-    this.state.setIsLoading(false);
+
+    // Used for debugging if fetching widget data failed to identify if the issue came from the api
+    const startTime = performance.now();
+    const widgetName = getWidgetName(widget.type);
+    try {
+      const data = await this.fetchData();
+      this.setData(data);
+      this.setPrevSettings(data);
+    } catch (e: unknown) {
+      console.error(
+        `${widgetName} Error: fetch widget data rejected after ${Math.round(
+          performance.now() - startTime,
+        )}ms}`,
+        e,
+      );
+
+      // Alert the user that the widget failed to load settings so they can determine the follow-up action instead of
+      // automatically closing the window, which may be confusing and frustrating for the user.
+      alertAsync({
+        title: $t(
+          'Something went wrong while loading settings for %{widgetName}. Please reopen the settings window or re-add the widget.',
+          {
+            widgetName,
+          },
+        ),
+        afterCloseFn: this.close,
+      });
+    } finally {
+      // Without this, a failed fetch will be stuck loading with an infinite spinner
+      this.state.setIsLoading(false);
+    }
   }
 
   destroy() {
@@ -165,18 +192,6 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
 
   get widgetData(): TWidgetState['data'] {
     return this.widgetState.data;
-  }
-
-  /**
-   * Checks if the widget has loaded settings, and narrows the type of `this.settings` accordingly.
-   *
-   * NOTE: Since the type is narrowed via the `this` value, the static analysis will not work with
-   * object destructuring! Make sure to keep/use a reference to the module instance.
-   */
-  hasLoadedSettings(): this is this & {
-    settings: TWidgetState['data']['settings'];
-  } {
-    return !!this.settings && !this.state.isLoading;
   }
 
   /**
