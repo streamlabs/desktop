@@ -85,8 +85,9 @@ export class EncoderQueryService extends Service {
    * The dropdown list: the intersection of what every enabled target platform accepts,
    * with the currently selected encoder's option re-appended from the device list when
    * the intersection dropped it, so a value the user actually has selected does not just
-   * vanish from the options. Returns null only when both the intersection and device
-   * queries failed outright — callers should leave existing options untouched in that case.
+   * vanish from the options. If only the intersection failed, the unnarrowed device list
+   * stands in. Returns null only when both queries failed outright — callers should leave
+   * existing options untouched in that case.
    */
   getAvailableStreamingEncoderOptions(
     mode: TOutputSettingsMode,
@@ -97,7 +98,11 @@ export class EncoderQueryService extends Service {
 
     if (targetEntry.encoders === null && deviceEntry.encoders === null) return null;
 
-    const options = targetEntry.encoders === null ? [] : targetEntry.options;
+    // Intersection unavailable but the machine list is: show that rather than collapse the
+    // dropdown to the single selected entry.
+    if (targetEntry.encoders === null) return deviceEntry.options;
+
+    const options = targetEntry.options;
 
     if (
       selectedEncoder &&
