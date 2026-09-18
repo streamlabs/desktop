@@ -1,10 +1,9 @@
-@import "../../../styles/index.less";
-@import "../../../styles/colors.less";
+@import '../../../styles/index.less';
+@import '../../../styles/colors.less';
 
 // the Foundation library interferes with some calendar styles
 // so we need to add some css fixes here
 .stream-scheduler-page {
-
   // fixes for Scrollable
   :global(.os-content-glue) {
     width: 100% !important;
@@ -12,7 +11,14 @@
   }
 
   width: 100%;
+  height: 100%;
   padding: 8px;
+
+  // set height for the loader so the scheduler is full height
+  :global(.ant-spin-nested-loading),
+  :global(.ant-spin-container) {
+    height: 100%;
+  }
 
   // make calendar cell narrower for the small screens
   @media (max-height: 1024px) {
@@ -32,14 +38,32 @@
   }
 
   // overwrite text align from foundation
-  :global(th) {text-align: right}
+  :global(th) {
+    text-align: right;
+  }
 
-  :global(.ant-modal-wrap), :global(.ant-modal-mask) {
+  :global(.ant-modal-wrap),
+  :global(.ant-modal-mask) {
     position: absolute;
   }
 
   // hide month/year mode selector
-  :global(.ant-picker-calendar-mode-switch)  {display: none;}
+  :global(.ant-picker-calendar-mode-switch) {
+    display: none;
+  }
+}
+
+.calendar {
+  height: 100%;
+
+  :global(.ant-picker-calendar),
+  :global(.ant-picker-panel),
+  :global(.ant-picker-date-panel),
+  :global(.ant-picker-body),
+  :global(.ant-picker-content) {
+    height: 100%;
+    flex: 1;
+  }
 }
 
 .event {
@@ -92,8 +116,6 @@
     color: white;
   }
 }
-
-.event-time {}
 
 .event-title {
   font-weight: bold;
