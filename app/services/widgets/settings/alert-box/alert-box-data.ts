@@ -175,6 +175,9 @@ export const conditions = () => ({
     { value: 'MIN_STARS_USED', title: $t('Stars used is at least <amount>') },
     { value: 'EXACT_STARS_USED', title: $t('Stars used is exactly <amount>') },
   ],
+  twitter_follow: [{ value: 'RANDOM', title: $t('Randomly') }],
+  twitter_like: [{ value: 'RANDOM', title: $t('Randomly') }],
+  twitter_subscription: [{ value: 'RANDOM', title: $t('Randomly') }],
 });
 
 export const conditionData = () => ({
@@ -199,6 +202,9 @@ export const conditionData = () => ({
     ],
   }),
   LOYALTY_STORE_REDEMPTION_ITEM_NAME: metadata.text({ title: $t('Item Name'), max: 50 }),
+  twitter_follow: {},
+  twitter_like: {},
+  twitter_subscription: {},
 });
 
 export const newVariation = (type: string): IAlertBoxVariation => ({

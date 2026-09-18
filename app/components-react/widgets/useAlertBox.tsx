@@ -565,6 +565,9 @@ function getVariationsMetadata() {
     tiltify_donation: {},
     treat: {},
     twitchcharitydonation: {},
+    twitter_follow: {},
+    twitter_like: {},
+    twitter_subscription: {},
   });
 
   // mix common and specific metadata and return it
