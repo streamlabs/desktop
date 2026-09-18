@@ -711,6 +711,29 @@ export class GoLiveSettingsModule {
       Services.HighlighterService.actions.setAiHighlighter(false);
     }
 
+    // Non-approved TikTok accounts must manually enter a server url and stream key, and
+    // approved accounts on the "stream-key" tab are able to go live with the url and key
+    // instead. In those cases, verifying the server url and stream key fields have values
+    if (this.state.isEnabled('tiktok')) {
+      const tiktokSettings = this.state.settings.platforms.tiktok;
+      const usingStreamKeyForm =
+        Services.TikTokService.scope !== 'approved' || tiktokSettings?.activeTab === 'stream-key';
+
+      if (
+        tiktokSettings &&
+        usingStreamKeyForm &&
+        (!tiktokSettings.serverUrl || !tiktokSettings.streamKey)
+      ) {
+        message.error(
+          $t(
+            'The TikTok stream form is missing a server url or stream key, which are required to go live to TikTok.',
+          ),
+          3,
+        );
+        return false;
+      }
+    }
+
     try {
       await getDefined(this.form).validateFields();
       return true;
