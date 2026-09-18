@@ -464,7 +464,7 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
           </div>
         </>
       )}
-      <DualOutputToggle type="switch" label={$t('Dual Output')} source="Editor" />
+      <DualOutputToggle type="switch" label={$t('Dual Output')} source="Editor" placement="left" />
     </div>
   );
 }

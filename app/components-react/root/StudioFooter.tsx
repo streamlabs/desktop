@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import cx from 'classnames';
 import { EStreamQuality } from '../../services/performance';
 import { EStreamingState, EReplayBufferState, ERecordingState } from '../../services/streaming';
@@ -14,6 +14,9 @@ import { Tooltip } from 'antd';
 import { confirmAsync } from 'components-react/modals';
 import RecordingSwitcher from 'components-react/windows/go-live/RecordingSwitcher';
 import { EAvailableFeatures } from 'services/incremental-rollout';
+import { KevinChatIcon } from 'components-react/shared/icons';
+import KevinApprovalBubble from 'components-react/agent/KevinApprovalBubble';
+import { KevinAnalytics } from 'components-react/agent/kevin-analytics';
 
 function StudioFooterComponent() {
   const {
@@ -25,6 +28,7 @@ function StudioFooterComponent() {
     PerformanceService,
     SettingsService,
     UserService,
+    KevinSupportService,
   } = Services;
 
   const {
@@ -37,6 +41,7 @@ function StudioFooterComponent() {
     replayBufferStatus,
     isReplayBufferActive,
     isLiveOutputEditingEnabled,
+    hasPendingApproval,
   } = useVuex(
     () => ({
       streamingStatus: StreamingService.views.streamingStatus,
@@ -48,6 +53,11 @@ function StudioFooterComponent() {
       replayBufferStatus: StreamingService.views.replayBufferStatus,
       isReplayBufferActive: StreamingService.views.isReplayBufferActive,
       isLiveOutputEditingEnabled: StreamingService.views.isLiveOutputEditingEnabled,
+      // Same predicate the bubble uses: nothing to flag while the streamer is
+      // already looking at the chat, where the card lives.
+      hasPendingApproval:
+        KevinSupportService.state.pendingApprovals.length > 0 &&
+        !WindowsService.state['kevin-support']?.isFocused,
     }),
     false,
   );
@@ -95,6 +105,35 @@ function StudioFooterComponent() {
       minHeight: 400,
     });
     UsageStatisticsService.actions.recordFeatureUsage('PerformanceStatistics');
+  }, []);
+
+  const kevinAnchorRef = useRef<HTMLDivElement>(null);
+
+  // The dot is the whole notification wherever the bubble is suppressed, so it
+  // needs a text equivalent rather than being colour alone.
+  const kevinLabel = hasPendingApproval
+    ? $t('Streamlabs Desktop Support — approval needed')
+    : $t('Streamlabs Desktop Support');
+
+  const openKevinSupport = useCallback(() => {
+    // A one-off window, not showWindow(): there is only one shared `child` window,
+    // so showWindow would close whatever the user already had open. Support needs
+    // to sit alongside the thing being asked about. The fixed windowId means a
+    // second click restores and focuses the existing window instead of duplicating.
+    WindowsService.actions.createOneOffWindow(
+      {
+        componentName: 'KevinSupport',
+        title: $t('Streamlabs Desktop Support'),
+        queryParams: {},
+        size: { width: 900, height: 640, minWidth: 560, minHeight: 420 },
+      },
+      'kevin-support',
+    );
+    // Tracked on the click, not on the window's mount effect: the fixed windowId
+    // means a second click only refocuses, so the component never remounts and
+    // the reach for support would go unrecorded.
+    KevinAnalytics.chatOpened();
+    UsageStatisticsService.actions.recordFeatureUsage('KevinSupportChat');
   }, []);
 
   const toggleReplayBuffer = useCallback(() => {
@@ -151,6 +190,26 @@ function StudioFooterComponent() {
           />
         </Tooltip>
         <PerformanceMetrics mode="limited" className="performance-metrics" />
+        {isLoggedIn && (
+          // The wrapper exists only to give the approval bubble something to
+          // measure; the bubble positions itself `fixed`, since the footer clips.
+          <div className={styles.kevinAnchor} ref={kevinAnchorRef}>
+            <KevinApprovalBubble anchorRef={kevinAnchorRef} />
+            <Tooltip placement="top" title={kevinLabel}>
+              <button
+                type="button"
+                aria-label={kevinLabel}
+                className={styles.kevinIcon}
+                onClick={openKevinSupport}
+              >
+                <KevinChatIcon />
+                {/* The bubble can't draw over an Electron BrowserView, so on any
+                    page that mounts one this dot is the only approval signal. */}
+                {hasPendingApproval && <span className={styles.kevinBadge} />}
+              </button>
+            </Tooltip>
+          </div>
+        )}
         <NotificationsArea />
       </div>
 

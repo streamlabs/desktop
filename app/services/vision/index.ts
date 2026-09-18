@@ -154,7 +154,18 @@ export class VisionService extends Service {
       return this.stop();
     });
 
-    if (this.enabledState.isEnabled) {
+    this.userService.userLogin.subscribe(() => {
+      if (this.enabledState.isEnabled) {
+        void this.ensureRunning();
+      }
+    });
+
+    this.userService.userLogout.subscribe(() => {
+      this.log('Vision is not supported for logged-out users, stopping.');
+      void this.stop();
+    });
+
+    if (this.userService.isLoggedIn && this.enabledState.isEnabled) {
       void this.ensureRunning();
     }
   }
@@ -220,6 +231,11 @@ export class VisionService extends Service {
     async ({ debugMode = false }: VisionRunnerStartOptions = {}) => {
       if (!this.isSupportedForOs()) {
         this.log('Vision is not supported for this platform at this time.');
+        return;
+      }
+
+      if (!this.userService.isLoggedIn) {
+        this.log('Vision is not supported for logged-out users.');
         return;
       }
 

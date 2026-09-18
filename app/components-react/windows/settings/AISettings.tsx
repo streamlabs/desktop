@@ -7,6 +7,7 @@ import React, { useEffect, useMemo } from 'react';
 import { $t } from 'services/i18n/index';
 import { VisionProcess, VisionService, VisionState } from 'services/vision';
 import { ObsSettingsSection } from './ObsSettings';
+import { useVuex } from 'components-react/hooks';
 
 type VisionStatus = 'running' | 'starting' | 'updating' | 'stopped';
 
@@ -39,6 +40,7 @@ function VisionInstalling(props: { percent: number; isUpdate: boolean }) {
 }
 
 type VisionInfoProps = {
+  isLoggedIn: boolean;
   status: VisionStatus;
   enabled: boolean;
   starting: boolean;
@@ -56,6 +58,7 @@ type VisionInfoProps = {
 };
 
 function VisionInfo({
+  isLoggedIn,
   status,
   enabled,
   starting,
@@ -80,7 +83,7 @@ function VisionInfo({
       <div style={{ marginBottom: 16 }}>
         <SwitchInput
           label={$t('Turn On AI')}
-          disabled={starting}
+          disabled={!isLoggedIn || starting}
           value={enabled}
           onChange={() => setIsEnabled(!enabled)}
         />
@@ -116,7 +119,7 @@ function VisionInfo({
             <div style={{ marginBottom: 6 }}>{$t('Active Process')}</div>
             <Select
               style={{ minWidth: 240 }}
-              disabled={!enabled || !isRunning}
+              disabled={!isLoggedIn || !enabled || !isRunning}
               value={isRunning ? activeProcessId : undefined}
               onFocus={() => isRunning && requestAvailableProcesses()}
               onChange={val => activateProcess(val, selectedGame)}
@@ -134,7 +137,7 @@ function VisionInfo({
             <div style={{ marginBottom: 6 }}>{$t('Selected Game')}</div>
             <Select
               style={{ minWidth: 240 }}
-              disabled={!enabled || !isRunning}
+              disabled={!isLoggedIn || !enabled || !isRunning}
               value={selectedGame}
               onChange={val => {
                 console.log('Changing game to: ', val);
@@ -159,9 +162,10 @@ function openLink(url: string) {
 }
 
 export function AISettings() {
-  const { UsageStatisticsService, VisionService } = Services;
+  const { UsageStatisticsService, UserService, VisionService } = Services;
   const actions = VisionService.actions;
   const state = useRealmObject(VisionService.state);
+  const isLoggedIn = useVuex(() => UserService.views.isLoggedIn);
 
   const visionEnabledState = useRealmObject(VisionService.enabledState);
   const enabled = visionEnabledState.isEnabled;
@@ -198,6 +202,7 @@ export function AISettings() {
   return (
     <div>
       <VisionInfo
+        isLoggedIn={isLoggedIn}
         status={getStatusText(state)}
         enabled={enabled}
         starting={state.isStarting}
