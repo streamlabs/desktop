@@ -22,8 +22,10 @@ const DASHBOARD_LINK_TYPES = new Set([
 
 /**
  * Returns a fragment of feature nav items to be rendered inside a parent
- * <Menu mode="horizontal">. Called as a hook from NavMenu so that rc-menu's
- * overflow measurement sees individual items rather than an opaque component.
+ * <Menu mode="horizontal">, plus a `contentKey` that changes whenever the
+ * fragment's rendered width could change (see useNavCollapse). Called as a
+ * hook from NavMenu so that rc-menu's overflow measurement sees individual
+ * items rather than an opaque component.
  */
 export function useFeaturesNav() {
   const {
@@ -105,7 +107,7 @@ export function useFeaturesNav() {
     setCurrentMenuItem(key ?? menuItem.key);
   }, []);
 
-  return (
+  const items = (
     <>
       {menuItems.map(menuItem => (
         <FeaturesNavItem
@@ -117,6 +119,13 @@ export function useFeaturesNav() {
       ))}
     </>
   );
+
+  // Signature of everything that can change this fragment's rendered width,
+  // for useNavCollapse to know when to re-measure. Order and badge text both
+  // affect width, so both are included.
+  const contentKey = menuItems.map(item => `${item.key}:${item.badge ?? ''}`).join(',');
+
+  return { items, contentKey };
 }
 
 const FeaturesNavItem = memo(
