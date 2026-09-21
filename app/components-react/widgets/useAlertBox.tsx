@@ -567,7 +567,7 @@ function getVariationsMetadata() {
     twitchcharitydonation: {},
     twitter_follow: {},
     twitter_like: {},
-    twitter_subscription: {},
+    twitter_sub: {},
   });
 
   // mix common and specific metadata and return it

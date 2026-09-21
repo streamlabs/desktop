@@ -32,7 +32,7 @@ export const API_NAME_MAP = {
   loyalty_store_redemption: 'loyaltystore',
   twitter_follow: 'twitter_follows',
   twitter_like: 'twitter_likes',
-  twitter_subscription: 'twitter_subscriptions',
+  twitter_sub: 'twitter_subs',
 };
 
 export const alertNameMap = () => ({
@@ -66,7 +66,7 @@ export const alertNameMap = () => ({
   effects: $t('Effects/Rallies'),
   twitter_follows: $t('X Follows'),
   twitter_likes: $t('X Likes'),
-  twitter_subscriptions: $t('X Subscriptions'),
+  twitter_subs: $t('X Subscriptions'),
 });
 
 // different tests are required due to api idiosyncracies
@@ -183,7 +183,7 @@ export const conditions = () => ({
   ],
   twitter_follows: [{ value: 'RANDOM', title: $t('Randomly') }],
   twitter_likes: [{ value: 'RANDOM', title: $t('Randomly') }],
-  twitter_subscriptions: [{ value: 'RANDOM', title: $t('Randomly') }],
+  twitter_subs: [{ value: 'RANDOM', title: $t('Randomly') }],
 });
 
 export const conditionData = () => ({
@@ -283,5 +283,5 @@ const DEFAULT_ALERT_FORMATS = {
   loyaltystore: '{name} redeemed {product}',
   twitter_follows: '{name} is now following on X!',
   twitter_likes: '{name} liked on X!',
-  twitter_subscriptions: '{name} subscribed on X!',
+  twitter_subs: '{name} subscribed on X!',
 };
