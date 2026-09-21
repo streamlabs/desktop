@@ -230,12 +230,13 @@ export class TwitchService
 
   async beforeGoLive(goLiveSettings?: IGoLiveSettings, context?: TDisplayType) {
     // If the stream has switched from another device, a new broadcast does not need to be created
-    if (
-      goLiveSettings &&
-      goLiveSettings.streamShift &&
-      this.streamingService.views.shouldSwitchStreams
-    ) {
-      await this.setupStreamShiftStream(goLiveSettings);
+    if (goLiveSettings && goLiveSettings.streamShift) {
+      // Stream shift is not compatible with enhanced broadcasting so always disable it
+      this.setEnhancedBroadcastingSetting(false);
+
+      if (this.streamingService.views.shouldSwitchStreams) {
+        await this.setupStreamShiftStream(goLiveSettings);
+      }
       return;
     }
 
@@ -245,12 +246,11 @@ export class TwitchService
     // to the display's OBS context when Twitch is not going out through restream, and that
     // depends on whether this stream is an enhanced broadcast — deciding afterwards means the
     // check answers for the previous stream instead of this one.
-    if (channelInfo) {
+    // Note: deliberately checking goLiveSettings and channelInfo together prevents checking for
+    // nullish values
+    if (goLiveSettings && channelInfo) {
       if (goLiveSettings?.liveOutputEditing) {
         await this.setupLiveOutputStream(goLiveSettings);
-      } else if (goLiveSettings.streamShift) {
-        // Stream shift is not compatible with enhanced broadcasting
-        this.setEnhancedBroadcastingSetting(false);
       } else if (channelInfo.display === 'both') {
         await this.setupDualStream(goLiveSettings);
       } else {
@@ -453,9 +453,6 @@ export class TwitchService
       this.postNotification('Stream Shift Error: Twitch is not live');
       return;
     }
-
-    // Stream shift not compatible with enhanced broadcasting
-    this.setEnhancedBroadcastingSetting(false);
 
     const [channelInfo] = await Promise.all([
       this.requestTwitch<{
