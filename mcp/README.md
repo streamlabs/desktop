@@ -4,8 +4,10 @@ Exposes Streamlabs Desktop to an AI agent as an [MCP](https://modelcontextprotoc
 streamer can say *"switch to Starting Soon, mute my mic, and tell me if anything looks wrong"* and
 have it happen.
 
-**Status: M0 prototype.** Five tools, no destructive actions, no gating. Not shipped, not packaged,
-not security-reviewed. See "Scope and limits" before pointing it at a real broadcast.
+**Status: Phase 1.** 27 tools covering scene/source editing, layout, and stream control, with a
+provenance-based confirmation gate. **Requires** a two-line app change (see "Undo
+integration"). Not shipped, not packaged, not security-reviewed. See "Scope and limits"
+before pointing it at a real broadcast.
 
 ## How it works
 
@@ -50,33 +52,76 @@ client spawns servers with a minimal environment and a cwd that is not your repo
 Register the **built `dist/index.js`**, never `tsx` — `tsx` resolution and PATH assumptions break
 under a client-spawned environment. Use `npm run dev` for the inner loop instead.
 
-Note that Claude Desktop can't do everything here: MCP **elicitation** (the only in-band way to get
-argument-specific human confirmation) is Claude Code CLI only. That matters from M2 onward.
+Note that Claude Desktop can't do everything here: MCP **elicitation** — the only in-band way to
+get argument-specific human confirmation — is Claude Code CLI and Hermes only. Every
+agent-initiated write depends on it; see "Safety model".
 
 ## Tools
 
-| Tool | Kind | What |
-| --- | --- | --- |
-| `get_stream_state` | read | The world model. Stream/recording status, health verdict, scene list, active-scene items as pixel rects, audio, events since last call, auto-detected warnings. **Call this first.** |
-| `get_scene` | read | Full item detail for one scene by name. |
-| `switch_scene` | write | Make a scene active. Warns if it's empty (black screen). |
-| `set_item_visibility` | write | Show/hide an item by name. |
-| `set_audio` | write | Mute/unmute and set volume by source name. |
+Grouped by **permission**, not by domain — `hermes mcp install` presents a per-tool checklist
+that writes into `tools.include`, so these boundaries are what a user chooses between.
 
-All three writes are reversible. Everything takes **human names** — the model never sees
+| Group | Tools |
+| --- | --- |
+| reads | `get_stream_state`, `get_health`, `get_scene`, `get_source_settings`, `list_source_types`, `preflight_check` |
+| performance | `switch_scene`, `set_audio`, `set_item_visibility`, `save_replay`, `undo_last_edit` |
+| layout | `set_item_transform`, `reorder_item`, `group_items` |
+| sources | `add_source`, `set_source_settings`, `add_filter`, `remove_filter` |
+| scenes | `create_scene`, `duplicate_scene`, `rename_scene` |
+| destructive | `remove_item`, `remove_source`, `remove_scene` |
+| stream | `go_live`, `stop_stream`, `set_recording` |
+
+Everything takes **human names** — the model never sees
 `SceneItem["sceneId", "nodeId", "sourceId"]`. On an ambiguous name you get the candidate list; on a
 miss, the available names.
 
-To reduce prompting, allowlist the safe ones in `.claude/settings.json`:
+`get_health` is a slim projection of `get_stream_state` for polling loops; the full snapshot is
+~1.2 KB per call and a monitoring task runs continuously.
 
-```json
-{ "permissions": { "allow": [
-  "mcp__streamlabs__get_stream_state",
-  "mcp__streamlabs__get_scene",
-  "mcp__streamlabs__switch_scene",
-  "mcp__streamlabs__set_audio",
-  "mcp__streamlabs__set_item_visibility"
-] } }
+## Safety model
+
+**Provenance decides whether to ask, and this server cannot see it.** A `switch_scene` call
+looks identical whether the streamer said "go to BRB" out loud or the agent decided BRB would
+be nice. Only the agent knows. So policy lives in the client-side skill and this server is the
+mechanism.
+
+Every write takes `requested_by`:
+
+- `"user"` — the streamer asked for this specific action. Executes immediately, no prompt.
+- `"agent"` — the agent is proposing it. Goes to the human via **MCP elicitation** first,
+  with the blast radius computed server-side (which scenes a source is in, whether you're
+  live, what the geometry will look like).
+
+`"agent"` is the **default**, so an omitted parameter asks rather than acts. A client that
+cannot elicit gets a refusal with recovery instructions, never a silent execution.
+
+`SLD_MCP_MODE=read-only` gates **registration** — the write tools do not exist, so there is
+nothing for a misconfigured client to auto-approve. It is env-only on purpose: a mode the
+model could set is a mode the model would set.
+
+## Undo integration
+
+Writes route through `EditorCommandsService`, so Ctrl+Z in Streamlabs reverts them — but only
+if the app exports the internal `Selection` class under a distinct name. `Selection[...]`
+otherwise resolves to the *external* helper, which has no `state` (`modify-transform.ts:20`
+throws on it) and whose `freeze()` writes to a fallback proxy instead of the real object.
+
+The app-side change is two lines in `app/services/api/external-api/resources.ts`:
+
+```ts
+export { Selection as InternalSelection } from 'services/selection';
+```
+
+This is a hard requirement, not a fallback: without the alias, every Selection-based tool
+fails with "resource not found" from the app. Verify it with the probe below.
+
+## Hermes skill
+
+`skill/SKILL.md` encodes the provenance contract, the monitoring loop and live etiquette.
+Install it straight from this path:
+
+```bash
+hermes skills install <owner>/<repo>/mcp/skill
 ```
 
 ## Development
@@ -85,6 +130,9 @@ To reduce prompting, allowlist the safe ones in `.claude/settings.json`:
 npm run probe -- ScenesService activeScene     # raw JSON-RPC, no MCP involved
 npm run probe -- StreamingService prepopulateInfo
 npm run test:e2e                               # drives the built server as an MCP client
+npm run mcp_demo                               # Phase 1 verification over the demo arc
+npm run mcp_demo:readonly                      # ...reads only, makes no changes
+npm run probe -- 'InternalSelection["<sceneId>",[]]' getSize   # undo-support probe
 npm run test:reconnect                         # kills/relaunches the app underneath it
 npm run inspect                                # browser Inspector
 SLD_MCP_VERBOSE=1 ...                          # per-request logging to stderr
@@ -158,15 +206,15 @@ Measured: ~1.2 KB, ~70 ms, 6 round-trips cold.
   rects and the `warnings` array. Never let it switch scenes or go live without a human watching the
   preview.
 - **No push.** MCP servers can't interrupt a model mid-turn, so events are buffered and surfaced via
-  `newEvents` on the next `get_stream_state`. Reactive-on-demand works well; continuous autonomous
-  monitoring needs a driver loop (Claude Code's `/loop`).
-- **Writes bypass the undo stack.** These tools call services directly, not
-  `EditorCommandsService`, so Ctrl+Z won't revert them. M1 adds `snapshot_scene_layout` /
-  `restore_scene_layout` to compensate.
-- **Secret redaction is present but M0 doesn't need it much.** `src/desktop/redact.ts` scrubs every
-  payload. It matters from M1 (`get_source_settings`, `get_settings`) onward, because the app's API
-  falls through to the whole internal service registry — OAuth tokens, the RTMP stream key and
-  widget tokens are all reachable, and model context leaves the machine.
+  `newEvents` on the next `get_stream_state` / `get_health`. Reactive-on-demand works well;
+  continuous monitoring needs a driver loop — Hermes' native scheduled automation, or Claude
+  Code's `/loop`.
+- **One undo entry per operation, not per agent action.** A multi-step edit is a matching
+  number of Ctrl+Z presses. Collapsing them would need a `MacroCommand` in the app.
+- **Secret redaction matters now.** `src/desktop/redact.ts` scrubs every payload, and
+  `get_source_settings` is exactly why: the app's API falls through to the whole internal
+  service registry — OAuth tokens, the RTMP stream key and widget tokens are all reachable, and
+  model context leaves the machine.
 - **Anything local can already do all of this.** The pipe is on by default, auto-authorizes local
   clients, has no token, and reaches ~250 services. This server doesn't widen that hole; it makes it
   convenient and puts a language model behind it. Productization needs real auth on the pipe, an
@@ -174,7 +222,22 @@ Measured: ~1.2 KB, ~70 ms, 6 round-trips cold.
 
 ## Next
 
-M1 — read surface (`list_sources`, `get_source_settings`, `diagnose_stream`), builder tools
-(`add_source`, `set_item_transform`, `arrange_scene`), layout snapshot/restore.
-M2 — confirm-token gate + elicitation, `stream_control` (go-live with dry-run default),
-`remove_object`, `raw_rpc` behind `SLD_MCP_RAW=1`.
+**Phase 1.5 — screen capture**, gated on two cheap experiments that should run before any code:
+
+1. Does Hermes forward MCP `image` content blocks to a vision model? Image support is not a
+   negotiated capability, so it cannot be feature-detected — point Hermes at a stub tool
+   returning a tiny PNG and see whether the model can describe it. If not, capture is inert.
+2. Does Electron 29's `desktopCapturer` return real pixels in the OBS preview region, or a
+   black rectangle? OBS renders into a native child HWND via a D3D swap chain from a separate
+   process, so this depends on Chromium's WGC window capturer being active. If it is black,
+   try `app.commandLine.appendSwitch('enable-features', 'AllowWgcWindowCapturer')`.
+
+The design if both pass: an internal `CaptureService` writes a downscaled PNG to
+`<userData>/captures/`, returns the path, and the MCP server reads and base64s it into an
+`image` content block — disk is the app↔server transport, because Hermes agents may run
+sandboxed with no host filesystem. Capture is the one read that is **not** free: it reads the
+user's screen rather than app state, bypasses `redact.ts` entirely, and always confirms.
+
+**Phase 2 — OBS canvas capture**, needed only if experiment 2 fails. Preference order: an
+offscreen `gs_texrender_t` readback inside osn; a Windows shared texture mirroring the
+existing macOS `OBS_content_createIOSurface`; or WGC against a dedicated chrome-free display.
