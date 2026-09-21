@@ -315,7 +315,7 @@ export class YoutubeService
       const error = this.createPlatformError(e, reqInfo);
       // Handle the live streaming not enabled error first because none of the others will occur if the user
       // is not enabled for live streaming
-      if (error.reason === 'liveStreamingNotEnabled' && repeatRequestIfRateLimitExceed) {
+      if (error?.reason === 'liveStreamingNotEnabled' && repeatRequestIfRateLimitExceed) {
         await Utils.sleep(3000);
         return await this.requestYoutube(reqInfo, false);
       }
@@ -1238,10 +1238,7 @@ export class YoutubeService
       this.fetchBroadcast(broadcastId),
       this.fetchVideo(broadcastId),
     ]);
-    console.log('BROADCAST');
-    console.log(JSON.stringify(broadcast, null, 2));
-    console.log('VIDEO');
-    console.log(JSON.stringify(video, null, 2));
+
     const { title, description } = broadcast.snippet;
     const { privacyStatus, selfDeclaredMadeForKids } = broadcast.status;
     const { enableDvr, projection, latencyPreference } = broadcast.contentDetails;
