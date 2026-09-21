@@ -201,14 +201,30 @@ export class Resolver {
     }));
   }
 
-  /** Audio sources are addressed by source name, scoped to the whole app. */
-  async resolveAudioSource(name: string): Promise<{ resourceId: string; name: string }> {
-    if (/^AudioSource\[/.test(name)) return { resourceId: name, name };
+  /**
+   * Audio sources are addressed by source name, scoped to the whole app.
+   *
+   * `sourceId` is carried alongside the resourceId because the undo-stack path needs it --
+   * MuteSourceCommand and SetDeflectionCommand take a plain sourceId, not a helper.
+   */
+  async resolveAudioSource(
+    name: string,
+  ): Promise<{ resourceId: string; name: string; sourceId: string }> {
+    if (/^AudioSource\[/.test(name)) {
+      let sourceId = '';
+      try {
+        sourceId = JSON.parse(name.slice('AudioSource'.length))[0];
+      } catch {
+        /* fall through with an empty id; the direct path does not need it */
+      }
+      return { resourceId: name, name, sourceId };
+    }
 
     const raw = await this.client.request<unknown[]>('AudioService', 'getSources');
     const audio = (raw ?? []).filter(isHelper).map(h => ({
       resourceId: h.resourceId,
       name: String(h.name ?? ''),
+      sourceId: String(h.sourceId ?? ''),
     }));
     return matchByName(name, audio, a => a.name, 'audio source');
   }

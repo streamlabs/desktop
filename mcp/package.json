@@ -10,7 +10,9 @@
     "probe": "tsx scripts/probe.ts",
     "inspect": "npx -y @modelcontextprotocol/inspector node dist/index.js",
     "test:e2e": "tsx scripts/e2e.ts",
-    "test:reconnect": "tsx scripts/reconnect-test.ts"
+    "test:reconnect": "tsx scripts/reconnect-test.ts",
+    "mcp_demo": "tsx scripts/demo-e2e.ts",
+    "mcp_demo:readonly": "tsx scripts/demo-e2e.ts --no-write"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
