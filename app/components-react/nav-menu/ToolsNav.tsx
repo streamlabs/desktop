@@ -22,9 +22,11 @@ import { EDismissable } from 'services/dismissables';
 import { platformLabels } from 'services/platforms';
 
 /**
- * Returns tools nav items (fragment) and any modals that must live outside
- * the <Menu> element. Called as a hook from NavMenu so that rc-menu's overflow
- * measurement sees individual items rather than an opaque component.
+ * Returns tools nav items (fragment), any modals that must live outside the
+ * <Menu> element, and a `contentKey` that changes whenever the fragment's
+ * rendered width could change (see useNavCollapse). Called as a hook from
+ * NavMenu so that rc-menu's overflow measurement sees individual items rather
+ * than an opaque component.
  */
 export function useToolsNav() {
   const {
@@ -279,7 +281,12 @@ export function useToolsNav() {
     </>
   );
 
-  return { items, modals };
+  // Signature of everything that can change this fragment's rendered width,
+  // for useNavCollapse to know when to re-measure. `studioMode` is excluded
+  // since it only ever toggles a class on the existing glyph, not its width.
+  const contentKey = `${isLoggedIn}|${displayName}|${dualOutputMode}`;
+
+  return { items, modals, contentKey };
 }
 
 function UserProfileOverlay(p: {

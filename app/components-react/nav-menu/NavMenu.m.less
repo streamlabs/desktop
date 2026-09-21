@@ -10,6 +10,17 @@
   // The unified Menu fills the bar; rc-menu renders its own flex container.
   :global(.ant-menu-horizontal) {
     width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+
+    // Direct children are MenuItem's wrapper divs (components-react/shared/MenuItem.tsx).
+    > div {
+      flex: none;
+    }
+  }
+
+  &[data-nav-collapse~='compact'] :global(.ant-menu-item) {
+    padding: 0 8px !important;
   }
 
   // Allow logout confirmation modal to show above resize bars
