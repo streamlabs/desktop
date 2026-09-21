@@ -202,9 +202,6 @@ export const conditionData = () => ({
     ],
   }),
   LOYALTY_STORE_REDEMPTION_ITEM_NAME: metadata.text({ title: $t('Item Name'), max: 50 }),
-  twitter_follow: {},
-  twitter_like: {},
-  twitter_subscription: {},
 });
 
 export const newVariation = (type: string): IAlertBoxVariation => ({

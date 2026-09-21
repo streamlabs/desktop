@@ -248,10 +248,8 @@ export class WidgetsService
     const host = this.hostsService.streamlabs;
     const headers = authorizedHeaders(this.userService.apiToken);
 
-    const apiAlertType = alertType === 'twitter_subscription' ? 'twitter_sub' : alertType;
-
     return fetch(
-      new Request(`https://${host}/api/v5/widgets/desktop/test/${apiAlertType}`, {
+      new Request(`https://${host}/api/v5/widgets/desktop/test/${alertType}`, {
         headers,
         method: 'POST',
       }),
