@@ -294,7 +294,7 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
         socket.on('v2:error', () => settle(new Error('v2:error')));
       });
     } catch (e: unknown) {
-      console.error('[KevinSupport] connect failed', e);
+      console.debug('[KevinSupport] connect failed', e);
       this.socket?.disconnect();
       this.socket = null;
       this.SET_CONNECTING(false);
