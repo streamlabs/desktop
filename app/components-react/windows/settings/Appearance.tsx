@@ -1,9 +1,9 @@
-import { Col, Row } from 'antd';
+import { Button, Col, Row } from 'antd';
 import { useVuex } from 'components-react/hooks';
 import { useRealmObject } from 'components-react/hooks/realm';
 import { bindFormState } from 'components-react/shared/inputs';
 import UltraIcon from 'components-react/shared/UltraIcon';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { CustomizationState } from 'services/customization';
 import { $t } from 'services/i18n';
 import { getDefined } from '../../../util/properties-type-guards';
@@ -29,12 +29,15 @@ export function AppearanceSettings() {
     (newSettings: CustomizationState) => CustomizationService.setSettings(newSettings as any),
   );
 
-  const { menuItemStatus, isLoggedIn, isPrime, toggleMenuItem } = useVuex(() => ({
-    menuItemStatus: NavMenuService.views.menuItemStatus,
-    isLoggedIn: UserService.views.isLoggedIn,
-    isPrime: UserService.views.isPrime,
-    toggleMenuItem: NavMenuService.actions.toggleMenuItem,
-  }));
+  const { availableMenuItems, isLoggedIn, isPrime, toggleMenuItem, resetMenuItems } = useVuex(
+    () => ({
+      availableMenuItems: NavMenuService.availableMenuItems,
+      isLoggedIn: UserService.views.isLoggedIn,
+      isPrime: UserService.views.isPrime,
+      toggleMenuItem: NavMenuService.actions.toggleMenuItem,
+      resetMenuItems: NavMenuService.actions.resetMenuItems,
+    }),
+  );
 
   function openFFZSettings() {
     WindowsService.actions.createOneOffWindow(
@@ -57,7 +60,6 @@ export function AppearanceSettings() {
 
   const shouldShowPrime = isLoggedIn && !isPrime;
   const shouldShowEmoteSettings = isLoggedIn && getDefined(UserService.platform).type === 'twitch';
-  const activeMenuItems = useMemo(() => NavMenuService.activeMenuItems, [isLoggedIn, isPrime]);
 
   return (
     <div className={styles.container}>
@@ -113,16 +115,23 @@ export function AppearanceSettings() {
         {/* Main nav item show/hide toggles */}
         <Row className={styles.navMenuSettings}>
           <Col flex={1} className={styles.menuControls}>
-            {activeMenuItems.map(({ key, title }) => (
+            {availableMenuItems.map(({ key, title, isVisible }) => (
               <SwitchInput
                 key={key}
                 label={title}
                 layout="horizontal"
-                onChange={() => toggleMenuItem(key)}
-                value={menuItemStatus[key]}
+                onChange={val => toggleMenuItem(key, val)}
+                value={isVisible}
                 disabled={!isLoggedIn}
               />
             ))}
+            <Button
+              className={`button--soft-warning ${styles.resetNavMenu}`}
+              onClick={() => resetMenuItems()}
+              disabled={!isLoggedIn}
+            >
+              {$t('Restore Defaults')}
+            </Button>
           </Col>
         </Row>
       </ObsSettingsSection>
