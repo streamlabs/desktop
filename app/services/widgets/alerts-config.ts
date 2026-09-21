@@ -198,7 +198,7 @@ export function getAlertsConfig(
     twitter_subscription: {
       type: 'twitter_subscription',
       name: $t('X Subscription'),
-      apiKey: 'twitter_subscription',
+      apiKey: 'twitter_sub',
       platforms: ['twitter'],
       tooltip: $t('Plays an alert for new X subscriptions'),
     },

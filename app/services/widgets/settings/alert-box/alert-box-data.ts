@@ -30,6 +30,9 @@ export const API_NAME_MAP = {
   facebook_share: 'shares',
   facebook_follow: 'fbfollows',
   loyalty_store_redemption: 'loyaltystore',
+  twitter_follow: 'twitter_follows',
+  twitter_like: 'twitter_likes',
+  twitter_subscription: 'twitter_subscriptions',
 };
 
 export const alertNameMap = () => ({
@@ -61,6 +64,9 @@ export const alertNameMap = () => ({
   loyaltystore: $t('Cloudbot Store'),
   stickers: $t('Stickers'),
   effects: $t('Effects/Rallies'),
+  twitter_follows: $t('X Follows'),
+  twitter_likes: $t('X Likes'),
+  twitter_subscriptions: $t('X Subscriptions'),
 });
 
 // different tests are required due to api idiosyncracies
@@ -175,9 +181,9 @@ export const conditions = () => ({
     { value: 'MIN_STARS_USED', title: $t('Stars used is at least <amount>') },
     { value: 'EXACT_STARS_USED', title: $t('Stars used is exactly <amount>') },
   ],
-  twitter_follow: [{ value: 'RANDOM', title: $t('Randomly') }],
-  twitter_like: [{ value: 'RANDOM', title: $t('Randomly') }],
-  twitter_subscription: [{ value: 'RANDOM', title: $t('Randomly') }],
+  twitter_follows: [{ value: 'RANDOM', title: $t('Randomly') }],
+  twitter_likes: [{ value: 'RANDOM', title: $t('Randomly') }],
+  twitter_subscriptions: [{ value: 'RANDOM', title: $t('Randomly') }],
 });
 
 export const conditionData = () => ({
@@ -275,4 +281,7 @@ const DEFAULT_ALERT_FORMATS = {
   shares: '{name} has shared!',
   fbfollows: '{name} has followed!',
   loyaltystore: '{name} redeemed {product}',
+  twitter_follows: '{name} is now following on X!',
+  twitter_likes: '{name} liked on X!',
+  twitter_subscriptions: '{name} subscribed on X!',
 };
