@@ -38,7 +38,7 @@ export default function SettingsView({
     EAvailableFeatures.highlighterMigration,
   );
 
-  const [isReplayInstalled, setIsReplayInstalled] = useState(false);
+  const [isReplayInstalled, setIsReplayInstalled] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!migrationEnabled) return;
@@ -56,7 +56,8 @@ export default function SettingsView({
     outputDisplay: StreamingService.views.outputDisplay,
   }));
 
-  const isInstalled = migrationEnabled ? isReplayInstalled : v.highlighterVersion !== '';
+  const installationCheckComplete = !migrationEnabled || isReplayInstalled !== null;
+  const isInstalled = migrationEnabled ? isReplayInstalled === true : v.highlighterVersion !== '';
 
   const disableAIHighlighter =
     (v.isVerticalRecording || v.isVerticalReplayBuffer) && v.outputDisplay === 'vertical';
@@ -196,6 +197,8 @@ export default function SettingsView({
 
     toggleUseAiHighlighter();
   }
+
+  if (!installationCheckComplete) return <div className={styles.settingsViewRoot} />;
 
   return (
     <div className={styles.settingsViewRoot}>

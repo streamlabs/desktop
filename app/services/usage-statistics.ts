@@ -39,7 +39,7 @@ export type TAnalyticsEvent =
   | 'Shown'
   | 'AppStart'
   | 'Highlighter'
-  | 'AiFeature'
+  | 'VisionFeature'
   | 'AIHighlighter'
   | 'Hardware'
   | 'WebcamUse'
