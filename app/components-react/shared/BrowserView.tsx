@@ -9,6 +9,7 @@ import { Services } from 'components-react/service-provider';
 import electron from 'electron';
 import { onUnload } from 'util/unload';
 import { Button } from 'antd';
+import { publishBrowserViewRect } from './browser-view-rects';
 
 interface BrowserViewProps {
   src: string;
@@ -27,6 +28,9 @@ export default function BrowserView(p: BrowserViewProps) {
 
   const [loading, setLoading] = useState(true);
   const sizeContainer = useRef<HTMLDivElement>(null);
+
+  // Identity for the occlusion registry — see browser-view-rects.ts.
+  const viewKey = useRef(Symbol('browser-view'));
 
   const { hideStyleBlockers } = WindowsService.state[Utils.getWindowId()];
   const { theme } = CustomizationService.state;
@@ -100,6 +104,8 @@ export default function BrowserView(p: BrowserViewProps) {
   }, [theme, p.src]);
 
   function destroyBrowserView() {
+    publishBrowserViewRect(viewKey.current, null);
+
     if (browserView.current) {
       remote.getCurrentWindow().removeBrowserView(browserView.current);
 
@@ -154,6 +160,10 @@ export default function BrowserView(p: BrowserViewProps) {
           width: Math.round(currentSize.x),
           height: Math.round(currentSize.y),
         });
+        // The `p.hidden || hideStyleBlockers` branch above yields a zero rect, which
+        // the registry reads as "not covering" — that covers the removeBrowserView
+        // path below too, so it needs no hook of its own.
+        publishBrowserViewRect(viewKey.current, rect);
       }
     }
   }

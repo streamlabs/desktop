@@ -66,9 +66,9 @@ export const SETTINGS_CONFIG: Record<ESettingsCategory, ISettingsConfig> = {
   [ESettingsCategory.Experimental]: { icon: 'fas fa-flask', component: pages.ExperimentalSettings },
   [ESettingsCategory.InstalledApps]: { icon: 'icon-store', component: pages.InstalledApps },
   [ESettingsCategory.GetSupport]: { icon: 'icon-question', component: pages.Support },
-  [ESettingsCategory.AI]: {
+  [ESettingsCategory.Vision]: {
     icon: 'icon-ai',
-    component: pages.AISettings,
+    component: pages.VisionSettings,
     shouldShow: () => {
       return getOS() === OS.Windows || (getOS() === OS.Mac && Utils.isDevMode());
     },

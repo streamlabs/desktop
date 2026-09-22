@@ -153,7 +153,7 @@ class LiveDockController {
     );
     if (hasMultistreamChat) {
       tabs.push({
-        name: $t('Multistream'),
+        name: $t('Multichat'),
         value: 'restream',
       });
     }
@@ -430,7 +430,11 @@ function LiveDock() {
                 placement="right"
                 autoAdjustOverflow={false}
               >
-                <i onClick={() => ctrl.showEditStreamInfo()} className="icon-edit" />
+                <i
+                  data-name="edit-stream"
+                  onClick={() => ctrl.showEditStreamInfo()}
+                  className="icon-edit"
+                />
               </Tooltip>
             )}
             {hasLiveDockFeature('view-stream') && isStreaming && (
@@ -498,6 +502,7 @@ function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
         defaultSelectedKeys={[p.visibleChat]}
         onClick={ev => p.setChat(ev.key)}
         mode="horizontal"
+        disabledOverflow
       >
         {ctrl.chatTabs.map(tab => (
           <Menu.Item key={tab.value}>{tab.name}</Menu.Item>

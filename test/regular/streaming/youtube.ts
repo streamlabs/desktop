@@ -27,7 +27,7 @@ import {
   waitForDisplayed,
 } from '../../helpers/modules/core';
 import * as moment from 'moment';
-import { fillForm, useForm } from '../../helpers/modules/forms';
+import { assertFormContains, fillForm, readFields, useForm } from '../../helpers/modules/forms';
 import { ListInputController } from '../../helpers/modules/forms/list';
 import { logOut } from '../../helpers/webdriver/user';
 import { toggleDualOutputMode } from '../../helpers/modules/dual-output';
@@ -119,28 +119,101 @@ test.skip('Streaming to the scheduled event on Youtube', async t => {
   });
 });
 
-// TODO flaky
-test.skip('GoLive from StreamScheduler', async t => {
+// TODO: Fix this test, which is blocked by limited YouTube test accounts and needing to update the
+// selectors in the `scheduleStream` helper function.
+test.skip('Youtube scheduled event keeps its own title and description', async t => {
+  await logInYouTubeEnabledAccount(t);
+
+  const now = Date.now();
+  const scheduledTitle = `Scheduled YT Event ${now}`;
+  const scheduledDescription = `Scheduled YT Description ${now}`;
+  const commonTitle = `Common Title ${now}`;
+  const commonDescription = `Common Description ${now}`;
+
+  const tomorrow = moment().add(1, 'day').toDate();
+  // TODO: Fix the selectors in `scheduleStream` in order to enable this test.
+  await scheduleStream(tomorrow, {
+    platform: 'YouTube',
+    title: scheduledTitle,
+    description: scheduledDescription,
+  });
+
+  await prepareToGoLive();
+  await clickGoLive();
+  await waitForSettingsWindowLoaded();
+
+  // Fill the shared fields with values the scheduled event does not have, so the assertion below
+  // can tell "the scheduled values won" apart from "there was nothing to overwrite". Without this
+  // the shared fields still hold whatever the last stream used, which may coincide.
+  await fillForm({ title: commonTitle, description: commonDescription });
+  await waitForSettingsWindowLoaded();
+
+  // Selecting the event refetches its settings from YouTube, which must replace the shared values
+  // for YouTube - the event already has a title and description of its own.
+  await fillForm({ broadcastId: scheduledTitle });
+  await waitForSettingsWindowLoaded();
+
+  // That refetch has no loading flag of its own, so poll YouTube's own title until it stops showing
+  // the shared value. A timeout here is not the failure: the assertion that follows reports
+  // whichever value the field was actually left holding.
+  const $youtubeTitle = await select(
+    '[data-role="form"][data-name="youtube-settings"] [data-role="input"][data-name="title"]',
+  );
+  try {
+    await $youtubeTitle.waitUntil(async () => (await $youtubeTitle.getValue()) !== commonTitle, {
+      timeout: 15000,
+    });
+  } catch (e: unknown) {
+    // Reported by the assertion below, which names both the expected and the actual value.
+  }
+
+  const { assertFormContains } = useForm('youtube-settings');
+  await assertFormContains({ title: scheduledTitle, description: scheduledDescription });
+
+  t.pass();
+});
+
+test.skip('Streaming to YouTube scheduled stream', async t => {
   await logInYouTubeEnabledAccount(t);
   await prepareToGoLive();
 
-  // schedule stream
+  // Fill a default Title and Description to confirm that the schedule stream title and
+  // description update correctly
+  // TODO: Re-enable when more YouTube accounts added to user pool
+  // await clickGoLive();
+  // await waitForSettingsWindowLoaded();
+  // await fillForm({ title: 'Default Title', description: 'Default Description' });
+  // await waitForSettingsWindowLoaded();
+  // await submit();
+  // await waitForStreamStart();
+  // await stopStream();
+
+  // Schedule stream
   const tomorrow = moment().add(1, 'day').toDate();
   await scheduleStream(tomorrow, { platform: 'YouTube', title: 'Test YT Scheduler' });
 
-  // open the modal
+  // Open the modal
   await focusMain();
   await click('span=Test YT Scheduler');
 
   // click GoLive
   const $modal = await select('.ant-modal-content');
-  const $goLiveBtn = await $modal.$('button=Go Live');
-  await click($goLiveBtn);
+  const modalFields = await readFields();
+
+  // Try to start the scheduled stream
+  await clickGoLive();
 
   // confirm settings
-  await focusChild();
-  await submit();
-  await waitForStreamStart();
+  await waitForSettingsWindowLoaded();
+  // TODO: Assert that the form contains the previous stream title and description after
+  // more YouTube accounts are added to the user pool
+  // await assertFormContains({ title: 'Default Title', description: 'Default Description' });
+  await assertFormContains({ title: '' });
+
+  // TODO: Re-enable when more YouTube accounts added to user pool
+  // await submit();
+  // await waitForStreamStart();
+  // await stopStream();
   t.pass();
 });
 

@@ -11,7 +11,7 @@ import { TDisplayType } from 'services/settings-v2';
 import { $t } from 'services/i18n';
 import { KickService, IKickStartStreamOptions } from './kick';
 import { PatreonService, IPatreonStartStreamOptions } from './patreon';
-import type { TStreamErrorType } from 'services/streaming/stream-error';
+import type { StreamError, TStreamErrorType } from 'services/streaming/stream-error';
 
 export type Tag = string;
 export interface IGame {
@@ -177,6 +177,12 @@ export interface IPlatformState {
   isPrepopulated: boolean;
 }
 
+export interface IPlatformErrorCallbackProps {
+  e: any;
+  reqInfo: IPlatformRequest | string;
+  errorType?: TStreamErrorType;
+}
+
 // All platform services should implement this interface.
 export interface IPlatformService {
   capabilities: Set<TPlatformCapability>;
@@ -215,9 +221,16 @@ export interface IPlatformService {
 
   setupStreamShiftStream?: (options: IGoLiveSettings) => Promise<void>;
 
+  setupLiveOutputStream?: (options: IGoLiveSettings) => Promise<void>;
+
   postNotification?: (message: string) => void;
 
-  formatError?: (e: any, platform: TPlatform, errorType?: TStreamErrorType) => never;
+  createPlatformError?: (
+    e: any,
+    reqInfo: IPlatformRequest | string,
+    errorType?: TStreamErrorType,
+    fn?: (p: IPlatformErrorCallbackProps) => void,
+  ) => StreamError | undefined;
 
   fetchNewToken: () => Promise<void>;
 
