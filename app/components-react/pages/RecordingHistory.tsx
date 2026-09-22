@@ -72,6 +72,12 @@ class RecordingHistoryController {
     return this.HighlighterService.views.highlighterVersion;
   }
 
+  get migrationEnabled() {
+    return this.IncrementalRolloutService.views.featureIsEnabled(
+      EAvailableFeatures.highlighterMigration,
+    );
+  }
+
   get uploadOptions() {
     const opts = [
       {
@@ -222,6 +228,7 @@ export function RecordingHistory(p: { className?: string }) {
     hasSLID,
     aiDetectionInProgress,
     highlighterVersion,
+    migrationEnabled,
   } = useVuex(() => ({
     recordings: controller.recordings,
     aiDetectionInProgress: controller.aiDetectionInProgress,
@@ -229,6 +236,7 @@ export function RecordingHistory(p: { className?: string }) {
     uploadInfo: controller.uploadInfo,
     hasSLID: controller.hasSLID,
     highlighterVersion: controller.highlighterVersion,
+    migrationEnabled: controller.migrationEnabled,
   }));
 
   useEffect(() => {
@@ -260,7 +268,7 @@ export function RecordingHistory(p: { className?: string }) {
           .map(option => {
             if (
               option.value === 'highlighter' &&
-              (!aiHighlighterFeatureEnabled || highlighterVersion === '')
+              (!aiHighlighterFeatureEnabled || (highlighterVersion === '' && !migrationEnabled))
             ) {
               return null;
             }
