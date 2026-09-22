@@ -50,6 +50,10 @@ export default function AiHighlighterToggle({
     };
   });
 
+  const migrationEnabled = IncrementalRolloutService.views.featureIsEnabled(
+    EAvailableFeatures.highlighterMigration,
+  );
+
   const [gameIsSupported, setGameIsSupported] = useState(false);
   const [gameConfig, setGameConfig] = useState<any>(null);
   const [showReplayRecordingAlert, setShowReplayRecordingAlert] = useState(false);
@@ -72,10 +76,6 @@ export default function AiHighlighterToggle({
   }, []);
 
   async function checkRecorderStatus() {
-    // Check migration feature flag first
-    const migrationEnabled = IncrementalRolloutService.views.featureIsEnabled(
-      EAvailableFeatures.highlighterMigration,
-    );
     if (!migrationEnabled) return;
 
     const running = await HighlighterService.actions.return.isStreamlabsRecorderRunning();
@@ -203,7 +203,7 @@ export default function AiHighlighterToggle({
                     {$t('Get stream highlights!')}
                   </h3>
 
-                  {highlighterVersion !== '' ? (
+                  {highlighterVersion !== '' || migrationEnabled ? (
                     <SwitchInput
                       name="replay"
                       style={{ width: '80px', margin: 0, marginTop: '-2px' }}
