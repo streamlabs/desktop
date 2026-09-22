@@ -268,7 +268,7 @@ export default function SettingsView({
                   )}
                 </p>
 
-                {v.highlighterVersion !== '' ? (
+                {isInstalled ? (
                   <SwitchInput
                     name="useHighlighter"
                     style={{ margin: 0, marginLeft: '-10px' }}
