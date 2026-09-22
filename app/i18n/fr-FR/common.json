@@ -148,11 +148,12 @@
   "Dashboard Home": "Accueil du tableau de bord",
   "Alert Box Settings": "Paramètres de la fenêtre d'alerte",
   "Alerts and Widgets": "Alertes et widgets",
-  "AI": "AI",
+  "Vision": "Vision",
   "Between": "Entre",
   "Upgrade": "Mise à niveau",
   "Edit Reactive Data": "Modifier les données réactives",
   "Reactive Data Editor": "Éditeur de données réactives",
   "Destinations": "Destinations",
-  "Not enabled": "Non activé"
+  "Not enabled": "Non activé",
+  "Multichat": "Multichat"
 }

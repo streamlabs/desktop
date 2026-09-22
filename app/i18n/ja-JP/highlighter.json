@@ -124,7 +124,7 @@
   "Select at least one clip to preview your video": "ビデオをプレビューするには、少なくとも1つのクリップを選択します",
   "Select at least one clip to export your video": "ビデオをエクスポートするには、少なくとも1つのクリップを選択します",
   "Game language must be English": "ゲームの言語は英語でなければなりません",
-  "Ai Highlighter only works, if the game language is set to english.": "Ai Highlighter は、ゲームの言語が英語に設定されている場合にのみ機能します。",
+  "AI Highlighter only works if the game language is set to English.": "AI Highlighter only works if the game language is set to English.",
   "How to change the game language?": "ゲームの言語を変更する方法",
   "English": "日本語",
   "Supported game modes": "対応ゲームモード",
@@ -183,7 +183,10 @@
   "Install %{appName} to import and detect game highlights.": "ゲームのハイライトをインポートして検出するには、%{appName}をインストールしてください。",
   "Open %{appName}": "%{appName}を開く",
   "Install %{appName}": "%{appName}をインストール",
+  "Open %{appName} to import and detect game highlights.": "Open %{appName} to import and detect game highlights.",
   "%{appName} has been installed and is now running.": "%{appName}がインストールされ、現在実行中です。",
+  "Continuing will open %{appName}": "Continuing will open %{appName}",
+  "Continuing will install %{appName}": "Continuing will install %{appName}",
   "Installing Highlighter": "Highlighterをインストール中",
   "Installation interrupted": "インストールが中断されました",
   "It seems the installation didn't finish.": "インストールが完了しなかったようです。",
@@ -227,5 +230,6 @@
   "Vertical replay buffer is active. Would you like to stop the replay buffer to enable AI Highlighter?": "Vertical replay buffer is active. Would you like to stop the replay buffer to enable AI Highlighter?",
   "All Supported Games": "All Supported Games",
   "Deletion info": "Deletion info",
-  "At least one clip could not be deleted from your system. Please delete it manually.": "At least one clip could not be deleted from your system. Please delete it manually."
+  "At least one clip could not be deleted from your system. Please delete it manually.": "At least one clip could not be deleted from your system. Please delete it manually.",
+  "Do not ask again": "Do not ask again"
 }

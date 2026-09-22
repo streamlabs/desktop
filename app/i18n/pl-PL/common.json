@@ -148,11 +148,12 @@
   "Dashboard Home": "Strona główna panelu kontrolnego",
   "Alert Box Settings": "Ustawienia pola powiadomień",
   "Alerts and Widgets": "Powiadomienia i widżety",
-  "AI": "AI",
+  "Vision": "Vision",
   "Between": "Pomiędzy",
   "Upgrade": "Ulepsz",
   "Edit Reactive Data": "Edytuj dane reaktywne",
   "Reactive Data Editor": "Edytor danych reaktywnych",
   "Destinations": "Destinations",
-  "Not enabled": "Nie włączono"
+  "Not enabled": "Nie włączono",
+  "Multichat": "Multichat"
 }

@@ -124,7 +124,7 @@
   "Select at least one clip to preview your video": "영상을 미리 보기할 클립을 하나 이상 선택하세요",
   "Select at least one clip to export your video": "영상을 내보낼 클립을 하나 이상 선택하세요",
   "Game language must be English": "게임 언어는 영어여야 합니다",
-  "Ai Highlighter only works, if the game language is set to english.": "AI Highlighter는 게임 언어가 영어로 설정된 경우에만 작동합니다.",
+  "AI Highlighter only works if the game language is set to English.": "AI Highlighter only works if the game language is set to English.",
   "How to change the game language?": "게임 언어를 변경하는 방법은 무엇인가요?",
   "English": "한국어",
   "Supported game modes": "지원되는 게임 모드",
@@ -183,7 +183,10 @@
   "Install %{appName} to import and detect game highlights.": "게임 하이라이트를 가져오고 감지하려면 %{appName}을(를) 설치하세요.",
   "Open %{appName}": "%{appName} 열기",
   "Install %{appName}": "%{appName} 설치",
+  "Open %{appName} to import and detect game highlights.": "Open %{appName} to import and detect game highlights.",
   "%{appName} has been installed and is now running.": "%{appName}이(가) 설치되었으며 현재 실행 중입니다.",
+  "Continuing will open %{appName}": "Continuing will open %{appName}",
+  "Continuing will install %{appName}": "Continuing will install %{appName}",
   "Installing Highlighter": "하이라이터 설치 중",
   "Installation interrupted": "설치가 중단되었습니다",
   "It seems the installation didn't finish.": "설치가 완료되지 않은 것 같습니다.",
@@ -227,5 +230,6 @@
   "Vertical replay buffer is active. Would you like to stop the replay buffer to enable AI Highlighter?": "Vertical replay buffer is active. Would you like to stop the replay buffer to enable AI Highlighter?",
   "All Supported Games": "All Supported Games",
   "Deletion info": "Deletion info",
-  "At least one clip could not be deleted from your system. Please delete it manually.": "At least one clip could not be deleted from your system. Please delete it manually."
+  "At least one clip could not be deleted from your system. Please delete it manually.": "At least one clip could not be deleted from your system. Please delete it manually.",
+  "Do not ask again": "Do not ask again"
 }

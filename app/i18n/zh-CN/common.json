@@ -148,11 +148,12 @@
   "Dashboard Home": "仪表板首页",
   "Alert Box Settings": "提醒框设置",
   "Alerts and Widgets": "提醒和小工具",
-  "AI": "AI",
+  "Vision": "Vision",
   "Between": "介于",
   "Upgrade": "升级",
   "Edit Reactive Data": "编辑响应式数据",
   "Reactive Data Editor": "响应式数据编辑器",
   "Destinations": "Destinations",
-  "Not enabled": "未启用"
+  "Not enabled": "未启用",
+  "Multichat": "Multichat"
 }

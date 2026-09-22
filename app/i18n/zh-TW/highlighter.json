@@ -124,7 +124,7 @@
   "Select at least one clip to preview your video": "至少選擇一個短片來預覽影片",
   "Select at least one clip to export your video": "至少選擇一個短片來匯出影片",
   "Game language must be English": "遊戲語言必須為英文",
-  "Ai Highlighter only works, if the game language is set to english.": "AI Highlighter 只有在遊戲語言設定為英文時才可運作。",
+  "AI Highlighter only works if the game language is set to English.": "AI Highlighter only works if the game language is set to English.",
   "How to change the game language?": "如何變更遊戲語言？",
   "English": "繁體中文（Chinese Traditional）",
   "Supported game modes": "支援的遊戲模式",
@@ -183,7 +183,10 @@
   "Install %{appName} to import and detect game highlights.": "安裝 %{appName} 以匯入並偵測遊戲精彩片段。",
   "Open %{appName}": "開啟 {appName}",
   "Install %{appName}": "安裝 {appName}",
+  "Open %{appName} to import and detect game highlights.": "Open %{appName} to import and detect game highlights.",
   "%{appName} has been installed and is now running.": "%{appName} 已安裝且正在執行。",
+  "Continuing will open %{appName}": "Continuing will open %{appName}",
+  "Continuing will install %{appName}": "Continuing will install %{appName}",
   "Installing Highlighter": "正在安裝 Highlighter",
   "Installation interrupted": "安裝中斷",
   "It seems the installation didn't finish.": "安裝似乎尚未完成。",
@@ -227,5 +230,6 @@
   "Vertical replay buffer is active. Would you like to stop the replay buffer to enable AI Highlighter?": "Vertical replay buffer is active. Would you like to stop the replay buffer to enable AI Highlighter?",
   "All Supported Games": "All Supported Games",
   "Deletion info": "Deletion info",
-  "At least one clip could not be deleted from your system. Please delete it manually.": "At least one clip could not be deleted from your system. Please delete it manually."
+  "At least one clip could not be deleted from your system. Please delete it manually.": "At least one clip could not be deleted from your system. Please delete it manually.",
+  "Do not ask again": "Do not ask again"
 }

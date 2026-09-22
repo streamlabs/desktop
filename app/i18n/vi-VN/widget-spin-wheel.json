@@ -1,6 +1,7 @@
 {
   "Add Category": "Add Category",
   "Add Section": "Add Section",
+  "DONUT": "DONUT",
   "Clear All": "Clear All",
   "Manage Spin Wheel": "Manage Spin Wheel",
   "Categories": "Categories",
@@ -30,5 +31,6 @@
   "Center Image Size": "Center Image Size",
   "Center Image Border Enabled": "Center Image Border Enabled",
   "Center Image Border Color": "Center Image Border Color",
-  "Center Image Border Width": "Center Image Border Width"
+  "Center Image Border Width": "Center Image Border Width",
+  "Add categories before adding new sections.": "Add categories before adding new sections."
 }

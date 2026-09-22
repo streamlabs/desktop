@@ -11,5 +11,6 @@
   "Switch to Streamlabs Desktop": "Přepnout na Streamlabs Desktop",
   "Upgrade to Ultra to switch streams between devices.": "Upgradujte na verzi Ultra a přenášejte streamy mezi zařízeními.",
   "Force Start": "Vynucené spuštění",
+  "Switch Stream": "Switch Stream",
   "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you're sure you're not live and it has been incorrectly detected, choose \"Force Start\" below.": "Byl zjištěn stream na jiném zařízení. Chcete převést svůj stream do Streamlabs Desktop? Pokud nechcete v tomto streamu pokračovat, ukončete jej z aktuálního zdroje streamování. Pokud jste si jisti, že nevysíláte živě a že došlo k nesprávné detekci, vyberte níže možnost „Vynutit spuštění“."
 }

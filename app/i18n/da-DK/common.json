@@ -148,11 +148,12 @@
   "Dashboard Home": "Dashboard-startside",
   "Alert Box Settings": "Indstillinger for notifikationsbokse",
   "Alerts and Widgets": "Notifikationer og widgets",
-  "AI": "AI",
+  "Vision": "Vision",
   "Between": "Between",
   "Upgrade": "Opgrader",
   "Edit Reactive Data": "Edit Reactive Data",
   "Reactive Data Editor": "Reactive Data Editor",
   "Destinations": "Destinations",
-  "Not enabled": "Not enabled"
+  "Not enabled": "Not enabled",
+  "Multichat": "Multichat"
 }

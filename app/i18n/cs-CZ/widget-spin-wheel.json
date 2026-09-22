@@ -1,6 +1,7 @@
 {
   "Add Category": "Přidat kategorii",
   "Add Section": "Přidat oddíl",
+  "DONUT": "DONUT",
   "Clear All": "Smazat vše",
   "Manage Spin Wheel": "Správa roztočení kola",
   "Categories": "Kategorie",
@@ -30,5 +31,6 @@
   "Center Image Size": "Velikost obrázku uprostřed",
   "Center Image Border Enabled": "Ohraničení obrázku uprostřed povoleno",
   "Center Image Border Color": "Barva ohraničení obrázku uprostřed",
-  "Center Image Border Width": "Šířka ohraničení obrázku uprostřed"
+  "Center Image Border Width": "Šířka ohraničení obrázku uprostřed",
+  "Add categories before adding new sections.": "Add categories before adding new sections."
 }

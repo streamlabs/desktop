@@ -148,11 +148,12 @@
   "Dashboard Home": "Gösterge Paneli Ana Sayfa",
   "Alert Box Settings": "Uyarı Kutusu Seçenekleri",
   "Alerts and Widgets": "Uyarılar ve Pencere Ögeleri",
-  "AI": "YAPAY ZEKA",
+  "Vision": "Vision",
   "Between": "Arasında",
   "Upgrade": "Yükselt",
   "Edit Reactive Data": "Reaktif Verileri Düzenleyin",
   "Reactive Data Editor": "Reaktif Veri Düzenleyici",
   "Destinations": "Destinations",
-  "Not enabled": "Etkin değil"
+  "Not enabled": "Etkin değil",
+  "Multichat": "Multichat"
 }

@@ -148,11 +148,12 @@
   "Dashboard Home": "Dashboard Home",
   "Alert Box Settings": "Értesítés doboz beállításai",
   "Alerts and Widgets": "Alerts and Widgets",
-  "AI": "AI",
+  "Vision": "Vision",
   "Between": "Between",
   "Upgrade": "Upgrade",
   "Edit Reactive Data": "Edit Reactive Data",
   "Reactive Data Editor": "Reactive Data Editor",
   "Destinations": "Destinations",
-  "Not enabled": "Not enabled"
+  "Not enabled": "Not enabled",
+  "Multichat": "Multichat"
 }

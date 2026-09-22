@@ -7,6 +7,7 @@
   "Set Stream Boss Health": "스트림 보스 체력 설정",
   "Goal": "목표",
   "Manage Battle": "배틀 관리",
+  "Boss Settings": "Boss Settings",
   "Starting Health": "시작 체력",
   "Fixed": "픽스됨",
   "The boss will spawn with the set amount of health everytime.": "보스는 매번 설정된 체력을 갖고 스폰됩니다.",
@@ -31,5 +32,6 @@
   "Health Bar Background Color": "체력 바 배경색",
   "Font": "폰트",
   "The boss will have additional health each time he is defeated. The amount is set below.": "보스는 패배할 때마다 추가 체력을 얻게 됩니다. 회복량은 아래에 설정돼있습니다.",
-  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "보스의 체력은 최후의 일격에 가해진 데미지에 따라 달라집니다. 승수에 의해 곱해진 추가 데미지가 보스의 새로운 체력이 됩니다. 예를 들어 체력이 100 남아있을 때 150 데미지를 가하면 승수 3을 곱하여 스폰되는 새로운 보스의 체력은 150이 됩니다.\n승수는 아래에 설정합니다."
+  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "보스의 체력은 최후의 일격에 가해진 데미지에 따라 달라집니다. 승수에 의해 곱해진 추가 데미지가 보스의 새로운 체력이 됩니다. 예를 들어 체력이 100 남아있을 때 150 데미지를 가하면 승수 3을 곱하여 스폰되는 새로운 보스의 체력은 150이 됩니다.\n승수는 아래에 설정합니다.",
+  "Failed to reset Stream Boss, please try again.": "Failed to reset Stream Boss, please try again."
 }
