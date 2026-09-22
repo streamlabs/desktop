@@ -168,6 +168,24 @@
 // Feature Carousel
 // =================================================================================================
 
+.app-detection {
+  width: 100%;
+  opacity: 0;
+  // Keeps the hidden carousel out of the tab order while app detection is pending — opacity and
+  // pointer-events alone leave the install CTA keyboard-focusable.
+  visibility: hidden;
+  pointer-events: none;
+  // Hold the visibility flip until the fade-out finishes; instant on the way in.
+  transition: opacity 160ms ease, visibility 0s linear 160ms;
+}
+
+.app-detection-ready {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 160ms ease, visibility 0s;
+}
+
 .carousel-wrapper {
   display: flex;
   background-color: var(--dark-background);

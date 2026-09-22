@@ -4,10 +4,15 @@ import { ListInput, TextInput } from 'components-react/shared/inputs';
 import Form from 'components-react/shared/inputs/Form';
 import { webUtils } from 'electron';
 import * as remote from '@electron/remote';
-import { SUPPORTED_FILE_TYPES } from 'services/highlighter/constants';
+import {
+  HIGHLIGHTER_APP_NAME,
+  REPLAY_APP_NAME,
+  SUPPORTED_FILE_TYPES,
+} from 'services/highlighter/constants';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import {
   IStreamInfoForAiHighlighter,
+  TInstalledHighlighterApp,
   TOpenedFrom,
 } from 'services/highlighter/models/highlighter.models';
 import { $t } from 'services/i18n';
@@ -36,7 +41,7 @@ export function ImportStreamModal({
   streamInfo?: IStreamInfoForAiHighlighter;
 }) {
   const { HighlighterService, UsageStatisticsService, IncrementalRolloutService } = Services;
-  const [replayInstalled, setReplayInstalled] = useState<boolean | null>(null);
+  const [installedApp, setInstalledApp] = useState<TInstalledHighlighterApp | null>(null);
   const [showingInstallFlow, setShowingInstallFlow] = useState(false);
   const [pendingImport, setPendingImport] = useState<{
     game: EGame;
@@ -45,8 +50,8 @@ export function ImportStreamModal({
   } | null>(null);
 
   useEffect(() => {
-    HighlighterService.isStreamlabsReplayInstalled().then(installed => {
-      setReplayInstalled(installed);
+    HighlighterService.actions.return.getInstalledHighlighterApp().then(app => {
+      setInstalledApp(app);
     });
   }, []);
 
@@ -148,14 +153,17 @@ export function ImportStreamModal({
         return;
       }
 
-      // If Replay isn't installed yet, hand the import to the installer instead of deeplinking
-      // it: the video and game go into the install origin marker, and Replay picks them up on
-      // its first launch. This keeps every entry point (Go-live and the Highlighter page) on the
+      // With neither app installed, hand the import to the installer instead of deeplinking it:
+      // the video and game go into the install origin marker, and Replay picks them up on its
+      // first launch. This keeps every entry point (Go-live and the Highlighter page) on the
       // same flow — game + title first, install second, then Replay opens directly on the import
       // screen with the game and video. pendingImport is only kept so a retry writes the same
       // marker and so onInstallComplete can close this modal.
-      const isInstalled = await HighlighterService.isStreamlabsReplayInstalled();
-      if (!isInstalled) {
+      //
+      // With either app installed the import is deeplinked, and the service picks the protocol —
+      // a Highlighter user is sent to Highlighter, where their data still lives.
+      const app = await HighlighterService.actions.return.getInstalledHighlighterApp();
+      if (app === 'none') {
         setPendingImport({ game, filePath: filePath[0], streamId: id });
         setShowingInstallFlow(true);
         HighlighterService.actions.installStreamlabsReplay({ videoPath: filePath[0], game });
@@ -196,7 +204,7 @@ export function ImportStreamModal({
           closeModal(true);
         }}
         onInstallComplete={() => {
-          setReplayInstalled(true);
+          setInstalledApp('replay');
           setShowingInstallFlow(false);
 
           // Deliberately no import deeplink here. The install origin marker already carried the
@@ -223,7 +231,7 @@ export function ImportStreamModal({
   // Show the install UI only once the user has committed to importing (game + title
   // selected, then startImport triggers the install). Applies to every entry point so
   // the import form is always shown first, never the install flow.
-  if (migrationEnabled && replayInstalled === false && showingInstallFlow) {
+  if (migrationEnabled && installedApp === 'none' && showingInstallFlow) {
     return (
       <HypeWrapper gameConfig={gameConfig} isAnimating={false} artwork={artwork}>
         {renderMigrationNotice()}
@@ -378,11 +386,16 @@ export function ImportStreamModal({
         </Button>
       </div>
       <div className={styles.explainerTextWrapper}>
-        {replayInstalled ? (
-          <p className={styles.explainerText}> Continuing will open Streamlabs Highlighter</p>
-        ) : (
-          <p className={styles.explainerText}> Continuing will install Streamlabs Highlighter</p>
-        )}
+        <p className={styles.explainerText}>
+          {' '}
+          {installedApp === 'replay' &&
+            $t('Continuing will open %{appName}', { appName: REPLAY_APP_NAME })}
+          {installedApp === 'highlighter' &&
+            $t('Continuing will open %{appName}', { appName: HIGHLIGHTER_APP_NAME })}
+          {installedApp !== 'replay' &&
+            installedApp !== 'highlighter' &&
+            $t('Continuing will install %{appName}', { appName: REPLAY_APP_NAME })}
+        </p>
       </div>
     </HypeWrapper>
   );

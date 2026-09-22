@@ -10,7 +10,7 @@ export const AGENT_APP_ID = '93125d1c33';
 /**
  * Tracks whether the Sidekick (co-host) platform app is installed and enabled,
  * and exposes helpers to install or (re-)enable it — the same detection/redirect
- * logic AILanding.tsx uses for its co-host feature card. Installed and enabled
+ * logic VisionLanding.tsx uses for its co-host feature card. Installed and enabled
  * are tracked separately since a user can install the app but later disable it
  * from Settings > Installed Apps.
  *
