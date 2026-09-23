@@ -162,7 +162,6 @@ interface IAdvancedStreamingOutputSettings extends IStreamingOutputSettings {
   outputWidth: number;
   outputHeight: number;
   videoEncoder: TObsVideoEncoderId;
-  enableTwitchVOD: boolean;
   twitchTrack?: number;
 }
 
