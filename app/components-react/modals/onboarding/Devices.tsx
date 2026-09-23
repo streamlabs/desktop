@@ -4,10 +4,10 @@ import { Services } from 'components-react/service-provider';
 import Display from 'components-react/shared/Display';
 import { ListInput } from 'components-react/shared/inputs';
 import Form from 'components-react/shared/inputs/Form';
-import { ERenderingMode } from 'obs-studio-node';
 import React, { useEffect, useRef } from 'react';
 import { Volmeter2d } from 'services/audio/volmeter-2d';
 import { $t } from 'services/i18n';
+import { ERenderingMode } from '../../../../obs-api';
 import styles from './Common.m.less';
 import { Header } from './Onboarding';
 
