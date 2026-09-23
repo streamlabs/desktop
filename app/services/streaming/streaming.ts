@@ -2830,38 +2830,7 @@ export class StreamingService
       this.contexts[contextName].streaming.video = this.videoSettingsService.contexts[display];
     }
 
-    const streamSettings =
-      display === 'horizontal'
-        ? this.settingsService.views.values.Stream
-        : this.settingsService.views.values.StreamSecond;
-
-    // Create a designated service instance for enhanced broadcasting with the default service settings.
-    if (contextName === 'enhancedBroadcasting') {
-      // Note: stream type must be `rtmp_common` to prevent a crash from a possible undefined server value
-      const streamType = 'rtmp_common';
-
-      this.contexts[contextName].streaming.service = ServiceFactory.create(
-        streamType,
-        'enhanced-broadcasting-service',
-        ServiceFactory.legacySettings.settings,
-      );
-
-      this.contexts[contextName].streaming.service.update(streamSettings);
-    } else if (
-      !this.views.protectedModeEnabled &&
-      this.isStreamingInstance(this.contexts[contextName].streaming)
-    ) {
-      this.contexts[contextName].streaming.service = ServiceFactory.legacySettings;
-      this.contexts[contextName].streaming.service.update(streamSettings);
-    } else {
-      this.contexts[contextName].streaming.service = ServiceFactory.create(
-        streamSettings.streamType,
-        `${contextName}-service`,
-        ServiceFactory.legacySettings.settings,
-      );
-
-      this.contexts[contextName].streaming.service.update(streamSettings);
-    }
+    this.configureStreamingService(contextName, display);
     const delay = DelayFactory.create();
 
     delay.enabled = this.streamSettingsService.settings.delayEnable;
@@ -2923,6 +2892,35 @@ export class StreamingService
     }
 
     return Promise.resolve(this.contexts[contextName].streaming);
+  }
+
+  private configureStreamingService(contextName: TOutputContext, display: TDisplayType) {
+    const streaming = this.contexts[contextName].streaming;
+    const streamSettings =
+      display === 'horizontal'
+        ? this.settingsService.views.values.Stream
+        : this.settingsService.views.values.StreamSecond;
+
+    if (contextName === 'enhancedBroadcasting') {
+      // Enhanced Broadcasting requires the common Twitch service.
+      streaming.service = ServiceFactory.create(
+        'rtmp_common',
+        'enhanced-broadcasting-service',
+        ServiceFactory.legacySettings.settings,
+      );
+      streaming.service.update(streamSettings);
+    } else if (!this.views.protectedModeEnabled && this.isStreamingInstance(streaming)) {
+      streaming.service = ServiceFactory.legacySettings;
+      streaming.service.update(streamSettings);
+    } else {
+      // The saved primary service contains provider-specific settings. Seeding
+      // another destination from it can label a custom RTMP service as Twitch.
+      streaming.service = ServiceFactory.create(
+        streamSettings.streamType,
+        `${contextName}-service`,
+        streamSettings,
+      );
+    }
   }
 
   private getStreamingAudioTrack() {
@@ -4080,6 +4078,25 @@ export class StreamingService
     if (validOutput && start) {
       try {
         if (type === 'streaming') {
+          // Recording/replay can retain the instance across Go Live attempts.
+          // Refresh destination and VOD settings without replacing shared encoders.
+          const stream = this.contexts[context].streaming;
+          const outputSettings = this.outputSettingsService.getStreamingSettings(display);
+          stream.enableTwitchVOD = outputSettings.enableTwitchVOD ?? false;
+          if (this.isAdvancedStreaming(stream) && 'twitchTrack' in outputSettings) {
+            stream.twitchTrack = outputSettings.twitchTrack;
+          }
+          if (this.isAdvancedStreaming(stream) && stream.enableTwitchVOD) {
+            if (!stream.twitchTrack) {
+              throw new Error('Twitch VOD is enabled but no Twitch audio track is set.');
+            }
+            await this.validateOrCreateAudioTrack(stream.twitchTrack);
+          }
+          // Enhanced Broadcasting prepares its Twitch service separately from
+          // any standard companion/relay destination on the same display.
+          if (!this.isEnhancedBroadcastingStreaming(stream)) {
+            this.configureStreamingService(context, display);
+          }
           this.startStreamingOutput(context);
         } else {
           this.contexts[context][type]?.start();
