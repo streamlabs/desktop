@@ -6,7 +6,7 @@ useWebdriver({ restartAppAfterEachTest: false });
 
 interface IScenario {
   mode: 'Simple' | 'Advanced';
-  swapped: boolean;
+  twitchVertical: boolean;
   protectedMode: boolean;
 }
 
@@ -26,16 +26,17 @@ interface IResult {
 }
 
 for (const mode of ['Simple', 'Advanced'] as const) {
-  for (const swapped of [false, true]) {
+  for (const twitchVertical of [false, true]) {
     test(`${mode} destination settings stay independent on fresh and retained Dual Output starts (${
-      swapped ? 'Twitch vertical' : 'Twitch horizontal'
+      twitchVertical ? 'Twitch vertical' : 'Twitch horizontal'
     })`, async t => {
-      const result = await runScenario(t, { mode, swapped, protectedMode: true });
+      const result = await runScenario(t, { mode, twitchVertical, protectedMode: true });
       t.falsy(result.error);
       t.is(result.starts.length, 6);
       for (const [index, snapshot] of result.starts.entries()) {
         const retained = index >= 2;
-        const twitch = (snapshot.context === (swapped ? 'vertical' : 'horizontal')) !== retained;
+        const twitch =
+          (snapshot.context === (twitchVertical ? 'vertical' : 'horizontal')) !== retained;
         t.is(snapshot.settings.service || '', twitch ? 'Twitch' : '');
         t.is(
           snapshot.settings.key,
@@ -53,7 +54,11 @@ for (const mode of ['Simple', 'Advanced'] as const) {
 }
 
 test('Unprotected streaming keeps the saved primary service settings', async t => {
-  const result = await runScenario(t, { mode: 'Advanced', swapped: false, protectedMode: false });
+  const result = await runScenario(t, {
+    mode: 'Advanced',
+    twitchVertical: false,
+    protectedMode: false,
+  });
   t.falsy(result.error);
   t.is(result.starts.length, 1);
   t.is(result.starts[0].settings.service, 'Twitch');
@@ -94,8 +99,8 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
         key: `${twitch ? 'twitch' : 'custom'}-${next ? 'next' : 'first'}`,
       });
       const values = {
-        Stream: settings(!input.swapped, false),
-        StreamSecond: settings(input.swapped, false),
+        Stream: settings(!input.twitchVertical, false),
+        StreamSecond: settings(input.twitchVertical, false),
         Output: { ABitrate: 160 },
         Advanced: {
           Reconnect: false,
@@ -186,8 +191,8 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
       create()
         .then(() => {
           if (!input.protectedMode) return;
-          values.Stream = settings(input.swapped, true);
-          values.StreamSecond = settings(!input.swapped, true);
+          values.Stream = settings(input.twitchVertical, true);
+          values.StreamSecond = settings(!input.twitchVertical, true);
           vod = false;
           return restart().then(() => {
             vod = true;
