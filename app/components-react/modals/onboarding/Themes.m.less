@@ -1,13 +1,22 @@
 .carousel-container {
-  width: 100%;
+  @slick-height: 64px;
+
   position: relative;
+  width: 768px;
+  margin: 0 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 
   :global(.ant-carousel) {
     width: 100%;
     height: 100%;
+    margin-bottom: 8px + @slick-height;
 
     :global(.slick-dots) {
-      bottom: -80px !important;
+      bottom: -1 * @slick-height;
+      margin: 0;
 
       li, li:global(.slick-active) {
         width: 100px;
@@ -38,53 +47,82 @@
       }
     }
   }
-}
 
-.back-arrow, .next-arrow {
-  position: absolute;
-  bottom: 52px;
-  transition: 0.2s linear;
+  .browse-link {
+    display: block;
+    text-decoration: underline;
+  }
 
-  &:hover {
-    cursor: pointer;
-    color: var(--white);
+  .back-arrow, .next-arrow {
+    position: absolute;
+    top: 0;
+    transition: color 0.2s linear;
+
+    // Make the arrow padding full-height for better click target
+    // Measured height of the carousel + slick
+    @carousel-height: 484px;
+    @arrow-height: 14px;
+    @arrow-padding: ((@carousel-height - @arrow-height) / 2);
+    padding: @arrow-padding 16px;
+
+    &:hover {
+      cursor: pointer;
+      color: var(--white);
+    }
+  }
+
+  .back-arrow {
+    left: -1 * 48px;
+  }
+
+  .next-arrow {
+    transform: rotate(180deg);
+    right: -1 * 48px;
   }
 }
 
-.back-arrow {
-  left: -4px;
-}
+.preview {
+  &-card {
+    height: 100%;
+    padding: 16px 32px;
+  }
 
-.next-arrow {
-  transform: rotate(180deg);
-  right: -4px;
-}
+  &-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    margin-bottom: 16px;
 
-.preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: end;
-  margin-bottom: 16px;
-}
+    &__avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+    }
+  }
 
-.avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-}
+  &-media {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 16px;
 
-.big-preview {
-  height: 300px;
-  width: auto;
-}
+    &__main {
+      height: 300px;
+      width: auto;
+    }
 
-.img-column {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+    &__thumbnails {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-evenly;
+      gap: 8px;
 
-  img, video {
-    height: 90px;
-    width: auto;
+      img, video {
+        height: 90px;
+        width: auto;
+      }
+    }
   }
 }

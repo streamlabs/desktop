@@ -1,5 +1,19 @@
 @import '../../../styles/index.less';
 
+.flexbox(@direction: column, @wrap: nowrap, @cross-axis: center, @main-axis: center, @gap: 16px) {
+  display: flex;
+  flex-flow: @direction @wrap;
+  align-items: @cross-axis;
+  justify-content: @main-axis;
+  gap: @gap;
+}
+
+.step-container {
+  width: 100%;
+  height: 100%;
+  .flexbox();
+}
+
 .modal-wrapper {
   display: flex;
   justify-content: center;
@@ -21,6 +35,13 @@
 .dark-box {
   background-color: var(--section);
   border-radius: 16px;
+
+  &--large:extend(.dark-box) {
+    width: 600px;
+    height: 360px;
+    padding: 24px;
+    .flexbox();
+  }
 }
 
 .header {
@@ -34,16 +55,6 @@
   h1 {
     margin: 0;
   }
-}
-
-.centered {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  gap: 16px;
 }
 
 .kevin-box {
@@ -100,38 +111,64 @@
   }
 }
 
-.platforms-container {
-  display: flex;
-  justify-content: flex-start;
-  width: 800px;
-  height: 296px;
-  flex-wrap: wrap;
-  row-gap: 16px;
-  column-gap: 30px;
-}
+.platforms {
+  @scrollbar-padding: 16px;
 
-.platform-card {
-  width: 240px;
-  height: 140px;
-  border-radius: 16px;
-  background: var(--section);
-  overflow: hidden;
-  padding-top: 16px;
+  &-scrollable {
+    &__host {
+      flex: 1;
+      position: relative;
+      width: 800px + @scrollbar-padding * 2;
+      max-height: 296px;
+    }
 
-  &:hover {
-    cursor: pointer;
+    &__scroller {
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
   }
 
-  .platform-card-button {
-    background: var(--button);
-    width: 100%;
-    padding: 8px;
-    position: relative;
-    bottom: -12px;
+  &-container {
+    padding: 0px @scrollbar-padding;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-auto-rows: 140px;
+    row-gap: 16px;
+    column-gap: 30px;
   }
 
-  :global(.ant-col-16) {
-    max-width: 100%;
+  &-card {
+    border-radius: 16px;
+    background: var(--section);
+    overflow: hidden;
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+
+    &:hover:not(&--disabled) {
+      cursor: pointer;
+    }
+
+    &--disabled {
+      opacity: 0.5;
+    }
+
+    &__button {
+      background: var(--button);
+      width: 100%;
+      padding: 8px;
+      position: relative;
+      bottom: -12px;
+    }
+
+    :global(.ant-col-16) {
+      max-width: 100%;
+    }
   }
 }
 
