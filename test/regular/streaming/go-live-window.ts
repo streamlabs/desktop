@@ -65,7 +65,7 @@ test(
         'Case 3: Shift ultra icon should be visible for non-prime users but was not found',
     });
     t.true(
-      await tooltipExists('i.icon-information', '[data-name="not-ultra"]', {
+      await tooltipExists('[data-name="stream-shift-tooltip"]', '[data-name="not-ultra"]', {
         timeout: 1000,
       }),
       'Case 3: Non-Ultra stream shift tooltip did not appear',
