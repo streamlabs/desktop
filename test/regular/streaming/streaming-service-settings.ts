@@ -22,6 +22,8 @@ interface IResult {
   starts: ISnapshot[];
   validatedTracks: number[];
   encoderUpdates: number;
+  replacedServicesReleased: boolean;
+  reportedError?: string;
   error?: string;
 }
 
@@ -48,7 +50,11 @@ for (const mode of ['Simple', 'Advanced'] as const) {
         if (mode === 'Advanced' && index >= 4) t.is(snapshot.twitchTrack, 3);
       }
       t.is(result.encoderUpdates, 0, 'recording retains the active shared encoder');
+      t.true(result.replacedServicesReleased, 'retained starts release the replaced services');
       if (mode === 'Advanced') t.true(result.validatedTracks.includes(3));
+      if (mode === 'Advanced') {
+        t.regex(result.reportedError ?? '', /Please select a Twitch audio track/);
+      }
     });
   }
 }
@@ -81,12 +87,17 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
         testLegacySetting: 'saved-primary',
       });
       osn.ServiceFactory.legacySettings = primary;
-      const services: import('obs-studio-node').IService[] = [];
+      const activeServices = new Map<string, import('obs-studio-node').IService>();
+      const unreleasedServices: import('obs-studio-node').IService[] = [];
       const starts: ISnapshot[] = [];
       const validatedTracks: number[] = [];
       let encoderUpdates = 0;
+      let replacedServicesReleased = true;
+      let reportedError: string | undefined;
+      const missingTrackMessage =
+        'Twitch VOD is enabled but no Twitch audio track is set. Please select a Twitch audio track in the output settings and try again.';
       let vod = true;
-      let twitchTrack = 2;
+      let twitchTrack: number | undefined = 2;
       const encoder = {
         id: 'obs_x264',
         active: true,
@@ -126,6 +137,7 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
       });
       const fixture: any = {
         contexts,
+        streamingServices: new WeakMap(),
         views: {
           protectedModeEnabled: input.protectedMode,
           getOutputDisplayType: (display: string) => display,
@@ -152,7 +164,17 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
         },
         startStreamingOutput(context: string) {
           const stream = contexts[context].streaming;
-          services.push(stream.service);
+          const previous = activeServices.get(context);
+          if (previous) {
+            try {
+              void previous.settings;
+              replacedServicesReleased = false;
+              unreleasedServices.push(previous);
+            } catch (e: unknown) {
+              // The replaced native service is no longer registered.
+            }
+          }
+          activeServices.set(context, stream.service);
           starts.push({
             context,
             settings: stream.service.settings,
@@ -160,6 +182,15 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
             twitchTrack: stream.twitchTrack,
             sameEncoder: stream.videoEncoder === encoder,
           });
+        },
+        createOBSError(
+          _type: unknown,
+          _display: unknown,
+          _signal: unknown,
+          _code: unknown,
+          error: string,
+        ) {
+          reportedError = error;
         },
       };
       Object.setPrototypeOf(fixture, Object.getPrototypeOf(singleton));
@@ -184,7 +215,8 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
         );
       const cleanup = () => {
         osn.ServiceFactory.legacySettings = original;
-        services.forEach(service => osn.ServiceFactory.destroy(service));
+        activeServices.forEach(service => osn.ServiceFactory.destroy(service));
+        unreleasedServices.forEach(service => osn.ServiceFactory.destroy(service));
         osn.ServiceFactory.destroy(primary);
         osn.ServiceFactory.destroy(original);
       };
@@ -197,16 +229,45 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
           return restart().then(() => {
             vod = true;
             twitchTrack = 3;
-            return restart();
+            return restart().then(() => {
+              if (input.mode !== 'Advanced') return;
+              twitchTrack = undefined;
+              const logError = console.error;
+              console.error = (...args: unknown[]) => {
+                if (
+                  args[0] === 'Error starting validated streaming instance:' &&
+                  args[1] instanceof Error &&
+                  args[1].message === missingTrackMessage
+                ) {
+                  return;
+                }
+                logError(...args);
+              };
+              return restart().finally(() => {
+                console.error = logError;
+              });
+            });
           });
         })
         .then(() => {
           cleanup();
-          done({ starts, validatedTracks, encoderUpdates });
+          done({
+            starts,
+            validatedTracks,
+            encoderUpdates,
+            replacedServicesReleased,
+            reportedError,
+          });
         })
         .catch((error: Error) => {
           cleanup();
-          done({ starts, validatedTracks, encoderUpdates, error: error.message });
+          done({
+            starts,
+            validatedTracks,
+            encoderUpdates,
+            replacedServicesReleased,
+            error: error.message,
+          });
         });
     }, scenario)) as IResult;
   } finally {
