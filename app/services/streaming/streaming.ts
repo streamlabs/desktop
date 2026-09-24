@@ -23,6 +23,7 @@ import {
   IAdvancedReplayBuffer,
   ISimpleRecording,
   ISimpleReplayBuffer,
+  IService,
   AdvancedRecordingFactory,
   SimpleRecordingFactory,
   AdvancedReplayBufferFactory,
@@ -233,6 +234,8 @@ export class StreamingService
       streaming: null,
     },
   };
+  // Track only services assigned here so retained restarts and teardown can release them.
+  private streamingServices = new WeakMap<object, IService>();
 
   static initialState: IStreamingServiceState = {
     status: {
@@ -2865,31 +2868,59 @@ export class StreamingService
 
   private configureStreamingService(contextName: TOutputContext, display: TDisplayType) {
     const streaming = this.contexts[contextName].streaming;
+    if (!streaming) throw new Error(`No streaming instance for ${contextName}`);
+
     const streamSettings =
       display === 'horizontal'
         ? this.settingsService.views.values.Stream
         : this.settingsService.views.values.StreamSecond;
 
-    if (contextName === 'enhancedBroadcasting') {
-      // Enhanced Broadcasting requires the common Twitch service.
-      streaming.service = ServiceFactory.create(
-        'rtmp_common',
-        'enhanced-broadcasting-service',
-        ServiceFactory.legacySettings.settings,
-      );
-      streaming.service.update(streamSettings);
-    } else if (!this.views.protectedModeEnabled && this.isStreamingInstance(streaming)) {
-      streaming.service = ServiceFactory.legacySettings;
-      streaming.service.update(streamSettings);
-    } else {
-      // The saved primary service contains provider-specific settings. Seeding
-      // another destination from it can label a custom RTMP service as Twitch.
-      streaming.service = ServiceFactory.create(
-        streamSettings.streamType,
-        `${contextName}-service`,
-        streamSettings,
-      );
+    let service: IService | undefined;
+    try {
+      if (contextName === 'enhancedBroadcasting') {
+        // Enhanced Broadcasting requires the common Twitch service. The legacy
+        // getter creates a separate native service, so release it after reading.
+        const legacyService = ServiceFactory.legacySettings;
+        try {
+          service = ServiceFactory.create(
+            'rtmp_common',
+            'enhanced-broadcasting-service',
+            legacyService.settings,
+          );
+        } finally {
+          ServiceFactory.destroy(legacyService);
+        }
+        service.update(streamSettings);
+      } else if (!this.views.protectedModeEnabled && this.isStreamingInstance(streaming)) {
+        service = ServiceFactory.legacySettings;
+        service.update(streamSettings);
+      } else {
+        // The saved primary service contains provider-specific settings. Seeding
+        // another destination from it can label a custom RTMP service as Twitch.
+        service = ServiceFactory.create(
+          streamSettings.streamType,
+          `${contextName}-service`,
+          streamSettings,
+        );
+      }
+
+      streaming.service = service;
+    } catch (e: unknown) {
+      if (service) ServiceFactory.destroy(service);
+      throw e;
     }
+
+    const previousService = this.streamingServices.get(streaming);
+    this.streamingServices.set(streaming, service);
+    if (previousService) ServiceFactory.destroy(previousService);
+  }
+
+  private releaseStreamingService(streaming: object) {
+    const service = this.streamingServices.get(streaming);
+    if (!service) return;
+
+    ServiceFactory.destroy(service);
+    this.streamingServices.delete(streaming);
   }
 
   private getStreamingAudioTrack() {
@@ -3986,16 +4017,21 @@ export class StreamingService
           // Recording/replay can retain the instance across Go Live attempts.
           // Refresh destination and VOD settings without replacing shared encoders.
           const stream = this.contexts[context].streaming;
+          if (!stream) throw new Error(`No streaming instance for ${context}`);
           const outputSettings = this.outputSettingsService.getStreamingSettings(display);
           stream.enableTwitchVOD = outputSettings.enableTwitchVOD ?? false;
-          if (this.isAdvancedStreaming(stream) && 'twitchTrack' in outputSettings) {
-            stream.twitchTrack = outputSettings.twitchTrack;
-          }
-          if (this.isAdvancedStreaming(stream) && stream.enableTwitchVOD) {
-            if (!stream.twitchTrack) {
-              throw new Error('Twitch VOD is enabled but no Twitch audio track is set.');
+          if (this.isAdvancedStreaming(stream)) {
+            const twitchTrack =
+              'twitchTrack' in outputSettings ? outputSettings.twitchTrack : undefined;
+            if (twitchTrack !== undefined) stream.twitchTrack = twitchTrack;
+            if (stream.enableTwitchVOD) {
+              if (!twitchTrack) {
+                throw new Error(
+                  'Twitch VOD is enabled but no Twitch audio track is set. Please select a Twitch audio track in the output settings and try again.',
+                );
+              }
+              await this.validateOrCreateAudioTrack(twitchTrack);
             }
-            await this.validateOrCreateAudioTrack(stream.twitchTrack);
           }
           // Enhanced Broadcasting prepares its Twitch service separately from
           // any standard companion/relay destination on the same display.
@@ -4011,12 +4047,16 @@ export class StreamingService
 
         const outputType =
           type === 'streaming' ? EOBSOutputType.Streaming : EOBSOutputType.Recording;
+        let errorMessage = $t('An unknown error occurred. Please try again.');
+        if (e instanceof Error) errorMessage = e.message;
+        else if (typeof e === 'string') errorMessage = e;
+
         this.createOBSError(
           outputType,
           display,
           EOBSOutputSignal.Start,
           EOutputCode.Error,
-          typeof e === 'string' ? e : $t('An unknown error occurred. Please try again.'),
+          errorMessage,
         );
       }
       return;
@@ -4865,6 +4905,8 @@ export class StreamingService
           break;
       }
     }
+
+    if (contextType === 'streaming') this.releaseStreamingService(instance);
   }
 
   private handleCleanupStreamingInstances({ skipHorizontal = false }) {
@@ -5005,53 +5047,7 @@ export class StreamingService
     } finally {
       const instance = this.contexts[contextName][contextType];
 
-      // Identify the output's factory in order to destroy the context
-      if (instance) {
-        if (
-          contextType === 'streaming' &&
-          this.isEnhancedBroadcastingStreaming(
-            instance as
-              | ISimpleStreaming
-              | IAdvancedStreaming
-              | IEnhancedBroadcastingSimpleStreaming
-              | IEnhancedBroadcastingAdvancedStreaming,
-          )
-        ) {
-          if (
-            this.isAdvancedStreaming(
-              instance as
-                | IEnhancedBroadcastingSimpleStreaming
-                | IEnhancedBroadcastingAdvancedStreaming,
-            )
-          ) {
-            EnhancedBroadcastingAdvancedStreamingFactory.destroy(
-              instance as IEnhancedBroadcastingAdvancedStreaming,
-            );
-          } else {
-            EnhancedBroadcastingSimpleStreamingFactory.destroy(
-              instance as IEnhancedBroadcastingSimpleStreaming,
-            );
-          }
-        } else {
-          switch (contextType) {
-            case 'streaming':
-              this.isAdvancedStreaming(instance as ISimpleStreaming | IAdvancedStreaming)
-                ? AdvancedStreamingFactory.destroy(instance as IAdvancedStreaming)
-                : SimpleStreamingFactory.destroy(instance as ISimpleStreaming);
-              break;
-            case 'recording':
-              this.isAdvancedRecording(instance as ISimpleRecording | IAdvancedRecording)
-                ? AdvancedRecordingFactory.destroy(instance as IAdvancedRecording)
-                : SimpleRecordingFactory.destroy(instance as ISimpleRecording);
-              break;
-            case 'replayBuffer':
-              this.isAdvancedReplayBuffer(instance as ISimpleReplayBuffer | IAdvancedReplayBuffer)
-                ? AdvancedReplayBufferFactory.destroy(instance as IAdvancedReplayBuffer)
-                : SimpleReplayBufferFactory.destroy(instance as ISimpleReplayBuffer);
-              break;
-          }
-        }
-      }
+      if (instance) this.destroyFactoryInstance(contextType, instance);
 
       this.contexts[contextName][contextType] = null;
 
