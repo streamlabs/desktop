@@ -259,6 +259,11 @@ export class AutomationsEngineService extends Service {
     const currentGame = this.getCurrentGame().toLowerCase();
 
     for (const automation of automations) {
+      if (automation.scenes?.length) {
+        const activeSceneName = this.scenesService.views.activeScene?.name;
+        if (!activeSceneName || !automation.scenes.includes(activeSceneName)) continue;
+      }
+
       const conditions = (automation.conditions as TCondition[]).filter(c =>
         c.type.startsWith(currentGame),
       );

@@ -25,6 +25,8 @@ const errorTextStyle: CSSProperties = {
   fontSize: '12px',
 };
 
+const ANY_SCENE = '__any_scene__';
+
 interface ActionRow {
   id: string;
   action: ExportedAction;
@@ -75,6 +77,7 @@ export default function AutomationEditor({ initial, onClose }: Props) {
   const [conditionProps, setConditionProps] = useState<Record<string, unknown>>(() => {
     return (initial?.conditions?.[0]?.props as Record<string, unknown>) ?? {};
   });
+  const [selectedScene, setSelectedScene] = useState<string | undefined>(initial?.scenes?.[0]);
   const [rows, setRows] = useState<ActionRow[]>(
     () =>
       (initial?.actions as ExportedAction[])?.filter(a => a?.type).map(makeRow) ?? [
@@ -96,6 +99,7 @@ export default function AutomationEditor({ initial, onClose }: Props) {
   const draft: TAutomationExport = {
     description,
     conditions: conditionType ? [{ type: conditionType, props: conditionPropsForSave as any }] : [],
+    scenes: selectedScene ? [selectedScene] : undefined,
     actions,
     enabled: enabled ?? true,
   };
@@ -109,7 +113,10 @@ export default function AutomationEditor({ initial, onClose }: Props) {
     ? issues.find(i => i.scope === 'description')?.message
     : undefined;
   const conditionError = attempted
-    ? issues.find(i => i.scope === 'conditions')?.message
+    ? issues.find(i => i.scope === 'conditions' && i.field !== 'scene')?.message
+    : undefined;
+  const sceneError = attempted
+    ? issues.find(i => i.scope === 'conditions' && i.field === 'scene')?.message
     : undefined;
   const actionsError = attempted
     ? issues.find(i => i.scope === 'action' && i.actionIndex === undefined)?.message
@@ -166,6 +173,7 @@ export default function AutomationEditor({ initial, onClose }: Props) {
         conditions: conditionType
           ? [{ type: conditionType, props: conditionPropsForSave as any }]
           : [],
+        scenes: selectedScene ? [selectedScene] : undefined,
         actions,
         enabled: enabled ?? checkEnableLimit(1, 'editor'),
       };
@@ -259,6 +267,24 @@ export default function AutomationEditor({ initial, onClose }: Props) {
             placeholder={$t('e.g. Victory Royale reaction')}
           />
           {descriptionError && <p style={errorTextStyle}>{descriptionError}</p>}
+        </div>
+
+        {/* Scene */}
+        <div style={{ marginBottom: 24 }}>
+          <label style={sectionLabelStyle}>{$t('Limit to Scene')}</label>
+          <p style={{ ...sectionSubtitleStyle, marginBottom: 16 }}>
+            {$t('Only trigger while this scene is active.')}
+          </p>
+          <Select
+            value={selectedScene ?? ANY_SCENE}
+            onChange={val => setSelectedScene(val === ANY_SCENE ? undefined : (val as string))}
+            options={[
+              { value: ANY_SCENE, label: $t('Any Scene') },
+              ...scenes.map(s => ({ value: s.name, label: s.name })),
+            ]}
+            style={{ width: '50%' }}
+          />
+          {sceneError && <p style={errorTextStyle}>{sceneError}</p>}
         </div>
 
         {/* Trigger */}
