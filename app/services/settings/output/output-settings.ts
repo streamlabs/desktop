@@ -167,6 +167,7 @@ interface IAdvancedRecordingOutputSettings extends IRecordingOutputSettings {
 
 interface IStreamingOutputSettings {
   enforceServiceBitrate: boolean;
+  enableTwitchVOD: boolean;
 }
 
 interface ISimpleStreamingOutputSettings extends IStreamingOutputSettings {
@@ -182,7 +183,6 @@ interface IAdvancedStreamingOutputSettings extends IStreamingOutputSettings {
   outputWidth: number;
   outputHeight: number;
   videoEncoder: EObsAdvancedEncoder;
-  enableTwitchVOD: boolean;
   twitchTrack?: number;
 }
 
@@ -731,6 +731,7 @@ export class OutputSettingsService extends Service {
       return {
         videoEncoder,
         enforceServiceBitrate,
+        enableTwitchVOD,
         useAdvanced,
         customEncSettings,
       } as ISimpleStreamingOutputSettings;
