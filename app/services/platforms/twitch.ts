@@ -230,12 +230,13 @@ export class TwitchService
 
   async beforeGoLive(goLiveSettings?: IGoLiveSettings, context?: TDisplayType) {
     // If the stream has switched from another device, a new broadcast does not need to be created
-    if (
-      goLiveSettings &&
-      goLiveSettings.streamShift &&
-      this.streamingService.views.shouldSwitchStreams
-    ) {
-      await this.setupStreamShiftStream(goLiveSettings);
+    if (goLiveSettings && goLiveSettings.streamShift) {
+      // Stream shift is not compatible with enhanced broadcasting so always disable it
+      this.setEnhancedBroadcastingSetting(false);
+
+      if (this.streamingService.views.shouldSwitchStreams) {
+        await this.setupStreamShiftStream(goLiveSettings);
+      }
       return;
     }
 
@@ -245,14 +246,16 @@ export class TwitchService
     // to the display's OBS context when Twitch is not going out through restream, and that
     // depends on whether this stream is an enhanced broadcast — deciding afterwards means the
     // check answers for the previous stream instead of this one.
-    if (channelInfo) {
+    // Note: deliberately checking goLiveSettings and channelInfo together prevents checking for
+    // nullish values
+    if (goLiveSettings && channelInfo) {
       if (goLiveSettings?.liveOutputEditing) {
         await this.setupLiveOutputStream(goLiveSettings);
       } else if (channelInfo.display === 'both') {
         await this.setupDualStream(goLiveSettings);
       } else {
         // Update enhanced broadcasting setting based on go live settings
-        this.settingsService.setEnhancedBroadcasting(channelInfo.isEnhancedBroadcasting);
+        this.setEnhancedBroadcastingSetting(channelInfo.isEnhancedBroadcasting);
       }
     } else if (this.streamingService.views.isTwitchDualStreamEnabled) {
       // Failsafe to guarantee that enhanced broadcasting is enabled if dual streaming is active
@@ -295,7 +298,7 @@ export class TwitchService
 
   async afterStopStream(): Promise<void> {
     // Restore enhanced broadcasting state
-    this.settingsService.setEnhancedBroadcasting(this.state.settings.isEnhancedBroadcasting);
+    this.setEnhancedBroadcastingSetting(this.state.settings.isEnhancedBroadcasting);
   }
 
   async setupDualStream(goLiveSettings?: IGoLiveSettings) {
@@ -305,7 +308,7 @@ export class TwitchService
 
     // Enhanced broadcasting is required for dual streaming, regardless of
     // how many platforms are enabled
-    this.settingsService.setEnhancedBroadcasting(true);
+    this.setEnhancedBroadcastingSetting(true);
   }
 
   async validatePlatform() {
@@ -451,9 +454,6 @@ export class TwitchService
       return;
     }
 
-    // Stream shift not compatible with enhanced broadcasting
-    this.settingsService.setEnhancedBroadcasting(false);
-
     const [channelInfo] = await Promise.all([
       this.requestTwitch<{
         data: {
@@ -518,7 +518,7 @@ export class TwitchService
 
   async setupLiveOutputStream(options?: IGoLiveSettings): Promise<void> {
     // Live output editing not compatible with enhanced broadcasting, so disable it here
-    this.settingsService.setEnhancedBroadcasting(false);
+    this.setEnhancedBroadcastingSetting(false);
   }
 
   fetchFollowers(): Promise<number> {
@@ -688,7 +688,30 @@ export class TwitchService
     });
   }
 
-  setEnhancedBroadcasting(status: boolean) {
+  /**
+   * Set the enhanced broadcasting backend setting for the Twitch stream.
+   * @remarks This updates the backend setting for enhanced broadcasting on Twitch, which actually
+   * determines whether or not the stream goes live with enhanced broadcasting enabled. This differs
+   * from the `setEnhancedBroadcastingState` method, which only updates the local persisted state
+   * managing the local settings. This method specifically updates the setting that is actually
+   * used when going live.
+   * @param status
+   */
+  setEnhancedBroadcastingSetting(status: boolean) {
+    this.settingsService.setEnhancedBroadcasting(status);
+  }
+
+  /**
+   * Set the enhanced broadcasting persisted state for the Twitch stream.
+   * @remarks This does not automatically update the backend settings, only tracks the state locally.
+   * for Twitch. This is both for persistence of the setting between refreshes of the go live window
+   * and also for restoring the user's preferences when streaming with features that automatically
+   * enable enhanced broadcasting (such as Twitch dual stream) and automatically disable enhanced
+   * broadcasting (such as live output editing and stream shift) when those features are no longer active.
+   * Currently, this is only used in the go live module to update the go live window platform settings.
+   * @param status - If enhanced broadcasting should be enabled
+   */
+  setEnhancedBroadcastingState(status: boolean) {
     this.SET_ENHANCED_BROADCASTING(status);
   }
 
