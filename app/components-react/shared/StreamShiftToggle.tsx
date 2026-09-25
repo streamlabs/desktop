@@ -101,7 +101,7 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
           lightShadow={true}
           className={styles.tooltip}
         >
-          <i className="icon-information" />
+          <i className="icon-information" data-name="stream-shift-tooltip" />
         </Tooltip>
       </div>
       <Badge className={styles.betaBadge} content={'Beta'} />
