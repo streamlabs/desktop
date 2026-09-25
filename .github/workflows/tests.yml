@@ -133,6 +133,89 @@ jobs:
       fail-fast: false
 
     steps:
+      # The desktop resolution is an INPUT to this job, not something it controls. The virtual machine's desktop resolution
+      # must be of a minimum size to launch the Electron app and  run the e2e tests successfully. Otherwise there will be
+      # false negatives.
+
+      # `scripts/ci/install.ps1` installs Amazon DCV Server and writes `console-session-default-layout = 1920x1080` and
+      # `min-head-resolution = (1920, 1080)` (8ae2f79bd, #6103). DCV supplies an AWS Indirect Display Device that supersedes
+      # the Microsoft Basic Display Adapter.
+      #
+      # Verifying the provisioning above actually took effect is necessary to prevent investigation of failure that have nothing
+      # to do with the actual test.
+
+      # This is ported from the Azure assertion (59b259a74). 43 of its 48 PowerShell lines are byte-identical; the five that differ
+      # are two deliberate changes:
+      #
+      #   1-3. The logging command, which is host-specific:
+      #          Azure:  Write-Host "##vso[task.logissue type=error]..."  /  type=warning
+      #          Here:   Write-Host "::error::..."                        /  ::warning::
+      #        Both raise an annotation on the run summary rather than burying it in the step
+      #        log. ('agent' also became 'runner' in the prose of two of them.)
+      #   4-5. The adapter read (and the comment above it) filters to a head that reports a
+      #        resolution. Under DCV there are now TWO video controllers - the active Indirect
+      #        Display Device and the inactive Basic Display Adapter - and a bare
+      #        'Select-Object -First 1' can pick the inactive one, which reports nothing and
+      #        makes the mismatch warning below fire on every run.
+      #
+      # Otherwise left alone on purpose, so it stays diffable against the Azure original.
+      - name: 'Assert usable screen resolution'
+        run: |
+          $sessionName = $env:SESSIONNAME
+          Write-Host "session     : $sessionName"
+
+          # The hardware adapter / console framebuffer. Prefer a head that actually reports a
+          # resolution: under DCV the inactive Basic Display Adapter is still enumerated, and
+          # picking it makes the mismatch warning below fire on every run. Fall back to the
+          # unfiltered first entry so this can never leave $c null.
+          $c = Get-CimInstance Win32_VideoController | Where-Object { $_.CurrentHorizontalResolution -gt 0 } | Select-Object -First 1
+          if (-not $c) { $c = Get-CimInstance Win32_VideoController | Select-Object -First 1 }
+          $adapter = $c.Name
+          $hwW = $c.CurrentHorizontalResolution
+          $hwH = $c.CurrentVerticalResolution
+          Write-Host "adapter     : $adapter"
+          Write-Host "adapter res : $hwW x $hwH"
+
+          # What a GUI process in THIS session actually sees, which is what Electron gets
+          # when it creates the main window. Under RDP, or with a virtual display driver
+          # active, this differs from the adapter reading - so assert on this one.
+          $w = $null
+          $h = $null
+          try {
+            Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
+            $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+            $w = $b.Width
+            $h = $b.Height
+            Write-Host "session res : $w x $h"
+          } catch {
+            Write-Host "session res : unavailable, falling back to the adapter reading"
+            Write-Host $_.Exception.Message
+            $w = $hwW
+            $h = $hwH
+          }
+
+          if ($w -ne $hwW -or $h -ne $hwH) {
+            Write-Host "::warning::Session resolution $w x $h differs from the adapter $hwW x $hwH. The runner is probably not on the console session. Tests will use the session value."
+          }
+
+          # The app's main window defaults to 1600x1000 (main.js). The e2e harness never
+          # sets a window size, so tests inherit the desktop. Below this the window is
+          # clamped toward its 800x600 minimum and UI tests fail misleadingly.
+          $minW = 1600
+          $minH = 1000
+
+          if ($null -eq $w -or $null -eq $h -or $w -eq 0 -or $h -eq 0) {
+            Write-Host "::error::Could not determine the screen resolution for this session."
+            exit 1
+          }
+          if ($w -lt $minW -or $h -lt $minH) {
+            Write-Host "::error::Desktop is $w x $h but the app's main window needs $minW x $minH. Tests would run in a clamped window and fail misleadingly. Fix the runner display driver rather than lowering this threshold."
+            exit 1
+          }
+          Write-Host "OK - desktop is large enough for the app's default window."
+        # Required, and easy to forget: this workflow sets 'defaults.run.shell: bash' at the top, so a PowerShell step has to opt in.
+        # Azure needed no equivalent - there '- powershell:' was its own step type, which is why the port changes shape without changing the body.
+        shell: powershell
       - name: 'Download Test Build'
         uses: actions/download-artifact@v4
         with:
