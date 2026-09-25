@@ -4,7 +4,7 @@ import React from 'react';
 import { ENavMenuKey } from 'services/nav-menu';
 import { useFeaturesNav } from './FeaturesNav';
 import styles from './NavMenu.m.less';
-import { useNavTools } from './NavTools';
+import { useToolsNav } from './ToolsNav';
 
 export default function NavMenu() {
   // Both hooks are inlined here (not rendered as component children) so that
@@ -12,7 +12,7 @@ export default function NavMenu() {
   // opaque component elements - antd 4.16 / rc-menu 9 only flattens arrays and
   // fragments that are *direct* children of <Menu>.
   const featureItems = useFeaturesNav();
-  const { items: toolItems, modals } = useNavTools();
+  const { items: toolItems, modals } = useToolsNav();
 
   return (
     <div className={cx(styles.navMenu)}>
