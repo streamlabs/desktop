@@ -1,40 +1,24 @@
 .shareStreamLinksContainer {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0;
   margin-top: -5px;
 
   :global(.ant-btn) {
-    padding: 0 4px;
+    padding: 0;
     width: 32px;
     height: 32px;
+    min-width: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
   }
 
-  :global(i.youtube) {
-    width: 16px;
-    height: 16px;
-  }
-
-  :global(i.tiktok) {
-    width: 16px;
-    height: 16px;
-  }
-
-  :global(i.kick) {
-    width: 16px;
-    height: 16px;
-  }
-
-  :global(i.twitch) {
-    width: 16px;
-    height: 16px;
-  }
-
-  :global(i.facebook) {
-    width: 16px;
-    height: 16px;
+  :global(i) {
+    width: 16px !important;
+    height: 16px !important;
+    max-width: 16px !important;
+    max-height: 16px !important;
   }
 }
