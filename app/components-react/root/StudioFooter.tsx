@@ -9,7 +9,6 @@ import styles from './StudioFooter.m.less';
 import PerformanceMetrics from '../shared/PerformanceMetrics';
 import TestWidgets from './TestWidgets';
 import StartStreamingButton from './StartStreamingButton';
-import NotificationsArea from './NotificationsArea';
 import { Tooltip } from 'antd';
 import { confirmAsync } from 'components-react/modals';
 import RecordingSwitcher from 'components-react/windows/go-live/RecordingSwitcher';
@@ -210,7 +209,6 @@ function StudioFooterComponent() {
             </Tooltip>
           </div>
         )}
-        <NotificationsArea />
       </div>
 
       <div className={styles.navRight}>
