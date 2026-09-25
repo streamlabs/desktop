@@ -183,3 +183,4 @@ There are some environment variables that can be passed to skip these steps:
 At its core, Streamlabs Desktop is powered by the [OBS](https://obsproject.com/)
 project. We want to thank all of the developers over at the OBS project for
 their years of tireless hard work, without which Streamlabs Desktop wouldn't exist today.
+
