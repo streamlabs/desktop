@@ -1,4 +1,5 @@
 import { ExecuteInCurrentWindow, Inject, mutation, StatefulService } from 'services/core';
+import cloneDeep from 'lodash/cloneDeep';
 import {
   EPlatformCallResult,
   IPlatformState,
@@ -123,6 +124,12 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
       },
       { deep: true },
     );
+  }
+
+  resetStreamSettings() {
+    const { initialState } = this.constructor as typeof BasePlatformService;
+    this.SET_STREAM_SETTINGS(cloneDeep(initialState.settings));
+    localStorage.removeItem(this.serviceName);
   }
 
   async validatePlatform() {

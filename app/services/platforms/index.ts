@@ -241,6 +241,11 @@ export interface IPlatformService {
 
   setPlatformContext?: (platform: TPlatform) => void;
 
+  /**
+   * Restore the platform's saved go-live settings (title, description, etc.) to defaults
+   */
+  resetStreamSettings: () => void;
+
   liveDockEnabled: boolean;
 
   readonly apiBase: string;
