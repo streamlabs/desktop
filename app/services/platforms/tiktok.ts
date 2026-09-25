@@ -79,6 +79,7 @@ export interface ITikTokStartStreamOptions {
   streamKey: string;
   game: string;
   audienceType?: string;
+  activeTab?: 'live-access' | 'stream-key';
 }
 
 interface ITikTokRequestHeaders extends Dictionary<string> {
@@ -240,7 +241,9 @@ export class TikTokService
       return;
     }
 
-    if (this.getHasScope('approved')) {
+    // An approved account can still choose to go live with a manually entered
+    // stream key instead API, indicated by which tab was active in the form
+    if (this.getHasScope('approved') && ttSettings.activeTab === 'live-access') {
       // update server url and stream key if handling streaming via API
       // streaming with server url and stream key is default
       const streamInfo = await this.startStream(ttSettings);
@@ -879,7 +882,8 @@ export class TikTokService
     this.SET_LIVE_SCOPE(scope);
   }
 
-  setGameName(gameName: string) {
+  setGameInfo({ gameId, gameName }: { gameId: string; gameName: string }) {
+    this.UPDATE_STREAM_SETTINGS({ game: gameId });
     this.SET_GAME_NAME(gameName);
   }
 
