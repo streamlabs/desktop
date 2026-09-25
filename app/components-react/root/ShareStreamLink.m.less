@@ -3,19 +3,16 @@
   align-items: center;
   gap: 0;
   margin-top: -5px;
+}
 
-  :global(.ant-btn) {
-    padding: 0 !important;
-    width: 32px !important;
-    height: 32px !important;
-    min-width: 32px !important;
-    min-height: 32px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex-shrink: 0;
-    border: none !important;
-  }
+.shareStreamLinkButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  flex-shrink: 0;
 
   :global(i) {
     width: 16px !important;
@@ -24,11 +21,10 @@
     max-height: 16px !important;
     min-width: 16px !important;
     min-height: 16px !important;
-    display: inline-block !important;
+    font-size: 16px !important;
+    line-height: 1 !important;
     background-size: contain !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
-    font-size: 16px !important;
-    line-height: 16px !important;
   }
 }
