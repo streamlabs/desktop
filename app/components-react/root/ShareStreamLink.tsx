@@ -102,7 +102,7 @@ export const ShareStreamLink = () => {
           <div
             style={{
               display: expanded ? 'flex' : 'none',
-              gap: '8px',
+              alignItems: 'center',
               transition: 'all 1s ease-in-out',
             }}
           >

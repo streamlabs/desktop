@@ -1,11 +1,21 @@
 .shareStreamLinksContainer {
   display: flex;
+  align-items: center;
+  gap: 4px;
   margin-top: -5px;
 
+  :global(.ant-btn) {
+    padding: 0 4px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   :global(i.youtube) {
-    width: 20px;
-    height: 20px;
-    margin-top: 6px;
+    width: 16px;
+    height: 16px;
   }
 
   :global(i.tiktok) {
@@ -14,6 +24,16 @@
   }
 
   :global(i.kick) {
+    width: 16px;
+    height: 16px;
+  }
+
+  :global(i.twitch) {
+    width: 16px;
+    height: 16px;
+  }
+
+  :global(i.facebook) {
     width: 16px;
     height: 16px;
   }
