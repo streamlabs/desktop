@@ -78,8 +78,11 @@ export default function Onboarding() {
   if (!currentStep || !showOnboarding) return <></>;
 
   const Component = STEPS_MAP[currentStep.name];
-  const continueText =
-    currentStep.name === EOnboardingSteps.Ultra ? $t('Continue with Free') : $t('Continue');
+  const continueTexts: PartialRec<EOnboardingSteps, string> = {
+    [EOnboardingSteps.Ultra]: $t('Continue with Free'),
+    [EOnboardingSteps.Themes]: $t('Finish'),
+  };
+  const continueText = continueTexts[currentStep.name] || $t('Continue');
 
   return (
     <Modal

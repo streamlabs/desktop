@@ -49,17 +49,14 @@ export function RecordingLogin(p: IOnboardingStepProps) {
   ];
 
   return (
-    <div className={styles.centered} style={{ height: '100%' }}>
+    <div className={styles.stepContainer} style={{ height: '100%' }}>
       <Header title={$t('Sign in for the Best Recording Experience')} />
       <div className={ultraS.ultraBox} style={{ display: 'flex', justifyContent: 'space-evenly' }}>
         {promoMetadata.map(data => (
           <ImageCard metadata={data} key={data.title} />
         ))}
       </div>
-      <div
-        className={cx(styles.darkBox, styles.centered)}
-        style={{ width: '100%', height: '40%', marginTop: 32 }}
-      >
+      <div className={styles.darkBoxLarge} style={{ marginTop: 32 }}>
         <Button
           className={cx(styles.bigButton, styles.white)}
           icon={<KevinSvg style={{ height: 12, width: 14, fill: 'black', marginRight: 8 }} />}
