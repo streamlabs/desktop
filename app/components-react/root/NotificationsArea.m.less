@@ -1,23 +1,28 @@
 @import '../../styles/index';
 
 .notifications-area {
-  overflow: hidden;
-  min-width: 50px;
+  overflow: visible;
   display: flex;
   align-items: center;
   justify-content: flex-start;
+
+  // Visual adjustment so that the notification bell looks
+  // vertically centered with the other nav items.
+  padding-top: 4px;
 }
 
 .notification-icon {
   &:hover {
     cursor: pointer;
-    color: var(--title) !important;
   }
 }
 
 .notifications__container {
   position: relative;
+  flex-grow: 1;
+  min-width: 50px;
   height: 30px;
+  overflow: hidden;
 
   :global(.ant-message) {
     position: relative;
@@ -99,14 +104,7 @@
 .notifications__counter {
   cursor: pointer;
   white-space: nowrap;
-  margin-right: 10px;
-
-  &::before {
-    content: '|';
-    padding-right: 12px;
-    opacity: 0.5;
-    color: var(--icon);
-  }
+  line-height: 24px;
 
   .fa {
     font-size: 15px;
