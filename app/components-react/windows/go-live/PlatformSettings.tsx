@@ -26,6 +26,7 @@ export default function PlatformSettings() {
   const {
     settings,
     enabledPlatforms,
+    validEnabledPlatforms,
     getPlatformDisplayName,
     updatePlatform,
     commonFields,
@@ -136,7 +137,7 @@ export default function PlatformSettings() {
       </Section>
 
       {/*SETTINGS FOR EACH ENABLED PLATFORM*/}
-      {enabledPlatforms.map((platform: TPlatform) => (
+      {validEnabledPlatforms.map((platform: TPlatform) => (
         <Section
           title={$t('%{platform} Settings', { platform: getPlatformDisplayName(platform) })}
           key={platform}

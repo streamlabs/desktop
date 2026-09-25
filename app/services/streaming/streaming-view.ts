@@ -177,6 +177,13 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     ];
   }
 
+  /**
+   * Returns if streaming to Twitch in unprotected mode
+   */
+  get isTwitchUnprotectedStream() {
+    return !this.protectedModeEnabled && this.streamSettingsView.settings.server.includes('twitch');
+  }
+
   /*
    * Primary used to get all platforms that should always show the destination switcher in the Go Live window
    */
@@ -731,9 +738,13 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Chat url of a primary platform
    * If the primary platform is not enabled, and we're on single stream mode,
    * returns the URL of the first enabled platform
+   * @remark Empty in unprotected mode. A custom ingest stream goes to the user's own server, so
+   * no linked platform is receiving it — resolving a platform here would mount the chat of a
+   * platform that is not live.
    */
   get chatUrl(): string {
     if (!this.userView.isLoggedIn || !this.userView.auth) return '';
+    if (!this.protectedModeEnabled) return '';
 
     const enabledPlatforms = this.enabledPlatforms;
     const platform = this.enabledPlatforms.includes(this.userView.auth.primaryPlatform)
