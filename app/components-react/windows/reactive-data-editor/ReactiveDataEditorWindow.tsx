@@ -31,6 +31,7 @@ export default function ReactiveDataEditorWindow() {
     setStateFlat(prev => (prev ? { ...prev, ...changes } : prev));
 
     ReactiveDataService.actions.updateState(changes);
+    WindowsService.actions.closeChildWindow();
   };
 
   type FlatSchemaKey = keyof typeof schemaFlat;
