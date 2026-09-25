@@ -62,6 +62,7 @@ export { SideNavService } from 'services/side-nav';
 export { VideoSettingsService } from 'services/settings-v2/video';
 export { SettingsManagerService } from 'services/settings-manager';
 export { MarkersService } from 'services/markers';
+export { ScreenshotService } from 'services/screenshot';
 export { RealmService } from 'services/realm';
 export { StreamAvatarService } from 'services/stream-avatar/stream-avatar-service';
 export { StreamAvatarApiService } from 'services/stream-avatar/stream-avatar-api-service';
@@ -195,6 +196,7 @@ import { VideoSettingsService } from 'services/settings-v2/video';
 import { SettingsManagerService } from 'services/settings-manager';
 import { DualOutputService } from 'services/dual-output';
 import { MarkersService } from 'services/markers';
+import { ScreenshotService } from 'services/screenshot';
 import { SharedStorageService } from 'services/integrations/shared-storage';
 import { RealmService } from 'services/realm';
 import { InstagramService } from 'services/platforms/instagram';
@@ -292,6 +294,7 @@ export const AppServices = {
   SettingsManagerService,
   DualOutputService,
   MarkersService,
+  ScreenshotService,
   SharedStorageService,
   RealmService,
   RemoteControlService,
