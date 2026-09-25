@@ -1,18 +1,18 @@
-import React, { useEffect, useRef } from 'react';
 import cx from 'classnames';
-import styles from './Common.m.less';
-import { Header, IOnboardingStepProps } from './Onboarding';
-import { $t } from 'services/i18n';
-import { ListInput } from 'components-react/shared/inputs';
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
-import Form from 'components-react/shared/inputs/Form';
-import { Volmeter2d } from 'services/audio/volmeter-2d';
 import Display from 'components-react/shared/Display';
+import { ListInput } from 'components-react/shared/inputs';
+import Form from 'components-react/shared/inputs/Form';
+import React, { useEffect, useRef } from 'react';
+import { Volmeter2d } from 'services/audio/volmeter-2d';
+import { $t } from 'services/i18n';
 import { ERenderingMode } from '../../../../obs-api';
+import styles from './Common.m.less';
+import { Header } from './Onboarding';
 
-export function Devices(p: IOnboardingStepProps) {
-  const { DefaultHardwareService, WindowsService } = Services;
+export function Devices() {
+  const { DefaultHardwareService } = Services;
 
   const { videoDevices, audioDevices, selectedAudioDevice, selectedVideoDevice } = useVuex(() => ({
     videoDevices: DefaultHardwareService.videoDevices.map(device => ({
@@ -52,16 +52,9 @@ export function Devices(p: IOnboardingStepProps) {
         title={$t('Set Up Your Mic & Webcam')}
         description={$t('Connect your most essential devices now or later on')}
       />
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-evenly',
-          alignItems: 'center',
-          width: '100%',
-        }}
-      >
+      <div className={styles.devices}>
         <DisplaySection />
-        <div className={styles.darkBox} style={{ width: 360, height: 240, padding: 32 }}>
+        <div className={styles.devicesPicker}>
           <Form layout="vertical">
             <ListInput
               label={$t('Webcam')}
@@ -104,12 +97,14 @@ function DisplaySection() {
 
   if (v.selectedVideoSource && v.videoDevices.length) {
     return (
-      <div className={cx(styles.display, 'section')}>
-        <Display
-          sourceId={v.selectedVideoSource.sourceId}
-          renderingMode={ERenderingMode.OBS_MAIN_RENDERING}
-          isModal
-        />
+      <div className={styles.devicesDisplay}>
+        <div className={cx(styles.devicesDisplayWrapper)}>
+          <Display
+            sourceId={v.selectedVideoSource.sourceId}
+            renderingMode={ERenderingMode.OBS_MAIN_RENDERING}
+            isModal
+          />
+        </div>
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
           <canvas ref={canvasRef} style={{ backgroundColor: 'var(--border)', width: '100%' }} />
         </div>
