@@ -128,7 +128,9 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
 
   resetStreamSettings() {
     const { initialState } = this.constructor as typeof BasePlatformService;
-    this.SET_STREAM_SETTINGS(cloneDeep(initialState.settings));
+    if (initialState.settings) {
+      this.SET_STREAM_SETTINGS(cloneDeep(initialState.settings));
+    }
     localStorage.removeItem(this.serviceName);
   }
 
