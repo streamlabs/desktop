@@ -51,15 +51,22 @@ export default function ResizeBar(p: React.PropsWithChildren<ResizeBarProps>) {
       height: Infinity,
       width: p.value,
       resizeHandles: [p.position === 'left' ? 'e' : 'w'],
-      minConstraints: [p.min, Infinity],
-      maxConstraints: [p.max, Infinity],
+      // A left bar's value is the width of the column to its right (see handleResize), so the
+      // library's constraints would bound the wrong quantity; handleResize clamps instead
+      minConstraints: [p.position === 'left' ? 0 : p.min, Infinity],
+      maxConstraints: [p.position === 'left' ? Infinity : p.max, Infinity],
       axis: 'x',
     };
   }
 
   function handleResize(callback: (val?: number) => void) {
     return (e: React.SyntheticEvent, data: ResizableData) => {
-      const value = p.position === 'top' ? data.size.height : data.size.width;
+      let value = p.position === 'top' ? data.size.height : data.size.width;
+      if (p.position === 'left') {
+        // The bar sits on the right edge of its pane but its value is the width of the column
+        // to the right, so a drag that grows the pane has to shrink the value
+        value = Math.min(p.max, Math.max(p.min, 2 * p.value - value));
+      }
       callback(value);
     };
   }
