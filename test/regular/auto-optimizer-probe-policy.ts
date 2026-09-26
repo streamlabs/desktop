@@ -194,7 +194,7 @@ test('Dual Output keeps one supported probe per canvas when other platforms shar
   );
 });
 
-test('Dual Output selects distinct supported representatives when a canvas has both', t => {
+test('Dual Output keeps all supported platforms, including repeated YouTube', t => {
   const streamSetup = twitchKickYoutubeDualOutputStreamSetup();
   streamSetup.outputs[0].destinations.splice(1, 0, { platform: 'youtube' });
   streamSetup.outputs[0].probeCandidates.push({
@@ -207,19 +207,23 @@ test('Dual Output selects distinct supported representatives when a canvas has b
   const filtered = prepareAutoOptimizerStreamSetup(streamSetup);
   t.deepEqual(
     filtered.outputs.map(output => output.probeCandidates.map(candidate => candidate.platform)),
-    [['twitch'], ['youtube']],
+    [['twitch', 'youtube'], ['youtube']],
   );
   t.true(isEligibleAutoOptimizerDualOutputActiveStreamSetup(filtered));
 });
 
-test('Dual Output remains estimate-only when a canvas has no supported representative', t => {
+test('Dual Output keeps its available probe when the other canvas has only Kick', t => {
   const streamSetup = twitchKickYoutubeDualOutputStreamSetup();
   streamSetup.outputs[1].destinations = [{ platform: 'kick' }];
   streamSetup.outputs[1].probeCandidates = [];
 
   const filtered = prepareAutoOptimizerStreamSetup(streamSetup);
-  t.true(filtered.outputs.every(output => output.measurement === 'estimated'));
-  t.deepEqual(allProbeCandidates(filtered), []);
+  t.deepEqual(
+    filtered.outputs.map(output => output.measurement),
+    ['active', 'estimated'],
+  );
+  t.is(allProbeCandidates(filtered).length, 1);
+  t.true(isEligibleAutoOptimizerDualOutputActiveStreamSetup(filtered));
 });
 
 test('active Dual Output requires a unique probe ID for each output', t => {
@@ -229,18 +233,18 @@ test('active Dual Output requires a unique probe ID for each output', t => {
   t.false(isEligibleAutoOptimizerDualOutputActiveStreamSetup(reusedProbeId));
 });
 
-test('a single multi-destination output nested under Dual Output is estimate-only', t => {
+test('a single multi-destination output under Dual Output keeps its probes', t => {
   const streamSetup = sharedCloudStreamSetup();
   streamSetup.type = 'dual-output';
 
   const filtered = prepareAutoOptimizerStreamSetup(streamSetup);
 
-  t.is(filtered.outputs[0].measurement, 'estimated');
-  t.is(filtered.outputs[0].estimateReason, 'dual_output');
-  t.deepEqual(allProbeCandidates(filtered), []);
+  t.is(filtered.outputs[0].measurement, 'active');
+  t.is(filtered.outputs[0].estimateReason, undefined);
+  t.is(allProbeCandidates(filtered).length, 2);
 });
 
-test('YouTube display both cannot create two active probe leases', t => {
+test('YouTube display both keeps a distinct probe for each canvas', t => {
   const outputs = ['horizontal', 'vertical'].map(display => ({
     outputId: display,
     display: display as 'horizontal' | 'vertical',
@@ -263,8 +267,9 @@ test('YouTube display both cannot create two active probe leases', t => {
 
   const filtered = prepareAutoOptimizerStreamSetup(streamSetup);
 
-  t.true(filtered.outputs.every(output => output.measurement === 'estimated'));
-  t.deepEqual(allProbeCandidates(filtered), []);
+  t.true(filtered.outputs.every(output => output.measurement === 'active'));
+  t.is(allProbeCandidates(filtered).length, 2);
+  t.true(isEligibleAutoOptimizerDualOutputActiveStreamSetup(filtered));
 });
 
 test('active evidence matches selected platforms and partial coverage requires low confidence', t => {

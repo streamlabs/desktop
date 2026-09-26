@@ -150,6 +150,7 @@ export function buildAutoOptimizerRequest(
   input: IBuildAutoOptimizerRequestInput,
 ): IBuiltAutoOptimizerRequest {
   const { streamSetup, outputSettings, videos } = input;
+  const activeDualOutput = isEligibleAutoOptimizerDualOutputActiveStreamSetup(streamSetup);
   const activeEnhancedBroadcastingDualOutput = isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup(
     streamSetup,
   );
@@ -182,6 +183,7 @@ export function buildAutoOptimizerRequest(
     );
     const allowPromotion =
       ((output.measurement === 'active' && output.estimateReason !== 'partial_provider_probes') ||
+        activeDualOutput ||
         activeEnhancedBroadcastingDualOutput) &&
       autoOptimizerCanvasAllowsQualityPromotion(
         video.baseWidth,

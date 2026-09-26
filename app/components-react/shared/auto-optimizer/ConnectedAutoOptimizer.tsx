@@ -26,6 +26,10 @@ const estimateReasonLabels: Record<string, string> = {
   custom_rtmp: 'Estimated without connecting to the custom RTMP destination.',
   cloud_multistream: 'Estimated for the shared cloud multistream upload.',
   dual_output: 'Estimated for this Dual Output stream.',
+  shared_upload_estimate:
+    "Estimated from the upload test on the other canvas. This destination's connection was not tested.",
+  combined_workload_unvalidated:
+    'Bandwidth testing completed, but the combined stream workload could not be validated. These settings are conservative.',
   enhanced_broadcasting: 'Estimated without changing the Enhanced Broadcasting ladder.',
   enhanced_broadcasting_transport_fallback:
     'Upload instability was detected while testing higher-quality settings. The recommended settings passed without dropped frames.',

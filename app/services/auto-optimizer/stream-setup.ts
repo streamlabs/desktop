@@ -61,11 +61,9 @@ const probePlatformOrder: TAutoOptimizerProbePlatform[] = ['twitch', 'youtube'];
 function probeCandidates(
   outputId: string,
   destinations: IAutoOptimizerDestination[],
-  allowed: boolean,
-  type: TAutoOptimizerStreamSetupType,
+  allowEnhancedBroadcastingProbe: boolean,
+  outputKind: IAutoOptimizerOutput['outputKind'],
 ): IAutoOptimizerProbeCandidate[] {
-  if (!allowed) return [];
-
   const platforms = new Set(destinations.map(item => item.platform));
   return probePlatformOrder
     .filter(platform => platforms.has(platform))
@@ -73,7 +71,7 @@ function probeCandidates(
       let kind: IAutoOptimizerProbeCandidate['kind'] = 'youtube-unbound';
       if (platform === 'twitch') {
         kind =
-          type === 'enhanced-broadcasting' || type === 'enhanced-broadcasting-dual-output'
+          allowEnhancedBroadcastingProbe && outputKind === 'twitch-enhanced-broadcasting'
             ? 'twitch-enhanced-broadcasting'
             : 'twitch-standard';
       }
@@ -84,9 +82,16 @@ function probeCandidates(
 function completeOutput(
   output: Omit<IAutoOptimizerOutput, 'probeCandidates' | 'measurement' | 'estimateReason'>,
   type: TAutoOptimizerStreamSetupType,
-  allowProbes: boolean,
+  allowEnhancedBroadcastingProbe: boolean,
 ): IAutoOptimizerOutput {
-  const candidates = probeCandidates(output.outputId, output.destinations, allowProbes, type);
+  // Stream mode controls whether the complete Twitch ladder can be tested, not
+  // whether an ordinary bandwidth probe is available for a selected platform.
+  const candidates = probeCandidates(
+    output.outputId,
+    output.destinations,
+    allowEnhancedBroadcastingProbe,
+    output.outputKind,
+  );
   return {
     ...output,
     probeCandidates: candidates,
@@ -176,10 +181,8 @@ export function describeAutoOptimizerStreamSetup(
     !twitchSettings?.useCustomFields &&
     (!dualOutputMode || isSingleConnectionTwitchDual);
   const enhancedBroadcastingDualOutputProbeEligible = type === 'enhanced-broadcasting-dual-output';
-  const allowProbes =
-    enhancedBroadcastingProbeEligible ||
-    enhancedBroadcastingDualOutputProbeEligible ||
-    !['custom-rtmp', 'mixed', 'enhanced-broadcasting'].includes(type);
+  const allowEnhancedBroadcastingProbe =
+    enhancedBroadcastingProbeEligible || enhancedBroadcastingDualOutputProbeEligible;
 
   const allDestinations: IAutoOptimizerDestination[] = [
     ...platforms.map(destination),
@@ -212,7 +215,7 @@ export function describeAutoOptimizerStreamSetup(
           destinations: [destination('twitch')],
         },
         type,
-        allowProbes,
+        allowEnhancedBroadcastingProbe,
       ),
       ...(['horizontal', 'vertical'] as const)
         .filter(display => byDisplay[display].length > 0)
@@ -225,7 +228,7 @@ export function describeAutoOptimizerStreamSetup(
               destinations: byDisplay[display],
             },
             type,
-            allowProbes,
+            allowEnhancedBroadcastingProbe,
           ),
         ),
     ];
@@ -239,7 +242,7 @@ export function describeAutoOptimizerStreamSetup(
           destinations: [destination('twitch')],
         },
         type,
-        allowProbes,
+        allowEnhancedBroadcastingProbe,
       ),
     ];
   } else if (!dualOutputMode) {
@@ -253,7 +256,7 @@ export function describeAutoOptimizerStreamSetup(
           destinations: allDestinations,
         },
         type,
-        allowProbes,
+        allowEnhancedBroadcastingProbe,
       ),
     ];
   } else {
@@ -284,11 +287,14 @@ export function describeAutoOptimizerStreamSetup(
             outputId: display,
             display,
             outputKind:
-              type === 'enhanced-broadcasting' ? 'twitch-enhanced-broadcasting' : 'standard',
+              type === 'enhanced-broadcasting' &&
+              byDisplay[display].some(item => item.platform === 'twitch')
+                ? 'twitch-enhanced-broadcasting'
+                : 'standard',
             destinations: byDisplay[display],
           },
           type,
-          allowProbes,
+          allowEnhancedBroadcastingProbe,
         ),
       );
   }

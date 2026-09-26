@@ -1,9 +1,5 @@
 import { TwitchService } from 'services/platforms/twitch';
 import { IYoutubeAutoOptimizerProbeLease, YoutubeService } from 'services/platforms/youtube';
-import {
-  isEligibleAutoOptimizerDualOutputActiveStreamSetup,
-  isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup,
-} from './probe-policy';
 import { IAutoOptimizerRun } from './native-run';
 import { IAutoOptimizerActiveProbe, IAutoOptimizerStreamSetup } from './types';
 
@@ -79,15 +75,13 @@ export class AutoOptimizerProbeResources {
         probeCandidates: output.probeCandidates.map(candidate => ({ ...candidate })),
       })),
     };
-    const activeDualOutput = isEligibleAutoOptimizerDualOutputActiveStreamSetup(streamSetup);
-    const activeEnhancedBroadcastingDualOutput = isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup(
-      streamSetup,
-    );
     const requestedProbeCount = streamSetup.outputs.reduce(
       (count, output) => count + output.probeCandidates.length,
       0,
     );
     const probesByOutput = new Map<string, IAutoOptimizerActiveProbe[]>();
+    let youtubeProbe: IAutoOptimizerActiveProbe | undefined;
+    let youtubeLease: IYoutubeAutoOptimizerProbeLease | undefined;
 
     try {
       for (const output of streamSetup.outputs) {
@@ -122,23 +116,34 @@ export class AutoOptimizerProbeResources {
               this.credentialProbes.push(probe);
               acquired.push({ candidate, probe });
             } else {
-              const lease = await this.youtube.acquireAutoOptimizerProbe({
-                signal: controller.signal,
-              });
+              // Each canvas keeps a request identity, but OSN measures this
+              // shared connection once and confirms ingest using its representative
+              // probe ID. All aliases retain the same cleanup owner.
+              const lease =
+                youtubeLease ??
+                (await this.youtube.acquireAutoOptimizerProbe({
+                  signal: controller.signal,
+                }));
+              const probeId = youtubeLease
+                ? `${lease.probeId}-${this.youtubeLeases.size}`
+                : lease.probeId;
               const probe: IAutoOptimizerActiveProbe = {
-                id: lease.probeId,
+                id: probeId,
                 kind: candidate.kind,
-                server: lease.server,
-                streamKey: lease.streamKey,
+                server:
+                  youtubeProbe && 'server' in youtubeProbe ? youtubeProbe.server : lease.server,
+                streamKey: youtubeProbe?.streamKey ?? lease.streamKey,
               };
+              youtubeLease = lease;
+              youtubeProbe = probe;
               // After copying credentials into the OSN request object, retain
               // only identifiers for cleanup and crash recovery.
               lease.server = '';
               lease.streamKey = '';
-              this.youtubeLeases.set(lease.probeId, lease);
+              this.youtubeLeases.set(probeId, lease);
               this.credentialProbes.push(probe);
               acquired.push({
-                candidate: { ...candidate, probeId: lease.probeId },
+                candidate: { ...candidate, probeId },
                 probe,
               });
             }
@@ -168,15 +173,6 @@ export class AutoOptimizerProbeResources {
       }
 
       const activeProbes = [...probesByOutput.values()].flat();
-      if (activeDualOutput && activeProbes.length !== requestedProbeCount) {
-        throw new AutoOptimizerProbeSetupError();
-      }
-      if (
-        activeEnhancedBroadcastingDualOutput &&
-        !activeProbes.some(probe => probe.kind === 'twitch-enhanced-broadcasting')
-      ) {
-        throw new AutoOptimizerProbeSetupError();
-      }
       if (requestedProbeCount > 0 && activeProbes.length === 0) {
         throw new AutoOptimizerProbeSetupError();
       }
@@ -265,10 +261,12 @@ export class AutoOptimizerProbeResources {
   }
 
   private async releaseYoutubeLeases(): Promise<void> {
-    for (const [probeId, lease] of [...this.youtubeLeases]) {
+    for (const lease of new Set(this.youtubeLeases.values())) {
       try {
         await this.youtube.releaseAutoOptimizerProbe(lease);
-        this.youtubeLeases.delete(probeId);
+        for (const [probeId, sharedLease] of this.youtubeLeases) {
+          if (sharedLease === lease) this.youtubeLeases.delete(probeId);
+        }
       } catch (error: unknown) {
         // OSN output is already stopped, so deletion can be retried later.
         // Retain the identifier-only lease and crash-recovery journal.

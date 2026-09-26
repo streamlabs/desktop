@@ -88,6 +88,8 @@ export function validateAutoOptimizerRecommendation(
   recommendation: TNativeRecommendation | null | undefined,
   context: {
     measurementMode: TAutoOptimizerMeasurementMode;
+    /** OSN validated both encoders and allocated a measured shared upload budget. */
+    sharedUploadEstimate?: boolean;
     currentBitrateKbps: number;
     probeEvidence: IAutoOptimizerProbeEvidence[];
     twitchManagesEncoding?: boolean;
@@ -186,6 +188,7 @@ export function validateAutoOptimizerRecommendation(
 
   if (
     context.measurementMode === 'estimated' &&
+    !context.sharedUploadEstimate &&
     ((context.currentWidth && value.width > context.currentWidth) ||
       (context.currentHeight && value.height > context.currentHeight))
   ) {
@@ -219,6 +222,7 @@ export function validateAutoOptimizerRecommendation(
 
   if (
     context.measurementMode === 'estimated' &&
+    !context.sharedUploadEstimate &&
     context.currentBitrateKbps > 0 &&
     value.bitrateKbps > context.currentBitrateKbps
   ) {

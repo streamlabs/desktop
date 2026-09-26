@@ -144,6 +144,82 @@ test('a complete OSN result is projected from the saved non-secret request conte
   t.false('advice' in result!);
 });
 
+test('YouTube bandwidth can support a jointly tested Kick canvas without claiming Kick was measured', t => {
+  const context = standardAttempt();
+  context.streamSetup.type = 'dual-output';
+  const youtubeSetup = copy(context.streamSetup.outputs[0]);
+  youtubeSetup.outputId = 'vertical';
+  youtubeSetup.display = 'vertical';
+  youtubeSetup.destinations = [{ platform: 'youtube' }];
+  youtubeSetup.probeCandidates = [
+    {
+      probeId: 'vertical-youtube',
+      outputId: 'vertical',
+      platform: 'youtube',
+      kind: 'youtube-unbound',
+    },
+  ];
+  context.streamSetup.outputs[0].destinations = [{ platform: 'kick' }];
+  context.streamSetup.outputs[0].measurement = 'estimated';
+  context.streamSetup.outputs[0].probeCandidates = [];
+  context.streamSetup.outputs.push(youtubeSetup);
+  const youtubeRequest = copy(context.outputs[0]);
+  youtubeRequest.outputId = 'vertical';
+  youtubeRequest.display = 'vertical';
+  youtubeRequest.destinations = ['youtube'];
+  youtubeRequest.current = { ...youtubeRequest.current, canvasId: 1, width: 720, height: 1280 };
+  youtubeRequest.limits = { ...youtubeRequest.limits, maxWidth: 1080, maxHeight: 1920 };
+  context.outputs[0].destinations = ['kick'];
+  context.outputs.push(youtubeRequest);
+  const native = standardNativeResult();
+  const youtubeResult = copy(native.outputs[0]);
+  youtubeResult.outputId = 'vertical';
+  youtubeResult.videos[0] = {
+    ...youtubeResult.videos[0],
+    display: 'vertical',
+    width: 1080,
+    height: 1920,
+  };
+  youtubeResult.measurement.evidence = [
+    { platform: 'youtube', method: 'youtube-unbound-ramp', success: true },
+  ];
+  native.outputs[0].measurement = {
+    mode: 'estimated',
+    confidence: 'medium',
+    reason: 'shared_upload_estimate',
+  };
+  native.outputs.push(youtubeResult);
+  const accepted = acceptAutoOptimizerResult(native, context);
+  t.truthy(accepted);
+  t.deepEqual(
+    accepted!.outputs.map(output => [output.bitrate, output.fps]),
+    [
+      [6000, 60],
+      [6000, 60],
+    ],
+  );
+  t.deepEqual(accepted!.outputs[0].probes, []);
+  t.is(accepted!.outputs[0].measurement, 'estimated');
+  for (const mutation of [
+    (result: IAutoOptimizerNativeResult) => {
+      result.outputs[1].measurement.evidence = [];
+    },
+    (result: IAutoOptimizerNativeResult) => {
+      result.outputs[0].measurement.mode = 'active';
+    },
+    (result: IAutoOptimizerNativeResult) => {
+      result.outputs[0].encoding!.bitrateKbps = 7000;
+    },
+    (result: IAutoOptimizerNativeResult) => {
+      result.outputs[1].videos[0].fpsNum = 30;
+    },
+  ]) {
+    const invalid = copy(native);
+    mutation(invalid);
+    t.is(acceptAutoOptimizerResult(invalid, context), null);
+  }
+});
+
 test('incomplete, missing, extra, and duplicate OSN outputs are rejected', t => {
   const context = standardAttempt();
   const partial = standardNativeResult();

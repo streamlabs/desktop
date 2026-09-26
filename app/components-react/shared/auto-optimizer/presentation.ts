@@ -122,9 +122,9 @@ export function autoOptimizerProgressLabel(
 
   switch (detail?.code) {
     case 'dual_output_allocating_upload':
-      return { key: 'Allocating upload capacity across Twitch and YouTube...' };
+      return { key: 'Allocating upload capacity across both canvases...' };
     case 'dual_output_testing_workload':
-      return { key: 'Testing Twitch and YouTube together...' };
+      return { key: 'Testing both canvases together...' };
     case 'enhanced_broadcasting_requesting_ladder':
       return { key: 'Preparing Enhanced Broadcasting settings with Twitch...' };
     case 'enhanced_broadcasting_testing_concurrent_outputs':

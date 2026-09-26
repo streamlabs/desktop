@@ -24,7 +24,7 @@ const AUTO_OPTIMIZER_ENCODER_FAMILIES = new Set([
  * Validate OSN's bandwidth-test evidence against the platforms selected for
  * this run. At least one selected platform must succeed. Missing evidence makes
  * the result partial and requires low confidence, except Dual Output may
- * deliberately select one Twitch or YouTube representative per canvas.
+ * share a tested canvas with destinations that do not support bandwidth testing.
  */
 export function isValidAutoOptimizerActiveProbeCoverage(p: {
   destinations: Array<{ platform: string }>;
@@ -35,9 +35,8 @@ export function isValidAutoOptimizerActiveProbeCoverage(p: {
   evidence: IAutoOptimizerProbeEvidence[];
   confidence: string | undefined;
   /**
-   * For jointly tested Dual Output, one selected Twitch or YouTube test
-   * represents each canvas. Other testable destinations sharing that canvas do
-   * not require separate evidence.
+   * Combined Enhanced Broadcasting workloads validate companion encoding
+   * separately, so their evidence may represent only the prepared probes.
    */
   requireAllProbeCapableDestinations?: boolean;
 }): boolean {
@@ -85,21 +84,22 @@ export function autoOptimizerPlatformForProbeKind(
 }
 
 /**
- * Recognize the supported two-canvas Dual Output setup: one Twitch test on one
- * canvas and one YouTube test on the other. OSN validates their combined upload
- * budget and concurrent encoder workload; other destinations may share either
- * canvas without being tested.
+ * Recognize two standard canvases with at least one available bandwidth probe.
+ * OSN validates the shared upload budget and concurrent encoder workload. An
+ * unprobed canvas can use that budget without claiming its destination was tested.
  */
 export function isEligibleAutoOptimizerDualOutputActiveStreamSetup(
   streamSetup: IAutoOptimizerStreamSetup,
 ): boolean {
-  if (streamSetup.type !== 'dual-output' || streamSetup.outputs.length !== 2) {
+  if (
+    streamSetup.outputs.length !== 2 ||
+    streamSetup.outputs.some(output => output.outputKind !== 'standard')
+  ) {
     return false;
   }
 
   const displays = new Set(streamSetup.outputs.map(output => output.display));
   const outputIds = new Set(streamSetup.outputs.map(output => output.outputId));
-  const probePlatforms = new Set<TAutoOptimizerProbePlatform>();
   if (
     displays.size !== 2 ||
     !displays.has('horizontal') ||
@@ -110,20 +110,23 @@ export function isEligibleAutoOptimizerDualOutputActiveStreamSetup(
   }
 
   for (const output of streamSetup.outputs) {
-    if (!output.destinations.length || output.probeCandidates.length !== 1) return false;
-    const candidate = output.probeCandidates[0];
-    const carriesProbePlatform = output.destinations.some(
-      destination => destination.platform === candidate.platform,
-    );
-    if (
-      !carriesProbePlatform ||
-      candidate.outputId !== output.outputId ||
-      (candidate.platform === 'twitch' && candidate.kind !== 'twitch-standard') ||
-      (candidate.platform === 'youtube' && candidate.kind !== 'youtube-unbound')
-    ) {
-      return false;
+    if (!output.destinations.length) return false;
+    const platforms = new Set<TAutoOptimizerProbePlatform>();
+    for (const candidate of output.probeCandidates) {
+      const carriesProbePlatform = output.destinations.some(
+        destination => destination.platform === candidate.platform,
+      );
+      if (
+        !carriesProbePlatform ||
+        candidate.outputId !== output.outputId ||
+        platforms.has(candidate.platform) ||
+        (candidate.platform === 'twitch' && candidate.kind !== 'twitch-standard') ||
+        (candidate.platform === 'youtube' && candidate.kind !== 'youtube-unbound')
+      ) {
+        return false;
+      }
+      platforms.add(candidate.platform);
     }
-    probePlatforms.add(candidate.platform);
   }
 
   const candidateKey = (candidate: IAutoOptimizerProbeCandidate) =>
@@ -132,12 +135,9 @@ export function isEligibleAutoOptimizerDualOutputActiveStreamSetup(
   const candidateKeys = candidates.map(candidateKey);
   const probeIds = candidates.map(candidate => candidate.probeId);
   return (
-    probePlatforms.size === 2 &&
-    probePlatforms.has('twitch') &&
-    probePlatforms.has('youtube') &&
-    candidates.length === 2 &&
-    new Set(candidateKeys).size === 2 &&
-    new Set(probeIds).size === 2
+    candidates.length > 0 &&
+    new Set(candidateKeys).size === candidates.length &&
+    new Set(probeIds).size === candidates.length
   );
 }
 
@@ -211,45 +211,9 @@ export function isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup
 }
 
 /**
- * Select one testable platform per canvas for Dual Output. Preserve the
- * deterministic candidate order, require one Twitch and one YouTube selection,
- * and let OSN derive the shared upload budget from both measurements.
- */
-function selectAutoOptimizerDualOutputProbePair(
-  streamSetup: IAutoOptimizerStreamSetup,
-): IAutoOptimizerStreamSetup | null {
-  if (streamSetup.type !== 'dual-output' || streamSetup.outputs.length !== 2) return null;
-
-  const candidatesByOutput = streamSetup.outputs.map(output => output.probeCandidates);
-  for (const first of candidatesByOutput[0]) {
-    for (const second of candidatesByOutput[1]) {
-      if (first.platform === second.platform) continue;
-      const selectedByOutput = new Map([
-        [first.outputId, first],
-        [second.outputId, second],
-      ]);
-      const selected: IAutoOptimizerStreamSetup = {
-        ...streamSetup,
-        outputs: streamSetup.outputs.map(output => ({
-          ...output,
-          destinations: output.destinations.map(destination => ({ ...destination })),
-          probeCandidates: selectedByOutput.has(output.outputId)
-            ? [selectedByOutput.get(output.outputId)!]
-            : [],
-          measurement: 'active',
-          estimateReason: undefined,
-        })),
-      };
-      if (isEligibleAutoOptimizerDualOutputActiveStreamSetup(selected)) return selected;
-    }
-  }
-  return null;
-}
-
-/**
- * Select only test combinations supported by the OSN request contract.
- * Platform credentials can still fail during preparation; partial platform
- * coverage must not promote video quality.
+ * Keep every available platform probe regardless of stream mode. Eligibility
+ * for a combined encoder workload is checked separately, not by removing
+ * otherwise useful bandwidth tests.
  */
 export function prepareAutoOptimizerStreamSetup(
   streamSetup: IAutoOptimizerStreamSetup,
@@ -262,39 +226,12 @@ export function prepareAutoOptimizerStreamSetup(
       probeCandidates: output.probeCandidates.map(candidate => ({ ...candidate })),
     })),
   };
-  // OSN allocates bandwidth and validates both encoder workloads together for
-  // Twitch and YouTube Dual Output. If a canvas also targets a destination
-  // without a supported bandwidth test, use one supported platform on that
-  // canvas as its representative instead of disabling both tests.
-  const selectedDualOutput = selectAutoOptimizerDualOutputProbePair(streamSetup);
-  const unsafeDualOutput = filtered.type === 'dual-output' && !selectedDualOutput;
-  const eligibleEnhancedBroadcastingDualOutput = isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup(
-    streamSetup,
-  );
-  const unsafeEnhancedBroadcastingDualOutput =
-    filtered.type === 'enhanced-broadcasting-dual-output' &&
-    !eligibleEnhancedBroadcastingDualOutput;
   filtered.outputs.forEach(output => {
-    const originalCandidates = output.probeCandidates;
-    if (unsafeDualOutput || unsafeEnhancedBroadcastingDualOutput) {
-      output.probeCandidates = [];
-      output.measurement = 'estimated';
-      output.estimateReason = unsafeDualOutput ? 'dual_output' : 'enhanced_broadcasting';
-      return;
-    }
-    const selectedOutput = selectedDualOutput?.outputs.find(
-      selected => selected.outputId === output.outputId,
-    );
-    const selectedCandidates = selectedDualOutput
-      ? selectedOutput!.probeCandidates
-      : originalCandidates;
-    output.probeCandidates = selectedCandidates;
-    if (selectedDualOutput) {
+    if (output.probeCandidates.length) {
       output.measurement = 'active';
       output.estimateReason = undefined;
-    } else if (eligibleEnhancedBroadcastingDualOutput) {
-      output.measurement = selectedCandidates.length ? 'active' : 'estimated';
-      output.estimateReason = selectedCandidates.length ? undefined : 'probe_disabled';
+    } else {
+      output.measurement = 'estimated';
     }
   });
   return filtered;

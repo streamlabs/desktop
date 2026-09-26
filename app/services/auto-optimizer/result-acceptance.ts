@@ -72,7 +72,28 @@ export function acceptAutoOptimizerResult(
     context.streamSetup,
   );
   const jointDualOutputActive =
-    activeDualOutput && nativeResult.outputs.every(output => output.measurement.mode === 'active');
+    activeDualOutput &&
+    nativeResult.outputs.some(output => output.measurement.mode === 'active') &&
+    nativeResult.outputs.every(
+      output =>
+        output.measurement.mode === 'active' ||
+        output.measurement.reason === 'shared_upload_estimate',
+    );
+  if (jointDualOutputActive) {
+    const first = nativeResult.outputs[0];
+    if (
+      nativeResult.outputs.some(
+        output =>
+          !output.encoding ||
+          output.encoding.bitrateKbps !== first.encoding?.bitrateKbps ||
+          output.encoding.encoderId !== first.encoding?.encoderId ||
+          output.encoding.preset !== first.encoding?.preset ||
+          output.videos[0]?.fpsNum * first.videos[0]?.fpsDen !==
+            first.videos[0]?.fpsNum * output.videos[0]?.fpsDen,
+      )
+    )
+      return null;
+  }
   const acceptedOutputs: IAutoOptimizerOutputResult[] = [];
 
   for (const nativeOutput of nativeResult.outputs) {
@@ -108,6 +129,19 @@ export function acceptAutoOptimizerResult(
     if (!primaryVideo || (requested.display === 'both' && !additionalVideo)) return null;
 
     const evidence = sanitizeAutoOptimizerProbeEvidence(nativeOutput.measurement.evidence);
+    const sharedUploadEstimate = nativeOutput.measurement.reason === 'shared_upload_estimate';
+    if (
+      sharedUploadEstimate &&
+      (!jointDualOutputActive ||
+        nativeOutput.measurement.mode !== 'estimated' ||
+        nativeOutput.measurement.confidence === 'high' ||
+        expected.probeCandidates.length ||
+        evidence.length ||
+        expected.destinations.some(
+          destination => destination.platform === 'twitch' || destination.platform === 'youtube',
+        ))
+    )
+      return null;
     const activeEvidenceValid =
       nativeOutput.measurement.mode !== 'active' ||
       isValidAutoOptimizerActiveProbeCoverage({
@@ -115,8 +149,7 @@ export function acceptAutoOptimizerResult(
         attemptedCandidates: expected.probeCandidates,
         evidence,
         confidence: nativeOutput.measurement.confidence,
-        requireAllProbeCapableDestinations:
-          !activeDualOutput && !activeEnhancedBroadcastingDualOutput,
+        requireAllProbeCapableDestinations: !activeEnhancedBroadcastingDualOutput,
       });
     const twitchManagesEncoding = expected.outputKind === 'twitch-enhanced-broadcasting';
     if (twitchManagesEncoding === Boolean(nativeOutput.encoding)) return null;
@@ -147,12 +180,16 @@ export function acceptAutoOptimizerResult(
       },
       {
         measurementMode: nativeOutput.measurement.mode,
+        sharedUploadEstimate,
         currentBitrateKbps: requested.current.bitrateKbps,
         probeEvidence: evidence,
         twitchManagesEncoding,
         enhancedBroadcasting: twitchManagesEncoding,
         qualityProfile:
-          jointDualOutputActive ||
+          (jointDualOutputActive &&
+            context.streamSetup.outputs.some(output =>
+              output.destinations.some(destination => destination.platform === 'twitch'),
+            )) ||
           expected.destinations.some(destination => destination.platform === 'twitch')
             ? 'twitch'
             : 'generic',

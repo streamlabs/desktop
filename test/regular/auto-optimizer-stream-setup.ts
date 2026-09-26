@@ -100,7 +100,7 @@ test('standard Twitch and YouTube share one cloud output with ordered probe cand
   );
 });
 
-test('custom and linked destinations share one mixed setup that remains estimate-only', t => {
+test('custom destinations do not disable probes for linked platforms', t => {
   const streamSetup = describeAutoOptimizerStreamSetup(
     settings({
       platforms: {
@@ -112,8 +112,11 @@ test('custom and linked destinations share one mixed setup that remains estimate
   );
 
   t.is(streamSetup.type, 'mixed');
-  t.is(allProbeCandidates(streamSetup).length, 0);
-  t.is(streamSetup.outputs[0].measurement, 'estimated');
+  t.deepEqual(
+    allProbeCandidates(streamSetup).map(probe => probe.kind),
+    ['twitch-standard'],
+  );
+  t.is(streamSetup.outputs[0].measurement, 'active');
   t.deepEqual(
     streamSetup.outputs[0].destinations.map(item => item.platform),
     ['twitch', 'custom'],
@@ -210,7 +213,7 @@ test('single-canvas Twitch-only Enhanced Broadcasting has its dedicated active p
   t.is(enhanced.outputs[0].measurement, 'active');
 });
 
-test('Enhanced Broadcasting with another destination remains estimate-only', t => {
+test('unsupported Enhanced Broadcasting workloads still offer regular bandwidth probes', t => {
   const enhancedWithYoutube = describeAutoOptimizerStreamSetup(
     settings({
       platforms: {
@@ -226,8 +229,11 @@ test('Enhanced Broadcasting with another destination remains estimate-only', t =
   );
 
   t.is(enhancedWithYoutube.type, 'enhanced-broadcasting');
-  t.is(allProbeCandidates(enhancedWithYoutube).length, 0);
-  t.is(enhancedWithYoutube.outputs[0].estimateReason, 'enhanced_broadcasting');
+  t.deepEqual(
+    allProbeCandidates(enhancedWithYoutube).map(probe => probe.kind),
+    ['twitch-standard', 'youtube-unbound'],
+  );
+  t.is(enhancedWithYoutube.outputs[0].estimateReason, undefined);
 });
 
 test('Stream Shift uses a regular Twitch probe and ignores the saved Enhanced Broadcasting preference', t => {
@@ -280,7 +286,7 @@ test('Stream Shift uses the same platform bandwidth probes as an ordinary stream
   );
 });
 
-test('Enhanced Broadcasting under Dual Output remains estimate-only', t => {
+test('horizontal Enhanced Broadcasting under Dual Output keeps its regular Twitch probe', t => {
   const streamSetup = describeAutoOptimizerStreamSetup(
     settings({
       platforms: {
@@ -296,8 +302,11 @@ test('Enhanced Broadcasting under Dual Output remains estimate-only', t => {
   );
 
   t.is(streamSetup.type, 'enhanced-broadcasting');
-  t.deepEqual(allProbeCandidates(streamSetup), []);
-  t.true(streamSetup.outputs.every(output => output.measurement === 'estimated'));
+  t.deepEqual(
+    allProbeCandidates(streamSetup).map(probe => probe.kind),
+    ['twitch-standard'],
+  );
+  t.true(streamSetup.outputs.every(output => output.measurement === 'active'));
 });
 
 test('paired Enhanced Broadcasting with a horizontal companion models both real outputs', t => {
@@ -497,7 +506,7 @@ test('Twitch Dual Stream uses one Enhanced Broadcasting connection for both canv
   t.is(streamSetup.outputs[0].measurement, 'active');
 });
 
-test('Twitch custom fields keep single and paired Enhanced Broadcasting estimate-only', t => {
+test('Twitch custom fields use regular probes rather than Enhanced Broadcasting workload probes', t => {
   const single = describeAutoOptimizerStreamSetup(
     settings({
       platforms: {
@@ -526,11 +535,17 @@ test('Twitch custom fields keep single and paired Enhanced Broadcasting estimate
   );
 
   t.is(single.type, 'enhanced-broadcasting');
-  t.deepEqual(allProbeCandidates(single), []);
-  t.is(single.outputs[0].measurement, 'estimated');
+  t.deepEqual(
+    allProbeCandidates(single).map(probe => probe.kind),
+    ['twitch-standard'],
+  );
+  t.is(single.outputs[0].measurement, 'active');
   t.is(paired.type, 'enhanced-broadcasting');
-  t.deepEqual(allProbeCandidates(paired), []);
-  t.is(paired.outputs[0].measurement, 'estimated');
+  t.deepEqual(
+    allProbeCandidates(paired).map(probe => probe.kind),
+    ['twitch-standard', 'twitch-standard'],
+  );
+  t.is(paired.outputs[0].measurement, 'active');
 });
 
 test('custom RTMP is never probed even when its URL belongs to YouTube', t => {

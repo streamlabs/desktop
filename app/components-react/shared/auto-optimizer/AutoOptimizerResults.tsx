@@ -48,7 +48,9 @@ function MeasurementProvenance(p: {
   output: IAutoOptimizerPresentationOutput;
   standalone?: boolean;
 }) {
-  const measured = p.output.measurementMode === 'active' ? p.output.measuredPlatforms || [] : [];
+  // Successful bandwidth evidence is still measured when the combined encoder
+  // workload cannot be validated and the recommendation remains conservative.
+  const measured = p.output.measuredPlatforms || [];
   // `platforms` includes every destination that shares this output. Show
   // measurement details only for Twitch and YouTube, the platforms Auto
   // Optimizer can test. Using the full destination list would incorrectly claim

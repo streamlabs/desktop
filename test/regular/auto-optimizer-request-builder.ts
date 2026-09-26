@@ -155,6 +155,54 @@ test('applies platform bitrate limits and prevents estimate or partial promotion
   });
 });
 
+test('allows both standard canvases to be benchmarked when only YouTube has a probe', t => {
+  const youtube = optimizerOutput({
+    outputId: 'vertical',
+    display: 'vertical',
+    destinations: [{ platform: 'youtube' }],
+    probeCandidates: [
+      {
+        probeId: 'vertical-youtube',
+        kind: 'youtube-unbound',
+        outputId: 'vertical',
+        platform: 'youtube',
+      },
+    ],
+  });
+  const kick = optimizerOutput({
+    destinations: [{ platform: 'kick' }],
+    probeCandidates: [],
+    measurement: 'estimated',
+  });
+  const built = buildAutoOptimizerRequest({
+    streamSetup: streamSetup([kick, youtube], 'dual-output'),
+    outputProbes: [
+      {
+        outputId: 'vertical',
+        probes: [
+          {
+            id: 'vertical-youtube',
+            kind: 'youtube-unbound',
+            server: 'probe-server',
+            streamKey: 'probe-key',
+          },
+        ],
+      },
+    ],
+    outputSettings,
+    videos: videos(),
+  });
+  t.deepEqual(
+    built.request.outputs.map(output => output.limits),
+    [
+      { maxBitrateKbps: 8000, maxWidth: 1920, maxHeight: 1080, maxFpsNum: 60, maxFpsDen: 1 },
+      { maxBitrateKbps: 8000, maxWidth: 1080, maxHeight: 1920, maxFpsNum: 60, maxFpsDen: 1 },
+    ],
+  );
+  t.falsy(built.request.outputs[0].probes?.length);
+  t.is(built.request.outputs[1].probes?.length, 1);
+});
+
 test('builds paired Enhanced Broadcasting video settings without a Desktop bitrate cap', t => {
   const enhanced = optimizerOutput({
     outputId: 'twitch-enhanced-broadcasting',

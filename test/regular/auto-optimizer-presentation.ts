@@ -303,7 +303,7 @@ test('Dual Output progress explains bandwidth allocation and concurrent workload
         availableBitrateKbps: 10000,
       }),
     ),
-    { key: 'Allocating upload capacity across Twitch and YouTube...' },
+    { key: 'Allocating upload capacity across both canvases...' },
   );
   t.deepEqual(
     autoOptimizerProgressLabel(
@@ -316,7 +316,36 @@ test('Dual Output progress explains bandwidth allocation and concurrent workload
         fpsDen: 1,
       }),
     ),
-    { key: 'Testing Twitch and YouTube together...' },
+    { key: 'Testing both canvases together...' },
+  );
+});
+
+test('Dual Output workload labels do not invent a Twitch destination for YouTube-only probes', t => {
+  for (const platforms of [
+    ['youtube', 'youtube'],
+    ['twitch', 'youtube'],
+  ] as const) {
+    const candidates = platforms.map(platform => ({ platform }));
+    t.is(
+      autoOptimizerProgressLabel(
+        'hardware',
+        progressDetail({ code: 'dual_output_testing_workload' }),
+        candidates,
+      ).key,
+      'Testing both canvases together...',
+    );
+    t.is(
+      autoOptimizerProgressLabel(
+        'recommendation',
+        progressDetail({ code: 'dual_output_allocating_upload' }),
+        candidates,
+      ).key,
+      'Allocating upload capacity across both canvases...',
+    );
+  }
+  t.is(
+    bandwidthPhaseLabelKey(null, [{ platform: 'twitch' }, { platform: 'youtube' }]),
+    'Measuring your Twitch and YouTube uploads...',
   );
 });
 
