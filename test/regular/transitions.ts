@@ -56,7 +56,7 @@ test('Adding and removing transitions', async t => {
   await clickSceneTransitions();
   await focusChild();
   await (await app.client.$('button=Add Transition')).click();
-  await dismissModal(t);
+  await clickButton('Done');
   await (await app.client.$('.icon-trash')).click();
   await (await app.client.$('.icon-edit')).click();
   const title = await getFormInput(t, 'Name');
