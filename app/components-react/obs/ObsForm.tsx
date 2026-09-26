@@ -389,21 +389,34 @@ export function ObsFormGroup(p: IObsFormGroupProps) {
   }
   const sections = p.value.filter(section => section.parameters.filter(p => p.visible).length);
 
+  // OBS can report consecutive sub-categories under the same name (Advanced > Audio is split
+  // into monitoring and low-latency buffering); render such a run as one titled section
+  const groups: { name: string; members: number[] }[] = [];
+  sections.forEach((section, ind) => {
+    const last = groups[groups.length - 1];
+    if (last && last.name !== 'Untitled' && last.name === section.nameSubCategory) {
+      last.members.push(ind);
+    } else {
+      groups.push({ name: section.nameSubCategory, members: [ind] });
+    }
+  });
+
   const type = p.type || 'default';
 
   return (
     <div className="form-groups" style={{ paddingBottom: '12px' }}>
       {type === 'default' &&
-        sections.map((sectionProps, ind) => (
-          <div className="section" key={`${sectionProps.nameSubCategory}${ind}`}>
-            {sectionProps.nameSubCategory !== 'Untitled' && (
-              <h2 className="section-title">{$t(sectionProps.nameSubCategory)}</h2>
-            )}
+        groups.map(group => (
+          <div className="section" key={`${group.name}${group.members[0]}`}>
+            {group.name !== 'Untitled' && <h2 className="section-title">{$t(group.name)}</h2>}
             <div className="section-content">
-              <ObsForm
-                value={sectionProps.parameters}
-                onChange={formData => onChangeHandler(formData, ind)}
-              />
+              {group.members.map(ind => (
+                <ObsForm
+                  key={ind}
+                  value={sections[ind].parameters}
+                  onChange={formData => onChangeHandler(formData, ind)}
+                />
+              ))}
             </div>
           </div>
         ))}
