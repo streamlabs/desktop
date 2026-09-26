@@ -1246,6 +1246,9 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
 
     this.writeUserIdFile();
     this.unsubscribeFromSocketConnection();
+    this.streamingService.views.allPlatforms.forEach(platform =>
+      getPlatformService(platform).resetStreamSettings(),
+    );
     this.LOGOUT();
     this.userLogout.next();
   }
