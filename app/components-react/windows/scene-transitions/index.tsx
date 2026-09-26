@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Menu, Modal } from 'antd';
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
@@ -12,21 +12,46 @@ import TransitionsTable from './TransitionsTable';
 import ConnectionsTable from './ConnectionsTable';
 
 export default function SceneTransitions() {
-  const { ScenesService } = Services;
+  const { ScenesService, EditorCommandsService } = Services;
 
   const [activeTab, setActiveTab] = useState('transitions');
   const [showConnectionModal, setShowConnectionModal] = useState(false);
   const [showTransitionModal, setShowTransitionModal] = useState(false);
   const [inspectedTransition, setInspectedTransition] = useState('');
   const [inspectedConnection, setInspectedConnection] = useState('');
+  // A transition created by "Add Transition" that the user has not yet kept with Done
+  const [pendingTransitionId, setPendingTransitionId] = useState('');
+  // Set when the user cancels out of a pending transition; removed once the modal has
+  // finished closing, because antd keeps the editor mounted during the close animation
+  const discardOnClose = useRef('');
 
   const { transitionsEnabled } = useVuex(() => ({
     transitionsEnabled: ScenesService.views.scenes.length > 1,
   }));
 
-  function dismissModal() {
+  function closeModal() {
     setShowConnectionModal(false);
     setShowTransitionModal(false);
+  }
+
+  function confirmModal() {
+    setPendingTransitionId('');
+    closeModal();
+  }
+
+  function cancelModal() {
+    if (showTransitionModal && pendingTransitionId) {
+      discardOnClose.current = pendingTransitionId;
+      setInspectedTransition('');
+      setPendingTransitionId('');
+    }
+    closeModal();
+  }
+
+  function afterModalClose() {
+    if (!discardOnClose.current) return;
+    EditorCommandsService.actions.executeCommand('RemoveTransitionCommand', discardOnClose.current);
+    discardOnClose.current = '';
   }
 
   return (
@@ -51,6 +76,7 @@ export default function SceneTransitions() {
               <TransitionsTable
                 setInspectedTransition={setInspectedTransition}
                 setShowTransitionModal={setShowTransitionModal}
+                setPendingTransition={setPendingTransitionId}
               />
             )}
             {activeTab === 'connections' && (
@@ -65,11 +91,12 @@ export default function SceneTransitions() {
             getContainer="#scene-transitions"
             bodyStyle={{ padding: 48, height: showTransitionModal ? 360 : 240 }}
             footer={
-              <button className="button button--action" onClick={dismissModal}>
+              <button className="button button--action" onClick={confirmModal}>
                 {$t('Done')}
               </button>
             }
-            onCancel={dismissModal}
+            onCancel={cancelModal}
+            afterClose={afterModalClose}
             destroyOnClose
           >
             {showConnectionModal && <ConnectionSettings connectionId={inspectedConnection} />}

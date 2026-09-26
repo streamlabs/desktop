@@ -13,6 +13,7 @@ import Tooltip from 'components-react/shared/Tooltip';
 export default function TransitionsTable(p: {
   setInspectedTransition: (id: string) => void;
   setShowTransitionModal: (val: boolean) => void;
+  setPendingTransition: (id: string) => void;
 }) {
   const { TransitionsService, EditorCommandsService } = Services;
 
@@ -42,6 +43,7 @@ export default function TransitionsTable(p: {
     )) as ITransition;
 
     if (!transition) return;
+    p.setPendingTransition(transition.id);
     editTransition(transition.id);
   }
 
