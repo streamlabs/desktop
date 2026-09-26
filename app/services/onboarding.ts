@@ -27,8 +27,6 @@ export enum EOnboardingSteps {
   ObsImport = 'ObsImport',
   HardwareSetup = 'HardwareSetup',
   ThemeSelector = 'ThemeSelector',
-  // temporarily disable auto config until migrate to new api
-  // Optimize = 'Optimize',
   Prime = 'Prime',
 }
 
@@ -102,15 +100,6 @@ export const ONBOARDING_STEPS = (): Record<EOnboardingSteps, IOnboardingStep> =>
       ((isLoggedIn && platformSupportsThemes) || !isLoggedIn),
     isSkippable: true,
   },
-  // temporarily disable auto config until migrate to new api
-  // [EOnboardingSteps.Optimize]: {
-  //   component: 'Optimize' as const,
-  //   disableControls: false,
-  //   hideSkip: false,
-  //   hideButton: true,
-  //   label: $t('Optimize'),
-  //   cond: ({ isTwitchAuthed, isYoutubeAuthed, recordingModeEnabled }: OnboardingStepContext) => isTwitchAuthed || isYoutubeAuthed || recordingModeEnabled,
-  // },
   [EOnboardingSteps.Prime]: {
     component: 'Prime' as const,
     hideButton: true,
@@ -143,7 +132,6 @@ export interface IOnboardingStep {
     | 'ObsImport'
     | 'HardwareSetup'
     | 'ThemeSelector'
-    | 'Optimize'
     | 'Prime';
   hideButton?: boolean;
   label?: string;
@@ -155,7 +143,6 @@ export interface IOnboardingStep {
 
 interface IOnboardingOptions {
   isLogin: boolean; // When logging into a new account after onboarding
-  isOptimize: boolean; // When re-running the optimizer after onboarding
   // about our security upgrade.
   isHardware: boolean; // When configuring capture defaults
   isImport: boolean; // When users are importing from OBS
@@ -176,8 +163,6 @@ class OnboardingViews extends ViewHandler<IOnboardingServiceState> {
 
       return ONBOARDING_STEPS()[EOnboardingSteps.Connect];
     }
-    // temporarily disable auto config until migrate to new api
-    // if (this.state.options.isOptimize) return ONBOARDING_STEPS()[EOnboardingSteps.Optimize];
     if (this.state.options.isHardware) return ONBOARDING_STEPS()[EOnboardingSteps.HardwareSetup];
     if (this.state.options.isImport) return ONBOARDING_STEPS()[EOnboardingSteps.ObsImport];
   }
@@ -252,7 +237,6 @@ export class OnboardingService extends StatefulService<IOnboardingServiceState> 
   static initialState: IOnboardingServiceState = {
     options: {
       isLogin: false,
-      isOptimize: false,
       isHardware: false,
       isImport: false,
     },
@@ -361,7 +345,6 @@ export class OnboardingService extends StatefulService<IOnboardingServiceState> 
   start(options: Partial<IOnboardingOptions> = {}) {
     const actualOptions: IOnboardingOptions = {
       isLogin: false,
-      isOptimize: false,
       isHardware: false,
       isImport: false,
       ...options,

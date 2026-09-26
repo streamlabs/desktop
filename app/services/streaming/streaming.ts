@@ -111,6 +111,7 @@ import {
   TStreamingDisplay,
 } from './output-context';
 import { videoOutputCoordinator } from 'services/video-output-coordinator';
+import { autoOptimizerStandardOutputForDisplay } from './auto-optimizer-profile-policy';
 import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremental-rollout';
 import { createStreamingSignalHandler } from './streaming-output-lifecycle';
 
@@ -531,8 +532,12 @@ export class StreamingService
       destination.mode = display === 'horizontal' ? 'landscape' : 'portrait';
     });
 
-    // save enabled platforms to reuse setting with the next app start
-    this.streamSettingsService.setSettings({ goLiveSettings: settings });
+    // Persist enabled platforms for the next app start, but never persist the
+    // optimizer profile. It is valid only for the exact outputs and destinations
+    // confirmed for this stream.
+    const persistedGoLiveSettings = cloneDeep(settings);
+    delete persistedGoLiveSettings.autoOptimizerProfile;
+    this.streamSettingsService.setSettings({ goLiveSettings: persistedGoLiveSettings });
 
     // save current settings in store so we can re-use them if something will go wrong
     this.SET_GO_LIVE_SETTINGS(settings);
@@ -558,7 +563,9 @@ export class StreamingService
      * Saved any settings updated during the `beforeGoLive` process for the platforms.
      * This is important for dual streaming and multistreaming.
      */
-    this.SET_GO_LIVE_SETTINGS(this.views.savedSettings);
+    const refreshedSettings = this.views.savedSettings;
+    refreshedSettings.autoOptimizerProfile = settings.autoOptimizerProfile;
+    this.SET_GO_LIVE_SETTINGS(refreshedSettings);
 
     /**
      * SET DUAL OUTPUT SETTINGS
@@ -606,7 +613,8 @@ export class StreamingService
               });
             }
 
-            const updatedSettings = { ...settings, currentCustomDestinations };
+            const updatedSettings = cloneDeep({ ...settings, currentCustomDestinations });
+            delete updatedSettings.autoOptimizerProfile;
             this.streamSettingsService.setSettings({ goLiveSettings: updatedSettings });
           }
 
@@ -646,7 +654,8 @@ export class StreamingService
               destination.video = this.videoSettingsService.contexts.vertical;
             });
 
-            const updatedSettings = { ...settings, currentCustomDestinations };
+            const updatedSettings = cloneDeep({ ...settings, currentCustomDestinations });
+            delete updatedSettings.autoOptimizerProfile;
             this.streamSettingsService.setSettings({ goLiveSettings: updatedSettings });
           }
 
@@ -3296,6 +3305,8 @@ export class StreamingService
         : this.outputSettingsService.getRecordingSettings(display);
 
     const instance = this.contexts[contextName][type];
+    const autoOptimizerLeg =
+      type === 'streaming' ? this.getAutoOptimizerOutputForContext(contextName) : undefined;
 
     // TODO: Revisit after merge video encoder backend changes to see if this should be surfaced to the user
     if (!instance) {
@@ -3314,7 +3325,7 @@ export class StreamingService
         key === 'videoEncoder' &&
         (contextName !== 'enhancedBroadcasting' || isEnhancedBroadcastingContext)
       ) {
-        const encoderSettings =
+        let encoderSettings =
           type === 'streaming'
             ? this.outputSettingsService.getStreamingVideoEncoderSettings(
                 mode,
@@ -3324,6 +3335,17 @@ export class StreamingService
                 mode,
                 settings.videoEncoder,
               );
+
+        if (type === 'streaming' && autoOptimizerLeg) {
+          // Output settings are global, while Dual Output can create one encoder
+          // per display. Apply only the per-output bitrate here; the encoder ID
+          // is persisted transactionally when it is common and remains under the
+          // existing factory's compatibility checks.
+          encoderSettings = {
+            ...encoderSettings,
+            bitrate: autoOptimizerLeg.bitrate,
+          };
+        }
 
         instance.videoEncoder = VideoEncoderFactory.create(
           settings.videoEncoder,
@@ -3345,6 +3367,14 @@ export class StreamingService
     });
 
     return instance;
+  }
+
+  private getAutoOptimizerOutputForContext(contextName: TOutputContext) {
+    const profile = this.state.info.settings?.autoOptimizerProfile;
+    if (contextName === 'enhancedBroadcasting') return;
+
+    const display: TDisplayType = contextName === 'vertical' ? 'vertical' : 'horizontal';
+    return autoOptimizerStandardOutputForDisplay(profile, display);
   }
 
   /** Install a fresh attempt's callback on the current streaming instance. */
@@ -4146,15 +4176,20 @@ export class StreamingService
     // A recording or replay buffer can retain the streaming dependency. Reuse its
     // encoder, but keep settings fixed while an output is using it.
     if (encoder && !encoder.active && encoder.id === settings.videoEncoder) {
-      encoder.update(
+      let encoderSettings =
         type === 'streaming'
           ? this.outputSettingsService.getStreamingVideoEncoderSettings(mode, settings.videoEncoder)
           : this.outputSettingsService.getRecordingVideoEncoderSettings(
               mode,
               settings.videoEncoder,
-            ),
-        true,
-      );
+            );
+      const autoOptimizerLeg =
+        type === 'streaming' ? this.getAutoOptimizerOutputForContext(contextName) : undefined;
+      // Retained encoders must use the same per-output override as newly created ones.
+      if (autoOptimizerLeg) {
+        encoderSettings = { ...encoderSettings, bitrate: autoOptimizerLeg.bitrate };
+      }
+      encoder.update(encoderSettings, true);
       if (type === 'streaming' && 'enforceServiceBitrate' in settings) {
         const stream = instance as ISimpleStreaming | IAdvancedStreaming;
         if (settings.enforceServiceBitrate !== undefined) {
