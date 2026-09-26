@@ -132,7 +132,7 @@ export default function GoLiveSettings() {
                 enabledPlatforms={enabledPlatforms}
                 onSetPrimaryChat={setPrimaryChat}
                 primaryChat={primaryChat}
-                suffixIcon={<CaretDownOutlined />}
+                suffixIcon={<CaretDownOutlined className="ant-select-suffix" />}
                 layout="horizontal"
                 logo={false}
                 border={false}

@@ -131,7 +131,7 @@ const EditStreamSettings = memo(function EditStreamSettings(p: { timer: number |
                 enabledPlatforms={enabledPlatforms}
                 onSetPrimaryChat={setPrimaryChat}
                 primaryChat={primaryChat}
-                suffixIcon={<CaretDownOutlined />}
+                suffixIcon={<CaretDownOutlined className="ant-select-suffix" />}
                 layout="horizontal"
                 logo={false}
                 border={false}

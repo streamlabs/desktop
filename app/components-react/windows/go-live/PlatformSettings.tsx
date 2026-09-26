@@ -128,7 +128,7 @@ export default function PlatformSettings() {
             enabledPlatforms={enabledPlatforms}
             onSetPrimaryChat={setPrimaryChat}
             primaryChat={primaryChat}
-            suffixIcon={<CaretDownOutlined />}
+            suffixIcon={<CaretDownOutlined className="ant-select-suffix" />}
             layout="vertical"
             logo={false}
           />
