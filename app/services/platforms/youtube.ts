@@ -201,7 +201,7 @@ type TBroadcastLifecycleStatus =
   | 'testStarting'
   | 'testing';
 
-const VERTICAL_STREAM_TITLE_SUFFIX = ' (Portrait)';
+export const VERTICAL_STREAM_TITLE_SUFFIX = ' (Portrait)';
 const makeVerticalTitle = (orig: string) => `${orig}${VERTICAL_STREAM_TITLE_SUFFIX}`;
 
 @InheritMutations()
