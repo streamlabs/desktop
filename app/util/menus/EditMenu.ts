@@ -64,9 +64,11 @@ export class EditMenu extends Menu {
     }
 
     // Selective recording can only be used with horizontal sources
+    const globalSelection = this.selectionService.views.globalSelection;
     this.showProjectionMenuItem =
       this.options?.display !== 'vertical' &&
-      !this.selectionService.views.globalSelection.getItems('vertical').length;
+      (!globalSelection.getItems('vertical').length ||
+        globalSelection.getItems('horizontal').length > 0);
 
     this.appendEditMenuItems();
   }
