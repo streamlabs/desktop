@@ -382,12 +382,18 @@ interface IObsFormGroupProps {
  * Renders a group of OBS forms
  */
 export function ObsFormGroup(p: IObsFormGroupProps) {
+  // Sub-categories with nothing visible are dropped from rendering, so a rendered index is not
+  // an index into p.value; keep the original position for the change handler
+  const visible = p.value
+    .map((section, index) => ({ section, index }))
+    .filter(({ section }) => section.parameters.filter(param => param.visible).length);
+  const sections = visible.map(({ section }) => section);
+
   function onChangeHandler(formData: TObsFormData, ind: number) {
     const newVal = cloneDeep(p.value);
-    newVal[ind].parameters = formData;
+    newVal[visible[ind].index].parameters = formData;
     p.onChange(newVal);
   }
-  const sections = p.value.filter(section => section.parameters.filter(p => p.visible).length);
 
   // OBS can report consecutive sub-categories under the same name (Advanced > Audio is split
   // into monitoring and low-latency buffering); render such a run as one titled section
