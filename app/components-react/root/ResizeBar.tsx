@@ -16,6 +16,9 @@ interface ResizeBarProps {
   onInput: (val: number) => void;
   className?: string;
   transformScale?: number;
+  // The bar's value is the width of the column on the other side of it rather than of the pane
+  // it wraps (the editor layouts), so a drag that grows the pane has to shrink the value
+  complementary?: boolean;
 }
 
 interface ResizableData {
@@ -51,10 +54,10 @@ export default function ResizeBar(p: React.PropsWithChildren<ResizeBarProps>) {
       height: Infinity,
       width: p.value,
       resizeHandles: [p.position === 'left' ? 'e' : 'w'],
-      // A left bar's value is the width of the column to its right (see handleResize), so the
+      // A complementary bar's value is the width of the other column (see handleResize), so the
       // library's constraints would bound the wrong quantity; handleResize clamps instead
-      minConstraints: [p.position === 'left' ? 0 : p.min, Infinity],
-      maxConstraints: [p.position === 'left' ? Infinity : p.max, Infinity],
+      minConstraints: [p.complementary ? 0 : p.min, Infinity],
+      maxConstraints: [p.complementary ? Infinity : p.max, Infinity],
       axis: 'x',
     };
   }
@@ -62,9 +65,7 @@ export default function ResizeBar(p: React.PropsWithChildren<ResizeBarProps>) {
   function handleResize(callback: (val?: number) => void) {
     return (e: React.SyntheticEvent, data: ResizableData) => {
       let value = p.position === 'top' ? data.size.height : data.size.width;
-      if (p.position === 'left') {
-        // The bar sits on the right edge of its pane but its value is the width of the column
-        // to the right, so a drag that grows the pane has to shrink the value
+      if (p.complementary) {
         value = Math.min(p.max, Math.max(p.min, 2 * p.value - value));
       }
       callback(value);
