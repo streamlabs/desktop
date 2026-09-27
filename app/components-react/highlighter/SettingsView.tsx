@@ -337,6 +337,8 @@ export default function SettingsView({
                           newHotkey.bindings.splice(0, 1, binding);
                           setHotkey(newHotkey);
                           hotkeyRef.current = newHotkey;
+                          HotkeysService.actions.applyGeneralHotkey(newHotkey);
+                          if (!v.isStreaming) HotkeysService.actions.unregisterAll();
                         }}
                       />
                     )}
