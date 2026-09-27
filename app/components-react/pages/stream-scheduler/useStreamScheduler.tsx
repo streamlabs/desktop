@@ -378,10 +378,16 @@ export class StreamSchedulerController {
       // update YT event
       const ytSettings = cloneDeep(streamSettings) as IYoutubeStartStreamOptions;
       ytSettings.scheduledStartTime = this.store.time;
-      const video = await Services.YoutubeService.actions.return.updateBroadcast(
-        selectedEventId,
-        ytSettings,
-      );
+      let video!: IYoutubeLiveBroadcast;
+      try {
+        video = await Services.YoutubeService.actions.return.updateBroadcast(
+          selectedEventId,
+          ytSettings,
+        );
+      } catch (e: unknown) {
+        this.handleError(e as IStreamError);
+        return;
+      }
       this.setEvent(video.id, convertYTBroadcastToEvent(video));
     } else if (selectedPlatform === 'twitter') {
       const twitterSettings = cloneDeep(streamSettings) as ITwitterStartStreamOptions;
