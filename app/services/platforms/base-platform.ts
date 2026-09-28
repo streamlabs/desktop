@@ -126,12 +126,16 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
     );
   }
 
+  /**
+   * Restore the platform's go-live settings to their defaults. Platforms that persist their
+   * settings via `syncSettingsWithLocalStorage` pick this up through that watcher, which
+   * overwrites the stored copy with the defaults on the next tick.
+   */
   resetStreamSettings() {
     const { initialState } = this.constructor as typeof BasePlatformService;
     if (initialState.settings) {
       this.SET_STREAM_SETTINGS(cloneDeep(initialState.settings));
     }
-    localStorage.removeItem(this.serviceName);
   }
 
   async validatePlatform() {
