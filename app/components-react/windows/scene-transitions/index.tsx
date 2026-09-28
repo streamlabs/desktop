@@ -42,7 +42,6 @@ export default function SceneTransitions() {
   function cancelModal() {
     if (showTransitionModal && pendingTransitionId) {
       discardOnClose.current = pendingTransitionId;
-      setInspectedTransition('');
       setPendingTransitionId('');
     }
     closeModal();
@@ -52,6 +51,8 @@ export default function SceneTransitions() {
     if (!discardOnClose.current) return;
     EditorCommandsService.actions.executeCommand('RemoveTransitionCommand', discardOnClose.current);
     discardOnClose.current = '';
+    // Only now that the editor is unmounted; the id must stay valid for the close animation
+    setInspectedTransition('');
   }
 
   return (
