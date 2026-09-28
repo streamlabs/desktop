@@ -448,7 +448,13 @@ export class StreamingService
     if (!this.streamSettingsService.state.protectedModeEnabled) {
       // Validate the current stream settings before proceeding
       // This is a band-aid solution until the backend fixes are made
-      this.settingsService.validateUnprotectedModeCredentials();
+      const correctedServer = this.settingsService.validateUnprotectedModeCredentials();
+
+      // Apply through StreamSettingsService so the OBS Stream category is written in the order it
+      // requires; patching `server` into that category directly loses `streamType` and `key`
+      if (correctedServer) {
+        this.streamSettingsService.setSettings({ server: correctedServer });
+      }
     }
 
     // don't interact with API in logged out mode and when protected mode is disabled
