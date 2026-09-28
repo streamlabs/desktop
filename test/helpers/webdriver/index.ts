@@ -127,6 +127,7 @@ class Application {
       env: {
         NODE_ENV: 'test',
         SLOBS_CACHE_DIR: cacheDir,
+        ...this.options.runnerEnv,
       },
     });
 
