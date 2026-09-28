@@ -120,6 +120,18 @@ export class AutomationsEngineService extends Service {
       this.selectedGame = change.selectedGame;
       this.resetGameState();
     });
+
+    // Reset scene-limited automations' cached status so the first match after
+    // re-entering their scene can fire.
+    this.scenesService.sceneSwitched.subscribe(() => {
+      this.automationsService.state.automations
+        .filter(a => a.scenes?.length)
+        .forEach(a =>
+          (a.conditions as TCondition[]).forEach(c =>
+            this.automationPreviousConditionsMetCache.delete(`${a.id}:${c.type}`),
+          ),
+        );
+    });
   }
 
   /**
@@ -259,17 +271,9 @@ export class AutomationsEngineService extends Service {
     const currentGame = this.getCurrentGame().toLowerCase();
 
     for (const automation of automations) {
-      const cacheKey = (condition: TCondition) => `${automation.id}:${condition.type}`;
-
       if (automation.scenes?.length) {
         const activeSceneName = this.scenesService.views.activeScene?.name;
-        if (!activeSceneName || !automation.scenes.includes(activeSceneName)) {
-          // Reset cached status so the first match after re-entering the scene can fire.
-          (automation.conditions as TCondition[]).forEach(c =>
-            this.automationPreviousConditionsMetCache.delete(cacheKey(c)),
-          );
-          continue;
-        }
+        if (!activeSceneName || !automation.scenes.includes(activeSceneName)) continue;
       }
 
       const conditions = (automation.conditions as TCondition[]).filter(c =>
@@ -282,6 +286,7 @@ export class AutomationsEngineService extends Service {
         status: ConditionsManager.evaluate({ condition, state, prevState }),
       }));
 
+      const cacheKey = (condition: TCondition) => `${automation.id}:${condition.type}`;
       const changed = conditionResults.some(
         r => this.automationPreviousConditionsMetCache.get(cacheKey(r.condition)) !== r.status,
       );
