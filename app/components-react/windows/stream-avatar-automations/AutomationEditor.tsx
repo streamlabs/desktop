@@ -276,11 +276,12 @@ export default function AutomationEditor({ initial, onClose }: Props) {
             {$t('Only trigger while this scene is active.')}
           </p>
           <Select
-            value={selectedScene ?? ANY_SCENE}
-            onChange={val => setSelectedScene(val === ANY_SCENE ? undefined : (val as string))}
+            // Option values are scene IDs so a scene named like the sentinel can't collide with it
+            value={scenes.find(s => s.name === selectedScene)?.id ?? selectedScene ?? ANY_SCENE}
+            onChange={val => setSelectedScene(scenes.find(s => s.id === val)?.name)}
             options={[
               { value: ANY_SCENE, label: $t('Any Scene') },
-              ...scenes.map(s => ({ value: s.name, label: s.name })),
+              ...scenes.map(s => ({ value: s.id, label: s.name })),
             ]}
             style={{ width: '50%' }}
           />
