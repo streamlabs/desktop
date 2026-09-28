@@ -166,15 +166,4 @@ export class StreamAvatarApiService extends Service {
       body: JSON.stringify({ instruction, response }),
     });
   }
-
-  async sendTrigger(
-    name: string,
-    parameters: Record<string, unknown>,
-    response: 'text' | 'tts' = 'tts',
-  ): Promise<void> {
-    await this.authedFetch<void>('/agent/trigger', {
-      method: 'POST',
-      body: JSON.stringify({ trigger: { name, parameters }, response }),
-    });
-  }
 }

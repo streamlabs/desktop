@@ -19,7 +19,6 @@ export enum EAvailableFeatures {
   highlighterMigration = 'slobs--highlighter-migration',
   growTab = 'slobs--grow-tab',
   themeAudit = 'slobs--theme-audit',
-  reactWidgets = 'slobs--react-widgets',
   sharedStorage = 'slobs--shared-storage',
   dualOutputRecording = 'slobs--dual-output-recording',
   verticalRecording = 'slobs--vertical-recording',

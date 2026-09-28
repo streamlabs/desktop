@@ -1,4 +1,4 @@
-export { default as AILanding } from './AILanding';
+export { default as VisionLanding } from './VisionLanding';
 export { default as AlertboxLibrary } from './AlertboxLibrary';
 export { default as BrowseOverlays } from './BrowseOverlays';
 export { default as Highlighter } from './Highlighter';

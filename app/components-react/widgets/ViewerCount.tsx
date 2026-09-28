@@ -24,7 +24,7 @@ export function ViewerCount() {
   // use 1 column layout
   return (
     <WidgetLayout>
-      {w.hasLoadedSettings() && (
+      {!w.state.isLoading && w.settings && (
         <>
           <InputWrapper label={$t('Enabled Streams')}>
             <CheckboxInput label={$t('Twitch Viewers')} {...w.bind.twitch} />

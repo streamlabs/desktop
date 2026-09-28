@@ -43,7 +43,7 @@ const loadingStrings = () => [
   'You can switch devices mid-stream, like from your Desktop to your phone, with Stream Shift. Enable Stream Shift in the Go Live modal.',
   'Get paid to stream with Sponsorships. Download in the App Store to get started.',
   'Display chat messages on stream with the Chat Box widget.',
-  'Sidekick is your co-host, live producer and tech support built into Streamlabs Desktop. Learn more via the AI panel in the left sidebar.',
+  'Sidekick is your co-host, live producer and tech support built into Streamlabs Desktop. Learn more via the Vision panel in the navigation menu.',
   'Add your friends or guest creators directly on your stream with Collab Cam Source.',
   "Use the Collab Cam Source to add your friend's webcam feed to your stream.",
   'You can give your Cloudbot chat bot a Custom Name',

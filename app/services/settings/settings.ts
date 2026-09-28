@@ -40,7 +40,7 @@ import { HighlighterService } from 'services/highlighter';
 import { EScaleType } from '../../../obs-api';
 
 export enum ESettingsCategory {
-  AI = 'AI',
+  Vision = 'Vision',
   SceneCollections = 'Scene Collections',
   Advanced = 'Advanced',
   Audio = 'Audio',
@@ -469,9 +469,9 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     categories.push(ESettingsCategory.GetSupport);
 
     // TODO: Lock behind admin?
-    // Show AI settings for Windows, or for Mac in development. Do not show to Mac users in production.
+    // Show Vision settings for Windows, or for Mac in development. Do not show to Mac users in production.
     if (getOS() === OS.Windows || (getOS() === OS.Mac && Utils.isDevMode())) {
-      categories.push(ESettingsCategory.AI);
+      categories.push(ESettingsCategory.Vision);
     }
 
     // dual output mode returns additional categories for each context
@@ -881,48 +881,68 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
    * specific rtmp urls are expected for each service. This validation is band-aid until the backend
    * fix is released.
    * TODO: Remove when BE fix is released.
-   * @returns If the server url is valid.
+   * @returns The server url that should replace the current one, or `null` when the current one is
+   * already valid, absent, or no correction is available. The caller applies it via
+   * `StreamSettingsService.setSettings`, which saves `streamType` before `key`/`server`; writing to
+   * the `Stream` category from here would skip that ordering and OBS would discard both values.
    */
-  validateUnprotectedModeCredentials(): boolean {
+  validateUnprotectedModeCredentials(): string | null {
     const settings = this.views.values.Stream;
+    // Log the shape of the settings, never the whole object — it carries the stream key.
+    console.log('Validating unprotected mode credentials:', {
+      streamType: settings.streamType,
+      service: settings.service,
+      hasServer: !!settings.server,
+    });
     // TODO: The backend is setting the service value with the platform label instead of the
     // lower case platform type. Need backend fix
-    const service = settings.service;
 
     // Always assume that the user provided the correct server url for rtmp custom
     // because we have no way to validate this.
-    if (settings.streamType === 'rtmp_custom') return true;
+    if (settings.streamType === 'rtmp_custom') return null;
 
-    // Only kick does not have the service name in its server url
+    // An absent server is not a defect for rtmp_common — OBS resolves the ingest from `service`.
+    // It can genuinely be undefined here, so this also guards the `includes` calls below.
+    if (!settings.server) return null;
+
+    // Keyed by every label that can reach `Stream.service`. `platformToServiceNameMap`
+    // (stream-settings.ts) and `platformServiceConfig` (encoder-query.ts) disagree on YouTube and
+    // both write 'Facebook Live', and in unprotected mode the user can pick any of OBS's own
+    // service names by hand. Only kick does not have the service name in its server url.
+    const service =
+      {
+        Kick: 'kick',
+        Twitch: 'twitch',
+        ['YouTube - RTMPS']: 'youtube',
+        ['YouTube / YouTube Gaming']: 'youtube',
+        Facebook: 'facebook',
+        ['Facebook Live']: 'facebook',
+      }[settings.service] ?? settings.service;
+
+    console.log('Derived service identifier:', service);
     const hasValidUrl =
       service === 'kick'
         ? settings.server.includes('live-video')
         : settings.server.includes(service);
+    console.log('Has valid URL:', hasValidUrl);
 
-    // Right now, only map for Twitch, YouTube, and Facebook
-    if (!hasValidUrl) {
-      const serverMap: Dictionary<string> = {
-        Twitch: 'rtmp://live.twitch.tv/app/',
-        ['YouTube - RTMPS']: 'rtmps://a.rtmps.youtube.com:443/live2/',
-        Facebook: 'rtmps://rtmp-api.facebook.com:443/rtmp/',
-      };
-      const serverUrl = serverMap[service];
-      if (!serverUrl) {
-        // Don't throw the error here, just log it for future debugging.
-        console.error(
-          'Unable to set valid server URL for the current streaming service: ',
-          service,
-        );
-        return false;
-      }
+    if (hasValidUrl) return null;
 
-      // Update server url if possible
-      this.setSettingsPatch({ Stream: { server: serverUrl } });
-
-      return true;
+    // Right now, only map for Twitch, YouTube, and Facebook. Keyed by the identifiers derived
+    // above, not by the raw service labels.
+    const serverMap: Dictionary<string> = {
+      twitch: 'rtmp://live.twitch.tv/app/',
+      youtube: 'rtmps://a.rtmps.youtube.com:443/live2/',
+      facebook: 'rtmps://rtmp-api.facebook.com:443/rtmp/',
+    };
+    const serverUrl = serverMap[service];
+    if (!serverUrl) {
+      // Don't throw the error here, just log it for future debugging.
+      console.error('Unable to set valid server URL for the current streaming service: ', service);
+      return null;
     }
 
-    return false;
+    return serverUrl;
   }
 
   validateEncoders() {

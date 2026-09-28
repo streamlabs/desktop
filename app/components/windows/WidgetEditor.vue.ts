@@ -190,13 +190,6 @@ export default class WidgetEditor extends TsxComponent<WidgetEditorProps> {
       : firstTab;
   }
 
-  get shouldShowAlertboxSwitcher() {
-    return (
-      this.props.isAlertBox &&
-      this.incrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.reactWidgets)
-    );
-  }
-
   updateTopTab(value: string) {
     if (value === this.currentTopTab) return;
     this.animating = true;

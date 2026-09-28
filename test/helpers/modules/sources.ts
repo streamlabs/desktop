@@ -12,6 +12,7 @@ import {
 import { setInputValue } from './forms/form';
 import { dialogDismiss } from '../webdriver/dialog';
 import { contextMenuClick } from '../webdriver/context-menu';
+import { sleep } from '../sleep';
 
 async function clickSourceAction(selector: string) {
   const $el = await (await select('[data-name=sourcesControls]')).$(selector);
@@ -53,8 +54,8 @@ export async function openSourceProperties(name: string) {
 export async function addSource(
   type: string,
   name: string,
-  closeProps = true,
-  audioSource = false,
+  closeProps: boolean = true,
+  waitForResponse: boolean = false,
 ) {
   await focusMain();
   await clickAddSource();
@@ -82,6 +83,13 @@ export async function addSource(
   if (closeProps) {
     await closeWindow('child');
   } else {
+    // For some sources that require data to be returned from an async call before loading, such as the tip-jar widget,
+    // the source settings window may not be fully loaded when the `focusChild` call is made. Allow a delay in the test
+    // to wait for the call to complete instead of failing the test due to a stale handle.
+    if (waitForResponse) {
+      await sleep(1000); // Adjust the delay as needed
+    }
+
     await focusChild();
   }
 }

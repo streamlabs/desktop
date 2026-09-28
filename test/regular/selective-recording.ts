@@ -10,6 +10,7 @@ import { clickWhenDisplayed, focusMain, waitForDisplayed } from '../helpers/modu
 import { useForm } from '../helpers/modules/forms';
 import { startRecording, stopRecording } from '../helpers/modules/streaming';
 import { sleep } from '../helpers/sleep';
+import * as path from 'path';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -19,7 +20,10 @@ test('Selective Recording', async t => {
   const sourceType = 'Browser Source';
   const sourceName = `Example ${sourceType}`;
   const { client } = t.context.app;
-  const tmpDir = await setTemporaryRecordingPath();
+  const tmpDir = await setTemporaryRecordingPath(
+    false,
+    path.join(t.context.cacheDir, 'slobs-client'),
+  );
 
   // TODO: Why does Simple mode `Same as stream` not work with Selective Recording?
   // All other encoders work. For temp testing purposes, change the recording quality

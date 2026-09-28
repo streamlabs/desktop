@@ -54,6 +54,7 @@ export default function StudioEditor() {
     return v.studioMode && !v.dualOutputMode ? studioModeTransitionName : undefined;
   }, [v.dualOutputMode, v.studioMode, studioModeTransitionName]);
 
+  // Do not use useSubscription here because the cleanup needs do more than cancel the audio subscription
   useEffect(() => {
     const timeoutHandles: { [key: number]: NodeJS.Timeout | undefined } = {};
 
@@ -463,7 +464,7 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
           </div>
         </>
       )}
-      <DualOutputToggle type="switch" label={$t('Dual Output')} source="Editor" />
+      <DualOutputToggle type="switch" label={$t('Dual Output')} source="Editor" placement="left" />
     </div>
   );
 }
