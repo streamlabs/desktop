@@ -440,7 +440,11 @@ function LiveDock() {
                 placement="right"
                 autoAdjustOverflow={false}
               >
-                <i onClick={() => ctrl.showEditStreamInfo()} className="icon-edit" />
+                <i
+                  data-name="edit-stream"
+                  onClick={() => ctrl.showEditStreamInfo()}
+                  className="icon-edit"
+                />
               </Tooltip>
             )}
             {hasLiveDockFeature('view-stream') && isStreaming && (

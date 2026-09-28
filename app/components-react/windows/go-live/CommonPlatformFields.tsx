@@ -60,6 +60,15 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
     ? view.supports('description', [p.platform as TPlatform])
     : view.supports('description');
 
+  // Only the shared instance can run out of platforms to write to, and only while live, where
+  // `updateCommonFields` skips any platform using its own title. Once every enabled platform has
+  // opted out, editing the shared title changes nothing.
+  const titleDisabled =
+    !p.platform &&
+    view.isMidStreamMode &&
+    view.enabledPlatforms.length > 0 &&
+    !view.platformsWithoutCustomFields.length;
+
   const fields = p.value;
 
   const height = useMemo(() => {
@@ -121,7 +130,10 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
             $t('Title')
           )
         }
-        required={true}
+        // A disabled input cannot be corrected, so it must not be able to fail validation. Each
+        // platform using its own title validates that title in its own section.
+        required={!titleDisabled}
+        disabled={titleDisabled}
         max={maxCharacters}
         min={minCharacters}
         layout={p.layout}

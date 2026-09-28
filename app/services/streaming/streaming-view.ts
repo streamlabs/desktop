@@ -105,6 +105,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       (this.platforms.twitch?.enabled && this.platforms.twitch.game) ||
       (this.platforms.facebook?.enabled && this.platforms.facebook.game) ||
+      (this.platforms.kick?.enabled && this.platforms.kick.game) ||
       ''
     );
   }
@@ -113,6 +114,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       (this.platforms.twitch?.enabled && this.platforms.twitch.gameName) ||
       (this.platforms.facebook?.enabled && this.platforms.facebook.game) ||
+      (this.platforms.kick?.enabled && this.platforms.kick.gameName) ||
       ''
     );
   }
@@ -200,7 +202,25 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     );
   }
 
+  /**
+   * Whether a platform is set to dual stream to both displays
+   * @remark The saved `both` display is deliberately left intact in `getSavedPlatformSettings`
+   * because reassigning it would destroy the user's dual stream choice.
+   * @param platform - The platform to check
+   */
+  isDualStreaming(platform: TPlatform): boolean {
+    if (this.isLiveOutputEditingEnabled) return false;
+    return this.settings.platforms[platform]?.display === 'both';
+  }
+
   get isTwitchDualStreamEnabled() {
+    // Twitch dual stream requires enhanced broadcasting, which is not available with live output editing
+    // because enhanced broadcasting cannot use restream service due to api requirements
+    // Note: redundant with the guard inside `isDualStreaming`, kept as defence in depth
+    if (this.isLiveOutputEditingEnabled) {
+      return false;
+    }
+
     if (!this.twitchView.hasTwitchDualStreamAccess) {
       return false;
     }
@@ -208,7 +228,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       this.settings.platforms?.twitch &&
       this.enabledPlatforms.includes('twitch') &&
-      this.settings.platforms?.twitch.display === 'both'
+      this.isDualStreaming('twitch')
     );
   }
 
@@ -220,7 +240,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       this.settings.platforms?.youtube &&
       this.enabledPlatforms.includes('youtube') &&
-      this.settings.platforms?.youtube?.display === 'both'
+      this.isDualStreaming('youtube')
     );
   }
 
@@ -294,9 +314,15 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   /**
    * Returns if the user can or should use the restream service
+   * @remark Order matters here when checking for which features are enabled. Stream shift mode and live output editing
+   * take precedence over dual output mode.
    */
   get isMultiplatformMode(): boolean {
+    // Order matters here when checking for which features are enabled.
+    // Stream shift mode and live output editing take precedence over
+    // dual output mode.
     if (this.isStreamShiftMode) return true;
+    if (this.isLiveOutputEditingEnabled) return true;
     if (this.isDualOutputMode) return false;
     return this.hasMultipleTargetsEnabled;
   }
@@ -341,7 +367,25 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns if the user can edit live outputs mid-stream.
    */
   get isLiveOutputEditingEnabled(): boolean {
+    if (!this.incrementalRolloutView.featureIsEnabled(EAvailableFeatures.liveOutputEditing)) {
+      return false;
+    }
     return this.settings.liveOutputEditing ?? false;
+  }
+
+  /**
+   * The persisted live output editing setting, gated by the feature flag
+   * @remark Reads `goLiveSettings` from state directly instead of `this.settings` to avoid the
+   * circular dependency: settings → savedSettings → getSavedPlatformSettings → settings. Use this
+   * wherever the persisted setting is read outside of `settings`, so that a setting persisted
+   * while the flag was granted cannot keep switching on live output editing behavior after it is
+   * revoked.
+   */
+  private get savedLiveOutputEditing(): boolean {
+    if (!this.incrementalRolloutView.featureIsEnabled(EAvailableFeatures.liveOutputEditing)) {
+      return false;
+    }
+    return this.streamSettingsView.state.goLiveSettings?.liveOutputEditing ?? false;
   }
 
   /**
@@ -352,23 +396,23 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     if (this.isStreamShiftMode) return true;
 
     // Live output editing uses the restream service
-    if (this.isLiveOutputEditingEnabled) {
-      return this.incrementalRolloutView.featureIsEnabled(EAvailableFeatures.liveOutputEditing);
-    }
+    if (this.isLiveOutputEditingEnabled) return true;
 
     // In dual output mode, if a display has more than one target that display uses the restream service
     const restreamDualOutputMode =
       this.isDualOutputMode && (this.horizontalStream.length > 1 || this.verticalStream.length > 1);
     return this.isMultiplatformMode || restreamDualOutputMode;
   }
-
   /**
    * Returns the displays that should use restream
    * @remark In dual output mode, only displays that have multiple targets enabled should use restream
    */
   get displaysToRestream(): TDisplayType[] {
     const displays = [] as TDisplayType[];
-    if (!this.isDualOutputMode) return displays;
+
+    // In single output mode, only the horizontal stream is streamed
+    if (!this.isDualOutputMode && !this.isLiveOutputEditingEnabled) return displays;
+
     if (this.horizontalStream.length > 1) {
       displays.push('horizontal' as TDisplayType);
     }
@@ -400,10 +444,21 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    */
   get isDualOutputMode(): boolean {
     if (!this.userView.isLoggedIn || !this.info) return false;
+    if (!this.dualOutputView.dualOutputMode) return false;
     return this.shouldSetupDualOutput;
   }
 
+  /**
+   * Returns the output orientation for a given platform.
+   * @remark Expects to return the following per feature:
+   * - Stream Shift - always returns 'landscape'
+   * - Single Output Mode - always returns 'landscape'
+   * - Dual Output Mode - returns assigned displays: 'landscape' for horizontal displays and 'portrait' for vertical displays
+   * - Live Output Editing - returns 'landscape' in single output mode, and assigned displays in dual output mode
+   * @param platform - The platform to resolve the orientation for
+   */
   getPlatformMode(platform: TPlatform): TOutputOrientation {
+    if (this.isStreamShiftMode) return 'landscape';
     if (!this.isDualOutputMode) return 'landscape';
     const display = this.getPlatformDisplayType(platform);
     return display === 'vertical' ? 'portrait' : 'landscape';
@@ -437,7 +492,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
         // if the platform is set to 'both' display, add it to both horizontal and vertical
         // for analytics purposes
-        if (this.settings.platforms[platform]?.display === 'both') {
+        if (this.isDualStreaming(platform)) {
           displayPlatforms.vertical.push(platform);
         }
 
@@ -460,6 +515,59 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       },
       { horizontal: [], vertical: [] },
     );
+  }
+
+  /**
+   * Returns the passed in targets according to their assigned display
+   * @remark Currently unused, but could be used for a future refactor to unify logic for filtering
+   * targets by display
+   * @param platforms - The platforms to be sorted by display
+   * @param customDestinations - The custom destinations to be sorted by display
+   * @param settings - The go live settings containing platform display assignments
+   * @returns targets sorted by assigned display
+   */
+  getActiveDisplayTargets(
+    platforms: TPlatform[],
+    customDestinations: ICustomStreamDestination[],
+    settings: IGoLiveSettings,
+  ): TDisplayDestinations {
+    const parsedPlatforms = platforms.reduce(
+      (displayPlatforms: TDisplayPlatforms, platform: TPlatform) => {
+        const display =
+          settings.platforms[platform]?.display && settings.platforms[platform]?.display !== 'both'
+            ? settings.platforms[platform]?.display
+            : 'horizontal';
+        displayPlatforms[display].push(platform);
+
+        // if the platform is set to 'both' display, add it to both horizontal and vertical
+        // for analytics purposes
+        if (settings.platforms[platform]?.display === 'both') {
+          displayPlatforms.vertical.push(platform);
+        }
+
+        return displayPlatforms;
+      },
+      { horizontal: [], vertical: [] },
+    );
+
+    /**
+     * Returns the enabled destinations according to their assigned display
+     */
+
+    const parsedDestinations = customDestinations.reduce(
+      (displayDestinations: TDisplayDestinations, destination: ICustomStreamDestination) => {
+        if (destination.enabled && !destination.dualStream) {
+          displayDestinations[destination.display ?? 'horizontal'].push(destination.url);
+        }
+        return displayDestinations;
+      },
+      { horizontal: [], vertical: [] },
+    );
+
+    return {
+      horizontal: (parsedPlatforms.horizontal as string[]).concat(parsedDestinations.horizontal),
+      vertical: (parsedPlatforms.vertical as string[]).concat(parsedDestinations.vertical),
+    };
   }
 
   get horizontalStream() {
@@ -488,8 +596,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   get hasDualStream() {
     return this.enabledPlatforms.some(
       (platform: TPlatform) =>
-        this.supports('dualStream', [platform]) &&
-        this.settings.platforms[platform]?.display === 'both',
+        this.supports('dualStream', [platform]) && this.isDualStreaming(platform),
     );
   }
 
@@ -548,6 +655,8 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     );
   }
 
+  // TODO: cleanup — dead code, no callers. Diagnostics uses the identically named
+  // `OutputSettingsService.getIsEnhancedBroadcasting`, not this one. Delete it.
   getIsEnhancedBroadcasting(): boolean {
     return Services.SettingsService.isEnhancedBroadcasting();
   }
@@ -555,7 +664,15 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   /**
    * Check for multistreaming with Twitch enhanced broadcasting
    */
+  // TODO: cleanup — this is a method rather than a getter, so it is unmemoized, and every call
+  // reaches native OBS through `SettingsService.isEnhancedBroadcasting()`. It runs on each go
+  // live from both `twitch.beforeGoLive` and `createEnhancedBroadcastDualOutput`. Convert to a
+  // getter, or read the per-stream `StreamingService.state.enhancedBroadcasting` decision.
   isEnhancedBroadcastingMultistream(): boolean {
+    // Enhanced broadcasting is not available while live output editing is enabled because it uses
+    // its own video context and stream, which cannot be edited mid-stream
+    if (this.isLiveOutputEditingEnabled) return false;
+
     // As a failsafe, ensure Twitch is one of the enabled platforms
     if (!this.enabledPlatforms.includes('twitch')) return false;
 
@@ -683,6 +800,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       customDestinations: savedGoLiveSettings?.customDestinations || [],
       recording: savedGoLiveSettings?.recording || 'horizontal',
       streamShift: savedGoLiveSettings?.streamShift || false,
+      liveOutputEditing: this.savedLiveOutputEditing,
     };
   }
 
@@ -732,16 +850,39 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return commonFields;
   }
 
+  /**
+   * Apply the common title and description to each platform
+   * @remark While live, the common title wins over whatever title a platform is holding, unless that
+   * platform uses custom fields. Deliberately scoped to mid-stream, for the Edit Stream window, the
+   * Go Live window keeps the original backfill. The description uses the backfill in both cases.
+   * @param platforms - The platform settings to apply the common fields to
+   * @return The updated platform settings with common fields applied
+   */
   applyCommonFields(platforms: IGoLiveSettings['platforms']): IGoLiveSettings['platforms'] {
     const commonFields = this.getCommonFields(platforms);
     const result = {} as IGoLiveSettings['platforms'];
+    const useCommonTitle = this.isMidStreamMode;
+
     Object.keys(platforms).forEach(platform => {
       // TODO: index
       // @ts-ignore
       result[platform] = platforms[platform];
+
       // TODO: index
       // @ts-ignore
-      result[platform].title = platforms[platform].title || commonFields.title;
+      const usesCustomFields = platforms[platform].useCustomFields;
+
+      // TODO: index
+      // @ts-ignore
+      result[platform].title =
+        useCommonTitle && !usesCustomFields
+          ? // TODO: index
+            // @ts-ignore
+            commonFields.title || platforms[platform].title
+          : // TODO: index
+            // @ts-ignore
+            platforms[platform].title || commonFields.title;
+
       // TODO: index
       // @ts-ignore
       result[platform].description = platforms[platform].description || commonFields.description;
@@ -888,10 +1029,17 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       settings['liveVideoId'] = '';
     }
 
-    // make sure platforms assigned to the vertical display in dual output mode still go live in single output mode
+    // make sure platforms assigned to the vertical display in dual output mode still go live in
+    // single output mode
+    // Note: `both` is deliberately passed through. It must not be collapsed here, because this
+    // value seeds the Go Live window and is written straight back by `save()`, so coercing it
+    // would overwrite the user's saved dual stream choice. Live output editing's inability to
+    // dual stream is enforced where the display is used, not where it is stored.
+    // The `?? 'horizontal'` matters: without it a platform with no saved display yields
+    // `undefined` here, and callers that index by display rather than defaulting it break.
     const display =
       this.isDualOutputMode && savedDestinations
-        ? savedDestinations[platform]?.display
+        ? savedDestinations[platform]?.display ?? 'horizontal'
         : 'horizontal';
 
     return {
@@ -999,11 +1147,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.streamingState.selectiveRecording;
   }
 
-  get canEditLiveOutputs() {
-    return false;
-    // return (
-    //   !this.isMidStreamMode &&
-    //   this.incrementalRolloutView.featureIsEnabled(EAvailableFeatures.liveOutputEditing)
-    // );
+  get showFeatureToggleCards() {
+    if (!this.incrementalRolloutView.featureIsEnabled(EAvailableFeatures.liveOutputEditing)) {
+      return false;
+    }
+    return !this.isMidStreamMode;
   }
 }

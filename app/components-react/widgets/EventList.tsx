@@ -65,13 +65,13 @@ export function EventList() {
         <Menu.Item key="visual">{$t('Visual Settings')}</Menu.Item>
       </Menu>
       <Form>
-        {w.hasLoadedSettings() && w.selectedTab === 'event' && (
+        {!w.state.isLoading && w.settings && w.selectedTab === 'event' && (
           <FormFactory metadata={w.eventMeta} values={w.settings} onChange={w.updateSetting} />
         )}
-        {w.hasLoadedSettings() && w.selectedTab === 'font' && (
+        {!w.state.isLoading && w.settings && w.selectedTab === 'font' && (
           <FormFactory metadata={w.fontMeta} values={w.settings} onChange={w.updateSetting} />
         )}
-        {w.hasLoadedSettings() && w.selectedTab === 'visual' && (
+        {!w.state.isLoading && w.settings && w.selectedTab === 'visual' && (
           <FormFactory metadata={w.visualMeta} values={w.settings} onChange={w.updateSetting} />
         )}
       </Form>

@@ -23,7 +23,10 @@ useWebdriver();
 
 test('Highlighter save and export', async t => {
   await logIn();
-  const recordingDir = await setTemporaryRecordingPath();
+  const recordingDir = await setTemporaryRecordingPath(
+    false,
+    path.join(t.context.cacheDir, 'slobs-client'),
+  );
 
   await showPage('Highlighter');
   await clickButton('Configure');
@@ -52,7 +55,10 @@ test('Highlighter save and export', async t => {
 test('AI Highlighter', withUser('twitch', { prime: true }), async t => {
   // AI Highlighter install button shows
   await showPage('Highlighter');
-  await waitForDisplayed('[name="installHighlighter"]');
+  await waitForDisplayed('[name="installHighlighter"]', {
+    timeout: 3000,
+    timeoutMsg: 'Highlighter tab AI Highlighter install button did not show',
+  });
 
   // Go live with AI Highlighter enabled
   await prepareToGoLive();

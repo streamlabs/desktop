@@ -148,7 +148,7 @@ export function useForm(name?: string) {
    */
   async function getInputControllers() {
     // wait for form to be visible
-    await waitForDisplayed(formSelector);
+    await waitForDisplayed(formSelector, { timeout: 15000 });
     const $inputs = await getInputElements();
     const controllers: BaseInputController<any>[] = [];
     for (const $input of $inputs) {

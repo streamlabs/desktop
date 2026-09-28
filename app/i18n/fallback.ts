@@ -22,7 +22,7 @@ const fallbackDictionary = {
   ...require('./en-US/filters.json'),
   ...require('./en-US/game-overlay.json'),
   ...require('./en-US/hotkeys.json'),
-  ...require('./en-US/live-outputs.json'),
+  ...require('./en-US/live-output-editing.json'),
   ...require('./en-US/media-gallery.json'),
   ...require('./en-US/notifications.json'),
   ...require('./en-US/onboarding.json'),
@@ -71,6 +71,7 @@ const fallbackDictionary = {
   ...require('./en-US/patreon.json'),
   ...require('./en-US/recording.json'),
   ...require('./en-US/stream-avatar-automations.json'),
+  ...require('./en-US/stream-avatar-agent.json'),
 };
 
 export default fallbackDictionary;

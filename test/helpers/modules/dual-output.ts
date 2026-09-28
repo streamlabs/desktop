@@ -101,7 +101,7 @@ export async function goLiveWithDualOutput(platform: string) {
   } else {
     await waitForDisplayed("h1=You're live!", { timeout: 60000 });
     await waitForStreamStart();
-    await isDisplayed('span=Multistream');
+    await isDisplayed('li=Multichat');
     await stopStream();
   }
 }

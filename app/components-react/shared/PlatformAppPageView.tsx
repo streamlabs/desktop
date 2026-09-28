@@ -5,6 +5,7 @@ import Utils from 'services/utils';
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
+import { publishBrowserViewRect } from './browser-view-rects';
 import styles from './PlatformAppPageView.m.less';
 
 export default function PlatformAppPageView(p: {
@@ -17,6 +18,10 @@ export default function PlatformAppPageView(p: {
 
   const appContainer = useRef<HTMLDivElement>(null);
 
+  // Identity for the occlusion registry — see browser-view-rects.ts. The container
+  // itself is shared and persistent across mounts, so it can't be the key.
+  const viewKey = useRef(Symbol('platform-app-page-view'));
+
   let currentPosition: IVec2 | null;
   let currentSize: IVec2 | null;
   let containerId: string | null;
@@ -26,6 +31,7 @@ export default function PlatformAppPageView(p: {
     delisted: PlatformAppsService.views.getDelisted(p.appId),
   }));
 
+  // Do not use useSubscription here because the cleanup needs to also unmount the container and clear the interval
   useEffect(() => {
     mountContainer();
 
@@ -58,6 +64,7 @@ export default function PlatformAppPageView(p: {
   function unmountContainer() {
     currentPosition = null;
     currentSize = null;
+    publishBrowserViewRect(viewKey.current, null);
     if (!containerId) return;
     PlatformAppsService.actions.unmountContainer(containerId, remote.getCurrentWindow().id);
   }
@@ -73,6 +80,9 @@ export default function PlatformAppPageView(p: {
       currentSize = { x: rect.width, y: rect.height };
 
       PlatformAppsService.actions.setContainerBounds(containerId, currentPosition, currentSize);
+      // The `hideStyleBlockers` branch above yields a zero rect, which the registry
+      // reads as "not covering" — no separate hook needed for that case.
+      publishBrowserViewRect(viewKey.current, rect);
     }
   }
 

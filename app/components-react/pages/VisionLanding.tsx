@@ -5,7 +5,7 @@ import { useRealmObject } from 'components-react/hooks/realm';
 import { Services } from 'components-react/service-provider';
 import { SwitchInput } from 'components-react/shared/inputs';
 import Scrollable from 'components-react/shared/Scrollable';
-import { Modal, Tooltip } from 'antd';
+import { message, Modal, Tooltip } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import { getConfigByGame } from 'services/highlighter/models/game-config.models';
@@ -15,7 +15,7 @@ import { IOverlayCollectionParams, TOverlayType } from 'services/user';
 import { $i } from 'services/utils';
 import { WidgetDisplayData } from 'services/widgets';
 import { WidgetType } from 'services/widgets/widgets-data';
-import styles from './AILanding.m.less';
+import styles from './VisionLanding.m.less';
 
 interface FeatureAction {
   text: string;
@@ -32,18 +32,18 @@ interface FeatureProps {
   actions?: FeatureAction | FeatureAction[];
 }
 
-function AIFeature(props: FeatureProps) {
+function VisionFeature(props: FeatureProps) {
   const actionsObj = props.actions ?? [];
   const actions = Array.isArray(actionsObj) ? actionsObj : [actionsObj];
   return (
-    <div className={styles.aiFeature}>
+    <div className={styles.visionFeature}>
       <h2>{props.name}</h2>
-      <div className={styles.aiFeatureImage}>
+      <div className={styles.visionFeatureImage}>
         <img src={props.img} alt={props.name} />
       </div>
       <p>{props.description}</p>
       {actions.length > 0 && (
-        <div className={styles.aiFeatureActions}>
+        <div className={styles.visionFeatureActions}>
           {actions.map(({ text, html, disabled, onClick }) => (
             <button
               key={text}
@@ -60,7 +60,7 @@ function AIFeature(props: FeatureProps) {
   );
 }
 
-export default function AILanding() {
+export default function VisionLanding() {
   const {
     HostsService,
     NavigationService,
@@ -74,9 +74,9 @@ export default function AILanding() {
     WidgetsService,
   } = Services;
   function trackEvent(type: string, data?: Record<string, any>) {
-    UsageStatisticsService.actions.recordAnalyticsEvent('AiFeature', {
+    UsageStatisticsService.actions.recordAnalyticsEvent('VisionFeature', {
       type,
-      source: 'AiLanding',
+      source: 'VisionLanding',
       ...(data ?? {}),
     });
   }
@@ -84,6 +84,7 @@ export default function AILanding() {
   const visionActions = VisionService.actions;
   const visionState = useRealmObject(VisionService.state);
 
+  const isLoggedIn = useVuex(() => UserService.views.isLoggedIn);
   const visionEnabledState = useRealmObject(VisionService.enabledState);
   const enabled = visionEnabledState.isEnabled;
 
@@ -106,6 +107,10 @@ export default function AILanding() {
   }, []);
 
   function onToggleAiClick(isEnabled?: boolean) {
+    if (!isLoggedIn) {
+      message.error($t('Please log in to use Streamlabs Vision.'), 3);
+      return;
+    }
     const newIsEnabled = isEnabled ?? !enabled;
     trackEvent('enabled', { enabled: String(newIsEnabled) });
     visionActions.setIsEnabled(newIsEnabled);
@@ -249,36 +254,36 @@ export default function AILanding() {
   }, [supportedGames]);
 
   return (
-    <div className={styles.aiLandingRoot}>
+    <div className={styles.visionLandingRoot}>
       <Scrollable style={{ flexGrow: 1, width: '100%' }}>
-        <div className={styles.aiLandingContents}>
+        <div className={styles.visionLandingContents}>
           <h1 className={styles.header}>
             <i className={cx('icon-ai', styles.headerUltra)} />
-            <span className={styles.headerUltraText}>{$t('Streamlabs AI:')}</span>
+            <span className={styles.headerUltraText}>{$t('Streamlabs Vision:')}</span>
             <span>{$t('Real-Time, Event-Driven Streaming')}</span>
           </h1>
           <div
-            className={cx(styles.aiToggle, !enabled && styles.aiToggleEmphasis)}
+            className={cx(styles.visionToggle, !enabled && styles.visionToggleEmphasis)}
             onClick={() => onToggleAiClick()}
           >
             <SwitchInput
-              label={$t('Turn On AI')}
-              disabled={visionState.isStarting}
+              label={$t('Turn On Vision')}
+              disabled={!isLoggedIn || visionState.isStarting}
               value={enabled}
             />
           </div>
           <div className={styles.featureList}>
             <div className={styles.featureListInner}>
-              <AIFeature
+              <VisionFeature
                 name={$t('Reactive Overlays')}
                 description={$t(
-                  'Dynamic overlays powered by Streamlabs AI that react in real-time to gameplay events.',
+                  'Dynamic overlays powered by Streamlabs Vision that react in real-time to gameplay events.',
                 )}
                 img={$i('images/ai/ai-reactive-overlays.png')}
                 disabled={!enabled}
                 actions={{ text: $t('Browse Reactive Overlays'), onClick: onBrowseOverlaysClick }}
               />
-              <AIFeature
+              <VisionFeature
                 name={$t('Game Pulse Widget')}
                 description={$t(
                   'Excite your viewers with effects for your in game kills, wins, deaths and more.',
@@ -295,7 +300,7 @@ export default function AILanding() {
                   onClick: onGamePulseWidgetClick,
                 }}
               />
-              <AIFeature
+              <VisionFeature
                 name={$t('Sidekick')}
                 description={$t(
                   'Sidekick is a virtual co-host, live producer, and technical assistant.',
