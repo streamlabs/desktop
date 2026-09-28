@@ -41,20 +41,27 @@ export default function Display(props: DisplayProps) {
       hideDisplay: p.isModal
         ? WindowsService.state[windowId]?.modalOptions?.hideStyleBlockers
         : WindowsService.state[windowId]?.hideStyleBlockers,
+      windowMinimized: !!WindowsService.state[windowId]?.isMinimized,
     };
   }, false);
 
   const paddingColor = useRealmObject(CustomizationService.state).displayBackground;
+
+  // OBS keeps rendering a display at the output frame rate whether or not anyone can see it.
+  // While the window is minimized, tear the display down the same way a modal does and rebuild
+  // it on restore. Only the preview is affected: stream and recording outputs do not go through
+  // displays. (document.hidden cannot be used: background throttling is off for the main window.)
+  const hideDisplay = v.hideDisplay || v.windowMinimized;
 
   const obsDisplay = useRef<OBSDisplay | null>(null);
   const displayEl = useRef<HTMLDivElement>(null);
 
   useEffect(updateDisplay, [p.sourceId, paddingColor]);
   useEffect(handleResize, [v.baseResolution]);
-  useEffect(handleHideDisplay, [v.hideDisplay]);
+  useEffect(handleHideDisplay, [hideDisplay]);
 
   function handleHideDisplay() {
-    if (v.hideDisplay) {
+    if (hideDisplay) {
       destroyDisplay();
     } else {
       if (!obsDisplay.current) {
@@ -96,7 +103,7 @@ export default function Display(props: DisplayProps) {
 
   function updateDisplay() {
     destroyDisplay();
-    if (!v.hideDisplay) {
+    if (!hideDisplay) {
       createDisplay();
     }
 
