@@ -4576,8 +4576,9 @@ export class StreamingService
 
         showNativeErrorMessage = details !== '';
       } else if (
-        this.settingsService.views.values.Stream.key === '' ||
-        this.settingsService.views.values.StreamSecond.key === ''
+        info.type === EOBSOutputType.Streaming &&
+        (this.settingsService.views.values.Stream.key === '' ||
+          this.settingsService.views.values.StreamSecond.key === '')
       ) {
         if (this.views.isDualOutputMode) {
           const display = info.service === 'vertical' ? 'vertical' : 'horizontal';
