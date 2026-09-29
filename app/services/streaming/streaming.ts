@@ -3572,7 +3572,6 @@ export class StreamingService
         await this.handleDestroyOutputContexts('enhancedBroadcasting');
         await this.handleDestroyOutputContexts('horizontal');
         await this.handleDestroyOutputContexts('vertical');
-        this.numInstances = 0;
         return;
       }
 
@@ -5038,6 +5037,10 @@ export class StreamingService
       }
 
       this.contexts[contextName][contextType] = null;
+
+      if (contextType === 'streaming' && this.numInstances > 0) {
+        this.numInstances--;
+      }
 
       Promise.resolve();
     }
