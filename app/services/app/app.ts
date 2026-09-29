@@ -304,6 +304,8 @@ export class AppService extends StatefulService<IAppState> {
             criticality: 'best-effort',
             run: () => this.performanceService.stop(),
           },
+          // Close the video settings service before the scene collections service
+          // because the graphics thread should be stopped before deinitializing scene collections.
           {
             name: 'VideoSettingsService.shutdown',
             criticality: 'required',
