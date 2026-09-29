@@ -35,8 +35,7 @@ export class ScreenshotService extends Service {
       return;
     }
 
-    const context =
-      this.videoSettingsService.contexts[display] ?? this.videoSettingsService.contexts.horizontal;
+    const context = this.videoSettingsService.contexts[display];
     if (!context) {
       this.warn($t('Could not save screenshot'));
       return;
