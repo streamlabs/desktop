@@ -136,6 +136,7 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
   private historicalCPU: number[] = [];
   private shutdown = false;
   private statsRequestInProgress = false;
+  private performanceStatsHandler: (e: electron.Event, am: electron.ProcessMetric[]) => void;
 
   // Used to report on the overall quality of a complete stream
   private streamStartSkippedFrames = 0;
@@ -179,42 +180,43 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
     };
     statsInterval();
 
-    electron.ipcRenderer.on(
-      'performanceStatsResponse',
-      (e: electron.Event, am: electron.ProcessMetric[]) => {
-        const streamingStats = this.streamingService.streamingPerformanceStats;
+    this.performanceStatsHandler = (e: electron.Event, am: electron.ProcessMetric[]) => {
+      if (this.shutdown) return;
 
-        // CPU with child processes
-        const CPU =
-          (obs.Global.cpuPercentage ?? 0) +
-          am.reduce((sum, proc) => sum + (proc.cpu?.percentCPUUsage ?? 0), 0);
-        const percentageDroppedFrames =
-          streamingStats.totalFrames > 0
-            ? (streamingStats.droppedFrames / streamingStats.totalFrames) * 100
-            : 0;
+      const streamingStats = this.streamingService.streamingPerformanceStats;
 
-        // Note: The below commented out properties are legacy from the old `OBS_API_getPerformanceStatistics`
-        // response. They are left commented out for now since they are not currently being used in the frontend,
-        // but the mapping should be preserved in case they are needed in the future.
-        // const recordingStats = this.streamingService.recordingPerformanceStats;
-        this.SET_PERFORMANCE_STATS({
-          CPU,
-          frameRate: obs.Global.currentFrameRate,
-          numberDroppedFrames: streamingStats.droppedFrames,
-          percentageDroppedFrames,
-          streamingBandwidth: streamingStats.kbitsPerSec,
-          // averageTimeToRenderFrame: obs.Global.averageFrameRenderTime,
-          // diskSpaceAvailable: obs.Global.diskSpaceAvailable,
-          // memoryUsage: obs.Global.memoryUsage,
-          // recordingBandwidth: recordingStats.kbitsPerSec,
-          // recordingDataOutput: recordingStats.dataOutput,
-          // streamingDataOutput: streamingStats.dataOutput,
-        });
-        this.monitorAndUpdateStats();
-        this.statisticsUpdated.next(this.state);
-        this.statsRequestInProgress = false;
-      },
-    );
+      // CPU with child processes
+      const CPU =
+        (obs.Global.cpuPercentage ?? 0) +
+        am.reduce((sum, proc) => sum + (proc.cpu?.percentCPUUsage ?? 0), 0);
+      const percentageDroppedFrames =
+        streamingStats.totalFrames > 0
+          ? (streamingStats.droppedFrames / streamingStats.totalFrames) * 100
+          : 0;
+
+      // Note: The below commented out properties are legacy from the old `OBS_API_getPerformanceStatistics`
+      // response. They are left commented out for now since they are not currently being used in the frontend,
+      // but the mapping should be preserved in case they are needed in the future.
+      // const recordingStats = this.streamingService.recordingPerformanceStats;
+      this.SET_PERFORMANCE_STATS({
+        CPU,
+        frameRate: obs.Global.currentFrameRate,
+        numberDroppedFrames: streamingStats.droppedFrames,
+        percentageDroppedFrames,
+        streamingBandwidth: streamingStats.kbitsPerSec,
+        // averageTimeToRenderFrame: obs.Global.averageFrameRenderTime,
+        // diskSpaceAvailable: obs.Global.diskSpaceAvailable,
+        // memoryUsage: obs.Global.memoryUsage,
+        // recordingBandwidth: recordingStats.kbitsPerSec,
+        // recordingDataOutput: recordingStats.dataOutput,
+        // streamingDataOutput: streamingStats.dataOutput,
+      });
+      this.monitorAndUpdateStats();
+      this.statisticsUpdated.next(this.state);
+      this.statsRequestInProgress = false;
+    };
+
+    electron.ipcRenderer.on('performanceStatsResponse', this.performanceStatsHandler);
   }
 
   /**
@@ -464,5 +466,11 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
 
   stop() {
     this.shutdown = true;
+    if (this.performanceStatsHandler) {
+      electron.ipcRenderer.removeListener(
+        'performanceStatsResponse',
+        this.performanceStatsHandler,
+      );
+    }
   }
 }

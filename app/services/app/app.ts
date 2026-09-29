@@ -300,6 +300,11 @@ export class AppService extends StatefulService<IAppState> {
             run: () => this.windowsService.shutdown(),
           },
           {
+            name: 'PerformanceService.stop',
+            criticality: 'best-effort',
+            run: () => this.performanceService.stop(),
+          },
+          {
             name: 'VideoSettingsService.shutdown',
             criticality: 'required',
             run: () => this.videoSettingsService.shutdown(),
@@ -308,11 +313,6 @@ export class AppService extends StatefulService<IAppState> {
             name: 'SceneCollectionsService.deinitialize',
             criticality: 'required',
             run: () => this.sceneCollectionsService.deinitialize({ persist: false }),
-          },
-          {
-            name: 'PerformanceService.stop',
-            criticality: 'best-effort',
-            run: () => this.performanceService.stop(),
           },
           {
             name: 'TransitionsService.shutdown',
