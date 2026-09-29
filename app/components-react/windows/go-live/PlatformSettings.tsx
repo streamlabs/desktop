@@ -54,7 +54,9 @@ export default function PlatformSettings() {
       return 'vertical';
     },
 
-    // In unprotected mode, only Twitch can show in the go live window
+    // In unprotected mode, only Twitch can show in the go live window. In unprotected mode the user can
+    // stream to Twitch even if the platform is not linked, so we do not need to check for it being a
+    // linked platform.
     get validEnabledPlatforms() {
       return !settings.protectedModeEnabled ? ['twitch' as TPlatform] : settings.enabledPlatforms;
     },

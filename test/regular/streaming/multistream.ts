@@ -9,28 +9,20 @@ import {
   switchAdvancedMode,
   waitForSettingsWindowLoaded,
   waitForStreamStart,
-  waitForStreamStop,
 } from '../../helpers/modules/streaming';
 import { assertFormContains, fillForm, useForm } from '../../helpers/modules/forms';
-import { setInputValue } from '../../helpers/modules/forms/base';
 import {
   click,
   clickButton,
   clickWhenDisplayed,
   focusChild,
   focusMain,
-  getClient,
   isDisplayed,
   tooltipExists,
   waitForDisplayed,
 } from '../../helpers/modules/core';
 import { logIn } from '../../helpers/modules/user';
-import {
-  addDummyAccount,
-  releaseUserInPool,
-  reserveUserFromPool,
-  withUser,
-} from '../../helpers/webdriver/user';
+import { releaseUserInPool, reserveUserFromPool, withUser } from '../../helpers/webdriver/user';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import {
   skipCheckingErrorsInLog,
@@ -40,16 +32,6 @@ import {
 } from '../../helpers/webdriver';
 import { sleep } from '../../helpers/sleep';
 import { toggleDualOutputMode } from '../../helpers/modules/dual-output';
-import { getApiClient } from '../../helpers/api-client';
-import { StreamingService } from '../../../app/services/streaming';
-// The enum has to come from `streaming-api`, not the barrel above. `StreamingService` is only ever
-// used as a type here so TypeScript elides that import, but an enum is a runtime value: importing
-// it from the barrel pulls `streaming.ts` into the ava process, which resolves
-// `services/core/stateful-service` through a webpack alias node knows nothing about. The test file
-// then dies at require time with `Cannot find module`, reported as `Couldn't find any matching
-// tests`. `api/streaming.ts` and `dual-output-end-stream.ts` import it from `streaming-api` too.
-import { EStreamingState } from '../../../app/services/streaming/streaming-api';
-import { WindowsService } from '../../../app/services/windows';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks

@@ -1,8 +1,7 @@
-import { skipCheckingErrorsInLog, test, useWebdriver } from '../../helpers/webdriver';
-import { getUser, logIn, withUser } from '../../helpers/webdriver/user';
+import { test, useWebdriver } from '../../helpers/webdriver';
+import { logIn, withUser } from '../../helpers/webdriver/user';
 import {
   chatIsVisible,
-  clickGoLive,
   goLive,
   stopStream,
   waitForStreamStart,
@@ -10,10 +9,8 @@ import {
 } from '../../helpers/modules/streaming';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import { click, clickButton, waitForDisplayed } from '../../helpers/modules/core';
-import { assertFormContains, fillForm, readFields, useForm } from '../../helpers/modules/forms';
+import { assertFormContains, fillForm, readFields } from '../../helpers/modules/forms';
 import { setInputValue } from '../../helpers/modules/forms/base';
-import { getApiClient } from '../../helpers/api-client';
-import { SettingsService } from '../../../app/services/settings';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks

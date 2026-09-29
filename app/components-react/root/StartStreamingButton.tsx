@@ -33,7 +33,6 @@ function StartStreamingButton(p: { disabled?: boolean }) {
     isPrime,
     primaryPlatform,
     isMultiplatformMode,
-    protectedModeEnabled,
     isTwitchUnprotectedStream,
   } = useVuex(
     () => ({
@@ -46,7 +45,6 @@ function StartStreamingButton(p: { disabled?: boolean }) {
       isPrime: UserService.state.isPrime,
       primaryPlatform: UserService.state.auth?.primaryPlatform,
       isMultiplatformMode: StreamingService.views.isMultiplatformMode,
-      protectedModeEnabled: StreamSettingsService.views.protectedModeEnabled,
       isTwitchUnprotectedStream: StreamingService.views.isTwitchUnprotectedStream,
     }),
     false,
