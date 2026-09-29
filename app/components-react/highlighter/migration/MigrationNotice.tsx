@@ -1,8 +1,6 @@
 import React from 'react';
-import { Services } from 'components-react/service-provider';
 import ModalInstallationFlow from './ModalInstallationFlow';
 import PageInstallationFlow from './PageInstallationFlow';
-import { EAvailableFeatures } from 'services/incremental-rollout';
 import { IReplayInstallOriginMetadata } from 'services/highlighter/models/highlighter.models';
 
 interface IMigrationNoticeProps {
@@ -15,16 +13,7 @@ interface IMigrationNoticeProps {
 }
 
 export default function MigrationNotice(props: IMigrationNoticeProps) {
-  const { IncrementalRolloutService } = Services;
   const variant = props.variant || 'page';
-
-  const isMigrationEnabled = IncrementalRolloutService.views.featureIsEnabled(
-    EAvailableFeatures.highlighterMigration,
-  );
-
-  if (!isMigrationEnabled) {
-    return null;
-  }
 
   function handleCancel() {
     if (props.onCancel) {

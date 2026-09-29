@@ -25,7 +25,7 @@ export interface IEnv {
   // Allows joining as a guest instead of a host for guest cam
   SLD_GUEST_CAM_HASH: string;
   CI: boolean;
-  HIGHLIGHTER_ENV: 'production' | 'staging' | 'local';
+  HIGHLIGHTER_ENV: 'production' | 'staging';
   // Dev only: absolute path to a locally built Streamlabs Replay installer. When set, the Replay
   // install flow runs that exe instead of downloading one from the CDN.
   HIGHLIGHTER_LOCAL_SETUP_PATH?: string;
@@ -111,17 +111,14 @@ export default class Utils {
     return Utils.env.NODE_ENV !== 'production';
   }
 
-  static getHighlighterEnvironment(): 'production' | 'staging' | 'local' {
+  static getHighlighterEnvironment(): 'production' | 'staging' {
     // need to use this remote thing because main process is being spawned as
     // subprocess of updater process in the release build
     if (remote.process.argv.includes('--bundle-qa')) {
       return 'staging';
     }
 
-    if (process.env.HIGHLIGHTER_ENV !== 'staging' && process.env.HIGHLIGHTER_ENV !== 'local') {
-      return 'production';
-    }
-    return process.env.HIGHLIGHTER_ENV as 'production' | 'staging' | 'local';
+    return process.env.HIGHLIGHTER_ENV === 'staging' ? 'staging' : 'production';
   }
 
   static getAvatarEnvironment(): 'production' | 'staging' | 'local' {

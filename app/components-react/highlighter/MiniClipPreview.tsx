@@ -11,13 +11,11 @@ import styles from './MiniClipPreview.m.less';
 
 export default function MiniClipPreview({
   clipId,
-  streamId,
   showDisabled,
   clipStateChanged,
   emitPlayClip,
 }: {
   clipId: string;
-  streamId?: string;
   showDisabled: boolean;
   clipStateChanged: (clipId: string, newState: boolean) => void;
   emitPlayClip: () => void;
@@ -39,7 +37,7 @@ export default function MiniClipPreview({
         onChange={(val: boolean, ev?: React.ChangeEvent<Element> | CheckboxChangeEvent) => {
           ev?.stopPropagation();
           const newState = !clip.enabled;
-          HighlighterService.actions.manuallyEnableClip(clip.path, newState, streamId);
+          HighlighterService.actions.manuallyEnableClip(clip.path, newState);
           clipStateChanged(clip.path, newState);
         }}
         className={styles.customCheckbox}

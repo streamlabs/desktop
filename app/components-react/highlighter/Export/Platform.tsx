@@ -19,22 +19,18 @@ import { EUploadPlatform } from 'services/highlighter/models/highlighter.models'
 export default function PlatformSelect({
   onClose,
   videoName,
-  streamId,
 }: {
   onClose: () => void;
   videoName: string;
-  streamId: string | undefined;
 }) {
-  const { store, exportInfo, clearUpload, getStreamTitle, getClips, getDuration } = useController(
-    ExportModalCtx,
-  );
+  const { store, exportInfo, clearUpload, getClips, getDuration } = useController(ExportModalCtx);
   const { UserService, HighlighterService } = Services;
   const { isYoutubeLinked } = useVuex(() => ({
     isYoutubeLinked: !!UserService.state.auth?.platforms.youtube,
   }));
   const [platform, setPlatform] = useState(() => (isYoutubeLinked ? 'youtube' : 'crossclip'));
-  const clipsAmount = getClips(streamId).length;
-  const clipsDuration = formatSecondsToHMS(getDuration(streamId));
+  const clipsAmount = getClips().length;
+  const clipsDuration = formatSecondsToHMS(getDuration());
   async function handlePlatformSelect(val: string) {
     if (platform === 'youtube') await clearUpload();
     setPlatform(val);
@@ -51,7 +47,7 @@ export default function PlatformSelect({
     {
       key: '1',
       label: 'Youtube',
-      children: <YoutubeUpload defaultTitle={videoName} close={onClose} streamId={streamId} />,
+      children: <YoutubeUpload defaultTitle={videoName} close={onClose} />,
     },
   ];
 

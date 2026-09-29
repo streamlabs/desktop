@@ -14,13 +14,8 @@ import UploadProgress from './UploadProgress';
 import styles from './ExportModal.m.less';
 import { EUploadPlatform } from 'services/highlighter/models/highlighter.models';
 
-export default function YoutubeUpload(props: {
-  defaultTitle: string;
-  close: () => void;
-  streamId: string | undefined;
-}) {
+export default function YoutubeUpload(props: { defaultTitle: string; close: () => void }) {
   const [title, setTitle] = useState(props.defaultTitle);
-  const streamId = props.streamId;
   const [description, setDescription] = useState('');
   const [privacy, setPrivacy] = useState('private');
   const [isOpen, setIsOpen] = useState(false);
@@ -161,14 +156,11 @@ export default function YoutubeUpload(props: {
             }}
             onClick={() => {
               UsageStatisticsService.actions.recordFeatureUsage('HighlighterUpload');
-              HighlighterService.actions.uploadYoutube(
-                {
-                  title,
-                  description,
-                  privacyStatus: privacy as TPrivacyStatus,
-                },
-                streamId,
-              );
+              HighlighterService.actions.uploadYoutube({
+                title,
+                description,
+                privacyStatus: privacy as TPrivacyStatus,
+              });
             }}
           >
             {$t('Publish')}

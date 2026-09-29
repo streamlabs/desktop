@@ -11,19 +11,14 @@ import { BoolButtonInput } from 'components-react/shared/inputs/BoolButtonInput'
 import styles from './ClipPreview.m.less';
 import { Button, Tooltip } from 'antd';
 import { $t } from 'services/i18n';
-import { isAiClip } from './utils';
 import { useVuex } from 'components-react/hooks';
-import ClipPreviewInfo from './ClipPreviewInfo';
-import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import cx from 'classnames';
 
 export default function ClipPreview(props: {
   clipId: string;
-  streamId: string | undefined;
   emitShowTrim: () => void;
   emitShowRemove: () => void;
   emitOpenFileInLocation: () => void;
-  game: EGame;
 }) {
   const { HighlighterService } = Services;
   const v = useVuex(() => ({
@@ -48,7 +43,7 @@ export default function ClipPreview(props: {
   }
 
   function setEnabled(enabled: boolean) {
-    HighlighterService.actions.manuallyEnableClip(v.clip.path, enabled, props.streamId);
+    HighlighterService.actions.manuallyEnableClip(v.clip.path, enabled);
   }
 
   return (
@@ -80,9 +75,6 @@ export default function ClipPreview(props: {
             <i className={`icon-trash ${styles.deletedIcon}`} />
           </div>
         )}
-        <div className={styles.flameHypescoreWrapper}>
-          {isAiClip(v.clip) && <FlameHypeScore score={v.clip.aiInfo.score} />}
-        </div>
         <span className={styles.enableButton}>
           <BoolButtonInput
             tooltip={enabled ? $t('Disable clip') : $t('Enable clip')}
@@ -114,13 +106,9 @@ export default function ClipPreview(props: {
                   fontSize: '19px',
                 }}
               >
-                {isAiClip(v.clip) ? (
-                  <ClipPreviewInfo clip={v.clip} game={props.game} />
-                ) : (
-                  <div className={styles.highlighterIcon}>
-                    <i className="icon-highlighter" />
-                  </div>
-                )}
+                <div className={styles.highlighterIcon}>
+                  <i className="icon-highlighter" />
+                </div>
               </div>
             </div>
           </div>
@@ -161,26 +149,4 @@ export function formatSecondsToHMS(seconds: number): string {
   return `${hours !== 0 ? hours.toString() + 'h ' : ''} ${
     minutes !== 0 ? minutes.toString() + 'm ' : ''
   }${remainingSeconds !== 0 ? remainingSeconds.toString() + 's' : ''}`;
-}
-
-function FlameHypeScore({ score }: { score: number }) {
-  if (score === undefined) {
-    return <></>;
-  }
-  const normalizedScore = Math.min(1, Math.max(0, score));
-  const fullFlames = Math.ceil(normalizedScore * 5);
-
-  return (
-    <div className="flex items-center gap-1" style={{ fontSize: '19px' }}>
-      {Array.from({ length: fullFlames }).map((_, index) => (
-        <React.Fragment key={'on' + index}>🔥</React.Fragment>
-      ))}
-
-      {Array.from({ length: 5 - fullFlames }).map((_, index) => (
-        <span key={'off' + index} style={{ opacity: '0.3' }}>
-          🔥
-        </span>
-      ))}
-    </div>
-  );
 }

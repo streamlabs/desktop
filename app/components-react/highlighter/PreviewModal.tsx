@@ -4,13 +4,11 @@ import { $t } from 'services/i18n';
 import { TClip } from 'services/highlighter/models/highlighter.models';
 import { sortClipsByOrder, getCombinedClipsDuration } from './utils';
 import MiniClipPreview from './MiniClipPreview';
-import { PauseButton, PlayButton } from './StreamCard';
 import styles from './PreviewModal.m.less';
 import { Button } from 'antd';
 import { TModalClipsView } from './ClipsView';
 import { CheckboxInput } from 'components-react/shared/inputs';
 import { formatSecondsToHMS } from './ClipPreview';
-import { TModalStreamCard } from './StreamCardModal';
 import { useVuex } from 'components-react/hooks';
 
 interface IPlaylist {
@@ -25,27 +23,23 @@ interface IPlaylist {
 
 export default function PreviewModal({
   close,
-  streamId,
   emitSetShowModal,
 }: {
   close: () => void;
-  streamId: string | undefined;
   emitSetShowModal: (modal: 'export' | null) => void;
 }) {
   const { HighlighterService, UsageStatisticsService } = Services;
-  const clips = useVuex(() =>
-    HighlighterService.getClips(HighlighterService.views.clips, streamId),
-  );
+  const clips = useVuex(() => HighlighterService.getClips(HighlighterService.views.clips));
   const { intro, outro } = HighlighterService.views.video;
   const audioSettings = HighlighterService.views.audio;
-  const sortedClips = [...sortClipsByOrder(clips, streamId)];
+  const sortedClips = [...sortClipsByOrder(clips)];
   const initialIndex = getInitialIndex(intro.duration, sortedClips);
   const [currentClipIndex, setCurrentClipIndex] = useState(initialIndex);
   const currentClipIndexRef = useRef(initialIndex);
   const [showDisabled, setShowDisabled] = useState(true);
 
   useEffect(() => {
-    UsageStatisticsService.recordShown('ClipsPreview', streamId);
+    UsageStatisticsService.recordShown('ClipsPreview');
   }, []);
 
   function getInitialIndex(introDuration: number | null, sortedClips: TClip[]): number {
@@ -306,7 +300,6 @@ export default function PreviewModal({
                 content = (
                   <MiniClipPreview
                     clipId={path}
-                    streamId={streamId}
                     showDisabled={showDisabled}
                     clipStateChanged={(clipId, newState) => {
                       playlist[index].enabled = newState;
@@ -384,3 +377,20 @@ export default function PreviewModal({
     </div>
   );
 }
+
+const PlayButton = () => (
+  <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M31.3111 17.05L12.9395 4.36284C11.6534 3.45661 10 4.36284 10 5.8128V31.1872C10 32.6372 11.6534 33.5434 12.9395 32.6372L31.3111 19.95C32.2296 19.225 32.2296 17.775 31.3111 17.05"
+      fill="white"
+    />
+  </svg>
+);
+const PauseButton = () => (
+  <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="7" y="5" width="10" height="28" rx="2" fill="white" />
+    <rect x="21" y="5" width="10" height="28" rx="2" fill="white" />
+  </svg>
+);

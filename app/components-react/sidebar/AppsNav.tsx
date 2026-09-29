@@ -4,55 +4,23 @@ import { useVuex } from 'components-react/hooks';
 import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
 import MenuItem from 'components-react/shared/MenuItem';
-import { EAppPageSlot, ILoadedApp } from 'services/platform-apps';
+import { EAppPageSlot } from 'services/platform-apps';
 import { Menu } from 'util/menus/Menu';
 import cx from 'classnames';
-import { EMenuItemKey } from 'services/side-nav';
 interface IAppsNav {
   type?: 'enabled' | 'selected';
 }
 
 export default memo(function AppsNav(p: IAppsNav) {
-  const { NavigationService, PlatformAppsService, SideNavService, HighlighterService } = Services;
+  const { NavigationService, PlatformAppsService, SideNavService } = Services;
   const { type = 'selected' } = p;
-
-  const aiHighlighterApp: ILoadedApp = {
-    id: 'AiHighlighter',
-    manifest: {
-      name: 'AI Highlighter',
-      version: 'xxx',
-      buildPath: 'xxx',
-      permissions: [],
-      sources: [],
-      pages: [
-        {
-          slot: EAppPageSlot.TopNav,
-          file: 'xxx',
-        },
-      ],
-      authorizationUrls: [],
-      mediaDomains: [],
-      icon: 'xxx',
-    },
-    unpacked: false,
-    beta: true,
-    appToken: 'xxx',
-    poppedOutSlots: [],
-    appPath: 'xxx',
-    enabled: true,
-    icon: 'xxx',
-    highlyPrivileged: false,
-  };
 
   const { currentMenuItem, apps, isOpen, navigateApp, enabledApps } = useVuex(() => ({
     currentMenuItem: SideNavService.views.currentMenuItem,
     apps: SideNavService.views.apps,
     isOpen: SideNavService.views.isOpen,
     navigateApp: NavigationService.actions.navigateApp,
-    enabledApps: (HighlighterService.views.highlighterVersion !== ''
-      ? [...PlatformAppsService.views.enabledApps, aiHighlighterApp]
-      : PlatformAppsService.views.enabledApps
-    )
+    enabledApps: PlatformAppsService.views.enabledApps
       .filter(app => {
         return !!app?.manifest?.pages.find(page => {
           return page.slot === EAppPageSlot.TopNav;
@@ -142,15 +110,7 @@ export default memo(function AppsNav(p: IAppsNav) {
               )}
               title={app.manifest?.name}
               onClick={() => {
-                if (app.id === 'AiHighlighter') {
-                  NavigationService.navigate(
-                    'Highlighter',
-                    { view: 'settings' },
-                    EMenuItemKey.Highlighter,
-                  );
-                } else {
-                  app?.id && navigateApp(app?.id, `sub-${app?.id}`);
-                }
+                app?.id && navigateApp(app?.id, `sub-${app?.id}`);
               }}
               type="submenu"
               onContextMenu={e => showContextMenu(e, app?.id)}

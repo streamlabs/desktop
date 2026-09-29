@@ -26,12 +26,6 @@ export const FADE_OUT_DURATION = 1;
 
 export const SUPPORTED_FILE_TYPES = ['mp4', 'mov', 'mkv'];
 
-export const AI_HIGHLIGHTER_BUILDS_URL_STAGING =
-  'https://cdn-highlighter-builds.streamlabs.com/staging/manifest_win_x86_64.json';
-
-export const AI_HIGHLIGHTER_BUILDS_URL_PRODUCTION =
-  'https://cdn-highlighter-builds.streamlabs.com/production/manifest_win_x86_64.json';
-
 export const REPLAY_SETUP_URL_STAGING =
   'https://cdn-highlighter-desktop.streamlabs.com/replay/staging/win32/x64/G+HUB+Replay-Setup.exe';
 

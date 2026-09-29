@@ -53,11 +53,12 @@ test('Highlighter save and export', async t => {
 });
 
 test('AI Highlighter', withUser('twitch', { prime: true }), async t => {
-  // AI Highlighter install button shows
+  // Replay install/open call to action shows. It is not clicked: that would download and run
+  // the real installer.
   await showPage('Highlighter');
-  await waitForDisplayed('[name="installHighlighter"]', {
+  await waitForDisplayed('[data-name="streamlabs-highlighter"]', {
     timeout: 3000,
-    timeoutMsg: 'Highlighter tab AI Highlighter install button did not show',
+    timeoutMsg: 'Highlighter tab Replay install/open call to action did not show',
   });
 
   // Go live with AI Highlighter enabled
@@ -70,38 +71,38 @@ test('AI Highlighter', withUser('twitch', { prime: true }), async t => {
     twitchGame: 'Fortnite',
   });
 
-  // Highlighter div shows
+  // Highlighter toggle shows
   await waitForSettingsWindowLoaded();
   t.true(
-    await isDisplayed('[name="install-highlighter"]'),
-    'Case 1: Highlighter card should show for supported game',
+    await isDisplayed('[data-name="replay"]'),
+    'Case 1: Highlighter toggle should show for supported game',
   );
 
-  // Highlighter div hides
+  // Highlighter toggle hides
   await fillForm({
     twitchGame: 'DOOM',
   });
   await waitForSettingsWindowLoaded();
   t.false(
-    await isDisplayed('[name="install-highlighter"]'),
-    'Case 2: Highlighter card should hide for not supported game',
+    await isDisplayed('[data-name="replay"]'),
+    'Case 2: Highlighter toggle should hide for not supported game',
   );
 
-  // Highlighter div shows again
+  // Highlighter toggle shows again
   await fillForm({
     twitchGame: 'Fortnite',
   });
   await waitForSettingsWindowLoaded();
   t.true(
-    await isDisplayed('[name="install-highlighter"]'),
-    'Case 3: Highlighter card should show when changing from an unsupported game to a supported game',
+    await isDisplayed('[data-name="replay"]'),
+    'Case 3: Highlighter toggle should show when changing from an unsupported game to a supported game',
   );
   await clickButton('Close');
   await clickGoLive();
   await waitForSettingsWindowLoaded();
   t.true(
-    await isDisplayed('[name="install-highlighter"]'),
-    'Case 5: Highlighter card should show for supported game when opening go live window',
+    await isDisplayed('[data-name="replay"]'),
+    'Case 4: Highlighter toggle should show for supported game when opening go live window',
   );
   await clickButton('Close');
 });

@@ -7,11 +7,9 @@ import styles from './RemoveModal.m.less';
 import { SCRUB_HEIGHT, SCRUB_WIDTH, SCRUB_WIDTH_VERTICAL } from 'services/highlighter/constants';
 
 export default function RemoveModal(p: {
-  removeType: 'clip' | 'stream';
   clip: TClip;
-  streamId: string | undefined;
   close: () => void;
-  deleteClip: (clipPath: string[], streamId: string | undefined) => void;
+  deleteClip: (clipPath: string[]) => void;
 }) {
   const { HighlighterService } = Services;
   const [deleteAllSelected, setDeleteAllSelected] = useState<boolean>(false);
@@ -20,7 +18,7 @@ export default function RemoveModal(p: {
   const width = p.clip.display === 'vertical' ? SCRUB_WIDTH_VERTICAL : SCRUB_WIDTH;
 
   function getClipsToDelete(): TClip[] {
-    return HighlighterService.getClips(HighlighterService.views.clips, p.streamId).filter(
+    return HighlighterService.getClips(HighlighterService.views.clips).filter(
       clip => clip.path !== p.clip.path && clip.enabled,
     );
   }
@@ -28,7 +26,7 @@ export default function RemoveModal(p: {
   return (
     <div style={{ textAlign: 'center' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>{p.removeType === 'stream' ? $t('Delete stream') : $t('Delete clips')}</h2>
+        <h2>{$t('Delete clips')}</h2>
         <Button type="text" onClick={p.close}>
           <i className="icon-close" style={{ margin: 0 }}></i>
         </Button>
@@ -88,16 +86,15 @@ export default function RemoveModal(p: {
               if (deleteAllSelected) {
                 const selectedClipsToDelete = HighlighterService.getClips(
                   HighlighterService.views.clips,
-                  p.streamId,
                 ).filter(clip => clip.path !== p.clip.path && clip.enabled); // prevent adding the same clip twice
                 clipsToDelete.push(...selectedClipsToDelete);
               }
 
               clipsToDelete.forEach(clip => {
-                HighlighterService.actions.removeClip(clip.path, p.streamId);
+                HighlighterService.actions.removeClip(clip.path);
               });
               const clipsToDeletePaths = clipsToDelete.map(clip => clip.path);
-              p.deleteClip(clipsToDeletePaths, p.streamId);
+              p.deleteClip(clipsToDeletePaths);
               p.close();
             }}
           >

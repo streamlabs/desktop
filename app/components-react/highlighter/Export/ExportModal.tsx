@@ -17,7 +17,7 @@ import { getCombinedClipsDuration } from '../utils';
 import { formatSecondsToHMS } from '../ClipPreview';
 import PlatformSelect from './Platform';
 import cx from 'classnames';
-import { getVideoResolution } from 'services/highlighter/cut-highlight-clips';
+import { getVideoResolution } from 'services/highlighter/video-info';
 
 type TSetting = { name: string; fps: TFPS; resolution: TResolution; preset: TPreset };
 const settings: TSetting[] = [
@@ -36,23 +36,16 @@ class ExportController {
   get exportInfo() {
     return this.service.views.exportInfo;
   }
-  getStreamTitle(streamId?: string) {
-    return (
-      this.service.views.highlightedStreams.find(stream => stream.id === streamId)?.title ||
-      'My Video'
-    );
+  getClips() {
+    return this.service.getClips(this.service.views.clips).filter(clip => clip.enabled);
   }
 
-  getClips(streamId?: string) {
-    return this.service.getClips(this.service.views.clips, streamId).filter(clip => clip.enabled);
+  getDuration() {
+    return getCombinedClipsDuration(this.getClips());
   }
 
-  getDuration(streamId?: string) {
-    return getCombinedClipsDuration(this.getClips(streamId));
-  }
-
-  async getClipResolution(streamId?: string) {
-    const firstClipPath = this.getClips(streamId).find(clip => clip.enabled)?.path;
+  async getClipResolution() {
+    const firstClipPath = this.getClips().find(clip => clip.enabled)?.path;
     if (!firstClipPath) {
       return undefined;
     }
@@ -82,11 +75,8 @@ class ExportController {
     this.service.actions.setExportFile(exportFile);
   }
 
-  exportCurrentFile(
-    streamId: string | undefined,
-    orientation: TOrientation = EOrientation.HORIZONTAL,
-  ) {
-    this.service.actions.export(false, streamId, orientation);
+  exportCurrentFile(orientation: TOrientation = EOrientation.HORIZONTAL) {
+    this.service.actions.export(false, orientation);
   }
 
   cancelExport() {
@@ -104,27 +94,19 @@ class ExportController {
 
 export const ExportModalCtx = React.createContext<ExportController | null>(null);
 
-export default function ExportModalProvider({
-  close,
-  streamId,
-}: {
-  close: () => void;
-  streamId: string | undefined;
-}) {
+export default function ExportModalProvider({ close }: { close: () => void }) {
   const controller = useMemo(() => new ExportController(), []);
   return (
     <ExportModalCtx.Provider value={controller}>
-      <ExportModal close={close} streamId={streamId} />
+      <ExportModal close={close} />
     </ExportModalCtx.Provider>
   );
 }
 
-function ExportModal({ close, streamId }: { close: () => void; streamId: string | undefined }) {
-  const { exportInfo, dismissError, resetExportedState, getStreamTitle } = useController(
-    ExportModalCtx,
-  );
+function ExportModal({ close }: { close: () => void }) {
+  const { exportInfo, dismissError, resetExportedState } = useController(ExportModalCtx);
 
-  const [videoName, setVideoName] = useState<string>(getStreamTitle(streamId) + ' - highlights');
+  const [videoName, setVideoName] = useState<string>('My Video - highlights');
 
   const unmount = () => {
     dismissError();
@@ -138,29 +120,26 @@ function ExportModal({ close, streamId }: { close: () => void; streamId: string 
       <ExportFlow
         isExporting={exportInfo.exporting}
         close={close}
-        streamId={streamId}
         videoName={videoName}
         onVideoNameChange={setVideoName}
       />
     );
   }
-  return <PlatformSelect onClose={close} videoName={videoName} streamId={streamId} />;
+  return <PlatformSelect onClose={close} videoName={videoName} />;
 }
 
 function ExportFlow({
   close,
   isExporting,
-  streamId,
   videoName,
   onVideoNameChange,
 }: {
   close: () => void;
   isExporting: boolean;
-  streamId: string | undefined;
   videoName: string;
   onVideoNameChange: (name: string) => void;
 }) {
-  const { UsageStatisticsService, HighlighterService } = Services;
+  const { UsageStatisticsService } = Services;
   const {
     exportInfo,
     cancelExport,
@@ -171,7 +150,6 @@ function ExportFlow({
     fileExists,
     setExport,
     exportCurrentFile,
-    getStreamTitle,
     getClips,
     getDuration,
     getClipResolution,
@@ -180,14 +158,14 @@ function ExportFlow({
   const [currentFormat, setCurrentFormat] = useState<TOrientation>(EOrientation.HORIZONTAL);
 
   const { amount, duration, thumbnail } = useMemo(() => {
-    const clips = getClips(streamId);
+    const clips = getClips();
 
     return {
       amount: clips.length,
       duration: formatSecondsToHMS(getCombinedClipsDuration(clips)),
       thumbnail: clips.find(clip => clip.enabled)?.scrubSprite,
     };
-  }, [streamId]);
+  }, []);
 
   function settingMatcher(initialSetting: TSetting) {
     const matchingSetting = settings.find(
@@ -212,7 +190,7 @@ function ExportFlow({
 
   async function initializeSettings() {
     try {
-      const resolution = await getClipResolution(streamId);
+      const resolution = await getClipResolution();
       let setting: TSetting;
       if (resolution?.height === 720 && exportInfo.resolution !== 720) {
         setting = settings.find(s => s.resolution === 720) || settings[settings.length - 1];
@@ -249,7 +227,7 @@ function ExportFlow({
   useEffect(() => {
     setIsLoadingResolution(true);
     initializeSettings();
-  }, [streamId]);
+  }, []);
 
   // Video name and export file are kept in sync
   const [exportFile, setExportFile] = useState<string>(getExportFileFromVideoName(videoName));
@@ -282,25 +260,7 @@ function ExportFlow({
     UsageStatisticsService.actions.recordFeatureUsage('HighlighterExport');
 
     setExport(exportFile);
-    exportCurrentFile(streamId, orientation);
-
-    const streamInfo = HighlighterService.views.highlightedStreams.find(
-      stream => stream.id === streamId,
-    );
-
-    if (streamInfo && !streamInfo.feedbackLeft) {
-      streamInfo.feedbackLeft = true;
-      HighlighterService.updateStream(streamInfo);
-
-      const clips = getClips(streamId);
-
-      UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
-        type: 'ThumbsUp',
-        streamId: streamInfo?.id,
-        game: streamInfo?.game,
-        clips: clips?.length,
-      });
-    }
+    exportCurrentFile(orientation);
   }
 
   return (
