@@ -1,4 +1,6 @@
-applyTo: "app/components/\*\*,app/components-react/\*\*,app/services/\*\*,app/i18n/en-US/\*\*"
+---
+applyTo: 'app/components/**,app/components-react/**,app/services/**,app/i18n/en-US/**'
+---
 
 Read the entire instructions file before carrying out any checks.
 
