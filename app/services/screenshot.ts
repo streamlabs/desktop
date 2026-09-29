@@ -29,7 +29,7 @@ export class ScreenshotService extends Service {
   @Inject() private jsonrpcService: JsonrpcService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
 
-  takeScreenshot(display: TDisplayType = 'horizontal') {
+  async takeScreenshot(display: TDisplayType = 'horizontal') {
     if (typeof obs.NodeObs.OBS_content_takeScreenshot !== 'function') {
       this.warn($t('Screenshots need a newer version of the Streamlabs backend.'));
       return;
@@ -58,7 +58,12 @@ export class ScreenshotService extends Service {
       DEFAULT_FILENAME_FORMAT;
 
     try {
-      const result = obs.NodeObs.OBS_content_takeScreenshot(context, directory, format, noSpace);
+      const result = await obs.NodeObs.OBS_content_takeScreenshot(
+        context,
+        directory,
+        format,
+        noSpace,
+      );
       this.notificationsService.push({
         type: ENotificationType.SUCCESS,
         message: $t('Screenshot saved as %{filename}', { filename: path.basename(result.path) }),
