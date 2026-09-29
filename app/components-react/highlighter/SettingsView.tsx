@@ -16,6 +16,7 @@ import { EAvailableFeatures } from 'services/incremental-rollout';
 import SupportedGames from './supportedGames/SupportedGames';
 import PageInstallationFlow from './migration/PageInstallationFlow';
 import { promptAction } from 'components-react/modals';
+import { EStreamingState } from 'services/streaming';
 
 export default function SettingsView({
   emitSetView,
@@ -107,6 +108,14 @@ export default function SettingsView({
       };
     }
   }, [v.isStreaming]);
+
+  useEffect(() => {
+    const subscription = StreamingService.streamingStatusChange.subscribe(status => {
+      if (status === EStreamingState.Offline) hotkeyRef.current = null;
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   function completedStepHeading(title: string) {
     return (
@@ -338,7 +347,6 @@ export default function SettingsView({
                           setHotkey(newHotkey);
                           hotkeyRef.current = newHotkey;
                           HotkeysService.actions.applyGeneralHotkey(newHotkey);
-                          if (!v.isStreaming) HotkeysService.actions.unregisterAll();
                         }}
                       />
                     )}
