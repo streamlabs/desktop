@@ -14,7 +14,6 @@ import ColorSpaceWarnings from './ColorSpaceWarnings';
 import { DestinationSwitchers } from './DestinationSwitchers';
 import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import cx from 'classnames';
-import { CaretDownOutlined } from '@ant-design/icons';
 import * as remote from '@electron/remote';
 import { inject } from 'slap';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
@@ -132,7 +131,7 @@ export default function GoLiveSettings() {
                 enabledPlatforms={enabledPlatforms}
                 onSetPrimaryChat={setPrimaryChat}
                 primaryChat={primaryChat}
-                suffixIcon={<CaretDownOutlined className="ant-select-suffix" />}
+                caretIcon
                 layout="horizontal"
                 logo={false}
                 border={false}

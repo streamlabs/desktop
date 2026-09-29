@@ -16,7 +16,6 @@ import GoLiveError from './GoLiveError';
 import PrimaryChatSwitcher from './PrimaryChatSwitcher';
 import { DestinationSwitchers } from './DestinationSwitchers';
 import cx from 'classnames';
-import { CaretDownOutlined } from '@ant-design/icons';
 import GoLiveInfoBanner from './GoLiveInfoBanner';
 import { WindowsService } from 'services/windows';
 import { StreamingService } from 'services/streaming';
@@ -131,7 +130,7 @@ const EditStreamSettings = memo(function EditStreamSettings(p: { timer: number |
                 enabledPlatforms={enabledPlatforms}
                 onSetPrimaryChat={setPrimaryChat}
                 primaryChat={primaryChat}
-                suffixIcon={<CaretDownOutlined className="ant-select-suffix" />}
+                caretIcon
                 layout="horizontal"
                 logo={false}
                 border={false}
