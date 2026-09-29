@@ -467,10 +467,7 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
   stop() {
     this.shutdown = true;
     if (this.performanceStatsHandler) {
-      electron.ipcRenderer.removeListener(
-        'performanceStatsResponse',
-        this.performanceStatsHandler,
-      );
+      electron.ipcRenderer.removeListener('performanceStatsResponse', this.performanceStatsHandler);
     }
   }
 }
