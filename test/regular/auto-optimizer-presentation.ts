@@ -527,6 +527,8 @@ test('Enhanced Broadcasting progress interpolates through the en-US catalog', t 
     'Upload instability was detected while testing higher-quality settings. The recommended settings passed without dropped frames.',
     'Higher-quality settings did not pass the performance test. The recommended settings passed.',
     'Higher-quality settings encountered upload instability and performance issues during testing. The recommended settings passed.',
+    "Not all selected platforms could be tested. The recommendation uses the successful bandwidth probe and estimates the untested platform's upload route, so confidence is low.",
+    'Estimated because at least one platform bandwidth probe could not be completed.',
   ].forEach(key => {
     t.true(
       Object.prototype.hasOwnProperty.call(messages, key),

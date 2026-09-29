@@ -37,6 +37,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { ICustomStreamDestination } from 'services/settings/streaming';
 import { ENotificationType } from 'services/notifications';
 import uuid from 'uuid';
+import { YoutubeAutoOptimizerProbeRecovery } from './youtube/auto-optimizer-probe-recovery';
 import {
   IYoutubeAutoOptimizerProbeAcquireOptions,
   IYoutubeAutoOptimizerProbeLease,
@@ -44,7 +45,6 @@ import {
   TYoutubeAutoOptimizerProbeDeleteResult,
   TYoutubeAutoOptimizerProbeRecoveryResult,
   TYoutubeAutoOptimizerProbeStreamStatus,
-  YoutubeAutoOptimizerProbeError,
   YoutubeAutoOptimizerProbeManager,
 } from './youtube/auto-optimizer-probe';
 
@@ -238,7 +238,14 @@ export class YoutubeService
   @lazyModule(YoutubeUploader) uploader: YoutubeUploader;
 
   private autoOptimizerProbeManager?: YoutubeAutoOptimizerProbeManager;
-  private autoOptimizerRecoveryTimer?: ReturnType<typeof setTimeout>;
+  private readonly autoOptimizerProbeRecovery = new YoutubeAutoOptimizerProbeRecovery({
+    getAccountId: () => {
+      const auth = this.userService.state.auth?.platforms?.youtube;
+      return this.oauthToken ? auth?.id || auth?.channelId || '' : '';
+    },
+    recover: () => this.recoverAutoOptimizerProbe(),
+    onError: error => console.warn('[Auto Optimizer] Deferred YouTube probe recovery', error),
+  });
   private pendingAutoOptimizerProbeReleases = new Map<string, IYoutubeAutoOptimizerProbeLease>();
 
   readonly capabilities = new Set<TPlatformCapability>([
@@ -311,14 +318,14 @@ export class YoutubeService
     this.syncSettingsWithLocalStorage();
 
     // Recover journaled temporary streams as soon as the linked YouTube account
-    // is available, independently of the Auto Optimizer UI. Retry transient or
-    // ambiguous cleanup failures in the background.
-    this.userService.userLoginFinished.subscribe(() => this.scheduleAutoOptimizerProbeRecovery());
+    // is available. Login completion also covers a failed linked-platform fetch;
+    // the scheduler coalesces it with auth updates and bounds background retries.
+    this.userService.userLoginFinished.subscribe(() => this.autoOptimizerProbeRecovery.schedule());
     this.userService.platformAuthUpdated.subscribe(platform => {
-      if (platform === 'youtube') this.scheduleAutoOptimizerProbeRecovery();
+      if (platform === 'youtube') this.autoOptimizerProbeRecovery.schedule();
     });
-    this.userService.userLogout.subscribe(() => this.cancelAutoOptimizerProbeRecovery());
-    if (this.oauthToken) this.scheduleAutoOptimizerProbeRecovery();
+    this.userService.userLogout.subscribe(() => this.autoOptimizerProbeRecovery.cancel());
+    if (this.oauthToken) this.autoOptimizerProbeRecovery.schedule();
 
     this.streamingService.streamErrorCreated.subscribe(e => {
       if (this.state.verticalStreamKey || this.state.verticalBroadcast.id) {
@@ -376,7 +383,7 @@ export class YoutubeService
       lease.server = '';
       lease.streamKey = '';
       this.pendingAutoOptimizerProbeReleases.set(lease.probeId, lease);
-      this.scheduleAutoOptimizerProbeRecovery(30_000);
+      this.autoOptimizerProbeRecovery.schedule(30_000);
       throw error;
     }
   }
@@ -504,32 +511,6 @@ export class YoutubeService
 
   private autoOptimizerProbeDescription(probeId: string): string {
     return `Temporary unbound Streamlabs Auto Optimizer probe ${probeId}`;
-  }
-
-  private scheduleAutoOptimizerProbeRecovery(delayMs = 0) {
-    this.cancelAutoOptimizerProbeRecovery();
-    const recover = async () => {
-      this.autoOptimizerRecoveryTimer = undefined;
-      if (!this.oauthToken) return;
-      try {
-        await this.recoverAutoOptimizerProbe();
-      } catch (error: unknown) {
-        console.warn('[Auto Optimizer] Deferred startup YouTube probe recovery', error);
-        const code =
-          error instanceof YoutubeAutoOptimizerProbeError ? error.code : 'cleanup_failed';
-        if (code !== 'account_mismatch' && code !== 'not_authenticated') {
-          this.scheduleAutoOptimizerProbeRecovery(30_000);
-        }
-      }
-    };
-
-    if (delayMs > 0) this.autoOptimizerRecoveryTimer = setTimeout(() => void recover(), delayMs);
-    else void recover();
-  }
-
-  private cancelAutoOptimizerProbeRecovery() {
-    if (this.autoOptimizerRecoveryTimer) clearTimeout(this.autoOptimizerRecoveryTimer);
-    this.autoOptimizerRecoveryTimer = undefined;
   }
 
   private async deleteAutoOptimizerProbeStream(

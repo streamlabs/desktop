@@ -106,7 +106,7 @@ export default function Settings() {
     SettingsService.actions.loadSettingsIntoStore();
 
     return () => {
-      void AutoOptimizerService.actions.return.closeFromHost('settings');
+      AutoOptimizerService.actions.closeFromHost('settings');
     };
   }, []);
 

@@ -8,8 +8,8 @@ export default function SettingsAutoOptimizer() {
   return (
     <ConnectedAutoOptimizer
       host="settings"
-      onApply={() => void service.actions.return.applyRecommendations()}
-      onClose={() => void service.actions.return.dismiss()}
+      onApply={() => service.actions.applyRecommendations()}
+      onClose={() => service.actions.dismiss()}
     />
   );
 }

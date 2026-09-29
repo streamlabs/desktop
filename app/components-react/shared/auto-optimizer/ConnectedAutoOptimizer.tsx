@@ -179,11 +179,11 @@ export function ConnectedAutoOptimizer(p: IConnectedAutoOptimizerProps) {
       errorMessage={$t(autoOptimizerErrorMessage(state.error))}
       canRetry={state.error?.retryable}
       host={p.host}
-      onStart={() => void service.actions.return.startOptimization()}
-      onCancel={() => void service.actions.return.cancelOptimization()}
+      onStart={() => service.actions.startOptimization()}
+      onCancel={() => service.actions.cancelOptimization()}
       onSkip={() => p.onSkip?.()}
       onApply={p.onApply}
-      onRetry={() => void service.actions.return.retry()}
+      onRetry={() => service.actions.retry()}
       onContinueWithoutOptimization={() => p.onContinueWithoutOptimization?.()}
       onClose={p.onClose}
       onAdvice={() => service.actions.openAdvice()}
