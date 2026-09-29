@@ -211,6 +211,8 @@ export class StreamingService
    */
   private addingDisplayTargets = new Set<TDisplayType>();
   private numInstances: number = 0;
+  /** Streaming contexts counted in `numInstances`, so teardown only uncounts what was counted */
+  private countedStreamingContexts = new Set<TOutputContext>();
 
   private resolveStartStreaming: Function = () => {};
   private rejectStartStreaming: Function = () => {};
@@ -3433,6 +3435,7 @@ export class StreamingService
         if (this.isDisplayContext(context) && this.addingDisplayTargets.has(context)) {
           this.addingDisplayTargets.delete(context);
           this.handleStartLiveOutputEditingStreamContext(context);
+          this.countedStreamingContexts.add(context);
           this.numInstances++;
           return;
         }
@@ -3444,6 +3447,7 @@ export class StreamingService
         await this.handleStartSingleOutputStream(info.signal, context, nextState, time);
       }
       // Memoize number of streaming instances for performance metrics calculation
+      this.countedStreamingContexts.add(context);
       this.numInstances++;
 
       // Updating state for the UI is handled in the above functions
@@ -4942,6 +4946,7 @@ export class StreamingService
     }
 
     this.numInstances = 0;
+    this.countedStreamingContexts.clear();
   }
 
   /**
@@ -5050,6 +5055,15 @@ export class StreamingService
       if (instance) this.destroyFactoryInstance(contextType, instance);
 
       this.contexts[contextName][contextType] = null;
+
+      // Only uncount instances that were counted on `Start`; one that failed to start never was
+      if (
+        contextType === 'streaming' &&
+        this.countedStreamingContexts.delete(contextName) &&
+        this.numInstances > 0
+      ) {
+        this.numInstances--;
+      }
 
       Promise.resolve();
     }
