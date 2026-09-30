@@ -4567,6 +4567,12 @@ export class StreamingService
       // -4 is used for generic unknown messages in OBS. Both -4 and any other code
       // we don't recognize should fall into this branch and show a generic error.
 
+      const isStreamKeyMissingError =
+        this.userService.isLoggedIn &&
+        info.type === EOBSOutputType.Streaming &&
+        (this.settingsService.views.values.Stream.key === '' ||
+          this.settingsService.views.values.StreamSecond.key === '');
+
       if (!this.userService.isLoggedIn) {
         const messages = formatStreamErrorMessage('LOGGED_OUT_ERROR');
 
@@ -4575,11 +4581,7 @@ export class StreamingService
         if (messages.details) details = messages.details;
 
         showNativeErrorMessage = details !== '';
-      } else if (
-        info.type === EOBSOutputType.Streaming &&
-        (this.settingsService.views.values.Stream.key === '' ||
-          this.settingsService.views.values.StreamSecond.key === '')
-      ) {
+      } else if (isStreamKeyMissingError) {
         if (this.views.isDualOutputMode) {
           const display = info.service === 'vertical' ? 'vertical' : 'horizontal';
           errorText = $t(
