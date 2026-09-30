@@ -165,7 +165,7 @@
     "css-loader": "2.1.1",
     "deasync": "0.1.31",
     "dotenv": "8.2.0",
-    "electron": "43.2.0",
+    "electron": "43.7.6",
     "electron-builder": "26.15.7",
     "electron-chromedriver": "43.2.0",
     "electron-devtools-installer": "3.1.1",
