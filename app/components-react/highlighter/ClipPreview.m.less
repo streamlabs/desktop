@@ -10,6 +10,13 @@
   display: flex;
   gap: 16px;
   overflow: hidden;
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  transition: outline-color 150ms ease-out;
+}
+
+.selected {
+  outline-color: var(--teal);
 }
 
 .preview-image {

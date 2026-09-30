@@ -1,6 +1,12 @@
 import { test, useWebdriver } from '../helpers/webdriver';
 import { setTemporaryRecordingPath } from '../helpers/modules/settings/settings';
-import { clickButton, focusMain, isDisplayed, waitForDisplayed } from '../helpers/modules/core';
+import {
+  clickButton,
+  focusMain,
+  isDisplayed,
+  selectElements,
+  waitForDisplayed,
+} from '../helpers/modules/core';
 import { showPage } from '../helpers/modules/navigation';
 import {
   clickGoLive,
@@ -29,7 +35,7 @@ test('Highlighter save and export', async t => {
   );
 
   await showPage('Highlighter');
-  await clickButton('Configure');
+  await clickButton('Configure replay buffer');
 
   await prepareToGoLive();
   await tryToGoLive({
@@ -37,11 +43,16 @@ test('Highlighter save and export', async t => {
     twitchGame: 'Fortnite',
   });
   await waitForStreamStart();
+  // The editor, and with it Export, only shows once at least two clips are selected
+  await saveReplayBuffer();
   await saveReplayBuffer();
   await stopStream();
 
   await focusMain();
-  await clickButton('All Clips');
+  await waitForDisplayed('[data-name="select-clip"]', { timeout: 15000 });
+  for (const selectClip of await selectElements('[data-name="select-clip"]')) {
+    await selectClip.click();
+  }
   await clickButton('Export');
   const fileName = 'MyTestVideo.mp4';
   const exportLocation = path.resolve(recordingDir, fileName);

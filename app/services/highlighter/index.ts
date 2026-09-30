@@ -45,7 +45,6 @@ import {
   IStreamInfoForAiHighlighter,
   IUploadInfo,
   TClip,
-  EHighlighterView,
   ITempRecordingInfo,
   IReplayInstallState,
   IReplayInstallOriginMetadata,
@@ -985,10 +984,13 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       });
     }
 
+    // Selection is working state for the next export: every session starts with nothing
+    // selected, which also keeps the editor panel hidden until the user picks clips.
     this.views.clips.forEach(c => {
       this.UPDATE_CLIP({
         path: c.path,
         loaded: false,
+        enabled: false,
       });
     });
 
@@ -1168,13 +1170,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
       this.setTempRecordingInfo(tempRecordingInfo);
 
-      this.navigationService.actions.navigate(
-        'Highlighter',
-        {
-          view: EHighlighterView.STREAM,
-        },
-        EMenuItemKey.Highlighter,
-      );
+      this.navigationService.actions.navigate('Highlighter', {}, EMenuItemKey.Highlighter);
     });
   }
 
@@ -1258,7 +1254,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       this.ADD_CLIP({
         path: clipData.path,
         loaded: false,
-        enabled: true,
+        enabled: false,
         startTrim: 0,
         endTrim: 0,
         deleted: false,
@@ -1327,16 +1323,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         const files = await fs.readdir(folderPath);
         if (files.length === 0) {
           await fs.rmdir(folderPath);
-        }
-
-        if (this.getClips(this.views.clips).length === 0) {
-          this.navigationService.actions.navigate(
-            'Highlighter',
-            {
-              view: EHighlighterView.STREAM,
-            },
-            EMenuItemKey.Highlighter,
-          );
         }
       } catch (error: unknown) {
         console.error('Error deleting clip or folder:', error);

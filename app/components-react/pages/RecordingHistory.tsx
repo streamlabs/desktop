@@ -18,10 +18,7 @@ import { EMenuItemKey } from 'services/side-nav';
 import { $i } from 'services/utils';
 import { IRecordingEntry } from 'services/recording-mode';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
-import {
-  EHighlighterView,
-  ITempRecordingInfo,
-} from 'services/highlighter/models/highlighter.models';
+import { ITempRecordingInfo } from 'services/highlighter/models/highlighter.models';
 
 interface IRecordingHistoryStore {
   showSLIDModal: boolean;
@@ -135,13 +132,7 @@ class RecordingHistoryController {
       };
       this.HighlighterService.setTempRecordingInfo(tempRecordingInfo);
 
-      this.NavigationService.actions.navigate(
-        'Highlighter',
-        {
-          view: EHighlighterView.STREAM,
-        },
-        EMenuItemKey.Highlighter,
-      );
+      this.NavigationService.actions.navigate('Highlighter', {}, EMenuItemKey.Highlighter);
       return;
     }
 

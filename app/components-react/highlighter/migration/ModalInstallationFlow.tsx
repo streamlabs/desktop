@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Button } from 'antd';
 import cx from 'classnames';
-import styles from './MigrationNotice.m.less';
+import styles from './InstallationFlow.m.less';
 import { HIGHLIGHTER_APP_NAME, REPLAY_APP_NAME } from 'services/highlighter/constants';
 import { $t } from 'services/i18n';
 import Translate from 'components-react/shared/Translate';

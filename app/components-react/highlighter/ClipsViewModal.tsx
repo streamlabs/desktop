@@ -7,7 +7,6 @@ import styles from './ClipsView.m.less';
 import ClipTrimmer from 'components-react/highlighter/ClipTrimmer';
 import { Modal, Alert } from 'antd';
 import ExportModal from 'components-react/highlighter/Export/ExportModal';
-import { $t } from 'services/i18n';
 import PreviewModal from './PreviewModal';
 import RemoveModal from './RemoveModal';
 

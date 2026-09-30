@@ -47,7 +47,7 @@ export default function ClipPreview(props: {
   }
 
   return (
-    <div className={styles.previewClip} style={{ opacity: v.clip.enabled ? 1.0 : 0.3 }}>
+    <div className={cx(styles.previewClip, { [styles.selected]: enabled })}>
       <div style={{ height: `${SCRUB_HEIGHT}px`, position: 'relative' }}>
         {!v.clip.deleted && (
           <img
@@ -77,7 +77,8 @@ export default function ClipPreview(props: {
         )}
         <span className={styles.enableButton}>
           <BoolButtonInput
-            tooltip={enabled ? $t('Disable clip') : $t('Enable clip')}
+            name="select-clip"
+            tooltip={enabled ? $t('Deselect clip') : $t('Select clip')}
             tooltipPlacement="top"
             value={enabled}
             onChange={setEnabled}

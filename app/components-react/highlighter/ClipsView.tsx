@@ -1,29 +1,34 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import * as remote from '@electron/remote';
+import cx from 'classnames';
 import { Services } from 'components-react/service-provider';
 import styles from './ClipsView.m.less';
-import {
-  EHighlighterView,
-  IViewState,
-  TClip,
-} from 'services/highlighter/models/highlighter.models';
+import { TClip } from 'services/highlighter/models/highlighter.models';
 import ClipPreview from 'components-react/highlighter/ClipPreview';
 import { ReactSortable } from 'react-sortablejs';
 import Scrollable from 'components-react/shared/Scrollable';
 import { EditingControls } from './EditingControls';
-import { sortClipsByOrder, useOptimizedHover } from './utils';
+import { MIN_SELECTED_CLIPS_FOR_EDITOR, sortClipsByOrder, useOptimizedHover } from './utils';
 import ClipsViewModal from './ClipsViewModal';
 import { useVuex } from 'components-react/hooks';
-import { Button, Tooltip } from 'antd';
+import { Button } from 'antd';
 import { SUPPORTED_FILE_TYPES } from 'services/highlighter/constants';
 import { $t } from 'services/i18n';
 import path from 'path';
 
 export type TModalClipsView = 'trim' | 'export' | 'preview' | 'remove';
 
-export default function ClipsView({ emitSetView }: { emitSetView: (data: IViewState) => void }) {
+/**
+ * Body of the Highlighter page: whatever is passed as children on top, then the grid of all
+ * clips. The editor panel slides in beside it once enough clips are selected to edit a video.
+ */
+export default function ClipsView({ children }: { children?: React.ReactNode }) {
   const { HighlighterService, UsageStatisticsService } = Services;
   const clipsAmount = useVuex(() => HighlighterService.views.clips.length);
+  const selectedAmount = useVuex(
+    () => HighlighterService.views.clips.filter(clip => clip.enabled && !clip.deleted).length,
+  );
+  const showEditor = selectedAmount >= MIN_SELECTED_CLIPS_FOR_EDITOR;
   const [clips, setClips] = useState<{ id: string }[]>([]);
 
   const [clipsLoaded, setClipsLoaded] = useState<boolean>(false);
@@ -97,96 +102,79 @@ export default function ClipsView({ emitSetView }: { emitSetView: (data: IViewSt
     );
   }
 
-  return (
-    <div ref={containerRef} className={styles.clipsViewRoot} onDrop={event => onDrop(event)}>
-      <div className={styles.container}>
-        <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
-          <header className={styles.header}>
-            <button
-              className={styles.backButton}
-              onClick={() => emitSetView({ view: EHighlighterView.SETTINGS })}
-            >
-              <i className="icon-back" />
-            </button>
-            <h1
-              className={styles.title}
-              onClick={() => emitSetView({ view: EHighlighterView.SETTINGS })}
-            >
-              {$t('All highlight clips')}
-            </h1>
-          </header>
-          <div style={{ padding: '20px', display: 'flex', gap: '8px' }}>
-            <Button
-              type="text"
-              icon={<i className="icon-community" style={{ marginRight: 8 }} />}
-              onClick={shareFeedback}
-            >
-              {$t('Share feedback')}
-            </Button>
-            <PreviewExportButton setModal={setModal} />
-          </div>
-        </div>
+  function renderClips() {
+    if (clips.length === 0) {
+      return <div className={styles.emptyState}>{$t('No clips found')}</div>;
+    }
 
-        {clips.length === 0 ? (
-          <div style={{ padding: '20px' }}>
-            {$t('No clips found')}
-            <br />
-            <div>
+    if (!clipsLoaded) return <ClipsLoadingView />;
+
+    return (
+      <ReactSortable
+        list={clips}
+        setList={clips => setClipOrder(clips)}
+        animation={200}
+        filter=".sortable-ignore"
+        onMove={e => {
+          return e.related.className.indexOf('sortable-ignore') === -1;
+        }}
+      >
+        {clips.map(({ id }) => {
+          const clip = HighlighterService.views.clipsDictionary[id];
+          return (
+            <div key={clip.path} data-clip-id={id} className={styles.clipItem}>
+              <ClipPreview
+                clipId={id}
+                emitShowTrim={() => {
+                  setModal({ modal: 'trim', inspectedPathId: id });
+                }}
+                emitShowRemove={() => {
+                  setModal({ modal: 'remove', inspectedPathId: id });
+                }}
+                emitOpenFileInLocation={() => {
+                  remote.shell.showItemInFolder(clip.path);
+                }}
+              />
+            </div>
+          );
+        })}
+      </ReactSortable>
+    );
+  }
+
+  return (
+    <div ref={containerRef} className={styles.clipsViewRoot}>
+      <Scrollable className={styles.pageScroll}>
+        {children}
+        <section className={styles.clipsSection} onDrop={onDrop}>
+          <div className={styles.clipsHeader}>
+            <h3 className={styles.clipsTitle}>{$t('All clips')}</h3>
+            <div className={styles.clipsHeaderActions}>
+              <Button
+                type="text"
+                icon={<i className="icon-community" style={{ marginRight: 8 }} />}
+                onClick={shareFeedback}
+              >
+                {$t('Share feedback')}
+              </Button>
               <AddClip addedClips={() => setClips(sortClips(getClips()))} />
             </div>
           </div>
-        ) : (
-          <>
-            {clipsLoaded ? (
-              <>
-                <div className={styles.clipsControls}>
-                  <AddClip addedClips={() => setClips(sortClips(getClips()))} />
-                </div>
-                <Scrollable className={styles.clipsContainer}>
-                  <ReactSortable
-                    list={clips}
-                    setList={clips => setClipOrder(clips)}
-                    animation={200}
-                    filter=".sortable-ignore"
-                    onMove={e => {
-                      return e.related.className.indexOf('sortable-ignore') === -1;
-                    }}
-                  >
-                    {clips.map(({ id }) => {
-                      const clip = HighlighterService.views.clipsDictionary[id];
-                      return (
-                        <div key={clip.path} data-clip-id={id} className={styles.clipItem}>
-                          <ClipPreview
-                            clipId={id}
-                            emitShowTrim={() => {
-                              setModal({ modal: 'trim', inspectedPathId: id });
-                            }}
-                            emitShowRemove={() => {
-                              setModal({ modal: 'remove', inspectedPathId: id });
-                            }}
-                            emitOpenFileInLocation={() => {
-                              remote.shell.showItemInFolder(clip.path);
-                            }}
-                          />
-                        </div>
-                      );
-                    })}
-                  </ReactSortable>
-                </Scrollable>
-              </>
-            ) : (
-              <ClipsLoadingView />
-            )}
-          </>
-        )}
+          {renderClips()}
+        </section>
+      </Scrollable>
+      <div
+        className={cx(styles.editorPanel, { [styles.editorPanelVisible]: showEditor })}
+        aria-hidden={!showEditor}
+      >
+        <EditingControls
+          emitSetShowModal={(modal: TModalClipsView | null) => {
+            if (modal) {
+              setModal({ modal });
+            }
+          }}
+        />
       </div>
-      <EditingControls
-        emitSetShowModal={(modal: TModalClipsView | null) => {
-          if (modal) {
-            setModal({ modal });
-          }
-        }}
-      />
       <ClipsViewModal
         modal={modal}
         onClose={() => setModal(null)}
@@ -250,39 +238,4 @@ function ClipsLoadingView() {
 
 function sortClips(clips: TClip[]): { id: string }[] {
   return sortClipsByOrder(clips).map(clip => ({ id: clip.path }));
-}
-
-function PreviewExportButton({
-  setModal,
-}: {
-  setModal: (modal: { modal: TModalClipsView }) => void;
-}) {
-  const { HighlighterService } = Services;
-  const clips = useVuex(() => HighlighterService.getClips(HighlighterService.views.clips));
-  const hasClipsToExport = clips.some(clip => clip.enabled);
-
-  return (
-    <>
-      <Tooltip
-        title={!hasClipsToExport ? $t('Select at least one clip to preview your video') : null}
-        placement="bottom"
-      >
-        <Button disabled={!hasClipsToExport} onClick={() => setModal({ modal: 'preview' })}>
-          {$t('Preview')}
-        </Button>
-      </Tooltip>
-      <Tooltip
-        title={!hasClipsToExport ? $t('Select at least one clip to export your video') : null}
-        placement="bottom"
-      >
-        <Button
-          disabled={!hasClipsToExport}
-          type="primary"
-          onClick={() => setModal({ modal: 'export' })}
-        >
-          {$t('Export')}
-        </Button>
-      </Tooltip>
-    </>
-  );
 }

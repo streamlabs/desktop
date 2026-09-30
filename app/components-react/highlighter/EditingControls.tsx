@@ -61,12 +61,21 @@ export function EditingControls({
     <Scrollable
       style={{
         width: '300px',
+        height: '100%',
         flexShrink: 0,
         background: 'var(--section)',
         borderLeft: '1px solid var(--border)',
         padding: '20px',
       }}
     >
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+        <Button style={{ flex: 1 }} onClick={() => emitSetShowModal('preview')}>
+          {$t('Preview')}
+        </Button>
+        <Button style={{ flex: 1 }} type="primary" onClick={() => emitSetShowModal('export')}>
+          {$t('Export')}
+        </Button>
+      </div>
       <Form layout="vertical">
         <TransitionSelector />
         <SliderInput

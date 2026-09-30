@@ -15,14 +15,12 @@ import {
   TOpenedFrom,
 } from 'services/highlighter/models/highlighter.models';
 import { $t } from 'services/i18n';
-import React, { useEffect, useRef, useState } from 'react';
-import styles from './StreamView.m.less';
+import React, { useEffect, useState } from 'react';
+import styles from './ImportStream.m.less';
 import { getConfigByGame, supportedGames } from 'services/highlighter/models/game-config.models';
 import path from 'path';
-import MigrationNotice from './migration/MigrationNotice';
+import ModalInstallationFlow from './migration/ModalInstallationFlow';
 import { HypeWrapper } from './HypeWrapper';
-
-type GameConfig = ReturnType<typeof getConfigByGame>;
 
 export function ImportStreamModal({
   close,
@@ -147,10 +145,9 @@ export function ImportStreamModal({
     }
   }, [gameConfig?.importModalConfig?.artwork]);
 
-  function renderMigrationNotice() {
+  function renderInstallationFlow() {
     return (
-      <MigrationNotice
-        variant="modal"
+      <ModalInstallationFlow
         installOriginMetadata={
           pendingImport
             ? { videoPath: pendingImport.filePath, game: pendingImport.game }
@@ -191,7 +188,7 @@ export function ImportStreamModal({
   if (installedApp === 'none' && showingInstallFlow) {
     return (
       <HypeWrapper gameConfig={gameConfig} isAnimating={false} artwork={artwork}>
-        {renderMigrationNotice()}
+        {renderInstallationFlow()}
       </HypeWrapper>
     );
   }

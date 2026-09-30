@@ -93,26 +93,6 @@ export interface IStreamInfoForAiHighlighter {
   title?: string;
 }
 
-// VIEW
-export enum EHighlighterView {
-  CLIPS = 'clips',
-  STREAM = 'stream',
-  SETTINGS = 'settings',
-}
-
-interface TClipsViewState {
-  view: EHighlighterView.CLIPS;
-}
-interface IStreamViewState {
-  view: EHighlighterView.STREAM;
-}
-
-interface ISettingsViewState {
-  view: EHighlighterView.SETTINGS;
-}
-
-export type IViewState = TClipsViewState | IStreamViewState | ISettingsViewState;
-
 export enum EUploadPlatform {
   YOUTUBE = 'youtube',
   CROSSCLIP = 'crossclip',

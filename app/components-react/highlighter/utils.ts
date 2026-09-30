@@ -2,6 +2,9 @@ import { TClip } from 'services/highlighter/models/highlighter.models';
 import { useRef, useEffect, useCallback } from 'react';
 import styles from './ClipsView.m.less';
 
+/** The editor panel only makes sense once there is more than one clip to put together */
+export const MIN_SELECTED_CLIPS_FOR_EDITOR = 2;
+
 export function sortClipsByOrder(clips: TClip[]): TClip[] {
   return clips
     .filter(c => c.deleted !== true)

@@ -1,8 +1,11 @@
 @import '../../styles/index';
 
+@editor-panel-width: 300px;
+
 .clips-view-root {
   position: relative;
   width: 100%;
+  height: 100%;
   display: flex;
 
   :global(.ant-modal-wrap),
@@ -18,57 +21,74 @@
   }
 }
 
-.container {
-  width: 100%;
+.page-scroll {
+  flex: 1;
+  min-width: 0;
   height: 100%;
-  display: flex;
-  flex-direction: column;
 }
 
-.header {
-  padding: 20px;
+.clips-section {
+  padding: 24px 48px 48px;
+}
+
+.clips-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.clips-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.clips-header-actions {
   display: flex;
   gap: 8px;
-  align-items: center;
-  cursor: pointer;
 }
 
-.backButton {
-  padding-top: 2px;
-  border: none;
-  background: none;
-}
-
-.title {
-  margin: 0;
-}
-
-.clips-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding: 0 20px 2px;
-  padding-top: 16px;
-}
-
-.clips-container {
-  flex-grow: 1;
-  padding: 20px;
+.empty-state {
+  color: var(--paragraph);
 }
 
 .clip-loading-indicator {
   width: 100%;
+  padding: 48px 0;
   font-size: 16px;
-  margin: auto;
   display: grid;
   place-content: center;
+  text-align: center;
 }
 
 .clip-item {
-  border-radius: 18px;
   margin: 10px 20px 10px 0;
   display: inline-block;
   background-color: #111111;
   border-radius: 16px;
+}
+
+// Slides in once enough clips are selected. Width (not transform) so the clip grid reflows into
+// the remaining space instead of being covered.
+.editor-panel {
+  flex-shrink: 0;
+  width: 0;
+  height: 100%;
+  overflow: hidden;
+  transition: width 250ms cubic-bezier(0.23, 1, 0.32, 1);
+
+  > * {
+    width: @editor-panel-width;
+  }
+}
+
+.editor-panel-visible {
+  width: @editor-panel-width;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editor-panel {
+    transition: none;
+  }
 }
