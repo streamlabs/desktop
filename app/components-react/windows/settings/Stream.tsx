@@ -217,8 +217,7 @@ export function StreamSettings() {
     // Custom ingest streams to the server url and stream key the user enters, so the OBS context
     // has to be `rtmp_custom`. With `rtmp_common` OBS resolves the ingest from the `service` left
     // behind by the last protected mode stream, so the primary platform's server silently replaces
-    // the custom one. Also clear the server because it still holds the previous server url until
-    // the user enters a new one.
+    // the custom one.
     StreamSettingsService.actions.setSettings({
       protectedModeEnabled: false,
       streamType: 'rtmp_custom',
