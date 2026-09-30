@@ -206,7 +206,7 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
         disabled={disabled}
         lightShadow
         destroyTooltipOnHide
-        trigger={['hover']}
+        trigger={['hover', 'focus']}
       >
         {type === 'switch' && (
           <DualOutputToggleSwitch
