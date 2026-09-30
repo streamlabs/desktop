@@ -10,6 +10,10 @@
   flex-direction: column;
   justify-content: center;
   padding: 64px 48px 48px;
+  // Cap the content width on wide windows so the hero and steps stop spreading apart; the
+  // background still spans the full width
+  // Escaped so Less passes it through instead of evaluating its own max()
+  padding-inline: ~'max(48px, calc((100% - 1400px) / 2))';
   // Figma background. CSS paints the first layer on top, so the radial glow goes first and fades
   // to transparent; in Figma's order the opaque linear gradient would hide it entirely
   background: radial-gradient(80% 80% at 20% 60%, #112f35 0%, rgba(16, 23, 27, 0) 80%),

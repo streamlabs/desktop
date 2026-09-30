@@ -18,12 +18,15 @@ import path from 'path';
 
 export type TModalClipsView = 'trim' | 'export' | 'preview' | 'remove';
 
+// Room left below the intro on the first screen: the clips header plus the top of the thumbnails
+const CLIPS_PEEK_HEIGHT = 160;
+
 /**
  * Body of the Highlighter page: whatever is passed as children on top, then the grid of all
  * clips. The editor panel slides in beside the clips (not the children) once enough clips are
  * selected to edit a video.
- * With `fillIntro` the children take up at least the full visible height, so the clips start
- * below the fold.
+ * With `fillIntro` the children take up nearly the full visible height, leaving just enough room
+ * for the top of the clips to peek out so users can tell there is more to scroll to.
  */
 export default function ClipsView({
   children,
@@ -168,7 +171,10 @@ export default function ClipsView({
       <div ref={scrollHostRef} className={styles.pageScroll}>
         <Scrollable style={{ height: '100%' }}>
           {fillIntro ? (
-            <div className={styles.intro} style={{ minHeight: viewportHeight || undefined }}>
+            <div
+              className={styles.intro}
+              style={{ minHeight: Math.max(viewportHeight - CLIPS_PEEK_HEIGHT, 0) || undefined }}
+            >
               {children}
             </div>
           ) : (
