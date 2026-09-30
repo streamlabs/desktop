@@ -127,6 +127,7 @@ test('YouTube Dual Stream', async t => {
     // Test custom destination with vertical display
     await clickGoLive();
     await waitForSettingsWindowLoaded();
+    await fillForm({ [`${name}Display`]: 'vertical' });
     await goLiveWithDualOutput('youtube');
   } finally {
     await showSettingsWindow('Stream', async () => {
