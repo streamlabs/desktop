@@ -20,6 +20,7 @@ type TImportModal = {
   game?: EGame;
   streamInfo?: IStreamInfoForAiHighlighter;
   openedFrom: TOpenedFrom;
+  showRecentRecordings?: boolean;
 } | null;
 
 export default function Highlighter() {
@@ -72,7 +73,11 @@ export default function Highlighter() {
     >
       <ClipsView fillIntro={showReplay}>
         {showReplay && (
-          <ReplaySection onImport={() => setImportModal({ openedFrom: 'manual-import' })} />
+          <ReplaySection
+            onImport={() =>
+              setImportModal({ openedFrom: 'manual-import', showRecentRecordings: true })
+            }
+          />
         )}
         <ManualCaptureSection
           title={showReplay ? $t('Or capture clips manually') : $t('Capture clips manually')}
@@ -109,6 +114,7 @@ export default function Highlighter() {
             selectedGame={importModal.game}
             streamInfo={importModal.streamInfo}
             openedFrom={importModal.openedFrom}
+            showRecentRecordings={importModal.showRecentRecordings}
           />
         )}
       </Modal>

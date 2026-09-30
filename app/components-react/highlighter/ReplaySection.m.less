@@ -10,12 +10,10 @@
   flex-direction: column;
   justify-content: center;
   padding: 64px 48px 48px;
-  background: radial-gradient(
-    circle at 25% 55%,
-    rgba(49, 195, 162, 0.2) 0%,
-    rgba(49, 195, 162, 0.08) 25%,
-    transparent 50%
-  );
+  // Figma background. CSS paints the first layer on top, so the radial glow goes first and fades
+  // to transparent; in Figma's order the opaque linear gradient would hide it entirely
+  background: radial-gradient(80% 80% at 20% 60%, #112f35 0%, rgba(16, 23, 27, 0) 80%),
+    linear-gradient(180deg, #17242d 0%, #10171b 100%);
 }
 
 .hero {
@@ -278,10 +276,10 @@
   background: var(--border);
 }
 
-// @media (prefers-reduced-motion: reduce) {
-//   .hero-image,
-//   .step,
-//   .step-number {
-//     transition: none;
-//   }
-// }
+@media (prefers-reduced-motion: reduce) {
+  .hero-image,
+  .step,
+  .step-number {
+    transition: none;
+  }
+}

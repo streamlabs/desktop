@@ -254,5 +254,10 @@
   "Deselect clip": "Deselect clip",
   "Select clip": "Select clip",
   "Or capture clips manually": "Or capture clips manually",
-  "Capture clips manually": "Capture clips manually"
+  "Capture clips manually": "Capture clips manually",
+  "Select one of your recent recordings": "Select one of your recent recordings",
+  "Select another file": "Select another file",
+  "Today": "Today",
+  "Yesterday": "Yesterday",
+  "%{count} days ago": "%{count} days ago"
 }

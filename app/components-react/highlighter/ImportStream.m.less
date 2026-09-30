@@ -77,6 +77,52 @@
   border-radius: 1px;
 }
 
+.recording-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  align-content: start;
+  gap: 12px;
+}
+
+.recording-thumbnail {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  border: 1px solid var(--midtone);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #ffffff0a;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--teal);
+  }
+
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+  }
+}
+
+.recording-date {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 4px 8px;
+  font-size: 12px;
+  text-align: left;
+  color: var(--white);
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+}
+
 .explainer-text-wrapper {
   display: flex;
   justify-content: center;

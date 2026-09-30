@@ -19,8 +19,13 @@ import React, { useEffect, useState } from 'react';
 import styles from './ImportStream.m.less';
 import { getConfigByGame, supportedGames } from 'services/highlighter/models/game-config.models';
 import path from 'path';
+import fs from 'fs';
+import moment from 'moment';
 import ModalInstallationFlow from './ModalInstallationFlow';
 import { HypeWrapper } from './HypeWrapper';
+import { IRecordingEntry } from 'services/recording-mode';
+
+const RECENT_RECORDINGS_COUNT = 10;
 
 export function ImportStreamModal({
   close,
@@ -28,15 +33,38 @@ export function ImportStreamModal({
   videoPath,
   selectedGame,
   streamInfo,
+  showRecentRecordings,
 }: {
   close: () => void;
   openedFrom: TOpenedFrom;
   videoPath?: string;
   selectedGame?: EGame;
   streamInfo?: IStreamInfoForAiHighlighter;
+  /** Start with a picker of the latest recordings before the import form */
+  showRecentRecordings?: boolean;
 }) {
-  const { HighlighterService, UsageStatisticsService } = Services;
+  const { HighlighterService, UsageStatisticsService, RecordingModeService } = Services;
   const [installedApp, setInstalledApp] = useState<TInstalledHighlighterApp | null>(null);
+
+  // Read once on open. Recordings deleted from disk since are left out.
+  const [recentRecordings] = useState<IRecordingEntry[]>(() =>
+    showRecentRecordings && !videoPath
+      ? RecordingModeService.views.sortedRecordings
+          .filter(recording => fs.existsSync(recording.filename))
+          .slice(0, RECENT_RECORDINGS_COUNT)
+      : [],
+  );
+  const [showingRecordingPicker, setShowingRecordingPicker] = useState(recentRecordings.length > 0);
+  const [gameSelectOpen, setGameSelectOpen] = useState(false);
+  const [openGameSelectOnShow, setOpenGameSelectOnShow] = useState(false);
+
+  // Opened only after the form is mounted, so the dropdown can attach to the rendered select
+  useEffect(() => {
+    if (!showingRecordingPicker && openGameSelectOnShow) {
+      setGameSelectOpen(true);
+      setOpenGameSelectOnShow(false);
+    }
+  }, [showingRecordingPicker, openGameSelectOnShow]);
   const [showingInstallFlow, setShowingInstallFlow] = useState(false);
   const [pendingImport, setPendingImport] = useState<{
     game: EGame;
@@ -193,18 +221,53 @@ export function ImportStreamModal({
     );
   }
 
+  function selectRecording(recording: IRecordingEntry) {
+    setFilePath(recording.filename);
+    setShowingRecordingPicker(false);
+    setOpenGameSelectOnShow(!game);
+  }
+
+  const header = (
+    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <h2 style={{ fontWeight: 600, margin: 0 }}>
+        {openedFrom === 'after-stream' ? 'Ai Highlighter' : `${$t('Import Game Recording')}`}
+      </h2>{' '}
+      <div>
+        <Button type="text" onClick={() => closeModal(true)}>
+          <i className="icon-close" style={{ margin: 0 }}></i>
+        </Button>
+      </div>
+    </div>
+  );
+
+  if (showingRecordingPicker) {
+    return (
+      <HypeWrapper gameConfig={gameConfig} isAnimating={isAnimating} artwork={artwork}>
+        {header}
+        <p style={{ margin: 0 }}>{$t('Select one of your recent recordings')}</p>
+        <div className={styles.recordingGrid}>
+          {recentRecordings.map(recording => (
+            <button
+              key={recording.timestamp}
+              className={styles.recordingThumbnail}
+              onClick={() => selectRecording(recording)}
+            >
+              {/* Seeking a bit in avoids a black first frame */}
+              <video src={`${recording.filename}#t=1`} preload="metadata" muted />
+              <span className={styles.recordingDate}>{getRelativeDay(recording.timestamp)}</span>
+            </button>
+          ))}
+        </div>
+        <Button size="large" onClick={() => setShowingRecordingPicker(false)}>
+          {$t('Select another file')}
+        </Button>
+      </HypeWrapper>
+    );
+  }
+
   return (
     <HypeWrapper gameConfig={gameConfig} isAnimating={isAnimating} artwork={artwork}>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <h2 style={{ fontWeight: 600, margin: 0 }}>
-          {openedFrom === 'after-stream' ? 'Ai Highlighter' : `${$t('Import Game Recording')}`}
-        </h2>{' '}
-        <div>
-          <Button type="text" onClick={() => closeModal(true)}>
-            <i className="icon-close" style={{ margin: 0 }}></i>
-          </Button>
-        </div>
-      </div>
+      {header}
 
       <TextInput
         className={styles.customInput}
@@ -292,6 +355,9 @@ export function ImportStreamModal({
           placeholder={$t('Start typing to search')}
           options={gameOptions}
           defaultValue={game}
+          open={gameSelectOpen}
+          onDropdownVisibleChange={setGameSelectOpen}
+          autoFocus={gameSelectOpen}
           showSearch
           optionRender={option => (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -352,4 +418,12 @@ export function ImportStreamModal({
       </div>
     </HypeWrapper>
   );
+}
+
+/** "Today", "Yesterday" or "X days ago", counted in calendar days */
+function getRelativeDay(timestamp: string) {
+  const days = moment().startOf('day').diff(moment(timestamp).startOf('day'), 'days');
+  if (days <= 0) return $t('Today');
+  if (days === 1) return $t('Yesterday');
+  return $t('%{count} days ago', { count: days });
 }
