@@ -1,6 +1,7 @@
 {
   "Add Category": "카테고리 추가",
   "Add Section": "섹션 추가",
+  "DONUT": "DONUT",
   "Clear All": "모두 제거",
   "Manage Spin Wheel": "돌림판 관리",
   "Categories": "카테고리",
@@ -30,5 +31,6 @@
   "Center Image Size": "중앙 이미지 사이즈",
   "Center Image Border Enabled": "활성화된 중앙 이미지 테두리",
   "Center Image Border Color": "중앙 이미지 테두리 색상",
-  "Center Image Border Width": "중앙 이미지 테두리 너비"
+  "Center Image Border Width": "중앙 이미지 테두리 너비",
+  "Add categories before adding new sections.": "Add categories before adding new sections."
 }

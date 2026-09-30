@@ -11,5 +11,6 @@
   "Switch to Streamlabs Desktop": "切換到 Streamlabs Desktop",
   "Upgrade to Ultra to switch streams between devices.": "升級至 Ultra 以在裝置之間切換直播。",
   "Force Start": "強制開始",
+  "Switch Stream": "Switch Stream",
   "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you're sure you're not live and it has been incorrectly detected, choose \"Force Start\" below.": "已偵測到另一台裝置上的直播。您要將直播切換到 Streamlabs Desktop 嗎？若您不想繼續此直播，請在目前的直播來源中結束它。如果您確定目前未直播而被偵測有誤，請在下方選擇「強制開始」。"
 }

@@ -11,5 +11,6 @@
   "Switch to Streamlabs Desktop": "Streamlabs Desktop に切り替える",
   "Upgrade to Ultra to switch streams between devices.": "Ultra にアップグレードすると、デバイス間でストリームを切り替えられます。",
   "Force Start": "強制起動",
+  "Switch Stream": "Switch Stream",
   "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you're sure you're not live and it has been incorrectly detected, choose \"Force Start\" below.": "他のデバイス上のストリームが検出されました。ストリームを Streamlabs Desktop に切り替えますか？このストリームを継続しない場合は、現在のストリーミングソースから終了してください。ライブ配信中ではなく、誤って検出されたと確信できる場合は、以下の「強制開始」を選択してください。"
 }

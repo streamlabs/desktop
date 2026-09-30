@@ -11,5 +11,6 @@
   "Switch to Streamlabs Desktop": "Streamlabs Desktop으로 전환",
   "Upgrade to Ultra to switch streams between devices.": "디바이스 간에 스트리밍을 전환하려면 Ultra로 업그레이드하세요.",
   "Force Start": "강제 시작",
+  "Switch Stream": "Switch Stream",
   "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you're sure you're not live and it has been incorrectly detected, choose \"Force Start\" below.": "다른 디바이스의 스트리밍이 감지되었습니다. 스트리밍을 Streamlabs Desktop으로 전환하시겠습니까? 이 스트리밍을 계속 진행하지 않으려면 현재 스트리밍 소스에서 종료하세요. 라이브 상태가 아닌 것이 확실하고 잘못 감지된 경우 아래에서 '강제 시작'을 선택하세요."
 }

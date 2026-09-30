@@ -7,6 +7,7 @@
   "Set Stream Boss Health": "Definir vida do Chefe de transmissão",
   "Goal": "Objetivo",
   "Manage Battle": "Gerir batalha",
+  "Boss Settings": "Boss Settings",
   "Starting Health": "Saúde inicial",
   "Fixed": "Fixa",
   "The boss will spawn with the set amount of health everytime.": "O chefe aparece sempre com o valor de vida definido.",
@@ -31,5 +32,6 @@
   "Health Bar Background Color": "Cor de fundo da barra de vida",
   "Font": "Tipo de letra",
   "The boss will have additional health each time he is defeated. The amount is set below.": "O chefe terá saúde adicional cada vez que for derrotado. O valor é definido abaixo.",
-  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "A saúde do chefe muda consoante o nível de dano aplicado no golpe mortal. O excesso de dano multiplicado pelo multiplicador será a nova saúde do chefe. Ou seja, um dano de 150 com 100 de saúde restante e um multiplicador de 3 resultaria numa saúde de 150 do chefe renascido. \n Defina o seu multiplicador abaixo."
+  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "A saúde do chefe muda consoante o nível de dano aplicado no golpe mortal. O excesso de dano multiplicado pelo multiplicador será a nova saúde do chefe. Ou seja, um dano de 150 com 100 de saúde restante e um multiplicador de 3 resultaria numa saúde de 150 do chefe renascido. \n Defina o seu multiplicador abaixo.",
+  "Failed to reset Stream Boss, please try again.": "Failed to reset Stream Boss, please try again."
 }

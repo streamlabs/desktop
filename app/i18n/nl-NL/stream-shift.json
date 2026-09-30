@@ -11,5 +11,6 @@
   "Switch to Streamlabs Desktop": "Ga naar Streamlabs Desktop",
   "Upgrade to Ultra to switch streams between devices.": "Upgrade naar Ultra om streams tussen apparaten te wisselen.",
   "Force Start": "Start forceren",
+  "Switch Stream": "Switch Stream",
   "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you're sure you're not live and it has been incorrectly detected, choose \"Force Start\" below.": "Er is een stream op een ander apparaat gevonden. Wil je je stream naar Streamlabs Desktop verplaatsen? Als je deze stream niet wilt blijven volgen, stop hem dan gewoon via de huidige streamingbron. Als je zeker weet dat je niet live bent en dat dit verkeerd is gedetecteerd, klik dan hieronder op 'Start forceren'."
 }

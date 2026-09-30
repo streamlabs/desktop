@@ -119,13 +119,13 @@ export default function Onboarding() {
 
 export function Header(p: { title: string; description?: string }) {
   return (
-    <>
+    <div className={styles.header}>
       <div className={styles.kevinBox}>
         <KevinSvg style={{ height: 32, width: 36, fill: 'var(--background)' }} />
       </div>
       <h1 style={{ marginBottom: !p.description ? 16 : undefined }}>{p.title}</h1>
-      {p.description && <span style={{ marginBottom: 16 }}>{p.description}</span>}
-    </>
+      {p.description && <span>{p.description}</span>}
+    </div>
   );
 }
 

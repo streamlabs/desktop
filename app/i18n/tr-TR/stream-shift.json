@@ -11,5 +11,6 @@
   "Switch to Streamlabs Desktop": "Streamlabs Desktop'a Geçin",
   "Upgrade to Ultra to switch streams between devices.": "Cihazlar arasında yayın değiştirmek için Ultra'ya yükseltin.",
   "Force Start": "Başlatmaya Zorla",
+  "Switch Stream": "Switch Stream",
   "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you're sure you're not live and it has been incorrectly detected, choose \"Force Start\" below.": "Başka bir cihazda bir yayın tespit edildi. Yayınınızı Streamlabs Desktop'a geçirmek ister misiniz? Bu yayına devam etmek istemiyorsanız lütfen mevcut yayın kaynağından yayını sonlandırın. Canlı olmadığınızdan ve yanlış algılandığından eminseniz aşağıdaki \"Başlatmaya Zorla\" özelliğini seçin."
 }

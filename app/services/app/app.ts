@@ -303,24 +303,26 @@ export class AppService extends StatefulService<IAppState> {
             run: () => this.windowsService.shutdown(),
           },
           {
+            name: 'PerformanceService.stop',
+            criticality: 'best-effort',
+            run: () => this.performanceService.stop(),
+          },
+          // Close the video settings service before the scene collections service
+          // because the graphics thread should be stopped before deinitializing scene collections.
+          {
+            name: 'VideoSettingsService.shutdown',
+            criticality: 'required',
+            run: () => this.videoSettingsService.shutdown(),
+          },
+          {
             name: 'SceneCollectionsService.deinitialize',
             criticality: 'required',
             run: () => this.sceneCollectionsService.deinitialize({ persist: false }),
           },
           {
-            name: 'PerformanceService.stop',
-            criticality: 'best-effort',
-            run: () => this.performanceService.stop(),
-          },
-          {
             name: 'TransitionsService.shutdown',
             criticality: 'required',
             run: () => this.transitionsService.shutdown(),
-          },
-          {
-            name: 'VideoSettingsService.shutdown',
-            criticality: 'required',
-            run: () => this.videoSettingsService.shutdown(),
           },
           {
             name: 'GameOverlayService.destroy',

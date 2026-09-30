@@ -148,11 +148,12 @@
   "Dashboard Home": "Home van dashboard",
   "Alert Box Settings": "Instellingen Meldingenvenster",
   "Alerts and Widgets": "Meldingen en widgets",
-  "AI": "AI",
+  "Vision": "Vision",
   "Between": "Tussen",
   "Upgrade": "Upgraden",
   "Edit Reactive Data": "Reactieve gegevens bewerken",
   "Reactive Data Editor": "Editor voor reactieve gegevens",
   "Destinations": "Destinations",
-  "Not enabled": "Niet ingeschakeld"
+  "Not enabled": "Niet ingeschakeld",
+  "Multichat": "Multichat"
 }

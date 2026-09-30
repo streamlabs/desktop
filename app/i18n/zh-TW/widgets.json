@@ -173,5 +173,6 @@
   "Goals": "目標",
   "Flair": "天賦",
   "Charity": "慈善",
-  "Saving custom code can have potential security risks, make sure you trust the code you are about to apply.": "Saving custom code can have potential security risks, make sure you trust the code you are about to apply."
+  "Saving custom code can have potential security risks, make sure you trust the code you are about to apply.": "Saving custom code can have potential security risks, make sure you trust the code you are about to apply.",
+  "Something went wrong while loading settings for %{widgetName}. Please reopen the settings window or re-add the widget.": "Something went wrong while loading settings for %{widgetName}. Please reopen the settings window or re-add the widget."
 }
