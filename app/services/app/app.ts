@@ -56,6 +56,7 @@ import {
 } from 'util/worker-shutdown';
 
 const SHUTDOWN_ANALYTICS_TIMEOUT_MS = 3 * 1000;
+const SHUTDOWN_SCENE_COLLECTIONS_SYNC_TIMEOUT_MS = 10 * 1000;
 
 interface IAppState {
   loading: boolean;
@@ -358,6 +359,12 @@ export class AppService extends StatefulService<IAppState> {
           },
         ],
         bestEffort: [
+          {
+            name: 'SceneCollectionsService.safeSync',
+            criticality: 'best-effort',
+            timeoutMs: SHUTDOWN_SCENE_COLLECTIONS_SYNC_TIMEOUT_MS,
+            run: () => this.sceneCollectionsService.safeSync(),
+          },
           {
             name: 'UsageStatisticsService.flushEvents',
             criticality: 'best-effort',
