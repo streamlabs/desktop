@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import * as remote from '@electron/remote';
 import cx from 'classnames';
 import { Services } from 'components-react/service-provider';
 import styles from './ClipsView.m.less';
 import { TClip } from 'services/highlighter/models/highlighter.models';
-import ClipPreview from 'components-react/highlighter/ClipPreview';
+import ClipPreview from 'components-react/highlighter/clips/ClipPreview';
 import { ReactSortable } from 'react-sortablejs';
 import Scrollable from 'components-react/shared/Scrollable';
 import { EditingControls } from './EditingControls';
@@ -20,9 +20,18 @@ export type TModalClipsView = 'trim' | 'export' | 'preview' | 'remove';
 
 /**
  * Body of the Highlighter page: whatever is passed as children on top, then the grid of all
- * clips. The editor panel slides in beside it once enough clips are selected to edit a video.
+ * clips. The editor panel slides in beside the clips (not the children) once enough clips are
+ * selected to edit a video.
+ * With `fillIntro` the children take up at least the full visible height, so the clips start
+ * below the fold.
  */
-export default function ClipsView({ children }: { children?: React.ReactNode }) {
+export default function ClipsView({
+  children,
+  fillIntro = false,
+}: {
+  children?: React.ReactNode;
+  fillIntro?: boolean;
+}) {
   const { HighlighterService, UsageStatisticsService } = Services;
   const clipsAmount = useVuex(() => HighlighterService.views.clips.length);
   const selectedAmount = useVuex(
@@ -96,6 +105,18 @@ export default function ClipsView({ children }: { children?: React.ReactNode }) 
 
   const containerRef = useOptimizedHover();
 
+  // The scroll content has no definite height, so percentage heights do not resolve inside it.
+  // Measure the visible height instead and hand it to the intro and clips area as pixel values.
+  const [viewportHeight, setViewportHeight] = useState(0);
+  const scrollHostRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!scrollHostRef.current) return;
+    const ro = new ResizeObserver(([entry]) => setViewportHeight(entry.contentRect.height));
+    ro.observe(scrollHostRef.current);
+    return () => ro.disconnect();
+  }, []);
+
   function shareFeedback() {
     remote.shell.openExternal(
       'https://support.streamlabs.com/hc/en-us/requests/new?ticket_form_id=31967205905051',
@@ -144,36 +165,49 @@ export default function ClipsView({ children }: { children?: React.ReactNode }) 
 
   return (
     <div ref={containerRef} className={styles.clipsViewRoot}>
-      <Scrollable className={styles.pageScroll}>
-        {children}
-        <section className={styles.clipsSection} onDrop={onDrop}>
-          <div className={styles.clipsHeader}>
-            <h3 className={styles.clipsTitle}>{$t('All clips')}</h3>
-            <div className={styles.clipsHeaderActions}>
-              <Button
-                type="text"
-                icon={<i className="icon-community" style={{ marginRight: 8 }} />}
-                onClick={shareFeedback}
-              >
-                {$t('Share feedback')}
-              </Button>
-              <AddClip addedClips={() => setClips(sortClips(getClips()))} />
+      <div ref={scrollHostRef} className={styles.pageScroll}>
+        <Scrollable style={{ height: '100%' }}>
+          {fillIntro ? (
+            <div className={styles.intro} style={{ minHeight: viewportHeight || undefined }}>
+              {children}
+            </div>
+          ) : (
+            children
+          )}
+          {/* At least one screen tall, so the sticky editor panel beside the clips always has
+              its full height and never sits next to the content above */}
+          <div className={styles.clipsArea} style={{ minHeight: viewportHeight || undefined }}>
+            <section className={styles.clipsSection} onDrop={onDrop}>
+              <div className={styles.clipsHeader}>
+                <h3 className={styles.clipsTitle}>{$t('All clips')}</h3>
+                <div className={styles.clipsHeaderActions}>
+                  <Button
+                    type="text"
+                    icon={<i className="icon-community" style={{ marginRight: 8 }} />}
+                    onClick={shareFeedback}
+                  >
+                    {$t('Share feedback')}
+                  </Button>
+                  <AddClip addedClips={() => setClips(sortClips(getClips()))} />
+                </div>
+              </div>
+              {renderClips()}
+            </section>
+            <div
+              className={cx(styles.editorPanel, { [styles.editorPanelVisible]: showEditor })}
+              style={{ height: viewportHeight || '100%' }}
+              aria-hidden={!showEditor}
+            >
+              <EditingControls
+                emitSetShowModal={(modal: TModalClipsView | null) => {
+                  if (modal) {
+                    setModal({ modal });
+                  }
+                }}
+              />
             </div>
           </div>
-          {renderClips()}
-        </section>
-      </Scrollable>
-      <div
-        className={cx(styles.editorPanel, { [styles.editorPanelVisible]: showEditor })}
-        aria-hidden={!showEditor}
-      >
-        <EditingControls
-          emitSetShowModal={(modal: TModalClipsView | null) => {
-            if (modal) {
-              setModal({ modal });
-            }
-          }}
-        />
+        </Scrollable>
       </div>
       <ClipsViewModal
         modal={modal}

@@ -8,7 +8,7 @@ import { Button, Progress, Alert, Dropdown } from 'antd';
 import { RadioInput } from 'components-react/shared/inputs/RadioInput';
 import { confirmAsync } from 'components-react/modals';
 import { $t } from 'services/i18n';
-import { initStore, useController } from '../../hooks/zustand';
+import { initStore, useController } from '../../../hooks/zustand';
 import { EOrientation, TOrientation } from 'services/highlighter/models/ai-highlighter.models';
 import { fileExists } from 'services/highlighter/file-utils';
 import { SCRUB_WIDTH, SCRUB_WIDTH_VERTICAL } from 'services/highlighter/constants';

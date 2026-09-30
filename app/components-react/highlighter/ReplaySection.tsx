@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from 'antd';
 import cx from 'classnames';
 import * as remote from '@electron/remote';
@@ -9,17 +9,50 @@ import { promptAction } from 'components-react/modals';
 import {
   HIGHLIGHTER_APP_NAME,
   REPLAY_APP_NAME,
-  REPLAY_HERO_IMAGE_URL,
+  REPLAY_IMAGE_PATH,
   REPLAY_SETUP_SIZE_MB,
 } from 'services/highlighter/constants';
 import { $t } from 'services/i18n';
 import Utils from 'services/utils';
-import { useInstallState, getStatusText } from './migration/useInstallState';
+import { useInstallState, getStatusText } from './useInstallState';
 import styles from './ReplaySection.m.less';
+
+// Titles are translation keys, translated at render time
+const FEATURE_STEPS = [
+  {
+    id: 'record',
+    title: 'Stream or record',
+    subtitle: 'Manually or automatically',
+    image: `${REPLAY_IMAGE_PATH}/auto-record.webp`,
+  },
+  {
+    id: 'highlights',
+    title: 'Get Highlights',
+    subtitle: 'As ready to share reels',
+    image: `${REPLAY_IMAGE_PATH}/create.webp`,
+  },
+  {
+    id: 'subtitles',
+    title: 'Add subtitles',
+    subtitle: 'Automatically',
+    image: `${REPLAY_IMAGE_PATH}/subtitles.webp`,
+  },
+  {
+    id: 'grow',
+    title: 'Grow everywhere',
+    subtitle: 'Share to all platforms',
+    image: `${REPLAY_IMAGE_PATH}/grow.webp`,
+  },
+];
+
+// "Get Highlights" is what Replay is about, so its image is the one shown first
+const DEFAULT_STEP = 1;
+const STEP_INTERVAL_MS = 5000;
 
 /**
  * Top of the Highlighter page. Installs Replay when neither app is installed, otherwise opens
- * whichever app the user has and offers importing a recording into it.
+ * whichever app the user has and offers importing a recording into it. Below that, clickable
+ * feature steps switch the hero image.
  */
 export default function ReplaySection({ onImport }: { onImport: () => void }) {
   const {
@@ -36,6 +69,19 @@ export default function ReplaySection({ onImport }: { onImport: () => void }) {
   const appName = installedApp === 'highlighter' ? HIGHLIGHTER_APP_NAME : REPLAY_APP_NAME;
   const isInstalling = step === 'downloading' || step === 'installing' || step === 'verifying';
   const isStaging = Utils.getHighlighterEnvironment() !== 'production';
+  const [activeStep, setActiveStep] = useState(DEFAULT_STEP);
+  const [stepsHovered, setStepsHovered] = useState(false);
+
+  // Advance to the next step on a timer. Keyed on the active step, so a click restarts the
+  // countdown; paused while the user hovers the steps to read them.
+  useEffect(() => {
+    if (stepsHovered) return;
+    const timeout = setTimeout(
+      () => setActiveStep(index => (index + 1) % FEATURE_STEPS.length),
+      STEP_INTERVAL_MS,
+    );
+    return () => clearTimeout(timeout);
+  }, [activeStep, stepsHovered]);
 
   function renderActions() {
     // Registry lookup still pending: keep the space so the page does not jump
@@ -50,25 +96,35 @@ export default function ReplaySection({ onImport }: { onImport: () => void }) {
     if (hasApp) {
       return (
         <>
-          <Button size="large" type="primary" onClick={() => handleOpenOrInstall('page')}>
+          <Button
+            size="large"
+            type="primary"
+            className={styles.primaryCta}
+            onClick={() => handleOpenOrInstall('page')}
+          >
             {$t('Open %{appName}', { appName })}
           </Button>
           <Button size="large" className={styles.importButton} onClick={onImport}>
             {$t('Import recording')}
           </Button>
-          <AutoHighlightToggle />
+          {/* <AutoHighlightToggle /> */}
         </>
       );
     }
 
     return (
       <>
-        <Button size="large" type="primary" onClick={() => handleOpenOrInstall('page')}>
+        <Button
+          size="large"
+          type="primary"
+          className={styles.primaryCta}
+          onClick={() => handleOpenOrInstall('page')}
+        >
           {$t('One-click-install')}
         </Button>
-        <span className={styles.fileSize}>
+        {/* <span className={styles.fileSize}>
           {$t('%{size}MB filesize', { size: REPLAY_SETUP_SIZE_MB })}
-        </span>
+        </span> */}
       </>
     );
   }
@@ -98,12 +154,24 @@ export default function ReplaySection({ onImport }: { onImport: () => void }) {
           </div>
           {isStaging && <div className={styles.stagingBadge}>STAGING</div>}
         </div>
-        <img className={styles.heroImage} src={REPLAY_HERO_IMAGE_URL} alt="" />
+        {/* All images stay mounted and crossfade, so switching steps never waits on a download */}
+        <div className={styles.heroMedia}>
+          {FEATURE_STEPS.map((feature, index) => (
+            <img
+              key={feature.id}
+              className={cx(styles.heroImage, { [styles.heroImageActive]: index === activeStep })}
+              src={feature.image}
+              alt=""
+            />
+          ))}
+        </div>
       </div>
 
-      {installedApp === 'none' && !hasApp && (
-        <InstallSteps onInstall={() => handleOpenOrInstall('page')} />
-      )}
+      <FeatureSteps
+        activeIndex={activeStep}
+        onSelect={setActiveStep}
+        onHoverChange={setStepsHovered}
+      />
     </section>
   );
 }
@@ -224,36 +292,35 @@ function InstallError({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-function InstallSteps({ onInstall }: { onInstall: () => void }) {
-  const steps = [
-    {
-      title: $t('Install %{appName}', { appName: REPLAY_APP_NAME }),
-      subtitle: (
-        <a className={styles.stepLink} onClick={onInstall}>
-          {$t('Install now')}
-        </a>
-      ),
-    },
-    { title: $t('Stream or record'), subtitle: $t('Highlights must be toggled on') },
-    {
-      title: $t('Get your Highlights'),
-      subtitle: $t('Automatically in %{appName}', { appName: REPLAY_APP_NAME }),
-    },
-  ];
-
+function FeatureSteps({
+  activeIndex,
+  onSelect,
+  onHoverChange,
+}: {
+  activeIndex: number;
+  onSelect: (index: number) => void;
+  onHoverChange: (hovered: boolean) => void;
+}) {
   return (
-    <div className={styles.steps}>
-      <h2 className={styles.stepsTitle}>{$t('Get your Highlights')}</h2>
-      {steps.map((step, index) => (
-        <React.Fragment key={index}>
+    <div
+      className={styles.steps}
+      onMouseEnter={() => onHoverChange(true)}
+      onMouseLeave={() => onHoverChange(false)}
+    >
+      {FEATURE_STEPS.map((step, index) => (
+        <React.Fragment key={step.id}>
           {index > 0 && <div className={styles.stepConnector} />}
-          <div className={styles.step}>
+          <button
+            className={cx(styles.step, { [styles.stepActive]: index === activeIndex })}
+            aria-pressed={index === activeIndex}
+            onClick={() => onSelect(index)}
+          >
             <span className={styles.stepNumber}>{index + 1}</span>
-            <div>
-              <div className={styles.stepTitle}>{step.title}</div>
-              <div className={styles.stepSubtitle}>{step.subtitle}</div>
-            </div>
-          </div>
+            <span className={styles.stepText}>
+              <span className={styles.stepTitle}>{$t(step.title)}</span>
+              <span className={styles.stepSubtitle}>{$t(step.subtitle)}</span>
+            </span>
+          </button>
         </React.Fragment>
       ))}
     </div>

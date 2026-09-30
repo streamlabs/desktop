@@ -19,7 +19,7 @@ import React, { useEffect, useState } from 'react';
 import styles from './ImportStream.m.less';
 import { getConfigByGame, supportedGames } from 'services/highlighter/models/game-config.models';
 import path from 'path';
-import ModalInstallationFlow from './migration/ModalInstallationFlow';
+import ModalInstallationFlow from './ModalInstallationFlow';
 import { HypeWrapper } from './HypeWrapper';
 
 export function ImportStreamModal({

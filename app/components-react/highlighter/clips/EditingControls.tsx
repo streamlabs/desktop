@@ -5,7 +5,7 @@ import { Button } from 'antd';
 import path from 'path';
 import Scrollable from 'components-react/shared/Scrollable';
 import Animate from 'rc-animate';
-import TransitionSelector from 'components-react/highlighter/TransitionSelector';
+import TransitionSelector from 'components-react/highlighter/clips/TransitionSelector';
 import { $t } from 'services/i18n';
 import { TModalClipsView } from './ClipsView';
 import { useVuex } from 'components-react/hooks';

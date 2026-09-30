@@ -3,7 +3,7 @@ import cx from 'classnames';
 import { Alert, Modal } from 'antd';
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
-import ClipsView from 'components-react/highlighter/ClipsView';
+import ClipsView from 'components-react/highlighter/clips/ClipsView';
 import ReplaySection from 'components-react/highlighter/ReplaySection';
 import ManualCaptureSection from 'components-react/highlighter/ManualCaptureSection';
 import { ImportStreamModal } from 'components-react/highlighter/ImportStream';
@@ -70,7 +70,7 @@ export default function Highlighter() {
       // width, which is zero once the Replay section is hidden (Mac)
       style={{ position: 'relative', flex: 1, minWidth: 0, height: '100%' }}
     >
-      <ClipsView>
+      <ClipsView fillIntro={showReplay}>
         {showReplay && (
           <ReplaySection onImport={() => setImportModal({ openedFrom: 'manual-import' })} />
         )}

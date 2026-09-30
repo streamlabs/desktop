@@ -4,9 +4,9 @@ import React, { useEffect, useState } from 'react';
 import { TModalClipsView } from './ClipsView';
 import { TClip } from 'services/highlighter/models/highlighter.models';
 import styles from './ClipsView.m.less';
-import ClipTrimmer from 'components-react/highlighter/ClipTrimmer';
+import ClipTrimmer from 'components-react/highlighter/clips/ClipTrimmer';
 import { Modal, Alert } from 'antd';
-import ExportModal from 'components-react/highlighter/Export/ExportModal';
+import ExportModal from 'components-react/highlighter/clips/Export/ExportModal';
 import PreviewModal from './PreviewModal';
 import RemoveModal from './RemoveModal';
 

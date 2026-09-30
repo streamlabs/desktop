@@ -1,4 +1,4 @@
-@import '../../styles/index';
+@import '../../../styles/index';
 
 @editor-panel-width: 300px;
 
@@ -27,7 +27,21 @@
   height: 100%;
 }
 
+// Column so a child with `flex-grow` can take the height the others leave over
+.intro {
+  display: flex;
+  flex-direction: column;
+}
+
+// Row of the clip grid and the editor panel, below the intro
+.clips-area {
+  display: flex;
+  align-items: flex-start;
+}
+
 .clips-section {
+  flex: 1;
+  min-width: 0;
   padding: 24px 48px 48px;
 }
 
@@ -70,11 +84,13 @@
 }
 
 // Slides in once enough clips are selected. Width (not transform) so the clip grid reflows into
-// the remaining space instead of being covered.
+// the remaining space instead of being covered. Sticky with a one-screen height (set inline), so
+// it stays in view while scrolling through the clips but never rises above the clips area.
 .editor-panel {
+  position: sticky;
+  top: 0;
   flex-shrink: 0;
   width: 0;
-  height: 100%;
   overflow: hidden;
   transition: width 250ms cubic-bezier(0.23, 1, 0.32, 1);
 
