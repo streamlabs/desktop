@@ -1914,7 +1914,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@electron/get@npm:^2.0.0, @electron/get@npm:^2.0.1":
+"@electron-internal/extract-zip@npm:^1.0.1":
+  version: 1.0.5
+  resolution: "@electron-internal/extract-zip@npm:1.0.5"
+  checksum: 941b78e62fc44e68ca6bc7f38f59c29064d1c3a007db3422087c4392292205721820f95f81fa2f16da0661dece00ed5f45892917a2a71e5f925e9fda9d96515f
+  languageName: node
+  linkType: hard
+
+"@electron/get@npm:^2.0.1":
   version: 2.0.2
   resolution: "@electron/get@npm:2.0.2"
   dependencies:
@@ -1930,6 +1937,24 @@ __metadata:
     global-agent:
       optional: true
   checksum: 900845cc0b31b54761fc9b0ada2dea1e999e59aacc48999d53903bcb7c9a0a7356b5fe736cf610b2a56c5a21f5a3c0e083b2ed2b7e52c36a4d0f420d4b5ec268
+  languageName: node
+  linkType: hard
+
+"@electron/get@npm:^5.0.0":
+  version: 5.1.0
+  resolution: "@electron/get@npm:5.1.0"
+  dependencies:
+    debug: ^4.1.1
+    env-paths: ^3.0.0
+    graceful-fs: ^4.2.11
+    progress: ^2.0.3
+    semver: ^7.6.3
+    sumchecker: ^3.0.1
+    undici: ^7.24.4
+  dependenciesMeta:
+    undici:
+      optional: true
+  checksum: 88b85ec30689c6743c2d9655d68dd1b82d9e7c814b47cea87193cdf3482e48391421c4e268f8ed572b267fe2e4228788689288f7ea9d64e21a4bc15b38499d23
   languageName: node
   linkType: hard
 
@@ -3330,12 +3355,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^20.9.0":
-  version: 20.12.8
-  resolution: "@types/node@npm:20.12.8"
+"@types/node@npm:^24.9.0":
+  version: 24.19.0
+  resolution: "@types/node@npm:24.19.0"
   dependencies:
-    undici-types: ~5.26.4
-  checksum: 84d4876d95792a9567d2cc5a2c48db7028c397820e842cd65e2f848c23dd4b868b7131bda8eb66a1729d4944289070153d6180048de5bd155b35de421283c433
+    undici-types: ">=7.24.0 <7.24.7"
+  checksum: 17381039ae34c5a34fc78b28614c5ecc66bd7092df93a235ea74b77ffa313f0e757373d23f9567dfe7f1cdb52a94260583f7f654919ec086cf7fe19e60e30294
   languageName: node
   linkType: hard
 
@@ -7290,16 +7315,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron@npm:29.3.1":
-  version: 29.3.1
-  resolution: "electron@npm:29.3.1"
+"electron@npm:41.10.6":
+  version: 41.10.6
+  resolution: "electron@npm:41.10.6"
   dependencies:
-    "@electron/get": ^2.0.0
-    "@types/node": ^20.9.0
-    extract-zip: ^2.0.1
+    "@electron-internal/extract-zip": ^1.0.1
+    "@electron/get": ^5.0.0
+    "@types/node": ^24.9.0
   bin:
     electron: cli.js
-  checksum: 49d54a56ffd7f4c60a2fba8f84a57041a70442dc6d774b750a52ca08943509b099b90861139d4c281926038cdbb4fb1fe8d9a56a57ad93eaeb90c66017062d0f
+  checksum: dcffc7b6d2cba16dd3b909092b1b39db4f78a236afa20bb7f60a34b86f7249b3c022a3b6c72eb9189f89e8c5bc31d10d5364b087df6e26046eef4f0a164ef7aa
   languageName: node
   linkType: hard
 
@@ -7422,6 +7447,13 @@ __metadata:
   version: 2.2.0
   resolution: "env-paths@npm:2.2.0"
   checksum: ba2aea38301aafd69086be1f8cb453b92946e4840cb0de9d1c88a67e6f43a6174dcddb60b218ec36db8720b12de46b0d93c2f97ad9bbec6a267b479ab37debb6
+  languageName: node
+  linkType: hard
+
+"env-paths@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "env-paths@npm:3.0.0"
+  checksum: b2b0a0d0d9931a13d279c22ed94d78648a1cc5f408f05d47ff3e0c1616f0aa0c38fb33deec5e5be50497225d500607d57f9c8652c4d39c2f2b7608cd45768128
   languageName: node
   linkType: hard
 
@@ -7948,7 +7980,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"extract-zip@npm:2.0.1, extract-zip@npm:^2.0.0, extract-zip@npm:^2.0.1":
+"extract-zip@npm:2.0.1, extract-zip@npm:^2.0.0":
   version: 2.0.1
   resolution: "extract-zip@npm:2.0.1"
   dependencies:
@@ -8988,17 +9020,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"graceful-fs@npm:^4.2.11, graceful-fs@npm:^4.2.9":
+  version: 4.2.11
+  resolution: "graceful-fs@npm:4.2.11"
+  checksum: ac85f94da92d8eb6b7f5a8b20ce65e43d66761c55ce85ac96df6865308390da45a8d3f0296dd3a663de65d30ba497bd46c696cc1e248c72b13d6d567138a4fc7
+  languageName: node
+  linkType: hard
+
 "graceful-fs@npm:^4.2.6":
   version: 4.2.8
   resolution: "graceful-fs@npm:4.2.8"
   checksum: 5d224c8969ad0581d551dfabdb06882706b31af2561bd5e2034b4097e67cc27d05232849b8643866585fd0a41c7af152950f8776f4dd5579e9853733f31461c6
-  languageName: node
-  linkType: hard
-
-"graceful-fs@npm:^4.2.9":
-  version: 4.2.11
-  resolution: "graceful-fs@npm:4.2.11"
-  checksum: ac85f94da92d8eb6b7f5a8b20ce65e43d66761c55ce85ac96df6865308390da45a8d3f0296dd3a663de65d30ba497bd46c696cc1e248c72b13d6d567138a4fc7
   languageName: node
   linkType: hard
 
@@ -14918,7 +14950,7 @@ __metadata:
     css-loader: 2.1.1
     deasync: 0.1.31
     dotenv: 8.2.0
-    electron: 29.3.1
+    electron: 41.10.6
     electron-builder: 22.14.5
     electron-chromedriver: 29.3.3
     electron-devtools-installer: 3.1.1
@@ -16382,6 +16414,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"undici-types@npm:>=7.24.0 <7.24.7":
+  version: 7.24.6
+  resolution: "undici-types@npm:7.24.6"
+  checksum: e79802e37dc472c6324850d938b5df6b9e796f6a1bb5f8ccd24f3a6d17eae94a9cc125506c8b339a3293ffbad81daeba30b843e564c1d237b3c8deafd98b6267
+  languageName: node
+  linkType: hard
+
 "undici-types@npm:~5.26.4":
   version: 5.26.5
   resolution: "undici-types@npm:5.26.5"
@@ -16393,6 +16432,13 @@ __metadata:
   version: 6.19.8
   resolution: "undici-types@npm:6.19.8"
   checksum: de51f1b447d22571cf155dfe14ff6d12c5bdaec237c765085b439c38ca8518fc360e88c70f99469162bf2e14188a7b0bcb06e1ed2dc031042b984b0bb9544017
+  languageName: node
+  linkType: hard
+
+"undici@npm:^7.24.4":
+  version: 7.30.0
+  resolution: "undici@npm:7.30.0"
+  checksum: 9138ee032f1d9133ee0cae068147a1c7eb9e514f07f012450a30d48896ee922c6cc2ad5c292cc35805712b80d7be3d5365af1af7df9f6aed1fd7a49175fc6105
   languageName: node
   linkType: hard
 
