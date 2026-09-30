@@ -3376,6 +3376,16 @@ export class StreamingService
     }
   }
 
+  /**
+   * Count a streaming context once, so a context that starts again while its instance was
+   * retained (recording or replay buffer still running) does not inflate `numInstances`
+   */
+  private countStreamingInstance(context: TOutputContext) {
+    if (this.countedStreamingContexts.has(context)) return;
+    this.countedStreamingContexts.add(context);
+    this.numInstances++;
+  }
+
   private async handleStreamingSignal(info: EOutputSignal, context: TOutputContext) {
     console.info('Streaming Signal:', JSON.stringify(info, null, 2), context);
 
@@ -3406,8 +3416,7 @@ export class StreamingService
         if (this.isDisplayContext(context) && this.addingDisplayTargets.has(context)) {
           this.addingDisplayTargets.delete(context);
           this.handleStartLiveOutputEditingStreamContext(context);
-          this.countedStreamingContexts.add(context);
-          this.numInstances++;
+          this.countStreamingInstance(context);
           return;
         }
       }
@@ -3418,8 +3427,7 @@ export class StreamingService
         await this.handleStartSingleOutputStream(info.signal, context, nextState, time);
       }
       // Memoize number of streaming instances for performance metrics calculation
-      this.countedStreamingContexts.add(context);
-      this.numInstances++;
+      this.countStreamingInstance(context);
 
       // Updating state for the UI is handled in the above functions
       return;

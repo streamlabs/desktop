@@ -362,6 +362,9 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
         isUpdatingHorizontalStream: input.updatingDisplay === 'horizontal',
         isUpdatingVerticalStream: input.updatingDisplay === 'vertical',
         numInstances: input.setup === 'dual' ? 2 : 1,
+        countedStreamingContexts: new Set(
+          Object.keys(contexts).filter(name => (contexts as any)[name].streaming),
+        ),
         outputSettingsService: { getSettings: () => ({ mode: 'Simple' }) },
         highlighterService: { shouldStartHighlighterOutputs: !!input.highlighter },
         streamingStatusChange: { next: (status: string) => published.push(status) },
