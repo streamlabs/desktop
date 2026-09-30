@@ -7,7 +7,7 @@ import { RealmObject } from './realm';
 import { TCategoryName } from './settings';
 
 export type TAppPage =
-  | 'AILanding'
+  | 'VisionLanding'
   | 'AlertboxLibrary'
   | 'BrowseOverlays'
   | 'Grow'

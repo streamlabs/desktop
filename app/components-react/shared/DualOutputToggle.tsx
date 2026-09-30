@@ -195,8 +195,8 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
     <div
       data-testid={v.dualOutputMode ? 'dual-output-active' : 'dual-output-inactive'}
       className={cx(p?.className, styles.dualOutputToggle, {
-        [styles.doTooltip]: p?.mode === 'dual',
-        [styles.soTooltip]: p?.mode === 'single',
+        [styles.doTooltip]: v.dualOutputMode,
+        [styles.soTooltip]: !v.dualOutputMode,
       })}
       style={p?.style}
     >

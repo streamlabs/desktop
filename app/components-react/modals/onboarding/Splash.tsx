@@ -4,23 +4,12 @@ import { Button } from 'antd';
 import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
 import styles from './Common.m.less';
-import { DancingKevins, IOnboardingStepProps, useAuth } from './Onboarding';
-import Translate from 'components-react/shared/Translate';
+import { DancingKevins, IOnboardingStepProps } from './Onboarding';
 
 export function Splash(p: IOnboardingStepProps) {
-  const { OnboardingV2Service, RecordingModeService } = Services;
+  const { OnboardingV2Service } = Services;
 
-  function startRecordingMode() {
-    RecordingModeService.actions.setRecordingMode(true);
-    RecordingModeService.actions.setUpRecordingFirstTimeSetup();
-    OnboardingV2Service.actions.takeStep();
-  }
-
-  const { SLIDLogin } = useAuth();
-
-  function login() {
-    // To account for backtracking
-    RecordingModeService.actions.setRecordingMode(false);
+  function getStarted() {
     OnboardingV2Service.actions.takeStep();
   }
 
@@ -37,24 +26,10 @@ export function Splash(p: IOnboardingStepProps) {
             'Access all the tools you need, including overlays, alerts, automatic clips, sponsorships, and more',
           )}
         </span>
-        <Button onClick={SLIDLogin} type="primary" className={styles.bigButton}>
-          {$t('Create an account')}
-          &nbsp;
-          <i className="icon-pop-out-2" />
+        <Button onClick={getStarted} type="primary" className={styles.bigButton}>
+          {$t('Get Started')}
         </Button>
-        <Translate
-          style={{ paddingTop: 24 }}
-          message="Already have an account? <link>Log In</link>"
-        >
-          <a onClick={login} slot="link" />
-        </Translate>
       </div>
-      <Translate
-        style={{ paddingTop: 32 }}
-        message="Just looking to record? <link>Start here</link>"
-      >
-        <a onClick={startRecordingMode} slot="link" />
-      </Translate>
     </div>
   );
 }

@@ -9,8 +9,9 @@ export const ImagePickerInput = InputComponent((p: TListInputProps<string>) => {
     <div className={styles.imagePicker}>
       {p.options?.map(opt => (
         <div
+          data-name={p.value === opt.value ? 'image-option-active' : `image-option-${opt.value}`}
           key={opt.value}
-          className={cx(styles.imageOption, p.value === opt.value && styles.active)}
+          className={cx(styles.imageOption, { [styles.active]: p.value === opt.value })}
           onClick={() => p.onChange && p.onChange(opt.value)}
         >
           {typeof opt.image === 'string' ? <img src={opt.image} /> : opt.image}

@@ -230,13 +230,40 @@ export class TwitchService
 
   async beforeGoLive(goLiveSettings?: IGoLiveSettings, context?: TDisplayType) {
     // If the stream has switched from another device, a new broadcast does not need to be created
-    if (
-      goLiveSettings &&
-      goLiveSettings.streamShift &&
-      this.streamingService.views.shouldSwitchStreams
-    ) {
-      await this.setupStreamShiftStream(goLiveSettings);
+    if (goLiveSettings && goLiveSettings.streamShift) {
+      // Stream shift is not compatible with enhanced broadcasting so always disable it
+      this.setEnhancedBroadcastingSetting(false);
+
+      if (this.streamingService.views.shouldSwitchStreams) {
+        await this.setupStreamShiftStream(goLiveSettings);
+      }
       return;
+    }
+
+    const channelInfo = goLiveSettings?.platforms.twitch;
+
+    // Resolve enhanced broadcasting before the stream key is written below. The key is only sent
+    // to the display's OBS context when Twitch is not going out through restream, and that
+    // depends on whether this stream is an enhanced broadcast — deciding afterwards means the
+    // check answers for the previous stream instead of this one.
+    // Note: deliberately checking goLiveSettings and channelInfo together prevents checking for
+    // nullish values
+    if (goLiveSettings && channelInfo) {
+      if (goLiveSettings?.liveOutputEditing) {
+        await this.setupLiveOutputStream(goLiveSettings);
+      } else if (
+        channelInfo.display === 'both' &&
+        this.streamingService.views.isTwitchDualStreamEnabled
+      ) {
+        await this.setupDualStream(goLiveSettings);
+      } else {
+        // Update enhanced broadcasting setting based on go live settings
+        this.setEnhancedBroadcastingSetting(channelInfo.isEnhancedBroadcasting);
+      }
+    } else if (this.streamingService.views.isTwitchDualStreamEnabled) {
+      // Failsafe to guarantee that enhanced broadcasting is enabled if dual streaming is active
+
+      await this.setupDualStream(goLiveSettings);
     }
 
     if (
@@ -265,33 +292,8 @@ export class TwitchService
       }
     }
 
-    if (goLiveSettings) {
-      const channelInfo = goLiveSettings?.platforms.twitch;
-
-      if (channelInfo) {
-        if (
-          channelInfo?.display === 'both' &&
-          this.streamingService.views.isTwitchDualStreamEnabled
-        ) {
-          try {
-            await this.setupDualStream(goLiveSettings);
-          } catch (e: unknown) {
-            console.error('Error setting up dual stream:', e);
-          }
-        } else {
-          // Update enhanced broadcasting setting based on go live settings
-          this.settingsService.setEnhancedBroadcasting(channelInfo.isEnhancedBroadcasting);
-        }
-
-        await this.putChannelInfo(channelInfo);
-      }
-    } else if (this.streamingService.views.isTwitchDualStreamEnabled) {
-      // Failsafe to guarantee that enhanced broadcasting is enabled if dual streaming is active
-      try {
-        await this.setupDualStream(goLiveSettings);
-      } catch (e: unknown) {
-        console.error('Error setting up dual stream:', e);
-      }
+    if (channelInfo) {
+      await this.putChannelInfo(channelInfo);
     }
 
     this.setPlatformContext('twitch');
@@ -299,7 +301,7 @@ export class TwitchService
 
   async afterStopStream(): Promise<void> {
     // Restore enhanced broadcasting state
-    this.settingsService.setEnhancedBroadcasting(this.state.settings.isEnhancedBroadcasting);
+    this.setEnhancedBroadcastingSetting(this.state.settings.isEnhancedBroadcasting);
   }
 
   async setupDualStream(goLiveSettings?: IGoLiveSettings) {
@@ -309,7 +311,7 @@ export class TwitchService
 
     // Enhanced broadcasting is required for dual streaming, regardless of
     // how many platforms are enabled
-    this.settingsService.setEnhancedBroadcasting(true);
+    this.setEnhancedBroadcastingSetting(true);
   }
 
   async validatePlatform() {
@@ -466,7 +468,7 @@ export class TwitchService
         }[];
       }>(`${this.apiBase}/helix/channels?broadcaster_id=${this.twitchId}`).then(json => {
         return {
-          title: settings?.stream_title ?? json.data[0].title,
+          title: json.data[0].title,
           game: json.data[0].game_name,
           gameId: json.data[0].game_id,
           gameName: json.data[0].game_name,
@@ -480,7 +482,22 @@ export class TwitchService
     ]);
 
     const title = settings?.stream_title ?? channelInfo.title;
-    const game = settings?.game_id ?? channelInfo.game;
+
+    // Stream Shift reports the category as an id, but `game` and `gameName` hold the category
+    // *name* everywhere else in this service — the Go Live form renders `game` directly. Resolve
+    // the id to a name so a shifted stream doesn't show a bare number as its category.
+    let game = channelInfo.game;
+    let gameId = channelInfo.gameId;
+
+    if (settings?.game_id) {
+      gameId = settings.game_id;
+      try {
+        game = (await this.fetchGame(settings.game_id)).name;
+      } catch (e: unknown) {
+        console.error('Stream Shift: could not resolve game name for id', settings.game_id, e);
+        game = channelInfo.game;
+      }
+    }
 
     const tags: string[] = this.twitchTagsService.views.hasTags
       ? this.twitchTagsService.views.tags
@@ -490,14 +507,21 @@ export class TwitchService
       tags,
       title,
       game,
-      gameId: channelInfo.gameId,
-      gameName: channelInfo.gameName,
+      gameId,
+      gameName: game,
       isBrandedContent: channelInfo.is_branded_content,
-      isEnhancedBroadcasting: this.settingsService.isEnhancedBroadcasting(),
+      // The user's persisted preference, not the OBS runtime flag. Stream shift already forced the OBS flag off,
+      // so reading the OBS runtime flag here would overwrite the preference with `false` every time a stream is shifted.
+      isEnhancedBroadcasting: this.state.settings.isEnhancedBroadcasting,
       contentClassificationLabels: channelInfo.content_classification_labels,
     });
 
     this.setPlatformContext('twitch');
+  }
+
+  async setupLiveOutputStream(options?: IGoLiveSettings): Promise<void> {
+    // Live output editing not compatible with enhanced broadcasting, so disable it here
+    this.setEnhancedBroadcastingSetting(false);
   }
 
   fetchFollowers(): Promise<number> {
@@ -667,7 +691,30 @@ export class TwitchService
     });
   }
 
-  setEnhancedBroadcasting(status: boolean) {
+  /**
+   * Set the enhanced broadcasting backend setting for the Twitch stream.
+   * @remarks This updates the backend setting for enhanced broadcasting on Twitch, which actually
+   * determines whether or not the stream goes live with enhanced broadcasting enabled. This differs
+   * from the `setEnhancedBroadcastingState` method, which only updates the local persisted state
+   * managing the local settings. This method specifically updates the setting that is actually
+   * used when going live.
+   * @param status
+   */
+  setEnhancedBroadcastingSetting(status: boolean) {
+    this.settingsService.setEnhancedBroadcasting(status);
+  }
+
+  /**
+   * Set the enhanced broadcasting persisted state for the Twitch stream.
+   * @remarks This does not automatically update the backend settings, only tracks the state locally.
+   * for Twitch. This is both for persistence of the setting between refreshes of the go live window
+   * and also for restoring the user's preferences when streaming with features that automatically
+   * enable enhanced broadcasting (such as Twitch dual stream) and automatically disable enhanced
+   * broadcasting (such as live output editing and stream shift) when those features are no longer active.
+   * Currently, this is only used in the go live module to update the go live window platform settings.
+   * @param status - If enhanced broadcasting should be enabled
+   */
+  setEnhancedBroadcastingState(status: boolean) {
     this.SET_ENHANCED_BROADCASTING(status);
   }
 

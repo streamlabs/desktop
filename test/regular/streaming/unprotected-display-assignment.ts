@@ -20,8 +20,16 @@ test('Unprotected Twitch Go Live ignores saved Dual Output destinations', async 
       const manager = (window as any).servicesManager;
       const user = manager.getResource('UserService');
       const twitch = manager.getResource('TwitchService');
+      const dualOutput = manager.getResource('DualOutputService');
       const originalState = Object.getOwnPropertyDescriptor(user, 'state');
+      const originalDualOutputState = Object.getOwnPropertyDescriptor(dualOutput, 'state');
       const originalFetchGame = twitch.fetchGame;
+      // Saved destinations no longer enable Dual Output on their own. Simulate its
+      // persisted toggle so the protected-mode checks exercise both displays.
+      Object.defineProperty(dualOutput, 'state', {
+        configurable: true,
+        value: { ...dualOutput.state, dualOutputMode: true },
+      });
       // The category input fetches its thumbnail in the child renderer when mounted.
       twitch.fetchGame = () => Promise.resolve(undefined);
       Object.defineProperty(user, 'state', {
@@ -43,6 +51,9 @@ test('Unprotected Twitch Go Live ignores saved Dual Output destinations', async 
         twitch.fetchGame = originalFetchGame;
         if (originalState) Object.defineProperty(user, 'state', originalState);
         else delete user.state;
+        if (originalDualOutputState) {
+          Object.defineProperty(dualOutput, 'state', originalDualOutputState);
+        } else delete dualOutput.state;
       };
     });
   }

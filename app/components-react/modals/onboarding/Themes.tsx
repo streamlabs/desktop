@@ -213,7 +213,7 @@ function PreviewCard(p: {
         {p.metadata.overlay_type === 'dynamic' && (
           <span style={{ marginRight: 'auto' }}>
             <i className="icon-ai" />
-            {$t('AI-powered reactions to in-game events')}
+            {$t('Vision-powered reactions to in-game events')}
           </span>
         )}
         <Button type="primary" onClick={() => p.installOverlay(String(p.metadata?.id))}>

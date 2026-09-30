@@ -28,11 +28,15 @@ interface ISwitcherCardProps {
   description: string;
   value: boolean;
   onClick: (e: MouseEvent) => boolean | void | unknown;
-  tooltip?: string;
+  tooltip?: string | ReactNode;
   tooltipDisabled?: boolean;
+  switchTooltip?: string | ReactNode;
+  switchTooltipDisabled?: boolean;
   className?: string;
   switchClassName?: string;
   tooltipClassName?: string;
+  switchTooltipClassName?: string;
+  iconClassName?: string;
   disabled?: boolean;
   switchDisabled?: boolean;
 }
@@ -40,6 +44,7 @@ interface ISwitcherCardProps {
 interface ISwitcherCardContentsProps {
   className?: string;
   switchClassName?: string;
+  iconClassName?: string;
   onClick: (e: MouseEvent) => void;
   onTransitionEnd: (e: React.TransitionEvent<HTMLDivElement>) => void;
   value: boolean;
@@ -51,6 +56,9 @@ interface ISwitcherCardContentsProps {
   description: string;
   children?: ReactNode;
   switchDisabled?: boolean;
+  switchTooltip?: string | ReactNode;
+  switchTooltipDisabled?: boolean;
+  switchTooltipClassName?: string;
 }
 
 /**
@@ -128,7 +136,11 @@ export const SwitcherCard = forwardRef<ISwitcherCardHandle, ISwitcherCardProps>(
         label={p.label}
         title={p.title}
         icon={p.icon}
+        iconClassName={p.iconClassName}
         description={p.description}
+        switchTooltip={p.switchTooltip}
+        switchTooltipDisabled={p.switchTooltipDisabled}
+        switchTooltipClassName={p.switchTooltipClassName}
       >
         {p.children}
       </SwitcherCardContents>
@@ -137,26 +149,57 @@ export const SwitcherCard = forwardRef<ISwitcherCardHandle, ISwitcherCardProps>(
 });
 
 function SwitcherCardContents(p: ISwitcherCardContentsProps) {
+  // Note on disabling the switch by adding the `ant-switch-disabled` class to it instead of the native `disabled` attribute.
+  // This is to allow the `onClick` in the parent container to still be triggered even when the switch should be disabled.
+  // Native form controls with the HTML `disabled` attribute never dispatch a `click` event, so the `click` event on a parent
+  // container does not bubble to the descendent element. Using the `ant-switch-disabled` class mimics the appearance
+  // of a disabled switch without actually using the HTML `disabled` attribute.
   return (
-    <div className={cx(styles.platformSwitcher, p.className)} onClick={p.onClick}>
+    <div
+      className={cx(styles.platformSwitcher, { [styles.cardDisabled]: p.disabled }, p.className)}
+      onClick={p.onClick}
+    >
       <div className={styles.destinationInfo}>
         <div className={styles.colInput} onTransitionEnd={p.onTransitionEnd}>
-          <SwitchInput
-            value={p.value}
-            name={p.name}
-            disabled={p.disabled}
-            label={p.label ?? p.title}
-            nolabel
-            className={p.switchClassName}
-            skipWrapperAttrs={true}
-          />
+          {p.switchTooltip ? (
+            <Tooltip
+              title={p.switchTooltip}
+              placement="left"
+              className={p.switchTooltipClassName}
+              overlayClassName={styles.switcherTooltip}
+              disabled={p.switchTooltipDisabled}
+              styleContent={false}
+              lightShadow={true}
+            >
+              <SwitchInput
+                value={p.value}
+                name={p.name}
+                className={cx({ 'ant-switch-disabled': p.disabled }, p.switchClassName)}
+                label={p.label ?? p.title}
+                nolabel
+                skipWrapperAttrs={true}
+              />
+            </Tooltip>
+          ) : (
+            <SwitchInput
+              value={p.value}
+              name={p.name}
+              className={cx({ 'ant-switch-disabled': p.disabled }, p.switchClassName)}
+              label={p.label ?? p.title}
+              nolabel
+              skipWrapperAttrs={true}
+            />
+          )}
         </div>
 
         <div className={styles.colInfo}>
           <div className={styles.colAccount}>
             {/* PLATFORM LOGO AND NAME*/}
             {typeof p.icon === 'string' ? (
-              <i className={p.icon} style={{ color: 'var(--title)', marginRight: '8px' }} />
+              <i
+                className={cx(p.icon, p.iconClassName)}
+                style={{ color: 'var(--title)', marginRight: '8px' }}
+              />
             ) : (
               p.icon
             )}

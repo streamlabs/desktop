@@ -56,6 +56,8 @@ export enum WidgetType {
   GamePulseWidget = 25,
 }
 
+export type TWidgetType = keyof typeof WidgetType;
+
 // TODO: there's some duplication between this and `WidgetsService.playAlert`
 export const makeWidgetTesters = (host: string): IWidgetTester[] => {
   const prefix = `https://${host}/api/v5/widgets/desktop/test`;
@@ -767,3 +769,12 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
     supportedOS: [OS.Windows],
   },
 });
+
+export function getWidgetName(widgetType: WidgetType): string {
+  const widget = WidgetDefinitions[widgetType];
+  if (!widget) {
+    console.error(`Unknown widget type: ${widgetType}`);
+  }
+
+  return widget?.name || $t('Widget');
+}

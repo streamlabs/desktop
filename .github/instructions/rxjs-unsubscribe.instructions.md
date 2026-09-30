@@ -1,4 +1,6 @@
-applyTo: "app/components/**,app/components-react/**"
+---
+applyTo: 'app/components/**,app/components-react/**'
+---
 
 # Tracking RxJS subscriptions
 
