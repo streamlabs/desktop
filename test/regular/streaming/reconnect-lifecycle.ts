@@ -48,6 +48,7 @@ interface ISnapshot {
   goLiveRejected: boolean;
   updatingDisplays: string[];
   numInstances: number;
+  countedContexts: string[];
 }
 
 interface IScenarioResult {
@@ -267,6 +268,30 @@ test('Delayed retained restart observes Activate before Starting and waits for D
   t.deepEqual(stopped.outputErrors, []);
 });
 
+test('A retained context that starts again is counted once and uncounted on cleanup', async t => {
+  const { snapshots, error } = await runScenario(t, {
+    setup: 'dual',
+    context: 'horizontal',
+    stages: [['stop', 'deactivate']],
+    retainedRestart: {
+      // Two Start signals for the same retained instance, with no cleanup between them
+      startupSignals: ['start', 'start'],
+      stages: [['stop', 'deactivate']],
+    },
+  });
+  t.falsy(error);
+  const [retained, restarted, stopped] = snapshots;
+  t.true(retained.outputRetained, 'ongoing recording retains the stopped streaming wrapper');
+  t.is(retained.numInstances, 0, 'ending the whole stream uncounts everything');
+  t.deepEqual(retained.countedContexts, []);
+  t.is(restarted.nativeStarts, 1);
+  t.is(restarted.numInstances, 1, 'a repeated Start on the retained context is counted once');
+  t.deepEqual(restarted.countedContexts, ['horizontal']);
+  t.is(stopped.numInstances, 0, 'cleanup after the restart uncounts it again');
+  t.deepEqual(stopped.countedContexts, []);
+  t.deepEqual(stopped.outputErrors, []);
+});
+
 test('Queued callbacks from the same streaming instance cannot affect its replacement handler', async t => {
   const { snapshots, error } = await runScenario(t, {
     setup: 'dual',
@@ -414,6 +439,7 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
         resetInfo: () => Promise.resolve(),
         RESET_STREAM_INFO: (): void => undefined,
         rejectStartStreaming: () => rejectGoLive(),
+        resolveStartStreaming: (): void => undefined,
       };
       Object.setPrototypeOf(fixture, prototype);
       if (input.highlighter) {
@@ -449,6 +475,7 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
           ...(fixture.isUpdatingVerticalStream ? ['vertical'] : []),
         ],
         numInstances: fixture.numInstances,
+        countedContexts: [...fixture.countedStreamingContexts].sort(),
       });
 
       try {
