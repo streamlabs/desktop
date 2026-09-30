@@ -124,7 +124,7 @@
   "Select at least one clip to preview your video": "Wähle mindestens einen Clip aus, um eine Vorschau deines Videos anzusehen",
   "Select at least one clip to export your video": "Wähle mindestens einen Clip aus, um dein Video zu exportieren",
   "Game language must be English": "Die Sprache im Spiel muss Englisch sein",
-  "Ai Highlighter only works, if the game language is set to english.": "Der AI Highlighter funktioniert nur, wenn die Sprache im Spiel auf Englisch eingestellt ist.",
+  "AI Highlighter only works if the game language is set to English.": "AI Highlighter only works if the game language is set to English.",
   "How to change the game language?": "Wie kann ich die Sprache im Spiel ändern?",
   "English": "Englisch",
   "Supported game modes": "Unterstützte Spielmodi",
@@ -183,7 +183,10 @@
   "Install %{appName} to import and detect game highlights.": "Installiere %{appName}, um Spiel-Highlights zu importieren und zu erkennen.",
   "Open %{appName}": "%{appName} öffnen",
   "Install %{appName}": "%{appName} installieren",
+  "Open %{appName} to import and detect game highlights.": "Open %{appName} to import and detect game highlights.",
   "%{appName} has been installed and is now running.": "%{appName} wurde installiert und läuft jetzt.",
+  "Continuing will open %{appName}": "Continuing will open %{appName}",
+  "Continuing will install %{appName}": "Continuing will install %{appName}",
   "Installing Highlighter": "Highlighter wird installiert",
   "Installation interrupted": "Installation unterbrochen",
   "It seems the installation didn't finish.": "Es scheint, als wäre die Installation nicht abgeschlossen worden.",
@@ -227,5 +230,6 @@
   "Vertical replay buffer is active. Would you like to stop the replay buffer to enable AI Highlighter?": "Vertical replay buffer is active. Would you like to stop the replay buffer to enable AI Highlighter?",
   "All Supported Games": "All Supported Games",
   "Deletion info": "Deletion info",
-  "At least one clip could not be deleted from your system. Please delete it manually.": "At least one clip could not be deleted from your system. Please delete it manually."
+  "At least one clip could not be deleted from your system. Please delete it manually.": "At least one clip could not be deleted from your system. Please delete it manually.",
+  "Do not ask again": "Do not ask again"
 }

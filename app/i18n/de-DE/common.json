@@ -148,11 +148,12 @@
   "Dashboard Home": "Dashboard Startseite",
   "Alert Box Settings": "Benachrichtigungsbox-Einstellungen",
   "Alerts and Widgets": "Alerts und Widgets",
-  "AI": "KI",
+  "Vision": "Vision",
   "Between": "Zwischen",
   "Upgrade": "Upgrade",
   "Edit Reactive Data": "Reaktive Daten bearbeiten",
   "Reactive Data Editor": "Editor für reaktive Daten",
   "Destinations": "Destinations",
-  "Not enabled": "Nicht aktiviert"
+  "Not enabled": "Nicht aktiviert",
+  "Multichat": "Multichat"
 }

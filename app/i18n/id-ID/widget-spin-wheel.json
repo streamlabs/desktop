@@ -1,6 +1,7 @@
 {
   "Add Category": "Tambahkan Kategori",
   "Add Section": "Tambahkan Bagian",
+  "DONUT": "DONUT",
   "Clear All": "Hapus Semua",
   "Manage Spin Wheel": "Kelola Roda Putar",
   "Categories": "Kategori",
@@ -30,5 +31,6 @@
   "Center Image Size": "Ukuran Gambar Tengah",
   "Center Image Border Enabled": "Batas Gambar Tengah Diaktifkan",
   "Center Image Border Color": "Warna Batas Gambar Tengah",
-  "Center Image Border Width": "Lebar Batas Gambar Tengah"
+  "Center Image Border Width": "Lebar Batas Gambar Tengah",
+  "Add categories before adding new sections.": "Add categories before adding new sections."
 }

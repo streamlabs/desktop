@@ -11,5 +11,6 @@
   "Switch to Streamlabs Desktop": "Passa a Streamlabs Desktop",
   "Upgrade to Ultra to switch streams between devices.": "Passa a Ultra per alternare lo streaming tra i dispositivi.",
   "Force Start": "Forza avvio",
+  "Switch Stream": "Switch Stream",
   "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you're sure you're not live and it has been incorrectly detected, choose \"Force Start\" below.": "È stato rilevato uno streaming su un altro dispositivo. Vuoi passare a Streamlabs Desktop per lo streaming? Se non desideri continuare questo streaming, chiudilo dalla fonte di streaming attuale. Se hai la certezza di non essere in diretta e il rilevamento è errato, fai clic su “Forza avvio” qui sotto."
 }
