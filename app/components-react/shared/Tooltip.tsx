@@ -1,5 +1,5 @@
 import React, { CSSProperties, PropsWithChildren, HTMLAttributes, ReactNode } from 'react';
-import { Tooltip as AntdTooltip } from 'antd';
+import { Tooltip as AntdTooltip, TooltipProps } from 'antd';
 import styles from './Tooltip.m.less';
 import cx from 'classnames';
 
@@ -34,6 +34,8 @@ interface ITooltipTipProps {
   tooltipClassName?: string;
   onClick?: () => void;
   name?: string;
+  destroyTooltipOnHide?: boolean;
+  trigger?: TooltipProps['trigger'];
 }
 
 export default function Tooltip(p: PropsWithChildren<ITooltipTipProps>) {
@@ -53,6 +55,8 @@ export default function Tooltip(p: PropsWithChildren<ITooltipTipProps>) {
     onClick,
     overlayClassName,
     tooltipClassName,
+    destroyTooltipOnHide,
+    trigger = ['hover', 'focus', 'click'],
   } = p;
 
   return (
@@ -79,10 +83,11 @@ export default function Tooltip(p: PropsWithChildren<ITooltipTipProps>) {
           style={style}
           getPopupContainer={triggerNode => triggerNode}
           mouseLeaveDelay={0.1}
-          trigger={['hover', 'focus', 'click']}
+          trigger={trigger}
           autoAdjustOverflow={autoAdjustOverflow}
           visible={visible}
           overlayClassName={overlayClassName}
+          destroyTooltipOnHide={destroyTooltipOnHide}
         >
           {content}
           {{ ...p }.children}
