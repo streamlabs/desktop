@@ -162,7 +162,17 @@ function StartStreamingButton(p: { disabled?: boolean }) {
         StreamingService.actions.goLive();
       }
     }
-  }, [streamingStatus, streamShiftStatus, isDualOutputMode, isLoggedIn, isPrime]);
+  }, [
+    streamingStatus,
+    streamShiftStatus,
+    isDualOutputMode,
+    isLoggedIn,
+    isPrime,
+    primaryPlatform,
+    isMultiplatformMode,
+    updateStreamInfoOnLive,
+    isTwitchUnprotectedStream,
+  ]);
 
   // Wrap the toggleStreaming function in a debounce to prevent multiple rapid clicks
   // and also to cancel the action on unmount to prevent memory leaks and state updates on unmounted components
@@ -209,17 +219,13 @@ function StartStreamingButton(p: { disabled?: boolean }) {
       return true;
     }
 
-    // TO REVIEW: master tested `primaryPlatform === 'twitch'` here. This branch substitutes
-    //   `isTwitchUnprotectedStream` (streaming-view.ts), which tests the configured ingest URL
-    //   rather than the linked account, because in unprotected mode a user can stream to Twitch
-    //   without Twitch being their primary platform — that is the fix this branch exists for.
-    // TO REVIEW: the branch's pre-merge version also wrapped the three checks above in
-    //   `if (protectedModeEnabled)` and returned true unconditionally for protected mode. That
-    //   restructure is NOT reproduced here, because it would override master's stream-shift and
-    //   dual-output handling. Net behavioural difference: a protected-mode, single-platform,
-    //   non-Twitch user now falls through to `isSafeToModifyStreamKey()` instead of getting the
-    //   Go Live window unconditionally. Confirm which is intended.
-    if (isTwitchUnprotectedStream) {
+    // For Twitch, there are two cases to check for the ability to show the Go Live window:
+    // 1. In protected mode: when Twitch is the primary platform
+    // 2. In unprotected mode: when the ingest url is for Twitch. The unprotected mode behavior for Twitch is for legacy reasons
+    if (
+      (StreamSettingsService.state.protectedModeEnabled && primaryPlatform === 'twitch') ||
+      isTwitchUnprotectedStream
+    ) {
       // For Twitch, we can show the Go Live window even with protected mode off
       // This is mainly for legacy reasons.
       return isMultiplatformMode || updateStreamInfoOnLive;
