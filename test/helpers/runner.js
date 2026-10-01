@@ -8,8 +8,15 @@
 const jobStartTime = Date.now();
 const { execSync } = require('child_process');
 const fs = require('fs');
+const https = require('https');
 const rimraf = require('rimraf');
 const fetch = require('node-fetch');
+
+// The timings GET at startup and the analytics POST after the run are 20+ minutes apart. Node's
+// default agent keeps sockets alive, so the POST would reuse one the server has already closed,
+// which writes an ECONNABORTED). Open a fresh connection per request instead.
+// TMP: Test if opening a fresh connection per request resolves the ECONNABORTED issue.
+const utilsServerAgent = new https.Agent({ keepAlive: false });
 
 const failedTestsFile = 'test-dist/failed-tests.json';
 const testStatsFile = 'test-dist/test-stats.json';
@@ -145,13 +152,26 @@ async function requestUtilityServer(path, method = 'get', body = null) {
   const token = process.env.SLOBS_TEST_USER_POOL_TOKEN;
   const requestPayload = {
     method,
+    agent: utilsServerAgent,
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   };
   if (body) requestPayload.body = JSON.stringify(body);
-  const response = await fetch(`${utilsServerUrl}/${path}`, requestPayload);
+
+  // TMP: Test if opening a fresh connection per request resolves the ECONNABORTED issue.
+  // This is to confirm that the second utility-server call was being sent over a connection that already died,
+  // and whether this is the cause of the ECONNABORTED issue.
+  let response;
+  // const response = await fetch(`${utilsServerUrl}/${path}`, requestPayload);
+  try {
+    response = await fetch(`${utilsServerUrl}/${path}`, requestPayload);
+  } catch (e) {
+    // retry once on a network failure; an HTTP error status is handled below, not retried
+    console.error(`request to ${path} failed, retrying once`, e);
+    response = await fetch(`${utilsServerUrl}/${path}`, requestPayload);
+  }
 
   if (!response.ok) {
     console.error(response.status);
