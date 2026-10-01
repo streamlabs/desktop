@@ -253,6 +253,7 @@ const TikTokRequired = memo((p: IPlatformComponentParams<'tiktok'>) => {
       moreIcon={null}
       tabBarGutter={0}
       subType="filled"
+      activeKey={p.value.activeTab || 'live-access'}
       onChange={setActiveTab}
       tabs={[
         {
