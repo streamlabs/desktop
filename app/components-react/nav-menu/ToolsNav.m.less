@@ -23,7 +23,7 @@
   }
 
   .compact {
-    :global(.ant-menu-item) {
+    &:global(.ant-menu-item) {
       padding: 0 8px !important;
     }
 
@@ -40,7 +40,7 @@
     }
   }
 
-  .settings-menu {
+  .icon-only {
     :global(.ant-menu-title-content) {
       margin-left: 0 !important;
     }
@@ -66,34 +66,10 @@
       object-fit: cover;
     }
 
-    &-dropdown-icon {
-      position: absolute;
-      right: -4px;
-      bottom: -4px;
-      font-size: 10px;
-    }
-
-    &-menu {
-      background-color: var(--section-alt);
-      border-radius: 4px;
-      padding: 4px 0;
-      min-width: 160px;
-    }
-
-    &-header {
-      padding: 8px 16px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 4px;
-      cursor: default;
-    }
-
-    &-item {
-      padding: 8px 16px;
-      cursor: pointer;
-
-      &:hover {
-        background-color: var(--hover);
-      }
+    &-tooltip {
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
     }
   }
 
