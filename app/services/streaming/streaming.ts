@@ -447,6 +447,19 @@ export class StreamingService
       this.userService.setPrimaryPlatform('twitch');
     }
 
+    // TODO: Remove when BE fix is released.
+    if (!this.streamSettingsService.state.protectedModeEnabled) {
+      // Validate the current stream settings before proceeding
+      // This is a band-aid solution until the backend fixes are made
+      const correctedServer = this.settingsService.validateUnprotectedModeCredentials();
+
+      // Apply through StreamSettingsService so the OBS Stream category is written in the order it
+      // requires; patching `server` into that category directly loses `streamType` and `key`
+      if (correctedServer) {
+        this.streamSettingsService.setSettings({ server: correctedServer });
+      }
+    }
+
     // don't interact with API in logged out mode and when protected mode is disabled
     if (
       !this.userService.isLoggedIn ||
@@ -4611,7 +4624,23 @@ export class StreamingService
       // -4 is used for generic unknown messages in OBS. Both -4 and any other code
       // we don't recognize should fall into this branch and show a generic error.
 
-      if (!this.userService.isLoggedIn) {
+      const isStreamKeyMissingError = this.getIsStreamKeyMissingError(info);
+
+      // Check if a stream key is missing for both logged out and logged in users because a logged out
+      // user streams in unprotected mode, which means a missing stream key can occur even if the user is not logged in.
+      if (isStreamKeyMissingError) {
+        if (this.views.isDualOutputMode) {
+          const display = info.service === 'vertical' ? 'vertical' : 'horizontal';
+          errorText = $t(
+            'The stream key is missing for the %{display} output. Please configure your streaming settings.',
+            { display },
+          );
+          diagReportMessage = diagReportMessage.concat(errorText);
+        } else {
+          errorText = $t('The stream key is missing. Please configure your streaming settings.');
+          diagReportMessage = diagReportMessage.concat(errorText);
+        }
+      } else if (!this.userService.isLoggedIn) {
         const messages = formatStreamErrorMessage('LOGGED_OUT_ERROR');
 
         errorText = messages.user;
@@ -4766,6 +4795,31 @@ export class StreamingService
     };
 
     this.handleOBSOutputError(error);
+  }
+
+  /**
+   * Determines if the error is caused by a missing stream key
+   * @remarks Used to show a more descriptive error message for the user
+   * Note: This check is also necessary for non-logged-in users who might be attempting to stream
+   * without a saved stream key.
+   * @param info - OBS Output Signal
+   * @returns Whether the error is a stream key error
+   */
+  private getIsStreamKeyMissingError(info: IOBSOutputSignalInfo): boolean {
+    // Only check stream keys for streaming signals
+    if (info.type !== EOBSOutputType.Streaming) return false;
+
+    // Verify horizontal stream key exists
+    if (info.service === 'default' && this.settingsService.views.values.Stream.key === '') {
+      return true;
+    }
+
+    // Verify vertical stream key exists
+    if (info.service === 'vertical' && this.settingsService.views.values.StreamSecond.key === '') {
+      return true;
+    }
+
+    return false;
   }
 
   private sendStreamEndEvent() {

@@ -51,7 +51,7 @@ export default function Main() {
     EditorCommandsService,
     ScenesService,
     CustomizationService,
-    OnboardingV2Service,
+    StreamSettingsService,
   } = Services;
   const mainWindowEl = useRef<HTMLDivElement | null>(null);
   const mainMiddleEl = useRef<HTMLDivElement | null>(null);
@@ -86,6 +86,7 @@ export default function Main() {
     isLoggedIn,
     platform,
     activeSceneId,
+    protectedModeEnabled,
   } = useVuex(() => ({
     errorAlert: AppService.state.errorAlert,
     applicationLoading: AppService.state.loading,
@@ -94,6 +95,7 @@ export default function Main() {
     isLoggedIn: UserService.views.isLoggedIn,
     platform: UserService.views.platform,
     activeSceneId: ScenesService.views.activeSceneId,
+    protectedModeEnabled: StreamSettingsService.views.protectedModeEnabled,
   }));
 
   const showLoadingSpinner = useMemo(
@@ -226,10 +228,16 @@ export default function Main() {
   }, []);
 
   useEffect(() => {
-    if (streamingStatus === EStreamingState.Starting && isDockCollapsed) {
+    // Only open live dock when streaming via APIs
+    if (streamingStatus === EStreamingState.Starting && protectedModeEnabled && isDockCollapsed) {
       setCollapsed(false);
     }
-  }, [streamingStatus]);
+
+    // Never open live dock, and collapse it if open, in unprotected mode (e.g. stream directly to custom destination)
+    if (streamingStatus === EStreamingState.Starting && !protectedModeEnabled && !isDockCollapsed) {
+      setCollapsed(true);
+    }
+  }, [streamingStatus, protectedModeEnabled, isDockCollapsed]);
 
   const oldTheme = useRef<TApplicationTheme | null>(null);
   useEffect(() => {
