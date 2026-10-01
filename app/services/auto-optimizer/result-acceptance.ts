@@ -91,8 +91,9 @@ export function acceptAutoOptimizerResult(
           output.videos[0]?.fpsNum * first.videos[0]?.fpsDen !==
             first.videos[0]?.fpsNum * output.videos[0]?.fpsDen,
       )
-    )
+    ) {
       return null;
+    }
   }
   const acceptedOutputs: IAutoOptimizerOutputResult[] = [];
 
@@ -140,8 +141,9 @@ export function acceptAutoOptimizerResult(
         expected.destinations.some(
           destination => destination.platform === 'twitch' || destination.platform === 'youtube',
         ))
-    )
+    ) {
       return null;
+    }
     const activeEvidenceValid =
       nativeOutput.measurement.mode !== 'active' ||
       isValidAutoOptimizerActiveProbeCoverage({
