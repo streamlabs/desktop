@@ -10,7 +10,6 @@ import {
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import { click, clickButton, waitForDisplayed } from '../../helpers/modules/core';
 import { assertFormContains, fillForm, readFields } from '../../helpers/modules/forms';
-import { setInputValue } from '../../helpers/modules/forms/base';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -32,12 +31,6 @@ test('Populates stream settings after go live', withUser('twitch'), async t => {
     t.true(fields.server !== '', 'Server field should not be empty');
     t.true(key !== '', 'Key field should not be empty');
 
-    // TODO: Filling the server below is to band-aid a bug automatically setting the url. Remove when fixed.
-    // Set it with `setInputValue`/`bufferInput` rather than `fillForm` so this doesn't depend on
-    // `forms/text.ts` buffering its keystrokes — this OBS form drops characters when typed at full
-    // speed. It must come from `forms/base`: the re-export in `forms/form.ts` takes only two
-    // arguments and silently discards the buffering.
-    await setInputValue('input[data-name="server"]', 'rtmp://live.twitch.tv/app/', true);
     await clickButton('Close');
   });
 

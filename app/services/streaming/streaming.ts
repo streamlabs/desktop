@@ -89,6 +89,7 @@ import { authorizedHeaders } from 'util/requests';
 import { HostsService } from '../hosts';
 import { assertIsDefined, getDefined } from 'util/properties-type-guards';
 import { StreamInfoView } from './streaming-view';
+import { isCommonTwitchService } from './stream-destination';
 import { GrowService } from 'services/grow/grow';
 import * as remote from '@electron/remote';
 import { RecordingModeService } from 'services/recording-mode';
@@ -447,27 +448,12 @@ export class StreamingService
       this.userService.setPrimaryPlatform('twitch');
     }
 
-    // TODO: Remove when BE fix is released.
-    if (!this.streamSettingsService.state.protectedModeEnabled) {
-      // Validate the current stream settings before proceeding
-      // This is a band-aid solution until the backend fixes are made
-      const correctedServer = this.settingsService.validateUnprotectedModeCredentials();
-
-      // Apply through StreamSettingsService so the OBS Stream category is written in the order it
-      // requires; patching `server` into that category directly loses `streamType` and `key`
-      if (correctedServer) {
-        this.streamSettingsService.setSettings({ server: correctedServer });
-      }
-    }
-
-    // don't interact with API in logged out mode and when protected mode is disabled
+    // Only a Twitch destination may use Twitch's metadata API in unprotected mode.
     if (
       !this.userService.isLoggedIn ||
-      (!this.streamSettingsService.state.protectedModeEnabled &&
-        this.userService.state.auth?.primaryPlatform !== 'twitch') // twitch is a special case
+      (!this.views.protectedModeEnabled && !this.views.isTwitchUnprotectedStream)
     ) {
-      this.finishStartStreaming();
-      return;
+      return this.finishStartStreaming();
     }
 
     // clear the current stream info
@@ -878,6 +864,8 @@ export class StreamingService
         // It is also unavailable during a stream shift, which always goes out through the
         // restream service.
         const isEnhancedBroadcasting =
+          (this.views.protectedModeEnabled ||
+            isCommonTwitchService(this.streamSettingsService.settings)) &&
           !this.views.isLiveOutputEditingEnabled &&
           !this.views.isStreamShiftMode &&
           (this.views.isTwitchDualStreamEnabled ||
@@ -1954,6 +1942,21 @@ export class StreamingService
   }
 
   async finishStartStreaming(): Promise<unknown> {
+    if (!this.streamSettingsService.protectedModeEnabled) {
+      if (this.streamSettingsService.settings.streamType === 'rtmp_common') {
+        // Older profiles may contain a server from another service. Let OSN normalize
+        // the saved selection and reload it before any output inherits the settings.
+        this.settingsService.setSettings('Stream', this.settingsService.state.Stream.formData);
+      }
+
+      // Recompute for every attempt, including direct/forced starts and retries.
+      // Keep the saved native preference so returning to common Twitch restores it.
+      this.SET_ENHANCED_BROADCASTING(
+        isCommonTwitchService(this.streamSettingsService.settings) &&
+          this.settingsService.isEnhancedBroadcasting(),
+      );
+    }
+
     // register a promise that we should reject or resolve in the `handleStreamingSignal`
     const startStreamingPromise = new Promise((resolve, reject) => {
       this.resolveStartStreaming = resolve;
@@ -2030,7 +2033,7 @@ export class StreamingService
 
     startStreamingPromise
       .then(() => {
-        if (this.views.settings.streamShift) {
+        if (this.views.protectedModeEnabled && this.views.settings.streamShift) {
           // Remove the pending state to show the correct text in the start streaming button
           this.restreamService.setStreamShiftStatus('inactive');
 
