@@ -26,7 +26,8 @@ const CLIPS_PEEK_HEIGHT = 160;
  * clips. The editor panel slides in beside the clips (not the children) once enough clips are
  * selected to edit a video.
  * With `fillIntro` the children take up nearly the full visible height, leaving just enough room
- * for the top of the clips to peek out so users can tell there is more to scroll to.
+ * for the top of the clips to peek out so users can tell there is more to scroll to. Without
+ * clips they fill the whole visible height, so the first screen ends with the children.
  */
 export default function ClipsView({
   children,
@@ -173,7 +174,12 @@ export default function ClipsView({
           {fillIntro ? (
             <div
               className={styles.intro}
-              style={{ minHeight: Math.max(viewportHeight - CLIPS_PEEK_HEIGHT, 0) || undefined }}
+              // Without clips there is nothing to peek at, so the intro ends the first screen
+              style={{
+                minHeight:
+                  Math.max(viewportHeight - (clips.length > 0 ? CLIPS_PEEK_HEIGHT : 0), 0) ||
+                  undefined,
+              }}
             >
               {children}
             </div>

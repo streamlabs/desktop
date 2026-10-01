@@ -25,7 +25,8 @@ import ModalInstallationFlow from './ModalInstallationFlow';
 import { HypeWrapper } from './HypeWrapper';
 import { IRecordingEntry } from 'services/recording-mode';
 
-const RECENT_RECORDINGS_COUNT = 10;
+const RECENT_RECORDINGS_COUNT = 20;
+const RECENT_RECORDINGS_MAX_AGE_DAYS = 30;
 
 export function ImportStreamModal({
   close,
@@ -47,13 +48,14 @@ export function ImportStreamModal({
   const [installedApp, setInstalledApp] = useState<TInstalledHighlighterApp | null>(null);
 
   // Read once on open. Recordings deleted from disk since are left out.
-  const [recentRecordings] = useState<IRecordingEntry[]>(() =>
-    showRecentRecordings && !videoPath
-      ? RecordingModeService.views.sortedRecordings
-          .filter(recording => fs.existsSync(recording.filename))
-          .slice(0, RECENT_RECORDINGS_COUNT)
-      : [],
-  );
+  const [recentRecordings] = useState<IRecordingEntry[]>(() => {
+    if (!showRecentRecordings || videoPath) return [];
+    const cutoff = moment().subtract(RECENT_RECORDINGS_MAX_AGE_DAYS, 'days');
+    return RecordingModeService.views.sortedRecordings
+      .filter(recording => moment(recording.timestamp).isAfter(cutoff))
+      .filter(recording => fs.existsSync(recording.filename))
+      .slice(0, RECENT_RECORDINGS_COUNT);
+  });
   const [showingRecordingPicker, setShowingRecordingPicker] = useState(recentRecordings.length > 0);
   const [gameSelectOpen, setGameSelectOpen] = useState(false);
   const [openGameSelectOnShow, setOpenGameSelectOnShow] = useState(false);

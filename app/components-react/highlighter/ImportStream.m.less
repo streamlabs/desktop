@@ -83,6 +83,8 @@
   overflow-y: auto;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  // Auto rows get squeezed to fit the grid's height, letting the thumbnails overlap
+  grid-auto-rows: max-content;
   align-content: start;
   gap: 12px;
 }
