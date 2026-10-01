@@ -3,6 +3,7 @@ import { setTemporaryRecordingPath } from '../helpers/modules/settings/settings'
 import {
   clickButton,
   focusMain,
+  getClient,
   isDisplayed,
   selectElements,
   waitForDisplayed,
@@ -49,7 +50,10 @@ test('Highlighter save and export', async t => {
   await stopStream();
 
   await focusMain();
-  await waitForDisplayed('[data-name="select-clip"]', { timeout: 15000 });
+  await getClient().waitUntil(
+    async () => (await selectElements('[data-name="select-clip"]')).length >= 2,
+    { timeout: 15000, timeoutMsg: 'Both replay buffer clips should show in the clip grid' },
+  );
   for (const selectClip of await selectElements('[data-name="select-clip"]')) {
     await selectClip.click();
   }
