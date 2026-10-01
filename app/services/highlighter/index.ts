@@ -1236,27 +1236,24 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   // CLIPS logic
   // =================================================================================================
   addClips(newClips: { path: string }[], source: 'Manual' | 'ReplayBuffer') {
-    newClips.forEach((clipData, index) => {
-      // Don't add the same clip twice
-      if (this.state.clips[clipData.path]) return;
+    // Don't add the same clip twice
+    const paths = [...new Set(newClips.map(c => c.path))].filter(p => !this.state.clips[p]);
+    if (paths.length === 0) return;
 
-      const allClips = this.getClips(this.views.clips);
-      const highestGlobalOrderPosition = allClips.length;
+    // New clips get prepended so they are visible right away (newest replay on top), so push
+    // all existing clips down once by the number of new clips
+    this.getClips(this.views.clips).forEach(clip => {
+      this.UPDATE_CLIP({
+        path: clip.path,
+        globalOrderPosition: clip.globalOrderPosition + paths.length,
+      });
+    });
 
-      if (source === 'Manual') {
-        // Manual clips get prepended to be visible after adding them, so push all others down
-        allClips.forEach(clip => {
-          this.UPDATE_CLIP({
-            path: clip.path,
-            globalOrderPosition: clip.globalOrderPosition + 1,
-          });
-        });
-      }
+    const display = this.streamingService.views.getOutputDisplayType();
 
-      const display = this.streamingService.views.getOutputDisplayType();
-
+    paths.forEach((clipPath, index) => {
       this.ADD_CLIP({
-        path: clipData.path,
+        path: clipPath,
         loaded: false,
         enabled: false,
         startTrim: 0,
@@ -1264,14 +1261,9 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         deleted: false,
         source,
         display,
-
-        // Manual clips always get prepended to be visible after adding them
-        // ReplayBuffers will appended to have them in the correct order.
-        globalOrderPosition:
-          source === 'Manual' ? 0 + index : index + highestGlobalOrderPosition + 1,
+        globalOrderPosition: index,
       });
     });
-    return;
   }
 
   manuallyEnableClip(path: string, enabled: boolean) {
