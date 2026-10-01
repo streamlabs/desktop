@@ -599,12 +599,8 @@ class SourceSelectorController {
     return this.streamingService.isIdle;
   }
 
-  get replayBufferActive() {
-    return this.streamingService.isReplayBufferActive;
-  }
-
   get selectiveRecordingLocked() {
-    return this.replayBufferActive || !this.streamingServiceIdle;
+    return !this.streamingServiceIdle;
   }
 
   toggleSelectiveRecording() {
