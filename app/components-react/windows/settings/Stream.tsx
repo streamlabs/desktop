@@ -214,9 +214,13 @@ export function StreamSettings() {
   );
 
   function disableProtectedMode() {
+    // Custom ingest streams to the server url and stream key the user enters, so the OBS context
+    // has to be `rtmp_custom`. With `rtmp_common` OBS resolves the ingest from the `service` left
+    // behind by the last protected mode stream, so the primary platform's server silently replaces
+    // the custom one.
     StreamSettingsService.actions.setSettings({
       protectedModeEnabled: false,
-      streamType: 'rtmp_common',
+      streamType: 'rtmp_custom',
     });
 
     if (DualOutputService.views.dualOutputMode) {
@@ -227,8 +231,9 @@ export function StreamSettings() {
   function enableProtectedMode() {
     StreamSettingsService.actions.setSettings({
       protectedModeEnabled: true,
+      // TODO: BE fix to verify, maybe the stream key should not be cleared here?
       key: '',
-      streamType: 'rtmp_custom',
+      streamType: 'rtmp_common',
     });
   }
 

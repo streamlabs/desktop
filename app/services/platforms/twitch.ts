@@ -251,7 +251,10 @@ export class TwitchService
     if (goLiveSettings && channelInfo) {
       if (goLiveSettings?.liveOutputEditing) {
         await this.setupLiveOutputStream(goLiveSettings);
-      } else if (channelInfo.display === 'both') {
+      } else if (
+        channelInfo.display === 'both' &&
+        this.streamingService.views.isTwitchDualStreamEnabled
+      ) {
         await this.setupDualStream(goLiveSettings);
       } else {
         // Update enhanced broadcasting setting based on go live settings

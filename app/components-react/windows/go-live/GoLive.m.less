@@ -49,6 +49,7 @@
   margin-right: 8px !important;
 }
 
+// Used by EditStreamWindow, which still has no left column of its own.
 .destination-mode {
   padding-right: 25px !important;
   padding-left: 25px !important;
@@ -56,6 +57,22 @@
   // Without a left column this padding is the only gutter, so the children's own right margins
   // sit on top of it and inset the right edge further than the left. Those margins exist to
   // separate the two columns, which is not this layout.
+  > *:not(:first-child) {
+    margin-right: 0;
+  }
+
+  .right-column-scroll {
+    margin-right: 0 !important;
+  }
+}
+
+// The GoLive window's unprotected-mode variant of the above: same single-column layout, tighter
+// right gutter. Kept as a separate class rather than a rename of `.destination-mode` because
+// EditStreamWindow still consumes that one.
+.unprotected-mode {
+  padding-right: 5px !important;
+  padding-left: 25px !important;
+
   > *:not(:first-child) {
     margin-right: 0;
   }
