@@ -30,7 +30,7 @@ export async function skipOnboarding() {
 export async function advancePastOnboardingLogin(t: TExecutionContext, newUser = true) {
   await focusMain();
 
-  if (!(await isDisplayed('h1=Welcome to Streamlabs Desktop'))) {
+  if (!(await isDisplayed('h1=Welcome to Streamlabs Desktop', { timeout: 5000 }))) {
     t.fail('Onboarding welcome page not shown');
     return;
   }

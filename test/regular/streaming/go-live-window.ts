@@ -65,7 +65,7 @@ test(
         'Case 3: Shift ultra icon should be visible for non-prime users but was not found',
     });
     t.true(
-      await tooltipExists('i.icon-information', '[data-name="not-ultra"]', {
+      await tooltipExists('button[data-name="streamShift"]', '[data-name="non-ultra"]', {
         timeout: 1000,
       }),
       'Case 3: Non-Ultra stream shift tooltip did not appear',
@@ -381,18 +381,18 @@ test(
       });
       await waitForSettingsWindowLoaded();
 
-      // Case 6: Stream shift default explanation tooltip shows
+      // Case 6: Stream shift default description shows
       t.true(
-        await tooltipExists('i.icon-information', '[data-name="explanation"]', { timeout: 1000 }),
-        'Case 6: Default stream shift explanation tooltip did not appear',
+        await isDisplayed('div=Switch between devices while live.', { timeout: 1000 }),
+        'Case 6: Default stream shift description did not appear',
       );
 
-      // Case 7: Default tooltip stays the same when multiple platforms are enabled
+      // Case 7: Default description stays the same when multiple platforms are enabled
       await fillForm({ instagram: true });
       await waitForSettingsWindowLoaded();
       t.true(
-        await tooltipExists('i.icon-information', '[data-name="explanation"]', { timeout: 1000 }),
-        'Case 7: Default stream shift explanation tooltip did not appear',
+        await isDisplayed('div=Switch between devices while live.', { timeout: 1000 }),
+        'Case 7: Default stream shift description did not appear',
       );
 
       // Case 8: Toggling stream shift disables enhanced broadcasting and vice versa
@@ -421,7 +421,7 @@ test(
         'Case 10: Display selectors should be shown in dual output mode',
       );
       t.true(
-        await tooltipExists('i.icon-information', '[data-name="dual-output"]', {
+        await tooltipExists('button[data-name="streamShift"]', '[data-name="dual-output"]', {
           timeout: 1000,
         }),
         'Case 10: Dual output tooltip did not appear',
@@ -528,15 +528,28 @@ test(
 
       // Case 2: Ultra users can enable more than 2 destinations
       await fillForm({ [name]: true });
+      await waitForSettingsWindowLoaded();
       await fillForm({ [name2]: true });
+      await waitForSettingsWindowLoaded();
       await assertFormContains({
         [name]: true,
         [name2]: true,
       });
 
       // Case 3: Ultra users can enable all targets
-      await fillForm({ twitch: true, instagram: true, kick: true });
+      await fillForm({ twitch: true });
       await waitForSettingsWindowLoaded();
+      await fillForm({ instagram: true });
+      await waitForSettingsWindowLoaded();
+      await fillForm({ kick: true });
+      await waitForSettingsWindowLoaded();
+      await assertFormContains({
+        twitch: true,
+        instagram: true,
+        kick: true,
+        [name]: true,
+        [name2]: true,
+      });
 
       // Case 4: Can toggle custom destination off
       await fillForm({ [name2]: false });
@@ -550,7 +563,9 @@ test(
       });
 
       // Case 5: Must always have at least one platform enabled
-      await fillForm({ instagram: false, kick: false });
+      await fillForm({ instagram: false });
+      await waitForSettingsWindowLoaded();
+      await fillForm({ kick: false });
       await waitForSettingsWindowLoaded();
       await assertFormContains({
         twitch: true,
@@ -575,12 +590,14 @@ test(
       await waitForSettingsWindowLoaded();
 
       // Case 6: In dual output mode, can set displays for all targets
-      await fillForm({
-        twitch: true,
-        instagram: true,
-        kick: true,
-        [name2]: true,
-      });
+      await fillForm({ twitch: true });
+      await waitForSettingsWindowLoaded();
+      await fillForm({ instagram: true });
+      await waitForSettingsWindowLoaded();
+      await fillForm({ kick: true });
+      await waitForSettingsWindowLoaded();
+      await fillForm({ [name2]: true });
+      await waitForSettingsWindowLoaded();
       await fillForm({
         twitchDisplay: 'both',
         instagramDisplay: 'vertical',

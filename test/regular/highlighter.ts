@@ -14,6 +14,8 @@ import { logIn } from '../helpers/modules/user';
 import { saveReplayBuffer } from '../helpers/modules/replay-buffer';
 import { fillForm } from '../helpers/modules/forms';
 import { withUser } from '../helpers/webdriver/user';
+import { getApiClient } from '../helpers/api-client';
+import { SettingsService } from '../../app/services/settings';
 const path = require('path');
 const fs = require('fs');
 
@@ -23,13 +25,16 @@ useWebdriver();
 
 test('Highlighter save and export', async t => {
   await logIn();
-  const recordingDir = await setTemporaryRecordingPath(
-    false,
-    path.join(t.context.cacheDir, 'slobs-client'),
-  );
+  const recordingDir = await setTemporaryRecordingPath();
+
+  // The replay buffer setup the Highlighter's Configure button applied, which the
+  // highlighter migration no longer shows
+  (await getApiClient()).getResource<SettingsService>('SettingsService').setSettingsPatch({
+    General: { ReplayBufferWhileStreaming: true, KeepReplayBufferStreamStops: false },
+    Output: { RecRB: true, RecFormat: 'mp4' },
+  });
 
   await showPage('Highlighter');
-  await clickButton('Configure');
 
   await prepareToGoLive();
   await tryToGoLive({
@@ -41,7 +46,7 @@ test('Highlighter save and export', async t => {
   await stopStream();
 
   await focusMain();
-  await clickButton('All Clips');
+  await clickButton('Show clips');
   await clickButton('Export');
   const fileName = 'MyTestVideo.mp4';
   const exportLocation = path.resolve(recordingDir, fileName);
@@ -53,11 +58,11 @@ test('Highlighter save and export', async t => {
 });
 
 test('AI Highlighter', withUser('twitch', { prime: true }), async t => {
-  // AI Highlighter install button shows
+  // Streamlabs Highlighter install action shows
   await showPage('Highlighter');
-  await waitForDisplayed('[name="installHighlighter"]', {
+  await waitForDisplayed('[data-name="streamlabs-highlighter"]', {
     timeout: 3000,
-    timeoutMsg: 'Highlighter tab AI Highlighter install button did not show',
+    timeoutMsg: 'Highlighter tab Streamlabs Highlighter install action did not show',
   });
 
   // Go live with AI Highlighter enabled
@@ -73,7 +78,7 @@ test('AI Highlighter', withUser('twitch', { prime: true }), async t => {
   // Highlighter div shows
   await waitForSettingsWindowLoaded();
   t.true(
-    await isDisplayed('[name="install-highlighter"]'),
+    await isDisplayed('[data-name="ai-highlighter-selector"]'),
     'Case 1: Highlighter card should show for supported game',
   );
 
@@ -83,7 +88,7 @@ test('AI Highlighter', withUser('twitch', { prime: true }), async t => {
   });
   await waitForSettingsWindowLoaded();
   t.false(
-    await isDisplayed('[name="install-highlighter"]'),
+    await isDisplayed('[data-name="ai-highlighter-selector"]'),
     'Case 2: Highlighter card should hide for not supported game',
   );
 
@@ -93,14 +98,14 @@ test('AI Highlighter', withUser('twitch', { prime: true }), async t => {
   });
   await waitForSettingsWindowLoaded();
   t.true(
-    await isDisplayed('[name="install-highlighter"]'),
+    await isDisplayed('[data-name="ai-highlighter-selector"]'),
     'Case 3: Highlighter card should show when changing from an unsupported game to a supported game',
   );
   await clickButton('Close');
   await clickGoLive();
   await waitForSettingsWindowLoaded();
   t.true(
-    await isDisplayed('[name="install-highlighter"]'),
+    await isDisplayed('[data-name="ai-highlighter-selector"]'),
     'Case 5: Highlighter card should show for supported game when opening go live window',
   );
   await clickButton('Close');

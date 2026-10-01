@@ -20,7 +20,6 @@ import {
 } from '../helpers/modules/replay-buffer';
 import { ExecutionContext } from 'ava';
 import { useForm } from '../helpers/modules/forms';
-import * as path from 'path';
 
 // Matches filenames produced by the default OBS FilenameFormatting value
 // ("%CCYY-%MM-%DD %hh-%mm-%ss"), e.g. "2024-01-15 10-23-45.mp4".
@@ -67,10 +66,7 @@ async function toggleReplayBuffer(advanced: boolean = false) {
 }
 
 test('Replay Buffer filenames contain a timestamp', async t => {
-  const tmpDir = await setTemporaryRecordingPath(
-    false,
-    path.join(t.context.cacheDir, 'slobs-client'),
-  );
+  const tmpDir = await setTemporaryRecordingPath();
   await setOutputResolution('100x100');
 
   await startReplayBuffer();
@@ -85,10 +81,7 @@ test('Replay Buffer filenames contain a timestamp', async t => {
 });
 
 test('Replay Buffer', async t => {
-  const tmpDir = await setTemporaryRecordingPath(
-    false,
-    path.join(t.context.cacheDir, 'slobs-client'),
-  );
+  const tmpDir = await setTemporaryRecordingPath();
   await setOutputResolution('100x100');
 
   // Simple Replay Buffer

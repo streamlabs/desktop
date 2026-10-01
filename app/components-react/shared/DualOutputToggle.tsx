@@ -200,7 +200,14 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
       })}
       style={p?.style}
     >
-      <Tooltip title={tooltip} placement={placement} disabled={disabled} lightShadow>
+      <Tooltip
+        title={tooltip}
+        placement={placement}
+        disabled={disabled}
+        lightShadow
+        destroyTooltipOnHide
+        trigger={['hover', 'focus']}
+      >
         {type === 'switch' && (
           <DualOutputToggleSwitch
             label={$t('Dual Output')}
