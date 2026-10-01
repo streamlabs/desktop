@@ -19,6 +19,7 @@ export default function ManualCaptureSection({ title }: { title: string }) {
   const { HotkeysService, SettingsService, StreamingService } = Services;
   const [hotkey, setHotkey] = useState<IHotkey | null>(null);
   const hotkeyRef = useRef<IHotkey | null>(null);
+  const [bindingFocused, setBindingFocused] = useState(false);
 
   const v = useVuex(() => ({
     settingsValues: SettingsService.views.values,
@@ -55,10 +56,11 @@ export default function ManualCaptureSection({ title }: { title: string }) {
     });
   }, []);
 
-  // Hotkeys are unbound while the binding input is on screen, so pressing the current hotkey
-  // records it instead of triggering it
+  // Hotkeys are unbound only while the binding input is focused, so pressing the current hotkey
+  // records it instead of triggering it. This section lives on the main Highlighter page, so
+  // all other hotkeys must keep working the rest of the time.
   useEffect(() => {
-    if (!v.isStreaming) {
+    if (bindingFocused && !v.isStreaming) {
       HotkeysService.actions.unregisterAll();
 
       return () => {
@@ -70,7 +72,7 @@ export default function ManualCaptureSection({ title }: { title: string }) {
         }
       };
     }
-  }, [v.isStreaming]);
+  }, [bindingFocused, v.isStreaming]);
 
   function setReplayTime(time: number | string | null | undefined) {
     if (typeof time !== 'number' || time < MIN_REPLAY_TIME || time > MAX_REPLAY_TIME) return;
@@ -97,18 +99,23 @@ export default function ManualCaptureSection({ title }: { title: string }) {
             <div className={styles.setting}>
               <span>{$t('Set a hotkey to capture replaybuffer')}</span>
               {hotkey && (
-                <HotkeyBinding
-                  style={{ width: 160, margin: 0 }}
-                  showLabel={false}
-                  hotkey={hotkey}
-                  binding={hotkey.bindings[0] ?? null}
-                  onBind={binding => {
-                    const newHotkey = { ...hotkey };
-                    newHotkey.bindings.splice(0, 1, binding);
-                    setHotkey(newHotkey);
-                    hotkeyRef.current = newHotkey;
-                  }}
-                />
+                <div
+                  onFocus={() => setBindingFocused(true)}
+                  onBlur={() => setBindingFocused(false)}
+                >
+                  <HotkeyBinding
+                    style={{ width: 160, margin: 0 }}
+                    showLabel={false}
+                    hotkey={hotkey}
+                    binding={hotkey.bindings[0] ?? null}
+                    onBind={binding => {
+                      const newHotkey = { ...hotkey };
+                      newHotkey.bindings.splice(0, 1, binding);
+                      setHotkey(newHotkey);
+                      hotkeyRef.current = newHotkey;
+                    }}
+                  />
+                </div>
               )}
             </div>
             <div className={styles.setting}>

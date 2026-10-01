@@ -26,12 +26,12 @@ export default function ClipPreview(props: {
   }));
 
   const [scrubFrame, setScrubFrame] = useState<number>(0);
+
+  // The clip can be removed in the worker before the parent list re-syncs
+  if (!v.clip) return null;
+
   const clipThumbnail = v.clip.scrubSprite || '';
   const enabled = v.clip.deleted ? false : v.clip.enabled;
-
-  if (!v.clip) {
-    return <>deleted</>;
-  }
 
   const width = v.clip.display === 'vertical' ? SCRUB_WIDTH_VERTICAL : SCRUB_WIDTH;
 

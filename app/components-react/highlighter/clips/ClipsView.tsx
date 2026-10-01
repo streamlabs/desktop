@@ -8,7 +8,7 @@ import ClipPreview from 'components-react/highlighter/clips/ClipPreview';
 import { ReactSortable } from 'react-sortablejs';
 import Scrollable from 'components-react/shared/Scrollable';
 import { EditingControls } from './EditingControls';
-import { MIN_SELECTED_CLIPS_FOR_EDITOR, sortClipsByOrder, useOptimizedHover } from './utils';
+import { MIN_SELECTED_CLIPS_FOR_EDITOR, sortClipsByOrder } from './utils';
 import ClipsViewModal from './ClipsViewModal';
 import { useVuex } from 'components-react/hooks';
 import { Button } from 'antd';
@@ -50,9 +50,9 @@ export default function ClipsView({
     setClipsLoaded(true);
   }, []);
 
-  const getClips = useCallback(() => {
-    return HighlighterService.getClips(HighlighterService.views.clips);
-  }, []);
+  // Read from views instead of the synchronous getClips() call. Clips whose file is gone are
+  // removed by the worker during loadClips(), which re-syncs this list via clipsAmount.
+  const getClips = useCallback(() => getListedClips(HighlighterService.views.clips), []);
 
   useEffect(() => {
     setClipsLoaded(false);
@@ -106,8 +106,6 @@ export default function ClipsView({
     e.stopPropagation();
   }
 
-  const containerRef = useOptimizedHover();
-
   // The scroll content has no definite height, so percentage heights do not resolve inside it.
   // Measure the visible height instead and hand it to the intro and clips area as pixel values.
   const [viewportHeight, setViewportHeight] = useState(0);
@@ -145,6 +143,8 @@ export default function ClipsView({
       >
         {clips.map(({ id }) => {
           const clip = HighlighterService.views.clipsDictionary[id];
+          // Removed in the worker, the list catches up on the next clipsAmount change
+          if (!clip) return null;
           return (
             <div key={clip.path} data-clip-id={id} className={styles.clipItem}>
               <ClipPreview
@@ -167,7 +167,7 @@ export default function ClipsView({
   }
 
   return (
-    <div ref={containerRef} className={styles.clipsViewRoot}>
+    <div className={styles.clipsViewRoot}>
       <div ref={scrollHostRef} className={styles.pageScroll}>
         <Scrollable style={{ height: '100%' }}>
           {fillIntro ? (
@@ -219,13 +219,7 @@ export default function ClipsView({
         modal={modal}
         onClose={() => setModal(null)}
         deleteClip={clipIds =>
-          setClips(
-            sortClips(
-              HighlighterService.getClips(HighlighterService.views.clips).filter(
-                clip => !clipIds.includes(clip.path),
-              ),
-            ),
-          )
+          setClips(sortClips(getClips().filter(clip => !clipIds.includes(clip.path))))
         }
       />
     </div>
@@ -264,7 +258,7 @@ function AddClip({ addedClips }: { addedClips: () => void }) {
 
 function ClipsLoadingView() {
   const { HighlighterService } = Services;
-  const clips = useVuex(() => HighlighterService.getClips(HighlighterService.views.clips));
+  const clips = useVuex(() => getListedClips(HighlighterService.views.clips));
 
   return (
     <div className={styles.clipLoadingIndicator}>
@@ -274,6 +268,10 @@ function ClipsLoadingView() {
       </p>
     </div>
   );
+}
+
+function getListedClips(clips: TClip[]): TClip[] {
+  return clips.filter(clip => clip.path !== 'add');
 }
 
 function sortClips(clips: TClip[]): { id: string }[] {

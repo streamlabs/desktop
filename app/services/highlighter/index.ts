@@ -1031,13 +1031,17 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     let streamInfo: IStreamInfoForAiHighlighter;
     let streamStarted = false;
     let aiRecordingInProgress = false;
+    // Replay buffer clips saved during the current stream, loaded when the stream ends
+    let streamReplayClipPaths: string[] = [];
 
     this.streamingService.replayBufferFileWrite.subscribe(async clipPath => {
       this.addClips([{ path: clipPath }], 'ReplayBuffer');
+      if (streamStarted) streamReplayClipPaths.push(clipPath);
     });
 
     this.streamingService.streamingStatusChange.subscribe(async status => {
       if (status === EStreamingState.Live) {
+        streamReplayClipPaths = [];
         streamStarted = true; // console.log('live', this.streamingService.views.settings.platforms.twitch.title);
         const streamId = 'fromStreamRecording' + uuid();
 
@@ -1134,8 +1138,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           game: this.streamingService.views.game,
         });
 
-        // Load potential replaybuffer clips
-        await this.loadClips();
+        // Load only this stream's replay buffer clips, not the whole library
+        await this.loadClips(streamReplayClipPaths);
       }
     });
 
@@ -1339,28 +1343,37 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     }
   }
 
-  async loadClips() {
-    const clipsToLoad: TClip[] = this.getClips(this.views.clips);
+  /**
+   * @param paths - Only load these clips. Loads every clip when omitted.
+   */
+  async loadClips(paths?: string[]) {
+    let candidates = this.getClips(this.views.clips);
+    if (paths) candidates = candidates.filter(clip => paths.includes(clip.path));
     // this.resetRenderingClips();
     await this.ensureScrubDirectory();
 
-    for (const clip of clipsToLoad) {
+    const supportedExtensions = SUPPORTED_FILE_TYPES.map(e => `.${e}`);
+    const clipsToLoad: TClip[] = [];
+
+    for (const clip of candidates) {
       if (!fileExists(clip.path)) {
         this.removeClip(clip.path);
-        return;
+        continue;
       }
 
-      if (!SUPPORTED_FILE_TYPES.map(e => `.${e}`).includes(path.parse(clip.path).ext)) {
+      if (!supportedExtensions.includes(path.parse(clip.path).ext)) {
         this.removeClip(clip.path);
         this.SET_ERROR(
           $t(
             'One or more clips could not be imported because they were not recorded in a supported file format.',
           ),
         );
+        continue;
       }
 
       this.renderingClips[clip.path] =
         this.renderingClips[clip.path] ?? new RenderingClip(clip.path, clip.display);
+      clipsToLoad.push(clip);
     }
 
     //TODO M: tracking type not correct

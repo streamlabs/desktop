@@ -37,14 +37,14 @@ export default function Highlighter() {
   const [importModal, setImportModal] = useState<TImportModal>(null);
 
   useEffect(() => {
-    UsageStatisticsService.recordShown('HighlighterTab');
+    UsageStatisticsService.actions.recordShown('HighlighterTab');
   }, []);
 
   // A recording handed over from elsewhere (after a stream, or the recordings tab) opens the
   // import modal right away
   useEffect(() => {
     const recordingInfo = { ...HighlighterService.views.tempRecordingInfo };
-    HighlighterService.setTempRecordingInfo({});
+    HighlighterService.actions.setTempRecordingInfo({});
 
     if (recordingInfo.recordingPath && recordingInfo.source) {
       setImportModal({
