@@ -419,8 +419,17 @@ module.exports = async (basePath: string) => {
       return;
     }
 
+    // Requests for files not in the manifest (e.g. source maps fetched by DevTools)
+    // must fail the request rather than throw, or the uncaught error takes down
+    // the main process.
+    const localFile = localManifest[bundleName];
+    if (!localFile) {
+      cb({ error: -6 }); // net::ERR_FILE_NOT_FOUND
+      return;
+    }
+
     console.log(`Using local bundle for ${bundleName}`);
-    cb({ path: path.join(localBase, localManifest[bundleName]) });
+    cb({ path: path.join(localBase, localFile) });
   });
 
   // Use a local web server to serve source maps in development.

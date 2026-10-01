@@ -14,5 +14,6 @@
   "Import your scenes and sources from Twitch Studio.": "Importujte scény a zdroje ze služby Twitch Studio.",
   "Importing from Twitch Studio is an experimental feature under active development. Some source types are unable to be imported, and not all settings will be carried over.": "Import ze služby Twitch Studio je experimentální funkce, která se aktivně vyvíjí. Některé typy zdrojů nelze importovat a ne všechna nastavení se přenesou.",
   "Stream Shift Error: Twitch is not live": "Chyba funkce Stream Shift: Ve službě Twitch nelze vysílat živě",
-  "Importing Your Existing Settings From Twitch Studio": "Importing Your Existing Settings From Twitch Studio"
+  "Importing Your Existing Settings From Twitch Studio": "Importing Your Existing Settings From Twitch Studio",
+  "Enhanced broadcasting is not available for live output editing": "Enhanced broadcasting is not available for live output editing"
 }

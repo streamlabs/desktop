@@ -7,6 +7,7 @@
   "Set Stream Boss Health": "設定直播頭目生命值",
   "Goal": "目標",
   "Manage Battle": "管理戰爭",
+  "Boss Settings": "Boss Settings",
   "Starting Health": "開始生命值",
   "Fixed": "已修正",
   "The boss will spawn with the set amount of health everytime.": "頭目每次會以設定的生命值數量復活。",
@@ -31,5 +32,6 @@
   "Health Bar Background Color": "生命條背景顏色",
   "Font": "字型",
   "The boss will have additional health each time he is defeated. The amount is set below.": "頭目每次被擊敗後都會有額外的生命值。數量於下方設定。",
-  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "頭目的生命值會視致命一擊造成的傷害而定。超過的傷害數量乘以乘數就是頭目的新生命值。例如在剩下 100 點生命時造成 150 點傷害，乘數設定為 3，則會導致新頭目在復活時會有 150 點生命值。 \n在下方設定您的乘數。"
+  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "頭目的生命值會視致命一擊造成的傷害而定。超過的傷害數量乘以乘數就是頭目的新生命值。例如在剩下 100 點生命時造成 150 點傷害，乘數設定為 3，則會導致新頭目在復活時會有 150 點生命值。 \n在下方設定您的乘數。",
+  "Failed to reset Stream Boss, please try again.": "Failed to reset Stream Boss, please try again."
 }

@@ -168,7 +168,9 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
     // In order for the enhanced broadcasting setting value to persist in the go live window when switching between
     // single output and dual output modes, explicitly set enhanced broadcasting setting
     if (platform === 'twitch' && patch && patch.hasOwnProperty('isEnhancedBroadcasting')) {
-      Services.TwitchService.actions.setEnhancedBroadcasting((patch as any).isEnhancedBroadcasting);
+      Services.TwitchService.actions.setEnhancedBroadcastingState(
+        (patch as any).isEnhancedBroadcasting,
+      );
     }
 
     this.updateSettings(updated);

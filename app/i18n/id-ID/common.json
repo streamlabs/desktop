@@ -148,11 +148,12 @@
   "Dashboard Home": "Beranda Dasbor",
   "Alert Box Settings": "Pengaturan Kotak Peringatan",
   "Alerts and Widgets": "Peringatan dan Widget",
-  "AI": "AI",
+  "Vision": "Vision",
   "Between": "Between",
   "Upgrade": "Tingkatkan",
   "Edit Reactive Data": "Edit Reactive Data",
   "Reactive Data Editor": "Reactive Data Editor",
   "Destinations": "Destinations",
-  "Not enabled": "Not enabled"
+  "Not enabled": "Not enabled",
+  "Multichat": "Multichat"
 }
