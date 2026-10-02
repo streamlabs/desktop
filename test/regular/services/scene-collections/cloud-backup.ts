@@ -3,6 +3,7 @@ import { SceneBuilder } from '../../../helpers/scene-builder';
 import { getApiClient } from '../../../helpers/api-client';
 import { logIn, loginWithAuthInfo } from '../../../helpers/webdriver/user';
 import { SceneCollectionsService } from '../../../../app/services/api/external-api/scene-collections';
+import { sleep } from '../../../helpers/sleep';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -25,6 +26,15 @@ test('Scene-collections cloud-backup', async t => {
       Item2: image_source
   `;
   sceneBuilder.build(sketch);
+
+  // Safe sync only happens on app start, so the app must be restarted before checking for cloud backup
+  await stopApp(t, false);
+  await startApp(t, true);
+
+  // Wait for the cloud sync to complete
+  await sleep(3000);
+
+  t.true(sceneBuilder.isEqualTo(sketch), 'Scene collection should persist');
 
   // restart the app and delete the cache dir
   await stopApp(t, true);
