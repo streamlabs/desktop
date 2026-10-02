@@ -1,120 +1,123 @@
-import SettingsView from 'components-react/highlighter/SettingsView';
-import { useVuex } from 'components-react/hooks';
 import React, { useEffect, useState } from 'react';
+import cx from 'classnames';
+import { Alert, Modal } from 'antd';
+import { useVuex } from 'components-react/hooks';
+import { Services } from 'components-react/service-provider';
+import ClipsView from 'components-react/highlighter/clips/ClipsView';
+import ReplaySection from 'components-react/highlighter/ReplaySection';
+import ManualCaptureSection from 'components-react/highlighter/ManualCaptureSection';
+import { ImportStreamModal } from 'components-react/highlighter/ImportStream';
+import importStyles from 'components-react/highlighter/ImportStream.m.less';
 import {
-  EHighlighterView,
   IStreamInfoForAiHighlighter,
-  IViewState,
   TOpenedFrom,
 } from 'services/highlighter/models/highlighter.models';
-import { Services } from 'components-react/service-provider';
-import StreamView from 'components-react/highlighter/StreamView';
-import ClipsView from 'components-react/highlighter/ClipsView';
-import UpdateModal from 'components-react/highlighter/UpdateModal';
+import { EGame } from 'services/highlighter/models/ai-highlighter.models';
+import { $t } from 'services/i18n';
 
-export default function Highlighter(props: { params?: { view: string } }) {
+type TImportModal = {
+  path?: string;
+  game?: EGame;
+  streamInfo?: IStreamInfoForAiHighlighter;
+  openedFrom: TOpenedFrom;
+  showRecentRecordings?: boolean;
+} | null;
+
+export default function Highlighter() {
   const { HighlighterService, UsageStatisticsService } = Services;
-  const aiHighlighterFeatureEnabled = HighlighterService.aiHighlighterFeatureEnabled;
+  // Replay only exists on Windows
+  const showReplay = HighlighterService.aiHighlighterFeatureEnabled;
 
   const v = useVuex(() => ({
-    useAiHighlighter: HighlighterService.views.useAiHighlighter,
+    error: HighlighterService.views.error,
+    uploadInfo: HighlighterService.views.uploadInfo,
+    tempRecordingInfoPath: HighlighterService.views.tempRecordingInfo.recordingPath,
   }));
 
-  const clipsAmount = HighlighterService.views.clips.length;
-  const streamAmount = HighlighterService.views.highlightedStreams.length;
-
-  let initialViewState: IViewState;
-
-  if (props.params?.view) {
-    const view =
-      props.params?.view === 'settings' ? EHighlighterView.SETTINGS : EHighlighterView.STREAM;
-    initialViewState = { view };
-  } else if (streamAmount > 0 && clipsAmount > 0 && aiHighlighterFeatureEnabled) {
-    initialViewState = { view: EHighlighterView.STREAM };
-  } else if (clipsAmount > 0) {
-    initialViewState = { view: EHighlighterView.CLIPS, id: undefined };
-  } else {
-    initialViewState = { view: EHighlighterView.STREAM };
-  }
+  const [importModal, setImportModal] = useState<TImportModal>(null);
 
   useEffect(() => {
-    // check if ai highlighter is activated and we need to update it
-    async function shouldUpdate() {
-      if (!HighlighterService.aiHighlighterUpdater) return false;
-      const versionAvailable = await HighlighterService.aiHighlighterUpdater.isNewVersionAvailable();
-      return versionAvailable && aiHighlighterFeatureEnabled && v.useAiHighlighter;
-    }
-
-    shouldUpdate().then(shouldUpdate => {
-      if (shouldUpdate) HighlighterService.actions.startUpdater();
-    });
+    UsageStatisticsService.actions.recordShown('HighlighterTab');
   }, []);
 
-  const [viewState, setViewState] = useState<IViewState>(initialViewState);
-
+  // A recording handed over from elsewhere (after a stream, or the recordings tab) opens the
+  // import modal right away
   useEffect(() => {
-    UsageStatisticsService.recordShown('HighlighterTab', viewState.view);
-  }, [viewState]);
+    const recordingInfo = { ...HighlighterService.views.tempRecordingInfo };
+    HighlighterService.actions.setTempRecordingInfo({});
 
-  const updaterModal = <UpdateModal />;
-
-  switch (viewState.view) {
-    case EHighlighterView.STREAM:
-      return (
-        <>
-          {aiHighlighterFeatureEnabled && updaterModal}
-          <StreamView
-            emitSetView={data => {
-              setViewFromEmit(data);
-            }}
-          />
-        </>
-      );
-    case EHighlighterView.CLIPS:
-      return (
-        <>
-          {aiHighlighterFeatureEnabled && updaterModal}
-          <ClipsView
-            emitSetView={data => {
-              setViewFromEmit(data);
-            }}
-            props={{
-              id: viewState.id,
-              streamTitle: viewState.id
-                ? HighlighterService.views.highlightedStreamsDictionary[viewState.id]?.title
-                : '',
-            }}
-          />
-        </>
-      );
-    default:
-      return (
-        <>
-          {aiHighlighterFeatureEnabled && updaterModal}
-          <SettingsView
-            close={() => {
-              HighlighterService.actions.dismissTutorial();
-            }}
-            emitSetView={data => setViewFromEmit(data)}
-          />
-        </>
-      );
-  }
-
-  function setViewFromEmit(data: IViewState) {
-    if (data.view === EHighlighterView.CLIPS) {
-      setView({
-        view: data.view,
-        id: data.id,
-      });
-    } else {
-      setView({
-        view: data.view,
+    if (recordingInfo.recordingPath && recordingInfo.source) {
+      setImportModal({
+        path: recordingInfo.recordingPath,
+        streamInfo: recordingInfo.streamInfo,
+        openedFrom: recordingInfo.source,
       });
     }
+  }, [v.tempRecordingInfoPath]);
+
+  function closeImportModal() {
+    // Do not allow closing while upload operations are in progress
+    if (v.uploadInfo.some(u => u.uploading)) return;
+
+    setImportModal(null);
+
+    if (v.error) HighlighterService.actions.dismissError();
   }
 
-  function setView(view: IViewState) {
-    setViewState(view);
-  }
+  return (
+    <div
+      className={cx(importModal && importStyles.importModalRoot)}
+      // The page container is a flex row: without flex-grow the page shrinks to its content's
+      // width, which is zero once the Replay section is hidden (Mac)
+      style={{ position: 'relative', flex: 1, minWidth: 0, height: '100%' }}
+    >
+      <ClipsView fillIntro={showReplay}>
+        {showReplay && (
+          <ReplaySection
+            onImport={() =>
+              setImportModal({ openedFrom: 'manual-import', showRecentRecordings: true })
+            }
+          />
+        )}
+        <ManualCaptureSection
+          title={showReplay ? $t('Or capture clips manually') : $t('Capture clips manually')}
+        />
+      </ClipsView>
+
+      <Modal
+        getContainer={`.${importStyles.importModalRoot}`}
+        onCancel={() => {
+          if (importModal) {
+            UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+              type: 'DetectionModalCanceled',
+              openedFrom: importModal.openedFrom,
+              streamId: importModal.streamInfo?.id,
+            });
+          }
+
+          closeImportModal();
+        }}
+        footer={null}
+        width={'fit-content'}
+        closable={false}
+        visible={!!importModal}
+        destroyOnClose={true}
+        keyboard={false}
+        transitionName=""
+        maskTransitionName=""
+      >
+        {!!v.error && <Alert message={v.error} type="error" showIcon />}
+        {importModal && (
+          <ImportStreamModal
+            close={closeImportModal}
+            videoPath={importModal.path}
+            selectedGame={importModal.game}
+            streamInfo={importModal.streamInfo}
+            openedFrom={importModal.openedFrom}
+            showRecentRecordings={importModal.showRecentRecordings}
+          />
+        )}
+      </Modal>
+    </div>
+  );
 }

@@ -1,0 +1,98 @@
+import { useVuex } from 'components-react/hooks';
+import { Services } from 'components-react/service-provider';
+import React, { useEffect, useState } from 'react';
+import { TModalClipsView } from './ClipsView';
+import { TClip } from 'services/highlighter/models/highlighter.models';
+import styles from './ClipsView.m.less';
+import ClipTrimmer from 'components-react/highlighter/clips/ClipTrimmer';
+import { Modal, Alert } from 'antd';
+import ExportModal from 'components-react/highlighter/clips/Export/ExportModal';
+import PreviewModal from './PreviewModal';
+import RemoveModal from './RemoveModal';
+
+export default function ClipsViewModal({
+  modal,
+  onClose,
+  deleteClip,
+}: {
+  modal: { modal: TModalClipsView; inspectedPathId?: string } | null;
+  onClose: () => void;
+  deleteClip: (clipPath: string[]) => void;
+}) {
+  const { HighlighterService } = Services;
+  const v = useVuex(() => ({
+    exportInfo: HighlighterService.views.exportInfo,
+    uploadInfo: HighlighterService.views.uploadInfo,
+    error: HighlighterService.views.error,
+  }));
+  const [showModal, rawSetShowModal] = useState<TModalClipsView | null>(null);
+  const [modalWidth, setModalWidth] = useState('700px');
+  const [inspectedClip, setInspectedClip] = useState<TClip | null>(null);
+
+  useEffect(() => {
+    if (modal?.inspectedPathId) {
+      setInspectedClip(HighlighterService.views.clipsDictionary[modal.inspectedPathId]);
+    }
+    if (modal?.modal) {
+      setShowModal(modal.modal);
+    }
+  }, [modal]);
+
+  function setShowModal(modal: TModalClipsView | null) {
+    rawSetShowModal(modal);
+
+    if (modal) {
+      setModalWidth(
+        ({
+          trim: '60%',
+          preview: '700px',
+          export: 'fit-content',
+          remove: '280px',
+        } as Record<string, string>)[modal] ?? '700px',
+      );
+    }
+  }
+  function closeModal() {
+    // Do not allow closing export modal while export/upload operations are in progress
+    if (v.exportInfo.exporting) return;
+    if (v.uploadInfo.some(u => u.uploading)) return;
+
+    setInspectedClip(null);
+    setShowModal(null);
+    onClose();
+    if (v.error) HighlighterService.actions.dismissError();
+  }
+
+  return (
+    <Modal
+      getContainer={`.${styles.clipsViewRoot}`}
+      onCancel={closeModal}
+      footer={null}
+      width={modalWidth}
+      closable={false}
+      visible={!!showModal || !!v.error}
+      destroyOnClose={true}
+      keyboard={false}
+    >
+      {!!v.error && <Alert message={v.error} type="error" showIcon />}
+      {inspectedClip && showModal === 'trim' && <ClipTrimmer clip={inspectedClip} />}
+      {showModal === 'export' && <ExportModal close={closeModal} />}
+      {showModal === 'preview' && (
+        <PreviewModal
+          close={closeModal}
+          emitSetShowModal={modal => {
+            setShowModal(modal);
+          }}
+        />
+      )}
+      {inspectedClip && showModal === 'remove' && (
+        <RemoveModal
+          key={`remove-${inspectedClip.path}`}
+          close={closeModal}
+          clip={inspectedClip}
+          deleteClip={deleteClip}
+        />
+      )}
+    </Modal>
+  );
+}

@@ -1,19 +1,16 @@
 import { SwitchInput } from 'components-react/shared/inputs/SwitchInput';
-import React, { useEffect, useState, memo } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './AiHighlighterToggle.m.less';
 import { Services } from 'components-react/service-provider';
 import { useDebounce, useVuex } from 'components-react/hooks';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
-import { Alert, Button } from 'antd';
+import { Button } from 'antd';
 import { getConfigByGame, isGameSupported } from 'services/highlighter/models/game-config.models';
 import { $t } from 'services/i18n';
 import { DiscordLogo } from 'components-react/highlighter/HypeWrapper';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
 import { REPLAY_APP_NAME } from 'services/highlighter/constants';
-import { EAvailableFeatures } from 'services/incremental-rollout';
 import { promptAction } from 'components-react/modals';
-import InputWrapper from 'components-react/shared/inputs/InputWrapper';
-import Translate from 'components-react/shared/Translate';
 import { EDismissable } from 'services/dismissables';
 
 export default function AiHighlighterToggle({
@@ -24,15 +21,9 @@ export default function AiHighlighterToggle({
   isUpdateMode?: boolean;
 }) {
   //TODO M: Probably good way to integrate the highlighter in to GoLiveSettings
-  const {
-    HighlighterService,
-    StreamingService,
-    IncrementalRolloutService,
-    DismissablesService,
-  } = Services;
+  const { HighlighterService, StreamingService, DismissablesService } = Services;
   const {
     useHighlighter,
-    highlighterVersion,
     isVerticalRecording,
     isVerticalReplayBuffer,
     outputDisplay,
@@ -41,7 +32,6 @@ export default function AiHighlighterToggle({
   } = useVuex(() => {
     return {
       useHighlighter: HighlighterService.views.useAiHighlighter,
-      highlighterVersion: HighlighterService.views.highlighterVersion,
       isVerticalRecording: StreamingService.views.isVerticalRecording,
       isVerticalReplayBuffer: StreamingService.views.isVerticalReplayBuffer,
       outputDisplay: StreamingService.views.outputDisplay,
@@ -49,10 +39,6 @@ export default function AiHighlighterToggle({
       shouldShow: DismissablesService.views.shouldShow(EDismissable.HighlighterBanner),
     };
   });
-
-  const migrationEnabled = IncrementalRolloutService.views.featureIsEnabled(
-    EAvailableFeatures.highlighterMigration,
-  );
 
   const [gameIsSupported, setGameIsSupported] = useState(false);
   const [gameConfig, setGameConfig] = useState<any>(null);
@@ -76,8 +62,6 @@ export default function AiHighlighterToggle({
   }, []);
 
   async function checkRecorderStatus() {
-    if (!migrationEnabled) return;
-
     const running = await HighlighterService.actions.return.isStreamlabsRecorderRunning();
     setShowReplayRecordingAlert(running);
   }
@@ -203,31 +187,13 @@ export default function AiHighlighterToggle({
                     {$t('Get stream highlights!')}
                   </h3>
 
-                  {highlighterVersion !== '' || migrationEnabled ? (
-                    <SwitchInput
-                      name="replay"
-                      style={{ width: '80px', margin: 0, marginTop: '-2px' }}
-                      value={disableAIHighlighter ? false : useHighlighter}
-                      label=""
-                      onChange={toggleHighlighter}
-                    />
-                  ) : (
-                    <Button
-                      name="install-highlighter"
-                      style={{ width: 'fit-content', marginLeft: '18px' }}
-                      size="small"
-                      type="primary"
-                      onClick={() => {
-                        HighlighterService.actions.installAiHighlighter(
-                          false,
-                          'Go-live-flow',
-                          gameName,
-                        );
-                      }}
-                    >
-                      {$t('Install AI Highlighter')}
-                    </Button>
-                  )}
+                  <SwitchInput
+                    name="replay"
+                    style={{ width: '80px', margin: 0, marginTop: '-2px' }}
+                    value={disableAIHighlighter ? false : useHighlighter}
+                    label=""
+                    onChange={toggleHighlighter}
+                  />
                 </div>
                 <div onClick={() => setIsExpanded(!isExpanded)} style={{ cursor: 'pointer' }}>
                   {isExpanded ? (
@@ -360,7 +326,6 @@ export default function AiHighlighterToggle({
                               {gameConfig?.gameModes && `(${gameConfig?.gameModes})`}
                             </span>
                           </div>
-                          {/* <EducationCarousel game={game!} /> */}
                         </div>
                       )}
                       <img
@@ -392,45 +357,3 @@ export default function AiHighlighterToggle({
     </div>
   );
 }
-
-const AIHighlighterBanner = memo(
-  (p: { game: string | undefined; toggleHighlighter: () => void }) => {
-    const { HighlighterService } = Services;
-    const { useHighlighter } = useVuex(
-      () => ({
-        useHighlighter: HighlighterService.views.useAiHighlighter,
-      }),
-      false,
-    );
-
-    const installAiHighlighter = useDebounce(300, () => {
-      HighlighterService.actions.installAiHighlighter(false, 'Go-live-flow', p.game);
-    });
-
-    return (
-      <InputWrapper layout="vertical" nolabel className={styles.highlighterBannerWrapper}>
-        <div className={styles.highlighterBanner}>
-          <SwitchInput
-            value={useHighlighter}
-            label={$t('AI Highlighter')}
-            onChange={p.toggleHighlighter}
-            nolabel
-          />
-          <Alert
-            message={
-              <Translate
-                message={$t(
-                  'Automatically capture highlights of your game with <replay>Replay</replay>',
-                )}
-              >
-                <a slot="replay" onClick={installAiHighlighter}>
-                  <b>{'Replay'}</b>
-                </a>
-              </Translate>
-            }
-          />
-        </div>
-      </InputWrapper>
-    );
-  },
-);
