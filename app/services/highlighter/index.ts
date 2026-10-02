@@ -38,7 +38,7 @@ import { NavigationService } from 'services/navigation';
 import { SharedStorageService } from 'services/integrations/shared-storage';
 import moment from 'moment';
 import uuid from 'uuid';
-import { EMenuItemKey } from 'services/side-nav';
+import { ENavMenuKey } from 'services/nav-menu';
 import { AiHighlighterUpdater } from './ai-highlighter-updater';
 import { IDownloadProgress, downloadFile } from 'util/requests';
 import { IncrementalRolloutService } from 'app-services';
@@ -1281,7 +1281,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         {
           view: EHighlighterView.STREAM,
         },
-        EMenuItemKey.Highlighter,
+        ENavMenuKey.Highlighter,
       );
     });
   }
@@ -1612,7 +1612,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
               {
                 view: EHighlighterView.STREAM,
               },
-              EMenuItemKey.Highlighter,
+              ENavMenuKey.Highlighter,
             );
           }
         } catch (error: unknown) {

@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import { Services } from 'components-react/service-provider';
-import styles from './SideNav.m.less';
+import styles from './NavMenu.m.less';
 import MenuItem from 'components-react/shared/MenuItem';
 import { useVuex } from 'components-react/hooks';
 import cx from 'classnames';
-import { EMenuItemKey, ENavName } from 'services/side-nav';
+import { ENavMenuKey, ENavName } from 'services/nav-menu';
 import { $t } from 'services/i18n';
 
 interface IEditorTabs {
@@ -12,7 +12,7 @@ interface IEditorTabs {
 }
 
 export default function EditorTabs(p: IEditorTabs) {
-  const { NavigationService, SideNavService, LayoutService } = Services;
+  const { NavigationService, NavMenuService, LayoutService } = Services;
   const { type = 'root' } = p;
 
   const defaultTitle = $t('Editor');
@@ -27,17 +27,17 @@ export default function EditorTabs(p: IEditorTabs) {
     editorToggled,
   } = useVuex(() => ({
     currentMenuItem:
-      SideNavService.views.currentMenuItem === 'editor'
+      NavMenuService.views.currentMenuItem === 'editor'
         ? 'default'
-        : SideNavService.views.currentMenuItem,
-    setCurrentMenuItem: SideNavService.actions.setCurrentMenuItem,
+        : NavMenuService.views.currentMenuItem,
+    setCurrentMenuItem: NavMenuService.actions.setCurrentMenuItem,
     studioTabs: LayoutService.views.studioTabs,
-    compactView: SideNavService.views.compactView,
-    isOpen: SideNavService.views.isOpen,
-    showCustomEditor: SideNavService.views.showCustomEditor,
-    toggleSidebarSubmenu: SideNavService.actions.toggleSidebarSubmenu,
-    toggleMenuItem: SideNavService.actions.toggleMenuItem,
-    editorToggled: SideNavService.views.getMenuItemData(ENavName.TopNav, EMenuItemKey.Editor)
+    compactView: NavMenuService.views.compactView,
+    isOpen: NavMenuService.views.isOpen,
+    showCustomEditor: NavMenuService.views.showCustomEditor,
+    toggleSidebarSubmenu: NavMenuService.actions.toggleSidebarSubmenu,
+    toggleMenuItem: NavMenuService.actions.toggleMenuItem,
+    editorToggled: NavMenuService.views.getMenuItemData(ENavName.FeaturesNav, ENavMenuKey.Editor)
       ?.isActive,
   }));
 
@@ -52,7 +52,7 @@ export default function EditorTabs(p: IEditorTabs) {
       if (tabId !== 'default' && !showCustomEditor) {
         toggleSidebarSubmenu(true);
       } else if (tabId === 'default' && !editorToggled && isOpen) {
-        toggleMenuItem(ENavName.TopNav, EMenuItemKey.Editor, true);
+        toggleMenuItem(ENavName.FeaturesNav, ENavMenuKey.Editor, true);
       }
     }
   }
@@ -61,7 +61,7 @@ export default function EditorTabs(p: IEditorTabs) {
     return editorToggled ? studioTabs : studioTabs.filter(tab => tab.key !== 'default');
   }, [editorToggled, studioTabs]);
 
-  // if closed, show editor tabs in sidenav when tab is toggled on
+  // if closed, show editor tabs in nav menu when tab is toggled on
   // show all editor tabs in submenu
   // don't translate tab title because the user has set it
   return type === 'root' ? (
@@ -71,7 +71,7 @@ export default function EditorTabs(p: IEditorTabs) {
           key={tab.key}
           className={cx(
             !isOpen && styles.closed,
-            (currentMenuItem === EMenuItemKey.Editor ||
+            (currentMenuItem === ENavMenuKey.Editor ||
               currentMenuItem === tab.key ||
               currentMenuItem === `sub-${tab.key}`) &&
               styles.active,
