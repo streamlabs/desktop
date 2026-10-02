@@ -19,6 +19,7 @@ export enum ENavMenuKey {
   Highlighter = 'highlighter',
   Cloudbot = 'cloudbot',
   Vision = 'vision',
+  RecordingHistory = 'recording-history',
   Ultra = 'ultra',
 }
 
@@ -57,10 +58,17 @@ export interface INavMenuItemMetadata {
   target?: TNavMenuTarget;
   trackingTarget?: string;
   /**
-   * Whether the menu item is active due to current *system* configuration
-   * (e.g. Windows vs Mac, logged in vs not, etc.). Defaults to true.
+   * Whether the menu item is available at all on this system (e.g. OS support).
+   * Unavailable items are hidden from the nav *and* from the settings toggles,
+   * cannot be enabled by the user, and are pruned from the persisted menu.
+   * Defaults to true.
    */
-  isActive?: TNavMenuConfigValue<boolean, { vision: VisionService; user: UserService }>;
+  isAvailable?: TNavMenuConfigValue<boolean, { vision: VisionService }>;
+  /**
+   * Default nav visibility, used only when the user has made no explicit choice
+   * (persisted `isVisible` is undefined). Defaults to true.
+   */
+  isVisibleByDefault?: TNavMenuConfigValue<boolean, { user: UserService }>;
 }
 
 type TExtractCtx<V> = V extends (ctx: infer C) => any ? C : never;
@@ -75,7 +83,11 @@ export interface INavMenuItemPersistedData {
   key: ENavMenuKey;
   /**
    * Whether the menu item is visible due to current *user* configuration
-   * (e.g. enabled vs disabled in settings). Defaults to true.
+   * (e.g. enabled vs disabled in settings).
+   *
+   * Tri-state: `undefined` means the user hasn't made an explicit choice yet,
+   * in which case the item's `isActive` default applies. `true`/`false` is an
+   * explicit choice and always wins.
    */
   isVisible?: boolean;
 }
@@ -85,7 +97,7 @@ export interface INavMenuItemPersistedData {
  */
 export type TNavMenuItem = Prettify<
   Omit<INavMenuItemPersistedData, 'isVisible'> &
-    Omit<INavMenuItemMetadata, 'isActive' | 'badge'> & { badge?: string }
+    Omit<INavMenuItemMetadata, 'isAvailable' | 'isVisibleByDefault' | 'badge'> & { badge?: string }
 >;
 
 export const NavMenuItemData = (): Record<ENavMenuKey, INavMenuItemMetadata> => ({
@@ -94,7 +106,7 @@ export const NavMenuItemData = (): Record<ENavMenuKey, INavMenuItemMetadata> => 
     icon: 'icon-ai',
     target: 'VisionLanding',
     trackingTarget: 'vision',
-    isActive: ({ vision }) => vision.isSupportedForOs(),
+    isAvailable: ({ vision }) => vision.isSupportedForOs(),
   },
   [ENavMenuKey.AppStore]: {
     title: $t('App Store'),
@@ -140,12 +152,20 @@ export const NavMenuItemData = (): Record<ENavMenuKey, INavMenuItemMetadata> => 
     type: 'overlays',
     trackingTarget: 'themes',
   },
+  [ENavMenuKey.RecordingHistory]: {
+    title: $t('Recordings'),
+    icon: 'icon-play-round',
+    target: 'RecordingHistory',
+    trackingTarget: 'recording-history',
+    // Hidden until the user records something or turns on recording-only mode.
+    isVisibleByDefault: false,
+  },
   [ENavMenuKey.Ultra]: {
     title: $t('Ultra'),
     icon: 'icon-ultra',
     target: 'Ultra',
     trackingTarget: 'ultra',
-    isActive: ({ user }) => !user.views.isPrime,
+    isVisibleByDefault: ({ user }) => !user.views.isPrime,
   },
 });
 
@@ -157,13 +177,16 @@ function genNavMenu(
   const menu: INavMenuItemPersistedData[] = [];
   keys.forEach(key => {
     data[key] = Object.freeze(cloneDeep(navMenuItemData[key]));
-    menu.push({ key, isVisible: true });
+    // isVisible starts unset (tri-state) so an item's `isVisibleByDefault`
+    // applies until the user makes an explicit choice.
+    menu.push({ key });
   });
   return { menu, data };
 }
 
 /** Logged-out nav items — navigable, can be active. */
-export const genLoggedOutNavMenu = () => genNavMenu(ENavMenuKey.Editor, ENavMenuKey.Ultra);
+export const genLoggedOutNavMenu = () =>
+  genNavMenu(ENavMenuKey.Editor, ENavMenuKey.RecordingHistory, ENavMenuKey.Ultra);
 
 /** Main nav items — navigable, can be active. */
 export const genFeaturesNavMenu = () =>
@@ -175,5 +198,6 @@ export const genFeaturesNavMenu = () =>
     ENavMenuKey.Highlighter,
     ENavMenuKey.Cloudbot,
     ENavMenuKey.Vision,
+    ENavMenuKey.RecordingHistory,
     ENavMenuKey.Ultra,
   );
