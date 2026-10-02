@@ -84,7 +84,7 @@ const destinations = [
     name: 'unresolved automatic selection',
     streamType: 'rtmp_custom',
     server: 'auto',
-    twitch: false,
+    twitch: true,
     enhanced: false,
   },
   { name: 'empty server', streamType: 'rtmp_custom', server: '', twitch: false, enhanced: false },

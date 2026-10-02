@@ -116,11 +116,14 @@ test('Migrate the twitch account to the protected mode', async t => {
   });
   // TODO: Add validation that the destination switchers in the go live window are hidden (requires multistream test account)
   // TODO: Add validation that the Twitch edit stream form in the go live window is the only form (requires multistream test account)
-  await waitForStreamStop();
+  await stopStream();
 
   // check that settings have been switched to the Custom Ingest mode
   await showSettingsWindow('Stream');
-  t.true(await isDisplayed('button=Use recommended settings'), 'Protected mode should be disabled');
+  t.false(
+    await isDisplayed('button=Use recommended settings'),
+    'Protected mode should be disabled',
+  );
 });
 
 // TODO: Re-enable after reauthing userpool

@@ -43,25 +43,40 @@ test('Populates stream settings after go live', withUser('twitch'), async t => {
   );
   await stopStream();
 
-  // Validate that the stream key persists when switching types and back to recommended settings
   await showSettingsWindow('Stream', async () => {
+    // Validate that the stream key resets when switching from Streaming Services to Custom Streaming Server
     await fillForm({ streamType: 'Streaming Services' });
     await waitForDisplayed('label=Service');
     const fields2 = (await readFields()) as Record<string, string>;
-    t.is(fields2.key, key, 'Stream key should persist when switching types');
+    t.is(
+      fields2.key,
+      '',
+      'Stream key should reset when switching from Streaming Services to Custom Streaming Server',
+    );
+    await fillForm({ key });
 
-    // Switch back to Custom Streaming Server type and validate that the stream key is still present
+    // Validate that the stream key persists when switching from Streaming Services to Custom Streaming Server
     await fillForm({ streamType: 'Custom Streaming Server' });
     await waitForDisplayed('label=URL');
     const fields3 = (await readFields()) as Record<string, string>;
     t.is(
       fields3.key,
       key,
-      'Stream key should persist when switching back to Custom Streaming Server type',
+      'Stream key should persist when switching from Streaming Services to Custom Streaming Server',
     );
+
+    // Can switch back to recommended settings, which will restore protected mode
+    await clickButton('Use recommended settings');
+    await waitForDisplayed('a=Stream to custom ingest', {
+      timeout: 5000,
+      timeoutMsg: 'Switched back to protected mode',
+    });
 
     await clickButton('Close');
   });
+
+  await goLive();
+  await stopStream();
 
   // TODO: Validate non-Twitch target
   // await showSettingsWindow('Stream', async () => {
@@ -73,21 +88,6 @@ test('Populates stream settings after go live', withUser('twitch'), async t => {
   // await clickGoLive();
   // t.false(await chatIsVisible(), 'Chat should be collapsed when going live in unprotected mode ');
   // await stopStream();
-
-  // Can switch back to protected mode
-  await showSettingsWindow('Stream', async () => {
-    // Can switch back to recommended settings
-    await clickButton('Use recommended settings');
-    await waitForDisplayed('a=Stream to custom ingest', {
-      timeout: 5000,
-      timeoutMsg: 'Recommended settings should restore protected mode',
-    });
-
-    await clickButton('Close');
-  });
-
-  await goLive();
-  await stopStream();
 });
 
 test('Populates stream key after go live', async t => {

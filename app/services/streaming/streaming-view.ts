@@ -188,7 +188,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       !this.protectedModeEnabled &&
       this.userView.isLoggedIn &&
-      this.isPrimaryPlatform('twitch') &&
+      this.isPlatformLinked('twitch') &&
       isTwitchStreamDestination(this.streamSettingsView.settings)
     );
   }
@@ -1165,9 +1165,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get showFeatureToggleCards() {
-    if (!this.incrementalRolloutView.featureIsEnabled(EAvailableFeatures.liveOutputEditing)) {
-      return false;
-    }
-    return !this.isMidStreamMode;
+    return this.protectedModeEnabled && !this.isMidStreamMode;
   }
 }

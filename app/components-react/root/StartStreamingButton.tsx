@@ -203,6 +203,11 @@ function StartStreamingButton(p: { disabled?: boolean }) {
 
     if (!primaryPlatform) return false;
 
+    // In unprotected mode, only a Twitch ingest url can show the Go Live window. This is for legacy reasons.
+    if (!StreamSettingsService.state.protectedModeEnabled) {
+      return isTwitchUnprotectedStream && updateStreamInfoOnLive;
+    }
+
     if (streamShiftStatus === 'pending') {
       return true;
     }
@@ -219,21 +224,10 @@ function StartStreamingButton(p: { disabled?: boolean }) {
       return true;
     }
 
-    // For Twitch, there are two cases to check for the ability to show the Go Live window:
-    // 1. In protected mode: when Twitch is the primary platform
-    // 2. In unprotected mode: when the ingest url is for Twitch. The unprotected mode behavior for Twitch is for legacy reasons
-    if (
-      (StreamSettingsService.state.protectedModeEnabled && primaryPlatform === 'twitch') ||
-      isTwitchUnprotectedStream
-    ) {
-      // For Twitch, we can show the Go Live window even with protected mode off
-      // This is mainly for legacy reasons.
+    if (primaryPlatform === 'twitch') {
       return isMultiplatformMode || updateStreamInfoOnLive;
     } else {
-      return (
-        StreamSettingsService.state.protectedModeEnabled &&
-        StreamSettingsService.isSafeToModifyStreamKey()
-      );
+      return StreamSettingsService.isSafeToModifyStreamKey();
     }
   }, [
     primaryPlatform,
