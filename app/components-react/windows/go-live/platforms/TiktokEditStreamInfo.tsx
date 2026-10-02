@@ -119,6 +119,13 @@ const TikTokStreamKeyForm = memo((p: IPlatformComponentParams<'tiktok'>) => {
     p.onChange({ ...p.value, ...updatedSettings }),
   );
 
+  // Approved users go live via API, which generates credentials automatically,
+  // but are also able to enter in a url and stream key manually. Not-approved
+  // users must use this form to provide the url and key. In both cases, the
+  // server url and stream key fields are required to go live.
+  const isRequired =
+    Services.TikTokService.scope !== 'approved' || p.value.activeTab === 'stream-key';
+
   return (
     <div data-name="tiktokStreamForm">
       <Translate
@@ -139,7 +146,7 @@ const TikTokStreamKeyForm = memo((p: IPlatformComponentParams<'tiktok'>) => {
             <i className="icon-information" style={{ marginLeft: '5px' }} />
           </Tooltip>
         }
-        required
+        required={isRequired}
         {...bind.serverUrl}
         layout="horizontal"
         size="large"
@@ -153,7 +160,7 @@ const TikTokStreamKeyForm = memo((p: IPlatformComponentParams<'tiktok'>) => {
             <i className="icon-information" style={{ marginLeft: '5px' }} />
           </Tooltip>
         }
-        required
+        required={isRequired}
         {...bind.streamKey}
         layout="horizontal"
         size="large"
@@ -236,12 +243,17 @@ function TikTokButtons(p: { denied: boolean }) {
 }
 
 const TikTokRequired = memo((p: IPlatformComponentParams<'tiktok'>) => {
+  function setActiveTab(activeTab: 'live-access' | 'stream-key') {
+    p.onChange({ ...p.value, activeTab });
+  }
+
   return (
     <Tabs
       type="card"
       moreIcon={null}
       tabBarGutter={0}
       subType="filled"
+      onChange={setActiveTab}
       tabs={[
         {
           label: (
