@@ -340,9 +340,10 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     this.contexts[display] = VideoFactory.create();
 
     try {
+      // migrateSettings() has already applied these settings to the OBS context; applying
+      // them a second time resets the video pipeline again for no change (~130ms per display)
       this.migrateSettings(display);
 
-      this.contexts[display].video = this.state[display];
       this.contexts[display].legacySettings = this.state[display];
       Video.video = this.state.horizontal;
       Video.legacySettings = this.state.horizontal;
