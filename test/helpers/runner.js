@@ -12,10 +12,10 @@ const https = require('https');
 const rimraf = require('rimraf');
 const fetch = require('node-fetch');
 
-// The timings GET at startup and the analytics POST after the run are 20+ minutes apart. Node's
-// default agent keeps sockets alive, so the POST would reuse one the server has already closed,
-// which writes an ECONNABORTED). Open a fresh connection per request instead.
-// TMP: Test if opening a fresh connection per request resolves the ECONNABORTED issue.
+// The timings GET at startup and the analytics POST after the run are 20+ minutes apart.
+// Node 22.18.0 is currently pinned for the workflow, which means the startup GET socket cannot
+// be reused after 20+ minutes. Each test suite consistently takes > 20 minutes. This meant the
+// POST request to attempt to use a closed socket and would fail with an ECONNABORTED error.
 const utilsServerAgent = new https.Agent({ keepAlive: false });
 
 const failedTestsFile = 'test-dist/failed-tests.json';
@@ -160,15 +160,11 @@ async function requestUtilityServer(path, method = 'get', body = null) {
   };
   if (body) requestPayload.body = JSON.stringify(body);
 
-  // TMP: Test if opening a fresh connection per request resolves the ECONNABORTED issue.
-  // This is to confirm that the second utility-server call was being sent over a connection that already died,
-  // and whether this is the cause of the ECONNABORTED issue.
+  // Attempt to send the request to the utility server via the old socket, retrying once on network failure.
   let response;
-  // const response = await fetch(`${utilsServerUrl}/${path}`, requestPayload);
   try {
     response = await fetch(`${utilsServerUrl}/${path}`, requestPayload);
   } catch (e) {
-    // retry once on a network failure; an HTTP error status is handled below, not retried
     console.error(`request to ${path} failed, retrying once`, e);
     response = await fetch(`${utilsServerUrl}/${path}`, requestPayload);
   }
