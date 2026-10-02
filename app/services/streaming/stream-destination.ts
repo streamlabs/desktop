@@ -15,6 +15,7 @@ export function isCommonTwitchService(destination: IStreamDestination): boolean 
 export function isTwitchStreamDestination(destination: IStreamDestination): boolean {
   if (destination.streamType === 'rtmp_common') return isCommonTwitchService(destination);
   if (destination.streamType !== 'rtmp_custom' || !destination.server) return false;
+  if (destination.server.trim().toLowerCase() === 'auto') return true;
 
   try {
     // Electron's browser URL parser treats RTMP URLs as opaque and has no hostname.
