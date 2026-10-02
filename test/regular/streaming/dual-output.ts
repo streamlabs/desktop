@@ -232,11 +232,12 @@ test(
 
     // Studio Mode
     await focusMain();
-    await (await app.client.$('.side-nav .icon-studio-mode-3')).click();
+    await (await app.client.$('.nav-menu .icon-studio-mode-3')).click();
     t.true(
-      await isDisplayed('div=Cannot toggle Studio Mode in Dual Output Mode.'),
+      await isDisplayed('span=Dual Output Enabled'),
       'Cannot toggle Studio Mode in Dual Output Mode.',
     );
+    await clickWhenDisplayed('.ant-modal-close');
 
     // Selective Recording
     await (await app.client.$('.icon-smart-record')).click();

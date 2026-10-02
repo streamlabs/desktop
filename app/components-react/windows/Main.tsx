@@ -8,7 +8,7 @@ import { useDebounce, useVuex } from 'components-react/hooks';
 import * as appPages from 'components-react/pages';
 import TitleBar from 'components-react/shared/TitleBar';
 import { Services } from 'components-react/service-provider';
-import SideNav from 'components-react/sidebar/SideNav';
+import NavMenu from 'components-react/nav-menu/NavMenu';
 import LiveDock from 'components-react/root/LiveDock';
 import StudioFooter from 'components-react/root/StudioFooter';
 import Loader from 'components-react/pages/Loader';
@@ -280,6 +280,8 @@ export default function Main() {
       onDrop={(ev: React.DragEvent) => onDropHandler(ev)}
     >
       <TitleBar windowId="main" className={cx({ [styles.titlebarError]: errorAlert })} />
+      {/* TODO @onboarding: Remove conditional check once new onboarding is live. */}
+      {page !== 'Onboarding' && !showLoadingSpinner && <NavMenu />}
       <div
         className={cx(styles.mainContents, {
           [styles.mainContentsRight]: renderDock && leftDock && hasLiveDock,
@@ -287,11 +289,6 @@ export default function Main() {
           [styles.mainContentsOnboarding]: page === 'Onboarding',
         })}
       >
-        {page !== 'Onboarding' && !showLoadingSpinner && (
-          <div className={styles.sideNavContainer}>
-            <SideNav />
-          </div>
-        )}
         {renderDock && leftDock && (
           <LiveDockContainer
             max={maxDockWidth}
