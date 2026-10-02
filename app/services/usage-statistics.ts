@@ -84,6 +84,7 @@ export type TUltraRefl =
   | 'slobs-live-output-editing'
   | 'slobs-automations'
   | 'slobs-support-chat'
+  | 'slobs-nav-menu'
   | string;
 
 interface IAnalyticsEvent {
