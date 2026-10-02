@@ -27,8 +27,8 @@ test('Highlighter save and export', async t => {
   const recordingDir = await setTemporaryRecordingPath(false);
 
   await showPage('Highlighter');
-  await clickButton('Show clips');
-  await isDisplayed('div=No clips found');
+  await clickButton('Settings');
+  await clickButton('All Clips');
 
   await prepareToGoLive();
   await tryToGoLive({
