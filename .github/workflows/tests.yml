@@ -245,6 +245,13 @@ jobs:
           BROWSER_SOURCE_HARDWARE_ACCELERATION: 'OFF'
           SLOBS_TEST_STREAM_KEY: ${{ secrets.SLOBS_TEST_STREAM_KEY }}
           SLOBS_TEST_RUN_CHUNK: '${{ matrix.chunk }}/4'
+          # Variables for CI analytics
+          BUILD_BUILDID: ${{ github.run_id }}
+          SYSTEM_JOBID: '${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.chunk }}'
+          SYSTEM_JOBNAME: 'Job${{ matrix.chunk }}'
+          BUILD_DEFINITIONNAME: 'streamlabs.desktop'
+          BUILD_REASON: ${{ github.event_name == 'pull_request' && 'PullRequest' || github.event_name == 'push' && 'IndividualCI' || 'Manual' }}
+          BUILD_SOURCEBRANCH: ${{ github.ref }}
 
   es-lint-strict-nulls:
     name: 'Check ESLint and Strict Nulls Regression'
