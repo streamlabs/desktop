@@ -30,6 +30,11 @@ interface IScenario {
     stages: Array<Array<string | IScenarioSignal>>;
   };
   replaceHandlerWithQueuedSignals?: boolean;
+  /**
+   * Twitch dual streaming with a horizontal display that streams through its own non-enhanced
+   * instance, already stopped, and retained because a recording is still running on it.
+   */
+  retainedNonEnhancedDisplay?: boolean;
 }
 
 interface ISnapshot {
@@ -292,6 +297,26 @@ test('A retained context that starts again is counted once and uncounted on clea
   t.deepEqual(stopped.outputErrors, []);
 });
 
+test('Ending a Twitch dual stream uncounts a display retained for recording', async t => {
+  const { snapshots, error } = await runScenario(t, {
+    setup: 'enhancedBroadcasting',
+    context: 'enhancedBroadcasting',
+    retainedNonEnhancedDisplay: true,
+    stages: [['stop'], ['deactivate']],
+  });
+  t.falsy(error);
+  const [pending, stopped] = snapshots;
+  t.is(pending.numInstances, 2, 'the enhanced instance and the display instance were counted');
+  t.true(stopped.destroyed.includes('enhancedBroadcasting/streaming'));
+  t.false(
+    stopped.destroyed.includes('horizontal/streaming'),
+    'the recording keeps the display streaming wrapper alive',
+  );
+  t.is(stopped.recording, 'recording');
+  t.is(stopped.numInstances, 0, 'the stream has ended, so no instance is counted');
+  t.deepEqual(stopped.countedContexts, []);
+});
+
 test('Queued callbacks from the same streaming instance cannot affect its replacement handler', async t => {
   const { snapshots, error } = await runScenario(t, {
     setup: 'dual',
@@ -354,8 +379,11 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
         recording: 'offline',
         replayBuffer: 'offline',
       });
+      const nonEnhancedDisplay = enhanced && !!input.retainedNonEnhancedDisplay;
       const contexts = {
-        horizontal: createContext(enhanced ? null : createOutput('horizontal')),
+        horizontal: createContext(
+          enhanced && !nonEnhancedDisplay ? null : createOutput('horizontal'),
+        ),
         vertical: createContext(input.setup === 'dual' ? createOutput('vertical') : null),
         enhancedBroadcasting: createContext(
           enhanced ? { ...createOutput('enhancedBroadcasting'), additionalVideo: {} } : null,
@@ -386,17 +414,19 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
         },
         isUpdatingHorizontalStream: input.updatingDisplay === 'horizontal',
         isUpdatingVerticalStream: input.updatingDisplay === 'vertical',
-        numInstances: input.setup === 'dual' ? 2 : 1,
         countedStreamingContexts: new Set(
           Object.keys(contexts).filter(name => (contexts as any)[name].streaming),
         ),
+        numInstances: Object.keys(contexts).filter(name => (contexts as any)[name].streaming)
+          .length,
         outputSettingsService: { getSettings: () => ({ mode: 'Simple' }) },
         highlighterService: { shouldStartHighlighterOutputs: !!input.highlighter },
         streamingStatusChange: { next: (status: string) => published.push(status) },
         SET_STREAMING_STATUS(status: string, context: 'horizontal' | 'vertical') {
           fixture.state.status[context].streaming = status;
         },
-        displayNeedsNonEnhancedBroadcastingInstance: () => !enhanced,
+        displayNeedsNonEnhancedBroadcastingInstance: (display: string) =>
+          !enhanced || (nonEnhancedDisplay && display === 'horizontal'),
         handleEnhancedBroadcastingResolutionChangeSignal: () => false,
         sendReconnectingNotification: (): void => undefined,
         clearReconnectingNotification: (): void => undefined,
@@ -445,6 +475,13 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
       if (input.highlighter) {
         fixture.state.status.horizontal.recording = 'recording';
         fixture.state.status.horizontal.replayBuffer = 'running';
+      }
+      if (nonEnhancedDisplay) {
+        // The display's own instance already delivered its terminal Stop; only the recording
+        // keeps its streaming wrapper alive through the Twitch dual-stream teardown.
+        fixture.state.status.horizontal.streaming = 'offline';
+        fixture.state.status.horizontal.recording = 'recording';
+        contexts.horizontal.recording = {};
       }
       if (input.retainedRestart) {
         fixture.state.status.horizontal.recording = 'recording';

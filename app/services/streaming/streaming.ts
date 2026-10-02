@@ -3584,6 +3584,13 @@ export class StreamingService
         await this.handleDestroyOutputContexts('enhancedBroadcasting');
         await this.handleDestroyOutputContexts('horizontal');
         await this.handleDestroyOutputContexts('vertical');
+        // The whole stream has ended, so nothing is streaming: zero the count the same way
+        // `handleCleanupStreamingInstances` does for the other stop paths. A display whose
+        // streaming wrapper is retained for a recording or replay buffer is not destroyed
+        // above, so it would otherwise stay counted and inflate the next stream's bitrate
+        // denominator. Its next `Start` counts it again.
+        this.numInstances = 0;
+        this.countedStreamingContexts.clear();
         return;
       }
 
