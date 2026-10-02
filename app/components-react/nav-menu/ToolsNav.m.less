@@ -102,11 +102,8 @@
     display: flex;
     align-items: center;
 
-    // Remove the labels only on smaller screens
-    @media (max-width: 1400px) {
-      & > span {
-        display: none;
-      }
+    :global([data-nav-collapse~='toggle-labels']) & > span {
+      display: none;
     }
   }
 }
