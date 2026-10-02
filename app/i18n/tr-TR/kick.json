@@ -1,5 +1,4 @@
 {
-  "Edit your stream title on Kick after going live.": "Canlı yayına geçtikten sonra Kick'te yayın başlığınızı düzenleyin.",
   "Kick Category": "Kick Kategorisi",
   "Failed to update Kick account. Please unlink and reconnect your Kick account.": "Kick hesabı güncellenemedi. Lütfen Kick hesabınızın bağlantısını kaldırın ve yeniden bağlayın.",
   "Failed to start Kick stream. Please check permissions with Kick and try again": "Kick yayını başlatılamadı. Lütfen Kick izinlerini kontrol edin ve tekrar deneyin",
@@ -11,5 +10,7 @@
   "Click on the \"eye\" icon to see your stream key": "Yayın anahtarınızı görmek için \"göz\" simgesine tıklayın",
   "Put in 2FA": "2FA'ya yerleştirin",
   "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "2FA'dan sonra, yayın anahtarı oluşturulmuştur ve bu kanalda Streamlabs Desktop için kullanılabilecektir. Artık Kick'te canlı yayına geçebilirsiniz.",
-  "Stream Shift Error: Kick is not live": "Stream Shift Hatası: Kick canlı değil"
+  "Stream Shift Error: Kick is not live": "Stream Shift Hatası: Kick canlı değil",
+  "Failed to start stream on Kick.": "Failed to start stream on Kick.",
+  "Permissions to generate stream key for Kick are missing. In order to go live on Kick, you must first generate a stream key on Kick to be available for Streamlabs Desktop. Please follow these steps:": "Permissions to generate stream key for Kick are missing. In order to go live on Kick, you must first generate a stream key on Kick to be available for Streamlabs Desktop. Please follow these steps:"
 }

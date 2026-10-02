@@ -1,5 +1,5 @@
 {
-  "Horizontal canvas": "Canvas orizzontale",
-  "Vertical canvas": "Canvas verticale",
+  "Toggle horizontal display": "Toggle horizontal display",
+  "Toggle vertical display": "Toggle vertical display",
   "Error stopping stream: default streams do not exist.": "Errore durante l'arresto dello stream: gli stream predefiniti non esistono."
 }

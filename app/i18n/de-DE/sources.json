@@ -53,11 +53,9 @@
   "Display your channel's most recent events on stream.": "Zeige die neuesten Events deines Channels im Stream an.",
   "Redemptions": "Einlösungen",
   "Tip Goal": "Spendenziel",
-  "Set a goal for your viewers to help you reach.": "Setzen Sie ein Ziel, zu dem Ihre Zuschauer beitragen können.",
   "Set a subscriber goal for your viewers to help you reach.": "Lege ein Abonnentenziel für deine Viewer fest, das du mit ihrer Unterstützung erreichen möchtest.",
   "Set a bit goal for your viewers to help you reach.": "Lege ein Bit-Ziel für deine Viewer fest, das du mit ihrer Unterstützung erreichen möchtest.",
   "Set a follower goal for your viewers to help you reach.": "Lege ein Follower-Ziel für deine Viewer fest, das du mit ihrer Unterstützung erreichen möchtest.",
-  "Set a stars goal for your viewers to help you reach.": "Lege ein Sterne-Ziel für deine Viewer fest, das du mit ihrer Unterstützung erreichen möchtest.",
   "Set a charity donation goal for your viewers to help you reach.": "Lege ein Spendenziel für deine Viewer fest, das ihr gemeinsam erreichen könnt.",
   "Set a super chat goal for your viewers to help you reach.": "Lege ein Super Chat-Ziel für deine Viewer fest, das du mit ihrer Unterstützung erreichen möchtest.",
   "Facebook Supporters": "Facebook-Unterstützer",
@@ -433,10 +431,11 @@
   "Your Microphone is unmuted but has no signal": "Dein Mikrofon ist nicht stummgeschaltet, aber es wird kein Signal empfangen",
   "Victory & Defeat": "Sieg und Niederlage",
   "Dynamic game animation": "Dynamische Spielanimation",
-  "Dynamic real time animation based on your game events, powered by Streamlabs AI. Install Reactive Overlays from our Library to see what it's capable of!": "Dynamische Echtzeit-Animation, die auf deinen Spielereignissen basiert und von Streamlabs AI unterstützt wird. Installiere reaktive Overlays aus unserer Bibliothek, um zu sehen, was alles möglich ist!",
+  "Dynamic real-time animation based on your game events, powered by Streamlabs Vision. Install Reactive Overlays from our Library to see what it's capable of!": "Dynamic real-time animation based on your game events, powered by Streamlabs Vision. Install Reactive Overlays from our Library to see what it's capable of!",
   "Kills & Eliminations": "Kills & Eliminierungen",
   "Health changes": "Gesundheitliche Veränderungen",
   "Search...": "Suche...",
   "Virtual Cam": "Virtuelle Kamera",
-  "Virtual Cam Error": "Fehler bei der virtuellen Kamera"
+  "Virtual Cam Error": "Fehler bei der virtuellen Kamera",
+  "This widget is no longer supported and can no longer be configured. You can safely remove it from your scene.": "This widget is no longer supported and can no longer be configured. You can safely remove it from your scene."
 }

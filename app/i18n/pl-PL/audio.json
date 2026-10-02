@@ -44,5 +44,6 @@
   "Mic/Auxiliary Device 2": "Mikrofon / dodatkowe urządzenie 2",
   "Mic/Auxiliary Device 3": "Mikrofon / dodatkowe urządzenie 3",
   "Recording Audio Encoder": "Koder audio dla nagrywania",
-  "Enable Muted Notifications": "Włącz wyciszone powiadomienia"
+  "Enable Muted Notifications": "Włącz wyciszone powiadomienia",
+  "Audio Track (Format FLV does not support multiple audio tracks per recording)": "Audio Track (Format FLV does not support multiple audio tracks per recording)"
 }

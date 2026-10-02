@@ -1,5 +1,4 @@
 {
-  "You have been logged out": "Byli jste odhlášeni",
   "This element is too small to be displayed": "Tento prvek je příliš malý na to, aby byl zobrazen",
   "This element requires Selective Recording to be enabled": "Tento prvek vyžaduje, aby bylo povoleno selektivní nahrávání",
   "Grant Permissions": "Udělit oprávnění",
@@ -22,5 +21,6 @@
   "Authentication Error": "Chyba ověření",
   "Diagnostic Report Uploaded Successfully": "Diagnostic Report Uploaded Successfully",
   "Copy Report ID": "Copy Report ID",
-  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team."
+  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.",
+  "Unknown %{platform} error": "Unknown %{platform} error"
 }

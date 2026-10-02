@@ -1,16 +1,8 @@
 {
-  "You can access your Facebook Streamer Dashboard here.": "Hier gelangen Sie zu Ihrem Facebook Streamer Dashboard.",
-  "Create a Page": "Seite erstellen",
-  "Facebook Setup": "Facebook-Einrichtung",
-  "Streamer Dashboard": "Streamer Dashboard",
   "Share": "Teilen",
   "Like": "Gefällt mir",
   "Step 3:": "Schritt 3:",
-  "Create a Facebook Gaming page to get started.": "Erstellen Sie eine Facebook Gaming-Seite, um zu beginnen.",
-  "Create a Gaming Page": "Gaming-Seite erstellen",
   "All of your scenes, sources, and settings will be preserved.": "Alle Ihre Szenen, Quellen und Einstellungen bleiben erhalten.",
-  "Connect Facebook": "Mit Facebook verbinden",
-  "Multistream To Facebook": "Multistream auf Facebook",
   "Connect": "Verbinden",
   "Install Your Theme": "Installieren Sie Ihr Thema",
   "Install": "Installieren",
@@ -18,7 +10,6 @@
   "Facebook Destination": "Facebook-Ziel",
   "Share to Your Timeline": "In Ihrer Timeline teilen",
   "Share to a Page You Manage": "Freigeben für eine von Ihnen verwaltete Seite",
-  "Share in a Group": "Teilen in einer Gruppe",
   "Facebook Group": "Facebook-Gruppe",
   "Scheduled Video": "Geplantes Video",
   "Make sure the Streamlabs app is added to your Group.": "Stellen Sie sicher, dass die Streamlabs-App zu Ihrer Gruppe hinzugefügt wurde.",
@@ -35,8 +26,8 @@
   "Do not change privacy settings": "Datenschutzeinstellungen nicht ändern",
   "Install %{overlayName}": "Installieren %{overlayName}",
   "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Bitte beachten Sie, dass Sie zwar Streams auf Facebook einplanen können, manche Streams jedoch aufgrund von API-Einschränkungen nicht in diesem Kalender angezeigt werden.",
-  "Your account is not eligible to stream on Facebook. Click to learn more.": "Dein Konto ist nicht für das Streaming auf Facebook zugelassen. Klicke hier, um mehr zu erfahren",
   "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers": "Du bist nicht berechtigt, live zu gehen. Dein Profil muss mindestens 60 Tage alt sein und deine Seite muss mindestens 100 Follower haben.",
   "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more.": "Du bist nicht berechtigt, live zu gehen. Dein Profil muss mindestens 60 Tage alt sein und deine Seite muss mindestens 100 Follower haben. Klicke auf die Meldung, um mehr zu erfahren.",
-  "Stream Shift Error: Facebook is not live": "Stream Shift-Fehler: Facebook ist offline"
+  "Stream Shift Error: Facebook is not live": "Stream Shift-Fehler: Facebook ist offline",
+  "Your account is not eligible to stream on Facebook. Click to learn more": "Your account is not eligible to stream on Facebook. Click to learn more"
 }

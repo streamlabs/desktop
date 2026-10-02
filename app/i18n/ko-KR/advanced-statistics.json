@@ -1,16 +1,13 @@
 {
-  "You do not have any notifications": "알림이 없습니다",
   "Your stream is currently offline": "현재 스트리밍이 오프라인입니다",
   "Your stream is experiencing issues": "스트리밍에 문제가 발생했습니다",
   "Your stream is experiencing minor issues": "스트리밍에 사소한 문제가 발생했습니다",
   "Live Stats": "라이브 상태",
   "Performance Notifications": "퍼포먼스 알림",
   "Click on a stat to add it to your footer": "상태를 클릭하면 바닥 글에 추가됩니다",
-  "Click to add this info to your footer": "이 정보를 클릭하면 바닥 글에 추가됩니다",
   "When Streamlabs detects performance issues with your stream, such as dropped frames, lagged frames, or a stream disconnection, troubleshooting notifications will be sent to you here.": "Streamlabs가 드롭 프레임, 뒤처진 프레임, 스트리밍 연결 끊김 등의 성능 문제를 발견하는 경우, 문제 해결 알림이 여기로 전송됩니다.",
   "Click to add %{stat} info to your footer": "클릭하여 바닥 글에 %{stat} 정보 추가",
   "CPU": "CPU",
   "FPS": "FPS",
-  "dropped frames": "드롭 프레임",
   "bandwidth": "대역폭"
 }

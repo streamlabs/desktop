@@ -57,7 +57,10 @@ export type TSourceFilterType =
   | 'mediasoupconnector_vfilter'
   | 'mediasoupconnector_vsfilter'
   | 'hdr_tonemap_filter'
+  | 'nvidia_audiofx_filter'
   | 'nv_greenscreen_filter'
+  | 'nv_blur_filter'
+  | 'nv_background_blur_filter'
   | 'luma_key_filter'
   | 'luma_key_filter_v2'
   | 'upward_compressor_filter'
@@ -243,6 +246,7 @@ export class SourceFiltersService extends StatefulService<IFiltersServiceState> 
       { description: $t('Chroma Key'), value: 'chroma_key_filter_v2' },
       { description: $t('Video Delay (Async)'), value: 'async_delay_filter' },
       { description: $t('Noise Suppression'), value: 'noise_suppress_filter_v2' },
+      { description: $t('NVIDIA Audio Effects'), value: 'nvidia_audiofx_filter' },
       { description: $t('Noise Gate'), value: 'noise_gate_filter' },
       { description: $t('Compressor'), value: 'compressor_filter' },
       { description: $t('VST 2.x Plugin'), value: 'vst_filter' },
@@ -253,6 +257,11 @@ export class SourceFiltersService extends StatefulService<IFiltersServiceState> 
       { description: $t('Shader'), value: 'shader_filter' },
       { description: $t('HDR Tone Mapping (Override)'), value: 'hdr_tonemap_filter' },
       { description: $t('NVIDIA Background Removal'), value: 'nv_greenscreen_filter' },
+      { description: $t('NVIDIA Blur Filter'), value: 'nv_blur_filter' },
+      {
+        description: $t('NVIDIA Background Blur Filter'),
+        value: 'nv_background_blur_filter',
+      },
       { description: $t('Luma Key'), value: 'luma_key_filter_v2' },
       { description: $t('Upward Compressor'), value: 'upward_compressor_filter' },
       { description: $t('3-Band Equalizer'), value: 'basic_eq_filter' },

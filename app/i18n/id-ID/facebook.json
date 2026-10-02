@@ -1,16 +1,8 @@
 {
-  "You can access your Facebook Streamer Dashboard here.": "Anda bisa mengakses Facebook Streamer Dashboard di sini.",
-  "Create a Page": "Buat sebuah Halaman",
-  "Facebook Setup": "Pengaturan Facebook",
-  "Streamer Dashboard": "Streamer Dashboard",
   "Share": "Bagi",
   "Like": "Suka",
   "Step 3:": "Langkah 3:",
-  "Create a Facebook Gaming page to get started.": "Buat halaman Facebook Gaming untuk memulainya.",
-  "Create a Gaming Page": "Buat Halaman Gaming",
   "All of your scenes, sources, and settings will be preserved.": "Semua scene, sumber, dan pengaturan akan disimpan.",
-  "Connect Facebook": "Hubungkan Facebook",
-  "Multistream To Facebook": "Multistreaming ke Facebook",
   "Connect": "Hubungkan",
   "Install Your Theme": "Instal Tema Anda",
   "Install": "Instal",
@@ -18,7 +10,6 @@
   "Facebook Destination": "Tujuan Facebook",
   "Share to Your Timeline": "Bagi ke Linimasa Anda",
   "Share to a Page You Manage": "Bagi ke Halaman yang Anda Kelola",
-  "Share in a Group": "Bagi di Grup",
   "Facebook Group": "Grup Facebook",
   "Scheduled Video": "Video yang Dijadwalkan",
   "Make sure the Streamlabs app is added to your Group.": "Pastikan aplikasi Streamlabs ditambahkan ke Grup Anda.",
@@ -35,8 +26,8 @@
   "Do not change privacy settings": "Jangan mengganti pengaturan privasi",
   "Install %{overlayName}": "Instal %{overlayName}",
   "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Harap dicatat bahwa walaupun Anda bisa menjadwalkan streaming ke Facebook, beberapa tidak akan muncul di kalender ini karena keterbatasan API.",
-  "Your account is not eligible to stream on Facebook. Click to learn more.": "Akun Anda tidak memenuhi syarat untuk melakukan streaming di Facebook. Klik untuk mempelajari lebih lanjut",
   "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers": "Anda tidak memenuhi syarat Siaran Langsung, profil Anda harus berusia minimal 60 hari dan halaman Anda harus memiliki setidaknya 100 pengikut",
   "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more.": "Anda tidak memenuhi syarat Siaran Langsung, profil Anda harus berusia minimal 60 hari dan halaman Anda harus memiliki setidaknya 100 pengikut. Klik notifikasi untuk mempelajari lebih lanjut.",
-  "Stream Shift Error: Facebook is not live": "Kesalahan Stream Shift: Facebook tidak aktif"
+  "Stream Shift Error: Facebook is not live": "Kesalahan Stream Shift: Facebook tidak aktif",
+  "Your account is not eligible to stream on Facebook. Click to learn more": "Your account is not eligible to stream on Facebook. Click to learn more"
 }

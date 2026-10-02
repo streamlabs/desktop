@@ -1,6 +1,5 @@
 {
   "Banned Media": "禁止されたメディア",
-  "Check Banned Media": "禁止されたメディアを確認",
   "Price Per Second": "1 秒当たりの価格",
   "Min. Amount to Share": "共有する最小金額",
   "Max Duration": "最長期間",
@@ -8,8 +7,5 @@
   "Spam Security": "スパム セキュリティ",
   "The time between videos the next video has to buffer.": "次のビデオがバッファーする必要があるビデオ間の時間。",
   "Manage Media Settings": "メディア設定の管理",
-  "The maximum duration in seconds that media can be played, regardless of amount donated. The default value is 60 seconds.": "寄付の金額に関係なくメディアを再生できる最長期間（秒）。デフォルト値は 60 秒。",
-  "This slider helps you filter shared media before it can be submitted.\nOff: No security\nLow: 65%+ rating, 5k+ views\nMedium: 75%+ rating, 40k+ views\nHigh: 80%+ rating, 300k+ views\nVery High: 85%+ rating, 900k+ views": "このスライダーによって、送信前に、共有されたメディアをフィルターできます。\nオフ：セキュリティなし\n低：65%+ 評価、5k+ 視聴数\n中：75%+ 評価、40k+ 視聴数\n高：80%+ 評価、300k+ 視聴数\n非常に高い：85%+ 評価、900k+ 視聴数",
-  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "寄付者がメディアを共有するために寄付する必要がある最低金額。デフォルト値は 5 米ドル",
-  "In order to control length, you can decide how much it costs per second to share media. Setting this to 0.30 would mean that for $10, media would play for 30 seconds. The default value is 0.10.": "長さを制御するために、メディアの共有にかかるコスト（1 秒当たり）を決定することができます。これを 0.30 に設定すると、10 ドルに対してメディアは 30 秒間再生します。デフォルト値は 0.10。"
+  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "寄付者がメディアを共有するために寄付する必要がある最低金額。デフォルト値は 5 米ドル"
 }

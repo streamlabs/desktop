@@ -1,13 +1,8 @@
 {
-  "You can edit the sounds of your stream alerts from the alertbox properties menu.": "Du kan redigere lyden af dine stream-notifikationer fra menuen Egenskaber for notifikationsboksen.",
-  "You can access our theme library from the left sidebar.": "Du kan få adgang til vores temabibliotek fra venstre margentekst.",
-  "Our 24/7 support staff is available at Discord.gg/stream.": "Vores supportpersonale er tilgængelige på Discord.gg/stream døgnet rundt.",
   "Sources are what we call media like text, images, video & audio feeds.": "Kilder er medier som f.eks. tekst, billeder, video- og lydfeeds.",
   "Undo works in the Editor. Just hit Ctrl + Z!": "Fortryd virker i editoren. Du skal bare trykke Ctrl + Z!",
-  "The sources listed at the top of your sources pane will be layered the highest in your editor.": "De kilder, der er anført øverst i din kildeoversigt, vil blive lagt øverst i din editor.",
   "Studio Mode is a powerful way to curate a professional-quality stream.": "Studio-tilstand er en effektiv måde at sende en stream i professionel kvalitet på.",
   "Cloudbot is a chatbot that can help you moderate your stream.": "Cloudbot er en chatbot, der kan hjælpe dig med at moderere din stream.",
-  "The Remote Control feature lets you control your active scene in real-time from your phone.": "Med fjernbetjeningsfunktionen kan du styre din aktive scene i realtid fra din telefon.",
   "Set Hotkeys from your settings to control your stream with your keyboard.": "Indstil genvejstaster i dine indstillinger for at styre din stream med dit tastatur.",
   "With Game Overlay you can view chat messages while gaming without switching screens.": "Med Game Overlay kan du se chatbeskeder, mens du spiller, uden at skifte skærm.",
   "The editor is fully customizable. Try repositioning things from the Layout Editor.": "Editoren kan tilpasses fuldt ud. Prøv at omarrangere tingene med layoutredigering.",
@@ -20,9 +15,5 @@
   "You can position your chat panel to be either on the left or right side of your screen.": "Du kan placere chatpanelet til enten venstre eller højre side af skærmen.",
   "Right-click on your camera source to add filters to your webcam.": "Højreklik på din kamerakilde for at føje filtre til dit webkamera.",
   "You can add and edit stinger transitions by clicking the settings cog near your scene collections.": "Du kan tilføje og redigere stinger-overgange ved at klikke på tandhjulsikonet i nærheden af dine scenesamlinger.",
-  "To crop your webcam, press Alt then drag the bounding box.": "Hvis du vil beskære dit webkamera, skal du trykke på Alt og derefter trække i den afgrænsende boks.",
-  "Widgets are dynamic, interactive overlays you can add to your scene.": "Widgets er dynamiske, interaktive overlays, som du kan tilføje til din scene.",
-  "Our App Store contains advanced technology to take your stream to the next level.": "Vores App Store indeholder avanceret teknologi, der kan tage din stream til det næste niveau.",
-  "With multi-stream, you can stream to YouTube, Twitch, and Facebook at the same time.": "With multi-stream, you can stream to YouTube, Twitch, and Facebook at the same time.",
-  "You can customize the design of your tip page from the Theme Library.": "Du kan tilpasse designet på din donationsside fra temabiblioteket."
+  "To crop your webcam, press Alt then drag the bounding box.": "Hvis du vil beskære dit webkamera, skal du trykke på Alt og derefter trække i den afgrænsende boks."
 }

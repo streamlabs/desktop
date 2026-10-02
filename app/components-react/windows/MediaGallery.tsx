@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { clipboard } from 'electron';
+import { clipboard, webUtils } from 'electron';
 import * as remote from '@electron/remote';
 import { Layout, message, Card, Menu, Progress, PageHeader } from 'antd';
 import cx from 'classnames';
@@ -136,7 +136,7 @@ export default function MediaGallery() {
   function handleFileDrop(e: React.DragEvent) {
     e.preventDefault();
     if (!e.dataTransfer?.files) return;
-    const mappedFiles = Array.from(e.dataTransfer.files).map(file => file.path);
+    const mappedFiles = Array.from(e.dataTransfer.files).map(file => webUtils.getPathForFile(file));
     upload(mappedFiles);
     setDragOver(false);
   }

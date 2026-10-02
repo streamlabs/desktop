@@ -1,16 +1,13 @@
 {
-  "You do not have any notifications": "Du har ingen notifikationer",
   "Your stream is currently offline": "Din stream er i øjeblikket offline",
   "Your stream is experiencing issues": "Der er problemer med din stream",
   "Your stream is experiencing minor issues": "Der er nogle problemer med din stream",
   "Live Stats": "Live statistikker",
   "Performance Notifications": "Notifikationer om ydeevne",
   "Click on a stat to add it to your footer": "Klik på en statistik for at tilføje den til din sidefod",
-  "Click to add this info to your footer": "Klik for at tilføje denne info til din sidefod",
   "When Streamlabs detects performance issues with your stream, such as dropped frames, lagged frames, or a stream disconnection, troubleshooting notifications will be sent to you here.": "Når Streamlabs registrerer ydeevneproblemer med din stream, f.eks. langsomme eller forsinkede frames eller afbrydelser i den streamede video, får du vist fejlfindingsmeddelelser her.",
   "Click to add %{stat} info to your footer": "Klik for at tilføje %{stat}-info til din sidefod",
   "CPU": "CPU",
   "FPS": "FPS",
-  "dropped frames": "tabte frames",
   "bandwidth": "båndbredde"
 }

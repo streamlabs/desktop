@@ -1,6 +1,5 @@
 {
   "Banned Media": "Запрещенные медиафайлы",
-  "Check Banned Media": "Проверить запрещенные медиафайлы",
   "Price Per Second": "Цена за секунду",
   "Min. Amount to Share": "Мин. сумма для показа",
   "Max Duration": "Макс. длительность",
@@ -8,8 +7,5 @@
   "Spam Security": "Защита от спама",
   "The time between videos the next video has to buffer.": "Интервал времени между видео для буферизации следующего видео.",
   "Manage Media Settings": "Управление медианастройками",
-  "The maximum duration in seconds that media can be played, regardless of amount donated. The default value is 60 seconds.": "Максимальная длительность воспроизведения медиафайлов в секундах, независимо от суммы пожертвования. По умолчанию: 60 секунд.",
-  "This slider helps you filter shared media before it can be submitted.\nOff: No security\nLow: 65%+ rating, 5k+ views\nMedium: 75%+ rating, 40k+ views\nHigh: 80%+ rating, 300k+ views\nVery High: 85%+ rating, 900k+ views": "Этот ползунок помогает отфильтровать общие медиафайлы перед их отправкой.\nВыкл.: без защиты.\nНизкий: рейтинг от 65 %, от 5000 просмотров.\nСредний: рейтинг от 75 %, от 40 000 просмотров.\nВысокий: рейтинг от 80 %, от 300 000 просмотров.\nОчень высокий: рейтинг от 85 %, от 900 000 просмотров.",
-  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "Минимальная сумма пожертвования для получения возможности поделиться мультимедиа. По умолчанию: 5 долл. США",
-  "In order to control length, you can decide how much it costs per second to share media. Setting this to 0.30 would mean that for $10, media would play for 30 seconds. The default value is 0.10.": "Чтобы контролировать продолжительность, можно указать стоимость одной секунды общей демонстрации медиафайла. Например, если установлено значение 0,30, за 10 долл. США можно будет воспроизводить мультимедиа в течение 30 секунд. По умолчанию: 0,10."
+  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "Минимальная сумма пожертвования для получения возможности поделиться мультимедиа. По умолчанию: 5 долл. США"
 }

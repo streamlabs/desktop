@@ -1,9 +1,7 @@
 {
   "Troubleshooter": "Мастер устранения неполадок",
   "Open Settings": "Открыть настройки",
-  " Streamlabs has detected dropped frames": " Приложение Streamlabs обнаружило выпавшие кадры",
   "What does this mean?": "Что это значит?",
-  " Some frames have not been uploaded. This problem is usually related to a poor network connection.": " Некоторые кадры не удалось передать. Обычно это связано с плохим сетевым подключением.",
   "What can I do?": "Что я могу сделать?",
   "Check the health of your Internet connection": "Проверьте качество подключения к Интернету",
   "Change your ingest server": "Измените сервер захвата",
@@ -23,5 +21,7 @@
   "Disable FreeSync or GSync in your Driver": "Отключите функции FreeSync или GSync драйвера",
   "Lower graphics settings until you stop lagging frames": "Снизьте настройки графики, чтобы устранить отставание кадров",
   "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "Отключить аппаратное декодирование всех медиаисточников (больше нагрузка на ЦП вместо ГЦ)",
-  "CPU usage threshold in Dual Output mode": "Порог использования процессора в режиме Dual Output"
+  "CPU usage threshold in Dual Output mode": "Порог использования процессора в режиме Dual Output",
+  "Streamlabs has detected dropped frames": "Streamlabs has detected dropped frames",
+  "Some frames have not been uploaded. This problem is usually related to a poor network connection.": "Some frames have not been uploaded. This problem is usually related to a poor network connection."
 }

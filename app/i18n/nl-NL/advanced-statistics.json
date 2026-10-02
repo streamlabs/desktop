@@ -1,16 +1,13 @@
 {
-  "You do not have any notifications": "U heeft geen meldingen",
   "Your stream is currently offline": "Uw stream is op dit moment offline",
   "Your stream is experiencing issues": "Uw stream ondervindt problemen",
   "Your stream is experiencing minor issues": "Uw stream ondervindt kleine problemen",
   "Live Stats": "Live statistieken",
   "Performance Notifications": "Prestatiemeldingen",
   "Click on a stat to add it to your footer": "Klik op een statistiek om deze aan uw voettekst toe te voegen",
-  "Click to add this info to your footer": "Klik om deze info aan uw voettekst toe te voegen",
   "When Streamlabs detects performance issues with your stream, such as dropped frames, lagged frames, or a stream disconnection, troubleshooting notifications will be sent to you here.": "Wanneer Streamlabs prestatieproblemen met uw stream detecteert, zoals gedropte frames, vertraagde frames of een verbroken streamverbinding, worden hier meldingen voor probleemoplossing naar u verzonden.",
   "Click to add %{stat} info to your footer": "Klik om deze info aan uw %{stat} toe te voegen",
   "CPU": "CPU",
   "FPS": "FPS",
-  "dropped frames": "gedropte frames",
   "bandwidth": "bandbreedte"
 }

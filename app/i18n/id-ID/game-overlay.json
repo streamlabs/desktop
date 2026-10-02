@@ -1,9 +1,7 @@
 {
   "Enable in-game overlay": "Aktifkan tampilan dalam game",
-  "Enable stream preview in overlay": "Aktifkan pratinjau streaming pada tampilan",
   "Toggle in-game overlay": "Ganti tampilan dalam game",
   "Toggle positioning mode": "Ganti mode pemosisian",
   "Set a hotkey in Hotkey Settings to toggle the in-game overlay": "Tetapkan hotkey di Pengaturan Hotkey untuk berganti-ganti tampilan dalam game",
-  "The in-game overlay is a new experimental feature that allows you to view chat and events overlayed on top of your game.  This overlay may not work with certain games running in exclusive fullscreen mode.  For best results, we recommend running your game in windowed-fullscreen mode.": "Tampilan dalam game adalah fitur eksperimental baru yang memungkinkan Anda untuk melihat obrolan dan acara yang ditampilkan di bagian atas game Anda. Tampilan ini mungkin tidak kompatibel dengan beberapa game yang dijalankan hanya dalam mode fullscreen. Untuk hasil terbaik, kami merekomendasikan agar Anda bermain dalam mode windowed-fullscreen.",
   "Please log in to use the in-game overlay.": "Log in untuk menggunakan tampilan dalam game."
 }

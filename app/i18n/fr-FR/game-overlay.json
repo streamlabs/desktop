@@ -1,9 +1,7 @@
 {
   "Enable in-game overlay": "Autoriser la superposition dans le jeu",
-  "Enable stream preview in overlay": "Autoriser l'aperçu du Stream dans la superposition",
   "Toggle in-game overlay": "Activer la superposition dans le jeu",
   "Toggle positioning mode": "Activer le mode de positionnement",
   "Set a hotkey in Hotkey Settings to toggle the in-game overlay": "Paramétrer un raccourci clavier dans les paramètres de raccourci pour activer la superposition dans le jeu",
-  "The in-game overlay is a new experimental feature that allows you to view chat and events overlayed on top of your game.  This overlay may not work with certain games running in exclusive fullscreen mode.  For best results, we recommend running your game in windowed-fullscreen mode.": "La superposition dans le jeu est une nouvelle fonctionnalité expérimentale qui vous permet d'afficher le chat et les événements directement au-dessus de votre jeu. Il se peut que la superposition ne fonctionne pas avec certains jeux qui s'exécutent exclusivement en mode plein écran. Pour un meilleur résultat, nous vous recommandons de jouer en mode plein écran fenêtré.",
   "Please log in to use the in-game overlay.": "Veuillez vous connecter pour utiliser la superposition dans le jeu."
 }

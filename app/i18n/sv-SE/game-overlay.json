@@ -1,9 +1,7 @@
 {
   "Enable in-game overlay": "Starta spel pålägg",
-  "Enable stream preview in overlay": "Starta förhandsvisning av ström i pålägg",
   "Toggle in-game overlay": "Toggla spel pålägg",
   "Toggle positioning mode": "Byt positionerings-läge",
   "Set a hotkey in Hotkey Settings to toggle the in-game overlay": "Välj en snabbvalstangent I snabbvalstangents-inställningar för att byta läge på i spel pålägget",
-  "The in-game overlay is a new experimental feature that allows you to view chat and events overlayed on top of your game.  This overlay may not work with certain games running in exclusive fullscreen mode.  For best results, we recommend running your game in windowed-fullscreen mode.": "Tillägg som visas i spelet är en ny experimental funktion som låter dig läsa chatten och se de senaste händelserna i ditt spel. Detta tillägg kanske inte funkar med vissa game som körs i exklusivt fullskärmsläge. För bästa resultat rekommenderar vi att du kör ditt spel i läge för helskärmsfönster.",
   "Please log in to use the in-game overlay.": "Please log in to use the in-game overlay."
 }

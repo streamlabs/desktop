@@ -1,6 +1,7 @@
 {
   "Add Category": "Dodaj kategorię",
   "Add Section": "Dodaj sekcję",
+  "DONUT": "DONUT",
   "Clear All": "Wyczyść wszystko",
   "Manage Spin Wheel": "Zarządzaj kołem fortuny",
   "Categories": "Kategorie",
@@ -30,5 +31,6 @@
   "Center Image Size": "Rozmiar środkowego obrazu",
   "Center Image Border Enabled": "Włączono obramowanie środkowego obrazu",
   "Center Image Border Color": "Kolor obramowania środkowego obrazu",
-  "Center Image Border Width": "Szerokość obramowania środkowego obrazu"
+  "Center Image Border Width": "Szerokość obramowania środkowego obrazu",
+  "Add categories before adding new sections.": "Add categories before adding new sections."
 }

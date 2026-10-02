@@ -1,9 +1,7 @@
 {
   "Enable in-game overlay": "Oyun içi katmanı etkinleştir",
-  "Enable stream preview in overlay": "Katmanda yayın ön izlemesini etkinleştir",
   "Toggle in-game overlay": "Oyun içi katmanı değiştir",
   "Toggle positioning mode": "Konumlandırma modunu değiştir",
   "Set a hotkey in Hotkey Settings to toggle the in-game overlay": "Oyun içi katmanı değiştirmek için Kısayol Ayarları’nda bir kısayol belirleyin",
-  "The in-game overlay is a new experimental feature that allows you to view chat and events overlayed on top of your game.  This overlay may not work with certain games running in exclusive fullscreen mode.  For best results, we recommend running your game in windowed-fullscreen mode.": "Oyun içi katman, sohbeti ve olayları oyununuzun üzerine bindirilmiş şekilde görüntülemenizi sağlayan yeni deneysel bir özelliktir. Bu katman, özel tam ekran modunda çalışan belirli oyunlarla çalışmayabilir. En iyi sonuçları elde etmek için oyununuzu pencereli tam ekran modunda çalıştırmanızı öneririz.",
   "Please log in to use the in-game overlay.": "Oyun içi katmanı kullanmak için lütfen oturum açın."
 }

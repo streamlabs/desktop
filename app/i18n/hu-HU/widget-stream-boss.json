@@ -7,6 +7,7 @@
   "Set Stream Boss Health": "Stream boss életpontjának beállítása",
   "Goal": "Cél",
   "Manage Battle": "Harc kezelése",
+  "Boss Settings": "Boss Settings",
   "Starting Health": "Kezdő HP",
   "Fixed": "Rögzített",
   "The boss will spawn with the set amount of health everytime.": "A boss mindig egy előre beállított életponttal fog megjelenni.",
@@ -31,5 +32,6 @@
   "Health Bar Background Color": "HP sáv háttérszíne",
   "Font": "Betű",
   "The boss will have additional health each time he is defeated. The amount is set below.": "A boss életpontja minden alkalommal nőni fog, ha legyőzik. Lent beállítható, hogy mennyivel.",
-  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "A boss életpontja az alapján változik, hogy mekkora volt a legutolsó sebzés. A boss új életpontját a többlet sebzés és a sokszorozó érték szorzata fogja meghatározni. Például, 150 pontnyi sebzés, 100 pontnyi fennmaradó életpontra, háromszoros sokszorozó értékkel azt eredményezi, hogy következő alkalommal a boss 150 életponttal fog újra megjelenni. \n Állítsd be a sokszorzót lentebb."
+  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "A boss életpontja az alapján változik, hogy mekkora volt a legutolsó sebzés. A boss új életpontját a többlet sebzés és a sokszorozó érték szorzata fogja meghatározni. Például, 150 pontnyi sebzés, 100 pontnyi fennmaradó életpontra, háromszoros sokszorozó értékkel azt eredményezi, hogy következő alkalommal a boss 150 életponttal fog újra megjelenni. \n Állítsd be a sokszorzót lentebb.",
+  "Failed to reset Stream Boss, please try again.": "Failed to reset Stream Boss, please try again."
 }

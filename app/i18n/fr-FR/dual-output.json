@@ -1,5 +1,5 @@
 {
-  "Horizontal canvas": "Canevas horizontal",
-  "Vertical canvas": "Canevas vertical",
+  "Toggle horizontal display": "Toggle horizontal display",
+  "Toggle vertical display": "Toggle vertical display",
   "Error stopping stream: default streams do not exist.": "Erreur lors de l’arrêt du stream : les streams par défaut n’existent pas."
 }

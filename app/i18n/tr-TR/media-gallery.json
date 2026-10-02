@@ -8,7 +8,6 @@
   "Browse the Gallery": "Galeriye Göz At",
   "Cancel": "İptal",
   "OK": "Tamam",
-  "Select": "Seç",
   "You don't have any uploaded files!": "Yüklenmiş herhangi bir dosyanız yok!",
   "You don't have any uploaded images!": "Yüklenmiş herhangi bir görüntünüz yok!",
   "You don't have any uploaded sounds!": "Yüklenmiş herhangi bir sesiniz yok!",
@@ -19,7 +18,6 @@
   "Stock Files": "Orijinal Dosyalar",
   "My Uploads": "Yüklemelerim",
   "Not a supported file type": "Desteklenen bir dosya türü değil",
-  "Downloading...": "İndiriliyor...",
   "Uploading...": "Yükleniyor...",
   "URL Copied": "URL Kopyalandı",
   "Failed to copy URL": "URL kopyalanamadı",
@@ -29,7 +27,9 @@
   "No Sound": "Ses Yok",
   "No Media": "Medya Yok",
   "Change Link": "Bağlantıyı Değiştir",
-  "Pick From Gallery": "Galeriden Seç",
   "Clear Link": "Bağlantıyı Temizle",
-  "Media URL": "Medya URL’si"
+  "Media URL": "Medya URL’si",
+  "Only .jpeg and .png is supported": "Only .jpeg and .png is supported",
+  "This file could not be uploaded": "This file could not be uploaded",
+  "You must have Streamlabs Ultra to use this media": "You must have Streamlabs Ultra to use this media"
 }

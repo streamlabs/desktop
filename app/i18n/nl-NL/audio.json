@@ -44,5 +44,6 @@
   "Mic/Auxiliary Device 2": "Mic/aux-apparaat 2",
   "Mic/Auxiliary Device 3": "Mic/aux-apparaat 3",
   "Recording Audio Encoder": "Audio-encoder opnemen",
-  "Enable Muted Notifications": "Mute meldingen inschakelen"
+  "Enable Muted Notifications": "Mute meldingen inschakelen",
+  "Audio Track (Format FLV does not support multiple audio tracks per recording)": "Audio Track (Format FLV does not support multiple audio tracks per recording)"
 }

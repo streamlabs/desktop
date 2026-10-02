@@ -1,16 +1,13 @@
 {
-  "You do not have any notifications": "Anda tidak memiliki notifikasi apa pun",
   "Your stream is currently offline": "Streaming Anda kini sedang offline",
   "Your stream is experiencing issues": "Streaming Anda mengalami masalah",
   "Your stream is experiencing minor issues": "Streaming Anda mengalami masalah kecil",
   "Live Stats": "Statistik Live",
   "Performance Notifications": "Notifikasi Kinerja",
   "Click on a stat to add it to your footer": "Klik sebuah statistik untuk menambahkannya ke footer Anda",
-  "Click to add this info to your footer": "Klik untuk menambahkan ini ke footer Anda",
   "When Streamlabs detects performance issues with your stream, such as dropped frames, lagged frames, or a stream disconnection, troubleshooting notifications will be sent to you here.": "Ketika Streamlabs mendeteksi masalah kinerja pada streaming Anda, seperti frame yang terjatuh, frame yang tertunda, atau koneksi streaming yang putus, notifikasi penyelesaian masalah akan dikirimkan kepada Anda di sini.",
   "Click to add %{stat} info to your footer": "Klik untuk menambahkan %{stat} ke footer Anda",
   "CPU": "CPU",
   "FPS": "FPS",
-  "dropped frames": "frame yang terjatuh",
   "bandwidth": "bandwidth"
 }

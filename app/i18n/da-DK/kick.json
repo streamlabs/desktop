@@ -1,5 +1,4 @@
 {
-  "Edit your stream title on Kick after going live.": "Rediger titlen på din stream på Kick, når du er gået live.",
   "Kick Category": "Kick-kategori",
   "Failed to update Kick account. Please unlink and reconnect your Kick account.": "Kunne ikke opdatere Kick-konto. Fjern tilknytningen af din Kick-konto, og tilknyt den igen.",
   "Failed to start Kick stream. Please check permissions with Kick and try again": "Kunne ikke starte Kick-stream. Tjek tilladelser med Kick, og prøv igen",
@@ -11,5 +10,7 @@
   "Click on the \"eye\" icon to see your stream key": "Klik på \"øje\"-ikonet for at se din stream-nøgle",
   "Put in 2FA": "Angiv 2FA",
   "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "Efter 2FA er stream-nøglen blevet genereret og vil være tilgængelig for Streamlabs Desktop for den pågældende kanal. Du burde nu kunne gå live på Kick.",
-  "Stream Shift Error: Kick is not live": "Stream Shift-fejl: Kick er ikke live"
+  "Stream Shift Error: Kick is not live": "Stream Shift-fejl: Kick er ikke live",
+  "Failed to start stream on Kick.": "Failed to start stream on Kick.",
+  "Permissions to generate stream key for Kick are missing. In order to go live on Kick, you must first generate a stream key on Kick to be available for Streamlabs Desktop. Please follow these steps:": "Permissions to generate stream key for Kick are missing. In order to go live on Kick, you must first generate a stream key on Kick to be available for Streamlabs Desktop. Please follow these steps:"
 }

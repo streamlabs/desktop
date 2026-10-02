@@ -1,9 +1,7 @@
 {
   "Enable in-game overlay": "啟用遊戲內疊層",
-  "Enable stream preview in overlay": "在疊層中啟用直播預覽",
   "Toggle in-game overlay": "切換遊戲內疊層",
   "Toggle positioning mode": "切換定位模式",
   "Set a hotkey in Hotkey Settings to toggle the in-game overlay": "在「熱鍵設定」中設定熱鍵，以切換遊戲中疊層",
-  "The in-game overlay is a new experimental feature that allows you to view chat and events overlayed on top of your game.  This overlay may not work with certain games running in exclusive fullscreen mode.  For best results, we recommend running your game in windowed-fullscreen mode.": "遊戲中疊層是新的實驗性功能，讓您可以透過在遊戲上顯示的疊層查看聊天室和事件。此疊層可能無法搭配在全螢幕獨占模式下執行的特定遊戲使用。為獲得最好的效果，建議在全螢幕視窗模式下執行遊戲。",
   "Please log in to use the in-game overlay.": "請登入以使用遊戲中疊層。"
 }

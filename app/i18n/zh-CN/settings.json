@@ -256,6 +256,7 @@
   "FPS Denominator": "FPS 分母",
   "FPS Value": "FPS 值",
   "The resolution must be in the format [width]x[height] (i.e. 1920x1080)": "分辨率必须采用 [width]x[height] 格式（例如 1920x1080）",
+  "Failed to update the video resolution.": "Failed to update the video resolution.",
   "Custom": "自定义",
   "Custom Base Resolution": "自定义基础分辨率",
   "Custom Output Resolution": "自定义输出分辨率",
@@ -292,6 +293,8 @@
   "%{videoCodec} codec is not supported for Dual Output. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} 编解码器不支持双路输出。您想继续使用 H.264 编解码器，还是选择其他编解码器？",
   "Your stream encoder has been reset to Software (x264). This can be caused by out of date graphics drivers. Please update your graphics drivers to continue using hardware encoding.": "您的流编码器已重置为软件 (x264)。这可能是由显卡驱动程序过时引起的。请更新您的显卡驱动程序以继续使用硬件编码。",
   "Your stream encoder has been reset to Software (x264). This can be caused by an invalid encoder setting.": "您的流编码器已重置为软件 (x264)。这可能是由无效的编码器设置引起的。",
+  "Live Settings": "Live Settings",
+  "Channel Settings": "Channel Settings",
   "Fix common issues": "Fix common issues",
   "Restore Ultra benefits": "Restore Ultra benefits",
   "If you subscribed on web, you may need to restore your Ultra membership on desktop.": "If you subscribed on web, you may need to restore your Ultra membership on desktop.",
@@ -317,5 +320,12 @@
   "Cache": "Cache",
   "Deleting your cache directory will cause you to lose some settings.": "Deleting your cache directory will cause you to lose some settings.",
   "Do not delete your cache directory unless instructed to do so by a Streamlabs staff member.": "Do not delete your cache directory unless instructed to do so by a Streamlabs staff member.",
-  "Enable reporting additional information on a crash (requires restart).": "Enable reporting additional information on a crash (requires restart)."
+  "Enable reporting additional information on a crash (requires restart).": "Enable reporting additional information on a crash (requires restart).",
+  "Use stream output": "Use stream output",
+  "Currently Loaded App": "Currently Loaded App",
+  "Token": "Token",
+  "Unload": "Unload",
+  "Invalid Scene Collection": "Invalid Scene Collection",
+  "Successfully converted scene collection.": "Successfully converted scene collection.",
+  "Output Scene": "Output Scene"
 }

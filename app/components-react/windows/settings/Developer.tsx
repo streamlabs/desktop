@@ -137,6 +137,7 @@ export function DualOutputDeveloperSettings(p: { collectionId?: string }) {
       );
 
       if (!collectionFilePath) {
+        setBusy(false);
         setError(true);
         setMessage($t('Unable to convert dual output collection.'));
         setBusy(false);
@@ -145,16 +146,22 @@ export function DualOutputDeveloperSettings(p: { collectionId?: string }) {
       }
 
       // save overlay
-      OverlaysPersistenceService.actions.return.saveOverlay(filePath).then(() => {
+      try {
+        await OverlaysPersistenceService.actions.return.saveOverlay(filePath);
         setError(false);
-        setBusy(false);
         setMessage(
           $t('Successfully saved %{filename} to %{filepath}', {
             filename: path.parse(collectionFilePath).base,
             filepath: filePath,
           }),
         );
-      });
+      } catch (e: unknown) {
+        console.error('Failed to export overlay', e);
+        setError(true);
+        setMessage($t('Failed to export overlay. Please choose a different location.'));
+      } finally {
+        setBusy(false);
+      }
     } else {
       setBusy(true);
 

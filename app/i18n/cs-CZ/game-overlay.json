@@ -1,9 +1,7 @@
 {
   "Enable in-game overlay": "Povolit překrytí ve hře",
-  "Enable stream preview in overlay": "Povolit náhled streamu na překrytí",
   "Toggle in-game overlay": "Přepnout překrytí ve hře",
   "Toggle positioning mode": "Přepnout režim polohování",
   "Set a hotkey in Hotkey Settings to toggle the in-game overlay": "Překrytí ve hře přepnete po nastavením klávesové zkratky v nastavení klávesových zkratek",
-  "The in-game overlay is a new experimental feature that allows you to view chat and events overlayed on top of your game.  This overlay may not work with certain games running in exclusive fullscreen mode.  For best results, we recommend running your game in windowed-fullscreen mode.": "Překrytí ve hře představuje novou experimentální funkci, která umožňuje zobrazit chat a události v rámci překrytí vaší hry. Toto překrytí nemusí u některých her spuštěných v exkluzivním režimu celé obrazovky fungovat. K dosažení nejlepších výsledků doporučujeme spustit hru v režimu celé obrazovky.",
   "Please log in to use the in-game overlay.": "Překrytí ve hře je možné použít po přihlášení."
 }

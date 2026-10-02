@@ -1,5 +1,4 @@
 {
-  "You have been logged out": "Oturumunuz kapatıldı",
   "This element is too small to be displayed": "Bu öge, görüntülenemeyecek kadar küçük",
   "This element requires Selective Recording to be enabled": "Bu ögenin etkinleştirilebilmesi için Seçilebilir Kayıt gerekli",
   "Grant Permissions": "İzin Ver",
@@ -22,5 +21,6 @@
   "Authentication Error": "Kimlik Doğrulama Hatası",
   "Diagnostic Report Uploaded Successfully": "Tanılama Raporu Başarıyla Yüklendi",
   "Copy Report ID": "Rapor Kimliğini Kopyalayın",
-  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "Tanılama raporu başarıyla yüklendi ve aşağıdaki Rapor Kimliği panonuza kopyalandı. Lütfen Rapor Kimliğini Streamlabs Streamer Success Ekibine bildirin."
+  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "Tanılama raporu başarıyla yüklendi ve aşağıdaki Rapor Kimliği panonuza kopyalandı. Lütfen Rapor Kimliğini Streamlabs Streamer Success Ekibine bildirin.",
+  "Unknown %{platform} error": "Unknown %{platform} error"
 }

@@ -25,6 +25,7 @@ import {
   focusChild,
   focusMain,
   getClient,
+  isDisplayed,
   waitForLoader,
 } from '../modules/core';
 import { clearCollections } from '../modules/api/scenes';
@@ -340,6 +341,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
       // Select the "Continue" button on the macOS permissions page (MacPermissions.tsx), if it exists.
       await clickIfDisplayed('button=Continue');
     }
+
     // Pretty much all tests except for onboarding-specific
     // tests will want to skip this flow, so we do it automatically.
     await waitForLoader();

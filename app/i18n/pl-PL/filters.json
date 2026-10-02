@@ -12,6 +12,7 @@
   "Chroma Key": "Chroma key",
   "Video Delay (Async)": "Opóźnienie wideo (Asynchroniczne)",
   "Noise Suppression": "Tłumienie szumów",
+  "NVIDIA Audio Effects": "NVIDIA Audio Effects",
   "Noise Gate": "Bramka szumów",
   "Compressor": "Kompresor",
   "VST 2.x Plugin": "Wtyczka VST 2.x",
@@ -27,6 +28,9 @@
   "Shader": "Shader",
   "HDR Tone Mapping (Override)": "Mapowanie tonów HDR (nadpisywanie)",
   "NVIDIA Background Removal": "Usuwanie tła dla NVIDIA",
+  "NVIDIA Blur Filter": "NVIDIA Blur Filter",
+  "NVIDIA Background Blur Filter": "NVIDIA Background Blur Filter",
+  "Luma Key": "Luma Key",
   "No settings are available for this filter": "Dla tego filtra nie są dostępne ustawienia",
   "Visual Presets": "Wizualne ustawienia wstępne",
   "None": "Brak",
@@ -81,5 +85,7 @@
   "Open Threshold": "Otwórz próg",
   "Close Threshold": "Zamknij próg",
   "Presets": "Ustawienia wstępne",
-  "Detection": "Wykrywanie"
+  "Detection": "Wykrywanie",
+  "Upward Compressor": "Upward Compressor",
+  "3-Band Equalizer": "3-Band Equalizer"
 }

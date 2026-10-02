@@ -1,7 +1,6 @@
 {
   "Visual Settings": "Vizuális beállítások",
   "Font Settings": "Betűtípus beállítások",
-  "Chatter": "Chatter",
   "Always Show Messages": "Legyenek mindig láthatóak az üzenetek",
   "Show Moderator Badges": "Mutasd a Moderátor jelvényeket",
   "Show Subscriber Badges": "Mutasd a Feliratkozó jelvényeket",
@@ -15,7 +14,6 @@
   "Text Color": "Szöveg színe",
   "Font Size": "Betűméret",
   "Muted Chatters": "Elrejtett üzenetek",
-  "Hide Commands": "Parancsok elrejtése",
   "Background Color": "Háttérszín",
   "Show Platform Icons": "Platform ikonok megjelenítése",
   "Theme": "Téma",

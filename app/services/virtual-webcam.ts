@@ -13,6 +13,7 @@ import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from './core/s
 import os from 'os';
 import { SignalsService } from './signals-manager';
 import { $t } from 'services/i18n';
+import { videoOutputCoordinator } from 'services/video-output-coordinator';
 
 const PLUGIN_PLIST_PATH =
   '/Library/CoreMediaIO/Plug-Ins/DAL/vcam-plugin.plugin/Contents/Info.plist';
@@ -260,14 +261,18 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
   start() {
     if (this.state.running) return;
 
+    let releaseOutputStart = () => {};
     try {
+      releaseOutputStart = videoOutputCoordinator.beginOutputStart();
       obs.NodeObs.OBS_service_startVirtualCam();
+      this.SET_RUNNING(true);
+      this.runningChanged.next(true);
     } catch (error: unknown) {
       this.handleUnknownVirtualCamError(error);
       return;
+    } finally {
+      releaseOutputStart();
     }
-    this.SET_RUNNING(true);
-    this.runningChanged.next(true);
 
     this.usageStatisticsService.recordFeatureUsage('VirtualWebcam');
   }

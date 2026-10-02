@@ -1,5 +1,5 @@
 {
-  "Horizontal canvas": "Płótno poziome",
-  "Vertical canvas": "Płótno pionowe",
+  "Toggle horizontal display": "Toggle horizontal display",
+  "Toggle vertical display": "Toggle vertical display",
   "Error stopping stream: default streams do not exist.": "Błąd podczas zatrzymywania strumienia: domyślne strumienie nie istnieją."
 }

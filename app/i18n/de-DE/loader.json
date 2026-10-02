@@ -1,13 +1,8 @@
 {
-  "You can edit the sounds of your stream alerts from the alertbox properties menu.": "Sie können die Sounds für Ihre Stream-Benachrichtigungen über das Menü mit den Eigenschaften für Benachrichtigungen bearbeiten.",
-  "You can access our theme library from the left sidebar.": "Sie können die Themenbibliothek über die linke Navigationsleiste öffnen.",
-  "Our 24/7 support staff is available at Discord.gg/stream.": "Unsere Support-Mitarbeiter sind rund um die Uhr auf Discord.gg/stream für Sie da.",
   "Sources are what we call media like text, images, video & audio feeds.": "Quellen sind das, was wir als Medien bezeichnen, etwa Text, Bilder, Video- und Audio-Feeds.",
   "Undo works in the Editor. Just hit Ctrl + Z!": "Das Rückgängigmachen ist möglich im Editor. Einfach Strg+Z drücken!",
-  "The sources listed at the top of your sources pane will be layered the highest in your editor.": "Die in Ihrem Quellenbereich zuoberst aufgelisteten Quellen werden im Editor im Vordergrund angezeigt.",
   "Studio Mode is a powerful way to curate a professional-quality stream.": "Der Studio-Modus ist ein hocheffizientes Hilfsmittel für Streams in professioneller Qualität.",
   "Cloudbot is a chatbot that can help you moderate your stream.": "Der Cloudbot ist ein Chatbot, der Ihnen helfen kann, Ihren Stream zu moderieren.",
-  "The Remote Control feature lets you control your active scene in real-time from your phone.": "Die Fernbedienungsfunktion gibt Ihnen die Möglichkeit, die aktive Szene in Echtzeit über Ihr Smartphone zu steuern.",
   "Set Hotkeys from your settings to control your stream with your keyboard.": "Legen Sie über Ihre Einstellungen Tastenbefehle fest, um Ihren Stream über Ihre Tastatur zu steuern.",
   "With Game Overlay you can view chat messages while gaming without switching screens.": "Mit Game Overlay können Sie mitten im Spiel Chat-Nachrichten ansehen, ohne den Bildschirm wechseln zu müssen.",
   "The editor is fully customizable. Try repositioning things from the Layout Editor.": "Der Editor ist uneingeschränkt personalisierbar. Im Layout-Editor können Sie Elemente neu anordnen. Probieren Sie es aus!",
@@ -20,9 +15,5 @@
   "You can position your chat panel to be either on the left or right side of your screen.": "Sie können Ihr Chat-Panel entweder rechts oder links auf Ihrem Bildschirm positionieren.",
   "Right-click on your camera source to add filters to your webcam.": "Klicken Sie mit der rechten Maustaste auf Ihre Kameraquelle, um Ihrer Webcam Filter hinzuzufügen.",
   "You can add and edit stinger transitions by clicking the settings cog near your scene collections.": "Sie können Stinger-Übergänge hinzufügen und bearbeiten, indem Sie auf das Symbol „Einstellungen“ (das Zahnrad) neben Ihren Szenensammlungen klicken.",
-  "To crop your webcam, press Alt then drag the bounding box.": "Zu Zuschneiden Ihres Webcam-Bilds drücken Sie die Alt-Tasten und ziehen Sie den Begrenzungsrahmen.",
-  "Widgets are dynamic, interactive overlays you can add to your scene.": "Widgets sind dynamische, interaktive Overlays, die Sie Ihrer Szene hinzufügen können.",
-  "Our App Store contains advanced technology to take your stream to the next level.": "In unserem App Store finden Sie fortschrittliche Technologie für neue Horizonte mit Ihrem Stream.",
-  "With multi-stream, you can stream to YouTube, Twitch, and Facebook at the same time.": "Per Multistreaming kannst du gleichzeitig auf YouTube, Twitch und Facebook streamen.",
-  "You can customize the design of your tip page from the Theme Library.": "Über die Themenbibliothek können Sie das Design Ihrer Trinkgeldseite anpassen."
+  "To crop your webcam, press Alt then drag the bounding box.": "Zu Zuschneiden Ihres Webcam-Bilds drücken Sie die Alt-Tasten und ziehen Sie den Begrenzungsrahmen."
 }

@@ -14,12 +14,20 @@
   "Select an Event": "Selecione um evento",
   "Trigger Type": "Tipo de gatilho",
   "Trigger Name": "Nome do gatilho",
-  "Select a Trigger Type": "Selecione o tipo de gatilho",
   "Triggers are set up and ready to go! Feel free to uncheck the ones you don't want.": "Os gatilhos estão configurados e prontos para usar! Fique à vontade para desmarcar os que você não quer.",
   "Global": "Global",
   "Triggered when a player reaches a cumulative total number of events.": "É ativado quando um jogador chega a um número total acumulado de eventos.",
   "Triggered when a player achieves a consecutive number of events without interruption.": "É ativada quando um jogador consegue um número consecutivo de eventos sem interrupção.",
   "No triggers available.": "Nenhum gatilho disponível.",
   "Animation Settings": "Configurações de animação",
-  "Real time alerts reacting to your in game events.": "Alertas em tempo real que reagem aos eventos do seu jogo."
+  "Real time alerts reacting to your in game events.": "Alertas em tempo real que reagem aos eventos do seu jogo.",
+  "Event Type": "Event Type",
+  "General Game Settings": "General Game Settings",
+  "Enable All": "Enable All",
+  "Disable All": "Disable All",
+  "Total Amount": "Total Amount",
+  "Level Range Type": "Level Range Type",
+  "Action Settings": "Action Settings",
+  "Text To Speech": "Text To Speech",
+  "Voice": "Voice"
 }

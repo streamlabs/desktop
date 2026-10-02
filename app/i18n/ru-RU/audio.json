@@ -44,5 +44,6 @@
   "Mic/Auxiliary Device 2": "Микрофон/дополнительное устройство 2",
   "Mic/Auxiliary Device 3": "Микрофон/дополнительное устройство 3",
   "Recording Audio Encoder": "Кодировщик записи аудио",
-  "Enable Muted Notifications": "Включить уведомления без звука"
+  "Enable Muted Notifications": "Включить уведомления без звука",
+  "Audio Track (Format FLV does not support multiple audio tracks per recording)": "Audio Track (Format FLV does not support multiple audio tracks per recording)"
 }

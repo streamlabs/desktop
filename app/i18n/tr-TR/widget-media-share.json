@@ -1,6 +1,5 @@
 {
   "Banned Media": "Yasaklı Medya",
-  "Check Banned Media": "Yasaklı Medyayı İncele",
   "Price Per Second": "Saniye Başına Fiyat",
   "Min. Amount to Share": "Paylaşılacak Min. Miktar",
   "Max Duration": "Maks. Süre",
@@ -8,8 +7,5 @@
   "Spam Security": "Spam Güvenliği",
   "The time between videos the next video has to buffer.": "Bir sonraki videonun arabelleğe alınması için videolar arasındaki süre.",
   "Manage Media Settings": "Medya Ayarlarını Düzenle",
-  "The maximum duration in seconds that media can be played, regardless of amount donated. The default value is 60 seconds.": "Bağış yapılan miktardan bağımsız olarak, medyanın oynatılabileceği saniye cinsinden maksimum süre. Varsayılan değer 60 saniyedir.",
-  "This slider helps you filter shared media before it can be submitted.\nOff: No security\nLow: 65%+ rating, 5k+ views\nMedium: 75%+ rating, 40k+ views\nHigh: 80%+ rating, 300k+ views\nVery High: 85%+ rating, 900k+ views": "Bu kaydırıcı, paylaşılan medyayı gönderilmeden önce filtrelemenize yardımcı olur.\nKapalı: Güvenlik yok\nDüşük: %65+ derecelendirme, 5k+ görüntüleme\nOrta: %75+ derecelendirme, 40k+ görüntüleme\nYüksek: %80+ derecelendirme, 300k+ görüntüleme\nÇok Yüksek: %85+ derecelendirme, 900k+ görüntüleme",
-  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "Bağışçının medya paylaşmak için bağış yapması gereken minimum tutar. Varsayılan değer $5.00 USD",
-  "In order to control length, you can decide how much it costs per second to share media. Setting this to 0.30 would mean that for $10, media would play for 30 seconds. The default value is 0.10.": "Uzunluğu kontrol etmek için paylaşılacak medyanın saniye başına fiyatını belirleyebilirsiniz. Bunu 0,30 olarak ayarlamak, $10 ile medyanın 30 saniye oynatılabileceği anlamına gelir. Varsayılan değer 0,10."
+  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "Bağışçının medya paylaşmak için bağış yapması gereken minimum tutar. Varsayılan değer $5.00 USD"
 }

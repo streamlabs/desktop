@@ -1,13 +1,8 @@
 {
-  "You can edit the sounds of your stream alerts from the alertbox properties menu.": "アラートボックス プロパティメニューから、ストリームアラートのサウンドを編集できます。",
-  "You can access our theme library from the left sidebar.": "左サイドバーからテーマ ライブラリにアクセスできます。",
-  "Our 24/7 support staff is available at Discord.gg/stream.": "Discord.gg/stream で年中無休のサポートを利用可能。",
   "Sources are what we call media like text, images, video & audio feeds.": "ソースは、テキスト、画像、動画、オーディオフィードなどのメディアです。",
   "Undo works in the Editor. Just hit Ctrl + Z!": "エディタには取り消し機能があります。Ctrl + Z を押すだけです！",
-  "The sources listed at the top of your sources pane will be layered the highest in your editor.": "ソースペイン最上部に表示されているソースは、エディタ内の最上部のレイヤーになります。",
   "Studio Mode is a powerful way to curate a professional-quality stream.": "スタジオモードは、プロ品質のストリームをキュレートするためのパワフルな機能です。",
   "Cloudbot is a chatbot that can help you moderate your stream.": "Cloudbot は、ストリームを管理するのに役立つチャットボットです。",
-  "The Remote Control feature lets you control your active scene in real-time from your phone.": "リモコン機能によって、スマートフォンから、アクティブな画面をリアルタイムでコントロールできます。",
   "Set Hotkeys from your settings to control your stream with your keyboard.": "設定からホットキーを設定して、キーボードを使ってストリームをコントロール。",
   "With Game Overlay you can view chat messages while gaming without switching screens.": "ゲームオーバーレイによって、画面を切り替えずに、ゲーミングをしながらチャットメッセージを確認できます。",
   "The editor is fully customizable. Try repositioning things from the Layout Editor.": "エディタは完全にカスタマイズ可能です。レイアウトエディタから、アイテムを再配置してみましょう。",
@@ -20,9 +15,5 @@
   "You can position your chat panel to be either on the left or right side of your screen.": "画面の左側または右側にチャットパネルを配置できます。",
   "Right-click on your camera source to add filters to your webcam.": "カメラソースを右クリックして、ウェブカメラにフィルターを追加。",
   "You can add and edit stinger transitions by clicking the settings cog near your scene collections.": "シーンコレクションの近くにある設定歯車をクリックして、Stinger トランジションの追加と編集ができます。",
-  "To crop your webcam, press Alt then drag the bounding box.": "ウェブカメラをトリミングするには、Alt を押してからバウンディングボックスをドラッグします。",
-  "Widgets are dynamic, interactive overlays you can add to your scene.": "ウィジェットは、シーンに追加できる、動的でインタラクティブなオーバーレイです。",
-  "Our App Store contains advanced technology to take your stream to the next level.": "App Store では高度なテクノロジーが採用され、ストリームを次のレベルに進めることができます。",
-  "With multi-stream, you can stream to YouTube, Twitch, and Facebook at the same time.": "マルチストリームによって、YouTube、Twitch、Facebook に同時にストリームできます。",
-  "You can customize the design of your tip page from the Theme Library.": "テーマ ライブラリから、チップページのデザインをカスタマイズできます。"
+  "To crop your webcam, press Alt then drag the bounding box.": "ウェブカメラをトリミングするには、Alt を押してからバウンディングボックスをドラッグします。"
 }

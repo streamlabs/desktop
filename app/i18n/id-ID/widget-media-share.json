@@ -1,6 +1,5 @@
 {
   "Banned Media": "Media yang Dilarang",
-  "Check Banned Media": "Periksa Media yang iDlarang",
   "Price Per Second": "Harga Per Detik",
   "Min. Amount to Share": "Jumlah Min. untuk Dibagi",
   "Max Duration": "Durasi Maks.",
@@ -8,8 +7,5 @@
   "Spam Security": "Keamanan Spam",
   "The time between videos the next video has to buffer.": "Waktu antara video dan video berikutnya harus ada buffer.",
   "Manage Media Settings": "Kelola Pengaturan Media",
-  "The maximum duration in seconds that media can be played, regardless of amount donated. The default value is 60 seconds.": "Durasi maksimum dalam detik yang bisa dimainkan media, berapa pun jumlah yang didonasikan. Nilai default adalah 60 detik.",
-  "This slider helps you filter shared media before it can be submitted.\nOff: No security\nLow: 65%+ rating, 5k+ views\nMedium: 75%+ rating, 40k+ views\nHigh: 80%+ rating, 300k+ views\nVery High: 85%+ rating, 900k+ views": "Penggeser ini membantu Anda memfilter media yang dibagi sebelum dapat dikirimkan.\nOff: Tidak ada keamanan\nRendah: Peringkat 65%+, dilihat 5 ribu+\nMedium: Peringkat 75%+, dilihat 40 ribu+\nTinggi: Peringkat 80%+, dilihat 300 ribu+\nSangat Tinggi: Peringkat 85%+, dilihat 900 ribu+",
-  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "Jumlah minimum yang harus didonasikan seorang donatur agar bisa berbagi media. Jumlah default adalah US$5,00",
-  "In order to control length, you can decide how much it costs per second to share media. Setting this to 0.30 would mean that for $10, media would play for 30 seconds. The default value is 0.10.": "Untuk mengontrol panjang, Anda dapat memutuskan berapa besar biaya per detik untuk berbagi media. Mengaturnya ke 0,30 berarti untuk setiap $10, media akan memainkannya selama 30 detik. Nilai default adalah 0,10."
+  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "Jumlah minimum yang harus didonasikan seorang donatur agar bisa berbagi media. Jumlah default adalah US$5,00"
 }

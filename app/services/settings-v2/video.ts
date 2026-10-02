@@ -11,12 +11,21 @@ import {
   EVideoFormat,
   EColorSpace,
   ERangeType,
+  SceneFactory,
 } from '../../../obs-api';
 import { DualOutputService } from 'services/dual-output';
 import { SettingsService } from 'services/settings';
 import { OutputSettingsService } from 'services/settings/output';
 import { Subject } from 'rxjs';
 import { horizontalDisplayData } from './default-settings-data';
+import isEqual from 'lodash/isEqual';
+import { Mutex } from 'util/mutex';
+import { videoOutputCoordinator } from 'services/video-output-coordinator';
+import type { SceneCollectionsService } from 'services/scene-collections';
+import type { ScenesService } from 'services/scenes';
+import type { StreamingService } from 'services/streaming';
+import type { VirtualWebcamService } from 'services/virtual-webcam';
+import type { FileManagerService } from 'services/file-manager';
 
 /**
  * Display Types
@@ -30,6 +39,20 @@ export type TDisplayType = typeof displays[number];
 export interface IVideoSetting {
   horizontal: IVideoInfo;
   vertical: IVideoInfo;
+}
+
+export interface IBaseResolution {
+  baseWidth: number;
+  baseHeight: number;
+}
+
+export type IBaseResolutions = Record<TDisplayType, IBaseResolution>;
+
+export type TVideoSettingsPatches = Partial<Record<TDisplayType, Partial<IVideoInfo>>>;
+
+interface IAppliedVideoSettings {
+  baseResolutionChanged: boolean;
+  previous: Partial<Record<TDisplayType, IVideoInfo>>;
 }
 
 export type IVideoInfoValue =
@@ -89,6 +112,11 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
   @Inject() dualOutputService: DualOutputService;
   @Inject() settingsService: SettingsService;
   @Inject() outputSettingsService: OutputSettingsService;
+  @Inject() private sceneCollectionsService: SceneCollectionsService;
+  @Inject() private scenesService: ScenesService;
+  @Inject() private streamingService: StreamingService;
+  @Inject() private virtualWebcamService: VirtualWebcamService;
+  @Inject() private fileManagerService: FileManagerService;
 
   initialState = {
     horizontal: null as IVideoInfo,
@@ -113,6 +141,15 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     horizontal: null as IVideo,
     vertical: null as IVideo,
   };
+
+  private readonly videoSettingsMutex = new Mutex();
+  private pendingCanvasSettings: TVideoSettingsPatches = {};
+  private pendingCanvasSettingsTimer: number | null = null;
+  private canvasSettingsFlushPromise: Promise<void> | null = null;
+  private pendingCanvasSettingsWaiters: Array<{
+    resolve: () => void;
+    reject: (error: unknown) => void;
+  }> = [];
 
   get values() {
     return {
@@ -293,7 +330,7 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
       this.loadLegacySettings();
       // Fresh canvas reads back 0x0 for both legacySettings and video. osn 0.26.28
       // now throws on SetVideoContext(0x0) where it previously dropped the error.
-      // Seed with defaults so the first push validates; autoconfig overwrites later.
+      // Seed with defaults so the first push validates.
       const legacy = this.contexts.horizontal.legacySettings;
       if (!legacy.baseWidth || !legacy.baseHeight) {
         Object.keys(horizontalDisplayData).forEach((key: keyof IVideoInfo) => {
@@ -397,80 +434,332 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
   }
 
   /**
-   * Migrate optimized settings to vertical context
+   * Applies collection-authored base resolutions before any scene graph is
+   * recreated. SceneCollectionsService owns the surrounding loading mode and
+   * output-start reservation.
    */
-  migrateAutoConfigSettings() {
-    // load optimized settings onto horizontal context
-    this.loadLegacySettings('horizontal');
-
-    if (this.contexts?.vertical) {
-      // add optimized settings to vertical context
-      const newVerticalSettings = {
-        ...this.contexts.horizontal.video,
-        baseWidth: this.state.vertical.baseWidth,
-        baseHeight: this.state.vertical.baseHeight,
-        outputWidth: this.state.vertical.outputWidth,
-        outputHeight: this.state.vertical.outputHeight,
-      };
-      this.updateVideoSettings(newVerticalSettings, 'vertical');
-
-      // update the Video settings property to the horizontal context dimensions
-      const base = `${this.state.horizontal.baseWidth}x${this.state.horizontal.baseHeight}`;
-      const output = `${this.state.horizontal.outputWidth}x${this.state.horizontal.outputHeight}`;
-      this.settingsService.setSettingValue('Video', 'Base', base);
-      this.settingsService.setSettingValue('Video', 'Output', output);
-    } else {
-      // if there is no vertical context, only update persisted settings for vertical context
-      const horizontalScaleType = this.contexts.horizontal.video.scaleType;
-      const horizontalFpsType = this.contexts.horizontal.video.fpsType;
-      const horizontalFpsNum = this.contexts.horizontal.video.fpsNum;
-      const horizontalFpsDen = this.contexts.horizontal.video.fpsDen;
-
-      this.dualOutputService.setVideoSetting({ scaleType: horizontalScaleType }, 'vertical');
-      this.dualOutputService.setVideoSetting({ fpsType: horizontalFpsType }, 'vertical');
-      this.dualOutputService.setVideoSetting({ fpsNum: horizontalFpsNum }, 'vertical');
-      this.dualOutputService.setVideoSetting({ fpsDen: horizontalFpsDen }, 'vertical');
-    }
+  async applyCollectionBaseResolutions(resolutions: IBaseResolutions): Promise<boolean> {
+    return this.videoSettingsMutex.do(() => {
+      const result = this.applyVideoSettingsPatches({
+        horizontal: resolutions.horizontal,
+        vertical: resolutions.vertical,
+      });
+      return result.baseResolutionChanged;
+    });
   }
 
   /**
-   * Confirm video setting dimensions in settings
-   * @remarks Primarily used with the optimizer to ensure the horizontal context dimensions
-   * are the dimensions in the settings
+   * Apply all user-approved canvas and output resolutions plus the shared frame
+   * rate atomically. Auto Optimizer may grow Base (Canvas) Resolution only
+   * through this method; OSN benchmarks temporary mixes without changing saved
+   * video settings.
    */
-  confirmVideoSettingDimensions() {
-    const [baseWidth, baseHeight] = this.settingsService.views.values.Video.Base.split('x');
-    const [outputWidth, outputHeight] = this.settingsService.views.values.Video.Output.split('x');
+  async applyAutoOptimizerSettings(patches: TVideoSettingsPatches): Promise<void> {
+    // Bitrate/encoder-only recommendations do not need a video reset and must
+    // remain applicable while independent outputs such as Replay Buffer run.
+    if (!this.videoSettingsPatchesChangeState(patches)) return;
+    // A dormant vertical display still needs the shared FPS persisted, but the
+    // optimizer must not create a video context that was unavailable before.
+    await this.runCanvasSettingsTransaction(patches, false);
+  }
 
-    if (
-      Number(baseWidth) !== this.state.horizontal.baseWidth ||
-      Number(baseHeight) !== this.state.horizontal.baseHeight
-    ) {
-      const base = `${this.state.horizontal.baseWidth}x${this.state.horizontal.baseHeight}`;
-      this.settingsService.setSettingValue('Video', 'Base', base);
+  private videoSettingsPatchesChangeState(patches: TVideoSettingsPatches): boolean {
+    return displays.some(display => {
+      const patch = patches[display];
+      if (!patch) return false;
+      const current = this.state[display];
+      if (!current) return true;
+      return (Object.keys(patch) as Array<keyof IVideoInfo>).some(
+        key => patch[key] !== current[key],
+      );
+    });
+  }
+
+  private changesBaseResolution(patch: Partial<IVideoInfo>, display: TDisplayType): boolean {
+    const pending = this.pendingCanvasSettings[display];
+    return (['baseWidth', 'baseHeight'] as const).some(key => {
+      if (!Object.prototype.hasOwnProperty.call(patch, key)) return false;
+      return (
+        Object.prototype.hasOwnProperty.call(pending ?? {}, key) ||
+        patch[key] !== this.state[display]?.[key]
+      );
+    });
+  }
+
+  private queueCanvasSettings(
+    patch: Partial<IVideoInfo>,
+    display: TDisplayType,
+    shouldSyncFPS = false,
+  ): Promise<void> {
+    this.pendingCanvasSettings[display] = {
+      ...this.pendingCanvasSettings[display],
+      ...patch,
+    };
+    if (shouldSyncFPS && display === 'horizontal') this.queueSynchronizedFpsSettings();
+
+    if (this.pendingCanvasSettingsTimer != null) {
+      window.clearTimeout(this.pendingCanvasSettingsTimer);
     }
 
-    if (
-      Number(outputWidth) !== this.state.horizontal.outputWidth ||
-      Number(outputHeight) !== this.state.horizontal.outputHeight
-    ) {
-      const output = `${this.state.horizontal.outputWidth}x${this.state.horizontal.outputHeight}`;
-      this.settingsService.setSettingValue('Video', 'Output', output);
+    const result = new Promise<void>((resolve, reject) => {
+      this.pendingCanvasSettingsWaiters.push({ resolve, reject });
+    });
+
+    this.pendingCanvasSettingsTimer = window.setTimeout(() => {
+      void this.flushPendingCanvasSettings().catch(() => undefined);
+    }, 200);
+
+    // Some legacy callers intentionally ignore the return value. Keep their
+    // behavior while still allowing callers that await the operation to react.
+    result.catch(error => console.error('Failed to update the base canvas resolution', error));
+    return result;
+  }
+
+  private queueSynchronizedFpsSettings() {
+    const horizontal = {
+      ...this.state.horizontal,
+      ...this.pendingCanvasSettings.horizontal,
+    };
+    const fpsSettings: Array<keyof IVideoInfo> = ['scaleType', 'fpsType', 'fpsNum', 'fpsDen'];
+    const verticalPatch = fpsSettings.reduce((patch, key) => {
+      patch[key] = horizontal[key] as never;
+      return patch;
+    }, {} as Partial<IVideoInfo>);
+    this.pendingCanvasSettings.vertical = {
+      ...this.pendingCanvasSettings.vertical,
+      ...verticalPatch,
+    };
+  }
+
+  async flushPendingCanvasSettings(): Promise<void> {
+    if (this.canvasSettingsFlushPromise) {
+      await this.canvasSettingsFlushPromise;
+      if (this.pendingCanvasSettingsWaiters.length) await this.flushPendingCanvasSettings();
+      return;
     }
+    if (!this.pendingCanvasSettingsWaiters.length) return;
+
+    if (this.pendingCanvasSettingsTimer != null) {
+      window.clearTimeout(this.pendingCanvasSettingsTimer);
+    }
+    const patches = this.pendingCanvasSettings;
+    const waiters = this.pendingCanvasSettingsWaiters;
+    this.pendingCanvasSettings = {};
+    this.pendingCanvasSettingsWaiters = [];
+    this.pendingCanvasSettingsTimer = null;
+
+    const flushPromise = this.runCanvasSettingsTransaction(patches);
+    this.canvasSettingsFlushPromise = flushPromise;
+    try {
+      await flushPromise;
+      waiters.forEach(waiter => waiter.resolve());
+    } catch (error: unknown) {
+      waiters.forEach(waiter => waiter.reject(error));
+      throw error;
+    } finally {
+      if (this.canvasSettingsFlushPromise === flushPromise) {
+        this.canvasSettingsFlushPromise = null;
+      }
+    }
+
+    if (this.pendingCanvasSettingsWaiters.length) await this.flushPendingCanvasSettings();
+  }
+
+  private async runCanvasSettingsTransaction(
+    patches: TVideoSettingsPatches,
+    establishMissingContexts = true,
+  ): Promise<void> {
+    await this.videoSettingsMutex.do(async () => {
+      const releaseVideoReset = videoOutputCoordinator.reserveVideoReset();
+      let autoSaveState: Awaited<
+        ReturnType<SceneCollectionsService['disableAutoSave']>
+      > | null = null;
+      let appliedSettings: IAppliedVideoSettings | null = null;
+
+      try {
+        this.assertVideoOutputsInactive();
+        autoSaveState = await this.sceneCollectionsService.disableAutoSave();
+        appliedSettings = this.applyVideoSettingsPatches(patches, establishMissingContexts);
+        if (!appliedSettings.baseResolutionChanged) return;
+
+        this.refreshSceneItemTransforms();
+        await this.sceneCollectionsService.save();
+        await this.fileManagerService.flushAll();
+      } catch (error: unknown) {
+        if (appliedSettings) {
+          try {
+            this.applyVideoSettingsPatches(appliedSettings.previous, establishMissingContexts);
+            this.refreshSceneItemTransforms();
+            await this.sceneCollectionsService.save();
+            await this.fileManagerService.flushAll();
+          } catch (rollbackError: unknown) {
+            const message =
+              rollbackError instanceof Error ? rollbackError.message : String(rollbackError);
+            throw new Error(`Failed to roll back the canvas resolution change: ${message}`);
+          }
+        }
+        throw error;
+      } finally {
+        if (autoSaveState?.wasEnabled) {
+          this.sceneCollectionsService.enableAutoSave(autoSaveState.revision);
+        }
+        releaseVideoReset();
+      }
+    });
+  }
+
+  private assertVideoOutputsInactive() {
+    if (
+      this.streamingService.isStreaming ||
+      this.streamingService.isRecording ||
+      this.streamingService.isReplayBufferActive ||
+      this.virtualWebcamService.views.running
+    ) {
+      throw new Error('The base canvas resolution cannot change while a video output is active.');
+    }
+  }
+
+  private applyVideoSettingsPatches(
+    patches: TVideoSettingsPatches,
+    establishMissingContexts = true,
+  ): IAppliedVideoSettings {
+    const updates: Array<{
+      display: TDisplayType;
+      previous: IVideoInfo;
+      next: IVideoInfo;
+      live: boolean;
+    }> = [];
+    let baseResolutionChanged = false;
+
+    displays.forEach(display => {
+      const patch = patches[display];
+      if (!patch) return;
+      if (!this.contexts[display] && establishMissingContexts) this.ensureVideoContext(display);
+
+      const existing = this.state[display] ?? this.contexts[display]?.video;
+      if (!existing) throw new Error(`The ${display} video settings are unavailable.`);
+      const previous = { ...existing };
+      const next = { ...previous, ...patch };
+      this.validateVideoDimensions(next);
+      if (isEqual(previous, next)) return;
+
+      if (previous.baseWidth !== next.baseWidth || previous.baseHeight !== next.baseHeight) {
+        baseResolutionChanged = true;
+      }
+      updates.push({ display, previous, next, live: !!this.contexts[display] });
+    });
+
+    const applied: typeof updates = [];
+    try {
+      updates.forEach(update => {
+        if (update.live) this.contexts[update.display].video = update.next;
+        applied.push(update);
+      });
+
+      updates.forEach(update => {
+        this.SET_VIDEO_CONTEXT(update.display, { ...update.next });
+        if (update.live) this.contexts[update.display].legacySettings = update.next;
+        this.dualOutputService.updateVideoSettings(update.next, update.display);
+      });
+      if (updates.length) this.settingsService.refreshVideoSettings();
+    } catch (error: unknown) {
+      let rollbackError: unknown;
+      [...applied].reverse().forEach(update => {
+        try {
+          if (update.live) this.contexts[update.display].video = update.previous;
+        } catch (error: unknown) {
+          rollbackError = rollbackError ?? error;
+        }
+      });
+
+      updates.forEach(update => {
+        this.SET_VIDEO_CONTEXT(update.display, { ...update.previous });
+        if (update.live) this.contexts[update.display].legacySettings = update.previous;
+        this.dualOutputService.updateVideoSettings(update.previous, update.display);
+      });
+      if (updates.length) this.settingsService.refreshVideoSettings();
+
+      if (rollbackError) {
+        const message =
+          rollbackError instanceof Error ? rollbackError.message : String(rollbackError);
+        throw new Error(`Video reset failed and its rollback also failed: ${message}`);
+      }
+      throw error;
+    }
+
+    return {
+      baseResolutionChanged,
+      previous: updates.reduce((result, update) => {
+        result[update.display] = update.previous;
+        return result;
+      }, {} as Partial<Record<TDisplayType, IVideoInfo>>),
+    };
+  }
+
+  private ensureVideoContext(display: TDisplayType) {
+    if (this.contexts[display]) return;
+    if (!this.establishVideoContext(display) || !this.contexts[display]) {
+      throw new Error(`The ${display} video context could not be established.`);
+    }
+  }
+
+  private validateVideoDimensions(settings: IVideoInfo) {
+    const dimensions = [
+      settings.baseWidth,
+      settings.baseHeight,
+      settings.outputWidth,
+      settings.outputHeight,
+    ];
+    if (
+      dimensions.some(
+        dimension => !Number.isInteger(dimension) || dimension < 2 || dimension > 32 * 1024,
+      )
+    ) {
+      throw new Error('Video dimensions must be whole numbers between 2 and 32768.');
+    }
+  }
+
+  private refreshSceneItemTransforms() {
+    SceneFactory.invalidateItemTransformCache();
+    this.scenesService.views
+      .getSceneItems()
+      .forEach(sceneItem => sceneItem.refreshTransformFromObs());
+  }
+
+  /**
+   * Write selected display states to their live OBS video contexts immediately,
+   * bypassing the debounced update. Base (Canvas) Resolution changes must
+   * continue through queueCanvasSettings().
+   */
+  flushObsSettings(displaysToFlush: TDisplayType[], shouldSyncFPS: Boolean = false) {
+    Array.from(new Set(displaysToFlush)).forEach(display =>
+      this.applyObsSettings(display, shouldSyncFPS),
+    );
+  }
+
+  private applyObsSettings(display: TDisplayType, shouldSyncFPS: Boolean) {
+    if (!this.contexts[display]) {
+      throw new Error(`The ${display} video context is unavailable`);
+    }
+
+    this.contexts[display].video = this.state[display];
+    this.contexts[display].legacySettings = this.state[display];
+    if (shouldSyncFPS) this.syncFPSSettings();
   }
 
   @debounce(200)
-  updateObsSettings(display: TDisplayType = 'horizontal', shouldSyncFPS: Boolean = false) {
-    // confirm all vertical fps settings are synced to the horizontal fps settings
-    // update contexts to values on state
-    this.contexts[display].video = this.state[display];
-    this.contexts[display].legacySettings = this.state[display];
-    if (shouldSyncFPS) {
-      this.syncFPSSettings();
-    }
+  async updateObsSettings(display: TDisplayType = 'horizontal', shouldSyncFPS: Boolean = false) {
+    await this.videoSettingsMutex.do(() => this.applyObsSettings(display, shouldSyncFPS));
   }
 
-  updateVideoSettings(patch: Partial<IVideoInfo>, display: TDisplayType = 'horizontal') {
+  updateVideoSettings(
+    patch: Partial<IVideoInfo>,
+    display: TDisplayType = 'horizontal',
+  ): Promise<void> | void {
+    if (this.changesBaseResolution(patch, display)) {
+      return this.queueCanvasSettings(patch, display);
+    }
+
     const newVideoSettings = { ...this.state[display], ...patch };
 
     this.SET_VIDEO_CONTEXT(display, newVideoSettings);
@@ -492,7 +781,18 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     value: IVideoInfoValue,
     display: TDisplayType = 'horizontal',
     shouldSyncFPS: Boolean = false,
-  ) {
+  ): Promise<void> | void {
+    if (
+      (key === 'baseWidth' || key === 'baseHeight') &&
+      this.changesBaseResolution({ [key]: value } as Partial<IVideoInfo>, display)
+    ) {
+      return this.queueCanvasSettings(
+        { [key]: value } as Partial<IVideoInfo>,
+        display,
+        !!shouldSyncFPS,
+      );
+    }
+
     this.SET_VIDEO_SETTING(key, value, display);
     this.updateObsSettings(display, shouldSyncFPS);
 
@@ -509,7 +809,18 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
    * @param display - name of context (aka display) to apply setting to. Default is horizontal.
    * @param settings - collection of key/value pairs. Each pair is a video setting and its' value.
    */
-  setVideoSettings(display: TDisplayType = 'horizontal', settings: ObsSetting[]) {
+  setVideoSettings(
+    display: TDisplayType = 'horizontal',
+    settings: ObsSetting[],
+  ): Promise<void> | void {
+    const patch = settings.reduce((result, setting) => {
+      result[setting.key] = setting.value as never;
+      return result;
+    }, {} as Partial<IVideoInfo>);
+    if (this.changesBaseResolution(patch, display)) {
+      return this.queueCanvasSettings(patch, display, true);
+    }
+
     for (let i = 0; i < settings.length; i++) {
       const setting: ObsSetting = settings[i];
       this.SET_VIDEO_SETTING(setting.key, setting.value, display);
@@ -525,10 +836,18 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     }
   }
 
-  setSettings(settings: Partial<IVideoInfo>, display: TDisplayType = 'horizontal') {
+  setSettings(
+    settings: Partial<IVideoInfo>,
+    display: TDisplayType = 'horizontal',
+    applyToObs = true,
+  ): Promise<void> | void {
+    if (this.changesBaseResolution(settings, display)) {
+      return this.queueCanvasSettings(settings, display);
+    }
+
     this.SET_SETTINGS(settings, display);
 
-    this.updateObsSettings(display);
+    if (applyToObs) this.updateObsSettings(display);
 
     // also update the persisted settings
     this.dualOutputService.setVideoSetting(settings, display);

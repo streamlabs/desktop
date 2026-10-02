@@ -1,5 +1,5 @@
 {
-  "Horizontal canvas": "水平キャンバス",
-  "Vertical canvas": "縦型キャンバス",
+  "Toggle horizontal display": "Toggle horizontal display",
+  "Toggle vertical display": "Toggle vertical display",
   "Error stopping stream: default streams do not exist.": "ストリームの停止エラー: デフォルトのストリームが存在しません。"
 }

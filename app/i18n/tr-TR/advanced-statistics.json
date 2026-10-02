@@ -1,16 +1,13 @@
 {
-  "You do not have any notifications": "Bildiriminiz yok",
   "Your stream is currently offline": "Yayınınız şu anda çevrimdışı",
   "Your stream is experiencing issues": "Yayınınızda sorun oluştu",
   "Your stream is experiencing minor issues": "Yayınınızda küçük çaplı sorunlar oluştu",
   "Live Stats": "Canlı İstatistikler",
   "Performance Notifications": "Performans Bildirimleri",
   "Click on a stat to add it to your footer": "Alt bilginize eklemek istediğiniz bir istatistiğe tıklayın",
-  "Click to add this info to your footer": "Bu bilgiyi alt bilginize eklemek için tıklayın",
   "When Streamlabs detects performance issues with your stream, such as dropped frames, lagged frames, or a stream disconnection, troubleshooting notifications will be sent to you here.": "Streamlabs; atlanan kareler, geciken kareler veya yayın bağlantısının kopması gibi yayınınızla ilgili bir performans sorunu tespit ederse burada size sorun giderme bildirimleri gönderilir.",
   "Click to add %{stat} info to your footer": "Alt bilginize %{stat} eklemek için tıklayın",
   "CPU": "CPU",
   "FPS": "FPS",
-  "dropped frames": "atlanan kareler",
   "bandwidth": "bant genişliği"
 }

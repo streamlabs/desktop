@@ -1,7 +1,6 @@
 {
   "Visual Settings": "Настройки визуализации",
   "Font Settings": "Настройки шрифта",
-  "Chatter": "Обсуждение",
   "Always Show Messages": "Всегда показывать сообщения",
   "Show Moderator Badges": "Показывать значки модераторов",
   "Show Subscriber Badges": "Показывать значки подписчиков",
@@ -15,7 +14,6 @@
   "Text Color": "Цвет текста",
   "Font Size": "Размер шрифта",
   "Muted Chatters": "Отключенные пользователи чата",
-  "Hide Commands": "Скрыть команды",
   "Background Color": "Цвет фона",
   "Show Platform Icons": "Показать значки платформ",
   "Theme": "Тема",

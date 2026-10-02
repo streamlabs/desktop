@@ -7,6 +7,7 @@
   "Set Stream Boss Health": "Yayın Patronunun Canını Belirle",
   "Goal": "Hedef",
   "Manage Battle": "Savaşı Yönet",
+  "Boss Settings": "Boss Settings",
   "Starting Health": "Başlangıç Canı",
   "Fixed": "Düzeltildi",
   "The boss will spawn with the set amount of health everytime.": "Patron her zaman belirlenen miktarda canla doğacaktır.",
@@ -31,5 +32,6 @@
   "Health Bar Background Color": "Can Çubuğu Arka Plan Rengi",
   "Font": "Yazı Tipi",
   "The boss will have additional health each time he is defeated. The amount is set below.": "Patron, her yenilgisinde ek can kazanır. Miktarı aşağıda ayarlanır.",
-  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "Patronun sağlığı, öldürücü darbede aldığı hasara göre değişir. Çarpan ile çarpılan aşırı hasar, patronun yeni sağlığı olur. Ör. kalan sağlık seviyesi 100 iken alınan 150 hasar ve ayarlanan 3 çarpanı ile, canlandıktan sonra yeni patronun sağlık seviyesi 150 olur. \n Çarpan değerinizi aşağıdan ayarlayın."
+  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "Patronun sağlığı, öldürücü darbede aldığı hasara göre değişir. Çarpan ile çarpılan aşırı hasar, patronun yeni sağlığı olur. Ör. kalan sağlık seviyesi 100 iken alınan 150 hasar ve ayarlanan 3 çarpanı ile, canlandıktan sonra yeni patronun sağlık seviyesi 150 olur. \n Çarpan değerinizi aşağıdan ayarlayın.",
+  "Failed to reset Stream Boss, please try again.": "Failed to reset Stream Boss, please try again."
 }

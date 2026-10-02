@@ -1,5 +1,4 @@
 {
-  "You have been logged out": "Du er blevet logget ud",
   "This element is too small to be displayed": "Dette element er for småt til at blive vist",
   "This element requires Selective Recording to be enabled": "Dette element kræver at selektiv optagelse er aktiveret",
   "Grant Permissions": "Giv tilladelser",
@@ -22,5 +21,6 @@
   "Authentication Error": "Godkendelsesfejl",
   "Diagnostic Report Uploaded Successfully": "Diagnostic Report Uploaded Successfully",
   "Copy Report ID": "Copy Report ID",
-  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team."
+  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.",
+  "Unknown %{platform} error": "Unknown %{platform} error"
 }

@@ -8,7 +8,6 @@
   "Browse the Gallery": "Böngéssz a galériában",
   "Cancel": "Mégse",
   "OK": "OK",
-  "Select": "Választ",
   "You don't have any uploaded files!": "Nincs feltöltött fájl!",
   "You don't have any uploaded images!": "Nincs feltöltött kép!",
   "You don't have any uploaded sounds!": "Nincs feltöltött hangja!",
@@ -19,7 +18,6 @@
   "Stock Files": "Alap fájlok",
   "My Uploads": "Feltöltéseim",
   "Not a supported file type": "Nem támogatott fájltípus",
-  "Downloading...": "Letöltés...",
   "Uploading...": "Feltöltés...",
   "URL Copied": "URL másolva",
   "Failed to copy URL": "Nem sikerült az URL másolása",
@@ -29,7 +27,9 @@
   "No Sound": "Nincs hang",
   "No Media": "Nincs média",
   "Change Link": "Link megváltoztatása",
-  "Pick From Gallery": "Válassz a galériából",
   "Clear Link": "Link törlése",
-  "Media URL": "Média URL"
+  "Media URL": "Média URL",
+  "Only .jpeg and .png is supported": "Only .jpeg and .png is supported",
+  "This file could not be uploaded": "This file could not be uploaded",
+  "You must have Streamlabs Ultra to use this media": "You must have Streamlabs Ultra to use this media"
 }

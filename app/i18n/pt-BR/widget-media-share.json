@@ -1,6 +1,5 @@
 {
   "Banned Media": "Tipos de mídias banidas",
-  "Check Banned Media": "Verificar os tipos de mídias banidas",
   "Price Per Second": "Preço por segundo",
   "Min. Amount to Share": "Valor mínimo para compartilhar",
   "Max Duration": "Duração máxima",
@@ -8,8 +7,5 @@
   "Spam Security": "Proteção contra spam",
   "The time between videos the next video has to buffer.": "O tempo entre vídeos para que carregue o próximo.",
   "Manage Media Settings": "Gerenciar as Configurações de Mídia",
-  "The maximum duration in seconds that media can be played, regardless of amount donated. The default value is 60 seconds.": "A duração máxima em segundos em que a mídia pode ser reproduzida, independentemente do valor doado. O valor padrão é 60 segundos.",
-  "This slider helps you filter shared media before it can be submitted.\nOff: No security\nLow: 65%+ rating, 5k+ views\nMedium: 75%+ rating, 40k+ views\nHigh: 80%+ rating, 300k+ views\nVery High: 85%+ rating, 900k+ views": "Esse controle deslizante ajuda a filtrar a mídia compartilhada antes de ser enviada.\nDesligado: Sem segurança\nBaixo: 65%+ de classificação, 5k+ visualizações\nMédio: 75%+ de classificação, 40k+ visualizações\nAlto: 80%+ de classificação, 300k+ visualizações\nMuito alto: 85%+ de classificação, 900k+ visualizações",
-  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "O valor mínimo que um doador deve doar para compartilhar a mídia. Por padrão, o valor é de US$ 5",
-  "In order to control length, you can decide how much it costs per second to share media. Setting this to 0.30 would mean that for $10, media would play for 30 seconds. The default value is 0.10.": "Para controlar a duração, você pode determinar o valor por segundo do compartilhamento de mídia. Ao definir esse valor como 0,30, isso significaria que, por cada US$ 10, a mídia seria reproduzida por 30 segundos. O valor padrão é 0,10."
+  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "O valor mínimo que um doador deve doar para compartilhar a mídia. Por padrão, o valor é de US$ 5"
 }
