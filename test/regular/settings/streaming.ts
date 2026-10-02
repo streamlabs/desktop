@@ -10,7 +10,6 @@ import {
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import { click, clickButton, waitForDisplayed } from '../../helpers/modules/core';
 import { assertFormContains, fillForm, readFields } from '../../helpers/modules/forms';
-import { sleep } from '../../helpers/sleep';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
