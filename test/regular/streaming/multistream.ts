@@ -362,17 +362,14 @@ test('Stream Shift', withUser('twitch', { prime: true, multistream: true }), asy
   await clickGoLive();
   await waitForSettingsWindowLoaded();
 
-  // Default tooltip
-  t.true(
-    await tooltipExists('i.icon-information', '[data-name="explanation"]', { timeout: 1000 }),
-    'Default stream shift explanation tooltip did not appear',
-  );
+  // Default stream shift card
+  t.true(await isDisplayed('[data-name="streamShift"]'), 'Stream Shift switch should be visible');
 
   // Default tooltip stays the same when multiple platforms are enabled
   await fillForm({ youtube: true });
   t.true(
-    await tooltipExists('i.icon-information', '[data-name="explanation"]', { timeout: 1000 }),
-    'Default stream shift explanation tooltip did not appear',
+    await isDisplayed('[data-name="streamShift"]'),
+    'Stream Shift switch should still be visible',
   );
 
   // Stream shift disables Enhanced Broadcasting
@@ -397,7 +394,9 @@ test('Stream Shift', withUser('twitch', { prime: true, multistream: true }), asy
     'Display selectors should be shown in dual output mode',
   );
   t.true(
-    await tooltipExists('i.icon-information', '[data-name="dual-output"]', { timeout: 1000 }),
+    await tooltipExists('[data-name="streamShift"]', '[data-name="dual-output"]', {
+      timeout: 1000,
+    }),
     'Dual output tooltip did not appear',
   );
   await assertFormContains({ streamShift: false });

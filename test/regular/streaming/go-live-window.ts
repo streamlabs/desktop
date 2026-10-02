@@ -59,21 +59,20 @@ test(
     });
 
     // Case 3: Stream shift should be disabled and tooltip should be visible
-    await isDisplayed('[data-name="shift-ultra-icon"]', {
-      timeout: 1000,
-      timeoutMsg:
-        'Case 3: Shift ultra icon should be visible for non-prime users but was not found',
-    });
     t.true(
-      await tooltipExists('i.icon-information', '[data-name="not-ultra"]', {
+      await isDisplayed('[data-name="streamShift"]', { timeout: 1000 }),
+      'Case 3: Stream Shift switch should be visible but was not found',
+    );
+    t.true(
+      await tooltipExists('[data-name="streamShift"]', '[data-name="non-ultra"]', {
         timeout: 1000,
       }),
-      'Case 3: Non-Ultra stream shift tooltip did not appear',
+      'Case 4: Non-Ultra stream shift tooltip did not appear',
     );
     await assertFormContains({ streamShift: false });
     t.false(
       await isDisplayed('[data-name="display-selector"]'),
-      'Case 3: Display selectors should be hidden in single output mode',
+      'Case 5: Display selectors should be hidden in single output mode',
     );
     await clickButton('Close');
 
