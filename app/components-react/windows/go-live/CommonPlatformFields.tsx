@@ -1,8 +1,10 @@
 import { TPlatform } from '../../../services/platforms';
+import { VERTICAL_STREAM_TITLE_SUFFIX } from '../../../services/platforms/youtube';
 import { $t } from '../../../services/i18n';
 import React, { useMemo } from 'react';
 import { InputComponent, TextAreaInput, TextInput, TInputLayout } from '../../shared/inputs';
 import { TLayoutMode } from './platforms/PlatformSettingsLayout';
+import { useGoLiveSettings } from './useGoLiveSettings';
 import { Services } from '../../service-provider';
 import { Tooltip } from 'antd';
 import AnimatedWrapper from 'components-react/shared/AnimatedWrapper';
@@ -83,11 +85,22 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
     return '71px';
   }, [fieldsAreVisible, hasDescription]);
 
+  const { enabledPlatforms, isYoutubeDualStreaming } = useGoLiveSettings().extend(module => ({
+    get enabledPlatforms() {
+      return module.state.enabledPlatforms;
+    },
+    get isYoutubeDualStreaming() {
+      return module.state.isDualStreaming('youtube');
+    },
+  }));
+
   // determine max character length for title by enabled platform limitation
   let maxCharacters = 120;
-  const enabledPlatforms = view.enabledPlatforms;
   if (enabledPlatforms.includes('youtube')) {
     maxCharacters = 100;
+    if (isYoutubeDualStreaming) {
+      maxCharacters -= VERTICAL_STREAM_TITLE_SUFFIX.length;
+    }
   } else if (enabledPlatforms.includes('twitch')) {
     maxCharacters = 140;
   }
