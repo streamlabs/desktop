@@ -108,8 +108,8 @@ async function goThroughOnboarding(t: TExecutionContext, fn: () => Promise<void>
   await waitForDisplayed('h1=Connect Platforms');
   await clickIfDisplayed('button=Skip');
 
-  await waitForDisplayed('h1=Choose Your Plan');
-  await clickIfDisplayed('button=Skip');
+  await waitForDisplayed('div[data-testid=choose-free-plan-btn]', { timeout: 60000 });
+  await clickIfDisplayed('div[data-testid=choose-free-plan-btn]');
   await withPoolUser(user, async () => {
     await fn();
   });
@@ -195,8 +195,8 @@ test('Go through onboarding', async t => {
     await waitForDisplayed('h1=Connect Platforms');
     await clickIfDisplayed('button=Skip');
 
-    await waitForDisplayed('h1=Choose Your Plan');
-    await clickIfDisplayed('button=Skip');
+    await waitForDisplayed('div[data-testid=choose-free-plan-btn]', { timeout: 60000 });
+    await clickIfDisplayed('div[data-testid=choose-free-plan-btn]');
 
     await waitForDisplayed('h1=Set Up Your Mic & Webcam');
 
@@ -297,7 +297,6 @@ test.skip('Go through the onboarding and autoconfig', async t => {
   // await (await app.client.$('button=Start')).click();
 
   // Skip purchasing prime
-  // TODO: is this timeout because of autoconfig?
   await waitForDisplayed('div[data-testid=choose-free-plan-btn]', { timeout: 60000 });
   await click('div[data-testid=choose-free-plan-btn]');
 
