@@ -12,7 +12,7 @@ import StartStreamingButton from './StartStreamingButton';
 import { Tooltip } from 'antd';
 import { confirmAsync } from 'components-react/modals';
 import RecordingSwitcher from 'components-react/windows/go-live/RecordingSwitcher';
-import { EAvailableFeatures } from 'services/incremental-rollout';
+import { NotificationsToastHost } from 'components-react/root/NotificationsArea';
 import { KevinChatIcon } from 'components-react/shared/icons';
 import KevinApprovalBubble from 'components-react/agent/KevinApprovalBubble';
 import { KevinAnalytics } from 'components-react/agent/kevin-analytics';
@@ -209,6 +209,7 @@ function StudioFooterComponent() {
             </Tooltip>
           </div>
         )}
+        <NotificationsToastHost />
       </div>
 
       <div className={styles.navRight}>
