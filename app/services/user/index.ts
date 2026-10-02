@@ -884,6 +884,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
           // Keep legacy single-platform auth in sync for rollback safety
           this.UPDATE_LEGACY_PLATFORM(this.state.auth.platforms[newPrimary]);
         } else {
+          this.resetPlatformStreamSettings();
           this.LOGOUT();
           // Force logout if Trovo was the only linked platform since it's deprecated
           return true;
@@ -1246,8 +1247,19 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
 
     this.writeUserIdFile();
     this.unsubscribeFromSocketConnection();
+    this.resetPlatformStreamSettings();
     this.LOGOUT();
     this.userLogout.next();
+  }
+
+  /**
+   * Drop every platform's saved go-live settings so they cannot carry over to whichever
+   * account is signed in next. Called on every path that replaces the current account.
+   */
+  private resetPlatformStreamSettings() {
+    this.streamingService.views.allPlatforms.forEach(platform =>
+      getPlatformService(platform).resetStreamSettings(),
+    );
   }
 
   async reLogin() {
@@ -1279,6 +1291,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
 
     if (!auth) return EPlatformCallResult.Error;
 
+    this.resetPlatformStreamSettings();
     this.LOGOUT();
     this.LOGIN(auth);
 
