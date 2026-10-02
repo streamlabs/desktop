@@ -16,6 +16,7 @@ function StartStreamingButton(p: { disabled?: boolean }) {
   const {
     StreamingService,
     StreamSettingsService,
+    SettingsService,
     UserService,
     CustomizationService,
     MediaBackupService,
@@ -34,6 +35,7 @@ function StartStreamingButton(p: { disabled?: boolean }) {
     primaryPlatform,
     isMultiplatformMode,
     isTwitchUnprotectedStream,
+    protectedModeEnabled,
   } = useVuex(
     () => ({
       streamingStatus: StreamingService.views.streamingStatus,
@@ -46,6 +48,7 @@ function StartStreamingButton(p: { disabled?: boolean }) {
       primaryPlatform: UserService.state.auth?.primaryPlatform,
       isMultiplatformMode: StreamingService.views.isMultiplatformMode,
       isTwitchUnprotectedStream: StreamingService.views.isTwitchUnprotectedStream,
+      protectedModeEnabled: StreamingService.views.protectedModeEnabled,
     }),
     false,
   );
@@ -111,6 +114,18 @@ function StartStreamingButton(p: { disabled?: boolean }) {
     if (StreamingService.isStreaming) {
       StreamingService.toggleStreaming();
     } else {
+      // OBS does not refuse a blank stream key, so an unprotected stream would go live without one.
+      // Validate that the stream key exists in unprotected mode.
+      if (!protectedModeEnabled && !SettingsService.views.values.Stream.key) {
+        await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+          title: $t('Streaming Error'),
+          type: 'error',
+          message: $t('The stream key is missing. Please configure your streaming settings.'),
+          buttons: [$t('OK')],
+        });
+        return;
+      }
+
       // Check if the scene collection has completed loading and syncing
       if (MediaBackupService.views.globalSyncStatus === EGlobalSyncStatus.Syncing) {
         const goLive = await remote.dialog
