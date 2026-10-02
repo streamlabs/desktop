@@ -1,18 +1,16 @@
 import * as remote from '@electron/remote';
-import { Dropdown } from 'antd';
+import { Tooltip } from 'antd';
 import cx from 'classnames';
 import { alertAsync } from 'components-react/modals';
 import { AuthModal } from 'components-react/shared/AuthModal';
 import DualOutputControls from 'components-react/shared/DualOutputControls';
 import { SwitchInput } from 'components-react/shared/inputs';
 import MenuItem from 'components-react/shared/MenuItem';
-import electron from 'electron';
 import throttle from 'lodash/throttle';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { NotificationsBell } from 'components-react/root/NotificationsArea';
 import { $t } from 'services/i18n';
 import { ESettingsCategory } from 'services/settings';
-import Utils, { $i } from 'services/utils';
+import { $i } from 'services/utils';
 import { useVuex } from '../hooks';
 import { Services } from '../service-provider';
 import styles from './ToolsNav.m.less';
@@ -37,6 +35,7 @@ export function useToolsNav() {
     TransitionsService,
     DualOutputService,
     StreamingService,
+    MagicLinkService,
   } = Services;
 
   const {
@@ -74,21 +73,14 @@ export function useToolsNav() {
   }, [isLoggedIn, platform, username]);
 
   const [showModal, setShowModal] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  // Style blockers hide the native display/chat surfaces so this DOM popup can
-  // paint above them (see ToolsNav.tsx's callers in the top-nav migration plan).
-  // Driven from one effect so the profile dropdown and the log-out confirm modal
-  // can't race each other turning blockers off while the other is still open.
-  //
-  // The dropdown fades out over antd's animation (300ms) - clearing immediately
-  // would let the native surface paint over the popup mid-fade. So closing is
-  // debounced by that duration; opening (or re-opening while the timer is
-  // pending) is immediate.
+  // Style blockers hide the native display/chat surfaces so the log-out confirm
+  // modal can paint above them. Clearing is debounced by antd's 300ms fade so
+  // the native surface doesn't paint over the modal mid-fade.
   const clearBlockersTimeout = useRef<number>();
   useEffect(() => {
-    if (profileOpen || showModal) {
+    if (showModal) {
       window.clearTimeout(clearBlockersTimeout.current);
       updateStyleBlockers('main', true);
       return;
@@ -97,13 +89,10 @@ export function useToolsNav() {
       updateStyleBlockers('main', false);
     }, 300);
     return () => window.clearTimeout(clearBlockersTimeout.current);
-  }, [profileOpen, showModal]);
+  }, [showModal]);
 
-  const isMounted = useRef(true);
   useEffect(
     () => () => {
-      isMounted.current = false;
-
       // Don't leave style blockers engaged if this unmounts while open.
       // The block above will clear the timers.
       updateStyleBlockers('main', false);
@@ -114,6 +103,29 @@ export function useToolsNav() {
   function openSettingsWindow() {
     SettingsService.actions.showSettings();
   }
+
+  function openHelp() {
+    UsageStatisticsService.actions.recordClick('NavMenu', 'help');
+    SettingsService.actions.showSettings(ESettingsCategory.GetSupport);
+  }
+
+  const openDashboard = useMemo(
+    () =>
+      throttle(
+        async () => {
+          UsageStatisticsService.actions.recordClick('NavMenu', 'dashboard');
+          try {
+            const link = await MagicLinkService.getDashboardMagicLink();
+            remote.shell.openExternal(link);
+          } catch (e: unknown) {
+            console.error('Error generating dashboard magic link', e);
+          }
+        },
+        2000,
+        { trailing: false },
+      ),
+    [],
+  );
 
   const handleAuth = () => {
     if (isLoggedIn) {
@@ -204,52 +216,56 @@ export function useToolsNav() {
         <hr />
       </MenuItem>
 
+      {isLoggedIn && (
+        <MenuItem
+          title={$t('Dashboard')}
+          icon={<i className="icon-dashboard" />}
+          onClick={() => openDashboard()}
+          className={cx(styles.compact, styles.iconOnly)}
+          wrapperClassName={styles.toolsNav}
+        />
+      )}
+
       <MenuItem
-        title={$t('Settings')}
-        icon={<i className="icon-settings" />}
-        onClick={openSettingsWindow}
-        className={cx(styles.compact, styles.settingsMenu)}
+        title={$t('Get Help')}
+        icon={<i className="icon-question" />}
+        onClick={openHelp}
+        className={cx(styles.compact, styles.iconOnly)}
         wrapperClassName={styles.toolsNav}
       />
 
       <MenuItem
-        title={$t('Notifications')}
-        className={cx(styles.compact)}
+        title={$t('Settings')}
+        icon={<i className="icon-settings" />}
+        onClick={openSettingsWindow}
+        className={cx(styles.compact, styles.iconOnly)}
         wrapperClassName={styles.toolsNav}
-      >
-        <NotificationsBell />
-      </MenuItem>
+      />
 
       <MenuItem
-        title={isLoggedIn ? displayName : $t('Log In')}
-        className={cx(styles.compact)}
+        data-testid="nav-auth"
         wrapperClassName={styles.toolsNav}
+        onClick={() => (isLoggedIn ? setShowModal(true) : handleAuth())}
       >
         <div ref={profileRef} className={styles.userProfileAnchor}>
-          <Dropdown
-            overlay={
-              <UserProfileOverlay
-                isLoggedIn={isLoggedIn}
-                platform={platform}
-                displayName={displayName}
-                isMounted={isMounted}
-                setProfileOpen={setProfileOpen}
-                setShowModal={setShowModal}
-                handleAuth={handleAuth}
-              />
+          <Tooltip
+            title={
+              <div className={styles.userProfileTooltip}>
+                {isLoggedIn ? (
+                  <PlatformIndicator platform={platform} displayName={displayName} />
+                ) : (
+                  $t('Log In')
+                )}
+              </div>
             }
-            trigger={['click']}
-            visible={profileOpen}
-            onVisibleChange={setProfileOpen}
+            placement="left"
+            arrowPointAtCenter
             getPopupContainer={() => profileRef.current as HTMLElement}
-            placement="bottomRight"
-            align={{ offset: [0, 0] }}
           >
             <div className={styles.userProfile}>
               <img className={styles.userProfileImage} src={$i('images/user.png')} />
-              <i className={cx('icon-dropdown', styles.userProfileDropdownIcon)} />
             </div>
-          </Dropdown>
+          </Tooltip>
         </div>
       </MenuItem>
     </>
@@ -282,112 +298,8 @@ export function useToolsNav() {
   );
 
   // Signature of everything that can change this fragment's rendered width,
-  // for useNavCollapse to know when to re-measure. `studioMode` is excluded
-  // since it only ever toggles a class on the existing glyph, not its width.
-  const contentKey = `${isLoggedIn}|${displayName}|${dualOutputMode}`;
+  // for useNavCollapse to know when to re-measure.
+  const contentKey = `${isLoggedIn}|${dualOutputMode}`;
 
   return { items, modals, contentKey };
-}
-
-function UserProfileOverlay(p: {
-  isLoggedIn: boolean;
-  platform?: any;
-  displayName: string;
-  isMounted: React.MutableRefObject<boolean>;
-  setProfileOpen: (open: boolean) => void;
-  setShowModal: (show: boolean) => void;
-  handleAuth: () => void;
-}) {
-  const { SettingsService, MagicLinkService, UsageStatisticsService } = Services;
-
-  const {
-    isLoggedIn,
-    platform,
-    displayName,
-    isMounted,
-    setProfileOpen,
-    setShowModal,
-    handleAuth,
-  } = p;
-
-  const [dashboardOpening, setDashboardOpening] = useState(false);
-  const isDevMode = useMemo(() => Utils.isDevMode(), []);
-
-  const openDashboard = throttle(
-    async (page?: string) => {
-      UsageStatisticsService.actions.recordClick('NavMenu', page || 'dashboard');
-      if (dashboardOpening) return;
-      setDashboardOpening(true);
-
-      try {
-        const link = await MagicLinkService.getDashboardMagicLink(page);
-        remote.shell.openExternal(link);
-      } catch (e: unknown) {
-        console.error('Error generating dashboard magic link', e);
-      }
-
-      if (isMounted.current) setDashboardOpening(false);
-    },
-    2000,
-    { trailing: false },
-  );
-
-  return (
-    <div className={cx(styles.userProfileMenu, 'react')}>
-      {isLoggedIn && (
-        <>
-          <div className={styles.userProfileHeader}>
-            <PlatformIndicator platform={platform} displayName={displayName} />
-          </div>
-          <div
-            className={styles.userProfileItem}
-            onClick={() => {
-              setProfileOpen(false);
-              openDashboard();
-            }}
-          >
-            {$t('Dashboard')}
-          </div>
-        </>
-      )}
-
-      {isDevMode && (
-        <div
-          className={styles.userProfileItem}
-          onClick={() => {
-            setProfileOpen(false);
-            electron.ipcRenderer.send('openDevTools');
-          }}
-        >
-          {$t('Dev Tools')}
-        </div>
-      )}
-
-      <div
-        className={styles.userProfileItem}
-        onClick={() => {
-          setProfileOpen(false);
-          UsageStatisticsService.actions.recordClick('NavMenu', 'help');
-          SettingsService.actions.showSettings(ESettingsCategory.GetSupport);
-        }}
-      >
-        {$t('Get Help')}
-      </div>
-
-      <div
-        className={styles.userProfileItem}
-        data-testid="nav-auth"
-        onClick={() => {
-          setProfileOpen(false);
-          if (isLoggedIn) {
-            setShowModal(true);
-          } else {
-            handleAuth();
-          }
-        }}
-      >
-        {isLoggedIn ? $t('Log Out') : $t('Log In')}
-      </div>
-    </div>
-  );
 }

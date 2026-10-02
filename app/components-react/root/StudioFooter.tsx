@@ -9,10 +9,10 @@ import styles from './StudioFooter.m.less';
 import PerformanceMetrics from '../shared/PerformanceMetrics';
 import TestWidgets from './TestWidgets';
 import StartStreamingButton from './StartStreamingButton';
+import NotificationsArea from './NotificationsArea';
 import { Tooltip } from 'antd';
 import { confirmAsync } from 'components-react/modals';
 import RecordingSwitcher from 'components-react/windows/go-live/RecordingSwitcher';
-import { NotificationsToastHost } from 'components-react/root/NotificationsArea';
 import { KevinChatIcon } from 'components-react/shared/icons';
 import KevinApprovalBubble from 'components-react/agent/KevinApprovalBubble';
 import { KevinAnalytics } from 'components-react/agent/kevin-analytics';
@@ -209,7 +209,7 @@ function StudioFooterComponent() {
             </Tooltip>
           </div>
         )}
-        <NotificationsToastHost />
+        <NotificationsArea />
       </div>
 
       <div className={styles.navRight}>
