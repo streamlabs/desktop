@@ -30,6 +30,7 @@ import Tooltip from 'components-react/shared/Tooltip';
 import ConnectButton from 'components-react/shared/ConnectButton';
 import { Observable } from 'rxjs';
 import debounce from 'lodash/debounce';
+import { IIngestServer } from 'services/restream';
 
 function censorWord(str: string) {
   if (str.length < 3) return str;
@@ -327,20 +328,29 @@ const AUTO_INGEST_SERVER = 'auto';
 function IngestServerSetting(p: { disabled?: boolean }) {
   const { RestreamService } = Services;
   const preferred = useRealmObject(RestreamService.preferences).preferredIngestServer;
-  const [servers, setServers] = useState<{ name: string; url: string }[]>([]);
+  const [servers, setServers] = useState<IIngestServer[]>([]);
 
   useEffect(() => {
+    let mounted = true;
     const fetchServers = debounce(() => {
       RestreamService.actions.return
         .fetchIngestServers()
-        .then(res => setServers(res.servers))
-        .catch(() => setServers([]));
-    }, 5000);
+        .then(res => {
+          if (mounted) {
+            setServers(res.servers);
+          }
+        })
+        .catch(() => {
+          console.error('Failed to fetch ingest servers');
+          setServers([]);
+        });
+    }, 1000);
 
     fetchServers();
 
     return () => {
       fetchServers.cancel();
+      mounted = false;
     };
   }, []);
 
