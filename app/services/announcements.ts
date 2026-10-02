@@ -330,13 +330,6 @@ export class AnnouncementsService extends Service {
     const req = this.formRequest(endpoint);
     try {
       const resp = await jfetch<{ updates: IAnnouncementsInfo[]; lastUpdatedAt: number }>(req);
-
-      // HACK: API can return a sparse array of updates, which gets deserialized as an
-      // object with number keys. Check for this and convert it to an array if necessary.
-      if (resp.updates && !Array.isArray(resp.updates)) {
-        resp.updates = Object.values(resp.updates);
-      }
-
       console.debug('Fetched product updates:', resp);
       return resp;
     } catch (e: unknown) {
