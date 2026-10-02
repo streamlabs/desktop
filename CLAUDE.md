@@ -108,6 +108,18 @@ See `ARCHITECTURE.md` for the full model and the *why* behind the sharp edges.
   → `afterInit()`.
 - Cross‑service / cross‑window events use **RxJS** `Subject`s.
 
+## Alert type `apiKey` field naming
+
+When adding a new alert type to `alerts-config.ts`, the `apiKey` field must match
+the **backend field prefix**, not the internal alert type name. For example,
+`twitter_subscription` alert type uses `apiKey: 'twitter_sub'` because the backend
+returns settings with keys like `twitter_sub_image_href`, not `twitter_subscription_*`.
+The variation field parser in `AlertBoxModule.setData()` uses `${apiKey}_` prefix
+matching (see `app/components-react/widgets/useAlertBox.tsx` line 207). Mismatching
+this causes variation settings to fail initialization silently, leading to UI freezes.
+Also map internal alert types to API endpoints in `WidgetsService.playAlert()`
+(`app/services/widgets/widgets.ts`) if the backend uses a different name there.
+
 ## Testing
 
 Tests are **integration/e2e via WebdriverIO** — they launch the real Electron app
