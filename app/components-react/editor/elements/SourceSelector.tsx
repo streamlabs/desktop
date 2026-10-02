@@ -600,7 +600,8 @@ class SourceSelectorController {
   }
 
   get selectiveRecordingLocked() {
-    return !this.streamingServiceIdle;
+    // Selective recording is locked if the streaming service is not idle or if the vertical replay buffer is active.
+    return !this.streamingServiceIdle || this.streamingService.views.isVerticalReplayBuffer;
   }
 
   toggleSelectiveRecording() {
