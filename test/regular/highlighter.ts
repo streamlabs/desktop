@@ -1,6 +1,7 @@
 import { test, useWebdriver } from '../helpers/webdriver';
 import { setTemporaryRecordingPath } from '../helpers/modules/settings/settings';
 import { clickButton, focusMain, isDisplayed, waitForDisplayed } from '../helpers/modules/core';
+import { startReplayBuffer, saveReplayBuffer } from '../helpers/modules/replay-buffer';
 import { showPage } from '../helpers/modules/navigation';
 import {
   clickGoLive,
@@ -11,11 +12,11 @@ import {
   waitForStreamStart,
 } from '../helpers/modules/streaming';
 import { logIn } from '../helpers/modules/user';
-import { saveReplayBuffer } from '../helpers/modules/replay-buffer';
 import { fillForm } from '../helpers/modules/forms';
 import { withUser } from '../helpers/webdriver/user';
-const path = require('path');
-const fs = require('fs');
+import { sleep } from '../helpers/sleep';
+import { pathExistsSync, readdir } from 'fs-extra';
+import * as path from 'path';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -26,7 +27,8 @@ test('Highlighter save and export', async t => {
   const recordingDir = await setTemporaryRecordingPath(false);
 
   await showPage('Highlighter');
-  await clickButton('Configure');
+  await clickButton('Show clips');
+  await isDisplayed('div=No clips found');
 
   await prepareToGoLive();
   await tryToGoLive({
@@ -34,25 +36,30 @@ test('Highlighter save and export', async t => {
     twitchGame: 'Fortnite',
   });
   await waitForStreamStart();
+  await startReplayBuffer();
+  // Sleep so there is something for the replay buffer to capture
+  await sleep(1000);
   await saveReplayBuffer();
   await stopStream();
 
+  const files = await readdir(recordingDir);
+  const recordingLocation = path.resolve(recordingDir, files[0]);
   await focusMain();
-  await clickButton('All Clips');
-  await clickButton('Export');
+  await waitForDisplayed(`[data-id="${recordingLocation.replace(/\\/g, '/')}"]`);
+
   const fileName = 'MyTestVideo.mp4';
   const exportLocation = path.resolve(recordingDir, fileName);
-  console.log('Export location:', exportLocation);
+  await clickButton('Export');
   await fillForm({ exportLocation });
   await clickButton('Export Horizontal');
   await waitForDisplayed('h2=Publish to', { timeout: 60000 });
-  t.true(fs.existsSync(exportLocation), 'The video file should exist');
+  t.true(pathExistsSync(exportLocation), 'The video file should exist');
 });
 
 test('AI Highlighter', withUser('twitch', { prime: true }), async t => {
   // AI Highlighter install button shows
   await showPage('Highlighter');
-  await waitForDisplayed('[name="installHighlighter"]', {
+  await waitForDisplayed('[data-name="streamlabs-highlighter"]', {
     timeout: 3000,
     timeoutMsg: 'Highlighter tab AI Highlighter install button did not show',
   });
@@ -70,7 +77,7 @@ test('AI Highlighter', withUser('twitch', { prime: true }), async t => {
   // Highlighter div shows
   await waitForSettingsWindowLoaded();
   t.true(
-    await isDisplayed('[name="install-highlighter"]'),
+    await isDisplayed('[data-name="ai-highlighter-selector"]'),
     'Case 1: Highlighter card should show for supported game',
   );
 
@@ -80,7 +87,7 @@ test('AI Highlighter', withUser('twitch', { prime: true }), async t => {
   });
   await waitForSettingsWindowLoaded();
   t.false(
-    await isDisplayed('[name="install-highlighter"]'),
+    await isDisplayed('[data-name="ai-highlighter-selector"]'),
     'Case 2: Highlighter card should hide for not supported game',
   );
 
@@ -90,14 +97,14 @@ test('AI Highlighter', withUser('twitch', { prime: true }), async t => {
   });
   await waitForSettingsWindowLoaded();
   t.true(
-    await isDisplayed('[name="install-highlighter"]'),
+    await isDisplayed('[data-name="ai-highlighter-selector"]'),
     'Case 3: Highlighter card should show when changing from an unsupported game to a supported game',
   );
   await clickButton('Close');
   await clickGoLive();
   await waitForSettingsWindowLoaded();
   t.true(
-    await isDisplayed('[name="install-highlighter"]'),
+    await isDisplayed('[data-name="ai-highlighter-selector"]'),
     'Case 5: Highlighter card should show for supported game when opening go live window',
   );
   await clickButton('Close');
