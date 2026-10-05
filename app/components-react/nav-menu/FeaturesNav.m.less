@@ -35,4 +35,25 @@
       }
     }
   }
+
+  .pinned-app {
+    &:global(.ant-menu-item) {
+      padding-left: 0 !important;
+    }
+
+    :global(.ant-menu-title-content) {
+      margin-left: 0 !important;
+    }
+
+    &.active .pinned-app-icon {
+      box-shadow: 0 0 0 2px var(--nav-active);
+    }
+  }
+
+  .pinned-app-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
 }
