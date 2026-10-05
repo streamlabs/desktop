@@ -256,7 +256,7 @@ export default function Main() {
     if (dockWidth < 1 && mainWindowEl.current) {
       // migrate from old percentage value to the pixel value
       const appRect = mainWindowEl.current.getBoundingClientRect();
-      const defaultWidth = appRect.width * 0.28;
+      const defaultWidth = Math.max(minDockWidth, appRect.width * 0.2);
       setDockWidth(defaultWidth);
     }
   }, [uiReady]);
