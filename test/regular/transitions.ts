@@ -58,7 +58,8 @@ test('Test creating transitions using apiClient', async t => {
   // Create a scene and add a source so scene items are assigned to the video context
   const scene = scenesService.createScene('Shutdown Test Scene');
   t.assert(scene, 'Failed to create scene');
-  scene.createAndAddSource('Test Source', 'color_source');
+  const source = scene.createAndAddSource('Test Source', 'color_source');
+  t.assert(source, 'Failed to create source');
 
   const transition = (transitionsService as any).createTransition(
     'fade_transition',
