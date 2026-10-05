@@ -103,11 +103,15 @@ class LiveDockController {
   }
 
   /**
-   * In unprotected mode the stream goes to a custom ingest, so no linked platform's chat belongs
-   * to it. The dock falls back to the offline chat placeholder instead.
+   * In unprotected mode the stream usually goes to a custom ingest, so no linked platform's chat
+   * belongs to it and the dock falls back to the offline chat placeholder. The exception is a
+   * Twitch ingest with a linked Twitch account, which streams to that account's channel.
    */
-  get protectedModeEnabled() {
-    return this.streamingService.views.protectedModeEnabled;
+  get platformChatEnabled() {
+    return (
+      this.streamingService.views.protectedModeEnabled ||
+      this.streamingService.views.isTwitchUnprotectedStream
+    );
   }
 
   get defaultPlatformChatVisible() {
@@ -334,7 +338,7 @@ function LiveDock() {
     streamingStatus,
     enabledPlatforms,
     primaryPlatform,
-    protectedModeEnabled,
+    platformChatEnabled,
   } = useVuex(() =>
     pick(ctrl, [
       'isStreaming',
@@ -349,7 +353,7 @@ function LiveDock() {
       'streamingStatus',
       'enabledPlatforms',
       'primaryPlatform',
-      'protectedModeEnabled',
+      'platformChatEnabled',
     ]),
   );
 
@@ -469,7 +473,7 @@ function LiveDock() {
             )}
           </div>
           <div className="flex">
-            {protectedModeEnabled &&
+            {platformChatEnabled &&
               (hasLiveDockFeature('refresh-chat') ||
                 (hasLiveDockFeature('refresh-chat-streaming') && isStreaming) ||
                 (hasLiveDockFeature('refresh-chat-restreaming') && isRestreaming)) && (
@@ -478,7 +482,7 @@ function LiveDock() {
           </div>
         </div>
         {!hideStyleBlockers &&
-          protectedModeEnabled &&
+          platformChatEnabled &&
           (hasLiveDockFeature('chat-offline') ||
             (isStreaming && hasLiveDockFeature('chat-streaming')) ||
             !hasLiveDockFeature('chat-streaming')) && (
@@ -498,7 +502,7 @@ function LiveDock() {
         {/* Although technically there are no style blocking elements here we want it to mirror
           the behavior of our chat pane */}
         {!hideStyleBlockers &&
-          (!protectedModeEnabled ||
+          (!platformChatEnabled ||
             (!hasLiveDockFeature('chat-offline') &&
               (!ctrl.platform || (hasLiveDockFeature('chat-streaming') && !isStreaming)))) && (
             <OfflineChat chatEnabled={true} primaryPlatform={ctrl.platform} />
