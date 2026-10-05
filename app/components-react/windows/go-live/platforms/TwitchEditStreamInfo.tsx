@@ -60,7 +60,7 @@ const TwitchRequiredFields = memo((p: IPlatformComponentParams<'twitch'>) => {
         <TwitchTagsInput label={$t('Twitch Tags')} {...bind.tags} layout="vertical" />
       </div>
       {p.isAiHighlighterEnabled && (
-        <AiHighlighterToggle key="ai-toggle" cardIsExpanded={false} isUpdateMode={p.isUpdateMode} />
+        <AiHighlighterToggle key="ai-toggle" isUpdateMode={p.isUpdateMode} />
       )}
     </>
   );

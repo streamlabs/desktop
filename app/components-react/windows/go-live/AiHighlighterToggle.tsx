@@ -5,22 +5,14 @@ import { Services } from 'components-react/service-provider';
 import { useDebounce, useVuex } from 'components-react/hooks';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
-import { getConfigByGame, isGameSupported } from 'services/highlighter/models/game-config.models';
+import { isGameSupported } from 'services/highlighter/models/game-config.models';
+import { TInstalledHighlighterApp } from 'services/highlighter/models/highlighter.models';
 import { $t } from 'services/i18n';
-import { DiscordLogo } from 'components-react/highlighter/HypeWrapper';
-import PlatformLogo from 'components-react/shared/PlatformLogo';
-import { REPLAY_APP_NAME } from 'services/highlighter/constants';
+import { GO_LIVE_HIGHLIGHTER_GRAPHIC, REPLAY_APP_NAME } from 'services/highlighter/constants';
 import { promptAction } from 'components-react/modals';
 import { EDismissable } from 'services/dismissables';
 
-export default function AiHighlighterToggle({
-  cardIsExpanded,
-  isUpdateMode,
-}: {
-  cardIsExpanded: boolean;
-  isUpdateMode?: boolean;
-}) {
-  //TODO M: Probably good way to integrate the highlighter in to GoLiveSettings
+export default function AiHighlighterToggle({ isUpdateMode }: { isUpdateMode?: boolean }) {
   const { HighlighterService, StreamingService, DismissablesService } = Services;
   const {
     useHighlighter,
@@ -40,26 +32,26 @@ export default function AiHighlighterToggle({
     };
   });
 
-  const [gameIsSupported, setGameIsSupported] = useState(false);
-  const [gameConfig, setGameConfig] = useState<any>(null);
+  const [installedApp, setInstalledApp] = useState<TInstalledHighlighterApp | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [showReplayRecordingAlert, setShowReplayRecordingAlert] = useState(false);
   const disableAIHighlighter =
     (isVerticalRecording || isVerticalReplayBuffer) && outputDisplay === 'vertical';
+  const gameIsSupported = !!isGameSupported(gameName);
+
+  // The install itself happens after the stream, so the button only opts the user in. Once they
+  // are opted in, or already have an app, the card collapses to the toggle.
+  const showToggle = useHighlighter || (installedApp !== null && installedApp !== 'none');
 
   useEffect(() => {
-    const supportedGame = isGameSupported(gameName);
-    setGameIsSupported(!!supportedGame);
-    if (supportedGame) {
-      setGameConfig(getConfigByGame(supportedGame));
-      if (!isUpdateMode) setIsExpanded(true);
-    } else {
-      setGameConfig(null);
-    }
-  }, [gameName]);
-
-  useEffect(() => {
+    HighlighterService.actions.return.getInstalledHighlighterApp().then(setInstalledApp);
     checkRecorderStatus();
   }, []);
+
+  useEffect(() => {
+    if (installedApp === null) return;
+    setIsExpanded(!showToggle && !isUpdateMode);
+  }, [showToggle, installedApp]);
 
   async function checkRecorderStatus() {
     const running = await HighlighterService.actions.return.isStreamlabsRecorderRunning();
@@ -78,15 +70,6 @@ export default function AiHighlighterToggle({
       console.error('Failed to send stop recording command:', error);
     }
   }
-
-  function getInitialExpandedState() {
-    if (isUpdateMode) return false;
-    if (gameIsSupported) return true;
-    if (useHighlighter) return true;
-    return cardIsExpanded;
-  }
-  const initialExpandedState = getInitialExpandedState();
-  const [isExpanded, setIsExpanded] = useState(initialExpandedState);
 
   const showHighlighterBanner = shouldShow || !isUpdateMode;
 
@@ -152,207 +135,57 @@ export default function AiHighlighterToggle({
     );
   }
 
+  if (!gameIsSupported || !showHighlighterBanner) return <></>;
+
   return (
-    <div>
-      {gameIsSupported && showHighlighterBanner ? (
-        <div
-          key={'aiSelector'}
-          data-name="ai-highlighter-selector"
-          style={{
-            marginTop: '12px',
-            marginBottom: '24px',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            flexFlow: 'rowWrap',
-            width: 'width: 100%',
-            backgroundColor: 'var(--dark-background)',
-            borderRadius: '8px',
-          }}
-        >
-          <div style={{ flexGrow: 0, backgroundColor: 'red' }}></div>
-
-          <div className={styles.aiHighlighterBox}>
-            <div
-              className={styles.coloredBlob}
-              style={{
-                backgroundColor: `${gameConfig?.importModalConfig?.accentColor}`,
-                opacity: isExpanded ? 0.5 : 1,
-                filter: isExpanded ? 'blur(74px)' : 'blur(44px)',
-              }}
-            ></div>
-            <div className={styles.header}>
-              <div className={styles.headlineWrapper}>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <h3 className={styles.headline} onClick={() => setIsExpanded(!isExpanded)}>
-                    {$t('Get stream highlights!')}
-                  </h3>
-
-                  <SwitchInput
-                    name="replay"
-                    style={{ width: '80px', margin: 0, marginTop: '-2px' }}
-                    value={disableAIHighlighter ? false : useHighlighter}
-                    label=""
-                    onChange={toggleHighlighter}
-                  />
-                </div>
-                <div onClick={() => setIsExpanded(!isExpanded)} style={{ cursor: 'pointer' }}>
-                  {isExpanded ? (
-                    <UpOutlined style={{ color: '#BDC2C4' }} />
-                  ) : (
-                    <DownOutlined style={{ color: '#BDC2C4' }} />
-                  )}
-                </div>
-              </div>
-              <div className={styles.headlineWrapper}>
-                <h2 style={{ fontSize: '14px', fontWeight: 300 }}>
-                  {$t('Auto-generate game highlight reels of your stream')}
-                </h2>
-                <div
-                  className={styles.betaTag}
-                  style={{ backgroundColor: `${gameConfig?.importModalConfig?.accentColor}` }}
-                >
-                  {$t('Beta')}
-                </div>
-              </div>
-            </div>
-
-            {showReplayRecordingAlert && useHighlighter ? (
-              showRecorderWarning()
-            ) : (
-              <>
-                {isExpanded && (
-                  <>
-                    <div className={styles.expandedWrapper}>
-                      {!useHighlighter ? (
-                        <div
-                          style={{
-                            top: '12px',
-                            width: '100%',
-                            display: 'flex',
-                            position: 'relative',
-                          }}
-                        >
-                          {gameConfig?.importModalConfig?.horizontalExampleVideo &&
-                          gameConfig?.importModalConfig?.verticalExampleVideo ? (
-                            <>
-                              <div
-                                className={styles.plattformIcon}
-                                style={{ top: '0px', left: '120px' }}
-                              >
-                                <PlatformLogo platform="youtube" size={30} />
-                              </div>
-                              <div
-                                className={styles.plattformIcon}
-                                style={{ top: '97px', left: '32px' }}
-                              >
-                                <DiscordLogo />
-                              </div>
-
-                              <div
-                                className={styles.plattformIcon}
-                                style={{ top: '1px', left: '283px' }}
-                              >
-                                <PlatformLogo platform="tiktok" size={30} />
-                              </div>
-
-                              <div
-                                className={styles.plattformIcon}
-                                style={{ top: '93px', left: '187px' }}
-                              >
-                                <PlatformLogo platform="instagram" size={30} />
-                              </div>
-                              <div
-                                className={styles.horizontalVideo}
-                                style={{
-                                  backgroundColor: gameConfig?.importModalConfig?.backgroundColor,
-                                  borderColor: gameConfig?.importModalConfig?.accentColor,
-                                  boxShadow: `0px 0px 42px -4px ${gameConfig?.importModalConfig?.accentColor}30`,
-                                }}
-                              >
-                                <video
-                                  muted
-                                  autoPlay
-                                  loop
-                                  style={{ width: '100%' }}
-                                  src={gameConfig.importModalConfig.horizontalExampleVideo}
-                                ></video>
-                              </div>
-                              <div
-                                className={styles.verticalVideo}
-                                style={{
-                                  backgroundColor: gameConfig?.importModalConfig?.backgroundColor,
-                                  borderColor: gameConfig?.importModalConfig?.accentColor,
-                                  boxShadow: `0px 0px 42px -4px ${gameConfig?.importModalConfig?.accentColor}30`,
-                                }}
-                              >
-                                {' '}
-                                <video
-                                  muted
-                                  autoPlay
-                                  loop
-                                  style={{ height: '100%' }}
-                                  src={gameConfig.importModalConfig.verticalExampleVideo}
-                                ></video>
-                              </div>
-                            </>
-                          ) : (
-                            <div className={styles.image}></div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className={styles.educationSection}>
-                          <div>
-                            <span>⚠️</span>
-                            <span> {$t('Game language must be English')}</span>
-                          </div>{' '}
-                          <div>
-                            {' '}
-                            <span>⚠️</span>
-                            <span> {$t('Game must be fullscreen')}</span>{' '}
-                          </div>
-                          <div>
-                            {' '}
-                            <span>⚠️</span>
-                            <span> {$t('Game mode must be supported')}</span>
-                          </div>
-                          <div
-                            style={{
-                              marginTop: '-10px',
-                              marginLeft: '20px',
-                              fontWeight: 400,
-                            }}
-                          >
-                            <span style={{ fontSize: '12px' }}>
-                              {gameConfig?.gameModes && `(${gameConfig?.gameModes})`}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                      <img
-                        className={`${styles.artworkImage}`}
-                        src={gameConfig?.importModalConfig?.artwork}
-                        alt=""
-                      />
-                    </div>
-                  </>
-                )}
-              </>
-            )}
-            {isUpdateMode && (
-              <div className={styles.dismissable}>
-                <a
-                  onClick={() =>
-                    DismissablesService.actions.dismiss(EDismissable.HighlighterBanner)
-                  }
-                >
-                  {$t('Do not ask again')}
-                </a>
-              </div>
-            )}
-          </div>
+    <div key={'aiSelector'} data-name="ai-highlighter-selector" className={styles.highlighterCard}>
+      {showToggle ? (
+        <div className={styles.toggleRow}>
+          <span className={styles.toggleLabel}>{$t('Get Stream Highlights after stream')}</span>
+          <SwitchInput
+            name="replay"
+            value={disableAIHighlighter ? false : useHighlighter}
+            label=""
+            onChange={toggleHighlighter}
+            layout="horizontal"
+            checkmark
+            nolabel
+          />
         </div>
       ) : (
-        <></>
+        <div className={styles.header}>
+          <div className={styles.headlineWrapper} onClick={() => setIsExpanded(!isExpanded)}>
+            <h3 className={styles.headline}>{$t('Get Stream Highlights')}</h3>
+            <p className={styles.subheadline}>
+              {$t("Auto-generate highlight reels when you're done streaming")}
+            </p>
+          </div>
+          <div className={styles.actions}>
+            <Button className={styles.installButton} onClick={toggleHighlighter}>
+              {$t('One-click install')}
+            </Button>
+            <Button
+              className={styles.expandButton}
+              onClick={() => setIsExpanded(!isExpanded)}
+              icon={isExpanded ? <UpOutlined /> : <DownOutlined />}
+            />
+          </div>
+        </div>
+      )}
+
+      {showReplayRecordingAlert && useHighlighter
+        ? showRecorderWarning()
+        : isExpanded &&
+          !showToggle && (
+            <img className={styles.graphic} src={GO_LIVE_HIGHLIGHTER_GRAPHIC} alt="" />
+          )}
+
+      {isUpdateMode && (
+        <div className={styles.dismissable}>
+          <a onClick={() => DismissablesService.actions.dismiss(EDismissable.HighlighterBanner)}>
+            {$t('Do not ask again')}
+          </a>
+        </div>
       )}
     </div>
   );

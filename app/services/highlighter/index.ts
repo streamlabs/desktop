@@ -129,6 +129,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     },
   };
 
+  // Replay (AI Highlighter) is Windows-only
   aiHighlighterFeatureEnabled = getOS() === OS.Windows || Utils.isDevMode();
 
   /**

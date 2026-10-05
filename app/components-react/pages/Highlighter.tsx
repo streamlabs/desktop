@@ -71,7 +71,8 @@ export default function Highlighter() {
       // width, which is zero once the Replay section is hidden (Mac)
       style={{ position: 'relative', flex: 1, minWidth: 0, height: '100%' }}
     >
-      <ClipsView fillIntro={showReplay}>
+      {/* Without Replay (Mac) the clips are the whole page, so the editor is always available */}
+      <ClipsView fillIntro={showReplay} alwaysShowEditor={!showReplay}>
         {showReplay && (
           <ReplaySection
             onImport={() =>
@@ -88,7 +89,7 @@ export default function Highlighter() {
         getContainer={`.${importStyles.importModalRoot}`}
         onCancel={() => {
           if (importModal) {
-            UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+            UsageStatisticsService.actions.recordAnalyticsEvent('AIHighlighter', {
               type: 'DetectionModalCanceled',
               openedFrom: importModal.openedFrom,
               streamId: importModal.streamInfo?.id,

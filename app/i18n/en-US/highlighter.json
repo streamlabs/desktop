@@ -259,5 +259,9 @@
   "Select another file": "Select another file",
   "Today": "Today",
   "Yesterday": "Yesterday",
-  "%{count} days ago": "%{count} days ago"
+  "%{count} days ago": "%{count} days ago",
+  "Get Stream Highlights": "Get Stream Highlights",
+  "Auto-generate highlight reels when you're done streaming": "Auto-generate highlight reels when you're done streaming",
+  "One-click install": "One-click install",
+  "Get Stream Highlights after stream": "Get Stream Highlights after stream"
 }

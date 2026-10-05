@@ -24,7 +24,7 @@ const CLIPS_PEEK_HEIGHT = 160;
 /**
  * Body of the Highlighter page: whatever is passed as children on top, then the grid of all
  * clips. The editor panel slides in beside the clips (not the children) once enough clips are
- * selected to edit a video.
+ * selected to edit a video, or right away with `alwaysShowEditor`.
  * With `fillIntro` the children take up nearly the full visible height, leaving just enough room
  * for the top of the clips to peek out so users can tell there is more to scroll to. Without
  * clips they fill the whole visible height, so the first screen ends with the children.
@@ -32,16 +32,18 @@ const CLIPS_PEEK_HEIGHT = 160;
 export default function ClipsView({
   children,
   fillIntro = false,
+  alwaysShowEditor = false,
 }: {
   children?: React.ReactNode;
   fillIntro?: boolean;
+  alwaysShowEditor?: boolean;
 }) {
   const { HighlighterService, UsageStatisticsService } = Services;
   const clipsAmount = useVuex(() => HighlighterService.views.clips.length);
   const selectedAmount = useVuex(
     () => HighlighterService.views.clips.filter(clip => clip.enabled && !clip.deleted).length,
   );
-  const showEditor = selectedAmount >= MIN_SELECTED_CLIPS_FOR_EDITOR;
+  const showEditor = alwaysShowEditor || selectedAmount >= MIN_SELECTED_CLIPS_FOR_EDITOR;
   const [clips, setClips] = useState<{ id: string }[]>([]);
 
   const [clipsLoaded, setClipsLoaded] = useState<boolean>(false);

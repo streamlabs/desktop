@@ -25,6 +25,9 @@ export function EditingControls({
     audio: HighlighterService.views.audio,
     video: HighlighterService.views.video,
     error: HighlighterService.views.error,
+    // The editor can be shown before any clip is selected, but there is nothing to preview or
+    // export yet
+    hasSelectedClips: HighlighterService.views.clips.some(clip => clip.enabled && !clip.deleted),
   }));
 
   function setTransitionDuration(duration: number) {
@@ -69,10 +72,19 @@ export function EditingControls({
       }}
     >
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-        <Button style={{ flex: 1 }} onClick={() => emitSetShowModal('preview')}>
+        <Button
+          style={{ flex: 1 }}
+          disabled={!v.hasSelectedClips}
+          onClick={() => emitSetShowModal('preview')}
+        >
           {$t('Preview')}
         </Button>
-        <Button style={{ flex: 1 }} type="primary" onClick={() => emitSetShowModal('export')}>
+        <Button
+          style={{ flex: 1 }}
+          type="primary"
+          disabled={!v.hasSelectedClips}
+          onClick={() => emitSetShowModal('export')}
+        >
           {$t('Export')}
         </Button>
       </div>
