@@ -755,13 +755,13 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Chat url of a primary platform
    * If the primary platform is not enabled, and we're on single stream mode,
    * returns the URL of the first enabled platform
-   * @remark Empty in unprotected mode. A custom ingest stream goes to the user's own server, so
-   * no linked platform is receiving it — resolving a platform here would mount the chat of a
-   * platform that is not live.
+   * @remark Empty in unprotected mode, except for a Twitch ingest with a linked Twitch account.
+   *  A custom ingest stream goes to the user's own server so no linked platform is receiving it,`
+   * which resolves a platform here would mount the chat of a platform that is not live.
    */
   get chatUrl(): string {
     if (!this.userView.isLoggedIn || !this.userView.auth) return '';
-    if (!this.protectedModeEnabled) return '';
+    if (!this.protectedModeEnabled && !this.isTwitchUnprotectedStream) return '';
 
     const enabledPlatforms = this.enabledPlatforms;
     const platform = this.enabledPlatforms.includes(this.userView.auth.primaryPlatform)
