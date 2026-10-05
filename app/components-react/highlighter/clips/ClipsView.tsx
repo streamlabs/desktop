@@ -272,7 +272,10 @@ function ClipsLoadingView() {
     <div className={styles.clipLoadingIndicator}>
       <h2>{$t('Loading')}</h2>
       <p>
-        {clips.filter(clip => clip.loaded).length}/{clips.length} Clips
+        {$t('%{loaded}/%{total} Clips', {
+          loaded: clips.filter(clip => clip.loaded).length,
+          total: clips.length,
+        })}
       </p>
     </div>
   );

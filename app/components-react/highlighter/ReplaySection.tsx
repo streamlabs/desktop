@@ -10,7 +10,6 @@ import {
   HIGHLIGHTER_APP_NAME,
   REPLAY_APP_NAME,
   REPLAY_IMAGE_PATH,
-  REPLAY_SETUP_SIZE_MB,
 } from 'services/highlighter/constants';
 import { $t } from 'services/i18n';
 import Utils from 'services/utils';

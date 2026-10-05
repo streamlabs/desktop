@@ -23,7 +23,7 @@ export default function ManualCaptureSection({ title }: { title: string }) {
 
   const v = useVuex(() => ({
     settingsValues: SettingsService.views.values,
-    isStreaming: StreamingService.isStreaming,
+    isStreaming: StreamingService.views.isStreaming,
   }));
 
   const correctlyConfigured =
