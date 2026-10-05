@@ -190,6 +190,8 @@
   "Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable Selective Recording to go live with Dual Output.": "選擇性錄製僅適用於水平來源且會停用編輯垂直輸出場景。請停用選擇性錄製，以啟用 Dual Output。",
   "Studio Mode Enabled": "工作室模式已啟用",
   "Cannot toggle Dual Output while in Studio Mode. Please disable Studio Mode to go live with Dual Output.": "在工作室模式中無法切換 Dual Output。請停用工作室模式，以啟用 Dual Output。",
+  "Dual Output Enabled": "Dual Output Enabled",
+  "Cannot toggle Studio Mode while in Dual Output Mode. Please disable Dual Output to use Studio Mode.": "Cannot toggle Studio Mode while in Dual Output Mode. Please disable Dual Output to use Studio Mode.",
   "Streamlabs has detected high CPU usage in Dual Output mode": "Streamlabs 偵測到在 Dual Output 模式下 CPU 使用率高",
   "System resource overuse.": "系統資源過度使用。",
   "To mitigate hide one of outputs or right click in editor to enable Performance Mode.": "為了解決此問題，可以隱藏其中一個輸出，或者右鍵按一下編輯器以啟用效能模式。",
