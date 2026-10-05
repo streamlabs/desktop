@@ -27,7 +27,7 @@ import BrowserView from './shared/BrowserView';
 import MediaGallery from './windows/MediaGallery';
 import Projector from './windows/Projector';
 import AddSource from './windows/AddSource';
-import SideNav from './sidebar/SideNav';
+import NavMenu from './nav-menu/NavMenu';
 import WelcomeToPrime from './windows/WelcomeToPrime';
 import Notifications from './windows/notifications/Notifications';
 import NotificationsAndNews from './windows/notifications';
@@ -83,7 +83,7 @@ export const components = {
   MediaGallery,
   AddSource,
   RecentEventsWindow,
-  SideNav,
+  NavMenu,
   WelcomeToPrime,
   Notifications,
   NotificationsAndNews,
