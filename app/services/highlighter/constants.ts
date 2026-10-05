@@ -38,7 +38,7 @@ export const REPLAY_SETUP_EXE_NAME = 'G HUB Replay-Setup.exe';
 // Shown next to the install button. Keep in sync with the size of the published installer.
 export const REPLAY_SETUP_SIZE_MB = 160;
 export const REPLAY_IMAGE_PATH = 'https://cdn.streamlabs.com/static/imgs/highlighter';
-export const GO_LIVE_HIGHLIGHTER_GRAPHIC = `${REPLAY_IMAGE_PATH}/go-live-highlights.png`;
+export const GO_LIVE_HIGHLIGHTER_GRAPHIC = `${REPLAY_IMAGE_PATH}/go-live-graphic.png`;
 
 // The standalone app Replay replaces. Users who still have it keep their data by migrating from
 // inside it — Highlighter merges and installs Replay itself — so Desktop hands them over instead
