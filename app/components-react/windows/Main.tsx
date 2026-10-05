@@ -401,6 +401,7 @@ const LiveDockContainer = memo(function LiveDockContainer(p: ILiveDockContainerP
       {!isDockCollapsed && (
         <ResizeBar
           position={p.onLeft ? 'left' : 'right'}
+          resizeHandle={p.onLeft ? 'e' : 'w'}
           onInput={(val: number) => p.setLiveDockWidth(val)}
           max={p.max}
           min={p.min}
