@@ -190,6 +190,8 @@
   "Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable Selective Recording to go live with Dual Output.": "Seçici Kaydetme yalnızca yatay kaynaklarla çalışır ve dikey çıkış sahnesinin düzenlenmesini devre dışı bırakır. Dual Output ile canlı yayına geçmek için lütfen Seçici Kaydetme’yi devre dışı bırakın.",
   "Studio Mode Enabled": "Stüdyo Modu Etkin",
   "Cannot toggle Dual Output while in Studio Mode. Please disable Studio Mode to go live with Dual Output.": "Stüdyo Modunda Dual Output değiştirilemez. Dual Output ile canlı yayına geçmek için lütfen Stüdyo Modunu devre dışı bırakın.",
+  "Dual Output Enabled": "Dual Output Enabled",
+  "Cannot toggle Studio Mode while in Dual Output Mode. Please disable Dual Output to use Studio Mode.": "Cannot toggle Studio Mode while in Dual Output Mode. Please disable Dual Output to use Studio Mode.",
   "Streamlabs has detected high CPU usage in Dual Output mode": "Streamlabs, Dual Output modunda yüksek CPU kullanımı tespit etti.",
   "System resource overuse.": "Sistem kaynaklarının aşırı kullanımı.",
   "To mitigate hide one of outputs or right click in editor to enable Performance Mode.": "Bu sorunu hafifletmek için çıkışlardan birini gizleyin veya düzenleyicide sağ tıklayarak Performans Modu’nu etkinleştirin.",
