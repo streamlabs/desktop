@@ -420,6 +420,10 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
       this.obsTransitions[id].release();
       delete this.obsTransitions[id];
     });
+    if (this.oldDuplicate) {
+      this.oldDuplicate.release();
+      this.oldDuplicate = null;
+    }
     this.releaseStudioModeObjects();
     obs.Global.setOutputSource(0, null);
   }
