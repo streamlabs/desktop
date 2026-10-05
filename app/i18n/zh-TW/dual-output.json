@@ -1,5 +1,6 @@
 {
   "Toggle horizontal display": "Toggle horizontal display",
   "Toggle vertical display": "Toggle vertical display",
-  "Error stopping stream: default streams do not exist.": "停止直播時發生錯誤：預設直播不存在。"
+  "Error stopping stream: default streams do not exist.": "停止直播時發生錯誤：預設直播不存在。",
+  "The stream key is missing for the %{display} output. Please configure your streaming settings.": "The stream key is missing for the %{display} output. Please configure your streaming settings."
 }
