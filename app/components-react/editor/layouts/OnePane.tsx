@@ -16,6 +16,7 @@ export function OnePane(p: ILayoutProps) {
     <div className={cx(styles.columns, styles.sidePadded, p.className)} ref={componentRef}>
       <ResizeBar
         position="left"
+        complementary
         value={bars.bar1}
         onInput={(value: number) => setBar('bar1', value)}
         max={calculateMax(mins.rest)}
