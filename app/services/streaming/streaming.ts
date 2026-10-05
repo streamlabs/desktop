@@ -88,6 +88,7 @@ import { authorizedHeaders } from 'util/requests';
 import { HostsService } from '../hosts';
 import { assertIsDefined, getDefined } from 'util/properties-type-guards';
 import { StreamInfoView } from './streaming-view';
+import { isCommonTwitchService } from './stream-destination';
 import { GrowService } from 'services/grow/grow';
 import * as remote from '@electron/remote';
 import { RecordingModeService } from 'services/recording-mode';
@@ -459,11 +460,10 @@ export class StreamingService
       this.userService.setPrimaryPlatform('twitch');
     }
 
-    // don't interact with API in logged out mode and when protected mode is disabled
+    // Only a Twitch destination may use Twitch's metadata API in unprotected mode.
     if (
       !this.userService.isLoggedIn ||
-      (!this.streamSettingsService.state.protectedModeEnabled &&
-        this.userService.state.auth?.primaryPlatform !== 'twitch') // twitch is a special case
+      (!this.views.protectedModeEnabled && !this.views.isTwitchUnprotectedStream)
     ) {
       await this.finishStartStreaming();
       return;
@@ -885,6 +885,8 @@ export class StreamingService
         // It is also unavailable during a stream shift, which always goes out through the
         // restream service.
         const isEnhancedBroadcasting =
+          (this.views.protectedModeEnabled ||
+            isCommonTwitchService(this.streamSettingsService.settings)) &&
           !this.views.isLiveOutputEditingEnabled &&
           !this.views.isStreamShiftMode &&
           (this.views.isTwitchDualStreamEnabled ||
@@ -1961,6 +1963,21 @@ export class StreamingService
   }
 
   async finishStartStreaming(): Promise<unknown> {
+    if (!this.streamSettingsService.protectedModeEnabled) {
+      if (this.streamSettingsService.settings.streamType === 'rtmp_common') {
+        // Older profiles may contain a server from another service. Let OSN normalize
+        // the saved selection and reload it before any output inherits the settings.
+        this.settingsService.setSettings('Stream', this.settingsService.state.Stream.formData);
+      }
+
+      // Recompute for every attempt, including direct/forced starts and retries.
+      // Keep the saved native preference so returning to common Twitch restores it.
+      this.SET_ENHANCED_BROADCASTING(
+        isCommonTwitchService(this.streamSettingsService.settings) &&
+          this.settingsService.isEnhancedBroadcasting(),
+      );
+    }
+
     const releaseOutputStart = videoOutputCoordinator.beginOutputStart();
     try {
       return await this.finishStartStreamingWithReservation();
@@ -2046,7 +2063,7 @@ export class StreamingService
 
     startStreamingPromise
       .then(() => {
-        if (this.views.settings.streamShift) {
+        if (this.views.protectedModeEnabled && this.views.settings.streamShift) {
           // Remove the pending state to show the correct text in the start streaming button
           this.restreamService.setStreamShiftStatus('inactive');
 
@@ -4843,7 +4860,23 @@ export class StreamingService
       // -4 is used for generic unknown messages in OBS. Both -4 and any other code
       // we don't recognize should fall into this branch and show a generic error.
 
-      if (!this.userService.isLoggedIn) {
+      const isStreamKeyMissingError = this.getIsStreamKeyMissingError(info);
+
+      // Check if a stream key is missing for both logged out and logged in users because a logged out
+      // user streams in unprotected mode, which means a missing stream key can occur even if the user is not logged in.
+      if (isStreamKeyMissingError) {
+        if (this.views.isDualOutputMode) {
+          const display = info.service === 'vertical' ? 'vertical' : 'horizontal';
+          errorText = $t(
+            'The stream key is missing for the %{display} output. Please configure your streaming settings.',
+            { display },
+          );
+          diagReportMessage = diagReportMessage.concat(errorText);
+        } else {
+          errorText = $t('The stream key is missing. Please configure your streaming settings.');
+          diagReportMessage = diagReportMessage.concat(errorText);
+        }
+      } else if (!this.userService.isLoggedIn) {
         const messages = formatStreamErrorMessage('LOGGED_OUT_ERROR');
 
         errorText = messages.user;
@@ -4998,6 +5031,31 @@ export class StreamingService
     };
 
     this.handleOBSOutputError(error);
+  }
+
+  /**
+   * Determines if the error is caused by a missing stream key
+   * @remarks Used to show a more descriptive error message for the user
+   * Note: This check is also necessary for non-logged-in users who might be attempting to stream
+   * without a saved stream key.
+   * @param info - OBS Output Signal
+   * @returns Whether the error is a stream key error
+   */
+  private getIsStreamKeyMissingError(info: IOBSOutputSignalInfo): boolean {
+    // Only check stream keys for streaming signals
+    if (info.type !== EOBSOutputType.Streaming) return false;
+
+    // Verify horizontal stream key exists
+    if (info.service === 'default' && this.settingsService.views.values.Stream.key === '') {
+      return true;
+    }
+
+    // Verify vertical stream key exists
+    if (info.service === 'vertical' && this.settingsService.views.values.StreamSecond.key === '') {
+      return true;
+    }
+
+    return false;
   }
 
   private sendStreamEndEvent() {

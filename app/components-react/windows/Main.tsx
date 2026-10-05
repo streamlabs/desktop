@@ -52,7 +52,7 @@ export default function Main() {
     EditorCommandsService,
     ScenesService,
     CustomizationService,
-    OnboardingV2Service,
+    StreamSettingsService,
   } = Services;
   const mainWindowEl = useRef<HTMLDivElement | null>(null);
   const mainMiddleEl = useRef<HTMLDivElement | null>(null);
@@ -87,6 +87,8 @@ export default function Main() {
     isLoggedIn,
     platform,
     activeSceneId,
+    protectedModeEnabled,
+    isTwitchUnprotectedStream,
   } = useVuex(() => ({
     errorAlert: AppService.state.errorAlert,
     applicationLoading: AppService.state.loading,
@@ -95,6 +97,8 @@ export default function Main() {
     isLoggedIn: UserService.views.isLoggedIn,
     platform: UserService.views.platform,
     activeSceneId: ScenesService.views.activeSceneId,
+    protectedModeEnabled: StreamSettingsService.views.protectedModeEnabled,
+    isTwitchUnprotectedStream: StreamingService.views.isTwitchUnprotectedStream,
   }));
 
   const showLoadingSpinner = useMemo(
@@ -227,10 +231,19 @@ export default function Main() {
   }, []);
 
   useEffect(() => {
-    if (streamingStatus === EStreamingState.Starting && isDockCollapsed) {
+    // Live dock should open when:
+    // - Protected mode: Streaming via APIs
+    // - Unprotected mode: Streaming to Twitch
+    const hasPlatformChat = protectedModeEnabled || isTwitchUnprotectedStream;
+    if (streamingStatus === EStreamingState.Starting && hasPlatformChat && isDockCollapsed) {
       setCollapsed(false);
     }
-  }, [streamingStatus]);
+
+    // Otherwise never open live dock, and collapse it if open, in unprotected mode (e.g. stream directly to custom destination)
+    if (streamingStatus === EStreamingState.Starting && !hasPlatformChat && !isDockCollapsed) {
+      setCollapsed(true);
+    }
+  }, [streamingStatus, protectedModeEnabled, isTwitchUnprotectedStream, isDockCollapsed]);
 
   const oldTheme = useRef<TApplicationTheme | null>(null);
   useEffect(() => {
