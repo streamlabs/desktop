@@ -1,0 +1,68 @@
+@import '../../styles/index';
+@import '../../styles/mixins';
+@import '../../styles/badges';
+@import '../../styles/ultra';
+
+.nav-menu {
+  position: relative;
+  width: 100%;
+
+  // The unified Menu fills the bar; rc-menu renders its own flex container.
+  :global(.ant-menu-horizontal) {
+    width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+
+    // Direct children are MenuItem's wrapper divs (components-react/shared/MenuItem.tsx).
+    > div {
+      flex: none;
+    }
+  }
+
+  &[data-nav-collapse~='compact'] :global(.ant-menu-item) {
+    padding: 0 8px !important;
+  }
+
+  // Allow logout confirmation modal to show above resize bars
+  z-index: 990;
+  overflow: visible;
+
+  .link-badge {
+    transform: scale(1.2, 1.2);
+    margin: auto;
+    display: block;
+    border: 1px solid var(--section-alt);
+    font-size: 8px;
+  }
+
+  // Fixed height (matching antd's own @menu-horizontal-line-height) so every
+  // item - icon-only, icon+label, or a raw control like the profile avatar -
+  // sits at the same vertical position instead of sizing to its own content.
+  :global(.ant-menu-item) {
+    height: 46px;
+    padding: 0 16px !important;
+    background: none !important;
+    color: var(--paragraph) !important;
+    display: flex;
+    align-items: center;
+
+    &:global(.ant-menu-item-selected)::after {
+      display: none;
+    }
+
+    i:not(.link-badge) {
+      font-size: 14px;
+    }
+
+    svg {
+      fill: var(--paragraph);
+      width: 14px;
+      height: 14px;
+      margin-right: 10px;
+    }
+
+    &:hover:not(:active) svg {
+      fill: var(--title);
+    }
+  }
+}
