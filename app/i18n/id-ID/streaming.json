@@ -190,6 +190,8 @@
   "Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable Selective Recording to go live with Dual Output.": "Perekaman Selektif hanya berfungsi pada sumber horizontal dan fitur ini menonaktifkan pengeditan adegan keluaran vertikal. Nonaktifkan Perekaman Selektif untuk menayangkan dengan Dual Output.",
   "Studio Mode Enabled": "Mode Studio Diaktifkan",
   "Cannot toggle Dual Output while in Studio Mode. Please disable Studio Mode to go live with Dual Output.": "Tidak dapat mengalihkan Dual Output sewaktu dalam Mode Studio. Harap nonaktifkan Mode Studio untuk menayangkan dengan Dual Output.",
+  "Dual Output Enabled": "Dual Output Enabled",
+  "Cannot toggle Studio Mode while in Dual Output Mode. Please disable Dual Output to use Studio Mode.": "Cannot toggle Studio Mode while in Dual Output Mode. Please disable Dual Output to use Studio Mode.",
   "Streamlabs has detected high CPU usage in Dual Output mode": "Streamlabs telah mendeteksi penggunaan CPU yang tinggi dalam mode Dual Output",
   "System resource overuse.": "Penggunaan sumber daya sistem yang berlebihan.",
   "To mitigate hide one of outputs or right click in editor to enable Performance Mode.": "Untuk mengurangi, sembunyikan salah satu keluaran atau klik kanan di editor untuk mengaktifkan Mode Performance.",
