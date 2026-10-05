@@ -190,6 +190,8 @@
   "Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable Selective Recording to go live with Dual Output.": "セレクティブレコーディングは横方向ソースでのみ動作し、縦方向の出力シーンの編集が無効になります。Dual Outputでライブを行うには、セレクティブレコーディングを無効にします。",
   "Studio Mode Enabled": "スタジオモードを有効化済み",
   "Cannot toggle Dual Output while in Studio Mode. Please disable Studio Mode to go live with Dual Output.": "スタジオモード中は Dual Output を切り替えられません。Dual Outputでライブを行うには、スタジオモードを無効にします。",
+  "Dual Output Enabled": "Dual Output Enabled",
+  "Cannot toggle Studio Mode while in Dual Output Mode. Please disable Dual Output to use Studio Mode.": "Cannot toggle Studio Mode while in Dual Output Mode. Please disable Dual Output to use Studio Mode.",
   "Streamlabs has detected high CPU usage in Dual Output mode": "StreamlabsがDual Outputモードで高いCPU使用率を検出しました。",
   "System resource overuse.": "システムリソースを過剰に使用しています。",
   "To mitigate hide one of outputs or right click in editor to enable Performance Mode.": "出力の1つを非表示にするか、エディターで右クリックしてパフォーマンスモードを有効にしてください。",
