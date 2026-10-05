@@ -414,6 +414,7 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
   }
 
   shutdown() {
+    if (this.state.studioMode) this.disableStudioMode();
     Object.keys(this.obsTransitions).forEach(id => {
       this.propertiesManagers[id]?.destroy();
       delete this.propertiesManagers[id];
