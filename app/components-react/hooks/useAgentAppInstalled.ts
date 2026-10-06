@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
-import { EMenuItemKey } from 'services/side-nav';
 import { getOS, OS } from 'util/operating-systems';
+import { ENavMenuKey } from 'services/nav-menu';
 
 export const AGENT_APP_STORE_ID = '7643';
 export const AGENT_APP_ID = '93125d1c33';
@@ -20,7 +20,7 @@ export const AGENT_APP_ID = '93125d1c33';
  * or enabled anywhere, without needing to remount.
  */
 export function useAgentAppInstalled() {
-  const { NavigationService, PlatformAppsService, SideNavService } = Services;
+  const { NavigationService, PlatformAppsService } = Services;
 
   useEffect(() => {
     if (getOS() !== OS.Windows) return;
@@ -37,8 +37,11 @@ export function useAgentAppInstalled() {
 
   async function installAgent() {
     await PlatformAppsService.actions.return.refreshProductionApps();
-    NavigationService.actions.navigate('PlatformAppStore', { appId: AGENT_APP_STORE_ID });
-    SideNavService.actions.setCurrentMenuItem(EMenuItemKey.AppStore);
+    NavigationService.actions.navigate(
+      'PlatformAppStore',
+      { appId: AGENT_APP_STORE_ID },
+      ENavMenuKey.AppStore,
+    );
   }
 
   function enableAgent() {

@@ -23,10 +23,7 @@ useWebdriver();
 
 test('Highlighter save and export', async t => {
   await logIn();
-  const recordingDir = await setTemporaryRecordingPath(
-    false,
-    path.join(t.context.cacheDir, 'slobs-client'),
-  );
+  const recordingDir = await setTemporaryRecordingPath(false);
 
   await showPage('Highlighter');
   await clickButton('Configure');

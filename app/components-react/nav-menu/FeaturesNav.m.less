@@ -1,0 +1,59 @@
+@import '../../styles/index';
+@import '../../styles/mixins';
+@import '../../styles/badges';
+@import '../../styles/ultra';
+
+.features-nav {
+  .badge {
+    border-radius: 4px;
+    background-color: var(--button);
+    color: var(--paragraph);
+    padding: 2px 6px;
+    margin-left: 8px;
+  }
+
+  .ultra:not(.active) {
+    .ultra-text() !important;
+
+    i {
+      .ultra-text('warm') !important;
+    }
+  }
+
+  :global(.ant-menu-item) {
+    &.active {
+      color: var(--nav-active) !important;
+
+      svg {
+        fill: var(--nav-active) !important;
+      }
+    }
+
+    :global([data-nav-collapse~='feature-labels']) & {
+      :global(.ant-menu-title-content) {
+        display: none;
+      }
+    }
+  }
+
+  .pinned-app {
+    &:global(.ant-menu-item) {
+      padding-left: 0 !important;
+    }
+
+    :global(.ant-menu-title-content) {
+      margin-left: 0 !important;
+    }
+
+    &.active .pinned-app-icon {
+      box-shadow: 0 0 0 2px var(--nav-active);
+    }
+  }
+
+  .pinned-app-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+}
