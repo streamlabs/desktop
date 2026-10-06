@@ -235,6 +235,7 @@ export function useToolsNav() {
       />
 
       <MenuItem
+        data-testid="nav-settings"
         title={$t('Settings')}
         icon={<i className="icon-settings" />}
         onClick={openSettingsWindow}

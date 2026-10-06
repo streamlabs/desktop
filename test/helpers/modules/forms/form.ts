@@ -61,31 +61,35 @@ export function useForm(name?: string) {
    * When filling the form, the element's `data-name` attribute is the key and the value is the `value` attribute.
    * The `data-name` attribute serves as the selector.
    */
-  async function fillForm(formData: TFormData) {
+  async function fillForm(formData: TFormData, debounce?: number) {
     // traverse form and fill inputs
     const filledFields: string[] = [];
-    await traverseForm(async (input, stopTraverse) => {
-      const name = input.name;
-      if (!(name in formData)) return;
-      const value = formData[name];
-      try {
-        if (typeof formData[name] === 'function') {
-          // if function provided as a value then call it as a FieldSetter function
-          const fieldSetter = formData[name] as TFiledSetterFn<any>;
-          await fieldSetter(input);
-        } else {
-          // otherwise set the given value
-          await input.setDisplayValue(formData[name]);
+    await traverseForm(
+      async (input, stopTraverse) => {
+        const name = input.name;
+        if (!(name in formData)) return;
+        const value = formData[name];
+        try {
+          if (typeof formData[name] === 'function') {
+            // if function provided as a value then call it as a FieldSetter function
+            const fieldSetter = formData[name] as TFiledSetterFn<any>;
+            await fieldSetter(input);
+          } else {
+            // otherwise set the given value
+            await input.setDisplayValue(formData[name]);
+          }
+        } catch (e: unknown) {
+          console.log(
+            `Input element found but failed to set the value "${value}" for the field "${name}"`,
+          );
+          throw e;
         }
-      } catch (e: unknown) {
-        console.log(
-          `Input element found but failed to set the value "${value}" for the field "${name}"`,
-        );
-        throw e;
-      }
-      filledFields.push(name);
-      if (filledFields.length === Object.keys(formData).length) stopTraverse();
-    }, true);
+        filledFields.push(name);
+        if (filledFields.length === Object.keys(formData).length) stopTraverse();
+      },
+      true,
+      debounce,
+    );
 
     // check that we filled out all requested fields
     const notFoundFields = difference(Object.keys(formData), filledFields);
@@ -115,6 +119,7 @@ export function useForm(name?: string) {
   async function traverseForm<T>(
     cb: (inputController: BaseInputController<any>, stopTraverse: Function) => Promise<T>,
     refetchControllersAfterEachStep = false,
+    debounce = 100,
   ): Promise<T[]> {
     let controllers = await getInputControllers();
     const results: T[] = [];
@@ -134,7 +139,7 @@ export function useForm(name?: string) {
       if (isTraverseStopped) break;
 
       if (refetchControllersAfterEachStep) {
-        await sleep(100);
+        await sleep(debounce);
         controllers = await getInputControllers();
         ind = 0;
       }
@@ -243,20 +248,26 @@ export async function setInputValue(selector: string, value: string) {
 /**
  * A shortcut for useForm().fillForm()
  */
-export async function fillForm(formData: TFormData): Promise<unknown>;
-export async function fillForm(formName: string, formData: TFormData): Promise<unknown>;
+export async function fillForm(formData: TFormData, debounce?: number): Promise<unknown>;
+export async function fillForm(
+  formName: string,
+  formData: TFormData,
+  debounce?: number,
+): Promise<unknown>;
 export async function fillForm(...args: unknown[]): Promise<unknown> {
   if (typeof args[0] === 'string') {
     const formName = args[0];
     const formData = args[1] as TFormData;
+    const debounce = args[2] as number;
     // TODO: fake hook
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useForm(formName).fillForm(formData);
+    return useForm(formName).fillForm(formData, debounce);
   } else {
     const formData = args[0] as TFormData;
+    const debounce = args[1] as number;
     // TODO: fake hook
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useForm().fillForm(formData);
+    return useForm().fillForm(formData, debounce);
   }
 }
 
