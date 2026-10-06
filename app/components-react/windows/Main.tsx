@@ -57,6 +57,7 @@ export default function Main() {
   const mainMiddleEl = useRef<HTMLDivElement | null>(null);
   const windowResizeTimeout = useRef<number | null>(null);
   const activeCachedPages = useRef(new Set<string>());
+  const cachedPagesParams = useRef<Record<string, any>>({});
 
   const [bulkLoadFinished, setBulkLoadFinished] = useState(false);
   const [i18nReady, seti18nReady] = useState(false);
@@ -281,6 +282,7 @@ export default function Main() {
   const CACHED_PAGES = ['BrowseOverlays', 'PlatformAppStore'];
   if (CACHED_PAGES.includes(page)) {
     activeCachedPages.current.add(page);
+    cachedPagesParams.current[page] = { ...params };
   }
 
   return (
@@ -337,7 +339,7 @@ export default function Main() {
                     }}
                   >
                     <PageComponent
-                      params={isActive ? params : {}}
+                      params={cachedPagesParams.current[cachedPage] || {}}
                       onTotalWidth={(width: number) => handleEditorWidth(width)}
                     />
                   </div>
