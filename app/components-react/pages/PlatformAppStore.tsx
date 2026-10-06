@@ -44,7 +44,7 @@ export default function PlatformAppStore(p: {
     }
 
     getPlatformAppsUrl();
-  }, [p.params?.appId, p.params?.type]);
+  }, [p.params]);
 
   function onBrowserViewReady(view: Electron.BrowserView) {
     new GuestApiHandler().exposeApi(view.webContents.id, {
@@ -65,9 +65,9 @@ export default function PlatformAppStore(p: {
     });
 
     view.webContents.on('did-finish-load', () => {
-      // if (Utils.isDevMode()) {
-      //   view.webContents.openDevTools();
-      // }
+      if (Utils.isDevMode()) {
+        view.webContents.openDevTools();
+      }
     });
 
     // reload apps after uninstall
