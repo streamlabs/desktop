@@ -65,9 +65,9 @@ export default function PlatformAppStore(p: {
     });
 
     view.webContents.on('did-finish-load', () => {
-      if (Utils.isDevMode()) {
-        view.webContents.openDevTools();
-      }
+      // if (Utils.isDevMode()) {
+      //   view.webContents.openDevTools();
+      // }
     });
 
     // reload apps after uninstall

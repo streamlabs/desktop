@@ -80,9 +80,9 @@ export default function BrowseOverlays(p: {
     });
 
     view.webContents.on('did-finish-load', () => {
-      if (Utils.isDevMode()) {
-        view.webContents.openDevTools();
-      }
+      // if (Utils.isDevMode()) {
+      //   view.webContents.openDevTools();
+      // }
     });
   }
 
