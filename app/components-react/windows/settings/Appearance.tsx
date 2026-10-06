@@ -126,14 +126,14 @@ export function AppearanceSettings() {
         {/* Main nav item show/hide toggles */}
         <Row className={styles.navMenuSettings}>
           <Col flex={1} className={styles.menuControls}>
-            {availableMenuItems.map(({ key, title, isVisible }) => (
+            {availableMenuItems.map(({ key, title, isVisible, isLocked }) => (
               <SwitchInput
                 key={key}
                 label={title}
                 layout="horizontal"
                 onChange={val => toggleMenuItem(key, val)}
                 value={isVisible}
-                disabled={!isLoggedIn}
+                disabled={!isLoggedIn || isLocked}
               />
             ))}
             <Button
