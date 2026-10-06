@@ -176,7 +176,7 @@ export class AnnouncementsService extends Service {
     // Handle the normal flow for showing the marketing modal on app start
     const resp = await this.fetchProductUpdates();
 
-    if (!resp || !resp.lastUpdatedAt || resp.lastUpdatedAt <= this.state.lastReadProductUpdate) {
+    if (!resp.lastUpdatedAt || resp.lastUpdatedAt <= this.state.lastReadProductUpdate) {
       return;
     }
 
@@ -318,12 +318,10 @@ export class AnnouncementsService extends Service {
   }> {
     const recentlyInstalled = await this.recentlyInstalled();
 
-    const forceShowMarketingModal = showProductUpdates !== undefined && showProductUpdates;
-    if (
-      !forceShowMarketingModal &&
-      (recentlyInstalled || !this.customizationService.state.enableAnnouncements)
-    ) {
-      return null;
+    if (showProductUpdates === true) {
+      console.debug('Forcing product updates modal to show for development purposes');
+    } else if (recentlyInstalled || !this.customizationService.state.enableAnnouncements) {
+      return { lastUpdatedAt: null };
     }
 
     const endpoint = `api/v5/slobs/product-updates/get?clientId=${this.userService.getLocalUserId()}&locale=${
@@ -332,6 +330,14 @@ export class AnnouncementsService extends Service {
     const req = this.formRequest(endpoint);
     try {
       const resp = await jfetch<{ updates: IAnnouncementsInfo[]; lastUpdatedAt: number }>(req);
+
+      // HACK: API can return a sparse array of updates, which gets deserialized as an
+      // object with number keys. Check for this and convert it to an array if necessary.
+      if (resp.updates && !Array.isArray(resp.updates)) {
+        resp.updates = Object.values(resp.updates);
+      }
+
+      console.debug('Fetched product updates:', resp);
       return resp;
     } catch (e: unknown) {
       return { lastUpdatedAt: null };

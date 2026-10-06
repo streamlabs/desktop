@@ -14,7 +14,7 @@ import { initStore, useController } from '../hooks/zustand';
 import { useVuex } from '../hooks';
 import Translate from 'components-react/shared/Translate';
 import uuid from 'uuid/v4';
-import { EMenuItemKey } from 'services/side-nav';
+import { ENavMenuKey } from 'services/nav-menu';
 import { $i } from 'services/utils';
 import { IRecordingEntry } from 'services/recording-mode';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
@@ -132,7 +132,7 @@ class RecordingHistoryController {
       };
       this.HighlighterService.setTempRecordingInfo(tempRecordingInfo);
 
-      this.NavigationService.actions.navigate('Highlighter', {}, EMenuItemKey.Highlighter);
+      this.NavigationService.actions.navigate('Highlighter', {}, ENavMenuKey.Highlighter);
       return;
     }
 

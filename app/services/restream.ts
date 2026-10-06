@@ -34,7 +34,7 @@ import { RealmObject } from './realm';
 import { ObjectSchema } from 'realm';
 import { TSocketEvent } from './websocket';
 
-interface IIngestServer {
+export interface IIngestServer {
   name: string;
   url: string;
 }

@@ -140,11 +140,11 @@ export default function ReplaySection({ onImport }: { onImport: () => void }) {
           <p className={styles.description}>
             {hasApp
               ? $t(
-                  '%{appName} captures the best moments from your streams and turns them into clips ready to share - automatically',
+                  '%{appName} automatically captures the best moments from your streams and turns them into viral videos for TikTok, YouTube, and Instagram.',
                   { appName },
                 )
               : $t(
-                  'Install %{appName} and capture the best moments from your streams and turn them into ready to share clips - automatically',
+                  'Install %{appName} and automatically capture the best moments from your streams and turn them into viral videos for TikTok, YouTube, and Instagram.',
                   { appName: REPLAY_APP_NAME },
                 )}
           </p>

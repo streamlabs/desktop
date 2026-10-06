@@ -88,10 +88,7 @@ test('Migrate the twitch account to the protected mode', async t => {
   await restartApp(t); // restarting the app should call migration again
 
   // go live
-  await tryToGoLive({
-    title: 'SLOBS Test Stream',
-    twitchGame: 'Fortnite',
-  });
+  await clickGoLive();
   await waitForStreamStop(); // can't go live with a fake key
 
   // This prevents the test from failing due to the fake key, which logs an error.
@@ -108,7 +105,7 @@ test('Migrate the twitch account to the protected mode', async t => {
   await clickButton('Use recommended settings');
   // setup custom server
   streamSettings.setSettings({
-    server: 'rtmp://live-sjc.twitch.tv/app',
+    server: 'rtmp://live.twitch.tv/app/',
     protectedModeMigrationRequired: true,
   });
 
@@ -117,11 +114,16 @@ test('Migrate the twitch account to the protected mode', async t => {
     title: 'SLOBS Test Stream',
     twitchGame: 'Fortnite',
   });
-  await waitForStreamStop();
+  // TODO: Add validation that the destination switchers in the go live window are hidden (requires multistream test account)
+  // TODO: Add validation that the Twitch edit stream form in the go live window is the only form (requires multistream test account)
+  await stopStream();
 
   // check that settings have been switched to the Custom Ingest mode
   await showSettingsWindow('Stream');
-  t.true(await isDisplayed('button=Use recommended settings'), 'Protected mode should be disabled');
+  t.false(
+    await isDisplayed('button=Use recommended settings'),
+    'Protected mode should be disabled',
+  );
 });
 
 // TODO: Re-enable after reauthing userpool

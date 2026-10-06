@@ -22,12 +22,7 @@ import {
   waitForDisplayed,
 } from '../../helpers/modules/core';
 import { logIn } from '../../helpers/modules/user';
-import {
-  addDummyAccount,
-  releaseUserInPool,
-  reserveUserFromPool,
-  withUser,
-} from '../../helpers/webdriver/user';
+import { releaseUserInPool, reserveUserFromPool, withUser } from '../../helpers/webdriver/user';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import {
   skipCheckingErrorsInLog,
@@ -50,7 +45,7 @@ async function enableAllPlatforms() {
   }
 }
 
-async function goLiveWithMultistream() {
+async function goLiveWithMultistream(t: TExecutionContext) {
   await submit();
   await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
 
@@ -71,8 +66,17 @@ async function goLiveWithMultistream() {
   }
 
   await waitForDisplayed("h1=You're live!", { timeout: 60000 });
-  // Confirm chat loads
-  await chatIsVisible(true);
+
+  // Confirm chat loads. `chatIsVisible` swallows its own timeout and returns false, so this has
+  // to be asserted — calling it bare checks nothing.
+  // When the bypass fired above, YouTube was dropped and this is a single Twitch target, so the
+  // Multistream tab is legitimately absent; assert the platform chat for that case rather than
+  // dropping the multistream assertion altogether.
+  if (bypassPrompted) {
+    t.true(await chatIsVisible(), 'Chat should load after going live');
+  } else {
+    t.true(await chatIsVisible(true), 'Multistream chat should load after going live');
+  }
 }
 
 async function goLiveWithStreamShift(
@@ -206,7 +210,10 @@ test(
     await enableAllPlatforms();
 
     // Shows primary chat switcher when multiple platforms are enabled
-    t.true(await isDisplayed('[data-name="primaryChat"]'), 'Shows primary chat switcher');
+    await waitForDisplayed('[data-name="primaryChat"]', {
+      timeout: 1000,
+      timeoutMsg: 'Primary chat switcher did not appear in go live window',
+    });
 
     // add settings
     await fillForm({
@@ -216,7 +223,7 @@ test(
       primaryChat: 'YouTube',
     });
 
-    await goLiveWithMultistream();
+    await goLiveWithMultistream(t);
     await stopStream();
 
     t.pass();
@@ -258,7 +265,7 @@ test.skip(
     await youtubeForm.fillForm(youtubeSettings);
     await youtubeForm.assertFormContains(youtubeSettings);
 
-    await goLiveWithMultistream();
+    await goLiveWithMultistream(t);
     await stopStream();
 
     t.pass();

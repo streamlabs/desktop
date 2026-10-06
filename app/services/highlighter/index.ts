@@ -37,7 +37,6 @@ import { JsonrpcService } from 'services/api/jsonrpc';
 import { NavigationService } from 'services/navigation';
 import { SharedStorageService } from 'services/integrations/shared-storage';
 import uuid from 'uuid';
-import { EMenuItemKey } from 'services/side-nav';
 import { IDownloadProgress, downloadFile } from 'util/requests';
 import {
   EUploadPlatform,
@@ -74,6 +73,7 @@ import Utils from 'services/utils';
 import { getOS, OS } from '../../util/operating-systems';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { ENavMenuKey } from '../nav-menu';
 
 const execAsync = promisify(exec);
 
@@ -1175,7 +1175,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
       this.setTempRecordingInfo(tempRecordingInfo);
 
-      this.navigationService.actions.navigate('Highlighter', {}, EMenuItemKey.Highlighter);
+      this.navigationService.actions.navigate('Highlighter', {}, ENavMenuKey.Highlighter);
     });
   }
 
