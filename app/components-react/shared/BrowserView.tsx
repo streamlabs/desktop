@@ -216,11 +216,14 @@ export default function BrowserView(p: BrowserViewProps) {
   if (loading) {
     return (
       <div
+        className={p.className}
         style={{
           display: 'flex',
           flexGrow: 1,
           alignItems: 'center',
           justifyContent: 'center',
+          height: '100%',
+          ...p.style,
         }}
       >
         <Spinner visible pageLoader />
