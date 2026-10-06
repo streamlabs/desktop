@@ -6,6 +6,7 @@ import UltraIcon from 'components-react/shared/UltraIcon';
 import React from 'react';
 import { CustomizationState } from 'services/customization';
 import { $t } from 'services/i18n';
+import { MAX_PINNED_APPS } from 'services/nav-menu';
 import { getDefined } from '../../../util/properties-type-guards';
 import { Services } from '../../service-provider';
 import { CheckboxInput, ListInput, SliderInput, SwitchInput } from '../../shared/inputs';
@@ -29,15 +30,25 @@ export function AppearanceSettings() {
     (newSettings: CustomizationState) => CustomizationService.setSettings(newSettings as any),
   );
 
-  const { availableMenuItems, isLoggedIn, isPrime, toggleMenuItem, resetMenuItems } = useVuex(
-    () => ({
-      availableMenuItems: NavMenuService.availableMenuItems,
-      isLoggedIn: UserService.views.isLoggedIn,
-      isPrime: UserService.views.isPrime,
-      toggleMenuItem: NavMenuService.actions.toggleMenuItem,
-      resetMenuItems: NavMenuService.actions.resetMenuItems,
-    }),
-  );
+  const {
+    availableMenuItems,
+    isLoggedIn,
+    isPrime,
+    toggleMenuItem,
+    resetMenuItems,
+    pinnableApps,
+    pinnedAppIds,
+    setAppPinned,
+  } = useVuex(() => ({
+    availableMenuItems: NavMenuService.availableMenuItems,
+    isLoggedIn: UserService.views.isLoggedIn,
+    isPrime: UserService.views.isPrime,
+    toggleMenuItem: NavMenuService.actions.toggleMenuItem,
+    resetMenuItems: NavMenuService.actions.resetMenuItems,
+    pinnableApps: NavMenuService.pinnableApps,
+    pinnedAppIds: NavMenuService.pinnedApps.map(app => app.id),
+    setAppPinned: NavMenuService.actions.setAppPinned,
+  }));
 
   function openFFZSettings() {
     WindowsService.actions.createOneOffWindow(
@@ -135,6 +146,29 @@ export function AppearanceSettings() {
           </Col>
         </Row>
       </ObsSettingsSection>
+
+      {isLoggedIn && pinnableApps.length > 0 && (
+        <ObsSettingsSection title={$t('Pinned Apps')}>
+          <p>{$t('Pin up to %{count} apps to the navigation bar.', { count: MAX_PINNED_APPS })}</p>
+          <Row className={styles.navMenuSettings}>
+            <Col flex={1} className={styles.menuControls}>
+              {pinnableApps.map(app => {
+                const isPinned = pinnedAppIds.includes(app.id);
+                return (
+                  <SwitchInput
+                    key={app.id}
+                    label={app.name}
+                    layout="horizontal"
+                    value={isPinned}
+                    onChange={val => setAppPinned(app.id, val)}
+                    disabled={!isPinned && pinnedAppIds.length >= MAX_PINNED_APPS}
+                  />
+                );
+              })}
+            </Col>
+          </Row>
+        </ObsSettingsSection>
+      )}
 
       <ObsSettingsSection>
         <CheckboxInput

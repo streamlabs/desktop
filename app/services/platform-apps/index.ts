@@ -291,6 +291,8 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
         highlyPrivileged: this.views.isAppHighlyPrivileged(app.id_hash),
       });
     });
+
+    this.navMenuService.pinNewApps();
   }
 
   fetchAppStoreVisibility(): Promise<boolean> {
@@ -660,8 +662,8 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
     const windowId = `${appId}-${pageSlot}`;
     const mousePos = remote.screen.getCursorScreenPoint();
 
-    // We use a generated window Id to prevent someobody popping out the
-    // same winow multiple times.
+    // We use a generated window Id to prevent somebody popping out the
+    // same window multiple times.
     this.windowsService.createOneOffWindow(
       {
         componentName: 'PlatformAppPopOut',

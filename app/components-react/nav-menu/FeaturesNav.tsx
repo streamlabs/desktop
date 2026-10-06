@@ -7,7 +7,7 @@ import { Services } from 'components-react/service-provider';
 import MenuItem from 'components-react/shared/MenuItem';
 import throttle from 'lodash/throttle';
 import React, { memo, useCallback, useMemo } from 'react';
-import { ENavMenuKey, TExternalLinkType, TNavMenuItem } from 'services/nav-menu';
+import { ENavMenuKey, INavMenuApp, TExternalLinkType, TNavMenuItem } from 'services/nav-menu';
 import { TAppPage } from 'services/navigation';
 import styles from './FeaturesNav.m.less';
 
@@ -39,10 +39,18 @@ export function useFeaturesNav() {
 
   const { isEnabled: isVisionEnabled } = useRealmObject(VisionService.enabledState);
 
-  const { setCurrentMenuItem, loggedOutMenuItemTargets, menuItems } = useVuex(() => ({
+  const {
+    setCurrentMenuItem,
+    loggedOutMenuItemTargets,
+    menuItems,
+    pinnedApps,
+    pinnedAppsMenuIndex,
+  } = useVuex(() => ({
     setCurrentMenuItem: NavMenuService.actions.setCurrentMenuItem,
     loggedOutMenuItemTargets: NavMenuService.views.loggedOutMenuItemTargets,
     menuItems: NavMenuService.menuItems,
+    pinnedApps: NavMenuService.pinnedApps,
+    pinnedAppsMenuIndex: NavMenuService.pinnedAppsMenuIndex,
   }));
 
   const menuStyles = useMemo(
@@ -107,23 +115,48 @@ export function useFeaturesNav() {
     setCurrentMenuItem(key ?? menuItem.key);
   }, []);
 
+  const navState = useRealmObject(NavigationService.state);
+  const currentAppId =
+    navState.currentPage === 'PlatformAppMainPage' ? navState.params.appId : undefined;
+  const activePinnedAppId = pinnedApps.find(app => app.id === currentAppId)?.id;
+
+  const navigateApp = useCallback(
+    (appId: string) => NavigationService.actions.navigateApp(appId),
+    [],
+  );
+
+  const renderMenuItems = (list: TNavMenuItem[]) =>
+    list.map(menuItem => (
+      <FeaturesNavItem
+        key={menuItem.key}
+        menuItem={menuItem}
+        className={cx(menuStyles[menuItem.key])}
+        suppressActive={!!activePinnedAppId}
+        handleNavigation={handleNavigation}
+      />
+    ));
+
   const items = (
     <>
-      {menuItems.map(menuItem => (
-        <FeaturesNavItem
-          key={menuItem.key}
-          menuItem={menuItem}
-          className={cx(menuStyles[menuItem.key])}
-          handleNavigation={handleNavigation}
+      {renderMenuItems(menuItems.slice(0, pinnedAppsMenuIndex))}
+      {pinnedApps.map(app => (
+        <PinnedAppNavItem
+          key={`app-${app.id}`}
+          app={app}
+          isActive={app.id === activePinnedAppId}
+          navigateApp={navigateApp}
         />
       ))}
+      {renderMenuItems(menuItems.slice(pinnedAppsMenuIndex))}
     </>
   );
 
   // Signature of everything that can change this fragment's rendered width,
-  // for useNavCollapse to know when to re-measure. Order and badge text both
-  // affect width, so both are included.
-  const contentKey = menuItems.map(item => `${item.key}:${item.badge ?? ''}`).join(',');
+  // for useNavCollapse to know when to re-measure. Order, badge text and pinned
+  // apps all affect width, so all are included.
+  const contentKey = `${menuItems
+    .map(item => `${item.key}:${item.badge ?? ''}`)
+    .join(',')}|${pinnedApps.map(app => app.id).join(',')}`;
 
   return { items, contentKey };
 }
@@ -132,6 +165,7 @@ const FeaturesNavItem = memo(
   (p: {
     menuItem: TNavMenuItem;
     className?: string;
+    suppressActive: boolean;
     handleNavigation: (menuItem: TNavMenuItem, key?: ENavMenuKey) => void;
   }) => {
     const { NavMenuService } = Services;
@@ -146,7 +180,10 @@ const FeaturesNavItem = memo(
     return (
       <MenuItem
         wrapperClassName={cx(styles.featuresNav)}
-        className={cx(className, currentMenuItem === menuItem.key && styles.active)}
+        className={cx(
+          className,
+          !p.suppressActive && currentMenuItem === menuItem.key && styles.active,
+        )}
         title={menuItem.title}
         icon={menuItem?.icon ? <i className={menuItem?.icon} /> : undefined}
         onClick={handleClick}
@@ -160,6 +197,29 @@ const FeaturesNavItem = memo(
           )}
         </div>
       </MenuItem>
+    );
+  },
+);
+
+const PinnedAppNavItem = memo(
+  (p: { app: INavMenuApp; isActive: boolean; navigateApp: (appId: string) => void }) => {
+    const { app, navigateApp } = p;
+    const handleClick = useCallback(() => navigateApp(app.id), [navigateApp, app.id]);
+
+    return (
+      <MenuItem
+        wrapperClassName={styles.featuresNav}
+        className={cx(styles.pinnedApp, p.isActive && styles.active)}
+        title={app.name}
+        icon={
+          app.iconUrl ? (
+            <img src={app.iconUrl} className={styles.pinnedAppIcon} />
+          ) : (
+            <i className="icon-integrations" />
+          )
+        }
+        onClick={handleClick}
+      />
     );
   },
 );
