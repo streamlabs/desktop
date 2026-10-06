@@ -248,7 +248,7 @@ export class NavMenuService extends PersistentStatefulService<INavMenuServiceSta
       const pinnedIds = this.pinnedApps.map(app => app.id);
       const pinnableIds = new Set(this.pinnableApps.map(app => app.id));
       const toPin = newApps
-        .filter(app => pinnableIds.has(app.id))
+        .filter(app => pinnableIds.has(app.id) && !pinnedIds.includes(app.id))
         .slice(0, Math.max(0, MAX_PINNED_APPS - pinnedIds.length))
         .map(app => app.id);
 
