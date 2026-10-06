@@ -10,6 +10,7 @@ import {
 import { InitAfter, Inject, PersistentStatefulService, ViewHandler } from 'services/core';
 import { mutation } from 'services/core/stateful-service';
 import { EDismissable } from 'services/dismissables';
+import { EAppPageSlot, ILoadedApp } from 'services/platform-apps';
 import {
   ENavMenuKey,
   genFeaturesNavMenu,
@@ -21,9 +22,23 @@ import {
   TNavMenuTarget,
 } from './menu-data';
 
+/** Maximum number of apps that can be pinned to the nav menu. */
+export const MAX_PINNED_APPS = 3;
+
+/** A platform app as shown in the nav menu and its settings. */
+export interface INavMenuApp {
+  id: string;
+  name: string;
+  iconUrl?: string;
+}
+
 interface INavMenuServiceState {
   currentMenuItem: ENavMenuKey;
   menu: INavMenuItemPersistedData[];
+  /** Pinned app IDs in display order. */
+  pinnedAppIds: string[];
+  /** Production app IDs this client has already processed for auto-pinning. */
+  seenAppIds: string[];
 }
 
 /** Resolves a `TNavMenuConfigValue`, invoking it with `ctx` if it's a callback. */
@@ -64,6 +79,13 @@ class NavMenuViews extends ViewHandler<INavMenuServiceState> {
 
 @InitAfter('PlatformAppsService')
 export class NavMenuService extends PersistentStatefulService<INavMenuServiceState> {
+  static defaultState: INavMenuServiceState = {
+    currentMenuItem: ENavMenuKey.Editor,
+    menu: [],
+    pinnedAppIds: [],
+    seenAppIds: [],
+  };
+
   @Inject() userService: UserService;
   @Inject() dismissablesService: DismissablesService;
   @Inject() highlighterService: HighlighterService;
@@ -73,6 +95,9 @@ export class NavMenuService extends PersistentStatefulService<INavMenuServiceSta
   @Inject() visionService: VisionService;
 
   private unwatchRecordings?: () => void;
+
+  /** Whether stale seen app IDs have been pruned yet this app session. */
+  private hasPrunedSeenAppIds = false;
 
   private static _featuresNavMenu: ReturnType<typeof genFeaturesNavMenu>;
   static get featuresNavMenu() {
@@ -151,6 +176,88 @@ export class NavMenuService extends PersistentStatefulService<INavMenuServiceSta
             ? data.badge({ highlighter: this.highlighterService })
             : data.badge,
       }));
+  }
+
+  private toNavMenuApp(app: ILoadedApp): INavMenuApp {
+    let iconUrl: string | undefined = app.icon;
+    if (!iconUrl && app.manifest.icon) {
+      iconUrl = this.platformAppsService.views.getAssetUrl(app.id, app.manifest.icon) ?? undefined;
+    }
+    return { id: app.id, name: app.manifest.name, iconUrl };
+  }
+
+  /** Enabled apps that have a top nav page, and so can be pinned. */
+  get pinnableApps(): INavMenuApp[] {
+    return this.platformAppsService.views.enabledApps
+      .filter(app => app.manifest?.pages?.some(page => page.slot === EAppPageSlot.TopNav))
+      .map(app => this.toNavMenuApp(app));
+  }
+
+  /**
+   * Pinned apps in display order. Stale IDs (disabled, uninstalled, still loading) are
+   * skipped but deliberately kept in state, since app reloads transiently unload everything.
+   */
+  get pinnedApps(): INavMenuApp[] {
+    const pinnable = this.pinnableApps;
+    return this.state.pinnedAppIds
+      .map(id => pinnable.find(app => app.id === id))
+      .filter((app): app is INavMenuApp => !!app);
+  }
+
+  /** Index in `menuItems` at which pinned apps are inserted (right after App Store). */
+  get pinnedAppsMenuIndex(): number {
+    const keys = this.availableMenuItemsData.map(([item]) => item.key);
+    const leading = new Set(keys.slice(0, keys.indexOf(ENavMenuKey.AppStore) + 1));
+    return this.menuItems.filter(item => leading.has(item.key)).length;
+  }
+
+  setAppPinned(appId: string, isPinned: boolean) {
+    const pinnedIds = this.pinnedApps.map(app => app.id);
+    if (isPinned) {
+      if (pinnedIds.includes(appId)) return;
+      if (pinnedIds.length >= MAX_PINNED_APPS) return;
+      if (!this.pinnableApps.some(app => app.id === appId)) return;
+      this.SET_PINNED_APP_IDS([...pinnedIds, appId]);
+    } else {
+      this.SET_PINNED_APP_IDS(this.state.pinnedAppIds.filter(id => id !== appId));
+    }
+  }
+
+  /**
+   * Marks newly loaded production apps as seen, pinning pinnable ones while slots remain.
+   * Called by PlatformAppsService once production apps finish loading.
+   *
+   * The first non-empty load of each app session also drops seen IDs for apps that are no
+   * longer installed, so reinstalling one later auto-pins it again. Empty loads are skipped
+   * because `fetchProductionApps` returns `[]` on network errors, which would wipe the list.
+   */
+  pinNewApps() {
+    const productionApps = this.platformAppsService.views.productionApps;
+    const installedIds = new Set(productionApps.map(app => app.id));
+
+    let seenIds = this.state.seenAppIds;
+    if (!this.hasPrunedSeenAppIds && installedIds.size) {
+      this.hasPrunedSeenAppIds = true;
+      seenIds = seenIds.filter(id => installedIds.has(id));
+    }
+
+    const seen = new Set(seenIds);
+    const newApps = productionApps.filter(app => !seen.has(app.id));
+
+    if (newApps.length) {
+      const pinnedIds = this.pinnedApps.map(app => app.id);
+      const pinnableIds = new Set(this.pinnableApps.map(app => app.id));
+      const toPin = newApps
+        .filter(app => pinnableIds.has(app.id) && !pinnedIds.includes(app.id))
+        .slice(0, Math.max(0, MAX_PINNED_APPS - pinnedIds.length))
+        .map(app => app.id);
+
+      if (toPin.length) this.SET_PINNED_APP_IDS([...pinnedIds, ...toPin]);
+    }
+
+    if (newApps.length || seenIds.length !== this.state.seenAppIds.length) {
+      this.SET_SEEN_APP_IDS([...seenIds, ...newApps.map(app => app.id)]);
+    }
   }
 
   setCurrentMenuItem(key: ENavMenuKey) {
@@ -258,5 +365,15 @@ export class NavMenuService extends PersistentStatefulService<INavMenuServiceSta
       }
       return item;
     });
+  }
+
+  @mutation()
+  private SET_PINNED_APP_IDS(ids: string[]) {
+    this.state.pinnedAppIds = ids;
+  }
+
+  @mutation()
+  private SET_SEEN_APP_IDS(ids: string[]) {
+    this.state.seenAppIds = ids;
   }
 }

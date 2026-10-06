@@ -257,7 +257,7 @@ export default function Main() {
     if (dockWidth < 1 && mainWindowEl.current) {
       // migrate from old percentage value to the pixel value
       const appRect = mainWindowEl.current.getBoundingClientRect();
-      const defaultWidth = appRect.width * 0.28;
+      const defaultWidth = Math.max(minDockWidth, appRect.width * 0.2);
       setDockWidth(defaultWidth);
     }
   }, [uiReady]);
@@ -402,6 +402,7 @@ const LiveDockContainer = memo(function LiveDockContainer(p: ILiveDockContainerP
       {!isDockCollapsed && (
         <ResizeBar
           position={p.onLeft ? 'left' : 'right'}
+          resizeHandle={p.onLeft ? 'e' : 'w'}
           onInput={(val: number) => p.setLiveDockWidth(val)}
           max={p.max}
           min={p.min}
