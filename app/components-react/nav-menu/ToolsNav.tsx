@@ -155,13 +155,9 @@ export function useToolsNav() {
         cancelText: $t('Close'),
         okText: $t('Disable'),
         okButtonProps: { type: 'primary' },
-        onOk: async () => {
-          DualOutputService.actions.setDualOutputModeIfPossible(false, true);
-
-          // NOTE: setDualOutputModeIfPossible reloads the UI, so this toggle never happens.
-          // Leaving this here in case that changes, but for now this is dead code.
-          TransitionsService.actions.toggleStudioMode();
-        },
+        // NOTE: setDualOutputModeIfPossible reloads the UI, so we can't run
+        // TransitionsService.actions.toggleStudioMode() afterwards.
+        onOk: () => DualOutputService.actions.return.setDualOutputModeIfPossible(false, true),
         cancelButtonProps: { style: { display: 'inline' } },
       });
       return;
