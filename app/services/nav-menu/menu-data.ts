@@ -69,6 +69,11 @@ export interface INavMenuItemMetadata {
    * (persisted `isVisible` is undefined). Defaults to true.
    */
   isVisibleByDefault?: TNavMenuConfigValue<boolean, { user: UserService }>;
+  /**
+   * Forces the item visible and prevents the user from toggling it off, overriding
+   * any persisted `isVisible`. Defaults to false.
+   */
+  isVisibilityLocked?: TNavMenuConfigValue<boolean, { user: UserService }>;
 }
 
 type TExtractCtx<V> = V extends (ctx: infer C) => any ? C : never;
@@ -97,7 +102,12 @@ export interface INavMenuItemPersistedData {
  */
 export type TNavMenuItem = Prettify<
   Omit<INavMenuItemPersistedData, 'isVisible'> &
-    Omit<INavMenuItemMetadata, 'isAvailable' | 'isVisibleByDefault' | 'badge'> & { badge?: string }
+    Omit<
+      INavMenuItemMetadata,
+      'isAvailable' | 'isVisibleByDefault' | 'isVisibilityLocked' | 'badge'
+    > & {
+      badge?: string;
+    }
 >;
 
 export const NavMenuItemData = (): Record<ENavMenuKey, INavMenuItemMetadata> => ({
@@ -166,6 +176,7 @@ export const NavMenuItemData = (): Record<ENavMenuKey, INavMenuItemMetadata> => 
     target: 'Ultra',
     trackingTarget: 'ultra',
     isVisibleByDefault: ({ user }) => !user.views.isPrime,
+    isVisibilityLocked: ({ user }) => !user.views.isPrime,
   },
 });
 

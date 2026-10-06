@@ -151,8 +151,13 @@ export class NavMenuService extends PersistentStatefulService<INavMenuServiceSta
       });
   }
 
-  /** Resolves whether an item is shown, honoring an explicit user choice over the default. */
+  private isItemLocked(data: INavMenuItemMetadata) {
+    return resolveConfigValue(data.isVisibilityLocked, { user: this.userService }) ?? false;
+  }
+
+  /** Resolves whether an item is shown. Locked items are always shown, otherwise an explicit user choice wins over the default. */
   private isItemVisible(item: INavMenuItemPersistedData, data: INavMenuItemMetadata) {
+    if (this.isItemLocked(data)) return true;
     const ctx = { user: this.userService };
     return item.isVisible ?? resolveConfigValue(data.isVisibleByDefault, ctx) ?? true;
   }
@@ -162,6 +167,7 @@ export class NavMenuService extends PersistentStatefulService<INavMenuServiceSta
       key: item.key,
       title: data.title,
       isVisible: this.isItemVisible(item, data),
+      isLocked: this.isItemLocked(data),
     }));
   }
 
@@ -277,6 +283,8 @@ export class NavMenuService extends PersistentStatefulService<INavMenuServiceSta
   }
 
   toggleMenuItem(key: ENavMenuKey, isVisible: boolean) {
+    const data = NavMenuService.featuresNavMenu.data[key];
+    if (data && this.isItemLocked(data)) return;
     if (key === ENavMenuKey.RecordingHistory) {
       // The user has made an explicit choice; the auto-reveal latch must not override it.
       this.stopWatchingRecordings();
