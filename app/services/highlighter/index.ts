@@ -959,6 +959,41 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   }
 
   // =================================================================================================
+  // Legacy AI Highlighter (in-app binary) uninstall support
+  // =================================================================================================
+
+  private get legacyAiHighlighterPath() {
+    return path.join(remote.app.getPath('userData'), '..', 'streamlabs-highlighter');
+  }
+
+  /**
+   * Returns the installed version of the legacy in-app AI Highlighter binary,
+   * an empty string if it is installed but the version is unknown,
+   * or null if it is not installed.
+   */
+  async getLegacyAiHighlighterVersion(): Promise<string | null> {
+    if (!(await fs.pathExists(this.legacyAiHighlighterPath))) return null;
+
+    try {
+      const manifest = await fs.readJson(path.join(this.legacyAiHighlighterPath, 'manifest.json'));
+      return manifest?.version ?? '';
+    } catch (e: unknown) {
+      return '';
+    }
+  }
+
+  async uninstallLegacyAiHighlighter() {
+    this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+      type: 'Uninstallation',
+    });
+
+    if (await fs.pathExists(this.legacyAiHighlighterPath)) {
+      console.log('uninstalling legacy AI Highlighter...');
+      await fs.remove(this.legacyAiHighlighterPath);
+    }
+  }
+
+  // =================================================================================================
   // CLIP EDITOR logic
   // =================================================================================================
 

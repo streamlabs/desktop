@@ -6,6 +6,8 @@ import BrowserView from 'components-react/shared/BrowserView';
 import { GuestApiHandler } from 'util/guest-api-handler';
 import * as remote from '@electron/remote';
 import { Services } from 'components-react/service-provider';
+import { Button } from 'antd';
+import { $t } from 'services/i18n';
 import styles from './PlatformAppStore.m.less';
 import { useVuex } from 'components-react/hooks';
 
@@ -18,14 +20,24 @@ export default function PlatformAppStore(p: {
     PlatformAppsService,
     PlatformAppStoreService,
     NavigationService,
+    HighlighterService,
     WindowsService,
   } = Services;
+
+  const [legacyHighlighterVersion, setLegacyHighlighterVersion] = useState<string | null>(null);
 
   const { hideStyleBlockers } = useVuex(() => ({
     hideStyleBlockers: WindowsService.state[Utils.getCurrentUrlParams().windowId].hideStyleBlockers,
   }));
 
   const [platformAppsUrl, setPlatformAppsUrl] = useState('');
+  const [currentUrl, setCurrentUrl] = useState<string>('');
+
+  useEffect(() => {
+    HighlighterService.actions.return
+      .getLegacyAiHighlighterVersion()
+      .then(setLegacyHighlighterVersion);
+  }, []);
 
   useEffect(() => {
     async function getPlatformAppsUrl() {
@@ -86,21 +98,48 @@ export default function PlatformAppStore(p: {
 
   if (!platformAppsUrl) return <></>;
 
+  const showLegacyHighlighter =
+    currentUrl.includes('installed-apps') && legacyHighlighterVersion !== null;
+
   return (
-    <BrowserView
-      className={cx(styles.browserView, p.className)}
-      style={{
-        height: '100%',
-        position: 'absolute',
-        top: 0,
-        right: 0,
-        bottom: 0,
-        left: 0,
-      }}
-      src={platformAppsUrl}
-      onReady={onBrowserViewReady}
-      enableGuestApi
-      hidden={hideStyleBlockers}
-    />
+    <>
+      <BrowserView
+        className={cx(styles.browserView, p.className)}
+        style={{
+          height: showLegacyHighlighter ? 'calc(100% - 72px)' : '100%',
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+        }}
+        src={platformAppsUrl}
+        onReady={onBrowserViewReady}
+        enableGuestApi
+        emitUrlChange={setCurrentUrl}
+        hidden={hideStyleBlockers}
+      />
+      {showLegacyHighlighter && (
+        <div className={styles.otherInstalledAppsWrapper}>
+          <div>{$t('Other installed apps:')}</div>
+          <div className={styles.otherAppWrapper}>
+            <div className={styles.textWrapper}>
+              <h3 style={{ margin: 0 }}>AI Highlighter</h3>
+              <p style={{ opacity: 0.3, margin: 0 }}>by Streamlabs</p>
+            </div>
+            <Button
+              size="middle"
+              type="default"
+              onClick={() => {
+                setLegacyHighlighterVersion(null);
+                HighlighterService.actions.uninstallLegacyAiHighlighter();
+              }}
+            >
+              {$t('Uninstall')}
+            </Button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tooltip } from 'antd';
 import cx from 'classnames';
 import { Services } from 'components-react/service-provider';
@@ -8,7 +8,15 @@ import styles from './InstalledApps.m.less';
 import { useVuex } from 'components-react/hooks';
 
 export function InstalledApps() {
-  const { PlatformAppsService } = Services;
+  const { PlatformAppsService, HighlighterService } = Services;
+
+  const [legacyHighlighterVersion, setLegacyHighlighterVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    HighlighterService.actions.return
+      .getLegacyAiHighlighterVersion()
+      .then(setLegacyHighlighterVersion);
+  }, []);
 
   const { installedApps } = useVuex(() => ({
     installedApps: PlatformAppsService.views.productionApps,
@@ -89,6 +97,31 @@ export function InstalledApps() {
               </td>
             </tr>
           ))}
+          {legacyHighlighterVersion !== null && (
+            <tr key={'Ai Highlighter'}>
+              <td>
+                <div className={styles.aiHighlighterThumbnail}>
+                  <i
+                    style={{ margin: 0, fontSize: '20px', color: 'black' }}
+                    className="icon-highlighter"
+                  ></i>
+                </div>
+              </td>
+              <td> {'Streamlabs AI Highlighter'} </td>
+              <td> {legacyHighlighterVersion} </td>
+              <td className={cx(styles.buttonContainer, 'button-container--right')}>
+                <button
+                  onClick={() => {
+                    setLegacyHighlighterVersion(null);
+                    HighlighterService.actions.uninstallLegacyAiHighlighter();
+                  }}
+                  className="button button--soft-warning"
+                >
+                  {$t('Uninstall')}
+                </button>
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
