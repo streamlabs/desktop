@@ -63,6 +63,7 @@ interface IAppState {
   argv: string[];
   errorAlert: boolean;
   onboarded: boolean;
+  shuttingDown: boolean;
 }
 
 export interface IRunInLoadingModeOptions {
@@ -120,6 +121,7 @@ export class AppService extends StatefulService<IAppState> {
     argv: remote.process.argv,
     errorAlert: false,
     onboarded: false,
+    shuttingDown: false,
   };
 
   readonly appDataDirectory = remote.app.getPath('userData');
@@ -169,7 +171,6 @@ export class AppService extends StatefulService<IAppState> {
     this.dismissablesService.initialize();
 
     electron.ipcRenderer.on('shutdown', () => {
-      this.windowsService.hideMainWindow();
       electron.ipcRenderer.send('acknowledgeShutdown');
       this.shutdownHandler();
     });
@@ -212,6 +213,8 @@ export class AppService extends StatefulService<IAppState> {
 
   @track('app_close')
   private shutdownHandler() {
+    // Shutdown state must be set before loading so the loader component mounts knowing this is a shutdown.
+    this.SET_SHUTTING_DOWN(true);
     this.START_LOADING();
     this.loadingChanged.next(true);
 
@@ -227,6 +230,12 @@ export class AppService extends StatefulService<IAppState> {
         name: 'IpcServerService.stopListening',
         criticality: 'required',
         run: () => this.ipcServerService.stopListening(),
+      },
+      {
+        // This UI can't destroy its own displays because windows can't reach the worker once IPC stops
+        name: 'VideoService.destroyAllDisplays',
+        criticality: 'best-effort',
+        run: () => this.videoService.destroyAllDisplays(),
       },
     ]);
 
@@ -244,6 +253,12 @@ export class AppService extends StatefulService<IAppState> {
             run: () => this.sceneCollectionsService.persistForShutdown(),
           },
           {
+            name: 'SceneCollectionsService.persistToServer',
+            criticality: 'best-effort',
+            timeoutMs: SHUTDOWN_SCENE_COLLECTIONS_SYNC_TIMEOUT_MS,
+            run: () => this.sceneCollectionsService.persistToServer(),
+          },
+          {
             name: 'UserService.flushUserSession',
             criticality: 'required',
             run: () => this.userService.flushUserSession(),
@@ -255,6 +270,11 @@ export class AppService extends StatefulService<IAppState> {
           },
         ],
         teardown: [
+          {
+            name: 'WindowsService.hideMainWindow',
+            criticality: 'best-effort',
+            run: () => this.windowsService.hideMainWindow(),
+          },
           {
             name: 'AppService.shutdownStarted',
             criticality: 'required',
@@ -312,6 +332,8 @@ export class AppService extends StatefulService<IAppState> {
             criticality: 'required',
             run: () => this.videoSettingsService.shutdown(),
           },
+          // Do not need to persist scene collections on shutdown because `persistForShutdown` was
+          // already called in the `persistance` step.
           {
             name: 'SceneCollectionsService.deinitialize',
             criticality: 'required',
@@ -359,12 +381,6 @@ export class AppService extends StatefulService<IAppState> {
           },
         ],
         bestEffort: [
-          {
-            name: 'SceneCollectionsService.safeSync',
-            criticality: 'best-effort',
-            timeoutMs: SHUTDOWN_SCENE_COLLECTIONS_SYNC_TIMEOUT_MS,
-            run: () => this.sceneCollectionsService.safeSync(),
-          },
           {
             name: 'UsageStatisticsService.flushEvents',
             criticality: 'best-effort',
@@ -501,5 +517,10 @@ export class AppService extends StatefulService<IAppState> {
   @mutation()
   private SET_ONBOARDED(onboarded: boolean) {
     this.state.onboarded = onboarded;
+  }
+
+  @mutation()
+  private SET_SHUTTING_DOWN(shuttingDown: boolean) {
+    this.state.shuttingDown = shuttingDown;
   }
 }

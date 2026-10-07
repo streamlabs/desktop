@@ -183,6 +183,34 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     this.stateService.flushManifestFile();
   }
 
+  async persistToServer() {
+    if (!this.collectionLoaded) return;
+    if (!this.activeCollection) return;
+    if (!this.canSync()) return;
+
+    try {
+      await this.performSyncStep('Update on server', async () => {
+        const exists = await this.stateService.collectionFileExists(this.activeCollection.id);
+
+        if (exists) {
+          const data = this.stateService.readCollectionFile(this.activeCollection.id);
+
+          if (data && this.activeCollection.serverId) {
+            await this.serverApi.updateSceneCollection({
+              data,
+              id: this.activeCollection.serverId,
+              name: this.activeCollection.name,
+              last_updated_at: this.activeCollection.modified,
+            });
+          }
+        }
+      });
+    } catch (e: unknown) {
+      // Silently do nothing so that the shutdown process continues uninterrupted
+      console.error('Failed to persist scene collection to server', this.activeCollection.id, e);
+    }
+  }
+
   /**
    * Generally called on application shutdown after persistForShutdown has completed.
    * Cloud synchronization is intentionally left to startup so network stalls cannot block exit.

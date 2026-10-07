@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import cx from 'classnames';
 import SvgContainer from 'components-react/shared/SvgContainer';
+import { Services } from 'components-react/service-provider';
+import { useVuex } from 'components-react/hooks';
 import { $t } from 'services/i18n';
 
 const loadingStrings = () => [
@@ -89,10 +91,15 @@ const loadingStrings = () => [
 ];
 
 export default function Loader(p: { className?: string }) {
+  const { shuttingDown } = useVuex(() => ({
+    shuttingDown: Services.AppService.state.shuttingDown,
+  }));
   const [loaderText, setLoaderText] = useState('');
-  useEffect(lifecycle, []);
+  useEffect(lifecycle, [shuttingDown]);
 
   function lifecycle() {
+    if (shuttingDown) return;
+
     function loopRandomText() {
       const randomIndex = Math.floor(Math.random() * loadingStrings().length);
       if (loaderText === loadingStrings()[randomIndex]) {
@@ -101,6 +108,7 @@ export default function Loader(p: { className?: string }) {
         setLoaderText(loadingStrings()[randomIndex]);
       }
     }
+
     loopRandomText();
     const interval = setInterval(loopRandomText, 5000);
 
@@ -114,7 +122,9 @@ export default function Loader(p: { className?: string }) {
       <div className="s-loader__bg">
         <div className="s-loader__inner">
           <Spinner />
-          <div className="s-loader__text">{loaderText}</div>
+          <div className="s-loader__text">
+            {shuttingDown ? $t('Syncing your collection with the cloud.') : loaderText}
+          </div>
         </div>
       </div>
     </div>

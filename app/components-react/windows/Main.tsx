@@ -81,6 +81,7 @@ export default function Main() {
   const {
     errorAlert,
     applicationLoading,
+    shuttingDown,
     hideStyleBlockers,
     streamingStatus,
     isLoggedIn,
@@ -91,6 +92,7 @@ export default function Main() {
   } = useVuex(() => ({
     errorAlert: AppService.state.errorAlert,
     applicationLoading: AppService.state.loading,
+    shuttingDown: AppService.state.shuttingDown,
     hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
     streamingStatus: StreamingService.views.streamingStatus,
     isLoggedIn: UserService.views.isLoggedIn,
@@ -101,8 +103,9 @@ export default function Main() {
   }));
 
   const showLoadingSpinner = useMemo(
-    () => applicationLoading && page !== 'Onboarding' && page !== 'BrowseOverlays',
-    [applicationLoading, page],
+    () =>
+      shuttingDown || (applicationLoading && page !== 'Onboarding' && page !== 'BrowseOverlays'),
+    [applicationLoading, shuttingDown, page],
   );
 
   const isOnboarding = page === 'Onboarding';

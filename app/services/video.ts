@@ -322,6 +322,8 @@ export class VideoService extends Service {
   @Inject() dualOutputService: DualOutputService;
   @Inject() sourcesService: SourcesService;
 
+  private displayNames = new Set<string>();
+
   init() {
     this.settingsService.loadSettingsIntoStore();
   }
@@ -405,6 +407,8 @@ export class VideoService extends Service {
         context,
       );
     }
+
+    this.displayNames.add(name);
   }
 
   setOBSDisplayPaddingColor(name: string, r: number, g: number, b: number) {
@@ -424,7 +428,23 @@ export class VideoService extends Service {
   }
 
   destroyOBSDisplay(name: string) {
+    if (!this.displayNames.has(name)) return;
     obs.NodeObs.OBS_content_destroyDisplay(name);
+    this.displayNames.delete(name);
+  }
+
+  /**
+   * Destroys every display without going through the UI windows that own them.
+   * @remark Needed at shutdown, when UI windows can no longer call into the worker.
+   */
+  destroyAllDisplays() {
+    Array.from(this.displayNames).forEach(name => {
+      try {
+        this.destroyOBSDisplay(name);
+      } catch (e: unknown) {
+        console.error(`Failed to destroy display ${name}`, e);
+      }
+    });
   }
 
   getOBSDisplayPreviewOffset(name: string): IVec2 {
