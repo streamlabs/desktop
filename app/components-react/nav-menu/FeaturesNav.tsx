@@ -9,6 +9,7 @@ import throttle from 'lodash/throttle';
 import React, { memo, useCallback, useMemo } from 'react';
 import { ENavMenuKey, INavMenuApp, TExternalLinkType, TNavMenuItem } from 'services/nav-menu';
 import { TAppPage } from 'services/navigation';
+import { EAppPageSlot } from 'services/platform-apps';
 import styles from './FeaturesNav.m.less';
 
 /** Types that open an external dashboard link rather than an in-app page */
@@ -32,6 +33,7 @@ export function useFeaturesNav() {
     MagicLinkService,
     NavigationService,
     NavMenuService,
+    PlatformAppsService,
     UsageStatisticsService,
     UserService,
     VisionService,
@@ -125,6 +127,11 @@ export function useFeaturesNav() {
     [],
   );
 
+  const popOutApp = useCallback(
+    (appId: string) => PlatformAppsService.actions.popOutAppPage(appId, EAppPageSlot.TopNav),
+    [],
+  );
+
   const renderMenuItems = (list: TNavMenuItem[]) =>
     list.map(menuItem => (
       <FeaturesNavItem
@@ -145,6 +152,7 @@ export function useFeaturesNav() {
           app={app}
           isActive={app.id === activePinnedAppId}
           navigateApp={navigateApp}
+          popOutApp={popOutApp}
         />
       ))}
       {renderMenuItems(menuItems.slice(pinnedAppsMenuIndex))}
@@ -202,9 +210,34 @@ const FeaturesNavItem = memo(
 );
 
 const PinnedAppNavItem = memo(
-  (p: { app: INavMenuApp; isActive: boolean; navigateApp: (appId: string) => void }) => {
-    const { app, navigateApp } = p;
-    const handleClick = useCallback(() => navigateApp(app.id), [navigateApp, app.id]);
+  (p: {
+    app: INavMenuApp;
+    isActive: boolean;
+    navigateApp: (appId: string) => void;
+    popOutApp: (appId: string) => void;
+  }) => {
+    const { app, navigateApp, popOutApp } = p;
+
+    // Ctrl/Cmd+click pops the app out instead of navigating to it
+    const handleClick = useCallback(
+      (e: { domEvent: React.MouseEvent | React.KeyboardEvent }) => {
+        if (app.allowPopout && (e.domEvent.ctrlKey || e.domEvent.metaKey)) {
+          popOutApp(app.id);
+        } else {
+          navigateApp(app.id);
+        }
+      },
+      [navigateApp, popOutApp, app.id, app.allowPopout],
+    );
+
+    // Middle click doesn't fire `onClick`
+    const handleAuxClick = useCallback(
+      (e: React.MouseEvent) => {
+        if (e.button !== 1 || !app.allowPopout) return;
+        popOutApp(app.id);
+      },
+      [popOutApp, app.id, app.allowPopout],
+    );
 
     return (
       <MenuItem
@@ -219,6 +252,7 @@ const PinnedAppNavItem = memo(
           )
         }
         onClick={handleClick}
+        onAuxClick={handleAuxClick}
       />
     );
   },
