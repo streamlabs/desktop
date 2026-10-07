@@ -1,10 +1,11 @@
 import React from 'react';
-import { Button } from 'antd';
+import cx from 'classnames';
 import { EAppPageSlot } from 'services/platform-apps';
 import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
 import PlatformAppPageView from 'components-react/shared/PlatformAppPageView';
 import { useVuex } from 'components-react/hooks';
+import styles from './PlatformAppMainPage.m.less';
 
 export default function PlatformAppMainPage(p: { params: { appId: string }; className?: string }) {
   const { PlatformAppsService, NavigationService } = Services;
@@ -17,23 +18,28 @@ export default function PlatformAppMainPage(p: { params: { appId: string }; clas
   }));
 
   return (
-    <div
-      className={p.className}
-      style={{ height: '100%', width: '100%', margin: poppedOut && '20px', display: 'flex', flexDirection: 'column' }}
-    >
+    <div className={cx(styles.container, p.className)} style={{ margin: poppedOut && '20px' }}>
       {poppedOut ? (
         $t('This app is currently popped out in another window.')
       ) : (
         <>
-          <div style={{ padding: '10px', display: 'flex', gap: '10px' }}>
-            <Button type="primary" onClick={() => NavigationService.actions.navigate('PlatformAppStore')}>
-              {$t('Back to Apps')}
-            </Button>
-            <Button type="primary" onClick={() => PlatformAppsService.actions.popOutAppPage(p.params.appId, pageSlot)}>
+          <div className={styles.header}>
+            <button
+              className={styles.textButton}
+              onClick={() => NavigationService.actions.navigate('PlatformAppStore')}
+            >
+              <i className="icon-back" />
+              {$t('Back')}
+            </button>
+            <button
+              className={styles.textButton}
+              onClick={() => PlatformAppsService.actions.popOutAppPage(p.params.appId, pageSlot)}
+            >
+              <i className="icon-pop-out-2" />
               {$t('Pop Out App')}
-            </Button>
+            </button>
           </div>
-          <div style={{ flex: 1, position: 'relative' }}>
+          <div className={styles.appViewWrapper}>
             <PlatformAppPageView
               appId={p.params.appId}
               pageSlot={pageSlot}
