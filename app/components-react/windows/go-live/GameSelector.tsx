@@ -110,11 +110,28 @@ export default function GameSelector(p: TProps) {
   function onSelect(searchString: string) {
     const game = games.find(game => game.label === searchString);
 
-    // TikTok and Kick's API require the category id, but this component renders the name,
-    // so the service has to track both. For Twitch, the API requires the game id but highlighter requires the name,
-    // so the service has to track both to update the Twitch API separately
-    if (isTikTok || isTwitch || isKick) {
+    if (isTikTok) {
+      // TikTok's API requires the category id, but this component renders the name,
+      // so the service has to track both
       Services.TikTokService.actions.setGameInfo({
+        gameId: game?.value ?? '',
+        gameName: game?.label ?? searchString,
+      });
+    }
+
+    if (isTwitch) {
+      // Because Twitch's API requires the game id but highlighter requires the name, we have
+      // to track both to update the Twitch API separately
+      Services.TwitchService.actions.setGameInfo({
+        gameId: game?.value ?? '',
+        gameName: game?.label ?? '',
+      });
+    }
+
+    if (isKick) {
+      // Kick's API requires the category id, but this component renders the name,
+      // so the service has to track both
+      Services.KickService.actions.setGameInfo({
         gameId: game?.value ?? '',
         gameName: game?.label ?? '',
       });
