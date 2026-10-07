@@ -540,7 +540,7 @@ test(
 
       // Case 3: Ultra users can enable all targets
       // Enabling/disabling multiple platforms causes form rerenders and needs a longer debounce between toggling them
-      await fillForm({ twitch: true, instagram: true, kick: true }, 600);
+      await fillForm({ twitch: true, instagram: true, kick: true }, 1000);
       await waitForSettingsWindowLoaded();
 
       // Case 4: Can toggle custom destination off
@@ -555,7 +555,7 @@ test(
       });
 
       // Case 5: Must always have at least one platform enabled
-      await fillForm({ instagram: false, kick: false }, 600);
+      await fillForm({ instagram: false, kick: false }, 1000);
       await waitForSettingsWindowLoaded();
       await assertFormContains({
         twitch: true,
@@ -587,7 +587,7 @@ test(
           kick: true,
           [name2]: true,
         },
-        600,
+        1000,
       );
       await fillForm({
         twitchDisplay: 'both',
