@@ -61,6 +61,7 @@ interface ITikTokStartStreamSettings {
   title: string;
   liveScope: TTikTokLiveScopeTypes;
   game: string;
+  gameName?: string;
   display?: TDisplayType;
   audienceType?: string;
   video?: IVideo;
@@ -78,6 +79,7 @@ export interface ITikTokStartStreamOptions {
   serverUrl: string;
   streamKey: string;
   game: string;
+  gameName?: string;
   audienceType?: string;
   activeTab?: 'live-access' | 'stream-key';
 }
@@ -102,6 +104,7 @@ export class TikTokService
       streamKey: '',
       display: 'vertical',
       game: '',
+      gameName: '',
     },
     broadcastId: '',
     username: '',
@@ -883,7 +886,7 @@ export class TikTokService
   }
 
   setGameInfo({ gameId, gameName }: { gameId: string; gameName: string }) {
-    this.UPDATE_STREAM_SETTINGS({ game: gameId });
+    this.UPDATE_STREAM_SETTINGS({ game: gameId, gameName });
     this.SET_GAME_NAME(gameName);
   }
 
@@ -921,6 +924,9 @@ export class TikTokService
   @mutation()
   protected SET_GAME_NAME(gameName: string = '') {
     this.state.gameName = gameName;
+    // also mirror into settings so it survives into savedSettings, which clones
+    // state.settings rather than reading the top-level state
+    this.state.settings = { ...this.state.settings, gameName };
   }
 
   @mutation()
