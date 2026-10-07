@@ -119,7 +119,7 @@ export default function ReplaySection({ onImport }: { onImport: () => void }) {
           className={styles.primaryCta}
           onClick={() => handleOpenOrInstall('page')}
         >
-          {$t('One-click-install')}
+          {$t('One-click install')}
         </Button>
         {/* <span className={styles.fileSize}>
           {$t('%{size}MB filesize', { size: REPLAY_SETUP_SIZE_MB })}

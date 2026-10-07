@@ -68,6 +68,16 @@
 .import-button {
   border-style: dashed;
   background: transparent;
+
+  // Override antd's teal hover/focus border; only the background changes on hover
+  &:global(.ant-btn):hover,
+  &:global(.ant-btn):focus {
+    border-color: var(--button);
+  }
+
+  &:global(.ant-btn):hover {
+    background: var(--button-hover);
+  }
 }
 
 .file-size {
