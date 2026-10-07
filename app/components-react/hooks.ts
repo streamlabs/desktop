@@ -68,6 +68,29 @@ export function useOnDestroy(cb: () => void) {
 }
 
 /**
+ * Returns a ref whose `current` is true while the component is mounted.
+ * Use it to guard state updates that happen after an await, which may resolve
+ * after the component has unmounted:
+ *
+ * const isMounted = useIsMounted();
+ * const result = await SomeService.actions.return.fetch();
+ * if (!isMounted.current) return;
+ * setResult(result);
+ */
+export function useIsMounted() {
+  const isMounted = useRef(false);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  return isMounted;
+}
+
+/**
  * Create a debounced version of the function
  */
 export function useDebounce<T extends (...args: any[]) => any>(ms = 0, cb: T) {
