@@ -422,7 +422,9 @@ export class TwitterPlatformService
   }
 
   get streamPageUrl() {
-    return '';
+    const username = this.userService.state.auth?.platforms?.twitter?.username;
+    if (!username) return '';
+    return `${this.domain}/${username}`;
   }
 
   get chatUrl() {
