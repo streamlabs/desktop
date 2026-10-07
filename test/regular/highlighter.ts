@@ -1,5 +1,8 @@
 import { test, useWebdriver } from '../helpers/webdriver';
-import { setTemporaryRecordingPath } from '../helpers/modules/settings/settings';
+import {
+  setOutputResolution,
+  setTemporaryRecordingPath,
+} from '../helpers/modules/settings/settings';
 import {
   clickButton,
   focusMain,
@@ -12,6 +15,8 @@ import { showPage } from '../helpers/modules/navigation';
 import {
   clickGoLive,
   prepareToGoLive,
+  startRecording,
+  stopRecording,
   stopStream,
   tryToGoLive,
   waitForSettingsWindowLoaded,
@@ -21,6 +26,7 @@ import { logIn } from '../helpers/modules/user';
 import { saveReplayBuffer } from '../helpers/modules/replay-buffer';
 import { fillForm } from '../helpers/modules/forms';
 import { withUser } from '../helpers/webdriver/user';
+import { sleep } from '../helpers/sleep';
 const path = require('path');
 const fs = require('fs');
 
@@ -117,4 +123,73 @@ test('AI Highlighter', withUser('twitch', { prime: true }), async t => {
     'Case 4: Highlighter toggle should show for supported game when opening go live window',
   );
   await clickButton('Close');
+});
+
+test('AI Highlighter opens the import dialog after the stream', withUser('twitch'), async t => {
+  await setTemporaryRecordingPath(false);
+
+  // AI Highlighter records the stream and hands the recording to the import dialog
+  await tryToGoLive({
+    title: 'SLOBS Test Stream',
+    twitchGame: 'Fortnite',
+    replay: true,
+  });
+  await waitForStreamStart();
+  await sleep(3000); // give the recording some content
+  await stopStream();
+
+  await focusMain();
+  await waitForDisplayed('h2=Ai Highlighter', {
+    timeout: 20000,
+    timeoutMsg: 'The import dialog should open after a stream with AI Highlighter enabled',
+  });
+  // The import button is not clicked: that would open Replay
+  t.true(
+    await isDisplayed('button=Find game highlights'),
+    'The stream recording should be preselected in the import dialog',
+  );
+});
+
+test('Highlighter import button opens the import dialog', async t => {
+  await logIn();
+
+  await showPage('Highlighter');
+  await clickButton('Import recording');
+
+  await waitForDisplayed('h2=Import Game Recording', {
+    timeout: 5000,
+    timeoutMsg: 'The import dialog should open from the Highlighter page',
+  });
+  // Without recent recordings the dialog goes straight to picking a file, which would open the
+  // native file dialog, so it is not clicked
+  t.true(
+    await isDisplayed('button=Select video and start import'),
+    'The import dialog should ask to select a video',
+  );
+});
+
+test('Recordings get highlights opens the import dialog', async t => {
+  await setOutputResolution('100x100');
+  await setTemporaryRecordingPath(false);
+
+  await focusMain();
+  await startRecording();
+  await sleep(2000);
+  await stopRecording();
+
+  await showPage('Recordings');
+  await waitForDisplayed('[data-test=filename]', {
+    timeout: 10000,
+    timeoutMsg: 'The recording should show in the recordings list',
+  });
+  await (await getClient().$('span=Get highlights')).click();
+
+  await waitForDisplayed('h2=Import Game Recording', {
+    timeout: 5000,
+    timeoutMsg: 'Get highlights should open the import dialog on the Highlighter page',
+  });
+  t.true(
+    await isDisplayed('button=Find game highlights'),
+    'The recording should be preselected in the import dialog',
+  );
 });
