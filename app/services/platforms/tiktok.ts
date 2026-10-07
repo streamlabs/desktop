@@ -242,7 +242,7 @@ export class TikTokService
     }
 
     // An approved account can still choose to go live with a manually entered
-    // stream key instead API, indicated by which tab was active in the form
+    // stream key instead of using the API, indicated by which tab was active in the form
     if (this.getHasScope('approved') && ttSettings.activeTab !== 'stream-key') {
       // update server url and stream key if handling streaming via API
       // streaming with server url and stream key is default
