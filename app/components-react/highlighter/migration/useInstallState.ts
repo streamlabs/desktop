@@ -4,6 +4,7 @@ import { useVuex } from 'components-react/hooks';
 import {
   EReplayInstallStep,
   IReplayInstallOriginMetadata,
+  TInstalledHighlighterApp,
 } from 'services/highlighter/models/highlighter.models';
 import { REPLAY_APP_NAME } from 'services/highlighter/constants';
 import { $t } from 'services/i18n';
@@ -15,8 +16,12 @@ import { $t } from 'services/i18n';
 export function useInstallState(installOriginMetadata?: IReplayInstallOriginMetadata) {
   const { HighlighterService } = Services;
 
-  const [isInstalled, setIsInstalled] = useState<boolean | null>(null);
+  const [installedApp, setInstalledApp] = useState<TInstalledHighlighterApp | null>(null);
   const [isRecorderRunning, setIsRecorderRunning] = useState(false);
+
+  // Kept as the Replay-installed boolean the existing conditionals were written against. A
+  // Highlighter user has an app but not this one, so they are deliberately not "installed" here.
+  const isInstalled = installedApp === null ? null : installedApp === 'replay';
 
   const { step, progress, error } = useVuex(() => ({
     step: HighlighterService.state.replayInstall.step as EReplayInstallStep,
@@ -27,16 +32,17 @@ export function useInstallState(installOriginMetadata?: IReplayInstallOriginMeta
   const isInstalling = step === 'downloading' || step === 'installing' || step === 'verifying';
 
   useEffect(() => {
-    HighlighterService.actions.return.isStreamlabsReplayInstalled().then(installed => {
-      setIsInstalled(installed);
-      if (installed) {
+    HighlighterService.actions.return.getInstalledHighlighterApp().then(app => {
+      setInstalledApp(app);
+      // The recorder belongs to Replay, so there is nothing to look for in the other two states.
+      if (app === 'replay') {
         HighlighterService.actions.return.isStreamlabsRecorderRunning().then(setIsRecorderRunning);
       }
     });
   }, []);
 
   useEffect(() => {
-    if (step === 'done') setIsInstalled(true);
+    if (step === 'done') setInstalledApp('replay');
   }, [step]);
 
   function handleOpenOrInstall(source: 'page' | 'modal') {
@@ -55,6 +61,7 @@ export function useInstallState(installOriginMetadata?: IReplayInstallOriginMeta
     step,
     progress,
     error,
+    installedApp,
     isInstalled,
     isInstalling,
     isRecorderRunning,

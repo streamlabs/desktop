@@ -90,6 +90,11 @@
   .flex();
   .flex--column();
   .flex--grow();
+
+  :global(.ant-menu-horizontal) {
+    flex-grow: 1;
+    width: 100%;
+  }
 }
 
 .live-dock-chat--offline {
@@ -127,7 +132,6 @@
 .live-dock-chat-tabs__icons {
   display: flex;
   flex-grow: 1;
-  width: 100%;
   justify-content: flex-end;
   align-items: center;
   padding: 8px 0 8px 8px;

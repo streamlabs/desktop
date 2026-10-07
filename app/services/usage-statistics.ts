@@ -39,7 +39,7 @@ export type TAnalyticsEvent =
   | 'Shown'
   | 'AppStart'
   | 'Highlighter'
-  | 'AiFeature'
+  | 'VisionFeature'
   | 'AIHighlighter'
   | 'Hardware'
   | 'WebcamUse'
@@ -84,6 +84,7 @@ export type TUltraRefl =
   | 'slobs-live-output-editing'
   | 'slobs-automations'
   | 'slobs-support-chat'
+  | 'slobs-nav-menu'
   | string;
 
 interface IAnalyticsEvent {

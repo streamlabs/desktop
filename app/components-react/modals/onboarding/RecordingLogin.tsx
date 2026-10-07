@@ -41,7 +41,7 @@ export function RecordingLogin(p: IOnboardingStepProps) {
     {
       title: $t('Reactive Overlays'),
       description: $t(
-        'Show off your gameplay stats in real-time with our premium AI powered reactive overlays.',
+        'Show off your gameplay stats in real-time with our premium Vision-powered reactive overlays.',
       ),
       img: $i('images/onboarding/reactive-overlays.png'),
       isUltra: true,

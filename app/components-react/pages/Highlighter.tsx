@@ -34,7 +34,7 @@ export default function Highlighter(props: { params?: { view: string } }) {
   } else if (clipsAmount > 0) {
     initialViewState = { view: EHighlighterView.CLIPS, id: undefined };
   } else {
-    initialViewState = { view: EHighlighterView.SETTINGS };
+    initialViewState = { view: EHighlighterView.STREAM };
   }
 
   useEffect(() => {

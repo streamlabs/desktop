@@ -52,6 +52,16 @@ export interface IReplayInstallState {
 }
 
 /**
+ * Which of the two apps Desktop should talk to.
+ *
+ * Replay replaces the standalone Highlighter app, but Highlighter users migrate from inside
+ * Highlighter so they keep their data — it merges and installs Replay itself. So a user who only
+ * has Highlighter gets sent there rather than having Replay installed underneath them, and Replay
+ * wins as soon as it exists.
+ */
+export type TInstalledHighlighterApp = 'replay' | 'highlighter' | 'none';
+
+/**
  * Extra hand-off data written into the install origin marker Replay reads on first run.
  *
  * Everything here is optional and best-effort: it describes what Desktop is about to ask Replay

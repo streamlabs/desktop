@@ -31,6 +31,9 @@ export interface IEnv {
   HIGHLIGHTER_LOCAL_SETUP_PATH?: string;
   PRODUCT_UPDATES: boolean;
   AVATAR_ENV?: 'production' | 'staging' | 'local';
+
+  // Test automation variables
+  SLD_TESTS_SKIP_ONBOARDING?: 'true';
 }
 
 export default class Utils {

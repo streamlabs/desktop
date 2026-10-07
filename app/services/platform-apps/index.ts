@@ -18,7 +18,7 @@ import { stringifyAppSourceSettings } from './source-url';
 import { NavigationService } from 'services/navigation';
 import { InitAfter } from '../core';
 import * as remote from '@electron/remote';
-import { SideNavService } from 'app-services';
+import { NavMenuService } from 'app-services';
 
 const DEV_PORT = 8081;
 
@@ -193,7 +193,7 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
   @Inject() hostsService: HostsService;
   @Inject() userService: UserService;
   @Inject() navigationService: NavigationService;
-  @Inject() sideNavService: SideNavService;
+  @Inject() navMenuService: NavMenuService;
 
   get views() {
     return new PlatformAppsViews(this.state);
@@ -291,6 +291,8 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
         highlyPrivileged: this.views.isAppHighlyPrivileged(app.id_hash),
       });
     });
+
+    this.navMenuService.pinNewApps();
   }
 
   fetchAppStoreVisibility(): Promise<boolean> {
@@ -312,7 +314,6 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
   async refreshProductionApps() {
     this.unloadAllApps();
     this.loadProductionApps();
-    this.sideNavService.actions.updateAllApps(this.state.loadedApps);
   }
 
   /**
@@ -661,8 +662,8 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
     const windowId = `${appId}-${pageSlot}`;
     const mousePos = remote.screen.getCursorScreenPoint();
 
-    // We use a generated window Id to prevent someobody popping out the
-    // same winow multiple times.
+    // We use a generated window Id to prevent somebody popping out the
+    // same window multiple times.
     this.windowsService.createOneOffWindow(
       {
         componentName: 'PlatformAppPopOut',

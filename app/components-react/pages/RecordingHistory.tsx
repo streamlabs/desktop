@@ -14,7 +14,7 @@ import { initStore, useController } from '../hooks/zustand';
 import { useVuex } from '../hooks';
 import Translate from 'components-react/shared/Translate';
 import uuid from 'uuid/v4';
-import { EMenuItemKey } from 'services/side-nav';
+import { ENavMenuKey } from 'services/nav-menu';
 import { $i } from 'services/utils';
 import { IRecordingEntry } from 'services/recording-mode';
 import { EAvailableFeatures } from 'services/incremental-rollout';
@@ -72,6 +72,12 @@ class RecordingHistoryController {
     return this.HighlighterService.views.highlighterVersion;
   }
 
+  get migrationEnabled() {
+    return this.IncrementalRolloutService.views.featureIsEnabled(
+      EAvailableFeatures.highlighterMigration,
+    );
+  }
+
   get uploadOptions() {
     const opts = [
       {
@@ -120,7 +126,7 @@ class RecordingHistoryController {
       {
         value: 'typestudio',
         label: 'Podcast Edtior',
-        description: $t('Polish your videos with text-based and AI powered Podcast Editor'),
+        description: $t('Polish your videos with text-based and AI-powered Podcast Editor'),
         src: 'podcast-editor.png',
       },
     ];
@@ -154,7 +160,7 @@ class RecordingHistoryController {
         {
           view: EHighlighterView.STREAM,
         },
-        EMenuItemKey.Highlighter,
+        ENavMenuKey.Highlighter,
       );
       return;
     }
@@ -222,6 +228,7 @@ export function RecordingHistory(p: { className?: string }) {
     hasSLID,
     aiDetectionInProgress,
     highlighterVersion,
+    migrationEnabled,
   } = useVuex(() => ({
     recordings: controller.recordings,
     aiDetectionInProgress: controller.aiDetectionInProgress,
@@ -229,6 +236,7 @@ export function RecordingHistory(p: { className?: string }) {
     uploadInfo: controller.uploadInfo,
     hasSLID: controller.hasSLID,
     highlighterVersion: controller.highlighterVersion,
+    migrationEnabled: controller.migrationEnabled,
   }));
 
   useEffect(() => {
@@ -260,7 +268,7 @@ export function RecordingHistory(p: { className?: string }) {
           .map(option => {
             if (
               option.value === 'highlighter' &&
-              (!aiHighlighterFeatureEnabled || highlighterVersion === '')
+              (!aiHighlighterFeatureEnabled || (highlighterVersion === '' && !migrationEnabled))
             ) {
               return null;
             }

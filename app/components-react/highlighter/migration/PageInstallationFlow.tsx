@@ -1,13 +1,16 @@
 import React from 'react';
 import { Button } from 'antd';
 import cx from 'classnames';
-import { REPLAY_APP_NAME } from 'services/highlighter/constants';
+import { HIGHLIGHTER_APP_NAME, REPLAY_APP_NAME } from 'services/highlighter/constants';
 import { $t } from 'services/i18n';
 import Utils from 'services/utils';
 import styles from './MigrationNotice.m.less';
 import FeatureCarousel, { CAROUSEL_FEATURES } from './FeatureCarousel';
 import { useInstallState, getStatusText } from './useInstallState';
-import { EReplayInstallStep } from 'services/highlighter/models/highlighter.models';
+import {
+  EReplayInstallStep,
+  TInstalledHighlighterApp,
+} from 'services/highlighter/models/highlighter.models';
 
 interface IPageInstallationFlowProps {
   onCancel: () => void;
@@ -18,11 +21,13 @@ export default function PageInstallationFlow(props: IPageInstallationFlowProps) 
   const {
     step,
     progress,
-    isInstalled,
+    installedApp,
     handleOpenOrInstall,
     handleRetry,
     handleCancel,
   } = useInstallState();
+
+  const appName = installedApp === 'highlighter' ? HIGHLIGHTER_APP_NAME : REPLAY_APP_NAME;
 
   function onCancel() {
     handleCancel();
@@ -32,12 +37,17 @@ export default function PageInstallationFlow(props: IPageInstallationFlowProps) 
   const isStaging = Utils.getHighlighterEnvironment() !== 'production';
 
   return (
-    <>
+    <div
+      className={cx(styles.appDetection, {
+        [styles.appDetectionReady]: installedApp !== null,
+      })}
+      aria-hidden={installedApp === null}
+    >
       <FeatureCarousel
-        title={REPLAY_APP_NAME}
+        title={appName}
         description={$t(
           'Turn your streams into TikTok and YouTube videos with the click of a button.',
-          { appName: REPLAY_APP_NAME },
+          { appName },
         )}
         features={CAROUSEL_FEATURES}
       >
@@ -48,7 +58,7 @@ export default function PageInstallationFlow(props: IPageInstallationFlowProps) 
           <PageInstallCta
             step={step}
             progress={progress}
-            isInstalled={isInstalled ?? false}
+            installedApp={installedApp ?? 'none'}
             onOpenOrInstall={() => handleOpenOrInstall('page')}
             onRetry={handleRetry}
             onCancel={onCancel}
@@ -71,7 +81,7 @@ export default function PageInstallationFlow(props: IPageInstallationFlowProps) 
           )}
         </div>
       </FeatureCarousel>
-    </>
+    </div>
   );
 }
 
@@ -80,7 +90,7 @@ export default function PageInstallationFlow(props: IPageInstallationFlowProps) 
 interface IPageInstallCtaProps {
   step: EReplayInstallStep;
   progress: number;
-  isInstalled: boolean;
+  installedApp: TInstalledHighlighterApp;
   onOpenOrInstall: () => void;
   onShowAllClips: () => void;
   onRetry: () => void;
@@ -90,7 +100,7 @@ interface IPageInstallCtaProps {
 function PageInstallCta({
   step,
   progress,
-  isInstalled,
+  installedApp,
   onOpenOrInstall,
   onShowAllClips,
   onRetry,
@@ -98,12 +108,16 @@ function PageInstallCta({
 }: IPageInstallCtaProps) {
   const isInstalling = step === 'downloading' || step === 'installing' || step === 'verifying';
 
-  // Idle — CTA button (install or open depending on whether Replay is already installed)
+  // Nothing to open yet — the only state where the CTA is an install and the handwritten
+  // annotations teasing it make sense.
+  const nothingInstalled = installedApp === 'none';
+
+  // Idle — CTA button: open whichever app the user has, or install Replay when they have neither
   if (step === 'idle') {
     return (
       <div style={{ display: 'flex', gap: 8 }}>
         <div style={{ position: 'relative' }}>
-          {!isInstalled && (
+          {nothingInstalled && (
             <div style={{ position: 'absolute', left: 63, top: -32 }}>
               <svg
                 width="25"
@@ -147,10 +161,11 @@ function PageInstallCta({
             type="primary"
             onClick={onOpenOrInstall}
           >
-            {isInstalled
-              ? $t('Open %{appName}', { appName: REPLAY_APP_NAME })
-              : $t('Install %{appName}', { appName: REPLAY_APP_NAME })}
-            {!isInstalled && (
+            {installedApp === 'replay' && $t('Open %{appName}', { appName: REPLAY_APP_NAME })}
+            {installedApp === 'highlighter' &&
+              $t('Open %{appName}', { appName: HIGHLIGHTER_APP_NAME })}
+            {nothingInstalled && $t('Install %{appName}', { appName: REPLAY_APP_NAME })}
+            {nothingInstalled && (
               <div
                 style={{
                   position: 'absolute',
@@ -194,7 +209,7 @@ function PageInstallCta({
             )}
           </Button>
         </div>
-        {isInstalled && (
+        {!nothingInstalled && (
           <Button
             size="large"
             style={{ width: 'max-content' }}
@@ -219,10 +234,9 @@ function PageInstallCta({
           <div className={styles.progressBarRow}>
             <div className={styles.progressTrack}>
               <div
-                className={cx(
-                  styles.progressFill,
-                  step !== 'downloading' && styles.progressFillPulse,
-                )}
+                className={cx(styles.progressFill, {
+                  [styles.progressFillPulse]: step !== 'downloading',
+                })}
                 style={{ width: step === 'downloading' ? `${progress}%` : '100%' }}
               />
             </div>
