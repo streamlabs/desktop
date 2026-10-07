@@ -18,21 +18,56 @@ import {
   startRecording,
   stopRecording,
   stopStream,
+  submit,
   tryToGoLive,
   waitForSettingsWindowLoaded,
   waitForStreamStart,
 } from '../helpers/modules/streaming';
 import { logIn } from '../helpers/modules/user';
 import { saveReplayBuffer } from '../helpers/modules/replay-buffer';
-import { fillForm } from '../helpers/modules/forms';
+import { fillForm, useForm } from '../helpers/modules/forms';
+import { SwitchInputController } from '../helpers/modules/forms/inputs';
 import { withUser } from '../helpers/webdriver/user';
 import { sleep } from '../helpers/sleep';
+import { getApiClient } from '../helpers/api-client';
+import { HighlighterService } from '../../app/services/highlighter';
 const path = require('path');
 const fs = require('fs');
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
+
+async function getInstalledHighlighterApp() {
+  return (await getApiClient())
+    .getResource<HighlighterService>('HighlighterService')
+    .getInstalledHighlighterApp();
+}
+
+/**
+ * Turn on AI Highlighter in the open go live window. Without Replay installed the card shows a
+ * one-click install button instead of the toggle. Clicking it only opts in, the installation
+ * itself would start after confirming the import dialog, which the tests never do.
+ */
+async function enableAiHighlighter() {
+  if ((await getInstalledHighlighterApp()) === 'none') {
+    await clickButton('One-click install');
+  } else {
+    await fillForm({ replay: true });
+  }
+
+  await waitForDisplayed('[data-name="replay"]', {
+    timeout: 5000,
+    timeoutMsg: 'The AI Highlighter toggle should show once AI Highlighter is enabled',
+  });
+  // not a react hook
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const toggle = await useForm().getInput<SwitchInputController>('replay');
+  await getClient().waitUntil(() => toggle.getValue(), {
+    timeout: 5000,
+    timeoutMsg: 'The AI Highlighter toggle should be turned on',
+  });
+}
 
 test('Highlighter save and export', async t => {
   await logIn();
@@ -89,38 +124,38 @@ test('AI Highlighter', withUser('twitch', { prime: true }), async t => {
     twitchGame: 'Fortnite',
   });
 
-  // Highlighter toggle shows
+  // Highlighter card shows. It holds the toggle, or the one-click install button without Replay.
   await waitForSettingsWindowLoaded();
   t.true(
-    await isDisplayed('[data-name="replay"]'),
-    'Case 1: Highlighter toggle should show for supported game',
+    await isDisplayed('[data-name="ai-highlighter-selector"]'),
+    'Case 1: Highlighter card should show for supported game',
   );
 
-  // Highlighter toggle hides
+  // Highlighter card hides
   await fillForm({
     twitchGame: 'DOOM',
   });
   await waitForSettingsWindowLoaded();
   t.false(
-    await isDisplayed('[data-name="replay"]'),
-    'Case 2: Highlighter toggle should hide for not supported game',
+    await isDisplayed('[data-name="ai-highlighter-selector"]'),
+    'Case 2: Highlighter card should hide for not supported game',
   );
 
-  // Highlighter toggle shows again
+  // Highlighter card shows again
   await fillForm({
     twitchGame: 'Fortnite',
   });
   await waitForSettingsWindowLoaded();
   t.true(
-    await isDisplayed('[data-name="replay"]'),
-    'Case 3: Highlighter toggle should show when changing from an unsupported game to a supported game',
+    await isDisplayed('[data-name="ai-highlighter-selector"]'),
+    'Case 3: Highlighter card should show when changing from an unsupported game to a supported game',
   );
   await clickButton('Close');
   await clickGoLive();
   await waitForSettingsWindowLoaded();
   t.true(
-    await isDisplayed('[data-name="replay"]'),
-    'Case 4: Highlighter toggle should show for supported game when opening go live window',
+    await isDisplayed('[data-name="ai-highlighter-selector"]'),
+    'Case 4: Highlighter card should show for supported game when opening go live window',
   );
   await clickButton('Close');
 });
@@ -129,11 +164,16 @@ test('AI Highlighter opens the import dialog after the stream', withUser('twitch
   await setTemporaryRecordingPath(false);
 
   // AI Highlighter records the stream and hands the recording to the import dialog
-  await tryToGoLive({
+  await prepareToGoLive();
+  await clickGoLive();
+  await waitForSettingsWindowLoaded();
+  await fillForm({
     title: 'SLOBS Test Stream',
     twitchGame: 'Fortnite',
-    replay: true,
   });
+  await waitForSettingsWindowLoaded();
+  await enableAiHighlighter();
+  await submit();
   await waitForStreamStart();
   await sleep(3000); // give the recording some content
   await stopStream();
@@ -154,6 +194,18 @@ test('Highlighter import button opens the import dialog', async t => {
   await logIn();
 
   await showPage('Highlighter');
+
+  // Without Replay installed the page only offers installing it. The button is not clicked:
+  // that would download and run the real installer.
+  if ((await getInstalledHighlighterApp()) === 'none') {
+    await waitForDisplayed('button=One-click install', {
+      timeout: 5000,
+      timeoutMsg: 'The Highlighter page should offer installing Replay',
+    });
+    t.pass();
+    return;
+  }
+
   await clickButton('Import recording');
 
   await waitForDisplayed('h2=Import Game Recording', {
