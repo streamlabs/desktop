@@ -751,6 +751,11 @@ export class TikTokService
   }
 
   get promptReapply(): boolean {
+    // TODO: Remove when able to update user pool to have a dateDenied field
+    if (Utils.isTestMode()) {
+      if (this.getHasScope('denied')) return true;
+    }
+
     // prompt a user to reapply if they were rejected 30+ days ago
     if (!this.getHasScope('denied') || !this.state.dateDenied) return false;
 
