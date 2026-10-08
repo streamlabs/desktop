@@ -1,5 +1,4 @@
 import { Menu } from 'antd';
-import cx from 'classnames';
 import React from 'react';
 import { ENavMenuKey } from 'services/nav-menu';
 import { useFeaturesNav } from './FeaturesNav';
@@ -18,7 +17,7 @@ export default function NavMenu() {
   const navRef = useNavCollapse(`${featuresKey}|${toolsKey}`);
 
   return (
-    <div className={cx(styles.navMenu)} ref={navRef}>
+    <div data-testid="nav-menu" className={styles.navMenu} ref={navRef}>
       <Menu
         key="nav-menu"
         mode="horizontal"
