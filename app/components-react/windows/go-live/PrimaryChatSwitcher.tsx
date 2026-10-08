@@ -10,6 +10,18 @@ import UltraIcon from 'components-react/shared/UltraIcon';
 import styles from './GoLive.m.less';
 import cx from 'classnames';
 import { useVuex } from 'components-react/hooks';
+import { CaretDownOutlined } from '@ant-design/icons';
+
+/**
+ * Caret used as the switcher's dropdown arrow.
+ * @remark Carries antd's own `ant-select-suffix` class on purpose. antd 4's Select stylesheet sets
+ * `pointer-events: none` on the arrow container but re-enables `pointer-events: auto` for any icon
+ * inside it without that class, so a custom suffix icon swallows the click and the dropdown only
+ * opens from the text. With the class, clicks fall through to the select like the default arrow.
+ */
+function CaretIcon() {
+  return <CaretDownOutlined className="ant-select-suffix" />;
+}
 
 interface IPrimaryChatSwitcherProps {
   enabledPlatforms: TPlatform[];
@@ -18,7 +30,8 @@ interface IPrimaryChatSwitcherProps {
   style?: React.CSSProperties;
   className?: string | undefined;
   layout?: 'vertical' | 'horizontal';
-  suffixIcon?: React.ReactNode;
+  /** Show a caret as the dropdown arrow instead of antd's default. See {@link CaretIcon}. */
+  caretIcon?: boolean;
   tooltip?: string;
   size?: 'small' | 'middle' | 'large';
   logo?: boolean;
@@ -33,7 +46,7 @@ export default function PrimaryChatSwitcher({
   style = {},
   layout = 'vertical',
   className = undefined,
-  suffixIcon = undefined,
+  caretIcon = false,
   tooltip = undefined,
   size = undefined,
   logo = true,
@@ -105,7 +118,7 @@ export default function PrimaryChatSwitcher({
         optionRender={opt => renderPrimaryChatOption(opt, logo)}
         value={value}
         onChange={onSetPrimaryChat}
-        suffixIcon={suffixIcon}
+        suffixIcon={caretIcon ? <CaretIcon /> : undefined}
         size={size}
         disabled={switcherDisabled}
         dropdownMatchSelectWidth={false}

@@ -16,7 +16,6 @@ import { KickEditStreamInfo } from './platforms/KickEditStreamInfo';
 import { PatreonEditStreamInfo } from './platforms/PatreonEditStreamInfo';
 import { TInputLayout } from 'components-react/shared/inputs';
 import PrimaryChatSwitcher from './PrimaryChatSwitcher';
-import { CaretDownOutlined } from '@ant-design/icons';
 import LiveOutputEditingCard from './LiveOutputEditingCard';
 import StreamShiftCard from './StreamShiftCard';
 import styles from './GoLive.m.less';
@@ -136,7 +135,7 @@ export default function PlatformSettings() {
             enabledPlatforms={enabledPlatforms}
             onSetPrimaryChat={setPrimaryChat}
             primaryChat={primaryChat}
-            suffixIcon={<CaretDownOutlined />}
+            caretIcon
             layout="vertical"
             logo={false}
           />
