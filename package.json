@@ -256,7 +256,8 @@
   },
   "optionalDependencies": {
     "node-gyp": "12.2.0",
-    "node-win32-np": "1.0.6"
+    "node-win32-np": "1.0.6",
+    "secure-pipe": "file:app/native/secure-pipe"
   },
   "resolutions": {
     "minimist": "1.2.6",
