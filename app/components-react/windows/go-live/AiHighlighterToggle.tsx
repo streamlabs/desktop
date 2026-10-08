@@ -2,7 +2,7 @@ import { SwitchInput } from 'components-react/shared/inputs/SwitchInput';
 import React, { useEffect, useState } from 'react';
 import styles from './AiHighlighterToggle.m.less';
 import { Services } from 'components-react/service-provider';
-import { useDebounce, useVuex } from 'components-react/hooks';
+import { useDebounce, useIsMounted, useVuex } from 'components-react/hooks';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { isGameSupported } from 'services/highlighter/models/game-config.models';
@@ -53,8 +53,10 @@ export default function AiHighlighterToggle({ isUpdateMode }: { isUpdateMode?: b
     setIsExpanded(!showToggle && !isUpdateMode);
   }, [showToggle, installedApp]);
 
+  const isMounted = useIsMounted();
   async function checkRecorderStatus() {
     const running = await HighlighterService.actions.return.isStreamlabsRecorderRunning();
+    if (!isMounted.current) return;
     setShowReplayRecordingAlert(running);
   }
 

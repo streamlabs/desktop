@@ -1,4 +1,4 @@
-import { readdir } from 'fs-extra';
+import { readdir, mkdirpSync } from 'fs-extra';
 import { test, useWebdriver } from '../helpers/webdriver';
 import { addSource } from '../helpers/modules/sources';
 import {
@@ -6,11 +6,21 @@ import {
   setTemporaryRecordingPath,
   showSettingsWindow,
 } from '../helpers/modules/settings/settings';
-import { clickWhenDisplayed, focusMain, waitForDisplayed } from '../helpers/modules/core';
+import {
+  clickButton,
+  clickWhenDisplayed,
+  focusMain,
+  waitForDisplayed,
+} from '../helpers/modules/core';
 import { useForm } from '../helpers/modules/forms';
 import { startRecording, stopRecording } from '../helpers/modules/streaming';
 import { sleep } from '../helpers/sleep';
 import * as path from 'path';
+import {
+  saveReplayBuffer,
+  startReplayBuffer,
+  stopReplayBuffer,
+} from '../helpers/modules/replay-buffer';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -27,6 +37,7 @@ test('Selective Recording', async t => {
   await showSettingsWindow('Output', async () => {
     const { setDropdownInputValue } = useForm('Recording');
     await setDropdownInputValue('RecQuality', 'High Quality, Medium File Size');
+    await clickButton('Close');
   });
 
   // set lower resolution for better performance in CI
@@ -83,5 +94,65 @@ test('Selective Recording', async t => {
 
   const newFiles = await readdir(tmpDir);
   t.is(newFiles.length, 2, 'Selective Recording works in Advanced Mode.');
+  t.pass();
+});
+
+test('Selective Recording w/Replay Buffer', async t => {
+  const sourceType = 'Browser Source';
+  const sourceName = `Example ${sourceType}`;
+  const { client } = t.context.app;
+  const tmpDir = await setTemporaryRecordingPath(
+    false,
+    path.join(t.context.cacheDir, 'slobs-client', 'test-recordings2'),
+  );
+  mkdirpSync(tmpDir);
+  // set lower resolution for better performance in CI
+  await setOutputResolution('100x100');
+  await sleep(1000);
+
+  // Set recording quality and enable replay buffer in one pass
+  await showSettingsWindow('Output', async () => {
+    const { setDropdownInputValue } = useForm('Recording');
+    await setDropdownInputValue('RecQuality', 'High Quality, Medium File Size');
+    const { fillForm } = useForm('Replay Buffer');
+    await fillForm({ RecRB: true });
+    await clickButton('Close');
+  });
+
+  // Add a browser source
+  await addSource(sourceType, sourceName);
+
+  // Toggle selective recording
+  await focusMain();
+  await startReplayBuffer();
+  await (await client.$('[data-name=sourcesControls] .icon-smart-record')).click();
+
+  // Check that selective recording icon is active
+  await (await client.$('.icon-smart-record.active')).waitForExist();
+
+  // Check that browser source has a selective recording toggle
+  t.true(await (await client.$('[data-role=source] .icon-smart-record')).isExisting());
+
+  // Cycle selective recording mode on browser source
+  await (await client.$('[data-role=source] .icon-smart-record')).click();
+
+  // Check that source is set to stream only
+  await (await client.$('[data-role=source] .icon-broadcast')).waitForExist();
+
+  // Create recording
+  await focusMain();
+  await startRecording();
+  await sleep(500);
+  await saveReplayBuffer();
+  await stopReplayBuffer();
+  await sleep(2000);
+  await stopRecording();
+
+  // Check that file exists
+  await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
+  await waitForDisplayed('h1=Recordings', { timeout: 1000 });
+
+  const files = await readdir(tmpDir);
+  t.is(files.length, 2, 'Selective Recording works with Replay Buffer.');
   t.pass();
 });
