@@ -354,7 +354,11 @@ export class YoutubeService
       typeof reqInfo !== 'string'
         ? `Failed ${this.displayName} API Request`
         : `Failed ${this.displayName} Request`;
-    console.error(consoleError, '\nRequest Info:', reqInfo, '\nError:', e);
+
+    // Parse object data if possible to read data in the errors array
+    const error = typeof e === 'object' ? JSON.stringify(e) : e;
+
+    console.error(consoleError, '\nRequest Info:', reqInfo, '\nError:', error);
 
     // If a function is provided, skip the default handling
     if (fn) {
@@ -488,6 +492,7 @@ export class YoutubeService
   }
 
   async setupDualStream(goLiveSettings: IGoLiveSettings) {
+    console.log('Setting up dual stream: ', goLiveSettings);
     // Live output editing currently cannot use dual stream so guard against it
     if (goLiveSettings.liveOutputEditing) {
       return;
@@ -630,7 +635,7 @@ export class YoutubeService
           setTimeout(async () => {
             await this.setupDualStream(goLiveSettings);
             resolve();
-          }, 1000);
+          }, 3000);
         });
       } catch (e: unknown) {
         this.createPlatformError(
