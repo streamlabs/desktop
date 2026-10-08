@@ -13,15 +13,15 @@ relevant service before editing it; prefer targeted reads over broad assumptions
 
 Package manager is **Yarn Berry (3.1.1)** — never use `npm`.
 
-| Task | Command | Notes |
-| --- | --- | --- |
-| Lint + format | `yarn eslint` | Prettier runs *through* ESLint (`eslint-plugin-prettier`). `eslint --fix` formats. |
-| Typecheck | `yarn typecheck` | **Fast self-verify.** `tsc --noEmit` for the app + React. Use this to check changes instead of a full build or the e2e suite. |
-| Iterative dev build | `yarn watch` | Webpack watch; use this while developing. |
-| One‑shot dev build | `yarn compile` | Slow: clears `bundles/media` and rebuilds everything. Don't run casually. |
-| Run the app | `yarn start` | Launches Electron against the last build. |
-| Single test file | `yarn test:file <path>` | Compiles tests, runs one file. |
-| Full test suite | `yarn test` | **Heavy/slow e2e** — see Testing below. Don't run unless asked. |
+| Task                | Command                 | Notes                                                                                                                         |
+| ------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Lint + format       | `yarn eslint`           | Prettier runs _through_ ESLint (`eslint-plugin-prettier`). `eslint --fix` formats.                                            |
+| Typecheck           | `yarn typecheck`        | **Fast self-verify.** `tsc --noEmit` for the app + React. Use this to check changes instead of a full build or the e2e suite. |
+| Iterative dev build | `yarn watch`            | Webpack watch; use this while developing.                                                                                     |
+| One‑shot dev build  | `yarn compile`          | Slow: clears `bundles/media` and rebuilds everything. Don't run casually.                                                     |
+| Run the app         | `yarn start`            | Launches Electron against the last build.                                                                                     |
+| Single test file    | `yarn test:file <path>` | Compiles tests, runs one file.                                                                                                |
+| Full test suite     | `yarn test`             | **Heavy/slow e2e** — see Testing below. Don't run unless asked.                                                               |
 
 For a fast type check without a full build, run **`yarn typecheck`** — it runs
 `tsc --noEmit` for the non‑React app (`tsconfig.json`) and for `app/components-react`
@@ -39,7 +39,7 @@ them. (The build still typechecks via `ts-loader`; tests compile via `tsc -p tes
 
 ## Architecture in one screen
 
-Multi‑window Electron app. Every window runs the *same* JS bundle but plays a
+Multi‑window Electron app. Every window runs the _same_ JS bundle but plays a
 different role:
 
 - **worker** — invisible, persistent renderer that runs the **entire services
@@ -51,8 +51,8 @@ different role:
 The UI windows (main, child, one‑off) **don't run services** — they call them
 remotely. A call from any non‑worker window is sent to the **Electron main
 process** (`main.js`), which forwards it to the **worker** window, then routes the
-result back to the originating window. Note: the *main process* (`main.js`, Node)
-is the router — **not** the *main window*, which is just another UI client.
+result back to the originating window. Note: the _main process_ (`main.js`, Node)
+is the router — **not** the _main window_, which is just another UI client.
 
 **Services** (`app/services/`) are strict singletons holding all domain logic.
 Normal application code reaches a service through the `@Inject()` decorator. They're
@@ -71,7 +71,7 @@ Much existing service state still lives in **Vuex** via `StatefulService<TState>
 (read through `this.state`, mutated only via `@mutation()` methods). You'll
 maintain it where it already exists, but **don't reach for Vuex for new state.**
 
-See `ARCHITECTURE.md` for the full model and the *why* behind the sharp edges.
+See `ARCHITECTURE.md` for the full model and the _why_ behind the sharp edges.
 
 ## Hard rules (these are easy to get wrong)
 
@@ -108,6 +108,20 @@ See `ARCHITECTURE.md` for the full model and the *why* behind the sharp edges.
   → `afterInit()`.
 - Cross‑service / cross‑window events use **RxJS** `Subject`s.
 
+## Alert type `apiKey` field naming
+
+When adding a new alert type to `alerts-config.ts`, the `apiKey` field must match
+the **backend field prefix**, not the internal alert type name. For example,
+an alert previously had the alert type `twitter_subscription` in the repository
+but because the backend returns settings with keys like `twitter_sub_image_href`,
+not `twitter_subscription_image_href`, it requires `apiKey: 'twitter_sub'`,
+not `twitter_subscription_*`. The variation field parser in `AlertBoxModule.setData()`
+uses `${apiKey}_` prefix matching (see `app/components-react/widgets/useAlertBox.tsx`
+line 207). Mismatching this causes variation settings to fail initialization silently,
+leading to UI freezes. Also map internal alert types to API endpoints in
+`WidgetsService.playAlert()` (`app/services/widgets/widgets.ts`) if the backend uses
+a different name there.
+
 ## Testing
 
 Tests are **integration/e2e via WebdriverIO** — they launch the real Electron app
@@ -117,20 +131,20 @@ suite (and `yarn package`) unless explicitly asked.
 
 ## Where things live
 
-| Path | What |
-| --- | --- |
-| `main.js` | Electron main process: windows, IPC routing, updater, logging. |
-| `app/app.ts` | Renderer bootstrap (services, i18n, Sentry). |
-| `app/app-services.ts` | Central service registry. |
-| `app/services/` | All services (domain logic). |
-| `app/services/core/` | Service base, `StatefulService`, DI, mutations. |
-| `app/services/realm.ts` | Realm‑backed cross‑process state. |
-| `app/services-manager.ts` | Service instantiation + IPC proxying. |
-| `app/services/api/internal-api-client.ts` | Client side of cross‑window service calls. |
-| `app/store/` | Vuex store + cross‑window mutation sync (legacy). |
-| `app/components-react/` | React UI (current). |
-| `app/components/` | Vue UI (legacy). |
-| `test/` | e2e/stress/screen/performance tests + helpers. |
+| Path                                      | What                                                           |
+| ----------------------------------------- | -------------------------------------------------------------- |
+| `main.js`                                 | Electron main process: windows, IPC routing, updater, logging. |
+| `app/app.ts`                              | Renderer bootstrap (services, i18n, Sentry).                   |
+| `app/app-services.ts`                     | Central service registry.                                      |
+| `app/services/`                           | All services (domain logic).                                   |
+| `app/services/core/`                      | Service base, `StatefulService`, DI, mutations.                |
+| `app/services/realm.ts`                   | Realm‑backed cross‑process state.                              |
+| `app/services-manager.ts`                 | Service instantiation + IPC proxying.                          |
+| `app/services/api/internal-api-client.ts` | Client side of cross‑window service calls.                     |
+| `app/store/`                              | Vuex store + cross‑window mutation sync (legacy).              |
+| `app/components-react/`                   | React UI (current).                                            |
+| `app/components/`                         | Vue UI (legacy).                                               |
+| `test/`                                   | e2e/stress/screen/performance tests + helpers.                 |
 
 ## Useful env vars (dev)
 

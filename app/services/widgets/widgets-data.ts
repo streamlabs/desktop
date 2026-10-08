@@ -85,7 +85,7 @@ export const makeWidgetTesters = (host: string): IWidgetTester[] => {
       url(platform) {
         return testUrl(alertTypeWithTwitchDefault('follow', platform));
       },
-      platforms: ['twitch', 'facebook'],
+      platforms: ['twitch', 'facebook', 'twitter'],
     },
     {
       name: 'Subscriber',
@@ -97,7 +97,7 @@ export const makeWidgetTesters = (host: string): IWidgetTester[] => {
       url(platform) {
         return testUrl(alertTypeWithTwitchDefault('sub', platform));
       },
-      platforms: ['twitch'],
+      platforms: ['twitch', 'twitter'],
     },
     {
       name: 'Membership',
@@ -144,8 +144,10 @@ export const makeWidgetTesters = (host: string): IWidgetTester[] => {
     },
     {
       name: 'Like',
-      url: testUrl('facebook_like'),
-      platforms: ['facebook'],
+      url(platform) {
+        return testUrl(platform === 'twitter' ? 'twitter_like' : 'facebook_like');
+      },
+      platforms: ['facebook', 'twitter'],
     },
     {
       name: 'Merch',
@@ -554,8 +556,13 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
     description: $t('Set a follower goal for your viewers to help you reach.'),
     demoVideo: false,
     demoFilename: 'source-follower-goal.png',
-    platforms: new Set(['twitch', 'facebook', 'youtube']),
-    supportList: [$t('Twitch Followers'), $t('YouTube Subscribers'), $t('Facebook Followers')],
+    platforms: new Set(['twitch', 'facebook', 'youtube', 'twitter']),
+    supportList: [
+      $t('Twitch Followers'),
+      $t('YouTube Subscribers'),
+      $t('Facebook Followers'),
+      $t('X Followers'),
+    ],
     icon: 'fas fa-calendar',
     group: 'goals',
   },
@@ -564,8 +571,13 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
     description: $t('Set a subscriber goal for your viewers to help you reach.'),
     demoVideo: false,
     demoFilename: 'source-follower-goal.png',
-    supportList: [$t('Twitch Subscribers'), $t('YouTube Members'), $t('Facebook Supporters')],
-    platforms: new Set(['twitch', 'youtube']),
+    supportList: [
+      $t('Twitch Subscribers'),
+      $t('YouTube Members'),
+      $t('Facebook Supporters'),
+      $t('X Subscribers'),
+    ],
+    platforms: new Set(['twitch', 'youtube', 'twitter']),
     icon: 'fas fa-calendar',
     group: 'goals',
   },
@@ -631,7 +643,7 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
       $t('Super Chats'),
       $t('Supporters'),
       $t('Charity donations'),
-      $t('Platform support: Twitch, YouTube, Facebook'),
+      $t('Platform support: Twitch, YouTube, Facebook, X'),
     ],
     icon: 'fas fa-th-list',
     shortDesc: $t('Display recent events'),
