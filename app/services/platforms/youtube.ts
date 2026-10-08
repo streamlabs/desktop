@@ -495,7 +495,11 @@ export class YoutubeService
     // Filter out sensitive information from custom destinations for logging
     const settings = {
       title: goLiveSettings?.platforms?.youtube?.title,
-      thumbnail: goLiveSettings?.platforms?.youtube?.thumbnail || 'default',
+      thumbnail:
+        goLiveSettings?.platforms?.youtube?.thumbnail &&
+        goLiveSettings?.platforms?.youtube?.thumbnail !== 'default'
+          ? goLiveSettings?.platforms?.youtube?.thumbnail
+          : 'default',
       categoryId: goLiveSettings?.platforms?.youtube?.categoryId,
       broadcastId: goLiveSettings?.platforms?.youtube?.broadcastId,
       description: goLiveSettings?.platforms?.youtube?.description,
