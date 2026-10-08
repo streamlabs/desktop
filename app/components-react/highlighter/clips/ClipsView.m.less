@@ -79,7 +79,7 @@
 .clip-item {
   margin: 10px 20px 10px 0;
   display: inline-block;
-  background-color: #111111;
+  background-color: var(--section);
   border-radius: 16px;
 }
 
@@ -92,7 +92,10 @@
   flex-shrink: 0;
   width: 0;
   overflow: hidden;
-  transition: width 250ms cubic-bezier(0.23, 1, 0.32, 1);
+  // Hidden panels must also leave the tab order. Visibility flips only after the width has
+  // collapsed, so the closing slide stays visible
+  visibility: hidden;
+  transition: width 250ms cubic-bezier(0.23, 1, 0.32, 1), visibility 0s linear 250ms;
 
   > * {
     width: @editor-panel-width;
@@ -101,6 +104,8 @@
 
 .editor-panel-visible {
   width: @editor-panel-width;
+  visibility: visible;
+  transition: width 250ms cubic-bezier(0.23, 1, 0.32, 1), visibility 0s;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -18,6 +18,13 @@
   // to transparent; in Figma's order the opaque linear gradient would hide it entirely
   background: radial-gradient(80% 80% at 20% 60%, #112f35 0%, rgba(16, 23, 27, 0) 80%),
     radial-gradient(82.46% 113.14% at 80% 20%, #112f35 0%, #10171b 80%, #10171b 100%);
+
+  // Same glow on a light base for the light themes
+  :global(.day-theme) &,
+  :global(.prime-light) & {
+    background: radial-gradient(80% 80% at 20% 60%, #d3ece8 0%, rgba(245, 248, 250, 0) 80%),
+      radial-gradient(82.46% 113.14% at 80% 20%, #d3ece8 0%, #f5f8fa 80%, #f5f8fa 100%);
+  }
 }
 
 .hero {
