@@ -167,7 +167,7 @@ export class AnnouncementsService extends Service {
    */
   async getProductUpdates() {
     // Handle forcing the marketing modal to show show for development purposes
-    if (Utils.showProductUpdates()) {
+    if (Utils.env.SLD_FORCE_PRODUCT_UPDATES) {
       const resp = await this.fetchProductUpdates(true);
       this.showProductUpdates(resp);
       return;
@@ -294,7 +294,7 @@ export class AnnouncementsService extends Service {
     if (
       !recentlyInstalled ||
       this.customizationService.state.enableAnnouncements ||
-      Utils.showProductUpdates()
+      Utils.env.SLD_FORCE_PRODUCT_UPDATES
     ) {
       const endpoint = `api/v5/slobs/announcement/get?clientId=${this.userService.getLocalUserId()}&locale=${
         this.i18nService.state.locale
