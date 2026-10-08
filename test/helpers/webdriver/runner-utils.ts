@@ -6,14 +6,38 @@
 import avaTest, { TestInterface } from 'ava';
 import { ITestContext } from './index';
 import { uniq } from 'lodash';
+import * as path from 'path';
 const fs = require('fs');
 const fetch = require('node-fetch');
-const tasklist = require('tasklist');
 const kill = require('tree-kill');
 
 export interface ITestStats {
   duration: number;
   syncIPCCalls: number;
+}
+
+export function desktopFailureLogs(cacheDir: string): string {
+  const files = [path.join(cacheDir, 'slobs-client', 'app.log')];
+  const obsLogDir = path.join(cacheDir, 'slobs-client', 'node-obs', 'logs');
+  try {
+    const obsLogs = fs.readdirSync(obsLogDir)
+      .map((name: string) => path.join(obsLogDir, name))
+      .filter((file: string) => fs.statSync(file).isFile())
+      .sort((left: string, right: string) => fs.statSync(right).mtimeMs - fs.statSync(left).mtimeMs);
+    if (obsLogs.length) files.push(obsLogs[0]);
+  } catch (error) {
+    files.push(`${obsLogDir} (unavailable: ${error.message})`);
+  }
+  const matcher = /\[Shutdown\]|obs-browser|Browser Source|CreateBrowserSync|CEF|sandbox|obs_shutdown|destroyOBS_API|Failed to load plugin/i;
+  return files.map(file => {
+    try {
+      const lines = fs.readFileSync(file, 'utf8').split(/\r?\n/);
+      const relevant = lines.filter((line: string) => matcher.test(line)).slice(-30);
+      return `${file}:\n${relevant.length ? relevant.join('\n') : '(no matching lines)'}`;
+    } catch (error) {
+      return `${file}: unreadable (${error.message})`;
+    }
+  }).join('\n');
 }
 
 const {
@@ -159,40 +183,90 @@ export function requestUtilsServer(path: string, method = 'get', body?: unknown)
   });
 }
 
-async function getElectronInstances() {
-  if (process.platform === 'win32') {
-    const tasks = await tasklist();
-    return tasks.filter((task: any) => task.imageName === 'electron.exe');
+function processExists(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    if (error.code === 'ESRCH') return false;
+    if (error.code === 'EPERM') return true;
+    throw error;
   }
-
-  // Returns an object { pid: number, comm: string } for each process, where comm is the command that launched the process
-  const { execSync } = require('child_process');
-  const output = execSync('ps -eo pid,comm').toString();
-  return output
-    .split('\n')
-    .slice(1)
-    .map((line: string) => {
-      const [pid, ...commParts] = line.trim().split(/\s+/);
-      return { pid: parseInt(pid, 10), comm: commParts.join(' ') };
-    })
-    .filter((proc: any) => proc.comm && proc.comm.includes('electron'));
 }
 
-export async function killElectronInstances() {
-  const tasks = await getElectronInstances();
-  tasks.forEach((task: any) => kill(task.pid));
+export function windowsProcessStartTime(pid: number): string | undefined {
+  if (process.platform !== 'win32' || !Number.isInteger(pid) || pid <= 0) return;
+  try {
+    const { execFileSync } = require('child_process');
+    const script = `(Get-Process -Id ${pid} -ErrorAction Stop).StartTime.ToUniversalTime().Ticks`;
+    return execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], {
+      encoding: 'utf8',
+      timeout: 5000,
+    }).trim() || undefined;
+  } catch (error) {
+    return;
+  }
 }
 
-export function killChromedriverOnPort(port: number) {
+function describeWindowsProcess(pid: number): string {
+  try {
+    const { execFileSync } = require('child_process');
+    const script = `Get-Process -Id ${pid} -ErrorAction SilentlyContinue | Select-Object Id,ProcessName,Path,StartTime,HasExited,@{Name='ThreadCount';Expression={$_.Threads.Count}} | ConvertTo-Json -Compress`;
+    return execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], {
+      encoding: 'utf8',
+      timeout: 5000,
+    }).trim() || 'no matching process';
+  } catch (error) {
+    return `process lookup failed: ${error.message}`;
+  }
+}
+
+export async function waitForProcessExit(
+  pid: number,
+  timeoutMs = 55000,
+  description = 'process',
+  expectedStartTime?: string,
+): Promise<void> {
+  if (!Number.isInteger(pid) || pid <= 0) throw new Error(`Invalid ${description} PID: ${pid}`);
+  const startedAt = Date.now();
+  while (processExists(pid)) {
+    if (Date.now() - startedAt >= timeoutMs) {
+      const details = process.platform === 'win32' ? `; process: ${describeWindowsProcess(pid)}` : '';
+      const currentStartTime = process.platform === 'win32' ? windowsProcessStartTime(pid) : undefined;
+      if (expectedStartTime && currentStartTime && currentStartTime !== expectedStartTime) return;
+      if (!processExists(pid)) return;
+      throw new Error(`Timed out waiting for ${description} PID ${pid} to exit after ${Date.now() - startedAt}ms${details}`);
+    }
+    await new Promise(resolve => setTimeout(resolve, 250));
+  }
+}
+
+export async function killProcessTree(pid: number): Promise<void> {
+  if (!Number.isInteger(pid) || pid <= 0 || !processExists(pid)) return;
+  await new Promise<void>((resolve, reject) => {
+    kill(pid, (error: NodeJS.ErrnoException) => {
+      // The process may exit between the existence check and tree-kill's taskkill call.
+      try {
+        if (error && processExists(pid)) reject(error);
+        else resolve();
+      } catch (checkError) {
+        reject(checkError);
+      }
+    });
+  });
+  await waitForProcessExit(pid, 10000, 'process tree root');
+}
+
+export async function killChromedriverOnPort(port: number): Promise<void> {
   const { execSync } = require('child_process');
 
   const p = Number(port);
   if (!Number.isInteger(p) || p <= 0 || p > 65535) return;
 
+  const pids = new Set<number>();
   try {
     if (process.platform === 'win32') {
       const output = execSync(`netstat -ano -p tcp | findstr LISTENING | findstr :${p}`).toString();
-      const pids = new Set<number>();
       output.split('\n').forEach((line: string) => {
         const parts = line.trim().split(/\s+/);
         // Proto LocalAddress ForeignAddress State PID
@@ -201,7 +275,6 @@ export function killChromedriverOnPort(port: number) {
           if (Number.isFinite(pid)) pids.add(pid);
         }
       });
-      pids.forEach(pid => kill(pid));
     } else {
       const output = execSync(`lsof -nP -iTCP:${p} -sTCP:LISTEN -t`).toString().trim();
       if (output) {
@@ -209,28 +282,11 @@ export function killChromedriverOnPort(port: number) {
           .split('\n')
           .map((pidStr: string) => parseInt(pidStr, 10))
           .filter((pid: number) => Number.isFinite(pid))
-          .forEach((pid: number) => kill(pid));
+          .forEach((pid: number) => pids.add(pid));
       }
     }
   } catch (e: unknown) {
     // Nothing is found
   }
-}
-
-export async function waitForElectronInstancesExist() {
-  const interval = 1000;
-  const timeout = 10000;
-
-  const startedAt = Date.now();
-  let tasks: any[] = await getElectronInstances();
-
-  while (tasks.length > 0 && Date.now() - startedAt < timeout) {
-    await new Promise(resolve => setTimeout(resolve, interval));
-    tasks = await getElectronInstances();
-  }
-
-  const elapsed = Date.now() - startedAt;
-  if (tasks.length > 0) {
-    throw new Error(`Timed out waiting for Electron instances to exit after ${elapsed}ms`);
-  }
+  await Promise.all(Array.from(pids).map(pid => killProcessTree(pid)));
 }
