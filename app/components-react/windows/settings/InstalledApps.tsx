@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tooltip } from 'antd';
 import cx from 'classnames';
 import { Services } from 'components-react/service-provider';
@@ -11,9 +11,16 @@ import { useVuex } from 'components-react/hooks';
 export function InstalledApps() {
   const { PlatformAppsService, HighlighterService, NavMenuService } = Services;
 
-  const { installedApps, highlighterVersion, pinnableAppIds, pinnedAppIds } = useVuex(() => ({
+  const [legacyHighlighterVersion, setLegacyHighlighterVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    HighlighterService.actions.return
+      .getLegacyAiHighlighterVersion()
+      .then(setLegacyHighlighterVersion);
+  }, []);
+
+  const { installedApps, pinnableAppIds, pinnedAppIds } = useVuex(() => ({
     installedApps: PlatformAppsService.views.productionApps,
-    highlighterVersion: HighlighterService.views.highlighterVersion,
     pinnableAppIds: NavMenuService.pinnableApps.map(app => app.id),
     pinnedAppIds: NavMenuService.pinnedApps.map(app => app.id),
   }));
@@ -123,7 +130,7 @@ export function InstalledApps() {
               </td>
             </tr>
           ))}
-          {highlighterVersion !== '' && (
+          {legacyHighlighterVersion !== null && (
             <tr key={'Ai Highlighter'}>
               <td>
                 <div className={styles.aiHighlighterThumbnail}>
@@ -134,15 +141,14 @@ export function InstalledApps() {
                 </div>
               </td>
               <td> {'Streamlabs AI Highlighter'} </td>
-              <td> {highlighterVersion} </td>
+              <td> {legacyHighlighterVersion} </td>
               <td className={cx(styles.buttonContainer, 'button-container--right')}>
                 <button
                   onClick={() => {
-                    HighlighterService.uninstallAiHighlighter();
+                    setLegacyHighlighterVersion(null);
+                    HighlighterService.actions.uninstallLegacyAiHighlighter();
                   }}
-                  className={cx('button', {
-                    'button--soft-warning': true,
-                  })}
+                  className="button button--soft-warning"
                 >
                   {$t('Uninstall')}
                 </button>

@@ -3,7 +3,6 @@ import {
   IGameConfig,
   EHighlighterInputTypes,
   EGame,
-  IEventInfo,
   IDefaultEventInfo,
   EGameState,
 } from './ai-highlighter.models';
@@ -797,51 +796,6 @@ export function getConfigByGame(game: EGame | undefined): IGameConfig | undefine
   const lowercaseGame = game.toLowerCase() as EGame;
   return GAME_CONFIGS[lowercaseGame] || UNSET_CONFIG;
 }
-export function getContextEventTypes(game: EGame): string[] {
-  const gameConfig = getConfigByGame(game);
-  const contextTypes: string[] = [];
-
-  Object.entries(gameConfig.inputTypeMap).forEach(([type, typeConfig]) => {
-    if (typeConfig.contextEvent === true) {
-      contextTypes.push(type);
-    }
-  });
-
-  return contextTypes;
-}
-
-export function getEventConfig(game: EGame, eventType: string): IEventInfo | IDefaultEventInfo {
-  const lowercaseEventType = eventType.toLocaleLowerCase();
-  const gameConfig = getConfigByGame(game);
-
-  // Check if event exists in game config
-  if (gameConfig.inputTypeMap[lowercaseEventType]) {
-    return gameConfig.inputTypeMap[lowercaseEventType];
-  }
-
-  // Check if event exists in Unset config
-  if (UNSET_CONFIG.inputTypeMap[lowercaseEventType]) {
-    return UNSET_CONFIG.inputTypeMap[lowercaseEventType];
-  }
-
-  // Check if event exists in aliases
-  const unsetEvent = Object.entries(
-    (UNSET_CONFIG.inputTypeMap as unknown) as IDefaultEventInfo,
-  ).find(([_, config]) => config.aliases?.includes(lowercaseEventType));
-
-  if (unsetEvent) {
-    return unsetEvent[1];
-  }
-
-  return {
-    emoji: EMOJI.FIRECRACKER,
-    description: { singular: eventType, plural: eventType },
-    orderPriority: 99,
-    includeInDropdown: false,
-    contextEvent: false,
-  };
-}
-
 export function isGameSupported(game: string | undefined) {
   const gameValue = supportedGames.find(
     supportedGame => supportedGame.label.toLowerCase() === game?.toLowerCase(),

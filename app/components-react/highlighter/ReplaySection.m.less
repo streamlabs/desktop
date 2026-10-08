@@ -1,0 +1,299 @@
+@import '../../styles/index';
+
+// Shared by the hero images and the feature steps so both fade in sync when the step changes
+@step-fade: 250ms ease-in-out;
+
+// Grows to fill the first screen above the replay buffer settings (see ClipsView `fillIntro`)
+.replay-section {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 64px 48px 48px;
+  // Cap the content width on wide windows so the hero and steps stop spreading apart; the
+  // background still spans the full width
+  // Escaped so Less passes it through instead of evaluating its own max()
+  padding-inline: ~'max(48px, calc((100% - 1400px) / 2))';
+  // Figma background. CSS paints the first layer on top, so the radial glow goes first and fades
+  // to transparent; in Figma's order the opaque linear gradient would hide it entirely
+  background: radial-gradient(80% 80% at 20% 60%, #112f35 0%, rgba(16, 23, 27, 0) 80%),
+    radial-gradient(82.46% 113.14% at 80% 20%, #112f35 0%, #10171b 80%, #10171b 100%);
+}
+
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 48px;
+}
+
+.hero-text {
+  flex: 1 1 520px;
+  min-width: 0;
+}
+
+.headline {
+  margin: 0;
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--title);
+}
+
+.headline-accent {
+  color: var(--teal);
+}
+
+.description {
+  max-width: 720px;
+  margin: 24px 0 40px;
+  font-size: 20px;
+  line-height: 1.6;
+  color: var(--paragraph);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  min-height: 56px;
+}
+
+.primary-cta {
+  font-weight: 700;
+}
+
+.import-button {
+  border-style: dashed;
+  background: transparent;
+
+  // Override antd's teal hover/focus border; only the background changes on hover
+  &:global(.ant-btn):hover,
+  &:global(.ant-btn):focus {
+    border-color: var(--button);
+  }
+
+  &:global(.ant-btn):hover {
+    background: var(--button-hover);
+  }
+}
+
+.file-size {
+  margin-left: 16px;
+  color: var(--paragraph);
+}
+
+.auto-highlight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: 80px;
+  font-weight: 500;
+  color: var(--title);
+}
+
+.staging-badge {
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #ff9800;
+}
+
+// Images share one grid cell and crossfade; the tallest one sets the height, so switching
+// steps does not shift the layout
+.hero-media {
+  display: grid;
+  flex: 0 1 560px;
+  min-width: 0;
+  max-width: 45%;
+}
+
+.hero-image {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity @step-fade;
+}
+
+.hero-image-active {
+  opacity: 1;
+}
+
+// Install progress / error (replaces the actions while the installer runs)
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 360px;
+}
+
+.progress-status {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-track {
+  flex: 1;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: var(--icon-semi);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--teal);
+  transition: width 0.3s ease-out;
+}
+
+.progress-fill-pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// Fixed width so the bar does not jitter as the digits change
+.progress-percent {
+  min-width: 3.5ch;
+  text-align: right;
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--title);
+}
+
+.cancel-button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--icon);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.2s ease-out;
+
+  &:hover {
+    color: var(--title);
+  }
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.error-title {
+  font-weight: 600;
+  color: var(--warning);
+}
+
+.error-text {
+  color: var(--paragraph);
+}
+
+// Feature steps below the hero, each one switches the hero image
+
+.steps {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 96px;
+}
+
+// Inactive steps are dimmed as a whole; the active one is shown at full strength
+.step {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  color: var(--title);
+  opacity: 0.5;
+  cursor: pointer;
+  transition: opacity @step-fade;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  &:focus-visible {
+    outline: 1px solid var(--teal);
+    outline-offset: 4px;
+  }
+}
+
+.step-active,
+.step-active:hover {
+  opacity: 1;
+
+  .step-number {
+    border-color: var(--title);
+  }
+}
+
+.step-number {
+  display: grid;
+  place-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  font-weight: 500;
+  transition: border-color @step-fade;
+}
+
+.step-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.step-title {
+  font-size: 18px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.step-subtitle {
+  color: var(--paragraph);
+  white-space: nowrap;
+}
+
+.step-connector {
+  flex: 1;
+  min-width: 32px;
+  height: 1px;
+  background: var(--border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-image,
+  .step,
+  .step-number {
+    transition: none;
+  }
+}

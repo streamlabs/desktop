@@ -1,20 +1,13 @@
-import {
-  IAiClipInfo,
-  IHighlighterMilestone,
-  EAiDetectionState,
-  EGame,
-  IHighlight,
-} from './ai-highlighter.models';
+import { EGame } from './ai-highlighter.models';
 import { ITransitionInfo, IAudioInfo, IExportInfo, IVideoInfo } from './rendering.models';
 import { TDisplayType } from 'services/settings-v2';
 
-export type TClip = IAiClip | IReplayBufferClip | IManualClip;
+export type TClip = IReplayBufferClip | IManualClip;
 export interface ITempRecordingInfo {
   recordingPath?: string;
   streamInfo?: IStreamInfoForAiHighlighter;
   source?: TOpenedFrom;
 }
-export const isAiClip = (clip: TClip): clip is IAiClip => clip.source === 'AiClip';
 
 export type TOpenedFrom = 'after-stream' | 'manual-import' | 'recordings-tab';
 
@@ -28,11 +21,6 @@ export interface IHighlighterState {
   dismissedTutorial: boolean;
   error: string;
   useAiHighlighter: boolean;
-  highlightedStreams: IHighlightedStream[];
-  highlightedStreamsDictionary: Dictionary<IHighlightedStream>;
-  updaterProgress: number;
-  isUpdaterRunning: boolean;
-  highlighterVersion: string;
   tempRecordingInfo: ITempRecordingInfo;
   replayInstall: IReplayInstallState;
 }
@@ -78,15 +66,6 @@ export interface IReplayInstallOriginMetadata {
 }
 
 // CLIP
-export interface INewClipData {
-  path: string;
-  aiClipInfo: IAiClipInfo;
-  startTime: number;
-  endTime: number;
-  startTrim: number;
-  endTrim: number;
-}
-
 interface IBaseClip {
   path: string;
   loaded: boolean;
@@ -98,11 +77,6 @@ interface IBaseClip {
   deleted: boolean;
   globalOrderPosition: number;
   display?: TDisplayType;
-  streamInfo:
-    | {
-        [streamId: string]: TStreamInfo;
-      }
-    | undefined;
 }
 interface IReplayBufferClip extends IBaseClip {
   source: 'ReplayBuffer';
@@ -112,66 +86,12 @@ interface IManualClip extends IBaseClip {
   source: 'Manual';
 }
 
-export interface IAiClip extends IBaseClip {
-  source: 'AiClip';
-  aiInfo: IAiClipInfo;
-}
-
-// STEAM
-export type TStreamInfo =
-  | {
-      orderPosition: number;
-      initialStartTime?: number;
-      initialEndTime?: number;
-    }
-  | undefined; // initialTimesInStream
-
+// STREAM
 export interface IStreamInfoForAiHighlighter {
   id: string;
   game: EGame;
   title?: string;
-  milestonesPath?: string;
 }
-
-export interface IStreamMilestones {
-  streamId: string;
-  milestones: IHighlighterMilestone[];
-}
-export interface IHighlightedStream {
-  id: string;
-  game: EGame;
-  title: string;
-  date: string;
-  state: {
-    type: EAiDetectionState;
-    progress: number;
-  };
-  abortController?: AbortController;
-  path: string;
-  feedbackLeft?: boolean;
-  highlights?: IHighlight[];
-}
-
-// VIEW
-export enum EHighlighterView {
-  CLIPS = 'clips',
-  STREAM = 'stream',
-  SETTINGS = 'settings',
-}
-
-interface TClipsViewState {
-  view: EHighlighterView.CLIPS;
-  id: string | undefined;
-}
-interface IStreamViewState {
-  view: EHighlighterView.STREAM;
-}
-
-interface ISettingsViewState {
-  view: EHighlighterView.SETTINGS;
-}
-
-export type IViewState = TClipsViewState | IStreamViewState | ISettingsViewState;
 
 export enum EUploadPlatform {
   YOUTUBE = 'youtube',
