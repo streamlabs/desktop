@@ -52,21 +52,44 @@
   justify-content: flex-end;
 }
 
-.info-alert {
-  color: #72d5ff;
+.go-live-alert {
   width: 600px;
   border-radius: 4px;
   margin: 0 auto;
   text-align: left !important;
 
+  :global(.ant-message-error .anticon) {
+    margin-right: 10px;
+  }
+}
+
+.alert-icon {
+  margin-right: 10px;
+}
+
+.info-alert:extend(.go-live-alert) {
+  color: var(--alert-info-text);
+
+  :global(.ant-message-notice-content) {
+    background-color: var(--alert-info-bg);
+  }
+
   :global(.ant-message-info) {
     display: flex;
     align-items: center;
   }
+}
 
-  :global(.ant-message-info .anticon) {
-    color: #72d5ff;
-    margin-right: 10px;
+.error-alert:extend(.go-live-alert) {
+  color: var(--alert-error-text);
+
+  :global(.ant-message-notice-content) {
+    background-color: var(--alert-error-bg);
+  }
+
+  :global(.ant-message-error) {
+    display: flex;
+    align-items: center;
   }
 }
 
@@ -74,4 +97,13 @@
   display: flex;
   flex-direction: row;
   align-items: center;
+  flex: 1;
+  justify-content: space-between;
+
+  i {
+    flex-shrink: 0;
+    width: 16px;
+    margin-left: 10px;
+    text-align: right;
+  }
 }

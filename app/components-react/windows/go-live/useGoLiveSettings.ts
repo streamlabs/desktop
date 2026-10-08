@@ -13,7 +13,7 @@ import { message } from 'antd';
 import { $t } from '../../../services/i18n';
 import { injectState, useModule } from 'slap';
 import { useForm } from '../../shared/inputs/Form';
-import { alertInfo } from '../../modals';
+import { alertError, alertInfo } from '../../modals';
 import { getDefined } from '../../../util/properties-type-guards';
 import isEqual from 'lodash/isEqual';
 import { TDisplayType } from 'services/settings-v2';
@@ -726,12 +726,13 @@ export class GoLiveSettingsModule {
         usingStreamKeyForm &&
         (!tiktokSettings.serverUrl || !tiktokSettings.streamKey)
       ) {
-        message.error(
-          $t(
+        alertError({
+          name: 'tiktok-stream-key-alert',
+          text: $t(
             'The TikTok stream form is missing a server url or stream key, which are required to go live to TikTok.',
           ),
-          3,
-        );
+          duration: 3,
+        });
         return false;
       }
     }
