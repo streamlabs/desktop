@@ -13,11 +13,9 @@ import { useRealmObject } from 'components-react/hooks/realm';
 const mins = { x: 150, y: 120 };
 
 export function Mixer() {
-  const { EditorCommandsService, AudioService, CustomizationService, WindowsService } = Services;
+  const { EditorCommandsService, AudioService, CustomizationService } = Services;
 
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const { renderElement } = useBaseElement(<Element />, mins, containerRef.current);
 
   const needToRenderVolmeters: boolean = useMemo(() => {
     // render volmeters without hardware acceleration only if we don't have the webgl context
@@ -26,11 +24,13 @@ export function Mixer() {
   }, []);
 
   const performanceMode = useRealmObject(CustomizationService.state).performanceMode;
-  const { audioSourceIds, hideStyleBlockers } = useVuex(() => ({
+  // Select only what this component renders with. It used to also select
+  // WindowsService.state.main.hideStyleBlockers without using it, which re-rendered the mixer on
+  // every modal open/close for nothing.
+  const { audioSourceIds } = useVuex(() => ({
     audioSourceIds: AudioService.views.sourcesForCurrentScene
       .filter(source => !source.mixerHidden && source.isControlledViaObs)
       .map(source => source.sourceId),
-    hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
   }));
 
   function showAdvancedSettings() {
@@ -46,42 +46,46 @@ export function Mixer() {
     menu.popup();
   }
 
-  function Element() {
-    return (
-      <>
-        <div className="studio-controls-top">
-          <Tooltip
-            title={$t('Monitor audio levels. If the bars are moving you are outputting audio.')}
-            placement="bottom"
-          >
-            <h2 className="studio-controls__label">{$t('Mixer')}</h2>
-          </Tooltip>
-          <Tooltip title={$t('Open advanced audio settings')} placement="left">
-            <i
-              className="icon-settings icon-button"
-              role="show-advanced-audio"
-              onClick={showAdvancedSettings}
-            />
-          </Tooltip>
-        </div>
-        <Scrollable
-          className="studio-controls-selector mixer-panel"
-          style={{ height: 'calc(100% - 32px)' }}
+  // A plain element, not a component declared inside the render function: a component type
+  // created on every render is a different type to React each time, so the whole subtree
+  // (the WebGL meters, their worker subscriptions, every row) was unmounted and re-mounted on
+  // every Mixer re-render.
+  const element = (
+    <>
+      <div className="studio-controls-top">
+        <Tooltip
+          title={$t('Monitor audio levels. If the bars are moving you are outputting audio.')}
+          placement="bottom"
         >
-          <div style={{ position: 'relative' }} onContextMenu={handleRightClick}>
-            {audioSourceIds.length !== 0 && !performanceMode && <GLVolmeters />}
-            {audioSourceIds.map(sourceId => (
-              <MixerItem
-                key={sourceId}
-                audioSourceId={sourceId}
-                volmetersEnabled={needToRenderVolmeters}
-              />
-            ))}
-          </div>
-        </Scrollable>
-      </>
-    );
-  }
+          <h2 className="studio-controls__label">{$t('Mixer')}</h2>
+        </Tooltip>
+        <Tooltip title={$t('Open advanced audio settings')} placement="left">
+          <i
+            className="icon-settings icon-button"
+            role="show-advanced-audio"
+            onClick={showAdvancedSettings}
+          />
+        </Tooltip>
+      </div>
+      <Scrollable
+        className="studio-controls-selector mixer-panel"
+        style={{ height: 'calc(100% - 32px)' }}
+      >
+        <div style={{ position: 'relative' }} onContextMenu={handleRightClick}>
+          {audioSourceIds.length !== 0 && !performanceMode && <GLVolmeters />}
+          {audioSourceIds.map(sourceId => (
+            <MixerItem
+              key={sourceId}
+              audioSourceId={sourceId}
+              volmetersEnabled={needToRenderVolmeters}
+            />
+          ))}
+        </div>
+      </Scrollable>
+    </>
+  );
+
+  const { renderElement } = useBaseElement(element, mins, containerRef.current);
 
   return (
     <div ref={containerRef} style={{ height: '100%' }}>
