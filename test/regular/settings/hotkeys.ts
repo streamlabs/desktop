@@ -42,6 +42,7 @@ test('Populates essential hotkeys for them to be bound', async t => {
     'Disable Studio Mode',
     'Transition (Studio Mode)',
     'Save Replay',
+    'Screenshot Output',
     'Mute',
     'Unmute',
     'Push to Mute',

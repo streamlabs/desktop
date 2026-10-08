@@ -4,6 +4,7 @@ import { SourcesService, TSourceType } from 'services/sources';
 import { TransitionsService } from 'services/transitions';
 import { KeyListenerService } from 'services/key-listener';
 import { MarkersService } from 'services/markers';
+import { ScreenshotService } from 'services/screenshot';
 import { Inject } from 'services/core/injector';
 import { StatefulService, mutation, ServiceHelper } from 'services';
 import defer from 'lodash/defer';
@@ -52,6 +53,10 @@ function getVirtualCameraService(): VirtualWebcamService {
 
 function getMarkersService(): MarkersService {
   return MarkersService.instance;
+}
+
+function getScreenshotService(): ScreenshotService {
+  return ScreenshotService.instance;
 }
 
 const isAudio = (sourceId: string) => {
@@ -176,6 +181,11 @@ const GENERAL_ACTIONS: HotkeyGroup = {
     name: 'SPLIT_FILE',
     description: () => $t('Split Recording File'),
     down: () => getStreamingService().splitFile(),
+  },
+  SCREENSHOT_OUTPUT: {
+    name: 'SCREENSHOT_OUTPUT',
+    description: () => $t('Screenshot Output'),
+    down: () => getScreenshotService().takeScreenshot(),
   },
   TOGGLE_OVERLAY: {
     name: 'TOGGLE_OVERLAY',
