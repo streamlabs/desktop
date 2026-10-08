@@ -108,8 +108,8 @@ async function goThroughOnboarding(t: TExecutionContext, fn: () => Promise<void>
   await waitForDisplayed('h1=Connect Platforms');
   await clickIfDisplayed('button=Skip');
 
-  await waitForDisplayed('h1=Choose Your Plan');
-  await clickIfDisplayed('button=Skip');
+  await waitForDisplayed('div[data-testid=choose-free-plan-btn]', { timeout: 60000 });
+  await clickIfDisplayed('div[data-testid=choose-free-plan-btn]');
   await withPoolUser(user, async () => {
     await fn();
   });
@@ -195,8 +195,8 @@ test('Go through onboarding', async t => {
     await waitForDisplayed('h1=Connect Platforms');
     await clickIfDisplayed('button=Skip');
 
-    await waitForDisplayed('h1=Choose Your Plan');
-    await clickIfDisplayed('button=Skip');
+    await waitForDisplayed('div[data-testid=choose-free-plan-btn]', { timeout: 60000 });
+    await clickIfDisplayed('div[data-testid=choose-free-plan-btn]');
 
     await waitForDisplayed('h1=Set Up Your Mic & Webcam');
 
@@ -257,4 +257,51 @@ test.skip('Go through onboarding as a new user and install theme', async t => {
   });
 
   t.pass();
+});
+
+// TODO: refactor to updated onboarding flow and make specific assertions here once re-enabled
+test.skip('Go through the onboarding and autoconfig', async t => {
+  const app = t.context.app;
+  await focusMain();
+
+  if (!(await isDisplayed('h2=Live Streaming'))) return;
+
+  await click('h2=Live Streaming');
+  await click('button=Continue');
+
+  // Click on Login on the signup page, then wait for the auth screen to appear
+  await click('a=Login');
+  // prettier-ignore
+  await (await app.client.$('button=Log in with Twitch')).isExisting();
+
+  await logIn(t, 'twitch', { prime: false }, false, true);
+  await sleep(1000);
+
+  // We seem to skip the login step after login internally
+  await clickIfDisplayed('button=Skip');
+
+  // Don't Import from OBS
+  await clickIfDisplayed('div=Start Fresh');
+
+  // Skip hardware config
+  await waitForDisplayed('h1=Set up your mic & webcam');
+  await clickIfDisplayed('button=Skip');
+
+  // Skip picking a theme
+  await waitForDisplayed('h1=Add an Overlay');
+  await clickIfDisplayed('button=Skip');
+
+  // Start auto config
+  // temporarily disable auto config until migrate to new api
+  // t.true(await (await app.client.$('button=Start')).isExisting());
+  // await (await app.client.$('button=Start')).click();
+
+  // Skip purchasing prime
+  await waitForDisplayed('div[data-testid=choose-free-plan-btn]', { timeout: 60000 });
+  await click('div[data-testid=choose-free-plan-btn]');
+
+  await waitForDisplayed('span=Sources', { timeout: 60000 });
+
+  // success?
+  t.true(await (await app.client.$('span=Sources')).isDisplayed(), 'Sources selector is visible');
 });

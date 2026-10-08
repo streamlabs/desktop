@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Animation from 'rc-animate';
 import { Services } from '../service-provider';
+import { useVuex } from '../hooks';
 import { $t } from '../../services/i18n';
 
 type VisionTesterValue = 'elimination' | 'victory' | 'death';
@@ -55,7 +56,8 @@ export default function TestWidgets(p: { testers?: string[] }) {
     };
   }, [SourcesService]);
 
-  const allTesters = useMemo(() => WidgetsService.views.testers, []);
+  // Testers depend on the primary platform, which changes when destinations are toggled in Go Live.
+  const { allTesters } = useVuex(() => ({ allTesters: WidgetsService.views.testers })) ?? {};
   const widgetTesters = p.testers
     ? allTesters.filter(tester => p.testers?.includes(tester.name))
     : allTesters;

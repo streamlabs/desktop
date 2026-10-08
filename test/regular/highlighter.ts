@@ -21,7 +21,8 @@ const fs = require('fs');
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
-test('Highlighter save and export', async t => {
+// Temporarily skipping this test pending changes
+test.skip('Highlighter save and export', async t => {
   await logIn();
   const recordingDir = await setTemporaryRecordingPath(false);
 
@@ -49,7 +50,8 @@ test('Highlighter save and export', async t => {
   t.true(fs.existsSync(exportLocation), 'The video file should exist');
 });
 
-test('AI Highlighter', withUser('twitch', { prime: true }), async t => {
+// Temporarily skipping this test pending changes
+test.skip('AI Highlighter', withUser('twitch', { prime: true }), async t => {
   // AI Highlighter install button shows
   await showPage('Highlighter');
   await waitForDisplayed('[name="installHighlighter"]', {

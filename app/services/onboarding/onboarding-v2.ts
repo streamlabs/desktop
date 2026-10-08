@@ -149,6 +149,21 @@ class OnboardingPath {
     modifiers?: Record<TNavigationModifier, boolean>,
   ): IOnboardingStep | void {
     if (this.singletonPath) return;
+
+    function advanceToOBSImportOr(otherwiseFn: () => IOnboardingStep | void) {
+      if (modifiers.obsInstalled) {
+        return { name: EOnboardingSteps.OBSImport };
+      }
+      return otherwiseFn();
+    }
+
+    function advanceToUltraOr(otherwiseFn: () => IOnboardingStep | void) {
+      if (modifiers.loggedIn && !modifiers.isUltra) {
+        return { name: EOnboardingSteps.Ultra, isSkippable: false };
+      }
+      return otherwiseFn();
+    }
+
     const fromCurrentStep = {
       [EOnboardingSteps.Splash]: () => {
         return {
@@ -159,24 +174,21 @@ class OnboardingPath {
       [EOnboardingSteps.RecordingLogin]: () => {
         if (modifiers.obsInstalled) return { name: EOnboardingSteps.OBSImport };
       },
-      // TODO: This is gross since there are 3 optional steps after Login but before Devices
-      // and each one can lead to either of the others in line, there's gotta be a better way
       [EOnboardingSteps.Login]: () => {
         if ((modifiers.loggedIn || modifiers.isPartialSLAuth) && modifiers.lessThanTwoPlatforms) {
           return { name: EOnboardingSteps.ConnectMore };
         }
-        if (modifiers.obsInstalled) return { name: EOnboardingSteps.OBSImport };
-        if (modifiers.loggedIn && !modifiers.isUltra) return { name: EOnboardingSteps.Ultra };
-        return { name: EOnboardingSteps.Devices };
+        return advanceToOBSImportOr(() =>
+          advanceToUltraOr(() => ({ name: EOnboardingSteps.Devices })),
+        );
       },
       [EOnboardingSteps.ConnectMore]: () => {
-        if (modifiers.obsInstalled) return { name: EOnboardingSteps.OBSImport };
-        if (modifiers.loggedIn && !modifiers.isUltra) return { name: EOnboardingSteps.Ultra };
-        return { name: EOnboardingSteps.Devices };
+        return advanceToOBSImportOr(() =>
+          advanceToUltraOr(() => ({ name: EOnboardingSteps.Devices })),
+        );
       },
       [EOnboardingSteps.OBSImport]: () => {
-        if (modifiers.loggedIn && !modifiers.isUltra) return { name: EOnboardingSteps.Ultra };
-        return { name: EOnboardingSteps.Devices };
+        return advanceToUltraOr(() => ({ name: EOnboardingSteps.Devices }));
       },
       [EOnboardingSteps.Ultra]: () => ({ name: EOnboardingSteps.Devices }),
       [EOnboardingSteps.Devices]: () => {

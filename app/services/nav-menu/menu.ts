@@ -30,6 +30,7 @@ export interface INavMenuApp {
   id: string;
   name: string;
   iconUrl?: string;
+  allowPopout: boolean;
 }
 
 interface INavMenuServiceState {
@@ -189,7 +190,9 @@ export class NavMenuService extends PersistentStatefulService<INavMenuServiceSta
     if (!iconUrl && app.manifest.icon) {
       iconUrl = this.platformAppsService.views.getAssetUrl(app.id, app.manifest.icon) ?? undefined;
     }
-    return { id: app.id, name: app.manifest.name, iconUrl };
+    const topNavPage = app.manifest.pages.find(page => page.slot === EAppPageSlot.TopNav);
+    const allowPopout = topNavPage?.allowPopout ?? true;
+    return { id: app.id, name: app.manifest.name, iconUrl, allowPopout };
   }
 
   /** Enabled apps that have a top nav page, and so can be pinned. */
