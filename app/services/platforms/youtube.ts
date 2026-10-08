@@ -586,6 +586,7 @@ export class YoutubeService
       'Vertical stream ',
       JSON.stringify({
         verticalBroadcast: this.state.verticalBroadcast.id,
+        verticalStream: this.state.verticalBroadcast.contentDetails.boundStreamId,
         verticalBroadcastId: verticalBroadcast.id,
         verticalStreamId: verticalStream.id,
       }),
@@ -699,7 +700,8 @@ export class YoutubeService
     console.log(
       'horizontal stream ',
       JSON.stringify({
-        horizontalBroadcast: this.state.streamId,
+        horizontalBroadcast: this.state.settings.broadcastId,
+        horizontalStream: this.state.streamId,
         horizontalBroadcastId: broadcast.id,
         horizontalStreamId: stream.id,
       }),
