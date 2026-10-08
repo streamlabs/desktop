@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import cx from 'classnames';
 import { EAppPageSlot } from 'services/platform-apps';
 import { $t } from 'services/i18n';
@@ -17,6 +17,12 @@ export default function PlatformAppMainPage(p: { params: { appId: string }; clas
       ?.poppedOutSlots.find(slot => slot === pageSlot),
   }));
 
+  const popOutApp = useCallback(
+    (appId: string) =>
+      PlatformAppsService.actions.popOutAppPage(appId, EAppPageSlot.TopNav, { center: true }),
+    [],
+  );
+
   return (
     <div className={cx(styles.container, p.className)} style={{ margin: poppedOut && '20px' }}>
       {poppedOut ? (
@@ -31,10 +37,7 @@ export default function PlatformAppMainPage(p: { params: { appId: string }; clas
               <i className="icon-back" />
               {$t('Back')}
             </button>
-            <button
-              className={styles.textButton}
-              onClick={() => PlatformAppsService.actions.popOutAppPage(p.params.appId, pageSlot)}
-            >
+            <button className={styles.textButton} onClick={() => popOutApp(p.params.appId)}>
               <i className="icon-pop-out-2" />
               {$t('Pop Out App')}
             </button>
