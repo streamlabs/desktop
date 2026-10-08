@@ -14,8 +14,9 @@ import Scrollable from 'components-react/shared/Scrollable';
 export function ConnectMore(p: IOnboardingStepProps) {
   const { UserService } = Services;
 
-  const { isPartialSLAuth } = useVuex(() => ({
+  const { isPartialSLAuth, linkedPlatforms } = useVuex(() => ({
     isPartialSLAuth: UserService.views.isPartialSLAuth,
+    linkedPlatforms: UserService.views.linkedPlatforms,
   }));
 
   const subtitle = isPartialSLAuth
@@ -36,7 +37,11 @@ export function ConnectMore(p: IOnboardingStepProps) {
         <Scrollable className={styles.platformsScrollableScroller}>
           <div className={styles.platformsContainer}>
             {platformCards.map(platform => (
-              <PlatformCard key={`${platform}-connect`} platform={platform} />
+              <PlatformCard
+                key={`${platform}-connect`}
+                platform={platform}
+                connected={linkedPlatforms.includes(platform)}
+              />
             ))}
             <div className={styles.platformsCard}>
               <i className="icon-platforms" style={{ fontSize: 32, padding: 8 }} />
@@ -60,14 +65,19 @@ export function ConnectMore(p: IOnboardingStepProps) {
   );
 }
 
-function PlatformCard(p: { platform: TPlatform }) {
+function PlatformCard(p: { platform: TPlatform; connected: boolean }) {
   const { mergePlatform } = useAuth();
 
   return (
-    <div className={styles.platformsCard} onClick={() => mergePlatform(p.platform)}>
+    <div
+      className={cx(styles.platformsCard, { [styles.platformsCardDisabled]: p.connected })}
+      onClick={() => !p.connected && mergePlatform(p.platform)}
+    >
       <PlatformLogo platform={p.platform} size="medium" />
       {platformLabels(p.platform)}
-      <div className={styles.platformsCardButton}>{$t('Connect')}</div>
+      <div className={styles.platformsCardButton}>
+        {p.connected ? $t('Connected') : $t('Connect')}
+      </div>
     </div>
   );
 }
