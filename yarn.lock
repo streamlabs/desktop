@@ -11785,6 +11785,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"node-addon-api@npm:^7.0.0":
+  version: 7.1.1
+  resolution: "node-addon-api@npm:7.1.1"
+  dependencies:
+    node-gyp: latest
+  checksum: 46051999e3289f205799dfaf6bcb017055d7569090f0004811110312e2db94cb4f8654602c7eb77a60a1a05142cc2b96e1b5c56ca4622c41a5c6370787faaf30
+  languageName: node
+  linkType: hard
+
 "node-api-version@npm:^0.2.1":
   version: 0.2.1
   resolution: "node-api-version@npm:0.2.1"
@@ -14757,6 +14766,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"secure-pipe@file:app/native/secure-pipe::locator=slobs-client%40workspace%3A.":
+  version: 1.0.0
+  resolution: "secure-pipe@file:app/native/secure-pipe#app/native/secure-pipe::hash=8c847f&locator=slobs-client%40workspace%3A."
+  dependencies:
+    node-addon-api: ^7.0.0
+  checksum: 2a604d52fc4265b31247d72d3bc5702cd9b104d683b62f65c26b93682580ea7d85f5efcd59bfc728aeb3add96da74ed27f6811455d93124d56b54ddd25bd6f10
+  languageName: node
+  linkType: hard
+
 "semver-compare@npm:^1.0.0":
   version: 1.0.0
   resolution: "semver-compare@npm:1.0.0"
@@ -15265,6 +15283,7 @@ __metadata:
     recursive-readdir: 2.2.2
     rimraf: ^2.6.1
     rxjs: 6.3.3
+    secure-pipe: "file:app/native/secure-pipe"
     semver: ^5.5.1
     serve-handler: 5.0.7
     sharp: ^0.33.5
@@ -15321,6 +15340,8 @@ __metadata:
     node-gyp:
       optional: true
     node-win32-np:
+      optional: true
+    secure-pipe:
       optional: true
   languageName: unknown
   linkType: soft

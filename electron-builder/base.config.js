@@ -64,7 +64,7 @@ const base = {
     // assistedInstaller.nsh. Requires electron-builder >= 23.0.6.
     removeDefaultUninstallWelcomePage: true,
   },
-  asarUnpack : ["**/node-libuiohook/**", "**/node-fontinfo/**", "**/font-manager/**", "**/game_overlay/**","**/color-picker/**"],
+  asarUnpack : ["**/node-libuiohook/**", "**/node-fontinfo/**", "**/font-manager/**", "**/game_overlay/**","**/color-picker/**","**/secure-pipe/**"],
   publish: {
     provider: 'generic',
     url: 'https://slobs-cdn.streamlabs.com',
