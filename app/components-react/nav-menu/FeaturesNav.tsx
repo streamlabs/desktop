@@ -128,7 +128,8 @@ export function useFeaturesNav() {
   );
 
   const popOutApp = useCallback(
-    (appId: string) => PlatformAppsService.actions.popOutAppPage(appId, EAppPageSlot.TopNav),
+    (appId: string) =>
+      PlatformAppsService.actions.popOutAppPage(appId, EAppPageSlot.TopNav, { center: true }),
     [],
   );
 
