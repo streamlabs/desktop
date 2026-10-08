@@ -360,17 +360,15 @@ export class StreamSchedulerController {
 
     this.showLoader();
     if (this.isUpdateMode) {
-      await this.saveExistingEvent();
-    } else {
-      await this.saveNewEvent();
+      return this.saveExistingEvent();
     }
-    return true;
+    return this.saveNewEvent();
   }
 
   /**
    * Saves the existing event via platform's API
    */
-  private async saveExistingEvent() {
+  private async saveExistingEvent(): Promise<boolean> {
     const { selectedPlatform, selectedEventId } = this.store;
     const streamSettings = getDefined(this.store.platformSettings[selectedPlatform]);
 
@@ -378,10 +376,16 @@ export class StreamSchedulerController {
       // update YT event
       const ytSettings = cloneDeep(streamSettings) as IYoutubeStartStreamOptions;
       ytSettings.scheduledStartTime = this.store.time;
-      const video = await Services.YoutubeService.actions.return.updateBroadcast(
-        selectedEventId,
-        ytSettings,
-      );
+      let video!: IYoutubeLiveBroadcast;
+      try {
+        video = await Services.YoutubeService.actions.return.updateBroadcast(
+          selectedEventId,
+          ytSettings,
+        );
+      } catch (e: unknown) {
+        this.handleError(e as IStreamError);
+        return false;
+      }
       this.setEvent(video.id, convertYTBroadcastToEvent(video));
     } else if (selectedPlatform === 'twitter') {
       const twitterSettings = cloneDeep(streamSettings) as ITwitterStartStreamOptions;
@@ -394,7 +398,7 @@ export class StreamSchedulerController {
         );
       } catch (e: unknown) {
         this.handleError(e as IStreamError);
-        return;
+        return false;
       }
       this.setEvent(broadcast.broadcast_id, convertTwitterBroadcastToEvent(broadcast));
     } else {
@@ -409,7 +413,7 @@ export class StreamSchedulerController {
         );
       } catch (e: unknown) {
         this.handleError(e as IStreamError);
-        return;
+        return false;
       }
       this.setEvent(video.id, convertFBLiveVideoToEvent({ ...video, ...fbOptions }));
       Services.UsageStatisticsService.actions.recordAnalyticsEvent('ScheduleStream', {
@@ -419,12 +423,13 @@ export class StreamSchedulerController {
       });
     }
     this.closeModal();
+    return true;
   }
 
   /**
    * Create a new event via platform's API
    */
-  private async saveNewEvent() {
+  private async saveNewEvent(): Promise<boolean> {
     const { selectedPlatform, time } = this.store;
     const streamSettings = getDefined(this.store.platformSettings[selectedPlatform]);
     const service = getPlatformService(selectedPlatform);
@@ -445,7 +450,7 @@ export class StreamSchedulerController {
       };
 
       this.handleError(error);
-      return;
+      return false;
     }
     let event: IStreamEvent;
     if (selectedPlatform === 'youtube') {
@@ -469,6 +474,7 @@ export class StreamSchedulerController {
       streamId: event.id,
     });
     this.closeModal();
+    return true;
   }
 
   /**
