@@ -61,6 +61,7 @@ interface ITikTokStartStreamSettings {
   title: string;
   liveScope: TTikTokLiveScopeTypes;
   game: string;
+  gameName?: string;
   display?: TDisplayType;
   audienceType?: string;
   video?: IVideo;
@@ -78,7 +79,9 @@ export interface ITikTokStartStreamOptions {
   serverUrl: string;
   streamKey: string;
   game: string;
+  gameName?: string;
   audienceType?: string;
+  activeTab?: 'live-access' | 'stream-key';
 }
 
 interface ITikTokRequestHeaders extends Dictionary<string> {
@@ -101,6 +104,7 @@ export class TikTokService
       streamKey: '',
       display: 'vertical',
       game: '',
+      gameName: '',
     },
     broadcastId: '',
     username: '',
@@ -240,7 +244,9 @@ export class TikTokService
       return;
     }
 
-    if (this.getHasScope('approved')) {
+    // An approved account can still choose to go live with a manually entered
+    // stream key instead of using the API, indicated by which tab was active in the form
+    if (this.getHasScope('approved') && ttSettings.activeTab !== 'stream-key') {
       // update server url and stream key if handling streaming via API
       // streaming with server url and stream key is default
       const streamInfo = await this.startStream(ttSettings);
@@ -879,7 +885,8 @@ export class TikTokService
     this.SET_LIVE_SCOPE(scope);
   }
 
-  setGameName(gameName: string) {
+  setGameInfo({ gameId, gameName }: { gameId: string; gameName: string }) {
+    this.UPDATE_STREAM_SETTINGS({ game: gameId, gameName });
     this.SET_GAME_NAME(gameName);
   }
 
@@ -917,6 +924,9 @@ export class TikTokService
   @mutation()
   protected SET_GAME_NAME(gameName: string = '') {
     this.state.gameName = gameName;
+    // also mirror into settings so it survives into savedSettings, which clones
+    // state.settings rather than reading the top-level state
+    this.state.settings = { ...this.state.settings, gameName };
   }
 
   @mutation()
