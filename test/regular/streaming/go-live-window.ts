@@ -59,21 +59,20 @@ test(
     });
 
     // Case 3: Stream shift should be disabled and tooltip should be visible
-    await isDisplayed('[data-name="shift-ultra-icon"]', {
-      timeout: 1000,
-      timeoutMsg:
-        'Case 3: Shift ultra icon should be visible for non-prime users but was not found',
-    });
     t.true(
-      await tooltipExists('i.icon-information', '[data-name="not-ultra"]', {
+      await isDisplayed('[data-name="streamShift"]', { timeout: 1000 }),
+      'Case 3: Stream Shift switch should be visible but was not found',
+    );
+    t.true(
+      await tooltipExists('[data-name="streamShift"]', '[data-name="non-ultra"]', {
         timeout: 1000,
       }),
-      'Case 3: Non-Ultra stream shift tooltip did not appear',
+      'Case 4: Non-Ultra stream shift tooltip did not appear',
     );
     await assertFormContains({ streamShift: false });
     t.false(
       await isDisplayed('[data-name="display-selector"]'),
-      'Case 3: Display selectors should be hidden in single output mode',
+      'Case 5: Display selectors should be hidden in single output mode',
     );
     await clickButton('Close');
 
@@ -382,18 +381,25 @@ test(
       await waitForSettingsWindowLoaded();
 
       // Case 6: Stream shift default explanation tooltip shows
-      t.true(
-        await tooltipExists('i.icon-information', '[data-name="explanation"]', { timeout: 1000 }),
-        'Case 6: Default stream shift explanation tooltip did not appear',
+      t.false(
+        await tooltipExists('[data-name="streamShift"]', '[data-name="explanation"]', {
+          timeout: 1000,
+        }),
+        'Case 6: Stream shift tooltip should be disabled when stream shift is available',
       );
 
       // Case 7: Default tooltip stays the same when multiple platforms are enabled
       await fillForm({ instagram: true });
       await waitForSettingsWindowLoaded();
+      await fillForm({ liveOutput: true });
       t.true(
-        await tooltipExists('i.icon-information', '[data-name="explanation"]', { timeout: 1000 }),
-        'Case 7: Default stream shift explanation tooltip did not appear',
+        await tooltipExists('[data-name="streamShift"]', '[data-name="live-output"]', {
+          timeout: 1000,
+        }),
+        'Case 7: Live output editing stream shift tooltip did not appear',
       );
+      await assertFormContains({ streamShift: false });
+      await fillForm({ liveOutput: false });
 
       // Case 8: Toggling stream shift disables enhanced broadcasting and vice versa
       await fillForm({ isEnhancedBroadcasting: true });
@@ -421,7 +427,7 @@ test(
         'Case 10: Display selectors should be shown in dual output mode',
       );
       t.true(
-        await tooltipExists('i.icon-information', '[data-name="dual-output"]', {
+        await tooltipExists('[data-name="streamShift"]', '[data-name="dual-output"]', {
           timeout: 1000,
         }),
         'Case 10: Dual output tooltip did not appear',
@@ -433,6 +439,7 @@ test(
       await waitForSettingsWindowLoaded();
     } catch (e: unknown) {
       console.log('Go Live Ultra Error testing platforms ', e);
+      t.fail('Go Live Ultra Error testing platforms' + e);
     } finally {
       await removeDummyAccount('instagram');
       await removeDummyAccount('kick');
@@ -517,9 +524,6 @@ test(
     await waitForSettingsWindowLoaded();
 
     try {
-      await clickGoLive();
-      await waitForSettingsWindowLoaded();
-
       // Case 1: Custom destination should appear in the go live form
       await assertFormContains({
         [name]: false,
@@ -535,7 +539,8 @@ test(
       });
 
       // Case 3: Ultra users can enable all targets
-      await fillForm({ twitch: true, instagram: true, kick: true });
+      // Enabling/disabling multiple platforms causes form rerenders and needs a longer debounce between toggling them
+      await fillForm({ twitch: true, instagram: true, kick: true }, 1000);
       await waitForSettingsWindowLoaded();
 
       // Case 4: Can toggle custom destination off
@@ -550,7 +555,7 @@ test(
       });
 
       // Case 5: Must always have at least one platform enabled
-      await fillForm({ instagram: false, kick: false });
+      await fillForm({ instagram: false, kick: false }, 1000);
       await waitForSettingsWindowLoaded();
       await assertFormContains({
         twitch: true,
@@ -575,12 +580,15 @@ test(
       await waitForSettingsWindowLoaded();
 
       // Case 6: In dual output mode, can set displays for all targets
-      await fillForm({
-        twitch: true,
-        instagram: true,
-        kick: true,
-        [name2]: true,
-      });
+      await fillForm(
+        {
+          twitch: true,
+          instagram: true,
+          kick: true,
+          [name2]: true,
+        },
+        1000,
+      );
       await fillForm({
         twitchDisplay: 'both',
         instagramDisplay: 'vertical',
@@ -638,6 +646,7 @@ test(
       await clickButton('Close');
     } catch (e: unknown) {
       console.log('Go Live Ultra Error testing custom destinations ', e);
+      t.fail('Go Live Ultra Error testing custom destinations' + e);
     } finally {
       // Clean up both custom destinations
       await showSettingsWindow('Stream', async () => {
