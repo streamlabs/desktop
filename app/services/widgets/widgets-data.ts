@@ -85,7 +85,7 @@ export const makeWidgetTesters = (host: string): IWidgetTester[] => {
       url(platform) {
         return testUrl(alertTypeWithTwitchDefault('follow', platform));
       },
-      platforms: ['twitch', 'facebook'],
+      platforms: ['twitch', 'facebook', 'kick'],
     },
     {
       name: 'Subscriber',
@@ -108,7 +108,7 @@ export const makeWidgetTesters = (host: string): IWidgetTester[] => {
       type: 'donations',
       name: 'Tip',
       url: testUrl('donation'),
-      platforms: ['twitch', 'youtube', 'facebook', 'tiktok'],
+      platforms: ['twitch', 'youtube', 'facebook', 'tiktok', 'kick'],
     },
     {
       type: 'bits',
