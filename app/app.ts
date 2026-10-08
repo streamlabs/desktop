@@ -1,6 +1,8 @@
 /*global SLOBS_BUNDLE_ID*/
 /*global SLD_SENTRY_BACKEND_SERVER_URL, SLD_SENTRY_FRONTEND_DSN, SLD_SENTRY_BACKEND_SERVER_PREVIEW_URL*/
 
+// NOCOMMIT: Force a test run, don't approve me!
+
 import { I18nService, $t } from 'services/i18n';
 
 // eslint-disable-next-line
