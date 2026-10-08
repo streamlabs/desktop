@@ -62,12 +62,9 @@ export const ShareStreamLink = () => {
         autoAdjustOverflow={false}
         key={`${platform}-${index}`}
       >
-        <Button
-          type="text"
-          aria-label={tooltip}
-          onClick={() => copyToClipboard(streamPageUrl)}
-          icon={<PlatformLogo platform={platform} size="small" />}
-        />
+        <div className={styles.shareStreamLinkButton} onClick={() => copyToClipboard(streamPageUrl)}>
+          <PlatformLogo platform={platform} size="small" />
+        </div>
       </Tooltip>
     );
   });
@@ -101,9 +98,8 @@ export const ShareStreamLink = () => {
           </Tooltip>
           <div
             style={{
-              flex: 1,
               display: expanded ? 'flex' : 'none',
-              justifyContent: 'space-between',
+              alignItems: 'center',
               transition: 'all 1s ease-in-out',
             }}
           >

@@ -1,20 +1,37 @@
 .shareStreamLinksContainer {
   display: flex;
+  align-items: center;
+  gap: 0;
   margin-top: -5px;
+}
 
-  :global(i.youtube) {
-    width: 20px;
-    height: 20px;
-    margin-top: 6px;
-  }
+.shareStreamLinkButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
 
-  :global(i.tiktok) {
-    width: 16px;
-    height: 16px;
-  }
-
-  :global(i.kick) {
-    width: 16px;
-    height: 16px;
+  i {
+    display: block;
+    width: 14px !important;
+    height: 14px !important;
+    max-width: 14px !important;
+    max-height: 14px !important;
+    min-width: 14px !important;
+    min-height: 14px !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+    background-size: contain !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 }
