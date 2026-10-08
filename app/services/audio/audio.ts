@@ -179,7 +179,7 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
   }
 
   unsubscribeVolmeter(sourceId: string, channelId: string) {
-    const channel = this.volmeterMessageChannels[sourceId].find(c => (c.id = channelId));
+    const channel = this.volmeterMessageChannels[sourceId]?.find(c => c.id === channelId);
     if (!channel) return;
 
     this.volmeterMessageChannels[sourceId] = this.volmeterMessageChannels[sourceId].filter(
