@@ -18,7 +18,7 @@ export default function NavMenu() {
   const navRef = useNavCollapse(`${featuresKey}|${toolsKey}`);
 
   return (
-    <div className={cx(styles.navMenu)} ref={navRef}>
+    <div className={cx('nav-menu', styles.navMenu)} ref={navRef}>
       <Menu
         key="nav-menu"
         mode="horizontal"
