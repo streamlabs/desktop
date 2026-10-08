@@ -14,4 +14,4 @@ Do not flag a rename where the old string is not referenced anywhere in `test/**
 
 When code reviewing a PR, check for tests that use base CSS class selectors instead of `data-*` or `name` attributes. Our CSS modularization appends a hash to any CSS classes that aren't flagged as `:global` class names or aren't icon (`.icon-*`) class names, and thus can lead to selectors not being found.
 
-Ensure that any CSS class selectors in tests are flagged as a potential weak point for test failure, and that a `data-*` attribute should be preferred.
+Ensure that CSS class selectors in tests are flagged as a potential weak point for test failure and that a `data-*` attribute should be preferred, except for `.icon-*` selectors, which are global and may be used safely.

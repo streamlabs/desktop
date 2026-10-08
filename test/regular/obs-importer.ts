@@ -67,9 +67,11 @@ test('OBS Importer', async t => {
 
   // check settings
   await showSettingsWindow('Output', async () => {
-    const { setDropdownInputValue } = useForm('Mode');
-    await setDropdownInputValue('Video Bitrate', '5000');
-    await setDropdownInputValue('Encoder', 'Software (x264)');
+    const { fillForm } = useForm('Streaming');
+    await fillForm({
+      VBitrate: '5000',
+      StreamEncoder: 'Software (x264)',
+    });
   });
 
   // check that widgets have been migrated
