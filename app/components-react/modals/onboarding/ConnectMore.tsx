@@ -30,30 +30,32 @@ export function ConnectMore(p: IOnboardingStepProps) {
   const { mergePlatform } = useAuth();
 
   return (
-    <div className={styles.centered}>
+    <div className={styles.stepContainer}>
       <Header title={$t('Connect Platforms')} description={subtitle} />
-      <Scrollable>
-        <div className={styles.platformsContainer}>
-          {platformCards.map(platform => (
-            <PlatformCard key={`${platform}-connect`} platform={platform} />
-          ))}
-          <div className={cx(styles.centered, styles.platformCard)}>
-            <i className="icon-platforms" style={{ fontSize: 32, padding: 8 }} />
-            <span>{$t('Select another platform')}</span>
-            <Form style={{ width: '100%', padding: '0 16px' }}>
-              <ListInput
-                options={listedPlatforms.map(platform => ({
-                  label: platformLabels(platform),
-                  value: platform,
-                }))}
-                onInput={mergePlatform}
-                nolabel
-                style={{ marginTop: 16 }}
-              />
-            </Form>
+      <div className={styles.platformsScrollableHost}>
+        <Scrollable className={styles.platformsScrollableScroller}>
+          <div className={styles.platformsContainer}>
+            {platformCards.map(platform => (
+              <PlatformCard key={`${platform}-connect`} platform={platform} />
+            ))}
+            <div className={styles.platformsCard}>
+              <i className="icon-platforms" style={{ fontSize: 32, padding: 8 }} />
+              <span>{$t('Select another platform')}</span>
+              <Form style={{ width: '100%', padding: '0 16px' }}>
+                <ListInput
+                  options={listedPlatforms.map(platform => ({
+                    label: platformLabels(platform),
+                    value: platform,
+                  }))}
+                  onInput={mergePlatform}
+                  nolabel
+                  style={{ marginTop: 16 }}
+                />
+              </Form>
+            </div>
           </div>
-        </div>
-      </Scrollable>
+        </Scrollable>
+      </div>
     </div>
   );
 }
@@ -62,13 +64,10 @@ function PlatformCard(p: { platform: TPlatform }) {
   const { mergePlatform } = useAuth();
 
   return (
-    <div
-      className={cx(styles.centered, styles.platformCard)}
-      onClick={() => mergePlatform(p.platform)}
-    >
+    <div className={styles.platformsCard} onClick={() => mergePlatform(p.platform)}>
       <PlatformLogo platform={p.platform} size="medium" />
       {platformLabels(p.platform)}
-      <div className={styles.platformCardButton}>{$t('Connect')}</div>
+      <div className={styles.platformsCardButton}>{$t('Connect')}</div>
     </div>
   );
 }

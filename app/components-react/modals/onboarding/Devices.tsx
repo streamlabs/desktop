@@ -47,7 +47,7 @@ export function Devices() {
   }
 
   return (
-    <div className={styles.centered}>
+    <div className={styles.stepContainer}>
       <Header
         title={$t('Set Up Your Mic & Webcam')}
         description={$t('Connect your most essential devices now or later on')}
