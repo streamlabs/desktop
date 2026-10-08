@@ -56,11 +56,41 @@ test('Adding and removing transitions', async t => {
   await clickSceneTransitions();
   await focusChild();
   await (await app.client.$('button=Add Transition')).click();
-  await dismissModal(t);
+  await clickButton('Done');
   await (await app.client.$('.icon-trash')).click();
   await (await app.client.$('.icon-edit')).click();
   const title = await getFormInput(t, 'Name');
   t.true(title === 'New Transition');
+});
+
+test('Cancelling a new transition discards it', async t => {
+  const app = t.context.app;
+
+  // We need at least 2 scenes to edit transitions
+  await addScene('Other Scene');
+
+  await focusMain();
+  await clickSceneTransitions();
+  await focusChild();
+  const rowCount = async () => (await app.client.$$('.ant-table-row')).length;
+  await (await app.client.$('.ant-table-row')).waitForExist({ timeout: 5000 });
+  const before = await rowCount();
+
+  // Add Transition creates the transition immediately; leaving the editor without Done
+  // (Escape, the X, the backdrop) has to remove it again once the modal has closed
+  await (await app.client.$('button=Add Transition')).click();
+  await (await app.client.$('.ant-modal-content')).waitForDisplayed({ timeout: 5000 });
+  await dismissModal(t);
+  await app.client.waitUntil(async () => (await rowCount()) === before, {
+    timeout: 5000,
+    timeoutMsg: 'the cancelled transition is still listed',
+  });
+  t.is(await rowCount(), before, 'cancelling should discard the new transition');
+
+  // The existing transitions survive, and keeping one with Done still adds a row
+  await (await app.client.$('button=Add Transition')).click();
+  await clickButton('Done');
+  t.is(await rowCount(), before + 1, 'confirming should keep the new transition');
 });
 
 test.skip('Changing connections', async t => {
