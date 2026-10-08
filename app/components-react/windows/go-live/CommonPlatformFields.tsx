@@ -1,6 +1,6 @@
 import { TPlatform } from '../../../services/platforms';
 import { $t } from '../../../services/i18n';
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { InputComponent, TextAreaInput, TextInput, TInputLayout } from '../../shared/inputs';
 import { TLayoutMode } from './platforms/PlatformSettingsLayout';
 import { Services } from '../../service-provider';
@@ -37,6 +37,9 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
   const defaultProps = { layoutMode: 'singlePlatform' as TLayoutMode };
   const p: IProps = { ...defaultProps, ...rawProps };
 
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [measuredHeight, setMeasuredHeight] = useState('0px');
+
   function updatePlatform(patch: Partial<ICommonPlatformSettings>) {
     const platformSettings = p.value;
     p.onChange({ ...platformSettings, ...patch });
@@ -71,17 +74,27 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
 
   const fields = p.value;
 
-  const height = useMemo(() => {
+  useEffect(() => {
     if (!fieldsAreVisible) {
-      return '0px';
+      setMeasuredHeight('0px');
+      return;
     }
 
-    if (hasDescription) {
-      return '162px';
-    }
+    if (!contentRef.current) return;
 
-    return '71px';
-  }, [fieldsAreVisible, hasDescription]);
+    const observer = new ResizeObserver(() => {
+      if (contentRef.current) {
+        setMeasuredHeight(`${contentRef.current.scrollHeight}px`);
+      }
+    });
+
+    observer.observe(contentRef.current);
+
+    // Initial measurement
+    setMeasuredHeight(`${contentRef.current.scrollHeight}px`);
+
+    return () => observer.disconnect();
+  }, [fieldsAreVisible]);
 
   // determine max character length for title by enabled platform limitation
   let maxCharacters = 120;
@@ -113,46 +126,48 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
     <AnimatedWrapper
       visible={fieldsAreVisible}
       style={{ marginBottom: p.platform && fieldsAreVisible ? '10px' : '0px' }}
-      height={height}
+      height={measuredHeight}
     >
-      {/*TITLE*/}
-      <TextInput
-        value={fields['title']}
-        name="title"
-        onChange={val => updateCommonField('title', val)}
-        label={
-          titleTooltip ? (
-            <Tooltip title={titleTooltip} placement="right">
-              {$t('Title')}
-              <i className="icon-information" style={{ marginLeft: '5px' }} />
-            </Tooltip>
-          ) : (
-            $t('Title')
-          )
-        }
-        // A disabled input cannot be corrected, so it must not be able to fail validation. Each
-        // platform using its own title validates that title in its own section.
-        required={!titleDisabled}
-        disabled={titleDisabled}
-        max={maxCharacters}
-        min={minCharacters}
-        layout={p.layout}
-        style={{ marginTop: !p.platform ? '0px' : '10px' }}
-        size="large"
-      />
-
-      {/*DESCRIPTION*/}
-      {hasDescription && (
-        <TextAreaInput
-          value={fields['description']}
-          onChange={val => updateCommonField('description', val)}
-          name="description"
-          label={$t('Description')}
-          required={descriptionIsRequired}
+      <div ref={contentRef}>
+        {/*TITLE*/}
+        <TextInput
+          value={fields['title']}
+          name="title"
+          onChange={val => updateCommonField('title', val)}
+          label={
+            titleTooltip ? (
+              <Tooltip title={titleTooltip} placement="right">
+                {$t('Title')}
+                <i className="icon-information" style={{ marginLeft: '5px' }} />
+              </Tooltip>
+            ) : (
+              $t('Title')
+            )
+          }
+          // A disabled input cannot be corrected, so it must not be able to fail validation. Each
+          // platform using its own title validates that title in its own section.
+          required={!titleDisabled}
+          disabled={titleDisabled}
+          max={maxCharacters}
           min={minCharacters}
           layout={p.layout}
+          style={{ marginTop: !p.platform ? '0px' : '10px' }}
+          size="large"
         />
-      )}
+
+        {/*DESCRIPTION*/}
+        {hasDescription && (
+          <TextAreaInput
+            value={fields['description']}
+            onChange={val => updateCommonField('description', val)}
+            name="description"
+            label={$t('Description')}
+            required={descriptionIsRequired}
+            min={minCharacters}
+            layout={p.layout}
+          />
+        )}
+      </div>
     </AnimatedWrapper>
   );
 });
