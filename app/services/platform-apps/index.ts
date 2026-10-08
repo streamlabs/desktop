@@ -660,7 +660,22 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
     if (!app || !app.enabled) return;
 
     const windowId = `${appId}-${pageSlot}`;
-    const mousePos = remote.screen.getCursorScreenPoint();
+
+    // `center` is handled here rather than forwarded, since Electron would
+    // otherwise center on the primary display and override the computed position.
+    const { center, ...restWindowOptions } = windowOptions ?? {};
+    const size = restWindowOptions.size ?? this.getPagePopOutSize(appId, pageSlot);
+
+    let position: { x: number; y: number };
+    if (center) {
+      const bounds = this.windowsService.windows.main.getBounds();
+      position = {
+        x: Math.floor(bounds.x + bounds.width / 2 - size.width / 2),
+        y: Math.floor(bounds.y + bounds.height / 2 - size.height / 2),
+      };
+    } else {
+      position = remote.screen.getCursorScreenPoint();
+    }
 
     // We use a generated window Id to prevent somebody popping out the
     // same window multiple times.
@@ -669,11 +684,11 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
         componentName: 'PlatformAppPopOut',
         queryParams: { appId, pageSlot },
         title: app.manifest.name,
-        size: this.getPagePopOutSize(appId, pageSlot),
-        x: mousePos.x,
-        y: mousePos.y,
+        size,
+        x: position.x,
+        y: position.y,
         persistWebContents: true,
-        ...windowOptions,
+        ...restWindowOptions,
       },
       windowId,
     );
