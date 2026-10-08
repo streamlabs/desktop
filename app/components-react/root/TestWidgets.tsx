@@ -50,17 +50,6 @@ export default function TestWidgets(p: { testers?: string[] }) {
       }
     });
 
-    // •
-    // Asana & Bug Workflow Tools
-    // •
-    // Testing Suite, Agents & Commands
-    // •
-    // Code Hygiene & Review Tools
-    // •
-    // PR & Release Management
-    // •
-    // Environment Setup & Branch Lifecycle
-
     return () => {
       addSub?.unsubscribe?.();
       removeSub?.unsubscribe?.();
