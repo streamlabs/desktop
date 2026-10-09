@@ -99,8 +99,9 @@ export default function Onboarding() {
   return (
     <Modal
       closable={false}
-      onCancel={closeModal}
+      keyboard={false}
       maskClosable={false}
+      onCancel={closeModal}
       destroyOnClose
       centered
       bodyStyle={{ padding: 32, height: '100%' }}
