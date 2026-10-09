@@ -4,14 +4,21 @@ import { first } from 'rxjs/operators';
 import { isEqual } from 'lodash';
 import { NamedPipeClient } from './named-pipe-client';
 import { StringDecoder } from 'string_decoder';
+import * as path from 'path';
+import * as os from 'os';
 
 const net = require('net');
 const snp = process.platform === 'win32' ? require('node-win32-np') : null;
 
 const PIPE_NAME = 'slobs';
 const PIPE_PATH = `\\\\.\\pipe\\${PIPE_NAME}`;
-const TCP_PORT = 28194;
-const TCP_HOST = '127.0.0.1';
+
+// Evaluated at connect time so it picks up SLOBS_CACHE_DIR set by the test runner.
+function getSocketPath(): string {
+  const appData = process.env.SLOBS_CACHE_DIR
+    || path.join(os.homedir(), 'Library', 'Application Support');
+  return path.join(appData, 'slobs-client', 'slobs.sock');
+}
 const PROMISE_TIMEOUT = 20000;
 
 let clientInstance: ApiClient = null;
@@ -66,7 +73,7 @@ export class ApiClient {
       if (process.platform === 'win32') {
         this.socket.connect(PIPE_PATH);
       } else {
-        this.socket.connect(TCP_PORT, TCP_HOST);
+        this.socket.connect(getSocketPath());
       }
     });
   }
@@ -81,7 +88,7 @@ export class ApiClient {
     this.socket.on('error', (error: any) => {
       this.log('error', error);
       this.connectionStatus = 'disconnected';
-      this.rejectConnection();
+      this.rejectConnection(error);
     });
 
     this.socket.on('data', (data: any) => {
@@ -218,7 +225,7 @@ export class ApiClient {
 
       return Buffer.concat(response);
     }
-    // Mac: use raw socket callbacks (not Promises) so deasync.loopWhile
+    // Mac: use Unix socket with raw socket callbacks (not Promises) so deasync.loopWhile
     // can drive the event loop without microtask flushing issues.
     let result: Buffer | undefined;
     let error: any;
@@ -227,7 +234,7 @@ export class ApiClient {
     const chunks: Buffer[] = [];
     const socket = new net.Socket();
 
-    socket.connect(TCP_PORT, TCP_HOST, () => {
+    socket.connect(getSocketPath(), () => {
       socket.write(rawMessage);
     });
 
