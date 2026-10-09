@@ -21,7 +21,7 @@ export function ConnectMore(p: IOnboardingStepProps) {
 
   const subtitle = isPartialSLAuth
     ? $t(
-        'Streamlabs Desktop requires that you have a connected platform account in order to use all of its features. By skipping this step, you will be logged out and some features may be unavailable.',
+        'Streamlabs Desktop requires that you have a connected platform account in order to use all of its features. Connect a platform to continue, or switch to a different account.',
       )
     : $t('Connect your accounts for the best experience. You can always connect more later.');
 

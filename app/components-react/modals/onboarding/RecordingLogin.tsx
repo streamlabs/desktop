@@ -1,15 +1,15 @@
-import React from 'react';
-import cx from 'classnames';
 import { Button } from 'antd';
+import cx from 'classnames';
+import KevinSvg from 'components-react/shared/KevinSvg';
+import PlatformLogo from 'components-react/shared/PlatformLogo';
+import Translate from 'components-react/shared/Translate';
+import React from 'react';
 import { $t } from 'services/i18n';
+import { EPlatform, platformLabels } from 'services/platforms';
+import { $i } from 'services/utils';
 import styles from './Common.m.less';
 import { Header, ImageCard, IOnboardingStepProps, useAuth } from './Onboarding';
-import { platformLabels, EPlatform } from 'services/platforms';
-import PlatformLogo from 'components-react/shared/PlatformLogo';
-import { $i } from 'services/utils';
 import ultraS from './Ultra.m.less';
-import KevinSvg from 'components-react/shared/KevinSvg';
-import Translate from 'components-react/shared/Translate';
 
 export function RecordingLogin(p: IOnboardingStepProps) {
   const { platformLogin, SLIDLogin } = useAuth();
@@ -49,14 +49,14 @@ export function RecordingLogin(p: IOnboardingStepProps) {
   ];
 
   return (
-    <div className={styles.stepContainer} style={{ height: '100%' }}>
+    <div className={cx(styles.recordingLogin, styles.stepContainer)}>
       <Header title={$t('Sign in for the Best Recording Experience')} />
-      <div className={ultraS.ultraBox} style={{ display: 'flex', justifyContent: 'space-evenly' }}>
+      <div className={cx(styles.featuresBox, ultraS.ultraBox)}>
         {promoMetadata.map(data => (
           <ImageCard metadata={data} key={data.title} />
         ))}
       </div>
-      <div className={styles.darkBoxLarge} style={{ marginTop: 32 }}>
+      <div className={styles.darkBoxLarge}>
         <Button
           className={cx(styles.bigButton, styles.white)}
           icon={<KevinSvg style={{ height: 12, width: 14, fill: 'black', marginRight: 8 }} />}
@@ -64,23 +64,22 @@ export function RecordingLogin(p: IOnboardingStepProps) {
         >
           {$t('Log in with Streamlabs ID')}
         </Button>
-        <Translate
-          style={{ paddingTop: 24 }}
-          message="Don't have an account? <link>Create one</link>"
-        >
+        <Translate message="Don't have an account? <link>Create one</link>">
           <a onClick={SLIDLogin} slot="link" />
         </Translate>
-        {$t('Or log in with a platform')}
-        <div className={styles.platformButtons}>
-          {platforms.map(platform => (
-            <Button
-              key={platform}
-              icon={<PlatformLogo platform={platform} size="small" />}
-              onClick={() => platformLogin(platform)}
-            >
-              {platformLabels(platform)}
-            </Button>
-          ))}
+        <div className={styles.platformButtonsContainer}>
+          <span>{$t('Or log in with a platform')}</span>
+          <div className={styles.platformButtons}>
+            {platforms.map(platform => (
+              <Button
+                key={platform}
+                icon={<PlatformLogo platform={platform} size="small" />}
+                onClick={() => platformLogin(platform)}
+              >
+                {platformLabels(platform)}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
