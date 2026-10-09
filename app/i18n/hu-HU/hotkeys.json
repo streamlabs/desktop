@@ -1,6 +1,11 @@
 {
   "Start Streaming": "Stream indítása",
   "Stop Streaming": "Stream leállítása",
+  "Screenshot Output": "Screenshot Output",
+  "Screenshot saved as %{filename}": "Screenshot saved as %{filename}",
+  "Could not save screenshot": "Could not save screenshot",
+  "Screenshots need a newer version of the Streamlabs backend.": "Screenshots need a newer version of the Streamlabs backend.",
+  "Set a recording folder in Settings > Output before taking a screenshot.": "Set a recording folder in Settings > Output before taking a screenshot.",
   "Start Recording": "Felvétel indítása",
   "Stop Recording": "Felvétel leállítása",
   "Switch to scene": "Váltás jelenetre",

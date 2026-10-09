@@ -1,6 +1,11 @@
 {
   "Start Streaming": "Start Streaming",
   "Stop Streaming": "Stop Streaming",
+  "Screenshot Output": "Screenshot Output",
+  "Screenshot saved as %{filename}": "Screenshot saved as %{filename}",
+  "Could not save screenshot": "Could not save screenshot",
+  "Screenshots need a newer version of the Streamlabs backend.": "Screenshots need a newer version of the Streamlabs backend.",
+  "Set a recording folder in Settings > Output before taking a screenshot.": "Set a recording folder in Settings > Output before taking a screenshot.",
   "Start Recording": "Start Recording",
   "Stop Recording": "Stop Recording",
   "Switch to scene": "Switch to scene",
