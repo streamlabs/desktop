@@ -142,6 +142,12 @@ export interface IWindowOptions extends Electron.BrowserWindowConstructorOptions
    * Only maintained for one-off windows; main and child never set it.
    */
   isFocused?: boolean;
+  /**
+   * Live state, not a construction option: true while the window is minimized or hidden. Only
+   * maintained for the main window. Background throttling is off for it (see init), so the
+   * Page Visibility API never reports it hidden and this flag is the only signal.
+   */
+  isMinimized?: boolean;
   title?: string;
   center?: boolean;
   position?: {
@@ -191,6 +197,7 @@ export class WindowsService extends StatefulService<IWindowsState> {
       componentName: 'Main',
       scaleFactor: 1,
       isShown: true,
+      isMinimized: false,
       hideStyleBlockers: true,
       title: `Streamlabs Desktop - ${Utils.env.SLOBS_VERSION}`,
       modalOptions: { hideStyleBlockers: false, visible: false },
@@ -255,6 +262,26 @@ export class WindowsService extends StatefulService<IWindowsState> {
     this.updateScaleFactor('child');
     this.windows.main.on('move', () => this.updateScaleFactor('main'));
     this.windows.child.on('move', () => this.updateScaleFactor('child'));
+
+    // OBS renders every display at the output frame rate whether or not it can be seen, so
+    // components hosting one (Display.tsx) tear it down while the main window is out of sight.
+    // Each event re-reads the window's actual state rather than trusting the event name, so an
+    // out-of-order or spurious event cannot leave the flag stuck; 'focus' is a further
+    // self-correcting point. 'hide'/'show' cover Cmd+H on macOS; 'show' also fires at startup.
+    const syncMainMinimized = () => {
+      const win = this.windows.main;
+      if (!win || win.isDestroyed()) return;
+      const isMinimized = win.isMinimized() || !win.isVisible();
+      if (isMinimized !== !!this.state.main.isMinimized) {
+        // A targeted mutation on purpose: UPDATE_MAIN_WINDOW_OPTIONS replaces state.main, which
+        // re-renders every component watching any main-window field. The Mixer is one, and it
+        // re-mounts its WebGL meters (and their worker subscriptions) on every re-render.
+        this.SET_MAIN_WINDOW_MINIMIZED(isMinimized);
+      }
+    };
+    ['minimize', 'restore', 'hide', 'show', 'focus'].forEach(event =>
+      this.windows.main.on(event as any, syncMainMinimized),
+    );
 
     if (remote.screen.getAllDisplays().length > 1) {
       this.usageStatisticsService.recordFeatureUsage('MultipleDisplays');
@@ -638,6 +665,11 @@ export class WindowsService extends StatefulService<IWindowsState> {
   @mutation()
   private UPDATE_MAIN_WINDOW_OPTIONS(options: Partial<IWindowOptions>) {
     this.state.main = { ...this.state.main, ...options };
+  }
+
+  @mutation()
+  private SET_MAIN_WINDOW_MINIMIZED(isMinimized: boolean) {
+    this.state.main.isMinimized = isMinimized;
   }
 
   @mutation()

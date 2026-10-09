@@ -9,6 +9,7 @@ import fShaderSrc from 'util/webgl/shaders/volmeter.frag';
 import { Services } from 'components-react/service-provider';
 import { assertIsDefined, getDefined } from 'util/properties-type-guards';
 import { useController } from 'components-react/hooks/zustand';
+import Utils from 'services/utils';
 
 // Configuration
 const CHANNEL_HEIGHT = 3;
@@ -91,6 +92,7 @@ const GLVolmetersCtx = React.createContext<GLVolmetersController | null>(null);
 class GLVolmetersController {
   private customizationService = Services.CustomizationService;
   private audioService = Services.AudioService;
+  private windowsService = Services.WindowsService;
 
   subscriptions: Dictionary<IVolmeterSubscription> = {};
 
@@ -118,6 +120,8 @@ class GLVolmetersController {
   interpolationTime = 35;
   private bg: { r: number; g: number; b: number };
   private fpsLimit: number;
+  // the slow poll that stands in for the frame loop while the window is minimized
+  private minimizedPollId = 0;
   private firstFrameTime: number;
   private frameNumber: number;
   private sourcesOrder: string[];
@@ -228,6 +232,7 @@ class GLVolmetersController {
 
     // cancel next frame rendering
     cancelAnimationFrame(this.requestedFrameId);
+    clearTimeout(this.minimizedPollId);
   }
 
   setupNewCanvas($canvasEl: HTMLCanvasElement) {
@@ -262,6 +267,22 @@ class GLVolmetersController {
   private onRequestAnimationFrameHandler(now: DOMHighResTimeStamp) {
     const isDestroyed = !this.$refs.canvas;
     if (isDestroyed) return;
+
+    // Background throttling is off for the main window, so requestAnimationFrame keeps firing
+    // at full display rate while the window is minimized and the meters keep being drawn for
+    // nobody. Skipping the draw saves the GPU process about two points of CPU (measured
+    // 2026-09-27). While minimized, poll twice a second with a plain timer instead and draw
+    // nothing; the frame loop resumes by itself on restore.
+    const windowMinimized = !!this.windowsService.state[Utils.getWindowId()]?.isMinimized;
+    if (windowMinimized) {
+      this.frameNumber = -1;
+      this.firstFrameTime = 0;
+      this.minimizedPollId = window.setTimeout(
+        () => this.onRequestAnimationFrameHandler(performance.now()),
+        500,
+      );
+      return;
+    }
 
     // init first rendering frame
     if (!this.firstFrameTime) {
