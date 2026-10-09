@@ -7,6 +7,7 @@ import { Services } from 'components-react/service-provider';
 import { useRealmObject, useRealmObjectProperty } from 'components-react/hooks/realm';
 import { useVuex } from 'components-react/hooks';
 import { $t } from 'services/i18n';
+import { alertAsync } from 'components-react/modals';
 import { EPlatformCallResult, externalAuthPlatforms, TPlatform } from 'services/platforms';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import KevinSvg from 'components-react/shared/KevinSvg';
@@ -244,12 +245,27 @@ export function useAuth() {
           }
           return;
         });
+      return;
     }
+
+    if (result === EPlatformCallResult.Error) {
+      alertAsync(
+        $t(
+          'This account is already linked to another Streamlabs Account. Please use a different account.',
+        ),
+      );
+      return;
+    }
+
+    // A non-merge login resolves with `undefined` on success, so only bail on
+    // results that explicitly report a problem (e.g. missing Twitch scope)
+    if (result !== undefined && result !== EPlatformCallResult.Success) return;
 
     // Merging a platform into a partial SLID auth gives it its first platform,
     // which lets us complete the login.
-    if (merge && result === EPlatformCallResult.Success && UserService.views.isPartialSLAuth) {
+    if (merge && UserService.views.isPartialSLAuth) {
       await finishSLID(platform);
+      if (!UserService.views.isLoggedIn) return;
     }
 
     OnboardingV2Service.actions.takeStep();
