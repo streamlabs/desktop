@@ -5,6 +5,7 @@ import * as steps from './steps';
 import { EOnboardingSteps } from 'services/onboarding/onboarding-v2';
 import { Services } from 'components-react/service-provider';
 import { useRealmObject, useRealmObjectProperty } from 'components-react/hooks/realm';
+import { useVuex } from 'components-react/hooks';
 import { $t } from 'services/i18n';
 import { EPlatformCallResult, externalAuthPlatforms, TPlatform } from 'services/platforms';
 import UltraIcon from 'components-react/shared/UltraIcon';
@@ -31,7 +32,7 @@ const STEPS_MAP = {
 };
 
 export default function Onboarding() {
-  const { OnboardingV2Service, RecordingModeService } = Services;
+  const { OnboardingV2Service, RecordingModeService, UserService } = Services;
 
   const [processing, setProcessing] = useState(false);
 
@@ -39,9 +40,20 @@ export default function Onboarding() {
   // by getting the `currentStep` separately
   const currentStep = useRealmObjectProperty(OnboardingV2Service.state.currentStep);
   const { currentIndex, showOnboarding } = useRealmObject(OnboardingV2Service.state);
+  const { isPartialSLAuth } = useVuex(() => ({
+    isPartialSLAuth: !!UserService.views.isPartialSLAuth,
+  }));
 
-  const continueFuncs: PartialRec<EOnboardingSteps, () => void> = useMemo(
+  const continueFuncs: PartialRec<EOnboardingSteps, () => void | false> = useMemo(
     () => ({
+      [EOnboardingSteps.ConnectMore]: () => {
+        // With only a partial SLID auth the user has no platform to continue with, so
+        // "continue" discards that auth and returns to the Login step to switch accounts
+        if (!UserService.views.isPartialSLAuth) return;
+        UserService.actions.finishSLAuth();
+        OnboardingV2Service.actions.stepBack();
+        return false;
+      },
       [EOnboardingSteps.Devices]: () => {
         RecordingModeService.actions.addRecordingWebcam();
       },
@@ -59,9 +71,8 @@ export default function Onboarding() {
   }
 
   function cont() {
-    if (continueFuncs[currentStep.name]) {
-      continueFuncs[currentStep.name]!();
-    }
+    // A continue func can return `false` to replace the default advance to the next step
+    if (continueFuncs[currentStep.name]?.() === false) return;
     takeStep();
   }
 
@@ -79,6 +90,7 @@ export default function Onboarding() {
 
   const Component = STEPS_MAP[currentStep.name];
   const continueTexts: PartialRec<EOnboardingSteps, string> = {
+    [EOnboardingSteps.ConnectMore]: isPartialSLAuth ? $t('Switch Account') : $t('Continue'),
     [EOnboardingSteps.Ultra]: $t('Continue with Free'),
     [EOnboardingSteps.Themes]: $t('Finish'),
   };
@@ -168,12 +180,43 @@ export function DancingKevins() {
 export function useAuth() {
   const { UsageStatisticsService, OnboardingV2Service, UserService } = Services;
 
-  const SLIDLogin = useCallback(() => {
+  /**
+   * An SLID auth is only partial (no primary platform, not validated) until
+   * `finishSLAuth` runs. That is what runs the full login and emits
+   * `userLoginFinished`, so it must happen before the flow continues.
+   */
+  const finishSLID = useCallback(async (primaryPlatform: TPlatform) => {
+    const result = await UserService.actions.return.finishSLAuth(primaryPlatform);
+
+    if (result === EPlatformCallResult.TwitchScopeMissing) {
+      await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+        type: 'warning',
+        message: $t(
+          'Streamlabs requires additional permissions from your Twitch account. Please log in with Twitch to continue.',
+        ),
+        title: $t('Twitch Authentication Error'),
+        buttons: [$t('Refresh Login')],
+      });
+
+      // Initiate a Twitch merge to get permissions
+      return UserService.actions.startAuth('twitch', 'external', true);
+    }
+  }, []);
+
+  const SLIDLogin = useCallback(async () => {
     UsageStatisticsService.actions.recordAnalyticsEvent('PlatformLogin', 'streamlabs');
-    UserService.startSLAuth().then((status: EPlatformCallResult) => {
-      if (status !== EPlatformCallResult.Success) return;
-      OnboardingV2Service.actions.takeStep();
-    });
+    const status: EPlatformCallResult = await UserService.actions.return.startSLAuth();
+    if (status !== EPlatformCallResult.Success) return;
+
+    // With at least one linked platform we can complete the login right away.
+    // Otherwise the ConnectMore step prompts for a platform and completes it.
+    const [primaryPlatform] = UserService.views.linkedPlatforms;
+    if (primaryPlatform) {
+      await finishSLID(primaryPlatform);
+      if (!UserService.views.isLoggedIn) return;
+    }
+
+    OnboardingV2Service.actions.takeStep();
   }, []);
 
   const platformLogin = useCallback(async (platform: TPlatform, merge = false) => {
@@ -201,6 +244,13 @@ export function useAuth() {
           return;
         });
     }
+
+    // Merging a platform into a partial SLID auth gives it its first platform,
+    // which lets us complete the login.
+    if (merge && result === EPlatformCallResult.Success && UserService.views.isPartialSLAuth) {
+      await finishSLID(platform);
+    }
+
     OnboardingV2Service.actions.takeStep();
   }, []);
 

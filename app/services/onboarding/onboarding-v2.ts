@@ -176,7 +176,7 @@ class OnboardingPath {
       },
       [EOnboardingSteps.Login]: () => {
         if ((modifiers.loggedIn || modifiers.isPartialSLAuth) && modifiers.lessThanTwoPlatforms) {
-          return { name: EOnboardingSteps.ConnectMore };
+          return { name: EOnboardingSteps.ConnectMore, isSkippable: !modifiers.isPartialSLAuth };
         }
         return advanceToOBSImportOr(() =>
           advanceToUltraOr(() => ({ name: EOnboardingSteps.Devices })),
