@@ -149,6 +149,14 @@ class OnboardingPath {
     modifiers?: Record<TNavigationModifier, boolean>,
   ): IOnboardingStep | void {
     if (this.singletonPath) return;
+    const currentStep = this.current.config.name;
+
+    function advanceToConnectMoreOr(otherwiseFn: () => IOnboardingStep | void) {
+      if ((modifiers.loggedIn || modifiers.isPartialSLAuth) && modifiers.lessThanTwoPlatforms) {
+        return { name: EOnboardingSteps.ConnectMore, isSkippable: !modifiers.isPartialSLAuth };
+      }
+      return otherwiseFn();
+    }
 
     function advanceToOBSImportOr(otherwiseFn: () => IOnboardingStep | void) {
       if (modifiers.obsInstalled) {
@@ -166,10 +174,10 @@ class OnboardingPath {
 
     const fromCurrentStep = {
       [EOnboardingSteps.Splash]: () => {
-        return {
+        return advanceToConnectMoreOr(() => ({
           name: modifiers.recordingMode ? EOnboardingSteps.RecordingLogin : EOnboardingSteps.Login,
           isSkippable: modifiers.loggedIn,
-        };
+        }));
       },
       [EOnboardingSteps.RecordingLogin]: () => {
         if (modifiers.obsInstalled) return { name: EOnboardingSteps.OBSImport };
@@ -178,8 +186,8 @@ class OnboardingPath {
         if ((modifiers.loggedIn || modifiers.isPartialSLAuth) && modifiers.lessThanTwoPlatforms) {
           return { name: EOnboardingSteps.ConnectMore, isSkippable: !modifiers.isPartialSLAuth };
         }
-        return advanceToOBSImportOr(() =>
-          advanceToUltraOr(() => ({ name: EOnboardingSteps.Devices })),
+        return advanceToConnectMoreOr(() =>
+          advanceToOBSImportOr(() => advanceToUltraOr(() => ({ name: EOnboardingSteps.Devices }))),
         );
       },
       [EOnboardingSteps.ConnectMore]: () => {
@@ -199,7 +207,7 @@ class OnboardingPath {
       [EOnboardingSteps.Themes]: () => {},
     };
 
-    return fromCurrentStep[this.current.config.name]();
+    return fromCurrentStep[currentStep]();
   }
 }
 
