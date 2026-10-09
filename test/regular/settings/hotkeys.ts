@@ -1,23 +1,20 @@
-import { restartApp, test, TExecutionContext, useWebdriver } from '../../helpers/webdriver';
+import { HotkeysService, ScenesService } from 'app-services';
+import { IHotkey } from 'services/hotkeys';
+import { getApiClient } from '../../helpers/api-client';
 import {
-  click,
   clickIfDisplayed,
   clickTab,
-  focusChild,
-  focusMain,
   getNumElements,
   isDisplayed,
   selectElements,
   waitForDisplayed,
 } from '../../helpers/modules/core';
 import { toggleDualOutputMode } from '../../helpers/modules/dual-output';
-import { logIn } from '../../helpers/modules/user';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
-import { getApiClient } from '../../helpers/api-client';
+import { logIn } from '../../helpers/modules/user';
 import { SceneBuilder } from '../../helpers/scene-builder';
 import { sleep } from '../../helpers/sleep';
-import { HotkeysService, ScenesService } from 'app-services';
-import { IHotkey } from 'services/hotkeys';
+import { restartApp, test, TExecutionContext, useWebdriver } from '../../helpers/webdriver';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -93,16 +90,10 @@ test('Binds a hotkey', async t => {
 });
 
 const openHotkeySettings = async (t: TExecutionContext) => {
-  const { app } = t.context;
-  await focusMain();
-  await (await app.client.$('.nav-menu .icon-settings')).click();
-
-  await focusChild();
-
-  // Wait for hotkeys to populate
-  await (await app.client.$('li=Hotkeys')).click();
-  const startStreamingHotkey = await app.client.$('[data-testid=Start_Streaming]');
-  await startStreamingHotkey.waitForExist();
+  await showSettingsWindow('Hotkeys', async () => {
+    const startStreamingHotkey = await t.context.app.client.$('[data-testid=Start_Streaming]');
+    await startStreamingHotkey.waitForExist();
+  });
 };
 
 test('Shows and filters scene item hotkeys', async t => {
