@@ -11,11 +11,14 @@ export default function PlatformAppMainPage(p: { params: { appId: string }; clas
   const { PlatformAppsService, NavigationService } = Services;
   const pageSlot = EAppPageSlot.TopNav;
 
-  const { poppedOut } = useVuex(() => ({
-    poppedOut: PlatformAppsService.views
-      .getApp(p.params.appId)
-      ?.poppedOutSlots.find(slot => slot === pageSlot),
+  // `useVuex` only captures its selector once, and this component instance is reused when
+  // navigating between apps, so the selector must not depend on `p.params.appId`.
+  const { poppedOutAppIds } = useVuex(() => ({
+    poppedOutAppIds: PlatformAppsService.views.enabledApps
+      .filter(app => app.poppedOutSlots.includes(pageSlot))
+      .map(app => app.id),
   }));
+  const poppedOut = poppedOutAppIds.includes(p.params.appId);
 
   const popOutApp = useCallback(
     (appId: string) =>
@@ -24,33 +27,35 @@ export default function PlatformAppMainPage(p: { params: { appId: string }; clas
   );
 
   return (
-    <div className={cx(styles.container, p.className)} style={{ margin: poppedOut && '20px' }}>
+    <div className={cx(styles.container, p.className)}>
+      <div className={styles.header}>
+        <button
+          className={styles.textButton}
+          onClick={() => NavigationService.actions.navigate('PlatformAppStore')}
+        >
+          <i className="icon-back" />
+          {$t('Back')}
+        </button>
+        {!poppedOut && (
+          <button className={styles.textButton} onClick={() => popOutApp(p.params.appId)}>
+            <i className="icon-pop-out-2" />
+            {$t('Pop Out App')}
+          </button>
+        )}
+      </div>
       {poppedOut ? (
-        $t('This app is currently popped out in another window.')
+        <div className={styles.poppedOutMessage}>
+          {$t('This app is currently popped out in another window.')}
+        </div>
       ) : (
-        <>
-          <div className={styles.header}>
-            <button
-              className={styles.textButton}
-              onClick={() => NavigationService.actions.navigate('PlatformAppStore')}
-            >
-              <i className="icon-back" />
-              {$t('Back')}
-            </button>
-            <button className={styles.textButton} onClick={() => popOutApp(p.params.appId)}>
-              <i className="icon-pop-out-2" />
-              {$t('Pop Out App')}
-            </button>
-          </div>
-          <div className={styles.appViewWrapper}>
-            <PlatformAppPageView
-              appId={p.params.appId}
-              pageSlot={pageSlot}
-              key={p.params.appId}
-              style={{ height: '100%', width: '100%', position: 'absolute' }}
-            />
-          </div>
-        </>
+        <div className={styles.appViewWrapper}>
+          <PlatformAppPageView
+            appId={p.params.appId}
+            pageSlot={pageSlot}
+            key={p.params.appId}
+            style={{ height: '100%', width: '100%', position: 'absolute' }}
+          />
+        </div>
       )}
     </div>
   );
