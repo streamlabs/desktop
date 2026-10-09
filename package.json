@@ -94,6 +94,7 @@
     "node-fontinfo": "https://slobs-node-fontinfo.s3-us-west-2.amazonaws.com/node-fontinfo-0.0.0.tar.gz",
     "node-libuiohook": "https://slobs-node-libuiohook.s3-us-west-2.amazonaws.com/node-libuiohook-0.0.0.tar.gz",
     "node-screenshots": "^0.2.1",
+    "node-secure-pipe": "https://slobs-node-secure-pipe.s3-us-west-2.amazonaws.com/node-secure-pipe-0.0.0.tar.gz",
     "node-window-rendering": "https://slobs-node-window-rendering.s3-us-west-2.amazonaws.com/node-window-rendering-0.0.0.tar.gz",
     "obs-studio-node": "https://s3-us-west-2.amazonaws.com/obsstudionodes3.streamlabs.com/osn-0.0.0-release.tar.gz",
     "openai": "^4.80.1",
@@ -256,8 +257,7 @@
   },
   "optionalDependencies": {
     "node-gyp": "12.2.0",
-    "node-win32-np": "1.0.6",
-    "secure-pipe": "file:app/native/secure-pipe"
+    "node-win32-np": "1.0.6"
   },
   "resolutions": {
     "minimist": "1.2.6",

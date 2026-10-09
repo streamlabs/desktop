@@ -268,10 +268,24 @@ export class TcpServerService extends PersistentStatefulService<ITcpServersSetti
 
   private createNamedPipeServer(): IServer {
     const settings = this.state.namedPipe;
-    const { createSecurePipe } = require('secure-pipe');
-    const fd = createSecurePipe(settings.pipeName);
+    const pipePath = `\\\\.\\pipe\\${settings.pipeName}`;
     const server = net.createServer();
-    server.listen({ fd });
+
+    // Node creates the pipe with the default named pipe DACL, which grants read access
+    // to Everyone and Anonymous. Replace it with an owner-only DACL as soon as the pipe
+    // exists. If that fails, close the server rather than leave the pipe open to other
+    // users on the machine.
+    server.on('listening', () => {
+      try {
+        const { restrictPipeToOwner } = require('node-secure-pipe');
+        restrictPipeToOwner(pipePath);
+      } catch (e: unknown) {
+        console.error('Failed to restrict named pipe to owner, closing pipe server', e);
+        server.close();
+      }
+    });
+
+    server.listen(pipePath);
     return {
       type: 'namedPipe',
       nativeServer: server,
