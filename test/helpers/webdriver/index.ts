@@ -10,14 +10,16 @@ import * as ChildProcess from 'child_process';
 import fetch from 'node-fetch';
 
 import {
+  desktopFailureLogs,
   ITestStats,
   killChromedriverOnPort,
-  killElectronInstances,
+  killProcessTree,
   removeFailedTestFromFile,
   saveFailedTestsToFile,
   saveTestStatsToFile,
   testFn,
-  waitForElectronInstancesExist,
+  waitForProcessExit,
+  windowsProcessStartTime,
 } from './runner-utils';
 import {
   clickIfDisplayed,
@@ -40,6 +42,24 @@ const rimraf = require('rimraf');
 const ALMOST_INFINITY = Math.pow(2, 31) - 1; // max 32bit int
 
 const CHROMEDRIVER_PORT = 4444;
+
+const PLATFORM_ENV_NAMES = process.platform === 'win32'
+  ? [
+      'APPDATA', 'LOCALAPPDATA', 'USERPROFILE', 'TEMP', 'TMP', 'PATH',
+      'SystemRoot', 'WINDIR', 'SystemDrive', 'ProgramData', 'ProgramFiles',
+      'ProgramFiles(x86)', 'CommonProgramFiles', 'CommonProgramFiles(x86)',
+      'HOMEDRIVE', 'HOMEPATH', 'ComSpec',
+    ]
+  : ['HOME', 'PATH', 'TMPDIR', 'LANG', 'LC_ALL', 'XDG_CACHE_HOME', 'XDG_CONFIG_HOME'];
+
+function platformRunnerEnvironment(): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = {};
+  for (const name of PLATFORM_ENV_NAMES) {
+    const value = process.env[name];
+    if (value !== undefined) env[name] = value;
+  }
+  return env;
+}
 
 // Enable for verbose debugging output. This does two things:
 // Enable Chromedriver logging to chromedriver.log
@@ -88,6 +108,9 @@ interface ITestRunnerOptions {
    */
   networkLogging?: boolean;
 
+  /** Pass standard OS paths and profile variables to Desktop and native children. */
+  inheritPlatformEnvironment?: boolean;
+
   /**
    * Called after cache directory is created but before
    * the app is started.  This is useful for setting up
@@ -110,6 +133,8 @@ const DEFAULT_OPTIONS: ITestRunnerOptions = {
 class Application {
   client: WebdriverIO.Browser;
   process: ChildProcess.ChildProcess;
+  mainPid: number;
+  mainStartTime?: string;
 
   constructor(public options: RemoteOptions) {}
 
@@ -126,11 +151,15 @@ class Application {
 
     this.process = ChildProcess.spawn(process.execPath, chromedriverArgs, {
       env: {
+        ...this.options.runnerEnv,
         NODE_ENV: 'test',
         SLOBS_CACHE_DIR: cacheDir,
-        ...this.options.runnerEnv,
       },
     });
+    // Chromedriver and its Electron child can write to these pipes. Drain them
+    // so a full pipe cannot block either process, including during shutdown.
+    this.process.stdout?.resume();
+    this.process.stderr?.resume();
 
     await this.waitForChromedriver();
 
@@ -139,9 +168,10 @@ class Application {
 
   stopInProgress = false;
 
-  stop() {
+  async stop() {
     if (!this.process) return;
-    this.process.kill();
+    const driverPid = this.process.pid;
+    await killProcessTree(driverPid);
     this.process = null;
   }
 
@@ -195,7 +225,8 @@ export async function stopApp(t: TExecutionContext, clearCache?: boolean) {
 }
 
 export async function restartApp(t: TExecutionContext): Promise<Application> {
-  await stopAppFn(t, false);
+  const stopError = await stopAppFn(t, false);
+  if (stopError) throw stopError;
   return await startAppFn(t, true);
 }
 
@@ -262,6 +293,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     t: TExecutionContext,
     reuseCache = false,
   ): Promise<Application> {
+    await killChromedriverOnPort(CHROMEDRIVER_PORT);
     if (!reuseCache) {
       lastCacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'slobs-test'));
     }
@@ -271,13 +303,11 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     if (options.networkLogging) appArgs.push('--network-logging');
     if (options.noSync) appArgs.push('--nosync');
 
-    killChromedriverOnPort(CHROMEDRIVER_PORT);
-    await killElectronInstances();
-
     app = t.context.app = new Application({
       port: CHROMEDRIVER_PORT,
       logLevel: CHROMEDRIVER_DEBUG ? 'debug' : 'silent',
       runnerEnv: {
+        ...(options.inheritPlatformEnvironment ? platformRunnerEnvironment() : {}),
         SLD_TESTS_SKIP_ONBOARDING: options.skipOnboarding ? 'true' : '',
       },
       capabilities: {
@@ -313,80 +343,147 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
       },
     });
 
-    if (options.beforeAppStartCb) await options.beforeAppStartCb(t);
+    try {
+      if (options.beforeAppStartCb) await options.beforeAppStartCb(t);
 
-    await t.context.app.start(t.context.cacheDir);
+      await t.context.app.start(t.context.cacheDir);
 
-    // Disable CSS transitions while running tests to allow for eager test clicks
-    // also disable tooltips and the tree mask on sourceSelector
-    const disableTransitionsCode = `
-      const disableAnimationsEl = document.createElement('style');
-      disableAnimationsEl.textContent =
-        '*{ transition: none !important; transition-property: none !important; animation-duration: 0 !important } .ant-tooltip-content{display: none} div[data-name=treeMask]{display: none}';
-      document.head.appendChild(disableAnimationsEl);
-      0; // Prevent returning a value that cannot be serialized
-    `;
-    await focusMain();
+      // Disable CSS transitions while running tests to allow for eager test clicks
+      // also disable tooltips and the tree mask on sourceSelector
+      const disableTransitionsCode = `
+        const disableAnimationsEl = document.createElement('style');
+        disableAnimationsEl.textContent =
+          '*{ transition: none !important; transition-property: none !important; animation-duration: 0 !important } .ant-tooltip-content{display: none} div[data-name=treeMask]{display: none}';
+        document.head.appendChild(disableAnimationsEl);
+        0; // Prevent returning a value that cannot be serialized
+      `;
+      await focusMain();
+      app.mainPid = await app.client.execute(() => require('@electron/remote').getGlobal('process').pid);
+      if (!Number.isInteger(app.mainPid) || app.mainPid <= 0) {
+        throw new Error(`Could not identify Desktop Electron process: ${app.mainPid}`);
+      }
+      app.mainStartTime = windowsProcessStartTime(app.mainPid);
 
-    // await t.context.app.webContents.executeJavaScript(disableTransitionsCode);
-    app.client.execute(disableTransitionsCode);
-    await focusMain();
+      // await t.context.app.webContents.executeJavaScript(disableTransitionsCode);
+      app.client.execute(disableTransitionsCode);
+      await focusMain();
 
-    // Wait up to N seconds before giving up looking for an element.
-    // This will slightly slow down negative assertions, but makes
-    // the tests much more stable, especially on slow systems.
-    await t.context.app.client.setTimeout({ implicit: options.implicitTimeout });
+      // Wait up to N seconds before giving up looking for an element.
+      // This will slightly slow down negative assertions, but makes
+      // the tests much more stable, especially on slow systems.
+      await t.context.app.client.setTimeout({ implicit: options.implicitTimeout });
 
-    if (platform() === 'darwin') {
-      // Select the "Continue" button on the macOS permissions page (MacPermissions.tsx), if it exists.
-      await clickIfDisplayed('button=Continue');
+      if (platform() === 'darwin') {
+        // Select the "Continue" button on the macOS permissions page (MacPermissions.tsx), if it exists.
+        await clickIfDisplayed('button=Continue');
+      }
+
+      // Pretty much all tests except for onboarding-specific
+      // tests will want to skip this flow, so we do it automatically.
+      await waitForLoader();
+
+      // disable the popups that prevents context menu to be shown
+      const client = await getApiClient();
+      const dismissablesService = client.getResource<DismissablesService>('DismissablesService');
+      dismissablesService.dismissAll();
+
+      // disable animations in the child window
+      await focusChild();
+
+      // await t.context.app.webContents.executeJavaScript(disableTransitionsCode);
+      app.client.execute(disableTransitionsCode);
+      await focusMain();
+      appIsRunning = true;
+
+      return app;
+    } catch (error) {
+      // Initialization can fail before beforeEach marks the app as running.
+      // Stop the Chromedriver process tree so its Electron child cannot affect the next test.
+      try {
+        await app.stop();
+      } catch (cleanupError) {
+        console.error('Could not stop Chromedriver after startup failure:', cleanupError);
+      }
+      try {
+        await killProcessTree(app.mainPid);
+      } catch (cleanupError) {
+        console.error('Could not stop Electron after startup failure:', cleanupError);
+      }
+      if (process.env.SLOBS_KEEP_FAILED_CACHE === '1') {
+        console.error(`Desktop startup failure cache retained at ${lastCacheDir}`);
+      } else {
+        await new Promise(resolve => rimraf(lastCacheDir, resolve));
+      }
+      appIsRunning = false;
+      throw error;
     }
-
-    // Pretty much all tests except for onboarding-specific
-    // tests will want to skip this flow, so we do it automatically.
-    await waitForLoader();
-
-    // disable the popups that prevents context menu to be shown
-    const client = await getApiClient();
-    const dismissablesService = client.getResource<DismissablesService>('DismissablesService');
-    dismissablesService.dismissAll();
-
-    // disable animations in the child window
-    await focusChild();
-
-    // await t.context.app.webContents.executeJavaScript(disableTransitionsCode);
-    app.client.execute(disableTransitionsCode);
-    await focusMain();
-    appIsRunning = true;
-
-    return app;
   };
 
   stopAppFn = async function stopApp(t: TExecutionContext, clearCache = true) {
+    let stopError: Error | undefined;
+    let electronExited = false;
     try {
       if (process.platform !== 'darwin') {
         // closeWindow crashes on macOS.
         await closeWindow('main');
-        await waitForElectronInstancesExist();
+        await waitForProcessExit(
+          app.mainPid,
+          55000,
+          'Desktop Electron',
+          app.mainStartTime,
+        );
+        electronExited = true;
       }
-
+    } catch (e: unknown) {
+      fail('Crash on shutdown');
+      console.error(e);
+      stopError = e instanceof Error ? e : new Error(String(e));
+    }
+    // Stop Chromedriver even if closing Electron failed and restartApp will throw.
+    try {
       await app.stop();
     } catch (e: unknown) {
       fail('Crash on shutdown');
       console.error(e);
+      if (!stopError) stopError = e instanceof Error ? e : new Error(String(e));
     }
-    await killElectronInstances();
+    if (!electronExited) {
+      try {
+        await killProcessTree(app.mainPid);
+      } catch (e: unknown) {
+        fail('Crash on shutdown');
+        console.error(e);
+        if (!stopError) stopError = e instanceof Error ? e : new Error(String(e));
+      }
+    }
     appIsRunning = false;
-    await checkErrorsInLogFile(t);
+    const logErrors = await checkErrorsInLogFile(t);
+    if (logErrors.length && !stopError) {
+      stopError = new Error(`Errors in Desktop log during shutdown:\n${logErrors.join('\n')}`);
+    }
+    const forcedShutdown = (readLogs() || '').split(/\r?\n/)
+      .find((line: string) => line.includes('[Shutdown] Force exiting application:'));
+    if (forcedShutdown) {
+      fail('Forced shutdown');
+      if (!stopError) stopError = new Error(forcedShutdown);
+    }
+    if (stopError) console.error(`Desktop shutdown diagnostics:\n${desktopFailureLogs(lastCacheDir)}`);
     logFileLastReadingPos = 0;
 
-    if (!clearCache) return;
-    await new Promise(resolve => {
-      rimraf(lastCacheDir, resolve);
-    });
+    if (!clearCache && !stopError) return;
+    const keepFailureCache = process.env.SLOBS_KEEP_FAILED_CACHE === '1' &&
+      (stopError || (clearCache && !testPassed));
+    if (keepFailureCache) {
+      console.error(`Desktop failure cache retained at ${lastCacheDir}`);
+    } else {
+      await new Promise(resolve => {
+        rimraf(lastCacheDir, resolve);
+      });
+    }
     for (const callback of afterStopCallbacks) {
       await callback(t);
     }
+    return stopError;
   };
 
   /**
@@ -395,7 +492,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
   async function checkErrorsInLogFile(t: TExecutionContext) {
     await sleep(1000); // electron-log needs some time to write down logs
     const logs: string = await readLogs();
-    if (!logs) return;
+    if (!logs) return [];
     lastLogs = logs;
     let ignoringErrors = false;
     let inMissingTranslation = false;
@@ -459,9 +556,11 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
 
     if (errors.length && !skipCheckingErrorsInLogFlag) {
       fail(`The log-file has errors \n ${displayLogs}`);
+      return errors;
     } else if (options.networkLogging && !testPassed) {
       fail(`log-file: \n ${displayLogs}`);
     }
+    return [];
   }
 
   test.beforeEach(async t => {
@@ -502,7 +601,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     // so we still can read the logs after the crash
     try {
       if (appIsRunning && options.clearCollectionAfterEachTest) await clearCollections();
-      await logOut(t, true);
+      if (appIsRunning) await logOut(t, true);
       if (options.restartAppAfterEachTest) {
         if (appIsRunning) {
           const client = await getApiClient();
