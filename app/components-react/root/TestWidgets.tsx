@@ -78,7 +78,7 @@ export default function TestWidgets(p: { testers?: string[] }) {
       </a>
       <Animation transitionName="ant-slide-right">
         {slideOpen && (
-          <div className="slide-open__menu" style={{ zIndex: 1011 }}>
+          <div className="slide-open__menu">
             {hasSmartBrowser &&
               VISION_TESTERS.map(tester => (
                 <button

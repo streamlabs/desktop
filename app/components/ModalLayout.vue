@@ -52,7 +52,7 @@
 
 .ModalLayout-fixed {
   flex-shrink: 0;
-  z-index: 1;
+  z-index: @z-raised;
 }
 
 .modal-layout-content {
@@ -103,7 +103,7 @@
 
   background-color: var(--section);
   flex-shrink: 0;
-  z-index: 10;
+  z-index: @z-overlay;
 
   .button {
     .margin-left();

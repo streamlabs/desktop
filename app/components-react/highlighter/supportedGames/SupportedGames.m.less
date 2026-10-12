@@ -1,3 +1,5 @@
+@import '../../../styles/index';
+
 .thumbnail {
   position: relative;
   border-radius: 8px;
@@ -33,7 +35,7 @@
 }
 
 .thumbnail:hover {
-  z-index: 10;
+  z-index: @z-overlay;
   transform: rotate(0) scale(1.2);
 }
 
