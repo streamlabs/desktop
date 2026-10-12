@@ -221,59 +221,70 @@ export function useAuth() {
     OnboardingV2Service.actions.takeStep();
   }, []);
 
-  const platformLogin = useCallback(async (platform: TPlatform, merge = false) => {
-    UsageStatisticsService.actions.recordAnalyticsEvent('PlatformLogin', platform);
-    const result = await UserService.startAuth(
-      platform,
-      externalAuthPlatforms.includes(platform) ? 'external' : 'internal',
-      merge,
-    );
+  const platformLogin = useCallback(
+    async (platform: TPlatform, merge = false): Promise<boolean> => {
+      UsageStatisticsService.actions.recordAnalyticsEvent('PlatformLogin', platform);
+      try {
+        const result = await UserService.actions.return.startAuth(
+          platform,
+          externalAuthPlatforms.includes(platform) ? 'external' : 'internal',
+          merge,
+        );
 
-    if (result === EPlatformCallResult.TwitchTwoFactor) {
-      remote.dialog
-        .showMessageBox({
-          type: 'error',
-          message: $t(
-            'Twitch requires two factor authentication to be enabled on your account in order to stream to Twitch. Please enable two factor authentication and try again.',
-          ),
-          title: $t('Twitch Authentication Error'),
-          buttons: [$t('Enable Two Factor Authentication'), $t('Dismiss')],
-        })
-        .then(({ response }) => {
-          if (response === 0) {
-            remote.shell.openExternal('https://twitch.tv/settings/security');
+        if (result === EPlatformCallResult.TwitchTwoFactor) {
+          remote.dialog
+            .showMessageBox({
+              type: 'error',
+              message: $t(
+                'Twitch requires two factor authentication to be enabled on your account in order to stream to Twitch. Please enable two factor authentication and try again.',
+              ),
+              title: $t('Twitch Authentication Error'),
+              buttons: [$t('Enable Two Factor Authentication'), $t('Dismiss')],
+            })
+            .then(({ response }) => {
+              if (response === 0) {
+                remote.shell.openExternal('https://twitch.tv/settings/security');
+              }
+            });
+          return false;
+        }
+
+        if (result === EPlatformCallResult.Error) {
+          alertAsync(
+            $t(
+              'This account is already linked to another Streamlabs Account. Please use a different account.',
+            ),
+          );
+          return false;
+        }
+
+        // A non-merge login resolves with `undefined` on success, so only bail on
+        // results that explicitly report a problem (e.g. missing Twitch scope)
+        if (result !== undefined && result !== EPlatformCallResult.Success) {
+          throw new Error('Unknown platform login result: ' + result);
+        }
+
+        // Merging a platform into a partial SLID auth gives it its first platform,
+        // which lets us complete the login.
+        if (merge && UserService.views.isPartialSLAuth) {
+          await finishSLID(platform);
+          if (!UserService.views.isLoggedIn) {
+            throw new Error('Failed to finish SLID login after merging platform');
           }
-          return;
-        });
-      return;
-    }
+        }
+      } catch (err: unknown) {
+        console.error('Error during platform login:', err);
+        alertAsync($t('Something went wrong while logging in. Please try again.'));
+        return false;
+      }
 
-    if (result === EPlatformCallResult.Error) {
-      alertAsync(
-        $t(
-          'This account is already linked to another Streamlabs Account. Please use a different account.',
-        ),
-      );
-      return;
-    }
+      // Merge complete, or a non-merge login with no issues, so we can continue the flow.
+      return true;
+    },
+    [],
+  );
 
-    // A non-merge login resolves with `undefined` on success, so only bail on
-    // results that explicitly report a problem (e.g. missing Twitch scope)
-    if (result !== undefined && result !== EPlatformCallResult.Success) return;
-
-    // Merging a platform into a partial SLID auth gives it its first platform,
-    // which lets us complete the login.
-    if (merge && UserService.views.isPartialSLAuth) {
-      await finishSLID(platform);
-      if (!UserService.views.isLoggedIn) return;
-    }
-
-    OnboardingV2Service.actions.takeStep();
-  }, []);
-
-  const mergePlatform = useCallback((platform: TPlatform) => {
-    platformLogin(platform, true);
-  }, []);
+  const mergePlatform = useCallback((platform: TPlatform) => platformLogin(platform, true), []);
 
   return { SLIDLogin, platformLogin, mergePlatform };
 }

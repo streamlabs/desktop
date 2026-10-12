@@ -3,16 +3,25 @@ import cx from 'classnames';
 import KevinSvg from 'components-react/shared/KevinSvg';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
 import Translate from 'components-react/shared/Translate';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { $t } from 'services/i18n';
 import { EPlatform, platformLabels } from 'services/platforms';
+import { Services } from 'components-react/service-provider';
 import { $i } from 'services/utils';
 import styles from './Common.m.less';
 import { Header, ImageCard, IOnboardingStepProps, useAuth } from './Onboarding';
 import ultraS from './Ultra.m.less';
 
 export function RecordingLogin(p: IOnboardingStepProps) {
+  const { OnboardingV2Service } = Services;
   const { platformLogin, SLIDLogin } = useAuth();
+
+  const onPlatformClick = useCallback(async (platform: EPlatform) => {
+    const canContinue = await platformLogin(platform);
+    if (!canContinue) return;
+
+    OnboardingV2Service.actions.takeStep();
+  }, []);
 
   const platforms = [
     EPlatform.Twitch,
@@ -74,7 +83,7 @@ export function RecordingLogin(p: IOnboardingStepProps) {
               <Button
                 key={platform}
                 icon={<PlatformLogo platform={platform} size="small" />}
-                onClick={() => platformLogin(platform)}
+                onClick={() => onPlatformClick(platform)}
               >
                 {platformLabels(platform)}
               </Button>
