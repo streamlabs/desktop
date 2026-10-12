@@ -182,6 +182,26 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
     );
   }
 
+  /**
+   * Serialize error for logging
+   * @remarks This method attempts to serialize an error object but if it fails will
+   * just return the original error object.
+   * @param e - The error object to serialize (also could be not an object or error).
+   * @returns The serialized error as a string or the original non-serialized error.
+   */
+  serializeError(e: unknown): string | unknown {
+    if (e && typeof e === 'object' && !(e instanceof Error)) {
+      try {
+        return JSON.stringify(e);
+      } catch {
+        // Failed to serialize error, return the original error object.
+        // Skip logging in case other functions that call this log the error themselves.
+      }
+    }
+
+    return e;
+  }
+
   @mutation()
   protected SET_VIEWERS_COUNT(viewers: number) {
     this.state.viewersCount = viewers;
