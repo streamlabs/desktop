@@ -19,7 +19,7 @@ export default function NavMenu() {
 
   return (
     // The global `nav-menu` class is the hook e2e tests select on
-    <div className={cx('nav-menu', styles.navMenu)} ref={navRef}>
+    <div className={cx(styles.navMenu)} ref={navRef}>
       <Menu
         key="nav-menu"
         mode="horizontal"

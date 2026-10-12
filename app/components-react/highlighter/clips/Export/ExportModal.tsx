@@ -106,7 +106,7 @@ export default function ExportModalProvider({ close }: { close: () => void }) {
 function ExportModal({ close }: { close: () => void }) {
   const { exportInfo, dismissError, resetExportedState } = useController(ExportModalCtx);
 
-  const [videoName, setVideoName] = useState<string>('My Video - highlights');
+  const [videoName, setVideoName] = useState<string>($t('My Video - highlights'));
 
   const unmount = () => {
     dismissError();

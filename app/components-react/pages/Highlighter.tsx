@@ -8,6 +8,7 @@ import ReplaySection from 'components-react/highlighter/ReplaySection';
 import ManualCaptureSection from 'components-react/highlighter/ManualCaptureSection';
 import { ImportStreamModal } from 'components-react/highlighter/ImportStream';
 import importStyles from 'components-react/highlighter/ImportStream.m.less';
+import styles from './Highlighter.m.less';
 import {
   IStreamInfoForAiHighlighter,
   TOpenedFrom,
@@ -65,12 +66,7 @@ export default function Highlighter() {
   }
 
   return (
-    <div
-      className={cx(importModal && importStyles.importModalRoot)}
-      // The page container is a flex row: without flex-grow the page shrinks to its content's
-      // width, which is zero once the Replay section is hidden (Mac)
-      style={{ position: 'relative', flex: 1, minWidth: 0, height: '100%' }}
-    >
+    <div className={cx(styles.highlighterPage, importModal && importStyles.importModalRoot)}>
       {/* Without Replay (Mac) the clips are the whole page, so the editor is always available */}
       <ClipsView fillIntro={showReplay} alwaysShowEditor={!showReplay}>
         {showReplay && (

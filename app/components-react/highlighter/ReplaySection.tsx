@@ -45,7 +45,7 @@ const FEATURE_STEPS = [
 ];
 
 // "Get Highlights" is what Replay is about, so its image is the one shown first
-const DEFAULT_STEP = 1;
+const DEFAULT_STEP = 0;
 const STEP_INTERVAL_MS = 5000;
 
 /**
