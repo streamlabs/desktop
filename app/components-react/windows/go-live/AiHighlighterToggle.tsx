@@ -43,8 +43,13 @@ export default function AiHighlighterToggle({ isUpdateMode }: { isUpdateMode?: b
   // are opted in, or already have an app, the card collapses to the toggle.
   const showToggle = useHighlighter || (installedApp !== null && installedApp !== 'none');
 
+  const isMounted = useIsMounted();
+
   useEffect(() => {
-    HighlighterService.actions.return.getInstalledHighlighterApp().then(setInstalledApp);
+    HighlighterService.actions.return.getInstalledHighlighterApp().then(app => {
+      if (!isMounted.current) return;
+      setInstalledApp(app);
+    });
     checkRecorderStatus();
   }, []);
 
@@ -53,7 +58,6 @@ export default function AiHighlighterToggle({ isUpdateMode }: { isUpdateMode?: b
     setIsExpanded(!showToggle && !isUpdateMode);
   }, [showToggle, installedApp]);
 
-  const isMounted = useIsMounted();
   async function checkRecorderStatus() {
     const running = await HighlighterService.actions.return.isStreamlabsRecorderRunning();
     if (!isMounted.current) return;
