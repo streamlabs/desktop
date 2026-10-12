@@ -50,9 +50,9 @@
     },
     {
       "name": "node-secure-pipe",
-      "url": "https://slobs-node-secure-pipe.s3-us-west-2.amazonaws.com/",
-      "archive": "node-secure-pipe-[VERSION]-[OS][ARCH].tar.gz",
-      "version": "1.0.0",
+      "url": "https://obs-studio-deployment.s3-us-west-2.amazonaws.com/",
+      "archive": "node-secure-pipe-[VERSION]-[OS].tar.gz",
+      "version": "0.1.0",
       "win64": true,
       "osx": false
     },
