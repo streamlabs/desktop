@@ -1,13 +1,15 @@
 import { execFileSync } from 'child_process';
+import * as fs from 'fs';
 import * as path from 'path';
 import { useWebdriver, test } from '../../helpers/webdriver';
-import { getApiClient } from '../../helpers/api-client';
+import { getApiClient, getSocketPath } from '../../helpers/api-client';
 import { ScenesService } from 'services/api/external-api/scenes';
 
 useWebdriver({ restartAppAfterEachTest: false });
 
 // The API named pipe is Windows-only (macOS uses a Unix socket)
 const windowsTest = process.platform === 'win32' ? test : test.skip;
+const macTest = process.platform === 'darwin' ? test : test.skip;
 
 const PIPE_PATH = '\\\\.\\pipe\\slobs';
 
@@ -56,4 +58,17 @@ windowsTest('API named pipe is restricted to the current user', async t => {
     normalizeSddl(getPipeDacl(PIPE_PATH)),
     `D:P(A;;FA;;;${getCurrentUserSid()})(A;;FA;;;${SYSTEM_SID})`,
   );
+});
+
+macTest('API Unix socket is restricted to the current user', async t => {
+  // The owner can still connect and use the API
+  const api = await getApiClient();
+  const scenesService = api.getResource<ScenesService>('ScenesService');
+  t.true(scenesService.getScenes().length > 0);
+
+  // TcpServerService must chmod the socket to 0600 so other accounts can't connect
+  const stats = fs.statSync(getSocketPath());
+  t.true(stats.isSocket());
+  t.is(stats.uid, process.getuid());
+  t.is(stats.mode & 0o777, 0o600);
 });

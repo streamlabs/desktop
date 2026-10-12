@@ -14,7 +14,7 @@ const PIPE_NAME = 'slobs';
 const PIPE_PATH = `\\\\.\\pipe\\${PIPE_NAME}`;
 
 // Evaluated at connect time so it picks up SLOBS_CACHE_DIR set by the test runner.
-function getSocketPath(): string {
+export function getSocketPath(): string {
   const appData = process.env.SLOBS_CACHE_DIR
     || path.join(os.homedir(), 'Library', 'Application Support');
   return path.join(appData, 'slobs-client', 'slobs.sock');
