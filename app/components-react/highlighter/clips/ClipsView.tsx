@@ -45,6 +45,9 @@ export default function ClipsView({
   );
   const showEditor = alwaysShowEditor || selectedAmount >= MIN_SELECTED_CLIPS_FOR_EDITOR;
   const [clips, setClips] = useState<{ id: string }[]>([]);
+  // Without clips and editor there is nothing to scroll to, so the clips area keeps its natural
+  // height instead of adding an empty screen below the intro
+  const fillClipsArea = clips.length > 0 || showEditor;
 
   const [clipsLoaded, setClipsLoaded] = useState<boolean>(false);
 
@@ -190,7 +193,10 @@ export default function ClipsView({
           )}
           {/* At least one screen tall, so the sticky editor panel beside the clips always has
               its full height and never sits next to the content above */}
-          <div className={styles.clipsArea} style={{ minHeight: viewportHeight || undefined }}>
+          <div
+            className={styles.clipsArea}
+            style={{ minHeight: (fillClipsArea && viewportHeight) || undefined }}
+          >
             <section className={styles.clipsSection} onDrop={onDrop}>
               <div className={styles.clipsHeader}>
                 <h3 className={styles.clipsTitle}>{$t('All clips')}</h3>
@@ -209,7 +215,8 @@ export default function ClipsView({
             </section>
             <div
               className={cx(styles.editorPanel, { [styles.editorPanelVisible]: showEditor })}
-              style={{ height: viewportHeight || '100%' }}
+              // The hidden panel still counts towards the row height, so collapse it as well
+              style={{ height: fillClipsArea ? viewportHeight || '100%' : 0 }}
               aria-hidden={!showEditor}
             >
               <EditingControls
