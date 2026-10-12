@@ -22,8 +22,16 @@
   :global(.ant-modal-mask),
   :global(.ant-modal-wrap) {
     position: absolute;
-    height: calc(100% - 30px);
-    top: 30px;
+    height: calc(~'100% - @{titlebar-height}');
+    top: @titlebar-height;
+  }
+
+  &.main-mac {
+    :global(.ant-modal-mask),
+    :global(.ant-modal-wrap) {
+      height: calc(~'100% - @{titlebar-height-mac}');
+      top: @titlebar-height-mac;
+    }
   }
 }
 
@@ -82,7 +90,7 @@
 
 .main-loading {
   position: absolute;
-  top: 30px;
+  top: @titlebar-height;
   bottom: 0;
   left: 0;
   right: 0;
@@ -92,7 +100,7 @@
 
   /* Loader component is a fixed element that obscures the top bar */
   /deep/ :global(.s-loader__bg) {
-    top: 30px;
+    top: @titlebar-height;
   }
 }
 

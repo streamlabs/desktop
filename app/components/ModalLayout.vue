@@ -37,10 +37,10 @@
 
 .modal-layout.has-titlebar {
   // Compensate for titlebar living in ChildWindow
-  height: calc(~'100% - 30px');
+  height: calc(~'100% - @{titlebar-height}');
 
   &.modal-layout-mac {
-    height: calc(~'100% - 22px');
+    height: calc(~'100% - @{titlebar-height-mac}');
   }
 }
 
