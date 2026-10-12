@@ -23,6 +23,7 @@ export default function PlatformAppStore(p: {
     NavigationService,
     HighlighterService,
     WindowsService,
+    CustomizationService,
   } = Services;
 
   const [highlighterInstalled, setHighlighterInstalled] = useState<boolean>(
@@ -36,15 +37,25 @@ export default function PlatformAppStore(p: {
   const [platformAppsUrl, setPlatformAppsUrl] = useState('');
   const [currentUrl, setCurrentUrl] = useState<string>('');
 
+  const { theme } = useVuex(() => ({ theme: CustomizationService.state.theme }));
+
+  // Single-use magic link: refetch on theme change so the store re-themes without
+  // replaying a spent login token.
   useEffect(() => {
+    let cancelled = false;
+
     async function getPlatformAppsUrl() {
       const url = await UserService.views.appStoreUrl(p.params);
-      if (!url) return;
+      if (!url || cancelled) return;
       setPlatformAppsUrl(url);
     }
 
     getPlatformAppsUrl();
-  }, [p.params.appId, p.params.type]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [p.params.appId, p.params.type, theme]);
 
   function onBrowserViewReady(view: Electron.BrowserView) {
     new GuestApiHandler().exposeApi(view.webContents.id, {
@@ -131,6 +142,7 @@ export default function PlatformAppStore(p: {
         src={platformAppsUrl}
         onReady={onBrowserViewReady}
         enableGuestApi
+        reloadOnThemeChange={false}
         emitUrlChange={url => {
           setCurrentUrl(url);
         }}
