@@ -28,12 +28,9 @@ export function Login(p: IOnboardingStepProps) {
   const extraPlatforms: TExtraPlatform[] = ['nimotv'];
 
   return (
-    <div className={styles.centered}>
+    <div className={styles.stepContainer}>
       <DancingKevins />
-      <div
-        className={cx(styles.darkBox, styles.centered)}
-        style={{ padding: 24, width: 600, height: 360 }}
-      >
+      <div className={styles.darkBoxLarge}>
         <h1>{$t('Log In')}</h1>
         {!extraPlatform && (
           <>

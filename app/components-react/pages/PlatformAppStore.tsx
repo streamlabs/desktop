@@ -47,7 +47,7 @@ export default function PlatformAppStore(p: {
     }
 
     getPlatformAppsUrl();
-  }, [p.params]);
+  }, [p.params.appId, p.params.type]);
 
   function onBrowserViewReady(view: Electron.BrowserView) {
     new GuestApiHandler().exposeApi(view.webContents.id, {

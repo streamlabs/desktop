@@ -13,7 +13,7 @@ export async function showSettingsWindow(category: string, cb?: () => Promise<un
   // not a react hook
   // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
-    await click('.nav-menu .icon-settings');
+    await click('[data-testid="nav-settings"]');
 
     if (category) {
       await focusChild();

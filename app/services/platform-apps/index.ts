@@ -380,10 +380,32 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
     return this.state.loadedApps.filter(app => !app.unpacked);
   }
 
-  loadApp(app: ILoadedApp) {
-    const { id, appToken } = app;
+  loadApp(newApp: ILoadedApp) {
+    const { id, appToken } = newApp;
+
+    // Reloading an app (e.g. the App Store triggering `loadProductionApps`) must not
+    // forget slots that are still popped out, or the main window will try to mount
+    // the same container and steal it from the pop-out window.
+    const existingApp = this.state.loadedApps.find(
+      a => a.id === id && a.unpacked === newApp.unpacked,
+    );
+    const app: ILoadedApp = existingApp?.poppedOutSlots.length
+      ? { ...newApp, poppedOutSlots: [...existingApp.poppedOutSlots] }
+      : newApp;
+
+    // `loadProductionApps` re-runs on App Store activity. If a production app is
+    // unchanged, leave its running containers alone: re-registering destroys every
+    // container for the app, including ones mounted in pop-out windows.
+    const unchanged =
+      existingApp &&
+      !app.unpacked &&
+      existingApp.enabled === app.enabled &&
+      existingApp.appUrl === app.appUrl &&
+      existingApp.appToken === app.appToken;
 
     this.LOAD_APP(app);
+    if (unchanged) return;
+
     if (app.unpacked && app.appPath) {
       // store app in local storage
       localStorage.setItem(
@@ -660,7 +682,22 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
     if (!app || !app.enabled) return;
 
     const windowId = `${appId}-${pageSlot}`;
-    const mousePos = remote.screen.getCursorScreenPoint();
+
+    // `center` is handled here rather than forwarded, since Electron would
+    // otherwise center on the primary display and override the computed position.
+    const { center, ...restWindowOptions } = windowOptions ?? {};
+    const size = restWindowOptions.size ?? this.getPagePopOutSize(appId, pageSlot);
+
+    let position: { x: number; y: number };
+    if (center) {
+      const bounds = this.windowsService.windows.main.getBounds();
+      position = {
+        x: Math.floor(bounds.x + bounds.width / 2 - size.width / 2),
+        y: Math.floor(bounds.y + bounds.height / 2 - size.height / 2),
+      };
+    } else {
+      position = remote.screen.getCursorScreenPoint();
+    }
 
     // We use a generated window Id to prevent somebody popping out the
     // same window multiple times.
@@ -669,11 +706,11 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
         componentName: 'PlatformAppPopOut',
         queryParams: { appId, pageSlot },
         title: app.manifest.name,
-        size: this.getPagePopOutSize(appId, pageSlot),
-        x: mousePos.x,
-        y: mousePos.y,
+        size,
+        x: position.x,
+        y: position.y,
         persistWebContents: true,
-        ...windowOptions,
+        ...restWindowOptions,
       },
       windowId,
     );

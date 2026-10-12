@@ -232,7 +232,7 @@ test(
 
     // Studio Mode
     await focusMain();
-    await (await app.client.$('.nav-menu .icon-studio-mode-3')).click();
+    await (await app.client.$('[data-testid=nav-menu] .icon-studio-mode-3')).click();
     t.true(
       await isDisplayed('span=Dual Output Enabled'),
       'Cannot toggle Studio Mode in Dual Output Mode.',
