@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { TClip } from 'services/highlighter/models/highlighter.models';
 import { $t } from 'services/i18n';
 import styles from './RemoveModal.m.less';
+import cx from 'classnames';
 import { SCRUB_HEIGHT, SCRUB_WIDTH, SCRUB_WIDTH_VERTICAL } from 'services/highlighter/constants';
 
 export default function RemoveModal(p: {
@@ -38,7 +39,7 @@ export default function RemoveModal(p: {
         {clipsToDelete.slice(0, 3).map((clip, index) => (
           <React.Fragment key={clip.path}>
             <div
-              className={styles.thumbnail}
+              className={cx(styles.thumbnail, index === 1 && styles.thumbnailFront)}
               style={{
                 width: `${width / 2}px`,
                 height: `${SCRUB_HEIGHT / 2}px`,
@@ -47,7 +48,6 @@ export default function RemoveModal(p: {
                 transform: `translate(${clipsToDelete.length > 1 ? (index - 1) * 9 : 0}px, ${
                   index === 1 ? 0 + 4 : 2 + 4
                 }px)`,
-                zIndex: index === 1 ? 10 : 0,
               }}
             >
               <img src={clip.scrubSprite} />{' '}

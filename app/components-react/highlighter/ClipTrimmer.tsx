@@ -256,6 +256,7 @@ export default function ClipTrimmer(props: { clip: TClip; streamId: string | und
             }}
           ></div>
           <div
+            className={styles.trimHandle}
             style={{
               position: 'absolute',
               left: `calc(${startTrimPct}% - 20px)`,
@@ -264,7 +265,6 @@ export default function ClipTrimmer(props: { clip: TClip; streamId: string | und
               background: 'var(--teal)',
               borderTopLeftRadius: 5,
               borderBottomLeftRadius: 5,
-              zIndex: 100,
               cursor: 'pointer',
               color: 'var(--title)',
               display: 'flex',
@@ -287,6 +287,7 @@ export default function ClipTrimmer(props: { clip: TClip; streamId: string | und
             }}
           ></div>
           <div
+            className={styles.trimHandle}
             style={{
               position: 'absolute',
               right: `calc(${endTrimPct}% - 20px)`,
@@ -295,7 +296,6 @@ export default function ClipTrimmer(props: { clip: TClip; streamId: string | und
               background: 'var(--teal)',
               borderTopRightRadius: 5,
               borderBottomRightRadius: 5,
-              zIndex: 100,
               cursor: 'pointer',
               color: 'var(--title)',
               display: 'flex',

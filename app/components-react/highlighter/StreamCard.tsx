@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   EHighlighterView,
   IHighlightedStream,
@@ -6,7 +6,8 @@ import {
   TClip,
 } from 'services/highlighter/models/highlighter.models';
 import styles from './StreamCard.m.less';
-import { Button, Tooltip } from 'antd';
+import cx from 'classnames';
+import { Button } from 'antd';
 import { Services } from 'components-react/service-provider';
 import { isAiClip } from './utils';
 import { useVuex } from 'components-react/hooks';
@@ -15,7 +16,6 @@ import { EAiDetectionState } from 'services/highlighter/models/ai-highlighter.mo
 import * as remote from '@electron/remote';
 import StreamCardInfo from './StreamCardInfo';
 import StreamCardModal, { TModalStreamCard } from './StreamCardModal';
-import { supportedGames } from 'services/highlighter/models/game-config.models';
 
 export default function StreamCard({
   streamId,
@@ -528,12 +528,14 @@ export function RotatedClips({ clips }: { clips: TClip[] }) {
           </div>
           {clips.slice(0, 3).map((clip, index) => (
             <div
-              className={styles.thumbnailWrapperSmall}
+              className={cx(
+                styles.thumbnailWrapperSmall,
+                index === 1 && styles.thumbnailWrapperSmallFront,
+              )}
               style={{
                 rotate: `${(index - 1) * 6}deg`,
                 scale: '1.2',
                 transform: `translate(${(index - 1) * 9}px, ${index === 1 ? 0 + 4 : 2 + 4}px)`,
-                zIndex: index === 1 ? 10 : 0,
               }}
               key={index}
             >
