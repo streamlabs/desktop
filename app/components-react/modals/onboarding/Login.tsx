@@ -1,19 +1,21 @@
-import React, { useState } from 'react';
-import cx from 'classnames';
 import { Button } from 'antd';
-import styles from './Common.m.less';
-import { $t } from 'services/i18n';
-import { platformLabels, EPlatform } from 'services/platforms';
-import PlatformLogo from 'components-react/shared/PlatformLogo';
+import cx from 'classnames';
 import { ExtraPlatformConnect } from 'components-react/modals/onboarding/ExtraPlatformConnect';
-import { DancingKevins, IOnboardingStepProps, useAuth } from './Onboarding';
+import { Services } from 'components-react/service-provider';
+import PlatformLogo from 'components-react/shared/PlatformLogo';
+import React, { useCallback, useState } from 'react';
+import { $t } from 'services/i18n';
+import { EPlatform, platformLabels } from 'services/platforms';
+import styles from './Common.m.less';
+import { DancingKevins, useAuth } from './Onboarding';
 
 type TExtraPlatform = 'nimotv';
 
-export function Login(p: IOnboardingStepProps) {
-  const [extraPlatform, setExtraPlatform] = useState<TExtraPlatform>();
-
+export function Login() {
+  const { OnboardingV2Service } = Services;
   const { SLIDLogin, platformLogin } = useAuth();
+
+  const [extraPlatform, setExtraPlatform] = useState<TExtraPlatform>();
 
   const orderedPlatforms = [
     EPlatform.Twitch,
@@ -26,6 +28,13 @@ export function Login(p: IOnboardingStepProps) {
   ];
 
   const extraPlatforms: TExtraPlatform[] = ['nimotv'];
+
+  const onMergePlatformClick = useCallback(async (platform: EPlatform) => {
+    const canContinue = await platformLogin(platform);
+    if (!canContinue) return;
+
+    OnboardingV2Service.actions.takeStep();
+  }, []);
 
   return (
     <div className={styles.stepContainer}>
@@ -45,7 +54,7 @@ export function Login(p: IOnboardingStepProps) {
                 <Button
                   key={platform}
                   icon={<PlatformLogo platform={platform} size="small" />}
-                  onClick={() => platformLogin(platform)}
+                  onClick={() => onMergePlatformClick(platform)}
                 >
                   {platformLabels(platform)}
                 </Button>
