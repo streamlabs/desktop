@@ -23,7 +23,7 @@ function executeCmd(cmd, options) {
   const result = options.silent ? sh.exec(cmd, { silent: true }) : sh.exec(cmd);
 
   if (result.code !== 0) {
-    error(`Command Failed >>> ${cmd}`);
+    log_error(`Command Failed >>> ${cmd}`);
     if (options.exit) {
       sh.exit(1);
     } else {
@@ -34,39 +34,73 @@ function executeCmd(cmd, options) {
   return result.stdout;
 }
 
-function downloadFile(srcUrl, dstPath) {
+async function downloadFile(srcUrl, dstPath) {
   const tmpPath = `${dstPath}.tmp`;
-  return new Promise((resolve, reject) => {
-    fetch(srcUrl)
-      .then(response => {
-        if (response.ok) return response;
-        log_error(`Got ${response.status} response from ${srcUrl}`);
-        return Promise.reject(response);
-      })
-      .then(({ body }) => {
-        const fileStream = fs.createWriteStream(tmpPath);
-        stream.pipeline(body, fileStream, e => {
-          if (e) {
-            log_error(`Error downloading ${srcUrl}`, e);
-            reject(e);
-          } else {
-            fs.rename(tmpPath, dstPath, e => {
-              if (e) {
-                reject(e);
-                return;
-              }
-              log_info(`Successfully downloaded ${srcUrl}`);
-              resolve();
-            });
-          }
-        });
-      })
-      .catch(e => reject(e));
-  });
+  try {
+    const response = await fetch(srcUrl);
+    if (!response.ok) {
+      throw new Error(`Got ${response.status} ${response.statusText} response from ${srcUrl}`);
+    }
+    await new Promise((resolve, reject) => {
+      stream.pipeline(response.body, fs.createWriteStream(tmpPath), e => (e ? reject(e) : resolve()));
+    });
+    fs.renameSync(tmpPath, dstPath);
+    log_info(`Successfully downloaded ${srcUrl}`);
+  } catch (e) {
+    sh.rm('-f', tmpPath);
+    throw e;
+  }
+}
+
+// Returns the version of an installed module, or null if it is missing or unreadable
+function getInstalledVersion(name) {
+  try {
+    const file = path.join(node_modules, name, 'package.json');
+    return JSON.parse(fs.readFileSync(file).toString())['version'];
+  } catch (e) {
+    return null;
+  }
+}
+
+async function installDependency(dependency, os, arch) {
+  const name = dependency['name'];
+  let moduleVersion = '';
+
+  if (os === 'osx' && dependency['mac_version']) {
+    moduleVersion = dependency['mac_version'];
+  } else {
+    moduleVersion = dependency['version'];
+  }
+
+  if (getInstalledVersion(name) === moduleVersion) {
+    return;
+  }
+
+  let fileName = dependency['archive'];
+  fileName = fileName.replace('[VERSION]', moduleVersion);
+  fileName = fileName.replace('[OS]', os);
+  fileName = fileName.replace('[ARCH]', arch);
+
+  const url = dependency['url'] + fileName;
+  const filePath = path.join(node_modules, fileName);
+
+  try {
+    // Download before removing the installed module, so a failed download leaves it in place
+    log_info('Downloading ' + fileName);
+    await downloadFile(url, filePath);
+
+    log_info('Installing ' + fileName);
+    sh.rm('-rf', path.join(node_modules, name));
+    executeCmd('tar -xzvf ' + fileName, { silent: true, exit: false });
+  } catch (e) {
+    throw new Error(`${name} ${moduleVersion}: ${e.message}`);
+  } finally {
+    sh.rm('-f', filePath);
+  }
 }
 
 async function runScript() {
-  colors.blue('----Streamlabs Desktop native dependecies installation----');
+  sh.echo(colors.blue('----Streamlabs Desktop native dependecies installation----'));
 
   try {
     const jsonData = fs.readFileSync('./scripts/repositories.json');
@@ -88,59 +122,41 @@ async function runScript() {
       } else if (process.arch == 'x64') {
         arch = '-x86_64';
       } else {
-        throw 'CPU architecture not supported.';
+        throw new Error('CPU architecture not supported.');
       }
     } else {
-      throw 'Platform not supported.';
+      throw new Error('Platform not supported.');
     }
 
     sh.cd(node_modules);
 
-    const promises = dependecies
-      .filter(dependency => dependency[os])
-      .map(async dependency => {
-        const file = path.join(process.cwd(), dependency['name'], 'package.json');
-        const jsonData = fs.readFileSync(file);
-        const root = JSON.parse(jsonData.toString());
-        const currentVersion = root['version'];
-        let moduleVersion = '';
-
-        if (os === 'osx' && dependency['mac_version']) {
-          moduleVersion = dependency['mac_version'];
-        } else {
-          moduleVersion = dependency['version'];
-        }
-
-        if (currentVersion == dependency['version']) {
-          return;
-        }
-
-        sh.rm('-rf', path.join(node_modules, dependency['name']));
-
-        let fileName = dependency['archive'];
-        fileName = fileName.replace('[VERSION]', moduleVersion);
-        fileName = fileName.replace('[OS]', os);
-        fileName = fileName.replace('[ARCH]', arch);
-
-        const url = dependency['url'] + fileName;
-        const filePath = path.join(process.cwd(), fileName);
-
-        log_info('Downloading ' + fileName);
-        await downloadFile(url, filePath);
-        log_info('Installing ' + fileName);
-        executeCmd('tar -xzvf ' + fileName, { silent: true });
-        sh.rm(fileName);
-      });
-    await Promise.all(promises);
+    // Let every install finish before reporting, so one failure doesn't
+    // abort the others midway
+    const results = await Promise.allSettled(
+      dependecies
+        .filter(dependency => dependency[os])
+        .map(dependency => installDependency(dependency, os, arch)),
+    );
+    const failures = results.filter(result => result.status === 'rejected');
 
     if (process.platform === 'win32') {
       sh.cd('../scripts');
+    }
+
+    if (failures.length > 0) {
+      log_error(
+        `Failed to install ${failures.length} native ${
+          failures.length === 1 ? 'dependency' : 'dependencies'
+        }:`,
+      );
+      failures.forEach(failure => log_error(`  ${failure.reason.message}`));
+      sh.exit(1);
     }
   } catch (error) {
     log_error(
       'An error occured preventing the script from installing successfully all required native dependencies.',
     );
-    log_error(error);
+    log_error(error.message || error);
     sh.exit(1);
   }
 }
