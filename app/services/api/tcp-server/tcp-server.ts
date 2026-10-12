@@ -127,6 +127,10 @@ export class TcpServerService extends PersistentStatefulService<ITcpServersSetti
     },
   };
 
+  static filter(state: ITcpServersSettings) {
+    return { ...state, namedPipe: { pipeName: state.namedPipe.pipeName } };
+  }
+
   @Inject() private jsonrpcService: JsonrpcService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private externalApiService: ExternalApiService;
