@@ -72,6 +72,11 @@ interface IServer {
     on(eventName: string, cb: (event: any) => any): any;
   };
   close(): void;
+  /**
+   * Optional gate for new connections. Return false to reject the connection;
+   * the server is responsible for destroying the socket.
+   */
+  acceptConnection?(socket: any): boolean;
 }
 
 class TcpServerServiceViews extends ViewHandler<ITcpServersSettings> {
@@ -263,7 +268,10 @@ export class TcpServerService extends PersistentStatefulService<ITcpServersSetti
   private listenConnections(server: IServer) {
     this.servers.push(server);
 
-    server.nativeServer.on('connection', socket => this.onConnectionHandler(socket, server));
+    server.nativeServer.on('connection', socket => {
+      if (server.acceptConnection && !server.acceptConnection(socket)) return;
+      this.onConnectionHandler(socket, server);
+    });
 
     server.nativeServer.on('error', error => {
       throw error;
@@ -274,11 +282,8 @@ export class TcpServerService extends PersistentStatefulService<ITcpServersSetti
     const settings = this.state.namedPipe;
     const pipePath = `\\\\.\\pipe\\${settings.pipeName}`;
     const server = net.createServer();
+    let acceptingConnections = false;
 
-    // Node creates the pipe with the default named pipe DACL, which grants read access
-    // to Everyone and Anonymous. Replace it with an owner-only DACL as soon as the pipe
-    // exists. If that fails, close the server rather than leave the pipe open to other
-    // users on the machine.
     server.on('listening', () => {
       try {
         const { restrictPipeToOwner } = require('node-secure-pipe');
@@ -286,7 +291,10 @@ export class TcpServerService extends PersistentStatefulService<ITcpServersSetti
       } catch (e: unknown) {
         console.error('Failed to restrict named pipe to owner, closing pipe server', e);
         server.close();
+        return;
       }
+
+      setTimeout(() => setImmediate(() => (acceptingConnections = true)), 100);
     });
 
     server.listen(pipePath);
@@ -295,6 +303,10 @@ export class TcpServerService extends PersistentStatefulService<ITcpServersSetti
       nativeServer: server,
       close() {
         server.close();
+      },
+      acceptConnection(socket: { destroy(): void }) {
+        if (!acceptingConnections) socket.destroy();
+        return acceptingConnections;
       },
     };
   }
