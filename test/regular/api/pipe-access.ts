@@ -5,11 +5,9 @@ import { useWebdriver, test } from '../../helpers/webdriver';
 import { getApiClient, getSocketPath } from '../../helpers/api-client';
 import { ScenesService } from 'services/api/external-api/scenes';
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver({ restartAppAfterEachTest: false });
-
-// The API named pipe is Windows-only (macOS uses a Unix socket)
-const windowsTest = process.platform === 'win32' ? test : test.skip;
-const macTest = process.platform === 'darwin' ? test : test.skip;
 
 const PIPE_PATH = '\\\\.\\pipe\\slobs';
 
@@ -44,7 +42,11 @@ function normalizeSddl(sddl: string): string {
   );
 }
 
-windowsTest('API named pipe is restricted to the current user', async t => {
+test('API named pipe is restricted to the current user', async t => {
+  if (process.platform !== 'win32') {
+    t.pass('Skipping Windows-specific test on non-Windows platform');
+    return;
+  }
   // The owner can still connect and use the API
   const api = await getApiClient();
   const scenesService = api.getResource<ScenesService>('ScenesService');
@@ -60,7 +62,12 @@ windowsTest('API named pipe is restricted to the current user', async t => {
   );
 });
 
-macTest('API Unix socket is restricted to the current user', async t => {
+test('API Unix socket is restricted to the current user', async t => {
+  if (process.platform !== 'darwin') {
+    t.pass('Skipping Unix socket test on non-macOS platform');
+    return;
+  }
+
   // The owner can still connect and use the API
   const api = await getApiClient();
   const scenesService = api.getResource<ScenesService>('ScenesService');
