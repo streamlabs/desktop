@@ -21,6 +21,12 @@ interface BrowserViewProps {
   className?: string;
   style?: React.CSSProperties;
   emitUrlChange?: (url: string) => void;
+  /**
+   * Reload `src` when the app theme changes. Defaults to true. Disable for single-use
+   * URLs (magic links): reloading one replays a spent login token and lands on the
+   * login page. Such callers should fetch a fresh `src` on theme change instead.
+   */
+  reloadOnThemeChange?: boolean;
 }
 
 export default function BrowserView(p: BrowserViewProps) {
@@ -99,9 +105,11 @@ export default function BrowserView(p: BrowserViewProps) {
     return () => clearInterval(resizeInterval);
   }, [loading]);
 
+  const reloadTheme = p.reloadOnThemeChange === false ? null : theme;
+
   useEffect(() => {
     loadUrl();
-  }, [theme, p.src]);
+  }, [reloadTheme, p.src]);
 
   function destroyBrowserView() {
     publishBrowserViewRect(viewKey.current, null);

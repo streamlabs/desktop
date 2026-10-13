@@ -1,3 +1,5 @@
+@import '../../../styles/index';
+
 .clip-resize-handle {
   position: absolute;
   right: 0;
@@ -31,10 +33,14 @@
   width: 3px;
   height: 100px;
   background-color: var(--title);
-  z-index: 200;
+  z-index: @z-playhead;
   transition: transform 250ms;
 
   &.clip-playhead-playing {
     transform: scale(1.2);
   }
+}
+
+.trim-handle {
+  z-index: @z-handle;
 }

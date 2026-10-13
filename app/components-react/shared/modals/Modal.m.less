@@ -3,7 +3,7 @@
 .wrapper {
   display: flex;
   position: fixed;
-  z-index: 1002; // above resize bars
+  z-index: @z-above-resize-bars; // above resize bars
   width: 100%;
   height: 100%;
   align-items: center;
@@ -16,7 +16,7 @@
 }
 
 .content {
-  z-index: 1;
+  z-index: @z-raised;
   a {
     color: var(--teal);
   }

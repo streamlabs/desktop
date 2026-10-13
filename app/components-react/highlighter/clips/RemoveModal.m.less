@@ -1,3 +1,5 @@
+@import '../../../styles/index';
+
 .thumbnail {
   top: 14px;
   left: 15%;
@@ -8,6 +10,10 @@
   margin: 0 auto;
   overflow-x: clip;
   background: var(--Day-Colors-Dark-4, #4f5e65);
+}
+
+.thumbnail-front {
+  z-index: @z-overlay;
 }
 
 .thumbnail-in-progress img {
