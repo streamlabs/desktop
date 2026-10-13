@@ -1,0 +1,100 @@
+@import '../../styles/index';
+@import '../../styles/mixins';
+@import '../../styles/badges';
+
+// Zero-width box pinned inside the nav, just left of the profile item (24px avatar plus
+// horizontal padding, which shrinks when the nav is compact). The login tip anchors to its
+// right edge so it renders within the nav's height rather than below it.
+.login-tip-anchor {
+  position: absolute;
+  top: 0;
+  right: 56px;
+  height: 100%;
+  width: 0;
+
+  :global([data-nav-collapse~='compact']) & {
+    right: 40px;
+  }
+}
+
+.tools-nav {
+  &.tools-start {
+    margin-left: auto;
+  }
+
+  &.divider {
+    :global(.ant-menu-title-content) {
+      align-self: stretch;
+      margin-top: 1px;
+      display: flex;
+      align-items: center;
+    }
+
+    hr {
+      border: none;
+      border-left: 2px solid var(--border);
+      height: 50%;
+    }
+  }
+
+  .compact {
+    &:global(.ant-menu-item) {
+      padding: 0 8px !important;
+    }
+
+    i:not(.link-badge) {
+      font-size: 16px;
+    }
+  }
+
+  .toggle {
+    margin-bottom: 0px !important;
+
+    &--active {
+      color: var(--teal) !important;
+    }
+  }
+
+  .icon-only {
+    :global(.ant-menu-title-content) {
+      margin-left: 0 !important;
+    }
+  }
+
+  .user-profile {
+    position: relative;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+
+    &-anchor {
+      position: relative;
+      display: flex;
+      align-items: center;
+      height: 100%;
+    }
+
+    &-image {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    &-tooltip {
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+    }
+  }
+
+  :global(.ant-form-item-control-input-content) {
+    // Vertically align the toggles with their labels
+    display: flex;
+    align-items: center;
+
+    :global([data-nav-collapse~='toggle-labels']) & > span {
+      display: none;
+    }
+  }
+}

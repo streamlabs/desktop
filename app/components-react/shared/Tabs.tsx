@@ -6,7 +6,7 @@ import omit from 'lodash/omit';
 import cx from 'classnames';
 import styles from './Tabs.m.less';
 
-const ANT_TAB_FEATURES = ['type', 'moreIcon', 'tabBarGutter', 'tabPosition'] as const;
+const ANT_TAB_FEATURES = ['type', 'moreIcon', 'tabBarGutter', 'tabPosition', 'activeKey'] as const;
 
 interface ITab {
   label: string | JSX.Element;

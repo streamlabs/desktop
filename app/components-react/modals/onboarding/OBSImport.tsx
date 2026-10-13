@@ -31,7 +31,7 @@ export function OBSImport(p: IOnboardingStepProps) {
   }
 
   return (
-    <div className={styles.centered}>
+    <div className={styles.stepContainer}>
       <Header
         title={$t('Import your OBS settings for a seamless setup')}
         description={$t('While that loads, explore a few key features worth checking out!')}

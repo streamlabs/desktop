@@ -13,7 +13,7 @@ import { message } from 'antd';
 import { $t } from '../../../services/i18n';
 import { injectState, useModule } from 'slap';
 import { useForm } from '../../shared/inputs/Form';
-import { alertInfo } from '../../modals';
+import { alertError, alertInfo } from '../../modals';
 import { getDefined } from '../../../util/properties-type-guards';
 import isEqual from 'lodash/isEqual';
 import { TDisplayType } from 'services/settings-v2';
@@ -168,7 +168,9 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
     // In order for the enhanced broadcasting setting value to persist in the go live window when switching between
     // single output and dual output modes, explicitly set enhanced broadcasting setting
     if (platform === 'twitch' && patch && patch.hasOwnProperty('isEnhancedBroadcasting')) {
-      Services.TwitchService.actions.setEnhancedBroadcasting((patch as any).isEnhancedBroadcasting);
+      Services.TwitchService.actions.setEnhancedBroadcastingState(
+        (patch as any).isEnhancedBroadcasting,
+      );
     }
 
     this.updateSettings(updated);
@@ -709,6 +711,30 @@ export class GoLiveSettingsModule {
       !this.state.isEnabled('twitch')
     ) {
       Services.HighlighterService.actions.setAiHighlighter(false);
+    }
+
+    // Non-approved TikTok accounts must manually enter a server url and stream key, and
+    // approved accounts on the "stream-key" tab are able to go live with the url and key
+    // instead. In those cases, verifying the server url and stream key fields have values
+    if (this.state.isEnabled('tiktok')) {
+      const tiktokSettings = this.state.settings.platforms.tiktok;
+      const usingStreamKeyForm =
+        Services.TikTokService.scope !== 'approved' || tiktokSettings?.activeTab === 'stream-key';
+
+      if (
+        tiktokSettings &&
+        usingStreamKeyForm &&
+        (!tiktokSettings.serverUrl || !tiktokSettings.streamKey)
+      ) {
+        alertError({
+          name: 'tiktok-stream-key-alert',
+          text: $t(
+            'The TikTok stream form is missing a server url or stream key, which are required to go live to TikTok.',
+          ),
+          duration: 3,
+        });
+        return false;
+      }
     }
 
     try {

@@ -11,6 +11,7 @@ import { FormProps } from 'antd/es';
 import { ModalLayout } from './shared/ModalLayout';
 import styles from './shared/Modals.m.less';
 import { useSubscription } from './hooks/useSubscription';
+import cx from 'classnames';
 
 /**
  * Show an Confirmation modal and return a Promise<confirmed: boolean>
@@ -58,6 +59,7 @@ export function alertAsync(
       okText: $t('Close'),
       cancelButtonProps: { style: { display: 'none' } },
       okButtonProps: { type: 'default' },
+      zIndex: Number(styles.alertModalZIndex),
       ...modalProps,
       afterClose: () => {
         WindowsService.updateStyleBlockers(Utils.getWindowId(), false);
@@ -187,8 +189,27 @@ export function alertInfo({
 }) {
   message.info({
     key: name,
+    icon: <i className={cx('icon-information', styles.alertIcon)} />,
     content: <AlertContent name={name} message={text} />,
     className: styles.infoAlert,
+    onClick: () => message.destroy(name),
+    duration,
+  });
+}
+
+export function alertError({
+  name,
+  text,
+  duration,
+}: {
+  name: string;
+  text: string;
+  duration?: number;
+}) {
+  message.error({
+    key: name,
+    content: <AlertContent name={name} message={text} />,
+    className: styles.errorAlert,
     onClick: () => message.destroy(name),
     duration,
   });

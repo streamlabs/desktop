@@ -30,6 +30,7 @@ import Tooltip from 'components-react/shared/Tooltip';
 import ConnectButton from 'components-react/shared/ConnectButton';
 import { Observable } from 'rxjs';
 import debounce from 'lodash/debounce';
+import { IIngestServer } from 'services/restream';
 
 function censorWord(str: string) {
   if (str.length < 3) return str;
@@ -214,9 +215,13 @@ export function StreamSettings() {
   );
 
   function disableProtectedMode() {
+    // Custom ingest streams to the server url and stream key the user enters, so the OBS context
+    // has to be `rtmp_custom`. With `rtmp_common` OBS resolves the ingest from the `service` left
+    // behind by the last protected mode stream, so the primary platform's server silently replaces
+    // the custom one.
     StreamSettingsService.actions.setSettings({
       protectedModeEnabled: false,
-      streamType: 'rtmp_common',
+      streamType: 'rtmp_custom',
     });
 
     if (DualOutputService.views.dualOutputMode) {
@@ -227,8 +232,9 @@ export function StreamSettings() {
   function enableProtectedMode() {
     StreamSettingsService.actions.setSettings({
       protectedModeEnabled: true,
+      // TODO: BE fix to verify, maybe the stream key should not be cleared here?
       key: '',
-      streamType: 'rtmp_custom',
+      streamType: 'rtmp_common',
     });
   }
 
@@ -322,20 +328,29 @@ const AUTO_INGEST_SERVER = 'auto';
 function IngestServerSetting(p: { disabled?: boolean }) {
   const { RestreamService } = Services;
   const preferred = useRealmObject(RestreamService.preferences).preferredIngestServer;
-  const [servers, setServers] = useState<{ name: string; url: string }[]>([]);
+  const [servers, setServers] = useState<IIngestServer[]>([]);
 
   useEffect(() => {
+    let mounted = true;
     const fetchServers = debounce(() => {
       RestreamService.actions.return
         .fetchIngestServers()
-        .then(res => setServers(res.servers))
-        .catch(() => setServers([]));
-    }, 5000);
+        .then(res => {
+          if (mounted) {
+            setServers(res.servers);
+          }
+        })
+        .catch(() => {
+          console.error('Failed to fetch ingest servers');
+          setServers([]);
+        });
+    }, 1000);
 
     fetchServers();
 
     return () => {
       fetchServers.cancel();
+      mounted = false;
     };
   }, []);
 

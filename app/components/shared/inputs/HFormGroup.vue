@@ -29,57 +29,59 @@
           {{ inputErrors[0].msg }}
         </div>
       </div>
-
     </div>
   </div>
 </template>
 
-
 <script lang="ts" src="./HFormGroup.vue.ts"></script>
 
 <style lang="less" scoped>
-  @import "../../../styles/index";
+@import '../../../styles/index';
 
-  .row {
-    display: flex;
-    margin: 0;
-    .margin-bottom(1);
+.row {
+  display: flex;
+  margin: 0;
+  .margin-bottom(1);
+}
+
+.input-body {
+  width: 70%;
+  margin-left: auto;
+}
+
+.input-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.slots {
+  width: 100%;
+}
+
+.tooltip {
+  .margin-left();
+
+  position: relative;
+  font-size: 14px;
+  align-self: center;
+  display: inline-block;
+  z-index: @z-raised;
+  color: var(--icon);
+}
+
+.input-footer {
+  margin-top: 6px;
+  min-height: 16px;
+  font-size: 11px;
+
+  .whisper {
+    font-style: italic;
   }
 
-  .input-body {
-    width: 70%;
-    margin-left: auto;
+  .input-error {
+    color: var(--warning);
   }
-
-  .input-container {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .slots {
-    width: 100%;
-  }
-
-  .tooltip {
-    .margin-left();
-
-    position: relative;
-    font-size: 14px;
-    align-self: center;
-    display: inline-block;
-    z-index: 1;
-    color: var(--icon);
-  }
-
-  .input-footer {
-    margin-top: 6px;
-    min-height: 16px;
-    font-size: 11px;
-
-    .whisper { font-style: italic; }
-    .input-error { color: var(--warning); }
-  }
-
+}
 </style>

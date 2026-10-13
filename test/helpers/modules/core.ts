@@ -114,6 +114,7 @@ export async function selectAsyncAlert(title: string) {
 
 export async function hoverElement(selector: string, waitForOptions?: WaitForOptions) {
   const element = await select(`${selector}`);
+  await element.scrollIntoView({ block: 'center' });
   await element.moveTo();
   if (waitForOptions?.timeout) {
     await getClient().pause(waitForOptions.timeout);

@@ -448,4 +448,8 @@ class StreamSettingsView extends ViewHandler<IStreamSettingsState> {
       preserveDelay: obsAdvancedSettings.DelayPreserve,
     };
   }
+
+  get protectedModeEnabled(): boolean {
+    return this.state.protectedModeEnabled;
+  }
 }

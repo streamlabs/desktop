@@ -50,6 +50,10 @@ class RecordingModeViews extends ViewHandler<IRecordingModeState> {
     );
   }
 
+  get hasRecordings() {
+    return Object.keys(this.state.recordingHistory).length > 0;
+  }
+
   formattedTimestamp(timestamp: string) {
     return moment(timestamp).fromNow();
   }

@@ -25,6 +25,8 @@ import {
 } from './v2/protocol';
 
 const CONNECT_TIMEOUT_MS = 15000;
+const RECONNECT_BASE_MS = 1000;
+const RECONNECT_MAX_MS = 30000;
 
 export interface IKevinMessage {
   /** Groups the burst of text packets that make up one assistant reply. */
@@ -102,6 +104,12 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
   private io: SocketIOClientStatic;
   private socket: SocketIOClient.Socket | null = null;
   private connectPromise: Promise<void> | null = null;
+  private reconnectTimeout: number | null = null;
+  private reconnectAttempts = 0;
+  /** False while a deliberate teardown (disconnect(), logout) is in flight. */
+  private shouldReconnect = false;
+  /** Set when the server refused our token, so the next attempt re-mints it. */
+  private forceTokenRefresh = false;
 
   init() {
     if (!Utils.isWorkerWindow()) return;
@@ -147,21 +155,34 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
       return;
     }
 
+    this.shouldReconnect = true;
     this.SET_CONNECTING(true);
     this.SET_ERROR(null);
 
     try {
       if (!this.io) this.io = (await importSocketIOClient()).default;
 
-      const token = await this.streamAvatarApiService.getToken();
+      const token = await this.streamAvatarApiService.getToken(this.forceTokenRefresh);
+      this.forceTokenRefresh = false;
       const protocol = Utils.getAvatarEnvironment() === 'local' ? 'http://' : 'https://';
       const url =
         `${protocol}${this.hostsService.streamAvatarApi}${V2_NAMESPACE}` +
         `?token=${token}&role=desktop&tv=${V2_TOOL_PROTOCOL_VERSION}`;
 
-      this.socket?.disconnect();
+      // Drop the reference first: the teardown below fires this socket's own
+      // 'disconnect' handler, and that handler must not mistake our replacement
+      // for a dropped connection and schedule a reconnect on top of this one.
+      const previous = this.socket;
+      this.socket = null;
+      previous?.disconnect();
+
       this.log('--', 'connecting', { url: url.replace(/token=[^&]+/, 'token=***') });
-      const socket = this.io(url, { transports: ['websocket'] });
+      // reconnection: false is load-bearing. The token rides the query string
+      // (v2 client, no `auth` option), and socket.io's built-in reconnect
+      // replays the original URL verbatim -- so once that token expired it
+      // retried the dead one forever, every 5s, until the app was restarted.
+      // Reconnecting ourselves is what lets openSocket() mint a fresh one.
+      const socket = this.io(url, { transports: ['websocket'], reconnection: false });
       this.socket = socket;
 
       this.traceUnhandled(socket, [
@@ -236,6 +257,10 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
         // Quota is answered by the upgrade modal, not by a red line: showing
         // both says the same thing twice, and only one of them is actionable.
         if (p.code === 'rate_limit') return;
+        // The server rejected this token. Our cached copy can still look valid
+        // locally (clock skew, a rotated secret), so retrying with it would
+        // just reproduce the refusal -- re-mint before the next attempt.
+        if (p.code === 'auth') this.forceTokenRefresh = true;
         this.SET_ERROR(p.message || $t('Something went wrong. Please try again.'));
       });
 
@@ -246,6 +271,8 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
         this.SET_PENDING(false);
         // Prompts belong to a live session; a stale one cannot be answered.
         this.CLEAR_APPROVALS();
+        // Only for the live socket: a superseded one is already being replaced.
+        if (socket === this.socket) this.scheduleReconnect();
       });
 
       await new Promise<void>((resolve, reject) => {
@@ -277,6 +304,7 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
           this.SET_APPROVALS(ready.pendingApprovals ?? []);
           this.SET_CONNECTING(false);
           this.SET_CONNECTED(true);
+          this.reconnectAttempts = 0;
           settle();
         });
 
@@ -306,7 +334,37 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
       if (!this.state.error) {
         this.SET_ERROR($t('Could not connect to Streamlabs Desktop Support. Please try again.'));
       }
+      this.scheduleReconnect();
     }
+  }
+
+  /**
+   * Backoff retry, capped and jittered. Jitter matters because the API runs
+   * several replicas: without it every desktop dropped by one restart comes
+   * back in the same tick.
+   */
+  private scheduleReconnect() {
+    if (!this.shouldReconnect) return;
+    if (this.reconnectTimeout !== null) return;
+    if (!this.userService.isLoggedIn) return;
+
+    const backoff = Math.min(RECONNECT_BASE_MS * 2 ** this.reconnectAttempts, RECONNECT_MAX_MS);
+    const delay = Math.round(backoff * (0.8 + Math.random() * 0.4));
+    this.reconnectAttempts += 1;
+    this.log('--', 'reconnect scheduled', { delay, attempt: this.reconnectAttempts });
+
+    this.reconnectTimeout = window.setTimeout(() => {
+      this.reconnectTimeout = null;
+      void this.connect();
+    }, delay);
+  }
+
+  private cancelReconnect() {
+    if (this.reconnectTimeout !== null) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+    this.reconnectAttempts = 0;
   }
 
   /**
@@ -482,6 +540,8 @@ export class KevinSupportService extends StatefulService<IKevinSupportState> {
   }
 
   disconnect() {
+    this.shouldReconnect = false;
+    this.cancelReconnect();
     this.socket?.disconnect();
     this.socket = null;
     this.SET_CONNECTED(false);

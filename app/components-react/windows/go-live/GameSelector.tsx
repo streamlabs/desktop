@@ -111,7 +111,12 @@ export default function GameSelector(p: TProps) {
     const game = games.find(game => game.label === searchString);
 
     if (isTikTok) {
-      Services.TikTokService.actions.setGameName(searchString);
+      // TikTok's API requires the category id, but this component renders the name,
+      // so the service has to track both
+      Services.TikTokService.actions.setGameInfo({
+        gameId: game?.value ?? '',
+        gameName: game?.label ?? searchString,
+      });
     }
 
     if (isTwitch) {

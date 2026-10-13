@@ -20,7 +20,6 @@ export interface IEnv {
   SLOBS_TRACE_SYNC_IPC: boolean;
   SLOBS_USE_CDN_MEDIA: boolean;
   SLD_USE_BETA: boolean;
-  SLD_FORCE_ONBOARDING_STEP: string;
   SLD_TEST_GROUP: string;
   // Allows joining as a guest instead of a host for guest cam
   SLD_GUEST_CAM_HASH: string;
@@ -29,8 +28,11 @@ export interface IEnv {
   // Dev only: absolute path to a locally built Streamlabs Replay installer. When set, the Replay
   // install flow runs that exe instead of downloading one from the CDN.
   HIGHLIGHTER_LOCAL_SETUP_PATH?: string;
-  PRODUCT_UPDATES: boolean;
   AVATAR_ENV?: 'production' | 'staging' | 'local';
+
+  // Development/testing variables
+  SLD_FORCE_PRODUCT_UPDATES?: boolean;
+  SLD_FORCE_ONBOARDING_STEP?: boolean | string;
 
   // Test automation variables
   SLD_TESTS_SKIP_ONBOARDING?: 'true';
@@ -154,15 +156,6 @@ export default class Utils {
 
   static shouldUseBeta(): boolean {
     return (process.env.SLD_COMPILE_FOR_BETA || Utils.env.SLD_USE_BETA) as boolean;
-  }
-
-  /**
-   * Show product updates
-   * @remark Primarily used to show the marketing modal on app start for development and testing purposes
-   * @returns if product updates should be shown
-   */
-  static showProductUpdates(): boolean {
-    return Utils.env.NODE_ENV !== 'production' && (Utils.env.PRODUCT_UPDATES as boolean);
   }
 
   /**

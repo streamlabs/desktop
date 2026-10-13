@@ -112,6 +112,11 @@ export class EventListModule extends WidgetModule<IEventListState> {
         show_sponsors: metadata.bool({ label: $t('Members') }),
         show_fanfundings: metadata.bool({ label: $t('Super Chats') }),
       },
+      twitter: {
+        show_follows: metadata.bool({ label: $t('Follows') }),
+        show_subscriptions: metadata.bool({ label: $t('Subscriptions') }),
+        show_likes: metadata.bool({ label: $t('Likes') }),
+      },
     };
     if (!platform || !platformEvents[platform]) return baseEvents;
     return { ...platformEvents[platform], ...baseEvents };

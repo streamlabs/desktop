@@ -7,7 +7,7 @@ import { GuestApiHandler } from 'util/guest-api-handler';
 import * as remote from '@electron/remote';
 import { Services } from 'components-react/service-provider';
 import { Button } from 'antd';
-import { EMenuItemKey } from 'services/side-nav';
+import { ENavMenuKey } from 'services/nav-menu';
 import { $t } from 'services/i18n';
 import styles from './PlatformAppStore.m.less';
 import { useVuex } from 'components-react/hooks';
@@ -23,6 +23,7 @@ export default function PlatformAppStore(p: {
     NavigationService,
     HighlighterService,
     WindowsService,
+    CustomizationService,
   } = Services;
 
   const [highlighterInstalled, setHighlighterInstalled] = useState<boolean>(
@@ -36,15 +37,25 @@ export default function PlatformAppStore(p: {
   const [platformAppsUrl, setPlatformAppsUrl] = useState('');
   const [currentUrl, setCurrentUrl] = useState<string>('');
 
+  const { theme } = useVuex(() => ({ theme: CustomizationService.state.theme }));
+
+  // Single-use magic link: refetch on theme change so the store re-themes without
+  // replaying a spent login token.
   useEffect(() => {
+    let cancelled = false;
+
     async function getPlatformAppsUrl() {
       const url = await UserService.views.appStoreUrl(p.params);
-      if (!url) return;
+      if (!url || cancelled) return;
       setPlatformAppsUrl(url);
     }
 
     getPlatformAppsUrl();
-  }, [p.params]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [p.params.appId, p.params.type, theme]);
 
   function onBrowserViewReady(view: Electron.BrowserView) {
     new GuestApiHandler().exposeApi(view.webContents.id, {
@@ -70,10 +81,26 @@ export default function PlatformAppStore(p: {
       }
     });
 
-    // reload apps after uninstall
     view.webContents.session.webRequest.onCompleted(
-      { urls: ['https://platform.streamlabs.com/api/v1/app/*/uninstall'] },
-      () => Promise.resolve(() => PlatformAppsService.actions.refreshProductionApps()),
+      {
+        urls: [
+          // The marketplace store page apps and themes share the `themes/*/install`
+          // endpoint. Reload apps when it reports a completed install.
+          'https://marketplace-api.streamlabs.com/api/v2/themes/*/install',
+          // Watch for the uninstall endpoint to reload apps after an app is
+          // uninstalled as well.
+          'https://platform.streamlabs.com/api/v1/app/*/uninstall',
+        ],
+      },
+      details => {
+        if (details.method === 'POST' && details.url.includes('/themes/')) {
+          PlatformAppsService.actions.loadProductionApps();
+          return;
+        }
+
+        // reload apps after uninstall
+        Promise.resolve(() => PlatformAppsService.actions.refreshProductionApps());
+      },
     );
   }
 
@@ -115,6 +142,7 @@ export default function PlatformAppStore(p: {
         src={platformAppsUrl}
         onReady={onBrowserViewReady}
         enableGuestApi
+        reloadOnThemeChange={false}
         emitUrlChange={url => {
           setCurrentUrl(url);
         }}
@@ -147,7 +175,7 @@ export default function PlatformAppStore(p: {
                   NavigationService.actions.navigate(
                     'Highlighter',
                     { view: 'settings' },
-                    EMenuItemKey.Highlighter,
+                    ENavMenuKey.Highlighter,
                   );
                 }}
               >

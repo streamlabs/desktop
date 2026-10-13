@@ -132,6 +132,17 @@ export function validateAutomation(
     issues.push({ scope: 'conditions', message: $t('This automation uses an unknown condition.') });
   }
 
+  const missingScene = automation.scenes?.find(
+    name => !resources.scenes.some(s => s.name === name),
+  );
+  if (missingScene) {
+    issues.push({
+      scope: 'conditions',
+      field: 'scene',
+      message: $t('Scene "%{name}" no longer exists.', { name: missingScene }),
+    });
+  }
+
   const validActions = (automation.actions ?? []).filter(a => a?.type);
   if (!validActions.length) {
     issues.push({ scope: 'action', message: $t('Add at least one action.') });
