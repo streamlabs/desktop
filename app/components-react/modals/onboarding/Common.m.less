@@ -15,6 +15,7 @@
 }
 
 .modal-wrapper {
+  z-index: @z-onboarding-modal !important;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -22,7 +23,6 @@
   width: 80% !important;
 
   :global(.ant-modal-content) {
-    z-index: 2000 !important; // show above everything
     height: 100% !important;
   }
 

@@ -76,7 +76,7 @@ export default class TagsInput extends BaseInput<
     const input = this.$el.querySelector('input');
     input.style.width = '100%';
     input.style.position = 'absolute';
-    input.style.zIndex = '9999';
+    input.style.zIndex = styles.dropdownInputZIndex;
   }
 
   getOptions(): IListMetadata<string, IOptionData> {

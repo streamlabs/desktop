@@ -44,7 +44,7 @@ export default function GoLiveWindow() {
       footer={<ModalFooter />}
       hideFooter={optimizerOpen}
       bodyStyle={{ position: 'relative' }}
-      className={styles.goLiveSettings}
+      className={styles.goLiveWindow}
     >
       {optimizerOpen ? (
         <GoLiveAutoOptimizer />

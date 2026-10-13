@@ -22,6 +22,9 @@ import styles from './Main.m.less';
 import { StatefulService } from 'services';
 import { useRealmObject } from 'components-react/hooks/realm';
 import Onboarding from 'components-react/modals/onboarding/Onboarding';
+import { byOS, OS } from 'util/operating-systems';
+
+const isMac = byOS({ [OS.Windows]: false, [OS.Mac]: true });
 
 // TODO: this is technically deprecated as we have moved customizationService to Realm
 // but some users may still have this value
@@ -288,7 +291,7 @@ export default function Main() {
 
   return (
     <div
-      className={cx(styles.main, theme, 'react')}
+      className={cx(styles.main, theme, 'react', { [styles.mainMac]: isMac })}
       id="mainWrapper"
       ref={mainWindowEl}
       onDrop={(ev: React.DragEvent) => onDropHandler(ev)}
