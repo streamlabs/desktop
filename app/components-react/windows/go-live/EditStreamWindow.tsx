@@ -78,7 +78,7 @@ export default function EditStreamWindow() {
     }
   }, [timer]);
   return (
-    <ModalLayout footer={<EditStreamFooter timer={timer} />} className={styles.goLiveSettings}>
+    <ModalLayout footer={<EditStreamFooter timer={timer} />} className={styles.goLiveWindow}>
       <Form
         form={form}
         style={{ position: 'relative', height: '100%' }}
