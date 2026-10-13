@@ -26,9 +26,9 @@ export default function IconButton({
       className={p.tooltipClassName}
       autoAdjustOverflow={p.autoAdjustOverflow}
     >
-      <Button type={type} icon={p.icon} aria-label={$t(p.label)} onClick={p.onClick} />
+      <Button type={type} icon={p.icon} aria-label={p.label} onClick={p.onClick} />
     </Tooltip>
   ) : (
-    <Button type={type} icon={p.icon} aria-label={$t(p.label)} onClick={p.onClick} />
+    <Button type={type} icon={p.icon} aria-label={p.label} onClick={p.onClick} />
   );
 }

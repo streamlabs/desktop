@@ -61,7 +61,7 @@ export const ShareStreamLink = () => {
         tooltipPlacement="right"
         type="text"
         icon={<PlatformLogo platform={platform} size="small" />}
-        label={$t('Share stream link')}
+        label={tooltip}
         onClick={() => copyToClipboard(streamPageUrl)}
         autoAdjustOverflow={false}
       />
