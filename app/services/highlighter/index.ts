@@ -50,6 +50,7 @@ import {
   EReplayInstallStep,
   TInstalledHighlighterApp,
   TOpenedFrom,
+  TReplayInstallEntry,
 } from './models/highlighter.models';
 import {
   EExportStep,
@@ -627,7 +628,23 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
    */
   private replayInstallAbortController: AbortController | null = null;
 
-  async installStreamlabsReplay(originMetadata?: IReplayInstallOriginMetadata): Promise<boolean> {
+  /**
+   * Where the current install was started from. Kept on the service so cancelReplayInstall, which
+   * runs outside the install call, tags its event the same way.
+   */
+  private replayInstallTracking: { entry?: TReplayInstallEntry; attempt: number } = { attempt: 1 };
+
+  /**
+   * @param originMetadata - Hand-off data for the install origin marker
+   * @param entry - Where in Desktop the install was started from, recorded as `entry` on every
+   * install event so installs can be broken down by entry point
+   * @param attempt - 1 for the first try, incremented by the retry button
+   */
+  async installStreamlabsReplay(
+    originMetadata?: IReplayInstallOriginMetadata,
+    entry?: TReplayInstallEntry,
+    attempt = 1,
+  ): Promise<boolean> {
     if (getOS() !== OS.Windows) {
       Sentry.withScope(scope => {
         scope.setTag('feature', 'highlighter');
@@ -646,9 +663,12 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     this.replayInstallAbortController = new AbortController();
     const { signal } = this.replayInstallAbortController;
 
+    this.replayInstallTracking = { entry, attempt };
+
     // Track installation started
     this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
       type: 'ReplayInstallationStarted',
+      ...this.replayInstallTracking,
     });
 
     let progressInterval: NodeJS.Timeout | null = null;
@@ -692,6 +712,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       if (signal.aborted) {
         this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'ReplayInstallationCancelled',
+          ...this.replayInstallTracking,
           phase: 'downloading',
         });
         return false;
@@ -730,6 +751,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       if (signal.aborted) {
         this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'ReplayInstallationCancelled',
+          ...this.replayInstallTracking,
           phase: 'installing',
         });
         return false;
@@ -746,6 +768,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       if (signal.aborted) {
         this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'ReplayInstallationCancelled',
+          ...this.replayInstallTracking,
           phase: 'verifying',
         });
         return false;
@@ -782,6 +805,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       // Track installation finished successfully
       this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
         type: 'ReplayInstallationFinished',
+        ...this.replayInstallTracking,
       });
 
       return true;
@@ -790,6 +814,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       if (signal.aborted) {
         this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'ReplayInstallationCancelled',
+          ...this.replayInstallTracking,
           phase: 'error',
         });
         return false;
@@ -806,6 +831,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       // Track installation failed
       this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
         type: 'ReplayInstallationFailed',
+        ...this.replayInstallTracking,
         phase: failedPhase,
       });
 
@@ -827,6 +853,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     if (wasInstalling) {
       this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
         type: 'ReplayInstallationCancelled',
+        ...this.replayInstallTracking,
         phase: this.state.replayInstall.step,
       });
     }
@@ -874,22 +901,22 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
    * A protocol that is registered but will not launch means the app was removed without
    * unregistering, so it falls through to the install.
    *
-   * @param source - Where the action was initiated from ('page' or 'modal')
+   * @param entry - Where in Desktop the flow was opened from, recorded as `entry` on the events
    * @returns Promise<boolean> - true if an app was opened, false if installation was started
    */
-  async openReplay(source: 'page' | 'modal'): Promise<boolean> {
+  async openReplay(entry: TReplayInstallEntry): Promise<boolean> {
     const app = await this.getInstalledHighlighterApp();
 
     if (app === 'replay') {
       this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
         type: 'ReplayOpen',
-        source,
+        entry,
       });
       if (await this.openProtocol(REPLAY_PROTOCOL)) return true;
     } else if (app === 'highlighter') {
       this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
         type: 'HighlighterAppOpen',
-        source,
+        entry,
       });
       if (await this.openProtocol(HIGHLIGHTER_PROTOCOL)) return true;
     }
@@ -897,11 +924,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     // Track installation click
     this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
       type: 'ReplayInstallationClick',
-      source,
+      entry,
     });
 
     // Start installation flow for Streamlabs Replay (don't await so UI can update)
-    this.installStreamlabsReplay();
+    this.installStreamlabsReplay(undefined, entry);
     return false;
   }
 

@@ -151,7 +151,10 @@ export function ImportStreamModal({
       if (app === 'none') {
         setPendingImport({ game, filePath: filePath[0], streamId: id });
         setShowingInstallFlow(true);
-        HighlighterService.actions.installStreamlabsReplay({ videoPath: filePath[0], game });
+        HighlighterService.actions.installStreamlabsReplay(
+          { videoPath: filePath[0], game },
+          `import-${openedFrom}`,
+        );
         return;
       }
 
@@ -178,6 +181,7 @@ export function ImportStreamModal({
   function renderInstallationFlow() {
     return (
       <ModalInstallationFlow
+        installEntry={`import-${openedFrom}`}
         installOriginMetadata={
           pendingImport
             ? { videoPath: pendingImport.filePath, game: pendingImport.game }

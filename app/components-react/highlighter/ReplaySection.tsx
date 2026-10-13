@@ -61,7 +61,7 @@ export default function ReplaySection({ onImport }: { onImport: () => void }) {
     handleOpenOrInstall,
     handleRetry,
     handleCancel,
-  } = useInstallState();
+  } = useInstallState('page');
 
   // Once the installer finished, Replay is installed even before a fresh registry lookup
   const hasApp = step === 'done' || (installedApp !== null && installedApp !== 'none');
@@ -99,7 +99,7 @@ export default function ReplaySection({ onImport }: { onImport: () => void }) {
             size="large"
             type="primary"
             className={styles.primaryCta}
-            onClick={() => handleOpenOrInstall('page')}
+            onClick={() => handleOpenOrInstall()}
           >
             {$t('Open %{appName}', { appName })}
           </Button>
@@ -117,7 +117,7 @@ export default function ReplaySection({ onImport }: { onImport: () => void }) {
           size="large"
           type="primary"
           className={styles.primaryCta}
-          onClick={() => handleOpenOrInstall('page')}
+          onClick={() => handleOpenOrInstall()}
         >
           {$t('One-click install')}
         </Button>

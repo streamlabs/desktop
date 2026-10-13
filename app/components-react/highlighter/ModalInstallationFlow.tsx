@@ -7,7 +7,10 @@ import { $t } from 'services/i18n';
 import Translate from 'components-react/shared/Translate';
 import SectionHeader from './SectionHeader';
 import { useInstallState, getStatusText } from './useInstallState';
-import { IReplayInstallOriginMetadata } from 'services/highlighter/models/highlighter.models';
+import {
+  IReplayInstallOriginMetadata,
+  TReplayInstallEntry,
+} from 'services/highlighter/models/highlighter.models';
 
 interface IModalInstallationFlowProps {
   onCancel: () => void;
@@ -15,6 +18,8 @@ interface IModalInstallationFlowProps {
   /** Hand-off data for the install origin marker, so a retry writes the same marker as the first
    * attempt. */
   installOriginMetadata?: IReplayInstallOriginMetadata;
+  /** Where the modal was opened from, tagged on the install analytics events. */
+  installEntry: TReplayInstallEntry;
 }
 
 export default function ModalInstallationFlow(props: IModalInstallationFlowProps) {
@@ -28,7 +33,7 @@ export default function ModalInstallationFlow(props: IModalInstallationFlowProps
     handleOpenOrInstall,
     handleRetry,
     handleCancel,
-  } = useInstallState(props.installOriginMetadata);
+  } = useInstallState(props.installEntry, props.installOriginMetadata);
 
   const appName = installedApp === 'highlighter' ? HIGHLIGHTER_APP_NAME : REPLAY_APP_NAME;
 
@@ -71,11 +76,7 @@ export default function ModalInstallationFlow(props: IModalInstallationFlowProps
             : $t('Install %{appName} to import and detect game highlights.', { appName })}
         </p>
         <div className={styles.actions}>
-          <Button
-            size="large"
-            onClick={() => handleOpenOrInstall('modal')}
-            style={{ width: '100%' }}
-          >
+          <Button size="large" onClick={() => handleOpenOrInstall()} style={{ width: '100%' }}>
             {installedApp === 'replay' && $t('Open %{appName}', { appName: REPLAY_APP_NAME })}
             {installedApp === 'highlighter' &&
               $t('Open %{appName}', { appName: HIGHLIGHTER_APP_NAME })}

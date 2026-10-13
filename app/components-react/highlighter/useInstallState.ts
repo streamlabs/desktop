@@ -1,23 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
 import {
   EReplayInstallStep,
   IReplayInstallOriginMetadata,
   TInstalledHighlighterApp,
+  TReplayInstallEntry,
 } from 'services/highlighter/models/highlighter.models';
 import { REPLAY_APP_NAME } from 'services/highlighter/constants';
 import { $t } from 'services/i18n';
 
 /**
+ * @param entry - Where the install was started from, tagged on the install analytics events.
  * @param installOriginMetadata - Hand-off data for the install origin marker, passed on again when
  * the user retries a failed install so the retry writes the same marker as the first attempt.
  */
-export function useInstallState(installOriginMetadata?: IReplayInstallOriginMetadata) {
+export function useInstallState(
+  entry: TReplayInstallEntry,
+  installOriginMetadata?: IReplayInstallOriginMetadata,
+) {
   const { HighlighterService } = Services;
 
   const [installedApp, setInstalledApp] = useState<TInstalledHighlighterApp | null>(null);
   const [isRecorderRunning, setIsRecorderRunning] = useState(false);
+  const installAttempt = useRef(1);
 
   // Kept as the Replay-installed boolean the existing conditionals were written against. A
   // Highlighter user has an app but not this one, so they are deliberately not "installed" here.
@@ -45,12 +51,17 @@ export function useInstallState(installOriginMetadata?: IReplayInstallOriginMeta
     if (step === 'done') setInstalledApp('replay');
   }, [step]);
 
-  function handleOpenOrInstall(source: 'page' | 'modal') {
-    HighlighterService.actions.openReplay(source);
+  function handleOpenOrInstall() {
+    HighlighterService.actions.openReplay(entry);
   }
 
   function handleRetry() {
-    HighlighterService.actions.installStreamlabsReplay(installOriginMetadata);
+    installAttempt.current += 1;
+    HighlighterService.actions.installStreamlabsReplay(
+      installOriginMetadata,
+      entry,
+      installAttempt.current,
+    );
   }
 
   function handleCancel() {

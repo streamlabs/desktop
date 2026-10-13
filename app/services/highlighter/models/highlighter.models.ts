@@ -11,6 +11,13 @@ export interface ITempRecordingInfo {
 
 export type TOpenedFrom = 'after-stream' | 'manual-import' | 'recordings-tab';
 
+/**
+ * Where in Desktop a Replay install was started from. Recorded as `entry` on the install events:
+ * the Highlighter page or the import dialog (suffixed with how it was opened). The install modal
+ * has no entry of its own: it reports the entry of whatever opened it.
+ */
+export type TReplayInstallEntry = 'page' | `import-${TOpenedFrom}`;
+
 export interface IHighlighterState {
   clips: Dictionary<TClip>;
   transition: ITransitionInfo;
