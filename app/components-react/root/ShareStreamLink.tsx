@@ -3,12 +3,11 @@ import { Services } from '../service-provider';
 import { $t } from 'services/i18n';
 import { clipboard } from 'electron';
 import { getPlatformService, TPlatform } from 'services/platforms';
-import { Button, message } from 'antd';
+import { message } from 'antd';
 import { CloseOutlined, ShareAltOutlined } from '@ant-design/icons';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
-import Tooltip from 'components-react/shared/Tooltip';
-import styles from './ShareStreamLink.m.less';
 import { useVuex } from 'components-react/hooks';
+import IconButton from 'components-react/shared/buttons/IconButton';
 
 /*
  * There's a weird issue on the Live Dock where components placed above
@@ -56,46 +55,47 @@ export const ShareStreamLink = () => {
     });
 
     return (
-      <Tooltip
-        placement="right"
-        title={tooltip}
-        autoAdjustOverflow={false}
+      <IconButton
         key={`${platform}-${index}`}
-      >
-        <div className={styles.shareStreamLinkButton} onClick={() => copyToClipboard(streamPageUrl)}>
-          <PlatformLogo platform={platform} size="small" />
-        </div>
-      </Tooltip>
+        tooltipTitle={tooltip}
+        tooltipPlacement="right"
+        type="text"
+        icon={<PlatformLogo platform={platform} size="small" />}
+        label={$t('Share stream link')}
+        onClick={() => copyToClipboard(streamPageUrl)}
+        autoAdjustOverflow={false}
+      />
     );
   });
 
   const single = items.length < 2;
 
   return (
-    <div className={styles.shareStreamLinksContainer}>
+    <>
       {single ? (
-        <Tooltip placement="right" title={$t('Copy stream link')}>
-          <Button
-            type="text"
-            icon={<ShareAltOutlined />}
-            aria-label={$t('Copy stream link')}
-            onClick={() =>
-              copyToClipboard(
-                getPlatformService(StreamingService.views.enabledPlatforms[0]).streamPageUrl,
-              )
-            }
-          />
-        </Tooltip>
+        <IconButton
+          tooltipTitle={$t('Copy stream link')}
+          tooltipPlacement="right"
+          type="text"
+          icon={<ShareAltOutlined />}
+          label={$t('Copy stream link')}
+          onClick={() =>
+            copyToClipboard(
+              getPlatformService(StreamingService.views.enabledPlatforms[0]).streamPageUrl,
+            )
+          }
+        />
       ) : (
         <>
-          <Tooltip placement="right" title={$t('Share stream link')}>
-            <Button
-              type="text"
-              icon={expanded ? <CloseOutlined /> : <ShareAltOutlined />}
-              aria-label={$t('Share stream link')}
-              onClick={() => toggleExpanded()}
-            />
-          </Tooltip>
+          <IconButton
+            tooltipTitle={$t('Share stream link')}
+            tooltipPlacement="right"
+            type="text"
+            icon={expanded ? <CloseOutlined /> : <ShareAltOutlined />}
+            label={$t('Share stream link')}
+            onClick={() => toggleExpanded()}
+          />
+
           <div
             style={{
               display: expanded ? 'flex' : 'none',
@@ -107,7 +107,7 @@ export const ShareStreamLink = () => {
           </div>
         </>
       )}
-    </div>
+    </>
   );
 };
 
