@@ -710,6 +710,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     if (categoryName === 'Audio') this.setAudioSettings([settingsData.pop()]);
     if (categoryName === 'Video' && forceApplyCategory && forceApplyCategory !== 'Video') return;
 
+    const wasSimpleVodEnabled = this.views.isSimpleOutputMode && this.views.vodTrackEnabled;
     const dataToSave = [];
 
     for (const subGroup of settingsData) {
@@ -719,20 +720,16 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
           valueToCurrentValue: true,
         }),
       });
-
-      if (
-        categoryName === 'Output' &&
-        subGroup.nameSubCategory === 'Untitled' &&
-        subGroup.parameters[0].value === 'Simple'
-      ) {
-        this.audioService.setSimpleTracks();
-      }
     }
 
     obs.NodeObs.OBS_settings_saveSettings(categoryName, dataToSave);
     this.isSaving = true;
     try {
       this.loadSettingsIntoStore();
+      if (categoryName === 'Output' && this.views.isSimpleOutputMode) {
+        const vodEnabled = !!this.views.vodTrackEnabled;
+        if (!vodEnabled || !wasSimpleVodEnabled) this.audioService.setSimpleTracks(vodEnabled);
+      }
     } finally {
       this.isSaving = false;
     }
