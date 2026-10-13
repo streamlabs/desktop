@@ -322,7 +322,12 @@ export class TcpServerService extends PersistentStatefulService<ITcpServersSetti
     }
 
     const server = net.createServer();
-    server.listen(socketPath);
+    const previousUmask = process.umask(0o177);
+    try {
+      server.listen(socketPath);
+    } finally {
+      process.umask(previousUmask);
+    }
 
     // Restrict to owner only — prevents other OS accounts from connecting
     fs.chmodSync(socketPath, 0o600);
