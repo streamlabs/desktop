@@ -36,7 +36,7 @@ export default function GoLiveWindow() {
   const shouldShowChecklist = ['runChecklist', 'live'].includes(lifecycle);
 
   return (
-    <ModalLayout footer={<ModalFooter />} className={styles.goLiveSettings}>
+    <ModalLayout footer={<ModalFooter />} className={styles.goLiveWindow}>
       <Form
         form={form!}
         style={{ position: 'relative', height: '100%' }}
