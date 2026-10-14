@@ -226,6 +226,7 @@
   "Rate Control": "速率控制",
   "Enforce streaming service encoder settings": "執行直播服務編碼器限制",
   "Twitch VOD": "Twitch VOD",
+  "Twitch VOD Track (Uses Track 2)": "Twitch VOD Track (Uses Track 2)",
   "Use authentication": "使用驗證",
   "Username": "使用者名稱",
   "Password": "密碼",
