@@ -44,7 +44,8 @@ function normalizeSddl(sddl: string): string {
 
 test('API named pipe is restricted to the current user', async t => {
   if (process.platform !== 'win32') {
-    t.pass('Skipping Windows-specific test on non-Windows platform');
+    t.log('Skipping Windows-specific test on non-Windows platform');
+    t.pass();
     return;
   }
   // The owner can still connect and use the API
@@ -64,7 +65,8 @@ test('API named pipe is restricted to the current user', async t => {
 
 test('API Unix socket is restricted to the current user', async t => {
   if (process.platform !== 'darwin') {
-    t.pass('Skipping Unix socket test on non-macOS platform');
+    t.log('Skipping Unix socket test on non-macOS platform');
+    t.pass();
     return;
   }
 
