@@ -1,3 +1,5 @@
+@import '../../../styles/index';
+
 .brandHeader {
   display: flex;
   flex-direction: column;
@@ -254,7 +256,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    z-index: 1;
+    z-index: @z-raised;
     pointer-events: none;
     background: linear-gradient(
       0deg,
@@ -287,7 +289,7 @@
   font-size: 14px;
   font-weight: 700;
   color: #fff;
-  z-index: 2;
+  z-index: @z-raised-2;
 }
 
 .gameCardName {
@@ -300,14 +302,14 @@
   font-weight: 700;
   letter-spacing: 0.2px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
-  z-index: 2;
+  z-index: @z-raised-2;
 }
 
 .gameCardCheck {
   position: absolute;
   top: 8px;
   right: 8px;
-  z-index: 2;
+  z-index: @z-raised-2;
   width: 22px;
   height: 22px;
   border-radius: 50%;
@@ -335,6 +337,6 @@
   font-size: 12px;
   color: #e3e8eb;
   text-align: center;
-  z-index: 2;
+  z-index: @z-raised-2;
 }
 

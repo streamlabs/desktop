@@ -154,7 +154,7 @@ export function Themes(p: IOnboardingStepProps) {
   }
 
   return (
-    <div className={styles.centered}>
+    <div className={styles.stepContainer}>
       <Header title={$t('Choose Your Overlay')} />
       {loading && <Spinner />}
       {!loading && !installing && (
@@ -175,7 +175,7 @@ export function Themes(p: IOnboardingStepProps) {
               />
             ))}
           </Carousel>
-          <a style={{ marginTop: 80, display: 'block' }} onClick={browseOverlays}>
+          <a className={themeS.browseLink} onClick={browseOverlays}>
             {$t('Browse All Overlays')}
           </a>
           <i onClick={() => navigate('prev')} className={cx(themeS.backArrow, 'icon-back')} />
@@ -203,9 +203,9 @@ function PreviewCard(p: {
   const [selectedImage, setSelectedImage] = useState(previews[0]);
 
   return (
-    <div className={styles.darkBox} style={{ height: '100%', padding: 16 }}>
+    <div className={cx(themeS.previewCard, styles.darkBox)}>
       <div className={themeS.previewHeader}>
-        <img className={themeS.avatar} src={p.metadata.designer?.avatar} />
+        <img className={themeS.previewHeaderAvatar} src={p.metadata.designer?.avatar} />
         <div style={{ marginRight: 'auto', textAlign: 'left', marginLeft: 8 }}>
           <h1>{p.metadata.name}</h1>
           <span>{$t('by %{designerName}', { designerName: p.metadata.designer?.name })}</span>
@@ -220,12 +220,13 @@ function PreviewCard(p: {
           {$t('Install')}
         </Button>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
-        {isVideo(selectedImage) && (
-          <video src={selectedImage} controls={false} loop className={themeS.bigPreview} />
+      <div className={themeS.previewMedia}>
+        {isVideo(selectedImage) ? (
+          <video src={selectedImage} controls={false} loop className={themeS.previewMediaMain} />
+        ) : (
+          <img src={selectedImage} className={themeS.previewMediaMain} />
         )}
-        {!isVideo(selectedImage) && <img src={selectedImage} className={themeS.bigPreview} />}
-        <div className={themeS.imgColumn}>
+        <div className={themeS.previewMediaThumbnails}>
           {previews.slice(0, 3).map(url => (
             <div key={url} onClick={() => setSelectedImage(url)}>
               {isVideo(url) && <video src={url} controls={false} loop />}

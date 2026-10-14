@@ -376,7 +376,7 @@
   left: 0;
   top: 50px;
   background-color: var(--background);
-  z-index: 1;
+  z-index: @z-raised;
   box-shadow: 0 2px var(--shadow);
   width: 100%;
 

@@ -1,0 +1,10 @@
+@import '../../styles/index';
+
+// Compensate for titlebar living in ChildWindow
+.modal-layout {
+  height: calc(~'100% - @{titlebar-height}');
+
+  &.modal-layout-mac {
+    height: calc(~'100% - @{titlebar-height-mac}');
+  }
+}
