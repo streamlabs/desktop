@@ -226,6 +226,7 @@
   "Rate Control": "Contrôle du débit",
   "Enforce streaming service encoder settings": "Appliquer les paramètres de l'encodeur du service de streaming",
   "Twitch VOD": "VOD Twitch",
+  "Twitch VOD Track (Uses Track 2)": "Twitch VOD Track (Uses Track 2)",
   "Use authentication": "Utiliser l'authentification",
   "Username": "Nom d’utilisateur",
   "Password": "Mot de passe",
