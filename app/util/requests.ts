@@ -140,7 +140,14 @@ export function jfetch<TResponse = unknown>(
     const contentType = response.headers.get('content-type');
     const isJson = contentType && contentType.includes('application/json');
     if (response.ok) {
-      if (isJson || options.forceJson) {
+      if (!response.body) {
+        // Sometimes a response is a success but carries no body to parse. Just in case, we attempt
+        // to read it as text and parse if not empty.
+        return response.text().then(text => {
+          if (!text.trim()) return (undefined as unknown) as TResponse;
+          return JSON.parse(text) as TResponse;
+        });
+      } else if (isJson || options.forceJson) {
         return response.json() as Promise<TResponse>;
       } else {
         console.warn(`jfetch: Got non-JSON response ${response.status} from ${response.url}`);
