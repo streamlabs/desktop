@@ -18,6 +18,7 @@ import {
   TRawOutputValues,
 } from './output-transaction-policy';
 import { autoOptimizerPromotesResolution } from './resolution-policy';
+import { isTwitchOnlyStream } from '../streaming/stream-resolution-policy';
 import {
   IAutoOptimizerOutputResult,
   IAutoOptimizerProfile,
@@ -148,6 +149,23 @@ class RecommendationApplyTransaction {
             preset: outputRecommendation!.encoder!.preset,
           },
         });
+        if (
+          outputRecommendation!.bitrate > 6000 &&
+          isTwitchOnlyStream(
+            result.outputs.flatMap(output =>
+              output.destinations.map(destination => destination.platform),
+            ),
+          )
+        ) {
+          // The experimental Twitch bitrate must survive stream startup.
+          // This field is included in the existing raw-settings rollback snapshot.
+          const field =
+            snapshot.output.mode === 'Simple' ? 'EnforceBitrate' : 'ApplyServiceSettings';
+          this.setRawOutputField('Streaming', field, false);
+          if (this.readRawOutputField('Streaming', field) !== false) {
+            throw new Error('Could not apply the tested Twitch streaming bitrate');
+          }
+        }
       }
 
       if (applyVideoSettings) {

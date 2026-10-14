@@ -19,11 +19,23 @@ const visibleActiveMeasurementReasons = new Set([
   'enhanced_broadcasting_transport_fallback',
   'enhanced_broadcasting_workload_fallback',
   'enhanced_broadcasting_transport_and_workload_fallback',
+  'enhanced_broadcasting_configuration_fallback',
 ]);
 
 /** Explanations that remain visible for successful measured results. */
 export function shouldShowAutoOptimizerMeasurementReason(reason?: string): boolean {
   return visibleActiveMeasurementReasons.has(reason || '');
+}
+
+/** Only display known, localized warnings; never render platform-supplied HTML. */
+export function autoOptimizerWarningLabels(warnings: readonly string[] = []): string[] {
+  const labels: Record<string, string> = {
+    enhanced_broadcasting_configuration_warning:
+      'Twitch returned a warning for these Enhanced Broadcasting settings. The test passed, but performance may vary during a live stream.',
+  };
+  return Object.keys(labels)
+    .filter(code => warnings.includes(code))
+    .map(code => labels[code]);
 }
 
 const hardwareFailureMessages: Record<string, string> = {
@@ -156,6 +168,16 @@ export function autoOptimizerProgressLabel(
         };
       }
       return { key: 'Validating Enhanced Broadcasting performance...' };
+    case 'enhanced_broadcasting_candidate_unavailable':
+      if (tuple) {
+        return {
+          key: detail.additionalVideo
+            ? 'Twitch could not provide %{width}×%{height} horizontal and %{additionalWidth}×%{additionalHeight} vertical at %{fps} FPS. Trying a lower setting...'
+            : 'Twitch could not provide %{width}×%{height}, %{fps} FPS. Trying a lower setting...',
+          values: tuple,
+        };
+      }
+      return { key: 'Twitch could not provide the requested settings. Trying a lower setting...' };
     case 'enhanced_broadcasting_candidate_rejected':
       if (tuple) {
         return {
@@ -320,4 +342,27 @@ export function autoOptimizerProgressLabel(
   if (phase === 'hardware') return { key: 'Checking your hardware...' };
   if (phase === 'cleanup') return { key: 'Cleaning up resources...' };
   return { key: 'Calculating your recommended settings...' };
+}
+
+/** Report the product ceiling separately from probe failures and warnings. */
+export function shouldShowMultistreamResolutionLimit(
+  outputs: ReadonlyArray<{
+    platforms?: ReadonlyArray<{ id: string }>;
+    width: number;
+    height: number;
+    measurementMode: string;
+  }>,
+): boolean {
+  const platforms = new Set(
+    outputs.flatMap(output => (output.platforms || []).map(platform => platform.id)),
+  );
+  return (
+    platforms.size > 1 &&
+    outputs.some(
+      output =>
+        output.measurementMode === 'active' &&
+        Math.max(output.width, output.height) === 1920 &&
+        Math.min(output.width, output.height) === 1080,
+    )
+  );
 }

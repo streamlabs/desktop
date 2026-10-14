@@ -8,9 +8,95 @@ import {
   autoOptimizerResolutionCeiling,
   autoOptimizerRequestFrameRateCeiling,
   buildAutoOptimizerRequestLimits,
+  boundAutoOptimizerCurrentResolution,
   matchesAutoOptimizerQualityPolicy,
   selectAutoOptimizerQuality,
 } from '../../app/services/auto-optimizer/resolution-policy';
+
+test('ultrawide inputs preserve output aspect within limits without double rounding', t => {
+  for (const width of [3340, 3440]) {
+    const current = { width, height: 1440, fpsNum: 60, fpsDen: 1 };
+    t.false(autoOptimizerCanvasAllowsQualityPromotion(width, 1440, width, 1440));
+    for (const maximum of [
+      { width: 2560, height: 1440 },
+      { width: 1920, height: 1080 },
+    ]) {
+      const limits = buildAutoOptimizerRequestLimits({
+        allowPromotion: true,
+        currentWidth: width,
+        currentHeight: 1440,
+        currentFpsNum: 60,
+        currentFpsDen: 1,
+        resolutionCeiling: maximum,
+      });
+      const expected = {
+        width: maximum.width,
+        height: Math.floor((1440 * maximum.width) / width / 2) * 2,
+      };
+      t.deepEqual(boundAutoOptimizerCurrentResolution(current, maximum), expected);
+      const ceilings = autoOptimizerHardwareCeilings(current, limits);
+      t.deepEqual(ceilings, [{ ...expected, fpsNum: 60, fpsDen: 1 }]);
+      t.true(
+        ceilings.every(value => value.width <= maximum.width && value.height <= maximum.height),
+      );
+      t.true(
+        matchesAutoOptimizerQualityPolicy(
+          { ...expected, fpsNum: 60, fpsDen: 1 },
+          current,
+          limits,
+          maximum.height === 1440 ? 7500 : 6000,
+          'nvenc',
+          'twitch',
+        ),
+      );
+    }
+    t.deepEqual(current, { width, height: 1440, fpsNum: 60, fpsDen: 1 });
+    t.deepEqual(autoOptimizerAcceptedBaseResolution(width, 1440, 2560, 1440), {
+      width,
+      height: 1440,
+    });
+  }
+});
+
+test('custom-aspect fallbacks respect smaller limits without promotion', t => {
+  t.deepEqual(
+    boundAutoOptimizerCurrentResolution(
+      { width: 1920, height: 802 },
+      { width: 2560, height: 1440 },
+    ),
+    { width: 1920, height: 802 },
+  );
+  t.deepEqual(
+    boundAutoOptimizerCurrentResolution(
+      { width: 1600, height: 1200 },
+      { width: 1920, height: 1080 },
+    ),
+    { width: 1440, height: 1080 },
+  );
+});
+
+test('experimental Twitch 1440p requires the full tested 7.5 Mbps budget', t => {
+  const ceiling = { width: 2560, height: 1440, fpsNum: 60, fpsDen: 1 };
+  t.deepEqual(selectAutoOptimizerQuality(ceiling, 7500, 'nvenc', 'twitch'), ceiling);
+  t.is(selectAutoOptimizerQuality(ceiling, 7499, 'nvenc', 'twitch')!.width, 1920);
+  t.is(selectAutoOptimizerQuality(ceiling, 6000, 'nvenc', 'twitch')!.width, 1920);
+  t.deepEqual(
+    buildAutoOptimizerRequestLimits({
+      allowPromotion: true,
+      currentWidth: 1280,
+      currentHeight: 720,
+      currentFpsNum: 30,
+      currentFpsDen: 1,
+      resolutionCeiling: ceiling,
+    }),
+    {
+      maxWidth: 2560,
+      maxHeight: 1440,
+      maxFpsNum: 60,
+      maxFpsDen: 1,
+    },
+  );
+});
 
 test('active landscape requests may test up to 1920x1080 without changing the canvas', t => {
   t.deepEqual(
@@ -105,11 +191,36 @@ test('active request can test above a smaller authored canvas without mutating i
   });
 });
 
-test('quality promotion requires a 16:9 or 9:16 Base Canvas with matching orientation', t => {
+test('quality promotion preserves a deliberate standard output on a custom canvas', t => {
   t.true(autoOptimizerCanvasAllowsQualityPromotion(1280, 720, 960, 540));
   t.true(autoOptimizerCanvasAllowsQualityPromotion(720, 1280, 540, 960));
-  t.false(autoOptimizerCanvasAllowsQualityPromotion(1600, 1200, 1280, 720));
+  t.true(autoOptimizerCanvasAllowsQualityPromotion(3440, 1440, 1920, 1080));
+  t.true(autoOptimizerCanvasAllowsQualityPromotion(1600, 1200, 1280, 720));
   t.false(autoOptimizerCanvasAllowsQualityPromotion(1280, 720, 720, 1280));
+});
+
+test('custom output aspects are fitted once in both measured and estimated requests', t => {
+  for (const [width, height, expectedWidth, expectedHeight] of [
+    [2560, 1600, 1728, 1080],
+    [1600, 1200, 1440, 1080],
+    [1440, 3440, 452, 1080],
+    [1440, 1440, 1080, 1080],
+  ]) {
+    for (const allowPromotion of [true, false]) {
+      const current = { width, height, fpsNum: 30, fpsDen: 1 };
+      const limits = buildAutoOptimizerRequestLimits({
+        allowPromotion,
+        currentWidth: width,
+        currentHeight: height,
+        currentFpsNum: 30,
+        currentFpsDen: 1,
+        resolutionCeiling: { width: 1920, height: 1080 },
+      });
+      t.deepEqual(autoOptimizerHardwareCeilings(current, limits), [
+        { width: expectedWidth, height: expectedHeight, fpsNum: 30, fpsDen: 1 },
+      ]);
+    }
+  }
 });
 
 test('Base Canvas grows only when both recommended output dimensions increase', t => {

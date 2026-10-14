@@ -98,6 +98,49 @@ function standardNativeResult(): IAutoOptimizerNativeResult {
   };
 }
 
+test('ultrawide measured and failed-probe results preserve aspect and carry guide guidance', t => {
+  for (const width of [3340, 3440]) {
+    for (const measurement of ['active', 'estimated'] as const) {
+      const context = standardAttempt();
+      context.outputs[0].hasUltrawideResolution = true;
+      Object.assign(context.outputs[0].current, {
+        width,
+        height: 1440,
+        fpsNum: 60,
+        bitrateKbps: 6000,
+      });
+      const native = standardNativeResult();
+      native.outputs[0].videos[0].height = width === 3440 ? 802 : 826;
+      native.outputs[0].measurement.mode = measurement;
+      native.outputs[0].measurement.evidence![0].success = measurement === 'active';
+      const result = acceptAutoOptimizerResult(native, context);
+      t.truthy(result);
+      t.deepEqual(result!.outputs[0].warnings, ['ultrawide_resolution']);
+      t.is(result!.outputs[0].resolution.height, width === 3440 ? 802 : 826);
+      native.outputs[0].videos[0].height = 1080;
+      t.is(
+        acceptAutoOptimizerResult(native, context),
+        null,
+        'forced 16:9 is not a tested custom output',
+      );
+      native.outputs[0].videos[0].width = width;
+      native.outputs[0].videos[0].height = 1440;
+      t.is(acceptAutoOptimizerResult(native, context), null, 'oversized results remain invalid');
+    }
+  }
+});
+
+test('ultrawide canvas guidance is shown even when the configured output is already 16:9', t => {
+  const context = standardAttempt();
+  context.outputs[0].hasUltrawideResolution = true;
+  const result = acceptAutoOptimizerResult(standardNativeResult(), context);
+  t.truthy(result);
+  t.deepEqual(result!.outputs[0].warnings, ['ultrawide_resolution']);
+  t.deepEqual(result!.outputs[0].resolution, { width: 1920, height: 1080 });
+  delete context.outputs[0].hasUltrawideResolution;
+  t.falsy(acceptAutoOptimizerResult(standardNativeResult(), context)!.outputs[0].warnings);
+});
+
 test('a complete OSN result is projected from the saved non-secret request context', t => {
   const context = standardAttempt();
   const serializedContext = JSON.stringify(context);
@@ -311,11 +354,13 @@ test('measured Enhanced Broadcasting fallback explanations survive result accept
   const nativeResult = standardNativeResult();
   delete nativeResult.outputs[0].encoding;
   nativeResult.outputs[0].measurement.evidence![0].method = 'twitch-enhanced-broadcasting-test';
+  nativeResult.outputs[0].warnings = ['enhanced_broadcasting_configuration_warning'];
 
   for (const reason of [
     'enhanced_broadcasting_transport_fallback',
     'enhanced_broadcasting_workload_fallback',
     'enhanced_broadcasting_transport_and_workload_fallback',
+    'enhanced_broadcasting_configuration_fallback',
   ]) {
     nativeResult.outputs[0].measurement.reason = reason;
     const accepted = acceptAutoOptimizerResult(nativeResult, context);
@@ -323,6 +368,8 @@ test('measured Enhanced Broadcasting fallback explanations survive result accept
     t.is(accepted!.outputs[0].estimateReason, reason);
     t.is(accepted!.outputs[0].measurement, 'active');
     t.is(accepted!.outputs[0].confidence, 'high');
+    t.deepEqual(accepted!.outputs[0].warnings, nativeResult.outputs[0].warnings);
+    t.not(accepted!.outputs[0].warnings, nativeResult.outputs[0].warnings);
     t.false('encoder' in accepted!.outputs[0]);
   }
 });

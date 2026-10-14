@@ -1,5 +1,6 @@
 import { TDisplayType } from 'services/settings-v2';
 import { autoOptimizerRecommendationBitrateCap } from './bitrate-policy';
+import { isTwitchOnlyStream, streamResolutionCeiling } from '../streaming/stream-resolution-policy';
 import {
   isEligibleAutoOptimizerDualOutputActiveStreamSetup,
   isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup,
@@ -7,6 +8,8 @@ import {
 import {
   autoOptimizerCanvasAllowsQualityPromotion,
   buildAutoOptimizerRequestLimits,
+  isUltrawideResolution,
+  isCanonicalAspect,
 } from './resolution-policy';
 import {
   IAutoOptimizerActiveProbe,
@@ -54,6 +57,8 @@ export interface IBuildAutoOptimizerRequestInput {
   outputProbes: readonly IAutoOptimizerPreparedOutputProbes[];
   outputSettings: IAutoOptimizerOutputSettingsSnapshot;
   videos: Record<TDisplayType, IAutoOptimizerVideoSnapshot>;
+  /** Content/monitor evidence for 1440p; platform ceilings still take precedence. */
+  allow1440p: boolean;
 }
 
 /** Non-secret values retained to validate the result after credentials are discarded. */
@@ -150,6 +155,21 @@ export function buildAutoOptimizerRequest(
   input: IBuildAutoOptimizerRequestInput,
 ): IBuiltAutoOptimizerRequest {
   const { streamSetup, outputSettings, videos } = input;
+  const platforms = streamSetup.outputs.flatMap(output =>
+    output.destinations.map(destination => destination.platform),
+  );
+  const twitchOnly = isTwitchOnlyStream(platforms);
+  const resolutionCeiling = (video: IAutoOptimizerVideoSnapshot, portrait: boolean) => {
+    const maximum = streamResolutionCeiling(twitchOnly && input.allow1440p, portrait);
+    // A custom authored canvas must not be resized to accommodate promotion of
+    // an already-standard output. Its saved layout remains the user's choice.
+    return isCanonicalAspect(video.baseWidth, video.baseHeight)
+      ? maximum
+      : {
+          width: Math.min(maximum.width, video.baseWidth),
+          height: Math.min(maximum.height, video.baseHeight),
+        };
+  };
   const activeDualOutput = isEligibleAutoOptimizerDualOutputActiveStreamSetup(streamSetup);
   const activeEnhancedBroadcastingDualOutput = isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup(
     streamSetup,
@@ -177,10 +197,7 @@ export function buildAutoOptimizerRequest(
       throw new AutoOptimizerRequestBuildError();
     }
 
-    const maxBitrateKbps = autoOptimizerRecommendationBitrateCap(
-      output.outputKind,
-      output.destinations.map(destination => destination.platform),
-    );
+    const maxBitrateKbps = autoOptimizerRecommendationBitrateCap(output.outputKind, platforms);
     const allowPromotion =
       ((output.measurement === 'active' && output.estimateReason !== 'partial_provider_probes') ||
         activeDualOutput ||
@@ -210,6 +227,7 @@ export function buildAutoOptimizerRequest(
       destinations: output.destinations.map(destination => destination.platform),
       current,
       limits: buildAutoOptimizerRequestLimits({
+        resolutionCeiling: resolutionCeiling(video, display === 'vertical'),
         allowPromotion,
         currentWidth: video.outputWidth,
         currentHeight: video.outputHeight,
@@ -232,6 +250,7 @@ export function buildAutoOptimizerRequest(
                 preset: outputSettings.streaming.preset || undefined,
               },
               limits: buildAutoOptimizerRequestLimits({
+                resolutionCeiling: resolutionCeiling(additionalVideo, true),
                 allowPromotion:
                   ((output.measurement === 'active' &&
                     output.estimateReason !== 'partial_provider_probes') ||
@@ -264,7 +283,20 @@ export function buildAutoOptimizerRequest(
     request,
     attemptContext: {
       streamSetup: cloneStreamSetup(streamSetup),
-      outputs: outputs.map(credentialFreeRequestOutput),
+      outputs: outputs.map(output => {
+        const displays: TDisplayType[] =
+          output.display === 'both' ? ['horizontal', 'vertical'] : [output.display];
+        return {
+          ...credentialFreeRequestOutput(output),
+          hasUltrawideResolution: displays.some(display => {
+            const video = videos[display];
+            return (
+              isUltrawideResolution(video.baseWidth, video.baseHeight) ||
+              isUltrawideResolution(video.outputWidth, video.outputHeight)
+            );
+          }),
+        };
+      }),
     },
   };
 }

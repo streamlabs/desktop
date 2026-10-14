@@ -465,8 +465,16 @@ export class GoLiveSettingsModule {
   /**
    * Save current settings so we can use it next time we open the GoLiveWindow
    */
-  save(settings: IGoLiveSettingsState) {
-    Services.StreamSettingsService.actions.return.setGoLiveSettings(settings);
+  async save(settings: IGoLiveSettingsState) {
+    await Services.StreamSettingsService.actions.return.setGoLiveSettings(settings);
+    if (this.isUpdateMode) return;
+    try {
+      await Services.StreamSettingsService.actions.return.applyStreamOutputLimits();
+    } catch (e: unknown) {
+      // The start path retries this guard. Never reset an active recording,
+      // replay buffer, virtual camera, or stream merely to save a selection.
+      message.error($t('Stop all video outputs before changing the stream output settings.'));
+    }
   }
 
   /**
@@ -781,6 +789,9 @@ export class GoLiveSettingsModule {
   async confirmGoLive(): Promise<boolean> {
     if (!(await this.validate())) return false;
 
+    // Offering an optimizer run must not save output changes. The actual
+    // stream-start path enforces destination limits, including after Skip.
+    if (!this.state.getMetadata?.()) return false;
     try {
       if (await Services.AutoOptimizerService.actions.return.interceptGoLive(this.state.settings)) {
         return false;

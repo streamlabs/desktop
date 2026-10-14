@@ -119,6 +119,7 @@ export interface IAutoOptimizerOutputResult {
   confidence: TAutoOptimizerConfidence;
   probes?: IAutoOptimizerProbeEvidence[];
   estimateReason?: string;
+  warnings?: string[];
   resolution: { width: number; height: number };
   fpsNum: number;
   fpsDen: number;
@@ -196,7 +197,10 @@ export type IAutoOptimizerRequestAdditionalVideo = NonNullable<
   TOSNAutoOptimizerRequestOutput['additionalVideo']
 >;
 export type IAutoOptimizerRequestOutput = TOSNAutoOptimizerRequestOutput;
-export type IAutoOptimizerAttemptRequestOutput = Omit<IAutoOptimizerRequestOutput, 'probes'>;
+export type IAutoOptimizerAttemptRequestOutput = Omit<IAutoOptimizerRequestOutput, 'probes'> & {
+  /** Saved canvas/output geometry, retained only for Desktop's result guidance. */
+  hasUltrawideResolution?: boolean;
+};
 export type IAutoOptimizerActiveProbe = NonNullable<
   TOSNAutoOptimizerRequestOutput['probes']
 >[number];

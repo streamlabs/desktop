@@ -1,3 +1,6 @@
+import { fitStreamResolution } from '../streaming/stream-resolution-policy';
+import { AUTO_OPTIMIZER_TWITCH_1440P_BITRATE_KBPS } from './bitrate-policy';
+
 export interface IAutoOptimizerResolution {
   width: number;
   height: number;
@@ -23,11 +26,13 @@ export interface IAutoOptimizerRequestLimitsInput {
   currentFpsNum: number;
   currentFpsDen: number;
   maxBitrateKbps?: number;
+  resolutionCeiling?: IAutoOptimizerResolution;
 }
 
 export type TAutoOptimizerQualityProfile = 'generic' | 'twitch';
 
 const LANDSCAPE_TIERS: ReadonlyArray<IAutoOptimizerResolution> = [
+  { width: 2560, height: 1440 },
   { width: 1920, height: 1080 },
   { width: 1280, height: 720 },
   { width: 960, height: 540 },
@@ -52,8 +57,27 @@ function isPortrait(width: number, height: number): boolean {
   return width < height;
 }
 
-function isCanonicalAspect(width: number, height: number): boolean {
+export function isCanonicalAspect(width: number, height: number): boolean {
   return isPortrait(width, height) ? width * 16 === height * 9 : width * 9 === height * 16;
+}
+
+export function isUltrawideResolution(width: number, height: number): boolean {
+  return isValidDimension(width) && isValidDimension(height) && width * 9 > height * 16;
+}
+
+/** Match OSN's bounded fallback without modifying the saved canvas or output. */
+export function boundAutoOptimizerCurrentResolution(
+  current: IAutoOptimizerResolution,
+  maximum: IAutoOptimizerResolution,
+): IAutoOptimizerResolution {
+  if (fitsWithin(current, maximum)) return { ...current };
+  if (isCanonicalAspect(current.width, current.height)) {
+    const tier = orientedTiers(isPortrait(current.width, current.height)).find(
+      value => fitsWithin(value, current) && fitsWithin(value, maximum),
+    );
+    if (tier) return { ...tier };
+  }
+  return fitStreamResolution(current.width, current.height, maximum);
 }
 
 function orientedTiers(portrait: boolean): IAutoOptimizerResolution[] {
@@ -119,27 +143,40 @@ function fitTupleToTier(
 /**
  * Return the highest supported 16:9 or 9:16 resolution that an active test may
  * evaluate without changing Base (Canvas) Resolution. OSN uses a temporary
- * benchmark mix, so the test does not change saved canvas settings. Preserve
- * the current dimensions for other aspect ratios.
+ * benchmark mix, so the test does not change saved canvas settings. Custom
+ * outputs, including ultrawide, retain their configured output aspect.
  */
 export function autoOptimizerResolutionCeiling(
   currentWidth: number,
   currentHeight: number,
+  maximum?: IAutoOptimizerResolution,
 ): IAutoOptimizerResolution {
   const current = { width: currentWidth, height: currentHeight };
   if (!isValidDimension(currentWidth) || !isValidDimension(currentHeight)) {
     return { width: 2, height: 2 };
   }
   if (!isCanonicalAspect(currentWidth, currentHeight)) {
-    return current;
+    // Send a bounding box, not an already-rounded fitted size. OSN must fit the
+    // original output once; fitting it to a rounded size again can lose pixels.
+    return maximum
+      ? {
+          width: Math.min(currentWidth, maximum.width),
+          height: Math.min(currentHeight, maximum.height),
+        }
+      : current;
   }
-  return orientedTiers(isPortrait(currentWidth, currentHeight))[0];
+  return (
+    maximum ||
+    (isPortrait(currentWidth, currentHeight)
+      ? { width: 1080, height: 1920 }
+      : { width: 1920, height: 1080 })
+  );
 }
 
 /**
- * Allow resolution promotion only when Base (Canvas) Resolution and Output
- * (Scaled) Resolution are both 16:9 or both 9:16. Otherwise, growing the canvas
- * while preserving its aspect ratio could exceed the workload tested by OSN.
+ * Promote standard-aspect outputs only. A custom canvas may already have
+ * a deliberate 16:9 output; keep that choice rather than deriving it from the
+ * canvas. Custom-aspect outputs are bounded without promoting their geometry.
  */
 export function autoOptimizerCanvasAllowsQualityPromotion(
   baseWidth: number,
@@ -152,7 +189,6 @@ export function autoOptimizerCanvasAllowsQualityPromotion(
     isValidDimension(baseHeight) &&
     isValidDimension(outputWidth) &&
     isValidDimension(outputHeight) &&
-    isCanonicalAspect(baseWidth, baseHeight) &&
     isCanonicalAspect(outputWidth, outputHeight) &&
     isPortrait(baseWidth, baseHeight) === isPortrait(outputWidth, outputHeight)
   );
@@ -173,9 +209,13 @@ export function autoOptimizerRequestResolutionCeiling(
   allowPromotion: boolean,
   currentWidth: number,
   currentHeight: number,
+  maximum?: IAutoOptimizerResolution,
 ): IAutoOptimizerResolution {
-  return allowPromotion
-    ? autoOptimizerResolutionCeiling(currentWidth, currentHeight)
+  if (allowPromotion || !isCanonicalAspect(currentWidth, currentHeight)) {
+    return autoOptimizerResolutionCeiling(currentWidth, currentHeight, maximum);
+  }
+  return maximum
+    ? boundAutoOptimizerCurrentResolution({ width: currentWidth, height: currentHeight }, maximum)
     : { width: currentWidth, height: currentHeight };
 }
 
@@ -210,8 +250,8 @@ export function autoOptimizerAcceptedBaseResolution(
 
 /**
  * Active tests may promote 30/1 to 60/1 FPS or 30000/1001 to 60000/1001 FPS.
- * Estimated results, custom aspect ratios, and all other frame rates retain the
- * exact current numerator and denominator.
+ * Estimated results, unsupported aspect ratios, and all other frame rates
+ * retain the exact current numerator and denominator.
  */
 export function autoOptimizerRequestFrameRateCeiling(
   allowPromotion: boolean,
@@ -249,6 +289,7 @@ export function buildAutoOptimizerRequestLimits(
     input.allowPromotion,
     input.currentWidth,
     input.currentHeight,
+    input.resolutionCeiling,
   );
   const frameRate = autoOptimizerRequestFrameRateCeiling(
     input.allowPromotion,
@@ -268,23 +309,28 @@ export function buildAutoOptimizerRequestLimits(
 
 /**
  * Return every resolution and frame-rate combination OSN may benchmark for
- * this request. Preserve custom aspect ratios; their only valid result is the
- * exact current settings.
+ * this request. Custom aspects use their configured output dimensions reduced
+ * to fit the request limits, independently of the authored canvas aspect.
  */
 export function autoOptimizerHardwareCeilings(
   current: IAutoOptimizerVideoTuple,
   limits: IAutoOptimizerRequestLimits,
 ): IAutoOptimizerVideoTuple[] {
-  if (!isCanonicalAspect(current.width, current.height)) {
-    const currentWithinLimits =
-      fitsWithin(current, { width: limits.maxWidth, height: limits.maxHeight }) &&
-      frameRateAtMost(current.fpsNum, current.fpsDen, limits.maxFpsNum, limits.maxFpsDen);
-    return currentWithinLimits ? [{ ...current }] : [];
+  const maximum = { width: limits.maxWidth, height: limits.maxHeight };
+  const bounded = boundAutoOptimizerCurrentResolution(current, maximum);
+  if (!isCanonicalAspect(bounded.width, bounded.height)) {
+    const fps = frameRateAtMost(current.fpsNum, current.fpsDen, limits.maxFpsNum, limits.maxFpsDen)
+      ? current
+      : { fpsNum: limits.maxFpsNum, fpsDen: limits.maxFpsDen };
+    return [{ ...bounded, fpsNum: fps.fpsNum, fpsDen: fps.fpsDen }];
   }
 
+  const largestTier = orientedTiers(isPortrait(current.width, current.height)).find(
+    tier =>
+      fitsWithin(tier, maximum) && tier.width >= bounded.width && tier.height >= bounded.height,
+  );
   const ceiling: IAutoOptimizerVideoTuple = {
-    width: limits.maxWidth,
-    height: limits.maxHeight,
+    ...(largestTier || bounded),
     fpsNum: limits.maxFpsNum,
     fpsDen: limits.maxFpsDen,
   };
@@ -326,6 +372,8 @@ function twitchMinimumBitrateKbps(video: IAutoOptimizerVideoTuple): number {
   const longEdge = Math.max(video.width, video.height);
   const shortEdge = Math.min(video.width, video.height);
   const highFps = video.fpsNum > 30 * video.fpsDen;
+  // Require the full tested budget for the ordinary-Twitch 1440p experiment.
+  if (longEdge === 2560 && shortEdge === 1440) return AUTO_OPTIMIZER_TWITCH_1440P_BITRATE_KBPS;
   if (longEdge === 1920 && shortEdge === 1080) return highFps ? 5500 : 5000;
   if (longEdge === 1280 && shortEdge === 720) return highFps ? 4500 : 3000;
   return 0;

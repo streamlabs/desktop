@@ -35,6 +35,7 @@ function createDependencies(options: IMockOptions = {}) {
       parameters: [
         { name: 'StreamEncoder', value: 'obs_x264' },
         { name: 'UseAdvanced', value: false },
+        { name: 'EnforceBitrate', value: true },
         { name: 'VBitrate', value: 2500 },
         { name: 'Preset', value: 'veryfast' },
         { name: 'NVENCPreset2', value: 'p4' },
@@ -241,6 +242,41 @@ function result(outputs: IAutoOptimizerOutputResult[]): IAutoOptimizerResult {
   };
 }
 
+test('an accepted experimental Twitch bitrate is not clamped back to 6 Mbps at startup', async t => {
+  const harness = createDependencies();
+  await applyAutoOptimizerRecommendations(
+    result([
+      standardOutput({
+        destinations: [{ platform: 'twitch' }],
+        bitrate: 7500,
+        resolution: { width: 2560, height: 1440 },
+      }),
+    ]),
+    'direct-single',
+    harness.dependencies,
+  );
+  t.is(findParameter(harness.rawOutput, 'Streaming', 'UseAdvanced')!.value, true);
+  t.is(findParameter(harness.rawOutput, 'Streaming', 'EnforceBitrate')!.value, false);
+  t.is(harness.output.streaming.bitrate, 7500);
+});
+
+test('failed experimental Twitch apply restores service bitrate enforcement', async t => {
+  const harness = createDependencies({ corruptAppliedLiveVideo: true });
+  await t.throwsAsync(() =>
+    applyAutoOptimizerRecommendations(
+      result([
+        standardOutput({
+          destinations: [{ platform: 'twitch' }],
+          bitrate: 7500,
+        }),
+      ]),
+      'direct-single',
+      harness.dependencies,
+    ),
+  );
+  t.deepEqual(harness.rawOutput, harness.initialRawOutput);
+});
+
 test('applies and verifies one standard recommendation after flushing pending canvas edits', async t => {
   const harness = createDependencies();
   const recommendation = result([standardOutput()]);
@@ -300,6 +336,47 @@ test('applies one standard recommendation atomically to both Dual Output canvase
   t.is(harness.videoState.horizontal.fpsNum, 60);
   t.is(harness.videoState.vertical.fpsNum, 60);
   t.deepEqual(profile.outputs, recommendation.outputs);
+});
+
+test('applying either configured output aspect preserves an authored ultrawide canvas', async t => {
+  for (const [width, currentOutputWidth, currentOutputHeight, recommendedHeight] of [
+    [3340, 3340, 1440, 826],
+    [3440, 3440, 1440, 802],
+    [3440, 1920, 1080, 1080],
+  ]) {
+    const harness = createDependencies();
+    const saved = {
+      ...harness.videoState.horizontal,
+      baseWidth: width,
+      baseHeight: 1440,
+      outputWidth: currentOutputWidth,
+      outputHeight: currentOutputHeight,
+    };
+    harness.videoState.horizontal = { ...saved };
+    harness.contexts.horizontal.video = { ...saved };
+
+    const profile = await applyAutoOptimizerRecommendations(
+      result([
+        standardOutput({
+          resolution: { width: 1920, height: recommendedHeight },
+          warnings: ['ultrawide_resolution'],
+        }),
+      ]),
+      'direct-single',
+      harness.dependencies,
+    );
+
+    t.deepEqual(harness.videoState.horizontal, {
+      baseWidth: width,
+      baseHeight: 1440,
+      outputWidth: 1920,
+      outputHeight: recommendedHeight,
+      fpsNum: 60,
+      fpsDen: 1,
+    });
+    t.deepEqual(harness.contexts.horizontal.video, harness.videoState.horizontal);
+    t.deepEqual(profile.outputs[0].resolution, { width: 1920, height: recommendedHeight });
+  }
 });
 
 test('an active Twitch Enhanced Broadcasting result changes resolution and frame rate only', async t => {

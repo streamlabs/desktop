@@ -7,7 +7,9 @@ import {
 } from './types';
 import {
   autoOptimizerHardwareCeilings,
+  boundAutoOptimizerCurrentResolution,
   IAutoOptimizerRequestLimits,
+  isCanonicalAspect,
   matchesAutoOptimizerQualityPolicy,
   TAutoOptimizerQualityProfile,
 } from './resolution-policy';
@@ -146,27 +148,39 @@ export function validateAutoOptimizerRecommendation(
   if (context.additionalVideo && additionalValue) {
     const current = context.additionalVideo.current;
     const limits = context.additionalVideo.limits;
+    const paired1440p = value.width === 2560 && value.height === 1440;
+    const customPair =
+      !isCanonicalAspect(context.currentWidth || 0, context.currentHeight || 0) ||
+      !isCanonicalAspect(current.width, current.height);
+    const pairedResolution = customPair
+      ? boundAutoOptimizerCurrentResolution(current, {
+          width: limits?.maxWidth || 1080,
+          height: limits?.maxHeight || 1920,
+        })
+      : { width: paired1440p ? 1080 : value.height, height: paired1440p ? 1920 : value.width };
     if (
       additionalValue.display !== 'vertical' ||
       !isIntegerInRange(additionalValue.width, 2, 16384) ||
       additionalValue.width % 2 !== 0 ||
       !isIntegerInRange(additionalValue.height, 2, 16384) ||
       additionalValue.height % 2 !== 0 ||
-      additionalValue.width !== value.height ||
-      additionalValue.height !== value.width ||
+      (context.measurementMode === 'active' &&
+        (additionalValue.width !== pairedResolution.width ||
+          additionalValue.height !== pairedResolution.height)) ||
       !isIntegerInRange(additionalValue.fpsNum, 1, 1000000) ||
       !isIntegerInRange(additionalValue.fpsDen, 1, 1000000) ||
       additionalValue.fpsNum / additionalValue.fpsDen > 240 ||
-      additionalValue.fpsNum * value.fpsDen !== value.fpsNum * additionalValue.fpsDen ||
+      (context.measurementMode === 'active' &&
+        additionalValue.fpsNum * value.fpsDen !== value.fpsNum * additionalValue.fpsDen) ||
       (limits?.maxWidth && additionalValue.width > limits.maxWidth) ||
       (limits?.maxHeight && additionalValue.height > limits.maxHeight) ||
       (limits?.maxFpsNum &&
         additionalValue.fpsNum * (limits.maxFpsDen || 1) >
           limits.maxFpsNum * additionalValue.fpsDen) ||
       (context.measurementMode === 'estimated' &&
-        (additionalValue.width !== current.width ||
-          additionalValue.height !== current.height ||
-          additionalValue.fpsNum * current.fpsDen !== current.fpsNum * additionalValue.fpsDen))
+        (additionalValue.width > current.width ||
+          additionalValue.height > current.height ||
+          additionalValue.fpsNum * current.fpsDen > current.fpsNum * additionalValue.fpsDen))
     ) {
       return null;
     }
@@ -309,11 +323,17 @@ export function validateAutoOptimizerRecommendation(
     }
   }
 
+  const boundedCurrent = hasCompleteQualityContext
+    ? boundAutoOptimizerCurrentResolution(
+        { width: context.currentWidth!, height: context.currentHeight! },
+        { width: context.maxWidth!, height: context.maxHeight! },
+      )
+    : null;
   const exactEstimatedCurrentFallback =
     context.measurementMode === 'estimated' &&
     hasCompleteQualityContext &&
-    value.width === context.currentWidth &&
-    value.height === context.currentHeight &&
+    value.width === boundedCurrent?.width &&
+    value.height === boundedCurrent?.height &&
     value.fpsNum === context.currentFpsNum &&
     value.fpsDen === context.currentFpsDen;
   if (
