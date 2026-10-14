@@ -267,6 +267,8 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     }
 
     t.context.cacheDir = lastCacheDir;
+    // Make the cache dir available to the test helper (api-client) in this process
+    process.env.SLOBS_CACHE_DIR = lastCacheDir;
     const appArgs = options.appArgs ? options.appArgs.split(' ') : [];
     if (options.networkLogging) appArgs.push('--network-logging');
     if (options.noSync) appArgs.push('--nosync');

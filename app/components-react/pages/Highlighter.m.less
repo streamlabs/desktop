@@ -47,3 +47,12 @@
     color: var(--title);
   }
 }
+
+// The page container is a flex row: without flex-grow the page shrinks to its content's
+// width, which is zero once the Replay section is hidden (Mac)
+.highlighter-page {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}

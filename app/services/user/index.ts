@@ -1452,6 +1452,8 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
         this.platformAuthUpdated.next(linkedPlatform.type);
         result = EPlatformCallResult.Success;
       } else {
+        // Auth failed (e.g. the backend rejected the account), don't continue the
+        // login with stale auth state
         result = EPlatformCallResult.Error;
       }
     }

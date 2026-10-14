@@ -38,7 +38,7 @@ export function DeveloperSettings() {
   }
 
   function handleNamedPipeChange(key: string) {
-    return (value: boolean | string) => {
+    return (value: string) => {
       TcpServerService.actions.setSettings({ namedPipe: { ...apiValues.namedPipe, [key]: value } });
     };
   }
