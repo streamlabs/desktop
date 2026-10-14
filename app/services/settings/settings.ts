@@ -37,7 +37,6 @@ import fs from 'fs';
 import path from 'path';
 import { Services } from 'components-react/service-provider';
 import { UserService } from 'app-services';
-import { HighlighterService } from 'services/highlighter';
 import { EScaleType } from '../../../obs-api';
 
 export enum ESettingsCategory {
@@ -481,8 +480,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
 
     const hasInstalledApps =
       this.views.platformAppsState.loadedApps.filter(app => !app.unpacked).length > 0;
-    const hasHighlighter = (HighlighterService.instance?.views.highlighterVersion ?? '') !== '';
-    if (hasInstalledApps || hasHighlighter) {
+    if (hasInstalledApps) {
       categories.push(ESettingsCategory.InstalledApps);
     }
 
@@ -710,6 +708,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     if (categoryName === 'Audio') this.setAudioSettings([settingsData.pop()]);
     if (categoryName === 'Video' && forceApplyCategory && forceApplyCategory !== 'Video') return;
 
+    const wasSimpleVodEnabled = this.views.isSimpleOutputMode && this.views.vodTrackEnabled;
     const dataToSave = [];
 
     for (const subGroup of settingsData) {
@@ -719,20 +718,16 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
           valueToCurrentValue: true,
         }),
       });
-
-      if (
-        categoryName === 'Output' &&
-        subGroup.nameSubCategory === 'Untitled' &&
-        subGroup.parameters[0].value === 'Simple'
-      ) {
-        this.audioService.setSimpleTracks();
-      }
     }
 
     obs.NodeObs.OBS_settings_saveSettings(categoryName, dataToSave);
     this.isSaving = true;
     try {
       this.loadSettingsIntoStore();
+      if (categoryName === 'Output' && this.views.isSimpleOutputMode) {
+        const vodEnabled = !!this.views.vodTrackEnabled;
+        if (!vodEnabled || !wasSimpleVodEnabled) this.audioService.setSimpleTracks(vodEnabled);
+      }
     } finally {
       this.isSaving = false;
     }

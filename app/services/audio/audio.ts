@@ -246,10 +246,16 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
     });
   }
 
-  setSimpleTracks() {
-    this.views
-      .getSources()
-      .forEach(audioSource => this.setSettings(audioSource.sourceId, { audioMixers: 1 }));
+  setSimpleTracks(includeVodTrack = false) {
+    this.views.getSources().forEach(audioSource =>
+      this.setSettings(audioSource.sourceId, {
+        // Initialize the VOD mix from the live mix when it is first enabled.
+        // Retain other authored track flags, including Advanced track 6.
+        audioMixers: includeVodTrack
+          ? audioSource.audioMixers | ((audioSource.audioMixers & 1) << 1)
+          : 1,
+      }),
+    );
   }
 
   setSettings(sourceId: string, patch: Partial<IAudioSource>) {
