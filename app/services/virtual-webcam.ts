@@ -115,17 +115,25 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
   private handleUnknownVirtualCamError(error: unknown) {
     console.error('Caught OBS_service_startVirtualCam error:', error);
     let errorMessage = '';
-    const darwinVersion = os.release().split('.')[0]; // Extract the major version number
-    const isMacOS15OrGreater = Number(darwinVersion) >= 15;
-    if (isMacOS15OrGreater) {
-      errorMessage = $t(
-        'Unable to start virtual camera.\n\nYou may need to enable permissions. To do this, go to System Settings → General → Login Items & Extensions → Camera Extensions.',
-      );
-    } else {
-      errorMessage = $t(
-        'Unable to start virtual camera.\n\nYou may need to enable permissions. To do this, go to System Settings → Privacy & Security → Security.',
-      );
-    }
+    byOS({
+      [OS.Windows]: () => {
+        errorMessage = $t('Unable to start virtual camera.');
+      },
+      [OS.Mac]: () => {
+        const darwinVersion = os.release().split('.')[0]; // Extract the major version number
+        const isMacOS15OrGreater = Number(darwinVersion) >= 15;
+        if (isMacOS15OrGreater) {
+          errorMessage = $t(
+            'Unable to start virtual camera.\n\nYou may need to enable permissions. To do this, go to System Settings → General → Login Items & Extensions → Camera Extensions.',
+          );
+        } else {
+          errorMessage = $t(
+            'Unable to start virtual camera.\n\nYou may need to enable permissions. To do this, go to System Settings → Privacy & Security → Security.',
+          );
+        }
+      },
+    });
+
     remote.dialog.showErrorBox($t('Virtual Webcam'), errorMessage);
   }
 
