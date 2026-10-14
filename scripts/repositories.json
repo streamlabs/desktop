@@ -49,6 +49,14 @@
       "osx": true
     },
     {
+      "name": "node-secure-pipe",
+      "url": "https://obs-studio-deployment.s3-us-west-2.amazonaws.com/",
+      "archive": "node-secure-pipe-[VERSION]-[OS].tar.gz",
+      "version": "0.1.0",
+      "win64": true,
+      "osx": false
+    },
+    {
       "name": "game_overlay",
       "url": "https://obs-studio-deployment.s3-us-west-2.amazonaws.com/",
       "archive": "game-overlay-[VERSION]-[OS].tar.gz",
