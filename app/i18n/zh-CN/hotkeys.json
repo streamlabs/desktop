@@ -1,6 +1,11 @@
 {
   "Start Streaming": "开始直播",
   "Stop Streaming": "停止直播",
+  "Screenshot Output": "Screenshot Output",
+  "Screenshot saved as %{filename}": "Screenshot saved as %{filename}",
+  "Could not save screenshot": "Could not save screenshot",
+  "Screenshots need a newer version of the Streamlabs backend.": "Screenshots need a newer version of the Streamlabs backend.",
+  "Set a recording folder in Settings > Output before taking a screenshot.": "Set a recording folder in Settings > Output before taking a screenshot.",
   "Start Recording": "开始录制",
   "Stop Recording": "停止录制",
   "Switch to scene": "切换至场景",

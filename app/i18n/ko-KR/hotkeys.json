@@ -1,6 +1,11 @@
 {
   "Start Streaming": "스트리밍 시작",
   "Stop Streaming": "스트리밍 중지",
+  "Screenshot Output": "Screenshot Output",
+  "Screenshot saved as %{filename}": "Screenshot saved as %{filename}",
+  "Could not save screenshot": "Could not save screenshot",
+  "Screenshots need a newer version of the Streamlabs backend.": "Screenshots need a newer version of the Streamlabs backend.",
+  "Set a recording folder in Settings > Output before taking a screenshot.": "Set a recording folder in Settings > Output before taking a screenshot.",
   "Start Recording": "녹화 시작",
   "Stop Recording": "녹화 중지",
   "Switch to scene": "장면으로 전환",
