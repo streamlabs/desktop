@@ -8,6 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import { getDefined } from '../../../util/properties-type-guards';
 import { useVuex } from 'components-react/hooks';
+import Tooltip from 'components-react/shared/Tooltip';
 import { useRealmObject } from 'components-react/hooks/realm';
 
 export function GeneralSettings() {
@@ -42,41 +43,26 @@ function LanguageSettings() {
 function ExtraSettings() {
   const {
     UserService,
-    StreamingService,
-    StreamSettingsService,
     CustomizationService,
     AppService,
     OnboardingService,
+    OnboardingV2Service,
     WindowsService,
     StreamlabelsService,
     RecordingModeService,
-    SettingsService,
+    ObsImporterService,
   } = Services;
   const isLoggedIn = UserService.isLoggedIn;
-  const isTwitch = isLoggedIn && getDefined(UserService.platform).type === 'twitch';
   const isFacebook = isLoggedIn && getDefined(UserService.platform).type === 'facebook';
   const isYoutube = isLoggedIn && getDefined(UserService.platform).type === 'youtube';
-  const protectedMode = StreamSettingsService.state.protectedModeEnabled;
   const disableHAFilePath = path.join(AppService.appDataDirectory, 'HADisable');
   const [disableHA, setDisableHA] = useState(() => fs.existsSync(disableHAFilePath));
-
-  // TODO: unused fields
-  const { isRecordingOrStreaming, recordingMode, isSimpleOutputMode } = useVuex(() => ({
-    isRecordingOrStreaming: StreamingService.isStreaming || StreamingService.isRecording,
+  const [obsInstalled] = useState(() => ObsImporterService.views.isOBSinstalled());
+  const { recordingMode } = useVuex(() => ({
     recordingMode: RecordingModeService.views.isRecordingModeEnabled,
-    isSimpleOutputMode: SettingsService.views.isSimpleOutputMode,
   }));
 
   const updateStreamInfoOnLive = useRealmObject(CustomizationService.state).updateStreamInfoOnLive;
-
-  // HDR Settings are not compliant with the auto-optimizer
-  // temporarily disable auto config until migrate to new api
-  const canRunOptimizer = false;
-  // !SettingsService.views.hasHDRSettings &&
-  // isTwitch &&
-  // !isRecordingOrStreaming &&
-  // protectedMode &&
-  // isSimpleOutputMode;
 
   function restartStreamlabelsSession() {
     StreamlabelsService.restartSession().then(result => {
@@ -86,20 +72,34 @@ function ExtraSettings() {
     });
   }
 
+  // TODO: HDR Settings are not compliant with the auto-optimizer. Disable until we migrate to new API.
+  // const { StreamingService, StreamSettingsService, SettingsService } = Services;
+  // const isTwitch = isLoggedIn && getDefined(UserService.platform).type === 'twitch';
+  // const protectedMode = StreamSettingsService.state.protectedModeEnabled;
+  // const { isRecordingOrStreaming, isSimpleOutputMode } = useVuex(() => ({
+  //   isRecordingOrStreaming: StreamingService.isStreaming || StreamingService.isRecording,
+  //   isSimpleOutputMode: SettingsService.views.isSimpleOutputMode,
+  // }));
+  // const canRunOptimizer =
+  //   !SettingsService.views.hasHDRSettings &&
+  //   isTwitch &&
+  //   !isRecordingOrStreaming &&
+  //   protectedMode &&
+  //   isSimpleOutputMode;
+  const canRunOptimizer = false;
+
   function runAutoOptimizer() {
     OnboardingService.actions.start({ isOptimize: true });
     WindowsService.actions.closeChildWindow();
   }
 
   function configureDefaults() {
-    OnboardingService.actions.start({ isHardware: true });
+    OnboardingV2Service.actions.showDevices();
     WindowsService.actions.closeChildWindow();
   }
 
   function importFromObs() {
-    // TODO: there's no check that OBS is installed like in Onboarding
-    OnboardingService.actions.setImport('obs');
-    OnboardingService.actions.start({ isImport: true });
+    OnboardingV2Service.actions.showObsImport();
     WindowsService.actions.closeChildWindow();
   }
 
@@ -166,9 +166,15 @@ function ExtraSettings() {
           )}
 
           <div className="input-container">
-            <button className="button button--default" onClick={importFromObs}>
-              {$t('OBS Import')}
-            </button>
+            <Tooltip title={$t('OBS is not installed')} disabled={obsInstalled}>
+              <button
+                className="button button--default"
+                disabled={!obsInstalled}
+                onClick={importFromObs}
+              >
+                {$t('OBS Import')}
+              </button>
+            </Tooltip>
           </div>
         </div>
       </ObsSettingsSection>

@@ -284,6 +284,29 @@ export class OnboardingV2Service extends Service {
     };
   }
 
+  /**
+   * Per-step handlers for the "Continue" button, resolved from navigation modifiers like
+   * `determineNextStep`. Returning `false` replaces the default advance to the next step.
+   */
+  private continueFuncs: PartialRec<EOnboardingSteps, (modifiers: TModifiers) => void | false> = {
+    [EOnboardingSteps.ConnectMore]: modifiers => {
+      // With only a partial SLID auth the user has no platform to continue with, so
+      // "continue" discards that auth and returns to the Login step to switch accounts
+      if (modifiers.isPartialSLAuth) {
+        this.userService.actions.finishSLAuth();
+        this.stepBack();
+        return false;
+      }
+    },
+    [EOnboardingSteps.Devices]: () => {
+      // The standalone devices step (from settings) only configures defaults, so only
+      // the full flow adds the webcam to the scene
+      if (!this.singletonPath) {
+        this.recordingModeService.actions.addRecordingWebcam();
+      }
+    },
+  };
+
   showOnboardingIfNecessary() {
     if (Utils.env.SLD_TESTS_SKIP_ONBOARDING) {
       this.appService.setOnboarded(true);
@@ -334,6 +357,22 @@ export class OnboardingV2Service extends Service {
       startingStep: { name: EOnboardingSteps.OBSImport, isSkippable: false },
       isSingleton: true,
     });
+  }
+
+  showDevices() {
+    this.initalizeView({
+      startingStep: { name: EOnboardingSteps.Devices, isSkippable: false },
+      isSingleton: true,
+    });
+  }
+
+  /**
+   * Advances from the "Continue" button. Unlike `takeStep`, runs the current step's
+   * continue func first, which can return `false` to replace the default advance.
+   */
+  continueStep() {
+    if (this.continueFuncs[this.currentStepName]?.(this.modifiers) === false) return;
+    this.takeStep();
   }
 
   takeStep(skipped?: boolean) {

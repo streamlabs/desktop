@@ -264,7 +264,7 @@ export default function Main() {
       const defaultWidth = Math.max(minDockWidth, appRect.width * 0.2);
       setDockWidth(defaultWidth);
     }
-  }, [uiReady]);
+  }, [uiReady, minDockWidth]);
 
   useEffect(() => {
     setCompactView(!!mainMiddleEl.current && mainMiddleEl.current.clientWidth < 1200);

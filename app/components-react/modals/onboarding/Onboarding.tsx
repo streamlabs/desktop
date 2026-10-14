@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect, useMemo } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Button, Modal } from 'antd';
 import * as remote from '@electron/remote';
 import * as steps from './steps';
@@ -33,7 +33,7 @@ const STEPS_MAP = {
 };
 
 export default function Onboarding() {
-  const { OnboardingV2Service, RecordingModeService, UserService } = Services;
+  const { OnboardingV2Service, UserService } = Services;
 
   const [processing, setProcessing] = useState(false);
 
@@ -45,23 +45,6 @@ export default function Onboarding() {
     isPartialSLAuth: !!UserService.views.isPartialSLAuth,
   }));
 
-  const continueFuncs: PartialRec<EOnboardingSteps, () => void | false> = useMemo(
-    () => ({
-      [EOnboardingSteps.ConnectMore]: () => {
-        // With only a partial SLID auth the user has no platform to continue with, so
-        // "continue" discards that auth and returns to the Login step to switch accounts
-        if (!UserService.views.isPartialSLAuth) return;
-        UserService.actions.finishSLAuth();
-        OnboardingV2Service.actions.stepBack();
-        return false;
-      },
-      [EOnboardingSteps.Devices]: () => {
-        RecordingModeService.actions.addRecordingWebcam();
-      },
-    }),
-    [],
-  );
-
   useEffect(() => {
     OnboardingV2Service.actions.showOnboardingIfNecessary();
   }, []);
@@ -72,9 +55,8 @@ export default function Onboarding() {
   }
 
   function cont() {
-    // A continue func can return `false` to replace the default advance to the next step
-    if (continueFuncs[currentStep.name]?.() === false) return;
-    takeStep();
+    if (processing) return;
+    OnboardingV2Service.actions.continueStep();
   }
 
   function takeStep(skipped?: boolean) {
@@ -116,16 +98,18 @@ export default function Onboarding() {
               {$t('Back')}
             </Button>
           )}
-          {currentStep.isSkippable && (
-            <Button type="link" style={{ marginLeft: 'auto' }} onClick={() => takeStep(true)}>
-              {$t('Skip')}
-            </Button>
-          )}
-          {!NO_BUTTON_STEPS.has(currentStep.name) && (
-            <Button type="primary" onClick={cont}>
-              {continueText}
-            </Button>
-          )}
+          <div style={{ display: 'flex', marginLeft: 'auto' }}>
+            {currentStep.isSkippable && (
+              <Button type="link" onClick={() => takeStep(true)}>
+                {$t('Skip')}
+              </Button>
+            )}
+            {!NO_BUTTON_STEPS.has(currentStep.name) && (
+              <Button type="primary" onClick={cont}>
+                {continueText}
+              </Button>
+            )}
+          </div>
         </div>
       }
     >
