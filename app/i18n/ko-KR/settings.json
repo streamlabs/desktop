@@ -226,6 +226,7 @@
   "Rate Control": "속도 제어",
   "Enforce streaming service encoder settings": "스트리밍 서비스 인코더 설정 강제",
   "Twitch VOD": "Twitch VOD",
+  "Twitch VOD Track (Uses Track 2)": "Twitch VOD Track (Uses Track 2)",
   "Use authentication": "인증 사용",
   "Username": "사용자 이름",
   "Password": "비밀번호",
