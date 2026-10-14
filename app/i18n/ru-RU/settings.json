@@ -226,6 +226,7 @@
   "Rate Control": "Управление скоростью",
   "Enforce streaming service encoder settings": "Принудительно использовать настройки кодировщика службы потоковой передачи",
   "Twitch VOD": "VOD в Twitch",
+  "Twitch VOD Track (Uses Track 2)": "Twitch VOD Track (Uses Track 2)",
   "Use authentication": "Использовать аутентификацию",
   "Username": "Имя пользователя",
   "Password": "Пароль",
