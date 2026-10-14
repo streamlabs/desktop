@@ -183,6 +183,59 @@ test('a bitrate write failure rolls back the bitrate and both scaled outputs', a
   }
 });
 
+test('missing Go Live settings skip output limits without flushing pending video edits', async t => {
+  t.true(await focusWindow('worker'));
+  try {
+    const results = (await t.context.app.client.executeAsync(done => {
+      const service = (window as any).servicesManager.getResource('StreamSettingsService');
+      const apply = Object.getPrototypeOf(service).applyStreamOutputLimits;
+      Promise.all(
+        ([undefined, null] as (undefined | null)[]).map(goLiveSettings => {
+          const calls: string[] = [];
+          const fixture = {
+            state: { protectedModeEnabled: true, goLiveSettings },
+            userService: { isLoggedIn: true },
+            videoSettingsService: {
+              flushPendingCanvasSettings() {
+                calls.push('flush');
+                return Promise.resolve();
+              },
+              limitStreamOutputs() {
+                calls.push('limit');
+                return Promise.resolve(true);
+              },
+            },
+            streamingService: { views: { isDualOutputMode: false } },
+            notificationsService: {
+              removeByCode: () => calls.push('remove-notification'),
+              push: () => calls.push('notify'),
+            },
+          };
+          const result = { savedSettings: String(goLiveSettings), calls };
+          return apply.call(fixture).then(
+            () => result,
+            (error: Error) => ({ ...result, error: error.message }),
+          );
+        }),
+      ).then(done);
+    })) as { savedSettings: string; calls: string[]; error?: string }[];
+    t.deepEqual(
+      results.map(result => result.savedSettings),
+      ['undefined', 'null'],
+    );
+    for (const result of results) {
+      t.falsy(result.error, result.savedSettings);
+      t.deepEqual(
+        result.calls,
+        [],
+        `${result.savedSettings} must not touch settings or notifications`,
+      );
+    }
+  } finally {
+    await focusMain();
+  }
+});
+
 test('stream output limit notifications replace earlier variants without clearing unrelated messages', async t => {
   t.true(await focusWindow('worker'));
   try {

@@ -229,7 +229,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
   /** Enforce the stream-output ceiling independently of the optimizer prompt flag. */
   async applyStreamOutputLimits(settings = this.state.goLiveSettings): Promise<void> {
     // Protected-mode selections must not affect an unprotected/legacy stream.
-    if (!this.state.protectedModeEnabled || !this.userService.isLoggedIn) return;
+    if (!this.state.protectedModeEnabled || !this.userService.isLoggedIn || !settings) return;
     await this.videoSettingsService.flushPendingCanvasSettings();
     const platforms = selectedStreamPlatforms(settings);
     const changed = await this.videoSettingsService.limitStreamOutputs(
