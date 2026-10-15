@@ -89,7 +89,7 @@ You can open dev tools by clicking the `</>` button on the sidebar.
 In the development environment, the titlebar of the main window will
 light up red when an exception occurs in any window.
 
-Our app is comprised of several windows, which are essential separate
+Our app is comprised of several windows, which are essentially separate
 copies of the same Javascript app, which are running different pieces
 of the code and communicating via Electron IPC.
 
