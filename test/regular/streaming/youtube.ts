@@ -44,8 +44,6 @@ async function logInYouTubeEnabledAccount(
   retries: number = 5,
   ultra: boolean = false,
 ): Promise<boolean | void> {
-  // only exclude multistream accounts on the first attempt to expand the user pool on later attempts
-  const multistream = retries === 5 ? false : undefined;
   if (retries === 0) {
     t.fail(
       'No YouTube accounts with live streaming enabled are currently available in the user pool',
@@ -55,7 +53,9 @@ async function logInYouTubeEnabledAccount(
 
   await logIn('youtube', {
     prime: ultra,
-    multistream: ultra || multistream,
+    // YouTube Dual Stream needs Ultra, but does not require other linked platforms.
+    // Omit this filter on retries; an explicit undefined is treated as false by the pool helper.
+    ...(retries === 5 && !ultra ? { multistream: false } : {}),
     streamingIsDisabled: false,
     notStreamable: false,
   });

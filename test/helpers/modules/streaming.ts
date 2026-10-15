@@ -7,7 +7,10 @@ import { getApiClient } from '../api-client';
 import {
   click,
   clickButton,
+  clickWhenDisplayed,
   focusChild,
+  focusMain,
+  getClient,
   isDisplayed,
   selectButton,
   useChildWindow,
@@ -90,13 +93,38 @@ export async function submit() {
   const submitButton = await selectButton('Confirm & Go Live');
   await submitButton.waitForEnabled({ timeout: 10000 });
   await submitButton.click();
+
+  // A fresh account is offered Auto Optimizer after validation. These tests use their
+  // own output settings, so continue through its real Skip action when it appears.
+  // Also return promptly for validation messages, whose toasts are short-lived.
+  let outcome = '';
+  await getClient().waitUntil(
+    async () => {
+      outcome = await getClient().execute(() => {
+        if (document.querySelector('[data-testid="auto-optimizer-flow"]')) return 'optimizer';
+        if (document.querySelector('.ant-message-notice, .ant-modal-confirm')) return 'validation';
+        if (!document.querySelector('[data-name="confirmGoLiveBtn"]')) return 'submitted';
+        return '';
+      });
+      return !!outcome;
+    },
+    { timeout: 10000, timeoutMsg: 'Go Live did not advance or show a validation result' },
+  );
+
+  if (outcome === 'optimizer') {
+    await clickButton('Skip');
+    await waitForDisplayed('[data-testid="auto-optimizer-flow"]', {
+      reverse: true,
+      timeout: 10000,
+    });
+  }
 }
 
 export async function waitForStreamStart() {
   // check we're streaming
   // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
-    await (await selectButton('End Stream')).waitForExist({ timeout: 20 * 1000 });
+    await (await selectButton('End Stream')).waitForClickable({ timeout: 20 * 1000 });
   });
 }
 
@@ -150,6 +178,18 @@ export async function startRecording() {
 export async function stopRecording() {
   await click('.record-button');
   await waitForDisplayed('.record-button:not(.active)', { timeout: 15000 });
+}
+
+/**
+ * Open recording history once the completion notice reaches the notification queue.
+ */
+export async function openRecordingHistoryFromNotification() {
+  await focusMain();
+  // Audio and replay-buffer notices can each occupy the notification area for eight seconds.
+  await clickWhenDisplayed('span=A new Recording has been completed. Click for more info', {
+    timeout: 20000,
+  });
+  await waitForDisplayed('h1=Recordings', { timeout: 10000 });
 }
 
 export async function waitForSettingsWindowLoaded() {

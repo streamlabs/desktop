@@ -273,7 +273,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     if (options.networkLogging) appArgs.push('--network-logging');
     if (options.noSync) appArgs.push('--nosync');
 
-    killChromedriverOnPort(CHROMEDRIVER_PORT);
+    await killChromedriverOnPort(CHROMEDRIVER_PORT);
     await killElectronInstances();
 
     app = t.context.app = new Application({

@@ -21,7 +21,7 @@ export function useForm(name?: string) {
   async function getInputElements(): Promise<WebdriverIO.ElementArray> {
     // wait for form appear
     if (formSelector !== DEFAULT_FORM_SELECTOR) {
-      (await client.$(formSelector)).waitForExist({ timeout: 15000 });
+      await (await client.$(formSelector)).waitForExist({ timeout: 15000 });
     }
 
     const $inputs = await client.$$(`${formSelector} [data-role=input]`);
@@ -87,7 +87,7 @@ export function useForm(name?: string) {
         filledFields.push(name);
         if (filledFields.length === Object.keys(formData).length) stopTraverse();
       },
-      true,
+      input => input.name in formData,
       debounce,
     );
 
@@ -114,11 +114,14 @@ export function useForm(name?: string) {
    * Returns an array of callback results
    *
    * If the callback changes visibility of some fields than
-   * `refetchControllersAfterEachStep` flag should be set to `true`
+   * `refetchControllersAfterEachStep` should be true, or a predicate identifying
+   * the inputs that can change the form. Untouched inputs do not need a refetch.
    */
   async function traverseForm<T>(
     cb: (inputController: BaseInputController<any>, stopTraverse: Function) => Promise<T>,
-    refetchControllersAfterEachStep = false,
+    refetchControllersAfterEachStep:
+      | boolean
+      | ((input: BaseInputController<any>) => boolean) = false,
     debounce = 100,
   ): Promise<T[]> {
     let controllers = await getInputControllers();
@@ -138,10 +141,14 @@ export function useForm(name?: string) {
       results.push(await cb(inputController, stopTraverse));
       if (isTraverseStopped) break;
 
-      if (refetchControllersAfterEachStep) {
+      const shouldRefetch =
+        typeof refetchControllersAfterEachStep === 'function'
+          ? refetchControllersAfterEachStep(inputController)
+          : refetchControllersAfterEachStep;
+      if (shouldRefetch) {
         await sleep(debounce);
         controllers = await getInputControllers();
-        ind = 0;
+        ind = -1;
       }
     }
 

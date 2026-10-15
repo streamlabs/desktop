@@ -1,7 +1,12 @@
 import { ExecutionContext } from 'ava';
 import { WidgetsService } from '../../app/services/widgets';
 import { getApiClient } from '../helpers/api-client';
-import { clickIfDisplayed, focusMain, waitForDisplayed } from '../helpers/modules/core';
+import {
+  clickButton,
+  clickIfDisplayed,
+  focusMain,
+  waitForDisplayed,
+} from '../helpers/modules/core';
 import { useForm } from '../helpers/modules/forms';
 import { advancePastOnboardingLogin } from '../helpers/modules/onboarding';
 import { sceneExisting, switchCollection } from '../helpers/modules/scenes';
@@ -44,10 +49,13 @@ test('OBS Importer', async t => {
   await clickIfDisplayed('button=Skip');
 
   // import from OBS
-  await clickIfDisplayed('button=Start Import');
-  await clickIfDisplayed('button=Skip');
+  await waitForDisplayed('button=Start Import');
+  await clickButton('Start Import');
+  await waitForDisplayed('div[data-testid=choose-free-plan-btn]', { timeout: 60000 });
+  await clickIfDisplayed('div[data-testid=choose-free-plan-btn]');
   await waitForDisplayed('h1=Set Up Your Mic & Webcam');
-  await clickIfDisplayed('button=Skip');
+  await clickButton('Skip');
+  await waitForDisplayed('h1=Set Up Your Mic & Webcam', { reverse: true });
 
   await waitForDisplayed('[data-name=SceneSelector]');
 

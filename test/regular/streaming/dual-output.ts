@@ -232,9 +232,9 @@ test(
 
     // Studio Mode
     await focusMain();
-    await (await app.client.$('[data-testid=nav-menu] .icon-studio-mode-3')).click();
+    await (await app.client.$('button[data-name=studio-mode-toggle]')).click();
     t.true(
-      await isDisplayed('span=Dual Output Enabled'),
+      await isDisplayed('span=Dual Output Enabled', { timeout: 5000 }),
       'Cannot toggle Studio Mode in Dual Output Mode.',
     );
     await clickWhenDisplayed('.ant-modal-close');
@@ -242,6 +242,7 @@ test(
     // Selective Recording
     await (await app.client.$('.icon-smart-record')).click();
     await waitForDisplayed('.icon-smart-record.active');
+    await waitForDisplayed('#vertical-display', { reverse: true, timeout: 10000 });
     t.false(
       await isDisplayed('#vertical-display'),
       'Toggling selective recording back hides the vertical display in dual output mode',

@@ -167,6 +167,10 @@ test('AI Highlighter opens the import dialog after the stream', withUser('twitch
   await prepareToGoLive();
   await clickGoLive();
   await waitForSettingsWindowLoaded();
+  // Selecting a different category makes Twitch store its numeric ID rather than
+  // the category name loaded from the account. Exercise that path on every run.
+  await fillForm({ twitchGame: 'DOOM' });
+  await waitForSettingsWindowLoaded();
   await fillForm({
     title: 'SLOBS Test Stream',
     twitchGame: 'Fortnite',

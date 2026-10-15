@@ -110,7 +110,7 @@ test('Migrate the twitch account to the protected mode', async t => {
   });
 
   await restartApp(t); // restarting the app should call migration again
-  await tryToGoLive({
+  await goLive({
     title: 'SLOBS Test Stream',
     twitchGame: 'Fortnite',
   });

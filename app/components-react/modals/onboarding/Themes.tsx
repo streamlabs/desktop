@@ -82,12 +82,14 @@ export function Themes(p: IOnboardingStepProps) {
 
   useEffect(() => {
     if (themeMetadata.current) return;
+    let mounted = true;
     Promise.all(
       idList.map(id => {
         return OnboardingService.actions.return.fetchThemeData(id);
       }),
     )
       .then(metadata => {
+        if (!mounted) return;
         themeMetadata.current = {};
         metadata.forEach(({ data }) => {
           themeMetadata.current = { ...themeMetadata.current, [data.id]: data };
@@ -98,8 +100,11 @@ export function Themes(p: IOnboardingStepProps) {
         });
       })
       .finally(() => {
-        setLoading(false);
+        if (mounted) setLoading(false);
       });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
