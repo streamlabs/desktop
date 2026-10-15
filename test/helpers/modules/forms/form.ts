@@ -188,7 +188,7 @@ export function useForm(name?: string) {
     expectedFormData: TFormData,
     indexKey = 'name',
     valueKey = 'displayValue',
-  ) {
+  ): Promise<boolean> {
     const actualFormData = await readFields(indexKey, valueKey);
     const expectedFieldNames = Object.keys(expectedFormData);
     for (const fieldName of expectedFieldNames) {
@@ -210,6 +210,12 @@ export function useForm(name?: string) {
         throw new Error(`Expected field "${fieldName}" to be ${expected} but got ${actual}`);
       }
     }
+
+    // Return true if all assertions pass so that the caller does not receive `undefined`.
+    // This is needed for cases where the return value must exactly be `true` for verification,
+    // like with `t.true`. `t.true` will fail if the return value is `undefined` because it is not
+    // an exact match.
+    return true;
   }
 
   function stringifyValue(value: unknown) {
@@ -300,25 +306,25 @@ export async function assertFormContains(
   messageOrIndexKey?: string,
   indexKeyOrValueKey?: string,
   valueKey?: string,
-): Promise<unknown>;
+): Promise<boolean>;
 export async function assertFormContains(
   formName: string,
   formData: TFormData,
   messageOrIndexKey?: string,
   indexKeyOrValueKey?: string,
   valueKey?: string,
-): Promise<unknown>;
-export async function assertFormContains(...args: any[]): Promise<unknown> {
+): Promise<boolean>;
+export async function assertFormContains(...args: any[]): Promise<boolean> {
   if (typeof args[0] === 'string') {
     const [formName, formData, ...rest] = args;
     // TODO: fake hook
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useForm(formName).assertFormContains(formData, ...rest);
+    return await useForm(formName).assertFormContains(formData, ...rest);
   } else {
     const [formData, ...rest] = args;
     // TODO: fake hook
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useForm().assertFormContains(formData, ...rest);
+    return await useForm().assertFormContains(formData, ...rest);
   }
 }
 
