@@ -1,4 +1,6 @@
 import os from 'os';
+import path from 'path';
+import fs from 'fs';
 import crypto from 'crypto';
 import { PersistentStatefulService, Inject, mutation, ViewHandler } from 'services/core';
 import {
@@ -19,11 +21,22 @@ const net = require('net');
 
 const LOCAL_HOST_NAME = '127.0.0.1';
 const WILDCARD_HOST_NAME = '0.0.0.0';
+const SOCKET_NAME = 'slobs.sock';
+
+function getUserDataPath(): string {
+  if (process.env.SLOBS_CACHE_DIR) {
+    return path.join(process.env.SLOBS_CACHE_DIR, 'slobs-client');
+  }
+  const appData =
+    process.platform === 'win32'
+      ? process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming')
+      : path.join(os.homedir(), 'Library', 'Application Support');
+  return path.join(appData, 'slobs-client');
+}
 
 export interface ITcpServersSettings {
   token: string;
   namedPipe: {
-    enabled: boolean;
     pipeName: string;
   };
   websockets: {
@@ -59,9 +72,12 @@ interface IServer {
     on(eventName: string, cb: (event: any) => any): any;
   };
   close(): void;
+  /**
+   * Optional gate for new connections. Return false to reject the connection;
+   * the server is responsible for destroying the socket.
+   */
+  acceptConnection?(socket: any): boolean;
 }
-
-const TCP_PORT = 28194;
 
 class TcpServerServiceViews extends ViewHandler<ITcpServersSettings> {
   get settings() {
@@ -71,16 +87,9 @@ class TcpServerServiceViews extends ViewHandler<ITcpServersSettings> {
   get metadata() {
     return {
       namedPipe: {
-        enabled: {
-          type: 'checkbox',
-          label: $t('Enabled'),
-          children: {
-            pipeName: {
-              type: 'text',
-              label: $t('Pipe Name'),
-              displayed: this.state.namedPipe.enabled,
-            },
-          },
+        pipeName: {
+          type: 'text',
+          label: $t('Pipe Name'),
         },
       },
       websockets: {
@@ -114,7 +123,6 @@ export class TcpServerService extends PersistentStatefulService<ITcpServersSetti
   static defaultState: ITcpServersSettings = {
     token: '',
     namedPipe: {
-      enabled: true,
       pipeName: 'slobs',
     },
     websockets: {
@@ -123,6 +131,10 @@ export class TcpServerService extends PersistentStatefulService<ITcpServersSetti
       allowRemote: false,
     },
   };
+
+  static filter(state: ITcpServersSettings) {
+    return { ...state, namedPipe: { pipeName: state.namedPipe.pipeName } };
+  }
 
   @Inject() private jsonrpcService: JsonrpcService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
@@ -149,11 +161,10 @@ export class TcpServerService extends PersistentStatefulService<ITcpServersSetti
   }
 
   listen() {
-    this.listenConnections(this.createTcpServer());
-
-    // Named pipe is windows only
-    if (this.state.namedPipe.enabled && getOS() === OS.Windows) {
+    if (getOS() === OS.Windows) {
       this.listenConnections(this.createNamedPipeServer());
+    } else {
+      this.listenConnections(this.createUnixSocketServer());
     }
 
     if (this.state.websockets.enabled) this.listenConnections(this.createWebsoketsServer());
@@ -257,7 +268,10 @@ export class TcpServerService extends PersistentStatefulService<ITcpServersSetti
   private listenConnections(server: IServer) {
     this.servers.push(server);
 
-    server.nativeServer.on('connection', socket => this.onConnectionHandler(socket, server));
+    server.nativeServer.on('connection', socket => {
+      if (server.acceptConnection && !server.acceptConnection(socket)) return;
+      this.onConnectionHandler(socket, server);
+    });
 
     server.nativeServer.on('error', error => {
       throw error;
@@ -266,25 +280,68 @@ export class TcpServerService extends PersistentStatefulService<ITcpServersSetti
 
   private createNamedPipeServer(): IServer {
     const settings = this.state.namedPipe;
+    const pipePath = `\\\\.\\pipe\\${settings.pipeName}`;
     const server = net.createServer();
-    server.listen(`\\\\.\\pipe\\${settings.pipeName}`);
+    let acceptingConnections = false;
+
+    server.on('listening', () => {
+      try {
+        const { restrictPipeToOwner } = require('node-secure-pipe');
+        restrictPipeToOwner(pipePath);
+      } catch (e: unknown) {
+        console.error('Failed to restrict named pipe to owner, closing pipe server', e);
+        server.close();
+        return;
+      }
+
+      setTimeout(() => setImmediate(() => (acceptingConnections = true)), 100);
+    });
+
+    server.listen(pipePath);
     return {
       type: 'namedPipe',
       nativeServer: server,
       close() {
         server.close();
       },
+      acceptConnection(socket: { destroy(): void }) {
+        if (!acceptingConnections) socket.destroy();
+        return acceptingConnections;
+      },
     };
   }
 
-  private createTcpServer(): IServer {
+  private createUnixSocketServer(): IServer {
+    const socketPath = path.join(getUserDataPath(), SOCKET_NAME);
+
+    // Clean up stale socket file from a prior crash
+    try {
+      if (fs.existsSync(socketPath)) fs.unlinkSync(socketPath);
+    } catch (e: unknown) {
+      console.warn('Failed to remove stale socket file', e);
+    }
+
     const server = net.createServer();
-    server.listen(TCP_PORT, LOCAL_HOST_NAME);
+    const previousUmask = process.umask(0o177);
+    try {
+      server.listen(socketPath);
+    } finally {
+      process.umask(previousUmask);
+    }
+
+    // Restrict to owner only — prevents other OS accounts from connecting
+    fs.chmodSync(socketPath, 0o600);
+
     return {
-      type: 'tcp',
+      type: 'unixSocket',
       nativeServer: server,
       close() {
         server.close();
+        try {
+          if (fs.existsSync(socketPath)) fs.unlinkSync(socketPath);
+        } catch (e: unknown) {
+          console.warn('Failed to clean up socket file', e);
+        }
       },
     };
   }
@@ -320,9 +377,10 @@ export class TcpServerService extends PersistentStatefulService<ITcpServersSetti
     this.clients[id] = client;
     this.log(`Id assigned ${id}`);
 
-    // manual authorization for local clients is not required except for websokets
-    // disabling authorization for local websoket clients introduces a breach where any website can establish connection to the localhost
-    if (server.type === 'namedPipe' || (server.type === 'tcp' && this.isLocalClient(client))) {
+    // Named pipes (Windows) and Unix sockets (macOS) are protected by OS-level
+    // file permissions, so only the owning user can connect. Auto-authorize them.
+    // Websocket clients must authenticate with a token.
+    if (server.type === 'namedPipe' || server.type === 'unixSocket') {
       this.authorizeClient(client);
     }
 
@@ -353,13 +411,6 @@ export class TcpServerService extends PersistentStatefulService<ITcpServersSetti
 
   private authorizeClient(client: IClient) {
     client.isAuthorized = true;
-  }
-
-  private isLocalClient(client: IClient) {
-    const localAddresses = this.getIPAddresses()
-      .filter(addressDescr => addressDescr.internal)
-      .map(addressDescr => addressDescr.address);
-    return localAddresses.includes((client.socket as any).remoteAddress);
   }
 
   private onRequestHandler(client: IClient, data: string) {
