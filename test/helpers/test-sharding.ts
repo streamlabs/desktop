@@ -1,4 +1,4 @@
-/** Assign every test to one CI chunk, including tests without recorded timings. */
+/** Assign tests using the same immutable timing snapshot on every CI chunk. */
 export function testBelongsToChunk(
   testName: string,
   timings: Record<string, number>,

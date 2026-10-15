@@ -17,6 +17,7 @@ type TProps = TSlobsInputProps<
     platform: TPlatform;
     layout?: TInputLayout;
     description?: string | React.ReactNode;
+    onGameSelect?: (game: { id: string; name: string }) => void;
   },
   string
 >;
@@ -138,6 +139,7 @@ export default function GameSelector(p: TProps) {
     }
 
     if (!game) return;
+    p.onGameSelect?.({ id: game.value, name: game.label });
     setGames([game]);
   }
 

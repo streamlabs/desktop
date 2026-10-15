@@ -72,6 +72,10 @@ jobs:
         run: node node_modules/electron/install.js
       - name: 'Compile Assets'
         run: yarn ci:compile
+      - name: 'Prepare Shared Test Timings'
+        run: node test/helpers/runner.js --prepare-timings
+        env:
+          SLOBS_TEST_USER_POOL_TOKEN: ${{ secrets.SLOBS_TEST_USER_POOL_TOKEN }}
       - name: 'Package Test Build'
         run: 7z a -t7z -mx=1 -bb0 "$env:RUNNER_TEMP\frontend-test-build.7z" . '-xr!.git'
         shell: powershell
@@ -245,6 +249,7 @@ jobs:
           BROWSER_SOURCE_HARDWARE_ACCELERATION: 'OFF'
           SLOBS_TEST_STREAM_KEY: ${{ secrets.SLOBS_TEST_STREAM_KEY }}
           SLOBS_TEST_RUN_CHUNK: '${{ matrix.chunk }}/4'
+          SLOBS_TEST_TIMINGS_PREPARED: '1'
           # Variables for CI analytics
           BUILD_BUILDID: ${{ github.run_id }}
           SYSTEM_JOBID: '${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.chunk }}'

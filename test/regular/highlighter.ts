@@ -6,6 +6,7 @@ import {
 import {
   clickButton,
   focusMain,
+  focusWindow,
   getClient,
   isDisplayed,
   selectElements,
@@ -161,6 +162,30 @@ test('AI Highlighter', withUser('twitch', { prime: true }), async t => {
 });
 
 test('AI Highlighter opens the import dialog after the stream', withUser('twitch'), async t => {
+  // Start from an unsupported category so stale form metadata cannot accidentally
+  // retain Fortnite from the pooled account and conceal a failed category change.
+  t.true(await focusWindow('worker'));
+  const seeded = (await getClient().executeAsync((done: Function) => {
+    const twitch = (window as any).servicesManager.getResource('TwitchService');
+    twitch
+      .searchGames('DOOM')
+      .then((games: { id: string; name: string }[]) => {
+        const game = games.find(candidate => candidate.name === 'DOOM');
+        if (!game) throw new Error('The DOOM test category was not available');
+        return twitch.putChannelInfo({
+          ...twitch.state.settings,
+          game: game.id,
+          gameId: game.id,
+          gameName: game.name,
+        });
+      })
+      .then(
+        () => done({ ok: true }),
+        (error: Error) => done({ ok: false, message: error.message }),
+      );
+  })) as { ok: boolean; message?: string };
+  t.true(seeded.ok, seeded.message);
+  await focusMain();
   await setTemporaryRecordingPath(false);
 
   // AI Highlighter records the stream and hands the recording to the import dialog

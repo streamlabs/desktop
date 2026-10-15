@@ -23,7 +23,10 @@ import {
 } from '../../helpers/modules/core';
 import { logIn } from '../../helpers/modules/user';
 import { releaseUserInPool, reserveUserFromPool, withUser } from '../../helpers/webdriver/user';
-import { showSettingsWindow } from '../../helpers/modules/settings/settings';
+import {
+  removeCustomDestinations,
+  showSettingsWindow,
+} from '../../helpers/modules/settings/settings';
 import {
   skipCheckingErrorsInLog,
   test,
@@ -346,9 +349,7 @@ test('Custom stream destinations', async t => {
 
     // delete existing destinations
     await showSettingsWindow('Stream');
-    for (let i = 0; i < 5; i++) {
-      await click('i.fa-trash');
-    }
+    await removeCustomDestinations();
     t.false(await isDisplayed('i.fa-trash'), 'Destinations should be removed');
   } finally {
     await releaseUserInPool(user);

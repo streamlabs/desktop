@@ -1,4 +1,12 @@
-import { click, clickButton, clickTab, focusChild, useChildWindow, useMainWindow } from '../core';
+import {
+  click,
+  clickButton,
+  clickTab,
+  focusChild,
+  getClient,
+  useChildWindow,
+  useMainWindow,
+} from '../core';
 import { mkdtemp } from 'fs-extra';
 import { tmpdir } from 'os';
 import * as path from 'path';
@@ -25,6 +33,20 @@ export async function showSettingsWindow(category: string, cb?: () => Promise<un
     // not a react hook
     // eslint-disable-next-line react-hooks/rules-of-hooks
     await useChildWindow(cb);
+  }
+}
+
+/** Remove destinations one at a time after the worker's update reaches the list. */
+export async function removeCustomDestinations() {
+  const client = getClient();
+  let remaining = (await client.$$('i.fa-trash')).length;
+  while (remaining > 0) {
+    await click('i.fa-trash');
+    remaining--;
+    await client.waitUntil(async () => (await client.$$('i.fa-trash')).length === remaining, {
+      timeout: 10000,
+      timeoutMsg: 'The custom destination list did not update after removal',
+    });
   }
 }
 
