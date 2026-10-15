@@ -16,19 +16,6 @@ export function useForm(name?: string) {
   const formSelector = name ? `[data-role="form"][data-name="${name}"]` : DEFAULT_FORM_SELECTOR;
 
   /**
-   * Find all input's DOM elements
-   */
-  async function getInputElements(): Promise<WebdriverIO.ElementArray> {
-    // wait for form appear
-    if (formSelector !== DEFAULT_FORM_SELECTOR) {
-      await (await client.$(formSelector)).waitForExist({ timeout: 15000 });
-    }
-
-    const $inputs = await client.$$(`${formSelector} [data-role=input]`);
-    return $inputs;
-  }
-
-  /**
    * Returns an array of input values in the order as they appear in the form
    */
   async function readForm(): Promise<
@@ -156,21 +143,36 @@ export function useForm(name?: string) {
   }
 
   /**
-   * Creates and returns input controllers for each input element on the form
+   * Snapshot input metadata together and resolve controls by name when used.
+   * React can replace controls while we enumerate them; retained WebDriver element
+   * handles can then enter an endless stale-element retry in our WebdriverIO version.
    */
   async function getInputControllers() {
     // wait for form to be visible
     await waitForDisplayed(formSelector, { timeout: 15000 });
-    const $inputs = await getInputElements();
+    const inputs = await client.execute(
+      (selector: string) =>
+        Array.from(document.querySelectorAll(selector)).map(input => {
+          const type = input.getAttribute('data-type');
+          const name = input.getAttribute('data-name');
+          const nameSelector =
+            name === null ? ':not([data-name])' : `[data-name="${CSS.escape(name)}"]`;
+          return {
+            type,
+            name,
+            selector: `${selector}${nameSelector}[data-type="${CSS.escape(type || '')}"]`,
+          };
+        }),
+      `${formSelector} [data-role=input]`,
+    );
     const controllers: BaseInputController<any>[] = [];
-    for (const $input of $inputs) {
-      const type = await $input.getAttribute('data-type');
-      const name = await $input.getAttribute('data-name');
+    for (const { type, name, selector } of inputs) {
+      if (!type) continue;
       const InputControllerClass = getInputControllerForType(type);
       if (!InputControllerClass) {
         continue;
       }
-      const inputController = new InputControllerClass($input, name);
+      const inputController = new InputControllerClass(selector, name);
       controllers.push(inputController);
     }
     return controllers;

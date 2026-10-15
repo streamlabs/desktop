@@ -368,6 +368,7 @@ test('Stream Shift', withUser('twitch', { prime: true, multistream: true }), asy
 
   // Default tooltip stays the same when multiple platforms are enabled
   await fillForm({ youtube: true });
+  await waitForSettingsWindowLoaded();
   t.true(
     await isDisplayed('[data-name="streamShift"]'),
     'Stream Shift switch should still be visible',
@@ -401,6 +402,12 @@ test('Stream Shift', withUser('twitch', { prime: true, multistream: true }), asy
     'Dual output tooltip did not appear',
   );
   await assertFormContains({ streamShift: false });
+  // Reopening after the mode change can disable secondary destinations. Enable
+  // YouTube before interacting with its otherwise hidden display selectors.
+  await fillForm({ youtube: true });
+  await waitForSettingsWindowLoaded();
+  await assertFormContains({ youtube: true });
+  await waitForDisplayed('[data-name="youtubeDisplay"]', { timeout: 10000 });
   await fillForm({ youtubeDisplay: 'vertical' });
   await fillForm({ youtubeDisplay: 'horizontal' });
   await fillForm({ youtube: false });
