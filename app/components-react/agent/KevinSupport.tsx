@@ -264,7 +264,7 @@ export default function KevinSupport() {
           // constrained by this wrapper plus `style`, never by a CSS-module class.
           <div className={styles.messages}>
             <Scrollable style={{ height: '100%' }} isResizable={false}>
-              <div ref={listRef}>
+              <div ref={listRef} className={styles.list}>
                 {messages.map((message, i) => (
                   <div
                     key={`${message.interactionId}-${i}`}
