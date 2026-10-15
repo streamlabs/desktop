@@ -11,7 +11,13 @@ import {
   waitForStreamStop,
 } from '../../helpers/modules/streaming';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
-import { clickButton, focusChild, isDisplayed, waitForDisplayed } from '../../helpers/modules/core';
+import {
+  clickButton,
+  focusChild,
+  isDisplayed,
+  waitForDisplayed,
+  waitForEnabled,
+} from '../../helpers/modules/core';
 import { restartApp, skipCheckingErrorsInLog, test, useWebdriver } from '../../helpers/webdriver';
 import { reserveUserFromPool, withUser } from '../../helpers/webdriver/user';
 import { getApiClient } from '../../helpers/api-client';
@@ -25,7 +31,20 @@ import { toggleDualOutputMode } from '../../helpers/modules/dual-output';
 async function enableTwitchVOD(status: boolean = true) {
   await showSettingsWindow('Output', async () => {
     await fillForm({ Mode: 'Advanced' });
-    await fillForm('Streaming', { VodTrackEnabled: status, VodTrackIndex: 3 });
+    await waitForEnabled('[data-name="Streaming"] [data-name="VodTrackEnabled"]', {
+      timeout: 10000,
+    });
+    await fillForm('Streaming', { VodTrackEnabled: status });
+    if (status) {
+      await waitForDisplayed('[data-name="Streaming"] [data-name="VodTrackIndex"]', {
+        timeout: 10000,
+      });
+      await fillForm('Streaming', { VodTrackIndex: 3 });
+    }
+    await assertFormContains('Streaming', {
+      VodTrackEnabled: status,
+      ...(status ? { VodTrackIndex: 3 } : {}),
+    });
     await clickButton('Close');
   });
 }
