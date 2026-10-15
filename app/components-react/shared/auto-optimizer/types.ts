@@ -28,6 +28,10 @@ export interface IAutoOptimizerPresentationOutput {
   measurementConfidence?: 'high' | 'medium' | 'low';
   estimateReason?: string;
   showMeasurementReason?: boolean;
+  /** Localized non-fatal warnings, shown independently of measurement confidence. */
+  warnings?: string[];
+  /** Show guide guidance even when an ultrawide canvas already has a 16:9 output. */
+  hasUltrawideResolution?: boolean;
   /** True when Twitch Enhanced Broadcasting selects bitrate and encoder settings. */
   encodingManagedByTwitch?: boolean;
   /** True when Desktop must leave resolution and frame rate unchanged. */

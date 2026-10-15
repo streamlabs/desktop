@@ -26,6 +26,12 @@ import type { ScenesService } from 'services/scenes';
 import type { StreamingService } from 'services/streaming';
 import type { VirtualWebcamService } from 'services/virtual-webcam';
 import type { FileManagerService } from 'services/file-manager';
+import {
+  isTwitchOnlyStream,
+  isMultiplatformStream,
+  MULTISTREAM_VIDEO_BITRATE_LIMIT_KBPS,
+  streamOutputResolutionPatches,
+} from '../streaming/stream-resolution-policy';
 
 /**
  * Display Types
@@ -53,6 +59,12 @@ export type TVideoSettingsPatches = Partial<Record<TDisplayType, Partial<IVideoI
 interface IAppliedVideoSettings {
   baseResolutionChanged: boolean;
   previous: Partial<Record<TDisplayType, IVideoInfo>>;
+}
+
+interface ICanvasSettingsTransaction {
+  video: TVideoSettingsPatches;
+  rescaleResolution?: string;
+  streamingBitrate?: number;
 }
 
 export type IVideoInfoValue =
@@ -463,6 +475,47 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     await this.runCanvasSettingsTransaction(patches, false);
   }
 
+  /** Lower stream outputs atomically, leaving authored canvases and FPS intact. */
+  async limitStreamOutputs(platforms: string[], dualOutput: boolean): Promise<boolean> {
+    let changed = false;
+    await this.runCanvasSettingsTransaction(() => {
+      const patches = streamOutputResolutionPatches(platforms, {
+        horizontal: this.state.horizontal,
+        ...(dualOutput ? { vertical: this.state.vertical } : {}),
+      });
+      // Advanced streaming can override Output (Scaled) Resolution again in
+      // the encoder. Apply that ceiling in the same guarded transaction.
+      const output = this.outputSettingsService.getSettings();
+      const rescale =
+        output.mode === 'Advanced' &&
+        output.streaming.rescaleOutput &&
+        platforms.length > 0 &&
+        !isTwitchOnlyStream(platforms)
+          ? output.streaming.outputResolution.split('x').map(Number)
+          : [];
+      const rescalePatch =
+        rescale.length === 2
+          ? streamOutputResolutionPatches(platforms, {
+              horizontal: { outputWidth: rescale[0], outputHeight: rescale[1] },
+            }).horizontal
+          : undefined;
+      const rescaleResolution = rescalePatch
+        ? `${rescalePatch.outputWidth}x${rescalePatch.outputHeight}`
+        : undefined;
+      const streamingBitrate =
+        isMultiplatformStream(platforms) &&
+        output.streaming.bitrate > MULTISTREAM_VIDEO_BITRATE_LIMIT_KBPS
+          ? MULTISTREAM_VIDEO_BITRATE_LIMIT_KBPS
+          : undefined;
+      changed =
+        this.videoSettingsPatchesChangeState(patches) ||
+        !!rescaleResolution ||
+        streamingBitrate !== undefined;
+      return { video: patches, rescaleResolution, streamingBitrate };
+    }, false);
+    return changed;
+  }
+
   private videoSettingsPatchesChangeState(patches: TVideoSettingsPatches): boolean {
     return displays.some(display => {
       const patch = patches[display];
@@ -566,20 +619,59 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
   }
 
   private async runCanvasSettingsTransaction(
-    patches: TVideoSettingsPatches,
+    requestedPatches: TVideoSettingsPatches | (() => ICanvasSettingsTransaction),
     establishMissingContexts = true,
   ): Promise<void> {
     await this.videoSettingsMutex.do(async () => {
+      const plan: ICanvasSettingsTransaction =
+        typeof requestedPatches === 'function' ? requestedPatches() : { video: requestedPatches };
+      const patches = plan.video;
+      if (
+        typeof requestedPatches === 'function' &&
+        !this.videoSettingsPatchesChangeState(patches) &&
+        !plan.rescaleResolution &&
+        plan.streamingBitrate === undefined
+      ) {
+        return;
+      }
       const releaseVideoReset = videoOutputCoordinator.reserveVideoReset();
       let autoSaveState: Awaited<
         ReturnType<SceneCollectionsService['disableAutoSave']>
       > | null = null;
       let appliedSettings: IAppliedVideoSettings | null = null;
+      let previousRescale: string | undefined;
+      let previousBitrate: number | undefined;
 
       try {
         this.assertVideoOutputsInactive();
         autoSaveState = await this.sceneCollectionsService.disableAutoSave();
         appliedSettings = this.applyVideoSettingsPatches(patches, establishMissingContexts);
+        if (plan.rescaleResolution) {
+          previousRescale = this.settingsService.findSettingValue(
+            this.settingsService.state.Output.formData,
+            'Streaming',
+            'RescaleRes',
+          );
+          this.settingsService.setSettingValue('Output', 'RescaleRes', plan.rescaleResolution);
+          if (
+            this.settingsService.findSettingValue(
+              this.settingsService.state.Output.formData,
+              'Streaming',
+              'RescaleRes',
+            ) !== plan.rescaleResolution
+          ) {
+            throw new Error('Failed to apply the stream output rescale limit.');
+          }
+        }
+        if (plan.streamingBitrate !== undefined) {
+          previousBitrate = this.outputSettingsService.getSettings().streaming.bitrate;
+          this.outputSettingsService.setSettings({ streaming: { bitrate: plan.streamingBitrate } });
+          if (
+            this.outputSettingsService.getSettings().streaming.bitrate !== plan.streamingBitrate
+          ) {
+            throw new Error('Failed to apply the multistream video bitrate limit.');
+          }
+        }
         if (!appliedSettings.baseResolutionChanged) return;
 
         this.refreshSceneItemTransforms();
@@ -588,6 +680,12 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
       } catch (error: unknown) {
         if (appliedSettings) {
           try {
+            if (previousBitrate !== undefined) {
+              this.outputSettingsService.setSettings({ streaming: { bitrate: previousBitrate } });
+            }
+            if (previousRescale !== undefined) {
+              this.settingsService.setSettingValue('Output', 'RescaleRes', previousRescale);
+            }
             this.applyVideoSettingsPatches(appliedSettings.previous, establishMissingContexts);
             this.refreshSceneItemTransforms();
             await this.sceneCollectionsService.save();

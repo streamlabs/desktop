@@ -516,6 +516,10 @@ export class StreamingService
       }
     }
 
+    // Also covers unattended starts and users who have already completed or
+    // declined Auto Optimizer. A failed video transaction must stop Go Live.
+    await this.streamSettingsService.applyStreamOutputLimits(settings);
+
     /**
      * SET CUSTOM DESTINATIONS SETTINGS
      */
@@ -1042,6 +1046,9 @@ export class StreamingService
     activePlatforms: TPlatform[] = [],
     activeDestinations: ICustomStreamDestination[] = [],
   ): Promise<boolean> {
+    // Adding a non-Twitch destination to a live 1440p stream requires a restart;
+    // the video transaction rejects active outputs without modifying them.
+    await this.streamSettingsService.applyStreamOutputLimits(settings);
     const lifecycle = this.state.info.lifecycle;
 
     // save current settings in store so we can re-use them if something will go wrong
@@ -2216,10 +2223,9 @@ export class StreamingService
       streamEncoderInfo = this.outputSettingsService.getSettings();
       game = this.views.game;
     } catch (e: unknown) {
-      console.error('Error fetching stream encoder info: ', e);
-
-      const message = (e as any)?.message ?? $t('Failed to fetch encoder settings');
-      this.handleTypedStreamError(e, 'INVALID_ENCODER', message);
+      // The stream is already live. Missing analytics metadata is not an encoder
+      // failure and must not replace the successful start with a stream error.
+      console.warn('Unable to collect stream-start encoder metadata: ', e);
     }
 
     const eventMetadata: Dictionary<any> = {

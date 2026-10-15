@@ -215,6 +215,10 @@ export function acceptAutoOptimizerResult(
       return null;
     }
 
+    const warnings = [...(nativeOutput.warnings || [])];
+    if (requested.hasUltrawideResolution) {
+      warnings.push('ultrawide_resolution');
+    }
     acceptedOutputs.push({
       outputId: nativeOutput.outputId,
       display: expected.display,
@@ -226,6 +230,7 @@ export function acceptAutoOptimizerResult(
       confidence: nativeOutput.measurement.confidence,
       probes: evidence,
       estimateReason: nativeOutput.measurement.reason,
+      ...(warnings.length ? { warnings } : {}),
       resolution: {
         width: recommendation.width,
         height: recommendation.height,

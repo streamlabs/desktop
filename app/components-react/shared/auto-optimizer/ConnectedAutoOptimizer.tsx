@@ -8,6 +8,7 @@ import { AutoOptimizer } from './AutoOptimizer';
 import {
   autoOptimizerErrorMessage,
   autoOptimizerProgressLabel,
+  autoOptimizerWarningLabels,
   estimatedProbePlatforms,
   shouldShowAutoOptimizerMeasurementReason,
   successfulProbePlatforms,
@@ -31,6 +32,8 @@ const estimateReasonLabels: Record<string, string> = {
   combined_workload_unvalidated:
     'Bandwidth testing completed, but the combined stream workload could not be validated. These settings are conservative.',
   enhanced_broadcasting: 'Estimated without changing the Enhanced Broadcasting ladder.',
+  enhanced_broadcasting_configuration_fallback:
+    'Twitch could not provide the higher-quality settings for this stream configuration. The recommended settings passed the test.',
   enhanced_broadcasting_transport_fallback:
     'Upload instability was detected while testing higher-quality settings. The recommended settings passed without dropped frames.',
   enhanced_broadcasting_workload_fallback:
@@ -148,6 +151,8 @@ export function ConnectedAutoOptimizer(p: IConnectedAutoOptimizerProps) {
         ? $t(estimateReasonLabels[output.estimateReason] || output.estimateReason)
         : undefined,
       showMeasurementReason: shouldShowAutoOptimizerMeasurementReason(output.estimateReason),
+      warnings: autoOptimizerWarningLabels(output.warnings).map(message => $t(message)),
+      hasUltrawideResolution: output.warnings?.includes('ultrawide_resolution'),
       encodingManagedByTwitch: output.outputKind === 'twitch-enhanced-broadcasting',
       preserveVideoSettings:
         output.outputKind === 'twitch-enhanced-broadcasting' && output.measurement !== 'active',

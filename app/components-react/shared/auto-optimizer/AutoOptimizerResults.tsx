@@ -1,9 +1,14 @@
 import React from 'react';
 import { Button } from 'antd';
+import { shell } from '@electron/remote';
 import { $t } from 'services/i18n';
 import { $i } from 'services/utils';
 import { IAutoOptimizerPresentationAdvice, IAutoOptimizerPresentationOutput } from './types';
 import styles from './AutoOptimizer.m.less';
+import { shouldShowMultistreamResolutionLimit } from './presentation';
+
+const ULTRAWIDE_GUIDE_URL =
+  'https://streamlabs.com/content-hub/post/how-to-stream-with-an-ultrawide-monitor';
 
 function settingsKey(output: IAutoOptimizerPresentationOutput) {
   return [
@@ -17,6 +22,7 @@ function settingsKey(output: IAutoOptimizerPresentationOutput) {
     output.preset || '',
     output.measurementMode,
     output.estimateReason || '',
+    ...(output.warnings || []),
     output.encodingManagedByTwitch ? 'twitch-encoding' : '',
     output.preserveVideoSettings ? 'preserve-video-settings' : '',
     ...(output.platforms || []).map(platform => platform.id).sort(),
@@ -154,6 +160,11 @@ function SettingsList(p: {
         </div>
       )}
       {!output.encodingManagedByTwitch && <EstimateExplanation output={output} />}
+      {output.warnings?.map(warning => (
+        <p key={warning} className={styles.estimateExplanation}>
+          {warning}
+        </p>
+      ))}
     </>
   );
 }
@@ -222,6 +233,27 @@ export function AutoOptimizerResults(p: {
                 </div>
               ))}
             </div>
+          )}
+          {shouldShowMultistreamResolutionLimit(p.outputs) && (
+            <p className={styles.estimateExplanation}>
+              {$t('1080p is the maximum recommended resolution for multistreaming')}
+            </p>
+          )}
+          {p.outputs.some(output => output.hasUltrawideResolution) && (
+            <p className={styles.estimateExplanation}>
+              {$t(
+                'Ultrawide resolutions can cause varied output results when streaming. See our guide for more information.',
+              )}{' '}
+              <a
+                href={ULTRAWIDE_GUIDE_URL}
+                onClick={event => {
+                  event.preventDefault();
+                  shell.openExternal(ULTRAWIDE_GUIDE_URL);
+                }}
+              >
+                {$t('Ultrawide guide')}
+              </a>
+            </p>
           )}
         </div>
         {!denseOutputLayout && (

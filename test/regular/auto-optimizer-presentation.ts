@@ -4,6 +4,7 @@ import * as path from 'path';
 import {
   autoOptimizerErrorMessage,
   autoOptimizerProgressLabel,
+  autoOptimizerWarningLabels,
   bandwidthPhaseLabelKey,
   estimatedProbePlatforms,
   shouldShowAutoOptimizerMeasurementReason,
@@ -31,6 +32,16 @@ function progressDetail(
     ...patch,
   };
 }
+
+test('ultrawide guide guidance does not duplicate ordinary warning labels', t => {
+  t.deepEqual(autoOptimizerWarningLabels(['ultrawide_resolution']), []);
+  const both = autoOptimizerWarningLabels([
+    'ultrawide_resolution',
+    'enhanced_broadcasting_configuration_warning',
+    '<b>unknown</b>',
+  ]);
+  t.is(both.length, 1);
+});
 
 test('successfully measured platforms are stable, deduplicated, and omit failures', t => {
   t.deepEqual(
@@ -72,6 +83,7 @@ test('active medium-confidence quality reasons remain visible in results', t => 
 });
 
 test('measured Enhanced Broadcasting results explain rejected higher-quality settings', t => {
+  t.true(shouldShowAutoOptimizerMeasurementReason('enhanced_broadcasting_configuration_fallback'));
   t.true(shouldShowAutoOptimizerMeasurementReason('enhanced_broadcasting_transport_fallback'));
   t.true(shouldShowAutoOptimizerMeasurementReason('enhanced_broadcasting_workload_fallback'));
   t.true(
@@ -80,6 +92,32 @@ test('measured Enhanced Broadcasting results explain rejected higher-quality set
     ),
   );
   t.false(shouldShowAutoOptimizerMeasurementReason());
+});
+
+test('Twitch configuration limitations are not described as measured overload', t => {
+  for (const additionalVideo of [
+    null,
+    { display: 'vertical' as const, width: 1080, height: 1920, fpsNum: 60, fpsDen: 1 },
+  ]) {
+    const detail = progressDetail({
+      code: 'enhanced_broadcasting_candidate_unavailable',
+      width: 2560,
+      height: 1440,
+      fpsNum: 60,
+      fpsDen: 1,
+      additionalVideo,
+    });
+    const label = autoOptimizerProgressLabel('bandwidth', detail);
+    t.true(label.key.startsWith('Twitch could not provide'));
+    t.false(label.key.includes('could not keep up'));
+    t.is(label.values!.width, 2560);
+    t.is(label.values!.fps, 60);
+  }
+  t.deepEqual(autoOptimizerWarningLabels(), []);
+  t.deepEqual(autoOptimizerWarningLabels(['<script>untrusted warning</script>']), []);
+  t.deepEqual(autoOptimizerWarningLabels(['enhanced_broadcasting_configuration_warning']), [
+    'Twitch returned a warning for these Enhanced Broadcasting settings. The test passed, but performance may vary during a live stream.',
+  ]);
 });
 
 test('bandwidth phase follows the platform currently being probed', t => {

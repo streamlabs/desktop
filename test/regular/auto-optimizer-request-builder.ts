@@ -69,6 +69,85 @@ function streamSetup(
   return { type, outputs };
 }
 
+test('ultrawide requests use platform and content ceilings without overwriting current settings', t => {
+  for (const width of [3340, 3440]) {
+    for (const allow1440p of [true, false]) {
+      for (const multistream of [true, false]) {
+        const snapshots = videos();
+        Object.assign(snapshots.horizontal, {
+          baseWidth: width,
+          baseHeight: 1440,
+          outputWidth: width,
+          outputHeight: 1440,
+        });
+        const before = JSON.stringify(snapshots);
+        const output = optimizerOutput({
+          destinations: multistream
+            ? [{ platform: 'twitch' }, { platform: 'youtube' }]
+            : [{ platform: 'twitch' }],
+        });
+        const built = buildAutoOptimizerRequest({
+          streamSetup: streamSetup([output]),
+          outputProbes: [],
+          outputSettings,
+          videos: snapshots,
+          allow1440p,
+        });
+        t.is(built.request.outputs[0].limits!.maxWidth, allow1440p && !multistream ? 2560 : 1920);
+        t.is(built.request.outputs[0].limits!.maxHeight, allow1440p && !multistream ? 1440 : 1080);
+        t.is(built.request.outputs[0].limits!.maxBitrateKbps, multistream ? 6000 : 7500);
+        t.is(built.request.outputs[0].current.width, width);
+        t.true(built.attemptContext.outputs[0].hasUltrawideResolution);
+        t.false('hasUltrawideResolution' in built.request.outputs[0]);
+        t.is(JSON.stringify(snapshots), before);
+      }
+    }
+  }
+});
+
+test('an ultrawide canvas with a standard output keeps that output aspect and guide metadata', t => {
+  const snapshots = videos();
+  Object.assign(snapshots.horizontal, {
+    baseWidth: 3440,
+    baseHeight: 1440,
+    outputWidth: 1920,
+    outputHeight: 1080,
+  });
+  const built = buildAutoOptimizerRequest({
+    streamSetup: streamSetup([optimizerOutput()]),
+    outputProbes: [],
+    outputSettings,
+    videos: snapshots,
+    allow1440p: false,
+  });
+  t.is(built.request.outputs[0].current.width, 1920);
+  t.is(built.request.outputs[0].current.height, 1080);
+  t.true(built.attemptContext.outputs[0].hasUltrawideResolution);
+  snapshots.horizontal.baseWidth = 1920;
+  t.true(
+    built.attemptContext.outputs[0].hasUltrawideResolution,
+    'the attempt keeps its own snapshot',
+  );
+});
+
+test('promotion of a standard output does not require growing a custom canvas', t => {
+  const snapshots = videos();
+  Object.assign(snapshots.horizontal, {
+    baseWidth: 2560,
+    baseHeight: 1080,
+    outputWidth: 1920,
+    outputHeight: 1080,
+  });
+  const built = buildAutoOptimizerRequest({
+    streamSetup: streamSetup([optimizerOutput()]),
+    outputProbes: [],
+    outputSettings,
+    videos: snapshots,
+    allow1440p: true,
+  });
+  t.is(built.request.outputs[0].limits!.maxHeight, 1080);
+});
+
 test('builds an active OSN request and retains only non-secret validation inputs', t => {
   const preparedStreamSetup = streamSetup([optimizerOutput()]);
   const probe: IAutoOptimizerActiveProbe = {
@@ -83,6 +162,7 @@ test('builds an active OSN request and retains only non-secret validation inputs
     outputProbes: [{ outputId: 'horizontal', probes: [probe] }],
     outputSettings,
     videos: videos(),
+    allow1440p: true,
   });
 
   t.is(built.request.streamSetup, 'direct-single');
@@ -97,9 +177,9 @@ test('builds an active OSN request and retains only non-secret validation inputs
     preset: 'p5',
   });
   t.deepEqual(built.request.outputs[0].limits, {
-    maxBitrateKbps: 8000,
-    maxWidth: 1920,
-    maxHeight: 1080,
+    maxBitrateKbps: 7500,
+    maxWidth: 2560,
+    maxHeight: 1440,
     maxFpsNum: 60,
     maxFpsDen: 1,
   });
@@ -114,6 +194,76 @@ test('builds an active OSN request and retains only non-secret validation inputs
   t.false(retained.includes('server'));
 });
 
+test('1080p content skips 1440p in ordinary and Enhanced Broadcasting requests, including Dual Format', t => {
+  for (const [outputKind, display, type] of [
+    ['standard', 'horizontal', 'direct-single'],
+    ['twitch-enhanced-broadcasting', 'horizontal', 'enhanced-broadcasting'],
+    ['twitch-enhanced-broadcasting', 'both', 'enhanced-broadcasting'],
+  ] as const) {
+    const snapshots = videos();
+    // A previous optimizer run may already have enlarged both saved resolutions.
+    snapshots.horizontal = video(0, false, {
+      baseWidth: 2560,
+      baseHeight: 1440,
+      outputWidth: 2560,
+      outputHeight: 1440,
+    });
+    const built = buildAutoOptimizerRequest({
+      streamSetup: streamSetup([optimizerOutput({ outputKind, display })], type),
+      outputProbes: [],
+      outputSettings,
+      videos: snapshots,
+      allow1440p: false,
+    });
+    const output = built.request.outputs[0];
+    t.is(output.limits!.maxWidth, 1920);
+    t.is(output.limits!.maxHeight, 1080);
+    t.is(output.limits!.maxFpsNum, 60, '1080p/60 testing remains available');
+    t.is(output.current.width, 2560, 'request construction must not change saved video settings');
+    t.deepEqual(built.attemptContext.outputs[0].limits, output.limits);
+    if (display === 'both') {
+      t.is(output.additionalVideo!.limits!.maxWidth, 1080);
+      t.is(output.additionalVideo!.limits!.maxHeight, 1920);
+    }
+  }
+});
+
+test('another platform caps every ordinary canvas at 6000 Kbps', t => {
+  const built = buildAutoOptimizerRequest({
+    streamSetup: streamSetup(
+      [
+        optimizerOutput(),
+        optimizerOutput({
+          outputId: 'vertical',
+          display: 'vertical',
+          destinations: [{ platform: 'youtube' }],
+          probeCandidates: [
+            {
+              probeId: 'vertical-youtube',
+              kind: 'youtube-unbound',
+              outputId: 'vertical',
+              platform: 'youtube',
+            },
+          ],
+        }),
+      ],
+      'dual-output',
+    ),
+    outputProbes: [],
+    outputSettings: { streaming: { ...outputSettings.streaming, bitrate: 8000 } },
+    videos: videos(),
+    allow1440p: true,
+  });
+  t.deepEqual(
+    built.request.outputs.map(output => output.limits!.maxBitrateKbps),
+    [6000, 6000],
+  );
+  t.deepEqual(
+    built.attemptContext.outputs.map(output => output.limits!.maxBitrateKbps),
+    [6000, 6000],
+  );
+});
+
 test('applies platform bitrate limits and prevents estimate or partial promotion', t => {
   const estimated = optimizerOutput({
     destinations: [{ platform: 'tiktok' }],
@@ -126,6 +276,7 @@ test('applies platform bitrate limits and prevents estimate or partial promotion
     outputProbes: [],
     outputSettings,
     videos: videos(),
+    allow1440p: false,
   }).request.outputs[0];
 
   t.deepEqual(estimatedRequest.limits, {
@@ -145,9 +296,10 @@ test('applies platform bitrate limits and prevents estimate or partial promotion
     outputProbes: [],
     outputSettings,
     videos: videos(),
+    allow1440p: false,
   }).request.outputs[0];
   t.deepEqual(partialRequest.limits, {
-    maxBitrateKbps: 8000,
+    maxBitrateKbps: 7500,
     maxWidth: 1280,
     maxHeight: 720,
     maxFpsNum: 30,
@@ -191,12 +343,13 @@ test('allows both standard canvases to be benchmarked when only YouTube has a pr
     ],
     outputSettings,
     videos: videos(),
+    allow1440p: true,
   });
   t.deepEqual(
     built.request.outputs.map(output => output.limits),
     [
-      { maxBitrateKbps: 8000, maxWidth: 1920, maxHeight: 1080, maxFpsNum: 60, maxFpsDen: 1 },
-      { maxBitrateKbps: 8000, maxWidth: 1080, maxHeight: 1920, maxFpsNum: 60, maxFpsDen: 1 },
+      { maxBitrateKbps: 6000, maxWidth: 1920, maxHeight: 1080, maxFpsNum: 60, maxFpsDen: 1 },
+      { maxBitrateKbps: 6000, maxWidth: 1080, maxHeight: 1920, maxFpsNum: 60, maxFpsDen: 1 },
     ],
   );
   t.falsy(built.request.outputs[0].probes?.length);
@@ -227,12 +380,13 @@ test('builds paired Enhanced Broadcasting video settings without a Desktop bitra
     outputProbes: [{ outputId: enhanced.outputId, probes: [probe] }],
     outputSettings,
     videos: videos(0, 1),
+    allow1440p: true,
   });
   const output = built.request.outputs[0];
 
   t.deepEqual(output.limits, {
-    maxWidth: 1920,
-    maxHeight: 1080,
+    maxWidth: 2560,
+    maxHeight: 1440,
     maxFpsNum: 60,
     maxFpsDen: 1,
   });
@@ -258,6 +412,29 @@ test('builds paired Enhanced Broadcasting video settings without a Desktop bitra
   t.false(JSON.stringify(built.attemptContext).includes('private-enhanced-key'));
 });
 
+test('another selected platform caps every canvas, including Twitch Enhanced Broadcasting', t => {
+  const enhanced = optimizerOutput({
+    outputId: 'enhanced',
+    outputKind: 'twitch-enhanced-broadcasting',
+    display: 'both',
+  });
+  const companion = optimizerOutput({
+    outputId: 'horizontal',
+    destinations: [{ platform: 'youtube' }],
+  });
+  const built = buildAutoOptimizerRequest({
+    streamSetup: streamSetup([enhanced, companion], 'enhanced-broadcasting-dual-output'),
+    outputSettings,
+    outputProbes: [],
+    videos: videos(),
+    allow1440p: true,
+  });
+  for (const output of built.request.outputs) {
+    t.is(output.limits!.maxWidth, 1920);
+    t.is(output.limits!.maxHeight, 1080);
+  }
+});
+
 test('paired requests accept zero-based identities and reject invalid canvas identities', t => {
   const horizontal = optimizerOutput();
   const vertical = optimizerOutput({
@@ -280,6 +457,7 @@ test('paired requests accept zero-based identities and reject invalid canvas ide
       outputProbes: [],
       outputSettings,
       videos: videoSnapshots,
+      allow1440p: true,
     });
 
   t.notThrows(() => build(videos(0, 1)));

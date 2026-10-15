@@ -44,6 +44,66 @@ const activeContext = {
   currentFpsDen: 1,
 };
 
+test('unavailable hardware and failed probes can return the bounded ultrawide estimate', t => {
+  const context = {
+    ...activeContext,
+    measurementMode: 'estimated' as const,
+    currentWidth: 3440,
+    currentHeight: 1440,
+    currentFpsNum: 60,
+    currentBitrateKbps: 2500,
+    probeEvidence: activeContext.probeEvidence.map(probe => ({ ...probe, success: false })),
+  };
+  t.truthy(
+    validateAutoOptimizerRecommendation(
+      recommendation({ height: 802, bitrateKbps: 2500 }),
+      context,
+    ),
+  );
+  t.is(
+    validateAutoOptimizerRecommendation(
+      recommendation({ width: 3440, height: 1440, bitrateKbps: 2500 }),
+      context,
+    ),
+    null,
+  );
+});
+
+test('estimated Dual Format video can be reduced to limits without imposing a measured pair', t => {
+  const context = {
+    ...activeContext,
+    measurementMode: 'estimated' as const,
+    twitchManagesEncoding: true,
+    currentWidth: 3340,
+    currentHeight: 1440,
+    currentFpsNum: 60,
+    currentBitrateKbps: 6000,
+    additionalVideo: {
+      display: 'vertical' as const,
+      current: {
+        width: 1440,
+        height: 2560,
+        fpsNum: 30,
+        fpsDen: 1,
+        bitrateKbps: 6000,
+        encoderId: 'obs_nvenc_h264_tex',
+      },
+      limits: { maxWidth: 1080, maxHeight: 1920, maxFpsNum: 30, maxFpsDen: 1 },
+    },
+  };
+  const value = recommendation({
+    additionalVideo: { display: 'vertical', width: 1080, height: 1920, fpsNum: 30, fpsDen: 1 },
+  });
+  t.truthy(validateAutoOptimizerRecommendation(value, context));
+  t.is(
+    validateAutoOptimizerRecommendation(
+      { ...value, additionalVideo: { ...value.additionalVideo!, width: 1440, height: 2560 } },
+      context,
+    ),
+    null,
+  );
+});
+
 test('a valid modern H.264 recommendation is preserved as one settings set', t => {
   t.deepEqual(validateAutoOptimizerRecommendation(recommendation(), activeContext), {
     width: 1920,
@@ -254,6 +314,96 @@ test('paired Enhanced Broadcasting validates transposed horizontal and vertical 
       context,
     ),
     null,
+  );
+});
+
+test('1440p Enhanced Broadcasting accepts only its exact 1080p paired vertical workload', t => {
+  const context = {
+    ...activeContext,
+    twitchManagesEncoding: true,
+    enhancedBroadcasting: true,
+    probeEvidence: [
+      {
+        platform: 'twitch' as const,
+        method: 'twitch-enhanced-broadcasting-test' as const,
+        success: true,
+      },
+    ],
+    maxWidth: 2560,
+    maxHeight: 1440,
+    additionalVideo: pairedAdditionalVideo(),
+  };
+  const candidate = recommendation({
+    width: 2560,
+    height: 1440,
+    additionalVideo: { display: 'vertical', width: 1080, height: 1920, fpsNum: 60, fpsDen: 1 },
+  });
+  t.truthy(validateAutoOptimizerRecommendation(candidate, context));
+  t.is(
+    validateAutoOptimizerRecommendation(
+      {
+        ...candidate,
+        additionalVideo: {
+          ...candidate.additionalVideo!,
+          width: 720,
+          height: 1280,
+        },
+      },
+      context,
+    ),
+    null,
+  );
+  t.is(
+    validateAutoOptimizerRecommendation(candidate, { ...context, maxWidth: 1920, maxHeight: 1080 }),
+    null,
+  );
+});
+
+test('Enhanced Broadcasting accepts independently configured custom aspects without rotating the other canvas', t => {
+  const context = {
+    ...activeContext,
+    twitchManagesEncoding: true,
+    enhancedBroadcasting: true,
+    currentWidth: 3440,
+    currentHeight: 1440,
+    currentFpsNum: 60,
+    probeEvidence: [
+      {
+        platform: 'twitch' as const,
+        method: 'twitch-enhanced-broadcasting-test' as const,
+        success: true,
+      },
+    ],
+    additionalVideo: pairedAdditionalVideo(),
+  };
+  Object.assign(context.additionalVideo.current, { width: 1080, height: 1920, fpsNum: 60 });
+  const candidate = recommendation({
+    height: 802,
+    additionalVideo: { display: 'vertical', width: 1080, height: 1920, fpsNum: 60, fpsDen: 1 },
+  });
+  t.truthy(validateAutoOptimizerRecommendation(candidate, context));
+  t.is(validateAutoOptimizerRecommendation({ ...candidate, height: 1080 }, context), null);
+  t.is(
+    validateAutoOptimizerRecommendation(
+      {
+        ...candidate,
+        additionalVideo: { ...candidate.additionalVideo!, width: 802 },
+      },
+      context,
+    ),
+    null,
+  );
+  Object.assign(context, { currentWidth: 1920, currentHeight: 1080 });
+  Object.assign(context.additionalVideo.current, { width: 1200, height: 1600 });
+  t.truthy(
+    validateAutoOptimizerRecommendation(
+      {
+        ...candidate,
+        height: 1080,
+        additionalVideo: { ...candidate.additionalVideo!, width: 1080, height: 1440 },
+      },
+      context,
+    ),
   );
 });
 

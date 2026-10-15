@@ -1,10 +1,12 @@
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
 import Vue from 'vue';
+import * as remote from '@electron/remote';
 import * as obs from '../../../obs-api';
 import { Inject, mutation, PersistentStatefulService, ViewHandler } from 'services/core';
 import { IGoLiveSettings, StreamingService } from 'services/streaming';
 import { SettingsService } from 'services/settings';
+import { StreamSettingsService } from 'services/settings/streaming';
 import { OutputSettingsService } from 'services/settings/output';
 import { EncoderQueryService } from 'services/settings/output/encoder-query';
 import { VideoSettingsService } from 'services/settings-v2/video';
@@ -36,6 +38,7 @@ import {
 } from './request-builder';
 import { acceptAutoOptimizerResult } from './result-acceptance';
 import { applyAutoOptimizerRecommendations } from './recommendation-applier';
+import { autoOptimizerContentSupports1440p, IAutoOptimizerMonitor } from './content-resolution';
 import {
   IAutoOptimizerEvent,
   IAutoOptimizerAdvice,
@@ -131,6 +134,7 @@ export class AutoOptimizerService extends PersistentStatefulService<IAutoOptimiz
   @Inject() private outputSettingsService: OutputSettingsService;
   @Inject() private encoderQueryService: EncoderQueryService;
   @Inject() private settingsService: SettingsService;
+  @Inject() private streamSettingsService: StreamSettingsService;
   @Inject() private videoSettingsService: VideoSettingsService;
   @Inject() private userService: UserService;
   @Inject() private twitchService: TwitchService;
@@ -278,6 +282,8 @@ export class AutoOptimizerService extends PersistentStatefulService<IAutoOptimiz
     if (token !== this.runToken) return;
 
     try {
+      // Probe limits belong to the request. Persisting platform limits here
+      // would change saved settings even when the user cancels or closes us.
       const prepared = await this.createNativeRequest(streamSetup);
       if (token !== this.runToken) {
         this.getProbeResources().redactCredentials();
@@ -598,6 +604,25 @@ export class AutoOptimizerService extends PersistentStatefulService<IAutoOptimiz
     };
   }
 
+  private contentSupports1440p(): boolean {
+    let monitors: IAutoOptimizerMonitor[] = [];
+    try {
+      monitors = remote.screen.getAllDisplays();
+    } catch {
+      // If monitor information is unavailable, require positive capture evidence.
+    }
+    const getItems = (sceneId: string) =>
+      this.scenesService.views
+        .getScene(sceneId)
+        ?.getItems()
+        .map(item => item.getModel()) || [];
+    return autoOptimizerContentSupports1440p(
+      getItems(this.scenesService.views.activeSceneId),
+      getItems,
+      monitors,
+    );
+  }
+
   private async createNativeRequest(
     sourceStreamSetup: IAutoOptimizerStreamSetup,
   ): Promise<
@@ -605,6 +630,7 @@ export class AutoOptimizerService extends PersistentStatefulService<IAutoOptimiz
   > {
     const resources = this.getProbeResources();
     const videos = this.getAutoOptimizerVideoSnapshots();
+    const allow1440p = this.contentSupports1440p();
     try {
       // Reject an unusable OBS environment before acquiring platform resources.
       validateAutoOptimizerCanvasIdentities(sourceStreamSetup, videos);
@@ -623,6 +649,7 @@ export class AutoOptimizerService extends PersistentStatefulService<IAutoOptimiz
           })),
           outputSettings: this.outputSettingsService.getSettings(),
           videos,
+          allow1440p,
         }),
         streamSetup: prepared.streamSetup,
       };
