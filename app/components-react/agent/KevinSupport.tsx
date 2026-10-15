@@ -300,11 +300,6 @@ export default function KevinSupport() {
                       {approval.risk === 'irreversible' && (
                         <div className={styles.approvalWarning}>{$t('This cannot be undone.')}</div>
                       )}
-                      {approval.risk === 'external' && (
-                        <div className={styles.approvalWarning}>
-                          {$t('This will be visible to your viewers.')}
-                        </div>
-                      )}
                       <div className={styles.approvalActions}>
                         <button
                           className="button button--action"
