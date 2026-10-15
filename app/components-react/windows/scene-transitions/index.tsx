@@ -72,8 +72,12 @@ export default function SceneTransitions() {
             onCancel={dismissModal}
             destroyOnClose
           >
-            {showConnectionModal && <ConnectionSettings connectionId={inspectedConnection} />}
-            {showTransitionModal && <TransitionSettings transitionId={inspectedTransition} />}
+            {showConnectionModal && (
+              <ConnectionSettings key={inspectedConnection} connectionId={inspectedConnection} />
+            )}
+            {showTransitionModal && (
+              <TransitionSettings key={inspectedTransition} transitionId={inspectedTransition} />
+            )}
           </Modal>
         </>
       )}
