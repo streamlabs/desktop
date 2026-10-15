@@ -419,9 +419,8 @@ test(
       // });
       // await goLiveWithDualOutput('twitch');
     } catch (e: unknown) {
-      console.log('Dual Output Go Live Ultra error with platforms:', e);
-      t.fail('Error going live with platforms during Dual Output Go Live Ultra test ');
-      return;
+      console.error('Dual Output Go Live Ultra error with platforms:', e);
+      throw e;
     }
 
     // Custom destination in ultra dual output
@@ -441,9 +440,8 @@ test(
 
       await goLiveWithDualOutput('twitch');
     } catch (e: unknown) {
-      t.fail(
-        'Error going live with platform and destination during Dual Output Go Live Ultra test',
-      );
+      console.error('Dual Output Go Live Ultra error with platform and destination:', e);
+      throw e;
     } finally {
       // Clean up custom destination
       await showSettingsWindow('Stream', async () => {
