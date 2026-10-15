@@ -94,7 +94,8 @@ test('Streaming to Youtube', async t => {
   await stopStream();
 });
 
-test('YouTube Dual Stream', async t => {
+// FIXME: Re-enable once the user pool has an Ultra YouTube account eligible for live streaming.
+test.skip('YouTube Dual Stream', async t => {
   await logInYouTubeEnabledAccount(t, 5, true);
   await toggleDualOutputMode();
   await clickGoLive();

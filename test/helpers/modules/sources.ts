@@ -5,6 +5,7 @@ import {
   closeWindow,
   click,
   clickButton,
+  getClient,
   isDisplayed,
   select,
   waitForDisplayed,
@@ -67,10 +68,20 @@ export async function addSource(
   await click(`[data-name="${type}"]`);
 
   await clickButton('Add Source');
-  const isInputVisible = await isDisplayed('[data-name=newSourceName]', {
-    timeout: 200,
-    interval: 100,
-  });
+  let isInputVisible = false;
+  // The naming dialog renders asynchronously. A missing input does not yet mean
+  // that existing sources are available and the "new source" switch is present.
+  await getClient().waitUntil(
+    async () => {
+      isInputVisible = await isDisplayed('[data-name=newSourceName]');
+      return isInputVisible || (await isDisplayed('[data-type=switch]'));
+    },
+    {
+      timeout: 10000,
+      interval: 100,
+      timeoutMsg: 'Source dialog did not show a naming field or an existing-source switch',
+    },
+  );
   if (!isInputVisible) {
     await click('[data-type=switch]');
     await waitForDisplayed('[data-name=newSourceName]');
