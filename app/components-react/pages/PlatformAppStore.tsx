@@ -7,7 +7,6 @@ import { GuestApiHandler } from 'util/guest-api-handler';
 import * as remote from '@electron/remote';
 import { Services } from 'components-react/service-provider';
 import { Button } from 'antd';
-import { EMenuItemKey } from 'services/side-nav';
 import { $t } from 'services/i18n';
 import styles from './PlatformAppStore.m.less';
 import { useVuex } from 'components-react/hooks';
@@ -23,11 +22,10 @@ export default function PlatformAppStore(p: {
     NavigationService,
     HighlighterService,
     WindowsService,
+    CustomizationService,
   } = Services;
 
-  const [highlighterInstalled, setHighlighterInstalled] = useState<boolean>(
-    HighlighterService.views.highlighterVersion !== '',
-  );
+  const [legacyHighlighterVersion, setLegacyHighlighterVersion] = useState<string | null>(null);
 
   const { hideStyleBlockers } = useVuex(() => ({
     hideStyleBlockers: WindowsService.state[Utils.getCurrentUrlParams().windowId].hideStyleBlockers,
@@ -36,15 +34,31 @@ export default function PlatformAppStore(p: {
   const [platformAppsUrl, setPlatformAppsUrl] = useState('');
   const [currentUrl, setCurrentUrl] = useState<string>('');
 
+  const { theme } = useVuex(() => ({ theme: CustomizationService.state.theme }));
+
+  // Single-use magic link: refetch on theme change so the store re-themes without
+  // replaying a spent login token.
   useEffect(() => {
+    HighlighterService.actions.return
+      .getLegacyAiHighlighterVersion()
+      .then(setLegacyHighlighterVersion);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
     async function getPlatformAppsUrl() {
       const url = await UserService.views.appStoreUrl(p.params);
-      if (!url) return;
+      if (!url || cancelled) return;
       setPlatformAppsUrl(url);
     }
 
     getPlatformAppsUrl();
-  }, [p.params]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [p.params.appId, p.params.type, theme]);
 
   function onBrowserViewReady(view: Electron.BrowserView) {
     new GuestApiHandler().exposeApi(view.webContents.id, {
@@ -70,10 +84,26 @@ export default function PlatformAppStore(p: {
       }
     });
 
-    // reload apps after uninstall
     view.webContents.session.webRequest.onCompleted(
-      { urls: ['https://platform.streamlabs.com/api/v1/app/*/uninstall'] },
-      () => Promise.resolve(() => PlatformAppsService.actions.refreshProductionApps()),
+      {
+        urls: [
+          // The marketplace store page apps and themes share the `themes/*/install`
+          // endpoint. Reload apps when it reports a completed install.
+          'https://marketplace-api.streamlabs.com/api/v2/themes/*/install',
+          // Watch for the uninstall endpoint to reload apps after an app is
+          // uninstalled as well.
+          'https://platform.streamlabs.com/api/v1/app/*/uninstall',
+        ],
+      },
+      details => {
+        if (details.method === 'POST' && details.url.includes('/themes/')) {
+          PlatformAppsService.actions.loadProductionApps();
+          return;
+        }
+
+        // reload apps after uninstall
+        Promise.resolve(() => PlatformAppsService.actions.refreshProductionApps());
+      },
     );
   }
 
@@ -95,17 +125,15 @@ export default function PlatformAppStore(p: {
 
   if (!platformAppsUrl) return <></>;
 
-  const heightDiff =
-    currentUrl.includes('installed-apps') && HighlighterService.views.highlighterVersion !== ''
-      ? '72'
-      : '0';
+  const showLegacyHighlighter =
+    currentUrl.includes('installed-apps') && legacyHighlighterVersion !== null;
 
   return (
     <>
       <BrowserView
         className={cx(styles.browserView, p.className)}
         style={{
-          height: `calc(100% - ${heightDiff}px)`,
+          height: showLegacyHighlighter ? 'calc(100% - 72px)' : '100%',
           position: 'absolute',
           top: 0,
           right: 0,
@@ -115,12 +143,11 @@ export default function PlatformAppStore(p: {
         src={platformAppsUrl}
         onReady={onBrowserViewReady}
         enableGuestApi
-        emitUrlChange={url => {
-          setCurrentUrl(url);
-        }}
+        reloadOnThemeChange={false}
+        emitUrlChange={setCurrentUrl}
         hidden={hideStyleBlockers}
       />
-      {currentUrl.includes('installed-apps') && highlighterInstalled && (
+      {showLegacyHighlighter && (
         <div className={styles.otherInstalledAppsWrapper}>
           <div>{$t('Other installed apps:')}</div>
           <div className={styles.otherAppWrapper}>
@@ -128,32 +155,16 @@ export default function PlatformAppStore(p: {
               <h3 style={{ margin: 0 }}>AI Highlighter</h3>
               <p style={{ opacity: 0.3, margin: 0 }}>by Streamlabs</p>
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <Button
-                size="middle"
-                type="default"
-                onClick={() => {
-                  setHighlighterInstalled(false);
-                  HighlighterService.uninstallAiHighlighter();
-                }}
-              >
-                {$t('Uninstall')}
-              </Button>
-
-              <Button
-                size="middle"
-                type="primary"
-                onClick={() => {
-                  NavigationService.actions.navigate(
-                    'Highlighter',
-                    { view: 'settings' },
-                    EMenuItemKey.Highlighter,
-                  );
-                }}
-              >
-                {$t('Open')}
-              </Button>
-            </div>
+            <Button
+              size="middle"
+              type="default"
+              onClick={() => {
+                setLegacyHighlighterVersion(null);
+                HighlighterService.actions.uninstallLegacyAiHighlighter();
+              }}
+            >
+              {$t('Uninstall')}
+            </Button>
           </div>
         </div>
       )}

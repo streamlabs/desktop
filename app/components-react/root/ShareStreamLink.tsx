@@ -101,9 +101,8 @@ export const ShareStreamLink = () => {
           </Tooltip>
           <div
             style={{
-              flex: 1,
               display: expanded ? 'flex' : 'none',
-              justifyContent: 'space-between',
+              gap: '8px',
               transition: 'all 1s ease-in-out',
             }}
           >

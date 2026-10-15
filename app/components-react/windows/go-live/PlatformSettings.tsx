@@ -26,6 +26,7 @@ export default function PlatformSettings() {
   const {
     settings,
     enabledPlatforms,
+    validEnabledPlatforms,
     getPlatformDisplayName,
     updatePlatform,
     commonFields,
@@ -51,6 +52,13 @@ export default function PlatformSettings() {
 
     get layout(): TInputLayout {
       return 'vertical';
+    },
+
+    // In unprotected mode, only Twitch can show in the go live window. In unprotected mode the user can
+    // stream to Twitch even if the platform is not linked, so we do not need to check for it being a
+    // linked platform.
+    get validEnabledPlatforms() {
+      return !settings.protectedModeEnabled ? ['twitch' as TPlatform] : settings.enabledPlatforms;
     },
   }));
 
@@ -136,7 +144,7 @@ export default function PlatformSettings() {
       </Section>
 
       {/*SETTINGS FOR EACH ENABLED PLATFORM*/}
-      {enabledPlatforms.map((platform: TPlatform) => (
+      {validEnabledPlatforms.map((platform: TPlatform) => (
         <Section
           title={$t('%{platform} Settings', { platform: getPlatformDisplayName(platform) })}
           key={platform}

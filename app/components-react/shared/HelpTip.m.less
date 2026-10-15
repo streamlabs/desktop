@@ -9,7 +9,7 @@
   width: 260px;
   padding: 10px;
   font-size: 14px;
-  z-index: 1002;
+  z-index: @z-above-resize-bars;
 }
 
 .help-tip__arrow {
@@ -29,6 +29,11 @@
 
   &.help-tip__arrow-bottom {
     bottom: 8px;
+  }
+
+  &.help-tip__arrow-middle {
+    top: 50%;
+    margin-top: -8px;
   }
 }
 
@@ -56,5 +61,38 @@
   i {
     margin-right: 8px;
     font-size: 16px;
+  }
+}
+
+// Single-row variant: title and body side by side, so the tip is short enough to sit in the nav.
+// Vertically centered on `top`; the right margin leaves room for the right-edge arrow.
+.help-tip--compact {
+  display: flex;
+  align-items: center;
+  width: 420px;
+  padding: 4px 10px;
+  margin-right: 12px;
+  transform: translateY(-50%);
+
+  .help-tip__title {
+    flex: none;
+    margin: 0 12px 0 0;
+    padding: 0 12px 0 0;
+    border-bottom: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .help-tip__body {
+    font-size: 13px;
+    line-height: 1.25;
+  }
+
+  .help-tip__close {
+    position: static;
+    order: 1;
+    flex: none;
+    margin-left: 10px;
   }
 }

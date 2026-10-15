@@ -21,6 +21,12 @@ interface BrowserViewProps {
   className?: string;
   style?: React.CSSProperties;
   emitUrlChange?: (url: string) => void;
+  /**
+   * Reload `src` when the app theme changes. Defaults to true. Disable for single-use
+   * URLs (magic links): reloading one replays a spent login token and lands on the
+   * login page. Such callers should fetch a fresh `src` on theme change instead.
+   */
+  reloadOnThemeChange?: boolean;
 }
 
 export default function BrowserView(p: BrowserViewProps) {
@@ -99,9 +105,11 @@ export default function BrowserView(p: BrowserViewProps) {
     return () => clearInterval(resizeInterval);
   }, [loading]);
 
+  const reloadTheme = p.reloadOnThemeChange === false ? null : theme;
+
   useEffect(() => {
     loadUrl();
-  }, [theme, p.src]);
+  }, [reloadTheme, p.src]);
 
   function destroyBrowserView() {
     publishBrowserViewRect(viewKey.current, null);
@@ -144,25 +152,39 @@ export default function BrowserView(p: BrowserViewProps) {
     if (!sizeContainer.current) return;
     if (!browserView.current) return;
 
-    const rect: { left: number; top: number; width: number; height: number } =
-      p.hidden || hideStyleBlockers
-        ? { left: 0, top: 0, width: 0, height: 0 }
-        : sizeContainer.current.getBoundingClientRect();
+    const rawRect = sizeContainer.current.getBoundingClientRect();
+    const isEffectivelyHidden = p.hidden || hideStyleBlockers || (rawRect.width === 0 && rawRect.height === 0);
+
+    const rect: { left: number; top: number; width: number; height: number } = isEffectivelyHidden
+      ? { left: 0, top: 0, width: 0, height: 0 }
+      : rawRect;
 
     if (currentPosition == null || currentSize == null || rectChanged(rect)) {
       currentPosition = { x: rect.left, y: rect.top };
       currentSize = { x: rect.width, y: rect.height };
 
       if (currentPosition && currentSize && browserView.current) {
-        browserView.current.setBounds({
-          x: Math.round(currentPosition.x),
-          y: Math.round(currentPosition.y),
-          width: Math.round(currentSize.x),
-          height: Math.round(currentSize.y),
-        });
-        // The `p.hidden || hideStyleBlockers` branch above yields a zero rect, which
-        // the registry reads as "not covering" — that covers the removeBrowserView
-        // path below too, so it needs no hook of its own.
+        if (isEffectivelyHidden) {
+          // Keep the previous dimensions (or default) to prevent the inner web app from
+          // crashing or reloading due to a 0x0 viewport, but move it far off-screen.
+          const currentBounds = browserView.current.getBounds();
+          const widthToKeep = currentBounds.width || 1024;
+          const heightToKeep = currentBounds.height || 768;
+          browserView.current.setBounds({
+            x: -99999,
+            y: -99999,
+            width: widthToKeep,
+            height: heightToKeep,
+          });
+        } else {
+          browserView.current.setBounds({
+            x: Math.round(currentPosition.x),
+            y: Math.round(currentPosition.y),
+            width: Math.round(currentSize.x),
+            height: Math.round(currentSize.y),
+          });
+        }
+        // The registry reads a zero rect as "not covering"
         publishBrowserViewRect(viewKey.current, rect);
       }
     }
@@ -202,11 +224,14 @@ export default function BrowserView(p: BrowserViewProps) {
   if (loading) {
     return (
       <div
+        className={p.className}
         style={{
           display: 'flex',
           flexGrow: 1,
           alignItems: 'center',
           justifyContent: 'center',
+          height: '100%',
+          ...p.style,
         }}
       >
         <Spinner visible pageLoader />

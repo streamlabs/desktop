@@ -77,7 +77,7 @@
 
 .plattform-icon {
   position: absolute;
-  z-index: 10;
+  z-index: @z-overlay;
   animation: wiggleAnimation 5s infinite ease-in-out;
 }
 
@@ -224,4 +224,11 @@
 .fadeOut {
   opacity: 0;
   transform: translateX(900px);
+}
+
+:global(.day-theme),
+:global(.prime-light) {
+  .manual-upload-wrapper {
+    border-color: var(--border);
+  }
 }

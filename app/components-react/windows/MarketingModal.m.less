@@ -110,7 +110,12 @@
 }
 
 .updates-button {
-  align-self: flex-end;
-  overflow: hidden;
-  width: 100%;
+  &:global(.button) {
+    align-self: flex-end;
+    overflow: hidden;
+    width: 100%;
+    line-height: 1.5em;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
 }

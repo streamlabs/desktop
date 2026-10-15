@@ -1,0 +1,78 @@
+// TODO: these are duplicated from ToolsNav.m.less, consider refactoring out if not needed there
+.platform-logo {
+  margin-right: 10px;
+
+  &-twitch {
+    color: var(--twitch) !important;
+  }
+  &-youtube {
+    color: var(--youtube) !important;
+  }
+  &-facebook {
+    color: var(--facebook) !important;
+  }
+  &-twitter,
+  &-tiktok,
+  &-instagram,
+  &-youtube,
+  &-kick,
+  &-patreon {
+    width: 15px;
+    height: 15px;
+  }
+  &-tiktok {
+    color: var(--tiktok) !important;
+  }
+  &-streamlabs {
+    color: var(--teal) !important;
+  }
+  &-default {
+    color: var(--logged-in) !important;
+  }
+}
+
+.username {
+  margin-bottom: 0px;
+  flex-grow: 1;
+  line-height: 20px;
+  margin: 2px 0 0 0;
+}
+
+.platform-icons {
+  display: flex;
+  flex-direction: row;
+  gap: 1px;
+  align-items: center;
+  justify-content: center;
+
+  &-container {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  // Override the zooming effect applied to sidebar icons
+  i {
+    &,
+    &:hover {
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+
+  // Custom destination icon
+  :global(.fa-globe) {
+    margin-right: 10px;
+  }
+
+  :global(.fa-globe) {
+    &,
+    &:hover,
+    &:focus,
+    &:active {
+      color: var(--icon) !important;
+    }
+  }
+}

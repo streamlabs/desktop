@@ -354,7 +354,11 @@ export class YoutubeService
       typeof reqInfo !== 'string'
         ? `Failed ${this.displayName} API Request`
         : `Failed ${this.displayName} Request`;
-    console.error(consoleError, '\nRequest Info:', reqInfo, '\nError:', e);
+
+    // Parse object data if possible to read data in the errors array
+    const error = this.serializeError(e);
+
+    console.error(consoleError, '\nRequest Info:', reqInfo, '\nError:', error);
 
     // If a function is provided, skip the default handling
     if (fn) {
@@ -488,6 +492,30 @@ export class YoutubeService
   }
 
   async setupDualStream(goLiveSettings: IGoLiveSettings) {
+    // Filter out sensitive information from custom destinations for logging
+    const settings = {
+      title: goLiveSettings?.platforms?.youtube?.title,
+      thumbnail:
+        goLiveSettings?.platforms?.youtube?.thumbnail &&
+        goLiveSettings?.platforms?.youtube?.thumbnail !== 'default'
+          ? goLiveSettings?.platforms?.youtube?.thumbnail
+          : 'default',
+      categoryId: goLiveSettings?.platforms?.youtube?.categoryId,
+      broadcastId: goLiveSettings?.platforms?.youtube?.broadcastId,
+      description: goLiveSettings?.platforms?.youtube?.description,
+      privacyStatus: goLiveSettings?.platforms?.youtube?.privacyStatus,
+      scheduledStartTime: goLiveSettings?.platforms?.youtube?.scheduledStartTime,
+      mode: goLiveSettings?.platforms?.youtube?.mode,
+      monetizationEnabled: goLiveSettings?.platforms?.youtube?.monetizationEnabled,
+      eligibleForMonetization: goLiveSettings?.platforms?.youtube?.eligibleForMonetization,
+    };
+    console.log(
+      'Setting up dual stream: ',
+      JSON.stringify({
+        advancedMode: goLiveSettings?.advancedMode,
+        settings,
+      }),
+    );
     // Live output editing currently cannot use dual stream so guard against it
     if (goLiveSettings.liveOutputEditing) {
       return;
@@ -552,6 +580,17 @@ export class YoutubeService
         verticalDestination.display,
       );
     }
+
+    // Temporarily log the vertical stream information for debugging purposes
+    console.log(
+      'Vertical stream ',
+      JSON.stringify({
+        verticalBroadcast: this.state.verticalBroadcast.id,
+        verticalStream: this.state.verticalBroadcast.contentDetails.boundStreamId,
+        verticalBroadcastId: verticalBroadcast.id,
+        verticalStreamId: verticalStream.id,
+      }),
+    );
 
     this.setPlatformContext('youtube');
   }
@@ -625,13 +664,9 @@ export class YoutubeService
       await this.setupLiveOutputStream(goLiveSettings);
     } else if (ytSettings.display === 'both') {
       try {
-        // Prevent rate limit errors by delaying the dual stream setup by 1 second
-        await new Promise<void>(resolve => {
-          setTimeout(async () => {
-            await this.setupDualStream(goLiveSettings);
-            resolve();
-          }, 1000);
-        });
+        // Prevent rate limit errors by delaying the dual stream setup by 3 seconds
+        await Utils.sleep(3000);
+        await this.setupDualStream(goLiveSettings);
       } catch (e: unknown) {
         this.createPlatformError(
           e,
@@ -660,6 +695,17 @@ export class YoutubeService
 
     this.SET_STREAM_ID(stream.id);
     this.SET_STREAM_KEY(streamKey);
+
+    // Temporarily log the horizontal stream information for debugging purposes
+    console.log(
+      'horizontal stream ',
+      JSON.stringify({
+        horizontalBroadcast: this.state.settings.broadcastId,
+        horizontalStream: this.state.streamId,
+        horizontalBroadcastId: broadcast.id,
+        horizontalStreamId: stream.id,
+      }),
+    );
 
     this.setPlatformContext('youtube');
   }

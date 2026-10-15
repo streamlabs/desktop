@@ -8,8 +8,15 @@
 const jobStartTime = Date.now();
 const { execSync } = require('child_process');
 const fs = require('fs');
+const https = require('https');
 const rimraf = require('rimraf');
 const fetch = require('node-fetch');
+
+// The timings GET at startup and the analytics POST after the run are 20+ minutes apart.
+// Node 22.18.0 is currently pinned for the workflow, which means the startup GET socket cannot
+// be reused after 20+ minutes. Each test suite consistently takes > 20 minutes. This meant the
+// POST request to attempt to use a closed socket and would fail with an ECONNABORTED error.
+const utilsServerAgent = new https.Agent({ keepAlive: false });
 
 const failedTestsFile = 'test-dist/failed-tests.json';
 const testStatsFile = 'test-dist/test-stats.json';
@@ -145,13 +152,22 @@ async function requestUtilityServer(path, method = 'get', body = null) {
   const token = process.env.SLOBS_TEST_USER_POOL_TOKEN;
   const requestPayload = {
     method,
+    agent: utilsServerAgent,
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   };
   if (body) requestPayload.body = JSON.stringify(body);
-  const response = await fetch(`${utilsServerUrl}/${path}`, requestPayload);
+
+  // Attempt to send the request to the utility server via the old socket, retrying once on network failure.
+  let response;
+  try {
+    response = await fetch(`${utilsServerUrl}/${path}`, requestPayload);
+  } catch (e) {
+    console.error(`request to ${path} failed, retrying once`, e);
+    response = await fetch(`${utilsServerUrl}/${path}`, requestPayload);
+  }
 
   if (!response.ok) {
     console.error(response.status);

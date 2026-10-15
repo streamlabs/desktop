@@ -102,6 +102,18 @@ class LiveDockController {
     return this.streamingService.views.enabledPlatforms;
   }
 
+  /**
+   * In unprotected mode the stream usually goes to a custom ingest, so no linked platform's chat
+   * belongs to it and the dock falls back to the offline chat placeholder. The exception is a
+   * Twitch ingest with a linked Twitch account, which streams to that account's channel.
+   */
+  get platformChatEnabled() {
+    return (
+      this.streamingService.views.protectedModeEnabled ||
+      this.streamingService.views.isTwitchUnprotectedStream
+    );
+  }
+
   get defaultPlatformChatVisible() {
     return this.store.selectedChat === 'default';
   }
@@ -123,7 +135,7 @@ class LiveDockController {
   }
 
   get chatTabs(): { name: string; value: string }[] {
-    if (!this.userService.state.auth) return [];
+    if (!this.userService.state.auth || !this.enabledPlatforms.length) return [];
 
     const hasMultistreamChat =
       (this.restreamService.views.canEnableRestream &&
@@ -326,6 +338,7 @@ function LiveDock() {
     streamingStatus,
     enabledPlatforms,
     primaryPlatform,
+    platformChatEnabled,
   } = useVuex(() =>
     pick(ctrl, [
       'isStreaming',
@@ -340,6 +353,7 @@ function LiveDock() {
       'streamingStatus',
       'enabledPlatforms',
       'primaryPlatform',
+      'platformChatEnabled',
     ]),
   );
 
@@ -378,9 +392,10 @@ function LiveDock() {
   }, [enabledPlatforms, primaryPlatform]);
 
   const chat = useMemo(() => {
-    const primaryChat = primaryStreaming ? primaryPlatform : (enabledPlatforms[0] as TPlatform);
+    const primaryChat = primaryStreaming ? primaryPlatform : enabledPlatforms[0];
+    if (!primaryChat) return <OfflineChat chatEnabled={true} />;
 
-    const service = getPlatformService(primaryChat!);
+    const service = getPlatformService(primaryChat);
 
     if (!service.hasCapability('chat') && !service.hasLiveDockFeature('chat-offline')) {
       return <OfflineChat chatEnabled={false} primaryPlatform={primaryChat} />;
@@ -458,14 +473,16 @@ function LiveDock() {
             )}
           </div>
           <div className="flex">
-            {(hasLiveDockFeature('refresh-chat') ||
-              (hasLiveDockFeature('refresh-chat-streaming') && isStreaming) ||
-              (hasLiveDockFeature('refresh-chat-restreaming') && isRestreaming)) && (
-              <a onClick={() => ctrl.refreshChat()}>{$t('Refresh Chat')}</a>
-            )}
+            {platformChatEnabled &&
+              (hasLiveDockFeature('refresh-chat') ||
+                (hasLiveDockFeature('refresh-chat-streaming') && isStreaming) ||
+                (hasLiveDockFeature('refresh-chat-restreaming') && isRestreaming)) && (
+                <a onClick={() => ctrl.refreshChat()}>{$t('Refresh Chat')}</a>
+              )}
           </div>
         </div>
         {!hideStyleBlockers &&
+          platformChatEnabled &&
           (hasLiveDockFeature('chat-offline') ||
             (isStreaming && hasLiveDockFeature('chat-streaming')) ||
             !hasLiveDockFeature('chat-streaming')) && (
@@ -485,8 +502,9 @@ function LiveDock() {
         {/* Although technically there are no style blocking elements here we want it to mirror
           the behavior of our chat pane */}
         {!hideStyleBlockers &&
-          !hasLiveDockFeature('chat-offline') &&
-          (!ctrl.platform || (hasLiveDockFeature('chat-streaming') && !isStreaming)) && (
+          (!platformChatEnabled ||
+            (!hasLiveDockFeature('chat-offline') &&
+              (!ctrl.platform || (hasLiveDockFeature('chat-streaming') && !isStreaming)))) && (
             <OfflineChat chatEnabled={true} primaryPlatform={ctrl.platform} />
           )}
       </div>
@@ -498,6 +516,12 @@ function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
   const ctrl = useController(LiveDockCtx);
   return (
     <div className="flex">
+      {/*
+        `disabledOverflow` keeps every tab rendered. A horizontal antd Menu otherwise gets
+        `maxCount: Overflow.RESPONSIVE` and collapses tabs that don't fit behind an ellipsis
+        indicator, leaving them in the DOM but `aria-hidden` and zero-height. In a dock this
+        narrow that fired with only two tabs, hiding the Multichat tab entirely.
+      */}
       <Menu
         defaultSelectedKeys={[p.visibleChat]}
         onClick={ev => p.setChat(ev.key)}
