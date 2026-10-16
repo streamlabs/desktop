@@ -8,6 +8,7 @@ import { AppService } from 'services/app';
 import { InitAfter } from '../core';
 import { BehaviorSubject } from 'rxjs';
 import { getPlatformService } from '../platforms';
+import Utils from 'services/utils';
 
 interface IStreamlabelActiveSubscriptions {
   filename: string;
@@ -50,6 +51,10 @@ interface ITrains {
   superchat: ITrainInfo;
   youtube_subscriber: ITrainInfo;
   facebook_follow: ITrainInfo;
+  twitter_follow: ITrainInfo;
+  twitter_sub: ITrainInfo;
+  twitter_like: ITrainInfo;
+  twitter_repost: ITrainInfo;
 }
 
 export interface IStreamlabelSet {
@@ -86,7 +91,11 @@ type TTrainType =
   | 'sponsor'
   | 'superchat'
   | 'youtube_subscriber'
-  | 'facebook_follow';
+  | 'facebook_follow'
+  | 'twitter_follow'
+  | 'twitter_sub'
+  | 'twitter_like'
+  | 'twitter_repost';
 
 interface IStreamlabelsServiceState {
   definitions: IStreamlabelSet;
@@ -170,6 +179,30 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
       mostRecentName: null,
       counter: 0,
       setting: 'train_facebook_follows',
+    },
+    twitter_follow: {
+      mostRecentEventAt: null,
+      mostRecentName: null,
+      counter: 0,
+      setting: 'train_twitter_follows',
+    },
+    twitter_sub: {
+      mostRecentEventAt: null,
+      mostRecentName: null,
+      counter: 0,
+      setting: 'train_twitter_subscriptions',
+    },
+    twitter_like: {
+      mostRecentEventAt: null,
+      mostRecentName: null,
+      counter: 0,
+      setting: 'train_twitter_likes',
+    },
+    twitter_repost: {
+      mostRecentEventAt: null,
+      mostRecentName: null,
+      counter: 0,
+      setting: 'train_twitter_reposts',
     },
     support: {
       mostRecentEventAt: null,
@@ -274,6 +307,10 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
         'train_youtube_superchats',
         'train_youtube_subscribers',
         'train_facebook_follows',
+        'train_twitter_follows',
+        'train_twitter_subscriptions',
+        'train_twitter_likes',
+        'train_twitter_reposts',
       ].includes(statname)
     ) {
       this.outputAllTrains();
@@ -527,6 +564,14 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
         this.trains.youtube_subscriber.mostRecentName = latest.name;
 
         this.outputTrainInfo('youtube_subscriber');
+      } else if (event.for === 'twitter_account') {
+        this.trains.twitter_follow.mostRecentEventAt = Date.now();
+        this.trains.twitter_follow.counter += event.message.length;
+
+        const latest = event.message[event.message.length - 1];
+        this.trains.twitter_follow.mostRecentName = latest.name;
+
+        this.outputTrainInfo('twitter_follow');
       }
     } else if (event.type === 'subscription') {
       if (event.for === 'twitch_account') {
@@ -545,6 +590,13 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
         this.trains.sponsor.mostRecentName = latest.name;
 
         this.outputTrainInfo('sponsor');
+      } else if (event.for === 'twitter_account') {
+        this.trains.twitter_sub.mostRecentEventAt = Date.now();
+        this.trains.twitter_sub.counter += event.message.length;
+
+        const latest = event.message[event.message.length - 1];
+        this.trains.twitter_sub.mostRecentName = latest.name;
+        this.outputTrainInfo('twitter_sub');
       }
     } else if (event.type === 'support') {
       this.trains.support.mostRecentEventAt = Date.now();
@@ -577,6 +629,24 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
       this.trains.stars.mostRecentName = latest.name;
 
       this.outputTrainInfo('stars');
+    } else if (event.type === 'like') {
+      if (event.for === 'twitter_account') {
+        this.trains.twitter_like.mostRecentEventAt = Date.now();
+        this.trains.twitter_like.counter += event.message.length;
+
+        const latest = event.message[event.message.length - 1];
+        this.trains.twitter_like.mostRecentName = latest.name;
+        this.outputTrainInfo('twitter_like');
+      }
+    } else if (event.type === 'repost') {
+      if (event.for === 'twitter') {
+        this.trains.twitter_repost.mostRecentEventAt = Date.now();
+        this.trains.twitter_repost.counter += event.message.length;
+
+        const latest = event.message[event.message.length - 1];
+        this.trains.twitter_repost.mostRecentName = latest.name;
+        this.outputTrainInfo('twitter_repost');
+      }
     }
   }
 

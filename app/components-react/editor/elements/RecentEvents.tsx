@@ -154,6 +154,7 @@ function EventCell(p: { event: IRecentEvent }) {
       youtube_account: <PlatformLogo platform="youtube" size={16} />,
       facebook_account: <PlatformLogo platform="facebook" />,
       kick_account: <PlatformLogo platform="kick" size={16} />,
+      twitter_account: <PlatformLogo platform="twitter" size={16} />,
       streamlabs: <PlatformLogo platform="streamlabs" size={16} />,
       streamlabscharity: <PlatformLogo platform="streamlabs" size={16} />,
     }[platform];
