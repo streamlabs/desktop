@@ -6,6 +6,7 @@ import {
   getClient,
   useChildWindow,
   useMainWindow,
+  waitForClickable,
 } from '../core';
 import { mkdtemp } from 'fs-extra';
 import { tmpdir } from 'os';
@@ -25,7 +26,13 @@ export async function showSettingsWindow(category: string, cb?: () => Promise<un
 
     if (category) {
       await focusChild();
-      await click(`[data-name="settings-nav-item"]=${category}`);
+      const selector = `[data-name="settings-nav-item"]=${category}`;
+      // Settings initialization can outlast the shared click helper's three-second deadline.
+      await waitForClickable(selector, {
+        timeout: 10000,
+        timeoutMsg: `Settings category "${category}" did not become clickable`,
+      });
+      await click(selector);
     }
   });
 
@@ -42,11 +49,15 @@ export async function removeCustomDestinations() {
   let remaining = (await client.$$('i.fa-trash')).length;
   while (remaining > 0) {
     await click('i.fa-trash');
-    remaining--;
-    await client.waitUntil(async () => (await client.$$('i.fa-trash')).length === remaining, {
-      timeout: 10000,
-      timeoutMsg: 'The custom destination list did not update after removal',
-    });
+    const expectedRemaining = remaining - 1;
+    await client.waitUntil(
+      async () => (await client.$$('i.fa-trash')).length === expectedRemaining,
+      {
+        timeout: 10000,
+        timeoutMsg: 'The custom destination list did not update after removal',
+      },
+    );
+    remaining = expectedRemaining;
   }
 }
 
