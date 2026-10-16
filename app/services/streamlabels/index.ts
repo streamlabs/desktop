@@ -653,7 +653,7 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
         this.outputTrainInfo('twitter_like');
       }
     } else if (event.type === 'repost') {
-      if (event.for === 'twitter') {
+      if (event.for === 'twitter_account') {
         this.trains.twitter_repost.mostRecentEventAt = Date.now();
         this.trains.twitter_repost.counter += event.message.length;
 
