@@ -30,6 +30,7 @@ import {
 } from '../modules/core';
 import { clearCollections } from '../modules/api/scenes';
 import { platform } from 'os';
+import { omitYouTubeRateLimitLogEntries, YouTubeRateLimitError } from '../youtube-rate-limit';
 export const test = testFn; // the overridden "test" function
 
 const path = require('path');
@@ -200,6 +201,24 @@ export async function restartApp(t: TExecutionContext): Promise<Application> {
 }
 
 let skipCheckingErrorsInLogFlag = false;
+let allowYouTubeRateLimitLogs = false;
+
+/** End a live YouTube test with a visible warning when its account is rate limited. */
+export function withYouTubeRateLimitWarning(
+  implementation: (t: TExecutionContext) => Promise<void>,
+) {
+  return async (t: TExecutionContext) => {
+    try {
+      await implementation(t);
+    } catch (error: unknown) {
+      if (!(error instanceof YouTubeRateLimitError)) throw error;
+      allowYouTubeRateLimitLogs = true;
+      t.log('WARNING: YouTube account rate limited; remaining live-stream checks were not run.');
+      // AVA has no runtime test skip; acknowledge the warning without retrying the account.
+      t.pass('YouTube live-stream checks unavailable due to userRequestsExceedRateLimit');
+    }
+  };
+}
 
 /**
  * Disable checking errors in the log file for a single test
@@ -401,45 +420,46 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     lastLogs = logs;
     let ignoringErrors = false;
     let inMissingTranslation = false;
-    const errors = logs
-      .slice(logFileLastReadingPos)
-      .split('\n')
-      .filter((record: string) => {
-        // This error is outside our control and can be ignored.
-        // See: https://stackoverflow.com/questions/49384120/resizeobserver-loop-limit-exceeded
-        if (record.match(/ResizeObserver loop limit exceeded/)) {
-          return false;
-        }
-        // Another ResizeObserver issue that appears outside of our control
-        // See: https://trackjs.com/javascript-errors/resizeobserver-loop-completed-with-undelivered-notifications/
-        if (record.match(/ResizeObserver loop completed with undelivered notifications/)) {
-          return false;
-        }
+    const newLogs = logs.slice(logFileLastReadingPos);
+    const checkedLogs = allowYouTubeRateLimitLogs
+      ? omitYouTubeRateLimitLogEntries(newLogs)
+      : newLogs;
+    const errors = checkedLogs.split('\n').filter((record: string) => {
+      // This error is outside our control and can be ignored.
+      // See: https://stackoverflow.com/questions/49384120/resizeobserver-loop-limit-exceeded
+      if (record.match(/ResizeObserver loop limit exceeded/)) {
+        return false;
+      }
+      // Another ResizeObserver issue that appears outside of our control
+      // See: https://trackjs.com/javascript-errors/resizeobserver-loop-completed-with-undelivered-notifications/
+      if (record.match(/ResizeObserver loop completed with undelivered notifications/)) {
+        return false;
+      }
 
-        // This error is related to a bug in `useModule` and this check should be removed
-        // after we fix it in the new `useModule`
-        if (record.match(/while rendering a different component/)) {
-          // Ignore errors until we encouter the next thing that isn't an error
-          ignoringErrors = true;
-          return false;
-        }
+      // This error is related to a bug in `useModule` and this check should be removed
+      // after we fix it in the new `useModule`
+      if (record.match(/while rendering a different component/)) {
+        // Ignore errors until we encouter the next thing that isn't an error
+        ignoringErrors = true;
+        return false;
+      }
 
-        // The key can span lines (OBS compat messages do) and every line is prefixed [error],
-        // so skip continuations up to the one closing the quote.
-        if (inMissingTranslation || record.match(/Missing translation/)) {
-          inMissingTranslation = !record.trimEnd().endsWith('"');
-          return false;
-        }
+      // The key can span lines (OBS compat messages do) and every line is prefixed [error],
+      // so skip continuations up to the one closing the quote.
+      if (inMissingTranslation || record.match(/Missing translation/)) {
+        inMissingTranslation = !record.trimEnd().endsWith('"');
+        return false;
+      }
 
-        const isError = !!record.match(/\[error\]/);
+      const isError = !!record.match(/\[error\]/);
 
-        if (isError) {
-          return !ignoringErrors;
-        } else {
-          ignoringErrors = false;
-          return false;
-        }
-      });
+      if (isError) {
+        return !ignoringErrors;
+      } else {
+        ignoringErrors = false;
+        return false;
+      }
+    });
 
     // save the last reading position, to skip already read records next time
     logFileLastReadingPos = logs.length - 1;
@@ -470,6 +490,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
     testName = t.title.replace('beforeEach hook for ', '');
     testPassed = false;
     skipCheckingErrorsInLogFlag = false;
+    allowYouTubeRateLimitLogs = false;
 
     t.context.app = app;
     setContext(t);

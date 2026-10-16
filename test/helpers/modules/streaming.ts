@@ -28,6 +28,7 @@ import {
 } from '../../../app/services/websocket';
 import { RestreamService } from '../../../app/services/restream';
 import type { IStreamingServiceApi } from '../../../app/services/streaming/streaming-api';
+import { isYouTubeBroadcastRateLimit, YouTubeRateLimitError } from '../youtube-rate-limit';
 
 /**
  * Go live and wait for stream start
@@ -127,12 +128,13 @@ export async function waitForStreamStart() {
       await (await selectButton('End Stream')).waitForClickable({ timeout: 20 * 1000 });
     });
   } catch (error: unknown) {
+    let diagnostics;
     try {
       const streaming = (await getApiClient()).getResource<IStreamingServiceApi>(
         'StreamingService',
       );
       const { info, status } = streaming.getModel();
-      console.error('Go Live startup state:', {
+      diagnostics = {
         lifecycle: info.lifecycle,
         checklist: info.checklist,
         status,
@@ -143,11 +145,17 @@ export async function waitForStreamStart() {
           platform: info.error.platform,
           reason: info.error.reason,
         },
-      });
+      };
     } catch {
       // A disconnected or crashed app must not replace the startup failure.
       console.error('Go Live startup state: unavailable');
+      throw error;
     }
+    if (isYouTubeBroadcastRateLimit(diagnostics.error)) {
+      console.warn('Go Live startup warning: YouTube account rate limited', diagnostics);
+      throw new YouTubeRateLimitError(error);
+    }
+    console.error('Go Live startup state:', diagnostics);
     throw error;
   }
 }
