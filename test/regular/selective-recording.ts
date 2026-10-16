@@ -12,7 +12,7 @@ import {
   openRecordingHistoryFromNotification,
   startRecording,
   stopRecording,
-} from '../helpers/modules/streaming';
+} from '../helpers/modules/recording';
 import { sleep } from '../helpers/sleep';
 import * as path from 'path';
 import {

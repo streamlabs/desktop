@@ -16,14 +16,13 @@ import { showPage } from '../helpers/modules/navigation';
 import {
   clickGoLive,
   prepareToGoLive,
-  startRecording,
-  stopRecording,
   stopStream,
   submit,
   tryToGoLive,
   waitForSettingsWindowLoaded,
   waitForStreamStart,
 } from '../helpers/modules/streaming';
+import { startRecording, stopRecording } from '../helpers/modules/recording';
 import { logIn } from '../helpers/modules/user';
 import { saveReplayBuffer } from '../helpers/modules/replay-buffer';
 import { fillForm, useForm } from '../helpers/modules/forms';

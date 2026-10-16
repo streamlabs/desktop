@@ -8,10 +8,6 @@ if (process.env.NODE_ENV !== 'test') {
 const path = require('path');
 const electron = require('electron');
 
-if (process.argv.includes('--game-capture-diagnostics')) {
-  require('./test/helpers/renderer-diagnostics')();
-}
-
 // Inject fake context menu
 (() => {
   let currentMenu;

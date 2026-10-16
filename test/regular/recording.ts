@@ -3,15 +3,17 @@ import { test, TExecutionContext, useWebdriver } from '../helpers/webdriver';
 import { sleep } from '../helpers/sleep';
 import {
   clickGoLive,
-  openRecordingHistoryFromNotification,
   prepareToGoLive,
-  startRecording,
-  stopRecording,
   stopStream,
   submit,
   waitForSettingsWindowLoaded,
   waitForStreamStart,
 } from '../helpers/modules/streaming';
+import {
+  openRecordingHistoryFromNotification,
+  startRecording,
+  stopRecording,
+} from '../helpers/modules/recording';
 import {
   setOutputResolution,
   setTemporaryRecordingPath,

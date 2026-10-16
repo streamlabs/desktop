@@ -12,7 +12,7 @@ import { NotificationsService } from '../../../app/services/notifications';
 import { IObsListInput } from '../../../app/components/obs/inputs/ObsInput';
 import { getApiClient } from '../../helpers/api-client';
 import { focusMain, focusWindow, getClient } from '../../helpers/modules/core';
-import { startRecording, stopRecording } from '../../helpers/modules/streaming';
+import { startRecording, stopRecording } from '../../helpers/modules/recording';
 import {
   startReplayBuffer,
   saveReplayBuffer,

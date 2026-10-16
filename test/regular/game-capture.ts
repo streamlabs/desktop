@@ -30,27 +30,9 @@ import { getApiClient } from '../helpers/api-client';
 import { SourcesService } from '../../app/services/api/external-api/sources';
 import { sleep } from '../helpers/sleep';
 import { buildWindowSetting, launchProfile, stopAll } from '../helpers/game-capture-target';
-import * as fs from 'fs';
-import * as path from 'path';
 
 // eslint-disable-next-line react-hooks/rules-of-hooks
-useWebdriver({ restartAppAfterEachTest: false, appArgs: '--game-capture-diagnostics' });
-
-// FIXME: Remove these diagnostics after the intermittent CI renderer exception is identified.
-let diagnosticLinesRead = 0;
-test.afterEach.always(t => {
-  const logFile = path.join(t.context.cacheDir, 'slobs-client', 'renderer-diagnostics.jsonl');
-  try {
-    if (!fs.existsSync(logFile)) return;
-    const lines = fs.readFileSync(logFile, 'utf8').trim().split('\n');
-    for (const line of lines.slice(diagnosticLinesRead)) {
-      console.log('Game Capture renderer diagnostic:', line);
-    }
-    diagnosticLinesRead = lines.length;
-  } catch (error: unknown) {
-    console.log('Could not read Game Capture renderer diagnostics:', error);
-  }
-});
+useWebdriver({ restartAppAfterEachTest: false });
 
 const skipCapture = process.env.SLOBS_TEST_SKIP_GAME_CAPTURE === '1';
 const captureTest = skipCapture ? test.skip : test;

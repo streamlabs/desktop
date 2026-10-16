@@ -51,6 +51,14 @@ const THEME_MAP = {
   },
 };
 
+type ThemeLoadState =
+  | { status: 'loading' }
+  | { status: 'error' }
+  | {
+      status: 'ready';
+      themes: { metadata: IThemeMetadata['data']; thumbnail: string; url: string }[];
+    };
+
 export function Themes(p: IOnboardingStepProps) {
   const {
     OnboardingV2Service,
@@ -62,9 +70,8 @@ export function Themes(p: IOnboardingStepProps) {
 
   const [installing, setInstalling] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const themeMetadata = useRef<Record<string, IThemeMetadata['data']> | null>(null);
-  const thumbnailArray = useRef<{ id: string; url: string }[]>([]);
+  const [themeLoad, setThemeLoad] = useState<ThemeLoadState>({ status: 'loading' });
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const sliderRef = useRef<CarouselRef>(null);
 
   const { isPrime } = useVuex(() => ({
@@ -78,34 +85,36 @@ export function Themes(p: IOnboardingStepProps) {
       [OS.Mac]: THEME_MAP.ULTRA_MAC,
     });
   }, [isPrime]);
-  const idList = Object.keys(themeOptions);
-
   useEffect(() => {
-    if (themeMetadata.current) return;
     let mounted = true;
-    Promise.all(
-      idList.map(id => {
-        return OnboardingService.actions.return.fetchThemeData(id);
-      }),
-    )
-      .then(metadata => {
-        if (!mounted) return;
-        themeMetadata.current = {};
-        metadata.forEach(({ data }) => {
-          themeMetadata.current = { ...themeMetadata.current, [data.id]: data };
-          const thumbnail = data.preview_images.length
-            ? data.preview_images[0]
-            : data.custom_images.start;
-          thumbnailArray.current.push({ id: String(data.id), url: thumbnail });
+    setThemeLoad({ status: 'loading' });
+    async function loadThemes() {
+      try {
+        const ids = Object.keys(themeOptions);
+        const metadata = await Promise.all(
+          ids.map(id => OnboardingService.actions.return.fetchThemeData(id)),
+        );
+        // Publish metadata and thumbnails together, after every response has been processed.
+        const themes = metadata.map(({ data }, i) => {
+          if (String(data.id) !== ids[i]) throw new Error('Unexpected overlay metadata ID');
+          return {
+            metadata: data,
+            thumbnail: data.preview_images.length
+              ? data.preview_images[0]
+              : data.custom_images.start,
+            url: themeOptions[ids[i]],
+          };
         });
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
+        if (mounted) setThemeLoad({ status: 'ready', themes });
+      } catch (e: unknown) {
+        if (mounted) setThemeLoad({ status: 'error' });
+      }
+    }
+    loadThemes();
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [themeOptions, loadAttempt]);
 
   useEffect(() => {
     if (installing) {
@@ -136,13 +145,13 @@ export function Themes(p: IOnboardingStepProps) {
   }
 
   async function installOverlay(id: string) {
-    if (!themeMetadata.current) return;
+    if (themeLoad.status !== 'ready') return;
+    const theme = themeLoad.themes.find(({ metadata }) => String(metadata.id) === id);
+    if (!theme) return;
     try {
-      const url = themeOptions[id];
-      const name = themeMetadata.current[id].name;
       setInstalling(true);
       p.setProcessing(true);
-      await SceneCollectionsService.actions.return.installOverlay(url, name);
+      await SceneCollectionsService.actions.return.installOverlay(theme.url, theme.metadata.name);
       setInstalling(false);
       p.setProcessing(false);
       OnboardingV2Service.actions.takeStep();
@@ -153,31 +162,33 @@ export function Themes(p: IOnboardingStepProps) {
     }
   }
 
-  function getThumbnail(i: number) {
-    if (!thumbnailArray.current) return '';
-    return thumbnailArray.current[i].url;
+  function retryLoading() {
+    setThemeLoad({ status: 'loading' });
+    setLoadAttempt(attempt => attempt + 1);
   }
 
   return (
     <div className={styles.stepContainer}>
       <Header title={$t('Choose Your Overlay')} />
-      {loading && <Spinner />}
-      {!loading && !installing && (
+      {themeLoad.status === 'loading' && <Spinner />}
+      {themeLoad.status === 'error' && (
+        <div className={styles.darkBoxLarge}>
+          <p role="alert">{$t('Unable to load overlays. Please try again.')}</p>
+          <Button onClick={retryLoading}>{$t('Retry')}</Button>
+        </div>
+      )}
+      {themeLoad.status === 'ready' && !installing && (
         <div className={themeS.carouselContainer}>
           <Carousel
             ref={sliderRef}
             style={{ width: '100%', height: '100%' }}
             customPaging={(i: number) => (
-              <ThemeThumbnail url={getThumbnail(i)} onClick={() => goToTheme(i)} />
+              <ThemeThumbnail url={themeLoad.themes[i].thumbnail} onClick={() => goToTheme(i)} />
             )}
             arrows={false}
           >
-            {idList.map(id => (
-              <PreviewCard
-                key={id}
-                metadata={themeMetadata.current![id]}
-                installOverlay={installOverlay}
-              />
+            {themeLoad.themes.map(({ metadata }) => (
+              <PreviewCard key={metadata.id} metadata={metadata} installOverlay={installOverlay} />
             ))}
           </Carousel>
           <a className={themeS.browseLink} onClick={browseOverlays}>
@@ -187,7 +198,7 @@ export function Themes(p: IOnboardingStepProps) {
           <i onClick={() => navigate('next')} className={cx(themeS.nextArrow, 'icon-back')} />
         </div>
       )}
-      {!loading && installing && (
+      {installing && (
         <div style={{ margin: 'auto', marginTop: 24, width: '80%' }}>
           <AutoProgressBar percent={progress} timeTarget={60 * 1000} />
           <p>{$t('Installing overlay...')}</p>

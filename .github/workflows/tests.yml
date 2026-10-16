@@ -72,6 +72,8 @@ jobs:
         run: node node_modules/electron/install.js
       - name: 'Compile Assets'
         run: yarn ci:compile
+      # Package one timing snapshot so all batches agree on test assignments,
+      # preventing gaps or duplicate runs if historical timings change between jobs.
       - name: 'Prepare Shared Test Timings'
         run: node test/helpers/runner.js --prepare-timings
         env:
