@@ -108,15 +108,16 @@ export default function GameSelector(p: TProps) {
     setIsSearching(true);
   }
 
-  function onSelect(searchString: string) {
-    const game = games.find(game => game.label === searchString);
+  function onSelect(value: string, label: string) {
+    // Category names are not unique; resolve the option by the selected value.
+    const game = games.find(game => game.value === value);
 
     if (isTikTok) {
       // TikTok's API requires the category id, but this component renders the name,
       // so the service has to track both
       Services.TikTokService.actions.setGameInfo({
         gameId: game?.value ?? '',
-        gameName: game?.label ?? searchString,
+        gameName: game?.label ?? label,
       });
     }
 
@@ -172,8 +173,8 @@ export default function GameSelector(p: TProps) {
       options={games}
       showSearch
       onSearch={onSearch}
-      onSelect={(val, opts) => {
-        onSelect(typeof opts.label === 'string' ? opts.label : '');
+      onSelect={(value, option) => {
+        onSelect(value, typeof option.label === 'string' ? option.label : '');
       }}
       filterOption={filterOption}
       debounce={500}
