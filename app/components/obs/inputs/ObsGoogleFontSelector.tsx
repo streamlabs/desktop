@@ -99,8 +99,10 @@ export default class GoogleFontSelector extends ObsInput<IGoogleFont> {
     this.isLoading = true;
     this.selectedStyle = styleName;
 
-    this.fontLibraryService.findStyle(this.selectedFamily, styleName).then(style => {
-      this.fontLibraryService.downloadFont(style.file).then(fontPath => {
+    this.fontLibraryService
+      .findStyle(this.selectedFamily, styleName)
+      .then(style => this.fontLibraryService.downloadFont(style.file))
+      .then(fontPath => {
         const fontInfo = fi.getFontInfo(fontPath);
 
         if (!fontInfo) {
@@ -118,8 +120,16 @@ export default class GoogleFontSelector extends ObsInput<IGoogleFont> {
 
         this.emitInput({ ...this.value, path: fontPath });
         this.isLoading = false;
+      })
+      .catch(error => {
+        console.warn('Could not download the selected font', error);
+        this.isLoading = false;
+        if (this.value.path) this.updateSelectionFromPath();
+        else {
+          this.selectedFamily = '';
+          this.selectedStyle = '';
+        }
       });
-    });
   }
 
   setSize(size: number) {

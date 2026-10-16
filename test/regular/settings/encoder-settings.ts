@@ -11,8 +11,8 @@ import { IAudioServiceApi } from '../../../app/services/audio';
 import { NotificationsService } from '../../../app/services/notifications';
 import { IObsListInput } from '../../../app/components/obs/inputs/ObsInput';
 import { getApiClient } from '../../helpers/api-client';
-import { focusMain, focusWindow, waitForDisplayed } from '../../helpers/modules/core';
-import { startRecording, stopRecording } from '../../helpers/modules/streaming';
+import { focusMain, focusWindow, getClient } from '../../helpers/modules/core';
+import { startRecording, stopRecording } from '../../helpers/modules/recording';
 import {
   startReplayBuffer,
   saveReplayBuffer,
@@ -200,11 +200,18 @@ async function createOutputContexts(t: TExecutionContext) {
 
 async function clearNotifications() {
   const client = await getApiClient();
-  client.getResource<NotificationsService>('NotificationsService').markAllAsRead();
-  // Let the renderer clear both the current completion message and queued ones
-  // before another recording or application teardown.
+  const notifications = client.getResource<NotificationsService>('NotificationsService');
   await focusMain();
-  await waitForDisplayed('.ant-message-notice', { reverse: true, timeout: 5000 });
+  const browser = getClient();
+  // Completion notices can arrive after recording or replay-buffer stopping finishes.
+  // Clear newly arrived notices too, until the renderer has drained the queue.
+  await browser.waitUntil(
+    async () => {
+      notifications.markAllAsRead();
+      return !(await (await browser.$('.ant-message-notice')).isDisplayed());
+    },
+    { timeout: 15000, interval: 200, timeoutMsg: 'Completion notifications did not clear' },
+  );
 }
 
 async function createRecordingFile(

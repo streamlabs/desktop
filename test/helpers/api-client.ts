@@ -1,6 +1,6 @@
 import { IJsonRpcEvent, IJsonRpcRequest, IJsonRpcResponse } from '../../app/services/api/jsonrpc';
 import { Observable, Subject, Subscription } from 'rxjs';
-import { first } from 'rxjs/operators';
+import { first, timeout } from 'rxjs/operators';
 import { isEqual } from 'lodash';
 import { NamedPipeClient } from './named-pipe-client';
 import { StringDecoder } from 'string_decoder';
@@ -15,8 +15,8 @@ const PIPE_PATH = `\\\\.\\pipe\\${PIPE_NAME}`;
 
 // Evaluated at connect time so it picks up SLOBS_CACHE_DIR set by the test runner.
 export function getSocketPath(): string {
-  const appData = process.env.SLOBS_CACHE_DIR
-    || path.join(os.homedir(), 'Library', 'Application Support');
+  const appData =
+    process.env.SLOBS_CACHE_DIR || path.join(os.homedir(), 'Library', 'Application Support');
   return path.join(appData, 'slobs-client', 'slobs.sock');
 }
 const PROMISE_TIMEOUT = 20000;
@@ -219,7 +219,7 @@ export class ApiClient {
       client.write(Buffer.from(rawMessage));
 
       /* \x0a is being used as a message delimiter for
-      * JSON-RPC messages. */
+       * JSON-RPC messages. */
       const response = client.read_until('\x0a');
       client.close();
 
@@ -394,11 +394,13 @@ export class ApiClient {
     }) as TResourceType;
   }
 
-  fetchNextEvent(): Promise<IJsonRpcEvent> {
-    return new Promise((resolve, reject) => {
-      this.eventReceived.pipe(first()).subscribe(event => resolve(event));
-      setTimeout(() => reject('Promise timeout'), PROMISE_TIMEOUT);
-    });
+  fetchNextEvent(resourceId?: string): Promise<IJsonRpcEvent> {
+    return this.eventReceived
+      .pipe(
+        first(event => !resourceId || event.resourceId === resourceId),
+        timeout(PROMISE_TIMEOUT),
+      )
+      .toPromise();
   }
 
   watchForEvents(eventNames: string[]): ApiEventWatcher {

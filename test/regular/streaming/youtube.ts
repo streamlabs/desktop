@@ -4,6 +4,7 @@ import {
   test,
   TExecutionContext,
   useWebdriver,
+  withYouTubeRateLimitWarning,
 } from '../../helpers/webdriver';
 import {
   chatIsVisible,
@@ -44,8 +45,6 @@ async function logInYouTubeEnabledAccount(
   retries: number = 5,
   ultra: boolean = false,
 ): Promise<boolean | void> {
-  // only exclude multistream accounts on the first attempt to expand the user pool on later attempts
-  const multistream = retries === 5 ? false : undefined;
   if (retries === 0) {
     t.fail(
       'No YouTube accounts with live streaming enabled are currently available in the user pool',
@@ -55,7 +54,9 @@ async function logInYouTubeEnabledAccount(
 
   await logIn('youtube', {
     prime: ultra,
-    multistream: ultra || multistream,
+    // YouTube Dual Stream needs Ultra, but does not require other linked platforms.
+    // Omit this filter on retries; an explicit undefined is treated as false by the pool helper.
+    ...(retries === 5 && !ultra ? { multistream: false } : {}),
     streamingIsDisabled: false,
     notStreamable: false,
   });
@@ -81,20 +82,24 @@ async function logInYouTubeEnabledAccount(
   return retried;
 }
 
-test('Streaming to Youtube', async t => {
-  await logInYouTubeEnabledAccount(t);
-  t.false(await chatIsVisible(), 'Chat should not be visible for YT before stream starts');
+test(
+  'Streaming to Youtube',
+  withYouTubeRateLimitWarning(async t => {
+    await logInYouTubeEnabledAccount(t);
+    t.false(await chatIsVisible(), 'Chat should not be visible for YT before stream starts');
 
-  await goLive({
-    title: 'SLOBS Test Stream',
-    description: 'SLOBS Test Stream Description',
-  });
+    await goLive({
+      title: 'SLOBS Test Stream',
+      description: 'SLOBS Test Stream Description',
+    });
 
-  t.true(await chatIsVisible(), 'Chat should be visible');
-  await stopStream();
-});
+    t.true(await chatIsVisible(), 'Chat should be visible');
+    await stopStream();
+  }),
+);
 
-test('YouTube Dual Stream', async t => {
+// FIXME: Re-enable once the user pool has an Ultra YouTube account eligible for live streaming.
+test.skip('YouTube Dual Stream', async t => {
   await logInYouTubeEnabledAccount(t, 5, true);
   await toggleDualOutputMode();
   await clickGoLive();
@@ -256,25 +261,28 @@ test.skip('Streaming to YouTube scheduled stream', async t => {
   t.pass();
 });
 
-test('Start stream twice to the same YT event', async t => {
-  await logInYouTubeEnabledAccount(t);
+test(
+  'Start stream twice to the same YT event',
+  withYouTubeRateLimitWarning(async t => {
+    await logInYouTubeEnabledAccount(t);
 
-  // create event via scheduling form
-  const now = Date.now();
-  await goLive({
-    title: `Youtube Test Stream ${now}`,
-    description: 'SLOBS Test Stream Description',
-    enableAutoStop: false,
-  });
-  await stopStream();
+    // create event via scheduling form
+    const now = Date.now();
+    await goLive({
+      title: `Youtube Test Stream ${now}`,
+      description: 'SLOBS Test Stream Description',
+      enableAutoStop: false,
+    });
+    await stopStream();
 
-  await goLive({
-    broadcastId: `Youtube Test Stream ${now}`,
-    enableAutoStop: true,
-  });
-  await stopStream();
-  t.pass();
-});
+    await goLive({
+      broadcastId: `Youtube Test Stream ${now}`,
+      enableAutoStop: true,
+    });
+    await stopStream();
+    t.pass();
+  }),
+);
 
 test('Youtube streaming is disabled', async t => {
   skipCheckingErrorsInLog();

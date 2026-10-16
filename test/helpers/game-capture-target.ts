@@ -182,8 +182,11 @@ export async function launchProfile(
   const source = await ensureBinary();
   const profile = await getProfile(id);
 
-  const dir = path.join(SPAWN_DIR, opts.instance ? `${id}-${opts.instance}` : id);
-  fs.mkdirSync(dir, { recursive: true });
+  fs.mkdirSync(SPAWN_DIR, { recursive: true });
+  // Windows may retain an executable lock after taskkill returns. Never overwrite a
+  // previous launch, while preserving the exact executable name used by OBS matching.
+  const prefix = opts.instance ? `${id}-${opts.instance}-` : `${id}-`;
+  const dir = fs.mkdtempSync(path.join(SPAWN_DIR, prefix));
   const target = path.join(dir, profile.exe);
   fs.copyFileSync(source, target);
 
@@ -194,6 +197,9 @@ export async function launchProfile(
   if (opts.extraArgs) args.push(...opts.extraArgs);
 
   const child = ChildProcess.spawn(target, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+  child.once('close', () => {
+    fs.rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }, () => {});
+  });
   const state: ITargetState = { child, events: [], waiters: [] };
   running.push(state);
 
