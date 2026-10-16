@@ -8,7 +8,6 @@ import { AppService } from 'services/app';
 import { InitAfter } from '../core';
 import { BehaviorSubject } from 'rxjs';
 import { getPlatformService } from '../platforms';
-import Utils from 'services/utils';
 
 interface IStreamlabelActiveSubscriptions {
   filename: string;
@@ -523,7 +522,22 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
   }
 
   private onSocketEvent(event: TSocketEvent) {
-    this.log('Socket Event', event);
+    const STREAMLABELS_EVENTS = [
+      'streamlabels',
+      'donation',
+      'follow',
+      'subscription',
+      'support',
+      'bits',
+      'superchat',
+      'stars',
+      'like',
+      'repost',
+    ];
+
+    if (STREAMLABELS_EVENTS.includes(event.type)) {
+      this.log('Socket Event', event);
+    }
 
     if (event.type === 'streamlabels') {
       this.updateOutput(event.message.data);
