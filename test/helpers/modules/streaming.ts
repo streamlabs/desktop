@@ -29,6 +29,7 @@ import {
   IStreamShiftActionCompleted,
 } from '../../../app/services/websocket';
 import { RestreamService } from '../../../app/services/restream';
+import type { IStreamingServiceApi } from '../../../app/services/streaming/streaming-api';
 
 /**
  * Go live and wait for stream start
@@ -121,11 +122,36 @@ export async function submit() {
 }
 
 export async function waitForStreamStart() {
-  // check we're streaming
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  await useMainWindow(async () => {
-    await (await selectButton('End Stream')).waitForClickable({ timeout: 20 * 1000 });
-  });
+  try {
+    // check we're streaming
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    await useMainWindow(async () => {
+      await (await selectButton('End Stream')).waitForClickable({ timeout: 20 * 1000 });
+    });
+  } catch (error: unknown) {
+    try {
+      const streaming = (await getApiClient()).getResource<IStreamingServiceApi>(
+        'StreamingService',
+      );
+      const { info, status } = streaming.getModel();
+      console.error('Go Live startup state:', {
+        lifecycle: info.lifecycle,
+        checklist: info.checklist,
+        status,
+        error: info.error && {
+          type: info.error.type,
+          message: info.error.message,
+          details: info.error.details,
+          platform: info.error.platform,
+          reason: info.error.reason,
+        },
+      });
+    } catch {
+      // A disconnected or crashed app must not replace the startup failure.
+      console.error('Go Live startup state: unavailable');
+    }
+    throw error;
+  }
 }
 
 /**
