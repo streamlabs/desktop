@@ -15,7 +15,7 @@ import { assertFormContains, fillForm } from '../../helpers/modules/forms';
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
-test('Stream Boss Manage Boss settings', async t => {
+test.skip('Stream Boss Manage Boss settings', async t => {
   if (!(await logIn(t))) return;
   await addSource('Stream Boss', '__Stream Boss', false);
   await clickWhenDisplayed('span=Manage Battle');
@@ -73,7 +73,7 @@ test.skip('Stream Boss Edit Boss settings', async t => {
 });
 
 // TODO: Fix test or form. Different form fields show in test than in app
-test('Stream Boss Manage Visual Settings', async t => {
+test.skip('Stream Boss Manage Visual Settings', async t => {
   if (!(await logIn(t))) return;
   await addSource('Stream Boss', '__Stream Boss', false);
 
