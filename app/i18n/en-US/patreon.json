@@ -5,5 +5,6 @@
   "Paid": "Paid",
   "All Tiers": "All Tiers",
   "Patreon Audience": "Patreon Audience",
-  "Patreon requires a title of at least 3 characters": "Patreon requires a title of at least 3 characters"
+  "Patreon requires a title of at least %{value} characters": "Patreon requires a title of at least %{value} characters",
+  "Patreon requires a description of at least %{value} characters": "Patreon requires a description of at least %{value} characters"
 }

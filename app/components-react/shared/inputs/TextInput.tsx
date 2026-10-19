@@ -40,10 +40,10 @@ export const TextInput = InputComponent((p: TTextInputProps) => {
     ref: p.inputRef,
     prefix: p.prefix,
   };
+
   return (
     <InputWrapper {...wrapperAttrs}>
-      {p.isPassword && <Input.Password {...textInputAttrs} />}
-      {!p.isPassword && <Input {...textInputAttrs} />}
+      {p.isPassword ? <Input.Password {...textInputAttrs} /> : <Input {...textInputAttrs} />}
     </InputWrapper>
   );
 });
