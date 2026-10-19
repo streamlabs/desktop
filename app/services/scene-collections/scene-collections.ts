@@ -404,9 +404,11 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * @param url the URL of the overlay file
    * @param name the name of the overlay
    * @param progressCallback a callback that receives progress of the download
+   * @param themeId the id of the theme being installed, if applicable
    */
   @RunInLoadingMode({ hideStyleBlockers: false })
-  async installOverlay(url: string, name: string) {
+  async installOverlay(url: string, name: string, themeId: string) {
+    console.log('themeId', themeId);
     const pathName = await this.overlaysPersistenceService.downloadOverlay(
       url,
       (progress: IDownloadProgress) => {

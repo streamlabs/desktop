@@ -101,11 +101,12 @@ export default function BrowseOverlays(p: {
   async function installOverlay(
     url: string,
     name: string,
-    progressCallback?: (progress: IDownloadProgress) => void,
+    progressCallback: (progress: IDownloadProgress) => void,
     mergePlatform = false,
+    themeId: string,
   ) {
     try {
-      await installOverlayBase(url, name, progressCallback, mergePlatform);
+      await installOverlayBase(url, name, progressCallback, mergePlatform, themeId);
       NavigationService.actions.navigate('Studio');
     } catch (e: unknown) {
       // If the overlay requires platform merge, navigate to the platform merge page
@@ -218,6 +219,7 @@ export default function BrowseOverlays(p: {
     name: string,
     progressCallback?: (progress: IDownloadProgress) => void,
     mergePlatform = false,
+    themeId?: string,
   ) {
     return new Promise<void>((resolve, reject) => {
       // TODO: refactor to use hasValidHost
@@ -243,7 +245,7 @@ export default function BrowseOverlays(p: {
         setDownloading(true);
         const sub = SceneCollectionsService.downloadProgress.subscribe(progressCallback);
         SceneCollectionsService.actions.return
-          .installOverlay(url, name)
+          .installOverlay(url, name, themeId)
           .then(() => {
             sub.unsubscribe();
             setDownloading(false);
@@ -293,10 +295,11 @@ export default function BrowseOverlays(p: {
     overlayUrl: string,
     overlayName: string,
     widgetUrls: string[],
-    progressCallback?: (progress: IDownloadProgress) => void,
+    progressCallback: (progress: IDownloadProgress) => void,
+    themeId: string,
   ) {
     try {
-      await installOverlayBase(overlayUrl, overlayName, progressCallback);
+      await installOverlayBase(overlayUrl, overlayName, progressCallback, false, themeId);
       await installWidgetsBase(widgetUrls);
       NavigationService.actions.navigate('Studio');
     } catch (e: unknown) {
