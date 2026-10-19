@@ -1,4 +1,5 @@
-import React, { useRef, useState, useMemo, memo, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useMemo, memo, useCallback } from 'react';
+import uuid from 'uuid/v4';
 import { IBinding, IHotkey } from 'services/hotkeys';
 import { TextInput } from 'components-react/shared/inputs';
 import { byOS, OS } from 'util/operating-systems';
@@ -65,30 +66,96 @@ function getModifiers(
 export default function HotkeyBinding(p: {
   hotkey: IHotkey;
   binding: IBinding | null;
-  onBind: (binding: IBinding) => void;
+  onBind: (binding: IBinding) => void | Promise<void>;
   style?: React.CSSProperties;
   showLabel?: boolean;
 }) {
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<Input>(null);
+  const captureRef = useRef<{
+    token: string;
+    pending: Promise<unknown>;
+    binding?: IBinding;
+    mouseButton?: number;
+  } | null>(null);
+
+  const releaseCapture = useCallback(() => {
+    const capture = captureRef.current;
+    if (!capture) return;
+    captureRef.current = null;
+    // Acquisition and any submitted edit must finish before releasing the token,
+    // even if this input is removed while the IPC response is in flight.
+    capture.pending
+      .catch(error => console.error('Could not update hotkey binding', error))
+      .then(() => Services.HotkeysService.actions.endCapture(capture.token));
+  }, []);
+
+  function cancelCapture() {
+    releaseCapture();
+    setFocused(false);
+  }
+
+  function beginCapture() {
+    if (captureRef.current) return;
+    const token = uuid();
+    const pending = Services.HotkeysService.actions.return.beginCapture(token);
+    captureRef.current = { token, pending };
+    setFocused(true);
+    pending.catch(() => {
+      if (captureRef.current?.token === token) {
+        inputRef.current?.blur();
+        cancelCapture();
+      }
+    });
+  }
+
+  useEffect(() => {
+    const deactivate = () => {
+      // Electron window deactivation can leave the DOM input focused.
+      inputRef.current?.blur();
+      cancelCapture();
+    };
+    window.addEventListener('blur', deactivate);
+    window.addEventListener('beforeunload', deactivate);
+    return () => {
+      window.removeEventListener('blur', deactivate);
+      window.removeEventListener('beforeunload', deactivate);
+      releaseCapture();
+    };
+  }, []);
+
+  function commitCapture() {
+    const capture = captureRef.current;
+    if (!capture?.binding) return;
+    const binding = capture.binding;
+    capture.pending = capture.pending.then(() => p.onBind(binding));
+    inputRef.current?.blur();
+    cancelCapture();
+  }
 
   function handlePress(event: React.KeyboardEvent<HTMLInputElement>) {
-    // We don't allow binding a modifier by instelf
-    if (isModifierPress(event) || !focused) return;
-
+    const capture = captureRef.current;
+    // We don't allow binding a modifier by itself.
+    if (isModifierPress(event) || !capture) return;
     event.preventDefault();
-
-    p.onBind({
+    if (capture.binding) return;
+    capture.binding = {
       key: event.code,
       modifiers: getModifiers(event),
-    });
-    if (inputRef.current) inputRef.current.blur();
+    };
+  }
+
+  function handleRelease(event: React.KeyboardEvent<HTMLInputElement>) {
+    // Keep shortcuts suspended until the captured key is released, so assigning
+    // a shortcut cannot also execute it (including actions bound on keyup).
+    if (captureRef.current?.binding?.key === event.code) commitCapture();
   }
 
   function handleClick(event: React.MouseEvent<HTMLInputElement>) {
     const key = event.button;
     const isPrimaryButton = key === 0 || key === 2;
-    if (!focused || isPrimaryButton) return;
+    const capture = captureRef.current;
+    if (!capture || isPrimaryButton) return;
 
     event.preventDefault();
 
@@ -98,11 +165,12 @@ export default function HotkeyBinding(p: {
       4: 'X2MouseButton',
     };
 
-    p.onBind({
+    if (!code[key] || capture.binding) return;
+    capture.mouseButton = key;
+    capture.binding = {
       key: code[key],
       modifiers: getModifiers(event),
-    });
-    if (inputRef.current) inputRef.current.blur();
+    };
   }
 
   return (
@@ -112,10 +180,14 @@ export default function HotkeyBinding(p: {
         style={{ width: 400, ...p.style }}
         label={<HotkeyLabel showLabel={p.showLabel ?? true} hotkey={p.hotkey} />}
         value={getHotkeyString(p.binding, focused)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
+        onFocus={beginCapture}
+        onBlur={cancelCapture}
         onKeyDown={handlePress}
+        onKeyUp={handleRelease}
         onMouseDown={handleClick}
+        onMouseUp={event => {
+          if (captureRef.current?.mouseButton === event.button) commitCapture();
+        }}
         inputRef={inputRef}
       />
     </Form>
