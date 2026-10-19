@@ -83,8 +83,8 @@ export default function HotkeyBinding(p: {
     const capture = captureRef.current;
     if (!capture) return;
     captureRef.current = null;
-    // Acquisition and any submitted edit must finish before releasing the token,
-    // even if this input is removed while the IPC response is in flight.
+    // Wait for pending requests before releasing this token,
+    // even if the input closes before the worker replies.
     capture.pending
       .catch(error => console.error('Could not update hotkey binding', error))
       .then(() => Services.HotkeysService.actions.endCapture(capture.token));
@@ -97,6 +97,7 @@ export default function HotkeyBinding(p: {
 
   function beginCapture() {
     if (captureRef.current) return;
+    // A fresh token keeps cleanup from an earlier capture from ending this one.
     const token = uuid();
     const pending = Services.HotkeysService.actions.return.beginCapture(token);
     captureRef.current = { token, pending };

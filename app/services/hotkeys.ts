@@ -463,7 +463,8 @@ export class HotkeysService extends StatefulService<IHotkeysServiceState> {
    */
   private registeredHotkeys: Hotkey[] | null;
 
-  // Capture belongs to individual inputs, which may live in different windows.
+  // Each input gets its own token while recording a shortcut, even across windows.
+  // Keep shortcuts off until every input has released its token.
   private captures = new Set<string>();
 
   init() {
@@ -616,13 +617,13 @@ export class HotkeysService extends StatefulService<IHotkeysServiceState> {
     return true;
   }
 
-  /** Suspend application shortcuts for a unique input capture token. Idempotent. */
+  /** Pause shortcuts for this token. Adding the same token twice is harmless. */
   beginCapture(token: string) {
     this.captures.add(token);
     this.unregisterAll();
   }
 
-  /** Release only this input's capture and restore the latest bindings when all finish. */
+  /** Remove only this token; restore shortcuts when no tokens remain. */
   endCapture(token: string) {
     if (this.captures.delete(token) && !this.captures.size) this.bindHotkeys();
   }
