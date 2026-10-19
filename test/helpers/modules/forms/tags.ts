@@ -52,7 +52,10 @@ export class TagsInputController extends BaseInputController<(string | number)[]
         await sleep(100);
       }
 
-      const $option = await select(`.ant-select-dropdown [data-option-${target}="${value}"]`);
+      // closed dropdowns stay in the DOM, so only look for the open one when selecting the option
+      const $option = await select(
+        `.ant-select-dropdown:not(.ant-select-dropdown-hidden) [data-option-${target}="${value}"]`,
+      );
       await $option.waitForExist();
       await $option.click();
     }
