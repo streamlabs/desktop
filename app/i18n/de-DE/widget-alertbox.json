@@ -150,10 +150,18 @@
   "Use unlimited delay": "Unbegrenzte Verzögerung verwenden",
   "When enabled new alerts will interrupt the on screen alert": "Wenn dies aktiviert ist, unterbricht ein neuer Alert den Alert auf dem Bildschirm.",
   "Text Highlight Color": "Text Highlight-Farbe",
-  "Platforms: Twitch, YouTube, Facebook & integrations": "Plattformen: Twitch, YouTube, Facebook und Integrationen",
+  "Platforms: Twitch, YouTube, Facebook, X (Twitter) & integrations": "Platforms: Twitch, YouTube, Facebook, X (Twitter) & integrations",
   "The display name of the viewer who redeemed the Power-Up": "The display name of the viewer who redeemed the Power-Up",
   "The title of the Power-Up that was redeemed": "The title of the Power-Up that was redeemed",
   "The number of Bits the viewer spent on the redemption": "The number of Bits the viewer spent on the redemption",
   "Any text the viewer provided when redeeming the Power-Up": "Any text the viewer provided when redeeming the Power-Up",
-  "Available Tokens:": "Available Tokens:"
+  "Available Tokens:": "Available Tokens:",
+  "X Follow": "X Follow",
+  "Plays an alert for new X followers": "Plays an alert for new X followers",
+  "X Like": "X Like",
+  "Plays an alert for new X likes": "Plays an alert for new X likes",
+  "X Subscription": "X Subscription",
+  "Plays an alert for new X subscriptions": "Plays an alert for new X subscriptions",
+  "X Repost": "X Repost",
+  "Plays an alert for new X reposts": "Plays an alert for new X reposts"
 }
