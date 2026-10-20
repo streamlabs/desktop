@@ -11,6 +11,7 @@
   "has subscribed (%{tier})": "s'est abonné à (%{tier})",
   "has converted from a Prime Gaming sub to a %{tier} sub": "est passé d'un abonnement Prime Gaming à un abonnement %{tier}",
   "has subscribed": "s'est abonné",
+  "has reposted": "has reposted",
   "has used": "a utilisé",
   "has raided you with a party of %{viewers}": "vous a attaqué avec un groupe de %{viewers}",
   "has used %{skill} for": "a utilisé %{skill} pour",
