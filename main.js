@@ -359,7 +359,17 @@ app.on('child-process-gone', (event, details) => {
 });
 
 function forceShutdown(reason) {
-  console.warn(`[Shutdown] Force exiting application: ${reason}`);
+  const warning = `[Shutdown] Force exiting application: ${reason}`;
+  console.warn(warning);
+  // app.exit can stop the async log writer before it persists this warning.
+  try {
+    fs.appendFileSync(
+      logFile,
+      `[${new Date().toISOString()}] [warn] [electron-main] - ${warning}\n`,
+    );
+  } catch (error) {
+    console.warn('[Shutdown] Could not persist forced shutdown warning:', error);
+  }
   allowMainWindowClose = true;
 
   BrowserWindow.getAllWindows().forEach(window => {
