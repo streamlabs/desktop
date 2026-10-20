@@ -16,8 +16,7 @@ import { TransitionsService } from 'services/api/external-api/transitions/transi
 useWebdriver();
 
 // TODO: Fix test to handle missing duration field
-test.skip('Changing transition options', async t => {
-  const app = t.context.app;
+test('Changing transition options', async t => {
   const transitionType = 'Fade';
   const transitionDuration = 500;
 
@@ -27,14 +26,14 @@ test.skip('Changing transition options', async t => {
   await focusMain();
   await clickSceneTransitions();
   await focusChild();
-  await (await app.client.$('.icon-edit')).click();
+  await click('.icon-edit');
   await fillForm({
     type: transitionType,
     duration: transitionDuration,
   });
 
   await dismissModal(t);
-  await clickButton('Done');
+  await clickButton('Close');
   await focusMain();
   await clickSceneTransitions();
   await focusChild();
@@ -85,7 +84,7 @@ test('Adding and removing transitions', async t => {
   t.true(title === 'New Transition');
 });
 
-test.skip('Changing connections', async t => {
+test('Changing connections', async t => {
   const app = t.context.app;
   const connectionBegin = 'Other Scene';
   const connectionTransition = 'New Transition';
@@ -102,11 +101,11 @@ test.skip('Changing connections', async t => {
   await (await app.client.$('span=Connections')).click();
   await (await app.client.$('button=Add Connection')).click();
   await fillForm({
-    from: connectionBegin,
-    transition: connectionTransition,
-    to: connectionEnd,
+    fromSceneId: connectionBegin,
+    transitionId: connectionTransition,
+    toSceneId: connectionEnd,
   });
-  await (await t.context.app.client.$('button=OK')).click();
+  await (await t.context.app.client.$('button=Done')).click();
   await focusMain();
   await clickSceneTransitions();
   await focusChild();
@@ -116,9 +115,9 @@ test.skip('Changing connections', async t => {
 
   t.true(
     await assertFormContains({
-      from: connectionBegin,
-      transition: connectionTransition,
-      to: connectionEnd,
+      fromSceneId: connectionBegin,
+      transitionId: connectionTransition,
+      toSceneId: connectionEnd,
     }),
   );
 });

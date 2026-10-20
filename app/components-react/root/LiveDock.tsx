@@ -22,6 +22,7 @@ import { useVuex } from 'components-react/hooks';
 import { useRealmObject } from 'components-react/hooks/realm';
 import { $i } from 'services/utils';
 import { ShareStreamLink } from './ShareStreamLink';
+import IconButton from 'components-react/shared/buttons/IconButton';
 
 const LiveDockCtx = React.createContext<LiveDockController | null>(null);
 
@@ -440,39 +441,38 @@ function LiveDock() {
         <div className={styles.liveDockInfo}>
           <div className={styles.liveDockPlatformTools}>
             {ctrl.canEditChannelInfo && (
-              <Tooltip
-                title={$t('Edit your stream title and description')}
-                placement="right"
+              <IconButton
+                label={$t('Edit your stream title and description')}
+                tooltipTitle={$t('Edit your stream title and description')}
+                tooltipPlacement="right"
                 autoAdjustOverflow={false}
-              >
-                <i
-                  data-name="edit-stream"
-                  onClick={() => ctrl.showEditStreamInfo()}
-                  className="icon-edit"
-                />
-              </Tooltip>
+                icon={<i data-name="edit-stream" className="icon-edit" />}
+                onClick={() => ctrl.showEditStreamInfo()}
+              />
             )}
             {hasLiveDockFeature('view-stream') && isStreaming && (
-              <Tooltip
-                title={$t('View your live stream in a web browser')}
-                placement="right"
+              <IconButton
+                label={$t('View your live stream in a web browser')}
+                tooltipTitle={$t('View your live stream in a web browser')}
+                tooltipPlacement="right"
                 autoAdjustOverflow={false}
-              >
-                <i onClick={() => ctrl.openPlatformStream()} className="icon-studio" />
-              </Tooltip>
+                icon={<i className="icon-studio" />}
+                onClick={() => ctrl.openPlatformStream()}
+              />
             )}
             {isStreaming && <ShareStreamLink />}
             {hasLiveDockFeature('dashboard') && isStreaming && (
-              <Tooltip
-                title={$t('Go to Live Dashboard')}
-                placement="right"
+              <IconButton
+                label={$t('Go to Live Dashboard')}
+                tooltipTitle={$t('Go to Live Dashboard')}
+                tooltipPlacement="right"
                 autoAdjustOverflow={false}
-              >
-                <i onClick={() => ctrl.openPlatformDash()} className="icon-settings" />
-              </Tooltip>
+                icon={<i className="icon-settings" />}
+                onClick={() => ctrl.openPlatformDash()}
+              />
             )}
           </div>
-          <div className="flex">
+          <div className={styles.liveDockChatRefresh}>
             {platformChatEnabled &&
               (hasLiveDockFeature('refresh-chat') ||
                 (hasLiveDockFeature('refresh-chat-streaming') && isStreaming) ||

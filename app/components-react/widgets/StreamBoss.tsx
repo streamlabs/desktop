@@ -275,6 +275,10 @@ export class StreamBossModule extends WidgetModule<IStreamBossState> {
         superchat_multiplier: metadata.number({ label: $t('Damage Per Superchat Dollar') }),
         follow_multiplier: metadata.number({ label: $t('Damage Per Subscriber') }),
       },
+      twitter: {
+        follow_multiplier: metadata.number({ label: $t('Damage Per Follower') }),
+        sub_multiplier: metadata.number({ label: $t('Damage Per Subscriber') }),
+      },
     };
 
     return fromMeta({

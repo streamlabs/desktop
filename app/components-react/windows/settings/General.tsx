@@ -8,6 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import { getDefined } from '../../../util/properties-type-guards';
 import { useVuex } from 'components-react/hooks';
+import Tooltip from 'components-react/shared/Tooltip';
 import { useRealmObject } from 'components-react/hooks/realm';
 
 export function GeneralSettings() {
@@ -44,17 +45,18 @@ function ExtraSettings() {
     UserService,
     CustomizationService,
     AppService,
-    OnboardingService,
+    OnboardingV2Service,
     WindowsService,
     StreamlabelsService,
     RecordingModeService,
+    ObsImporterService,
   } = Services;
   const isLoggedIn = UserService.isLoggedIn;
   const isFacebook = isLoggedIn && getDefined(UserService.platform).type === 'facebook';
   const isYoutube = isLoggedIn && getDefined(UserService.platform).type === 'youtube';
   const disableHAFilePath = path.join(AppService.appDataDirectory, 'HADisable');
   const [disableHA, setDisableHA] = useState(() => fs.existsSync(disableHAFilePath));
-
+  const [obsInstalled] = useState(() => ObsImporterService.views.isOBSinstalled());
   const { recordingMode } = useVuex(() => ({
     recordingMode: RecordingModeService.views.isRecordingModeEnabled,
   }));
@@ -70,14 +72,12 @@ function ExtraSettings() {
   }
 
   function configureDefaults() {
-    OnboardingService.actions.start({ isHardware: true });
+    OnboardingV2Service.actions.showDevices();
     WindowsService.actions.closeChildWindow();
   }
 
   function importFromObs() {
-    // TODO: there's no check that OBS is installed like in Onboarding
-    OnboardingService.actions.setImport('obs');
-    OnboardingService.actions.start({ isImport: true });
+    OnboardingV2Service.actions.showObsImport();
     WindowsService.actions.closeChildWindow();
   }
 
@@ -136,9 +136,15 @@ function ExtraSettings() {
             </button>
           </div>
           <div className="input-container">
-            <button className="button button--default" onClick={importFromObs}>
-              {$t('OBS Import')}
-            </button>
+            <Tooltip title={$t('OBS is not installed')} disabled={obsInstalled}>
+              <button
+                className="button button--default"
+                disabled={!obsInstalled}
+                onClick={importFromObs}
+              >
+                {$t('OBS Import')}
+              </button>
+            </Tooltip>
           </div>
         </div>
       </ObsSettingsSection>
