@@ -51,13 +51,6 @@
 
   display: flex;
   justify-content: space-between;
-
-  .live-dock-platform-tools {
-    a,
-    i {
-      padding: 0 8px;
-    }
-  }
 }
 
 .live-dock-viewer-count {
@@ -125,8 +118,12 @@
 }
 
 .live-dock-platform-tools {
-  .flex();
-  gap: 16px;
+  display: flex;
+  flex: 1;
+}
+
+.live-dock-chat-refresh {
+  justify-self: flex-end;
 }
 
 .live-dock-chat-tabs__icons {

@@ -141,7 +141,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     return (
       this.aiHighlighterFeatureEnabled &&
       this.views.useAiHighlighter &&
-      !!isGameSupported(this.streamingService.views.game)
+      !!isGameSupported(this.streamingService.views.gameName || this.streamingService.views.game)
     );
   }
 
@@ -1133,17 +1133,16 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           game: this.streamingService.views.game,
         });
 
-        if (!isGameSupported(this.streamingService.views.game)) {
+        // Twitch's game field becomes a category ID after editing the category.
+        // Highlighter recognizes names, including for the recording's import metadata.
+        const normalizedGameName = isGameSupported(
+          this.streamingService.views.gameName || this.streamingService.views.game,
+        );
+        if (!normalizedGameName) {
           return;
         }
 
-        let game;
-        const normalizedGameName = isGameSupported(this.streamingService.views.game);
-        if (normalizedGameName) {
-          game = normalizedGameName as EGame;
-        } else {
-          game = EGame.UNSET;
-        }
+        const game = normalizedGameName as EGame;
 
         streamInfo = {
           id: streamId,

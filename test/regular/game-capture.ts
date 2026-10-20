@@ -31,6 +31,7 @@ import { SourcesService } from '../../app/services/api/external-api/sources';
 import { sleep } from '../helpers/sleep';
 import { buildWindowSetting, launchProfile, stopAll } from '../helpers/game-capture-target';
 
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver({ restartAppAfterEachTest: false });
 
 const skipCapture = process.env.SLOBS_TEST_SKIP_GAME_CAPTURE === '1';
@@ -342,11 +343,7 @@ captureTest('Game Capture warns and refuses capture when injection is blocked', 
     t.falsy(hooked, 'a blocked target must never be hooked');
 
     const { width, height } = await readDimensions(name);
-    t.not(
-      `${width}x${height}`,
-      target.clientSize,
-      'a blocked target must never produce frames',
-    );
+    t.not(`${width}x${height}`, target.clientSize, 'a blocked target must never produce frames');
 
     const info = await readCompatInfoFor(name);
     t.true(info.rendered, 'the compatibility warning should still be shown while blocked');

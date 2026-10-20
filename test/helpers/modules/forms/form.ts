@@ -16,19 +16,6 @@ export function useForm(name?: string) {
   const formSelector = name ? `[data-role="form"][data-name="${name}"]` : DEFAULT_FORM_SELECTOR;
 
   /**
-   * Find all input's DOM elements
-   */
-  async function getInputElements(): Promise<WebdriverIO.ElementArray> {
-    // wait for form appear
-    if (formSelector !== DEFAULT_FORM_SELECTOR) {
-      (await client.$(formSelector)).waitForExist({ timeout: 15000 });
-    }
-
-    const $inputs = await client.$$(`${formSelector} [data-role=input]`);
-    return $inputs;
-  }
-
-  /**
    * Returns an array of input values in the order as they appear in the form
    */
   async function readForm(): Promise<
@@ -87,7 +74,7 @@ export function useForm(name?: string) {
         filledFields.push(name);
         if (filledFields.length === Object.keys(formData).length) stopTraverse();
       },
-      true,
+      input => input.name in formData,
       debounce,
     );
 
@@ -114,11 +101,14 @@ export function useForm(name?: string) {
    * Returns an array of callback results
    *
    * If the callback changes visibility of some fields than
-   * `refetchControllersAfterEachStep` flag should be set to `true`
+   * `refetchControllersAfterEachStep` should be true, or a predicate identifying
+   * the inputs that can change the form. Untouched inputs do not need a refetch.
    */
   async function traverseForm<T>(
     cb: (inputController: BaseInputController<any>, stopTraverse: Function) => Promise<T>,
-    refetchControllersAfterEachStep = false,
+    refetchControllersAfterEachStep:
+      | boolean
+      | ((input: BaseInputController<any>) => boolean) = false,
     debounce = 100,
   ): Promise<T[]> {
     let controllers = await getInputControllers();
@@ -138,10 +128,14 @@ export function useForm(name?: string) {
       results.push(await cb(inputController, stopTraverse));
       if (isTraverseStopped) break;
 
-      if (refetchControllersAfterEachStep) {
+      const shouldRefetch =
+        typeof refetchControllersAfterEachStep === 'function'
+          ? refetchControllersAfterEachStep(inputController)
+          : refetchControllersAfterEachStep;
+      if (shouldRefetch) {
         await sleep(debounce);
         controllers = await getInputControllers();
-        ind = 0;
+        ind = -1;
       }
     }
 
@@ -149,21 +143,36 @@ export function useForm(name?: string) {
   }
 
   /**
-   * Creates and returns input controllers for each input element on the form
+   * Snapshot input metadata together and resolve controls by name when used.
+   * React can replace controls while we enumerate them; retained WebDriver element
+   * handles can then enter an endless stale-element retry in our WebdriverIO version.
    */
   async function getInputControllers() {
     // wait for form to be visible
     await waitForDisplayed(formSelector, { timeout: 15000 });
-    const $inputs = await getInputElements();
+    const inputs = await client.execute(
+      (selector: string) =>
+        Array.from(document.querySelectorAll(selector)).map(input => {
+          const type = input.getAttribute('data-type');
+          const name = input.getAttribute('data-name');
+          const nameSelector =
+            name === null ? ':not([data-name])' : `[data-name="${CSS.escape(name)}"]`;
+          return {
+            type,
+            name,
+            selector: `${selector}${nameSelector}[data-type="${CSS.escape(type || '')}"]`,
+          };
+        }),
+      `${formSelector} [data-role=input]`,
+    );
     const controllers: BaseInputController<any>[] = [];
-    for (const $input of $inputs) {
-      const type = await $input.getAttribute('data-type');
-      const name = await $input.getAttribute('data-name');
+    for (const { type, name, selector } of inputs) {
+      if (!type) continue;
       const InputControllerClass = getInputControllerForType(type);
       if (!InputControllerClass) {
         continue;
       }
-      const inputController = new InputControllerClass($input, name);
+      const inputController = new InputControllerClass(selector, name);
       controllers.push(inputController);
     }
     return controllers;
@@ -188,7 +197,7 @@ export function useForm(name?: string) {
     expectedFormData: TFormData,
     indexKey = 'name',
     valueKey = 'displayValue',
-  ) {
+  ): Promise<boolean> {
     const actualFormData = await readFields(indexKey, valueKey);
     const expectedFieldNames = Object.keys(expectedFormData);
     for (const fieldName of expectedFieldNames) {
@@ -210,6 +219,12 @@ export function useForm(name?: string) {
         throw new Error(`Expected field "${fieldName}" to be ${expected} but got ${actual}`);
       }
     }
+
+    // Return true if all assertions pass so that the caller does not receive `undefined`.
+    // This is needed for cases where the return value must exactly be `true` for verification,
+    // like with `t.true`. `t.true` will fail if the return value is `undefined` because it is not
+    // an exact match.
+    return true;
   }
 
   function stringifyValue(value: unknown) {
@@ -300,25 +315,25 @@ export async function assertFormContains(
   messageOrIndexKey?: string,
   indexKeyOrValueKey?: string,
   valueKey?: string,
-): Promise<unknown>;
+): Promise<boolean>;
 export async function assertFormContains(
   formName: string,
   formData: TFormData,
   messageOrIndexKey?: string,
   indexKeyOrValueKey?: string,
   valueKey?: string,
-): Promise<unknown>;
-export async function assertFormContains(...args: any[]): Promise<unknown> {
+): Promise<boolean>;
+export async function assertFormContains(...args: any[]): Promise<boolean> {
   if (typeof args[0] === 'string') {
     const [formName, formData, ...rest] = args;
     // TODO: fake hook
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useForm(formName).assertFormContains(formData, ...rest);
+    return await useForm(formName).assertFormContains(formData, ...rest);
   } else {
     const [formData, ...rest] = args;
     // TODO: fake hook
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useForm().assertFormContains(formData, ...rest);
+    return await useForm().assertFormContains(formData, ...rest);
   }
 }
 

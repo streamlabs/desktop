@@ -54,6 +54,7 @@ export interface IBaseMetadata {
   type?: string;
   rules?: Rule[];
   onChange?: (value: unknown) => void;
+  debounce?: number;
   children?: Dictionary<IBaseMetadata>;
   displayed?: boolean;
   disabled?: boolean;
