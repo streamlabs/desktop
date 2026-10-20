@@ -1752,7 +1752,9 @@ export class StreamingService
     }
 
     if (e instanceof StreamError) {
-      this.setError({ ...e, type: resolvedType });
+      const streamError = createStreamError(resolvedType, e, e.details);
+      streamError.message = e.message;
+      this.setError(streamError);
       return resolvedType;
     }
 

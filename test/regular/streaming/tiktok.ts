@@ -141,6 +141,7 @@ async function goLiveWithLiveAccess(t: TExecutionContext, serverUrl: string, str
 
   await submit();
   await waitForDisplayed('span=Update settings for TikTok');
+  await waitForStreamStart();
   await stopStream();
 }
 
@@ -173,6 +174,7 @@ test('Streaming to TikTok', withUser('twitch', { multistream: false, prime: true
 });
 
 async function testLiveScope(t: TExecutionContext, scope: TTikTokLiveScopeTypes) {
+  t.log(`Testing TikTok ${scope} scope`);
   const { serverUrl, streamKey }: IDummyTestUser = await addDummyAccount('tiktok', {
     tikTokLiveScope: scope,
   });

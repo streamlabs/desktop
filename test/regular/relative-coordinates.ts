@@ -6,7 +6,7 @@ import { SceneCollectionsService } from '../../app/services/api/external-api/sce
 import { VideoSettingsService } from '../../app/services/settings-v2/video';
 import { StreamingService } from '../../app/services/streaming';
 import { sleep } from '../helpers/sleep';
-import { startRecording, stopRecording } from '../helpers/modules/streaming';
+import { startRecording, stopRecording } from '../helpers/modules/recording';
 import { focusMain, focusWindow } from '../helpers/modules/core';
 
 const fs = require('fs');
