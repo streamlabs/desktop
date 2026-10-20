@@ -11,6 +11,7 @@
   "has subscribed (%{tier})": "подписывается (%{tier})",
   "has converted from a Prime Gaming sub to a %{tier} sub": "переходит с Prime Gaming на %{tier} подписку",
   "has subscribed": "подписывается",
+  "has reposted": "has reposted",
   "has used": "использует",
   "has raided you with a party of %{viewers}": "совершает рейд с группой из %{viewers}",
   "has used %{skill} for": "использует %{skill} для",
