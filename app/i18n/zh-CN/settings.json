@@ -24,6 +24,7 @@
   "Auto Optimize": "自动优化",
   "Configure Default Devices": "配置默认设备",
   "OBS Import": "OBS 导入",
+  "OBS is not installed": "OBS is not installed",
   "Confirm stream title and game before going live": "直播前确认直播标题和游戏",
   "Enable reporting additional information on a crash (requires restart)": "启用报告有关崩溃的附加信息（需要重新启动）",
   "WARNING! You will lose all scenes, sources, and settings. This cannot be undone!": "警告！您将丢失所有场景、源和设置。此操作无法撤消！",
