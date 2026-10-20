@@ -449,12 +449,115 @@ export function getConfigByGame(game: EGame | undefined): IGameConfig | undefine
   const lowercaseGame = game.toLowerCase() as EGame;
   return GAME_CONFIGS[lowercaseGame] || UNSET_CONFIG;
 }
-export function isGameSupported(game: string | undefined) {
-  const gameValue = supportedGames.find(
-    supportedGame => supportedGame.label.toLowerCase() === game?.toLowerCase(),
+/**
+ * Games supported by Streamlabs Replay, keyed by game id.
+ * Snapshot of `configs/games.json` on the highlighter CDN. Used as long as the
+ * fresh list hasn't been fetched (or the fetch failed). See HighlighterService.fetchReplaySupportedGames
+ */
+export const FALLBACK_REPLAY_SUPPORTED_GAMES: Dictionary<string> = {
+  '7_days_to_die': '7 Days to Die',
+  apex_legends: 'Apex Legends',
+  arena_breakout_infinite: 'Arena Breakout: Infinite',
+  arc_raiders: 'ARC Raiders',
+  battlefield_6: 'Battlefield 6',
+  bloodborne: 'Bloodborne',
+  black_ops_6: 'Call of Duty: Black Ops 6',
+  black_ops_7: 'Call of Duty: Black Ops 7',
+  modern_warfare_4: 'Call of Duty: Modern Warfare 4',
+  warzone: 'Call of Duty: Warzone',
+  counter_strike_2: 'Counter-Strike 2',
+  dark_souls_2: 'Dark Souls II',
+  dark_souls_3: 'Dark Souls III',
+  dark_souls_remastered: 'Dark Souls Remastered',
+  dayz: 'DayZ',
+  dead_by_daylight: 'Dead by Daylight',
+  deadlock: 'Deadlock',
+  delta_force: 'Delta Force',
+  dota_2: 'Dota 2',
+  ea_sports_fc_26: 'EA Sports FC™ 26',
+  elden_ring: 'ELDEN RING',
+  enshrouded: 'Enshrouded',
+  escape_from_tarkov: 'Escape from Tarkov',
+  f1_25: 'F1® 25',
+  fortnite: 'Fortnite',
+  forza_horizon_6: 'Forza Horizon 6',
+  halo_infinite: 'Halo Infinite',
+  helldivers_2: 'Helldivers 2',
+  heroes_of_the_storm: 'Heroes of the Storm',
+  hunt_showdown_1896: 'Hunt: Showdown 1896',
+  league_of_legends: 'League of Legends',
+  left_4_dead_2: 'Left 4 Dead 2',
+  madden_nfl_27: 'Madden NFL 27',
+  marathon: 'Marathon',
+  marvel_rivals: 'Marvel Rivals',
+  minecraft: 'Minecraft',
+  mortal_shell_2: 'Mortal Shell II',
+  nba_2k26: 'NBA 2K26',
+  nba_2k27: 'NBA 2K27',
+  overwatch_2: 'Overwatch 2',
+  palworld: 'Palworld',
+  path_of_exile_2: 'Path of Exile 2',
+  pubg: 'PUBG: BATTLEGROUNDS',
+  rainbow_six_siege: "Tom Clancy's Rainbow Six Siege",
+  rocket_league: 'Rocket League',
+  rust: 'Rust',
+  sekiro_shadows_die_twice: 'Sekiro: Shadows Die Twice',
+  teamfight_tactics: 'Teamfight Tactics',
+  valheim: 'Valheim',
+  valorant: 'VALORANT',
+  wardogs: 'WARDOGS',
+  war_thunder: 'War Thunder',
+  world_of_warcraft_ss: 'World of Warcraft (Solo Shuffle)',
+  just_chatting: 'Just Chatting',
+  other_game: 'Other Game',
+};
+
+/**
+ * Replay game ids that don't enable the AI Highlighter in the go live flow.
+ * Remove `just_chatting` from this list to enable it for the Just Chatting category.
+ */
+export const DISABLED_REPLAY_GAMES: string[] = ['just_chatting', 'other_game'];
+
+const STREAM_HIGHLIGHTS_ONLY_SUFFIX = ' (Stream Highlights Only)';
+
+/**
+ * Replay labels non-gameplay entries like "Just Chatting (Stream Highlights Only)".
+ * Strip that suffix so the label matches the platform category name.
+ */
+export function toPlatformCategoryLabel(replayLabel: string) {
+  return replayLabel.endsWith(STREAM_HIGHLIGHTS_ONLY_SUFFIX)
+    ? replayLabel.slice(0, -STREAM_HIGHLIGHTS_ONLY_SUFFIX.length)
+    : replayLabel;
+}
+
+/**
+ * Returns the game id if the given game (platform category name) is supported, otherwise false.
+ * Checks the local game configs first, then the games supported by Replay.
+ * Ids that only exist in Replay's list aren't part of EGame; getConfigByGame falls back to UNSET for them.
+ */
+export function isGameSupported(
+  game: string | undefined,
+  replaySupportedGames: Dictionary<string> = FALLBACK_REPLAY_SUPPORTED_GAMES,
+): EGame | false {
+  if (!game) {
+    return false;
+  }
+  const lowercaseGame = game.toLowerCase();
+
+  const localGameValue = supportedGames.find(
+    supportedGame => supportedGame.label.toLowerCase() === lowercaseGame,
   )?.value;
-  if (game && gameValue) {
-    return gameValue;
+  if (localGameValue) {
+    return localGameValue;
+  }
+
+  const replayGameId = Object.keys(replaySupportedGames).find(
+    id =>
+      !DISABLED_REPLAY_GAMES.includes(id) &&
+      replaySupportedGames[id]?.toLowerCase() === lowercaseGame,
+  );
+  if (replayGameId) {
+    return replayGameId as EGame;
   }
   return false;
 }

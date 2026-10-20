@@ -35,6 +35,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
     isDualOutputMode: DualOutputService.views.dualOutputMode,
     recordWhenStreaming: StreamSettingsService.views.settings.recordWhenStreaming,
     useAiHighlighter: HighlighterService.views.useAiHighlighter,
+    replaySupportedGames: HighlighterService.views.replaySupportedGames,
     isRecording: StreamingService.views.isRecording,
     isReplayBufferActive: StreamingService.views.isReplayBufferActive,
     canRecordVertical: IncrementalRolloutService.views.featureIsEnabled(
@@ -45,8 +46,8 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
   }));
 
   const shouldUseAiHighlighter = useMemo(() => {
-    return isGameSupported(game) && v.useAiHighlighter;
-  }, [game, v.useAiHighlighter]);
+    return !!isGameSupported(game, v.replaySupportedGames) && v.useAiHighlighter;
+  }, [game, v.replaySupportedGames, v.useAiHighlighter]);
 
   const recordWhenStartStream = useMemo(() => v.recordWhenStreaming || shouldUseAiHighlighter, [
     v.recordWhenStreaming,
