@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { Button, InputNumber } from 'antd';
 import HotkeyBinding from 'components-react/shared/HotkeyBinding';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
+import { useHotkeyBindings } from 'components-react/hooks/useHotkeyBindings';
 import { IHotkey } from 'services/hotkeys';
 import { SUPPORTED_FILE_TYPES } from 'services/highlighter/constants';
 import { $t } from 'services/i18n';
@@ -10,6 +11,7 @@ import styles from './ManualCaptureSection.m.less';
 
 const MIN_REPLAY_TIME = 1;
 const MAX_REPLAY_TIME = 120;
+const SAVE_REPLAY_HOTKEY: IHotkey = { actionName: 'SAVE_REPLAY', bindings: [] };
 
 /**
  * Replay buffer settings for capturing clips by hotkey. The captured clips show up in the clip
@@ -17,9 +19,7 @@ const MAX_REPLAY_TIME = 120;
  */
 export default function ManualCaptureSection({ title }: { title: string }) {
   const { HotkeysService, SettingsService, StreamingService } = Services;
-  const [hotkey, setHotkey] = useState<IHotkey | null>(null);
-  const hotkeyRef = useRef<IHotkey | null>(null);
-  const [bindingFocused, setBindingFocused] = useState(false);
+  const bindings = useHotkeyBindings(SAVE_REPLAY_HOTKEY);
 
   const v = useVuex(() => ({
     settingsValues: SettingsService.views.values,
@@ -50,30 +50,6 @@ export default function ManualCaptureSection({ title }: { title: string }) {
     }
   }
 
-  useEffect(() => {
-    HotkeysService.actions.return.getGeneralHotkeyByName('SAVE_REPLAY').then(hotkey => {
-      if (hotkey) setHotkey(hotkey);
-    });
-  }, []);
-
-  // Hotkeys are unbound only while the binding input is focused, so pressing the current hotkey
-  // records it instead of triggering it. This section lives on the main Highlighter page, so
-  // all other hotkeys must keep working the rest of the time.
-  useEffect(() => {
-    if (bindingFocused && !v.isStreaming) {
-      HotkeysService.actions.unregisterAll();
-
-      return () => {
-        if (hotkeyRef.current) {
-          // Implies a bind all
-          HotkeysService.actions.applyGeneralHotkey(hotkeyRef.current);
-        } else {
-          HotkeysService.actions.bindHotkeys();
-        }
-      };
-    }
-  }, [bindingFocused, v.isStreaming]);
-
   function setReplayTime(time: number | string | null | undefined) {
     if (typeof time !== 'number' || time < MIN_REPLAY_TIME || time > MAX_REPLAY_TIME) return;
     SettingsService.actions.setSettingsPatch({ Output: { RecRBTime: time } });
@@ -98,25 +74,21 @@ export default function ManualCaptureSection({ title }: { title: string }) {
           <>
             <div className={styles.setting}>
               <span>{$t('Set a hotkey to capture replaybuffer')}</span>
-              {hotkey && (
-                <div
-                  onFocus={() => setBindingFocused(true)}
-                  onBlur={() => setBindingFocused(false)}
-                >
-                  <HotkeyBinding
-                    style={{ width: 160, margin: 0 }}
-                    showLabel={false}
-                    hotkey={hotkey}
-                    binding={hotkey.bindings[0] ?? null}
-                    onBind={binding => {
-                      const newHotkey = { ...hotkey };
-                      newHotkey.bindings.splice(0, 1, binding);
-                      setHotkey(newHotkey);
-                      hotkeyRef.current = newHotkey;
-                    }}
-                  />
-                </div>
-              )}
+              <div data-testid="highlighter-replay-hotkey">
+                <HotkeyBinding
+                  style={{ width: 160, margin: 0 }}
+                  showLabel={false}
+                  hotkey={SAVE_REPLAY_HOTKEY}
+                  binding={bindings[0] ?? null}
+                  onBind={async binding => {
+                    await HotkeysService.actions.return.editBinding(SAVE_REPLAY_HOTKEY, {
+                      type: 'set',
+                      index: 0,
+                      binding,
+                    });
+                  }}
+                />
+              </div>
             </div>
             <div className={styles.setting}>
               <span>{$t('Adjust replay duration')}</span>
