@@ -49,11 +49,11 @@ class FacebookEditStreamInfoModule {
     return this.props.value;
   }
 
-  setProps(props: IPlatformComponentParams<'facebook'>) {
+  async setProps(props: IPlatformComponentParams<'facebook'>) {
     this.props = props;
     if (!this.state.scheduledVideosLoaded) this.loadScheduledBroadcasts();
-    if (this.settings.pageId) this.loadPicture(this.settings.pageId);
-    if (this.settings.groupId) this.loadPicture(this.settings.groupId);
+    if (this.settings.pageId) await this.loadPicture(this.settings.pageId);
+    if (this.settings.groupId) await this.loadPicture(this.settings.groupId);
   }
 
   updateSettings(patch: Partial<IFacebookStartStreamOptions>) {
@@ -239,8 +239,15 @@ class FacebookEditStreamInfoModule {
 
   async loadPicture(objectId: string) {
     const state = this.state;
-    if (state.pictures[objectId]) return state.pictures[objectId];
+    if (state.pictures[objectId]) {
+      // Log left for debugging purposes to track fix for undefined picture error
+      console.log('Picture already loaded for objectId:', objectId);
+      return state.pictures[objectId];
+    }
+
     const picture = await this.fbService.actions.return.fetchPicture(objectId);
+    // Log left for debugging purposes to track fix for undefined picture error
+    console.log('Fetched picture for objectId:', objectId);
     state.setPictures({ ...state.pictures, [objectId]: picture });
   }
 
@@ -343,7 +350,7 @@ function RequiredFields() {
                   image: pictures[group.id],
                 }))}
                 defaultActiveFirstOption
-                onDropdownVisibleChange={() => loadPictures('group')}
+                onDropdownVisibleChange={shown => shown && loadPictures('group')}
                 extra={
                   <p>
                     {$t('Make sure the Streamlabs app is added to your Group.')}
