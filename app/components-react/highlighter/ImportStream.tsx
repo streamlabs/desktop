@@ -1,5 +1,6 @@
 import { Button } from 'antd';
 import { Services } from 'components-react/service-provider';
+import { useVuex } from 'components-react/hooks';
 import { ListInput, TextInput } from 'components-react/shared/inputs';
 import Form from 'components-react/shared/inputs/Form';
 import * as remote from '@electron/remote';
@@ -15,9 +16,9 @@ import {
   TOpenedFrom,
 } from 'services/highlighter/models/highlighter.models';
 import { $t } from 'services/i18n';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styles from './ImportStream.m.less';
-import { getConfigByGame, supportedGames } from 'services/highlighter/models/game-config.models';
+import { getConfigByGame, getGameOptions } from 'services/highlighter/models/game-config.models';
 import path from 'path';
 import fs from 'fs';
 import moment from 'moment';
@@ -88,7 +89,8 @@ export function ImportStreamModal({
       selectedGame ||
       undefined,
   );
-  const gameOptions = supportedGames;
+  const replaySupportedGames = useVuex(() => HighlighterService.views.replaySupportedGames);
+  const gameOptions = useMemo(() => getGameOptions(replaySupportedGames), [replaySupportedGames]);
   const gameConfig = getConfigByGame(game);
 
   function handleInputChange(value: string) {
@@ -372,6 +374,7 @@ export function ImportStreamModal({
                   src={typeof option.image === 'string' ? option.image : undefined}
                   alt={option.label}
                   className={styles.listImage}
+                  onError={e => (e.currentTarget.style.visibility = 'hidden')}
                 />
               )}
               <span>{option.label}</span>

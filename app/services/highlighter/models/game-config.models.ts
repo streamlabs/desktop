@@ -518,6 +518,22 @@ export const FALLBACK_REPLAY_SUPPORTED_GAMES: Dictionary<string> = {
  */
 export const DISABLED_REPLAY_GAMES: string[] = ['just_chatting', 'other_game'];
 
+/**
+ * Game options for picking the game of a recording: the local games (with artwork),
+ * followed by the Replay games that have no local config. Their thumbnail is looked up
+ * by game id and may not exist on the CDN.
+ */
+export function getGameOptions(
+  replaySupportedGames: Dictionary<string> = FALLBACK_REPLAY_SUPPORTED_GAMES,
+) {
+  const localGameIds = supportedGames.map(game => game.value as string);
+  const replayOnlyGames = Object.entries(replaySupportedGames)
+    .filter(([id]) => !localGameIds.includes(id) && !DISABLED_REPLAY_GAMES.includes(id))
+    .map(([id, label]) => ({ value: id as EGame, label, image: `${thumbnailPath}${id}.png` }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  return [...supportedGames, ...replayOnlyGames];
+}
+
 const STREAM_HIGHLIGHTS_ONLY_SUFFIX = ' (Stream Highlights Only)';
 
 /**
