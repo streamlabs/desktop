@@ -542,22 +542,53 @@ export function isGameSupported(
   if (!game) {
     return false;
   }
-  const lowercaseGame = game.toLowerCase();
+  const normalizedGame = normalizeGameName(game);
+  const matches = (id: string, label: string | undefined) =>
+    (!!label && normalizeGameName(label) === normalizedGame) ||
+    (PLATFORM_CATEGORY_ALIASES[id] ?? []).some(
+      alias => normalizeGameName(alias) === normalizedGame,
+    );
 
-  const localGameValue = supportedGames.find(
-    supportedGame => supportedGame.label.toLowerCase() === lowercaseGame,
+  const localGameValue = supportedGames.find(supportedGame =>
+    matches(supportedGame.value, supportedGame.label),
   )?.value;
   if (localGameValue) {
     return localGameValue;
   }
 
   const replayGameId = Object.keys(replaySupportedGames).find(
-    id =>
-      !DISABLED_REPLAY_GAMES.includes(id) &&
-      replaySupportedGames[id]?.toLowerCase() === lowercaseGame,
+    id => !DISABLED_REPLAY_GAMES.includes(id) && matches(id, replaySupportedGames[id]),
   );
   if (replayGameId) {
     return replayGameId as EGame;
   }
   return false;
+}
+
+/**
+ * Platform category names that don't match the game's label, keyed by game id.
+ * Used when a platform renamed a category, e.g. Twitch dropping the "2" from Overwatch.
+ */
+const PLATFORM_CATEGORY_ALIASES: Dictionary<string[]> = {
+  overwatch_2: ['Overwatch'],
+  rainbow_six_siege: [
+    "Tom Clancy's Rainbow Six Siege",
+    "Tom Clancy's Rainbow Six Siege X",
+    'Rainbow Six Siege',
+    'Rainbow Six Siege X',
+  ],
+};
+
+/**
+ * Normalizes a game name so that labels and platform category names can be compared, e.g.
+ * "F1® 25" -> "f1 25", "DARK SOULS: REMASTERED" -> "dark souls remastered",
+ * "World of Warcraft (Solo Shuffle)" -> "world of warcraft".
+ */
+export function normalizeGameName(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/\s*\([^)]*\)\s*$/, '') // trailing qualifier like "(Solo Shuffle)"
+    .replace(/[™®©'’]/g, '')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
 }
