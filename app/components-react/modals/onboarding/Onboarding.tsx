@@ -155,10 +155,10 @@ export function DancingKevins() {
   const url = $i('webm/kevin_jump.webm');
 
   return (
-    <div style={{ display: 'flex', height: 160 }}>
-      <video src={url} controls={false} autoPlay loop style={{ margin: '0 -150px' }} />
-      <video src={`${url}#t=1`} controls={false} autoPlay loop style={{ margin: '0 -150px' }} />
-      <video src={`${url}#t=2`} controls={false} autoPlay loop style={{ margin: '0 -150px' }} />
+    <div className={styles.dancingKevins}>
+      <video src={url} controls={false} autoPlay loop />
+      <video src={`${url}#t=1`} controls={false} autoPlay loop />
+      <video src={`${url}#t=2`} controls={false} autoPlay loop />
     </div>
   );
 }
