@@ -24,6 +24,7 @@
   "Auto Optimize": "자동 최적화",
   "Configure Default Devices": "기본 디바이스 구성",
   "OBS Import": "OBS 가져오기",
+  "OBS is not installed": "OBS is not installed",
   "Confirm stream title and game before going live": "라이브 하기 전에 스트리밍 제목 및 게임 확인하기",
   "Enable reporting additional information on a crash (requires restart)": "충돌 시 추가 정보 보고 활성화(다시 시작 필수)",
   "WARNING! You will lose all scenes, sources, and settings. This cannot be undone!": "경고! 모든 장면, 소스, 설정을 잃게 됩니다. 이 작업은 취소할 수 없습니다!",

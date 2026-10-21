@@ -24,6 +24,7 @@
   "Auto Optimize": "自動最佳化",
   "Configure Default Devices": "設定預設裝置",
   "OBS Import": "OBS 匯入",
+  "OBS is not installed": "OBS is not installed",
   "Confirm stream title and game before going live": "在開始直播前確認直播標題與遊戲",
   "Enable reporting additional information on a crash (requires restart)": "啟用當機時報告其他資訊 (需要重新啟動)",
   "WARNING! You will lose all scenes, sources, and settings. This cannot be undone!": "警告！您會失去所有場景、來源與設定。此動作無法復原！",

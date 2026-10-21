@@ -24,6 +24,7 @@
   "Auto Optimize": "Optimizar automáticamente",
   "Configure Default Devices": "Configurar dispositivos predeterminados",
   "OBS Import": "Importación de OBS",
+  "OBS is not installed": "OBS is not installed",
   "Confirm stream title and game before going live": "Confirmar título de stream y juego antes de transmitir en directo",
   "Enable reporting additional information on a crash (requires restart)": "Active la notificación de información adicional al producirse un bloque (requiere reinicio)",
   "WARNING! You will lose all scenes, sources, and settings. This cannot be undone!": "¡ADVERTENCIA! Perderá todas las escenas, fuentes y ajustes. ¡Esta operación no se puede deshacer!",
