@@ -201,7 +201,8 @@ const HotkeyLabel = memo(function HotkeyLabel(p: { hotkey: IHotkey; showLabel: b
   const v = useVuex(() => ({
     dualOutputMode: DualOutputService.views.dualOutputMode,
     setMarkerName: MarkersService.actions.setMarkerName,
-    getLabel: MarkersService.views.getLabel,
+    // Read the name here so it keeps its service context and reacts to saved changes.
+    label: p.hotkey.isMarker ? MarkersService.views.getLabel(p.hotkey.actionName) : '',
   }));
 
   const showDualOutputLabel = useMemo(() => {
@@ -215,8 +216,6 @@ const HotkeyLabel = memo(function HotkeyLabel(p: { hotkey: IHotkey; showLabel: b
     [p.hotkey.actionName, v.setMarkerName],
   );
 
-  const label = useMemo(() => v.getLabel(p.hotkey.actionName), [p.hotkey.actionName, v.getLabel]);
-
   const icon = useMemo(
     () => (p.hotkey?.display === 'vertical' ? 'icon-phone-case' : 'icon-desktop'),
     [p.hotkey?.display],
@@ -228,7 +227,7 @@ const HotkeyLabel = memo(function HotkeyLabel(p: { hotkey: IHotkey; showLabel: b
         <>
           {showDualOutputLabel && <i className={icon} style={{ margin: '5px', opacity: 0.6 }} />}
           {p.hotkey.isMarker ? (
-            <TextInput value={label} onChange={handleLabel} nowrap />
+            <TextInput value={v.label} onChange={handleLabel} nowrap />
           ) : (
             p.hotkey.description || ''
           )}
