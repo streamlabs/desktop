@@ -179,5 +179,7 @@
   "confirm the broadcast is currently live or that it exists in YouTube Studio": "confirm the broadcast is currently live or that it exists in YouTube Studio",
   "confirm the channel is under its broadcast limit": "confirm the channel is under its broadcast limit",
   "confirm their current and upcoming broadcasts in YouTube Studio": "confirm their current and upcoming broadcasts in YouTube Studio",
-  "confirm their videos and current and upcoming broadcasts in YouTube Studio": "confirm their videos and current and upcoming broadcasts in YouTube Studio"
+  "confirm their videos and current and upcoming broadcasts in YouTube Studio": "confirm their videos and current and upcoming broadcasts in YouTube Studio",
+  "YouTube Dual Stream title limited to %{value} characters (includes \" (Portrait)\" suffix)": "YouTube Dual Stream title limited to %{value} characters (includes \" (Portrait)\" suffix)",
+  "YouTube title limited to %{value} characters": "YouTube title limited to %{value} characters"
 }
