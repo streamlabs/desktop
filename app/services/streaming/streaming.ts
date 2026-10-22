@@ -3799,6 +3799,18 @@ export class StreamingService
     if (info.signal === EOBSOutputSignal.Wrote) {
       this.SET_RECORDING_STATUS(nextState, display, new Date().toISOString());
 
+      // A failure to open the output file (e.g. a nonexistent recording path) is reported as a
+      // `wrote` signal with a success code and an error message, so check the message instead
+      if (info.error) {
+        await this.handleDestroyOutputContexts(display);
+        this.recordingStatusChange.next(nextState);
+
+        const code =
+          (info.code as EOutputCode) === EOutputCode.Success ? EOutputCode.BadPath : info.code;
+        this.createOBSError(EOBSOutputType.Recording, display, info.signal, code, info.error);
+        return;
+      }
+
       const fileName = this.contexts[display].recording?.lastFile() ?? '';
 
       const parsedName = byOS({
@@ -4815,10 +4827,13 @@ export class StreamingService
     let linkToDriverInfo = false;
     let showNativeErrorMessage = false;
     let diagReportMessage = this.streamErrorUserMessage;
+    // Secondary text shown below the main message in the error dialog
+    let errorDetail = '';
 
     // Surface a more specific error for a missing stream key or server url
     const missingSetting =
-      info.code === EOutputCode.InvalidStream || info.code === EOutputCode.BadPath
+      info.type === EOBSOutputType.Streaming &&
+      (info.code === EOutputCode.InvalidStream || info.code === EOutputCode.BadPath)
         ? this.getMissingStreamSetting(info.service)
         : null;
 
@@ -4829,6 +4844,12 @@ export class StreamingService
 
       errorText = messages.user;
       diagReportMessage = messages.report;
+    } else if (info.code === EOutputCode.BadPath && info.type === EOBSOutputType.Recording) {
+      errorText = $t(
+        'Failed to create recording. Please check your settings and file path and try again.',
+      );
+      if (typeof info.error === 'string') errorDetail = info.error.trim();
+      diagReportMessage = diagReportMessage.concat(errorText, errorDetail);
     } else if (info.code === EOutputCode.BadPath) {
       errorText = $t(
         'Invalid Path or Connection URL.  Please check your settings to confirm that they are valid.',
@@ -4929,8 +4950,8 @@ export class StreamingService
       }
     }
 
-    // Add display information for dual output mode
-    if (this.views.isDualOutputMode) {
+    // Add display information for dual output mode. The platform list only applies to streaming.
+    if (this.views.isDualOutputMode && info.type === EOBSOutputType.Streaming) {
       const display = info.service === 'vertical' ? 'vertical' : 'horizontal';
       const targets = [];
       if (this.views.activeDisplayDestinations[display].length) {
@@ -4977,6 +4998,7 @@ export class StreamingService
         title,
         type: errorType,
         message: errorText,
+        detail: errorDetail || undefined,
       })
       .then(({ response }) => {
         if (linkToDriverInfo && response === 1) {
