@@ -1,5 +1,6 @@
 import { IGoLiveSettings, StreamInfoView, TDisplayOutput } from '../../../services/streaming';
 import {
+  canBePrimaryPlatform,
   maxNumPlatforms,
   platformLabels,
   platformList,
@@ -185,7 +186,7 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
 
   switchPlatforms(enabledPlatforms: TPlatform[]) {
     if (this.isPrimaryPlatform('instagram') || this.isPrimaryPlatform('patreon')) {
-      const newPrimary = enabledPlatforms.find(p => p !== 'instagram' && p !== 'patreon');
+      const newPrimary = enabledPlatforms.find(canBePrimaryPlatform);
       if (newPrimary) {
         this.setPrimaryPlatform(newPrimary);
       }
@@ -490,7 +491,7 @@ export class GoLiveSettingsModule {
     // promote any other enabled platform to primary so chat & stream-info
     // routing don't resolve to a non-streaming platform.
     if (this.state.isPrimaryPlatform('instagram') || this.state.isPrimaryPlatform('patreon')) {
-      const newPrimary = enabledPlatforms.find(p => p !== 'instagram' && p !== 'patreon');
+      const newPrimary = enabledPlatforms.find(canBePrimaryPlatform);
       if (newPrimary) {
         this.setPrimaryChat(newPrimary);
       }
