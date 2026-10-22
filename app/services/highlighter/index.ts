@@ -149,7 +149,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     return (
       this.aiHighlighterFeatureEnabled &&
       this.views.useAiHighlighter &&
-      !!isGameSupported(this.streamingService.views.game, this.views.replaySupportedGames)
+      // The game is the Twitch category id once it was changed in the go live window, so use the name
+      !!isGameSupported(this.streamingService.views.gameName, this.views.replaySupportedGames)
     );
   }
 
@@ -1178,7 +1179,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         });
 
         const game = isGameSupported(
-          this.streamingService.views.game,
+          this.streamingService.views.gameName,
           this.views.replaySupportedGames,
         );
         if (!game) {
