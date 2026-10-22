@@ -21,7 +21,7 @@ interface IRecordingSettingsProps {
 }
 
 export default function RecordingSwitcher(p: IRecordingSettingsProps) {
-  const { updateRecordingDisplayAndSaveSettings, game } = useGoLiveSettings();
+  const { updateRecordingDisplayAndSaveSettings } = useGoLiveSettings();
   const {
     DualOutputService,
     StreamSettingsService,
@@ -35,6 +35,10 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
     isDualOutputMode: DualOutputService.views.dualOutputMode,
     recordWhenStreaming: StreamSettingsService.views.settings.recordWhenStreaming,
     useAiHighlighter: HighlighterService.views.useAiHighlighter,
+    replaySupportedGames: HighlighterService.views.replaySupportedGames,
+    // Must match the game AiHighlighterToggle and HighlighterService check. The form's `game` is
+    // the Twitch category id after a search, which never matches a supported game name.
+    gameName: StreamingService.views.gameName,
     isRecording: StreamingService.views.isRecording,
     isReplayBufferActive: StreamingService.views.isReplayBufferActive,
     canRecordVertical: IncrementalRolloutService.views.featureIsEnabled(
@@ -45,13 +49,12 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
   }));
 
   const shouldUseAiHighlighter = useMemo(() => {
-    return isGameSupported(game) && v.useAiHighlighter;
-  }, [game, v.useAiHighlighter]);
+    return !!isGameSupported(v.gameName, v.replaySupportedGames) && v.useAiHighlighter;
+  }, [v.gameName, v.replaySupportedGames, v.useAiHighlighter]);
 
   const recordWhenStartStream = useMemo(() => v.recordWhenStreaming || shouldUseAiHighlighter, [
     v.recordWhenStreaming,
     shouldUseAiHighlighter,
-    game,
   ]);
 
   const showRecordingToggle = useMemo(() => p?.showRecordingToggle ?? false, [
@@ -74,7 +77,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
 
   const disableIcons = useMemo(
     () => shouldUseAiHighlighter || v.isRecording || v.isReplayBufferActive,
-    [shouldUseAiHighlighter, v.isRecording, v.isReplayBufferActive, game],
+    [shouldUseAiHighlighter, v.isRecording, v.isReplayBufferActive],
   );
 
   const options = useMemo(() => {
@@ -89,7 +92,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
       v.isRecording
         ? $t('Recording in progress. Stop recording to change the recording display.')
         : $t('AI Highlighter is enabled. Recording will start when stream starts.'),
-    [v.isRecording, shouldUseAiHighlighter, game],
+    [v.isRecording, shouldUseAiHighlighter],
   );
 
   return (

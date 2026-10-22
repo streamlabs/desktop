@@ -30,6 +30,8 @@ export interface IHighlighterState {
   useAiHighlighter: boolean;
   tempRecordingInfo: ITempRecordingInfo;
   replayInstall: IReplayInstallState;
+  /** Games supported by Streamlabs Replay, game id -> platform category name */
+  replaySupportedGames: Dictionary<string>;
 }
 
 export type EReplayInstallStep =

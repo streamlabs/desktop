@@ -24,20 +24,7 @@ export interface IGameConfig {
   titleIcon: string;
   thumbnail: string;
   state: EGameState;
-  inputTypeMap: Record<string, IEventInfo | IDefaultEventInfo>;
   importModalConfig: undefined | IImportModalConfig;
-}
-
-export interface IEventInfo {
-  emoji: string;
-  description: { singular: string; plural: string };
-  orderPriority: number; //Ordering in the stream card
-  includeInDropdown: boolean; //autoEditDropdown
-  contextEvent: boolean; //eg start or end
-}
-
-export interface IDefaultEventInfo extends IEventInfo {
-  aliases?: string[];
 }
 
 // space -> underscore
@@ -69,16 +56,4 @@ export enum EGame {
   ENSHROUDED = 'enshrouded',
   MINECRAFT = 'minecraft',
   UNSET = 'unset',
-}
-
-export enum EHighlighterInputTypes {
-  KILL = 'kill',
-  KNOCKED = 'knocked',
-  GAME_SEQUENCE = 'game_sequence',
-  GAME_START = 'start_game',
-  GAME_END = 'end_game',
-  VOICE_ACTIVITY = 'voice_activity',
-  DEATH = 'death',
-  VICTORY = 'victory',
-  DEPLOY = 'deploy',
 }

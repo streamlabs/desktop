@@ -26,7 +26,7 @@ import {
 import { logIn } from '../helpers/modules/user';
 import { saveReplayBuffer } from '../helpers/modules/replay-buffer';
 import { fillForm, useForm } from '../helpers/modules/forms';
-import { SwitchInputController } from '../helpers/modules/forms/inputs';
+import { ListInputController, SwitchInputController } from '../helpers/modules/forms/inputs';
 import { withUser } from '../helpers/webdriver/user';
 import { sleep } from '../helpers/sleep';
 import { getApiClient } from '../helpers/api-client';
@@ -245,3 +245,55 @@ test('Recordings get highlights opens the import dialog', async t => {
     'The recording should be preselected in the import dialog',
   );
 });
+
+test(
+  'AI Highlighter records and opens the hype modal after changing the game',
+  withUser('twitch'),
+  async t => {
+    await setTemporaryRecordingPath(false);
+
+    await prepareToGoLive();
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+
+    // Switch to a supported game that differs from the one the channel currently has
+    // not a react hook
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const gameInput = await useForm().getInput<ListInputController<string>>('twitchGame');
+    const currentGame = await gameInput.getDisplayValue();
+    const newGame = ['Fortnite', 'Apex Legends'].find(game => game !== currentGame);
+    await fillForm({
+      title: 'SLOBS Test Stream',
+      twitchGame: newGame,
+    });
+    await waitForSettingsWindowLoaded();
+
+    t.true(
+      await isDisplayed('[data-name="ai-highlighter-selector"]'),
+      'Highlighter card should show for the new supported game',
+    );
+
+    await enableAiHighlighter();
+    await submit();
+    await waitForStreamStart();
+
+    // AI Highlighter starts a recording together with the stream
+    await focusMain();
+    await waitForDisplayed('.record-button.active', {
+      timeout: 10000,
+      timeoutMsg: 'The recording should run while streaming with AI Highlighter enabled',
+    });
+    await sleep(3000); // give the recording some content
+    await stopStream();
+
+    await focusMain();
+    await waitForDisplayed('h2=Turn your gameplay into epic highlight reels', {
+      timeout: 20000,
+      timeoutMsg: 'The hype modal should open after a stream with AI Highlighter enabled',
+    });
+    t.true(
+      await isDisplayed('h2=Ai Highlighter'),
+      'The hype modal should be opened from the after-stream flow',
+    );
+  },
+);
