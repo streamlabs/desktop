@@ -5,7 +5,9 @@ import { InputComponent, TextAreaInput, TextInput, TInputLayout } from '../../sh
 import { TLayoutMode } from './platforms/PlatformSettingsLayout';
 import { Services } from '../../service-provider';
 import { Tooltip } from 'antd';
+import { Rule } from 'antd/lib/form';
 import AnimatedWrapper from 'components-react/shared/AnimatedWrapper';
+import { useGoLiveSettings } from './useGoLiveSettings';
 
 interface ICommonPlatformSettings {
   title: string;
@@ -46,6 +48,18 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
     updatePlatform({ [fieldName]: value });
   }
 
+  /**
+   * Minimum length counted in visible characters. Descriptions are prefilled with a trailing newline,
+   * which antd's `min` rule counts, so a field that looks 2 characters long would pass a minimum of 3.
+   */
+  function minVisibleCharsRule(min: number, message: string): Rule {
+    return {
+      validateTrigger: 'onChange',
+      validator: (rule, value?: string) =>
+        (value ?? '').trim().length >= min ? Promise.resolve() : Promise.reject(new Error(message)),
+    };
+  }
+
   const view = Services.StreamingService.views;
   const fieldsAreVisible = useMemo(() => {
     if (p.layoutMode === 'singlePlatform') return true;
@@ -69,51 +83,103 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
     view.enabledPlatforms.length > 0 &&
     !view.platformsWithoutCustomFields.length;
 
+  const { settings } = useGoLiveSettings();
   const fields = p.value;
-
-  const height = useMemo(() => {
-    if (!fieldsAreVisible) {
-      return '0px';
-    }
-
-    if (hasDescription) {
-      return '162px';
-    }
-
-    return '71px';
-  }, [fieldsAreVisible, hasDescription]);
-
-  // determine max character length for title by enabled platform limitation
-  let maxCharacters = 120;
   const enabledPlatforms = view.enabledPlatforms;
-  if (enabledPlatforms.includes('youtube')) {
-    maxCharacters = 100;
-  } else if (enabledPlatforms.includes('twitch')) {
-    maxCharacters = 140;
-  }
 
-  // Patreon requires both a title and description of at least 3 characters,
-  // but other platforms do not have a minimum character requirement for title or description
-  const hasPatreon = p.platform === 'patreon' || enabledPlatforms.includes('patreon');
-  const minCharacters = hasPatreon ? 3 : undefined;
+  // A single platform's instance validates that platform's limits only, the shared instance
+  // validates every enabled platform
+  const targetPlatforms = useMemo(() => (p.platform ? [p.platform] : enabledPlatforms), [
+    p.platform,
+    enabledPlatforms,
+  ]);
+  const isYouTubeDualStream =
+    targetPlatforms.includes('youtube') && settings.platforms['youtube']?.display === 'both';
+  const hasPatreon = targetPlatforms.includes('patreon');
+  const minTitleChars = hasPatreon ? 3 : undefined;
+  const minDescriptionChars = hasPatreon ? 3 : undefined;
+
+  const maxTitleChars = useMemo(() => {
+    // 100 minus the 11 characters of the " (Portrait)" suffix added to the vertical broadcast
+    if (isYouTubeDualStream) return 89;
+    if (targetPlatforms.includes('youtube')) return 100;
+    if (targetPlatforms.includes('twitch')) return 140;
+    return undefined;
+  }, [isYouTubeDualStream, targetPlatforms]);
+
+  const titleRules = useMemo(() => {
+    const rules: Rule[] = [];
+    const maxRule = { max: maxTitleChars, validateTrigger: 'onChange' };
+    const value = maxTitleChars;
+
+    if (isYouTubeDualStream) {
+      rules.push({
+        ...maxRule,
+        message: $t(
+          'YouTube Dual Stream title limited to %{value} characters (includes " (Portrait)" suffix)',
+          { value },
+        ),
+      });
+    } else if (targetPlatforms.includes('youtube')) {
+      rules.push({
+        ...maxRule,
+        message: $t('YouTube title limited to %{value} characters', { value }),
+      });
+    } else if (targetPlatforms.includes('twitch')) {
+      rules.push({
+        ...maxRule,
+        message: $t('Twitch title limited to %{value} characters', { value }),
+      });
+    } else {
+      rules.push({
+        ...maxRule,
+        message: $t('This field may not be greater than %{value} characters.', { value }),
+      });
+    }
+
+    if (minTitleChars) {
+      rules.push(
+        minVisibleCharsRule(
+          minTitleChars,
+          $t('Patreon requires a title of at least %{value} characters', { value: minTitleChars }),
+        ),
+      );
+    }
+
+    return rules;
+  }, [isYouTubeDualStream, targetPlatforms, maxTitleChars, minTitleChars]);
+
+  const descriptionRules = useMemo(() => {
+    if (!minDescriptionChars) return undefined;
+
+    return [
+      minVisibleCharsRule(
+        minDescriptionChars,
+        $t('Patreon requires a description of at least %{value} characters', {
+          value: minDescriptionChars,
+        }),
+      ),
+    ];
+  }, [minDescriptionChars]);
 
   const titleTooltip = useMemo(() => {
-    if (hasPatreon) {
-      return $t('Patreon requires a title of at least 3 characters');
+    if (minTitleChars) {
+      return $t('Patreon requires a title of at least %{value} characters', {
+        value: minTitleChars,
+      });
     }
 
-    if (enabledPlatforms.includes('tiktok')) {
+    if (targetPlatforms.includes('tiktok')) {
       return $t('Only 32 characters of your title will display on TikTok');
     }
 
     return undefined;
-  }, [enabledPlatforms]);
+  }, [minTitleChars, targetPlatforms]);
 
   return (
     <AnimatedWrapper
       visible={fieldsAreVisible}
       style={{ marginBottom: p.platform && fieldsAreVisible ? '10px' : '0px' }}
-      height={height}
     >
       {/*TITLE*/}
       <TextInput
@@ -134,8 +200,7 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
         // platform using its own title validates that title in its own section.
         required={!titleDisabled}
         disabled={titleDisabled}
-        max={maxCharacters}
-        min={minCharacters}
+        rules={titleDisabled ? undefined : titleRules}
         layout={p.layout}
         style={{ marginTop: !p.platform ? '0px' : '10px' }}
         size="large"
@@ -149,7 +214,7 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
           name="description"
           label={$t('Description')}
           required={descriptionIsRequired}
-          min={minCharacters}
+          rules={descriptionRules}
           layout={p.layout}
         />
       )}
