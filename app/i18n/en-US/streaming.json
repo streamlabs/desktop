@@ -8,6 +8,7 @@
   "Twitch returned a warning for these Enhanced Broadcasting settings. The test passed, but performance may vary during a live stream.": "Twitch returned a warning for these Enhanced Broadcasting settings. The test passed, but performance may vary during a live stream.",
   "Are you sure you want to stop streaming?": "Are you sure you want to stop streaming?",
   "Invalid Path or Connection URL.  Please check your settings to confirm that they are valid.": "Invalid Path or Connection URL.  Please check your settings to confirm that they are valid.",
+  "Failed to create recording. Please check your settings and file path and try again.": "Failed to create recording. Please check your settings and file path and try again.",
   "Failed to connect to the streaming server.  Please check your internet connection.": "Failed to connect to the streaming server.  Please check your internet connection.",
   "Disconnected from the streaming server.  Please check your internet connection.": "Disconnected from the streaming server.  Please check your internet connection.",
   "Could not access the specified channel or stream key. Please log out and back in to refresh your credentials. If the problem persists, there may be a problem connecting to the server.": "Could not access the specified channel or stream key. Please log out and back in to refresh your credentials. If the problem persists, there may be a problem connecting to the server.",
