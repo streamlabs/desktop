@@ -3331,12 +3331,16 @@ export class StreamingService
       } catch (e: unknown) {
         console.error('Error starting recording:', e);
 
+        let errorMessage = $t('An unknown error occurred. Please try again.');
+        if (e instanceof Error) errorMessage = e.message;
+        else if (typeof e === 'string') errorMessage = e;
+
         this.createOBSError(
           EOBSOutputType.Recording,
           display,
           EOBSOutputSignal.Start,
           EOutputCode.Error,
-          typeof e === 'string' ? e : $t('An unknown Recording error occurred. Please try again.'),
+          errorMessage,
         );
 
         this.handleDestroyOutputContexts(display);
