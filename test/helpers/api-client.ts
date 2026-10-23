@@ -387,9 +387,11 @@ export class ApiClient {
     }) as TResourceType;
   }
 
-  fetchNextEvent(): Promise<IJsonRpcEvent> {
+  fetchNextEvent(resourceId?: string): Promise<IJsonRpcEvent> {
     return new Promise((resolve, reject) => {
-      this.eventReceived.pipe(first()).subscribe(event => resolve(event));
+      this.eventReceived
+        .pipe(first(event => !resourceId || event.resourceId === resourceId))
+        .subscribe(event => resolve(event));
       setTimeout(() => reject('Promise timeout'), PROMISE_TIMEOUT);
     });
   }
