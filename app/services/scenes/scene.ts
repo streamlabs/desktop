@@ -304,23 +304,19 @@ export class Scene {
       item.setParent(folderId);
     }
     if (this.dualOutputService.views.hasSceneNodeMaps) {
-      Promise.resolve(
-        this.dualOutputService.actions.return.createOrAssignOutputNode(
-          item,
-          'vertical',
-          false,
-          this.id,
-        ),
-      ).then(node => {
-        if (folderId) {
-          const verticalFolderId = this.dualOutputService.views.getVerticalNodeId(
-            folderId,
-            this.id,
-          );
-          if (node && verticalFolderId) node.setParent(verticalFolderId);
-        }
-        return node;
-      });
+      // create and parent the vertical node synchronously, so it is placed in
+      // the vertical folder at the same point as its horizontal partner and
+      // both displays keep the same stacking order
+      const verticalNode = this.dualOutputService.createOrAssignOutputNode(
+        item,
+        'vertical',
+        false,
+        this.id,
+      );
+      if (folderId && verticalNode) {
+        const verticalFolderId = this.dualOutputService.views.getVerticalNodeId(folderId, this.id);
+        if (verticalFolderId) verticalNode.setParent(verticalFolderId);
+      }
     }
     return item;
   }

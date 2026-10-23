@@ -305,6 +305,14 @@ test('Adding a nested folder of files to a new inactive scene creates one item p
   t.deepEqual(getPaths('horizontal'), expectedPaths, 'Horizontal tree has each file once');
   t.deepEqual(getPaths('vertical'), expectedPaths, 'Vertical tree has each file once');
 
+  // both displays must have the same stacking order, so map the horizontal
+  // node order through the node map and compare it with the vertical order
+  t.deepEqual(
+    nodes.filter(node => node.display === 'horizontal').map(node => nodeMap?.[node.id]),
+    nodes.filter(node => node.display === 'vertical').map(node => node.id),
+    'Vertical nodes are in the same order as their horizontal partners',
+  );
+
   nodes
     .filter(node => node.display === 'horizontal')
     .forEach(horizontalNode => {
