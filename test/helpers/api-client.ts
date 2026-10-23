@@ -1,24 +1,17 @@
 import { IJsonRpcEvent, IJsonRpcRequest, IJsonRpcResponse } from '../../app/services/api/jsonrpc';
 import { Observable, Subject, Subscription } from 'rxjs';
-import { first, timeout } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { isEqual } from 'lodash';
 import { NamedPipeClient } from './named-pipe-client';
 import { StringDecoder } from 'string_decoder';
-import * as path from 'path';
-import * as os from 'os';
 
 const net = require('net');
 const snp = process.platform === 'win32' ? require('node-win32-np') : null;
 
 const PIPE_NAME = 'slobs';
 const PIPE_PATH = `\\\\.\\pipe\\${PIPE_NAME}`;
-
-// Evaluated at connect time so it picks up SLOBS_CACHE_DIR set by the test runner.
-export function getSocketPath(): string {
-  const appData =
-    process.env.SLOBS_CACHE_DIR || path.join(os.homedir(), 'Library', 'Application Support');
-  return path.join(appData, 'slobs-client', 'slobs.sock');
-}
+const TCP_PORT = 28194;
+const TCP_HOST = '127.0.0.1';
 const PROMISE_TIMEOUT = 20000;
 
 let clientInstance: ApiClient = null;
@@ -73,7 +66,7 @@ export class ApiClient {
       if (process.platform === 'win32') {
         this.socket.connect(PIPE_PATH);
       } else {
-        this.socket.connect(getSocketPath());
+        this.socket.connect(TCP_PORT, TCP_HOST);
       }
     });
   }
@@ -88,7 +81,7 @@ export class ApiClient {
     this.socket.on('error', (error: any) => {
       this.log('error', error);
       this.connectionStatus = 'disconnected';
-      this.rejectConnection(error);
+      this.rejectConnection();
     });
 
     this.socket.on('data', (data: any) => {
@@ -219,13 +212,13 @@ export class ApiClient {
       client.write(Buffer.from(rawMessage));
 
       /* \x0a is being used as a message delimiter for
-       * JSON-RPC messages. */
+      * JSON-RPC messages. */
       const response = client.read_until('\x0a');
       client.close();
 
       return Buffer.concat(response);
     }
-    // Mac: use Unix socket with raw socket callbacks (not Promises) so deasync.loopWhile
+    // Mac: use raw socket callbacks (not Promises) so deasync.loopWhile
     // can drive the event loop without microtask flushing issues.
     let result: Buffer | undefined;
     let error: any;
@@ -234,7 +227,7 @@ export class ApiClient {
     const chunks: Buffer[] = [];
     const socket = new net.Socket();
 
-    socket.connect(getSocketPath(), () => {
+    socket.connect(TCP_PORT, TCP_HOST, () => {
       socket.write(rawMessage);
     });
 
@@ -394,13 +387,11 @@ export class ApiClient {
     }) as TResourceType;
   }
 
-  fetchNextEvent(resourceId?: string): Promise<IJsonRpcEvent> {
-    return this.eventReceived
-      .pipe(
-        first(event => !resourceId || event.resourceId === resourceId),
-        timeout(PROMISE_TIMEOUT),
-      )
-      .toPromise();
+  fetchNextEvent(): Promise<IJsonRpcEvent> {
+    return new Promise((resolve, reject) => {
+      this.eventReceived.pipe(first()).subscribe(event => resolve(event));
+      setTimeout(() => reject('Promise timeout'), PROMISE_TIMEOUT);
+    });
   }
 
   watchForEvents(eventNames: string[]): ApiEventWatcher {
