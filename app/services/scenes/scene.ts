@@ -260,7 +260,7 @@ export class Scene {
     const fname = path.parse(addPath).name;
 
     if (fstat.isDirectory()) {
-      if (this.dualOutputService.views.hasNodeMap()) {
+      if (this.dualOutputService.views.hasSceneNodeMaps) {
         // create horizontal and vertical folders
         const horizontalFolder = this.createFolder(fname, { display: 'horizontal' });
         const verticalFolder = this.createFolder(fname, { display: 'vertical' });
@@ -269,7 +269,10 @@ export class Scene {
         if (folderId) {
           horizontalFolder.setParent(folderId);
 
-          const verticalFolderParentId = this.dualOutputService.views.getVerticalNodeId(folderId);
+          const verticalFolderParentId = this.dualOutputService.views.getVerticalNodeId(
+            folderId,
+            this.id,
+          );
           if (verticalFolderParentId) verticalFolder.setParent(verticalFolderParentId);
         }
 
@@ -280,12 +283,10 @@ export class Scene {
           verticalFolder.id,
         );
 
-        // create horizontal and vertical nodes
+        // create horizontal nodes, their vertical partners are created and
+        // added to the vertical folder when each file is added
         const files = fs.readdirSync(addPath).reverse();
-        files.forEach(filePath => {
-          this.addFile(path.join(addPath, filePath), horizontalFolder.id);
-          this.addFile(path.join(addPath, filePath), verticalFolder.id);
-        });
+        files.forEach(filePath => this.addFile(path.join(addPath, filePath), horizontalFolder.id));
         return horizontalFolder;
       } else {
         const folder = this.createFolder(fname);
@@ -302,21 +303,20 @@ export class Scene {
     if (folderId) {
       item.setParent(folderId);
     }
-    if (this.dualOutputService.views.hasNodeMap()) {
-      Promise.resolve(
-        this.dualOutputService.actions.return.createOrAssignOutputNode(
-          item,
-          'vertical',
-          false,
-          this.id,
-        ),
-      ).then(node => {
-        if (folderId) {
-          const verticalFolderId = this.dualOutputService.views.getVerticalNodeId(folderId);
-          if (node && verticalFolderId) node.setParent(verticalFolderId);
-        }
-        return node;
-      });
+    if (this.dualOutputService.views.hasSceneNodeMaps) {
+      // create and parent the vertical node synchronously, so it is placed in
+      // the vertical folder at the same point as its horizontal partner and
+      // both displays keep the same stacking order
+      const verticalNode = this.dualOutputService.createOrAssignOutputNode(
+        item,
+        'vertical',
+        false,
+        this.id,
+      );
+      if (folderId && verticalNode) {
+        const verticalFolderId = this.dualOutputService.views.getVerticalNodeId(folderId, this.id);
+        if (verticalFolderId) verticalNode.setParent(verticalFolderId);
+      }
     }
     return item;
   }
