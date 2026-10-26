@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useVuex } from 'components-react/hooks';
 import { getOS, OS } from 'util/operating-systems';
 import { $t } from 'services/i18n';
@@ -14,7 +14,7 @@ import styles from './VirtualWebcam.m.less';
 import cx from 'classnames';
 
 export function VirtualWebcamSettings() {
-  const { VirtualWebcamService, ScenesService, SourcesService } = Services;
+  const { VirtualWebcamService } = Services;
 
   useEffect(() => {
     let mounted = true;
@@ -31,6 +31,7 @@ export function VirtualWebcamSettings() {
     running: VirtualWebcamService.views.running,
     outputType: VirtualWebcamService.views.outputType,
     outputSelection: VirtualWebcamService.views.outputSelection,
+    outputSelectionOptions: VirtualWebcamService.views.outputSelectionOptions,
     installStatus: VirtualWebcamService.views.installStatus,
     update: VirtualWebcamService.actions.update,
   }));
@@ -41,39 +42,6 @@ export function VirtualWebcamSettings() {
     { label: $t('Scene'), value: VCamOutputType.SceneOutput.toString() },
     { label: $t('Source'), value: VCamOutputType.SourceOutput.toString() },
   ];
-
-  const outputSelectionOptions = useMemo(() => {
-    // set the options based on the selected virtual cam
-    let options = [{ label: 'None', value: '' }];
-
-    if (v.outputType === VCamOutputType.SceneOutput.toString()) {
-      options = ScenesService.views.scenes.map(scene => ({
-        label: scene.name,
-        value: scene.id,
-      }));
-    }
-
-    if (v.outputType === VCamOutputType.SourceOutput.toString()) {
-      options = SourcesService.views
-        .getSources()
-        .filter(source => source.type !== 'scene' && source.video)
-        .map(source => ({
-          label: source.name,
-          value: source.sourceId,
-        }));
-    }
-
-    return options;
-  }, [v.outputType, v.outputSelection]);
-
-  const outputSelectionValue = useMemo(() => {
-    if (!outputSelectionOptions.length) return { label: 'None', value: '' };
-
-    const outputSelection =
-      outputSelectionOptions.find(o => o.value === v.outputSelection) ?? outputSelectionOptions[0];
-
-    return outputSelection;
-  }, [v.outputSelection, outputSelectionOptions]);
 
   const isInstalled = v.installStatus === EVirtualWebcamPluginInstallStatus.Installed;
 
@@ -88,18 +56,7 @@ export function VirtualWebcamSettings() {
       : $t('Output Source');
 
   function onSelectType(value: string) {
-    const type = Number(value) as VCamOutputType;
-    let name = '';
-    if (type === VCamOutputType.SceneOutput) {
-      const scenes = ScenesService.views.scenes;
-      name = scenes.length ? scenes[0].id : '';
-    } else if (type === VCamOutputType.SourceOutput) {
-      const sources = SourcesService.views
-        .getSources()
-        .filter(source => source.type !== 'scene' && source.video);
-      name = sources.length ? sources[0].sourceId : '';
-    }
-    v.update(type, name);
+    v.update(Number(value) as VCamOutputType, '');
   }
 
   function onSelectSelection(value: string) {
@@ -140,8 +97,8 @@ export function VirtualWebcamSettings() {
           <Form>
             <ListInput
               label={showOutputLabel}
-              options={outputSelectionOptions}
-              value={outputSelectionValue.value}
+              options={v.outputSelectionOptions}
+              value={v.outputSelection}
               onSelect={onSelectSelection}
               allowClear={false}
               style={{ width: '100%' }}
@@ -157,7 +114,7 @@ export function VirtualWebcamSettings() {
       {!isInstalled && (
         <InstallVirtualWebcam
           isUpdate={v.installStatus === EVirtualWebcamPluginInstallStatus.Outdated}
-          name={outputSelectionValue.value}
+          name={v.outputSelection}
         />
       )}
       {isInstalled && <UninstallVirtualWebcam />}

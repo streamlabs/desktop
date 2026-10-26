@@ -9,7 +9,7 @@ import path from 'path';
 import { getChecksum } from 'util/requests';
 import { byOS, OS } from 'util/operating-systems';
 import { Inject } from 'services/core/injector';
-import { UsageStatisticsService, SourcesService, AppService } from 'app-services';
+import { UsageStatisticsService, SourcesService, ScenesService, AppService } from 'app-services';
 import * as remote from '@electron/remote';
 import { Subject } from 'rxjs';
 import { VCamOutputType } from 'obs-studio-node';
@@ -65,7 +65,6 @@ interface IVirtualWebcamServiceState {
 export class VirtualWebcamService extends PersistentStatefulService<IVirtualWebcamServiceState> {
   @Inject() appService: AppService;
   @Inject() usageStatisticsService: UsageStatisticsService;
-  @Inject() sourcesService: SourcesService;
   @Inject() signalsService: SignalsService;
 
   static defaultState: IVirtualWebcamServiceState = {
@@ -290,14 +289,14 @@ export class VirtualWebcamService extends PersistentStatefulService<IVirtualWebc
 
   @ExecuteInWorkerProcess()
   start() {
-    if (this.state.running) return;
+    if (this.state.running || this.appService.state.loading) return;
 
     let releaseOutputStart = () => {};
     try {
       releaseOutputStart = videoOutputCoordinator.beginOutputStart();
-      // OSN's configuration is process-local. Apply the saved target here, once
-      // scenes/sources are available, including starts triggered by a hotkey.
-      obs.NodeObs.OBS_service_updateVirtualCam(this.state.outputType, this.state.outputSelection);
+      // Resolve and save the target against the loaded collection before starting,
+      // including starts triggered by a hotkey without opening settings first.
+      this.update(this.state.outputType, this.state.outputSelection);
       obs.NodeObs.OBS_service_startVirtualCam();
       this.SET_RUNNING(true);
       this.runningChanged.next(true);
@@ -328,11 +327,15 @@ export class VirtualWebcamService extends PersistentStatefulService<IVirtualWebc
 
   @ExecuteInWorkerProcess()
   update(type: VCamOutputType, name: string) {
-    const { outputType, outputSelection } = VirtualWebcamService.filter({
+    const filtered = VirtualWebcamService.filter({
       ...this.state,
       outputType: type,
       outputSelection: name,
     });
+    const { outputType, outputSelection } = this.views.resolveOutput(
+      filtered.outputType,
+      filtered.outputSelection,
+    );
     obs.NodeObs.OBS_service_updateVirtualCam(outputType, outputSelection);
     this.SET_OUTPUT(outputType, outputSelection);
   }
@@ -354,16 +357,48 @@ export class VirtualWebcamService extends PersistentStatefulService<IVirtualWebc
   }
 }
 class VirtualWebcamViews extends ViewHandler<IVirtualWebcamServiceState> {
+  @Inject() private scenesService: ScenesService;
+  @Inject() private sourcesService: SourcesService;
+
   get running() {
     return this.state.running;
   }
 
+  getOutputSelectionOptions(type: VCamOutputType) {
+    if (type === VCamOutputType.SceneOutput) {
+      return this.scenesService.views.scenes.map(scene => ({ label: scene.name, value: scene.id }));
+    }
+    if (type === VCamOutputType.SourceOutput) {
+      return this.sourcesService.views
+        .getSources()
+        .filter(source => source.type !== 'scene' && source.video)
+        .map(source => ({ label: source.name, value: source.sourceId }));
+    }
+    return [];
+  }
+
+  resolveOutput(type: VCamOutputType, selection: string) {
+    const options = this.getOutputSelectionOptions(type);
+    const target = options.find(option => option.value === selection) ?? options[0];
+    return target
+      ? { outputType: type, outputSelection: target.value }
+      : { outputType: VCamOutputType.ProgramView, outputSelection: '' };
+  }
+
+  get output() {
+    return this.resolveOutput(this.state.outputType, this.state.outputSelection);
+  }
+
+  get outputSelectionOptions() {
+    return this.getOutputSelectionOptions(this.state.outputType);
+  }
+
   get outputType() {
-    return this.state.outputType.toString();
+    return this.output.outputType.toString();
   }
 
   get outputSelection() {
-    return this.state.outputSelection;
+    return this.output.outputSelection;
   }
 
   get installStatus(): EVirtualWebcamPluginInstallStatus {
