@@ -30,7 +30,8 @@ export type TAlertType =
   | 'justgiving_donation'
   | 'twitter_follow'
   | 'twitter_like'
-  | 'twitter_sub';
+  | 'twitter_sub'
+  | 'twitter_repost';
 
 export interface IAlertConfig {
   type: TAlertType;
@@ -201,6 +202,14 @@ export function getAlertsConfig(
       apiKey: 'twitter_sub',
       platforms: ['twitter'],
       tooltip: $t('Plays an alert for new X subscriptions'),
+    },
+
+    twitter_repost: {
+      type: 'twitter_repost',
+      name: $t('X Repost'),
+      apiKey: 'twitter_repost',
+      platforms: ['twitter'],
+      tooltip: $t('Plays an alert for new X reposts'),
     },
 
     // TODO: Implement these when needed

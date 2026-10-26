@@ -1,7 +1,5 @@
 {
   "Show the live dock (chat) on the left side": "Canlı pencereyi (sohbet) sol tarafta göster",
-  "Chat Text Size": "Sohbet Metin Boyutu",
-  "Chat Width": "Sohbet Genişliği",
   "Enable BetterTTV emotes for Twitch": "Twitch için BetterTTV ifadelerini etkinleştir",
   "Enable FrankerFaceZ emotes for Twitch": "Twitch için FrankerFaceZ ifadelerini etkinleştir",
   "Editor Display": "Düzenleyici Ekranı",
@@ -22,9 +20,9 @@
   "Current Tab": "Geçerli Sekme",
   "Delete Current Tab": "Geçerli Sekmeyi Sil",
   "Enter Target URL": "Hedef URL’yi Gir",
-  "Obsidian Prime": "Obsidian Prime",
-  "Alabaster Prime": "Alabaster Prime",
   "Custom Navigation Bar": "Özel Gezinti Çubuğu",
   "Obsidian Ultra": "Obsidian Ultra",
-  "Alabaster Ultra": "Alabaster Ultra"
+  "Alabaster Ultra": "Alabaster Ultra",
+  "Read": "Read",
+  "Post Comments": "Post Comments"
 }

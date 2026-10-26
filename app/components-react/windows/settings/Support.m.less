@@ -29,11 +29,28 @@
   }
 }
 
+.quickfix-groups {
+  display: flex;
+  flex-direction: column;
+}
+
+.quickfix-group {
+  > h3 {
+    margin-bottom: 8px;
+  }
+
+  > p {
+    margin-bottom: 12px;
+  }
+}
+
 .restore-ultra {
   &:global(.ant-btn) {
-    &, &:hover, &:focus, &:active {
+    &,
+    &:hover,
+    &:focus,
+    &:active {
       color: var(--black);
-      background-color: unset;
       background: var(--ultra);
     }
   }

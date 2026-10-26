@@ -254,3 +254,31 @@
     }
   }
 }
+
+.dancing-kevins {
+  // Videos are positioned manually, flex sizing of <video> elements is unreliable
+  // on newer Electron versions. Each video box is 450px wide (the source width)
+  // and they are offset by 150px, so the three overlap at their transparent edges.
+  position: relative;
+  width: 750px;
+  height: 160px;
+
+  video {
+    position: absolute;
+    top: 0;
+    width: 450px;
+    height: 100%;
+
+    &:nth-child(1) {
+      left: 0;
+    }
+
+    &:nth-child(2) {
+      left: 150px;
+    }
+
+    &:nth-child(3) {
+      left: 300px;
+    }
+  }
+}

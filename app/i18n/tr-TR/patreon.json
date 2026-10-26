@@ -1,10 +1,9 @@
 {
-  "Campaign ID": "Kampanya Kimliği",
-  "Audience": "Kitle",
   "Select Tier": "Seviye Seçin",
   "Stream Shift cannot be used with Patreon": "Stream Shift, Patreon ile kullanılamaz",
   "All Members": "Tüm Üyeler",
   "Paid": "Ödenen",
   "All Tiers": "Tüm Seviyeler",
-  "Patreon Audience": "Patreon Kitlesi"
+  "Patreon Audience": "Patreon Kitlesi",
+  "Patreon requires a title of at least 3 characters": "Patreon requires a title of at least 3 characters"
 }

@@ -4,7 +4,7 @@ import { Services } from 'components-react/service-provider';
 import Display from 'components-react/shared/Display';
 import { ListInput } from 'components-react/shared/inputs';
 import Form from 'components-react/shared/inputs/Form';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Volmeter2d } from 'services/audio/volmeter-2d';
 import { $t } from 'services/i18n';
 import { ERenderingMode } from '../../../../obs-api';
@@ -86,6 +86,13 @@ function DisplaySection() {
   }));
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // Delay rendering the display so it doesn't appear before the modal finishes zooming in
+  const [displayReady, setDisplayReady] = useState(false);
+  useEffect(() => {
+    const timeout = setTimeout(() => setDisplayReady(true), 200);
+    return () => clearTimeout(timeout);
+  }, []);
+
   // Set up volmeter
   useEffect(() => {
     if (canvasRef.current && v.selectedAudioSource) {
@@ -99,11 +106,13 @@ function DisplaySection() {
     return (
       <div className={styles.devicesDisplay}>
         <div className={cx(styles.devicesDisplayWrapper)}>
-          <Display
-            sourceId={v.selectedVideoSource.sourceId}
-            renderingMode={ERenderingMode.OBS_MAIN_RENDERING}
-            isModal
-          />
+          {displayReady && (
+            <Display
+              sourceId={v.selectedVideoSource.sourceId}
+              renderingMode={ERenderingMode.OBS_MAIN_RENDERING}
+              isModal
+            />
+          )}
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
           <canvas ref={canvasRef} style={{ backgroundColor: 'var(--border)', width: '100%' }} />

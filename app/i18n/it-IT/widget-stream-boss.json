@@ -7,6 +7,7 @@
   "Set Stream Boss Health": "Imposta stato di salute Stream Boss",
   "Goal": "Obiettivo",
   "Manage Battle": "Gestisci battaglia",
+  "Boss Settings": "Boss Settings",
   "Starting Health": "Stato di salute iniziale",
   "Fixed": "Fisso",
   "The boss will spawn with the set amount of health everytime.": "Il boss sarà generato ogni volta con lo stato di salute impostato.",
@@ -31,5 +32,6 @@
   "Health Bar Background Color": "Colore sfondo barra stato di salute",
   "Font": "Font",
   "The boss will have additional health each time he is defeated. The amount is set below.": "Il boss avrà punti salute aggiuntivi ogni volta che viene sconfitto. La quantità è impostata di seguito.",
-  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "La salute del boss cambierà in base alla quantità di danni inflitti dal colpo mortale. Il danno in eccesso moltiplicato per il moltiplicatore sarà la nuova salute del boss. Ad esempio, con un danno di 150, 100 punti vita rimanenti e un moltiplicatore impostato su 3, il nuovo boss avrebbe 150 punti salute generati. \n Imposta il moltiplicatore di seguito."
+  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "La salute del boss cambierà in base alla quantità di danni inflitti dal colpo mortale. Il danno in eccesso moltiplicato per il moltiplicatore sarà la nuova salute del boss. Ad esempio, con un danno di 150, 100 punti vita rimanenti e un moltiplicatore impostato su 3, il nuovo boss avrebbe 150 punti salute generati. \n Imposta il moltiplicatore di seguito.",
+  "Failed to reset Stream Boss, please try again.": "Failed to reset Stream Boss, please try again."
 }

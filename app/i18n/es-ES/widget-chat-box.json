@@ -1,7 +1,6 @@
 {
   "Visual Settings": "Ajustes visuales",
   "Font Settings": "Ajustes de fuente",
-  "Chatter": "Chateador",
   "Always Show Messages": "Mostrar siempre los mensajes",
   "Show Moderator Badges": "Ver insignias de moderador",
   "Show Subscriber Badges": "Ver insignias de suscriptor",
@@ -15,7 +14,6 @@
   "Text Color": "Color de texto",
   "Font Size": "Tamaño de fuente",
   "Muted Chatters": "Chateadores silenciados",
-  "Hide Commands": "Ocultar comandos",
   "Background Color": "Color de fondo",
   "Show Platform Icons": "Mostrar iconos de plataforma",
   "Theme": "Tema",

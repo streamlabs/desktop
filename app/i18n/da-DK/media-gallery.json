@@ -8,7 +8,6 @@
   "Browse the Gallery": "Gennemse galleriet",
   "Cancel": "Annuller",
   "OK": "OK",
-  "Select": "Vælg",
   "You don't have any uploaded files!": "Du har ikke nogen uploadede filer.",
   "You don't have any uploaded images!": "Du har ikke nogen uploadede billeder.",
   "You don't have any uploaded sounds!": "Du har ikke nogen uploadede lyde.",
@@ -19,7 +18,6 @@
   "Stock Files": "Lagerfiler",
   "My Uploads": "Mine uploads",
   "Not a supported file type": "Ikke en understøttet filtype",
-  "Downloading...": "Downloader ...",
   "Uploading...": "Uploader ...",
   "URL Copied": "URL kopieret",
   "Failed to copy URL": "Kunne ikke kopiere URL",
@@ -29,7 +27,9 @@
   "No Sound": "Ingen lyd",
   "No Media": "Ingen medier",
   "Change Link": "Ændr link",
-  "Pick From Gallery": "Vælg fra galleri",
   "Clear Link": "Slet link",
-  "Media URL": "Medie-URL"
+  "Media URL": "Medie-URL",
+  "Only .jpeg and .png is supported": "Only .jpeg and .png is supported",
+  "This file could not be uploaded": "This file could not be uploaded",
+  "You must have Streamlabs Ultra to use this media": "You must have Streamlabs Ultra to use this media"
 }

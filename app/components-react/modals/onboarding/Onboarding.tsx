@@ -8,7 +8,12 @@ import { useRealmObject, useRealmObjectProperty } from 'components-react/hooks/r
 import { useVuex } from 'components-react/hooks';
 import { $t } from 'services/i18n';
 import { alertAsync } from 'components-react/modals';
-import { EPlatformCallResult, externalAuthPlatforms, TPlatform } from 'services/platforms';
+import {
+  EPlatformCallResult,
+  externalAuthPlatforms,
+  canBePrimaryPlatform,
+  TPlatform,
+} from 'services/platforms';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import KevinSvg from 'components-react/shared/KevinSvg';
 import styles from './Common.m.less';
@@ -155,12 +160,29 @@ export function DancingKevins() {
   const url = $i('webm/kevin_jump.webm');
 
   return (
-    <div style={{ display: 'flex', height: 160 }}>
-      <video src={url} controls={false} autoPlay loop style={{ margin: '0 -150px' }} />
-      <video src={`${url}#t=1`} controls={false} autoPlay loop style={{ margin: '0 -150px' }} />
-      <video src={`${url}#t=2`} controls={false} autoPlay loop style={{ margin: '0 -150px' }} />
+    <div className={styles.dancingKevins}>
+      <video src={url} controls={false} autoPlay loop />
+      <video src={`${url}#t=1`} controls={false} autoPlay loop />
+      <video src={`${url}#t=2`} controls={false} autoPlay loop />
     </div>
   );
+}
+
+function showTwitchTwoFactorDialog() {
+  remote.dialog
+    .showMessageBox({
+      type: 'error',
+      message: $t(
+        'Twitch requires two factor authentication to be enabled on your account in order to stream to Twitch. Please enable two factor authentication and try again.',
+      ),
+      title: $t('Twitch Authentication Error'),
+      buttons: [$t('Enable Two Factor Authentication'), $t('Dismiss')],
+    })
+    .then(({ response }) => {
+      if (response === 0) {
+        remote.shell.openExternal('https://twitch.tv/settings/security');
+      }
+    });
 }
 
 export function useAuth() {
@@ -170,37 +192,46 @@ export function useAuth() {
    * An SLID auth is only partial (no primary platform, not validated) until
    * `finishSLAuth` runs. That is what runs the full login and emits
    * `userLoginFinished`, so it must happen before the flow continues.
+   *
+   * The outcome is computed in the worker: this window's copy of the user state can lag
+   * behind the worker's, so `UserService.views` must not be read to decide what happens next.
+   * @returns whether the user is now fully logged in
    */
-  const finishSLID = useCallback(async (primaryPlatform: TPlatform) => {
-    const result = await UserService.actions.return.finishSLAuth(primaryPlatform);
+  const handleSLIDFinish = useCallback(
+    async ({ result, loggedIn }: { result?: EPlatformCallResult; loggedIn: boolean }) => {
+      if (result === EPlatformCallResult.TwitchTwoFactor) {
+        showTwitchTwoFactorDialog();
+        return false;
+      }
 
-    if (result === EPlatformCallResult.TwitchScopeMissing) {
-      await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
-        type: 'warning',
-        message: $t(
-          'Streamlabs requires additional permissions from your Twitch account. Please log in with Twitch to continue.',
-        ),
-        title: $t('Twitch Authentication Error'),
-        buttons: [$t('Refresh Login')],
-      });
+      if (result === EPlatformCallResult.TwitchScopeMissing) {
+        await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+          type: 'warning',
+          message: $t(
+            'Streamlabs requires additional permissions from your Twitch account. Please log in with Twitch to continue.',
+          ),
+          title: $t('Twitch Authentication Error'),
+          buttons: [$t('Refresh Login')],
+        });
 
-      // Initiate a Twitch merge to get permissions
-      return UserService.actions.startAuth('twitch', 'external', true);
-    }
-  }, []);
+        // Initiate a Twitch merge to get permissions
+        await UserService.actions.return.startAuth('twitch', 'external', true);
+      }
+
+      return loggedIn;
+    },
+    [],
+  );
 
   const SLIDLogin = useCallback(async () => {
     UsageStatisticsService.actions.recordAnalyticsEvent('PlatformLogin', 'streamlabs');
     const status: EPlatformCallResult = await UserService.actions.return.startSLAuth();
     if (status !== EPlatformCallResult.Success) return;
 
-    // With at least one linked platform we can complete the login right away.
+    // With at least one linked streaming platform we can complete the login right away.
     // Otherwise the ConnectMore step prompts for a platform and completes it.
-    const [primaryPlatform] = UserService.views.linkedPlatforms;
-    if (primaryPlatform) {
-      await finishSLID(primaryPlatform);
-      if (!UserService.views.isLoggedIn) return;
-    }
+    const response = await UserService.actions.return.finishSLAuthWithLinkedPlatform();
+    if (response.primaryPlatform && !(await handleSLIDFinish(response))) return;
 
     OnboardingV2Service.actions.takeStep();
   }, []);
@@ -216,20 +247,7 @@ export function useAuth() {
         );
 
         if (result === EPlatformCallResult.TwitchTwoFactor) {
-          remote.dialog
-            .showMessageBox({
-              type: 'error',
-              message: $t(
-                'Twitch requires two factor authentication to be enabled on your account in order to stream to Twitch. Please enable two factor authentication and try again.',
-              ),
-              title: $t('Twitch Authentication Error'),
-              buttons: [$t('Enable Two Factor Authentication'), $t('Dismiss')],
-            })
-            .then(({ response }) => {
-              if (response === 0) {
-                remote.shell.openExternal('https://twitch.tv/settings/security');
-              }
-            });
+          showTwitchTwoFactorDialog();
           return false;
         }
 
@@ -248,11 +266,14 @@ export function useAuth() {
           throw new Error('Unknown platform login result: ' + result);
         }
 
-        // Merging a platform into a partial SLID auth gives it its first platform,
-        // which lets us complete the login.
-        if (merge && UserService.views.isPartialSLAuth) {
-          await finishSLID(platform);
-          if (!UserService.views.isLoggedIn) {
+        // Merging a streaming platform into a partial SLID auth gives it its first platform,
+        // which lets us complete the login. Platforms like Patreon can't be a primary platform,
+        // so those are linked but the user still needs to connect a streaming one.
+        if (merge && canBePrimaryPlatform(platform)) {
+          const response = await UserService.actions.return.finishSLAuthWithPlatform(platform);
+          if (!(await handleSLIDFinish(response))) {
+            // Two factor failures have already been reported to the user
+            if (response.result === EPlatformCallResult.TwitchTwoFactor) return false;
             throw new Error('Failed to finish SLID login after merging platform');
           }
         }

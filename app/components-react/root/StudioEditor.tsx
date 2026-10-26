@@ -14,6 +14,7 @@ import { useRealmObject } from 'components-react/hooks/realm';
 import { ENotificationType } from 'services/notifications';
 import { Service } from 'services/core/service';
 import { AudioNotificationType } from 'services/audio/audio';
+import { createEditorMouseMoveDispatcher } from 'util/editor-mouse-move';
 
 export default function StudioEditor() {
   const {
@@ -141,12 +142,8 @@ export default function StudioEditor() {
     };
   }, [v.studioMode]);
 
-  // This is a bit weird, but it's a performance optimization.
-  // This component heavily re-renders, so trying to do as little
-  // as possible on each re-render, including defining event handlers,
-  // which in this case don't rely on the closure and therefore never
-  // need to be redefined. It also ensures a single closure that never
-  // changes for the moveInFlight piece of the mouseMove handler.
+  // Keep one mouse-move dispatcher across renders so events from both canvases
+  // share the same in-flight request and pending move.
   const eventHandlers = useMemo(() => {
     function getMouseEvent(event: React.MouseEvent, display: TDisplayType) {
       return {
@@ -164,28 +161,17 @@ export default function StudioEditor() {
       };
     }
 
-    let moveInFlight = false;
-    let lastMoveEvent: React.MouseEvent | null = null;
-
-    function onMouseMove(event: React.MouseEvent, display: TDisplayType) {
-      if (moveInFlight) {
-        lastMoveEvent = event;
-        return;
-      }
-
-      moveInFlight = true;
-      EditorService.actions.return.handleMouseMove(getMouseEvent(event, display)).then(stopMove => {
+    const dispatchMouseMove = createEditorMouseMoveDispatcher(
+      async event => {
+        const stopMove = await EditorService.actions.return.handleMouseMove(event);
         if (stopMove && !messageActive) {
           showOutOfBoundsErrorMessage();
         }
-        moveInFlight = false;
-
-        if (lastMoveEvent) {
-          onMouseMove(lastMoveEvent, display);
-          lastMoveEvent = null;
-        }
-      });
-    }
+      },
+      (error, event) => {
+        console.error('Failed to handle editor mouse move', error, { display: event.display });
+      },
+    );
 
     return {
       onOutputResize(rect: IRectangle, display: TDisplayType) {
@@ -208,7 +194,9 @@ export default function StudioEditor() {
         EditorService.actions.handleMouseDblClick(getMouseEvent(event, display));
       },
 
-      onMouseMove,
+      onMouseMove(event: React.MouseEvent, display: TDisplayType) {
+        void dispatchMouseMove(getMouseEvent(event, display));
+      },
 
       enablePreview() {
         CustomizationService.actions.setSettings({ performanceMode: false });

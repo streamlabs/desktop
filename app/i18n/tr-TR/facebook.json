@@ -1,16 +1,8 @@
 {
-  "You can access your Facebook Streamer Dashboard here.": "Facebook Yayıncı Panonuza buradan ulaşabilirsiniz.",
-  "Create a Page": "Sayfa Oluştur",
-  "Facebook Setup": "Facebook Kurulumu",
-  "Streamer Dashboard": "Yayıncı Panosu",
   "Share": "Paylaş",
   "Like": "Beğen",
   "Step 3:": "3. Adım:",
-  "Create a Facebook Gaming page to get started.": "Başlamak için bir Facebook Oyun sayfası oluşturun.",
-  "Create a Gaming Page": "Oyun Sayfası Oluştur",
   "All of your scenes, sources, and settings will be preserved.": "Tüm sahneleriniz, kaynaklarınız ve ayarlarınız korunacaktır.",
-  "Connect Facebook": "Facebook’a Bağlan",
-  "Multistream To Facebook": "Facebook’ta Çoklu Yayın",
   "Connect": "Bağlan",
   "Install Your Theme": "Temanızı Yükleyin",
   "Install": "Yükle",
@@ -18,7 +10,6 @@
   "Facebook Destination": "Facebook Hedefi",
   "Share to Your Timeline": "Zaman Tünelinizde Paylaşın",
   "Share to a Page You Manage": "Yönettiğiniz Bir Sayfada Paylaşın",
-  "Share in a Group": "Bir Grupta Paylaşın",
   "Facebook Group": "Facebook Grubu",
   "Scheduled Video": "Zamanlanmış Video",
   "Make sure the Streamlabs app is added to your Group.": "Streamlabs uygulamasının Grubunuza eklendiğinden emin olun.",
@@ -35,8 +26,8 @@
   "Do not change privacy settings": "Gizlilik ayarlarını değiştirme",
   "Install %{overlayName}": "Yükle %{overlayName}",
   "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Facebook’ta yayın planlamaları yapsanız da bazı yayınların API kısıtlamaları nedeniyle bu takvimde yer almayacağını unutmayın",
-  "Your account is not eligible to stream on Facebook. Click to learn more.": "Hesabınız Facebook'ta yayın yapmak için uygun değil. Daha fazla bilgi için tıklayın",
   "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers": "Yayına Başla için uygun değilsiniz, profilinizin en az 60 günlük olması ve sayfanızın en az 100 takipçisi olması gerekir",
   "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more.": "Yayına Başla için uygun değilsiniz, profilinizin en az 60 günlük olması ve sayfanızın en az 100 takipçisi olması gerekir. Daha fazla bilgi edinmek için bildirime tıklayın.",
-  "Stream Shift Error: Facebook is not live": "Stream Shift Hatası: Facebook canlı değil"
+  "Stream Shift Error: Facebook is not live": "Stream Shift Hatası: Facebook canlı değil",
+  "Your account is not eligible to stream on Facebook. Click to learn more": "Your account is not eligible to stream on Facebook. Click to learn more"
 }

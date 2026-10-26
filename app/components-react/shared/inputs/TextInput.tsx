@@ -21,7 +21,9 @@ export type TTextInputProps = TSlobsInputProps<
     onFocus?: React.FocusEventHandler<HTMLInputElement>;
     onBlur?: React.FocusEventHandler<HTMLInputElement>;
     onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
+    onKeyUp?: React.KeyboardEventHandler<HTMLInputElement>;
     onMouseDown?: React.MouseEventHandler<HTMLInputElement>;
+    onMouseUp?: React.MouseEventHandler<HTMLInputElement>;
     inputRef?: React.Ref<Input>;
     isPassword?: boolean;
   },
@@ -36,14 +38,16 @@ export const TextInput = InputComponent((p: TTextInputProps) => {
     ...inputAttrs,
     onFocus: p.onFocus,
     onKeyDown: p.onKeyDown,
+    onKeyUp: p.onKeyUp,
     onMouseDown: p.onMouseDown,
+    onMouseUp: p.onMouseUp,
     ref: p.inputRef,
     prefix: p.prefix,
   };
+
   return (
     <InputWrapper {...wrapperAttrs}>
-      {p.isPassword && <Input.Password {...textInputAttrs} />}
-      {!p.isPassword && <Input {...textInputAttrs} />}
+      {p.isPassword ? <Input.Password {...textInputAttrs} /> : <Input {...textInputAttrs} />}
     </InputWrapper>
   );
 });

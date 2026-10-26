@@ -23,7 +23,10 @@ import {
 } from '../../helpers/modules/core';
 import { logIn } from '../../helpers/modules/user';
 import { releaseUserInPool, reserveUserFromPool, withUser } from '../../helpers/webdriver/user';
-import { showSettingsWindow } from '../../helpers/modules/settings/settings';
+import {
+  removeCustomDestinations,
+  showSettingsWindow,
+} from '../../helpers/modules/settings/settings';
 import {
   skipCheckingErrorsInLog,
   test,
@@ -346,9 +349,7 @@ test('Custom stream destinations', async t => {
 
     // delete existing destinations
     await showSettingsWindow('Stream');
-    for (let i = 0; i < 5; i++) {
-      await click('i.fa-trash');
-    }
+    await removeCustomDestinations();
     t.false(await isDisplayed('i.fa-trash'), 'Destinations should be removed');
   } finally {
     await releaseUserInPool(user);
@@ -367,6 +368,7 @@ test('Stream Shift', withUser('twitch', { prime: true, multistream: true }), asy
 
   // Default tooltip stays the same when multiple platforms are enabled
   await fillForm({ youtube: true });
+  await waitForSettingsWindowLoaded();
   t.true(
     await isDisplayed('[data-name="streamShift"]'),
     'Stream Shift switch should still be visible',
@@ -400,6 +402,12 @@ test('Stream Shift', withUser('twitch', { prime: true, multistream: true }), asy
     'Dual output tooltip did not appear',
   );
   await assertFormContains({ streamShift: false });
+  // Reopening after the mode change can disable secondary destinations. Enable
+  // YouTube before interacting with its otherwise hidden display selectors.
+  await fillForm({ youtube: true });
+  await waitForSettingsWindowLoaded();
+  await assertFormContains({ youtube: true });
+  await waitForDisplayed('[data-name="youtubeDisplay"]', { timeout: 10000 });
   await fillForm({ youtubeDisplay: 'vertical' });
   await fillForm({ youtubeDisplay: 'horizontal' });
   await fillForm({ youtube: false });

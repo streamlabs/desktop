@@ -151,8 +151,14 @@ class OnboardingPath {
     if (this.singletonPath) return;
     const currentStep = this.current.config.name;
 
+    // A partial SLID auth has no usable platform yet, so the user can't continue without
+    // connecting one, no matter how many other accounts (e.g. Patreon or X) are linked
+    function needsConnectMore() {
+      return !!modifiers.isPartialSLAuth || (modifiers.loggedIn && modifiers.lessThanTwoPlatforms);
+    }
+
     function advanceToConnectMoreOr(otherwiseFn: () => IOnboardingStep | void) {
-      if ((modifiers.loggedIn || modifiers.isPartialSLAuth) && modifiers.lessThanTwoPlatforms) {
+      if (needsConnectMore()) {
         return { name: EOnboardingSteps.ConnectMore, isSkippable: !modifiers.isPartialSLAuth };
       }
       return otherwiseFn();
@@ -183,9 +189,6 @@ class OnboardingPath {
         if (modifiers.obsInstalled) return { name: EOnboardingSteps.OBSImport };
       },
       [EOnboardingSteps.Login]: () => {
-        if ((modifiers.loggedIn || modifiers.isPartialSLAuth) && modifiers.lessThanTwoPlatforms) {
-          return { name: EOnboardingSteps.ConnectMore, isSkippable: !modifiers.isPartialSLAuth };
-        }
         return advanceToConnectMoreOr(() =>
           advanceToOBSImportOr(() => advanceToUltraOr(() => ({ name: EOnboardingSteps.Devices }))),
         );

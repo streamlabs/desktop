@@ -1,6 +1,5 @@
 {
   "Banned Media": "금지된 미디어",
-  "Check Banned Media": "금지된 미디어 확인",
   "Price Per Second": "초당 가격",
   "Min. Amount to Share": "공유 최소 금액",
   "Max Duration": "최대 시간",
@@ -8,8 +7,5 @@
   "Spam Security": "스팸 보안",
   "The time between videos the next video has to buffer.": "한 비디오에서 다음 비디오 사이의 버퍼 시간입니다.",
   "Manage Media Settings": "미디어 설정 관리",
-  "The maximum duration in seconds that media can be played, regardless of amount donated. The default value is 60 seconds.": "후원 금액에 관계없이 미디어가 재생될 수 있는 최대 시간입니다(초 기준). 기본값은 60초입니다.",
-  "This slider helps you filter shared media before it can be submitted.\nOff: No security\nLow: 65%+ rating, 5k+ views\nMedium: 75%+ rating, 40k+ views\nHigh: 80%+ rating, 300k+ views\nVery High: 85%+ rating, 900k+ views": "이 슬라이더는 공유 미디어를 제출하기 전에 필터링하는 것을 도와줍니다.\n끄기: 보안 없음\n낮음: 65%+ 레이팅, 5k+ 뷰\n중간: 75%+ 레이팅, 40k+ 뷰\n높음: 80%+ 레이팅, 300k+ 뷰\n아주 높음: 85%+ 레이팅, 900k+ 뷰",
-  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "후원자가 미디어 공유를 위해 후원해야 하는 최소 금액입니다. 기본값은 $5.00 USD입니다",
-  "In order to control length, you can decide how much it costs per second to share media. Setting this to 0.30 would mean that for $10, media would play for 30 seconds. The default value is 0.10.": "길이를 제어하려면 미디어를 공유하기 위해 필요한 초당 가격을 책정해야 합니다. 이를 0.30으로 설정하면 $10당 30초가 재생된다는 뜻입니다. 기본값은 0.10입니다."
+  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "후원자가 미디어 공유를 위해 후원해야 하는 최소 금액입니다. 기본값은 $5.00 USD입니다"
 }

@@ -45,7 +45,6 @@ function ExtraSettings() {
     UserService,
     CustomizationService,
     AppService,
-    OnboardingService,
     OnboardingV2Service,
     WindowsService,
     StreamlabelsService,
@@ -70,27 +69,6 @@ function ExtraSettings() {
         alertAsync($t('Stream Labels session has been successfully restarted!'));
       }
     });
-  }
-
-  // TODO: HDR Settings are not compliant with the auto-optimizer. Disable until we migrate to new API.
-  // const { StreamingService, StreamSettingsService, SettingsService } = Services;
-  // const isTwitch = isLoggedIn && getDefined(UserService.platform).type === 'twitch';
-  // const protectedMode = StreamSettingsService.state.protectedModeEnabled;
-  // const { isRecordingOrStreaming, isSimpleOutputMode } = useVuex(() => ({
-  //   isRecordingOrStreaming: StreamingService.isStreaming || StreamingService.isRecording,
-  //   isSimpleOutputMode: SettingsService.views.isSimpleOutputMode,
-  // }));
-  // const canRunOptimizer =
-  //   !SettingsService.views.hasHDRSettings &&
-  //   isTwitch &&
-  //   !isRecordingOrStreaming &&
-  //   protectedMode &&
-  //   isSimpleOutputMode;
-  const canRunOptimizer = false;
-
-  function runAutoOptimizer() {
-    OnboardingService.actions.start({ isOptimize: true });
-    WindowsService.actions.closeChildWindow();
   }
 
   function configureDefaults() {
@@ -157,14 +135,6 @@ function ExtraSettings() {
               {$t('Configure Default Devices')}
             </button>
           </div>
-          {canRunOptimizer && (
-            <div className="input-container">
-              <button className="button button--default" onClick={runAutoOptimizer}>
-                {$t('Auto Optimize')}
-              </button>
-            </div>
-          )}
-
           <div className="input-container">
             <Tooltip title={$t('OBS is not installed')} disabled={obsInstalled}>
               <button

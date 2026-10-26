@@ -1,6 +1,7 @@
 {
   "Add Category": "Kategorie hinzufügen",
   "Add Section": "Abschnitt hinzufügen",
+  "DONUT": "DONUT",
   "Clear All": "Alle löschen",
   "Manage Spin Wheel": "Glücksrad verwalten",
   "Categories": "Kategorien",
@@ -30,5 +31,6 @@
   "Center Image Size": "Größe mittleres Bild",
   "Center Image Border Enabled": "Rahmen mittleres Bild aktiviert",
   "Center Image Border Color": "Rahmenfarbe mittleres Bild",
-  "Center Image Border Width": "Rahmenbreite mittleres Bild"
+  "Center Image Border Width": "Rahmenbreite mittleres Bild",
+  "Add categories before adding new sections.": "Add categories before adding new sections."
 }

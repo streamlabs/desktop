@@ -1,6 +1,7 @@
 {
   "Add Category": "Kategori Ekle",
   "Add Section": "Bölüm Ekle",
+  "DONUT": "DONUT",
   "Clear All": "Tümünü Temizle",
   "Manage Spin Wheel": "Çark Döndürmeyi Yönet",
   "Categories": "Kategoriler",
@@ -30,5 +31,6 @@
   "Center Image Size": "Merkezi Görüntü Boyutu",
   "Center Image Border Enabled": "Merkezi Görüntü Çerçevesi Etkinleştirildi",
   "Center Image Border Color": "Merkezi Görüntü Çerçevesi Rengi",
-  "Center Image Border Width": "Merkezi Görüntü Çerçevesi Genişliği"
+  "Center Image Border Width": "Merkezi Görüntü Çerçevesi Genişliği",
+  "Add categories before adding new sections.": "Add categories before adding new sections."
 }

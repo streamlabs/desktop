@@ -1,5 +1,4 @@
 {
-  "Edit your stream title on Kick after going live.": "Modifie le titre de ton stream sur Kick après être passé en direct.",
   "Kick Category": "Catégorie Kick",
   "Failed to update Kick account. Please unlink and reconnect your Kick account.": "Impossible de mettre à jour le compte Kick. Déconnecte et reconnecte ton compte Kick.",
   "Failed to start Kick stream. Please check permissions with Kick and try again": "Impossible de démarrer le stream Kick. Vérifie les autorisations avec Kick et réessaie",
@@ -11,5 +10,7 @@
   "Click on the \"eye\" icon to see your stream key": "Clique sur l’icône d’« œil » pour afficher ta clé de stream",
   "Put in 2FA": "Active la double authentification",
   "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "Après la double authentification, la clé de stream a été générée et sera disponible pour Streamlabs Desktop pour cette chaîne. Tu devrais maintenant pouvoir diffuser en direct sur Kick.",
-  "Stream Shift Error: Kick is not live": "Erreur de Stream Shift : Kick n’est pas en direct"
+  "Stream Shift Error: Kick is not live": "Erreur de Stream Shift : Kick n’est pas en direct",
+  "Failed to start stream on Kick.": "Failed to start stream on Kick.",
+  "Permissions to generate stream key for Kick are missing. In order to go live on Kick, you must first generate a stream key on Kick to be available for Streamlabs Desktop. Please follow these steps:": "Permissions to generate stream key for Kick are missing. In order to go live on Kick, you must first generate a stream key on Kick to be available for Streamlabs Desktop. Please follow these steps:"
 }

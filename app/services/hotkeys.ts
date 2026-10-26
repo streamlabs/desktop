@@ -4,6 +4,7 @@ import { SourcesService, TSourceType } from 'services/sources';
 import { TransitionsService } from 'services/transitions';
 import { KeyListenerService } from 'services/key-listener';
 import { MarkersService } from 'services/markers';
+import { ScreenshotService } from 'services/screenshot';
 import { Inject } from 'services/core/injector';
 import { StatefulService, mutation, ServiceHelper } from 'services';
 import defer from 'lodash/defer';
@@ -54,6 +55,10 @@ function getMarkersService(): MarkersService {
   return MarkersService.instance;
 }
 
+function getScreenshotService(): ScreenshotService {
+  return ScreenshotService.instance;
+}
+
 const isAudio = (sourceId: string) => {
   const source = getSourcesService().views.getSource(sourceId);
 
@@ -66,7 +71,7 @@ const isSourceType = (type: TSourceType) => (sourceId: string) => {
   return source ? source.type === type : false;
 };
 
-function getHotkeyHash(hotkey: IHotkey): string {
+export function getHotkeyHash(hotkey: IHotkey): string {
   return `${hotkey.actionName}/${hotkey.sceneId || ''}${hotkey.sourceId || ''}/${
     hotkey.sceneItemId || ''
   }`;
@@ -176,6 +181,11 @@ const GENERAL_ACTIONS: HotkeyGroup = {
     name: 'SPLIT_FILE',
     description: () => $t('Split Recording File'),
     down: () => getStreamingService().splitFile(),
+  },
+  SCREENSHOT_OUTPUT: {
+    name: 'SCREENSHOT_OUTPUT',
+    description: () => $t('Screenshot Output'),
+    down: () => getScreenshotService().takeScreenshot(),
   },
   TOGGLE_OVERLAY: {
     name: 'TOGGLE_OVERLAY',
@@ -421,6 +431,11 @@ export interface IHotkeysSet {
   markers: IHotkey[];
 }
 
+export type THotkeyBindingEdit =
+  | { type: 'set'; index: number; binding: IBinding }
+  | { type: 'insert'; index: number }
+  | { type: 'remove'; index: number };
+
 interface IHotkeysServiceState {
   hotkeys: IHotkey[]; // only bound hotkeys are stored
 }
@@ -447,6 +462,10 @@ export class HotkeysService extends StatefulService<IHotkeysServiceState> {
    * Memoizes the currently registered hotkeys
    */
   private registeredHotkeys: Hotkey[] | null;
+
+  // Each input gets its own token while recording a shortcut, even across windows.
+  // Keep shortcuts off until every input has released its token.
+  private captures = new Set<string>();
 
   init() {
     this.scenesService.sceneAdded.subscribe(() => this.invalidate());
@@ -566,6 +585,49 @@ export class HotkeysService extends StatefulService<IHotkeysServiceState> {
     this.applyHotkeySet(set);
   }
 
+  /**
+   * Apply one explicit editor operation to the current bindings in the worker.
+   * Other hotkeys and other bindings are preserved. Index zero also addresses the
+   * empty placeholder shown for an unbound hotkey. Returns false if the target
+   * or index no longer exists (for example, after deleting a scene).
+   */
+  editBinding(hotkey: IHotkey, edit: THotkeyBindingEdit): boolean {
+    const current = this.getHotkeys().find(h => h.equals(hotkey));
+    if (!current) return false;
+    const bindings = current.bindings.map(b => ({ ...b, modifiers: { ...b.modifiers } }));
+    if (!bindings.length) {
+      bindings.push({ key: '', modifiers: { alt: false, ctrl: false, shift: false, meta: false } });
+    }
+    if (!Number.isInteger(edit.index) || edit.index < 0 || edit.index >= bindings.length) {
+      return false;
+    }
+    if (edit.type === 'set') {
+      bindings[edit.index] = { ...edit.binding, modifiers: { ...edit.binding.modifiers } };
+    } else if (edit.type === 'insert') {
+      bindings.splice(edit.index + 1, 0, {
+        key: '',
+        modifiers: { alt: false, ctrl: false, shift: false, meta: false },
+      });
+    } else {
+      bindings.splice(edit.index, 1);
+    }
+    this.UPDATE_HOTKEY({ ...current.getModel(), bindings });
+    this.invalidate();
+    this.bindHotkeys();
+    return true;
+  }
+
+  /** Pause shortcuts for this token. Adding the same token twice is harmless. */
+  beginCapture(token: string) {
+    this.captures.add(token);
+    this.unregisterAll();
+  }
+
+  /** Remove only this token; restore shortcuts when no tokens remain. */
+  endCapture(token: string) {
+    if (this.captures.delete(token) && !this.captures.size) this.bindHotkeys();
+  }
+
   getHotkeys(): Hotkey[] {
     if (!this.registeredHotkeys) this.updateRegisteredHotkeys();
     return (this.registeredHotkeys ?? []).filter(hotkey => hotkey.shouldApply);
@@ -673,6 +735,7 @@ export class HotkeysService extends StatefulService<IHotkeysServiceState> {
 
   bindHotkeys() {
     this.unregisterAll();
+    if (this.captures.size) return;
 
     // Node-libuiohook does not support binding multiple callbacks to
     // a single key event, so we have to group them by binding
@@ -724,8 +787,13 @@ export class HotkeysService extends StatefulService<IHotkeysServiceState> {
   }
 
   @mutation()
-  private SET_BINDINGS(hotkeyInd: number, bindings: IBinding[]) {
-    this.state.hotkeys[hotkeyInd].bindings = bindings;
+  private UPDATE_HOTKEY(hotkey: IHotkey) {
+    const index = this.state.hotkeys.findIndex(h => getHotkeyHash(h) === getHotkeyHash(hotkey));
+    if (index !== -1) {
+      this.state.hotkeys.splice(index, 1, ...(hotkey.bindings.length ? [hotkey] : []));
+    } else if (hotkey.bindings.length) {
+      this.state.hotkeys.push(hotkey);
+    }
   }
 
   @mutation()

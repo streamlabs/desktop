@@ -1,9 +1,7 @@
 {
   "Enable in-game overlay": "In-Game-Overlay aktivieren",
-  "Enable stream preview in overlay": "Stream-Vorschau in Overlay aktivieren",
   "Toggle in-game overlay": "In-Game-Overlay umschalten",
   "Toggle positioning mode": "Positionierungsmodus umschalten",
   "Set a hotkey in Hotkey Settings to toggle the in-game overlay": "Tastaturbefehl zum Umschalten des In-Game-Overlays in den Einstellungen für Tastaturbefehle festlegen",
-  "The in-game overlay is a new experimental feature that allows you to view chat and events overlayed on top of your game.  This overlay may not work with certain games running in exclusive fullscreen mode.  For best results, we recommend running your game in windowed-fullscreen mode.": "In-Game-Overlay ist eine neue Funktion, die sich noch im Experimentierstadium befindet. Sie ermöglicht es, Chat und Ereignisse als Überlagerung zusammen mit dem Spiel anzuzeigen. Diese Überlagerung kann eventuell nicht mit Spielen verwendet werden, die ausschließlich im Vollbildmodus ausgeführt werden. Für optimale Ergebnisse empfehlen wir, das Spiel im Fenstermodus auszuführen.",
   "Please log in to use the in-game overlay.": "Bitte melden Sie sich an, um das In-Game-Overlay zu verwenden."
 }

@@ -1,9 +1,7 @@
 {
   "Troubleshooter": "Solucionador de problemas",
   "Open Settings": "Abrir Ajustes",
-  " Streamlabs has detected dropped frames": " Streamlabs ha detectado fotogramas perdidos",
   "What does this mean?": "¿Qué significa esto?",
-  " Some frames have not been uploaded. This problem is usually related to a poor network connection.": " Algunos fotogramas no se han cargado. Este problema suele estar relacionado con una conexión a Internet deficiente.",
   "What can I do?": "¿Qué puedo hacer?",
   "Check the health of your Internet connection": "Compruebe el estado de su conexión a Internet",
   "Change your ingest server": "Cambiar su servidor de ingesta",
@@ -23,5 +21,7 @@
   "Disable FreeSync or GSync in your Driver": "Desactive FreeSync o GSync en su controlador",
   "Lower graphics settings until you stop lagging frames": "Reduzca los ajustes de gráficos hasta que deje de haber fotogramas con retraso",
   "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "Desactive la decodificación por hardware en todas las fuentes de multimedia (esto aumentará ligeramente el uso de la CPU sobre el de la GPU)",
-  "CPU usage threshold in Dual Output mode": "Límite de uso de la CPU en modo Dual Output"
+  "CPU usage threshold in Dual Output mode": "Límite de uso de la CPU en modo Dual Output",
+  "Streamlabs has detected dropped frames": "Streamlabs has detected dropped frames",
+  "Some frames have not been uploaded. This problem is usually related to a poor network connection.": "Some frames have not been uploaded. This problem is usually related to a poor network connection."
 }

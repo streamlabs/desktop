@@ -1,9 +1,7 @@
 {
   "Enable in-game overlay": "Włącz nakładkę podczas gry",
-  "Enable stream preview in overlay": "Włącz podgląd transmisji w nakładce",
   "Toggle in-game overlay": "Przełącz nakładkę podczas gry",
   "Toggle positioning mode": "Przełącz na tryb pozycjonowania",
   "Set a hotkey in Hotkey Settings to toggle the in-game overlay": "Ustaw skrót klawiszowy w ustawieniach skrótu, aby włączyć nakładkę podczas gry",
-  "The in-game overlay is a new experimental feature that allows you to view chat and events overlayed on top of your game.  This overlay may not work with certain games running in exclusive fullscreen mode.  For best results, we recommend running your game in windowed-fullscreen mode.": "Nakładka podczas gry to nowa eksperymentalna funkcja, która umożliwia przeglądanie czatu i wydarzeń nakładanych na grę. Ta nakładka może nie działać w przypadku niektórych gier działających w wyłącznym trybie pełnoekranowym. Aby uzyskać najlepsze wyniki, zalecamy uruchomienie gry w trybie pełnoekranowym w oknie.",
   "Please log in to use the in-game overlay.": "Zaloguj się, aby używać nakładki podczas gry."
 }

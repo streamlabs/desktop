@@ -3,6 +3,7 @@ import { logIn, withPoolUser } from '../helpers/webdriver/user';
 import { sleep } from '../helpers/sleep';
 import {
   click,
+  clickButton,
   clickIfDisplayed,
   clickWhenDisplayed,
   focusMain,
@@ -124,35 +125,34 @@ async function finishOnboarding(
   HardwareConfigButton: HardwareConfigButtons = HardwareConfigButtons.Continue,
 ) {
   await waitForDisplayed('h1=Set Up Your Mic & Webcam');
-  await clickIfDisplayed(`button=${HardwareConfigButton}`);
+  await clickButton(HardwareConfigButton);
 
-  if (HardwareConfigButton !== HardwareConfigButtons.Skip) {
-    // Theme install
-    if (installTheme) {
-      await waitForDisplayed('h1=Choose Your Overlay');
-      await clickWhenDisplayed(
-        '//div[contains(@class,"slick-active")]//button[normalize-space(.)="Install"]',
-        { timeout: 15000 },
-      );
-      await sleep(1000);
-    } else {
-      await waitForDisplayed('h1=Choose Your Overlay');
-      await clickIfDisplayed('button=Skip');
-    }
+  await waitForDisplayed('h1=Choose Your Overlay');
+  if (installTheme) {
+    await clickWhenDisplayed(
+      '//div[contains(@class,"slick-active")]//button[normalize-space(.)="Install"]',
+      { timeout: 15000 },
+    );
+  } else {
+    await clickButton('Skip');
   }
 
-  await isDisplayed('span=Sources');
+  await waitForDisplayed('h1=Choose Your Overlay', { reverse: true, timeout: 30000 });
+  if (!installTheme && HardwareConfigButton === HardwareConfigButtons.Continue) {
+    // Device setup releases its temporary webcam before asynchronously adding the real source.
+    await waitForDisplayed('div[data-role=source]', { timeout: 10000 });
+  }
 }
 
 test('Go through onboarding', async t => {
   await focusMain();
 
-  if (!(await isDisplayed('h1=Welcome to Streamlabs Desktop'))) {
+  if (!(await isDisplayed('h1=Welcome to Streamlabs Desktop', { timeout: 10000 }))) {
     t.fail('Onboarding welcome page not shown');
     return;
   }
-  // Click on Get Started on the welcome page, then wait for the auth screen to appear
-  await clickWhenDisplayed('button=Get Started', { timeout: 5000 });
+  await clickWhenDisplayed('a=Log In', { timeout: 5000 });
+  await waitForDisplayed('h1=Log In');
 
   // Signup page
   t.true(await isDisplayed('h1=Log In'), 'Shows login page by default');
@@ -180,15 +180,11 @@ test('Go through onboarding', async t => {
   // Complete login
   await waitForDisplayed('button=Twitch');
   const user = await logIn(t, 'twitch', { prime: false }, false, true);
-  await sleep(1000);
 
-  // We seem to skip the login step after login internally.
-  // Navigate back to onboarding and re-check if the user can skip the login step.
-  await clickIfDisplayed('button=Back');
+  // Fake authentication bypasses the login button's navigation callback.
+  await clickButton('Back');
   await waitForDisplayed('h1=Welcome to Streamlabs Desktop');
-  await clickWhenDisplayed('button=Get Started', { timeout: 5000 });
-  await isDisplayed('button=Twitch');
-  await clickIfDisplayed('button=Skip');
+  await clickWhenDisplayed('a=Log In', { timeout: 5000 });
 
   // Finish onboarding flow
   await withPoolUser(user, async () => {
@@ -198,7 +194,7 @@ test('Go through onboarding', async t => {
     await waitForDisplayed('div[data-testid=choose-free-plan-btn]', { timeout: 60000 });
     await clickIfDisplayed('div[data-testid=choose-free-plan-btn]');
 
-    await waitForDisplayed('h1=Set Up Your Mic & Webcam');
+    await finishOnboarding(false, HardwareConfigButtons.Skip);
 
     t.true(await isDisplayed('span=Sources'), 'Sources selector is visible');
 
@@ -242,7 +238,7 @@ test.skip('Go through onboarding and install theme', async t => {
 
 test('Go through onboarding as a new user', async t => {
   await goThroughOnboarding(t, async () => {
-    await finishOnboarding(true);
+    await finishOnboarding();
     await confirmDefaultSources(t);
   });
 

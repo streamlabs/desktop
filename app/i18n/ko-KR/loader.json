@@ -1,13 +1,8 @@
 {
-  "You can edit the sounds of your stream alerts from the alertbox properties menu.": "알림 상자 속성 메뉴에서 스트리밍 알림 사운드를 편집할 수 있습니다.",
-  "You can access our theme library from the left sidebar.": "왼쪽 사이드바에서 테마 라이브러리를 이용할 수 있습니다.",
-  "Our 24/7 support staff is available at Discord.gg/stream.": "Discord.gg/stream에 연중무휴 24시간 지원 담당자가 상주합니다.",
   "Sources are what we call media like text, images, video & audio feeds.": "텍스트, 이미지, 비디오, 오디오 피드 등 미디어 소스를 사용합니다.",
   "Undo works in the Editor. Just hit Ctrl + Z!": "에디터에서 작업을 취소해보세요. Ctrl + Z 키를 누르면 끝입니다!",
-  "The sources listed at the top of your sources pane will be layered the highest in your editor.": "소스 창 상단에 나열된 소스가 에디터에서 가장 높은 레이어로 처리됩니다.",
   "Studio Mode is a powerful way to curate a professional-quality stream.": "스튜디오 모드는 프로급 스트리밍을 큐레이션하는 좋은 방법입니다.",
   "Cloudbot is a chatbot that can help you moderate your stream.": "클라우드봇은 스트리밍 조정을 지원하는 챗봇입니다.",
-  "The Remote Control feature lets you control your active scene in real-time from your phone.": "원격 제어 기능을 사용하면 핸드폰에서 실시간으로 활성 장면을 제어할 수 있습니다.",
   "Set Hotkeys from your settings to control your stream with your keyboard.": "설정에서 핫키를 설정하여 키보드로 스트리밍을 제어해보세요.",
   "With Game Overlay you can view chat messages while gaming without switching screens.": "게임 오버레이 사용 시 화면 전환 없이 게임 중 채팅 메시지를 확인할 수 있습니다.",
   "The editor is fully customizable. Try repositioning things from the Layout Editor.": "에디터는 완전한 커스텀이 가능합니다. 레이아웃 에디터에서 배치를 바꿔보세요.",
@@ -20,9 +15,5 @@
   "You can position your chat panel to be either on the left or right side of your screen.": "채팅 패널이 화면 왼쪽 또는 오른쪽에 오도록 배치할 수 있습니다.",
   "Right-click on your camera source to add filters to your webcam.": "카메라 소스를 오른쪽 클릭하여 웹캠에 필터를 추가해보세요.",
   "You can add and edit stinger transitions by clicking the settings cog near your scene collections.": "장면 컬렉션 근처의 설정 톱니를 클릭하면 스팅어 전환을 추가 및 편집할 수 있습니다.",
-  "To crop your webcam, press Alt then drag the bounding box.": "웹캠을 크롭하려면 Alt를 누른 뒤 바운딩 상자를 드래그하세요.",
-  "Widgets are dynamic, interactive overlays you can add to your scene.": "위젯은 장면에 추가할 수 있는 동적인 상호 오버레이입니다.",
-  "Our App Store contains advanced technology to take your stream to the next level.": "앱스토어에서 스트리밍을 한 단계 업그레이드할 수 있는 고급 기술을 활용할 수 있습니다.",
-  "With multi-stream, you can stream to YouTube, Twitch, and Facebook at the same time.": "멀티스트리밍으로 YouTube, Twitch, Facebook에 동시 스트리밍이 가능합니다.",
-  "You can customize the design of your tip page from the Theme Library.": "테마 라이브러리에서 팁 페이지 디자인을 커스텀할 수 있습니다."
+  "To crop your webcam, press Alt then drag the bounding box.": "웹캠을 크롭하려면 Alt를 누른 뒤 바운딩 상자를 드래그하세요."
 }

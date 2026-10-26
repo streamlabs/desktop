@@ -1,13 +1,8 @@
 {
-  "You can edit the sounds of your stream alerts from the alertbox properties menu.": "Вы можете редактировать звуки оповещений для своих трансляций в меню свойств оповещений.",
-  "You can access our theme library from the left sidebar.": "Библиотека тем доступна в левой боковой панели.",
-  "Our 24/7 support staff is available at Discord.gg/stream.": "Наша поддержка доступна круглосуточно на канале Discord.gg/stream.",
   "Sources are what we call media like text, images, video & audio feeds.": "Источники — это такие медиаобъекты, как текст, изображения, видео- и аудиопотоки.",
   "Undo works in the Editor. Just hit Ctrl + Z!": "Вы можете отменять свои действия в редакторе. Просто нажмите Ctrl+Z!",
-  "The sources listed at the top of your sources pane will be layered the highest in your editor.": "Источники, которые находятся вверху панели источников, будут также находиться на самом верхнем уровне в редакторе.",
   "Studio Mode is a powerful way to curate a professional-quality stream.": "Режим студии — это мощный инструмент, позволяющий вести трансляцию на профессиональном уровне.",
   "Cloudbot is a chatbot that can help you moderate your stream.": "Облачный бот — это чат-бот, который поможет вам модерировать ваш стрим.",
-  "The Remote Control feature lets you control your active scene in real-time from your phone.": "Функция дистанционного управления поможет вам управлять активной сценой в реальном времени с телефона.",
   "Set Hotkeys from your settings to control your stream with your keyboard.": "Назначьте горячие клавиши в настройках, чтобы управлять стримом с клавиатуры.",
   "With Game Overlay you can view chat messages while gaming without switching screens.": "Игровой оверлей позволяет просматривать сообщения чата прямо из игры без переключения.",
   "The editor is fully customizable. Try repositioning things from the Layout Editor.": "Вид редактора можно настроить. Попробуйте перемещать его элементы в редакторе макета.",
@@ -20,9 +15,5 @@
   "You can position your chat panel to be either on the left or right side of your screen.": "Вы можете разместить панель чата слева или справа от экрана.",
   "Right-click on your camera source to add filters to your webcam.": "Щелкните камеру-источник правой кнопкой, чтобы добавить фильтры к изображению с веб-камеры.",
   "You can add and edit stinger transitions by clicking the settings cog near your scene collections.": "Вы можете добавлять и редактировать переходы. Эта функция доступна по нажатии шестеренки (значка настроек) рядом с коллекциями сцен.",
-  "To crop your webcam, press Alt then drag the bounding box.": "Чтобы обрезать изображение с веб-камеры, нажмите Alt и растяните рамку кадра.",
-  "Widgets are dynamic, interactive overlays you can add to your scene.": "Виджеты — это динамические интерактивные оверлеи, которые вы можете добавлять к сценам.",
-  "Our App Store contains advanced technology to take your stream to the next level.": "Наш магазин приложений предлагает продвинутые технологии для создания крутых стримов.",
-  "With multi-stream, you can stream to YouTube, Twitch, and Facebook at the same time.": "Функция многопоточной трансляции позволяет одновременно вести трансляцию на YouTube, Twitch и Facebook.",
-  "You can customize the design of your tip page from the Theme Library.": "Вы можете выбрать оформление страницы чаевых из библиотеки тем."
+  "To crop your webcam, press Alt then drag the bounding box.": "Чтобы обрезать изображение с веб-камеры, нажмите Alt и растяните рамку кадра."
 }

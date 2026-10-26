@@ -7,6 +7,7 @@
   "Set Stream Boss Health": "Définir la vie du boss du stream",
   "Goal": "Objectif",
   "Manage Battle": "Gérer la bataille",
+  "Boss Settings": "Boss Settings",
   "Starting Health": "Vie de départ",
   "Fixed": "Fixe",
   "The boss will spawn with the set amount of health everytime.": "Le boss apparaîtra avec la quantité de vie définie à chaque fois.",
@@ -31,5 +32,6 @@
   "Health Bar Background Color": "Couleur d'arrière-plan de la barre de vie",
   "Font": "Police",
   "The boss will have additional health each time he is defeated. The amount is set below.": "Le boss cumule des points de vie supplémentaires à chaque défaite. Le nombre est défini ci-dessous.",
-  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "La santé du boss évoluera en fonction de la quantité de dégâts attribuée au coup fatal. Les dégâts supplémentaires seront multipliés par le multiplicateur et constitueront le nombre de points de vie du boss. En d'autres termes, avec 150 points de dégâts, 100 points de vie restants et un multiplicateur de jeu de 3, le nouveau boss aura 150 points de vie à son retour à la vie. \n Définissez votre multiplicateur ci-dessous."
+  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "La santé du boss évoluera en fonction de la quantité de dégâts attribuée au coup fatal. Les dégâts supplémentaires seront multipliés par le multiplicateur et constitueront le nombre de points de vie du boss. En d'autres termes, avec 150 points de dégâts, 100 points de vie restants et un multiplicateur de jeu de 3, le nouveau boss aura 150 points de vie à son retour à la vie. \n Définissez votre multiplicateur ci-dessous.",
+  "Failed to reset Stream Boss, please try again.": "Failed to reset Stream Boss, please try again."
 }

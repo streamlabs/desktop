@@ -3,6 +3,7 @@ import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
 import { ListInput, TextInput } from 'components-react/shared/inputs';
 import Form from 'components-react/shared/inputs/Form';
+import { webUtils } from 'electron';
 import * as remote from '@electron/remote';
 import {
   HIGHLIGHTER_APP_NAME,
@@ -320,7 +321,8 @@ export function ImportStreamModal({
           const files: string[] = [];
           let fi = e.dataTransfer.files.length;
           while (fi--) {
-            const file = e.dataTransfer.files.item(fi)?.path;
+            const item = e.dataTransfer.files.item(fi);
+            const file = item ? webUtils.getPathForFile(item) : '';
             if (file) files.push(file);
           }
           const filtered = files.filter(f => extensions.includes(path.parse(f).ext));

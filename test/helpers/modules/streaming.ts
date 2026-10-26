@@ -8,6 +8,7 @@ import {
   click,
   clickButton,
   focusChild,
+  getClient,
   isDisplayed,
   selectButton,
   useChildWindow,
@@ -26,6 +27,8 @@ import {
   IStreamShiftActionCompleted,
 } from '../../../app/services/websocket';
 import { RestreamService } from '../../../app/services/restream';
+import type { IStreamingServiceApi } from '../../../app/services/streaming/streaming-api';
+import { isYouTubeBroadcastRateLimit, YouTubeRateLimitError } from '../youtube-rate-limit';
 
 /**
  * Go live and wait for stream start
@@ -90,14 +93,71 @@ export async function submit() {
   const submitButton = await selectButton('Confirm & Go Live');
   await submitButton.waitForEnabled({ timeout: 10000 });
   await submitButton.click();
+
+  // A fresh account is offered Auto Optimizer after validation. These tests use their
+  // own output settings, so continue through its real Skip action when it appears.
+  // Also return promptly for validation messages, whose toasts are short-lived.
+  let outcome = '';
+  await getClient().waitUntil(
+    async () => {
+      outcome = await getClient().execute(() => {
+        if (document.querySelector('[data-testid="auto-optimizer-flow"]')) return 'optimizer';
+        if (document.querySelector('.ant-message-notice, .ant-modal-confirm')) return 'validation';
+        if (!document.querySelector('[data-name="confirmGoLiveBtn"]')) return 'submitted';
+        return '';
+      });
+      return !!outcome;
+    },
+    { timeout: 10000, timeoutMsg: 'Go Live did not advance or show a validation result' },
+  );
+
+  if (outcome === 'optimizer') {
+    await clickButton('Skip');
+    await waitForDisplayed('[data-testid="auto-optimizer-flow"]', {
+      reverse: true,
+      timeout: 10000,
+    });
+  }
 }
 
 export async function waitForStreamStart() {
-  // check we're streaming
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  await useMainWindow(async () => {
-    await (await selectButton('End Stream')).waitForExist({ timeout: 20 * 1000 });
-  });
+  try {
+    // check we're streaming
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    await useMainWindow(async () => {
+      await (await selectButton('End Stream')).waitForClickable({ timeout: 20 * 1000 });
+    });
+  } catch (error: unknown) {
+    let diagnostics;
+    try {
+      const streaming = (await getApiClient()).getResource<IStreamingServiceApi>(
+        'StreamingService',
+      );
+      const { info, status } = streaming.getModel();
+      diagnostics = {
+        lifecycle: info.lifecycle,
+        checklist: info.checklist,
+        status,
+        error: info.error && {
+          type: info.error.type,
+          message: info.error.message,
+          details: info.error.details,
+          platform: info.error.platform,
+          reason: info.error.reason,
+        },
+      };
+    } catch {
+      // A disconnected or crashed app must not replace the startup failure.
+      console.error('Go Live startup state: unavailable');
+      throw error;
+    }
+    if (isYouTubeBroadcastRateLimit(diagnostics.error)) {
+      console.warn('Go Live startup warning: YouTube account rate limited', diagnostics);
+      throw new YouTubeRateLimitError(error);
+    }
+    console.error('Go Live startup state:', diagnostics);
+    throw error;
+  }
 }
 
 /**
@@ -140,16 +200,6 @@ export async function chatIsVisible(multistream: boolean = false) {
       timeoutMsg: 'Refresh Chat did not appear',
     });
   });
-}
-
-export async function startRecording() {
-  await click('.record-button');
-  await waitForDisplayed('.record-button.active');
-}
-
-export async function stopRecording() {
-  await click('.record-button');
-  await waitForDisplayed('.record-button:not(.active)', { timeout: 15000 });
 }
 
 export async function waitForSettingsWindowLoaded() {

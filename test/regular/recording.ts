@@ -4,13 +4,16 @@ import { sleep } from '../helpers/sleep';
 import {
   clickGoLive,
   prepareToGoLive,
-  startRecording,
-  stopRecording,
   stopStream,
   submit,
   waitForSettingsWindowLoaded,
   waitForStreamStart,
 } from '../helpers/modules/streaming';
+import {
+  openRecordingHistoryFromNotification,
+  startRecording,
+  stopRecording,
+} from '../helpers/modules/recording';
 import {
   setOutputResolution,
   setTemporaryRecordingPath,
@@ -21,7 +24,6 @@ import {
   clickTab,
   clickCheckbox,
   clickToggle,
-  clickWhenDisplayed,
   focusMain,
   getNumElements,
   waitForDisplayed,
@@ -30,6 +32,7 @@ import { logIn, logOut } from '../helpers/webdriver/user';
 import { toggleDualOutputMode } from '../helpers/modules/dual-output';
 import { showPage } from '../helpers/modules/navigation';
 import { useForm, fillForm } from '../helpers/modules/forms';
+import { ListInputController } from '../helpers/modules/forms/list';
 import * as childProcess from 'child_process';
 import * as path from 'path';
 import { platform } from 'os';
@@ -74,9 +77,7 @@ async function createRecordingFiles(advanced: boolean = false): Promise<number> 
     await sleep(2000);
 
     // Confirm notification has been shown and navigate to the recording history
-    await focusMain();
-    await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
-    await waitForDisplayed('h1=Recordings', { timeout: 1000 });
+    await openRecordingHistoryFromNotification();
     await sleep(500);
     await showPage('Editor');
   }
@@ -107,7 +108,7 @@ async function validateRecordingFiles(
 
   // Check that the recordings are displayed in the recording history
   await showPage('Recordings');
-  waitForDisplayed('h1=Recordings');
+  await waitForDisplayed('h1=Recordings');
 
   const numRecordings = await getNumElements('[data-test=filename]');
   t.is(
@@ -149,7 +150,7 @@ test('Recording', async t => {
   // Record for 2s to prevent the recording from accidentally having the same key
   await sleep(2000);
   await stopRecording();
-  await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
+  await openRecordingHistoryFromNotification();
   await validateRecordingFiles(t, tmpDir, numSimpleFormats + numAdvancedFormats + 1, true);
 
   t.pass();
@@ -236,9 +237,7 @@ async function createRecordingWithFormParms(
   await sleep(2000);
 
   // Confirm notification has been shown and navigate to the recording history
-  await focusMain();
-  await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
-  await waitForDisplayed('h1=Recordings', { timeout: 1000 });
+  await openRecordingHistoryFromNotification();
   await sleep(500);
   await showPage('Editor');
 }
@@ -280,6 +279,8 @@ test('Recording with rescaling', async t => {
     // Advanced Recording
     const tmpDir = await setTemporaryRecordingPath(true);
     await createRecordingWithFormParms({
+      // Rescaling requires a separate recording encoder rather than the shared stream encoder.
+      RecEncoder: (input: ListInputController<string>) => input.setValue('obs_x264'),
       RecFormat: 'mkv',
       RecRescale: true,
       RecRescaleRes: '1280x720',

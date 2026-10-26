@@ -1,5 +1,4 @@
 {
-  "Edit your stream title on Kick after going live.": "Pas de titel van je stream aan op Kick nadat je live bent gegaan.",
   "Kick Category": "Kick Categorie",
   "Failed to update Kick account. Please unlink and reconnect your Kick account.": "Kan Kick-account niet updaten. Koppel je Kick-account los en maak opnieuw verbinding.",
   "Failed to start Kick stream. Please check permissions with Kick and try again": "Kan Kick-stream niet starten. Controleer even je rechten bij Kick en probeer het nog een keer.",
@@ -11,5 +10,7 @@
   "Click on the \"eye\" icon to see your stream key": "Klik op het oogje om je streamcode te zien.",
   "Put in 2FA": "Zet 2FA aan",
   "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "Na 2FA is de stream-sleutel gegenereerd en beschikbaar voor Streamlabs Desktop voor dat kanaal. Je zou nu live moeten kunnen gaan op Kick.",
-  "Stream Shift Error: Kick is not live": "Stream Shift fout: Kick is niet live"
+  "Stream Shift Error: Kick is not live": "Stream Shift fout: Kick is niet live",
+  "Failed to start stream on Kick.": "Failed to start stream on Kick.",
+  "Permissions to generate stream key for Kick are missing. In order to go live on Kick, you must first generate a stream key on Kick to be available for Streamlabs Desktop. Please follow these steps:": "Permissions to generate stream key for Kick are missing. In order to go live on Kick, you must first generate a stream key on Kick to be available for Streamlabs Desktop. Please follow these steps:"
 }

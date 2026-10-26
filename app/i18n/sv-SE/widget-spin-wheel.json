@@ -1,6 +1,7 @@
 {
   "Add Category": "Lägg till kategori",
   "Add Section": "Add Section",
+  "DONUT": "DONUT",
   "Clear All": "Rensa alla",
   "Manage Spin Wheel": "Hantera Snurrhjul",
   "Categories": "Kategorier",
@@ -30,5 +31,6 @@
   "Center Image Size": "Mittenbildens Storlek",
   "Center Image Border Enabled": "Mittenbildens Ram Aktiverad",
   "Center Image Border Color": "Mittenbilders Ramfärg",
-  "Center Image Border Width": "Mittenbildens Rambredd"
+  "Center Image Border Width": "Mittenbildens Rambredd",
+  "Add categories before adding new sections.": "Add categories before adding new sections."
 }

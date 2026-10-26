@@ -6,14 +6,13 @@ import {
   setTemporaryRecordingPath,
   showSettingsWindow,
 } from '../helpers/modules/settings/settings';
-import {
-  clickButton,
-  clickWhenDisplayed,
-  focusMain,
-  waitForDisplayed,
-} from '../helpers/modules/core';
+import { clickButton, focusMain } from '../helpers/modules/core';
 import { useForm } from '../helpers/modules/forms';
-import { startRecording, stopRecording } from '../helpers/modules/streaming';
+import {
+  openRecordingHistoryFromNotification,
+  startRecording,
+  stopRecording,
+} from '../helpers/modules/recording';
 import { sleep } from '../helpers/sleep';
 import * as path from 'path';
 import {
@@ -75,8 +74,7 @@ test('Selective Recording', async t => {
   await stopRecording();
 
   // Check that file exists
-  await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
-  await waitForDisplayed('h1=Recordings', { timeout: 1000 });
+  await openRecordingHistoryFromNotification();
 
   const files = await readdir(tmpDir);
   t.is(files.length, 1, 'Selective Recording works in Simple Mode.');
@@ -89,8 +87,7 @@ test('Selective Recording', async t => {
   await stopRecording();
 
   // Check that file exists
-  await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
-  await waitForDisplayed('h1=Recordings', { timeout: 1000 });
+  await openRecordingHistoryFromNotification();
 
   const newFiles = await readdir(tmpDir);
   t.is(newFiles.length, 2, 'Selective Recording works in Advanced Mode.');
@@ -112,6 +109,8 @@ test('Selective Recording w/Replay Buffer', async t => {
 
   // Set recording quality and enable replay buffer in one pass
   await showSettingsWindow('Output', async () => {
+    // Visiting Video settings leaves the recording controls below the Output viewport.
+    await (await client.$('[data-name="RecQuality"]')).scrollIntoView({ block: 'center' });
     const { setDropdownInputValue } = useForm('Recording');
     await setDropdownInputValue('RecQuality', 'High Quality, Medium File Size');
     const { fillForm } = useForm('Replay Buffer');
@@ -149,8 +148,7 @@ test('Selective Recording w/Replay Buffer', async t => {
   await stopRecording();
 
   // Check that file exists
-  await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
-  await waitForDisplayed('h1=Recordings', { timeout: 1000 });
+  await openRecordingHistoryFromNotification();
 
   const files = await readdir(tmpDir);
   t.is(files.length, 2, 'Selective Recording works with Replay Buffer.');

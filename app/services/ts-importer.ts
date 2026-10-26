@@ -211,17 +211,19 @@ export class TwitchStudioImporterService extends StatefulService<{
     await this.sceneCollectionsService.create({
       name: 'Twitch Studio Imported',
       setupFunction: async () => {
-        this.setupVideo(config);
-        this.importScenes(config);
+        await this.setupVideo(config);
+        await this.importScenes(config);
 
         return this.scenesService.views.scenes.length !== 0;
       },
     });
   }
 
-  setupVideo(config: ITSConfig) {
-    this.videoSettingsService.setVideoSetting('baseWidth', config.graphics.canvasWidth);
-    this.videoSettingsService.setVideoSetting('baseHeight', config.graphics.canvasHeight);
+  async setupVideo(config: ITSConfig) {
+    await this.videoSettingsService.setSettings({
+      baseWidth: config.graphics.canvasWidth,
+      baseHeight: config.graphics.canvasHeight,
+    });
   }
 
   async importScenes(config: ITSConfig) {

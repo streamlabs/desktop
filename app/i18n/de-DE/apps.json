@@ -7,5 +7,10 @@
   "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "Der Entwickler hat die Unterstützung für diese App eingestellt. Die App funktioniert möglicherweise weiterhin, es werden jedoch keine Updates zur Verfügung gestellt. Wenn Sie sie deinstallieren möchten, folgen Sie den Anweisungen hier.",
   "Uninstall": "Deinstallieren",
   "Other installed apps:": "Andere installierte Apps:",
-  "Open": "Öffnen"
+  "Open": "Öffnen",
+  "Pin": "Pin",
+  "Unpin": "Unpin",
+  "Pinned Apps": "Pinned Apps",
+  "Pin up to %{count} apps to the navigation bar.": "Pin up to %{count} apps to the navigation bar.",
+  "You can pin up to %{count} apps. Unpin an app to pin this one.": "You can pin up to %{count} apps. Unpin an app to pin this one."
 }

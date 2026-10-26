@@ -1,7 +1,6 @@
 {
   "Visual Settings": "视觉设置",
   "Font Settings": "字体设置",
-  "Chatter": "善谈者",
   "Always Show Messages": "始终显示信息",
   "Show Moderator Badges": "显示主持人徽章",
   "Show Subscriber Badges": "显示订阅者徽章",
@@ -15,7 +14,6 @@
   "Text Color": "文字颜色",
   "Font Size": "字体大小",
   "Muted Chatters": "静音聊天者",
-  "Hide Commands": "隐藏指令",
   "Background Color": "背景颜色",
   "Show Platform Icons": "显示平台图标",
   "Theme": "主题",

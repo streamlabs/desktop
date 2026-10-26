@@ -6,30 +6,42 @@ import { focusMain, focusWindow, getClient, isDisplayed } from '../../helpers/mo
 useWebdriver();
 
 test('Expanded Live Dock handles unprotected destinations without a linked platform', async t => {
+  // Start in unprotected mode before supplying the renderer-only account. Mounting
+  // the dock must react to that account, without relying on a later mode change.
+  t.true(await focusWindow('worker'));
+  await getClient().execute(() => {
+    const manager = (window as any).servicesManager;
+    manager.getResource('StreamSettingsService').setSettings({
+      streamType: 'rtmp_common',
+      platform: 'youtube',
+      protectedModeEnabled: false,
+      key: 'synthetic-key',
+    });
+    manager.getResource('CustomizationService').setSettings({ livedockCollapsed: false });
+  });
   await focusMain();
+  t.false(await isDisplayed('span=Your chat is currently offline'));
   await getClient().execute(() => {
     const manager = (window as any).servicesManager;
     const user = manager.getResource('UserService');
-    const originalState = Object.getOwnPropertyDescriptor(user, 'state');
+    const originalState = user.state;
     // Only the main renderer needs an account to mount the dock. Avoid account
     // requests and login side effects in the worker; all credentials are synthetic.
-    Object.defineProperty(user, 'state', {
-      configurable: true,
-      value: {
-        ...user.state,
-        loginValidated: true,
-        auth: {
-          primaryPlatform: 'twitch',
-          widgetToken: 'synthetic',
-          platforms: {
-            twitch: { type: 'twitch', id: 'synthetic', username: 'synthetic' },
-          },
+    // Use the local reactive setter so Main observes the login change. Replacing
+    // the property descriptor leaves its Vuex watcher subscribed to the old state.
+    user.state = {
+      ...originalState,
+      loginValidated: true,
+      auth: {
+        primaryPlatform: 'twitch',
+        widgetToken: 'synthetic',
+        platforms: {
+          twitch: { type: 'twitch', id: 'synthetic', username: 'synthetic' },
         },
       },
-    });
+    };
     (window as any).restoreLiveDockUser = () => {
-      if (originalState) Object.defineProperty(user, 'state', originalState);
-      else delete user.state;
+      user.state = originalState;
     };
   });
 

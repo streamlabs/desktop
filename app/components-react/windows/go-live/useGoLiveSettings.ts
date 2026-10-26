@@ -1,5 +1,6 @@
 import { IGoLiveSettings, StreamInfoView, TDisplayOutput } from '../../../services/streaming';
 import {
+  canBePrimaryPlatform,
   maxNumPlatforms,
   platformLabels,
   platformList,
@@ -185,7 +186,7 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
 
   switchPlatforms(enabledPlatforms: TPlatform[]) {
     if (this.isPrimaryPlatform('instagram') || this.isPrimaryPlatform('patreon')) {
-      const newPrimary = enabledPlatforms.find(p => p !== 'instagram' && p !== 'patreon');
+      const newPrimary = enabledPlatforms.find(canBePrimaryPlatform);
       if (newPrimary) {
         this.setPrimaryPlatform(newPrimary);
       }
@@ -465,8 +466,16 @@ export class GoLiveSettingsModule {
   /**
    * Save current settings so we can use it next time we open the GoLiveWindow
    */
-  save(settings: IGoLiveSettingsState) {
-    Services.StreamSettingsService.actions.return.setGoLiveSettings(settings);
+  async save(settings: IGoLiveSettingsState) {
+    await Services.StreamSettingsService.actions.return.setGoLiveSettings(settings);
+    if (this.isUpdateMode) return;
+    try {
+      await Services.StreamSettingsService.actions.return.applyStreamOutputLimits();
+    } catch (e: unknown) {
+      // The start path retries this guard. Never reset an active recording,
+      // replay buffer, virtual camera, or stream merely to save a selection.
+      message.error($t('Stop all video outputs before changing the stream output settings.'));
+    }
   }
 
   /**
@@ -482,7 +491,7 @@ export class GoLiveSettingsModule {
     // promote any other enabled platform to primary so chat & stream-info
     // routing don't resolve to a non-streaming platform.
     if (this.state.isPrimaryPlatform('instagram') || this.state.isPrimaryPlatform('patreon')) {
-      const newPrimary = enabledPlatforms.find(p => p !== 'instagram' && p !== 'patreon');
+      const newPrimary = enabledPlatforms.find(canBePrimaryPlatform);
       if (newPrimary) {
         this.setPrimaryChat(newPrimary);
       }
@@ -746,14 +755,61 @@ export class GoLiveSettingsModule {
     }
   }
 
+  private async startGoLive() {
+    if (!this.state.getMetadata?.()) return;
+
+    const settings = this.state.settings;
+    const autoOptimizerProfile = await Services.AutoOptimizerService.actions.return.consumePendingGoLiveProfile(
+      settings,
+    );
+
+    // Closing the reusable Go Live window destroys this scoped state while
+    // worker-owned Auto Optimizer actions may still be resolving over IPC.
+    if (!this.state.getMetadata?.()) return;
+
+    Services.StreamingService.actions.goLive({
+      ...settings,
+      autoOptimizerProfile: autoOptimizerProfile || undefined,
+    });
+  }
+
   /**
-   * Validate the form and start streaming
+   * Validate the form and start streaming without opening a new optimizer flow.
+   * Error retry and bypass actions use this path after the initial confirmation.
    */
   async goLive() {
-    if (await this.validate()) {
-      Services.StreamingService.actions.goLive(this.state.settings);
-    }
+    if (!(await this.validate())) return;
+    await this.startGoLive();
   }
+
+  /**
+   * Validate the final Go Live selections and offer Auto Optimizer before the
+   * streaming checklist starts. Eligibility failures fail open to normal Go Live.
+   * Returns true only when streaming was started immediately.
+   */
+  async confirmGoLive(): Promise<boolean> {
+    if (!(await this.validate())) return false;
+
+    // Offering an optimizer run must not save output changes. The actual
+    // stream-start path enforces destination limits, including after Skip.
+    if (!this.state.getMetadata?.()) return false;
+    try {
+      if (await Services.AutoOptimizerService.actions.return.interceptGoLive(this.state.settings)) {
+        return false;
+      }
+    } catch (e: unknown) {
+      console.warn('[Auto Optimizer] Eligibility check failed; continuing normal Go Live', e);
+    }
+
+    await this.startGoLive();
+    return true;
+  }
+
+  /** Start streaming with the settings validated before Auto Optimizer opened. */
+  async continueGoLiveAfterOptimizer() {
+    await this.startGoLive();
+  }
+
   /**
    * Validate the form and send new settings for each eligible platform
    */

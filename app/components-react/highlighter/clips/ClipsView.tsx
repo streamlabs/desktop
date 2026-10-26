@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import * as remote from '@electron/remote';
+import { webUtils } from 'electron';
 import cx from 'classnames';
 import { Services } from 'components-react/service-provider';
 import styles from './ClipsView.m.less';
@@ -95,7 +96,8 @@ export default function ClipsView({
     const files: string[] = [];
     let fi = e.dataTransfer.files.length;
     while (fi--) {
-      const file = e.dataTransfer.files.item(fi)?.path;
+      const item = e.dataTransfer.files.item(fi);
+      const file = item ? webUtils.getPathForFile(item) : '';
       if (file) files.push(file);
     }
 

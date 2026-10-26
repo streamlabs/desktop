@@ -1,16 +1,8 @@
 {
-  "You can access your Facebook Streamer Dashboard here.": "Přístup ke svému řídicímu panelu Facebook pro streamery naleznete zde.",
-  "Create a Page": "Vytvořit stránku",
-  "Facebook Setup": "Nastavení Facebooku",
-  "Streamer Dashboard": "Řídicí panel pro streamery",
   "Share": "Sdílet",
   "Like": "To se mi líbí",
   "Step 3:": "Krok 3:",
-  "Create a Facebook Gaming page to get started.": "Začněte vytvořením herní stránky na Facebooku.",
-  "Create a Gaming Page": "Vytvořit stránku",
   "All of your scenes, sources, and settings will be preserved.": "Všechny vaše scény, zdroje a nastavení budou zachovány.",
-  "Connect Facebook": "Připojit Facebook",
-  "Multistream To Facebook": "Multistream na Facebooku",
   "Connect": "Připojit",
   "Install Your Theme": "Nainstalujte svůj motiv",
   "Install": "Instalovat",
@@ -18,7 +10,6 @@
   "Facebook Destination": "Cíl Facebooku",
   "Share to Your Timeline": "Sdílet na Moje historie",
   "Share to a Page You Manage": "Sdílet na stránce, kterou spravujete",
-  "Share in a Group": "Sdílet ve skupině",
   "Facebook Group": "Facebooková skupina",
   "Scheduled Video": "Plánované video",
   "Make sure the Streamlabs app is added to your Group.": "Zkontrolujte, zda je aplikace Streamlabs přidána do vaší skupiny.",
@@ -35,8 +26,8 @@
   "Do not change privacy settings": "Neměnit nastavení ochrany soukromí",
   "Install %{overlayName}": "Instalovat %{overlayName}",
   "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Upozorňujeme, že ačkoli můžete plánovat streamy na Facebook, některé z nich se neobjeví v tomto kalendáři kvůli omezením API",
-  "Your account is not eligible to stream on Facebook. Click to learn more.": "Váš účet není způsobilý pro streamování na Facebook. Klikněte pro více informací",
   "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers": "Nemáte nárok na přechod na živé vysílání, váš profil musí být alespoň 60 dní starý a vaše stránka musí mít alespoň 100 sledujících.",
   "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more.": "Nemáte nárok na službu Go Live, váš profil musí být alespoň 60 dní starý a vaše stránka musí mít alespoň 100 sledujících. Kliknutím na oznámení se dozvíte více.",
-  "Stream Shift Error: Facebook is not live": "Chyba funkce Stream Shift: Ve službě Facebook nelze vysílat živě"
+  "Stream Shift Error: Facebook is not live": "Chyba funkce Stream Shift: Ve službě Facebook nelze vysílat živě",
+  "Your account is not eligible to stream on Facebook. Click to learn more": "Your account is not eligible to stream on Facebook. Click to learn more"
 }

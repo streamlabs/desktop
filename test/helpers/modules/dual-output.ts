@@ -1,11 +1,17 @@
 import { sleep } from '../sleep';
 import { skipCheckingErrorsInLog } from '../webdriver';
 import { addDummyAccount } from '../webdriver/user';
+import { getApiClient } from '../api-client';
+import {
+  EStreamingState,
+  IStreamingServiceApi,
+} from '../../../app/services/streaming/streaming-api';
 import {
   click,
   clickToggle,
   clickIfDisplayed,
   focusMain,
+  getClient,
   isDisplayed,
   waitForDisplayed,
 } from './core';
@@ -90,16 +96,41 @@ export async function goLiveWithDualOutput(platform: string) {
   await waitForSettingsWindowLoaded();
 
   await submit();
-  await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
 
   if (platform === 'instagram') {
+    await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
     // Dummy accounts won't go live
     await sleep(1000);
     await chatIsVisible();
     await waitForStreamStop();
     skipCheckingErrorsInLog();
   } else {
-    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
+    const streaming = (await getApiClient()).getResource<IStreamingServiceApi>('StreamingService');
+    let model = streaming.getModel();
+    // The success window closes after one second; both output states remain observable.
+    try {
+      await getClient().waitUntil(
+        () => {
+          model = streaming.getModel();
+          const { info, status } = model;
+          return (
+            info.lifecycle === 'live' &&
+            status.horizontal.streaming === EStreamingState.Live &&
+            status.vertical.streaming === EStreamingState.Live
+          );
+        },
+        { timeout: 60000, timeoutMsg: 'Dual Output did not finish with both streams live' },
+      );
+    } catch (e: unknown) {
+      const { info, status } = model;
+      console.error('Dual Output Go Live state:', {
+        lifecycle: info.lifecycle,
+        checklist: info.checklist,
+        status,
+        error: info.error && { type: info.error.type, message: info.error.message },
+      });
+      throw e;
+    }
     await waitForStreamStart();
     await isDisplayed('li=Multichat');
     await stopStream();

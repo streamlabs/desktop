@@ -18,6 +18,12 @@ import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import Vue from 'vue';
 import { IVideo } from 'obs-studio-node';
 import { TOutputOrientation } from 'services/restream';
+import {
+  isMultiplatformStream,
+  selectedStreamPlatforms,
+} from '../../streaming/stream-resolution-policy';
+import { NotificationsService, ENotificationType } from 'services/notifications';
+import { $t } from 'services/i18n';
 
 export interface ISavedGoLiveSettings {
   platforms: Partial<Record<TPlatform, IPlatformFlags>>;
@@ -124,6 +130,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
   @Inject() private streamSettingsService: StreamSettingsService;
   @Inject() private streamingService: StreamingService;
   @Inject() private videoSettingsService: VideoSettingsService;
+  @Inject() private notificationsService: NotificationsService;
 
   static defaultState: IStreamSettingsState = {
     protectedModeEnabled: true,
@@ -217,6 +224,35 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
     });
 
     this.settingsService.setSettings(streamName, streamFormData);
+  }
+
+  /** Enforce the stream-output ceiling independently of the optimizer prompt flag. */
+  async applyStreamOutputLimits(settings = this.state.goLiveSettings): Promise<void> {
+    // Protected-mode selections must not affect an unprotected/legacy stream.
+    if (!this.state.protectedModeEnabled || !this.userService.isLoggedIn || !settings) return;
+    await this.videoSettingsService.flushPendingCanvasSettings();
+    const platforms = selectedStreamPlatforms(settings);
+    const changed = await this.videoSettingsService.limitStreamOutputs(
+      platforms,
+      this.streamingService.views.isDualOutputMode,
+    );
+    if (changed) {
+      // The wording changes with the selected platforms; replace either previous variant.
+      this.notificationsService.removeByCode('STREAM_OUTPUT_SETTINGS_LIMIT');
+      this.notificationsService.push({
+        code: 'STREAM_OUTPUT_SETTINGS_LIMIT',
+        message: isMultiplatformStream(platforms)
+          ? $t(
+              'Stream output settings were adjusted for multistreaming: up to 1080p and 6000 Kbps. Your canvas resolution is unchanged.',
+            )
+          : $t(
+              'Stream output resolution was reduced to fit within 1080p because a platform other than Twitch is enabled. Your canvas resolution is unchanged.',
+            ),
+        type: ENotificationType.INFO,
+        lifeTime: -1,
+        singleton: true,
+      });
+    }
   }
 
   setGoLiveSettings(settingsPatch: Partial<IGoLiveSettings>) {

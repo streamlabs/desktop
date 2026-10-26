@@ -46,7 +46,7 @@ test('Source events', async t => {
 
   // check `sourceAdded` event after `createSource` call
   let source1: Source = null;
-  let eventPromise = client.fetchNextEvent();
+  let eventPromise = client.fetchNextEvent('SourcesService.sourceAdded');
   if (platform() === 'win32') {
     source1 = sourcesService.createSource('audio1', 'wasapi_output_capture');
   } else if (platform() === 'darwin') {
@@ -64,7 +64,9 @@ test('Source events', async t => {
 
   // check `sourceAdded` event after `createAndAddSource` call
   let item2: SceneItem = null;
-  eventPromise = client.fetchNextEvent();
+  eventPromise = client.fetchNextEvent('SourcesService.sourceAdded');
+  // An existing source can emit an update while the next source is being added.
+  source1.setName('audio1 updated');
   if (platform() === 'win32') {
     item2 = scenesService.activeScene.createAndAddSource('audio2', 'wasapi_output_capture');
   } else if (platform() === 'darwin') {
@@ -80,13 +82,13 @@ test('Source events', async t => {
   t.is(event.data.name, 'audio2');
 
   // check `sourceRemoved` event
-  eventPromise = client.fetchNextEvent();
+  eventPromise = client.fetchNextEvent('SourcesService.sourceRemoved');
   item2.remove();
   event = await eventPromise;
   t.is(event.data.name, 'audio2');
 
   // check `sourceUpdated` event when renaming a source
-  eventPromise = client.fetchNextEvent();
+  eventPromise = client.fetchNextEvent('SourcesService.sourceUpdated');
   source1.setName('audio3');
   event = await eventPromise;
 

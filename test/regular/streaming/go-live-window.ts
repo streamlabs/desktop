@@ -585,10 +585,12 @@ test(
           twitch: true,
           instagram: true,
           kick: true,
+          [name]: true,
           [name2]: true,
         },
         1000,
       );
+      await waitForSettingsWindowLoaded();
       await fillForm({
         twitchDisplay: 'both',
         instagramDisplay: 'vertical',

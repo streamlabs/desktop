@@ -131,9 +131,11 @@ export class TwitterPlatformService
 
   readonly capabilities = new Set<TPlatformCapability>([
     'title',
+    'description',
     'viewerCount',
     'chat',
     'stream-schedule',
+    'streamlabels',
   ]);
   readonly liveDockFeatures = new Set<TLiveDockFeature>([
     'refresh-chat-streaming',

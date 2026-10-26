@@ -1,7 +1,5 @@
 {
   "Show the live dock (chat) on the left side": "왼쪽에 라이브 도크(채팅) 표시",
-  "Chat Text Size": "채팅 텍스트 사이즈",
-  "Chat Width": "채팅 너비",
   "Enable BetterTTV emotes for Twitch": "Twitch용 BetterTTV 이모티콘 활성화",
   "Enable FrankerFaceZ emotes for Twitch": "Twitch용 FrankerFaceZ 이모티콘 활성화",
   "Editor Display": "에디터 표시",
@@ -22,9 +20,9 @@
   "Current Tab": "현재 탭",
   "Delete Current Tab": "현재 탭 삭제",
   "Enter Target URL": "타겟 URL 입력",
-  "Obsidian Prime": "Obsidian Prime",
-  "Alabaster Prime": "Alabaster Prime",
   "Custom Navigation Bar": "커스텀 내비게이션 바",
   "Obsidian Ultra": "옵시디언 Ultra",
-  "Alabaster Ultra": "앨러배스터 Ultra"
+  "Alabaster Ultra": "앨러배스터 Ultra",
+  "Read": "Read",
+  "Post Comments": "Post Comments"
 }
