@@ -551,22 +551,25 @@ export class FacebookService
    * Download the picture of a group or page and return it's base64 url string
    */
   async fetchPicture(objectId: string): Promise<string> {
-    let url = '';
-    try {
-      await fetch(`${this.apiBase}/${objectId}/picture`, {
-        method: 'GET',
-        headers: new Headers({
-          Authorization: 'Bearer ' + this.oauthToken,
-        }),
+    return await fetch(`${this.apiBase}/${objectId}/picture`, {
+      method: 'GET',
+      headers: new Headers({
+        Authorization: 'Bearer ' + this.oauthToken,
+      }),
+    })
+      .then(response => {
+        if (!response.ok) throw response;
+        return response.blob();
       })
-        .then(response => response.blob())
-        .then(blob => {
-          url = window.URL.createObjectURL(blob);
-        });
-    } catch (e: unknown) {
-      // just don't care is something is wrong here
-    }
-    return url;
+      .then(blob => {
+        return window.URL.createObjectURL(blob);
+      })
+      .catch(e => {
+        // just don't care is something is wrong here
+        console.error('Error fetching Facebook picture', this.serializeError(e));
+
+        return '';
+      });
   }
 
   private createLiveVideo(options: IFacebookStartStreamOptions): Promise<IFacebookLiveVideo> {
@@ -798,10 +801,11 @@ export class FacebookService
         )
       ).data;
     } catch (e: unknown) {
-      console.error('Error fetching Facebook groups', e);
+      console.error('Error fetching Facebook groups', this.serializeError(e));
       this.SET_OUTAGE_WARN(
-        'Streaming to Facebook groups is currently unavailable.  Please try again later.',
+        $t('Streaming to Facebook groups is currently unavailable.  Please try again later.'),
       );
+
       return [];
     }
   }
@@ -880,12 +884,7 @@ export class FacebookService
    * @remark Prevents race conditions when fetching pictures for pages and groups
    */
   private async fetchPagesAndGroups() {
-    const [pagesResult, groupsResult] = await Promise.allSettled([
-      this.fetchPages(),
-      this.fetchGroups(),
-    ]);
-    const pages = pagesResult.status === 'fulfilled' ? pagesResult.value : [];
-    const groups = groupsResult.status === 'fulfilled' ? groupsResult.value : [];
+    const [pages, groups] = await Promise.all([this.fetchPages(), this.fetchGroups()]);
 
     const pictures: Record<string, string> = {};
 
@@ -902,12 +901,21 @@ export class FacebookService
   }
 
   private async fetchPages(): Promise<IFacebookPage[]> {
-    return (
-      await this.requestFacebook<{ data: IFacebookPage[] }>(
-        `${this.apiBase}/me/accounts?limit=100`,
-        this.oauthToken,
-      )
-    ).data;
+    try {
+      return (
+        await this.requestFacebook<{ data: IFacebookPage[] }>(
+          `${this.apiBase}/me/accounts?limit=100`,
+          this.oauthToken,
+        )
+      ).data;
+    } catch (e: unknown) {
+      console.error('Could not fetch Facebook pages', this.serializeError(e));
+      this.SET_OUTAGE_WARN(
+        $t('Streaming to Facebook pages is currently unavailable.  Please try again later.'),
+      );
+
+      return [];
+    }
   }
 
   /**
