@@ -1,16 +1,15 @@
-import cx from 'classnames';
 import { useVuex } from 'components-react/hooks';
 import { AGENT_APP_ID, useAgentAppInstalled } from 'components-react/hooks/useAgentAppInstalled';
 import { useRealmObject } from 'components-react/hooks/realm';
 import { Services } from 'components-react/service-provider';
-import { SwitchInput } from 'components-react/shared/inputs';
 import Scrollable from 'components-react/shared/Scrollable';
-import { message, Modal, Tooltip } from 'antd';
+import { Button, message, Modal, Tooltip } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import { getConfigByGame } from 'services/highlighter/models/game-config.models';
 import { $t } from 'services/i18n/index';
 import { ENavMenuKey } from 'services/nav-menu';
+import { ESettingsCategory } from 'services/settings';
 import { IOverlayCollectionParams, TOverlayType } from 'services/user';
 import { $i } from 'services/utils';
 import { WidgetDisplayData } from 'services/widgets';
@@ -38,10 +37,10 @@ function VisionFeature(props: FeatureProps) {
   return (
     <div className={styles.visionFeature}>
       <h2>{props.name}</h2>
+      <p>{props.description}</p>
       <div className={styles.visionFeatureImage}>
         <img src={props.img} alt={props.name} />
       </div>
-      <p>{props.description}</p>
       {actions.length > 0 && (
         <div className={styles.visionFeatureActions}>
           {actions.map(({ text, html, disabled, onClick }) => (
@@ -62,10 +61,12 @@ function VisionFeature(props: FeatureProps) {
 
 export default function VisionLanding() {
   const {
+    AutomationsService,
     HostsService,
     NavigationService,
     PlatformAppsService,
     ScenesService,
+    SettingsService,
     SourcesService,
     UsageStatisticsService,
     UserService,
@@ -113,6 +114,16 @@ export default function VisionLanding() {
     const newIsEnabled = isEnabled ?? !enabled;
     trackEvent('enabled', { enabled: String(newIsEnabled) });
     visionActions.setIsEnabled(newIsEnabled);
+  }
+
+  function onMoreSettingsClick() {
+    trackEvent('open-settings');
+    SettingsService.actions.showSettings(ESettingsCategory.Vision);
+  }
+
+  function onOpenAutomationsClick() {
+    trackEvent('open-automations');
+    AutomationsService.actions.showAutomations();
   }
 
   function onBrowseOverlaysClick() {
@@ -244,12 +255,7 @@ export default function VisionLanding() {
             <li>{label}</li>
           ))}
         </ul>
-        {hasMore && (
-          <div className={styles.moreGamesCta}>
-            <div>{$t('And more!')}</div>
-            <div>{$t('Click to see all games')}</div>
-          </div>
-        )}
+        {hasMore && <div className={styles.moreGamesCta}>{$t('Click to see all games')}</div>}
       </div>
     );
   }, [supportedGames]);
@@ -258,27 +264,48 @@ export default function VisionLanding() {
     <div className={styles.visionLandingRoot}>
       <Scrollable style={{ flexGrow: 1, width: '100%' }}>
         <div className={styles.visionLandingContents}>
-          <h1 className={styles.header}>
-            <i className={cx('icon-ai', styles.headerUltra)} />
-            <span className={styles.headerUltraText}>{$t('Streamlabs Vision:')}</span>
-            <span>{$t('Real-Time, Event-Driven Streaming')}</span>
-          </h1>
-          <div
-            className={cx(styles.visionToggle, !enabled && styles.visionToggleEmphasis)}
-            onClick={() => onToggleAiClick()}
-          >
-            <SwitchInput
-              label={$t('Turn On Vision')}
-              disabled={!isLoggedIn || visionState.isStarting}
-              value={enabled}
-            />
+          <div className={styles.header}>
+            <div>
+              <h1 className={styles.headerTitle}>
+                <i className="icon-ai" />
+                <span>{$t('Streamlabs Vision')}</span>
+              </h1>
+              <p className={styles.headerSubtitle}>
+                {$t('Enhance your stream based on real-time game events.')}
+              </p>
+            </div>
+            <div className={styles.headerActions}>
+              <Button
+                type="text"
+                icon={<i className="icon-settings" style={{ marginRight: 8 }} />}
+                onClick={onMoreSettingsClick}
+              >
+                {$t('More settings')}
+              </Button>
+              <Button
+                type={enabled ? 'default' : 'primary'}
+                disabled={!isLoggedIn || visionState.isStarting}
+                onClick={() => onToggleAiClick()}
+              >
+                {enabled ? $t('Disable Vision') : $t('Turn on Vision')}
+              </Button>
+            </div>
           </div>
           <div className={styles.featureList}>
             <div className={styles.featureListInner}>
               <VisionFeature
+                name={$t('Automations')}
+                description={$t(
+                  'Trigger sources, switch scenes, show instant replays and beyond triggered by game play events.',
+                )}
+                img={$i('images/ai/ai-automations.png')}
+                disabled={!enabled}
+                actions={{ text: $t('Open Automations'), onClick: onOpenAutomationsClick }}
+              />
+              <VisionFeature
                 name={$t('Reactive Overlays')}
                 description={$t(
-                  'Dynamic overlays powered by Streamlabs Vision that react in real-time to gameplay events.',
+                  'Dynamic overlays powered by Streamlabs Vision that react in real-time to gameplay events.',
                 )}
                 img={$i('images/ai/ai-reactive-overlays.png')}
                 disabled={!enabled}
@@ -304,39 +331,47 @@ export default function VisionLanding() {
               <VisionFeature
                 name={$t('Sidekick')}
                 description={$t(
-                  'Sidekick is a virtual co-host, live producer, and technical assistant.',
+                  'Sidekick is a virtual co-host, live producer, and technical assistant. Customize it and ask it questions while you’re live.',
                 )}
                 img={$i('images/ai/ai-sidekick.png')}
                 disabled={!enabled}
                 actions={
                   isAgentAppInstalled
-                    ? { text: $t('Launch App'), onClick: onLaunchAgentClick }
+                    ? { text: $t('Open App'), onClick: onLaunchAgentClick }
                     : {
-                        text: $t('Install Sidekick'),
+                        text: $t('Install App'),
                         onClick: onInstallAgentClick,
                       }
                 }
               />
             </div>
           </div>
-          <div className={styles.supportedGames}>
-            <h3>{$t('Supported Games:')}</h3>
-            <div className={styles.supportedGamesList}>
-              {showcasedGames
-                .map(game => getConfigByGame(game))
-                .filter(config => config.titleIcon && config.titleIcon !== 'unset')
-                .map(config => (
-                  <img key={config.name} src={config.titleIcon} alt={config.label} />
-                ))}
-              <Tooltip title={moreGamesTooltip}>
-                <img
-                  src={$i('images/ai/and-more.svg')}
-                  className={styles.moreGamesIcon}
-                  onClick={() => supportedGamesTitles.length > 0 && setShowMoreGamesModal(true)}
-                />
-              </Tooltip>
+          <Tooltip title={moreGamesTooltip}>
+            <div
+              className={styles.supportedGames}
+              onClick={() => supportedGamesTitles.length > 0 && setShowMoreGamesModal(true)}
+            >
+              <h3>{$t('Supported Games:')}</h3>
+              <div className={styles.supportedGamesList}>
+                {showcasedGames
+                  .map(game => getConfigByGame(game))
+                  .filter(config => config.titleIcon && config.titleIcon !== 'unset')
+                  .map(config => (
+                    <span
+                      key={config.name}
+                      role="img"
+                      aria-label={config.label}
+                      className={styles.gameIcon}
+                      style={{
+                        maskImage: `url(${config.titleIcon})`,
+                        WebkitMaskImage: `url(${config.titleIcon})`,
+                      }}
+                    />
+                  ))}
+              </div>
+              <p className={styles.moreGamesText}>{$t('and hundreds more')}</p>
             </div>
-          </div>
+          </Tooltip>
         </div>
       </Scrollable>
       <Modal
