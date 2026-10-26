@@ -1,10 +1,14 @@
-import { ExecuteInWorkerProcess, StatefulService, ViewHandler, mutation } from 'services/core';
+import {
+  ExecuteInWorkerProcess,
+  PersistentStatefulService,
+  ViewHandler,
+  mutation,
+} from 'services/core';
 import * as obs from '../../obs-api';
 import path from 'path';
 import { getChecksum } from 'util/requests';
 import { byOS, OS } from 'util/operating-systems';
 import { Inject } from 'services/core/injector';
-import { SettingsService } from 'services/settings';
 import { UsageStatisticsService, SourcesService, AppService } from 'app-services';
 import * as remote from '@electron/remote';
 import { Subject } from 'rxjs';
@@ -58,25 +62,47 @@ interface IVirtualWebcamServiceState {
   installStatus: EVirtualWebcamPluginInstallStatus;
 }
 
-export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceState> {
+export class VirtualWebcamService extends PersistentStatefulService<IVirtualWebcamServiceState> {
   @Inject() appService: AppService;
   @Inject() usageStatisticsService: UsageStatisticsService;
   @Inject() sourcesService: SourcesService;
-  @Inject() settingsService: SettingsService;
   @Inject() signalsService: SignalsService;
 
-  static initialState: IVirtualWebcamServiceState = {
+  static defaultState: IVirtualWebcamServiceState = {
     running: false,
     outputType: VCamOutputType.ProgramView,
     outputSelection: '',
     installStatus: EVirtualWebcamPluginInstallStatus.NotPresent,
   };
 
+  static filter(state: IVirtualWebcamServiceState): IVirtualWebcamServiceState {
+    const type = Number(state.outputType);
+    const outputType = [
+      VCamOutputType.ProgramView,
+      VCamOutputType.SceneOutput,
+      VCamOutputType.SourceOutput,
+    ].includes(type)
+      ? type
+      : VCamOutputType.ProgramView;
+
+    // Only the selected output survives a restart. Installation and running status
+    // must be determined by the new process, not restored from the previous one.
+    return {
+      ...this.defaultState,
+      outputType,
+      outputSelection:
+        outputType !== VCamOutputType.ProgramView && typeof state.outputSelection === 'string'
+          ? state.outputSelection
+          : '',
+    };
+  }
+
   runningChanged = new Subject<boolean>();
   installStatusChanged = new Subject<EVirtualWebcamPluginInstallStatus>();
   signalInfoChanged = new Subject<IOBSOutputSignalInfo>();
 
-  protected init(): void {
+  init(): void {
+    super.init();
     this.appService.shutdownStarted.subscribe(() => this.stop());
 
     byOS({
@@ -259,10 +285,7 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
       return;
     }
     this.SET_INSTALL_STATUS(EVirtualWebcamPluginInstallStatus.NotPresent);
-    this.SET_OUTPUT_TYPE(VCamOutputType.ProgramView);
-
-    // clearing the output selection from settings is needed to prevent stream errors
-    this.settingsService.setSettingValue('Virtual Webcam', 'OutputSelection', '');
+    this.SET_OUTPUT(VCamOutputType.ProgramView, '');
   }
 
   @ExecuteInWorkerProcess()
@@ -272,6 +295,9 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
     let releaseOutputStart = () => {};
     try {
       releaseOutputStart = videoOutputCoordinator.beginOutputStart();
+      // OSN's configuration is process-local. Apply the saved target here, once
+      // scenes/sources are available, including starts triggered by a hotkey.
+      obs.NodeObs.OBS_service_updateVirtualCam(this.state.outputType, this.state.outputSelection);
       obs.NodeObs.OBS_service_startVirtualCam();
       this.SET_RUNNING(true);
       this.runningChanged.next(true);
@@ -302,14 +328,13 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
 
   @ExecuteInWorkerProcess()
   update(type: VCamOutputType, name: string) {
-    obs.NodeObs.OBS_service_updateVirtualCam(type, name);
-
-    const outputSelection = type === VCamOutputType.ProgramView ? '' : name;
-
-    if (type !== this.state.outputType) {
-      this.SET_OUTPUT_TYPE(type);
-      this.SET_OUTPUT_SELECTION(outputSelection);
-    }
+    const { outputType, outputSelection } = VirtualWebcamService.filter({
+      ...this.state,
+      outputType: type,
+      outputSelection: name,
+    });
+    obs.NodeObs.OBS_service_updateVirtualCam(outputType, outputSelection);
+    this.SET_OUTPUT(outputType, outputSelection);
   }
 
   @mutation()
@@ -318,12 +343,8 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
   }
 
   @mutation()
-  private SET_OUTPUT_TYPE(type: VCamOutputType) {
+  private SET_OUTPUT(type: VCamOutputType, selection: string) {
     this.state.outputType = type;
-  }
-
-  @mutation()
-  private SET_OUTPUT_SELECTION(selection: string) {
     this.state.outputSelection = selection;
   }
 

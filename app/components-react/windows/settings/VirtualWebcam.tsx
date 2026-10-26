@@ -103,7 +103,7 @@ export function VirtualWebcamSettings() {
   }
 
   function onSelectSelection(value: string) {
-    v.update((v.outputType as unknown) as VCamOutputType, value);
+    v.update(Number(v.outputType) as VCamOutputType, value);
   }
 
   return (
@@ -230,7 +230,7 @@ function InstallVirtualWebcam(p: { isUpdate: boolean; name: string }) {
     if (p.isUpdate) {
       const type = Services.VirtualWebcamService.views.outputType;
 
-      Services.VirtualWebcamService.actions.update((type as unknown) as VCamOutputType, p.name);
+      Services.VirtualWebcamService.actions.update(Number(type) as VCamOutputType, p.name);
     } else {
       Services.VirtualWebcamService.actions.install();
     }
