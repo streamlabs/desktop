@@ -54,6 +54,10 @@ export class VisionUpdater {
     }
   }
 
+  async getInstalledVersion(): Promise<string> {
+    return (await this.readInstalledManifest())?.version ?? '';
+  }
+
   private getEnvironment(): 'production' | 'staging' | 'local' {
     // need to use this remote thing because main process is being spawned as
     // subprocess of updater process in the release build

@@ -138,6 +138,11 @@ export class VisionService extends Service {
   init() {
     if (!this.isSupportedForOs()) return;
 
+    // VisionState isn't persisted, so seed the installed version from disk.
+    void this.visionUpdater
+      .getInstalledVersion()
+      .then(installedVersion => this.writeState({ installedVersion }));
+
     // Hook widget/overlay services to check for vision-dependent installs.
     // TODO @widgets-refactor: Remove IWidgetConfig cast.
     this.widgetsService.widgetCreated.subscribe(({ type }) => this.onWidgetCreated(type));

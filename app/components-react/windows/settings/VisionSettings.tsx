@@ -82,7 +82,7 @@ function VisionInfo({
     <ObsSettingsSection title="Streamlabs Vision">
       <div style={{ marginBottom: 16 }}>
         <SwitchInput
-          label={$t('Turn On Vision')}
+          label={$t('Turn on Vision')}
           disabled={!isLoggedIn || starting}
           value={enabled}
           onChange={() => setIsEnabled(!enabled)}
