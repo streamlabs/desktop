@@ -45,6 +45,12 @@ export class VisionUpdater {
     await fs.mkdir(this.paths.tmp, { recursive: true });
   }
 
+  async uninstall() {
+    this.log('uninstall');
+    pMemoizeClear(this.checkNeedsUpdate);
+    await fs.rm(this.baseDir, { recursive: true, force: true });
+  }
+
   private async readInstalledManifest(): Promise<IVisionManifest | undefined> {
     try {
       const raw = await fs.readFile(this.paths.manifest, 'utf8');

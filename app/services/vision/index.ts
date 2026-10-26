@@ -47,11 +47,16 @@ VisionProcess.register();
 
 export class VisionEnabledState extends RealmObject {
   isEnabled: boolean;
+  // Whether adding a reactive overlay / Game Pulse widget may auto-enable Vision.
+  reactiveOverlaysEnabled: boolean;
+  gamePulseEnabled: boolean;
 
   static schema: ObjectSchema = {
     name: 'VisionEnabledState',
     properties: {
       isEnabled: { type: 'bool', default: false },
+      reactiveOverlaysEnabled: { type: 'bool', default: true },
+      gamePulseEnabled: { type: 'bool', default: true },
     },
   };
 }
@@ -186,6 +191,19 @@ export class VisionService extends Service {
     } else {
       await this.stop();
     }
+  }
+
+  async uninstall() {
+    this.writeEnabledState(false);
+    await this.stop();
+    await this.visionUpdater.uninstall();
+    this.writeState({
+      pid: 0,
+      port: 0,
+      isRunning: false,
+      installedVersion: '',
+      needsUpdate: false,
+    });
   }
 
   private ensureUpdated = pMemoize(
@@ -398,6 +416,12 @@ export class VisionService extends Service {
     }
   }
 
+  setFeatureSettings(
+    patch: Partial<Pick<VisionEnabledState, 'reactiveOverlaysEnabled' | 'gamePulseEnabled'>>,
+  ) {
+    this.enabledState.db.write(() => Object.assign(this.enabledState, patch));
+  }
+
   private writeEnabledState(isEnabled: VisionEnabledState['isEnabled']) {
     this.enabledState.db.write(() => Object.assign(this.enabledState, { isEnabled }));
     this.notifyOfStateChange();
@@ -409,7 +433,7 @@ export class VisionService extends Service {
   }
 
   private onSourceCreated(source: ISource) {
-    if (this.state.isRunning) return;
+    if (this.state.isRunning || !this.enabledState.reactiveOverlaysEnabled) return;
 
     // Smart browser sources are munged to type: 'browser_source' by OBS.
     // Check the manager type instead.
@@ -420,7 +444,7 @@ export class VisionService extends Service {
   }
 
   private onWidgetCreated(type: WidgetType) {
-    if (this.state.isRunning) return;
+    if (this.state.isRunning || !this.enabledState.gamePulseEnabled) return;
 
     if (type === WidgetType.GamePulseWidget) {
       console.log('Game Pulse widget added, enabling vision service');
@@ -429,7 +453,7 @@ export class VisionService extends Service {
   }
 
   private onAutomationCreated() {
-    if (this.state.isRunning) return;
+    if (this.state.isRunning || !this.automationsService.settings.isEnabled) return;
 
     console.log('Automation created, enabling vision service');
     this.setIsEnabled(true);

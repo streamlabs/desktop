@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
-import { getOS, OS } from 'util/operating-systems';
 import { ENavMenuKey } from 'services/nav-menu';
 
 export const AGENT_APP_STORE_ID = '7643';
@@ -20,22 +19,23 @@ export const AGENT_APP_ID = '93125d1c33';
  * or enabled anywhere, without needing to remount.
  */
 export function useAgentAppInstalled() {
-  const { NavigationService, PlatformAppsService } = Services;
+  const { NavigationService, PlatformAppsService, VisionService } = Services;
 
   useEffect(() => {
-    if (getOS() !== OS.Windows) return;
+    if (!VisionService.isSupportedForOs()) return;
     // No cleanup needed: loadProductionApps() is fire-and-forget; results are
     // read reactively via useVuex and not held in local component state.
     void PlatformAppsService.actions.return.loadProductionApps();
   }, []);
 
   const { isInstalled, isEnabled } = useVuex(() => {
-    if (getOS() !== OS.Windows) return { isInstalled: false, isEnabled: false };
+    if (!VisionService.isSupportedForOs()) return { isInstalled: false, isEnabled: false };
     const app = PlatformAppsService.views.state.loadedApps.find(a => a.id === AGENT_APP_ID);
     return { isInstalled: !!app, isEnabled: !!app?.enabled || !!app?.unpacked };
   });
 
   async function installAgent() {
+    if (!VisionService.isSupportedForOs()) return;
     await PlatformAppsService.actions.return.refreshProductionApps();
     NavigationService.actions.navigate(
       'PlatformAppStore',
@@ -48,5 +48,9 @@ export function useAgentAppInstalled() {
     PlatformAppsService.actions.setEnabled(AGENT_APP_ID, true);
   }
 
-  return { isInstalled, isEnabled, installAgent, enableAgent };
+  function disableAgent() {
+    PlatformAppsService.actions.setEnabled(AGENT_APP_ID, false);
+  }
+
+  return { isInstalled, isEnabled, installAgent, enableAgent, disableAgent };
 }
