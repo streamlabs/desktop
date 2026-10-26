@@ -93,6 +93,10 @@ export interface IFacebookLiveVideoExtended extends IFacebookLiveVideo {
 interface IFacebookServiceState extends IPlatformState {
   facebookPages: IFacebookPage[];
   facebookGroups: IFacebookGroup[];
+  /**
+   * Picture urls by page/group id
+   */
+  pictures: Record<string, string>;
   settings: IFacebookStartStreamOptions;
   grantedPermissions: TFacebookPermissionName[];
   /**
@@ -131,6 +135,7 @@ const initialState: IFacebookServiceState = {
   ...BasePlatformService.initialState,
   facebookPages: [],
   facebookGroups: [],
+  pictures: {},
   grantedPermissions: [],
   outageWarning: '',
   streamPageUrl: '',
@@ -215,9 +220,14 @@ export class FacebookService
   }
 
   @mutation()
-  private SET_FACEBOOK_PAGES_AND_GROUPS(pages: IFacebookPage[], groups: IFacebookGroup[]) {
+  private SET_FACEBOOK_PAGES_AND_GROUPS(
+    pages: IFacebookPage[],
+    groups: IFacebookGroup[],
+    pictures: Record<string, string>,
+  ) {
     this.state.facebookPages = pages;
     this.state.facebookGroups = groups;
+    this.state.pictures = pictures;
   }
 
   @mutation()
@@ -351,12 +361,10 @@ export class FacebookService
       return;
     }
 
-    // fetch pages and groups
-    const [pages, groups] = ((await Promise.all([
-      this.fetchPages(),
-      this.fetchGroups(),
-    ])) as unknown) as [IFacebookPage[], IFacebookGroup[]];
-    this.SET_FACEBOOK_PAGES_AND_GROUPS(pages, groups);
+    await this.fetchPagesAndGroups();
+
+    const pages = this.state.facebookPages;
+    const groups = this.state.facebookGroups;
 
     if (pages.length) {
       const pageId = this.state.settings.pageId!;
@@ -380,8 +388,6 @@ export class FacebookService
     ) {
       this.UPDATE_STREAM_SETTINGS({ destinationType: 'me' });
     }
-
-    console.log('FACEBOOK await this.fetchPicture("me")', await this.fetchPicture('me'));
 
     if (!this.state.userAvatar) {
       this.SET_AVATAR(await this.fetchPicture('me'));
@@ -594,12 +600,10 @@ export class FacebookService
       .map(p => p.permission);
     this.SET_PERMISSIONS(grantedPermissions);
 
-    // fetch pages and groups
-    const [pages, groups] = ((await Promise.all([
-      this.fetchPages(),
-      this.fetchGroups(),
-    ])) as unknown) as [IFacebookPage[], IFacebookGroup[]];
-    this.SET_FACEBOOK_PAGES_AND_GROUPS(pages, groups);
+    await this.fetchPagesAndGroups();
+
+    const pages = this.state.facebookPages;
+    const groups = this.state.facebookGroups;
 
     // if currently selected page is not in the pages list then select the first page
     if (pages.length) {
@@ -869,6 +873,32 @@ export class FacebookService
   createFBPage() {
     remote.shell.openExternal('https://www.facebook.com/gaming/pages/create?ref=streamlabs');
     this.windowsService.actions.closeChildWindow();
+  }
+
+  /**
+   * Fetch pages, groups and their pictures together
+   * @remark Prevents race conditions when fetching pictures for pages and groups
+   */
+  private async fetchPagesAndGroups() {
+    const [pagesResult, groupsResult] = await Promise.allSettled([
+      this.fetchPages(),
+      this.fetchGroups(),
+    ]);
+    const pages = pagesResult.status === 'fulfilled' ? pagesResult.value : [];
+    const groups = groupsResult.status === 'fulfilled' ? groupsResult.value : [];
+
+    const pictures: Record<string, string> = {};
+
+    // Wait for promises to settle to prevent getting a page or group from failing
+    // just because of an image fetch failure
+    await Promise.allSettled(
+      [...pages, ...groups].map(async ({ id }) => {
+        const picture = await this.fetchPicture(id);
+        if (picture) pictures[id] = picture;
+      }),
+    );
+
+    this.SET_FACEBOOK_PAGES_AND_GROUPS(pages, groups, pictures);
   }
 
   private async fetchPages(): Promise<IFacebookPage[]> {
