@@ -806,6 +806,7 @@ export class FacebookService
         $t('Streaming to Facebook groups is currently unavailable.  Please try again later.'),
       );
 
+      // By default, return an empty array so that the go live window still loads
       return [];
     }
   }
@@ -914,6 +915,7 @@ export class FacebookService
         $t('Streaming to Facebook pages is currently unavailable.  Please try again later.'),
       );
 
+      // By default, return an empty array so that the go live window still loads
       return [];
     }
   }
