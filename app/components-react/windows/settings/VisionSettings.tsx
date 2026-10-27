@@ -3,6 +3,7 @@ import { Button, message, Progress, Select, Switch } from 'antd';
 import cx from 'classnames';
 import { useVuex } from 'components-react/hooks';
 import { useRealmObject } from 'components-react/hooks/realm';
+import { confirmAsync } from 'components-react/modals';
 import { Services } from 'components-react/service-provider';
 import React, { useEffect, useMemo, useState } from 'react';
 import { $t } from 'services/i18n/index';
@@ -70,6 +71,7 @@ type VisionInfoProps = {
   selectedGame: string;
   requestAvailableProcesses: VisionService['actions']['requestAvailableProcesses'];
   activateProcess: VisionService['actions']['activateProcess'];
+  uninstall: VisionService['actions']['uninstall'];
   openExternal: (url: string) => void;
 };
 
@@ -196,11 +198,22 @@ function VisionDebugSection({
   availableProcesses,
   requestAvailableProcesses,
   activateProcess,
+  uninstall,
   selectedGame,
 }: Omit<VisionInfoProps, 'availableGames'>) {
   const eventsUrl = useMemo(() => buildLocalUrl(port, '/events'), [port]);
   const frameUrl = useMemo(() => buildLocalUrl(port, '/display_frame'), [port]);
   const isRunning = status === 'running';
+
+  async function confirmUninstall() {
+    const confirmed = await confirmAsync({
+      title: $t('Uninstall Vision?'),
+      content: <p>{$t('This will turn off Vision and delete its installed files.')}</p>,
+      okText: $t('Uninstall'),
+      okButtonProps: { danger: true },
+    });
+    if (confirmed) uninstall();
+  }
 
   return (
     <ObsSettingsSection title={$t('Debugging')}>
@@ -247,6 +260,11 @@ function VisionDebugSection({
         >
           {$t('Open Display Frame')}
         </button>
+        {installedVersion && (
+          <button className="button button--warn" onClick={confirmUninstall}>
+            {$t('Uninstall Vision')}
+          </button>
+        )}
       </div>
     </ObsSettingsSection>
   );
@@ -329,6 +347,7 @@ export function VisionSettings() {
         pid={state.pid}
         port={state.port}
         openExternal={openLink}
+        uninstall={actions.uninstall}
         availableProcesses={state.availableProcesses}
         activeProcessId={state.selectedProcessId}
         requestAvailableProcesses={actions.requestAvailableProcesses}

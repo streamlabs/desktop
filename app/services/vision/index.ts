@@ -183,6 +183,19 @@ export class VisionService extends Service {
     }
   }
 
+  async uninstall() {
+    this.writeEnabledState(false);
+    await this.stop();
+    await this.visionUpdater.uninstall();
+    this.writeState({
+      pid: 0,
+      port: 0,
+      isRunning: false,
+      installedVersion: '',
+      needsUpdate: false,
+    });
+  }
+
   private ensureUpdated = pMemoize(
     async ({ startAfterUpdate = true }: { startAfterUpdate?: boolean } = {}) => {
       this.log('ensureUpdated()');
