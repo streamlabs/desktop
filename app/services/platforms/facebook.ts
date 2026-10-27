@@ -93,6 +93,10 @@ export interface IFacebookLiveVideoExtended extends IFacebookLiveVideo {
 interface IFacebookServiceState extends IPlatformState {
   facebookPages: IFacebookPage[];
   facebookGroups: IFacebookGroup[];
+  /**
+   * Picture urls by page/group id
+   */
+  pictures: Record<string, string>;
   settings: IFacebookStartStreamOptions;
   grantedPermissions: TFacebookPermissionName[];
   /**
@@ -131,6 +135,7 @@ const initialState: IFacebookServiceState = {
   ...BasePlatformService.initialState,
   facebookPages: [],
   facebookGroups: [],
+  pictures: {},
   grantedPermissions: [],
   outageWarning: '',
   streamPageUrl: '',
@@ -215,9 +220,14 @@ export class FacebookService
   }
 
   @mutation()
-  private SET_FACEBOOK_PAGES_AND_GROUPS(pages: IFacebookPage[], groups: IFacebookGroup[]) {
+  private SET_FACEBOOK_PAGES_AND_GROUPS(
+    pages: IFacebookPage[],
+    groups: IFacebookGroup[],
+    pictures: Record<string, string>,
+  ) {
     this.state.facebookPages = pages;
     this.state.facebookGroups = groups;
+    this.state.pictures = pictures;
   }
 
   @mutation()
@@ -351,12 +361,10 @@ export class FacebookService
       return;
     }
 
-    // fetch pages and groups
-    const [pages, groups] = ((await Promise.all([
-      this.fetchPages(),
-      this.fetchGroups(),
-    ])) as unknown) as [IFacebookPage[], IFacebookGroup[]];
-    this.SET_FACEBOOK_PAGES_AND_GROUPS(pages, groups);
+    await this.fetchPagesAndGroups();
+
+    const pages = this.state.facebookPages;
+    const groups = this.state.facebookGroups;
 
     if (pages.length) {
       const pageId = this.state.settings.pageId!;
@@ -380,8 +388,6 @@ export class FacebookService
     ) {
       this.UPDATE_STREAM_SETTINGS({ destinationType: 'me' });
     }
-
-    console.log('FACEBOOK await this.fetchPicture("me")', await this.fetchPicture('me'));
 
     if (!this.state.userAvatar) {
       this.SET_AVATAR(await this.fetchPicture('me'));
@@ -545,22 +551,25 @@ export class FacebookService
    * Download the picture of a group or page and return it's base64 url string
    */
   async fetchPicture(objectId: string): Promise<string> {
-    let url = '';
-    try {
-      await fetch(`${this.apiBase}/${objectId}/picture`, {
-        method: 'GET',
-        headers: new Headers({
-          Authorization: 'Bearer ' + this.oauthToken,
-        }),
+    return await fetch(`${this.apiBase}/${objectId}/picture`, {
+      method: 'GET',
+      headers: new Headers({
+        Authorization: 'Bearer ' + this.oauthToken,
+      }),
+    })
+      .then(response => {
+        if (!response.ok) throw response;
+        return response.blob();
       })
-        .then(response => response.blob())
-        .then(blob => {
-          url = window.URL.createObjectURL(blob);
-        });
-    } catch (e: unknown) {
-      // just don't care is something is wrong here
-    }
-    return url;
+      .then(blob => {
+        return window.URL.createObjectURL(blob);
+      })
+      .catch(e => {
+        // just don't care is something is wrong here
+        console.error('Error fetching Facebook picture', this.serializeError(e));
+
+        return '';
+      });
   }
 
   private createLiveVideo(options: IFacebookStartStreamOptions): Promise<IFacebookLiveVideo> {
@@ -594,12 +603,10 @@ export class FacebookService
       .map(p => p.permission);
     this.SET_PERMISSIONS(grantedPermissions);
 
-    // fetch pages and groups
-    const [pages, groups] = ((await Promise.all([
-      this.fetchPages(),
-      this.fetchGroups(),
-    ])) as unknown) as [IFacebookPage[], IFacebookGroup[]];
-    this.SET_FACEBOOK_PAGES_AND_GROUPS(pages, groups);
+    await this.fetchPagesAndGroups();
+
+    const pages = this.state.facebookPages;
+    const groups = this.state.facebookGroups;
 
     // if currently selected page is not in the pages list then select the first page
     if (pages.length) {
@@ -794,10 +801,12 @@ export class FacebookService
         )
       ).data;
     } catch (e: unknown) {
-      console.error('Error fetching Facebook groups', e);
+      console.error('Error fetching Facebook groups', this.serializeError(e));
       this.SET_OUTAGE_WARN(
-        'Streaming to Facebook groups is currently unavailable.  Please try again later.',
+        $t('Streaming to Facebook groups is currently unavailable.  Please try again later.'),
       );
+
+      // By default, return an empty array so that the go live window still loads
       return [];
     }
   }
@@ -871,13 +880,44 @@ export class FacebookService
     this.windowsService.actions.closeChildWindow();
   }
 
+  /**
+   * Fetch pages, groups and their pictures together
+   * @remark Prevents race conditions when fetching pictures for pages and groups
+   */
+  private async fetchPagesAndGroups() {
+    const [pages, groups] = await Promise.all([this.fetchPages(), this.fetchGroups()]);
+
+    const pictures: Record<string, string> = {};
+
+    // Wait for promises to settle to prevent getting a page or group from failing
+    // just because of an image fetch failure
+    await Promise.allSettled(
+      [...pages, ...groups].map(async ({ id }) => {
+        const picture = await this.fetchPicture(id);
+        if (picture) pictures[id] = picture;
+      }),
+    );
+
+    this.SET_FACEBOOK_PAGES_AND_GROUPS(pages, groups, pictures);
+  }
+
   private async fetchPages(): Promise<IFacebookPage[]> {
-    return (
-      await this.requestFacebook<{ data: IFacebookPage[] }>(
-        `${this.apiBase}/me/accounts?limit=100`,
-        this.oauthToken,
-      )
-    ).data;
+    try {
+      return (
+        await this.requestFacebook<{ data: IFacebookPage[] }>(
+          `${this.apiBase}/me/accounts?limit=100`,
+          this.oauthToken,
+        )
+      ).data;
+    } catch (e: unknown) {
+      console.error('Could not fetch Facebook pages', this.serializeError(e));
+      this.SET_OUTAGE_WARN(
+        $t('Streaming to Facebook pages is currently unavailable.  Please try again later.'),
+      );
+
+      // By default, return an empty array so that the go live window still loads
+      return [];
+    }
   }
 
   /**
