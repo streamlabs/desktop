@@ -1,0 +1,12 @@
+# Configuration for Dependabot
+
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    # Look for `package.json` and `lock` files in the `root` directory
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'sunday'
+      time: '00:00'
+      timezone: 'America/Los_Angeles'
