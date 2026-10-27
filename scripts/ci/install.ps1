@@ -65,7 +65,7 @@ echo "Install Visual C++ Redistributable (required for node-win32-np module)"
 choco install vcredist2015
 
 echo "Install Nodejs"
-choco install nodejs --version=22.18.0
+choco install nodejs --version=22.23.4
 
 echo "Install Yarn"
 choco install yarn
