@@ -1,0 +1,26 @@
+.dock,
+.stacked {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.top {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  // The resize bar sits in the middle of this space
+  margin-bottom: 16px;
+}
+
+.bottom {
+  position: relative;
+  // The resize bar is absolutely positioned and has no offset of its own, so it sits where it
+  // would have been in the flow. As the last child it would land below the element. A flex
+  // container places it at the start instead, above the element.
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  min-height: 0;
+}
