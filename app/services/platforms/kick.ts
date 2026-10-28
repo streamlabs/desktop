@@ -7,7 +7,7 @@ import {
   IPlatformState,
   TPlatform,
   TPlatformCapability,
-  TLiveDockFeature,
+  TMultichatFeature,
 } from './index';
 import { authorizedHeaders, jfetch } from '../../util/requests';
 import { StreamError, throwStreamError } from '../streaming/stream-error';
@@ -133,7 +133,7 @@ export class KickService
     'viewerCount',
     'streamlabels',
   ]);
-  readonly liveDockFeatures = new Set<TLiveDockFeature>([
+  readonly multichatFeatures = new Set<TMultichatFeature>([
     'view-stream',
     'refresh-chat',
     'chat-streaming',
@@ -575,7 +575,7 @@ export class KickService
     return `https://${host}/dashboard#/settings/account-settings/platforms`;
   }
 
-  get liveDockEnabled(): boolean {
+  get multichatEnabled(): boolean {
     return true;
   }
 
