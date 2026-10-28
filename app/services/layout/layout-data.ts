@@ -64,11 +64,31 @@ export const LAYOUT_DATA: ILayoutData = {
   },
 };
 
+export enum EDockLayout {
+  Single = 'Single',
+  Stacked = 'Stacked',
+}
+
+export type TDockSlot = 'S1' | 'S2';
+
+/**
+ * The slots each dock layout provides. Stacked slots are ordered top to bottom.
+ */
+export const DOCK_SLOTS: Record<EDockLayout, TDockSlot[]> = {
+  [EDockLayout.Single]: ['S1'],
+  [EDockLayout.Stacked]: ['S1', 'S2'],
+};
+
+export function isDockSlot(slot: string | null | undefined): slot is TDockSlot {
+  return slot === 'S1' || slot === 'S2';
+}
+
 export enum ELayoutElement {
   Minifeed = 'Minifeed',
   LegacyEvents = 'LegacyEvents',
   Display = 'Display',
   Mixer = 'Mixer',
+  Multichat = 'Multichat',
   Scenes = 'Scenes',
   Sources = 'Sources',
   StreamPreview = 'StreamPreview',
@@ -97,6 +117,10 @@ export const ELEMENT_DATA = (): IElementData => ({
   [ELayoutElement.Mixer]: {
     title: $t('Audio Mixer'),
     component: 'Mixer',
+  },
+  [ELayoutElement.Multichat]: {
+    title: $t('Multichat'),
+    component: 'Multichat',
   },
   [ELayoutElement.Scenes]: {
     title: $t('Scene Selector'),
