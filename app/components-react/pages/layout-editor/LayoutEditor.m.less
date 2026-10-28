@@ -166,6 +166,86 @@
   box-shadow: 0 0 50px rgba(255, 255, 255, 0.2) inset;
 }
 
+// dock
+
+.dock-preview {
+  flex: none;
+  width: 200px;
+  margin: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dock-label {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.dock-zone {
+  min-height: 0;
+  flex: 1 1 0;
+
+  &:last-of-type {
+    flex-grow: 2;
+  }
+
+  span {
+    font-size: 1.25rem;
+  }
+}
+
+.dock-layouts {
+  display: grid;
+  grid-template-columns: repeat(2, 76px);
+  gap: 16px;
+  margin: 12px 8px 8px;
+}
+
+.dock-layout-option {
+  .radius();
+
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 4px;
+  padding: 8px 4px;
+  font-size: 12px;
+  border: 2px solid transparent;
+  background-color: var(--border);
+
+  &:hover {
+    cursor: pointer;
+    color: var(--title);
+  }
+
+  &.active {
+    border-color: var(--button);
+    color: var(--title);
+  }
+}
+
+.dock-layout-icon {
+  display: flex;
+  flex-direction: column;
+  width: 24px;
+  height: 36px;
+  margin-bottom: 4px;
+
+  span {
+    flex: 1;
+    border-radius: 2px;
+    background-color: var(--paragraph);
+
+    & + span {
+      margin-top: 2px;
+    }
+  }
+}
+
 // layout templates
 
 .template-container.default {
