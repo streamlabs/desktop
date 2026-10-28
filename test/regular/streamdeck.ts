@@ -292,6 +292,17 @@ test('Malformed request disconnects the client', async t => {
   const sceneName = 'Sent after disconnect';
 
   const socket = net.connect({ port: 28194, host: '127.0.0.1', allowHalfOpen: true });
+  await new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => reject('Could not connect to the TCP API'), 5000);
+    socket.once('connect', () => {
+      clearTimeout(timeout);
+      resolve();
+    });
+    socket.once('error', e => {
+      clearTimeout(timeout);
+      reject(e);
+    });
+  });
   socket.on('error', () => {});
   // 'end' is only emitted once the error response we get back has been read
   socket.resume();
