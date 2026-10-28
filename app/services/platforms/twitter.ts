@@ -5,7 +5,7 @@ import {
   IPlatformService,
   IPlatformState,
   TPlatformCapability,
-  TLiveDockFeature,
+  TMultichatFeature,
 } from './index';
 import { authorizedHeaders, jfetch } from '../../util/requests';
 import { throwStreamError } from '../streaming/stream-error';
@@ -137,7 +137,7 @@ export class TwitterPlatformService
     'stream-schedule',
     'streamlabels',
   ]);
-  readonly liveDockFeatures = new Set<TLiveDockFeature>([
+  readonly multichatFeatures = new Set<TMultichatFeature>([
     'refresh-chat-streaming',
     'chat-streaming',
   ]);
@@ -419,7 +419,7 @@ export class TwitterPlatformService
     return {};
   }
 
-  get liveDockEnabled(): boolean {
+  get multichatEnabled(): boolean {
     return true;
   }
 

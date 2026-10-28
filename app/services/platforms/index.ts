@@ -187,7 +187,7 @@ export interface IPlatformErrorCallbackProps {
 export interface IPlatformService {
   capabilities: Set<TPlatformCapability>;
   hasCapability<T extends TPlatformCapability>(capability: T): this is TPlatformCapabilityMap[T];
-  hasLiveDockFeature(feature: TLiveDockFeature): boolean;
+  hasMultichatFeature(feature: TMultichatFeature): boolean;
 
   authWindowOptions: Electron.BrowserWindowConstructorOptions;
 
@@ -241,7 +241,7 @@ export interface IPlatformService {
 
   setPlatformContext?: (platform: TPlatform) => void;
 
-  liveDockEnabled: boolean;
+  multichatEnabled: boolean;
 
   readonly apiBase: string;
   readonly platform: TPlatform;
@@ -274,7 +274,7 @@ export interface IUserInfo {
   username?: string;
 }
 
-export type TLiveDockFeature =
+export type TMultichatFeature =
   | 'chat-offline'
   | 'chat-streaming'
   | 'dashboard'
