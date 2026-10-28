@@ -15,7 +15,7 @@ export class AddFilesCommand extends Command {
   @Inject() private editorCommandsService: EditorCommandsService;
 
   private addNodesSubCommands: (CreateNewItemCommand | CreateFolderCommand)[];
-  private removeNodesSubCommand: RemoveNodesCommand;
+  private removeNodesSubCommand: RemoveNodesCommand | null;
 
   constructor(private sceneId: string, private files: string[]) {
     super();
@@ -62,7 +62,10 @@ export class AddFilesCommand extends Command {
           }
           return new CreateFolderCommand(this.sceneId, node.name);
         });
-      this.removeNodesSubCommand = new RemoveNodesCommand(scene.getSelection(addedNodes));
+      // nothing was added if none of the files are a supported type
+      this.removeNodesSubCommand = addedNodes.length
+        ? new RemoveNodesCommand(scene.getSelection(addedNodes))
+        : null;
     } else {
       // redo logic
       this.addNodesSubCommands.forEach(cmd => cmd.execute());
@@ -70,6 +73,6 @@ export class AddFilesCommand extends Command {
   }
 
   async rollback() {
-    await this.removeNodesSubCommand.execute();
+    await this.removeNodesSubCommand?.execute();
   }
 }
