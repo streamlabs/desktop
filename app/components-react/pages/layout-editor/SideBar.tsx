@@ -43,17 +43,12 @@ function ElementList() {
   const { LayoutService } = Services;
   const { handleElementDrag } = useLayoutEditor();
 
-  // TODO: Multichat is selectable once the dock renders from the layout state
-  const elements = Object.keys(ELayoutElement).filter(
-    element => element !== ELayoutElement.Multichat,
-  );
-
   return (
     <div className={styles.elementList}>
       <div className={styles.title}>{$t('Elements')}</div>
       <div className={styles.subtitle}>{$t('Drag and drop to edit.')}</div>
       <Scrollable className={styles.elementContainer}>
-        {elements.map((element: ELayoutElement) => (
+        {Object.keys(ELayoutElement).map((element: ELayoutElement) => (
           <div
             draggable
             key={element}

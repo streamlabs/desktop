@@ -6,6 +6,12 @@ import { Services } from 'components-react/service-provider';
 
 type TLayoutElementComponent = FunctionComponent<ILayoutElementProps> & { mins: IVec2 };
 
+/** Get the minimum size of a layout element. */
+export function getElementMins(element: string): IVec2 | undefined {
+  const componentName = Services.LayoutService.views.elementComponent(element as ELayoutElement);
+  return (elements as Dictionary<TLayoutElementComponent>)[componentName]?.mins;
+}
+
 /**
  * Builds the elements assigned to each slot, along with their minimum sizes.
  * @param elementsToRender the elements to render, e.g. `LayoutService.views.elementsToRender`
