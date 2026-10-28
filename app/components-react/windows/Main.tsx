@@ -10,16 +10,15 @@ import * as appPages from 'components-react/pages';
 import TitleBar from 'components-react/shared/TitleBar';
 import { Services } from 'components-react/service-provider';
 import NavMenu from 'components-react/nav-menu/NavMenu';
-import { isMultichatSupported } from 'components-react/editor/elements/Multichat';
 import { getElementMins } from 'components-react/editor/renderLayoutElements';
 import Dock from 'components-react/root/Dock';
 import DockHeader from 'components-react/root/DockHeader';
+import { useDockHasContent } from 'components-react/root/useDockHasContent';
 import StudioFooter from 'components-react/root/StudioFooter';
 import Loader from 'components-react/pages/Loader';
 import ResizeBar from 'components-react/root/ResizeBar';
 import antdThemes from 'styles/antd/index';
 import { EStreamingState } from 'services/streaming';
-import { ELayoutElement } from 'services/layout';
 import { TApplicationTheme } from 'services/customization';
 import styles from './Main.m.less';
 import { StatefulService } from 'services';
@@ -114,16 +113,8 @@ export default function Main() {
 
   const isOnboarding = page === 'Onboarding';
 
-  // Multichat is not shown in the dock on platforms that don't support it, so a dock that
-  // only holds Multichat has nothing to show.
   const dockKey = dockElements.join();
-  const dockHasContent = useMemo(
-    () =>
-      dockElements.some(
-        element => element !== ELayoutElement.Multichat || isMultichatSupported(platform),
-      ),
-    [dockKey, platform?.type],
-  );
+  const dockHasContent = useDockHasContent();
 
   const renderDock = useMemo(() => {
     return isLoggedIn && !isOnboarding && hasDock && !showLoadingSpinner && dockHasContent;
