@@ -26,6 +26,11 @@ test('Scene-collections cloud-backup', async t => {
   `;
   sceneBuilder.build(sketch);
 
+  // Shutdown persists locally; cloud synchronization runs on explicit collection operations
+  // and startup. Save the edited graph, then sync it before discarding the local cache.
+  await collectionsService.load(collection.id);
+  await collectionsService.rename(collection.name, collection.id);
+
   // restart the app and delete the cache dir
   await stopApp(t, true);
   await startApp(t);
@@ -35,8 +40,9 @@ test('Scene-collections cloud-backup', async t => {
   await loginWithAuthInfo(t, authInfo);
 
   // check the scene-collection is downloaded
+  t.is(collectionsService.activeCollection.name, collection.name);
   t.true(sceneBuilder.isEqualTo(sketch), 'Scene collection should be downloaded');
 
   // clear the collection
-  await collectionsService.delete(collection.id);
+  await collectionsService.delete(collectionsService.activeCollection.id);
 });

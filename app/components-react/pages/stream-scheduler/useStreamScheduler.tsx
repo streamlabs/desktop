@@ -135,9 +135,19 @@ export class StreamSchedulerController {
   });
 
   /**
+   * Whether the controller has already loaded its events
+   * @remark `useController` calls `init()` for every component that consumes the controller, and
+   * again whenever one of them remounts. Without this guard, opening an event re-runs `loadEvents`,
+   * which can accidentally overwrite settings in local state
+   */
+  private isInitialized = false;
+
+  /**
    * Load all events into state on module init
    */
   init() {
+    if (this.isInitialized) return;
+    this.isInitialized = true;
     this.loadEvents();
   }
 
@@ -551,6 +561,35 @@ export class StreamSchedulerController {
     });
   }
 
+  /**
+   * Hide the event modal
+   * @remark `closeModal` can't be used to hide the edit scheduled event modal because it discards
+   * the selected event and the settings fetched for it, both of which have to survive to restore
+   * the modal.
+   * @remark This is why the modal has no `afterClose` handler — see `closeModal`.
+   */
+  hideModal() {
+    this.store.setState(s => {
+      s.isModalVisible = false;
+    });
+  }
+
+  /**
+   * Show the event modal
+   * @remark Used to re-show the event modal when the modal settings need to be preserved.
+   * This is the counterpart to `hideModal`.
+   */
+  showModal() {
+    this.store.setState(s => {
+      s.isModalVisible = true;
+    });
+  }
+
+  /**
+   * Discard the modal's state
+   * @remark Deliberately not wired to the modal's `afterClose`, which fires when the leave animation
+   * ends and would clear `selectedEventId` so the modal comes back without its Delete and Save buttons.
+   */
   closeModal() {
     this.store.setState(s => {
       s.selectedEventId = '';

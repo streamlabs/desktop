@@ -216,6 +216,7 @@ function humanFileSize(bytes, si) {
 console.log('=================================');
 console.log('Streamlabs Desktop');
 console.log(`Version: ${process.env.SLOBS_VERSION}`);
+console.log(`Electron: ${process.versions.electron}, Chromium: ${process.versions.chrome}`);
 console.log(`OS: ${os.platform()} ${os.release()}`);
 console.log(`Arch: ${process.arch}`);
 console.log(`CPU: ${cpus[0].model}`);
@@ -278,6 +279,84 @@ let shutdownStarted = false;
 let shutdownCoordinator;
 
 global.indexUrl = `file://${__dirname}/index.html`;
+
+function logElectronEvent(level, eventName, details) {
+  if (process.env.SLOBS_DISABLE_MAIN_LOGGING) return;
+
+  // console.warn/error do not use the app.log writer in the main process.
+  logFromRemote(
+    level,
+    'electron-main',
+    `[Electron] ${eventName} ${JSON.stringify({ ...details, shutdownStarted })}`,
+  );
+}
+
+// Observe every renderer, including one-off windows and embedded webviews.
+app.on('web-contents-created', (event, contents) => {
+  const identity = {
+    webContentsId: contents.id,
+    webContentsType: contents.getType(),
+    browserWindowId: null,
+    windowId: null,
+    rendererPid: null,
+  };
+
+  function updateIdentity() {
+    if (contents.isDestroyed()) return;
+
+    try {
+      const owner = BrowserWindow.fromWebContents(contents);
+      identity.browserWindowId = owner ? owner.id : null;
+      // Electron can return 0 after a crash; retain the last known PID for correlation.
+      identity.rendererPid = contents.getOSProcessId() || identity.rendererPid;
+
+      const pageUrl = new URL(contents.getURL() || 'about:blank');
+      const appUrl = new URL(global.indexUrl);
+      identity.windowId =
+        pageUrl.protocol === appUrl.protocol && pageUrl.pathname === appUrl.pathname
+          ? pageUrl.searchParams.get('windowId')
+          : null;
+    } catch (e) {
+      // A destroyed native object must not prevent logging its last known identity.
+    }
+  }
+
+  // Cache identity while the process is alive, without logging page URLs or titles.
+  contents.on('did-start-loading', updateIdentity);
+  contents.on('dom-ready', () => {
+    updateIdentity();
+    logElectronEvent('info', 'renderer-ready', identity);
+  });
+  contents.on('render-process-gone', (event, details) => {
+    updateIdentity();
+    logElectronEvent(details.reason === 'clean-exit' ? 'info' : 'error', 'render-process-gone', {
+      ...identity,
+      reason: details.reason,
+      exitCode: details.exitCode,
+    });
+    identity.rendererPid = null;
+  });
+  contents.on('unresponsive', () => {
+    updateIdentity();
+    logElectronEvent('warn', 'unresponsive', identity);
+  });
+  contents.on('responsive', () => {
+    updateIdentity();
+    logElectronEvent('info', 'responsive', identity);
+  });
+});
+
+// GPU and utility processes are not covered by renderer exit events.
+app.on('child-process-gone', (event, details) => {
+  logElectronEvent(details.reason === 'clean-exit' ? 'info' : 'error', 'child-process-gone', {
+    type: details.type,
+    reason: details.reason,
+    exitCode: details.exitCode,
+    serviceName: details.serviceName,
+    name: details.name,
+    systemErrorCode: details.systemErrorCode,
+  });
+});
 
 function forceShutdown(reason) {
   console.warn(`[Shutdown] Force exiting application: ${reason}`);
@@ -342,6 +421,23 @@ async function startApp() {
   });
 
   remote.initialize();
+
+  // Resolve remote.require() from this file rather than letting @electron/remote
+  // pick the context itself.
+  //
+  // @electron/remote branches on `process.mainModule` being undefined to decide how
+  // to resolve modules. That assumption held around Electron 28, but Electron 43
+  // defines `process.mainModule` again -- as Electron's own internal module, whose
+  // `paths` array is empty -- so it takes the legacy branch and every
+  // remote.require() fails with "Cannot find module ... Require stack: - electron".
+  // Still present in @electron/remote 2.1.3.
+  //
+  // Setting `returnValue` on the documented `remote-require` event short-circuits
+  // that logic. `require` here resolves from main.js, which has the correct paths.
+  // Affects game_overlay, node-libuiohook, and node-window-rendering.
+  app.on('remote-require', (event, webContents, moduleName) => {
+    event.returnValue = require(moduleName);
+  });
 
   const Raven = require('raven');
 
@@ -628,7 +724,9 @@ async function startApp() {
 }
 
 const haDisableFile = path.join(app.getPath('userData'), 'HADisable');
-if (fs.existsSync(haDisableFile)) app.disableHardwareAcceleration();
+const hardwareAccelerationDisabled = fs.existsSync(haDisableFile);
+if (hardwareAccelerationDisabled) app.disableHardwareAcceleration();
+console.log(`Electron hardware acceleration disabled by setting: ${hardwareAccelerationDisabled}`);
 
 app.setAsDefaultProtocolClient('slobs');
 

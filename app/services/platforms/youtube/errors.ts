@@ -93,7 +93,12 @@ export function formatYoutubeReasonDetail(e: any, reason?: EYoutubeErrorReason):
         console.error('YouTube API Error 403: Permission denied', e);
         return $t('YouTube permission denied by API');
       default:
-        console.error('YouTube API Error ', status, ': Non-generic error', e);
+        console.error(
+          'YouTube API Error ',
+          status ?? 'NO STATUS RETURNED',
+          ': Non-generic error',
+          e,
+        );
         return $t('Connection Failed');
     }
   }

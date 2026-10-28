@@ -67,7 +67,8 @@ export interface IEventSocketEvent {
     | 'kicks'
     | 'account_permissions_required'
     | 'visionEvent'
-    | 'userStateUpdated';
+    | 'userStateUpdated'
+    | 'repost';
   for: string;
   message: IRecentEvent[];
 }

@@ -1,6 +1,5 @@
 {
   "Banned Media": "Forbudte medier",
-  "Check Banned Media": "Kontrollér forbudte medier",
   "Price Per Second": "Pris pr. sekund",
   "Min. Amount to Share": "Minimumsbeløb der skal deles",
   "Max Duration": "Maksimal varighed",
@@ -8,8 +7,5 @@
   "Spam Security": "Spamsikkerhed",
   "The time between videos the next video has to buffer.": "Tiden mellem videoer som den næste video skal gemme i buffer.",
   "Manage Media Settings": "Administrer medieindstillinger",
-  "The maximum duration in seconds that media can be played, regardless of amount donated. The default value is 60 seconds.": "Den maksimale varighed i sekunder som medier kan afspilles uanset det donerede beløb. Standardværdien er 60 sekunder.",
-  "This slider helps you filter shared media before it can be submitted.\nOff: No security\nLow: 65%+ rating, 5k+ views\nMedium: 75%+ rating, 40k+ views\nHigh: 80%+ rating, 300k+ views\nVery High: 85%+ rating, 900k+ views": "Denne skydeknap hjælper dig med at filtrere delte medier, før det kan indsendes. \nFra: Ingen beskyttelse\nLav: 65 %+-vurdering, 5k+-visninger\nMedium: 75 %+-vurdering, 40k+-visninger\nHøj: 80 %+-bedømmelse, 300k+-visninger\nMeget høj: 85 %+-vurdering, 900k+-visninger",
-  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "Det mindste beløb, en donator skal donere for at dele medier. Standardværdien er 5,00 USD",
-  "In order to control length, you can decide how much it costs per second to share media. Setting this to 0.30 would mean that for $10, media would play for 30 seconds. The default value is 0.10.": "For at kontrollere længden kan du beslutte hvor meget det koster pr. sekund at dele medier. Indstilling af dette til 0,30 ville betyde at for 10 dollars ville medier spille i 30 sekunder. Standardværdien er 0,10."
+  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "Det mindste beløb, en donator skal donere for at dele medier. Standardværdien er 5,00 USD"
 }

@@ -49,6 +49,7 @@
   margin-right: 8px !important;
 }
 
+// Used by EditStreamWindow, which still has no left column of its own.
 .destination-mode {
   padding-right: 25px !important;
   padding-left: 25px !important;
@@ -65,14 +66,30 @@
   }
 }
 
+// The GoLive window's unprotected-mode variant of the above: same single-column layout, tighter
+// right gutter. Kept as a separate class rather than a rename of `.destination-mode` because
+// EditStreamWindow still consumes that one.
+.unprotected-mode {
+  padding-right: 5px !important;
+  padding-left: 25px !important;
+
+  > *:not(:first-child) {
+    margin-right: 0;
+  }
+
+  .right-column-scroll {
+    margin-right: 0 !important;
+  }
+}
+
 .label {
   align-self: center;
   margin-right: 10px;
   flex-grow: 1;
 }
 
-.go-live-settings {
-  height: 100%;
+.go-live-window {
+  background-color: var(--background);
 
   &:global(a) {
     color: var(--teal);
@@ -253,35 +270,6 @@ button.bottom {
   :global(.ant-row.ant-form-item) {
     margin-top: 0px !important;
   }
-}
-
-.info-alert {
-  color: #72d5ff;
-  width: 600px;
-  border-radius: 4px;
-  margin: 0 auto;
-  text-align: left !important;
-
-  :global(.ant-form-item-control-input-content) {
-    min-width: 100px;
-    text-align: right;
-  }
-
-  :global(.ant-message-info) {
-    display: flex;
-    align-items: center;
-  }
-
-  :global(.ant-message-info .anticon) {
-    color: #72d5ff;
-    margin-right: 10px;
-  }
-}
-
-.alert-content {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
 }
 
 .update-btn-tooltip {

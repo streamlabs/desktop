@@ -156,7 +156,7 @@ export default function GoLiveSettings() {
       <Col
         span={shouldShowLeftCol ? 17 : 24}
         className={cx(styles.rightColumn, {
-          [styles.destinationMode]: !shouldShowLeftCol,
+          [styles.unprotectedMode]: !shouldShowLeftCol,
         })}
       >
         <Spinner visible={isLoading} relative />

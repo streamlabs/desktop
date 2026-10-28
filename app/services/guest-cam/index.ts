@@ -951,7 +951,7 @@ export class GuestCamService extends StatefulService<IGuestCamServiceState> {
         if (result && result['error']) {
           // TODO: index
           // @ts-ignore
-          this.error(`Got error response from request ${data['type']}`);
+          this.error(`Got error response from request ${data['type']}`, result['error']);
         }
 
         resolve(result);

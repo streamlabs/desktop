@@ -108,7 +108,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
       >
         {showRecordingToggle && (
           <SwitchInput
-            name="recording"
+            name="recording-toggle"
             value={recordWhenStartStream}
             onChange={val => {
               SettingsService.actions.setSettingValue('General', 'RecordWhenStreaming', val);

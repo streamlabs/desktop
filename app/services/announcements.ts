@@ -167,7 +167,7 @@ export class AnnouncementsService extends Service {
    */
   async getProductUpdates() {
     // Handle forcing the marketing modal to show show for development purposes
-    if (Utils.showProductUpdates()) {
+    if (Utils.env.SLD_FORCE_PRODUCT_UPDATES) {
       const resp = await this.fetchProductUpdates(true);
       this.showProductUpdates(resp);
       return;
@@ -176,7 +176,7 @@ export class AnnouncementsService extends Service {
     // Handle the normal flow for showing the marketing modal on app start
     const resp = await this.fetchProductUpdates();
 
-    if (!resp || !resp.lastUpdatedAt || resp.lastUpdatedAt <= this.state.lastReadProductUpdate) {
+    if (!resp.lastUpdatedAt || resp.lastUpdatedAt <= this.state.lastReadProductUpdate) {
       return;
     }
 
@@ -294,7 +294,7 @@ export class AnnouncementsService extends Service {
     if (
       !recentlyInstalled ||
       this.customizationService.state.enableAnnouncements ||
-      Utils.showProductUpdates()
+      Utils.env.SLD_FORCE_PRODUCT_UPDATES
     ) {
       const endpoint = `api/v5/slobs/announcement/get?clientId=${this.userService.getLocalUserId()}&locale=${
         this.i18nService.state.locale
@@ -318,12 +318,10 @@ export class AnnouncementsService extends Service {
   }> {
     const recentlyInstalled = await this.recentlyInstalled();
 
-    const forceShowMarketingModal = showProductUpdates !== undefined && showProductUpdates;
-    if (
-      !forceShowMarketingModal &&
-      (recentlyInstalled || !this.customizationService.state.enableAnnouncements)
-    ) {
-      return null;
+    if (showProductUpdates === true) {
+      console.debug('Forcing product updates modal to show for development purposes');
+    } else if (recentlyInstalled || !this.customizationService.state.enableAnnouncements) {
+      return { lastUpdatedAt: null };
     }
 
     const endpoint = `api/v5/slobs/product-updates/get?clientId=${this.userService.getLocalUserId()}&locale=${
@@ -332,6 +330,7 @@ export class AnnouncementsService extends Service {
     const req = this.formRequest(endpoint);
     try {
       const resp = await jfetch<{ updates: IAnnouncementsInfo[]; lastUpdatedAt: number }>(req);
+      console.debug('Fetched product updates:', resp);
       return resp;
     } catch (e: unknown) {
       return { lastUpdatedAt: null };

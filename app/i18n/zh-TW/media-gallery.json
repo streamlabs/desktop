@@ -8,7 +8,6 @@
   "Browse the Gallery": "瀏覽藝廊",
   "Cancel": "取消",
   "OK": "確定",
-  "Select": "選擇",
   "You don't have any uploaded files!": "您沒有任何已上傳的檔案！",
   "You don't have any uploaded images!": "您沒有任何已上傳的影像！",
   "You don't have any uploaded sounds!": "您沒有任何已上傳的聲音！",
@@ -19,7 +18,6 @@
   "Stock Files": "庫存檔案",
   "My Uploads": "我的上傳",
   "Not a supported file type": "不是支援的檔案類型",
-  "Downloading...": "下載中...",
   "Uploading...": "上傳中...",
   "URL Copied": "URL 已複製",
   "Failed to copy URL": "無法複製 URL",
@@ -29,7 +27,9 @@
   "No Sound": "沒有聲音",
   "No Media": "沒有媒體",
   "Change Link": "變更連結",
-  "Pick From Gallery": "從圖庫中選擇",
   "Clear Link": "清除連結",
-  "Media URL": "媒體 URL"
+  "Media URL": "媒體 URL",
+  "Only .jpeg and .png is supported": "Only .jpeg and .png is supported",
+  "This file could not be uploaded": "This file could not be uploaded",
+  "You must have Streamlabs Ultra to use this media": "You must have Streamlabs Ultra to use this media"
 }

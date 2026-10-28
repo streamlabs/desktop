@@ -8,7 +8,6 @@
   "Browse the Gallery": "갤러리 탐색",
   "Cancel": "취소",
   "OK": "확인",
-  "Select": "선택",
   "You don't have any uploaded files!": "업로드된 파일이 없습니다!",
   "You don't have any uploaded images!": "업로드된 이미지가 없습니다!",
   "You don't have any uploaded sounds!": "업로드된 사운드가 없습니다!",
@@ -19,7 +18,6 @@
   "Stock Files": "스톡 파일",
   "My Uploads": "나의 업로드",
   "Not a supported file type": "지원되지 않는 파일 유형",
-  "Downloading...": "다운로드 중...",
   "Uploading...": "업로드 중...",
   "URL Copied": "복사된 URL",
   "Failed to copy URL": "URL 복사 실패",
@@ -29,7 +27,9 @@
   "No Sound": "사운드 없음",
   "No Media": "미디어 없음",
   "Change Link": "링크 변경",
-  "Pick From Gallery": "갤러리에서 선택",
   "Clear Link": "링크 지우기",
-  "Media URL": "미디어 URL"
+  "Media URL": "미디어 URL",
+  "Only .jpeg and .png is supported": "Only .jpeg and .png is supported",
+  "This file could not be uploaded": "This file could not be uploaded",
+  "You must have Streamlabs Ultra to use this media": "You must have Streamlabs Ultra to use this media"
 }

@@ -387,6 +387,7 @@ class SourceSelectorController {
        * clicking on the source selector selects both sources
        */
       if (
+        this.isDualOutputActive &&
         this.dualOutputService.views.hasNodeMap(this.scene.id) &&
         this.dualOutputService.views.activeDisplays.horizontal &&
         this.dualOutputService.views.activeDisplays.vertical
@@ -504,6 +505,7 @@ class SourceSelectorController {
      * in the vertical display, convert the vertical node id to the horizontal node id.
      */
     if (
+      this.isDualOutputActive &&
       this.dualOutputService.views.activeDisplays.horizontal &&
       this.dualOutputService.views.activeDisplays.vertical
     ) {
@@ -599,12 +601,9 @@ class SourceSelectorController {
     return this.streamingService.isIdle;
   }
 
-  get replayBufferActive() {
-    return this.streamingService.isReplayBufferActive;
-  }
-
   get selectiveRecordingLocked() {
-    return this.replayBufferActive || !this.streamingServiceIdle;
+    // Selective recording is locked if the streaming service is not idle or if the vertical replay buffer is active.
+    return !this.streamingServiceIdle || this.streamingService.views.isVerticalReplayBuffer;
   }
 
   toggleSelectiveRecording() {

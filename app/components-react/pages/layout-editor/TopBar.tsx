@@ -5,13 +5,14 @@ import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
 import { ListInput } from 'components-react/shared/inputs';
 import { ELayoutElement } from 'services/layout';
+import { ENavMenuKey } from 'services/nav-menu';
 import { $t } from 'services/i18n';
 import styles from './LayoutEditor.m.less';
 import { useLayoutEditor } from './hooks';
 import Form from '../../shared/inputs/Form';
 
 export default function TopBar() {
-  const { LayoutService, NavigationService, SideNavService } = Services;
+  const { LayoutService, NavigationService, NavMenuService } = Services;
   const {
     slottedElements,
     browserUrl,
@@ -42,13 +43,12 @@ export default function TopBar() {
     if (browserUrl && slottedElements[ELayoutElement.Browser]) {
       await LayoutService.actions.return.setUrl(browserUrl);
     }
-    SideNavService.actions.setCurrentMenuItem(LayoutService.state.currentTab);
+    NavMenuService.actions.setCurrentMenuItem(ENavMenuKey.Editor);
     NavigationService.actions.navigate('Studio');
   }
 
   return (
     <Form className={styles.topBar}>
-      <img className={styles.arrow} src={require('../../../../media/images/chalk-arrow.png')} />
       <button
         className="button button--action"
         style={{ margin: '0 16px' }}

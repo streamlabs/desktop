@@ -113,6 +113,10 @@ interface IRecentEventFilterConfig {
   kick_kicks?: boolean;
   kick_subscription?: boolean;
   kick_subscription_gifts?: boolean;
+  twitter_follow?: boolean;
+  twitter_subscription?: boolean;
+  twitter_like?: boolean;
+  twitter_repost?: boolean;
   // Facebook Live
   facebook_support?: boolean;
   facebook_like?: boolean;
@@ -206,6 +210,10 @@ const filterName = (key: string): string => {
     kick_follow: $t('Follows'),
     kick_subscription: $t('Subs'),
     kick_subscription_gifts: $t('Gifted'),
+    twitter_follow: $t('X Follows'),
+    twitter_subscription: $t('X Subscriptions'),
+    twitter_like: $t('X Likes'),
+    twitter_repost: $t('X Reposts'),
     facebook_support: $t('Supports'),
     facebook_like: $t('Likes'),
     facebook_share: $t('Shares'),
@@ -216,6 +224,9 @@ const filterName = (key: string): string => {
 function getRecentEventType(event: IEventSocketEvent): string {
   if (event.for === 'kick_account') {
     return `kick_${event.type}`;
+  }
+  if (event.for === 'twitter_account') {
+    return `twitter_${event.type}`;
   }
   if (event.type === 'powerUp') {
     return 'power_up';
@@ -289,6 +300,7 @@ const SUPPORTED_EVENTS = [
   'sticker',
   'effect',
   'like',
+  'repost',
   'raid',
   'stars',
   'support',
@@ -324,6 +336,11 @@ class RecentEventsViews extends ViewHandler<IRecentEventsState> {
       kick_kicks: $t('has used'),
       kick_subscription: this.getSubString(event),
       kick_subscription_gifts: this.getSubString(event),
+      // X
+      twitter_follow: $t('has followed'),
+      twitter_subscription: $t('has subscribed'),
+      twitter_like: $t('has liked'),
+      twitter_repost: $t('has reposted'),
       // Facebook
       like: $t('has liked'),
       stars: $t('has used'),
@@ -355,7 +372,6 @@ class RecentEventsViews extends ViewHandler<IRecentEventsState> {
     }
     return $t('has tipped');
   }
-
   getSubString(event: IRecentEvent) {
     if (event.platform === 'facebook_account') {
       if (event.months > 1) {
@@ -703,6 +719,10 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
       'kick_follow',
       'kick_kicks',
       'kick_subscription',
+      'twitter_follow',
+      'twitter_subscription',
+      'twitter_like',
+      'twitter_repost',
       'facebook_support',
       'facebook_like',
       'facebook_share',
@@ -893,7 +913,12 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
 
   isAllowed(event: IRecentEvent) {
     if (this.state.safeMode.enabled) {
-      if (['follow', 'host'].includes(event.type)) return false;
+      if (['follow', 'twitter_follow', 'host'].includes(event.type)) return false;
+    }
+
+    // Handle Twitter events separately since they are prefixed with `twitter_`.
+    if (event.platform === 'twitter_account' && event.type.startsWith('twitter_')) {
+      return !!this.state.filterConfig[event.type as keyof IRecentEventFilterConfig];
     }
 
     if (event.type === 'subscription' && this.userService.platform.type !== 'youtube') {

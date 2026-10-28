@@ -232,15 +232,17 @@ test(
 
     // Studio Mode
     await focusMain();
-    await (await app.client.$('.side-nav .icon-studio-mode-3')).click();
+    await (await app.client.$('button[data-name=studio-mode-toggle]')).click();
     t.true(
-      await isDisplayed('div=Cannot toggle Studio Mode in Dual Output Mode.'),
+      await isDisplayed('span=Dual Output Enabled', { timeout: 5000 }),
       'Cannot toggle Studio Mode in Dual Output Mode.',
     );
+    await clickWhenDisplayed('.ant-modal-close');
 
     // Selective Recording
     await (await app.client.$('.icon-smart-record')).click();
     await waitForDisplayed('.icon-smart-record.active');
+    await waitForDisplayed('#vertical-display', { reverse: true, timeout: 10000 });
     t.false(
       await isDisplayed('#vertical-display'),
       'Toggling selective recording back hides the vertical display in dual output mode',
@@ -417,9 +419,8 @@ test(
       // });
       // await goLiveWithDualOutput('twitch');
     } catch (e: unknown) {
-      console.log('Dual Output Go Live Ultra error with platforms:', e);
-      t.fail('Error going live with platforms during Dual Output Go Live Ultra test ');
-      return;
+      console.error('Dual Output Go Live Ultra error with platforms:', e);
+      throw e;
     }
 
     // Custom destination in ultra dual output
@@ -439,9 +440,8 @@ test(
 
       await goLiveWithDualOutput('twitch');
     } catch (e: unknown) {
-      t.fail(
-        'Error going live with platform and destination during Dual Output Go Live Ultra test',
-      );
+      console.error('Dual Output Go Live Ultra error with platform and destination:', e);
+      throw e;
     } finally {
       // Clean up custom destination
       await showSettingsWindow('Stream', async () => {

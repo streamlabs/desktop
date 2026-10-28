@@ -16,6 +16,14 @@ interface ResizeBarProps {
   onInput: (val: number) => void;
   className?: string;
   transformScale?: number;
+  /**
+   * Direction in which dragging grows `value`.
+   * - 'w' (default): `value` is the size of the element on the far side of the bar from
+   *   the container edge (layout editor columns), so dragging right shrinks it.
+   * - 'e': `value` is the size of the element between the bar and the container edge
+   *   (left-docked chat), so dragging right grows it.
+   */
+  resizeHandle?: 'e' | 'w';
 }
 
 interface ResizableData {
@@ -50,7 +58,7 @@ export default function ResizeBar(p: React.PropsWithChildren<ResizeBarProps>) {
     resizableProps = {
       height: Infinity,
       width: p.value,
-      resizeHandles: [p.position === 'left' ? 'e' : 'w'],
+      resizeHandles: [p.resizeHandle ?? 'w'],
       minConstraints: [p.min, Infinity],
       maxConstraints: [p.max, Infinity],
       axis: 'x',

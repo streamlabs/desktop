@@ -131,9 +131,11 @@ export class TwitterPlatformService
 
   readonly capabilities = new Set<TPlatformCapability>([
     'title',
+    'description',
     'viewerCount',
     'chat',
     'stream-schedule',
+    'streamlabels',
   ]);
   readonly liveDockFeatures = new Set<TLiveDockFeature>([
     'refresh-chat-streaming',
@@ -422,7 +424,9 @@ export class TwitterPlatformService
   }
 
   get streamPageUrl() {
-    return '';
+    const username = this.userService.state.auth?.platforms?.twitter?.username;
+    if (!username) return '';
+    return `${this.domain}/${username}`;
   }
 
   get chatUrl() {

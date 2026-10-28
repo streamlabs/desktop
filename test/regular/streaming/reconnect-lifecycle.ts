@@ -362,7 +362,11 @@ async function runScenario(t: TExecutionContext, scenario: IScenario): Promise<I
         isUpdatingHorizontalStream: input.updatingDisplay === 'horizontal',
         isUpdatingVerticalStream: input.updatingDisplay === 'vertical',
         numInstances: input.setup === 'dual' ? 2 : 1,
-        outputSettingsService: { getSettings: () => ({ mode: 'Simple' }) },
+        outputSettingsService: {
+          getSettings: () => ({ mode: 'Simple' }),
+          getStreamingSettings: () => ({ enableTwitchVOD: false }),
+        },
+        configureStreamingService: (): void => undefined,
         highlighterService: { shouldStartHighlighterOutputs: !!input.highlighter },
         streamingStatusChange: { next: (status: string) => published.push(status) },
         SET_STREAMING_STATUS(status: string, context: 'horizontal' | 'vertical') {

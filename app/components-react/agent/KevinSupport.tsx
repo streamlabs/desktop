@@ -264,7 +264,7 @@ export default function KevinSupport() {
           // constrained by this wrapper plus `style`, never by a CSS-module class.
           <div className={styles.messages}>
             <Scrollable style={{ height: '100%' }} isResizable={false}>
-              <div ref={listRef}>
+              <div ref={listRef} className={styles.list}>
                 {messages.map((message, i) => (
                   <div
                     key={`${message.interactionId}-${i}`}
@@ -299,11 +299,6 @@ export default function KevinSupport() {
                       <div className={styles.approvalSummary}>{approval.summary}</div>
                       {approval.risk === 'irreversible' && (
                         <div className={styles.approvalWarning}>{$t('This cannot be undone.')}</div>
-                      )}
-                      {approval.risk === 'external' && (
-                        <div className={styles.approvalWarning}>
-                          {$t('This will be visible to your viewers.')}
-                        </div>
                       )}
                       <div className={styles.approvalActions}>
                         <button

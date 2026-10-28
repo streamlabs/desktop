@@ -1,16 +1,13 @@
 {
-  "You do not have any notifications": "没有通知",
   "Your stream is currently offline": "您的直播当前处于脱机状态",
   "Your stream is experiencing issues": "您的直播出现问题",
   "Your stream is experiencing minor issues": "您的直播出现小问题",
   "Live Stats": "直播统计",
   "Performance Notifications": "性能通知",
   "Click on a stat to add it to your footer": "点击统计信息以将其添加到页脚",
-  "Click to add this info to your footer": "点击以将此信息添加到页脚",
   "When Streamlabs detects performance issues with your stream, such as dropped frames, lagged frames, or a stream disconnection, troubleshooting notifications will be sent to you here.": "当 Streamlabs 检测到您的直播存在性能问题（例如丢帧、延迟帧或直播断开连接）时，故障排除通知将在此处发送给您。",
   "Click to add %{stat} info to your footer": "点击以将 %{stat} 信息添加到页脚",
   "CPU": "CPU",
   "FPS": "FPS",
-  "dropped frames": "丢帧",
   "bandwidth": "带宽"
 }

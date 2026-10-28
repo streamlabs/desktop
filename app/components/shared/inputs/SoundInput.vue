@@ -82,7 +82,7 @@ i {
   height: 120px;
   width: 100%;
   border: 1px solid var(--border);
-  z-index: 10;
+  z-index: @z-overlay;
 
   button {
     position: absolute;

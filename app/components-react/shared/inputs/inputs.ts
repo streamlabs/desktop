@@ -268,6 +268,8 @@ export function useInput<
     inputAttrs: inputAttrsRef.current,
     wrapperAttrs: wrapperAttrsRef.current,
     dataAttrs,
+    localValueRef,
+    prevValueRef,
     forceUpdate,
     setLocalValue,
     emitChange,
@@ -287,11 +289,29 @@ export function useTextInput<
 >(type: TInputType, p: TProps, antFeatures?: Parameters<typeof useInput>[2]) {
   // Text inputs are uncontrolled by default for better performance
   const uncontrolled = p.uncontrolled === true || p.uncontrolled !== false;
-  const { inputAttrs, wrapperAttrs, forceUpdate, setLocalValue, emitChange } = useInput(
-    type,
-    { uncontrolled, ...p },
-    antFeatures,
-  );
+  const {
+    inputAttrs,
+    wrapperAttrs,
+    localValueRef,
+    prevValueRef,
+    forceUpdate,
+    setLocalValue,
+    emitChange,
+  } = useInput(type, { uncontrolled, ...p }, antFeatures);
+  // The `valueRef` below is needed because `onBlur` is wrapped in `useCallback(..., [])` so React creates that
+  // function once reuses it forever. Because it "remembers" the variables from the first render `p.value` inside
+  // the `onBlur` will always be the value the field had when it first appeared, even after the parent or backend
+  // stored a newer one. `valueRef` refreshes on every render, so `onBlur` can read the latest value. Directly compare:
+  //  - Without `valueRef`: Using `p.value`:  'A' equals the remembered 'A', so nothing is sent (parent stays 'B').
+  //  - With `valueRef`: 'A' differs from the parent's 'B', so 'A' is sent (parent is 'A').
+  //
+  // With uncontrolled text inputs, the parent is only told when the field loses focus (blur).
+  // This prevents bugs in the following scenario:
+  //  1. Field loads with 'A'. Parent value: 'A'. Remembered `p.value`: 'A'.
+  //  2. User types 'B' and blurs. 'B' is different from 'A', so 'B' is sent. Parent value: 'B'.
+  //  3. User types 'A' and blurs. The field shows 'A' but the parent still holds 'B'.
+  const valueRef = useRef(p.value);
+  valueRef.current = p.value;
 
   // we need to handle onChange differently for text inputs
   const onChange = useCallback((ev: ChangeEvent<any>) => {
@@ -311,10 +331,20 @@ export function useTextInput<
   const onBlur = useCallback((ev: FocusEvent<any>) => {
     // for uncontrolled components call the `onChange()` handler on blur
     const newVal = type === 'number' ? Number(ev.target.value) : ev.target.value;
-    if (uncontrolled && p.value !== newVal) {
+    if (uncontrolled && valueRef.current !== newVal) {
       emitChange(newVal);
     }
     p.onBlur && p.onBlur(ev);
+  }, []);
+
+  // Ensure uncontrolled inputs are updated before they are destroyed if
+  // focused when destroyed
+  useEffect(() => {
+    return () => {
+      if (uncontrolled && prevValueRef.current !== localValueRef.current) {
+        emitChange(localValueRef.current);
+      }
+    };
   }, []);
 
   const textInputAttrs = {

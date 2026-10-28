@@ -1,18 +1,28 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tooltip } from 'antd';
 import cx from 'classnames';
 import { Services } from 'components-react/service-provider';
 import { ILoadedApp } from 'services/platform-apps';
 import { $t } from 'services/i18n';
+import { MAX_PINNED_APPS } from 'services/nav-menu';
 import styles from './InstalledApps.m.less';
 import { useVuex } from 'components-react/hooks';
 
 export function InstalledApps() {
-  const { PlatformAppsService, HighlighterService } = Services;
+  const { PlatformAppsService, HighlighterService, NavMenuService } = Services;
 
-  const { installedApps, highlighterVersion } = useVuex(() => ({
+  const [legacyHighlighterVersion, setLegacyHighlighterVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    HighlighterService.actions.return
+      .getLegacyAiHighlighterVersion()
+      .then(setLegacyHighlighterVersion);
+  }, []);
+
+  const { installedApps, pinnableAppIds, pinnedAppIds } = useVuex(() => ({
     installedApps: PlatformAppsService.views.productionApps,
-    highlighterVersion: HighlighterService.views.highlighterVersion,
+    pinnableAppIds: NavMenuService.pinnableApps.map(app => app.id),
+    pinnedAppIds: NavMenuService.pinnedApps.map(app => app.id),
   }));
   const enabledInstalledAppIds = installedApps.filter(app => app.enabled).map(app => app.id);
 
@@ -57,6 +67,36 @@ export function InstalledApps() {
               <td> {app.manifest.name} </td>
               <td> {app.manifest.version} </td>
               <td className={cx(styles.buttonContainer, 'button-container--right')}>
+                {pinnableAppIds.includes(app.id) && (
+                  <Tooltip
+                    title={
+                      !pinnedAppIds.includes(app.id) && pinnedAppIds.length >= MAX_PINNED_APPS
+                        ? $t('You can pin up to %{count} apps. Unpin an app to pin this one.', {
+                            count: MAX_PINNED_APPS,
+                          })
+                        : undefined
+                    }
+                    placement="left"
+                  >
+                    <span>
+                      <button
+                        onClick={() =>
+                          NavMenuService.actions.setAppPinned(
+                            app.id,
+                            !pinnedAppIds.includes(app.id),
+                          )
+                        }
+                        className="button button--trans"
+                        disabled={
+                          !pinnedAppIds.includes(app.id) && pinnedAppIds.length >= MAX_PINNED_APPS
+                        }
+                      >
+                        <i className="fas fa-thumbtack"></i>
+                        {pinnedAppIds.includes(app.id) ? $t('Unpin') : $t('Pin')}
+                      </button>
+                    </span>
+                  </Tooltip>
+                )}
                 {isEnabled(app.id) && (
                   <button onClick={() => reload(app.id)} className="button button--trans">
                     <i className="icon-reset"></i>
@@ -90,7 +130,7 @@ export function InstalledApps() {
               </td>
             </tr>
           ))}
-          {highlighterVersion !== '' && (
+          {legacyHighlighterVersion !== null && (
             <tr key={'Ai Highlighter'}>
               <td>
                 <div className={styles.aiHighlighterThumbnail}>
@@ -101,15 +141,14 @@ export function InstalledApps() {
                 </div>
               </td>
               <td> {'Streamlabs AI Highlighter'} </td>
-              <td> {highlighterVersion} </td>
+              <td> {legacyHighlighterVersion} </td>
               <td className={cx(styles.buttonContainer, 'button-container--right')}>
                 <button
                   onClick={() => {
-                    HighlighterService.uninstallAiHighlighter();
+                    setLegacyHighlighterVersion(null);
+                    HighlighterService.actions.uninstallLegacyAiHighlighter();
                   }}
-                  className={cx('button', {
-                    'button--soft-warning': true,
-                  })}
+                  className="button button--soft-warning"
                 >
                   {$t('Uninstall')}
                 </button>

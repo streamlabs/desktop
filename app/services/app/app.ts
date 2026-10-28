@@ -49,6 +49,7 @@ import { NavigationService } from 'services/navigation';
 import { StreamingService } from 'services/streaming';
 import { VirtualWebcamService } from 'services/virtual-webcam';
 import { WebsocketService } from 'services/websocket';
+import { ObsModuleLoadNotificationsService } from 'services/obs-module-load-notifications-service';
 import {
   executeImmediateShutdownSteps,
   IWorkerShutdownPlan,
@@ -113,6 +114,7 @@ export class AppService extends StatefulService<IAppState> {
   @Inject() private streamingService: StreamingService;
   @Inject() private virtualWebcamService: VirtualWebcamService;
   @Inject() private websocketService: WebsocketService;
+  @Inject() private obsModuleLoadNotificationsService: ObsModuleLoadNotificationsService;
 
   static initialState: IAppState = {
     loading: true,
@@ -164,6 +166,7 @@ export class AppService extends StatefulService<IAppState> {
       // TODO: We should come up with a better way to handle this.
       await this.sceneCollectionsService.initialize();
     }
+    await this.obsModuleLoadNotificationsService.refreshModuleLoadNotifications();
 
     this.dismissablesService.initialize();
 
@@ -300,19 +303,23 @@ export class AppService extends StatefulService<IAppState> {
             run: () => this.windowsService.shutdown(),
           },
           {
-            name: 'SceneCollectionsService.deinitialize',
-            criticality: 'required',
-            run: () => this.sceneCollectionsService.deinitialize({ persist: false }),
-          },
-          {
             name: 'PerformanceService.stop',
             criticality: 'best-effort',
             run: () => this.performanceService.stop(),
           },
+          // Shut down transitions while graphics thread
+          // is still running to avoid debug spew for null transitions.
           {
             name: 'TransitionsService.shutdown',
             criticality: 'required',
             run: () => this.transitionsService.shutdown(),
+          },
+          // Deinitialize scene collections before shutting down video contexts
+          // in which case it avoids the OBS_VIDEO_INFO_IN_USE error.
+          {
+            name: 'SceneCollectionsService.deinitialize',
+            criticality: 'required',
+            run: () => this.sceneCollectionsService.deinitialize({ persist: false }),
           },
           {
             name: 'VideoSettingsService.shutdown',

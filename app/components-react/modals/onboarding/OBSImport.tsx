@@ -31,7 +31,7 @@ export function OBSImport(p: IOnboardingStepProps) {
   }
 
   return (
-    <div className={styles.centered}>
+    <div className={styles.stepContainer}>
       <Header
         title={$t('Import your OBS settings for a seamless setup')}
         description={$t('While that loads, explore a few key features worth checking out!')}
@@ -51,7 +51,7 @@ export function OBSImport(p: IOnboardingStepProps) {
           metadata={{
             title: $t('Reactive Overlays'),
             description: $t(
-              'Exclusive Streamlabs AI powered overlays that update in real time in response to game events',
+              'Exclusive Streamlabs Vision-powered overlays that update in real time in response to game events',
             ),
             img: $i('images/onboarding/reactive-overlays.png'),
             count: 2,

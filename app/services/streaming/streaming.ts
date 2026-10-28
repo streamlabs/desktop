@@ -23,11 +23,11 @@ import {
   IAdvancedReplayBuffer,
   ISimpleRecording,
   ISimpleReplayBuffer,
+  IService,
   AdvancedRecordingFactory,
   SimpleRecordingFactory,
   AdvancedReplayBufferFactory,
   SimpleReplayBufferFactory,
-  ISettings,
   EScaleType,
 } from '../../../obs-api';
 import { Inject } from 'services/core/injector';
@@ -88,6 +88,7 @@ import { authorizedHeaders } from 'util/requests';
 import { HostsService } from '../hosts';
 import { assertIsDefined, getDefined } from 'util/properties-type-guards';
 import { StreamInfoView } from './streaming-view';
+import { isCommonTwitchService } from './stream-destination';
 import { GrowService } from 'services/grow/grow';
 import * as remote from '@electron/remote';
 import { RecordingModeService } from 'services/recording-mode';
@@ -100,6 +101,19 @@ import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services
 import { SignalsService } from 'services/signals-manager';
 import { TSocketEvent } from 'services/websocket';
 import { HighlighterService } from 'services/highlighter';
+import {
+  RESOLUTION_CHANGE_NOTIFICATION_CODE,
+  createResolutionChangeNotification,
+} from './enhanced-broadcasting-notifications';
+import {
+  canDestroyDisplayOutputContext,
+  isDisplayOutputContext,
+  shouldStopDisplayContextBeforeDestroy as shouldStopDisplayOutputContextBeforeDestroy,
+  shouldStopStreamingContext as shouldStopStreamingOutputContext,
+  TStreamingDisplay,
+} from './output-context';
+import { videoOutputCoordinator } from 'services/video-output-coordinator';
+import { autoOptimizerStandardOutputForDisplay } from './auto-optimizer-profile-policy';
 import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremental-rollout';
 import { createStreamingSignalHandler } from './streaming-output-lifecycle';
 
@@ -233,6 +247,8 @@ export class StreamingService
       streaming: null,
     },
   };
+  // Track only services assigned here so retained restarts and teardown can release them.
+  private streamingServices = new WeakMap<object, IService>();
 
   static initialState: IStreamingServiceState = {
     status: {
@@ -444,13 +460,12 @@ export class StreamingService
       this.userService.setPrimaryPlatform('twitch');
     }
 
-    // don't interact with API in logged out mode and when protected mode is disabled
+    // Only a Twitch destination may use Twitch's metadata API in unprotected mode.
     if (
       !this.userService.isLoggedIn ||
-      (!this.streamSettingsService.state.protectedModeEnabled &&
-        this.userService.state.auth?.primaryPlatform !== 'twitch') // twitch is a special case
+      (!this.views.protectedModeEnabled && !this.views.isTwitchUnprotectedStream)
     ) {
-      this.finishStartStreaming();
+      await this.finishStartStreaming();
       return;
     }
 
@@ -501,6 +516,10 @@ export class StreamingService
       }
     }
 
+    // Also covers unattended starts and users who have already completed or
+    // declined Auto Optimizer. A failed video transaction must stop Go Live.
+    await this.streamSettingsService.applyStreamOutputLimits(settings);
+
     /**
      * SET CUSTOM DESTINATIONS SETTINGS
      */
@@ -520,8 +539,12 @@ export class StreamingService
       destination.mode = display === 'horizontal' ? 'landscape' : 'portrait';
     });
 
-    // save enabled platforms to reuse setting with the next app start
-    this.streamSettingsService.setSettings({ goLiveSettings: settings });
+    // Persist enabled platforms for the next app start, but never persist the
+    // optimizer profile. It is valid only for the exact outputs and destinations
+    // confirmed for this stream.
+    const persistedGoLiveSettings = cloneDeep(settings);
+    delete persistedGoLiveSettings.autoOptimizerProfile;
+    this.streamSettingsService.setSettings({ goLiveSettings: persistedGoLiveSettings });
 
     // save current settings in store so we can re-use them if something will go wrong
     this.SET_GO_LIVE_SETTINGS(settings);
@@ -547,7 +570,9 @@ export class StreamingService
      * Saved any settings updated during the `beforeGoLive` process for the platforms.
      * This is important for dual streaming and multistreaming.
      */
-    this.SET_GO_LIVE_SETTINGS(this.views.savedSettings);
+    const refreshedSettings = this.views.savedSettings;
+    refreshedSettings.autoOptimizerProfile = settings.autoOptimizerProfile;
+    this.SET_GO_LIVE_SETTINGS(refreshedSettings);
 
     /**
      * SET DUAL OUTPUT SETTINGS
@@ -595,7 +620,8 @@ export class StreamingService
               });
             }
 
-            const updatedSettings = { ...settings, currentCustomDestinations };
+            const updatedSettings = cloneDeep({ ...settings, currentCustomDestinations });
+            delete updatedSettings.autoOptimizerProfile;
             this.streamSettingsService.setSettings({ goLiveSettings: updatedSettings });
           }
 
@@ -635,7 +661,8 @@ export class StreamingService
               destination.video = this.videoSettingsService.contexts.vertical;
             });
 
-            const updatedSettings = { ...settings, currentCustomDestinations };
+            const updatedSettings = cloneDeep({ ...settings, currentCustomDestinations });
+            delete updatedSettings.autoOptimizerProfile;
             this.streamSettingsService.setSettings({ goLiveSettings: updatedSettings });
           }
 
@@ -862,6 +889,8 @@ export class StreamingService
         // It is also unavailable during a stream shift, which always goes out through the
         // restream service.
         const isEnhancedBroadcasting =
+          (this.views.protectedModeEnabled ||
+            isCommonTwitchService(this.streamSettingsService.settings)) &&
           !this.views.isLiveOutputEditingEnabled &&
           !this.views.isStreamShiftMode &&
           (this.views.isTwitchDualStreamEnabled ||
@@ -1017,6 +1046,9 @@ export class StreamingService
     activePlatforms: TPlatform[] = [],
     activeDestinations: ICustomStreamDestination[] = [],
   ): Promise<boolean> {
+    // Adding a non-Twitch destination to a live 1440p stream requires a restart;
+    // the video transaction rejects active outputs without modifying them.
+    await this.streamSettingsService.applyStreamOutputLimits(settings);
     const lifecycle = this.state.info.lifecycle;
 
     // save current settings in store so we can re-use them if something will go wrong
@@ -1720,7 +1752,9 @@ export class StreamingService
     }
 
     if (e instanceof StreamError) {
-      this.setError({ ...e, type: resolvedType });
+      const streamError = createStreamError(resolvedType, e, e.details);
+      streamError.message = e.message;
+      this.setError(streamError);
       return resolvedType;
     }
 
@@ -1938,6 +1972,30 @@ export class StreamingService
   }
 
   async finishStartStreaming(): Promise<unknown> {
+    if (!this.streamSettingsService.protectedModeEnabled) {
+      if (this.streamSettingsService.settings.streamType === 'rtmp_common') {
+        // Older profiles may contain a server from another service. Let OSN normalize
+        // the saved selection and reload it before any output inherits the settings.
+        this.settingsService.setSettings('Stream', this.settingsService.state.Stream.formData);
+      }
+
+      // Recompute for every attempt, including direct/forced starts and retries.
+      // Keep the saved native preference so returning to common Twitch restores it.
+      this.SET_ENHANCED_BROADCASTING(
+        isCommonTwitchService(this.streamSettingsService.settings) &&
+          this.settingsService.isEnhancedBroadcasting(),
+      );
+    }
+
+    const releaseOutputStart = videoOutputCoordinator.beginOutputStart();
+    try {
+      return await this.finishStartStreamingWithReservation();
+    } finally {
+      releaseOutputStart();
+    }
+  }
+
+  private async finishStartStreamingWithReservation(): Promise<unknown> {
     // register a promise that we should reject or resolve in the `handleStreamingSignal`
     const startStreamingPromise = new Promise((resolve, reject) => {
       this.resolveStartStreaming = resolve;
@@ -2014,7 +2072,7 @@ export class StreamingService
 
     startStreamingPromise
       .then(() => {
-        if (this.views.settings.streamShift) {
+        if (this.views.protectedModeEnabled && this.views.settings.streamShift) {
           // Remove the pending state to show the correct text in the start streaming button
           this.restreamService.setStreamShiftStatus('inactive');
 
@@ -2167,10 +2225,9 @@ export class StreamingService
       streamEncoderInfo = this.outputSettingsService.getSettings();
       game = this.views.game;
     } catch (e: unknown) {
-      console.error('Error fetching stream encoder info: ', e);
-
-      const message = (e as any)?.message ?? $t('Failed to fetch encoder settings');
-      this.handleTypedStreamError(e, 'INVALID_ENCODER', message);
+      // The stream is already live. Missing analytics metadata is not an encoder
+      // failure and must not replace the successful start with a stream error.
+      console.warn('Unable to collect stream-start encoder metadata: ', e);
     }
 
     const eventMetadata: Dictionary<any> = {
@@ -2566,6 +2623,7 @@ export class StreamingService
     contextNames.forEach(contextName => {
       const streaming = this.contexts[contextName].streaming;
       if (!streaming) return;
+      if (!this.shouldStopStreamingOutputContext(contextName)) return;
 
       const forceStop =
         force ||
@@ -2730,7 +2788,7 @@ export class StreamingService
         // stream audio track
         const audioTrack = index ?? stream.audioTrack ?? this.getStreamingAudioTrack();
 
-        this.validateOrCreateAudioTrack(audioTrack);
+        await this.validateOrCreateAudioTrack(audioTrack);
         stream.audioTrack = audioTrack;
       }
 
@@ -2743,7 +2801,7 @@ export class StreamingService
 
       // Twitch VOD audio track
       if (stream.enableTwitchVOD && stream.twitchTrack) {
-        this.validateOrCreateAudioTrack(stream.twitchTrack);
+        await this.validateOrCreateAudioTrack(stream.twitchTrack);
       } else if (stream.enableTwitchVOD) {
         console.error('Twitch VOD is enabled but no Twitch audio track is set.');
         this.rejectStartStreaming();
@@ -2768,8 +2826,11 @@ export class StreamingService
         | IEnhancedBroadcastingSimpleStreaming;
 
       stream.audioEncoder = AudioEncoderFactory.create(
-        this.outputSettingsService.getRecordingAudioEncoderSettings(),
+        'ffmpeg_aac',
         `audio-encoder-streaming-${display}`,
+      );
+      stream.audioEncoder.bitrate = Number(
+        this.settingsService.views.values.Output.ABitrate ?? 160,
       );
       this.contexts[contextName].streaming = stream as
         | ISimpleStreaming
@@ -2806,38 +2867,7 @@ export class StreamingService
       this.contexts[contextName].streaming.video = this.videoSettingsService.contexts[display];
     }
 
-    const streamSettings =
-      display === 'horizontal'
-        ? this.settingsService.views.values.Stream
-        : this.settingsService.views.values.StreamSecond;
-
-    // Create a designated service instance for enhanced broadcasting with the default service settings.
-    if (contextName === 'enhancedBroadcasting') {
-      // Note: stream type must be `rtmp_common` to prevent a crash from a possible undefined server value
-      const streamType = 'rtmp_common';
-
-      this.contexts[contextName].streaming.service = ServiceFactory.create(
-        streamType,
-        'enhanced-broadcasting-service',
-        ServiceFactory.legacySettings.settings,
-      );
-
-      this.contexts[contextName].streaming.service.update(streamSettings);
-    } else if (
-      !this.views.protectedModeEnabled &&
-      this.isStreamingInstance(this.contexts[contextName].streaming)
-    ) {
-      this.contexts[contextName].streaming.service = ServiceFactory.legacySettings;
-      this.contexts[contextName].streaming.service.update(streamSettings);
-    } else {
-      this.contexts[contextName].streaming.service = ServiceFactory.create(
-        streamSettings.streamType,
-        `${contextName}-service`,
-        ServiceFactory.legacySettings.settings,
-      );
-
-      this.contexts[contextName].streaming.service.update(streamSettings);
-    }
+    this.configureStreamingService(contextName, display);
     const delay = DelayFactory.create();
 
     delay.enabled = this.streamSettingsService.settings.delayEnable;
@@ -2862,6 +2892,13 @@ export class StreamingService
     this.contexts[contextName].streaming.network = network;
 
     if (start) {
+      const isEnhancedBroadcastingContext =
+        isEnhancedBroadcasting || contextName === 'enhancedBroadcasting';
+
+      if (isEnhancedBroadcastingContext) {
+        this.clearEnhancedBroadcastingResolutionChangeNotification();
+      }
+
       try {
         this.startStreamingOutput(contextName);
       } catch (e: unknown) {
@@ -2892,6 +2929,63 @@ export class StreamingService
     }
 
     return Promise.resolve(this.contexts[contextName].streaming);
+  }
+
+  private configureStreamingService(contextName: TOutputContext, display: TDisplayType) {
+    const streaming = this.contexts[contextName].streaming;
+    if (!streaming) throw new Error(`No streaming instance for ${contextName}`);
+
+    const streamSettings =
+      display === 'horizontal'
+        ? this.settingsService.views.values.Stream
+        : this.settingsService.views.values.StreamSecond;
+
+    let service: IService | undefined;
+    try {
+      if (contextName === 'enhancedBroadcasting') {
+        // Enhanced Broadcasting requires the common Twitch service. The legacy
+        // getter creates a separate native service, so release it after reading.
+        const legacyService = ServiceFactory.legacySettings;
+        try {
+          service = ServiceFactory.create(
+            'rtmp_common',
+            'enhanced-broadcasting-service',
+            legacyService.settings,
+          );
+        } finally {
+          ServiceFactory.destroy(legacyService);
+        }
+        service.update(streamSettings);
+      } else if (!this.views.protectedModeEnabled && this.isStreamingInstance(streaming)) {
+        service = ServiceFactory.legacySettings;
+        service.update(streamSettings);
+      } else {
+        // The saved primary service contains provider-specific settings. Seeding
+        // another destination from it can label a custom RTMP service as Twitch.
+        service = ServiceFactory.create(
+          streamSettings.streamType,
+          `${contextName}-service`,
+          streamSettings,
+        );
+      }
+
+      streaming.service = service;
+    } catch (e: unknown) {
+      if (service) ServiceFactory.destroy(service);
+      throw e;
+    }
+
+    const previousService = this.streamingServices.get(streaming);
+    this.streamingServices.set(streaming, service);
+    if (previousService) ServiceFactory.destroy(previousService);
+  }
+
+  private releaseStreamingService(streaming: object) {
+    const service = this.streamingServices.get(streaming);
+    if (!service) return;
+
+    ServiceFactory.destroy(service);
+    this.streamingServices.delete(streaming);
   }
 
   private getStreamingAudioTrack() {
@@ -2985,6 +3079,15 @@ export class StreamingService
   }
 
   private async handleStartRecording() {
+    const releaseOutputStart = videoOutputCoordinator.beginOutputStart();
+    try {
+      await this.handleStartRecordingWithReservation();
+    } finally {
+      releaseOutputStart();
+    }
+  }
+
+  private async handleStartRecordingWithReservation() {
     // Only attempt to create recording instances if the recording status is offline
     // This prevents errors when trying to create a recording instance when one already exists
     if (this.isRecording) {
@@ -3190,6 +3293,8 @@ export class StreamingService
         this.outputSettingsService.getRecordingAudioEncoderSettings(),
         `audio-encoder-recording-${display}`,
       );
+      // Simple standalone recording has always used 192 Kbps. Stream quality shares stream audio.
+      recording.audioEncoder.bitrate = 192;
 
       // to prevent reference errors, cast the recording instance
       this.contexts[display].recording = recording as ISimpleRecording;
@@ -3254,6 +3359,8 @@ export class StreamingService
         : this.outputSettingsService.getRecordingSettings(display);
 
     const instance = this.contexts[contextName][type];
+    const autoOptimizerLeg =
+      type === 'streaming' ? this.getAutoOptimizerOutputForContext(contextName) : undefined;
 
     // TODO: Revisit after merge video encoder backend changes to see if this should be surfaced to the user
     if (!instance) {
@@ -3272,28 +3379,33 @@ export class StreamingService
         key === 'videoEncoder' &&
         (contextName !== 'enhancedBroadcasting' || isEnhancedBroadcastingContext)
       ) {
-        let encoderSettings: ISettings | undefined;
-        switch (type) {
-          case 'streaming':
-            encoderSettings = this.outputSettingsService.getStreamingVideoEncoderSettings(mode);
-            break;
-          case 'recording':
-            encoderSettings = this.outputSettingsService.getRecordingVideoEncoderSettings(mode);
-            break;
+        let encoderSettings =
+          type === 'streaming'
+            ? this.outputSettingsService.getStreamingVideoEncoderSettings(
+                mode,
+                settings.videoEncoder,
+              )
+            : this.outputSettingsService.getRecordingVideoEncoderSettings(
+                mode,
+                settings.videoEncoder,
+              );
+
+        if (type === 'streaming' && autoOptimizerLeg) {
+          // Output settings are global, while Dual Output can create one encoder
+          // per display. Apply only the per-output bitrate here; the encoder ID
+          // is persisted transactionally when it is common and remains under the
+          // existing factory's compatibility checks.
+          encoderSettings = {
+            ...encoderSettings,
+            bitrate: autoOptimizerLeg.bitrate,
+          };
         }
 
-        if (encoderSettings) {
-          instance.videoEncoder = VideoEncoderFactory.create(
-            settings.videoEncoder,
-            `video-encoder-${type}-${contextName}`,
-            encoderSettings,
-          );
-        } else {
-          instance.videoEncoder = VideoEncoderFactory.create(
-            settings.videoEncoder,
-            `video-encoder-${type}-${contextName}`,
-          );
-        }
+        instance.videoEncoder = VideoEncoderFactory.create(
+          settings.videoEncoder,
+          `video-encoder-${type}-${contextName}`,
+          encoderSettings,
+        );
 
         if (instance.videoEncoder.lastError) {
           console.error(
@@ -3309,6 +3421,14 @@ export class StreamingService
     });
 
     return instance;
+  }
+
+  private getAutoOptimizerOutputForContext(contextName: TOutputContext) {
+    const profile = this.state.info.settings?.autoOptimizerProfile;
+    if (contextName === 'enhancedBroadcasting') return;
+
+    const display: TDisplayType = contextName === 'vertical' ? 'vertical' : 'horizontal';
+    return autoOptimizerStandardOutputForDisplay(profile, display);
   }
 
   /** Install a fresh attempt's callback on the current streaming instance. */
@@ -3346,6 +3466,10 @@ export class StreamingService
   private async handleSignal(info: EOutputSignal, context: TOutputContext) {
     const type = info.type as EOBSOutputType;
     try {
+      if (this.handleEnhancedBroadcastingResolutionChangeSignal(info)) {
+        return;
+      }
+
       if (info.code !== EOutputCode.Success) {
         // handle errors before attempting anything else
         console.error('Output Signal Error:', info, context);
@@ -3372,6 +3496,19 @@ export class StreamingService
       this.RESET_STREAM_INFO();
       this.rejectStartStreaming();
     }
+  }
+
+  private handleEnhancedBroadcastingResolutionChangeSignal(info: EOutputSignal): boolean {
+    const notification = createResolutionChangeNotification(info);
+    if (!notification) return false;
+
+    this.clearEnhancedBroadcastingResolutionChangeNotification();
+    this.notificationsService.push(notification);
+    return true;
+  }
+
+  private clearEnhancedBroadcastingResolutionChangeNotification() {
+    this.notificationsService.removeByCode(RESOLUTION_CHANGE_NOTIFICATION_CODE);
   }
 
   private async handleStreamingSignal(info: EOutputSignal, context: TOutputContext) {
@@ -3779,7 +3916,13 @@ export class StreamingService
    */
 
   startReplayBuffer(): void {
+    void this.startReplayBufferWithReservation();
+  }
+
+  private async startReplayBufferWithReservation(): Promise<void> {
+    let releaseOutputStart = () => {};
     try {
+      releaseOutputStart = videoOutputCoordinator.beginOutputStart();
       // Only attempt to create or start the replay buffer instance if the replay buffer is offline
       if (this.views.isReplayBufferActive) {
         console.warn('Replay buffer is already active');
@@ -3795,12 +3938,12 @@ export class StreamingService
       // recording instance first in the app's current session. A band-aid solution is to always create the
       // horizontal recording instance and then destroy it since we won't be using it.
       if (display === 'vertical' && this.contexts.horizontal.recording === null) {
-        this.createTemporaryHorizontalRecording();
+        await this.createTemporaryHorizontalRecording();
       }
 
       this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Running, display);
       const audioTrack = display === 'horizontal' ? 1 : 2;
-      this.createReplayBuffer({ display, audioTrack });
+      await this.createReplayBuffer({ display, audioTrack });
     } catch (e: unknown) {
       console.error('Error toggling replay buffer:', e);
 
@@ -3822,6 +3965,8 @@ export class StreamingService
         EOutputCode.Error,
         message,
       );
+    } finally {
+      releaseOutputStart();
     }
   }
 
@@ -3979,12 +4124,70 @@ export class StreamingService
 
     const context = contextName || display;
     const mode = this.outputSettingsService.getSettings().mode;
-    const validOutput = this.validateOutputInstance(mode, context, type);
+    let validOutput = this.validateOutputInstance(mode, context, type);
+
+    if (validOutput) {
+      const outputTypes: Array<'streaming' | 'recording'> =
+        type === 'recording' ? ['streaming', 'recording'] : ['streaming'];
+      const encoderChanged = outputTypes.some(outputType => {
+        const encoder = this.contexts[context][outputType]?.videoEncoder;
+        const outputSettings =
+          outputType === 'streaming'
+            ? this.outputSettingsService.getStreamingSettings(display)
+            : this.outputSettingsService.getRecordingSettings(display);
+        return encoder && encoder.id !== outputSettings.videoEncoder;
+      });
+      if (encoderChanged) {
+        const encoderActive = outputTypes.some(
+          outputType => this.contexts[context][outputType]?.videoEncoder?.active,
+        );
+        const canDestroy =
+          !encoderActive &&
+          (this.isDisplayContext(context)
+            ? this.canDestroyDisplayOutputContext(context)
+            : !this.isStreaming);
+        if (!canDestroy) {
+          throw new Error('Stop active outputs before changing the selected encoder.');
+        }
+        // Recording and replay can borrow the stream encoder. Recreate their
+        // complete idle context using the existing output teardown order.
+        await this.handleDestroyOutputContexts(context);
+        validOutput = false;
+      }
+    }
+
+    if (validOutput) {
+      await this.updateOutputEncoderSettings(context, type);
+    }
 
     // If the instance matches the mode, return to validate it
     if (validOutput && start) {
       try {
         if (type === 'streaming') {
+          // Recording/replay can retain the instance across Go Live attempts.
+          // Refresh destination and VOD settings without replacing shared encoders.
+          const stream = this.contexts[context].streaming;
+          if (!stream) throw new Error(`No streaming instance for ${context}`);
+          const outputSettings = this.outputSettingsService.getStreamingSettings(display);
+          stream.enableTwitchVOD = outputSettings.enableTwitchVOD ?? false;
+          if (this.isAdvancedStreaming(stream)) {
+            const twitchTrack =
+              'twitchTrack' in outputSettings ? outputSettings.twitchTrack : undefined;
+            if (twitchTrack !== undefined) stream.twitchTrack = twitchTrack;
+            if (stream.enableTwitchVOD) {
+              if (!twitchTrack) {
+                throw new Error(
+                  'Twitch VOD is enabled but no Twitch audio track is set. Please select a Twitch audio track in the output settings and try again.',
+                );
+              }
+              await this.validateOrCreateAudioTrack(twitchTrack);
+            }
+          }
+          // Enhanced Broadcasting prepares its Twitch service separately from
+          // any standard companion/relay destination on the same display.
+          if (!this.isEnhancedBroadcastingStreaming(stream)) {
+            this.configureStreamingService(context, display);
+          }
           this.startStreamingOutput(context);
         } else {
           this.contexts[context][type]?.start();
@@ -3994,12 +4197,16 @@ export class StreamingService
 
         const outputType =
           type === 'streaming' ? EOBSOutputType.Streaming : EOBSOutputType.Recording;
+        let errorMessage = $t('An unknown error occurred. Please try again.');
+        if (e instanceof Error) errorMessage = e.message;
+        else if (typeof e === 'string') errorMessage = e;
+
         this.createOBSError(
           outputType,
           display,
           EOBSOutputSignal.Start,
           EOutputCode.Error,
-          typeof e === 'string' ? e : $t('An unknown error occurred. Please try again.'),
+          errorMessage,
         );
       }
       return;
@@ -4031,6 +4238,76 @@ export class StreamingService
     }
   }
 
+  private async updateOutputEncoderSettings(
+    contextName: TOutputContext,
+    type: 'streaming' | 'recording',
+  ) {
+    if (type === 'recording' && this.contexts[contextName].streaming) {
+      await this.updateOutputEncoderSettings(contextName, 'streaming');
+    }
+    const instance = this.contexts[contextName][type];
+    if (!instance) return;
+    const mode = this.outputSettingsService.getSettings().mode;
+    const display = this.isDisplayContext(contextName) ? contextName : 'horizontal';
+    const settings =
+      type === 'streaming'
+        ? this.outputSettingsService.getStreamingSettings(display)
+        : this.outputSettingsService.getRecordingSettings(display);
+    const encoder = instance.videoEncoder;
+
+    // A recording or replay buffer can retain the streaming dependency. Reuse its
+    // encoder, but keep settings fixed while an output is using it.
+    if (encoder && !encoder.active && encoder.id === settings.videoEncoder) {
+      let encoderSettings =
+        type === 'streaming'
+          ? this.outputSettingsService.getStreamingVideoEncoderSettings(mode, settings.videoEncoder)
+          : this.outputSettingsService.getRecordingVideoEncoderSettings(
+              mode,
+              settings.videoEncoder,
+            );
+      const autoOptimizerLeg =
+        type === 'streaming' ? this.getAutoOptimizerOutputForContext(contextName) : undefined;
+      // Retained encoders must use the same per-output override as newly created ones.
+      if (autoOptimizerLeg) {
+        encoderSettings = { ...encoderSettings, bitrate: autoOptimizerLeg.bitrate };
+      }
+      encoder.update(encoderSettings, true);
+      if (type === 'streaming' && 'enforceServiceBitrate' in settings) {
+        const stream = instance as ISimpleStreaming | IAdvancedStreaming;
+        if (settings.enforceServiceBitrate !== undefined) {
+          stream.enforceServiceBitrate = settings.enforceServiceBitrate;
+        }
+      }
+      if (
+        type === 'streaming' &&
+        this.isSimpleStreaming(instance as ISimpleStreaming) &&
+        'useAdvanced' in settings
+      ) {
+        const stream = instance as ISimpleStreaming;
+        stream.useAdvanced = settings.useAdvanced;
+        stream.customEncSettings = settings.customEncSettings ?? '';
+        stream.audioEncoder.bitrate = Number(
+          this.settingsService.views.values.Output.ABitrate ?? 160,
+        );
+      }
+    }
+
+    if (type === 'streaming' && this.isAdvancedStreaming(instance as IAdvancedStreaming)) {
+      const stream = instance as IAdvancedStreaming;
+      if (stream.audioTrack) await this.validateOrCreateAudioTrack(stream.audioTrack);
+      if (stream.enableTwitchVOD && stream.twitchTrack) {
+        await this.validateOrCreateAudioTrack(stream.twitchTrack);
+      }
+    } else if (type === 'recording' && this.isAdvancedRecording(instance as IAdvancedRecording)) {
+      const recording = instance as IAdvancedRecording;
+      for (let index = 1; index <= 6; index++) {
+        if (recording.mixer & (1 << (index - 1))) {
+          await this.validateOrCreateAudioTrack(index);
+        }
+      }
+    }
+  }
+
   private validateOutputInstance(
     mode: 'Simple' | 'Advanced',
     contextName: TOutputContext,
@@ -4059,32 +4336,68 @@ export class StreamingService
    * audio track.
    * @param index - The index of the audio track
    */
-  async validateOrCreateAudioTrack(index: number) {
+  private async validateOrCreateAudioTrack(index: number) {
+    const output = this.settingsService.state.Output.formData;
+    const category = `Audio - Track ${index}`;
+    const bitrate = Number(
+      this.settingsService.findSettingValue(output, category, `Track${index}Bitrate`) ?? 160,
+    );
+    const name = this.settingsService.findSettingValue(output, category, `Track${index}Name`) ?? '';
+    let track;
     try {
-      const existingTrack = AudioTrackFactory.getAtIndex(index);
-      if (existingTrack) return;
+      track = AudioTrackFactory.getAtIndex(index);
     } catch (e: unknown) {
-      // Continue to create track if the audio track does not exist. This is not a bug.
-      // This call to get at index will throw an error if the track does not exist,
-      // so we can catch the error and create the track if it does not exist.
+      // getAtIndex throws when no track has been registered at this index.
       console.info('Audio track does not exist, creating new track at index', index);
     }
 
-    this.createAudioTrack(index);
-  }
-
-  /**
-   * Create an audio track
-   * @param index - index of the audio track to create
-   */
-  private createAudioTrack(index: number) {
-    const trackName = `track${index}`;
-    const track = AudioTrackFactory.create(160, trackName);
-    AudioTrackFactory.setAtIndex(track, index);
+    if (track) {
+      // Outputs own their active audio encoders. Refresh the shared configuration for
+      // the next output start without replacing the track or changing live encoders.
+      track.bitrate = bitrate;
+      track.name = name;
+    } else {
+      track = AudioTrackFactory.create(bitrate, name);
+      AudioTrackFactory.setAtIndex(track, index);
+    }
   }
 
   private isDisplayContext(context: TOutputContext): context is TDisplayType {
-    return context === 'horizontal' || context === 'vertical';
+    return isDisplayOutputContext(context);
+  }
+
+  private hasEnhancedBroadcastingStreamingInstance() {
+    return this.isEnhancedBroadcastingStreaming(this.contexts.enhancedBroadcasting.streaming);
+  }
+
+  private shouldStopStreamingOutputContext(contextName: TOutputContext) {
+    return shouldStopStreamingOutputContext(
+      contextName,
+      this.hasEnhancedBroadcastingStreamingInstance(),
+      display => this.displayNeedsNonEnhancedBroadcastingInstance(display),
+    );
+  }
+
+  private canDestroyDisplayOutputContext(contextName: TDisplayType) {
+    return canDestroyDisplayOutputContext(
+      contextName as TStreamingDisplay,
+      this.state.status[contextName],
+      this.hasEnhancedBroadcastingStreamingInstance(),
+      display => this.displayNeedsNonEnhancedBroadcastingInstance(display),
+    );
+  }
+
+  private shouldStopDisplayOutputContextBeforeDestroy(
+    contextName: TDisplayType,
+    contextType: keyof IOutputContext,
+  ) {
+    return shouldStopDisplayOutputContextBeforeDestroy(
+      contextName as TStreamingDisplay,
+      contextType,
+      this.state.status[contextName],
+      this.hasEnhancedBroadcastingStreamingInstance(),
+      display => this.displayNeedsNonEnhancedBroadcastingInstance(display),
+    );
   }
 
   private isEnhancedBroadcastingStreaming(
@@ -4093,7 +4406,8 @@ export class StreamingService
       | IAdvancedStreaming
       | IEnhancedBroadcastingSimpleStreaming
       | IEnhancedBroadcastingAdvancedStreaming
-      | null,
+      | null
+      | undefined,
   ): instance is IEnhancedBroadcastingSimpleStreaming | IEnhancedBroadcastingAdvancedStreaming {
     if (!instance) return false;
     return 'additionalVideo' in instance;
@@ -4554,7 +4868,23 @@ export class StreamingService
       // -4 is used for generic unknown messages in OBS. Both -4 and any other code
       // we don't recognize should fall into this branch and show a generic error.
 
-      if (!this.userService.isLoggedIn) {
+      const isStreamKeyMissingError = this.getIsStreamKeyMissingError(info);
+
+      // Check if a stream key is missing for both logged out and logged in users because a logged out
+      // user streams in unprotected mode, which means a missing stream key can occur even if the user is not logged in.
+      if (isStreamKeyMissingError) {
+        if (this.views.isDualOutputMode) {
+          const display = info.service === 'vertical' ? 'vertical' : 'horizontal';
+          errorText = $t(
+            'The stream key is missing for the %{display} output. Please configure your streaming settings.',
+            { display },
+          );
+          diagReportMessage = diagReportMessage.concat(errorText);
+        } else {
+          errorText = $t('The stream key is missing. Please configure your streaming settings.');
+          diagReportMessage = diagReportMessage.concat(errorText);
+        }
+      } else if (!this.userService.isLoggedIn) {
         const messages = formatStreamErrorMessage('LOGGED_OUT_ERROR');
 
         errorText = messages.user;
@@ -4711,6 +5041,31 @@ export class StreamingService
     this.handleOBSOutputError(error);
   }
 
+  /**
+   * Determines if the error is caused by a missing stream key
+   * @remarks Used to show a more descriptive error message for the user
+   * Note: This check is also necessary for non-logged-in users who might be attempting to stream
+   * without a saved stream key.
+   * @param info - OBS Output Signal
+   * @returns Whether the error is a stream key error
+   */
+  private getIsStreamKeyMissingError(info: IOBSOutputSignalInfo): boolean {
+    // Only check stream keys for streaming signals
+    if (info.type !== EOBSOutputType.Streaming) return false;
+
+    // Verify horizontal stream key exists
+    if (info.service === 'default' && this.settingsService.views.values.Stream.key === '') {
+      return true;
+    }
+
+    // Verify vertical stream key exists
+    if (info.service === 'vertical' && this.settingsService.views.values.StreamSecond.key === '') {
+      return true;
+    }
+
+    return false;
+  }
+
   private sendStreamEndEvent() {
     const data: Dictionary<any> = {};
     data.viewerCounts = {};
@@ -4848,6 +5203,8 @@ export class StreamingService
           break;
       }
     }
+
+    if (contextType === 'streaming') this.releaseStreamingService(instance);
   }
 
   private handleCleanupStreamingInstances({ skipHorizontal = false }) {
@@ -4859,7 +5216,8 @@ export class StreamingService
       if (
         (contextName === 'horizontal' && skipHorizontal) ||
         this.contexts[contextName].streaming === undefined ||
-        this.contexts[contextName].streaming === null
+        this.contexts[contextName].streaming === null ||
+        !this.shouldStopStreamingOutputContext(contextName)
       ) {
         continue;
       }
@@ -4899,10 +5257,7 @@ export class StreamingService
     }
 
     // For the horizontal and vertical contexts, only destroy instances if all outputs are offline
-    const offline =
-      this.state.status[context].replayBuffer === EReplayBufferState.Offline &&
-      this.state.status[context].recording === ERecordingState.Offline &&
-      this.state.status[context].streaming === EStreamingState.Offline;
+    const offline = this.canDestroyDisplayOutputContext(context);
 
     if (offline || force) {
       await this.destroyOutputContextIfExists(context, 'replayBuffer');
@@ -4939,8 +5294,7 @@ export class StreamingService
       // Prevent errors by stopping an active context before destroying it
       if (
         this.isDisplayContext(contextName) &&
-        this.state.status[contextName][contextType] &&
-        this.state.status[contextName][contextType].toString() !== 'offline'
+        this.shouldStopDisplayOutputContextBeforeDestroy(contextName, contextType)
       ) {
         this.contexts[contextName][contextType].stop(true);
 
@@ -4988,53 +5342,7 @@ export class StreamingService
     } finally {
       const instance = this.contexts[contextName][contextType];
 
-      // Identify the output's factory in order to destroy the context
-      if (instance) {
-        if (
-          contextType === 'streaming' &&
-          this.isEnhancedBroadcastingStreaming(
-            instance as
-              | ISimpleStreaming
-              | IAdvancedStreaming
-              | IEnhancedBroadcastingSimpleStreaming
-              | IEnhancedBroadcastingAdvancedStreaming,
-          )
-        ) {
-          if (
-            this.isAdvancedStreaming(
-              instance as
-                | IEnhancedBroadcastingSimpleStreaming
-                | IEnhancedBroadcastingAdvancedStreaming,
-            )
-          ) {
-            EnhancedBroadcastingAdvancedStreamingFactory.destroy(
-              instance as IEnhancedBroadcastingAdvancedStreaming,
-            );
-          } else {
-            EnhancedBroadcastingSimpleStreamingFactory.destroy(
-              instance as IEnhancedBroadcastingSimpleStreaming,
-            );
-          }
-        } else {
-          switch (contextType) {
-            case 'streaming':
-              this.isAdvancedStreaming(instance as ISimpleStreaming | IAdvancedStreaming)
-                ? AdvancedStreamingFactory.destroy(instance as IAdvancedStreaming)
-                : SimpleStreamingFactory.destroy(instance as ISimpleStreaming);
-              break;
-            case 'recording':
-              this.isAdvancedRecording(instance as ISimpleRecording | IAdvancedRecording)
-                ? AdvancedRecordingFactory.destroy(instance as IAdvancedRecording)
-                : SimpleRecordingFactory.destroy(instance as ISimpleRecording);
-              break;
-            case 'replayBuffer':
-              this.isAdvancedReplayBuffer(instance as ISimpleReplayBuffer | IAdvancedReplayBuffer)
-                ? AdvancedReplayBufferFactory.destroy(instance as IAdvancedReplayBuffer)
-                : SimpleReplayBufferFactory.destroy(instance as ISimpleReplayBuffer);
-              break;
-          }
-        }
-      }
+      if (instance) this.destroyFactoryInstance(contextType, instance);
 
       this.contexts[contextName][contextType] = null;
 

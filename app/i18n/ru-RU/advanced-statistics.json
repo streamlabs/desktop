@@ -1,16 +1,13 @@
 {
-  "You do not have any notifications": "У вас нет уведомлений",
   "Your stream is currently offline": "В данный момент ваша трансляция недоступна",
   "Your stream is experiencing issues": "Возникла проблема с вашей трансляцией",
   "Your stream is experiencing minor issues": "Возникли незначительные проблемы с вашей трансляцией",
   "Live Stats": "Статистика в реальном времени",
   "Performance Notifications": "Оповещения о производительности",
   "Click on a stat to add it to your footer": "Нажмите на статистику, чтобы добавить ее в нижний колонтитул",
-  "Click to add this info to your footer": "Нажмите, чтобы добавить эту информацию в нижний колонтитул",
   "When Streamlabs detects performance issues with your stream, such as dropped frames, lagged frames, or a stream disconnection, troubleshooting notifications will be sent to you here.": "Если Streamlabs обнаружит проблемы с производительностью вашей трансляции, например пропущенные кадры, отстающие кадры или отключение трансляции, вы получите уведомления об устранении неполадок.",
   "Click to add %{stat} info to your footer": "Нажмите, чтобы добавить информацию %{stat} в нижний колонтитул",
   "CPU": "ЦП",
   "FPS": "FPS",
-  "dropped frames": "пропущенных кадров",
   "bandwidth": "пропускная способность"
 }

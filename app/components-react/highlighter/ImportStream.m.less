@@ -1,0 +1,137 @@
+@import '../../styles/index';
+
+.import-modal-root {
+  position: relative;
+
+  :global(.ant-modal-wrap),
+  :global(.ant-modal-mask) {
+    position: absolute;
+    top: 0 !important;
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  :global(.os-content-glue) {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  :global(.ant-modal-body) {
+    padding: 0px;
+    border-radius: 24px;
+    overflow: hidden;
+  }
+  :global(.ant-modal-content) {
+    border-radius: 24px;
+    border: 1px solid var(--Day-Colors-Dark-4, #4f5e65);
+    border: none;
+    background-color: transparent;
+    box-shadow: none;
+  }
+}
+
+.video-preview {
+  position: relative;
+  display: grid;
+  place-content: center;
+  max-height: 100%;
+  border-radius: 8px;
+  width: fit-content;
+  height: fit-content;
+  min-width: 392px;
+  min-height: 220px;
+  background-color: #ffffff0a;
+  cursor: 'pointer';
+}
+
+.video-preview::before {
+  content: '';
+  border-style: var(--border-style);
+  border-width: 1px;
+  border-color: var(--border-color);
+  border-radius: 8px;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.custom-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+.drag-and-drop {
+  font-weight: 400;
+  margin-top: 12px;
+  text-align: center;
+}
+
+.list-image {
+  width: 23px;
+  height: 23px;
+  object-fit: cover;
+  border-radius: 1px;
+}
+
+.recording-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  // Auto rows get squeezed to fit the grid's height, letting the thumbnails overlap
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 12px;
+}
+
+.recording-thumbnail {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  border: 1px solid var(--midtone);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #ffffff0a;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--teal);
+  }
+
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+  }
+}
+
+.recording-date {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 4px 8px;
+  font-size: 12px;
+  text-align: left;
+  color: var(--white);
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+}
+
+.explainer-text-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.explainer-text {
+  opacity: 60%;
+  text-align: center;
+  width: 100%;
+}

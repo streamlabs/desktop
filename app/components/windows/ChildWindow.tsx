@@ -99,6 +99,8 @@ export default class ChildWindow extends Vue {
 
   private onWindowUpdatedHandler(options: IWindowOptions) {
     window.removeEventListener('resize', this.windowSizeHandler);
+    // Closing or replacing a window must also cancel a component that has not mounted yet.
+    clearTimeout(this.refreshingTimeout);
     // If the window was closed, just clear the stack
     if (!options.isShown) {
       this.restoreAppTheme();
@@ -124,7 +126,6 @@ export default class ChildWindow extends Vue {
     // This is essentially a race condition, but make a best effort
     // at having a successful paint cycle before loading a component
     // that will do a bunch of synchronous IO.
-    clearTimeout(this.refreshingTimeout);
     this.refreshingTimeout = window.setTimeout(async () => {
       this.components.push({
         ...options,

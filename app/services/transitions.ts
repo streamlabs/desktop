@@ -253,6 +253,14 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
     this.releaseStudioModeObjects();
   }
 
+  toggleStudioMode() {
+    if (this.state.studioMode) {
+      this.disableStudioMode();
+    } else {
+      this.enableStudioMode();
+    }
+  }
+
   /**
    * While in studio mode, will execute a studio mode transition
    */
@@ -414,7 +422,17 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
   }
 
   shutdown() {
-    Object.values(this.obsTransitions).forEach(tran => tran.release());
+    if (this.state.studioMode) this.disableStudioMode();
+    Object.keys(this.obsTransitions).forEach(id => {
+      this.propertiesManagers[id]?.destroy();
+      delete this.propertiesManagers[id];
+      this.obsTransitions[id].release();
+      delete this.obsTransitions[id];
+    });
+    if (this.oldDuplicate) {
+      this.oldDuplicate.release();
+      this.oldDuplicate = null;
+    }
     this.releaseStudioModeObjects();
     obs.Global.setOutputSource(0, null);
   }
@@ -490,11 +508,15 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
   }
 
   deleteTransition(id: string) {
-    this.propertiesManagers[id].destroy();
-    delete this.propertiesManagers[id];
+    if (this.propertiesManagers[id]) {
+      this.propertiesManagers[id].destroy();
+      delete this.propertiesManagers[id];
+    }
 
-    this.obsTransitions[id].release();
-    delete this.obsTransitions[id];
+    if (this.obsTransitions[id]) {
+      this.obsTransitions[id].release();
+      delete this.obsTransitions[id];
+    }
     this.DELETE_TRANSITION(id);
   }
 

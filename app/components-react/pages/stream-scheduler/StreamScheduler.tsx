@@ -123,7 +123,7 @@ function SchedulerCalendar() {
   });
 
   return (
-    <div onClick={onCalendarClick}>
+    <div className={css.calendar} onClick={onCalendarClick}>
       <Calendar dateCellRender={dateCellRender} validRange={[minDate, maxDate]} />
     </div>
   );
@@ -185,7 +185,6 @@ function EventSettingsModal() {
       visible={isModalVisible}
       onOk={submit}
       onCancel={closeModal}
-      afterClose={closeModal}
       destroyOnClose={true}
       footer={<ModalButtons />}
       getContainer={`.${css.streamSchedulerPage}`}
@@ -273,7 +272,16 @@ function EventSettingsModal() {
  */
 function ModalButtons() {
   const controller = useStreamScheduler();
-  const { selectedEvent, remove, submit, goLive, primaryPlatform, store } = controller;
+  const {
+    selectedEvent,
+    remove,
+    submit,
+    goLive,
+    primaryPlatform,
+    hideModal,
+    showModal,
+    store,
+  } = controller;
   const { isLoading } = store.useState(s => ({
     isLoading: s.isLoading,
   }));
@@ -290,9 +298,16 @@ function ModalButtons() {
 
   /**
    * confirm and delete
+   * @remark The confirmation opens behind this modal, so hide this one for as long as the prompt is
+   * up and bring it back if the user decides against deleting. `remove` closes it for real.
    */
   async function onDeleteClick() {
-    if (await confirmAsync($t('Delete the event?'))) remove();
+    hideModal();
+    if (await confirmAsync($t('Delete the event?'))) {
+      remove();
+    } else {
+      showModal();
+    }
   }
 
   return (

@@ -20,6 +20,7 @@ export { ShortcutsService } from 'services/shortcuts';
 export { CustomizationService } from 'services/customization';
 export { LayoutService } from 'services/layout';
 export { NotificationsService } from 'services/notifications';
+export { ObsModuleLoadNotificationsService } from 'services/obs-module-load-notifications-service';
 export { OnboardingService } from 'services/onboarding';
 export { NavigationService } from 'services/navigation';
 export { PerformanceService } from 'services/performance';
@@ -58,10 +59,11 @@ export { MetricsService } from 'services/metrics';
 export { HighlighterService } from 'services/highlighter';
 export { DiagnosticsService } from 'services/diagnostics';
 export { RecordingModeService } from 'services/recording-mode';
-export { SideNavService } from 'services/side-nav';
+export { NavMenuService } from 'services/nav-menu';
 export { VideoSettingsService } from 'services/settings-v2/video';
 export { SettingsManagerService } from 'services/settings-manager';
 export { MarkersService } from 'services/markers';
+export { ScreenshotService } from 'services/screenshot';
 export { RealmService } from 'services/realm';
 export { StreamAvatarService } from 'services/stream-avatar/stream-avatar-service';
 export { StreamAvatarApiService } from 'services/stream-avatar/stream-avatar-api-service';
@@ -103,7 +105,7 @@ export { PatchNotesService } from 'services/patch-notes';
 export { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 export { StreamingService } from 'services/streaming';
 export { StreamlabelsService } from 'services/streamlabels';
-export { AutoConfigService } from 'services/auto-config';
+export { AutoOptimizerService } from 'services/auto-optimizer';
 export { PlatformAppsService } from 'services/platform-apps';
 export { PlatformAppStoreService } from 'services/platform-app-store';
 export { PlatformAppAssetsService } from 'services/platform-apps/platform-app-assets-service';
@@ -162,6 +164,7 @@ import { TcpServerService } from './services/api/tcp-server';
 import { MagicLinkService } from './services/magic-link';
 import { UsageStatisticsService } from './services/usage-statistics';
 import { NotificationsService } from './services/notifications';
+import { ObsModuleLoadNotificationsService } from 'services/obs-module-load-notifications-service';
 import { MediaBackupService } from './services/media-backup';
 import { HotkeysService } from './services/hotkeys';
 import { WidgetsService } from './services/widgets';
@@ -181,7 +184,7 @@ import { LayoutService } from './services/layout';
 import { ProjectorService } from './services/projector';
 import { ObsImporterService } from 'services/obs-importer';
 import { DefaultHardwareService, HardwareService } from 'services/hardware';
-import { AutoConfigService } from 'services/auto-config';
+import { AutoOptimizerService } from 'services/auto-optimizer';
 import { MacPermissionsService } from 'services/mac-permissions';
 import { IncrementalRolloutService } from './services/incremental-rollout';
 import { RecordingModeService } from 'services/recording-mode';
@@ -190,11 +193,12 @@ import { OverlaysPersistenceService } from 'services/scene-collections/overlays'
 import { PlatformAppStoreService } from 'services/platform-app-store';
 import { GameOverlayService } from 'services/game-overlay';
 import { GuestCamService } from 'services/guest-cam';
-import { SideNavService } from './services/side-nav';
+import { NavMenuService } from './services/nav-menu';
 import { VideoSettingsService } from 'services/settings-v2/video';
 import { SettingsManagerService } from 'services/settings-manager';
 import { DualOutputService } from 'services/dual-output';
 import { MarkersService } from 'services/markers';
+import { ScreenshotService } from 'services/screenshot';
 import { SharedStorageService } from 'services/integrations/shared-storage';
 import { RealmService } from 'services/realm';
 import { InstagramService } from 'services/platforms/instagram';
@@ -259,6 +263,7 @@ export const AppServices = {
   MediaGalleryService,
   UsageStatisticsService,
   NotificationsService,
+  ObsModuleLoadNotificationsService,
   MediaBackupService,
   HotkeysService,
   WidgetsService,
@@ -277,7 +282,7 @@ export const AppServices = {
   ObsImporterService,
   TwitchStudioImporterService,
   DefaultHardwareService,
-  AutoConfigService,
+  AutoOptimizerService,
   MacPermissionsService,
   IncrementalRolloutService,
   RecordingModeService,
@@ -287,11 +292,12 @@ export const AppServices = {
   GameOverlayService,
   GuestCamService,
   HardwareService,
-  SideNavService,
+  NavMenuService,
   VideoSettingsService,
   SettingsManagerService,
   DualOutputService,
   MarkersService,
+  ScreenshotService,
   SharedStorageService,
   RealmService,
   RemoteControlService,

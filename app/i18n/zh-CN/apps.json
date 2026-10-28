@@ -7,5 +7,10 @@
   "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "开发者已停止支持此应用程序。该应用程序可能可以继续运行，但不会收到任何更新。如果您想卸载，请按照此处的说明进行操作。",
   "Uninstall": "卸载",
   "Other installed apps:": "其他已安装的应用程序：",
-  "Open": "打开"
+  "Open": "打开",
+  "Pin": "Pin",
+  "Unpin": "Unpin",
+  "Pinned Apps": "Pinned Apps",
+  "Pin up to %{count} apps to the navigation bar.": "Pin up to %{count} apps to the navigation bar.",
+  "You can pin up to %{count} apps. Unpin an app to pin this one.": "You can pin up to %{count} apps. Unpin an app to pin this one."
 }

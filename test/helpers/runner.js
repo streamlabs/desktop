@@ -1,6 +1,7 @@
 /**
  * Tests runner script:
- * - fetch average test timings from the DB
+ * - prepare one shared timing snapshot before packaging the CI test build
+ * - reuse that snapshot in every CI batch (or fetch timings for standalone runs)
  * - run tests
  * - if some tests failed retry only these tests
  * - save failed tests to DB
@@ -8,11 +9,19 @@
 const jobStartTime = Date.now();
 const { execSync } = require('child_process');
 const fs = require('fs');
+const https = require('https');
 const rimraf = require('rimraf');
 const fetch = require('node-fetch');
 
+// The timings GET at startup and the analytics POST after the run are 20+ minutes apart.
+// Node 22.18.0 is currently pinned for the workflow, which means the startup GET socket cannot
+// be reused after 20+ minutes. Each test suite consistently takes > 20 minutes. This meant the
+// POST request to attempt to use a closed socket and would fail with an ECONNABORTED error.
+const utilsServerAgent = new https.Agent({ keepAlive: false });
+
 const failedTestsFile = 'test-dist/failed-tests.json';
 const testStatsFile = 'test-dist/test-stats.json';
+const testTimingsFile = 'test-dist/test-timings.json';
 const args = process.argv.slice(2);
 const TIMEOUT = 3; // timeout in minutes
 const {
@@ -26,16 +35,25 @@ const {
 } = process.env;
 let retryingFailed = false;
 
-const RUN_TESTS_CMD = !args.length
-  ? `yarn test --timeout=${TIMEOUT}m --color -v`
-  : args.join(' ') + ' ';
+const RUN_TESTS_CMD = !args.length ? `yarn test --timeout=${TIMEOUT}m --color -v` : args.join(' ');
 
 (async function main() {
+  if (args.length === 1 && args[0] === '--prepare-timings') {
+    await createTestTimingsFile();
+    return;
+  }
+
   let failedTests = [];
   try {
     rimraf.sync(failedTestsFile);
     rimraf.sync(testStatsFile);
-    await createTestTimingsFile();
+    if (process.env.SLOBS_TEST_TIMINGS_PREPARED === '1') {
+      // Every CI batch must use the snapshot packaged with the shared build.
+      // Refetching here can move tests between batches as other runs finish.
+      validateTestTimings(JSON.parse(fs.readFileSync(testTimingsFile, 'utf8')));
+    } else {
+      await createTestTimingsFile();
+    }
     execSync(RUN_TESTS_CMD, { stdio: [0, 1, 2] });
   } catch (e) {
     console.log(e);
@@ -57,7 +75,7 @@ function retryTests(failedTests) {
 
   const retryingArgs = failedTests.map(testName => `--match="${testName}"`);
   try {
-    execSync(RUN_TESTS_CMD + retryingArgs.join(' '), {
+    execSync([RUN_TESTS_CMD, ...retryingArgs].join(' '), {
       stdio: [0, 1, 2],
     });
     log('retrying succeed');
@@ -130,14 +148,29 @@ async function sendJobToAnalytics(failedTests) {
  * and save results to a file
  */
 async function createTestTimingsFile() {
-  const testTimingsFile = 'test-dist/test-timings.json';
   rimraf.sync(testTimingsFile);
 
   const data = await requestUtilityServer('testStats');
+  validateTestTimings(data);
   if (!fs.existsSync('test-dist')) {
     fs.mkdirSync('test-dist');
   }
   fs.writeFileSync(testTimingsFile, JSON.stringify(data));
+}
+
+function validateTestTimings(records) {
+  if (
+    !Array.isArray(records) ||
+    records.some(
+      record =>
+        !record ||
+        typeof record.name !== 'string' ||
+        !Number.isFinite(record.time) ||
+        record.time < 0,
+    )
+  ) {
+    throw new Error('Invalid shared test timing snapshot');
+  }
 }
 
 async function requestUtilityServer(path, method = 'get', body = null) {
@@ -145,13 +178,22 @@ async function requestUtilityServer(path, method = 'get', body = null) {
   const token = process.env.SLOBS_TEST_USER_POOL_TOKEN;
   const requestPayload = {
     method,
+    agent: utilsServerAgent,
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   };
   if (body) requestPayload.body = JSON.stringify(body);
-  const response = await fetch(`${utilsServerUrl}/${path}`, requestPayload);
+
+  // Attempt to send the request to the utility server via the old socket, retrying once on network failure.
+  let response;
+  try {
+    response = await fetch(`${utilsServerUrl}/${path}`, requestPayload);
+  } catch (e) {
+    console.error(`request to ${path} failed, retrying once`, e);
+    response = await fetch(`${utilsServerUrl}/${path}`, requestPayload);
+  }
 
   if (!response.ok) {
     console.error(response.status);

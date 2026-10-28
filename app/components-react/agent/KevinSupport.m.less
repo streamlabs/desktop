@@ -102,6 +102,12 @@
   min-height: 0;
 }
 
+// The scrollbar is an overlay: it draws over the content's right edge instead of
+// taking its own column, so without this gutter it covers the user's bubbles.
+.list {
+  padding-right: 12px;
+}
+
 .message {
   display: flex;
   gap: 10px;

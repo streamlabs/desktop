@@ -67,10 +67,7 @@ async function toggleReplayBuffer(advanced: boolean = false) {
 }
 
 test('Replay Buffer filenames contain a timestamp', async t => {
-  const tmpDir = await setTemporaryRecordingPath(
-    false,
-    path.join(t.context.cacheDir, 'slobs-client'),
-  );
+  const tmpDir = await setTemporaryRecordingPath(false);
   await setOutputResolution('100x100');
 
   await startReplayBuffer();
@@ -85,10 +82,7 @@ test('Replay Buffer filenames contain a timestamp', async t => {
 });
 
 test('Replay Buffer', async t => {
-  const tmpDir = await setTemporaryRecordingPath(
-    false,
-    path.join(t.context.cacheDir, 'slobs-client'),
-  );
+  const tmpDir = await setTemporaryRecordingPath(false);
   await setOutputResolution('100x100');
 
   // Simple Replay Buffer

@@ -7,5 +7,10 @@
   "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "A fejlesztő már nem támogatja ezt az alkalmazást. Az alkalmazás továbbra is működhet, de nem fog frissítéseket kapni. Ha szeretnéd eltávolítani, kérjük, kövesd az itt található utasításokat.",
   "Uninstall": "Uninstall",
   "Other installed apps:": "Other installed apps:",
-  "Open": "Open"
+  "Open": "Open",
+  "Pin": "Pin",
+  "Unpin": "Unpin",
+  "Pinned Apps": "Pinned Apps",
+  "Pin up to %{count} apps to the navigation bar.": "Pin up to %{count} apps to the navigation bar.",
+  "You can pin up to %{count} apps. Unpin an app to pin this one.": "You can pin up to %{count} apps. Unpin an app to pin this one."
 }

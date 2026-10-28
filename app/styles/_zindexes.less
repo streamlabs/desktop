@@ -1,0 +1,61 @@
+// Central registry of z-index values. Do not hardcode z-index numbers in
+// stylesheets or components; add or reuse a variable here instead.
+//
+// For values needed from JS/TSX, expose them from a CSS module with `:export`
+// (see GamePulse.m.less) rather than hardcoding a number in the component.
+//
+// Tiers are spaced out so a one-off layer can slot between two existing ones
+// without renumbering. Pick a free number inside the tier's range; add a
+// variable here if it's reused.
+//
+//   -99 .. 999     local stacking within a component, then app chrome
+//   1000 .. 1099   antd's own range (see below) and the layers that must
+//                  coexist with it
+//   2000 and up    layers above all of the above
+//
+// antd's built-in z-indexes are NOT defined here (@zindex-* in antd's theme):
+//   modal 1000, message/notification 1010, popover 1030, dropdown/picker 1050,
+//   popconfirm 1060, tooltip 1070, image 1080.
+// Layers above 1080 (onboarding, alertAsync, ...) cover antd popups that are
+// portaled to <body>, such as select dropdowns. Only put such layers there
+// when their content has no antd popups, or give the popup its own zIndex.
+
+// Local stacking within a component (relative to its siblings)
+@z-below: -10;
+@z-base: 0;
+@z-raised: 10;
+@z-raised-2: 20;
+@z-raised-3: 30;
+@z-overlay: 100;
+@z-badge: 200;
+@z-handle: 300;
+@z-tags-input: 400;
+@z-playhead: 500;
+
+// App chrome. Order matters: live dock < resize bars < nav menu < loader < fullscreen overlays
+@z-live-dock: 600;
+@z-resize-bar: 700;
+@z-nav-menu: 800; // above resize bars so the logout confirmation modal shows over them
+@z-loader: 850;
+@z-fullscreen-overlay: 900;
+
+// Layers that must show above the resize bars and nav menu. Keep both above
+// antd's default modal (1000) and below its message/notification (1010), so
+// toasts still show over them.
+@z-above-resize-bars: 1003; // modals, help tips, agent approval bubble
+@z-above-help-tips: 1006; // antd modals, auth modal, live dock chevron
+
+// antd-range layers between message (1010) and popover (1030)
+@z-test-widgets-menu: 1020;
+
+// Above everything in the app except tooltips
+@z-onboarding-modal: 2000;
+@z-alert-modal: 5000;
+
+// Tooltips and floating inputs that must show over modals
+@z-tutorial-tooltip: 9000;
+@z-tags-input-dropdown: 9000;
+@z-tooltip: 10000;
+
+// Covers the whole window while the app loads
+@z-main-loading: 100000;

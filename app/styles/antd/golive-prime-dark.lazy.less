@@ -1,5 +1,6 @@
 @import '~antd/dist/antd.dark.less';
 @import '../colors';
+@import '../alerts';
 @import './antd.less';
 @import '../go-live.less';
 
@@ -138,4 +139,12 @@
 .ant-checkbox-checked .ant-checkbox-inner {
   background-color: var(--secondary-checkbox);
   border-color: var(--secondary-checkbox);
+}
+
+// Notices mount on <body>, outside the theme class that defines these in themes.g.less
+body {
+  --alert-info-bg: @alert-info-dark;
+  --alert-info-text: @alert-info-text-dark;
+  --alert-error-bg: @alert-error-dark;
+  --alert-error-text: @alert-error-text-dark;
 }

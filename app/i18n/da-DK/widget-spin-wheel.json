@@ -1,6 +1,7 @@
 {
   "Add Category": "Tilføj kategori",
   "Add Section": "Tilføj afsnit",
+  "DONUT": "DONUT",
   "Clear All": "Ryd alt",
   "Manage Spin Wheel": "Administrer hjuletdrejning",
   "Categories": "Kategorier",
@@ -30,5 +31,6 @@
   "Center Image Size": "Centrer billedstørrelse",
   "Center Image Border Enabled": "Centrer billedes kant aktiveret",
   "Center Image Border Color": "Centrer billedes kantfarve",
-  "Center Image Border Width": "Centrer billedes kantbredde"
+  "Center Image Border Width": "Centrer billedes kantbredde",
+  "Add categories before adding new sections.": "Add categories before adding new sections."
 }

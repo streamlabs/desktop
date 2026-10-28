@@ -1,6 +1,5 @@
 {
   "Banned Media": "Contenuti multimediali vietati",
-  "Check Banned Media": "Controlla contenuti multimediali vietati",
   "Price Per Second": "Costo al secondo",
   "Min. Amount to Share": "Importo minimo per condividere",
   "Max Duration": "Durata massima",
@@ -8,8 +7,5 @@
   "Spam Security": "Protezione spam",
   "The time between videos the next video has to buffer.": "Durante la riproduzione di video, tempo di buffering prima dell'avvio del video successivo.",
   "Manage Media Settings": "Gestisci impostazioni multimediali",
-  "The maximum duration in seconds that media can be played, regardless of amount donated. The default value is 60 seconds.": "La durata massima in secondi per cui i contenuti multimediali possono essere riprodotti, indipendentemente dall'importo donato. Il valore predefinito è 60 secondi.",
-  "This slider helps you filter shared media before it can be submitted.\nOff: No security\nLow: 65%+ rating, 5k+ views\nMedium: 75%+ rating, 40k+ views\nHigh: 80%+ rating, 300k+ views\nVery High: 85%+ rating, 900k+ views": "Questo dispositivo di scorrimento consente di filtrare i contenuti multimediali condivisi prima che possano essere inviati.\nSpento: nessuna sicurezza \nBasso: valutazione 65%+, 5k+ visualizzazioni\nMedio: valutazione 75%+, 40k+ visualizzazioni\nAlto: valutazione 80%+, 300k+ visualizzazioni\nMolto alto: valutazione 85%+, 900k+ visualizzazioni",
-  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "L'importo minimo che un donatore deve donare per condividere i contenuti multimediali. Il valore predefinito è 5,00 USD",
-  "In order to control length, you can decide how much it costs per second to share media. Setting this to 0.30 would mean that for $10, media would play for 30 seconds. The default value is 0.10.": "Per controllare la lunghezza, puoi decidere quanto costa al secondo condividere gli elementi multimediali. Se si imposta la lunghezza su 0,30, per 10 $, i contenuti multimediali verranno riprodotti per 30 secondi. Il valore predefinito è 0,10."
+  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "L'importo minimo che un donatore deve donare per condividere i contenuti multimediali. Il valore predefinito è 5,00 USD"
 }

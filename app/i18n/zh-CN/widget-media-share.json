@@ -1,6 +1,5 @@
 {
   "Banned Media": "被禁止的媒体",
-  "Check Banned Media": "检查被禁止的媒体",
   "Price Per Second": "每秒价格",
   "Min. Amount to Share": "最小分享量",
   "Max Duration": "最长持续时间",
@@ -8,8 +7,5 @@
   "Spam Security": "垃圾信息安全性",
   "The time between videos the next video has to buffer.": "下一视频必须的视频间缓冲时间。",
   "Manage Media Settings": "管理媒体设置",
-  "The maximum duration in seconds that media can be played, regardless of amount donated. The default value is 60 seconds.": "无论打赏多少，均可播放媒体的最大持续时间（以秒为单位）。默认值为 60 秒。",
-  "This slider helps you filter shared media before it can be submitted.\nOff: No security\nLow: 65%+ rating, 5k+ views\nMedium: 75%+ rating, 40k+ views\nHigh: 80%+ rating, 300k+ views\nVery High: 85%+ rating, 900k+ views": "此滑块可帮助您在共享媒体提交之前对其进行过滤。\n关：无安全性\n低：65% 评分，超过 5 千次观看\n中：75% 评分，超过 4 万次观看\n高：80% 评分，超过 30 万次观看\n很高：85% 评分，超过 90 万次观看",
-  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "打赏者分享媒体所必须的最低打赏金额。默认值为 5 美元",
-  "In order to control length, you can decide how much it costs per second to share media. Setting this to 0.30 would mean that for $10, media would play for 30 seconds. The default value is 0.10.": "为控制长度，您可以决定共享媒体的每秒花费。将此值设置为 0.30 意味着 10 美元可播放媒体 30 秒。默认值为 0.10。"
+  "The minimum amount a donor must donate in order to share media. The default value is $5.00 USD": "打赏者分享媒体所必须的最低打赏金额。默认值为 5 美元"
 }

@@ -27,7 +27,11 @@ export type TAlertType =
   | 'tiltify_donation'
   | 'treat'
   | 'donordrive_donation'
-  | 'justgiving_donation';
+  | 'justgiving_donation'
+  | 'twitter_follow'
+  | 'twitter_like'
+  | 'twitter_sub'
+  | 'twitter_repost';
 
 export interface IAlertConfig {
   type: TAlertType;
@@ -175,6 +179,39 @@ export function getAlertsConfig(
       platforms: ['youtube'],
       tooltip: $t('Plays an alert when a viewer subscribes to your YouTube channel'),
     },
+
+    twitter_follow: {
+      type: 'twitter_follow',
+      name: $t('X Follow'),
+      apiKey: 'twitter_follow',
+      platforms: ['twitter'],
+      tooltip: $t('Plays an alert for new X followers'),
+    },
+
+    twitter_like: {
+      type: 'twitter_like',
+      name: $t('X Like'),
+      apiKey: 'twitter_like',
+      platforms: ['twitter'],
+      tooltip: $t('Plays an alert for new X likes'),
+    },
+
+    twitter_sub: {
+      type: 'twitter_sub',
+      name: $t('X Subscription'),
+      apiKey: 'twitter_sub',
+      platforms: ['twitter'],
+      tooltip: $t('Plays an alert for new X subscriptions'),
+    },
+
+    twitter_repost: {
+      type: 'twitter_repost',
+      name: $t('X Repost'),
+      apiKey: 'twitter_repost',
+      platforms: ['twitter'],
+      tooltip: $t('Plays an alert for new X reposts'),
+    },
+
     // TODO: Implement these when needed
     donordrive_donation: undefined,
     eldonation: undefined,

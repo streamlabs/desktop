@@ -205,6 +205,8 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
       id,
       description: automation.description,
       conditions: automation.conditions,
+      // API stores "no scene limit" as null but its schema only accepts an array or absence.
+      scenes: automation.scenes ?? undefined,
       actions: automation.actions,
       enabled: automation.enabled,
     };

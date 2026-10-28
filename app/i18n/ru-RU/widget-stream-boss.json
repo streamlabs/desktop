@@ -7,6 +7,7 @@
   "Set Stream Boss Health": "Указать уровень здоровья босса",
   "Goal": "Цель",
   "Manage Battle": "Управление битвой",
+  "Boss Settings": "Boss Settings",
   "Starting Health": "Начальный уровень здоровья",
   "Fixed": "Исправлено",
   "The boss will spawn with the set amount of health everytime.": "Босс всегда появляется с определенным уровнем здоровья.",
@@ -31,5 +32,6 @@
   "Health Bar Background Color": "Цвет фона шкалы здоровья",
   "Font": "Шрифт",
   "The boss will have additional health each time he is defeated. The amount is set below.": "Босс будет получать дополнительное здоровье при каждом поражении. Величина задается ниже.",
-  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "Здоровье босса будет изменяться в зависимости от размера ущерба при смертельном ударе. Новое значение здоровья босса будет равняться излишнему ущербу, умноженному на коэффициент. Например, если при оставшемся здоровье 100 был нанесен ущерб 150 и задан коэффициент 3, новый босс при появлении будет иметь здоровье 150. \n Задайте коэффициент ниже."
+  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "Здоровье босса будет изменяться в зависимости от размера ущерба при смертельном ударе. Новое значение здоровья босса будет равняться излишнему ущербу, умноженному на коэффициент. Например, если при оставшемся здоровье 100 был нанесен ущерб 150 и задан коэффициент 3, новый босс при появлении будет иметь здоровье 150. \n Задайте коэффициент ниже.",
+  "Failed to reset Stream Boss, please try again.": "Failed to reset Stream Boss, please try again."
 }

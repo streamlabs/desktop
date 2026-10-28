@@ -315,6 +315,14 @@ export const platformList = [
   EPlatform.Instagram,
 ];
 
+/**
+ * Whether a platform can be a user's primary platform. Instagram and Patreon can be linked to
+ * an account but have no chat or stream info to route to, so they can't be primary.
+ */
+export function canBePrimaryPlatform(platform: TPlatform | string) {
+  return platform !== EPlatform.Instagram && platform !== EPlatform.Patreon;
+}
+
 export const platformLabels = (platform: TPlatform | string) =>
   ({
     [EPlatform.Twitch]: $t('Twitch'),

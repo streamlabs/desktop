@@ -1,6 +1,5 @@
 {
   "Sponsor Banner": "Sponsor Başlığı",
-  "Ad Layout": "Reklam Düzeni",
   "Placement": "Yerleştirme",
   "Image Layout": "Görüntü Düzeni",
   "Image Duration (seconds)": "Görüntü Süresi (saniye)",
@@ -19,9 +18,6 @@
   "These are the animations that are used to show your banner.": "Bunlar, başlığınızı göstermek için kullanılan animasyonlardır.",
   "Visual Settings": "Görsel Ayarlar",
   "Image Set %{number}": "Görüntü Ayarlandı %{number}",
-  "Placement %{number} Images": "%{number} Görüntü Ekleme",
   "No Image": "Görüntü Yok",
-  "Set up a sponsor banner to be able to edit (add, remove, update) rotating sponsor logos on streamer channel.": "Yayıncı kanalda dönen sponsor logolarını düzenleyebilmek (eklemek, kaldırmak, güncellemek) için bir sponsor başlığı oluşturun.",
-  "Show off rotating media to display your socials, sponsorships, CTAs or just cute animations.": "Sosyal medya hesaplarınızı, sponsorluklarınızı, CTA'larınızı veya sadece sevimli animasyonlarınızı görüntülemek için dönen medya gösterin.",
-  "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)": "Süre, [dakika]:[saniye] biçiminde olmalıdır (örneğin, 02:05)."
+  "Show off rotating media to display your socials, sponsorships, CTAs or just cute animations.": "Sosyal medya hesaplarınızı, sponsorluklarınızı, CTA'larınızı veya sadece sevimli animasyonlarınızı görüntülemek için dönen medya gösterin."
 }

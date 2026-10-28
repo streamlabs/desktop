@@ -1,9 +1,7 @@
 {
   "Troubleshooter": "トラブルシューター",
   "Open Settings": "設定を開く",
-  " Streamlabs has detected dropped frames": " Streamlabs はドロップフレームを検出しました",
   "What does this mean?": "これは何を意味するのでしょうか?",
-  " Some frames have not been uploaded. This problem is usually related to a poor network connection.": "一部のフレームはアップロードされませんでした。この問題は通常、不良なネットワーク接続に関連しています。",
   "What can I do?": "どうすれば良いですか?",
   "Check the health of your Internet connection": "インターネット接続の状態を確認します",
   "Change your ingest server": "インジェストサーバーを変えます",
@@ -23,5 +21,7 @@
   "Disable FreeSync or GSync in your Driver": "ドライバーの FreeSync または GSync を無効化します",
   "Lower graphics settings until you stop lagging frames": "フレームの遅延が停止するまで、グラフィック設定を下げます",
   "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "メディアソースの下のハードウェア デコーディングを無効化します（これによって、GPU に対して CPU 利用率がわずかに増加します）",
-  "CPU usage threshold in Dual Output mode": "Dual OutputモードでのCPU使用率のしきい値"
+  "CPU usage threshold in Dual Output mode": "Dual OutputモードでのCPU使用率のしきい値",
+  "Streamlabs has detected dropped frames": "Streamlabs has detected dropped frames",
+  "Some frames have not been uploaded. This problem is usually related to a poor network connection.": "Some frames have not been uploaded. This problem is usually related to a poor network connection."
 }

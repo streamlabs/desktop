@@ -1,11 +1,15 @@
-import { ExecuteInWorkerProcess, StatefulService, ViewHandler, mutation } from 'services/core';
+import {
+  ExecuteInWorkerProcess,
+  PersistentStatefulService,
+  ViewHandler,
+  mutation,
+} from 'services/core';
 import * as obs from '../../obs-api';
 import path from 'path';
 import { getChecksum } from 'util/requests';
 import { byOS, OS } from 'util/operating-systems';
 import { Inject } from 'services/core/injector';
-import { SettingsService } from 'services/settings';
-import { UsageStatisticsService, SourcesService, AppService } from 'app-services';
+import { UsageStatisticsService, SourcesService, ScenesService, AppService } from 'app-services';
 import * as remote from '@electron/remote';
 import { Subject } from 'rxjs';
 import { VCamOutputType } from 'obs-studio-node';
@@ -13,6 +17,7 @@ import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from './core/s
 import os from 'os';
 import { SignalsService } from './signals-manager';
 import { $t } from 'services/i18n';
+import { videoOutputCoordinator } from 'services/video-output-coordinator';
 
 const PLUGIN_PLIST_PATH =
   '/Library/CoreMediaIO/Plug-Ins/DAL/vcam-plugin.plugin/Contents/Info.plist';
@@ -57,25 +62,46 @@ interface IVirtualWebcamServiceState {
   installStatus: EVirtualWebcamPluginInstallStatus;
 }
 
-export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceState> {
+export class VirtualWebcamService extends PersistentStatefulService<IVirtualWebcamServiceState> {
   @Inject() appService: AppService;
   @Inject() usageStatisticsService: UsageStatisticsService;
-  @Inject() sourcesService: SourcesService;
-  @Inject() settingsService: SettingsService;
   @Inject() signalsService: SignalsService;
 
-  static initialState: IVirtualWebcamServiceState = {
+  static defaultState: IVirtualWebcamServiceState = {
     running: false,
     outputType: VCamOutputType.ProgramView,
     outputSelection: '',
     installStatus: EVirtualWebcamPluginInstallStatus.NotPresent,
   };
 
+  static filter(state: IVirtualWebcamServiceState): IVirtualWebcamServiceState {
+    const type = Number(state.outputType);
+    const outputType = [
+      VCamOutputType.ProgramView,
+      VCamOutputType.SceneOutput,
+      VCamOutputType.SourceOutput,
+    ].includes(type)
+      ? type
+      : VCamOutputType.ProgramView;
+
+    // Only the selected output survives a restart. Installation and running status
+    // must be determined by the new process, not restored from the previous one.
+    return {
+      ...this.defaultState,
+      outputType,
+      outputSelection:
+        outputType !== VCamOutputType.ProgramView && typeof state.outputSelection === 'string'
+          ? state.outputSelection
+          : '',
+    };
+  }
+
   runningChanged = new Subject<boolean>();
   installStatusChanged = new Subject<EVirtualWebcamPluginInstallStatus>();
   signalInfoChanged = new Subject<IOBSOutputSignalInfo>();
 
-  protected init(): void {
+  init(): void {
+    super.init();
     this.appService.shutdownStarted.subscribe(() => this.stop());
 
     byOS({
@@ -114,17 +140,25 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
   private handleUnknownVirtualCamError(error: unknown) {
     console.error('Caught OBS_service_startVirtualCam error:', error);
     let errorMessage = '';
-    const darwinVersion = os.release().split('.')[0]; // Extract the major version number
-    const isMacOS15OrGreater = Number(darwinVersion) >= 15;
-    if (isMacOS15OrGreater) {
-      errorMessage = $t(
-        'Unable to start virtual camera.\n\nYou may need to enable permissions. To do this, go to System Settings → General → Login Items & Extensions → Camera Extensions.',
-      );
-    } else {
-      errorMessage = $t(
-        'Unable to start virtual camera.\n\nYou may need to enable permissions. To do this, go to System Settings → Privacy & Security → Security.',
-      );
-    }
+    byOS({
+      [OS.Windows]: () => {
+        errorMessage = $t('Unable to start virtual camera.');
+      },
+      [OS.Mac]: () => {
+        const darwinVersion = os.release().split('.')[0]; // Extract the major version number
+        const isMacOS15OrGreater = Number(darwinVersion) >= 15;
+        if (isMacOS15OrGreater) {
+          errorMessage = $t(
+            'Unable to start virtual camera.\n\nYou may need to enable permissions. To do this, go to System Settings → General → Login Items & Extensions → Camera Extensions.',
+          );
+        } else {
+          errorMessage = $t(
+            'Unable to start virtual camera.\n\nYou may need to enable permissions. To do this, go to System Settings → Privacy & Security → Security.',
+          );
+        }
+      },
+    });
+
     remote.dialog.showErrorBox($t('Virtual Webcam'), errorMessage);
   }
 
@@ -250,24 +284,28 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
       return;
     }
     this.SET_INSTALL_STATUS(EVirtualWebcamPluginInstallStatus.NotPresent);
-    this.SET_OUTPUT_TYPE(VCamOutputType.ProgramView);
-
-    // clearing the output selection from settings is needed to prevent stream errors
-    this.settingsService.setSettingValue('Virtual Webcam', 'OutputSelection', '');
+    this.SET_OUTPUT(VCamOutputType.ProgramView, '');
   }
 
   @ExecuteInWorkerProcess()
   start() {
-    if (this.state.running) return;
+    if (this.state.running || this.appService.state.loading) return;
 
+    let releaseOutputStart = () => {};
     try {
+      releaseOutputStart = videoOutputCoordinator.beginOutputStart();
+      // Resolve and save the target against the loaded collection before starting,
+      // including starts triggered by a hotkey without opening settings first.
+      this.update(this.state.outputType, this.state.outputSelection);
       obs.NodeObs.OBS_service_startVirtualCam();
+      this.SET_RUNNING(true);
+      this.runningChanged.next(true);
     } catch (error: unknown) {
       this.handleUnknownVirtualCamError(error);
       return;
+    } finally {
+      releaseOutputStart();
     }
-    this.SET_RUNNING(true);
-    this.runningChanged.next(true);
 
     this.usageStatisticsService.recordFeatureUsage('VirtualWebcam');
   }
@@ -289,14 +327,17 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
 
   @ExecuteInWorkerProcess()
   update(type: VCamOutputType, name: string) {
-    obs.NodeObs.OBS_service_updateVirtualCam(type, name);
-
-    const outputSelection = type === VCamOutputType.ProgramView ? '' : name;
-
-    if (type !== this.state.outputType) {
-      this.SET_OUTPUT_TYPE(type);
-      this.SET_OUTPUT_SELECTION(outputSelection);
-    }
+    const filtered = VirtualWebcamService.filter({
+      ...this.state,
+      outputType: type,
+      outputSelection: name,
+    });
+    const { outputType, outputSelection } = this.views.resolveOutput(
+      filtered.outputType,
+      filtered.outputSelection,
+    );
+    obs.NodeObs.OBS_service_updateVirtualCam(outputType, outputSelection);
+    this.SET_OUTPUT(outputType, outputSelection);
   }
 
   @mutation()
@@ -305,12 +346,8 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
   }
 
   @mutation()
-  private SET_OUTPUT_TYPE(type: VCamOutputType) {
+  private SET_OUTPUT(type: VCamOutputType, selection: string) {
     this.state.outputType = type;
-  }
-
-  @mutation()
-  private SET_OUTPUT_SELECTION(selection: string) {
     this.state.outputSelection = selection;
   }
 
@@ -320,16 +357,48 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
   }
 }
 class VirtualWebcamViews extends ViewHandler<IVirtualWebcamServiceState> {
+  @Inject() private scenesService: ScenesService;
+  @Inject() private sourcesService: SourcesService;
+
   get running() {
     return this.state.running;
   }
 
+  getOutputSelectionOptions(type: VCamOutputType) {
+    if (type === VCamOutputType.SceneOutput) {
+      return this.scenesService.views.scenes.map(scene => ({ label: scene.name, value: scene.id }));
+    }
+    if (type === VCamOutputType.SourceOutput) {
+      return this.sourcesService.views
+        .getSources()
+        .filter(source => source.type !== 'scene' && source.video)
+        .map(source => ({ label: source.name, value: source.sourceId }));
+    }
+    return [];
+  }
+
+  resolveOutput(type: VCamOutputType, selection: string) {
+    const options = this.getOutputSelectionOptions(type);
+    const target = options.find(option => option.value === selection) ?? options[0];
+    return target
+      ? { outputType: type, outputSelection: target.value }
+      : { outputType: VCamOutputType.ProgramView, outputSelection: '' };
+  }
+
+  get output() {
+    return this.resolveOutput(this.state.outputType, this.state.outputSelection);
+  }
+
+  get outputSelectionOptions() {
+    return this.getOutputSelectionOptions(this.state.outputType);
+  }
+
   get outputType() {
-    return this.state.outputType.toString();
+    return this.output.outputType.toString();
   }
 
   get outputSelection() {
-    return this.state.outputSelection;
+    return this.output.outputSelection;
   }
 
   get installStatus(): EVirtualWebcamPluginInstallStatus {

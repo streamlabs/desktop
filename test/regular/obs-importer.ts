@@ -1,15 +1,16 @@
 import { ExecutionContext } from 'ava';
 import { WidgetsService } from '../../app/services/widgets';
 import { getApiClient } from '../helpers/api-client';
-import { FormMonkey } from '../helpers/form-monkey';
 import {
+  clickButton,
   clickIfDisplayed,
-  focusChild,
   focusMain,
-  waitForDisplayed
+  waitForDisplayed,
 } from '../helpers/modules/core';
+import { useForm } from '../helpers/modules/forms';
 import { advancePastOnboardingLogin } from '../helpers/modules/onboarding';
 import { sceneExisting, switchCollection } from '../helpers/modules/scenes';
+import { showSettingsWindow } from '../helpers/modules/settings/settings';
 import { sourceIsExisting } from '../helpers/modules/sources';
 import { sleep } from '../helpers/sleep';
 import { skipCheckingErrorsInLog, test, useWebdriver } from '../helpers/webdriver';
@@ -42,18 +43,19 @@ test('OBS Importer', async t => {
   // Disabling due to incorrect state set issue in useModule
   skipCheckingErrorsInLog();
 
-  const client = t.context.app.client;
-
   await advancePastOnboardingLogin(t);
 
   await waitForDisplayed('h1=Connect Platforms');
   await clickIfDisplayed('button=Skip');
 
   // import from OBS
-  await clickIfDisplayed('button=Start Import');
-  await clickIfDisplayed('button=Skip');
+  await waitForDisplayed('button=Start Import');
+  await clickButton('Start Import');
+  await waitForDisplayed('div[data-testid=choose-free-plan-btn]', { timeout: 60000 });
+  await clickIfDisplayed('div[data-testid=choose-free-plan-btn]');
   await waitForDisplayed('h1=Set Up Your Mic & Webcam');
-  await clickIfDisplayed('button=Skip');
+  await clickButton('Skip');
+  await waitForDisplayed('h1=Set Up Your Mic & Webcam', { reverse: true });
 
   await waitForDisplayed('[data-name=SceneSelector]');
 
@@ -72,12 +74,13 @@ test('OBS Importer', async t => {
   await switchCollection('Collection 2');
 
   // check settings
-  await (await client.$('.side-nav .icon-settings')).click();
-  await focusChild();
-  await (await client.$('li=Output')).click();
-  const form = new FormMonkey(t);
-  await form.setInputValue(await form.getInputSelectorByTitle('Video Bitrate'), '5000');
-  await form.setInputValue(await form.getInputSelectorByTitle('Encoder'), 'Software (x264)');
+  await showSettingsWindow('Output', async () => {
+    const { fillForm } = useForm('Streaming');
+    await fillForm({
+      VBitrate: '5000',
+      StreamEncoder: 'Software (x264)',
+    });
+  });
 
   // check that widgets have been migrated
   await focusMain();

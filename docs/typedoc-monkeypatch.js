@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // remove unused legends
   patchLegend();
 
-  // show only classes in the side navigation
+  // show only classes in the nav menu
   hideNonClassesFromNavigation();
 
   console.log('monkeypatch applied');

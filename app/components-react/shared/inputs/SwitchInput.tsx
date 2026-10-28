@@ -43,7 +43,12 @@ export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
     <InputWrapper {...attrs}>
       <Form.Item colon={false} aria-label={p.label} style={p.style} className={p?.className}>
         {!p.nolabel && labelAlign === 'left' && (
-          <span style={{ marginRight: '10px' }}>{p.label}</span>
+          <span
+            style={{ marginRight: '10px' }}
+            onClick={() => !p.disabled && !p.readOnly && inputAttrs.onChange(!inputAttrs.value)}
+          >
+            {p.label}
+          </span>
         )}
         <Switch
           checked={inputAttrs.value}
@@ -59,7 +64,12 @@ export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
           checkedChildren={p?.checkmark ? <i className="icon-check-mark" /> : undefined}
         />
         {!p.nolabel && labelAlign === 'right' && (
-          <span style={{ marginLeft: '10px' }}>{p.label}</span>
+          <span
+            style={{ marginLeft: '10px' }}
+            onClick={() => !p.disabled && !p.readOnly && inputAttrs.onChange(!inputAttrs.value)}
+          >
+            {p.label}
+          </span>
         )}
       </Form.Item>
     </InputWrapper>

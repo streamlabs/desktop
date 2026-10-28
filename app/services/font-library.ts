@@ -2,6 +2,9 @@ import { Service } from './core/service';
 import path from 'path';
 import fs from 'fs';
 import https from 'https';
+import crypto from 'crypto';
+import { IncomingMessage } from 'http';
+import { pipeline } from 'stream';
 import electron from 'electron';
 import { AppService } from 'services/app';
 import { Inject } from 'services/core/injector';
@@ -86,7 +89,10 @@ export class FontLibraryService extends Service {
     });
   }
 
-  // Returns a promise that resolves with a path to the downloaded font
+  /**
+   * Returns the cached font path after the complete download has been published.
+   * Network, HTTP and filesystem failures reject the promise and allow a later retry.
+   */
   downloadFont(file: string): Promise<string> {
     const fontPath = this.libraryPath(file);
 
@@ -98,15 +104,42 @@ export class FontLibraryService extends Service {
       return this.fontDownloadPromises[file];
     }
 
-    this.fontDownloadPromises[file] = new Promise(resolve => {
+    const download = async (): Promise<string> => {
       this.ensureFontsDirectory();
+      const temporaryPath = `${fontPath}.${crypto.randomBytes(6).toString('hex')}.download`;
 
-      https.get(this.libraryUrl(file), response => {
-        const fontFile = fs.createWriteStream(fontPath);
+      try {
+        const response = await new Promise<IncomingMessage>((resolve, reject) => {
+          https
+            .get(this.libraryUrl(file), response => {
+              response.on('error', reject);
+              resolve(response);
+            })
+            .on('error', reject);
+        });
 
-        fontFile.on('finish', () => resolve(fontPath));
-        response.pipe(fontFile);
-      });
+        if (response.statusCode !== 200) {
+          response.resume();
+          throw new Error(`Font download failed with HTTP ${response.statusCode}`);
+        }
+
+        await new Promise<void>((resolve, reject) => {
+          pipeline(response, fs.createWriteStream(temporaryPath), error =>
+            error ? reject(error) : resolve(),
+          );
+        });
+        await fs.promises.rename(temporaryPath, fontPath);
+        return fontPath;
+      } catch (error: unknown) {
+        // Preserve the download error if cleanup also fails. The published font is untouched.
+        await fs.promises.unlink(temporaryPath).catch(() => {});
+        throw error;
+      }
+    };
+
+    this.fontDownloadPromises[file] = download().catch(error => {
+      delete this.fontDownloadPromises[file];
+      throw error;
     });
 
     return this.fontDownloadPromises[file];

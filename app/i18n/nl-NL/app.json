@@ -1,5 +1,4 @@
 {
-  "You have been logged out": "U bent uitgelogd",
   "This element is too small to be displayed": "Dit element is te klein voor weergave",
   "This element requires Selective Recording to be enabled": "Dit element vereist Selectieve opname om ingeschakeld te worden",
   "Grant Permissions": "Machtigingen verlenen",
@@ -18,9 +17,11 @@
   "Unknown error, please contact support": "Er is een fout opgetreden, neem contact op met de helpdesk.",
   "Custom Destination": "Aangepaste bestemming",
   "This app is currently popped out in another window.": "Deze app is nu in een ander venster geopend.",
+  "Pop Out App": "Pop Out App",
   "Error granting chat permissions.": "Er is een fout opgetreden bij het geven van chat-toestemming.",
   "Authentication Error": "Authenticatiefout",
   "Diagnostic Report Uploaded Successfully": "Diagnostisch rapport is geüpload",
   "Copy Report ID": "Rapport-ID kopiëren",
-  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "Het diagnoserapport is veilig geüpload en de onderstaande rapport-ID is naar je klembord gekopieerd. Geef het rapport-ID door aan het Streamlabs Streamer Success-team."
+  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "Het diagnoserapport is veilig geüpload en de onderstaande rapport-ID is naar je klembord gekopieerd. Geef het rapport-ID door aan het Streamlabs Streamer Success-team.",
+  "Unknown %{platform} error": "Unknown %{platform} error"
 }

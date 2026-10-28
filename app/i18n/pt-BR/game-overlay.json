@@ -1,9 +1,7 @@
 {
   "Enable in-game overlay": "Ativar painel em jogo",
-  "Enable stream preview in overlay": "Ativar pré-visualização da transmissão no painel",
   "Toggle in-game overlay": "Ativar painel em jogo",
   "Toggle positioning mode": "Ativar modo de posicionamento",
   "Set a hotkey in Hotkey Settings to toggle the in-game overlay": "Definir uma tecla de atalho nas configurações de tecla de atalho para ativar o painel em jogo",
-  "The in-game overlay is a new experimental feature that allows you to view chat and events overlayed on top of your game.  This overlay may not work with certain games running in exclusive fullscreen mode.  For best results, we recommend running your game in windowed-fullscreen mode.": "O painel em jogo é um novo recurso experimental que permite visualizar o chat e os eventos sobrepostos em um painel sobre seu jogo. Esse painel pode não funcionar com determinados jogos em execução no modo exclusivo de tela cheia. Para melhores resultados, recomendamos que você execute seu jogo no modo de tela cheia em janela.",
   "Please log in to use the in-game overlay.": "Faça o login para usar a sobreposição no jogo."
 }

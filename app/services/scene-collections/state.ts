@@ -111,6 +111,10 @@ export class SceneCollectionsStateService extends StatefulService<ISceneCollecti
     return this.fileManagerService.exists(filePath);
   }
 
+  async absoluteCollectionBackupExists(id: string) {
+    return this.fileManagerService.exists(this.getAbsoluteCollectionBackupPath(id));
+  }
+
   /**
    * Reads the contents of the file into a string
    * @param id The id of the collection
@@ -135,6 +139,10 @@ export class SceneCollectionsStateService extends StatefulService<ISceneCollecti
     let collectionPath = this.getCollectionFilePath(id);
     if (backup) collectionPath = `${collectionPath}.bak`;
     this.fileManagerService.write(collectionPath, data);
+  }
+
+  writeAbsoluteCollectionBackup(id: string, data: string) {
+    this.fileManagerService.write(this.getAbsoluteCollectionBackupPath(id), data);
   }
 
   /**
@@ -177,6 +185,10 @@ export class SceneCollectionsStateService extends StatefulService<ISceneCollecti
 
   getCollectionFilePath(id: string) {
     return path.join(this.collectionsDirectory, `${id}.json`);
+  }
+
+  getAbsoluteCollectionBackupPath(id: string) {
+    return `${this.getCollectionFilePath(id)}.absolute.bak`;
   }
 
   /**

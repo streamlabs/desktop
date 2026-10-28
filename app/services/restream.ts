@@ -34,7 +34,7 @@ import { RealmObject } from './realm';
 import { ObjectSchema } from 'realm';
 import { TSocketEvent } from './websocket';
 
-interface IIngestServer {
+export interface IIngestServer {
   name: string;
   url: string;
 }
@@ -1695,6 +1695,9 @@ export class RestreamService extends StatefulService<IRestreamState> {
         nodeIntegration: false,
         contextIsolation: true,
         sandbox: false,
+        // The multistream chat reloads itself when its keep-alive timers get throttled,
+        // which happens a few minutes after the app is minimized, and every reload wipes the chat.
+        backgroundThrottling: false,
       },
     });
 

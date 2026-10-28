@@ -152,17 +152,28 @@ export class EditorService extends StatefulService<IEditorServiceState> {
     }
   }
 
-  startDragging(event: IMouseEvent) {
-    const dragHandler = new DragHandler(event, {
-      displaySize: {
-        x: this.renderedWidths[event.display],
-        y: this.renderedHeights[event.display],
+  startDragging(event: IMouseEvent, source: SceneItem) {
+    // Folder selection can end with an empty folder. Anchor the drag to the
+    // hovered item, and only start while it remains selected on this display.
+    const draggedSource = this.selectionService.views.globalSelection
+      .getVisualItems(event.display)
+      .find(item => item.id === source?.id);
+    if (!draggedSource) return;
+
+    const dragHandler = new DragHandler(
+      event,
+      {
+        displaySize: {
+          x: this.renderedWidths[event.display],
+          y: this.renderedHeights[event.display],
+        },
+        displayOffset: {
+          x: this.renderedOffsetXs[event.display],
+          y: this.renderedOffsetYs[event.display],
+        },
       },
-      displayOffset: {
-        x: this.renderedOffsetXs[event.display],
-        y: this.renderedOffsetYs[event.display],
-      },
-    });
+      draggedSource,
+    );
 
     this.dragHandler = dragHandler;
     this.SET_CHANGING_POSITION_IN_PROGRESS(true);
@@ -323,7 +334,7 @@ export class EditorService extends StatefulService<IEditorServiceState> {
         }
 
         // Start dragging it
-        this.startDragging(event);
+        this.startDragging(event, overSource);
       }
     }
 

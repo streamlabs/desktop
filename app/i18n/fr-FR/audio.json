@@ -44,5 +44,6 @@
   "Mic/Auxiliary Device 2": "Micro/Dispositif auxiliaire 2",
   "Mic/Auxiliary Device 3": "Micro/Dispositif auxiliaire 3",
   "Recording Audio Encoder": "Encodeur audio d’enregistrement",
-  "Enable Muted Notifications": "Activer les notifications silencieuses"
+  "Enable Muted Notifications": "Activer les notifications silencieuses",
+  "Audio Track (Format FLV does not support multiple audio tracks per recording)": "Audio Track (Format FLV does not support multiple audio tracks per recording)"
 }

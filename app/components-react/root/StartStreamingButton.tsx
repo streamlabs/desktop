@@ -16,6 +16,7 @@ function StartStreamingButton(p: { disabled?: boolean }) {
   const {
     StreamingService,
     StreamSettingsService,
+    SettingsService,
     UserService,
     CustomizationService,
     MediaBackupService,
@@ -33,6 +34,8 @@ function StartStreamingButton(p: { disabled?: boolean }) {
     isPrime,
     primaryPlatform,
     isMultiplatformMode,
+    isTwitchUnprotectedStream,
+    protectedModeEnabled,
   } = useVuex(
     () => ({
       streamingStatus: StreamingService.views.streamingStatus,
@@ -44,6 +47,8 @@ function StartStreamingButton(p: { disabled?: boolean }) {
       isPrime: UserService.state.isPrime,
       primaryPlatform: UserService.state.auth?.primaryPlatform,
       isMultiplatformMode: StreamingService.views.isMultiplatformMode,
+      isTwitchUnprotectedStream: StreamingService.views.isTwitchUnprotectedStream,
+      protectedModeEnabled: StreamingService.views.protectedModeEnabled,
     }),
     false,
   );
@@ -109,6 +114,18 @@ function StartStreamingButton(p: { disabled?: boolean }) {
     if (StreamingService.isStreaming) {
       StreamingService.toggleStreaming();
     } else {
+      // OBS does not refuse a blank stream key, so an unprotected stream would go live without one.
+      // Validate that the stream key exists in unprotected mode.
+      if (!protectedModeEnabled && !SettingsService.views.values.Stream.key) {
+        await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+          title: $t('Streaming Error'),
+          type: 'error',
+          message: $t('The stream key is missing. Please configure your streaming settings.'),
+          buttons: [$t('OK')],
+        });
+        return;
+      }
+
       // Check if the scene collection has completed loading and syncing
       if (MediaBackupService.views.globalSyncStatus === EGlobalSyncStatus.Syncing) {
         const goLive = await remote.dialog
@@ -160,7 +177,17 @@ function StartStreamingButton(p: { disabled?: boolean }) {
         StreamingService.actions.goLive();
       }
     }
-  }, [streamingStatus, streamShiftStatus, isDualOutputMode, isLoggedIn, isPrime]);
+  }, [
+    streamingStatus,
+    streamShiftStatus,
+    isDualOutputMode,
+    isLoggedIn,
+    isPrime,
+    primaryPlatform,
+    isMultiplatformMode,
+    updateStreamInfoOnLive,
+    isTwitchUnprotectedStream,
+  ]);
 
   // Wrap the toggleStreaming function in a debounce to prevent multiple rapid clicks
   // and also to cancel the action on unmount to prevent memory leaks and state updates on unmounted components
@@ -191,6 +218,11 @@ function StartStreamingButton(p: { disabled?: boolean }) {
 
     if (!primaryPlatform) return false;
 
+    // In unprotected mode, only a Twitch ingest url can show the Go Live window. This is for legacy reasons.
+    if (!StreamSettingsService.state.protectedModeEnabled) {
+      return isTwitchUnprotectedStream && updateStreamInfoOnLive;
+    }
+
     if (streamShiftStatus === 'pending') {
       return true;
     }
@@ -208,16 +240,17 @@ function StartStreamingButton(p: { disabled?: boolean }) {
     }
 
     if (primaryPlatform === 'twitch') {
-      // For Twitch, we can show the Go Live window even with protected mode off
-      // This is mainly for legacy reasons.
       return isMultiplatformMode || updateStreamInfoOnLive;
     } else {
-      return (
-        StreamSettingsService.state.protectedModeEnabled &&
-        StreamSettingsService.isSafeToModifyStreamKey()
-      );
+      return StreamSettingsService.isSafeToModifyStreamKey();
     }
-  }, [primaryPlatform, isMultiplatformMode, updateStreamInfoOnLive, streamShiftStatus]);
+  }, [
+    primaryPlatform,
+    isMultiplatformMode,
+    updateStreamInfoOnLive,
+    streamShiftStatus,
+    isTwitchUnprotectedStream,
+  ]);
 
   return (
     <button

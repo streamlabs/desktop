@@ -1,5 +1,6 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import fs from 'fs';
+import { webUtils } from 'electron';
 import * as remote from '@electron/remote';
 import cx from 'classnames';
 import Animation from 'rc-animate';
@@ -8,7 +9,7 @@ import { useDebounce, useVuex } from 'components-react/hooks';
 import * as appPages from 'components-react/pages';
 import TitleBar from 'components-react/shared/TitleBar';
 import { Services } from 'components-react/service-provider';
-import SideNav from 'components-react/sidebar/SideNav';
+import NavMenu from 'components-react/nav-menu/NavMenu';
 import LiveDock from 'components-react/root/LiveDock';
 import StudioFooter from 'components-react/root/StudioFooter';
 import Loader from 'components-react/pages/Loader';
@@ -21,6 +22,9 @@ import styles from './Main.m.less';
 import { StatefulService } from 'services';
 import { useRealmObject } from 'components-react/hooks/realm';
 import Onboarding from 'components-react/modals/onboarding/Onboarding';
+import { byOS, OS } from 'util/operating-systems';
+
+const isMac = byOS({ [OS.Windows]: false, [OS.Mac]: true });
 
 // TODO: this is technically deprecated as we have moved customizationService to Realm
 // but some users may still have this value
@@ -51,18 +55,18 @@ export default function Main() {
     EditorCommandsService,
     ScenesService,
     CustomizationService,
-    OnboardingV2Service,
+    StreamSettingsService,
   } = Services;
   const mainWindowEl = useRef<HTMLDivElement | null>(null);
   const mainMiddleEl = useRef<HTMLDivElement | null>(null);
-  const windowResizeTimeout = useRef<number | null>(null);
+  const windowResizeTimeout = useRef<number | undefined>(undefined);
+  const activeCachedPages = useRef(new Set<string>());
+  const cachedPagesParams = useRef<Record<string, any>>({});
 
   const [bulkLoadFinished, setBulkLoadFinished] = useState(false);
   const [i18nReady, seti18nReady] = useState(false);
   const [compactView, setCompactView] = useState(false);
   const [hasLiveDock, setHasLiveDock] = useState(true);
-  const [minDockWidth, setMinDockWidth] = useState(290);
-  const [maxDockWidth, setMaxDockWidth] = useState(290);
   const [minEditorWidth, setMinEditorWidth] = useState(500);
 
   const uiReady = bulkLoadFinished && i18nReady;
@@ -75,9 +79,6 @@ export default function Main() {
     leftDock,
   } = useRealmObject(Services.CustomizationService.state);
 
-  // Provides smooth chat resizing instead of writing to realm every tick while resizing
-  const [dockWidth, setDockWidth] = useState(realmDockWidth);
-
   const {
     errorAlert,
     applicationLoading,
@@ -86,6 +87,8 @@ export default function Main() {
     isLoggedIn,
     platform,
     activeSceneId,
+    protectedModeEnabled,
+    isTwitchUnprotectedStream,
   } = useVuex(() => ({
     errorAlert: AppService.state.errorAlert,
     applicationLoading: AppService.state.loading,
@@ -94,6 +97,8 @@ export default function Main() {
     isLoggedIn: UserService.views.isLoggedIn,
     platform: UserService.views.platform,
     activeSceneId: ScenesService.views.activeSceneId,
+    protectedModeEnabled: StreamSettingsService.views.protectedModeEnabled,
+    isTwitchUnprotectedStream: StreamingService.views.isTwitchUnprotectedStream,
   }));
 
   const showLoadingSpinner = useMemo(
@@ -132,7 +137,7 @@ export default function Main() {
 
       const files: string[] = [];
       let fi = fileList.length;
-      while (fi--) files.push(fileList.item(fi)!.path);
+      while (fi--) files.push(webUtils.getPathForFile(fileList.item(fi)!));
 
       const isDir = await isDirectory(files[0]).catch(err => {
         console.error('Error checking if drop is directory', err);
@@ -162,12 +167,19 @@ export default function Main() {
     setMinEditorWidth(width);
   });
 
-  const updateLiveDockWidth = useCallback(() => {
-    let constrainedWidth = Math.max(minDockWidth, dockWidth);
-    constrainedWidth = Math.min(maxDockWidth, dockWidth);
+  // Provides smooth chat resizing instead of writing to realm every tick while resizing
+  const [rawDockWidth, setDockWidth] = useState(realmDockWidth);
+  const [minDockWidth, setMinDockWidth] = useState(290);
+  const [maxDockWidth, setMaxDockWidth] = useState(Infinity);
+  const dockWidth = Math.min(maxDockWidth, Math.max(minDockWidth, rawDockWidth));
 
-    if (dockWidth !== constrainedWidth) setDockWidth(constrainedWidth);
-  }, []);
+  const updateDockBounds = useCallback(() => {
+    const appRect = mainWindowEl.current?.getBoundingClientRect();
+    if (!appRect) return;
+    const max = Math.min(appRect.width - minEditorWidth, appRect.width / 2);
+    setMaxDockWidth(max);
+    setMinDockWidth(Math.min(290, max));
+  }, [minEditorWidth]);
 
   const setCollapsed = useCallback((livedockCollapsed: boolean) => {
     updateStyleBlockers(true);
@@ -177,25 +189,20 @@ export default function Main() {
     }, 300);
   }, []);
 
-  function windowSizeHandler() {
+  const windowSizeHandler = useCallback(() => {
     if (!hideStyleBlockers) {
       updateStyleBlockers(true);
     }
     const windowWidth = window.innerWidth;
 
-    if (windowResizeTimeout.current) clearTimeout(windowResizeTimeout.current);
+    clearTimeout(windowResizeTimeout.current);
 
     setHasLiveDock(page === 'Studio' ? windowWidth >= minEditorWidth + 100 : windowWidth >= 1070);
     windowResizeTimeout.current = window.setTimeout(() => {
       updateStyleBlockers(false);
-      const appRect = mainWindowEl.current?.getBoundingClientRect();
-      if (!appRect) return;
-      setMaxDockWidth(Math.min(appRect.width - minEditorWidth, appRect.width / 2));
-      setMinDockWidth(Math.min(290, maxDockWidth));
-
-      updateLiveDockWidth();
+      updateDockBounds();
     }, 200);
-  }
+  }, [hideStyleBlockers, page, minEditorWidth, updateDockBounds]);
 
   useEffect(() => {
     let unsubscribe: (() => void) | null = null;
@@ -220,16 +227,28 @@ export default function Main() {
 
     return () => {
       window.removeEventListener('resize', windowSizeHandler);
-      // Sync persisted live dock width in the db
-      CustomizationService.actions.setSettings({ livedockSize: dockWidth });
     };
-  }, []);
+  }, [windowSizeHandler]);
+
+  // The main element is not mounted until the ui is ready, so bounds can't be measured on mount
+  useEffect(() => {
+    if (uiReady) updateDockBounds();
+  }, [uiReady, updateDockBounds]);
 
   useEffect(() => {
-    if (streamingStatus === EStreamingState.Starting && isDockCollapsed) {
+    // Live dock should open when:
+    // - Protected mode: Streaming via APIs
+    // - Unprotected mode: Streaming to Twitch
+    const hasPlatformChat = protectedModeEnabled || isTwitchUnprotectedStream;
+    if (streamingStatus === EStreamingState.Starting && hasPlatformChat && isDockCollapsed) {
       setCollapsed(false);
     }
-  }, [streamingStatus]);
+
+    // Otherwise never open live dock, and collapse it if open, in unprotected mode (e.g. stream directly to custom destination)
+    if (streamingStatus === EStreamingState.Starting && !hasPlatformChat && !isDockCollapsed) {
+      setCollapsed(true);
+    }
+  }, [streamingStatus, protectedModeEnabled, isTwitchUnprotectedStream, isDockCollapsed]);
 
   const oldTheme = useRef<TApplicationTheme | null>(null);
   useEffect(() => {
@@ -240,13 +259,14 @@ export default function Main() {
   }, [theme]);
 
   useEffect(() => {
-    if (dockWidth < 1 && mainWindowEl.current) {
+    if (rawDockWidth < 1 && mainWindowEl.current) {
       // migrate from old percentage value to the pixel value
       const appRect = mainWindowEl.current.getBoundingClientRect();
-      const defaultWidth = appRect.width * 0.28;
+      const defaultWidth = Math.max(minDockWidth, appRect.width * 0.2);
       setDockWidth(defaultWidth);
+      CustomizationService.actions.setSettings({ livedockSize: defaultWidth });
     }
-  }, [uiReady]);
+  }, [uiReady, minDockWidth]);
 
   useEffect(() => {
     setCompactView(!!mainMiddleEl.current && mainMiddleEl.current.clientWidth < 1200);
@@ -264,14 +284,22 @@ export default function Main() {
     onTotalWidth: (width: number) => void;
   }>;
 
+  const CACHED_PAGES = ['BrowseOverlays', 'PlatformAppStore'];
+  if (CACHED_PAGES.includes(page)) {
+    activeCachedPages.current.add(page);
+    cachedPagesParams.current[page] = { ...params };
+  }
+
   return (
     <div
-      className={cx(styles.main, theme, 'react')}
+      className={cx(styles.main, theme, 'react', { [styles.mainMac]: isMac })}
       id="mainWrapper"
       ref={mainWindowEl}
       onDrop={(ev: React.DragEvent) => onDropHandler(ev)}
     >
       <TitleBar windowId="main" className={cx({ [styles.titlebarError]: errorAlert })} />
+      {/* TODO @onboarding: Remove conditional check once new onboarding is live. */}
+      {page !== 'Onboarding' && !showLoadingSpinner && <NavMenu />}
       <div
         className={cx(styles.mainContents, {
           [styles.mainContentsRight]: renderDock && leftDock && hasLiveDock,
@@ -279,11 +307,6 @@ export default function Main() {
           [styles.mainContentsOnboarding]: page === 'Onboarding',
         })}
       >
-        {page !== 'Onboarding' && !showLoadingSpinner && (
-          <div className={styles.sideNavContainer}>
-            <SideNav />
-          </div>
-        )}
         {renderDock && leftDock && (
           <LiveDockContainer
             max={maxDockWidth}
@@ -303,10 +326,37 @@ export default function Main() {
         >
           {!showLoadingSpinner && (
             <div className={styles.mainPageContainer}>
-              <Component
-                params={params}
-                onTotalWidth={(width: number) => handleEditorWidth(width)}
-              />
+              {Array.from(activeCachedPages.current).map(cachedPage => {
+                const PageComponent = (appPages[cachedPage as keyof typeof appPages] ||
+                  appPages.Studio) as React.FunctionComponent<{
+                  className?: string;
+                  params: any;
+                  onTotalWidth: (width: number) => void;
+                }>;
+                const isActive = page === cachedPage;
+                return (
+                  <div
+                    key={cachedPage}
+                    style={{
+                      display: isActive ? 'block' : 'none',
+                      height: '100%',
+                      width: '100%',
+                    }}
+                  >
+                    <PageComponent
+                      params={cachedPagesParams.current[cachedPage] || {}}
+                      onTotalWidth={(width: number) => handleEditorWidth(width)}
+                    />
+                  </div>
+                );
+              })}
+              {!CACHED_PAGES.includes(page) && (
+                <Component
+                  key={page}
+                  params={params}
+                  onTotalWidth={(width: number) => handleEditorWidth(width)}
+                />
+              )}
             </div>
           )}
           {!applicationLoading && page !== 'Onboarding' && (
@@ -391,7 +441,11 @@ const LiveDockContainer = memo(function LiveDockContainer(p: ILiveDockContainerP
       {!isDockCollapsed && (
         <ResizeBar
           position={p.onLeft ? 'left' : 'right'}
+          resizeHandle={p.onLeft ? 'e' : 'w'}
           onInput={(val: number) => p.setLiveDockWidth(val)}
+          onResizestop={(val?: number) =>
+            val && Services.CustomizationService.actions.setSettings({ livedockSize: val })
+          }
           max={p.max}
           min={p.min}
           value={p.width}

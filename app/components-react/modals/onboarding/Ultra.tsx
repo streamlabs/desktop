@@ -34,14 +34,14 @@ export function Ultra(p: IOnboardingStepProps) {
       { icon: 'icon-themes', text: $t('Premium Widget Themes') },
       { icon: 'icon-store', text: $t('Desktop App Store') },
       { icon: 'icon-balance', text: $t('Custom Tip Page') },
-      { icon: 'icon-ai', text: $t('Streamlabs AI Features') },
+      { icon: 'icon-ai', text: $t('Streamlabs Vision Features') },
       { icon: 'icon-streamlabs', text: $t('Stream Shift') },
       { text: $t('And More') },
     ],
   };
 
   return (
-    <div className={styles.centered}>
+    <div className={styles.stepContainer}>
       <Header
         title={$t('Choose Your Plan')}
         description={$t('Choose the best plan to fit your content creation needs.')}
