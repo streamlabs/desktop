@@ -1,9 +1,9 @@
 import { $t } from 'services/i18n';
 
 export enum ELayout {
+  Classic = 'Classic',
   Default = 'Default',
   TwoPane = 'TwoPane',
-  Classic = 'Classic',
   FourByFour = 'FourByFour',
   Triplets = 'Triplets',
   OnePane = 'OnePane',
