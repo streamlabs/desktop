@@ -120,11 +120,11 @@
   opacity: 0;
 }
 
-.live-dock {
+.dock {
   height: 100%;
 }
 
-.live-dock-container {
+.dock-container {
   display: flex;
   flex-grow: 1;
   flex-direction: column;
@@ -140,7 +140,7 @@
   }
 }
 
-.live-dock-collapsed {
+.dock-collapsed {
   width: 20px;
   height: 100%;
   padding: 0;
@@ -151,17 +151,17 @@
   &.left {
     border-right: 1px solid var(--border);
 
-    .live-dock-chevron.left {
+    .dock-chevron.left {
       left: 50%;
     }
   }
 
-  .live-dock-chevron {
+  .dock-chevron {
     .center();
   }
 }
 
-.live-dock-chevron {
+.dock-chevron {
   width: 16px;
   height: 20px;
   position: absolute;

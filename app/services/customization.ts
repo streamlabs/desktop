@@ -8,7 +8,7 @@ import path from 'path';
 import { AppService } from './app';
 import * as obs from '../../obs-api';
 import { RealmObject } from './realm';
-import { ObjectSchema } from 'realm';
+import Realm, { ObjectSchema } from 'realm';
 import { Theme } from 'styles/antd';
 
 export type TGoLiveTheme =
@@ -88,8 +88,8 @@ export interface ICustomizationServiceState {
   hideViewerCount: boolean;
   folderSelection: boolean;
   legacyAlertbox: boolean | null;
-  livedockCollapsed: boolean;
-  livedockSize: number;
+  dockCollapsed: boolean;
+  dockSize: number;
   eventsSize: number;
   controlsSize: number;
   performanceMode: boolean;
@@ -136,8 +136,8 @@ export class CustomizationState extends RealmObject {
   hideViewerCount: boolean;
   folderSelection: boolean;
   legacyAlertbox: boolean | null;
-  livedockCollapsed: boolean;
-  livedockSize: number;
+  dockCollapsed: boolean;
+  dockSize: number;
   eventsSize: number;
   controlsSize: number;
   performanceMode: boolean;
@@ -162,8 +162,8 @@ export class CustomizationState extends RealmObject {
       hideViewerCount: { type: 'bool', default: false },
       folderSelection: { type: 'bool', default: false },
       legacyAlertbox: { type: 'bool', default: false },
-      livedockCollapsed: { type: 'bool', default: true },
-      livedockSize: { type: 'double', default: 0 },
+      dockCollapsed: { type: 'bool', default: true },
+      dockSize: { type: 'double', default: 0 },
       eventsSize: { type: 'double', default: 156 },
       controlsSize: { type: 'double', default: 240 },
       performanceMode: { type: 'bool', default: false },
@@ -180,11 +180,34 @@ export class CustomizationState extends RealmObject {
     },
   };
 
+  /**
+   * `livedockSize` was renamed to `dockSize`. The old column is dropped by the schema change,
+   * so carry its value over for existing users. `livedockCollapsed` needs no migration because
+   * the dock is always collapsed on app start.
+   */
+  static onMigration(oldRealm: Realm, newRealm: Realm) {
+    const oldStates = oldRealm.objects<{ livedockSize?: number }>('CustomizationState');
+    const newStates = newRealm.objects<{ dockSize: number }>('CustomizationState');
+
+    oldStates.forEach((oldState, i) => {
+      if (oldState.livedockSize != null && newStates[i]) {
+        newStates[i].dockSize = oldState.livedockSize;
+      }
+    });
+  }
+
   protected onCreated(): void {
     const data = localStorage.getItem('PersistentStatefulService-CustomizationService');
 
     if (data) {
       const parsed = JSON.parse(data);
+
+      // Settings persisted by the pre-Realm service use the old names
+      if (parsed.livedockSize != null) parsed.dockSize = parsed.livedockSize;
+      if (parsed.livedockCollapsed != null) parsed.dockCollapsed = parsed.livedockCollapsed;
+      delete parsed.livedockSize;
+      delete parsed.livedockCollapsed;
+
       this.db.write(() => {
         Object.assign(this, parsed);
       });
@@ -219,7 +242,7 @@ export class CustomizationService extends Service {
 
   init() {
     super.init();
-    this.setLiveDockCollapsed(true); // livedock is always collapsed on app start
+    this.setDockCollapsed(true); // dock is always collapsed on app start
     this.ensureCrashDumpFolder();
     this.setObsTheme();
 
@@ -294,8 +317,8 @@ export class CustomizationService extends Service {
     this.setSettings({ leftDock: enabled });
   }
 
-  setLiveDockCollapsed(collapsed: boolean) {
-    this.setSettings({ livedockCollapsed: collapsed });
+  setDockCollapsed(collapsed: boolean) {
+    this.setSettings({ dockCollapsed: collapsed });
   }
 
   setHiddenViewerCount(hidden: boolean) {

@@ -259,12 +259,12 @@ class MultichatController {
     });
   }
 
-  setCollapsed(livedockCollapsed: boolean) {
+  setCollapsed(dockCollapsed: boolean) {
     this.store.setState(s => {
       s.canAnimate = true;
     });
     this.windowsService.actions.updateStyleBlockers('main', true);
-    this.customizationService.actions.setSettings({ livedockCollapsed });
+    this.customizationService.actions.setSettings({ dockCollapsed });
     setTimeout(() => {
       this.store.setState(s => {
         s.canAnimate = false;
@@ -358,7 +358,7 @@ function Multichat() {
     ]),
   );
 
-  const { livedockCollapsed: collapsed, hideViewerCount } = useRealmObject(
+  const { dockCollapsed: collapsed, hideViewerCount } = useRealmObject(
     Services.CustomizationService.state,
   );
   const viewerCount = hideViewerCount ? $t('Viewers Hidden') : currentViewers;
