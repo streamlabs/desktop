@@ -9,18 +9,22 @@ import uuid from 'uuid/v4';
 import {
   LAYOUT_DATA,
   ELEMENT_DATA,
+  DOCK_SLOTS,
   ELayout,
   ELayoutElement,
+  EDockLayout,
   TLayout,
   TLayoutElement,
+  TDockSlot,
+  isDockSlot,
 } from './layout-data';
 import { UsageStatisticsService } from 'services/usage-statistics';
 
-export { ELayout, ELayoutElement };
+export { ELayout, ELayoutElement, EDockLayout, DOCK_SLOTS, isDockSlot };
 
 export interface IVec2Array extends Array<IVec2Array | IVec2> {}
 
-export type TLayoutSlot = '1' | '2' | '3' | '4' | '5' | '6';
+export type TLayoutSlot = '1' | '2' | '3' | '4' | '5' | '6' | TDockSlot;
 
 export type TSlottedElements = Partial<Record<ELayoutElement, { slot: TLayoutSlot; src?: string }>>;
 
@@ -30,6 +34,13 @@ interface ILayoutState {
   currentLayout: ELayout;
   slottedElements: TSlottedElements;
   resizes: { bar1: number; bar2: number };
+  /**
+   * The layout of the dock. Elements in the dock are assigned to the dock slots
+   * (see `DOCK_SLOTS`) in `slottedElements`, alongside the elements of the main layout.
+   */
+  dockLayout: EDockLayout;
+  /** The proportion of the dock's height given to its first slot when stacked. */
+  dockResize: number;
 }
 interface ILayoutServiceState {
   currentTab: string;
@@ -51,6 +62,42 @@ class LayoutViews extends ViewHandler<ILayoutServiceState> {
     return Object.keys(this.currentTab.slottedElements).filter(
       (key: TLayoutElement) => this.currentTab.slottedElements[key].slot,
     );
+  }
+
+  /**
+   * Elements rendered in the main layout (excludes elements in the dock)
+   */
+  get mainElementsToRender() {
+    return this.elementsToRender.filter(
+      (key: TLayoutElement) => !isDockSlot(this.currentTab.slottedElements[key].slot),
+    );
+  }
+
+  /**
+   * Elements rendered in the dock, ordered by slot (top to bottom when stacked)
+   */
+  get dockElements() {
+    const { slottedElements, dockLayout } = this.currentTab;
+    return DOCK_SLOTS[dockLayout ?? EDockLayout.Single]
+      .map(slot =>
+        Object.keys(slottedElements).find(
+          (key: TLayoutElement) => slottedElements[key]?.slot === slot,
+        ),
+      )
+      .filter(Boolean) as ELayoutElement[];
+  }
+
+  /**
+   * The slot assignments of the elements in the dock, for layouts that replace the
+   * main layout's assignments without affecting the dock
+   */
+  get dockSlottedElements() {
+    const { slottedElements } = this.currentTab;
+    const dockSlotted: TSlottedElements = {};
+    Object.keys(slottedElements).forEach((key: ELayoutElement) => {
+      if (isDockSlot(slottedElements[key]?.slot)) dockSlotted[key] = slottedElements[key];
+    });
+    return dockSlotted;
   }
 
   elementTitle(element: ELayoutElement) {
@@ -120,11 +167,14 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
           [ELayoutElement.Scenes]: { slot: '3' },
           [ELayoutElement.Sources]: { slot: '4' },
           [ELayoutElement.Mixer]: { slot: '5' },
+          [ELayoutElement.Multichat]: { slot: 'S1' },
         },
         resizes: {
           bar1: 156,
           bar2: 240,
         },
+        dockLayout: EDockLayout.Single,
+        dockResize: 0.33,
       },
     },
   };
@@ -135,6 +185,7 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
   init() {
     super.init();
     this.migrateSlots();
+    this.migrateDock();
 
     // Hack since defaultState can't take a translated string
     if (!this.state.tabs.default.name) {
@@ -151,6 +202,7 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
         [ELayoutElement.Scenes]: { slot: '3' },
         [ELayoutElement.Sources]: { slot: '4' },
         [ELayoutElement.Mixer]: { slot: '5' },
+        ...this.views.dockSlottedElements,
       });
       this.customizationService.setSettings({ legacyEvents: false });
     }
@@ -188,6 +240,16 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
     this.SET_SLOTS(slottedElements);
   }
 
+  /**
+   * Tabs created before the dock was part of the layout get a single dock holding Multichat,
+   * which is what the dock contained before it was configurable.
+   */
+  migrateDock() {
+    Object.keys(this.state.tabs).forEach(id => {
+      if (!this.state.tabs[id].dockLayout) this.SET_TAB_DOCK_DEFAULTS(id);
+    });
+  }
+
   get views() {
     return new LayoutViews(this.state);
   }
@@ -209,6 +271,14 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
     this.SET_SLOTS(slottedElements);
   }
 
+  setDockLayout(layout: EDockLayout) {
+    this.SET_DOCK_LAYOUT(layout);
+  }
+
+  setDockResize(proportion: number) {
+    this.SET_DOCK_RESIZE(proportion);
+  }
+
   setUrl(url: string) {
     this.SET_URL(url);
   }
@@ -227,8 +297,45 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
   @mutation()
   CHANGE_LAYOUT(layout: ELayout) {
     Vue.set(this.state.tabs[this.state.currentTab], 'currentLayout', layout);
-    Vue.set(this.state.tabs[this.state.currentTab], 'slottedElements', {});
+    // Changing the main layout doesn't affect the dock
+    const slottedElements = this.state.tabs[this.state.currentTab].slottedElements;
+    const dockSlotted: TSlottedElements = {};
+    Object.keys(slottedElements).forEach((el: ELayoutElement) => {
+      if (isDockSlot(slottedElements[el]?.slot)) dockSlotted[el] = slottedElements[el];
+    });
+    Vue.set(this.state.tabs[this.state.currentTab], 'slottedElements', dockSlotted);
     Vue.set(this.state.tabs[this.state.currentTab], 'resizes', LAYOUT_DATA[layout].resizeDefaults);
+  }
+
+  @mutation()
+  SET_DOCK_LAYOUT(layout: EDockLayout) {
+    const tab = this.state.tabs[this.state.currentTab];
+    const kept = DOCK_SLOTS[layout];
+    const slottedElements = { ...tab.slottedElements };
+
+    // Elements in slots the new dock layout doesn't have are removed from the layout
+    Object.keys(slottedElements).forEach((el: ELayoutElement) => {
+      const slot = slottedElements[el]?.slot;
+      if (isDockSlot(slot) && !kept.includes(slot)) slottedElements[el] = { slot: null };
+    });
+
+    Vue.set(tab, 'slottedElements', slottedElements);
+    Vue.set(tab, 'dockLayout', layout);
+  }
+
+  @mutation()
+  SET_DOCK_RESIZE(proportion: number) {
+    Vue.set(this.state.tabs[this.state.currentTab], 'dockResize', proportion);
+  }
+
+  @mutation()
+  SET_TAB_DOCK_DEFAULTS(id: string) {
+    const tab = this.state.tabs[id];
+    Vue.set(tab, 'dockLayout', EDockLayout.Single);
+    Vue.set(tab, 'dockResize', 0.5);
+    if (!tab.slottedElements[ELayoutElement.Multichat]?.slot) {
+      Vue.set(tab.slottedElements, ELayoutElement.Multichat, { slot: 'S1' });
+    }
   }
 
   @mutation()
@@ -299,11 +406,14 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
         [ELayoutElement.Scenes]: { slot: '3' },
         [ELayoutElement.Sources]: { slot: '4' },
         [ELayoutElement.Mixer]: { slot: '5' },
+        [ELayoutElement.Multichat]: { slot: 'S1' },
       },
       resizes: {
         bar1: 156,
         bar2: 240,
       },
+      dockLayout: EDockLayout.Single,
+      dockResize: 0.33,
     });
     this.state.currentTab = id;
   }
