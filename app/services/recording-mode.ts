@@ -122,6 +122,7 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
       [ELayoutElement.Scenes]: { slot: '2' },
       [ELayoutElement.Sources]: { slot: '3' },
       [ELayoutElement.Mixer]: { slot: '4' },
+      ...this.layoutService.views.dockSlottedElements,
     });
     this.layoutService.setBarResize('bar1', 0.3);
   }
