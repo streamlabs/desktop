@@ -1,5 +1,4 @@
-import React, { memo, useEffect, useMemo, useState } from 'react';
-import * as remote from '@electron/remote';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import cx from 'classnames';
 import { Menu } from 'antd';
 import pick from 'lodash/pick';
@@ -13,16 +12,26 @@ import {
   TPlatform,
 } from 'services/platforms';
 import { $t } from 'services/i18n';
-import { Services } from '../service-provider';
-import Chat from './Chat';
+import { Services } from 'components-react/service-provider';
+import Chat from 'components-react/root/Chat';
 import styles from './Multichat.m.less';
 import Tooltip from 'components-react/shared/Tooltip';
 import PlatformAppPageView from 'components-react/shared/PlatformAppPageView';
 import { useVuex } from 'components-react/hooks';
-import { useRealmObject } from 'components-react/hooks/realm';
 import { $i } from 'services/utils';
-import { ShareStreamLink } from './ShareStreamLink';
-import IconButton from 'components-react/shared/buttons/IconButton';
+import { multichatChat } from './multichat-chat';
+import useBaseElement, { ILayoutElementProps, useDockCollapsed } from './hooks';
+
+const mins = { x: 300, y: 300 };
+
+/**
+ * Multichat is only available for platforms that support it. It is checked here so the layout
+ * element can render an explanation wherever it is placed, and so containers (e.g. the dock)
+ * can decide whether they have anything worth showing.
+ */
+export function isMultichatSupported(platform?: { type: TPlatform } | null): boolean {
+  return !!platform && getPlatformService(platform.type).multichatEnabled;
+}
 
 const MultichatCtx = React.createContext<MultichatController | null>(null);
 
@@ -38,7 +47,6 @@ class MultichatController {
 
   store = initStore({
     canAnimate: false,
-    selectedChat: 'default',
   });
 
   get applicationLoading() {
@@ -53,10 +61,6 @@ class MultichatController {
     return this.streamingService.isStreaming;
   }
 
-  get currentViewers() {
-    return this.streamingService.views.viewerCount.toString();
-  }
-
   get pageSlot() {
     return EAppPageSlot.Chat;
   }
@@ -66,15 +70,7 @@ class MultichatController {
   }
 
   get selectedChat() {
-    return this.store.selectedChat;
-  }
-
-  get liveText() {
-    if (this.streamingStatus === EStreamingState.Live) return 'Live';
-    if (this.streamingStatus === EStreamingState.Starting) return 'Starting';
-    if (this.streamingStatus === EStreamingState.Ending) return 'Ending';
-    if (this.streamingStatus === EStreamingState.Reconnecting) return 'Reconnecting';
-    return 'Offline';
+    return multichatChat.selectedChat;
   }
 
   get platform() {
@@ -116,7 +112,7 @@ class MultichatController {
   }
 
   get defaultPlatformChatVisible() {
-    return this.store.selectedChat === 'default';
+    return multichatChat.selectedChat === 'default';
   }
 
   get restreamChatUrl() {
@@ -193,9 +189,9 @@ class MultichatController {
 
   get isPopOutAllowed() {
     if (this.defaultPlatformChatVisible) return false;
-    if (this.store.selectedChat === 'restream') return false;
+    if (multichatChat.selectedChat === 'restream') return false;
     const chatPage = this.platformAppsService.views
-      .getApp(this.store.selectedChat)
+      .getApp(multichatChat.selectedChat)
       .manifest.pages.find(page => page.slot === EAppPageSlot.Chat);
     if (!chatPage) return false;
     // Default result is true
@@ -206,57 +202,9 @@ class MultichatController {
     return this.userService.platform?.type === 'tiktok';
   }
 
-  get canEditChannelInfo(): boolean {
-    // Twitter, TikTok & Patreon don't support editing title after going live
-    if (this.isPlatform('twitter') && !this.isRestreaming) return false;
-    if (this.isPlatform('tiktok') && !this.isRestreaming) return false;
-    if (this.isPlatform('patreon') && !this.isRestreaming) return false;
-
-    return (
-      this.streamingService.views.isMidStreamMode ||
-      this.userService.state.auth?.primaryPlatform === 'twitch'
-    );
-  }
-
-  getElapsedStreamTime() {
-    return this.streamingService.formattedDurationInCurrentStreamingState;
-  }
-
-  isPlatform(platforms: TPlatform | TPlatform[]) {
-    if (!this.platform) return false;
-    if (Array.isArray(platforms)) return platforms.includes(this.platform);
-    return this.platform === platforms;
-  }
-
-  openPlatformStream() {
-    const url = this.platformService?.streamPageUrl;
-    if (!url) return;
-    remote.shell.openExternal(url);
-  }
-
-  openPlatformDash() {
-    const url = this.platformService?.dashboardUrl;
-    if (!url) return;
-    remote.shell.openExternal(url);
-  }
-
-  refreshChat() {
-    if (this.store.selectedChat === 'default') {
-      this.chatService.refreshChat();
-      return;
-    }
-    if (this.store.selectedChat === 'restream') {
-      this.restreamService.refreshChat();
-      return;
-    }
-    this.platformAppsService.refreshApp(this.store.selectedChat);
-  }
-
   popOut() {
-    this.platformAppsService.popOutAppPage(this.store.selectedChat, this.pageSlot);
-    this.store.setState(s => {
-      s.selectedChat = 'default';
-    });
+    this.platformAppsService.popOutAppPage(multichatChat.selectedChat, this.pageSlot);
+    multichatChat.update('selectedChat', 'default');
   }
 
   setCollapsed(dockCollapsed: boolean) {
@@ -273,16 +221,6 @@ class MultichatController {
     }, 300);
   }
 
-  toggleViewerCount() {
-    this.customizationService.actions.setHiddenViewerCount(
-      !this.customizationService.state.hideViewerCount,
-    );
-  }
-
-  showEditStreamInfo() {
-    this.streamingService.actions.showEditStream();
-  }
-
   showMultistreamChatInfo() {
     this.chatService.actions.showMultistreamChatWindow();
   }
@@ -292,36 +230,44 @@ class MultichatController {
   }
 }
 
-function MultichatWithContext() {
+function MultichatWithContext(p: ILayoutElementProps) {
   const controller = useMemo(() => new MultichatController(), []);
   return (
     <MultichatCtx.Provider value={controller}>
-      <Multichat />
+      <MultichatContents inDock={p.inDock} />
     </MultichatCtx.Provider>
   );
 }
 
-export default memo(MultichatWithContext);
+const MemoizedMultichat = memo(MultichatWithContext);
 
-const StreamTimer = memo(function StreamTimer({
-  streamingStatus,
-}: {
-  streamingStatus: EStreamingState;
-}) {
-  const ctrl = useController(MultichatCtx);
-  const [elapsed, setElapsed] = useState('');
+function MultichatElement(p: ILayoutElementProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const supported = useVuex(() => isMultichatSupported(Services.UserService.views.platform));
+  const { renderElement } = useBaseElement(
+    supported ? <MemoizedMultichat inDock={p.inDock} /> : <UnsupportedMultichat />,
+    mins,
+    containerRef.current,
+  );
 
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      setElapsed(streamingStatus === EStreamingState.Live ? ctrl.getElapsedStreamTime() : '');
-    }, 200);
-    return () => clearInterval(id);
-  }, [streamingStatus]);
+  return (
+    <div ref={containerRef} style={{ height: '100%' }}>
+      {renderElement()}
+    </div>
+  );
+}
 
-  return <span className={styles.multichatTimer}>{elapsed}</span>;
-});
+/** The Multichat layout element.*/
+export function Multichat(p: ILayoutElementProps) {
+  const dockCollapsed = useDockCollapsed(p.inDock);
+  if (dockCollapsed) return null;
 
-function Multichat() {
+  return <MultichatElement inDock={p.inDock} />;
+}
+
+Multichat.mins = mins;
+
+function MultichatContents(p: ILayoutElementProps) {
   const ctrl = useController(MultichatCtx);
 
   const [visibleChat, setVisibleChat] = useState('default');
@@ -333,9 +279,7 @@ function Multichat() {
     hasChatTabs,
     applicationLoading,
     hideStyleBlockers,
-    currentViewers,
     pageSlot,
-    liveText,
     streamingStatus,
     enabledPlatforms,
     primaryPlatform,
@@ -348,8 +292,6 @@ function Multichat() {
       'applicationLoading',
       'hideStyleBlockers',
       'pageSlot',
-      'currentViewers',
-      'liveText',
       'hasMultichatFeature',
       'streamingStatus',
       'enabledPlatforms',
@@ -358,10 +300,9 @@ function Multichat() {
     ]),
   );
 
-  const { dockCollapsed: collapsed, hideViewerCount } = useRealmObject(
-    Services.CustomizationService.state,
-  );
-  const viewerCount = hideViewerCount ? $t('Viewers Hidden') : currentViewers;
+  // The selected chat is shared with the dock header, so it must not outlive this Multichat
+  useEffect(() => () => multichatChat.update('selectedChat', 'default'), []);
+
   useEffect(() => {
     if (isRestreaming && streamingStatus === EStreamingState.Starting) {
       Services.RestreamService.actions.refreshChat();
@@ -377,15 +318,13 @@ function Multichat() {
   // Safe getter/setter prevents getting stuck on the chat
   // for an app that was unloaded.
   function setChat(key: string) {
-    ctrl.store.setState(s => {
-      if (!ctrl.chatApps.find(app => app.id === key) && !['default', 'restream'].includes(key)) {
-        s.selectedChat = 'default';
-        setVisibleChat('default');
-      } else {
-        s.selectedChat = key;
-        setVisibleChat(key);
-      }
-    });
+    if (!ctrl.chatApps.find(app => app.id === key) && !['default', 'restream'].includes(key)) {
+      multichatChat.update('selectedChat', 'default');
+      setVisibleChat('default');
+    } else {
+      multichatChat.update('selectedChat', key);
+      setVisibleChat(key);
+    }
   }
 
   const primaryStreaming = useMemo(() => {
@@ -413,74 +352,8 @@ function Multichat() {
   }, [primaryPlatform, enabledPlatforms, visibleChat, isStreaming, isRestreaming]);
 
   return (
-    <div className={styles.multichat}>
+    <div className={cx(styles.multichat, { [styles.multichatInDock]: p.inDock })}>
       <div className={styles.multichatExpandedContents}>
-        <div className={styles.multichatHeader}>
-          <div className="flex flex--center">
-            <div
-              className={cx(styles.multichatPulse, {
-                [styles.multichatOffline]: !isStreaming,
-              })}
-            />
-            <span className={styles.multichatText}>{liveText}</span>
-            <StreamTimer streamingStatus={streamingStatus} />
-          </div>
-          <div className={styles.multichatViewerCount}>
-            <i
-              className={cx({
-                ['icon-view']: !hideViewerCount,
-                ['icon-hide']: hideViewerCount,
-              })}
-              onClick={() => ctrl.toggleViewerCount()}
-            />
-            <span className={styles.multichatViewerCountCount}>{viewerCount}</span>
-            {Number(viewerCount) >= 0 && <span>{$t('viewers')}</span>}
-          </div>
-        </div>
-
-        <div className={styles.multichatInfo}>
-          <div className={styles.multichatPlatformTools}>
-            {ctrl.canEditChannelInfo && (
-              <IconButton
-                label={$t('Edit your stream title and description')}
-                tooltipTitle={$t('Edit your stream title and description')}
-                tooltipPlacement="right"
-                autoAdjustOverflow={false}
-                icon={<i data-name="edit-stream" className="icon-edit" />}
-                onClick={() => ctrl.showEditStreamInfo()}
-              />
-            )}
-            {hasMultichatFeature('view-stream') && isStreaming && (
-              <IconButton
-                label={$t('View your live stream in a web browser')}
-                tooltipTitle={$t('View your live stream in a web browser')}
-                tooltipPlacement="right"
-                autoAdjustOverflow={false}
-                icon={<i className="icon-studio" />}
-                onClick={() => ctrl.openPlatformStream()}
-              />
-            )}
-            {isStreaming && <ShareStreamLink />}
-            {hasMultichatFeature('dashboard') && isStreaming && (
-              <IconButton
-                label={$t('Go to Live Dashboard')}
-                tooltipTitle={$t('Go to Live Dashboard')}
-                tooltipPlacement="right"
-                autoAdjustOverflow={false}
-                icon={<i className="icon-settings" />}
-                onClick={() => ctrl.openPlatformDash()}
-              />
-            )}
-          </div>
-          <div className={styles.multichatChatRefresh}>
-            {platformChatEnabled &&
-              (hasMultichatFeature('refresh-chat') ||
-                (hasMultichatFeature('refresh-chat-streaming') && isStreaming) ||
-                (hasMultichatFeature('refresh-chat-restreaming') && isRestreaming)) && (
-                <a onClick={() => ctrl.refreshChat()}>{$t('Refresh Chat')}</a>
-              )}
-          </div>
-        </div>
         {!hideStyleBlockers &&
           platformChatEnabled &&
           (hasMultichatFeature('chat-offline') ||
@@ -488,7 +361,7 @@ function Multichat() {
             !hasMultichatFeature('chat-streaming')) && (
             <div className={styles.multichatChat}>
               {hasChatTabs && <ChatTabs visibleChat={visibleChat} setChat={setChat} />}
-              {!applicationLoading && !collapsed && chat}
+              {!applicationLoading && chat}
               {!['default', 'restream'].includes(visibleChat) && (
                 <PlatformAppPageView
                   className={styles.multichatPlatformAppWebview}
@@ -551,6 +424,15 @@ function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
           <i className={cx(styles.multichatChatTabsInfo, 'icon-information')} />
         </Tooltip>
       </div>
+    </div>
+  );
+}
+
+function UnsupportedMultichat() {
+  return (
+    <div className={cx('flex flex--center flex--column', styles.multichatChatOffline)}>
+      <img className={styles.multichatChatImgOffline} src={$i('images/sleeping-kevin-day.png')} />
+      <span>{$t('Multichat is not supported for your platform.')}</span>
     </div>
   );
 }
