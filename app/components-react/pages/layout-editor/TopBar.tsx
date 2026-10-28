@@ -17,6 +17,7 @@ export default function TopBar() {
     slottedElements,
     browserUrl,
     currentLayout,
+    dockLayout,
     setShowModal,
     setCurrentTab,
     currentTab,
@@ -38,6 +39,9 @@ export default function TopBar() {
   async function save() {
     if (currentLayout !== LayoutService.views.currentTab.currentLayout) {
       await LayoutService.actions.return.changeLayout(currentLayout);
+    }
+    if (dockLayout !== LayoutService.views.currentTab.dockLayout) {
+      await LayoutService.actions.return.setDockLayout(dockLayout);
     }
     await LayoutService.actions.return.setSlots(slottedElements);
     if (browserUrl && slottedElements[ELayoutElement.Browser]) {
