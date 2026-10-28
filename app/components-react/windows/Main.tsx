@@ -17,6 +17,8 @@ import { useDockHasContent } from 'components-react/root/useDockHasContent';
 import StudioFooter from 'components-react/root/StudioFooter';
 import Loader from 'components-react/pages/Loader';
 import ResizeBar from 'components-react/root/ResizeBar';
+import HelpTip from 'components-react/shared/HelpTip';
+import { EDismissable } from 'services/dismissables';
 import antdThemes from 'styles/antd/index';
 import { EStreamingState } from 'services/streaming';
 import { TApplicationTheme } from 'services/customization';
@@ -424,6 +426,27 @@ const Chevron = memo(function Chevron(p: {
   );
 });
 
+function DockLayoutEditorDismissible(p: { onLeft?: boolean }) {
+  return (
+    <HelpTip
+      title={$t('New: Dock Layouts')}
+      dismissableKey={EDismissable.DockLayouts}
+      position={
+        p.onLeft
+          ? { bottom: '52px', left: 'calc(100% + 14px)' }
+          : { bottom: '52px', right: 'calc(100% + 14px)' }
+      }
+      arrowPosition={p.onLeft ? 'left' : 'right'}
+    >
+      <div>
+        {$t(
+          'Stack the Mini Feed above Multichat, or place any item in the dock, from the Layout Editor.',
+        )}
+      </div>
+    </HelpTip>
+  );
+}
+
 const DockContainer = memo(function DockContainer(p: IDockContainerProps) {
   const isDockCollapsed = useRealmObject(Services.CustomizationService.state).dockCollapsed;
 
@@ -438,6 +461,7 @@ const DockContainer = memo(function DockContainer(p: IDockContainerProps) {
     <Animation transitionName={transitionName} transitionAppear>
       {isDockCollapsed && (
         <div className={cx(styles.dockCollapsed, p.onLeft && styles.left)} key="collapsed">
+          <DockLayoutEditorDismissible onLeft={p.onLeft} />
           <Chevron
             onLeft={p.onLeft}
             isDockCollapsed={isDockCollapsed}
@@ -463,6 +487,7 @@ const DockContainer = memo(function DockContainer(p: IDockContainerProps) {
             className={cx(styles.dockContainer, p.onLeft && styles.left)}
             style={{ width: `${p.width}px` }}
           >
+            <DockLayoutEditorDismissible onLeft={p.onLeft} />
             <DockHeader />
             <div className={styles.dockContents}>
               <Dock />
