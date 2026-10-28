@@ -10,7 +10,7 @@ import * as appPages from 'components-react/pages';
 import TitleBar from 'components-react/shared/TitleBar';
 import { Services } from 'components-react/service-provider';
 import NavMenu from 'components-react/nav-menu/NavMenu';
-import LiveDock from 'components-react/root/LiveDock';
+import Multichat from 'components-react/root/Multichat';
 import StudioFooter from 'components-react/root/StudioFooter';
 import Loader from 'components-react/pages/Loader';
 import ResizeBar from 'components-react/root/ResizeBar';
@@ -115,7 +115,7 @@ export default function Main() {
       hasLiveDock &&
       !showLoadingSpinner &&
       platform &&
-      getPlatformService(platform.type).liveDockEnabled
+      getPlatformService(platform.type).multichatEnabled
     );
   }, [isLoggedIn, isOnboarding, hasLiveDock, showLoadingSpinner, platform?.type]);
 
@@ -456,7 +456,7 @@ const LiveDockContainer = memo(function LiveDockContainer(p: ILiveDockContainerP
             className={cx(styles.liveDockContainer, p.onLeft && styles.left)}
             style={{ width: `${p.width}px` }}
           >
-            <LiveDock />
+            <Multichat />
             <Chevron
               onLeft={p.onLeft}
               isDockCollapsed={isDockCollapsed}

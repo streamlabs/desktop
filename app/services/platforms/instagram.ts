@@ -7,7 +7,7 @@ import {
   TPlatformCapability,
   TStartStreamOptions,
   EPlatformCallResult,
-  TLiveDockFeature,
+  TMultichatFeature,
 } from '.';
 import { BasePlatformService } from './base-platform';
 import { IGoLiveSettings } from 'services/streaming';
@@ -39,7 +39,7 @@ export class InstagramService
   readonly platform = 'instagram';
   readonly displayName = 'Instagram';
   readonly capabilities = new Set<TPlatformCapability>(['resolutionPreset', 'title']);
-  readonly liveDockFeatures = new Set<TLiveDockFeature>();
+  readonly multichatFeatures = new Set<TMultichatFeature>();
 
   static initialState: IInstagramServiceState = {
     ...BasePlatformService.initialState,
@@ -112,7 +112,7 @@ export class InstagramService
     return '';
   }
 
-  get liveDockEnabled(): boolean {
+  get multichatEnabled(): boolean {
     return this.streamingService.views.isMultiplatformMode;
   }
 

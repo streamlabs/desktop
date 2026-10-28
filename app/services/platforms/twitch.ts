@@ -4,7 +4,7 @@ import {
   IPlatformRequest,
   IPlatformService,
   IPlatformState,
-  TLiveDockFeature,
+  TMultichatFeature,
   TPlatformCapability,
 } from '.';
 import { HostsService } from 'services/hosts';
@@ -151,7 +151,7 @@ export class TwitchService
     'dualStream',
   ]);
 
-  readonly liveDockFeatures = new Set<TLiveDockFeature>([
+  readonly multichatFeatures = new Set<TMultichatFeature>([
     'chat-offline',
     'refresh-chat',
     'chat-streaming',
@@ -737,7 +737,7 @@ export class TwitchService
     };
   }
 
-  get liveDockEnabled(): boolean {
+  get multichatEnabled(): boolean {
     return true;
   }
 
