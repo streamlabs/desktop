@@ -41,7 +41,7 @@ const StreamTimer = memo(function StreamTimer({
   return <span>{elapsed}</span>;
 });
 
-function refreshChat() {
+export function refreshChat() {
   const { ChatService, RestreamService, PlatformAppsService } = Services;
   const selectedChat = multichatChat.selectedChat;
 
@@ -55,12 +55,10 @@ function refreshChat() {
 }
 
 /**
- * The stream status and tools at the top of the dock: whether and how long the stream has been
- * live, the viewer count, the platform shortcuts and a chat refresh. It belongs to the dock
- * rather than Multichat so it remains whatever the dock contains.
+ * The state behind the stream tools shared by the dock header and the Multichat title bar.
  */
-export default function DockHeader() {
-  const { StreamingService, UserService, CustomizationService } = Services;
+export function useStreamTools() {
+  const { StreamingService, UserService } = Services;
 
   const {
     isStreaming,
@@ -68,7 +66,6 @@ export default function DockHeader() {
     streamingStatus,
     viewerCount,
     platform,
-    primaryPlatform,
     canEditChannelInfo,
     platformChatEnabled,
   } = useVuex(() => {
@@ -88,7 +85,6 @@ export default function DockHeader() {
       streamingStatus: views.streamingStatus,
       viewerCount: views.viewerCount.toString(),
       platform,
-      primaryPlatform,
       canEditChannelInfo:
         !platformCantEdit && (views.isMidStreamMode || primaryPlatform === 'twitch'),
       // In unprotected mode the stream usually goes to a custom ingest, so no linked platform's
@@ -97,16 +93,48 @@ export default function DockHeader() {
     };
   });
 
-  const { hideViewerCount } = useRealmObject(CustomizationService.state);
-  const displayedViewers = hideViewerCount ? $t('Viewers Hidden') : viewerCount;
-
   const platformService = platform ? getPlatformService(platform) : undefined;
   const hasFeature = (feature: TMultichatFeature) =>
     !!platformService?.hasMultichatFeature(feature);
 
-  function openPlatformPage(url?: string) {
-    if (url) remote.shell.openExternal(url);
-  }
+  return {
+    isStreaming,
+    streamingStatus,
+    viewerCount,
+    canEditChannelInfo,
+    platformService,
+    hasFeature,
+    canRefreshChat:
+      platformChatEnabled &&
+      (hasFeature('refresh-chat') ||
+        (hasFeature('refresh-chat-streaming') && isStreaming) ||
+        (hasFeature('refresh-chat-restreaming') && isRestreaming)),
+    openPlatformPage(url?: string) {
+      if (url) remote.shell.openExternal(url);
+    },
+  };
+}
+
+/**
+ * The stream status and tools at the top of the dock: whether and how long the stream has been
+ * live, the viewer count, the platform shortcuts and a chat refresh. It belongs to the dock
+ * rather than Multichat so it remains whatever the dock contains.
+ */
+export default function DockHeader() {
+  const { StreamingService, CustomizationService } = Services;
+  const {
+    isStreaming,
+    streamingStatus,
+    viewerCount,
+    canEditChannelInfo,
+    platformService,
+    hasFeature,
+    canRefreshChat,
+    openPlatformPage,
+  } = useStreamTools();
+
+  const { hideViewerCount } = useRealmObject(CustomizationService.state);
+  const displayedViewers = hideViewerCount ? $t('Viewers Hidden') : viewerCount;
 
   return (
     <div className={styles.dockHeader}>
@@ -168,12 +196,7 @@ export default function DockHeader() {
           )}
         </div>
         <div className={styles.dockHeaderChatRefresh}>
-          {platformChatEnabled &&
-            (hasFeature('refresh-chat') ||
-              (hasFeature('refresh-chat-streaming') && isStreaming) ||
-              (hasFeature('refresh-chat-restreaming') && isRestreaming)) && (
-              <a onClick={refreshChat}>{$t('Refresh Chat')}</a>
-            )}
+          {canRefreshChat && <a onClick={refreshChat}>{$t('Refresh Chat')}</a>}
         </div>
       </div>
     </div>
