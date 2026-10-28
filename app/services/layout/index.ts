@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import isEqual from 'lodash/isEqual';
+import cloneDeep from 'lodash/cloneDeep';
 import { Inject, ViewHandler, InitAfter } from 'services/core';
 import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
 import { mutation } from 'services/core/stateful-service';
@@ -48,6 +49,26 @@ interface ILayoutServiceState {
     [key: string]: ILayoutState;
   };
 }
+
+/**
+ * The layout of the default tab on fresh installs: the mini feed is stacked above Multichat
+ * in the dock, leaving the main layout to the editor display and the scene, source and
+ * mixer controls.
+ */
+const NEW_USER_TAB: Omit<ILayoutState, 'name' | 'icon'> = {
+  currentLayout: ELayout.Classic,
+  slottedElements: {
+    [ELayoutElement.Display]: { slot: '1' },
+    [ELayoutElement.Scenes]: { slot: '2' },
+    [ELayoutElement.Sources]: { slot: '3' },
+    [ELayoutElement.Mixer]: { slot: '4' },
+    [ELayoutElement.Minifeed]: { slot: 'S1' },
+    [ELayoutElement.Multichat]: { slot: 'S2' },
+  },
+  resizes: LAYOUT_DATA[ELayout.Classic].resizeDefaults,
+  dockLayout: EDockLayout.Stacked,
+  dockResize: 0.5,
+};
 
 class LayoutViews extends ViewHandler<ILayoutServiceState> {
   get currentTab() {
@@ -183,9 +204,15 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
   @Inject() private usageStatisticsService: UsageStatisticsService;
 
   init() {
+    // Nothing is persisted until the first change to the state, so this must be checked first.
+    // Fresh installs get the new default layout. Existing users keep theirs.
+    const isFreshInstall = localStorage.getItem(LayoutService.localStorageKey) === null;
+
     super.init();
     this.migrateSlots();
     this.migrateDock();
+
+    if (isFreshInstall) this.APPLY_NEW_USER_LAYOUT();
 
     // Hack since defaultState can't take a translated string
     if (!this.state.tabs.default.name) {
@@ -214,9 +241,30 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
     if (Object.keys(this.state.tabs).length > 1) {
       this.usageStatisticsService.recordFeatureUsage('LayoutEditorTabs');
       this.usageStatisticsService.recordFeatureUsage('LayoutEditor');
-    } else if (this.state.tabs.default.currentLayout !== ELayout.Default) {
+    } else if (
+      this.state.tabs.default.currentLayout !== ELayout.Default &&
+      !this.isNewUserLayout(this.state.tabs.default)
+    ) {
       this.usageStatisticsService.recordFeatureUsage('LayoutEditor');
     }
+  }
+
+  /**
+   * Whether a tab still has the layout fresh installs start with, which doesn't mean
+   * the layout editor was used even though it isn't the default layout.
+   */
+  private isNewUserLayout(tab: Omit<ILayoutState, 'name' | 'icon'>) {
+    const assignments = (t: Omit<ILayoutState, 'name' | 'icon'>) =>
+      Object.keys(t.slottedElements)
+        .filter((el: ELayoutElement) => t.slottedElements[el]?.slot)
+        .map((el: ELayoutElement) => `${el}:${t.slottedElements[el].slot}`)
+        .sort();
+
+    return (
+      tab.currentLayout === NEW_USER_TAB.currentLayout &&
+      tab.dockLayout === NEW_USER_TAB.dockLayout &&
+      isEqual(assignments(tab), assignments(NEW_USER_TAB))
+    );
   }
 
   migrateSlots() {
@@ -305,6 +353,18 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
     });
     Vue.set(this.state.tabs[this.state.currentTab], 'slottedElements', dockSlotted);
     Vue.set(this.state.tabs[this.state.currentTab], 'resizes', LAYOUT_DATA[layout].resizeDefaults);
+  }
+
+  @mutation()
+  APPLY_NEW_USER_LAYOUT() {
+    const tab = this.state.tabs.default;
+    const layout = cloneDeep(NEW_USER_TAB);
+
+    Vue.set(tab, 'currentLayout', layout.currentLayout);
+    Vue.set(tab, 'slottedElements', layout.slottedElements);
+    Vue.set(tab, 'resizes', layout.resizes);
+    Vue.set(tab, 'dockLayout', layout.dockLayout);
+    Vue.set(tab, 'dockResize', layout.dockResize);
   }
 
   @mutation()

@@ -20,6 +20,7 @@ export enum EDismissable {
   EnhancedBroadcasting = 'enhanced_broadcasting',
   StreamAvatarAutomationsWelcome = 'stream_avatar_automations_welcome',
   HighlighterBanner = 'highlighter_banner',
+  DockLayouts = 'dock_layouts',
 }
 
 interface IDismissablesServiceState {
@@ -44,6 +45,13 @@ export class DismissablesService extends PersistentStatefulService<IDismissables
       // Some keys have extra show criteria
       if (key === EDismissable.RecentEventsHelpTip && !this.state[key]) {
         // If this is a fresh cache, never show the tip
+        if (this.appService.state.onboarded) {
+          this.dismiss(key);
+        }
+      }
+
+      // Users onboarded this session start on the new layout, so there is nothing new to announce
+      if (key === EDismissable.DockLayouts && !this.state[key]) {
         if (this.appService.state.onboarded) {
           this.dismiss(key);
         }
