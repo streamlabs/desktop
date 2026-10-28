@@ -231,8 +231,8 @@ export async function switchAdvancedMode() {
 export async function updateChannelSettings(prefillData: TFormData) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
-    await click('[data-testid=multichat]'); // open Multichat
-    await click('.icon-edit'); // click Edit
+    await click('[data-testid=dock-chevron]'); // open Dock
+    await click('[data-testid=dock-edit-stream]'); // click Edit
     await focusChild();
     if (prefillData) await fillForm('editStreamForm', prefillData);
     await clickButton('Update');
