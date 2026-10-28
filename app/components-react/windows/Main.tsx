@@ -66,15 +66,15 @@ export default function Main() {
   const [bulkLoadFinished, setBulkLoadFinished] = useState(false);
   const [i18nReady, seti18nReady] = useState(false);
   const [compactView, setCompactView] = useState(false);
-  const [hasLiveDock, setHasLiveDock] = useState(true);
+  const [hasDock, setHasDock] = useState(true);
   const [minEditorWidth, setMinEditorWidth] = useState(500);
 
   const uiReady = bulkLoadFinished && i18nReady;
 
   const { currentPage: page, params } = useRealmObject(Services.NavigationService.state);
   const {
-    livedockSize: realmDockWidth,
-    livedockCollapsed: isDockCollapsed,
+    dockSize: realmDockWidth,
+    dockCollapsed: isDockCollapsed,
     theme: realmTheme,
     leftDock,
   } = useRealmObject(Services.CustomizationService.state);
@@ -112,12 +112,12 @@ export default function Main() {
     return (
       isLoggedIn &&
       !isOnboarding &&
-      hasLiveDock &&
+      hasDock &&
       !showLoadingSpinner &&
       platform &&
       getPlatformService(platform.type).multichatEnabled
     );
-  }, [isLoggedIn, isOnboarding, hasLiveDock, showLoadingSpinner, platform?.type]);
+  }, [isLoggedIn, isOnboarding, hasDock, showLoadingSpinner, platform?.type]);
 
   const theme = useMemo(() => {
     return !bulkLoadFinished ? loadedTheme() || 'night-theme' : realmTheme;
@@ -181,9 +181,9 @@ export default function Main() {
     setMinDockWidth(Math.min(290, max));
   }, [minEditorWidth]);
 
-  const setCollapsed = useCallback((livedockCollapsed: boolean) => {
+  const setCollapsed = useCallback((dockCollapsed: boolean) => {
     updateStyleBlockers(true);
-    CustomizationService.actions.setSettings({ livedockCollapsed });
+    CustomizationService.actions.setSettings({ dockCollapsed });
     setTimeout(() => {
       updateStyleBlockers(false);
     }, 300);
@@ -197,7 +197,7 @@ export default function Main() {
 
     clearTimeout(windowResizeTimeout.current);
 
-    setHasLiveDock(page === 'Studio' ? windowWidth >= minEditorWidth + 100 : windowWidth >= 1070);
+    setHasDock(page === 'Studio' ? windowWidth >= minEditorWidth + 100 : windowWidth >= 1070);
     windowResizeTimeout.current = window.setTimeout(() => {
       updateStyleBlockers(false);
       updateDockBounds();
@@ -236,7 +236,7 @@ export default function Main() {
   }, [uiReady, updateDockBounds]);
 
   useEffect(() => {
-    // Live dock should open when:
+    // Dock should open Multichat when:
     // - Protected mode: Streaming via APIs
     // - Unprotected mode: Streaming to Twitch
     const hasPlatformChat = protectedModeEnabled || isTwitchUnprotectedStream;
@@ -244,7 +244,7 @@ export default function Main() {
       setCollapsed(false);
     }
 
-    // Otherwise never open live dock, and collapse it if open, in unprotected mode (e.g. stream directly to custom destination)
+    // Otherwise never open the dock, and collapse it if open, in unprotected mode (e.g. stream directly to custom destination)
     if (streamingStatus === EStreamingState.Starting && !hasPlatformChat && !isDockCollapsed) {
       setCollapsed(true);
     }
@@ -264,7 +264,7 @@ export default function Main() {
       const appRect = mainWindowEl.current.getBoundingClientRect();
       const defaultWidth = Math.max(minDockWidth, appRect.width * 0.2);
       setDockWidth(defaultWidth);
-      CustomizationService.actions.setSettings({ livedockSize: defaultWidth });
+      CustomizationService.actions.setSettings({ dockSize: defaultWidth });
     }
   }, [uiReady, minDockWidth]);
 
@@ -302,18 +302,18 @@ export default function Main() {
       {page !== 'Onboarding' && !showLoadingSpinner && <NavMenu />}
       <div
         className={cx(styles.mainContents, {
-          [styles.mainContentsRight]: renderDock && leftDock && hasLiveDock,
-          [styles.mainContentsLeft]: renderDock && !leftDock && hasLiveDock,
+          [styles.mainContentsRight]: renderDock && leftDock && hasDock,
+          [styles.mainContentsLeft]: renderDock && !leftDock && hasDock,
           [styles.mainContentsOnboarding]: page === 'Onboarding',
         })}
       >
         {renderDock && leftDock && (
-          <LiveDockContainer
+          <DockContainer
             max={maxDockWidth}
             min={minDockWidth}
             width={dockWidth}
             setCollapsed={setCollapsed}
-            setLiveDockWidth={setDockWidth}
+            setDockWidth={setDockWidth}
             onLeft
           />
         )}
@@ -366,12 +366,12 @@ export default function Main() {
           )}
         </div>
         {renderDock && !leftDock && (
-          <LiveDockContainer
+          <DockContainer
             max={maxDockWidth}
             min={minDockWidth}
             width={dockWidth}
             setCollapsed={setCollapsed}
-            setLiveDockWidth={setDockWidth}
+            setDockWidth={setDockWidth}
           />
         )}
       </div>
@@ -387,12 +387,12 @@ export default function Main() {
   );
 }
 
-interface ILiveDockContainerProps {
+interface IDockContainerProps {
   max: number;
   min: number;
   width: number;
   setCollapsed: (val: boolean) => void;
-  setLiveDockWidth: (val: number) => void;
+  setDockWidth: (val: number) => void;
   onLeft?: boolean;
 }
 
@@ -403,7 +403,7 @@ const Chevron = memo(function Chevron(p: {
 }) {
   return (
     <div
-      className={cx(styles.liveDockChevron, p.onLeft && styles.left)}
+      className={cx(styles.dockChevron, p.onLeft && styles.left)}
       onClick={() => p.setCollapsed(!p.isDockCollapsed)}
     >
       <i
@@ -417,8 +417,8 @@ const Chevron = memo(function Chevron(p: {
   );
 });
 
-const LiveDockContainer = memo(function LiveDockContainer(p: ILiveDockContainerProps) {
-  const isDockCollapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
+const DockContainer = memo(function DockContainer(p: IDockContainerProps) {
+  const isDockCollapsed = useRealmObject(Services.CustomizationService.state).dockCollapsed;
 
   const transitionName = useMemo(() => {
     if ((p.onLeft && isDockCollapsed) || (!p.onLeft && !isDockCollapsed)) {
@@ -430,7 +430,7 @@ const LiveDockContainer = memo(function LiveDockContainer(p: ILiveDockContainerP
   return (
     <Animation transitionName={transitionName} transitionAppear>
       {isDockCollapsed && (
-        <div className={cx(styles.liveDockCollapsed, p.onLeft && styles.left)} key="collapsed">
+        <div className={cx(styles.dockCollapsed, p.onLeft && styles.left)} key="collapsed">
           <Chevron
             onLeft={p.onLeft}
             isDockCollapsed={isDockCollapsed}
@@ -442,9 +442,9 @@ const LiveDockContainer = memo(function LiveDockContainer(p: ILiveDockContainerP
         <ResizeBar
           position={p.onLeft ? 'left' : 'right'}
           resizeHandle={p.onLeft ? 'e' : 'w'}
-          onInput={(val: number) => p.setLiveDockWidth(val)}
+          onInput={(val: number) => p.setDockWidth(val)}
           onResizestop={(val?: number) =>
-            val && Services.CustomizationService.actions.setSettings({ livedockSize: val })
+            val && Services.CustomizationService.actions.setSettings({ dockSize: val })
           }
           max={p.max}
           min={p.min}
@@ -453,7 +453,7 @@ const LiveDockContainer = memo(function LiveDockContainer(p: ILiveDockContainerP
           key="expanded"
         >
           <div
-            className={cx(styles.liveDockContainer, p.onLeft && styles.left)}
+            className={cx(styles.dockContainer, p.onLeft && styles.left)}
             style={{ width: `${p.width}px` }}
           >
             <Multichat />
