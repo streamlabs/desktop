@@ -10,12 +10,12 @@ import * as appPages from 'components-react/pages';
 import TitleBar from 'components-react/shared/TitleBar';
 import { Services } from 'components-react/service-provider';
 import NavMenu from 'components-react/nav-menu/NavMenu';
-import Multichat from 'components-react/root/Multichat';
+import { Multichat, isMultichatSupported } from 'components-react/editor/elements/Multichat';
+import DockHeader from 'components-react/root/DockHeader';
 import StudioFooter from 'components-react/root/StudioFooter';
 import Loader from 'components-react/pages/Loader';
 import ResizeBar from 'components-react/root/ResizeBar';
 import antdThemes from 'styles/antd/index';
-import { getPlatformService } from 'services/platforms';
 import { EStreamingState } from 'services/streaming';
 import { TApplicationTheme } from 'services/customization';
 import styles from './Main.m.less';
@@ -114,8 +114,7 @@ export default function Main() {
       !isOnboarding &&
       hasDock &&
       !showLoadingSpinner &&
-      platform &&
-      getPlatformService(platform.type).multichatEnabled
+      isMultichatSupported(platform)
     );
   }, [isLoggedIn, isOnboarding, hasDock, showLoadingSpinner, platform?.type]);
 
@@ -432,6 +431,7 @@ const DockContainer = memo(function DockContainer(p: IDockContainerProps) {
       {isDockCollapsed && (
         <div className={cx(styles.dockCollapsed, p.onLeft && styles.left)} key="collapsed">
           <Chevron
+            data-testid="dock-chevron"
             onLeft={p.onLeft}
             isDockCollapsed={isDockCollapsed}
             setCollapsed={p.setCollapsed}
@@ -456,8 +456,12 @@ const DockContainer = memo(function DockContainer(p: IDockContainerProps) {
             className={cx(styles.dockContainer, p.onLeft && styles.left)}
             style={{ width: `${p.width}px` }}
           >
-            <Multichat />
+            <DockHeader />
+            <div className={styles.dockContents}>
+              <Multichat inDock />
+            </div>
             <Chevron
+              data-testid="dock-chevron"
               onLeft={p.onLeft}
               isDockCollapsed={isDockCollapsed}
               setCollapsed={p.setCollapsed}
