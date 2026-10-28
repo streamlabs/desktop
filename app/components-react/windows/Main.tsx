@@ -10,13 +10,16 @@ import * as appPages from 'components-react/pages';
 import TitleBar from 'components-react/shared/TitleBar';
 import { Services } from 'components-react/service-provider';
 import NavMenu from 'components-react/nav-menu/NavMenu';
-import { Multichat, isMultichatSupported } from 'components-react/editor/elements/Multichat';
+import { isMultichatSupported } from 'components-react/editor/elements/Multichat';
+import { getElementMins } from 'components-react/editor/renderLayoutElements';
+import Dock from 'components-react/root/Dock';
 import DockHeader from 'components-react/root/DockHeader';
 import StudioFooter from 'components-react/root/StudioFooter';
 import Loader from 'components-react/pages/Loader';
 import ResizeBar from 'components-react/root/ResizeBar';
 import antdThemes from 'styles/antd/index';
 import { EStreamingState } from 'services/streaming';
+import { ELayoutElement } from 'services/layout';
 import { TApplicationTheme } from 'services/customization';
 import styles from './Main.m.less';
 import { StatefulService } from 'services';
@@ -56,6 +59,7 @@ export default function Main() {
     ScenesService,
     CustomizationService,
     StreamSettingsService,
+    LayoutService,
     WidgetsService,
   } = Services;
   const mainWindowEl = useRef<HTMLDivElement | null>(null);
@@ -90,6 +94,7 @@ export default function Main() {
     activeSceneId,
     protectedModeEnabled,
     isTwitchUnprotectedStream,
+    dockElements,
   } = useVuex(() => ({
     errorAlert: AppService.state.errorAlert,
     applicationLoading: AppService.state.loading,
@@ -100,6 +105,7 @@ export default function Main() {
     activeSceneId: ScenesService.views.activeSceneId,
     protectedModeEnabled: StreamSettingsService.views.protectedModeEnabled,
     isTwitchUnprotectedStream: StreamingService.views.isTwitchUnprotectedStream,
+    dockElements: LayoutService.views.dockElements,
   }));
 
   const showLoadingSpinner = useMemo(
@@ -109,15 +115,26 @@ export default function Main() {
 
   const isOnboarding = page === 'Onboarding';
 
+  // Multichat is not shown in the dock on platforms that don't support it, so a dock that
+  // only holds Multichat has nothing to show.
+  const dockKey = dockElements.join();
+  const dockHasContent = useMemo(
+    () =>
+      dockElements.some(
+        element => element !== ELayoutElement.Multichat || isMultichatSupported(platform),
+      ),
+    [dockKey, platform?.type],
+  );
+
   const renderDock = useMemo(() => {
-    return (
-      isLoggedIn &&
-      !isOnboarding &&
-      hasDock &&
-      !showLoadingSpinner &&
-      isMultichatSupported(platform)
-    );
-  }, [isLoggedIn, isOnboarding, hasDock, showLoadingSpinner, platform?.type]);
+    return isLoggedIn && !isOnboarding && hasDock && !showLoadingSpinner && dockHasContent;
+  }, [isLoggedIn, isOnboarding, hasDock, showLoadingSpinner, dockHasContent]);
+
+  // The dock is at least as wide as the widest minimum of its elements
+  const contentMinDockWidth = useMemo(() => {
+    const widths = dockElements.map(element => getElementMins(element)?.x ?? 0);
+    return Math.max(290, ...widths);
+  }, [dockKey]);
 
   const theme = useMemo(() => {
     return !bulkLoadFinished ? loadedTheme() || 'night-theme' : realmTheme;
@@ -199,8 +216,8 @@ export default function Main() {
     if (!appRect) return;
     const max = Math.min(appRect.width - minEditorWidth, appRect.width / 2);
     setMaxDockWidth(max);
-    setMinDockWidth(Math.min(290, max));
-  }, [minEditorWidth]);
+    setMinDockWidth(Math.min(contentMinDockWidth, max));
+  }, [minEditorWidth, contentMinDockWidth]);
 
   const setCollapsed = useCallback((dockCollapsed: boolean) => {
     updateStyleBlockers(true);
@@ -482,7 +499,7 @@ const DockContainer = memo(function DockContainer(p: IDockContainerProps) {
           >
             <DockHeader />
             <div className={styles.dockContents}>
-              <Multichat inDock />
+              <Dock />
             </div>
             <Chevron
               data-testid="dock-chevron-opened"
