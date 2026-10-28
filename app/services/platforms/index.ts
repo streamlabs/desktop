@@ -230,7 +230,7 @@ export interface IPlatformService {
     reqInfo: IPlatformRequest | string,
     errorType?: TStreamErrorType,
     fn?: (p: IPlatformErrorCallbackProps) => void,
-  ) => StreamError;
+  ) => StreamError | undefined;
 
   fetchNewToken: () => Promise<void>;
 

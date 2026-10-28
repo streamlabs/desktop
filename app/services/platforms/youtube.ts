@@ -315,7 +315,7 @@ export class YoutubeService
       const error = this.createPlatformError(e, reqInfo);
       // Handle the live streaming not enabled error first because none of the others will occur if the user
       // is not enabled for live streaming
-      if (error.reason === 'liveStreamingNotEnabled' && repeatRequestIfRateLimitExceed) {
+      if (error?.reason === 'liveStreamingNotEnabled' && repeatRequestIfRateLimitExceed) {
         await Utils.sleep(3000);
         return await this.requestYoutube(reqInfo, false);
       }
