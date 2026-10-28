@@ -10,8 +10,6 @@ import {
 } from 'services/api/jsonrpc/index';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { ExternalApiService } from '../external-api';
-// eslint-disable-next-line no-undef
-import WritableStream = NodeJS.WritableStream;
 import { $t } from 'services/i18n';
 import { OS, getOS } from 'util/operating-systems';
 
@@ -40,9 +38,12 @@ export interface IIPAddressDescription {
   internal: boolean;
 }
 
+// net.Socket for tcp and named pipes, SockJSConnection for websockets
+type TClientSocket = NodeJS.WritableStream & { destroy(): void };
+
 interface IClient {
   id: number;
-  socket: WritableStream;
+  socket: TClientSocket;
   subscriptions: string[];
   isAuthorized: boolean;
 
@@ -306,7 +307,7 @@ export class TcpServerService extends PersistentStatefulService<ITcpServersSetti
     };
   }
 
-  private onConnectionHandler(socket: WritableStream, server: IServer) {
+  private onConnectionHandler(socket: TClientSocket, server: IServer) {
     this.log('new connection');
 
     const id = this.nextClientId++;
@@ -364,6 +365,8 @@ export class TcpServerService extends PersistentStatefulService<ITcpServersSetti
 
   private onRequestHandler(client: IClient, data: string) {
     this.log(`tcp request from ${client.id}`, data);
+
+    if (this.clients[client.id] !== client) return;
 
     if (this.isRequestsHandlingStopped && !this.forceRequests) {
       this.sendResponse(
@@ -587,8 +590,13 @@ export class TcpServerService extends PersistentStatefulService<ITcpServersSetti
 
   private disconnectClient(clientId: number) {
     const client = this.clients[clientId];
-    client.socket.end();
+    if (!client) return;
+
+    // Must be destroy(), not end(). end() only half-closes the socket, so a client
+    // that keeps sending after we disconnect it would still have its data handled.
+    client.isAuthorized = false;
     delete this.clients[clientId];
+    client.socket.destroy();
   }
 
   private log(...messages: any[]) {
