@@ -1,10 +1,9 @@
-import React, { ReactNode, FunctionComponent, useMemo } from 'react';
-import { ELayoutElement, IVec2Array, TLayoutSlot } from 'services/layout';
-import * as elements from 'components-react/editor/elements';
+import React, { FunctionComponent, useMemo } from 'react';
+import { IVec2Array } from 'services/layout';
 import * as layouts from 'components-react/editor/layouts';
+import { renderLayoutElements } from 'components-react/editor/renderLayoutElements';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
-import { TLayoutElement } from 'services/layout/layout-data';
 import { ILayoutProps } from 'components-react/editor/layouts/hooks';
 
 export default function Studio(p: { onTotalWidth: (width: Number) => void; className?: string }) {
@@ -27,22 +26,10 @@ export default function Studio(p: { onTotalWidth: (width: Number) => void; class
 
   const Layout = (layouts as Dictionary<FunctionComponent<ILayoutProps>>)[layout];
 
-  const { children, childrenMins } = useMemo(() => {
-    const children: Partial<Record<TLayoutSlot, ReactNode>> = {};
-    const childrenMins: Dictionary<IVec2> = {};
-    elementsToRender.forEach((el: ELayoutElement) => {
-      const componentName: TLayoutElement = LayoutService.views.elementComponent(el);
-      const Component = (elements as Dictionary<FunctionComponent & { mins: IVec2 }>)[
-        componentName
-      ];
-      const slot = slottedElements[el]?.slot;
-      if (slot && Component) {
-        children[slot] = <Component />;
-        childrenMins[slot] = Component.mins;
-      }
-    });
-    return { children, childrenMins };
-  }, [currentTab]);
+  const { children, childrenMins } = useMemo(
+    () => renderLayoutElements(elementsToRender, slottedElements),
+    [currentTab],
+  );
 
   return (
     <Layout
