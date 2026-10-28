@@ -51,6 +51,11 @@ import { VirtualWebcamService } from 'services/virtual-webcam';
 import { WebsocketService } from 'services/websocket';
 import { ObsModuleLoadNotificationsService } from 'services/obs-module-load-notifications-service';
 import {
+  CameraStatusService,
+  startCameraStatusMonitoring,
+  stopCameraStatusMonitoring,
+} from 'services/camera-status-service';
+import {
   executeImmediateShutdownSteps,
   IWorkerShutdownPlan,
   runWorkerShutdown,
@@ -115,6 +120,7 @@ export class AppService extends StatefulService<IAppState> {
   @Inject() private virtualWebcamService: VirtualWebcamService;
   @Inject() private websocketService: WebsocketService;
   @Inject() private obsModuleLoadNotificationsService: ObsModuleLoadNotificationsService;
+  @Inject() private cameraStatusService: CameraStatusService;
 
   static initialState: IAppState = {
     loading: true,
@@ -167,6 +173,7 @@ export class AppService extends StatefulService<IAppState> {
       await this.sceneCollectionsService.initialize();
     }
     await this.obsModuleLoadNotificationsService.refreshModuleLoadNotifications();
+    startCameraStatusMonitoring(this.cameraStatusService);
 
     this.dismissablesService.initialize();
 
@@ -257,6 +264,11 @@ export class AppService extends StatefulService<IAppState> {
           },
         ],
         teardown: [
+          {
+            name: 'CameraStatusService.stopMonitoring',
+            criticality: 'required',
+            run: () => stopCameraStatusMonitoring(),
+          },
           {
             name: 'AppService.shutdownStarted',
             criticality: 'required',

@@ -1,4 +1,13 @@
 {
+  "“%{source}” could not start. Windows reported insufficient USB bandwidth.": "“%{source}” could not start. Windows reported insufficient USB bandwidth.",
+  "“%{source}” could not start.": "“%{source}” could not start.",
+  "Try lowering your cameras’ resolution or frame rate, deactivating unused cameras, or connecting a camera to a port on a different USB controller.": "Try lowering your cameras’ resolution or frame rate, deactivating unused cameras, or connecting a camera to a port on a different USB controller.",
+  "The selected camera could not be found. Reconnect it or select another device.": "The selected camera could not be found. Reconnect it or select another device.",
+  "Check that the camera is connected, close other apps that may be using it, and try a lower resolution or frame rate.": "Check that the camera is connected, close other apps that may be using it, and try a lower resolution or frame rate.",
+  "Open camera settings.": "Open camera settings.",
+  "Device: %{device}": "Device: %{device}",
+  "Technical details": "Technical details",
+  "Windows error: %{code}": "Windows error: %{code}",
   "Image": "Image",
   "Color Block": "Color Block",
   "Browser Source": "Browser Source",
