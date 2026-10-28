@@ -226,12 +226,12 @@ export async function switchAdvancedMode() {
 }
 
 /**
- * Open liveDock and edit stream settings
+ * Open Multichat and edit stream settings
  */
 export async function updateChannelSettings(prefillData: TFormData) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
-    await click('.live-dock'); // open LiveDock
+    await click('.multichat'); // open Multichat
     await click('.icon-edit'); // click Edit
     await focusChild();
     if (prefillData) await fillForm('editStreamForm', prefillData);
