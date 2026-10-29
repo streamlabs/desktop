@@ -3331,12 +3331,15 @@ export class StreamingService
       } catch (e: unknown) {
         console.error('Error starting recording:', e);
 
+        let errorMessage = $t('An unknown error occurred. Please try again.');
+        if (e instanceof Error) errorMessage = e.message;
+        else if (typeof e === 'string') errorMessage = e;
         this.createOBSError(
           EOBSOutputType.Recording,
           display,
           EOBSOutputSignal.Start,
           EOutputCode.Error,
-          typeof e === 'string' ? e : $t('An unknown Recording error occurred. Please try again.'),
+          errorMessage,
         );
 
         this.handleDestroyOutputContexts(display);
@@ -4037,14 +4040,16 @@ export class StreamingService
     } catch (e: unknown) {
       console.error('Error starting replay buffer:', e);
 
+      let errorMessage = $t('An unknown error occurred. Please try again.');
+      if (e instanceof Error) errorMessage = e.message;
+      else if (typeof e === 'string') errorMessage = e;
+
       this.createOBSError(
         EOBSOutputType.ReplayBuffer,
         display,
         EOBSOutputSignal.Start,
         EOutputCode.Error,
-        typeof e === 'string'
-          ? e
-          : $t('An unknown Replay Buffer error occurred. Please try again.'),
+        errorMessage,
       );
 
       this.handleDestroyOutputContexts(display);
@@ -4810,7 +4815,9 @@ export class StreamingService
       return;
     }
 
-    let errorText = this.streamErrorUserMessage;
+    // If user is not streaming, check for error message.
+    let errorText =
+      info.type !== EOBSOutputType.Streaming ? info.error : this.streamErrorUserMessage;
     let details = '';
     let linkToDriverInfo = false;
     let showNativeErrorMessage = false;
@@ -4864,6 +4871,13 @@ export class StreamingService
         'An error occurred with the output. This is usually caused by out of date video drivers. Please ensure your Nvidia or AMD drivers are up to date and try again.',
       );
       diagReportMessage = diagReportMessage.concat(errorText);
+    } else if (errorText.length !== 0) {
+      const localizedSystemMessage = $t('System error message:');
+      const userText = `${$t(
+        'Failed to create recording. Please check your settings and file path and try again.',
+      )}\n\n${localizedSystemMessage} ${errorText}`;
+      diagReportMessage = diagReportMessage.concat(userText);
+      errorText = userText;
     } else {
       // -4 is used for generic unknown messages in OBS. Both -4 and any other code
       // we don't recognize should fall into this branch and show a generic error.
@@ -4929,8 +4943,8 @@ export class StreamingService
       }
     }
 
-    // Add display information for dual output mode
-    if (this.views.isDualOutputMode) {
+    // Add display information for dual output mode. The platform list only applies to streaming.
+    if (this.views.isDualOutputMode && info.type === EOBSOutputType.Streaming) {
       const display = info.service === 'vertical' ? 'vertical' : 'horizontal';
       const targets = [];
       if (this.views.activeDisplayDestinations[display].length) {
