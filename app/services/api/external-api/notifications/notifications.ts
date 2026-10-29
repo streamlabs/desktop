@@ -2,6 +2,7 @@ import { NotificationsService as InternalNotificationsService } from 'services/n
 import { Inject } from 'services/core/injector';
 import { Fallback, Singleton } from 'services/api/external-api';
 import { IJsonRpcRequest } from 'services/api/jsonrpc';
+import { pickUntrustedNotificationOptions } from 'services/notifications/untrusted-options';
 
 /**
  * Available types of notifications.
@@ -33,7 +34,6 @@ interface INotificationOptions {
   code?: string;
   unread?: boolean;
   type?: ENotificationType;
-  action?: IJsonRpcRequest;
   playSound?: boolean;
   data?: any;
   subType?: ENotificationSubType;
@@ -50,6 +50,7 @@ interface INotificationOptions {
  */
 export interface INotificationModel extends INotificationOptions {
   id: number;
+  action?: IJsonRpcRequest;
   type: ENotificationType;
   message: string;
   unread: boolean;
@@ -85,7 +86,7 @@ export class NotificationsService {
    * @returns The created notification
    */
   push(notifyInfo: INotificationOptions): INotificationModel {
-    return this.notificationsService.push(notifyInfo);
+    return this.notificationsService.push(pickUntrustedNotificationOptions(notifyInfo));
   }
 
   /**

@@ -2,6 +2,7 @@ import { Module, apiMethod, apiEvent, EApiPermissions, IApiContext } from './mod
 import { Inject } from 'services/core/injector';
 import { Subject } from 'rxjs';
 import { INotificationsServiceApi } from 'services/notifications';
+import { pickUntrustedNotificationOptions } from 'services/notifications/untrusted-options';
 
 type TIssueCode = 'FRAMES_LAGGED' | 'FRAMES_SKIPPED' | 'FRAMES_DROPPED' | 'HIGH_CPU_USAGE';
 
@@ -66,7 +67,7 @@ export class NotificationsModule extends Module {
 
   @apiMethod()
   push(ctx: IApiContext, notification: INotificationOptions): INotification {
-    return this.notificationsService.push(notification);
+    return this.notificationsService.push(pickUntrustedNotificationOptions(notification));
   }
 
   @apiMethod()
