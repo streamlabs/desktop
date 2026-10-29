@@ -21,6 +21,68 @@ function nativeResult(): IAutoOptimizerNativeResult {
   };
 }
 
+test.serial(
+  'the default guard allows the native phase budgets and still cancels a stalled run',
+  async t => {
+    const originalSetTimeout = global.setTimeout;
+    const originalClearTimeout = global.clearTimeout;
+    const timers = new Map<number, { deadline: number; callback: () => void }>();
+    let now = 0;
+    let nextTimerId = 0;
+    global.setTimeout = (((callback: () => void, delay = 0) => {
+      const timerId = ++nextTimerId;
+      timers.set(timerId, { deadline: now + delay, callback });
+      return timerId;
+    }) as unknown) as typeof setTimeout;
+    global.clearTimeout = (((timerId: number) =>
+      timers.delete(timerId)) as unknown) as typeof clearTimeout;
+    const advance = (milliseconds: number) => {
+      now += milliseconds;
+      for (const [timerId, timer] of timers) {
+        if (timer.deadline <= now) {
+          timers.delete(timerId);
+          timer.callback();
+        }
+      }
+    };
+
+    try {
+      const result = deferred<IAutoOptimizerNativeResult>();
+      let cancellations = 0;
+      const run: IAutoOptimizerRun = {
+        result: result.promise,
+        confirmProbeIngest: () => undefined,
+        cancel: async () => {
+          cancellations++;
+        },
+      };
+      const guarded = awaitAutoOptimizerRun(run).catch(error => error as Error);
+      // Five minutes of hardware testing, the full shared YouTube budget,
+      // then allowance for the Twitch probe and output cleanup.
+      advance(300000 + 150000 + 30000 + 10000);
+      const completed = nativeResult();
+      result.resolve(completed);
+      t.is(await guarded, completed);
+      t.is(cancellations, 0);
+      t.is(timers.size, 0, 'completion clears the default guard');
+
+      const stalled = awaitAutoOptimizerRun({
+        ...run,
+        result: new Promise<IAutoOptimizerNativeResult>(() => undefined),
+      }).catch(error => error as Error);
+      advance(10 * 60 * 1000);
+      const error = await stalled;
+      t.true(error instanceof Error);
+      t.is((error as Error).message, 'Auto Optimizer timed out');
+      t.is(cancellations, 1);
+      t.is(timers.size, 0);
+    } finally {
+      global.setTimeout = originalSetTimeout;
+      global.clearTimeout = originalClearTimeout;
+    }
+  },
+);
+
 test('a completed OSN run returns its result without cancellation', async t => {
   let cancelled = false;
   const run: IAutoOptimizerRun = {

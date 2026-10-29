@@ -1046,7 +1046,7 @@ export class StreamingService
     activePlatforms: TPlatform[] = [],
     activeDestinations: ICustomStreamDestination[] = [],
   ): Promise<boolean> {
-    // Adding a non-Twitch destination to a live 1440p stream requires a restart;
+    // Adding a destination other than Twitch or YouTube to a live 1440p stream requires a restart;
     // the video transaction rejects active outputs without modifying them.
     await this.streamSettingsService.applyStreamOutputLimits(settings);
     const lifecycle = this.state.info.lifecycle;
