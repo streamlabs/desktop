@@ -1,5 +1,9 @@
 import test from 'ava';
 import { pickUntrustedNotificationOptions } from '../../app/services/notifications/untrusted-options';
+import {
+  ENotificationSubType,
+  ENotificationType,
+} from '../../app/services/notifications/notifications-api';
 
 test('pickUntrustedNotificationOptions drops an attacker-supplied action', t => {
   const options = {
@@ -34,10 +38,10 @@ test('pickUntrustedNotificationOptions keeps the documented fields', t => {
     message: 'hi',
     code: 'SOME_CODE',
     unread: false,
-    type: 'WARNING',
+    type: ENotificationType.WARNING,
     playSound: false,
     data: { a: 1 },
-    subType: 'NEWS',
+    subType: ENotificationSubType.NEWS,
     lifeTime: -1,
     showTime: true,
   };
