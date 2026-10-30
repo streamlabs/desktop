@@ -2064,7 +2064,7 @@ export class StreamingService
           output: 'horizontal',
           audioTrack: this.getStreamingAudioTrack(),
           start: true,
-          context: 'horizontal',
+          context: this.state.enhancedBroadcasting ? 'enhancedBroadcasting' : 'horizontal',
           isEnhancedBroadcasting: this.state.enhancedBroadcasting,
         });
       }
