@@ -261,6 +261,7 @@
   "Failed to start video transmission": "Failed to start video transmission",
   "Failed to create stream. Please check your settings and try again.": "ストリームの作成に失敗しました。設定を確認して、再試行してください。",
   "Failed to create recording. Please check your settings and file path and try again.": "録画の作成に失敗しました。設定とファイルパスを確認して、再試行してください。",
+  "System error message:": "System error message:",
   "Unknown recording error, please contact support": "不明な録画エラーが発生しました。サポートに連絡してください",
   "recording settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "録画設定が正しくありません。ストリーミングと録画の両方の録画パスとエンコーダー設定を確認してください。",
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "リプレイバッファの作成に失敗しました。ストリーミング設定、録画設定、および録画ファイルパスを確認して、再試行してください。",

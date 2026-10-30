@@ -261,6 +261,7 @@
   "Failed to start video transmission": "Failed to start video transmission",
   "Failed to create stream. Please check your settings and try again.": "创建流失败。请检查您的设置，然后再试一次。",
   "Failed to create recording. Please check your settings and file path and try again.": "创建录制失败。请检查您的设置和文件路径，然后再试一次。",
+  "System error message:": "System error message:",
   "Unknown recording error, please contact support": "未知录制错误，请联系支持人员。",
   "recording settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "录制设置不正确。请检查流媒体和录制的录制路径及编码器设置。",
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "创建重放缓存失败。请检查您的流媒体设置、录制设置和录制文件路径，然后再试一次。",

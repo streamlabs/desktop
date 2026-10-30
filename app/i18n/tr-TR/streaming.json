@@ -261,6 +261,7 @@
   "Failed to start video transmission": "Failed to start video transmission",
   "Failed to create stream. Please check your settings and try again.": "Yayın oluşturulamadı. Lütfen ayarlarınızı kontrol edin ve tekrar deneyin.",
   "Failed to create recording. Please check your settings and file path and try again.": "Kayıt oluşturulamadı. Lütfen ayarlarınızı ve dosya yolunu kontrol edip tekrar deneyin.",
+  "System error message:": "System error message:",
   "Unknown recording error, please contact support": "Bilinmeyen kayıt hatası, lütfen destek ekibiyle iletişime geçin",
   "recording settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "kayıt ayarları hatalı. Hem yayın hem de kayıt için kayıt yolunu ve kodlayıcı ayarlarını kontrol edin.",
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "Tekrar arabelleği oluşturulamadı. Lütfen yayın ayarlarınızı, kayıt ayarlarınızı ve kayıt dosya yolunu kontrol edip tekrar deneyin.",

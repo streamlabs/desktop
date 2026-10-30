@@ -261,6 +261,7 @@
   "Failed to start video transmission": "Failed to start video transmission",
   "Failed to create stream. Please check your settings and try again.": "Kon stream niet aanmaken. Controleer je instellingen en probeer het opnieuw.",
   "Failed to create recording. Please check your settings and file path and try again.": "Kon opname niet aanmaken. Controleer je instellingen en bestandspad en probeer het opnieuw.",
+  "System error message:": "System error message:",
   "Unknown recording error, please contact support": "Onbekende opnamefout, neem contact op met support",
   "recording settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "opname-instellingen zijn onjuist. Controleer het opnamepad en de encoderinstellingen voor zowel streamen als opnemen.",
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "Kon replay-buffer niet aanmaken. Controleer je streaming-instellingen, opname-instellingen en het bestandspad voor opnames en probeer het opnieuw.",
