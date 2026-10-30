@@ -53,6 +53,19 @@ const base = {
   // Left on, @electron/rebuild source-builds deasync and dies resolving node-addon-api's
   // include dir ("Cannot open include file: 'napi.h'") on the release machine.
   npmRebuild: false,
+  // Stop the shipped binary from being run as a plain Node runtime or attached to a
+  // debugger: ELECTRON_RUN_AS_NODE, NODE_OPTIONS / NODE_EXTRA_CA_CERTS and --inspect are
+  // all ignored in packaged builds. electron-builder flips these after the afterPack hook
+  // and before signing, on both platforms. With runAsNode off, child_process.fork() throws
+  // in the packaged app; use utilityProcess for a standalone Node process instead.
+  electronFuses: {
+    runAsNode: false,
+    enableNodeOptionsEnvironmentVariable: false,
+    enableNodeCliInspectArguments: false,
+    // Unsigned builds skip signing, and flipping the fuses invalidates Electron's ad-hoc
+    // signature, which an arm64 Mac refuses to launch. Re-apply it for those builds only.
+    resetAdHocDarwinSignature: process.platform === 'darwin' && !!process.env.SLOBS_NO_SIGN,
+  },
   nsis: {
     license: 'AGREEMENT',
     oneClick: false,
