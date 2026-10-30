@@ -46,7 +46,7 @@ export default function Chat(props: {
     }
 
     setupChat();
-    // Wait for livedock to expand to set chat resize
+    // Wait for the dock to expand to set chat resize
     setTimeout(checkResize, 100);
 
     return () => {

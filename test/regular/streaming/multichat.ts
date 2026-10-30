@@ -17,7 +17,7 @@ test('Expanded Multichat handles unprotected destinations without a linked platf
       protectedModeEnabled: false,
       key: 'synthetic-key',
     });
-    manager.getResource('CustomizationService').setSettings({ livedockCollapsed: false });
+    manager.getResource('CustomizationService').setSettings({ dockCollapsed: false });
   });
   await focusMain();
   t.false(await isDisplayed('span=Your chat is currently offline'));
@@ -40,7 +40,7 @@ test('Expanded Multichat handles unprotected destinations without a linked platf
         },
       },
     };
-    (window as any).restoreLiveDockUser = () => {
+    (window as any).restoreMultichatUser = () => {
       user.state = originalState;
     };
   });
@@ -58,7 +58,7 @@ test('Expanded Multichat handles unprotected destinations without a linked platf
           protectedModeEnabled: false,
           key: 'synthetic-key',
         });
-        manager.getResource('CustomizationService').setSettings({ livedockCollapsed: false });
+        manager.getResource('CustomizationService').setSettings({ dockCollapsed: false });
       }, destination);
       await focusMain();
       await getClient().$('span=Your chat is currently offline').waitForDisplayed();
@@ -76,8 +76,8 @@ test('Expanded Multichat handles unprotected destinations without a linked platf
   } finally {
     await focusMain();
     await getClient().execute(() => {
-      (window as any).restoreLiveDockUser();
-      delete (window as any).restoreLiveDockUser;
+      (window as any).restoreMultichatUser();
+      delete (window as any).restoreMultichatUser;
     });
   }
 });

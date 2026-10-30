@@ -37,10 +37,10 @@ export default function useLayout(
 ) {
   const { CustomizationService, LayoutService } = Services;
 
-  const { livedockSize, resizes, chatCollapsed } = useVuex(() => ({
-    livedockSize: CustomizationService.state.livedockSize,
+  const { dockSize, resizes, chatCollapsed } = useVuex(() => ({
+    dockSize: CustomizationService.state.dockSize,
     resizes: LayoutService.views.currentTab.resizes,
-    chatCollapsed: CustomizationService.state.livedockCollapsed,
+    chatCollapsed: CustomizationService.state.dockCollapsed,
   }));
 
   const [bars, setBars] = useState<{ bar1: number; bar2: number }>({
@@ -137,10 +137,10 @@ export default function useLayout(
    * non-resize actions such as window resizing or expanding chat
    */
   const updateSize = useCallback((chatCollapsed = true, oldChatCollapsed?: boolean) => {
-    let offset = chatCollapsed ? 0 : livedockSize;
+    let offset = chatCollapsed ? 0 : dockSize;
     // Reverse offset if chat is collapsed from an uncollapsed state
     if (chatCollapsed && oldChatCollapsed === false) {
-      offset = livedockSize * -1;
+      offset = dockSize * -1;
     }
     const bar1 = getBarPixels('bar1', offset);
     if (bar1) setBar('bar1', bar1);

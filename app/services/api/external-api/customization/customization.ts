@@ -15,6 +15,7 @@ interface IPinnedStatistics {
 
 interface ICustomizationServiceState {
   hideViewerCount: boolean;
+  /** @deprecated Superseded by the dock. Kept for API compatibility, use `dockCollapsed`. */
   livedockCollapsed: boolean;
   performanceMode: boolean;
   chatZoomFactor: number;
@@ -25,6 +26,7 @@ interface ICustomizationServiceState {
 
 interface ICustomizationServiceStateUpdateSettings {
   hideViewerCount?: boolean;
+  /** @deprecated Superseded by the dock. Kept for API compatibility, use `dockCollapsed`. */
   livedockCollapsed?: boolean;
   performanceMode?: boolean;
 }
@@ -57,15 +59,17 @@ export class CustomizationService implements ISerializable {
   getModel(): ICustomizationServiceState {
     const state = this.customizationService.state;
 
-    return pick(state, [
-      'hideViewerCount',
-      'livedockCollapsed',
-      'performanceMode',
-      'chatZoomFactor',
-      'pinnedStatistics',
-      'theme',
-      'legacyAlertbox',
-    ]);
+    return {
+      ...pick(state, [
+        'hideViewerCount',
+        'performanceMode',
+        'chatZoomFactor',
+        'pinnedStatistics',
+        'theme',
+        'legacyAlertbox',
+      ]),
+      livedockCollapsed: state.dockCollapsed,
+    };
   }
 
   /**
@@ -75,13 +79,16 @@ export class CustomizationService implements ISerializable {
    * @see {@link ICustomizationServiceStateUpdateSettings}
    */
   setSettings(settingsPatch: Partial<ICustomizationServiceStateUpdateSettings>) {
-    const settings = pick(settingsPatch, [
+    const { livedockCollapsed, ...rest } = pick(settingsPatch, [
       'hideViewerCount',
       'livedockCollapsed',
       'performanceMode',
       'legacyAlertbox',
     ]);
 
-    this.customizationService.setSettings(settings);
+    this.customizationService.setSettings({
+      ...rest,
+      ...(livedockCollapsed != null ? { dockCollapsed: livedockCollapsed } : {}),
+    });
   }
 }

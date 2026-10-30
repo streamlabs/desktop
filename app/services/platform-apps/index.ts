@@ -64,7 +64,7 @@ export enum EAppPageSlot {
   TopNav = 'top_nav',
 
   /**
-   * The chat slot is mounted in the live dock
+   * The chat slot is mounted in Multichat
    */
   Chat = 'chat',
 
