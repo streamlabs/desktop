@@ -19,19 +19,14 @@ import Tooltip from 'components-react/shared/Tooltip';
 import PlatformAppPageView from 'components-react/shared/PlatformAppPageView';
 import { useVuex } from 'components-react/hooks';
 import { $i } from 'services/utils';
+import IconButton from 'components-react/shared/buttons/IconButton';
+import { ShareStreamLink } from 'components-react/root/ShareStreamLink';
+import { refreshChat, useStreamTools } from 'components-react/root/DockHeader';
 import { multichatChat } from './multichat-chat';
+import { isMultichatSupported } from './multichat-support';
 import useBaseElement, { ILayoutElementProps, useDockCollapsed } from './hooks';
 
 const mins = { x: 300, y: 300 };
-
-/**
- * Multichat is only available for platforms that support it. It is checked here so the layout
- * element can render an explanation wherever it is placed, and so containers (e.g. the dock)
- * can decide whether they have anything worth showing.
- */
-export function isMultichatSupported(platform?: { type: TPlatform } | null): boolean {
-  return !!platform && getPlatformService(platform.type).multichatEnabled;
-}
 
 const MultichatCtx = React.createContext<MultichatController | null>(null);
 
@@ -353,6 +348,8 @@ function MultichatContents(p: ILayoutElementProps) {
 
   return (
     <div className={cx(styles.multichat, { [styles.multichatInDock]: p.inDock })}>
+      {/* In the dock these tools are in the dock header, so only show them here otherwise */}
+      {!p.inDock && <MultichatTitleBar />}
       <div className={styles.multichatExpandedContents}>
         {!hideStyleBlockers &&
           platformChatEnabled &&
@@ -380,6 +377,63 @@ function MultichatContents(p: ILayoutElementProps) {
               (!ctrl.platform || (hasMultichatFeature('chat-streaming') && !isStreaming)))) && (
             <OfflineChat chatEnabled={true} primaryPlatform={ctrl.platform} />
           )}
+      </div>
+    </div>
+  );
+}
+
+function MultichatTitleBar() {
+  const { StreamingService } = Services;
+  const {
+    isStreaming,
+    canEditChannelInfo,
+    platformService,
+    hasFeature,
+    canRefreshChat,
+    openPlatformPage,
+  } = useStreamTools();
+
+  return (
+    <div className="studio-controls-top">
+      <h2 className="studio-controls__label">{$t('Multichat')}</h2>
+      <div className={styles.multichatTitleBarIcons}>
+        {canEditChannelInfo && (
+          <IconButton
+            label={$t('Edit stream info')}
+            tooltipTitle={$t('Edit stream info')}
+            tooltipPlacement="left"
+            icon={<i data-name="edit-stream" className="icon-edit" />}
+            onClick={() => StreamingService.actions.showEditStream()}
+          />
+        )}
+        {hasFeature('view-stream') && isStreaming && (
+          <IconButton
+            label={$t('View on web')}
+            tooltipTitle={$t('View on web')}
+            tooltipPlacement="left"
+            icon={<i className="icon-studio" />}
+            onClick={() => openPlatformPage(platformService?.streamPageUrl)}
+          />
+        )}
+        {isStreaming && <ShareStreamLink />}
+        {hasFeature('dashboard') && isStreaming && (
+          <IconButton
+            label={$t('Go to Live Dashboard')}
+            tooltipTitle={$t('Go to Live Dashboard')}
+            tooltipPlacement="left"
+            icon={<i className="icon-settings" />}
+            onClick={() => openPlatformPage(platformService?.dashboardUrl)}
+          />
+        )}
+        {canRefreshChat && (
+          <IconButton
+            label={$t('Refresh Chat')}
+            tooltipTitle={$t('Refresh Chat')}
+            tooltipPlacement="left"
+            icon={<i className="icon-repeat" />}
+            onClick={refreshChat}
+          />
+        )}
       </div>
     </div>
   );
