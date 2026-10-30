@@ -3300,12 +3300,6 @@ export class StreamingService
       this.contexts[display].recording = recording as ISimpleRecording;
     }
 
-    console.log(
-      'Setting up recording for display:',
-      display,
-      this.contexts,
-      this.contexts[display].streaming,
-    );
     // handle setting the stream
     if (this.isAdvancedStreaming(this.contexts[display].streaming)) {
       const stream = this.contexts[display].streaming as IAdvancedStreaming;
@@ -3325,11 +3319,6 @@ export class StreamingService
 
     // assign context
     this.contexts[display].recording.video = this.videoSettingsService.contexts[display];
-    console.log(
-      'Assigned video context for display:',
-      display,
-      this.contexts[display].recording.video,
-    );
 
     // set signal handler
     this.contexts[display].recording.signalHandler = async (signal: EOutputSignal) => {
@@ -4329,8 +4318,6 @@ export class StreamingService
     contextName: TOutputContext,
     type: 'streaming' | 'recording',
   ) {
-    console.log('contexts', this.contexts);
-
     if (!this.contexts[contextName][type]) return false;
 
     const isAdvancedOutput =
