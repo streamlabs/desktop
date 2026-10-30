@@ -21,6 +21,7 @@ export { CustomizationService } from 'services/customization';
 export { LayoutService } from 'services/layout';
 export { NotificationsService } from 'services/notifications';
 export { ObsModuleLoadNotificationsService } from 'services/obs-module-load-notifications-service';
+export { CameraStatusService } from 'services/camera-status-service';
 export { OnboardingService } from 'services/onboarding';
 export { NavigationService } from 'services/navigation';
 export { PerformanceService } from 'services/performance';
@@ -165,6 +166,7 @@ import { MagicLinkService } from './services/magic-link';
 import { UsageStatisticsService } from './services/usage-statistics';
 import { NotificationsService } from './services/notifications';
 import { ObsModuleLoadNotificationsService } from 'services/obs-module-load-notifications-service';
+import { CameraStatusService } from 'services/camera-status-service';
 import { MediaBackupService } from './services/media-backup';
 import { HotkeysService } from './services/hotkeys';
 import { WidgetsService } from './services/widgets';
@@ -264,6 +266,7 @@ export const AppServices = {
   UsageStatisticsService,
   NotificationsService,
   ObsModuleLoadNotificationsService,
+  CameraStatusService,
   MediaBackupService,
   HotkeysService,
   WidgetsService,
