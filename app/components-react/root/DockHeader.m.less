@@ -1,0 +1,66 @@
+@import '../../styles/index';
+
+.dock-header {
+  flex: none;
+  padding: 8px 8px 0;
+}
+
+.dock-header-status {
+  .margin-bottom();
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dock-header-text {
+  .weight(@medium);
+
+  margin: 0 2px 0 4px;
+}
+
+.dock-header-info {
+  .margin-bottom();
+
+  display: flex;
+  justify-content: space-between;
+}
+
+.dock-header-viewer-count {
+  .flex();
+  .flex--center();
+
+  i {
+    .margin-right();
+
+    cursor: pointer;
+  }
+}
+
+.dock-header-viewer-count__count {
+  padding-right: 3px;
+}
+
+.dock-header-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--warning);
+  margin: 0 8px;
+  box-shadow: 0 0 0 rgba(252, 62, 63, 0.4);
+
+  &.dock-header-offline {
+    background: var(--icon);
+    animation: none;
+  }
+}
+
+.dock-header-platform-tools {
+  display: flex;
+  flex: 1;
+}
+
+.dock-header-chat-refresh {
+  justify-self: flex-end;
+}
