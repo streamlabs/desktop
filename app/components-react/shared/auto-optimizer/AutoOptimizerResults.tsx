@@ -5,7 +5,7 @@ import { $t } from 'services/i18n';
 import { $i } from 'services/utils';
 import { IAutoOptimizerPresentationAdvice, IAutoOptimizerPresentationOutput } from './types';
 import styles from './AutoOptimizer.m.less';
-import { shouldShowMultistreamResolutionLimit } from './presentation';
+import { shouldShowPlatformResolutionLimit } from './presentation';
 
 const ULTRAWIDE_GUIDE_URL =
   'https://streamlabs.com/content-hub/post/how-to-stream-with-an-ultrawide-monitor';
@@ -234,9 +234,11 @@ export function AutoOptimizerResults(p: {
               ))}
             </div>
           )}
-          {shouldShowMultistreamResolutionLimit(p.outputs) && (
+          {shouldShowPlatformResolutionLimit(p.outputs) && (
             <p className={styles.estimateExplanation}>
-              {$t('1080p is the maximum recommended resolution for multistreaming')}
+              {$t(
+                '1080p is the maximum recommended resolution when a platform other than Twitch or YouTube is enabled',
+              )}
             </p>
           )}
           {p.outputs.some(output => output.hasUltrawideResolution) && (

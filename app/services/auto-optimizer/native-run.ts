@@ -1,9 +1,10 @@
 import { IAutoOptimizerNativeResult } from './types';
 
-// OSN may spend up to four minutes testing bounded encoder and quality
-// candidates, followed by sequential Twitch and YouTube tests. This timeout is
-// only a final guard for a stalled run; normal steps continue to report progress.
-export const AUTO_OPTIMIZER_NATIVE_RUN_TIMEOUT_MS = 420000;
+// Allow OSN's five-minute hardware budget, a shared YouTube probe of up to
+// 150 seconds, and sequential Twitch probing and cleanup. Desktop reuses one
+// YouTube connection across canvases. This is a final guard for a stalled run;
+// OSN enforces the shorter per-phase deadlines while reporting progress.
+export const AUTO_OPTIMIZER_NATIVE_RUN_TIMEOUT_MS = 600000;
 
 type TNodeObs = typeof import('../../../obs-api').NodeObs;
 export type IAutoOptimizerApi = TNodeObs['AutoOptimizer'];
