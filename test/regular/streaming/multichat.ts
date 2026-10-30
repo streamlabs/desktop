@@ -5,7 +5,7 @@ import { focusMain, focusWindow, getClient, isDisplayed } from '../../helpers/mo
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
-test('Expanded Live Dock handles unprotected destinations without a linked platform', async t => {
+test('Expanded Multichat handles unprotected destinations without a linked platform', async t => {
   // Start in unprotected mode before supplying the renderer-only account. Mounting
   // the dock must react to that account, without relying on a later mode change.
   t.true(await focusWindow('worker'));

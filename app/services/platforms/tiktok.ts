@@ -7,7 +7,7 @@ import {
   IPlatformService,
   IPlatformState,
   TPlatformCapability,
-  TLiveDockFeature,
+  TMultichatFeature,
 } from './index';
 import { authorizedHeaders, jfetch } from '../../util/requests';
 import {
@@ -123,7 +123,7 @@ export class TikTokService
   readonly platform = 'tiktok';
   readonly displayName = 'TikTok';
   readonly capabilities = new Set<TPlatformCapability>(['title', 'game', 'viewerCount', 'chat']);
-  readonly liveDockFeatures = new Set<TLiveDockFeature>([
+  readonly multichatFeatures = new Set<TMultichatFeature>([
     'view-stream',
     'dashboard',
     'refresh-chat-restreaming',
@@ -662,7 +662,7 @@ export class TikTokService
     remote.shell.openExternal(this.replaysUrl);
   }
 
-  get liveDockEnabled(): boolean {
+  get multichatEnabled(): boolean {
     return true;
   }
 

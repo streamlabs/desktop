@@ -8,7 +8,7 @@ import {
   IPlatformRequest,
   IPlatformService,
   IPlatformState,
-  TLiveDockFeature,
+  TMultichatFeature,
   TPlatformCapability,
 } from '.';
 import { TDisplayType } from 'services/settings-v2';
@@ -120,7 +120,7 @@ export class PatreonService
   readonly platform = 'patreon';
   readonly displayName = 'Patreon';
   readonly capabilities = new Set<TPlatformCapability>(['title', 'description']);
-  readonly liveDockFeatures = new Set<TLiveDockFeature>(['view-stream']);
+  readonly multichatFeatures = new Set<TMultichatFeature>(['view-stream']);
 
   authWindowOptions: Electron.BrowserWindowConstructorOptions = {
     width: 600,
@@ -150,7 +150,7 @@ export class PatreonService
     return `https://www.patreon.com/${this.state.channelName}/events/${this.state.broadcastId}`;
   }
 
-  get liveDockEnabled(): boolean {
+  get multichatEnabled(): boolean {
     return true;
   }
 

@@ -9,13 +9,13 @@ import { EAppPageSlot, ILoadedApp } from 'services/platform-apps';
 import {
   getPlatformService,
   platformLabels,
-  TLiveDockFeature,
+  TMultichatFeature,
   TPlatform,
 } from 'services/platforms';
 import { $t } from 'services/i18n';
 import { Services } from '../service-provider';
 import Chat from './Chat';
-import styles from './LiveDock.m.less';
+import styles from './Multichat.m.less';
 import Tooltip from 'components-react/shared/Tooltip';
 import PlatformAppPageView from 'components-react/shared/PlatformAppPageView';
 import { useVuex } from 'components-react/hooks';
@@ -24,9 +24,9 @@ import { $i } from 'services/utils';
 import { ShareStreamLink } from './ShareStreamLink';
 import IconButton from 'components-react/shared/buttons/IconButton';
 
-const LiveDockCtx = React.createContext<LiveDockController | null>(null);
+const MultichatCtx = React.createContext<MultichatController | null>(null);
 
-class LiveDockController {
+class MultichatController {
   private streamingService = Services.StreamingService;
   private userService = Services.UserService;
   private customizationService = Services.CustomizationService;
@@ -287,28 +287,28 @@ class LiveDockController {
     this.chatService.actions.showMultistreamChatWindow();
   }
 
-  hasLiveDockFeature(feature: TLiveDockFeature) {
-    return this.platformService?.hasLiveDockFeature(feature);
+  hasMultichatFeature(feature: TMultichatFeature) {
+    return this.platformService?.hasMultichatFeature(feature);
   }
 }
 
-function LiveDockWithContext() {
-  const controller = useMemo(() => new LiveDockController(), []);
+function MultichatWithContext() {
+  const controller = useMemo(() => new MultichatController(), []);
   return (
-    <LiveDockCtx.Provider value={controller}>
-      <LiveDock />
-    </LiveDockCtx.Provider>
+    <MultichatCtx.Provider value={controller}>
+      <Multichat />
+    </MultichatCtx.Provider>
   );
 }
 
-export default memo(LiveDockWithContext);
+export default memo(MultichatWithContext);
 
 const StreamTimer = memo(function StreamTimer({
   streamingStatus,
 }: {
   streamingStatus: EStreamingState;
 }) {
-  const ctrl = useController(LiveDockCtx);
+  const ctrl = useController(MultichatCtx);
   const [elapsed, setElapsed] = useState('');
 
   useEffect(() => {
@@ -318,16 +318,16 @@ const StreamTimer = memo(function StreamTimer({
     return () => clearInterval(id);
   }, [streamingStatus]);
 
-  return <span className={styles.liveDockTimer}>{elapsed}</span>;
+  return <span className={styles.multichatTimer}>{elapsed}</span>;
 });
 
-function LiveDock() {
-  const ctrl = useController(LiveDockCtx);
+function Multichat() {
+  const ctrl = useController(MultichatCtx);
 
   const [visibleChat, setVisibleChat] = useState('default');
 
   const {
-    hasLiveDockFeature,
+    hasMultichatFeature,
     isStreaming,
     isRestreaming,
     hasChatTabs,
@@ -350,7 +350,7 @@ function LiveDock() {
       'pageSlot',
       'currentViewers',
       'liveText',
-      'hasLiveDockFeature',
+      'hasMultichatFeature',
       'streamingStatus',
       'enabledPlatforms',
       'primaryPlatform',
@@ -398,7 +398,7 @@ function LiveDock() {
 
     const service = getPlatformService(primaryChat);
 
-    if (!service.hasCapability('chat') && !service.hasLiveDockFeature('chat-offline')) {
+    if (!service.hasCapability('chat') && !service.hasMultichatFeature('chat-offline')) {
       return <OfflineChat chatEnabled={false} primaryPlatform={primaryChat} />;
     }
 
@@ -413,19 +413,19 @@ function LiveDock() {
   }, [primaryPlatform, enabledPlatforms, visibleChat, isStreaming, isRestreaming]);
 
   return (
-    <div className={styles.liveDock}>
-      <div className={styles.liveDockExpandedContents}>
-        <div className={styles.liveDockHeader}>
+    <div className={styles.multichat}>
+      <div className={styles.multichatExpandedContents}>
+        <div className={styles.multichatHeader}>
           <div className="flex flex--center">
             <div
-              className={cx(styles.liveDockPulse, {
-                [styles.liveDockOffline]: !isStreaming,
+              className={cx(styles.multichatPulse, {
+                [styles.multichatOffline]: !isStreaming,
               })}
             />
-            <span className={styles.liveDockText}>{liveText}</span>
+            <span className={styles.multichatText}>{liveText}</span>
             <StreamTimer streamingStatus={streamingStatus} />
           </div>
-          <div className={styles.liveDockViewerCount}>
+          <div className={styles.multichatViewerCount}>
             <i
               className={cx({
                 ['icon-view']: !hideViewerCount,
@@ -433,13 +433,13 @@ function LiveDock() {
               })}
               onClick={() => ctrl.toggleViewerCount()}
             />
-            <span className={styles.liveDockViewerCountCount}>{viewerCount}</span>
+            <span className={styles.multichatViewerCountCount}>{viewerCount}</span>
             {Number(viewerCount) >= 0 && <span>{$t('viewers')}</span>}
           </div>
         </div>
 
-        <div className={styles.liveDockInfo}>
-          <div className={styles.liveDockPlatformTools}>
+        <div className={styles.multichatInfo}>
+          <div className={styles.multichatPlatformTools}>
             {ctrl.canEditChannelInfo && (
               <IconButton
                 label={$t('Edit your stream title and description')}
@@ -450,7 +450,7 @@ function LiveDock() {
                 onClick={() => ctrl.showEditStreamInfo()}
               />
             )}
-            {hasLiveDockFeature('view-stream') && isStreaming && (
+            {hasMultichatFeature('view-stream') && isStreaming && (
               <IconButton
                 label={$t('View your live stream in a web browser')}
                 tooltipTitle={$t('View your live stream in a web browser')}
@@ -461,7 +461,7 @@ function LiveDock() {
               />
             )}
             {isStreaming && <ShareStreamLink />}
-            {hasLiveDockFeature('dashboard') && isStreaming && (
+            {hasMultichatFeature('dashboard') && isStreaming && (
               <IconButton
                 label={$t('Go to Live Dashboard')}
                 tooltipTitle={$t('Go to Live Dashboard')}
@@ -472,26 +472,26 @@ function LiveDock() {
               />
             )}
           </div>
-          <div className={styles.liveDockChatRefresh}>
+          <div className={styles.multichatChatRefresh}>
             {platformChatEnabled &&
-              (hasLiveDockFeature('refresh-chat') ||
-                (hasLiveDockFeature('refresh-chat-streaming') && isStreaming) ||
-                (hasLiveDockFeature('refresh-chat-restreaming') && isRestreaming)) && (
+              (hasMultichatFeature('refresh-chat') ||
+                (hasMultichatFeature('refresh-chat-streaming') && isStreaming) ||
+                (hasMultichatFeature('refresh-chat-restreaming') && isRestreaming)) && (
                 <a onClick={() => ctrl.refreshChat()}>{$t('Refresh Chat')}</a>
               )}
           </div>
         </div>
         {!hideStyleBlockers &&
           platformChatEnabled &&
-          (hasLiveDockFeature('chat-offline') ||
-            (isStreaming && hasLiveDockFeature('chat-streaming')) ||
-            !hasLiveDockFeature('chat-streaming')) && (
-            <div className={styles.liveDockChat}>
+          (hasMultichatFeature('chat-offline') ||
+            (isStreaming && hasMultichatFeature('chat-streaming')) ||
+            !hasMultichatFeature('chat-streaming')) && (
+            <div className={styles.multichatChat}>
               {hasChatTabs && <ChatTabs visibleChat={visibleChat} setChat={setChat} />}
               {!applicationLoading && !collapsed && chat}
               {!['default', 'restream'].includes(visibleChat) && (
                 <PlatformAppPageView
-                  className={styles.liveDockPlatformAppWebview}
+                  className={styles.multichatPlatformAppWebview}
                   appId={visibleChat}
                   pageSlot={pageSlot}
                   key={visibleChat}
@@ -503,8 +503,8 @@ function LiveDock() {
           the behavior of our chat pane */}
         {!hideStyleBlockers &&
           (!platformChatEnabled ||
-            (!hasLiveDockFeature('chat-offline') &&
-              (!ctrl.platform || (hasLiveDockFeature('chat-streaming') && !isStreaming)))) && (
+            (!hasMultichatFeature('chat-offline') &&
+              (!ctrl.platform || (hasMultichatFeature('chat-streaming') && !isStreaming)))) && (
             <OfflineChat chatEnabled={true} primaryPlatform={ctrl.platform} />
           )}
       </div>
@@ -513,7 +513,7 @@ function LiveDock() {
 }
 
 function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
-  const ctrl = useController(LiveDockCtx);
+  const ctrl = useController(MultichatCtx);
   return (
     <div className="flex">
       {/*
@@ -532,11 +532,11 @@ function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
           <Menu.Item key={tab.value}>{tab.name}</Menu.Item>
         ))}
       </Menu>
-      <div className={styles.liveDockChatTabsIcons}>
+      <div className={styles.multichatChatTabsIcons}>
         {ctrl.isPopOutAllowed && (
           <Tooltip title={$t('Pop out to new window')} placement="topRight">
             <i
-              className={cx(styles.liveDockChatTabsPopout, 'icon-pop-out-1')}
+              className={cx(styles.multichatChatTabsPopout, 'icon-pop-out-1')}
               onClick={() => ctrl.popOut()}
             />
           </Tooltip>
@@ -548,7 +548,7 @@ function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
           placement="topRight"
           onClick={ctrl.showMultistreamChatInfo}
         >
-          <i className={cx(styles.liveDockChatTabsInfo, 'icon-information')} />
+          <i className={cx(styles.multichatChatTabsInfo, 'icon-information')} />
         </Tooltip>
       </div>
     </div>
@@ -557,8 +557,8 @@ function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
 
 function OfflineChat(p: { chatEnabled: boolean; primaryPlatform?: TPlatform }) {
   return (
-    <div className={cx('flex flex--center flex--column', styles.liveDockChatOffline)}>
-      <img className={styles.liveDockChatImgOffline} src={$i('images/sleeping-kevin-day.png')} />
+    <div className={cx('flex flex--center flex--column', styles.multichatChatOffline)}>
+      <img className={styles.multichatChatImgOffline} src={$i('images/sleeping-kevin-day.png')} />
       {p.primaryPlatform && !p.chatEnabled ? (
         <span>
           {$t('Chat is not supported for %{platform}', {
