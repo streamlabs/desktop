@@ -14,16 +14,23 @@ const STACK_GAP = 16;
  */
 export default function Dock() {
   const { LayoutService } = Services;
-  const { dockLayout, dockResize, dockElements, slottedElements } = useVuex(() => ({
-    dockLayout: LayoutService.views.currentTab.dockLayout,
-    dockResize: LayoutService.views.currentTab.dockResize,
-    dockElements: LayoutService.views.dockElements,
-    slottedElements: LayoutService.views.currentTab.slottedElements,
-  }));
+  const { dockLayout, dockResize, dockElements, slottedElements, dockSlottedElements } = useVuex(
+    () => ({
+      dockLayout: LayoutService.views.currentTab.dockLayout,
+      dockResize: LayoutService.views.currentTab.dockResize,
+      dockElements: LayoutService.views.dockElements,
+      slottedElements: LayoutService.views.currentTab.slottedElements,
+      dockSlottedElements: LayoutService.views.dockSlottedElements,
+    }),
+  );
 
-  const { children, childrenMins } = renderLayoutElements(dockElements, slottedElements, {
-    inDock: true,
-  });
+  // Only re-render when the elements change, not when the layout changes,
+  // to avoid re-rendering embedded content when resizing the dock.
+  const elementsKey = JSON.stringify(dockSlottedElements);
+  const { children, childrenMins } = React.useMemo(
+    () => renderLayoutElements(dockElements, slottedElements, { inDock: true }),
+    [elementsKey],
+  );
 
   // With only one slot occupied, that element takes the whole dock
   if (dockLayout === EDockLayout.Stacked && children.S1 && children.S2) {
