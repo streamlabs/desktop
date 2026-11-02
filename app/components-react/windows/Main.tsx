@@ -88,8 +88,7 @@ export default function Main() {
     applicationLoading,
     hideStyleBlockers,
     streamingStatus,
-    isLoggedIn,
-    platform,
+    multichatSupported,
     activeSceneId,
     protectedModeEnabled,
     isTwitchUnprotectedStream,
@@ -99,8 +98,7 @@ export default function Main() {
     applicationLoading: AppService.state.loading,
     hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
     streamingStatus: StreamingService.views.streamingStatus,
-    isLoggedIn: UserService.views.isLoggedIn,
-    platform: UserService.views.platform,
+    multichatSupported: isMultichatSupported(UserService.views.platform),
     activeSceneId: ScenesService.views.activeSceneId,
     protectedModeEnabled: StreamSettingsService.views.protectedModeEnabled,
     isTwitchUnprotectedStream: StreamingService.views.isTwitchUnprotectedStream,
@@ -114,20 +112,17 @@ export default function Main() {
 
   const isOnboarding = page === 'Onboarding';
 
-  // Multichat is not shown in the dock on platforms that don't support it, so a dock that
-  // only holds Multichat has nothing to show.
+  // Multichat is not shown in the dock when logged out or on platforms that don't support it, so
+  // a dock that only holds Multichat has nothing to show. Other elements don't need a login.
   const dockKey = dockElements.join();
   const dockHasContent = useMemo(
-    () =>
-      dockElements.some(
-        element => element !== ELayoutElement.Multichat || isMultichatSupported(platform),
-      ),
-    [dockKey, platform?.type],
+    () => dockElements.some(element => element !== ELayoutElement.Multichat || multichatSupported),
+    [dockKey, multichatSupported],
   );
 
   const renderDock = useMemo(() => {
-    return isLoggedIn && !isOnboarding && hasDock && !showLoadingSpinner && dockHasContent;
-  }, [isLoggedIn, isOnboarding, hasDock, showLoadingSpinner, dockHasContent]);
+    return !isOnboarding && hasDock && !showLoadingSpinner && dockHasContent;
+  }, [isOnboarding, hasDock, showLoadingSpinner, dockHasContent]);
 
   // The dock is at least as wide as the widest minimum of its elements
   const contentMinDockWidth = useMemo(() => {
@@ -252,6 +247,9 @@ export default function Main() {
   }, [uiReady, updateDockBounds]);
 
   useEffect(() => {
+    // Other dock elements keep the user's chosen visibility
+    if (dockKey !== ELayoutElement.Multichat) return;
+
     // Dock should open Multichat when:
     // - Protected mode: Streaming via APIs
     // - Unprotected mode: Streaming to Twitch
@@ -264,7 +262,7 @@ export default function Main() {
     if (streamingStatus === EStreamingState.Starting && !hasPlatformChat && !isDockCollapsed) {
       setCollapsed(true);
     }
-  }, [streamingStatus, protectedModeEnabled, isTwitchUnprotectedStream, isDockCollapsed]);
+  }, [streamingStatus, protectedModeEnabled, isTwitchUnprotectedStream, isDockCollapsed, dockKey]);
 
   const oldTheme = useRef<TApplicationTheme | null>(null);
   useEffect(() => {
