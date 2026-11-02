@@ -3,11 +3,22 @@ import type { ICaptureStatus } from 'obs-studio-node';
 type Translate = (key: string, params?: Record<string, string>) => string;
 
 export function cameraFailureMessage(status: ICaptureStatus, sourceName: string, t: Translate) {
-  return status.reason === 'insufficient_bandwidth'
-    ? t('“%{source}” could not start. Windows reported insufficient USB bandwidth.', {
+  switch (status.reason) {
+    case 'insufficient_bandwidth':
+      return t('“%{source}” could not start. Windows reported insufficient USB bandwidth.', {
         source: sourceName,
-      })
-    : t('“%{source}” could not start.', { source: sourceName });
+      });
+    case 'access_denied':
+      return t('“%{source}” could not start. Windows denied access to the camera.', {
+        source: sourceName,
+      });
+    case 'invalid_configuration':
+      return t('“%{source}” could not start. Windows reported an invalid camera configuration.', {
+        source: sourceName,
+      });
+    default:
+      return t('“%{source}” could not start.', { source: sourceName });
+  }
 }
 
 export function cameraFailureAdvice(status: ICaptureStatus, t: Translate) {
@@ -18,6 +29,16 @@ export function cameraFailureAdvice(status: ICaptureStatus, t: Translate) {
   }
   if (status.reason === 'device_not_found') {
     return t('The selected camera could not be found. Reconnect it or select another device.');
+  }
+  if (status.reason === 'access_denied') {
+    return t(
+      'Check Windows camera privacy settings and allow desktop apps to access your camera. Then deactivate and activate the camera.',
+    );
+  }
+  if (status.reason === 'invalid_configuration') {
+    return t(
+      'Select Device Default for Resolution/FPS Type, or choose a resolution, frame rate, and video format supported by the camera.',
+    );
   }
   return t(
     'Check that the camera is connected, close other apps that may be using it, and try a lower resolution or frame rate.',

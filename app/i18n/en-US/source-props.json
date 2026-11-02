@@ -1,6 +1,10 @@
 {
   "“%{source}” could not start. Windows reported insufficient USB bandwidth.": "“%{source}” could not start. Windows reported insufficient USB bandwidth.",
   "“%{source}” could not start.": "“%{source}” could not start.",
+  "“%{source}” could not start. Windows denied access to the camera.": "“%{source}” could not start. Windows denied access to the camera.",
+  "“%{source}” could not start. Windows reported an invalid camera configuration.": "“%{source}” could not start. Windows reported an invalid camera configuration.",
+  "Check Windows camera privacy settings and allow desktop apps to access your camera. Then deactivate and activate the camera.": "Check Windows camera privacy settings and allow desktop apps to access your camera. Then deactivate and activate the camera.",
+  "Select Device Default for Resolution/FPS Type, or choose a resolution, frame rate, and video format supported by the camera.": "Select Device Default for Resolution/FPS Type, or choose a resolution, frame rate, and video format supported by the camera.",
   "Try lowering your cameras’ resolution or frame rate, deactivating unused cameras, or connecting a camera to a port on a different USB controller.": "Try lowering your cameras’ resolution or frame rate, deactivating unused cameras, or connecting a camera to a port on a different USB controller.",
   "The selected camera could not be found. Reconnect it or select another device.": "The selected camera could not be found. Reconnect it or select another device.",
   "Check that the camera is connected, close other apps that may be using it, and try a lower resolution or frame rate.": "Check that the camera is connected, close other apps that may be using it, and try a lower resolution or frame rate.",

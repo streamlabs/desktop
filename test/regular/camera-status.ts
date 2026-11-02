@@ -35,6 +35,69 @@ test('camera copy distinguishes bandwidth, unavailable device, and generic error
   );
 });
 
+for (const scenario of [
+  {
+    reason: 'access_denied' as const,
+    errorCode: 0x80070005,
+    message: 'Windows denied access to the camera',
+    advice: 'allow desktop apps to access your camera',
+    formattedCode: '0x80070005',
+  },
+  {
+    reason: 'invalid_configuration' as const,
+    errorCode: 0x800718ce,
+    message: 'Windows reported an invalid camera configuration',
+    advice: 'Select Device Default for Resolution/FPS Type',
+    formattedCode: '0x800718CE',
+  },
+]) {
+  test(`camera ${scenario.reason} warning gives specific advice and preserves native details`, t => {
+    const status: ICaptureStatus = {
+      ...failure,
+      reason: scenario.reason,
+      errorCode: scenario.errorCode,
+    };
+    const message = cameraFailureMessage(status, 'Face camera', translate);
+    const advice = cameraFailureAdvice(status, translate);
+    t.true(message.includes('“Face camera”'));
+    t.true(message.includes(scenario.message));
+    t.true(advice.includes(scenario.advice));
+    t.false(message.includes('bandwidth'));
+    t.false(advice.includes('USB controller'));
+    t.is(cameraErrorCode(status), scenario.formattedCode);
+  });
+
+  test(`camera ${scenario.reason} warning replaces an earlier failure and clears on recovery`, t => {
+    const tracker = new CameraFailureTracker();
+    const other: ICaptureStatus = { ...failure, sourceName: 'source-b', instanceId: '2' };
+    tracker.update([failure, other]);
+    const changed: ICaptureStatus = {
+      ...failure,
+      reason: scenario.reason,
+      errorCode: scenario.errorCode,
+      generation: 2,
+    };
+    const update = tracker.update([changed, other]);
+    t.deepEqual(update.notify, [changed]);
+    t.deepEqual(update.clear, ['source-a']);
+    t.deepEqual(update.errors, { 'source-a': changed, 'source-b': other });
+    t.deepEqual(tracker.update([changed, other]).notify, []);
+
+    const recovered: ICaptureStatus = {
+      ...changed,
+      generation: 3,
+      state: 'running',
+      reason: '',
+      errorCode: 0,
+    };
+    t.deepEqual(tracker.update([recovered, other]), {
+      errors: { 'source-b': other },
+      notify: [],
+      clear: ['source-a'],
+    });
+  });
+}
+
 test('repeated failures and retries do not repeatedly notify', t => {
   const tracker = new CameraFailureTracker();
   t.deepEqual(tracker.update([failure]).notify, [failure]);
