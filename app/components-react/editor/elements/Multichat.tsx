@@ -25,9 +25,9 @@ import useBaseElement, { ILayoutElementProps, useDockCollapsed } from './hooks';
 const mins = { x: 300, y: 300 };
 
 /**
- * Multichat is only available for platforms that support it. It is checked here so the layout
- * element can render an explanation wherever it is placed, and so containers (e.g. the dock)
- * can decide whether they have anything worth showing.
+ * Multichat is only available when logged in (the platform is only set then) to a platform that
+ * supports it. It is checked here so the layout element can render an explanation wherever it is
+ * placed, and so containers (e.g. the dock) can decide whether they have anything worth showing.
  */
 export function isMultichatSupported(platform?: { type: TPlatform } | null): boolean {
   return !!platform && getPlatformService(platform.type).multichatEnabled;
@@ -243,12 +243,21 @@ const MemoizedMultichat = memo(MultichatWithContext);
 
 function MultichatElement(p: ILayoutElementProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const supported = useVuex(() => isMultichatSupported(Services.UserService.views.platform));
-  const { renderElement } = useBaseElement(
-    supported ? <MemoizedMultichat inDock={p.inDock} /> : <UnsupportedMultichat />,
-    mins,
-    containerRef.current,
-  );
+  const { isLoggedIn, supported } = useVuex(() => ({
+    isLoggedIn: Services.UserService.views.isLoggedIn,
+    supported: isMultichatSupported(Services.UserService.views.platform),
+  }));
+
+  const contents = useMemo(() => {
+    if (!isLoggedIn) {
+      return <DisabledMultichat message={$t('Log in to use Multichat.')} />;
+    } else if (!supported) {
+      return <DisabledMultichat message={$t('Multichat is not supported for your platform.')} />;
+    }
+    return <MemoizedMultichat inDock={p.inDock} />;
+  }, [isLoggedIn, supported, p.inDock]);
+
+  const { renderElement } = useBaseElement(contents, mins, containerRef.current);
 
   return (
     <div ref={containerRef} style={{ height: '100%' }}>
@@ -428,11 +437,11 @@ function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
   );
 }
 
-function UnsupportedMultichat() {
+function DisabledMultichat(p: { message: string }) {
   return (
     <div className={cx('flex flex--center flex--column', styles.multichatChatOffline)}>
       <img className={styles.multichatChatImgOffline} src={$i('images/sleeping-kevin-day.png')} />
-      <span>{$t('Multichat is not supported for your platform.')}</span>
+      <span>{p.message}</span>
     </div>
   );
 }
