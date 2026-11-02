@@ -9,6 +9,7 @@ import { Services } from 'components-react/service-provider';
 import electron from 'electron';
 import { onUnload } from 'util/unload';
 import { Button } from 'antd';
+import { useVuex } from 'components-react/hooks';
 import { publishBrowserViewRect } from './browser-view-rects';
 
 interface BrowserViewProps {
@@ -38,7 +39,11 @@ export default function BrowserView(p: BrowserViewProps) {
   // Identity for the occlusion registry — see browser-view-rects.ts.
   const viewKey = useRef(Symbol('browser-view'));
 
-  const { hideStyleBlockers } = WindowsService.state[Utils.getWindowId()];
+  // Reactive: the resize interval and the attach/detach effect below must see changes, e.g. the
+  // dock hides style blockers while it animates, which can still be on when a view finishes loading.
+  const hideStyleBlockers = useVuex(
+    () => WindowsService.state[Utils.getWindowId()].hideStyleBlockers,
+  );
   const { theme } = CustomizationService.state;
 
   let currentPosition: IVec2;
@@ -103,7 +108,7 @@ export default function BrowserView(p: BrowserViewProps) {
     const resizeInterval = window.setInterval(checkResize, 100);
 
     return () => clearInterval(resizeInterval);
-  }, [loading]);
+  }, [loading, hideStyleBlockers]);
 
   const reloadTheme = p.reloadOnThemeChange === false ? null : theme;
 
@@ -153,7 +158,8 @@ export default function BrowserView(p: BrowserViewProps) {
     if (!browserView.current) return;
 
     const rawRect = sizeContainer.current.getBoundingClientRect();
-    const isEffectivelyHidden = p.hidden || hideStyleBlockers || (rawRect.width === 0 && rawRect.height === 0);
+    const isEffectivelyHidden =
+      p.hidden || hideStyleBlockers || (rawRect.width === 0 && rawRect.height === 0);
 
     const rect: { left: number; top: number; width: number; height: number } = isEffectivelyHidden
       ? { left: 0, top: 0, width: 0, height: 0 }
