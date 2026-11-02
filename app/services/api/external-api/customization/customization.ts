@@ -15,7 +15,8 @@ interface IPinnedStatistics {
 
 interface ICustomizationServiceState {
   hideViewerCount: boolean;
-  /** @deprecated Superseded by the dock. Kept for API compatibility, use `dockCollapsed`. */
+  dockCollapsed: boolean;
+  /** @deprecated Kept for API compatibility, use `dockCollapsed`. */
   livedockCollapsed: boolean;
   performanceMode: boolean;
   chatZoomFactor: number;
@@ -26,7 +27,8 @@ interface ICustomizationServiceState {
 
 interface ICustomizationServiceStateUpdateSettings {
   hideViewerCount?: boolean;
-  /** @deprecated Superseded by the dock. Kept for API compatibility, use `dockCollapsed`. */
+  dockCollapsed?: boolean;
+  /** @deprecated Kept for API compatibility, use `dockCollapsed`. Ignored if `dockCollapsed` is set. */
   livedockCollapsed?: boolean;
   performanceMode?: boolean;
 }
@@ -68,6 +70,7 @@ export class CustomizationService implements ISerializable {
         'theme',
         'legacyAlertbox',
       ]),
+      dockCollapsed: state.dockCollapsed,
       livedockCollapsed: state.dockCollapsed,
     };
   }
@@ -79,16 +82,24 @@ export class CustomizationService implements ISerializable {
    * @see {@link ICustomizationServiceStateUpdateSettings}
    */
   setSettings(settingsPatch: Partial<ICustomizationServiceStateUpdateSettings>) {
-    const { livedockCollapsed, ...rest } = pick(settingsPatch, [
+    const { dockCollapsed, livedockCollapsed, ...rest } = pick(settingsPatch, [
       'hideViewerCount',
+      'dockCollapsed',
       'livedockCollapsed',
       'performanceMode',
       'legacyAlertbox',
     ]);
 
+    const collapsed = dockCollapsed ?? livedockCollapsed;
+
     this.customizationService.setSettings({
       ...rest,
-      ...(livedockCollapsed != null ? { dockCollapsed: livedockCollapsed } : {}),
+      ...(collapsed != null ? { dockCollapsed: collapsed } : {}),
     });
+  }
+
+  /** @deprecated Kept for API compatibility, use `setDockCollapsed`. */
+  setLiveDockCollapsed(collapsed: boolean) {
+    this.customizationService.setDockCollapsed(collapsed);
   }
 }
