@@ -46,11 +46,11 @@ function refreshChat() {
   const selectedChat = multichatChat.selectedChat;
 
   if (selectedChat === 'default') {
-    ChatService.refreshChat();
+    ChatService.actions.refreshChat();
   } else if (selectedChat === 'restream') {
-    RestreamService.refreshChat();
+    RestreamService.actions.refreshChat();
   } else {
-    PlatformAppsService.refreshApp(selectedChat);
+    PlatformAppsService.actions.refreshApp(selectedChat);
   }
 }
 
@@ -137,12 +137,11 @@ export default function DockHeader() {
         <div className={styles.dockHeaderPlatformTools}>
           {canEditChannelInfo && (
             <IconButton
-              data-testid="dock-edit-stream"
               label={$t('Edit your stream title and description')}
               tooltipTitle={$t('Edit your stream title and description')}
               tooltipPlacement="right"
               autoAdjustOverflow={false}
-              icon={<i data-name="edit-stream" className="icon-edit" />}
+              icon={<i data-testid="dock-edit-stream" className="icon-edit" />}
               onClick={() => StreamingService.actions.showEditStream()}
             />
           )}
