@@ -49,13 +49,6 @@ export class DismissablesService extends PersistentStatefulService<IDismissables
           this.dismiss(key);
         }
       }
-
-      // Users onboarded this session start on the new layout, so there is nothing new to announce
-      if (key === EDismissable.DockLayouts && !this.state[key]) {
-        if (this.appService.state.onboarded) {
-          this.dismiss(key);
-        }
-      }
     });
   }
 

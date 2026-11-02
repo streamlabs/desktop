@@ -1,8 +1,8 @@
 import { $t } from 'services/i18n';
 
 export enum ELayout {
-  Classic = 'Classic',
   Default = 'Default',
+  TwoThenThree = 'TwoThenThree',
   TwoPane = 'TwoPane',
   FourByFour = 'FourByFour',
   Triplets = 'Triplets',
@@ -23,19 +23,19 @@ type ILayoutData = {
 
 export const LAYOUT_DATA: ILayoutData = {
   [ELayout.Default]: {
-    resizeDefaults: { bar1: 0.2, bar2: 0.3 },
+    resizeDefaults: { bar1: 0.4, bar2: 0 },
     className: 'default',
     component: 'Default',
+  },
+  [ELayout.TwoThenThree]: {
+    resizeDefaults: { bar1: 0.2, bar2: 0.3 },
+    className: 'twoThenThree',
+    component: 'TwoThenThree',
   },
   [ELayout.TwoPane]: {
     resizeDefaults: { bar1: 0.5, bar2: 0.3 },
     className: 'twoPane',
     component: 'TwoPane',
-  },
-  [ELayout.Classic]: {
-    resizeDefaults: { bar1: 0.4, bar2: 0 },
-    className: 'classic',
-    component: 'Classic',
   },
   [ELayout.FourByFour]: {
     resizeDefaults: { bar1: 0.25, bar2: 0.25 },

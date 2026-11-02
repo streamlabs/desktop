@@ -259,12 +259,12 @@
 
 .template-container.default {
   grid-template-columns: 33% 34% 33%;
-  grid-template-rows: 40% 20% 40%;
+  grid-template-rows: 60% 40%;
 }
 
-.template-container.classic {
+.template-container.two-then-three {
   grid-template-columns: 33% 34% 33%;
-  grid-template-rows: 60% 40%;
+  grid-template-rows: 40% 20% 40%;
 }
 
 .template-container.two-pane {
@@ -296,34 +296,34 @@
 // component positions
 
 .default-1,
-.classic-1,
+.two-then-three-1,
 .one-pane-r-1 {
   grid-column: 1 / span 3;
   grid-row: 1 / span 1;
 }
 
-.default-2 {
+.two-then-three-2 {
   grid-column: 1 / span 3;
   grid-row: 2 / span 1;
 }
 
-.default-3,
+.two-then-three-3,
 .four-by-four-4 {
   grid-column: 1 / span 1;
   grid-row: 3 / span 1;
 }
 
-.default-4 {
+.two-then-three-4 {
   grid-column: 2 / span 1;
   grid-row: 3 / span 1;
 }
 
-.default-5 {
+.two-then-three-5 {
   grid-column: 3 / span 1;
   grid-row: 3 / span 1;
 }
 
-.classic-2,
+.default-2,
 .four-by-four-2,
 .triplets-4,
 .one-pane-r-3,
@@ -332,7 +332,7 @@
   grid-row: 2 / span 1;
 }
 
-.classic-3,
+.default-3,
 .two-pane-3,
 .four-by-four-3,
 .one-pane-3,
@@ -343,7 +343,7 @@
   grid-row: 2 / span 1;
 }
 
-.classic-4,
+.default-4,
 .one-pane-r-5 {
   grid-column: 3 / span 1;
   grid-row: 2 / span 1;
@@ -413,10 +413,10 @@
   grid-row: 1 / span 2;
 }
 
+.default-5,
 .default-6,
+.two-then-three-6,
 .two-pane-6,
-.classic-5,
-.classic-6,
 .four-by-four-6,
 .one-pane-6,
 .one-pane-r-6,
