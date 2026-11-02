@@ -317,6 +317,9 @@ export default function Main() {
     onTotalWidth: (width: number) => void;
   }>;
 
+  let visibleDockWidth = 0;
+  if (renderDock) visibleDockWidth = isDockCollapsed ? COLLAPSED_DOCK_WIDTH : dockWidth;
+
   const CACHED_PAGES = ['BrowseOverlays', 'PlatformAppStore'];
   if (CACHED_PAGES.includes(page)) {
     activeCachedPages.current.add(page);
@@ -407,6 +410,9 @@ export default function Main() {
             setDockWidth={setDockWidth}
           />
         )}
+        {!isOnboarding && !showLoadingSpinner && (
+          <DockLayoutEditorDismissible onLeft={leftDock} dockWidth={visibleDockWidth} />
+        )}
       </div>
       <Animation transitionName="ant-fade">
         {(!uiReady || showLoadingSpinner) && (
@@ -419,6 +425,9 @@ export default function Main() {
     </div>
   );
 }
+
+// Must match the width of `.dock-collapsed`
+const COLLAPSED_DOCK_WIDTH = 20;
 
 interface IDockContainerProps {
   max: number;
@@ -452,16 +461,18 @@ const Chevron = memo(function Chevron(p: {
   );
 });
 
-function DockLayoutEditorDismissible(p: { onLeft?: boolean }) {
+/**
+ * Points at the inner edge of the dock. Rendered beside the dock rather than inside it so it
+ * still shows when the dock has nothing to render, in which case it points at the window edge.
+ * Must be a child of the (relatively positioned) main contents.
+ */
+function DockLayoutEditorDismissible(p: { onLeft?: boolean; dockWidth: number }) {
+  const offset = `calc(${p.dockWidth}px + 14px)`;
   return (
     <HelpTip
       title={$t('New: Dock Layouts')}
       dismissableKey={EDismissable.DockLayouts}
-      position={
-        p.onLeft
-          ? { bottom: '52px', left: 'calc(100% + 14px)' }
-          : { bottom: '52px', right: 'calc(100% + 14px)' }
-      }
+      position={p.onLeft ? { bottom: '52px', left: offset } : { bottom: '52px', right: offset }}
       arrowPosition={p.onLeft ? 'left' : 'right'}
     >
       <div>
@@ -487,7 +498,6 @@ const DockContainer = memo(function DockContainer(p: IDockContainerProps) {
     <Animation transitionName={transitionName} transitionAppear>
       {isDockCollapsed && (
         <div className={cx(styles.dockCollapsed, p.onLeft && styles.left)} key="collapsed">
-          <DockLayoutEditorDismissible onLeft={p.onLeft} />
           <Chevron
             data-testid="dock-chevron-closed"
             onLeft={p.onLeft}
@@ -514,7 +524,6 @@ const DockContainer = memo(function DockContainer(p: IDockContainerProps) {
             className={cx(styles.dockContainer, p.onLeft && styles.left)}
             style={{ width: `${p.width}px` }}
           >
-            <DockLayoutEditorDismissible onLeft={p.onLeft} />
             <DockHeader />
             <div className={styles.dockContents}>
               <Dock />
