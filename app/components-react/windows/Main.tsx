@@ -399,9 +399,11 @@ const Chevron = memo(function Chevron(p: {
   onLeft?: boolean;
   isDockCollapsed: boolean;
   setCollapsed: (val: boolean) => void;
+  'data-testid'?: string;
 }) {
   return (
     <div
+      data-testid={p['data-testid']}
       className={cx(styles.dockChevron, p.onLeft && styles.left)}
       onClick={() => p.setCollapsed(!p.isDockCollapsed)}
     >
@@ -431,7 +433,7 @@ const DockContainer = memo(function DockContainer(p: IDockContainerProps) {
       {isDockCollapsed && (
         <div className={cx(styles.dockCollapsed, p.onLeft && styles.left)} key="collapsed">
           <Chevron
-            data-testid="dock-chevron"
+            data-testid="dock-chevron-closed"
             onLeft={p.onLeft}
             isDockCollapsed={isDockCollapsed}
             setCollapsed={p.setCollapsed}
@@ -461,7 +463,7 @@ const DockContainer = memo(function DockContainer(p: IDockContainerProps) {
               <Multichat inDock />
             </div>
             <Chevron
-              data-testid="dock-chevron"
+              data-testid="dock-chevron-opened"
               onLeft={p.onLeft}
               isDockCollapsed={isDockCollapsed}
               setCollapsed={p.setCollapsed}
