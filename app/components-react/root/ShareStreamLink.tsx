@@ -68,6 +68,9 @@ export const ShareStreamLink = () => {
     );
   });
 
+  // Nothing to share, e.g. streaming to a custom destination in unprotected mode
+  if (platformUrls.length === 0) return null;
+
   const single = items.length < 2;
 
   return (
@@ -79,11 +82,7 @@ export const ShareStreamLink = () => {
           type="text"
           icon={<ShareAltOutlined />}
           label={$t('Copy stream link')}
-          onClick={() =>
-            copyToClipboard(
-              getPlatformService(StreamingService.views.enabledPlatforms[0]).streamPageUrl,
-            )
-          }
+          onClick={() => copyToClipboard(platformUrls[0].streamPageUrl)}
         />
       ) : (
         <>

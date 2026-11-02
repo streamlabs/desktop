@@ -13,7 +13,7 @@ import NavMenu from 'components-react/nav-menu/NavMenu';
 import { getElementMins } from 'components-react/editor/renderLayoutElements';
 import Dock from 'components-react/root/Dock';
 import DockHeader from 'components-react/root/DockHeader';
-import { useDockHasContent } from 'components-react/root/useDockHasContent';
+import { useDockHasContent } from 'components-react/hooks/useDockHasContent';
 import StudioFooter from 'components-react/root/StudioFooter';
 import Loader from 'components-react/pages/Loader';
 import ResizeBar from 'components-react/root/ResizeBar';
