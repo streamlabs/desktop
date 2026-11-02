@@ -413,7 +413,7 @@ function Multichat() {
   }, [primaryPlatform, enabledPlatforms, visibleChat, isStreaming, isRestreaming]);
 
   return (
-    <div className={styles.multichat}>
+    <div data-testid="multichat" className={styles.multichat}>
       <div className={styles.multichatExpandedContents}>
         <div className={styles.multichatHeader}>
           <div className="flex flex--center">
@@ -446,7 +446,7 @@ function Multichat() {
                 tooltipTitle={$t('Edit your stream title and description')}
                 tooltipPlacement="right"
                 autoAdjustOverflow={false}
-                icon={<i data-name="edit-stream" className="icon-edit" />}
+                icon={<i data-testid="multichat-edit" className="icon-edit" />}
                 onClick={() => ctrl.showEditStreamInfo()}
               />
             )}
