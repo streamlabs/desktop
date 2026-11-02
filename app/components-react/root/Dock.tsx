@@ -21,9 +21,13 @@ export default function Dock() {
     slottedElements: LayoutService.views.currentTab.slottedElements,
   }));
 
-  const { children, childrenMins } = renderLayoutElements(dockElements, slottedElements, {
-    inDock: true,
-  });
+  // Only re-render when the elements change, not when the layout changes,
+  // to avoid re-rendering embedded content when resizing the dock.
+  const elementsKey = JSON.stringify([dockElements, slottedElements]);
+  const { children, childrenMins } = React.useMemo(
+    () => renderLayoutElements(dockElements, slottedElements, { inDock: true }),
+    [elementsKey],
+  );
 
   // With only one slot occupied, that element takes the whole dock
   if (dockLayout === EDockLayout.Stacked && children.S1 && children.S2) {
