@@ -116,7 +116,7 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
   }
 
   private setRecordingLayout() {
-    this.layoutService.changeLayout(ELayout.Classic);
+    this.layoutService.changeLayout(ELayout.Default);
     this.layoutService.setSlots({
       [ELayoutElement.Display]: { slot: '1' },
       [ELayoutElement.Scenes]: { slot: '2' },
