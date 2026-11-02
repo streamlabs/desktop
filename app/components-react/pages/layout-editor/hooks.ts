@@ -35,13 +35,20 @@ class LayoutEditorModule {
     this.state.setCurrentLayout(this.layoutService.state.tabs[tab].currentLayout);
     this.state.setDockLayout(this.layoutService.state.tabs[tab].dockLayout || EDockLayout.Single);
     this.setSlottedElements(cloneDeep(this.layoutService.state.tabs[tab].slottedElements));
+    this.state.setBrowserUrl(
+      this.layoutService.state.tabs[tab].slottedElements[ELayoutElement.Browser]?.src || '',
+    );
   }
 
+  /**
+   * The Website URL being edited is kept while the Website is moved around, and only cleared
+   * when it is removed from the layout entirely.
+   */
   @mutation()
   setSlottedElements(elements: TSlottedElements) {
     this.state.slottedElements = elements;
-    if (!elements[ELayoutElement.Browser]) return;
-    this.state.setBrowserUrl(elements[ELayoutElement.Browser]?.src || '');
+    const browser = elements[ELayoutElement.Browser];
+    if (browser && !browser.slot) this.state.setBrowserUrl('');
   }
 
   /**

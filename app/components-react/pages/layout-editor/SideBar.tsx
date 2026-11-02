@@ -59,9 +59,11 @@ function DockLayoutPicker() {
       <div className={styles.title}>{$t('Dock')}</div>
       <div className={styles.dockLayouts}>
         {Object.values(EDockLayout).map(layout => (
-          <div
+          <button
             key={layout}
+            type="button"
             data-name={`dock-layout-${layout}`}
+            aria-pressed={dockLayout === layout}
             className={cx(styles.dockLayoutOption, { [styles.active]: dockLayout === layout })}
             onClick={() => changeDockLayout(layout)}
           >
@@ -71,7 +73,7 @@ function DockLayoutPicker() {
               ))}
             </div>
             {labels[layout]}
-          </div>
+          </button>
         ))}
       </div>
     </div>

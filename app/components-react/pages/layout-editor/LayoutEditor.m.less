@@ -216,10 +216,19 @@
   font-size: 12px;
   border: 2px solid transparent;
   background-color: var(--border);
+  font-family: inherit;
+  line-height: inherit;
+  color: inherit;
+  appearance: none;
 
   &:hover {
     cursor: pointer;
     color: var(--title);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--button);
+    outline-offset: 2px;
   }
 
   &.active {
