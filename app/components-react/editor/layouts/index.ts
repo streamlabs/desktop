@@ -1,5 +1,5 @@
 export { Default } from './Default';
-export { Classic } from './Classic';
+export { TwoThenThree } from './TwoThenThree';
 export { FourByFour } from './FourByFour';
 export { Pyramid } from './Pyramid';
 export { OnePane } from './OnePane';

@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import isEqual from 'lodash/isEqual';
-import cloneDeep from 'lodash/cloneDeep';
+import merge from 'lodash/merge';
+import omit from 'lodash/omit';
 import { Inject, ViewHandler, InitAfter } from 'services/core';
 import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
 import { mutation } from 'services/core/stateful-service';
@@ -43,7 +44,13 @@ interface ILayoutState {
   /** The proportion of the dock's height given to its first slot when stacked. */
   dockResize: number;
 }
+
 interface ILayoutServiceState {
+  /**
+   * The version of the persisted state, kept in the state itself so that it is always written
+   * together with the data it describes. Absent from unversioned (version 1) states.
+   */
+  version?: number;
   currentTab: string;
   tabs: {
     [key: string]: ILayoutState;
@@ -51,23 +58,36 @@ interface ILayoutServiceState {
 }
 
 /**
- * The layout of the default tab on fresh installs: the mini feed is stacked above Multichat
- * in the dock, leaving the main layout to the editor display and the scene, source and
- * mixer controls.
+ * The version of the persisted state. Increment it when adding a migration to
+ * `LayoutService.migratePersistedState`.
+ * 1: Unversioned. The layouts were Classic and Default.
+ * 2: Classic was renamed Default, and the previous Default was renamed TwoThenThree.
  */
-const NEW_USER_TAB: Omit<ILayoutState, 'name' | 'icon'> = {
-  currentLayout: ELayout.Classic,
-  slottedElements: {
-    [ELayoutElement.Display]: { slot: '1' },
-    [ELayoutElement.Scenes]: { slot: '2' },
-    [ELayoutElement.Sources]: { slot: '3' },
-    [ELayoutElement.Mixer]: { slot: '4' },
-    [ELayoutElement.Minifeed]: { slot: 'S1' },
-    [ELayoutElement.Multichat]: { slot: 'S2' },
+const PERSISTED_STATE_VERSION = 2;
+
+/**
+ * The default state of version 1, which persisted states are relative to.
+ */
+const V1_DEFAULT_STATE: ILayoutServiceState = {
+  currentTab: 'default',
+  tabs: {
+    default: {
+      name: null as string | null,
+      icon: 'icon-studio',
+      currentLayout: ELayout.Default,
+      slottedElements: {
+        [ELayoutElement.Display]: { slot: '1' },
+        [ELayoutElement.Minifeed]: { slot: '2' },
+        [ELayoutElement.Scenes]: { slot: '3' },
+        [ELayoutElement.Sources]: { slot: '4' },
+        [ELayoutElement.Mixer]: { slot: '5' },
+        [ELayoutElement.Multichat]: { slot: 'S1' },
+      },
+      resizes: { bar1: 156, bar2: 240 },
+      dockLayout: EDockLayout.Single,
+      dockResize: 0.33,
+    },
   },
-  resizes: LAYOUT_DATA[ELayout.Classic].resizeDefaults,
-  dockLayout: EDockLayout.Stacked,
-  dockResize: 0.5,
 };
 
 class LayoutViews extends ViewHandler<ILayoutServiceState> {
@@ -184,35 +204,59 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
         currentLayout: ELayout.Default,
         slottedElements: {
           [ELayoutElement.Display]: { slot: '1' },
-          [ELayoutElement.Minifeed]: { slot: '2' },
-          [ELayoutElement.Scenes]: { slot: '3' },
-          [ELayoutElement.Sources]: { slot: '4' },
-          [ELayoutElement.Mixer]: { slot: '5' },
-          [ELayoutElement.Multichat]: { slot: 'S1' },
+          [ELayoutElement.Scenes]: { slot: '2' },
+          [ELayoutElement.Sources]: { slot: '3' },
+          [ELayoutElement.Mixer]: { slot: '4' },
+          [ELayoutElement.Minifeed]: { slot: 'S1' },
+          [ELayoutElement.Multichat]: { slot: 'S2' },
         },
-        resizes: {
-          bar1: 156,
-          bar2: 240,
-        },
-        dockLayout: EDockLayout.Single,
+        resizes: { ...LAYOUT_DATA[ELayout.Default].resizeDefaults },
+        dockLayout: EDockLayout.Stacked,
         dockResize: 0.33,
       },
     },
   };
 
+  /**
+   * Migrates the persisted state before it is merged with the default state.
+   */
+  static get initialState() {
+    LayoutService.migratePersistedState();
+    return { ...super.initialState, version: PERSISTED_STATE_VERSION };
+  }
+
+  private static migratePersistedState() {
+    const persisted: ILayoutServiceState | null = JSON.parse(
+      localStorage.getItem(LayoutService.localStorageKey) as string,
+    );
+
+    // A fresh install has nothing to migrate. Its state is versioned in `initialState`.
+    if (!persisted || (persisted.version ?? 1) >= PERSISTED_STATE_VERSION) return;
+
+    // Update the layout names to the new names. This is a migration from version 1 to version 2.
+    const renamed: Record<string, ELayout> = {
+      Classic: ELayout.Default,
+      Default: ELayout.TwoThenThree,
+    };
+    const migrated: ILayoutServiceState = merge({}, V1_DEFAULT_STATE, persisted);
+    Object.keys(migrated.tabs).forEach(id => {
+      const tab = migrated.tabs[id];
+      if (renamed[tab.currentLayout]) tab.currentLayout = renamed[tab.currentLayout];
+    });
+
+    // The version is written with the state in a single write, so a concurrent reader or a crash
+    // can never observe a migrated state that is still marked as version 1.
+    migrated.version = PERSISTED_STATE_VERSION;
+    localStorage.setItem(LayoutService.localStorageKey, JSON.stringify(migrated));
+  }
+
   @Inject() private customizationService: CustomizationService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
 
   init() {
-    // Nothing is persisted until the first change to the state, so this must be checked first.
-    // Fresh installs get the new default layout. Existing users keep theirs.
-    const isFreshInstall = localStorage.getItem(LayoutService.localStorageKey) === null;
-
     super.init();
     this.migrateSlots();
     this.migrateDock();
-
-    if (isFreshInstall) this.APPLY_NEW_USER_LAYOUT();
 
     // Hack since defaultState can't take a translated string
     if (!this.state.tabs.default.name) {
@@ -221,7 +265,7 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
 
     if (
       this.customizationService.state.legacyEvents &&
-      isEqual(this.state, LayoutService.defaultState)
+      isEqual(omit(this.state, 'version'), LayoutService.defaultState)
     ) {
       this.setSlots({
         [ELayoutElement.Display]: { slot: '1' },
@@ -234,7 +278,21 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
       this.customizationService.setSettings({ legacyEvents: false });
     }
 
+    // The dock starts collapsed on every app start, which would hide the Mini Feed from fresh users.
+    // Multichat keeps the collapsed start, since it has a policy of its own when streaming starts.
+    if (this.views.dockElements.includes(ELayoutElement.Minifeed)) {
+      this.customizationService.setDockCollapsed(false);
+    }
+
     this.checkUsage();
+  }
+
+  /**
+   * Called when the layout editor saves, since changes to slots or the dock can leave the
+   * selected layout as it was.
+   */
+  recordLayoutEditorUsage() {
+    this.usageStatisticsService.recordFeatureUsage('LayoutEditor');
   }
 
   private checkUsage() {
@@ -243,27 +301,22 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
       this.usageStatisticsService.recordFeatureUsage('LayoutEditor');
     } else if (
       this.state.tabs.default.currentLayout !== ELayout.Default &&
-      !this.isNewUserLayout(this.state.tabs.default)
+      !this.isMigratedDefaultTab(this.state.tabs.default)
     ) {
       this.usageStatisticsService.recordFeatureUsage('LayoutEditor');
     }
   }
 
   /**
-   * Whether a tab still has the layout fresh installs start with, which doesn't mean
-   * the layout editor was used even though it isn't the default layout.
+   * The version 1 default layout is migrated to `TwoThenThree`. Left as it was migrated, it
+   * isn't a use of the layout editor.
    */
-  private isNewUserLayout(tab: Omit<ILayoutState, 'name' | 'icon'>) {
-    const assignments = (t: Omit<ILayoutState, 'name' | 'icon'>) =>
-      Object.keys(t.slottedElements)
-        .filter((el: ELayoutElement) => t.slottedElements[el]?.slot)
-        .map((el: ELayoutElement) => `${el}:${t.slottedElements[el].slot}`)
-        .sort();
-
+  private isMigratedDefaultTab(tab: ILayoutState) {
+    const v1Tab = V1_DEFAULT_STATE.tabs.default;
     return (
-      tab.currentLayout === NEW_USER_TAB.currentLayout &&
-      tab.dockLayout === NEW_USER_TAB.dockLayout &&
-      isEqual(assignments(tab), assignments(NEW_USER_TAB))
+      tab.currentLayout === ELayout.TwoThenThree &&
+      isEqual(tab.slottedElements, v1Tab.slottedElements) &&
+      isEqual(tab.resizes, v1Tab.resizes)
     );
   }
 
@@ -353,18 +406,6 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
     });
     Vue.set(this.state.tabs[this.state.currentTab], 'slottedElements', dockSlotted);
     Vue.set(this.state.tabs[this.state.currentTab], 'resizes', LAYOUT_DATA[layout].resizeDefaults);
-  }
-
-  @mutation()
-  APPLY_NEW_USER_LAYOUT() {
-    const tab = this.state.tabs.default;
-    const layout = cloneDeep(NEW_USER_TAB);
-
-    Vue.set(tab, 'currentLayout', layout.currentLayout);
-    Vue.set(tab, 'slottedElements', layout.slottedElements);
-    Vue.set(tab, 'resizes', layout.resizes);
-    Vue.set(tab, 'dockLayout', layout.dockLayout);
-    Vue.set(tab, 'dockResize', layout.dockResize);
   }
 
   @mutation()
@@ -458,7 +499,7 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
     Vue.set(this.state.tabs, id, {
       name,
       icon,
-      currentLayout: ELayout.Default,
+      currentLayout: ELayout.TwoThenThree,
 
       slottedElements: {
         [ELayoutElement.Display]: { slot: '1' },

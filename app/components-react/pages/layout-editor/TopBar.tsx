@@ -44,6 +44,7 @@ export default function TopBar() {
       await LayoutService.actions.return.setDockLayout(dockLayout);
     }
     await LayoutService.actions.return.setSlots(slottedElements);
+    LayoutService.actions.recordLayoutEditorUsage();
     if (browserUrl && slottedElements[ELayoutElement.Browser]) {
       await LayoutService.actions.return.setUrl(browserUrl);
     }
