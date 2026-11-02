@@ -261,6 +261,7 @@
   "Failed to start video transmission": "Failed to start video transmission",
   "Failed to create stream. Please check your settings and try again.": "Stream konnte nicht erstellt werden. Bitte überprüfe deine Einstellungen und versuche es erneut.",
   "Failed to create recording. Please check your settings and file path and try again.": "Aufnahme konnte nicht erstellt werden. Bitte überprüfe deine Einstellungen und den Dateipfad und versuche es erneut.",
+  "System error message:": "System error message:",
   "Unknown recording error, please contact support": "Unbekannter Aufnahmefehler; bitte kontaktiere den Support",
   "recording settings are incorrect. Check recording path and encoder settings for both streaming and recording.": "Aufnahmeeinstellungen sind inkorrekt. Überprüfe den Aufnahmepfad und die Encoder-Einstellungen für Streaming und Aufnahme.",
   "Failed to create replay buffer. Please check your streaming settings, recording settings, and recording file path and try again.": "Replay-Puffer konnte nicht erstellt werden. Bitte überprüfe deine Streaming-Einstellungen, Aufnahmeeinstellungen und den Aufnahme-Dateipfad und versuche es erneut.",

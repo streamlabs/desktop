@@ -19,7 +19,7 @@ import Vue from 'vue';
 import { IVideo } from 'obs-studio-node';
 import { TOutputOrientation } from 'services/restream';
 import {
-  isMultiplatformStream,
+  isTwitchOrYouTubeOnlyStream,
   selectedStreamPlatforms,
 } from '../../streaming/stream-resolution-policy';
 import { NotificationsService, ENotificationType } from 'services/notifications';
@@ -232,22 +232,32 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
     if (!this.state.protectedModeEnabled || !this.userService.isLoggedIn || !settings) return;
     await this.videoSettingsService.flushPendingCanvasSettings();
     const platforms = selectedStreamPlatforms(settings);
-    const changed = await this.videoSettingsService.limitStreamOutputs(
+    const changes = await this.videoSettingsService.limitStreamOutputs(
       platforms,
       this.streamingService.views.isDualOutputMode,
     );
-    if (changed) {
-      // The wording changes with the selected platforms; replace either previous variant.
+    if (!platforms.length || isTwitchOrYouTubeOnlyStream(platforms)) {
       this.notificationsService.removeByCode('STREAM_OUTPUT_SETTINGS_LIMIT');
+    } else if (changes.resolutionChanged || changes.bitrateChanged) {
+      // Report only the limits actually applied, replacing the previous variant.
+      this.notificationsService.removeByCode('STREAM_OUTPUT_SETTINGS_LIMIT');
+      let message: string;
+      if (changes.resolutionChanged && changes.bitrateChanged) {
+        message = $t(
+          'Stream output settings were reduced to fit within 1080p and 6000 Kbps because a platform other than Twitch or YouTube is enabled. Your canvas resolution is unchanged.',
+        );
+      } else if (changes.resolutionChanged) {
+        message = $t(
+          'Stream output resolution was reduced to fit within 1080p because a platform other than Twitch or YouTube is enabled. Your canvas resolution is unchanged.',
+        );
+      } else {
+        message = $t(
+          'Stream video bitrate was reduced to 6000 Kbps because a platform other than Twitch or YouTube is enabled for multistreaming.',
+        );
+      }
       this.notificationsService.push({
         code: 'STREAM_OUTPUT_SETTINGS_LIMIT',
-        message: isMultiplatformStream(platforms)
-          ? $t(
-              'Stream output settings were adjusted for multistreaming: up to 1080p and 6000 Kbps. Your canvas resolution is unchanged.',
-            )
-          : $t(
-              'Stream output resolution was reduced to fit within 1080p because a platform other than Twitch is enabled. Your canvas resolution is unchanged.',
-            ),
+        message,
         type: ENotificationType.INFO,
         lifeTime: -1,
         singleton: true,
