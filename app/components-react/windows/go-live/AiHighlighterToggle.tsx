@@ -21,6 +21,7 @@ export default function AiHighlighterToggle({ isUpdateMode }: { isUpdateMode?: b
     outputDisplay,
     gameName,
     shouldShow,
+    replaySupportedGames,
   } = useVuex(() => {
     return {
       useHighlighter: HighlighterService.views.useAiHighlighter,
@@ -29,6 +30,7 @@ export default function AiHighlighterToggle({ isUpdateMode }: { isUpdateMode?: b
       outputDisplay: StreamingService.views.outputDisplay,
       gameName: StreamingService.views.gameName,
       shouldShow: DismissablesService.views.shouldShow(EDismissable.HighlighterBanner),
+      replaySupportedGames: HighlighterService.views.replaySupportedGames,
     };
   });
 
@@ -37,7 +39,7 @@ export default function AiHighlighterToggle({ isUpdateMode }: { isUpdateMode?: b
   const [showReplayRecordingAlert, setShowReplayRecordingAlert] = useState(false);
   const disableAIHighlighter =
     (isVerticalRecording || isVerticalReplayBuffer) && outputDisplay === 'vertical';
-  const gameIsSupported = !!isGameSupported(gameName);
+  const gameIsSupported = !!isGameSupported(gameName, replaySupportedGames);
 
   // The install itself happens after the stream, so the button only opts the user in. Once they
   // are opted in, or already have an app, the card collapses to the toggle.
