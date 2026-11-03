@@ -93,6 +93,7 @@ function ElementList() {
           <div
             draggable
             key={element}
+            data-name={`element-${element}`}
             className={styles.elementCell}
             onDragEnd={(e: React.DragEvent<HTMLDivElement>) =>
               handleElementDrag(e, ELayoutElement[element])
