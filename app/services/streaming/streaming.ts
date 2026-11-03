@@ -3730,13 +3730,10 @@ export class StreamingService
         await this.handleDestroyOutputContexts('horizontal');
         await this.handleDestroyOutputContexts('vertical');
 
-        // Track the number of instances after destroying the output contexts
-        // This must be done by checking for a context's existence because instances may exist
-        // for recording and replay buffer
-        this.numInstances = Object.values(this.contexts).filter(
-          c => c.streaming !== null && c.streaming !== undefined,
-        ).length;
-        return;
+        // Reset the number of streaming instances to zero because `isTwitchDualStreaming` is only true if
+        // it is the only streaming instance that goes live, so all other streaming instances that exist
+        // only exist for the recording and/or replay buffer instances.
+        this.numInstances = 0;
       }
 
       if (
