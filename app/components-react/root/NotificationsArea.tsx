@@ -91,13 +91,14 @@ class NotificationsModule {
     return Services.NotificationsService.state.settings;
   }
 
-  get platform() {
-    return Services.UserService.views.platform?.type;
-  }
-
   get ytDisabled() {
+    // To check if live streaming is enabled on an account, if the account is merged
+    // must be checked, not as the primary platform, otherwise the live streaming
+    // approval status will not be confirmed and the user will be able with proceed
+    // with attempting to go live. This will cause an error when going live and the entire
+    // stream will fail.
     return (
-      Services.UserService.views.platform?.type === 'youtube' &&
+      Services.StreamingService.views.isPlatformLinked('youtube') &&
       !Services.YoutubeService.state.liveStreamingEnabled
     );
   }
@@ -107,9 +108,7 @@ class NotificationsModule {
   }
 
   async confirmYoutubeEnabled() {
-    if (this.platform === 'youtube') {
-      Services.YoutubeService.actions.prepopulateInfo();
-    }
+    await Services.YoutubeService.actions.return.validatePlatform();
   }
 
   clickNotif() {
@@ -244,7 +243,9 @@ function YTError() {
   return (
     <div className={cx('ant-message-notice', styles.notification, styles.warning, styles.ytError)}>
       <i className="fa fa-exclamation-triangle" />
-      <span>{$t('YouTube account not enabled for live streaming')}</span>
+      <span data-name="youtube-streaming-disabled">
+        {$t('YouTube account not enabled for live streaming')}
+      </span>
       <button className={cx('button', styles.alertButton)} onClick={openYoutubeEnable}>
         {$t('Fix')}
       </button>

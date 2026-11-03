@@ -321,10 +321,25 @@ export class YoutubeService
     // is available. Login completion also covers a failed linked-platform fetch;
     // the scheduler coalesces it with auth updates and bounds background retries.
     this.userService.userLoginFinished.subscribe(() => this.autoOptimizerProbeRecovery.schedule());
-    this.userService.platformAuthUpdated.subscribe(platform => {
-      if (platform === 'youtube') this.autoOptimizerProbeRecovery.schedule();
+
+    this.userService.platformAuthUpdated.subscribe(async platform => {
+      if (platform === 'youtube') {
+        // Validate any YouTube account has live streaming enabled. If not, prompt the user to enable it.
+        const status = await this.validatePlatform();
+        if (status !== EPlatformCallResult.Success) {
+          // Return early if live streaming not enabled to prevent scheduling the auto optimizer probe recovery
+          return;
+        }
+
+        this.autoOptimizerProbeRecovery.schedule();
+      }
     });
-    this.userService.userLogout.subscribe(() => this.autoOptimizerProbeRecovery.cancel());
+    this.userService.userLogout.subscribe(() => {
+      this.autoOptimizerProbeRecovery.cancel();
+
+      // Reset the YouTube live streaming status so it never carries over to the next session
+      this.SET_ENABLED_STATUS(false);
+    });
     if (this.oauthToken) this.autoOptimizerProbeRecovery.schedule();
 
     this.streamingService.streamErrorCreated.subscribe(e => {
