@@ -2284,6 +2284,7 @@ export class StreamingService
       // Case A: Twitch dual stream alone. Enhanced Broadcasting sends both canvases via video (horizontal) and
       // additionalVideo (vertical). No additional instance needed — resolve directly.
       await this.handleStartStreaming(code, 'horizontal');
+      this.streamingStatusChange.next(EStreamingState.Live);
     } else if (this.views.isTwitchDualStreamEnabled && this.state.enhancedBroadcasting) {
       // Case B: Twitch dual stream + other platforms. Enhanced Broadcasting sends Twitch to both canvases via
       // additionalVideo; each display with non-Twitch targets needs its own non-Enhanced Broadcasting instance.
@@ -2471,6 +2472,7 @@ export class StreamingService
         // In single output mode without restream, the enhanced broadcasting stream is the only stream.
         // Use 'horizontal' as the display since that is the default display context.
         await this.handleStartStreaming(code, 'horizontal');
+        this.streamingStatusChange.next(nextState);
       }
     }
 
@@ -3582,10 +3584,16 @@ export class StreamingService
       const isTwitchDualStreamStopping =
         context === 'enhancedBroadcasting' && this.views.isTwitchDualStreaming;
 
+      const isEnhancedBroadcastSingleOutputStopping =
+        context === 'enhancedBroadcasting' &&
+        !this.views.isDualOutputMode &&
+        !this.views.shouldSetupRestream;
+
       if (
         context === 'horizontal' ||
         isEnhancedBroadcastDualOutputStopping ||
-        isTwitchDualStreamStopping
+        isTwitchDualStreamStopping ||
+        isEnhancedBroadcastSingleOutputStopping
       ) {
         this.sendStreamEndEvent();
       }
@@ -3626,6 +3634,15 @@ export class StreamingService
       // that to false synchronously after handleStopStreaming returns, before Enhanced Broadcasting's
       // Stopping/Stop signals arrive. The Enhanced Broadcasting context only fires signals if its instance
       // exists, so the context check is sufficient to know this is a real Enhanced Broadcasting signal.
+      //
+      // In single output mode if the stream is just Twitch Enhanced Broadcasting, map the streaming status to the
+      // horizontal display streaming status so the UI updates correctly.
+      if (!this.views.isDualOutputMode && !this.views.hasMultipleTargetsEnabled) {
+        this.SET_STREAMING_STATUS(nextState, 'horizontal', time);
+        this.streamingStatusChange.next(nextState);
+        return;
+      }
+
       let updated = false;
       (['horizontal', 'vertical'] as TDisplayType[]).forEach(d => {
         const targets =
@@ -3712,6 +3729,13 @@ export class StreamingService
         await this.handleDestroyOutputContexts('enhancedBroadcasting');
         await this.handleDestroyOutputContexts('horizontal');
         await this.handleDestroyOutputContexts('vertical');
+
+        // Track the number of instances after destroying the output contexts
+        // This must be done by checking for a context's existence because instances may exist
+        // for recording and replay buffer
+        this.numInstances = Object.values(this.contexts).filter(
+          c => c.streaming !== null && c.streaming !== undefined,
+        ).length;
         return;
       }
 
@@ -3721,6 +3745,14 @@ export class StreamingService
       ) {
         // The primary output has stopped; finish its companion outputs as well.
         this.handleCleanupStreamingInstances({ skipHorizontal: context === 'horizontal' });
+      } else if (
+        context === 'enhancedBroadcasting' &&
+        !this.views.isDualOutputMode &&
+        !this.views.shouldSetupRestream
+      ) {
+        // The only stream stopped without going through the cleanup above, which resets the
+        // instance count used for the performance metrics.
+        this.numInstances = 0;
       }
 
       // Ensure instances for the recording and replay buffer are destroyed for the display context
