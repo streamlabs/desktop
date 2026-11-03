@@ -51,6 +51,8 @@ interface ILayoutServiceState {
    * together with the data it describes. Absent from unversioned (version 1) states.
    */
   version?: number;
+  /** Set once the layout editor has been used, so the usage is attributed on later sessions. */
+  layoutEditorUsed?: boolean;
   currentTab: string;
   tabs: {
     [key: string]: ILayoutState;
@@ -59,7 +61,7 @@ interface ILayoutServiceState {
 
 /**
  * The version of the persisted state. Increment it when adding a migration to
- * `LayoutService.migratePersistedState`.
+ * `LayoutService.migrateVersion`.
  * 1: Unversioned. The layouts were Classic and Default.
  * 2: Classic was renamed Default, and the previous Default was renamed TwoThenThree.
  */
@@ -217,44 +219,12 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
     },
   };
 
-  /**
-   * Migrates the persisted state before it is merged with the default state.
-   */
-  static get initialState() {
-    LayoutService.migratePersistedState();
-    return { ...super.initialState, version: PERSISTED_STATE_VERSION };
-  }
-
-  private static migratePersistedState() {
-    const persisted: ILayoutServiceState | null = JSON.parse(
-      localStorage.getItem(LayoutService.localStorageKey) as string,
-    );
-
-    // A fresh install has nothing to migrate. Its state is versioned in `initialState`.
-    if (!persisted || (persisted.version ?? 1) >= PERSISTED_STATE_VERSION) return;
-
-    // Update the layout names to the new names. This is a migration from version 1 to version 2.
-    const renamed: Record<string, ELayout> = {
-      Classic: ELayout.Default,
-      Default: ELayout.TwoThenThree,
-    };
-    const migrated: ILayoutServiceState = merge({}, V1_DEFAULT_STATE, persisted);
-    Object.keys(migrated.tabs).forEach(id => {
-      const tab = migrated.tabs[id];
-      if (renamed[tab.currentLayout]) tab.currentLayout = renamed[tab.currentLayout];
-    });
-
-    // The version is written with the state in a single write, so a concurrent reader or a crash
-    // can never observe a migrated state that is still marked as version 1.
-    migrated.version = PERSISTED_STATE_VERSION;
-    localStorage.setItem(LayoutService.localStorageKey, JSON.stringify(migrated));
-  }
-
   @Inject() private customizationService: CustomizationService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
 
   init() {
     super.init();
+    this.migrateVersion();
     this.migrateSlots();
     this.migrateDock();
 
@@ -265,7 +235,7 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
 
     if (
       this.customizationService.state.legacyEvents &&
-      isEqual(omit(this.state, 'version'), LayoutService.defaultState)
+      isEqual(omit(this.state, ['version', 'layoutEditorUsed']), LayoutService.defaultState)
     ) {
       this.setSlots({
         [ELayoutElement.Display]: { slot: '1' },
@@ -292,6 +262,7 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
    * selected layout as it was.
    */
   recordLayoutEditorUsage() {
+    this.SET_LAYOUT_EDITOR_USED();
     this.usageStatisticsService.recordFeatureUsage('LayoutEditor');
   }
 
@@ -299,25 +270,49 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
     if (Object.keys(this.state.tabs).length > 1) {
       this.usageStatisticsService.recordFeatureUsage('LayoutEditorTabs');
       this.usageStatisticsService.recordFeatureUsage('LayoutEditor');
-    } else if (
-      this.state.tabs.default.currentLayout !== ELayout.Default &&
-      !this.isMigratedDefaultTab(this.state.tabs.default)
-    ) {
+    } else if (this.state.layoutEditorUsed) {
       this.usageStatisticsService.recordFeatureUsage('LayoutEditor');
     }
   }
 
   /**
-   * The version 1 default layout is migrated to `TwoThenThree`. Left as it was migrated, it
-   * isn't a use of the layout editor.
+   * The persisted state only holds the values that differ from the default state of the version
+   * that wrote it, so a state from version 1 is read back relative to that version's defaults.
    */
-  private isMigratedDefaultTab(tab: ILayoutState) {
-    const v1Tab = V1_DEFAULT_STATE.tabs.default;
-    return (
-      tab.currentLayout === ELayout.TwoThenThree &&
-      isEqual(tab.slottedElements, v1Tab.slottedElements) &&
-      isEqual(tab.resizes, v1Tab.resizes)
+  migrateVersion() {
+    if (this.state.version === PERSISTED_STATE_VERSION) return;
+
+    const persisted: ILayoutServiceState | null = JSON.parse(
+      localStorage.getItem(LayoutService.localStorageKey) as string,
     );
+
+    // A fresh install has nothing to migrate
+    if (persisted && !persisted.version) {
+      const migrated: ILayoutServiceState = merge({}, V1_DEFAULT_STATE, persisted);
+      const v1Tab = V1_DEFAULT_STATE.tabs.default;
+      // Resizes are excluded, since they are converted to proportions without the user editing.
+      const customized = Object.keys(migrated.tabs).some(
+        id =>
+          id !== 'default' ||
+          migrated.tabs[id].currentLayout !== ELayout.Default ||
+          !isEqual(migrated.tabs[id].slottedElements, v1Tab.slottedElements),
+      );
+
+      // Classic was renamed Default, and the previous Default was renamed TwoThenThree
+      const renamed: Record<string, ELayout> = {
+        Classic: ELayout.Default,
+        Default: ELayout.TwoThenThree,
+      };
+      Object.keys(migrated.tabs).forEach(id => {
+        const tab = migrated.tabs[id];
+        if (renamed[tab.currentLayout]) tab.currentLayout = renamed[tab.currentLayout];
+      });
+
+      this.SET_TABS(migrated.tabs, migrated.currentTab);
+      if (customized) this.SET_LAYOUT_EDITOR_USED();
+    }
+
+    this.SET_VERSION(PERSISTED_STATE_VERSION);
   }
 
   migrateSlots() {
@@ -393,6 +388,22 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
 
   removeCurrentTab() {
     this.REMOVE_TAB(this.state.currentTab);
+  }
+
+  @mutation()
+  SET_VERSION(version: number) {
+    Vue.set(this.state, 'version', version);
+  }
+
+  @mutation()
+  SET_LAYOUT_EDITOR_USED() {
+    Vue.set(this.state, 'layoutEditorUsed', true);
+  }
+
+  @mutation()
+  SET_TABS(tabs: ILayoutServiceState['tabs'], currentTab: string) {
+    this.state.tabs = tabs;
+    this.state.currentTab = currentTab;
   }
 
   @mutation()
