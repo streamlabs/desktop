@@ -27,8 +27,9 @@ import type { StreamingService } from 'services/streaming';
 import type { VirtualWebcamService } from 'services/virtual-webcam';
 import type { FileManagerService } from 'services/file-manager';
 import {
-  isTwitchOnlyStream,
-  isMultiplatformStream,
+  isTwitchOrYouTubeOnlyStream,
+  shouldLimitMultistreamBitrate,
+  IStreamOutputLimitChanges,
   MULTISTREAM_VIDEO_BITRATE_LIMIT_KBPS,
   streamOutputResolutionPatches,
 } from '../streaming/stream-resolution-policy';
@@ -476,8 +477,11 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
   }
 
   /** Lower stream outputs atomically, leaving authored canvases and FPS intact. */
-  async limitStreamOutputs(platforms: string[], dualOutput: boolean): Promise<boolean> {
-    let changed = false;
+  async limitStreamOutputs(
+    platforms: string[],
+    dualOutput: boolean,
+  ): Promise<IStreamOutputLimitChanges> {
+    const changes = { resolutionChanged: false, bitrateChanged: false };
     await this.runCanvasSettingsTransaction(() => {
       const patches = streamOutputResolutionPatches(platforms, {
         horizontal: this.state.horizontal,
@@ -490,7 +494,7 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
         output.mode === 'Advanced' &&
         output.streaming.rescaleOutput &&
         platforms.length > 0 &&
-        !isTwitchOnlyStream(platforms)
+        !isTwitchOrYouTubeOnlyStream(platforms)
           ? output.streaming.outputResolution.split('x').map(Number)
           : [];
       const rescalePatch =
@@ -503,17 +507,16 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
         ? `${rescalePatch.outputWidth}x${rescalePatch.outputHeight}`
         : undefined;
       const streamingBitrate =
-        isMultiplatformStream(platforms) &&
+        shouldLimitMultistreamBitrate(platforms) &&
         output.streaming.bitrate > MULTISTREAM_VIDEO_BITRATE_LIMIT_KBPS
           ? MULTISTREAM_VIDEO_BITRATE_LIMIT_KBPS
           : undefined;
-      changed =
-        this.videoSettingsPatchesChangeState(patches) ||
-        !!rescaleResolution ||
-        streamingBitrate !== undefined;
+      changes.resolutionChanged =
+        this.videoSettingsPatchesChangeState(patches) || !!rescaleResolution;
+      changes.bitrateChanged = streamingBitrate !== undefined;
       return { video: patches, rescaleResolution, streamingBitrate };
     }, false);
-    return changed;
+    return changes;
   }
 
   private videoSettingsPatchesChangeState(patches: TVideoSettingsPatches): boolean {

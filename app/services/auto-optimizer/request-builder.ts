@@ -1,6 +1,9 @@
 import { TDisplayType } from 'services/settings-v2';
 import { autoOptimizerRecommendationBitrateCap } from './bitrate-policy';
-import { isTwitchOnlyStream, streamResolutionCeiling } from '../streaming/stream-resolution-policy';
+import {
+  isTwitchOrYouTubeOnlyStream,
+  streamResolutionCeiling,
+} from '../streaming/stream-resolution-policy';
 import {
   isEligibleAutoOptimizerDualOutputActiveStreamSetup,
   isEligibleAutoOptimizerEnhancedBroadcastingDualOutputStreamSetup,
@@ -158,9 +161,9 @@ export function buildAutoOptimizerRequest(
   const platforms = streamSetup.outputs.flatMap(output =>
     output.destinations.map(destination => destination.platform),
   );
-  const twitchOnly = isTwitchOnlyStream(platforms);
+  const allowHigherResolution = isTwitchOrYouTubeOnlyStream(platforms);
   const resolutionCeiling = (video: IAutoOptimizerVideoSnapshot, portrait: boolean) => {
-    const maximum = streamResolutionCeiling(twitchOnly && input.allow1440p, portrait);
+    const maximum = streamResolutionCeiling(allowHigherResolution && input.allow1440p, portrait);
     // A custom authored canvas must not be resized to accommodate promotion of
     // an already-standard output. Its saved layout remains the user's choice.
     return isCanonicalAspect(video.baseWidth, video.baseHeight)

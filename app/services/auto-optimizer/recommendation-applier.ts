@@ -18,7 +18,7 @@ import {
   TRawOutputValues,
 } from './output-transaction-policy';
 import { autoOptimizerPromotesResolution } from './resolution-policy';
-import { isTwitchOnlyStream } from '../streaming/stream-resolution-policy';
+import { allowsExperimentalTwitchBitrate } from '../streaming/stream-resolution-policy';
 import {
   IAutoOptimizerOutputResult,
   IAutoOptimizerProfile,
@@ -151,7 +151,7 @@ class RecommendationApplyTransaction {
         });
         if (
           outputRecommendation!.bitrate > 6000 &&
-          isTwitchOnlyStream(
+          allowsExperimentalTwitchBitrate(
             result.outputs.flatMap(output =>
               output.destinations.map(destination => destination.platform),
             ),
