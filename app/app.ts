@@ -38,6 +38,8 @@ import { UsageStatisticsService } from 'services/usage-statistics';
 import * as remote from '@electron/remote';
 import { RealmService } from 'app-services';
 import { DiagnosticsService } from 'services/diagnostics';
+import { getMsvcRuntimeInfo } from 'util/msvc-runtime';
+import { getOS, OS } from 'util/operating-systems';
 
 // // TODO: commented until we remove slap library
 // // For React Windows
@@ -55,6 +57,27 @@ type TLogType = typeof logTypes[number];
 
 if (isProduction) {
   electron.crashReporter.addExtraParameter('windowId', Utils.getWindowId());
+}
+
+// Tags crash reports with the msvcp140.dll this process loaded. obs-studio-node crashes
+// in mtx_do_lock when that DLL is older than 14.40, and the path shows where it came from.
+// Must run before obs.IPC.host(), which is where that crash happens.
+function tagMsvcRuntime() {
+  try {
+    const runtime = getMsvcRuntimeInfo();
+    console.log(`msvcp140.dll: ${runtime.version} at ${runtime.path}`);
+
+    if (isProduction) {
+      // Native crashes reach Sentry through crashReporter; sentry[tags][...] become tags.
+      electron.crashReporter.addExtraParameter('sentry[tags][msvcp140_version]', runtime.version);
+      electron.crashReporter.addExtraParameter('sentry[tags][msvcp140_path]', runtime.path);
+    }
+    Sentry.setTag('msvcp140_version', runtime.version);
+    Sentry.setTag('msvcp140_path', runtime.path);
+  } catch (e: unknown) {
+    // Diagnostics only: never block startup.
+    console.log(`Could not read msvcp140.dll info: ${e}`);
+  }
 }
 
 let usingSentry = false;
@@ -286,6 +309,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // This is used for debugging
     (window as typeof window & { obs: typeof obs }).obs = obs;
+
+    if (getOS() === OS.Windows) tagMsvcRuntime();
 
     // Host a new OBS server instance
     obs.IPC.host(remote.process.env.IPC_UUID);
