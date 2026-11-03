@@ -23,7 +23,7 @@ export function getMsvcRuntimeInfo(): IMsvcRuntimeInfo {
   const dllPath = findLoadedModule('msvcp140.dll');
   if (!dllPath) return { path: 'not loaded', version: 'unknown' };
 
-  return { path: dllPath, version: readFileVersion(dllPath) ?? 'unknown' };
+  return { path: dllPath, version: parseFileVersion(fs.readFileSync(dllPath)) ?? 'unknown' };
 }
 
 function findLoadedModule(fileName: string): string | undefined {
@@ -35,11 +35,15 @@ function findLoadedModule(fileName: string): string | undefined {
   return sharedObjects.find(p => path.win32.basename(p).toLowerCase() === fileName);
 }
 
-// Reads the file version from the DLL's VS_FIXEDFILEINFO resource. The struct starts
-// with the signature 0xFEEF04BD and the struct version 0x00010000, followed by the
-// file version as two 32-bit values: (major << 16 | minor) and (build << 16 | revision).
-function readFileVersion(dllPath: string): string | undefined {
-  const data = fs.readFileSync(dllPath);
+/**
+ * Reads the file version from a PE file's VS_FIXEDFILEINFO resource. The struct starts
+ * with the signature 0xFEEF04BD and the struct version 0x00010000, followed by the
+ * file version as two 32-bit values: (major << 16 | minor) and (build << 16 | revision).
+ *
+ * Returns the first match whose struct version is valid, or undefined if there is none
+ * or the data ends before the file version.
+ */
+export function parseFileVersion(data: Buffer): string | undefined {
   const signature = Buffer.from([0xbd, 0x04, 0xef, 0xfe]);
 
   for (let i = data.indexOf(signature); i >= 0; i = data.indexOf(signature, i + 1)) {
