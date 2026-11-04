@@ -23,6 +23,8 @@ import { promptAction } from 'components-react/modals';
 import TwitterInput from './Twitter';
 import { useVuex } from 'components-react/hooks';
 import GoLiveAutoOptimizer from './GoLiveAutoOptimizer';
+import { VideoSettingsService } from 'services/settings-v2/video';
+import { StreamSettingsService } from 'services/settings/streaming';
 
 export default function GoLiveWindow() {
   const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
@@ -84,16 +86,22 @@ function ModalFooter() {
     forceStreamShiftGoLive,
     goLiveWithDefaultCodec,
     showSettings,
+    showVideoSettings,
     setStreamShift,
     clearStreamShiftPending,
     hasValidDisplayAssignment,
     shouldShowConfirm,
     shouldShowGoBackButton,
     shouldShowRecordingSwitcher,
+    isHorizontalAspectRatioMismatched,
+    isVerticalAspectRatioMismatched,
+    recordWhenStreaming,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
     settingsService: inject(SettingsService),
     restreamService: inject(RestreamService),
+    videoSettingsService: inject(VideoSettingsService),
+    streamSettingsService: inject(StreamSettingsService),
 
     close() {
       this.windowsService.actions.closeChildWindow();
@@ -105,6 +113,10 @@ function ModalFooter() {
 
     get streamShiftStatus() {
       return module.streamShiftStatus;
+    },
+
+    get recordWhenStreaming() {
+      return this.streamSettingsService.views.settings.recordWhenStreaming;
     },
 
     async forceStreamShiftGoLive() {
@@ -137,6 +149,24 @@ function ModalFooter() {
       return ['empty', 'prepopulate', 'waitForNewSettings'].includes(module.lifecycle);
     },
 
+    get isHorizontalAspectRatioMismatched() {
+      return (
+        this.videoSettingsService.baseResolutions.horizontal.baseWidth *
+          this.videoSettingsService.outputResolutions.horizontal.outputHeight !==
+        this.videoSettingsService.outputResolutions.horizontal.outputWidth *
+          this.videoSettingsService.baseResolutions.horizontal.baseHeight
+      );
+    },
+
+    get isVerticalAspectRatioMismatched() {
+      return (
+        this.videoSettingsService.baseResolutions.vertical.baseWidth *
+          this.videoSettingsService.outputResolutions.vertical.outputHeight !==
+        this.videoSettingsService.outputResolutions.vertical.outputWidth *
+          this.videoSettingsService.baseResolutions.vertical.baseHeight
+      );
+    },
+
     async goLiveWithDefaultCodec() {
       this.settingsService.actions.setDefaultVideoEncoder();
       return module.confirmGoLive();
@@ -144,6 +174,10 @@ function ModalFooter() {
 
     showSettings() {
       this.settingsService.actions.showSettings('Output');
+    },
+
+    showVideoSettings() {
+      this.settingsService.actions.showSettings('Video');
     },
 
     clearStreamShiftPending() {
@@ -192,6 +226,48 @@ function ModalFooter() {
       secondaryActionFn: showSettings,
     });
   }, [isStreamShiftMode, isDualOutputMode, codec, goLiveWithDefaultCodec, showSettings]);
+
+  const promptMismatchAspectRatio = useCallback(async () => {
+    //
+    let message = '';
+
+    if (isHorizontalAspectRatioMismatched && recordWhenStreaming) {
+      message = $t(
+        'Your base (canvas) resolution and output (scaled) resolution have different aspect ratios, which will cause your recording and stream to appear stretched or distorted. Would you like to continue anyway?',
+      );
+    } else if (isHorizontalAspectRatioMismatched) {
+      message = $t(
+        'Your horizontal base (canvas) resolution and output (scaled) resolution have different aspect ratios, which will cause your stream to appear stretched or distorted. Would you like to continue anyway?',
+      );
+    } else if (isVerticalAspectRatioMismatched) {
+      message = $t(
+        'Your vertical base (canvas) resolution and output (scaled) resolution have different aspect ratios, which will cause your stream to appear stretched or distorted. Would you like to continue anyway?',
+      );
+    } else {
+      message = $t(
+        'Your base (canvas) resolution and output (scaled) resolution have different aspect ratios.',
+      );
+    }
+
+    await promptAction({
+      title: $t('Mismatched Aspect Ratio'),
+      message,
+      btnText: $t('Continue'),
+      fn: () => {
+        confirmGoLive();
+      },
+      cancelBtnText: $t('Cancel'),
+      cancelBtnPosition: 'left',
+      secondaryActionText: $t('Update Resolution'),
+      secondaryActionFn: showVideoSettings,
+    });
+  }, [
+    confirmGoLive,
+    showVideoSettings,
+    recordWhenStreaming,
+    isHorizontalAspectRatioMismatched,
+    isVerticalAspectRatioMismatched,
+  ]);
 
   const promptStreamShift = useCallback(async () => {
     isStreamShiftPromptShown.current = true;
@@ -284,6 +360,11 @@ function ModalFooter() {
       return;
     }
 
+    if (isHorizontalAspectRatioMismatched || isVerticalAspectRatioMismatched) {
+      await promptMismatchAspectRatio();
+      return;
+    }
+
     // StreamingService performs the Stream Shift check. This confirmation may
     // open Auto Optimizer first when the Go Live settings are eligible.
     await confirmGoLive();
@@ -292,6 +373,9 @@ function ModalFooter() {
     hasValidDisplayAssignment,
     hasIncompatibleCodec,
     promptUseDefaultCodec,
+    isHorizontalAspectRatioMismatched,
+    isVerticalAspectRatioMismatched,
+    promptMismatchAspectRatio,
     confirmGoLive,
   ]);
 
