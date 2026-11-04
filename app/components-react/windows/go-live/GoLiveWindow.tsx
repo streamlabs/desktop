@@ -159,6 +159,9 @@ function ModalFooter() {
     },
 
     get isVerticalAspectRatioMismatched() {
+      // Only check vertical aspect ratio mismatch in dual output mode
+      if (!module.isDualOutputMode) return false;
+
       return (
         this.videoSettingsService.baseResolutions.vertical.baseWidth *
           this.videoSettingsService.outputResolutions.vertical.outputHeight !==
@@ -187,6 +190,15 @@ function ModalFooter() {
 
   const [isCoolingDown, setIsCoolingDown] = useState(false);
   const isStreamShiftPromptShown = useRef(false);
+
+  const promptDualOutputDisplays = useCallback(() => {
+    alertInfo({
+      name: 'dual-output-info-alert',
+      text: $t(
+        'To use Dual Output you must stream to at least one horizontal and one vertical platform.',
+      ),
+    });
+  }, []);
 
   const promptUseDefaultCodec = useCallback(async () => {
     // If the user is not live but has an incompatible codec, prompt to change codec
@@ -228,7 +240,6 @@ function ModalFooter() {
   }, [isStreamShiftMode, isDualOutputMode, codec, goLiveWithDefaultCodec, showSettings]);
 
   const promptMismatchAspectRatio = useCallback(async () => {
-    //
     let message = '';
 
     if (isHorizontalAspectRatioMismatched && recordWhenStreaming) {
@@ -344,23 +355,21 @@ function ModalFooter() {
   const handleGoLive = useCallback(async () => {
     // Check to see if the user has at least one horizontal and one vertical target
     if (!hasValidDisplayAssignment) {
-      alertInfo({
-        name: 'dual-output-info-alert',
-        text: $t(
-          'To use Dual Output you must stream to at least one horizontal and one vertical platform.',
-        ),
-      });
-
+      promptDualOutputDisplays();
       return;
     }
 
+    const hasAspectRatioMismatch =
+      isHorizontalAspectRatioMismatched || isVerticalAspectRatioMismatched;
+
     // Check for incompatible codec before going live (non-stream-shift case)
-    if (hasIncompatibleCodec) {
+    // Check for aspect ratio mismatch also so the aspect ratio is still checked
+    if (hasIncompatibleCodec && !hasAspectRatioMismatch) {
       await promptUseDefaultCodec();
       return;
     }
 
-    if (isHorizontalAspectRatioMismatched || isVerticalAspectRatioMismatched) {
+    if (hasAspectRatioMismatch) {
       await promptMismatchAspectRatio();
       return;
     }
