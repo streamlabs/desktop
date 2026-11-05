@@ -134,8 +134,8 @@ jobs:
 
     strategy:
       matrix:
-        chunk: [1, 2, 3, 4]
-      max-parallel: 4
+        chunk: [1, 2, 3, 4, 5, 6]
+      max-parallel: 6
       fail-fast: false
 
     steps:
@@ -250,7 +250,7 @@ jobs:
           SLOBS_TEST_USER_POOL_TOKEN: ${{ secrets.SLOBS_TEST_USER_POOL_TOKEN }}
           BROWSER_SOURCE_HARDWARE_ACCELERATION: 'OFF'
           SLOBS_TEST_STREAM_KEY: ${{ secrets.SLOBS_TEST_STREAM_KEY }}
-          SLOBS_TEST_RUN_CHUNK: '${{ matrix.chunk }}/4'
+          SLOBS_TEST_RUN_CHUNK: '${{ matrix.chunk }}/6'
           SLOBS_TEST_TIMINGS_PREPARED: '1'
           # Variables for CI analytics
           BUILD_BUILDID: ${{ github.run_id }}
