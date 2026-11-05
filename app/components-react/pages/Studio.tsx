@@ -18,7 +18,7 @@ export default function Studio(p: { onTotalWidth: (width: Number) => void; class
   }
 
   const { elementsToRender, slottedElements, layout, currentTab } = useVuex(() => ({
-    elementsToRender: LayoutService.views.elementsToRender,
+    elementsToRender: LayoutService.views.mainElementsToRender,
     slottedElements: LayoutService.views.currentTab.slottedElements,
     layout: LayoutService.views.component,
     currentTab: LayoutService.views.currentTab,
