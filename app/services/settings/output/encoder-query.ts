@@ -141,8 +141,10 @@ export class EncoderQueryService extends Service {
     // Keyed on the full target set, so enabling or disabling a platform lands on a
     // different entry instead of reusing a list filtered for a different destination.
     const cacheKey = `${mode}:${targets.join('+') || 'none'}`;
-    return this.resolveStreamingEncoderEntry(cacheKey, () =>
-      this.queryEncodersForTargets(mode, targets),
+    return this.resolveStreamingEncoderEntry(
+      cacheKey,
+      () => this.queryEncodersForTargets(mode, targets),
+      { allowLiveInstance: true },
     );
   }
 
@@ -152,14 +154,20 @@ export class EncoderQueryService extends Service {
    * dropdown options should ever be narrowed by the target-set intersection.
    */
   private getDeviceStreamingEncoderEntry(mode: TOutputSettingsMode): IStreamingEncoderResult {
-    return this.resolveStreamingEncoderEntry(`${mode}:device`, () =>
-      this.queryEncodersForPlatform(mode, null),
+    // Never read the device entry from a live instance: it backs encoder metadata
+    // (family/codec/preset), and a live instance's list is filtered by that output's
+    // service — or by no service at all while an output is still being set up.
+    return this.resolveStreamingEncoderEntry(
+      `${mode}:device`,
+      () => this.queryEncodersForPlatform(mode, null),
+      { allowLiveInstance: false },
     );
   }
 
   private resolveStreamingEncoderEntry(
     cacheKey: string,
     query: () => IEncoderOption[] | null,
+    { allowLiveInstance }: { allowLiveInstance: boolean },
   ): IStreamingEncoderResult {
     try {
       // While actively streaming, the running output already carries the real service:
@@ -167,9 +175,14 @@ export class EncoderQueryService extends Service {
       // a cached or stale list. Recording-only sessions (isStreaming false even though a
       // streaming dependency exists for the recording) fall through to the query below,
       // so they still get the target-set intersection instead of this shortcut.
-      if (this.streamingService.isStreaming) {
+      //
+      // isStreaming is true as soon as either display is live, so during dual output
+      // Go Live the instance returned here can be the second output, created but not yet
+      // given a service. OSN filters service-checked encoders (e.g. NVENC) out of a
+      // service-less instance's list, so only trust an instance that has a service.
+      if (allowLiveInstance && this.streamingService.isStreaming) {
         const live = this.streamingService.getStreamingInstance();
-        if (live && hasGetAvailableEncoders(live)) {
+        if (live && live.service && hasGetAvailableEncoders(live)) {
           const encoders = live.getAvailableEncoders();
           return { encoders, options: mapEncoders(encoders) };
         }
