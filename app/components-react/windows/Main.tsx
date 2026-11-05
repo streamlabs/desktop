@@ -17,6 +17,8 @@ import { useDockHasContent } from 'components-react/hooks/useDockHasContent';
 import StudioFooter from 'components-react/root/StudioFooter';
 import Loader from 'components-react/pages/Loader';
 import ResizeBar from 'components-react/root/ResizeBar';
+import HelpTip from 'components-react/shared/HelpTip';
+import { EDismissable } from 'services/dismissables';
 import antdThemes from 'styles/antd/index';
 import { EStreamingState } from 'services/streaming';
 import { ELayoutElement } from 'services/layout';
@@ -293,6 +295,9 @@ export default function Main() {
     onTotalWidth: (width: number) => void;
   }>;
 
+  let visibleDockWidth = 0;
+  if (renderDock) visibleDockWidth = isDockCollapsed ? COLLAPSED_DOCK_WIDTH : dockWidth;
+
   const CACHED_PAGES = ['BrowseOverlays', 'PlatformAppStore'];
   if (CACHED_PAGES.includes(page)) {
     activeCachedPages.current.add(page);
@@ -383,6 +388,9 @@ export default function Main() {
             setDockWidth={setDockWidth}
           />
         )}
+        {!isOnboarding && !showLoadingSpinner && (
+          <DockLayoutEditorDismissible onLeft={leftDock} dockWidth={visibleDockWidth} />
+        )}
       </div>
       <Animation transitionName="ant-fade">
         {(!uiReady || showLoadingSpinner) && (
@@ -395,6 +403,9 @@ export default function Main() {
     </div>
   );
 }
+
+// Must match the width of `.dock-collapsed`
+const COLLAPSED_DOCK_WIDTH = 20;
 
 interface IDockContainerProps {
   max: number;
@@ -427,6 +438,29 @@ const Chevron = memo(function Chevron(p: {
     </div>
   );
 });
+
+/**
+ * Points at the inner edge of the dock. Rendered beside the dock rather than inside it so it
+ * still shows when the dock has nothing to render, in which case it points at the window edge.
+ * Must be a child of the (relatively positioned) main contents.
+ */
+function DockLayoutEditorDismissible(p: { onLeft?: boolean; dockWidth: number }) {
+  const offset = `calc(${p.dockWidth}px + 14px)`;
+  return (
+    <HelpTip
+      title={$t('New: Dock Layouts')}
+      dismissableKey={EDismissable.DockLayouts}
+      position={p.onLeft ? { bottom: '52px', left: offset } : { bottom: '52px', right: offset }}
+      arrowPosition={p.onLeft ? 'left' : 'right'}
+    >
+      <div>
+        {$t(
+          'Stack the Mini Feed above Multichat, or place any item in the dock, from the Layout Editor.',
+        )}
+      </div>
+    </HelpTip>
+  );
+}
 
 const DockContainer = memo(function DockContainer(p: IDockContainerProps) {
   const isDockCollapsed = useRealmObject(Services.CustomizationService.state).dockCollapsed;

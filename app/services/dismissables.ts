@@ -20,6 +20,7 @@ export enum EDismissable {
   EnhancedBroadcasting = 'enhanced_broadcasting',
   StreamAvatarAutomationsWelcome = 'stream_avatar_automations_welcome',
   HighlighterBanner = 'highlighter_banner',
+  DockLayouts = 'dock_layouts',
 }
 
 interface IDismissablesServiceState {
