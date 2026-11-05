@@ -1,7 +1,10 @@
 import { test, TExecutionContext, useWebdriver } from '../helpers/webdriver';
 import { ApiClient, getApiClient } from '../helpers/api-client';
 import { IJsonRpcResponse } from '../../app/services/api/jsonrpc';
+import { ScenesService } from '../../app/services/api/external-api/scenes';
+import { sleep } from '../helpers/sleep';
 import { cloneDeep } from 'lodash';
+import * as net from 'net';
 
 useWebdriver();
 
@@ -281,6 +284,54 @@ test('Connect streamdeck device', async t => {
   ]);
 
   t.pass();
+});
+
+test('Malformed request disconnects the client', async t => {
+  const api = await getApiClient();
+  const scenesService = api.getResource<ScenesService>('ScenesService');
+  const sceneName = 'Sent after disconnect';
+
+  const socket = net.connect({ port: 28194, host: '127.0.0.1', allowHalfOpen: true });
+  await new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => reject('Could not connect to the TCP API'), 5000);
+    socket.once('connect', () => {
+      clearTimeout(timeout);
+      resolve();
+    });
+    socket.once('error', e => {
+      clearTimeout(timeout);
+      reject(e);
+    });
+  });
+  socket.on('error', () => {});
+  // 'end' is only emitted once the error response we get back has been read
+  socket.resume();
+
+  // the server should drop us as soon as it sees a line that isn't JSON-RPC
+  await new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => reject('Server did not close the connection'), 5000);
+    const onClosed = () => {
+      clearTimeout(timeout);
+      resolve();
+    };
+    socket.once('end', onClosed);
+    socket.once('close', onClosed);
+    socket.write('POST / HTTP/1.1\r\nHost: 127.0.0.1:28194\r\n\r\n');
+  });
+
+  // keep sending from our side of the connection, this must not reach the API
+  socket.write(
+    JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'createScene',
+      params: { resource: 'ScenesService', args: [sceneName] },
+    }) + '\n',
+  );
+  await sleep(1000);
+  socket.destroy();
+
+  t.false(scenesService.getScenes().some(scene => scene.name === sceneName));
 });
 
 /**
