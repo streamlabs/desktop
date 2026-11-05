@@ -6,7 +6,7 @@ import {
   TPlatformCapability,
   TStartStreamOptions,
   TPlatformCapabilityMap,
-  TLiveDockFeature,
+  TMultichatFeature,
   platformLabels,
 } from './index';
 import { StreamingService } from 'services/streaming';
@@ -48,7 +48,7 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
 
   abstract capabilities: Set<TPlatformCapability>;
 
-  abstract liveDockFeatures: Set<TLiveDockFeature>;
+  abstract multichatFeatures: Set<TMultichatFeature>;
 
   @ExecuteInCurrentWindow()
   hasCapability<T extends TPlatformCapability>(capability: T): this is TPlatformCapabilityMap[T] {
@@ -56,8 +56,8 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
   }
 
   @ExecuteInCurrentWindow()
-  hasLiveDockFeature(feature: TLiveDockFeature) {
-    return this.liveDockFeatures.has(feature);
+  hasMultichatFeature(feature: TMultichatFeature) {
+    return this.multichatFeatures.has(feature);
   }
 
   get mergeUrl() {
