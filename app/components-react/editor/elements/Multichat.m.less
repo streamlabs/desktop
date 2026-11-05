@@ -1,0 +1,67 @@
+@import '../../../styles/index';
+
+.multichat {
+  position: relative;
+  z-index: @z-dock;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+
+  &.can-animate {
+    transition: width 300ms;
+  }
+
+  &.multichat--left {
+    background-color: var(--section);
+  }
+}
+
+.multichat-expanded-contents {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.multichat-chat {
+  .flex();
+  .flex--column();
+  .flex--grow();
+
+  :global(.ant-menu-horizontal) {
+    flex-grow: 1;
+    width: 100%;
+  }
+}
+
+.multichat-chat--offline {
+  height: 100%;
+}
+
+.multichat-chat__img--offline {
+  .flex();
+  .flex--center();
+  .flex--column();
+
+  width: 60%;
+  margin-bottom: 16px;
+}
+
+.multichat-chat-tabs__icons {
+  display: flex;
+  flex-grow: 1;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 8px 0 8px 8px;
+}
+
+.multichat-chat-tabs__popout {
+  cursor: pointer;
+}
+
+.multichat-chat-tabs__info {
+  cursor: pointer;
+}
+
+.multichat-platform-app-webview {
+  .flex--grow();
+}

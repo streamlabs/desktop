@@ -3,6 +3,7 @@ export { LegacyEvents } from './LegacyEvents';
 export { SceneSelectorElement as Scenes } from './SceneSelector';
 export { SourceSelectorElement as Sources } from './SourceSelector';
 export { Mixer } from './Mixer';
+export { Multichat } from './Multichat';
 export { RecordingPreview } from './RecordingPreview';
 export { StreamPreview } from './StreamPreview';
 export { Browser } from './Browser';

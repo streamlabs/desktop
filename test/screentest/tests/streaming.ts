@@ -77,7 +77,7 @@ platforms.forEach(platform => {
     await sleep(2000);
 
     // open the editStreamInfo dialog
-    await (await app.client.$('[data-testid=multichat-edit]')).click();
+    await (await app.client.$('[data-testid=dock-edit-stream]')).click();
     await focusChild();
     await (await app.client.$('input')).waitForExist({ timeout: 20 * 1000 });
     await makeScreenshots(t, 'in_stream');

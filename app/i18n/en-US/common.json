@@ -155,5 +155,6 @@
   "Reactive Data Editor": "Reactive Data Editor",
   "Destinations": "Destinations",
   "Not enabled": "Not enabled",
-  "Multichat": "Multichat"
+  "Multichat": "Multichat",
+  "Multichat is not supported for your platform.": "Multichat is not supported for your platform."
 }
