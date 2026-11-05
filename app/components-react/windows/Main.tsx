@@ -10,10 +10,10 @@ import * as appPages from 'components-react/pages';
 import TitleBar from 'components-react/shared/TitleBar';
 import { Services } from 'components-react/service-provider';
 import NavMenu from 'components-react/nav-menu/NavMenu';
-import { isMultichatSupported } from 'components-react/editor/elements/Multichat';
 import { getElementMins } from 'components-react/editor/renderLayoutElements';
 import Dock from 'components-react/root/Dock';
 import DockHeader from 'components-react/root/DockHeader';
+import { useDockHasContent } from 'components-react/hooks/useDockHasContent';
 import StudioFooter from 'components-react/root/StudioFooter';
 import Loader from 'components-react/pages/Loader';
 import ResizeBar from 'components-react/root/ResizeBar';
@@ -88,7 +88,6 @@ export default function Main() {
     applicationLoading,
     hideStyleBlockers,
     streamingStatus,
-    multichatSupported,
     activeSceneId,
     protectedModeEnabled,
     isTwitchUnprotectedStream,
@@ -98,7 +97,6 @@ export default function Main() {
     applicationLoading: AppService.state.loading,
     hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
     streamingStatus: StreamingService.views.streamingStatus,
-    multichatSupported: isMultichatSupported(UserService.views.platform),
     activeSceneId: ScenesService.views.activeSceneId,
     protectedModeEnabled: StreamSettingsService.views.protectedModeEnabled,
     isTwitchUnprotectedStream: StreamingService.views.isTwitchUnprotectedStream,
@@ -115,10 +113,7 @@ export default function Main() {
   // Multichat is not shown in the dock when logged out or on platforms that don't support it, so
   // a dock that only holds Multichat has nothing to show. Other elements don't need a login.
   const dockKey = dockElements.join();
-  const dockHasContent = useMemo(
-    () => dockElements.some(element => element !== ELayoutElement.Multichat || multichatSupported),
-    [dockKey, multichatSupported],
-  );
+  const dockHasContent = useDockHasContent();
 
   const renderDock = useMemo(() => {
     return !isOnboarding && hasDock && !showLoadingSpinner && dockHasContent;
