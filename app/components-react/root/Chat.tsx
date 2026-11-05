@@ -25,7 +25,10 @@ export default function Chat(props: {
     const cancelUnload = onUnload(() => service.actions.unmountChat(remote.getCurrentWindow().id));
 
     const debouncedCheckResize = debounce(checkResize, 100);
-    window.addEventListener('resize', debouncedCheckResize);
+
+    // The chat view is positioned natively, so it must follow its container when it is resized.
+    const resizeObserver = new ResizeObserver(debouncedCheckResize);
+    if (chatEl.current) resizeObserver.observe(chatEl.current);
 
     // Work around an electron bug on mac where chat is not interactable
     // after leaving fullscreen until chat is remounted.
@@ -45,7 +48,7 @@ export default function Chat(props: {
     setTimeout(checkResize, 100);
 
     return () => {
-      window.removeEventListener('resize', debouncedCheckResize);
+      resizeObserver.disconnect();
       debouncedCheckResize.cancel();
 
       if (getOS() === OS.Mac) {
