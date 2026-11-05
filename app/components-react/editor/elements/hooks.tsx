@@ -2,6 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { $t } from 'services/i18n';
 import styles from './BaseElement.m.less';
 import Scrollable from 'components-react/shared/Scrollable';
+import { Services } from 'components-react/service-provider';
+import { useRealmObject } from 'components-react/hooks/realm';
+
+/**
+ * Props passed to every layout element by the layout renderer.
+ */
+export interface ILayoutElementProps {
+  /** Whether the element is rendered in the dock rather than the main layout grid. */
+  inDock?: boolean;
+}
+
+/**
+ * Whether an element is hidden because it lives in a collapsed dock. Elements with embedded
+ * or expensive content (webviews, native views, polling) should render nothing while this is
+ * true so they don't consume resources while out of sight.
+ */
+export function useDockCollapsed(inDock?: boolean) {
+  const { dockCollapsed } = useRealmObject(Services.CustomizationService.state);
+  return !!inDock && dockCollapsed;
+}
 
 export default function useBaseElement(
   element: React.ReactNode,
