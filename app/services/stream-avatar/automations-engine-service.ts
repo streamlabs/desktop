@@ -267,6 +267,8 @@ export class AutomationsEngineService extends Service {
   }
 
   private async checkAndTriggerAutomations(state: GameState, prevState: GameState) {
+    if (!this.automationsService.settings.isEnabled) return;
+
     const automations = this.automationsService.state.automations.filter(a => a.enabled);
     const currentGame = this.getCurrentGame().toLowerCase();
 

@@ -1,5 +1,4 @@
 @import "../../styles/colors";
-@import "../../styles/ultra";
 @import "../../styles/index";
 
 .vision-landing {
@@ -28,62 +27,42 @@
 
   &-contents {
     min-height: 100%;
-    padding: 4 * @spacing;
+    padding: 2 * @spacing;
     background-color: var(--section);
-    text-align: center;
 
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     gap: 4 * @spacing;
   }
 }
 
 .header {
-  font-size: 32px;
-  font-weight: @medium;
-  margin: 0;
   display: flex;
   flex-flow: row wrap;
-  align-items: center;
-  justify-content: center;
-  column-gap: 0.3em;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2 * @spacing;
 
-  &-ultra {
-    .ultra-text('warm');
-
-    &-text {
-      .ultra-text();
-    }
-  }
-}
-
-.vision-toggle {
-  @borderWidth: 2px;
-  @borderRadius: 4px;
-  @bloomWidth: 4px;
-
-  // Match padding/border padding of .ultra-card().
-  padding: @bloomWidth;
-  border: @borderWidth solid transparent;
-
-  &:hover {
-    cursor: pointer;
+  &-title {
+    font-size: 24px;
+    font-weight: @medium;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.3em;
   }
 
-  &&-emphasis {
-    .ultra-card(@borderWidth, @borderRadius, @bloomWidth, var(--background));
+  &-subtitle {
+    margin: 0;
+    color: var(--paragraph);
   }
 
-  :global(.ant-form-item) {
-    margin: 0px;
-    padding: 4px 10px;
-    border-radius: @borderRadius;
-    background-color: var(--background);
-
-    label:hover {
-      cursor: pointer;
-    }
+  &-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: @spacing;
   }
 }
 
@@ -95,7 +74,7 @@
   justify-content: center;
 
   &-inner {
-    max-width: min(1400px, 100%);
+    max-width: min(1600px, 100%);
     display: grid;
     gap: 2 * @spacing;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -106,19 +85,25 @@
   border: 1px solid transparent;
   border-radius: 2 * @radius;
   padding: 2 * @spacing;
-  text-align: center;
+  text-align: left;
   background-color: var(--background);
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: @spacing;
 
+  p {
+    margin: 0;
+    flex: 1;
+    color: var(--paragraph);
+  }
+
   &-image {
     flex: 1;
 
     img {
       width: 100%;
-      height: auto;
+      aspect-ratio: 4 / 3;
     }
   }
 
@@ -135,8 +120,17 @@
 }
 
 .supported-games {
+  text-align: center;
+  color: var(--paragraph);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: @spacing;
+  cursor: pointer;
+
   h3 {
-    color: var(--midtone);
+    color: var(--paragraph);
+    margin: 0;
   }
 
   &-list {
@@ -149,16 +143,33 @@
   }
 }
 
+.game-icon {
+  display: inline-block;
+  height: 32px;
+  width: 96px;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+}
+
 .more-games {
-  &--icon {
-    cursor: pointer;
+  &-text {
+    margin: 0;
   }
 
   &-list {
-    columns: 2;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px 16px;
     list-style: none;
     padding: 0;
     margin: 0;
+    max-height: 60vh;
+    overflow-y: auto;
   }
 
   &--cta {

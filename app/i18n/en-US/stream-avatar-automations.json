@@ -1,4 +1,8 @@
 {
+  "Run automations": "Run automations",
+  "Automations are turned off.": "Automations are turned off.",
+  "Automations will not run until you turn them back on.": "Automations will not run until you turn them back on.",
+  "Turn On": "Turn On",
   "%{count}/%{max} automations used": "%{count}/%{max} automations used",
   "Automation limit reached": "Automation limit reached",
   "Free includes %{free} enabled automations, Ultra %{ultra}, and Ultra+ %{ultraPlus}.": "Free includes %{free} enabled automations, Ultra %{ultra}, and Ultra+ %{ultraPlus}.",

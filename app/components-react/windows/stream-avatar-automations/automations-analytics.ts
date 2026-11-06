@@ -6,6 +6,7 @@ type TAutomationsAction =
   | 'automation_created'
   | 'automation_updated'
   | 'limit_reached'
+  | 'automations_toggled'
   | 'upsell_clicked';
 
 /** Which code path ran into the enabled-automations cap. */
@@ -25,6 +26,8 @@ export const AutomationsAnalytics = {
     AutomationsAnalytics.track('template_added', { game, trigger, actions }),
   automationCreated: (game: string, trigger: string, actions: string[]) =>
     AutomationsAnalytics.track('automation_created', { game, trigger, actions }),
+  automationsToggled: (enabled: boolean) =>
+    AutomationsAnalytics.track('automations_toggled', { enabled, source: 'automations_page' }),
   automationUpdated: (game: string, trigger: string, actions: string[]) =>
     AutomationsAnalytics.track('automation_updated', { game, trigger, actions }),
   /** The user hit the cap and was shown the upsell modal (or the Ultra+ hard-cap toast). */
