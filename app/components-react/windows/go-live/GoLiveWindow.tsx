@@ -143,8 +143,9 @@ function ModalFooter() {
 
     async goLiveWithDefaultCodec() {
       this.settingsService.actions.setDefaultVideoEncoder();
-      // A loaded optimized profile was fetched for the previous encoder, and applying it
-      // in goLive would switch the encoder back (e.g. to HEVC). Drop it for this start.
+      // A loaded optimized profile was fetched for the previous encoder; drop it. A profile
+      // fetch still in flight can restore it, so goLive also skips any profile fetched for
+      // a different encoder than the one that will start.
       module.updateSettings({ optimizedProfile: undefined });
       return module.confirmGoLive();
     },

@@ -70,7 +70,10 @@ import {
   INotification,
   NotificationsService,
 } from 'services/notifications';
-import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
+import {
+  IEncoderProfile,
+  VideoEncodingOptimizationService,
+} from 'services/video-encoding-optimizations';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import {
   getDestinationId,
@@ -810,15 +813,23 @@ export class StreamingService
     // apply optimized settings
     const optimizer = this.videoEncodingOptimizationService;
     if (optimizer.state.useOptimizedProfile && settings.optimizedProfile) {
-      if (unattendedMode && optimizer.canApplyProfileFromCache()) {
-        optimizer.applyProfileFromCache();
-      } else {
-        optimizer.applyProfile(settings.optimizedProfile);
-      }
-      await this.runCheck('applyOptimizedSettings');
+      const profile =
+        unattendedMode && optimizer.canApplyProfileFromCache()
+          ? optimizer.state.lastSelectedProfile
+          : settings.optimizedProfile;
 
-      // A profile writes back the encoder it was fetched for (e.g. HEVC), which can undo a
-      // codec switch made after it loaded. Validate the encoder that will actually start.
+      // A profile is fetched for the encoder selected at that time, and applying it writes
+      // that encoder back. If the encoder has changed since (e.g. "Use H.264 Codec" after an
+      // HEVC profile loaded, or a fetch that resolved after the switch), the profile is stale:
+      // skip it rather than undo the switch.
+      if (this.isOptimizedProfileForCurrentEncoder(profile)) {
+        optimizer.applyProfile(profile);
+        await this.runCheck('applyOptimizedSettings');
+      } else {
+        console.log('Skipping optimized profile fetched for a different encoder', profile.encoder);
+      }
+
+      // Validate the encoder that will actually start.
       this.throwIfPlatformCodecIncompatible(platforms);
     }
 
@@ -4484,6 +4495,21 @@ export class StreamingService
     }
 
     return findPlatformCodecIncompatibility(platforms, codec);
+  }
+
+  /**
+   * Whether `profile` was fetched for the currently selected streaming encoder.
+   * `fetchOptimizedProfile` stamps the profile with the encoder family selected at fetch time.
+   * If the current family cannot be resolved, the profile is applied as before.
+   */
+  private isOptimizedProfileForCurrentEncoder(profile: IEncoderProfile): boolean {
+    let family: string | undefined;
+    try {
+      family = this.outputSettingsService.getStreamingEncoderFamily();
+    } catch (e: unknown) {
+      console.warn('Could not resolve the streaming encoder family for the optimized profile', e);
+    }
+    return !family || !profile.encoder || profile.encoder === family;
   }
 
   /** Sets and throws `PLATFORM_UNSUPPORTED_CODEC` if a platform rejects the streaming codec. */
