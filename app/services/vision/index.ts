@@ -13,7 +13,7 @@ import { ObjectSchema } from 'realm';
 import { Subject } from 'rxjs';
 import { InitAfter, Inject, Service } from 'services';
 import { RealmObject } from 'services/realm';
-import { ISource, TSourceType } from 'services/sources';
+import { ISource } from 'services/sources';
 import { GAME_NAMES } from 'services/stream-avatar/engine/conditions';
 import { WidgetType } from 'services/widgets';
 import { authorizedHeaders, jfetch } from 'util/requests';
@@ -194,7 +194,12 @@ export class VisionService extends Service {
   }
 
   async uninstall() {
+    if (this.state.isInstalling) {
+      this.log('Cannot uninstall while an install is in progress.');
+      return;
+    }
     this.writeEnabledState(false);
+
     await this.stop();
     await this.visionUpdater.uninstall();
     this.writeState({
@@ -215,9 +220,7 @@ export class VisionService extends Service {
       const { needsUpdate, latestManifest } = await this.visionUpdater.checkNeedsUpdate();
 
       if (needsUpdate) {
-        this.writeState({ isCurrentlyUpdating: true });
-
-        // make sure vision is stopped
+        this.writeState({ isInstalling: true, isCurrentlyUpdating: true });
         await this.visionRunner.stop();
 
         try {
@@ -229,6 +232,7 @@ export class VisionService extends Service {
             installedVersion: latestManifest?.version || '',
             needsUpdate: false,
             isCurrentlyUpdating: false,
+            isInstalling: false,
             percentDownloaded: 0,
           });
 
@@ -240,6 +244,7 @@ export class VisionService extends Service {
             needsUpdate: true,
             hasFailedToUpdate: true,
             isCurrentlyUpdating: false,
+            isInstalling: false,
             percentDownloaded: 0,
           });
 
@@ -276,6 +281,9 @@ export class VisionService extends Service {
           latestManifest,
         } = await this.visionUpdater.checkNeedsUpdate();
 
+        // Disabled (or uninstalled) while we were checking; don't resurrect it.
+        if (!this.enabledState.isEnabled) return;
+
         this.writeState({
           needsUpdate,
           installedVersion: installedManifest?.version ?? '',
@@ -294,6 +302,9 @@ export class VisionService extends Service {
             return { started: false, reason: 'needs-update' as const };
           }
         }
+
+        // Disabled (or uninstalled) while we were checking; don't start it.
+        if (!this.enabledState.isEnabled) return;
 
         const { pid, port } = await this.visionRunner.ensureStarted({ debugMode });
         this.writeState({ pid, port, isRunning: true });

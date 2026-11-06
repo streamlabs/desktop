@@ -273,6 +273,9 @@ export class AutomationsEngineService extends Service {
     const currentGame = this.getCurrentGame().toLowerCase();
 
     for (const automation of automations) {
+      // Actions can await (e.g. wait_for_ms), so the switch may flip mid-pass.
+      if (!this.automationsService.settings.isEnabled) return;
+
       if (automation.scenes?.length) {
         const activeSceneName = this.scenesService.views.activeScene?.name;
         if (!activeSceneName || !automation.scenes.includes(activeSceneName)) continue;
@@ -307,6 +310,8 @@ export class AutomationsEngineService extends Service {
       });
 
       for (const exportedAction of automation.actions) {
+        if (!this.automationsService.settings.isEnabled) return;
+
         try {
           const [action] = await Actions.fromExported([exportedAction as any], this.actionContext);
           await Actions.process({

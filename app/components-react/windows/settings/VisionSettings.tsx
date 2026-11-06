@@ -135,6 +135,7 @@ function VisionGeneralSettings({
       >
         <Switch
           size="small"
+          aria-label={$t('Automations')}
           checked={toggles.automations}
           disabled={!isLoggedIn}
           onChange={checked => setFeature('automations', checked)}
@@ -149,6 +150,7 @@ function VisionGeneralSettings({
       >
         <Switch
           size="small"
+          aria-label={$t('Reactive Overlays')}
           checked={toggles.reactiveOverlays}
           disabled={!isLoggedIn}
           onChange={checked => setFeature('reactiveOverlays', checked)}
@@ -163,6 +165,7 @@ function VisionGeneralSettings({
       >
         <Switch
           size="small"
+          aria-label={$t('Game Pulse Widget')}
           checked={toggles.gamePulse}
           disabled={!isLoggedIn}
           onChange={checked => setFeature('gamePulse', checked)}
@@ -175,6 +178,7 @@ function VisionGeneralSettings({
       >
         <Switch
           size="small"
+          aria-label={$t('Sidekick')}
           checked={toggles.sidekick}
           disabled={!isLoggedIn}
           onChange={checked => setFeature('sidekick', checked)}
@@ -297,7 +301,9 @@ export function VisionSettings() {
 
   const { toggles, allFeaturesOff, setFeature } = useVisionFeatureToggles((feature, checked) => {
     trackEvent('toggle-feature', { feature, enabled: String(checked) });
-    if (feature === 'automations') AutomationsAnalytics.automationsToggled(checked);
+    if (feature === 'automations') {
+      AutomationsAnalytics.automationsToggled(checked, 'vision_settings');
+    }
   });
 
   useEffect(() => {

@@ -11,6 +11,8 @@ type TAutomationsAction =
 
 /** Which code path ran into the enabled-automations cap. */
 export type TLimitTrigger = 'toggle' | 'editor' | 'templates';
+/** Which surface the global automations switch was flipped from. */
+export type TAutomationsToggleSource = 'automations_page' | 'vision_settings';
 /** Which surface the user clicked through from. */
 export type TUpsellSource = 'modal' | 'header';
 
@@ -26,8 +28,8 @@ export const AutomationsAnalytics = {
     AutomationsAnalytics.track('template_added', { game, trigger, actions }),
   automationCreated: (game: string, trigger: string, actions: string[]) =>
     AutomationsAnalytics.track('automation_created', { game, trigger, actions }),
-  automationsToggled: (enabled: boolean) =>
-    AutomationsAnalytics.track('automations_toggled', { enabled, source: 'automations_page' }),
+  automationsToggled: (enabled: boolean, source: TAutomationsToggleSource = 'automations_page') =>
+    AutomationsAnalytics.track('automations_toggled', { enabled, source }),
   automationUpdated: (game: string, trigger: string, actions: string[]) =>
     AutomationsAnalytics.track('automation_updated', { game, trigger, actions }),
   /** The user hit the cap and was shown the upsell modal (or the Ultra+ hard-cap toast). */
