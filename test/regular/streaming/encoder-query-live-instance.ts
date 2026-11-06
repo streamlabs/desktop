@@ -18,7 +18,9 @@ useWebdriver({ restartAppAfterEachTest: false });
  * hardware is required.
  */
 
-type TLiveInstanceState = 'none' | 'without-service' | 'with-service';
+// 'with-service-kick': streaming to Kick (rtmp_custom), whose live list still includes HEVC
+// because the service declares no codecs; Desktop must filter it by Kick's codec table.
+type TLiveInstanceState = 'none' | 'without-service' | 'with-service' | 'with-service-kick';
 
 interface IQueryResult {
   metadataNames: string[];
@@ -59,13 +61,15 @@ async function queryWithLiveInstance(
           ];
           // What OSN returns for an instance: a service-less instance drops
           // service-checked encoders, which is how the selected encoder went missing.
-          const liveEncoders = [encoder('obs_x264', 'x264', 'h264')];
+          // An rtmp_custom service (Kick) declares no codecs, so OSN keeps HEVC in its list.
+          const liveEncoders =
+            state === 'with-service-kick' ? deviceEncoders : [encoder('obs_x264', 'x264', 'h264')];
 
           const live =
             state === 'none'
               ? null
               : {
-                  service: state === 'with-service' ? { name: 'live-service' } : undefined,
+                  service: state.startsWith('with-service') ? { name: 'live-service' } : undefined,
                   getAvailableEncoders: () => liveEncoders,
                 };
 
@@ -78,7 +82,9 @@ async function queryWithLiveInstance(
             value: {
               isStreaming: state !== 'none',
               getStreamingInstance: () => live,
-              views: { enabledPlatforms: [] as string[] },
+              views: {
+                enabledPlatforms: state === 'with-service-kick' ? ['kick'] : ([] as string[]),
+              },
             },
           });
           fixture.queryEncodersForPlatform = () => deviceEncoders;
@@ -151,4 +157,20 @@ test('encoder metadata uses the encoder query when not streaming', async t => {
   t.true(result.metadataNames.includes(SELECTED_ENCODER));
   t.is(result.family, SELECTED_ENCODER);
   t.true(result.optionValues.includes(SELECTED_ENCODER));
+});
+
+test('live encoder options are filtered by the platform codec table', async t => {
+  const result = await queryWithLiveInstance(t, 'with-service-kick');
+
+  t.falsy(result.error);
+  t.deepEqual(
+    result.optionValues,
+    ['obs_x264'],
+    'HEVC should not reappear in the dropdown while streaming to Kick',
+  );
+  t.true(
+    result.metadataNames.includes(SELECTED_ENCODER),
+    'device metadata should stay unfiltered so the selected encoder still resolves',
+  );
+  t.is(result.family, SELECTED_ENCODER);
 });

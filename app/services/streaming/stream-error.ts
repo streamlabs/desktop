@@ -382,6 +382,14 @@ export const errorTypes = {
       return $t('switch to a supported encoder such as x264');
     },
   },
+  PLATFORM_UNSUPPORTED_CODEC: {
+    get message() {
+      return $t('Your streaming encoder uses a codec that one of your platforms does not support');
+    },
+    get action() {
+      return $t('Switch to an encoder whose codec the platform supports, such as H.264');
+    },
+  },
   PRIME_REQUIRED: {
     get message() {
       return $t('This feature is for Ultra members only');

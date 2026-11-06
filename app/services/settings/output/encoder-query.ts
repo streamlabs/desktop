@@ -14,6 +14,7 @@ import { TPlatform } from 'services/platforms';
 import type { IEncoderOption } from 'obs-studio-node';
 import type { TOutputSettingsMode } from './output-settings';
 import { legacyEncoderAliasToObsEncoderIdOrSelf } from './encoder-compatibility';
+import { isVideoCodecSupportedByPlatform } from './platform-codec-support';
 
 interface IWithAvailableEncoders {
   getAvailableEncoders(): IEncoderOption[];
@@ -48,6 +49,19 @@ interface IStreamingEncoderResult {
   // fall back only on failure (not on a real empty result) rely on this distinction.
   encoders: IEncoderOption[] | null;
   options: IObsListOption<string>[];
+}
+
+/**
+ * Drops encoders whose codec any of `platforms` cannot accept. Only needed for platforms OBS
+ * cannot validate (see `PLATFORM_SUPPORTED_VIDEO_CODECS`); others pass everything through.
+ */
+function filterEncodersForPlatforms(
+  encoders: IEncoderOption[],
+  platforms: TPlatform[],
+): IEncoderOption[] {
+  return encoders.filter(encoder =>
+    platforms.every(platform => isVideoCodecSupportedByPlatform(platform, encoder.codec)),
+  );
 }
 
 function intersectEncoders(a: IEncoderOption[], b: IEncoderOption[]): IEncoderOption[] {
@@ -144,7 +158,7 @@ export class EncoderQueryService extends Service {
     return this.resolveStreamingEncoderEntry(
       cacheKey,
       () => this.queryEncodersForTargets(mode, targets),
-      { allowLiveInstance: true },
+      { liveInstanceTargets: targets },
     );
   }
 
@@ -160,14 +174,18 @@ export class EncoderQueryService extends Service {
     return this.resolveStreamingEncoderEntry(
       `${mode}:device`,
       () => this.queryEncodersForPlatform(mode, null),
-      { allowLiveInstance: false },
+      { liveInstanceTargets: null },
     );
   }
 
+  /**
+   * @param liveInstanceTargets Platforms to filter a live instance's encoder list by, or
+   * null to never read from a live instance (the device entry).
+   */
   private resolveStreamingEncoderEntry(
     cacheKey: string,
     query: () => IEncoderOption[] | null,
-    { allowLiveInstance }: { allowLiveInstance: boolean },
+    { liveInstanceTargets }: { liveInstanceTargets: TPlatform[] | null },
   ): IStreamingEncoderResult {
     try {
       // While actively streaming, the running output already carries the real service:
@@ -180,10 +198,17 @@ export class EncoderQueryService extends Service {
       // Go Live the instance returned here can be the second output, created but not yet
       // given a service. OSN filters service-checked encoders (e.g. NVENC) out of a
       // service-less instance's list, so only trust an instance that has a service.
-      if (allowLiveInstance && this.streamingService.isStreaming) {
+      //
+      // The live list is only narrowed by the live output's own service, and rtmp_custom
+      // platforms (Kick, X) declare no codecs, so apply Desktop's platform codec table to it,
+      // the same way queryEncodersForPlatform does for the non-live query.
+      if (liveInstanceTargets && this.streamingService.isStreaming) {
         const live = this.streamingService.getStreamingInstance();
         if (live && live.service && hasGetAvailableEncoders(live)) {
-          const encoders = live.getAvailableEncoders();
+          const encoders = filterEncodersForPlatforms(
+            live.getAvailableEncoders(),
+            liveInstanceTargets,
+          );
           return { encoders, options: mapEncoders(encoders) };
         }
       }
@@ -235,6 +260,11 @@ export class EncoderQueryService extends Service {
   /**
    * Returns null when the target could not be queried at all — no query method, or the
    * query threw. An empty array is a real answer: the platform supports no encoders.
+   *
+   * For a platform, OSN only narrows by codec when the service declares its codecs
+   * (`rtmp_common`). `rtmp_custom` platforms such as Kick are narrowed here using
+   * Desktop's own table. The device query (`platform` null) is never narrowed, because
+   * it is the source of encoder metadata.
    */
   private queryEncodersForPlatform(
     mode: TOutputSettingsMode,
@@ -248,7 +278,9 @@ export class EncoderQueryService extends Service {
         mode === 'Simple' ? SimpleStreamingFactory.create() : AdvancedStreamingFactory.create();
       service = this.setupTempStreamingService(instance, platform);
       if (!hasGetAvailableEncoders(instance)) return null;
-      return instance.getAvailableEncoders();
+      const encoders = instance.getAvailableEncoders();
+      if (!platform) return encoders;
+      return filterEncodersForPlatforms(encoders, [platform]);
     } catch (e: unknown) {
       // Contained per target so one failure cannot discard the narrowing the other
       // targets already contributed.
