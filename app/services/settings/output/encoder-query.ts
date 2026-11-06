@@ -51,6 +51,19 @@ interface IStreamingEncoderResult {
   options: IObsListOption<string>[];
 }
 
+/**
+ * Drops encoders whose codec any of `platforms` cannot accept. Only needed for platforms OBS
+ * cannot validate (see `PLATFORM_SUPPORTED_VIDEO_CODECS`); others pass everything through.
+ */
+function filterEncodersForPlatforms(
+  encoders: IEncoderOption[],
+  platforms: TPlatform[],
+): IEncoderOption[] {
+  return encoders.filter(encoder =>
+    platforms.every(platform => isVideoCodecSupportedByPlatform(platform, encoder.codec)),
+  );
+}
+
 function intersectEncoders(a: IEncoderOption[], b: IEncoderOption[]): IEncoderOption[] {
   return a.filter(encoder => b.some(other => other.name === encoder.name));
 }
@@ -145,7 +158,7 @@ export class EncoderQueryService extends Service {
     return this.resolveStreamingEncoderEntry(
       cacheKey,
       () => this.queryEncodersForTargets(mode, targets),
-      { allowLiveInstance: true },
+      { liveInstanceTargets: targets },
     );
   }
 
@@ -161,14 +174,18 @@ export class EncoderQueryService extends Service {
     return this.resolveStreamingEncoderEntry(
       `${mode}:device`,
       () => this.queryEncodersForPlatform(mode, null),
-      { allowLiveInstance: false },
+      { liveInstanceTargets: null },
     );
   }
 
+  /**
+   * @param liveInstanceTargets Platforms to filter a live instance's encoder list by, or
+   * null to never read from a live instance (the device entry).
+   */
   private resolveStreamingEncoderEntry(
     cacheKey: string,
     query: () => IEncoderOption[] | null,
-    { allowLiveInstance }: { allowLiveInstance: boolean },
+    { liveInstanceTargets }: { liveInstanceTargets: TPlatform[] | null },
   ): IStreamingEncoderResult {
     try {
       // While actively streaming, the running output already carries the real service:
@@ -181,10 +198,17 @@ export class EncoderQueryService extends Service {
       // Go Live the instance returned here can be the second output, created but not yet
       // given a service. OSN filters service-checked encoders (e.g. NVENC) out of a
       // service-less instance's list, so only trust an instance that has a service.
-      if (allowLiveInstance && this.streamingService.isStreaming) {
+      //
+      // The live list is only narrowed by the live output's own service, and rtmp_custom
+      // platforms (Kick, X) declare no codecs, so apply Desktop's platform codec table to it,
+      // the same way queryEncodersForPlatform does for the non-live query.
+      if (liveInstanceTargets && this.streamingService.isStreaming) {
         const live = this.streamingService.getStreamingInstance();
         if (live && live.service && hasGetAvailableEncoders(live)) {
-          const encoders = live.getAvailableEncoders();
+          const encoders = filterEncodersForPlatforms(
+            live.getAvailableEncoders(),
+            liveInstanceTargets,
+          );
           return { encoders, options: mapEncoders(encoders) };
         }
       }
@@ -256,7 +280,7 @@ export class EncoderQueryService extends Service {
       if (!hasGetAvailableEncoders(instance)) return null;
       const encoders = instance.getAvailableEncoders();
       if (!platform) return encoders;
-      return encoders.filter(encoder => isVideoCodecSupportedByPlatform(platform, encoder.codec));
+      return filterEncodersForPlatforms(encoders, [platform]);
     } catch (e: unknown) {
       // Contained per target so one failure cannot discard the narrowing the other
       // targets already contributed.
