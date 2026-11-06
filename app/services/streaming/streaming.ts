@@ -565,21 +565,8 @@ export class StreamingService
     // Fail before any platform is set up (broadcasts created, stream keys fetched) when a
     // target cannot accept the selected codec. OSN only catches this for `rtmp_common`
     // services; `rtmp_custom` platforms like Kick otherwise start and then reconnect forever.
-    const codecIncompatibility = this.getPlatformCodecIncompatibility(platforms);
-    if (codecIncompatibility) {
-      const { platform, codec, supportedCodecs } = codecIncompatibility;
-      const details = $t(
-        '%{platformName} does not support the %{videoCodec} codec. Supported: %{supportedCodecs}. Select a different streaming encoder in Settings > Output.',
-        {
-          platformName: this.views.getPlatformDisplayName(platform),
-          videoCodec: videoCodecLabel(codec),
-          supportedCodecs: supportedCodecs.map(videoCodecLabel).join(', '),
-        },
-      );
-      const error = createStreamError('PLATFORM_UNSUPPORTED_CODEC', { platform }, details);
-      this.setError(error, platform);
-      throwStreamError('PLATFORM_UNSUPPORTED_CODEC', { platform }, details);
-    }
+    // Checked again after the optimized profile is applied, since that can change the encoder.
+    this.throwIfPlatformCodecIncompatible(platforms);
 
     /**
      * SET PLATFORM STREAM SETTINGS
@@ -829,6 +816,10 @@ export class StreamingService
         optimizer.applyProfile(settings.optimizedProfile);
       }
       await this.runCheck('applyOptimizedSettings');
+
+      // A profile writes back the encoder it was fetched for (e.g. HEVC), which can undo a
+      // codec switch made after it loaded. Validate the encoder that will actually start.
+      this.throwIfPlatformCodecIncompatible(platforms);
     }
 
     // start video transmission
@@ -4493,6 +4484,25 @@ export class StreamingService
     }
 
     return findPlatformCodecIncompatibility(platforms, codec);
+  }
+
+  /** Sets and throws `PLATFORM_UNSUPPORTED_CODEC` if a platform rejects the streaming codec. */
+  private throwIfPlatformCodecIncompatible(platforms: TPlatform[]) {
+    const codecIncompatibility = this.getPlatformCodecIncompatibility(platforms);
+    if (!codecIncompatibility) return;
+
+    const { platform, codec, supportedCodecs } = codecIncompatibility;
+    const details = $t(
+      '%{platformName} does not support the %{videoCodec} codec. Supported: %{supportedCodecs}. Select a different streaming encoder in Settings > Output.',
+      {
+        platformName: this.views.getPlatformDisplayName(platform),
+        videoCodec: videoCodecLabel(codec),
+        supportedCodecs: supportedCodecs.map(videoCodecLabel).join(', '),
+      },
+    );
+    const error = createStreamError('PLATFORM_UNSUPPORTED_CODEC', { platform }, details);
+    this.setError(error, platform);
+    throwStreamError('PLATFORM_UNSUPPORTED_CODEC', { platform }, details);
   }
 
   getStreamingInstance(): ISimpleStreaming | IAdvancedStreaming | null {
