@@ -33,7 +33,14 @@ import {
 import { Inject } from 'services/core/injector';
 import moment from 'moment';
 import padStart from 'lodash/padStart';
-import { IOutputSettings, OutputSettingsService, SettingsService } from 'services/settings';
+import {
+  findPlatformCodecIncompatibility,
+  IOutputSettings,
+  IPlatformCodecIncompatibility,
+  OutputSettingsService,
+  SettingsService,
+  videoCodecLabel,
+} from 'services/settings';
 import { WindowsService } from 'services/windows';
 import { Subject } from 'rxjs';
 import {
@@ -554,6 +561,25 @@ export class StreamingService
 
     // all platforms to stream
     const platforms = this.views.enabledPlatforms;
+
+    // Fail before any platform is set up (broadcasts created, stream keys fetched) when a
+    // target cannot accept the selected codec. OSN only catches this for `rtmp_common`
+    // services; `rtmp_custom` platforms like Kick otherwise start and then reconnect forever.
+    const codecIncompatibility = this.getPlatformCodecIncompatibility(platforms);
+    if (codecIncompatibility) {
+      const { platform, codec, supportedCodecs } = codecIncompatibility;
+      const details = $t(
+        '%{platformName} does not support the %{videoCodec} codec. Supported: %{supportedCodecs}. Select a different streaming encoder in Settings > Output.',
+        {
+          platformName: this.views.getPlatformDisplayName(platform),
+          videoCodec: videoCodecLabel(codec),
+          supportedCodecs: supportedCodecs.map(videoCodecLabel).join(', '),
+        },
+      );
+      const error = createStreamError('PLATFORM_UNSUPPORTED_CODEC', { platform }, details);
+      this.setError(error, platform);
+      throwStreamError('PLATFORM_UNSUPPORTED_CODEC', { platform }, details);
+    }
 
     /**
      * SET PLATFORM STREAM SETTINGS
@@ -4445,6 +4471,26 @@ export class StreamingService
   ): instance is IEnhancedBroadcastingSimpleStreaming | IEnhancedBroadcastingAdvancedStreaming {
     if (!instance) return false;
     return 'additionalVideo' in instance;
+  }
+
+  /**
+   * The first of `platforms` whose ingest does not accept the codec of the selected
+   * streaming encoder, or null. Only platforms OBS cannot validate are checked; see
+   * `PLATFORM_SUPPORTED_VIDEO_CODECS`. Returns null if the codec cannot be resolved, so a
+   * metadata gap never blocks Go Live.
+   */
+  getPlatformCodecIncompatibility(
+    platforms: TPlatform[] = this.views.enabledPlatforms,
+  ): IPlatformCodecIncompatibility | null {
+    let codec: string | undefined;
+    try {
+      codec = this.outputSettingsService.getSettings().streaming.codec;
+    } catch (e: unknown) {
+      console.warn('Could not resolve the streaming encoder codec for the platform check', e);
+      return null;
+    }
+
+    return findPlatformCodecIncompatibility(platforms, codec);
   }
 
   getStreamingInstance(): ISimpleStreaming | IAdvancedStreaming | null {

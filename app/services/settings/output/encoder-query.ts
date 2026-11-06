@@ -14,6 +14,7 @@ import { TPlatform } from 'services/platforms';
 import type { IEncoderOption } from 'obs-studio-node';
 import type { TOutputSettingsMode } from './output-settings';
 import { legacyEncoderAliasToObsEncoderIdOrSelf } from './encoder-compatibility';
+import { isVideoCodecSupportedByPlatform } from './platform-codec-support';
 
 interface IWithAvailableEncoders {
   getAvailableEncoders(): IEncoderOption[];
@@ -235,6 +236,11 @@ export class EncoderQueryService extends Service {
   /**
    * Returns null when the target could not be queried at all — no query method, or the
    * query threw. An empty array is a real answer: the platform supports no encoders.
+   *
+   * For a platform, OSN only narrows by codec when the service declares its codecs
+   * (`rtmp_common`). `rtmp_custom` platforms such as Kick are narrowed here using
+   * Desktop's own table. The device query (`platform` null) is never narrowed, because
+   * it is the source of encoder metadata.
    */
   private queryEncodersForPlatform(
     mode: TOutputSettingsMode,
@@ -248,7 +254,9 @@ export class EncoderQueryService extends Service {
         mode === 'Simple' ? SimpleStreamingFactory.create() : AdvancedStreamingFactory.create();
       service = this.setupTempStreamingService(instance, platform);
       if (!hasGetAvailableEncoders(instance)) return null;
-      return instance.getAvailableEncoders();
+      const encoders = instance.getAvailableEncoders();
+      if (!platform) return encoders;
+      return encoders.filter(encoder => isVideoCodecSupportedByPlatform(platform, encoder.codec));
     } catch (e: unknown) {
       // Contained per target so one failure cannot discard the narrowing the other
       // targets already contributed.
