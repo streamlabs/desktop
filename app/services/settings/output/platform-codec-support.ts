@@ -10,12 +10,18 @@ import type { TPlatform } from 'services/platforms';
  * ingest that only takes H.264 then drops the connection right after it connects, leaving the
  * output in a silent reconnect loop.
  *
- * Platforms missing from this table are treated as unconstrained.
+ * Platforms missing from this table are treated as unconstrained. Only add a platform with
+ * direct evidence of what its live ingest accepts: a wrong entry blocks a working encoder.
+ * TikTok, Patreon and Instagram accept H.264 and HEVC and are intentionally left out.
  */
 export const PLATFORM_SUPPORTED_VIDEO_CODECS: Partial<Record<TPlatform, readonly string[]>> = {
   // "KICK currently only supports X264 / H.264 encoding."
   // https://help.kick.com/en/articles/7066931-how-to-stream-on-kick-com
   kick: ['h264'],
+  // X only accepts H.264. obs-studio's rtmp-services `services.json` also declares the
+  // "Twitter" service as h264-only, but Desktop streams to X as rtmp_custom, so OSN never
+  // applies that list.
+  twitter: ['h264'],
 };
 
 const VIDEO_CODEC_LABELS: Record<string, string> = {

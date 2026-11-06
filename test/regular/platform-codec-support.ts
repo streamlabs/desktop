@@ -11,6 +11,19 @@ test('Kick only accepts H.264', t => {
   t.false(isVideoCodecSupportedByPlatform('kick', 'av1'));
 });
 
+test('X only accepts H.264', t => {
+  t.true(isVideoCodecSupportedByPlatform('twitter', 'h264'));
+  t.false(isVideoCodecSupportedByPlatform('twitter', 'hevc'));
+  t.false(isVideoCodecSupportedByPlatform('twitter', 'av1'));
+});
+
+test('platforms that accept HEVC are not constrained', t => {
+  for (const platform of ['tiktok', 'patreon', 'instagram'] as const) {
+    t.true(isVideoCodecSupportedByPlatform(platform, 'h264'), `${platform} h264`);
+    t.true(isVideoCodecSupportedByPlatform(platform, 'hevc'), `${platform} hevc`);
+  }
+});
+
 test('platforms OBS validates itself are not constrained by Desktop', t => {
   // Twitch/YouTube codecs come from obs-studio's services.json and are enforced by OSN.
   t.true(isVideoCodecSupportedByPlatform('twitch', 'hevc'));
