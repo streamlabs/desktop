@@ -4484,7 +4484,9 @@ export class StreamingService
   ): IPlatformCodecIncompatibility | null {
     let codec: string | undefined;
     try {
-      codec = this.outputSettingsService.getSettings().streaming.codec;
+      // Streaming-only lookup: getSettings() also resolves recording encoder metadata, and a
+      // failure there would hide a known streaming codec and skip this check.
+      codec = this.outputSettingsService.getStreamingEncoderCodec();
     } catch (e: unknown) {
       console.warn('Could not resolve the streaming encoder codec for the platform check', e);
       return null;
