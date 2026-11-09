@@ -455,7 +455,7 @@ function DockLayoutEditorDismissible(p: { onLeft?: boolean; dockWidth: number })
     >
       <div>
         {$t(
-          'Stack the Mini Feed above Multichat, or place any item in the dock, from the Layout Editor.',
+          'Stack the Mini Feed above Chat, or place any item in the dock, from the Layout Editor.',
         )}
       </div>
     </HelpTip>
