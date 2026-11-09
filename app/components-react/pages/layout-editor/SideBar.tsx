@@ -1,7 +1,7 @@
 import React from 'react';
 import cx from 'classnames';
 import styles from './LayoutEditor.m.less';
-import { ELayoutElement, ELayout, EDockLayout, DOCK_SLOTS } from 'services/layout';
+import { ELayoutElement, ELayout, EDockLayout } from 'services/layout';
 import { $t } from 'services/i18n';
 import Scrollable from 'components-react/shared/Scrollable';
 import { Services } from 'components-react/service-provider';
@@ -47,36 +47,83 @@ function LayoutPicker() {
 }
 
 function DockLayoutPicker() {
+  const { CustomizationService } = Services;
   const { dockLayout, changeDockLayout } = useLayoutEditor();
-
-  const labels = {
-    [EDockLayout.Single]: $t('Single'),
-    [EDockLayout.Stacked]: $t('Stacked'),
-  };
+  const { leftDock } = useRealmObject(CustomizationService.state);
 
   return (
     <div>
-      <div className={styles.title}>{$t('Dock')}</div>
+      <div className={styles.title}>{$t('Dock Layout')}</div>
       <div className={styles.dockLayouts}>
-        {Object.values(EDockLayout).map(layout => (
-          <button
-            key={layout}
-            type="button"
-            data-name={`dock-layout-${layout}`}
-            aria-pressed={dockLayout === layout}
-            className={cx(styles.dockLayoutOption, { [styles.active]: dockLayout === layout })}
-            onClick={() => changeDockLayout(layout)}
-          >
-            <div className={styles.dockLayoutIcon}>
-              {DOCK_SLOTS[layout].map(slot => (
-                <span key={slot} />
-              ))}
-            </div>
-            {labels[layout]}
-          </button>
-        ))}
+        <DockOption
+          name="dock-layout-single"
+          label={$t('Single')}
+          active={dockLayout === EDockLayout.Single}
+          onClick={() => changeDockLayout(EDockLayout.Single)}
+        >
+          <div className={styles.dockLayoutIcon}>
+            <span />
+          </div>
+        </DockOption>
+        <DockOption
+          name="dock-layout-stacked"
+          label={$t('Stacked')}
+          active={dockLayout === EDockLayout.Stacked}
+          onClick={() => changeDockLayout(EDockLayout.Stacked)}
+        >
+          <div className={styles.dockLayoutIcon}>
+            <span />
+            <span />
+          </div>
+        </DockOption>
+      </div>
+      <div className={styles.title}>{$t('Dock Position')}</div>
+      <div className={styles.dockLayouts}>
+        <DockOption
+          name="dock-position-left"
+          label={$t('Left')}
+          active={leftDock}
+          onClick={() => CustomizationService.actions.setLeftDock(true)}
+        >
+          <div className={cx(styles.dockLayoutIcon, styles.dockPositionIcon)}>
+            <span />
+            <span />
+          </div>
+        </DockOption>
+        <DockOption
+          name="dock-position-right"
+          label={$t('Right')}
+          active={!leftDock}
+          onClick={() => CustomizationService.actions.setLeftDock(false)}
+        >
+          <div className={cx(styles.dockLayoutIcon, styles.dockPositionIcon, styles.right)}>
+            <span />
+            <span />
+          </div>
+        </DockOption>
       </div>
     </div>
+  );
+}
+
+function DockOption(p: {
+  name: string;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      data-name={p.name}
+      aria-pressed={p.active}
+      className={cx(styles.dockLayoutOption, { [styles.active]: p.active })}
+      onClick={p.onClick}
+    >
+      {p.children}
+      {p.label}
+    </button>
   );
 }
 

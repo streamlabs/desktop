@@ -83,17 +83,21 @@ export function isDockSlot(slot: string | null | undefined): slot is TDockSlot {
   return slot === 'S1' || slot === 'S2';
 }
 
+/**
+ * The elements that can be slotted into the layout editor.
+ * @note The order of this enum determines the order of the elements in the layout editor sidebar.
+ */
 export enum ELayoutElement {
-  Minifeed = 'Minifeed',
-  LegacyEvents = 'LegacyEvents',
   Display = 'Display',
-  Mixer = 'Mixer',
+  Minifeed = 'Minifeed',
   Multichat = 'Multichat',
+  Mixer = 'Mixer',
   Scenes = 'Scenes',
   Sources = 'Sources',
   StreamPreview = 'StreamPreview',
   RecordingPreview = 'RecordingPreview',
   Browser = 'Browser',
+  LegacyEvents = 'LegacyEvents',
 }
 
 export type TLayoutElement = `${ELayoutElement}`;
