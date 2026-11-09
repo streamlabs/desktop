@@ -45,18 +45,24 @@ async function runDeviceQueryWithSavedTwitch(
   try {
     return (await t.context.app.client.executeAsync(
       (queryMode: TMode, done: (result: IDeviceQueryResult) => void) => {
+        // This callback is serialized and run in the worker, so it must not compile to TS
+        // emit helpers (object rest becomes `__rest`, which is not defined there).
         try {
-          const encoder = (name: string, codec: string, serviceChecked: boolean) => ({
-            title: name,
-            name,
-            id: name,
-            family: name,
-            preset: 'preset',
-            codec,
-            streaming: true,
-            recording: true,
-            serviceChecked,
-          });
+          // Encoders OSN only lists when the instance's service accepts their codec.
+          const serviceCheckedEncoders = new Set<string>();
+          const encoder = (name: string, codec: string, serviceChecked: boolean) => {
+            if (serviceChecked) serviceCheckedEncoders.add(name);
+            return {
+              title: name,
+              name,
+              id: name,
+              family: name,
+              preset: 'preset',
+              codec,
+              streaming: true,
+              recording: true,
+            };
+          };
           const allEncoders = [
             encoder('obs_x264', 'h264', false),
             encoder('obs_nvenc_h264_tex', 'h264', true),
@@ -88,7 +94,7 @@ async function runDeviceQueryWithSavedTwitch(
           };
           const filterForService = (service: IFakeService | undefined) =>
             allEncoders.filter(e => {
-              if (!e.serviceChecked) return true;
+              if (!serviceCheckedEncoders.has(e.name)) return true;
               if (!service) return false;
               return declaredCodecs(service).includes(e.codec);
             });
@@ -124,8 +130,7 @@ async function runDeviceQueryWithSavedTwitch(
                   current = value;
                   if (value) assignedServices.push(value);
                 },
-                getAvailableEncoders: () =>
-                  filterForService(current).map(({ serviceChecked, ...rest }) => rest),
+                getAvailableEncoders: () => filterForService(current),
               };
             },
             destroy: () => {
