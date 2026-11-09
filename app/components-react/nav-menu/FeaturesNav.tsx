@@ -30,6 +30,7 @@ const DASHBOARD_LINK_TYPES = new Set([
  */
 export function useFeaturesNav() {
   const {
+    LayoutService,
     MagicLinkService,
     NavigationService,
     NavMenuService,
@@ -163,9 +164,11 @@ export function useFeaturesNav() {
   // Signature of everything that can change this fragment's rendered width,
   // for useNavCollapse to know when to re-measure. Order, badge text and pinned
   // apps all affect width, so all are included.
-  const contentKey = `${menuItems
-    .map(item => `${item.key}:${item.badge ?? ''}`)
-    .join(',')}|${pinnedApps.map(app => app.id).join(',')}`;
+  const contentKey = [
+    menuItems.map(item => `${item.key}:${item.badge ?? ''}:${item.icon ?? ''}`).join(','),
+    LayoutService.views.currentTab.name,
+    pinnedApps.map(app => app.id).join(','),
+  ].join('|');
 
   return { items, contentKey };
 }

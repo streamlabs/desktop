@@ -178,10 +178,9 @@ export class NavMenuService extends PersistentStatefulService<INavMenuServiceSta
       .map<TNavMenuItem>(([item, data]) => ({
         ...item,
         ...data,
-        badge:
-          typeof data.badge === 'function'
-            ? data.badge({ highlighter: this.highlighterService })
-            : data.badge,
+        badge: resolveConfigValue(data.badge, { highlighter: this.highlighterService }),
+        title: resolveConfigValue(data.title, { layout: this.layoutService }),
+        icon: resolveConfigValue(data.icon, { layout: this.layoutService }),
       }));
   }
 
