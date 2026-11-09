@@ -2,30 +2,39 @@
 
 .top-bar {
   position: relative;
-  height: 64px;
   width: 100%;
-  padding: 8px;
+  height: 64px;
   display: flex;
   align-items: center;
   background-color: var(--section);
 
-  button {
+  &:global(.ant-form) {
+    padding: 8px;
+  }
+
+  & > *:last-child {
     margin-left: auto;
-    margin-right: 16px;
+    margin-right: 8px;
   }
 
-  .arrow {
-    transform: scaleX(-1);
-    height: 12px;
-    width: auto;
-    position: relative;
-    top: 4px;
+  .layout-select {
+    &:global(.ant-form-item) {
+      margin-bottom: 0px;
+    }
+
+    & :global(.ant-form-item-label) {
+      min-width: max-content;
+    }
+
+    & :global(.ant-form-item-control) {
+      width: 150px;
+    }
   }
 
-  .remove-button {
-    height: 32px;
+  .icon-button {
     width: 32px;
-    margin-left: 2px;
+    height: 32px;
+    margin-left: 16px;
   }
 }
 
