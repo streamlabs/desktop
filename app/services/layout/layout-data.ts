@@ -119,7 +119,7 @@ export const ELEMENT_DATA = (): IElementData => ({
     component: 'Mixer',
   },
   [ELayoutElement.Multichat]: {
-    title: $t('Multichat'),
+    title: $t('Chat'),
     component: 'Multichat',
   },
   [ELayoutElement.Scenes]: {
