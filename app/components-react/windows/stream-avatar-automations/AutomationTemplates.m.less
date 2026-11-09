@@ -166,10 +166,12 @@
 }
 
 // Figma: a 42px fade from the window background over the row edge, with a bare chevron.
+// Offsets match `.scroller`'s negative margins, so the fade reaches the scroller's real edge
+// instead of leaving a strip of card visible beyond it.
 .arrow {
   position: absolute;
-  top: 0;
-  bottom: 0;
+  top: -10px;
+  bottom: -10px;
   z-index: @z-raised;
   width: 42px;
   display: flex;
@@ -187,7 +189,7 @@
 }
 
 .arrowLeft {
-  left: 0;
+  left: -8px;
   background: linear-gradient(90deg, var(--background) 20%, transparent 100%);
 
   i {
@@ -196,7 +198,7 @@
 }
 
 .arrowRight {
-  right: 0;
+  right: -8px;
   background: linear-gradient(-90deg, var(--background) 20%, transparent 100%);
 
   i {

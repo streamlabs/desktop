@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { isVideoUrl } from './automations-utils';
 
 interface TemplatePreviewProps {
@@ -24,6 +24,9 @@ export default function TemplatePreview({
   playing = true,
 }: TemplatePreviewProps) {
   const videoRef = React.useRef<HTMLVideoElement>(null);
+  // A missing file (e.g. art not uploaded yet) would show the browser's broken-image icon.
+  // Show a dark placeholder of the same size instead.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
 
   useEffect(() => {
     const el = videoRef.current;
@@ -37,6 +40,10 @@ export default function TemplatePreview({
   }, [src, playToken, playing]);
 
   if (!src) return null;
+  // Same box as the media (via className), filled with the darkest surface colour.
+  if (src === failedSrc) {
+    return <div className={className} style={{ background: 'var(--section)' }} aria-hidden />;
+  }
   return isVideoUrl(src) ? (
     <video
       key={src}
@@ -47,8 +54,9 @@ export default function TemplatePreview({
       // Loads enough to paint the first frame while paused.
       preload="auto"
       onEnded={onEnded}
+      onError={() => setFailedSrc(src)}
     />
   ) : (
-    <img key={src} src={src} className={className} alt="" />
+    <img key={src} src={src} className={className} alt="" onError={() => setFailedSrc(src)} />
   );
 }
