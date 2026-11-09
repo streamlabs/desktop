@@ -155,8 +155,9 @@ export async function applyTemplates(
       const enabled = (item.automation.enabled ?? true) && remaining > 0;
       if (enabled) remaining -= 1;
       await AutomationsService.actions.create({ ...item.automation, conditions, enabled });
+      // Same `game` value automation_created sends (condition prefix), not the pack id.
       AutomationsAnalytics.templateAdded(
-        pack.id,
+        pack.game ?? conditions[0]?.type.split('.')[0] ?? 'unknown',
         conditions[0]?.type ?? 'unknown',
         item.automation.actions.map(a => a.type),
       );

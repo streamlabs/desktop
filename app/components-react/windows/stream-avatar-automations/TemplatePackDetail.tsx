@@ -50,10 +50,9 @@ export default function TemplatePackDetail({
 
   return (
     <div className={styles.detail}>
-      <div
-        className={styles.banner}
-        style={{ backgroundImage: `url(${JSON.stringify(pack.bannerUrl || pack.imageUrl)})` }}
-      >
+      <div className={styles.banner}>
+        {/* A layer, not background-image: game pack art is often .webm, which CSS can't paint. */}
+        <TemplatePreview src={pack.bannerUrl || pack.imageUrl} className={styles.bannerMedia} />
         <span className={styles.badge} style={{ background: badgeColor(pack.name) }}>
           {pack.name.charAt(0)}
         </span>

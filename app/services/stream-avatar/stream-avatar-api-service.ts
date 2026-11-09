@@ -169,6 +169,9 @@ export class StreamAvatarApiService extends Service {
     try {
       return await this.authedFetch<AutomationTemplatePack[]>('/automations/template-packs');
     } catch (e: unknown) {
+      // Only a missing route means an older API; anything else is a real failure.
+      const status = (e as { status?: number } | null)?.status;
+      if (status !== 404 && status !== 405) throw e;
       console.warn('[StreamAvatarApi] Template packs unavailable, using game templates', e);
       return gamesToTemplatePacks(await this.getAutomationTemplates());
     }

@@ -327,6 +327,23 @@
   > * {
     position: relative;
   }
+
+  > .bannerMedia {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  // Keep the gradient above the media layer.
+  &::before {
+    z-index: 1;
+  }
+
+  > :not(.bannerMedia) {
+    z-index: 2;
+  }
 }
 
 .badge {

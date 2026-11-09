@@ -361,5 +361,6 @@
   "Most events": "Most events",
   "Search Automations": "Search Automations",
   "Sort By": "Sort By",
-  "%{count}/%{max} automations enabled": "%{count}/%{max} automations enabled"
+  "%{count}/%{max} automations enabled": "%{count}/%{max} automations enabled",
+  "Some automations could not be added. Please try again.": "Some automations could not be added. Please try again."
 }

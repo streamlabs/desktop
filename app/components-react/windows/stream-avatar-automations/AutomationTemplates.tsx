@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Spin } from 'antd';
+import { message, Spin } from 'antd';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
@@ -110,8 +110,12 @@ export default function AutomationTemplates({ onCancel, onSaved, variant }: Prop
     });
     return sum + count;
   }, 0);
-  // The meter moves as packs are added, up to what the tier allows enabled.
-  const projectedCount = Math.min(usage.max, usage.count + automationsToCreate);
+  // The meter moves as packs are added, up to what the tier allows enabled. A count already
+  // over the cap (e.g. after a downgrade) is shown as is.
+  const projectedCount = Math.max(
+    usage.count,
+    Math.min(usage.max, usage.count + automationsToCreate),
+  );
 
   async function handleComplete() {
     if (totalSelected === 0) {
@@ -121,6 +125,11 @@ export default function AutomationTemplates({ onCancel, onSaved, variant }: Prop
     setSaving(true);
     try {
       await applyTemplates(selections, packs);
+    } catch (e: unknown) {
+      // Some automations may already exist, so close and refresh the list rather than let a
+      // second Finish create duplicates.
+      console.error('[AutomationTemplates] Failed to add templates', e);
+      message.error($t('Some automations could not be added. Please try again.'));
     } finally {
       setSaving(false);
     }
