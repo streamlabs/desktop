@@ -82,6 +82,7 @@ export const CategoryListInput = InputComponent(
     const searchRef = useRef<Input>(null);
     const popupRef = useRef<HTMLDivElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLElement | null>(null);
     // Unique per component instance, the ids of the listbox and its options derive from it
     const idPrefix = useRef(uniqueId('category-list-')).current;
     const listboxId = `${idPrefix}-listbox`;
@@ -156,6 +157,17 @@ export const CategoryListInput = InputComponent(
       }, 0);
       return () => window.clearTimeout(id);
     }, [isOpen, activeKey]);
+
+    // The popup no longer lives inside the Scrollable, so it wouldn't follow the field when the
+    // content scrolls. Close it instead of leaving it floating.
+    useEffect(() => {
+      if (!isOpen) return;
+      const viewport = triggerRef.current?.closest('.os-viewport');
+      if (!viewport) return;
+      const close = () => changeOpen(false);
+      viewport.addEventListener('scroll', close, { passive: true });
+      return () => viewport.removeEventListener('scroll', close);
+    }, [isOpen]);
 
     function scrollToRow(index: number) {
       const list = listRef.current;
@@ -264,9 +276,15 @@ export const CategoryListInput = InputComponent(
     }
 
     function getPopupContainer(triggerNode: HTMLElement) {
-      // stick the selector popup to the closest Scrollable content, so it gets the theme vars
-      // (they are not set on <body>)
-      return (triggerNode.closest('.os-content, body') as HTMLElement | null) ?? document.body;
+      triggerRef.current = triggerNode;
+      // Mount on the window's themed root (it carries the theme vars, <body> doesn't), not the
+      // Scrollable content. Inside the Scrollable, antd only counts the room left in the scroll
+      // viewport, so a list that grows (e.g. drilling into Games) flips above the field. From the
+      // root it can overlap the window footer and only flips when it would leave the window.
+      return (
+        (triggerNode.closest('#mainWrapper, .os-content, body') as HTMLElement | null) ??
+        document.body
+      );
     }
 
     function renderRow(row: TRow<T>, index: number) {
