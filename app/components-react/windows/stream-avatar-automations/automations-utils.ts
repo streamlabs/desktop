@@ -1,4 +1,5 @@
 import { $t } from 'services/i18n';
+import type { ICategoryListCategory } from 'components-react/shared/inputs';
 import {
   Conditions,
   GAME_NAMES,
@@ -31,11 +32,11 @@ const STREAM_EVENT_OPTIONS = Object.entries(STREAM_EVENT_SOURCES).map(([value, l
   value,
 }));
 
-/** Games and stream-event sources, grouped for the trigger source pickers. */
-export function triggerSourceOptions() {
+/** Stream-event and game sources, as the categories of the trigger source pickers. */
+export function triggerSourceCategories(): ICategoryListCategory<string>[] {
   return [
-    { label: $t('Stream Events'), options: STREAM_EVENT_OPTIONS },
-    { label: $t('Games'), options: GAME_OPTIONS },
+    { key: 'stream', label: $t('Stream Events'), options: STREAM_EVENT_OPTIONS },
+    { key: 'games', label: $t('Games'), options: GAME_OPTIONS },
   ];
 }
 

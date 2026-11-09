@@ -1,11 +1,12 @@
-import React, { CSSProperties } from 'react';
+import React, { CSSProperties, useMemo } from 'react';
 import { Input, InputNumber, Select, Slider } from 'antd';
+import { CategoryListInput } from 'components-react/shared/inputs';
 import { $t } from 'services/i18n';
 import { Properties } from 'services/stream-avatar/engine/properties';
 import { Conditions } from 'services/stream-avatar/engine/conditions';
 import type { ConditionType } from 'services/stream-avatar/engine/conditions';
 import { CONTROL_HEIGHT, errorTextStyle } from './ActionControls';
-import { triggerSourceOptions } from './automations-utils';
+import { triggerSourceCategories } from './automations-utils';
 import styles from './AutomationEditor.m.less';
 
 const trashCellStyle: CSSProperties = {
@@ -73,6 +74,8 @@ export default function TriggerEditor({
 }: TriggerEditorProps) {
   const { source, type, props } = trigger;
   const conditionOptions = getConditionOptions(source);
+  // CategoryListInput is memoised on its props, so keep the categories array stable.
+  const sourceCategories = useMemo(() => triggerSourceCategories(), []);
 
   function setSource(nextSource: string) {
     // The previous condition belongs to the old source, so start the row over.
@@ -214,16 +217,19 @@ export default function TriggerEditor({
           alignItems: 'start',
         }}
       >
-        <Select
+        <CategoryListInput
+          // `nowrap` skips the Form.Item wrapper, whose bottom margin would unalign the grid row.
+          nowrap
           value={source || undefined}
-          onChange={val => setSource(val)}
-          placeholder={$t('Select a Trigger')}
-          options={triggerSourceOptions()}
+          onChange={val => val && setSource(val)}
+          categories={sourceCategories}
+          searchPlaceholder={$t('Search all trigger sources')}
+          placeholder={$t('Select a trigger source')}
         />
         <Select
           value={type || undefined}
           onChange={val => setType(val as ConditionType)}
-          placeholder={$t('Select a Condition')}
+          placeholder={$t('Select an event')}
           options={conditionOptions}
         />
         {/* Always render the cell so the selects don't change width when the button hides. */}

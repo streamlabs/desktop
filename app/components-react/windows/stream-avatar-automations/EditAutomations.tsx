@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Switch, Tooltip, Spin, Popconfirm, Select, Dropdown, Menu, Tag } from 'antd';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Button, Switch, Tooltip, Spin, Popconfirm, Dropdown, Menu, Tag } from 'antd';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import Spinner from 'components-react/shared/Spinner';
+import { CategoryListInput } from 'components-react/shared/inputs';
 import { useVuex } from 'components-react/hooks';
 import { useAgentAppInstalled } from 'components-react/hooks/useAgentAppInstalled';
 import { Services } from 'components-react/service-provider';
@@ -21,7 +22,7 @@ import {
   conditionLabel,
   conditionGame,
   summarizeActions,
-  triggerSourceOptions,
+  triggerSourceCategories,
 } from './automations-utils';
 import {
   checkEnableLimit,
@@ -53,6 +54,8 @@ export default function EditAutomations() {
   const [creating, setCreating] = useState(false);
   const [showPreMade, setShowPreMade] = useState(false);
   const [filterGame, setFilterGame] = useState('');
+  // CategoryListInput is memoised on its props, so keep the categories array stable.
+  const sourceCategories = useMemo(() => triggerSourceCategories(), []);
   const [simulatingId, setSimulatingId] = useState<number | null>(null);
   const [showWelcome, setShowWelcome] = useState<boolean | null>(null);
 
@@ -206,15 +209,20 @@ export default function EditAutomations() {
           {automations.length > 0 && (
             <>
               <span className={styles.filterLabel}>{$t('Filter by')}</span>
-              <Select
-                value={filterGame}
-                onChange={val => setFilterGame(val)}
-                options={[
-                  { label: $t('All game automations'), value: '' },
-                  ...triggerSourceOptions(),
-                ]}
-                style={{ width: 200 }}
-              />
+              <div style={{ width: 200 }}>
+                <CategoryListInput
+                  nowrap
+                  allowClear
+                  value={filterGame || undefined}
+                  // Clearing the field sends undefined, which means no filter.
+                  onChange={val => setFilterGame(val ?? '')}
+                  categories={sourceCategories}
+                  searchPlaceholder={$t('Search all trigger sources')}
+                  placeholder={$t('All automations')}
+                  // The field is narrower than the search results (label + category) need.
+                  dropdownMatchSelectWidth={320}
+                />
+              </div>
             </>
           )}
         </div>
