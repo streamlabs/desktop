@@ -61,6 +61,9 @@ export default function MultistreamChatInfo() {
 
   return (
     <ModalLayout className={styles.chatInfoContainer}>
+      <h1 className={styles.chatInfoHeader}>
+        {$t('Reply to Twitch, YouTube and other platform messages in Multichat')}
+      </h1>
       <Row className={styles.chatInfoRow}>
         <Col span={10} className={cx(styles.chatInfoCol, styles.infoHeading)}>
           {$t('Platform')}

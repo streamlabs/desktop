@@ -385,7 +385,7 @@ export class ChatService extends Service {
 
   showMultistreamChatWindow() {
     // We use a generated window Id to prevent somebody popping out the
-    // same winow multiple times.
+    // same window multiple times.
     this.windowsService.createOneOffWindow(
       {
         componentName: 'MultistreamChatInfo',
