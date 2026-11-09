@@ -1,5 +1,6 @@
 import React from 'react';
 import { Tooltip } from 'antd';
+import cx from 'classnames';
 import { $t } from 'services/i18n';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import { upgrade, ULTRA_PLUS_TIER, AUTOMATION_LIMITS } from './automations-limits';
@@ -18,12 +19,26 @@ export default function UsageMeter({ count, max, tier, label = 'used' }: UsageMe
   const atCap = count >= max;
   const atTopTier = tier === ULTRA_PLUS_TIER;
 
+  // The picker (Figma) shows the count in teal. Translate the whole sentence once with a marker
+  // in place of the count, then swap the marker for the styled number, so word order follows the
+  // locale.
+  const COUNT_MARKER = '\u0000';
+  const enabledParts = $t('%{count}/%{max} automations enabled', {
+    count: COUNT_MARKER,
+    max,
+  }).split(COUNT_MARKER);
+
   return (
-    <div className={styles.usageMeter}>
+    <div className={cx(styles.usageMeter, { [styles.usageMeterPicker]: label === 'enabled' })}>
       <div className={styles.usageRow}>
         <span className={styles.usageText}>
           {label === 'enabled'
-            ? $t('%{count}/%{max} automations enabled', { count, max })
+            ? enabledParts.map((part, i) => (
+                <React.Fragment key={i}>
+                  {i > 0 && <span className={styles.usageCount}>{count}</span>}
+                  {part}
+                </React.Fragment>
+              ))
             : $t('%{count}/%{max} automations used', { count, max })}
         </span>
         <Tooltip

@@ -60,6 +60,8 @@ export default function TemplateFilters({ filters, games, onChange }: Props) {
         // Undefined shows the placeholder while the sort is the default.
         value={filters.sort === 'default' ? undefined : filters.sort}
         placeholder={$t('Sort By')}
+        // Figma uses the A–Z sort glyph here instead of a chevron.
+        suffixIcon={<i className="fas fa-sort-alpha-down" />}
         options={sortOptions}
         onChange={sort => onChange({ ...filters, sort: sort ?? 'default' })}
       />

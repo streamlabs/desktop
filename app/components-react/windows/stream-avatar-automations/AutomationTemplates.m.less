@@ -1,7 +1,13 @@
 @import '../../../styles/index';
 
+// Values from Figma "Templates [Growth, Expanding]" (SL-Desktop 12758:19017). Night-theme
+// variables that match its tokens: --card / --section-alt #2B383F, --background #17242D,
+// --button #4F5E65, --paragraph #BDC2C4, --teal #80F5D2.
 @card-width: 230px;
-@card-gap: 12px;
+@card-gap: 16px;
+// Figma lifts some surfaces one step above --card (#334249 hovered card body, #353E47 detail
+// panel). No theme variable has that step, so overlay a faint white on --card instead.
+@lift: linear-gradient(rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04));
 
 .container {
   display: flex;
@@ -17,7 +23,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 32px;
 }
 
 .subtitle {
@@ -35,7 +41,32 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
+
+  // Figma: filled #2B383F fields with no border, 4px radius and 14px text.
+  :global(.ant-select:not(.ant-select-customize-input) .ant-select-selector),
+  :global(.ant-input-affix-wrapper),
+  :global(.ant-input) {
+    border: none !important;
+    border-radius: 4px !important;
+    background: var(--section-alt) !important;
+    box-shadow: none !important;
+    font-size: 14px;
+  }
+
+  :global(.ant-select-selection-item),
+  :global(.ant-input) {
+    color: var(--title);
+  }
+
+  :global(.ant-select-selection-placeholder),
+  :global(.ant-input::placeholder) {
+    color: var(--paragraph);
+  }
+
+  :global(.ant-select-arrow) {
+    color: var(--paragraph);
+  }
 }
 
 .filterSelect {
@@ -63,28 +94,30 @@
 // ── Rows ──────────────────────────────────────────────
 
 .section {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .sectionHeader {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
 }
 
 .sectionTitle {
   margin: 0;
   font-size: 22px;
   font-weight: 400;
+  line-height: normal;
   color: var(--title);
 }
 
 .seeAll {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 14px;
+  font-weight: 600;
   color: var(--paragraph);
   cursor: pointer;
 
@@ -110,8 +143,8 @@
 // The padding gives a hovered (scaled up) card room that overflow would otherwise clip; the
 // matching negative margin keeps the cards where they would be without it.
 .scroller {
-  margin: -8px -4px;
-  padding: 8px 4px;
+  margin: -10px -8px;
+  padding: 10px 8px;
   overflow-x: auto;
   overflow-y: hidden;
 
@@ -132,32 +165,30 @@
   gap: 16px @card-gap;
 }
 
-// Sits over the vertical middle of the card thumbnails (128px tall).
+// Figma: a 42px fade from the window background over the row edge, with a bare chevron.
 .arrow {
   position: absolute;
-  top: 64px;
+  top: 0;
+  bottom: 0;
   z-index: @z-raised;
-  width: 32px;
-  height: 32px;
+  width: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   border: none;
-  border-radius: 50%;
-  background: rgba(9, 22, 29, 0.6);
-  color: #fff;
-  font-size: 10px;
+  color: var(--title);
+  font-size: 12px;
   cursor: pointer;
-  transform: translateY(-50%);
 
   &:hover {
-    background: rgba(9, 22, 29, 0.85);
+    color: var(--teal);
   }
 }
 
 .arrowLeft {
-  left: 8px;
+  left: 0;
+  background: linear-gradient(90deg, var(--background) 20%, transparent 100%);
 
   i {
     transform: rotate(90deg);
@@ -165,7 +196,8 @@
 }
 
 .arrowRight {
-  right: 8px;
+  right: 0;
+  background: linear-gradient(-90deg, var(--background) 20%, transparent 100%);
 
   i {
     transform: rotate(-90deg);
@@ -182,15 +214,20 @@
   flex-shrink: 0;
   box-sizing: border-box;
   border-radius: 8px;
-  background: var(--section);
+  background: var(--card);
   overflow: hidden;
   cursor: pointer;
   transition: transform 150ms ease, box-shadow 150ms ease;
 
+  // Figma "Card [Hover]": scaled up, body lifted to #334249.
   &:hover {
     z-index: @z-raised;
-    transform: scale(1.04);
+    transform: scale(1.06);
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+
+    .cardBody {
+      background-image: @lift;
+    }
   }
 }
 
@@ -202,12 +239,16 @@
     z-index: auto;
     transform: none;
     box-shadow: none;
+
+    .cardBody {
+      background-image: none;
+    }
   }
 }
 
 .cardThumb {
   height: 128px;
-  background: var(--background);
+  background: var(--section-alt);
   overflow: hidden;
 }
 
@@ -223,36 +264,39 @@
   flex: 1;
   flex-direction: column;
   gap: 8px;
-  padding: 12px;
+  padding: 12px 12px 8px;
 }
 
 .cardTitle {
   font-size: 14px;
   font-weight: 500;
+  line-height: normal;
   color: var(--title);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+// Figma clips the chip row at the card edge instead of shortening the chips.
 .chips {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
   overflow: hidden;
 }
 
 .chip {
-  flex: 0 1 auto;
-  min-width: 0;
-  padding: 4px 8px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
   border-radius: 4px;
   background: var(--button);
   color: var(--title);
-  font-size: 12px;
+  font-size: 14px;
+  line-height: 1.5;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .chipMore {
@@ -265,13 +309,14 @@
   justify-content: center;
   gap: 8px;
   width: 100%;
-  height: 40px;
-  padding: 0;
+  padding: 11px 10px;
   border: none;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--background);
   background: transparent;
   color: var(--paragraph);
   font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
   cursor: pointer;
 
   &:hover {
@@ -307,95 +352,86 @@
   align-items: center;
   gap: 16px;
   height: 96px;
-  margin-bottom: 16px;
+  margin-bottom: 32px;
   padding: 0 16px;
   border-radius: 8px;
-  background-color: var(--section);
-  background-position: center;
-  background-size: cover;
+  background-color: var(--section-alt);
   overflow: hidden;
 
-  // Darkens the left side so the name stays readable on any art.
+  // Figma "Dim overlay": a flat 40% black over the art.
   &::before {
     content: '';
     position: absolute;
     inset: 0;
+    z-index: 1;
     pointer-events: none;
-    background: linear-gradient(90deg, rgba(9, 22, 29, 0.8) 0%, rgba(9, 22, 29, 0.1) 70%);
+    background: rgba(0, 0, 0, 0.4);
   }
 
   > * {
     position: relative;
+    z-index: 2;
   }
 
   > .bannerMedia {
     position: absolute;
     inset: 0;
+    z-index: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
-
-  // Keep the gradient above the media layer.
-  &::before {
-    z-index: 1;
-  }
-
-  > :not(.bannerMedia) {
-    z-index: 2;
-  }
 }
 
 .badge {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   flex-shrink: 0;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 500;
   color: #fff;
 }
 
 .bannerText {
   min-width: 0;
   color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  line-height: 1.5;
 }
 
 .bannerName {
   font-size: 20px;
-  font-weight: 700;
-  line-height: 1.2;
+  font-weight: 500;
 }
 
 .bannerSub {
   font-size: 14px;
-  opacity: 0.85;
+  color: #e3e8eb;
 }
 
+// Figma: #353E47 panel, no border.
 .mainRow {
   display: flex;
   gap: 16px;
   width: 100%;
   margin-bottom: 16px;
   padding: 16px;
-  border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--section);
+  background: @lift, var(--card);
 }
 
 // Left panel: the preview
 .coverPanel {
   position: relative;
   width: 348px;
-  min-height: 240px;
+  height: 241px;
   flex-shrink: 0;
   border-radius: 6px;
   overflow: hidden;
-  background: var(--background);
+  background: var(--section-alt);
 }
 
 .coverVideo {
@@ -435,20 +471,22 @@
   gap: 4px;
 }
 
+// Figma: rows sit on the panel; the selected one is filled #4F5E65.
 .checklistRow {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 6px 10px;
+  padding: 7px 11px;
   border-radius: 8px;
   cursor: pointer;
 
   &:hover {
-    background: var(--button);
+    background: rgba(255, 255, 255, 0.06);
   }
 }
 
-.checklistRowActive {
+.checklistRowActive,
+.checklistRowActive:hover {
   background: var(--button);
 }
 
@@ -485,6 +523,9 @@
   font-size: 12.5px;
   line-height: 16.88px;
   color: var(--paragraph);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .rowPlay {
@@ -517,8 +558,8 @@
   justify-content: center;
   border: 2px solid #ffffff80;
   border-radius: 50%;
-  color: #000;
-  font-size: 12px;
+  color: var(--section);
+  font-size: 11px;
 }
 
 .rowCheckActive {
