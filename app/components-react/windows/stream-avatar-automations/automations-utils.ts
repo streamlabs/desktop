@@ -87,12 +87,12 @@ const CONDITION_GROUP_PLATFORM: Record<string, string> = {
 
 /**
  * Event templates list their condition for every platform. Keeps the ones usable with the
- * platforms the user has linked, drops duplicates and trims to what one automation can hold.
+ * platforms the user has linked and drops duplicates. The result can exceed what one
+ * automation holds; split it with `chunkConditions`.
  */
 export function resolveConditionsForPlatforms<T extends { type: string; props?: unknown }>(
   conditions: T[],
   linkedPlatforms: readonly string[],
-  max = MAX_AUTOMATION_CONDITIONS,
 ): T[] {
   const seen = new Set<string>();
   const resolved: T[] = [];
@@ -105,7 +105,17 @@ export function resolveConditionsForPlatforms<T extends { type: string; props?: 
     seen.add(key);
     resolved.push(condition);
   }
-  return resolved.slice(0, max);
+  return resolved;
+}
+
+/**
+ * Splits conditions into groups one automation can hold. A follow template with all six
+ * platforms linked becomes two automations instead of silently losing a platform.
+ */
+export function chunkConditions<T>(conditions: T[], max = MAX_AUTOMATION_CONDITIONS): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < conditions.length; i += max) chunks.push(conditions.slice(i, i + max));
+  return chunks;
 }
 
 /** The conditions a template is created with for this user. Empty means it can't be used. */

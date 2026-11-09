@@ -11,7 +11,7 @@ import type {
 import type { TCondition } from 'services/stream-avatar/engine/conditions';
 import { AutomationsAnalytics } from './automations-analytics';
 import { checkEnableLimit, enabledUsage } from './automations-limits';
-import { resolveTemplateConditions } from './automations-utils';
+import { chunkConditions, resolveTemplateConditions } from './automations-utils';
 
 export async function downloadAsset(downloadUrl: string, assetKey: string): Promise<string | null> {
   try {
@@ -116,7 +116,8 @@ export async function applyTemplates(
   const queue: {
     pack: AutomationTemplatePack;
     item: AutomationTemplateItem;
-    conditions: TCondition[];
+    /** One automation per chunk; more than one only when the conditions exceed the cap. */
+    chunks: TCondition[][];
   }[] = [];
   for (const pack of packs) {
     const indices = selections[pack.id];
@@ -126,7 +127,7 @@ export async function applyTemplates(
       const item: AutomationTemplateItem | undefined = pack.templates[index];
       if (!item) continue;
       const conditions = resolveTemplateConditions(item, linkedPlatforms);
-      if (conditions.length > 0) queue.push({ pack, item, conditions });
+      if (conditions.length > 0) queue.push({ pack, item, chunks: chunkConditions(conditions) });
     }
   }
   if (queue.length === 0) return;
@@ -136,11 +137,12 @@ export async function applyTemplates(
 
   // Everything past the tier cap is still created, just switched off. Prompt once
   // up front rather than once per template.
-  checkEnableLimit(queue.length, 'templates');
+  const total = queue.reduce((sum, entry) => sum + entry.chunks.length, 0);
+  checkEnableLimit(total, 'templates');
   const usage = enabledUsage();
   let remaining = Math.max(0, usage.max - usage.count);
 
-  for (const { pack, item, conditions } of queue) {
+  for (const { pack, item, chunks } of queue) {
     for (const src of item.sources ?? []) {
       try {
         await createTemplateSource(src, assets);
@@ -149,13 +151,15 @@ export async function applyTemplates(
       }
     }
 
-    const enabled = (item.automation.enabled ?? true) && remaining > 0;
-    if (enabled) remaining -= 1;
-    await AutomationsService.actions.create({ ...item.automation, conditions, enabled });
-    AutomationsAnalytics.templateAdded(
-      pack.id,
-      conditions[0]?.type ?? 'unknown',
-      item.automation.actions.map(a => a.type),
-    );
+    for (const conditions of chunks) {
+      const enabled = (item.automation.enabled ?? true) && remaining > 0;
+      if (enabled) remaining -= 1;
+      await AutomationsService.actions.create({ ...item.automation, conditions, enabled });
+      AutomationsAnalytics.templateAdded(
+        pack.id,
+        conditions[0]?.type ?? 'unknown',
+        item.automation.actions.map(a => a.type),
+      );
+    }
   }
 }

@@ -15,8 +15,10 @@ import { enabledUsage } from './automations-limits';
 import {
   DEFAULT_PACK_FILTERS,
   availableTemplateIndices,
+  chunkConditions,
   filterAndSortPacks,
   gameFilterOptions,
+  resolveTemplateConditions,
 } from './automations-utils';
 import type { ITemplatePackFilters } from './automations-utils';
 import { applyTemplates } from './template-applicator';
@@ -99,8 +101,17 @@ export default function AutomationTemplates({ onCancel, onSaved, variant }: Prop
   }
 
   const totalSelected = packs.reduce((sum, pack) => sum + selectedCount(pack), 0);
+  // Counts automations, not templates: one over the condition cap becomes several.
+  const automationsToCreate = packs.reduce((sum, pack) => {
+    let count = 0;
+    selections[pack.id]?.forEach(i => {
+      const item = pack.templates[i];
+      if (item) count += chunkConditions(resolveTemplateConditions(item, linkedPlatforms)).length;
+    });
+    return sum + count;
+  }, 0);
   // The meter moves as packs are added, up to what the tier allows enabled.
-  const projectedCount = Math.min(usage.max, usage.count + totalSelected);
+  const projectedCount = Math.min(usage.max, usage.count + automationsToCreate);
 
   async function handleComplete() {
     if (totalSelected === 0) {
