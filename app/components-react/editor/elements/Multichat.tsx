@@ -478,13 +478,11 @@ function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
           </Tooltip>
         )}
         <Tooltip
-          title={$t(
-            'You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.',
-          )}
-          placement="topRight"
+          title={$t("What's Multichat?")}
+          placement="left"
           onClick={ctrl.showMultistreamChatInfo}
         >
-          <i className={cx(styles.multichatChatTabsInfo, 'icon-information')} />
+          <i className={cx(styles.multichatChatTabsInfo, 'icon-question')} />
         </Tooltip>
       </div>
     </div>
