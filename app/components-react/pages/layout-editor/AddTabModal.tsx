@@ -46,7 +46,7 @@ export default function AddTabModal() {
           disabled={!icon || !name}
           style={{ marginLeft: '8px' }}
         >
-          {$t('Save New Tab')}
+          {$t('Save Layout')}
         </button>
       </>
     );
