@@ -29,6 +29,8 @@ export interface AutomationTemplateItem {
   description: string;
   imageUrl: string;
   gifUrl: string;
+  /** Short label for the pack card chips; falls back to `title`. */
+  chipLabel?: string;
   sources?: AutomationTemplateSource[];
   automation: Omit<TAutomationExport, 'id'>;
 }
@@ -37,6 +39,41 @@ export interface AutomationTemplateGame {
   game: string;
   gameName: string;
   templates: AutomationTemplateItem[];
+}
+
+export type AutomationTemplateCategory = 'game' | 'event';
+
+/**
+ * A group of templates shown as one card in the picker. Game packs hold one game's templates;
+ * event packs hold stream-event templates whose conditions list every platform variant.
+ */
+export interface AutomationTemplatePack {
+  /** Unique, e.g. 'game:fortnite' or 'event:welcome-wagon'. */
+  id: string;
+  category: AutomationTemplateCategory;
+  name: string;
+  /** Condition prefix for game packs. */
+  game?: string;
+  /** Static card thumbnail. */
+  imageUrl: string;
+  /** Hover and detail preview. */
+  gifUrl: string;
+  /** Detail banner; falls back to `imageUrl`. */
+  bannerUrl?: string;
+  templates: AutomationTemplateItem[];
+}
+
+/** Maps the per-game templates response into game packs. */
+export function gamesToTemplatePacks(games: AutomationTemplateGame[]): AutomationTemplatePack[] {
+  return games.map(game => ({
+    id: `game:${game.game}`,
+    category: 'game',
+    name: game.gameName,
+    game: game.game,
+    imageUrl: game.templates[0]?.imageUrl ?? '',
+    gifUrl: game.templates[0]?.gifUrl ?? '',
+    templates: game.templates,
+  }));
 }
 
 /**
@@ -122,6 +159,19 @@ export class StreamAvatarApiService extends Service {
 
   getAutomationTemplates(): Promise<AutomationTemplateGame[]> {
     return this.authedFetch<AutomationTemplateGame[]>('/automations/templates');
+  }
+
+  /**
+   * Game and event template packs. An API that predates packs rejects this route, so fall back
+   * to the game templates it does serve and present those as game packs.
+   */
+  async getAutomationTemplatePacks(): Promise<AutomationTemplatePack[]> {
+    try {
+      return await this.authedFetch<AutomationTemplatePack[]>('/automations/template-packs');
+    } catch (e: unknown) {
+      console.warn('[StreamAvatarApi] Template packs unavailable, using game templates', e);
+      return gamesToTemplatePacks(await this.getAutomationTemplates());
+    }
   }
 
   getInstructions(): Promise<Record<string, string>> {
