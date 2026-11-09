@@ -12,13 +12,20 @@ useWebdriver({ restartAppAfterEachTest: false });
  * .goLive must reject that with PLATFORM_UNSUPPORTED_CODEC before any platform is set up,
  * including starts that bypass the Go Live window.
  *
+ * An optimized profile is fetched for the encoder selected at that time, and applying it
+ * writes that encoder back. goLive must skip a profile fetched for a different encoder (e.g.
+ * an HEVC profile after "Use H.264 Codec"), apply a matching one, pick the cached profile on
+ * unattended starts, and re-check the codec after applying it.
+ *
  * These tests run the real goLive on an isolated StreamingService fixture. Its collaborators
  * are stubbed, every mutation it reaches is replaced so the real store is never written, and
- * the codec is resolved through the real OutputSettingsService lookup for each output mode
- * against stubbed Output settings. No output is started and no encoder hardware is required.
+ * the codec and family are resolved through the real OutputSettingsService lookups for each
+ * output mode against stubbed Output settings. The fake optimizer's applyProfile writes the
+ * profile's encoder into Advanced mode, as the real one does. No output is started and no
+ * encoder hardware is required.
  *
  * setPlatformSettings is the only path from goLive to a platform's beforeGoLive hook, so the
- * fixture replaces it with a recorder.
+ * fixture replaces it with a recorder. finishStartStreaming records the codec that would start.
  */
 
 type TMode = 'Simple' | 'Advanced';
@@ -26,26 +33,27 @@ type TCodec = 'h264' | 'hevc' | 'av1';
 
 interface IScenario {
   platform: 'kick' | 'twitter';
-  codec: TCodec;
+  /** Codec of the selected streaming encoder, or 'unresolved' for an encoder with no metadata. */
+  selected: TCodec | 'unresolved';
+  /** Codec of the profile loaded in the Go Live settings (`settings.optimizedProfile`). */
+  windowProfile?: TCodec;
+  /** Codec of the optimizer's cached profile (`state.lastSelectedProfile`). */
+  cachedProfile?: TCodec;
+  useOptimizedProfile?: boolean;
+  /** Start without Go Live settings, as unattended starts do. */
+  unattended?: boolean;
 }
 
-interface IScenarioResult extends IScenario {
+interface IScenarioResult {
+  scenario: IScenario;
   thrownType: string | null;
   errorType: string | null;
   errorPlatform: string | null;
   events: string[];
   codecQueries: string[];
+  appliedProfiles: string[];
   unexpectedError?: string;
 }
-
-const SCENARIOS: IScenario[] = [
-  { platform: 'kick', codec: 'h264' },
-  { platform: 'kick', codec: 'hevc' },
-  { platform: 'kick', codec: 'av1' },
-  { platform: 'twitter', codec: 'h264' },
-  { platform: 'twitter', codec: 'hevc' },
-  { platform: 'twitter', codec: 'av1' },
-];
 
 async function runGoLive(
   t: TExecutionContext,
@@ -78,13 +86,16 @@ async function runGoLive(
             av1: 'obs_nvenc_av1_tex',
           },
         };
-        const codecByEncoder: Record<string, TCodec> = {
-          obs_x264: 'h264',
-          x264: 'h264',
-        };
+        // An optimized profile stores the encoder family, which for NVENC is the Advanced id.
+        const familyByCodec: Record<TCodec, string> = encoderByMode.Advanced;
+        const UNRESOLVED_ENCODER = 'legacy_unknown_encoder';
+
+        const codecByEncoder: Record<string, TCodec> = { obs_x264: 'h264', x264: 'h264' };
+        const familyByEncoder: Record<string, string> = { obs_x264: 'x264', x264: 'x264' };
         (['Simple', 'Advanced'] as TMode[]).forEach(m => {
           (Object.keys(encoderByMode[m]) as TCodec[]).forEach(c => {
             codecByEncoder[encoderByMode[m][c]] = c;
+            familyByEncoder[encoderByMode[m][c]] = familyByCodec[c];
           });
         });
 
@@ -94,9 +105,25 @@ async function runGoLive(
           });
         };
 
+        const profile = (source: string, codec: TCodec) => ({
+          game: 'test',
+          encoder: familyByCodec[codec],
+          codec,
+          bitrateMin: 0,
+          bitrateMax: 0,
+          presetIn: '',
+          presetOut: '',
+          resolutionIn: '',
+          resolutionOut: '',
+          options: '',
+          description: `${source}-${codec}`,
+        });
+
         const runScenario = (scenario: IScenario): Promise<IScenarioResult> => {
           const events: string[] = [];
           const codecQueries: string[] = [];
+          const appliedProfiles: string[] = [];
+          let recordCodecQueries = true;
           const record = (event: string) => () => {
             events.push(event);
           };
@@ -104,7 +131,10 @@ async function runGoLive(
           // Output settings with the selected encoder in the field this mode reads, and an
           // H.264 decoy in the other mode's field, so a lookup through the wrong field passes
           // the guard and fails the rejection cases.
-          const selected = encoderByMode[outputMode][scenario.codec];
+          const selected =
+            scenario.selected === 'unresolved'
+              ? UNRESOLVED_ENCODER
+              : encoderByMode[outputMode][scenario.selected];
           const decoy = outputMode === 'Advanced' ? 'x264' : 'obs_x264';
           const param = (name: string, value: string) => ({ name, value });
           const formData = [
@@ -117,6 +147,13 @@ async function runGoLive(
               ],
             },
           ];
+          const setOutputValue = (name: string, value: string) => {
+            formData.forEach(subCategory => {
+              subCategory.parameters.forEach(p => {
+                if (p.name === name) p.value = value;
+              });
+            });
+          };
 
           const settingsFixture = Object.create(settingsPrototype);
           define(settingsFixture, {
@@ -129,16 +166,41 @@ async function runGoLive(
             settingsService: settingsFixture,
             encoderQueryService: {
               resolveStreamingEncoderCodec: (mode: string, encoder: string) => {
-                codecQueries.push(`${mode}:${encoder}`);
+                if (recordCodecQueries) codecQueries.push(`${mode}:${encoder}`);
                 return codecByEncoder[encoder];
               },
+              resolveStreamingEncoderFamily: (_mode: string, encoder: string) =>
+                familyByEncoder[encoder],
             },
           });
+
+          const optimizerState = {
+            useOptimizedProfile: !!scenario.useOptimizedProfile,
+            lastSelectedProfile: scenario.cachedProfile
+              ? profile('cached', scenario.cachedProfile)
+              : null,
+          };
+          const optimizer = {
+            state: optimizerState,
+            canApplyProfileFromCache: () =>
+              !!(optimizerState.useOptimizedProfile && optimizerState.lastSelectedProfile),
+            // Like the real applyProfile: writes the profile's encoder and moves Simple mode
+            // to Advanced.
+            applyProfile: (applied: { description: string; encoder: string }) => {
+              appliedProfiles.push(applied.description);
+              events.push(`applyProfile:${applied.description}`);
+              setOutputValue('Mode', 'Advanced');
+              setOutputValue('Encoder', applied.encoder);
+            },
+          };
 
           const goLiveSettings = {
             platforms: { [scenario.platform]: { enabled: true } },
             customDestinations: [] as unknown[],
             streamShift: false,
+            optimizedProfile: scenario.windowProfile
+              ? profile('window', scenario.windowProfile)
+              : undefined,
           };
           const state = { info: { error: null as any, checklist: {} as Record<string, string> } };
 
@@ -168,7 +230,7 @@ async function runGoLive(
               setSettings: () => {},
             },
             videoSettingsService: { contexts: {} },
-            videoEncodingOptimizationService: { state: { useOptimizedProfile: false } },
+            videoEncodingOptimizationService: optimizer,
             streamErrorCreated: { next: () => {} },
             // Mutations commit to the shared store, so every one goLive reaches is replaced.
             RESET_STREAM_INFO: () => {},
@@ -188,20 +250,25 @@ async function runGoLive(
               return Promise.resolve();
             },
             finishStartStreaming: () => {
-              events.push('startOutput');
+              // The codec the output would start with, through the same lookup the guard
+              // uses. Not counted as a guard query.
+              recordCodecQueries = false;
+              const codec = outputSettings.getStreamingEncoderCodec();
+              recordCodecQueries = true;
+              events.push(`startOutput:${codec}`);
               return Promise.resolve();
             },
             getIsStreamingStatus: () => false,
           });
 
           const result = (thrownType: string | null, unexpectedError?: string) => ({
-            platform: scenario.platform,
-            codec: scenario.codec,
+            scenario,
             thrownType,
             errorType: state.info.error ? state.info.error.type : null,
             errorPlatform: state.info.error ? state.info.error.platform : null,
             events,
             codecQueries,
+            appliedProfiles,
             unexpectedError,
           });
 
@@ -215,7 +282,9 @@ async function runGoLive(
 
           let started: Promise<unknown>;
           try {
-            started = Promise.resolve(streaming.goLive(goLiveSettings));
+            started = Promise.resolve(
+              scenario.unattended ? streaming.goLive() : streaming.goLive(goLiveSettings),
+            );
           } catch (e: unknown) {
             started = Promise.reject(e);
           }
@@ -250,13 +319,13 @@ async function runGoLive(
             (e: unknown) =>
               done([
                 {
-                  platform: 'kick',
-                  codec: 'h264',
+                  scenario: runs[0],
                   thrownType: null,
                   errorType: null,
                   errorPlatform: null,
                   events: [],
                   codecQueries: [],
+                  appliedProfiles: [],
                   unexpectedError: e instanceof Error ? e.message : String(e),
                 },
               ]),
@@ -270,30 +339,38 @@ async function runGoLive(
   }
 }
 
+async function runOne(t: TExecutionContext, mode: TMode, scenario: IScenario) {
+  const [result] = await runGoLive(t, mode, [scenario]);
+  t.falsy(result.unexpectedError, 'goLive fails only with a stream error, if at all');
+  return result;
+}
+
 const ENCODER_BY_MODE: Record<TMode, Record<TCodec, string>> = {
   Simple: { h264: 'nvenc', hevc: 'nvenc_hevc', av1: 'nvenc_av1' },
   Advanced: { h264: 'obs_nvenc_h264_tex', hevc: 'obs_nvenc_hevc_tex', av1: 'obs_nvenc_av1_tex' },
 };
 
+const PLATFORMS: IScenario['platform'][] = ['kick', 'twitter'];
+
 for (const mode of ['Simple', 'Advanced'] as TMode[]) {
   test(`${mode} Go Live rejects HEVC/AV1 for Kick and X before platform setup`, async t => {
-    const results = await runGoLive(
-      t,
-      mode,
-      SCENARIOS.filter(s => s.codec !== 'h264'),
-    );
+    const scenarios: IScenario[] = [];
+    PLATFORMS.forEach(platform => {
+      (['hevc', 'av1'] as TCodec[]).forEach(selected => scenarios.push({ platform, selected }));
+    });
+    const results = await runGoLive(t, mode, scenarios);
     t.is(results.length, 4);
 
     for (const r of results) {
-      const label = `${mode} ${r.platform} ${r.codec}`;
+      const label = `${mode} ${r.scenario.platform} ${r.scenario.selected}`;
       t.falsy(r.unexpectedError, `${label}: goLive should fail only with a stream error`);
       t.is(r.thrownType, 'PLATFORM_UNSUPPORTED_CODEC', `${label}: thrown error type`);
       t.is(r.errorType, 'PLATFORM_UNSUPPORTED_CODEC', `${label}: reported error type`);
-      t.is(r.errorPlatform, r.platform, `${label}: reported error platform`);
+      t.is(r.errorPlatform, r.scenario.platform, `${label}: reported error platform`);
       t.deepEqual(r.events, [], `${label}: no beforeGoLive hook and no output start`);
       t.deepEqual(
         r.codecQueries,
-        [`${mode}:${ENCODER_BY_MODE[mode][r.codec]}`],
+        [`${mode}:${ENCODER_BY_MODE[mode][r.scenario.selected as TCodec]}`],
         `${label}: codec resolved from the ${mode} encoder setting`,
       );
     }
@@ -303,21 +380,114 @@ for (const mode of ['Simple', 'Advanced'] as TMode[]) {
     const results = await runGoLive(
       t,
       mode,
-      SCENARIOS.filter(s => s.codec === 'h264'),
+      PLATFORMS.map(platform => ({ platform, selected: 'h264' as TCodec })),
     );
     t.is(results.length, 2);
 
     for (const r of results) {
-      const label = `${mode} ${r.platform} h264`;
+      const label = `${mode} ${r.scenario.platform} h264`;
       t.falsy(r.unexpectedError, `${label}: no unexpected error`);
       t.is(r.thrownType, null, `${label}: goLive does not throw`);
       t.is(r.errorType, null, `${label}: no error reported`);
       t.deepEqual(
         r.events,
-        [`beforeGoLive:${r.platform}`, 'startOutput'],
-        `${label}: runs the platform hook, then starts the output`,
+        [`beforeGoLive:${r.scenario.platform}`, 'startOutput:h264'],
+        `${label}: runs the platform hook, then starts the output with H.264`,
       );
       t.deepEqual(r.codecQueries, [`${mode}:${ENCODER_BY_MODE[mode].h264}`]);
     }
+  });
+
+  test(`${mode} Go Live skips a stale HEVC profile after switching to H.264`, async t => {
+    const r = await runOne(t, mode, {
+      platform: 'kick',
+      selected: 'h264',
+      windowProfile: 'hevc',
+      useOptimizedProfile: true,
+    });
+
+    t.is(r.thrownType, null);
+    t.is(r.errorType, null);
+    t.deepEqual(r.appliedProfiles, [], 'the HEVC profile is not applied');
+    t.deepEqual(
+      r.events,
+      ['beforeGoLive:kick', 'startOutput:h264'],
+      'the output starts with the H.264 encoder the user switched to',
+    );
+  });
+
+  test(`${mode} Go Live applies a profile fetched for the selected encoder`, async t => {
+    const r = await runOne(t, mode, {
+      platform: 'kick',
+      selected: 'h264',
+      windowProfile: 'h264',
+      useOptimizedProfile: true,
+    });
+
+    t.is(r.thrownType, null);
+    t.is(r.errorType, null);
+    t.deepEqual(r.appliedProfiles, ['window-h264'], 'the matching profile is applied');
+    t.deepEqual(r.events, ['beforeGoLive:kick', 'applyProfile:window-h264', 'startOutput:h264']);
+  });
+
+  test(`${mode} unattended Go Live applies the matching cached profile`, async t => {
+    const r = await runOne(t, mode, {
+      platform: 'kick',
+      selected: 'h264',
+      windowProfile: 'hevc',
+      cachedProfile: 'h264',
+      useOptimizedProfile: true,
+      unattended: true,
+    });
+
+    t.is(r.thrownType, null);
+    t.is(r.errorType, null);
+    t.deepEqual(
+      r.appliedProfiles,
+      ['cached-h264'],
+      'the cached profile is used, not the one in the saved Go Live settings',
+    );
+    t.deepEqual(r.events, ['beforeGoLive:kick', 'applyProfile:cached-h264', 'startOutput:h264']);
+  });
+
+  test(`${mode} unattended Go Live skips a stale cached HEVC profile`, async t => {
+    const r = await runOne(t, mode, {
+      platform: 'kick',
+      selected: 'h264',
+      windowProfile: 'h264',
+      cachedProfile: 'hevc',
+      useOptimizedProfile: true,
+      unattended: true,
+    });
+
+    t.is(r.thrownType, null);
+    t.is(r.errorType, null);
+    t.deepEqual(
+      r.appliedProfiles,
+      [],
+      'the stale cached profile is skipped and the saved profile is not substituted',
+    );
+    t.deepEqual(r.events, ['beforeGoLive:kick', 'startOutput:h264']);
+  });
+
+  test(`${mode} Go Live re-checks the codec after an applied profile switches to HEVC`, async t => {
+    // With no family for the selected encoder, the profile is applied as before. It writes
+    // HEVC, which the second check must catch before the output starts.
+    const r = await runOne(t, mode, {
+      platform: 'kick',
+      selected: 'unresolved',
+      windowProfile: 'hevc',
+      useOptimizedProfile: true,
+    });
+
+    t.deepEqual(r.appliedProfiles, ['window-hevc']);
+    t.is(r.thrownType, 'PLATFORM_UNSUPPORTED_CODEC');
+    t.is(r.errorType, 'PLATFORM_UNSUPPORTED_CODEC');
+    t.is(r.errorPlatform, 'kick');
+    t.deepEqual(
+      r.events,
+      ['beforeGoLive:kick', 'applyProfile:window-hevc'],
+      'the output never starts',
+    );
   });
 }
