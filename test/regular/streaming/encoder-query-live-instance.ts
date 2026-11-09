@@ -20,12 +20,20 @@ useWebdriver({ restartAppAfterEachTest: false });
 
 // 'with-service-kick': streaming to Kick (rtmp_custom), whose live list still includes HEVC
 // because the service declares no codecs; Desktop must filter it by Kick's codec table.
-type TLiveInstanceState = 'none' | 'without-service' | 'with-service' | 'with-service-kick';
+// 'twitch-not-streaming': Twitch enabled and not live. Twitch's rtmp_common service declares
+// only H.264, so a query through it drops HEVC even though the machine can encode it.
+type TLiveInstanceState =
+  | 'none'
+  | 'without-service'
+  | 'with-service'
+  | 'with-service-kick'
+  | 'twitch-not-streaming';
 
 interface IQueryResult {
   metadataNames: string[];
   family: string | null;
   optionValues: string[];
+  isAvailable: boolean | null;
   error?: string;
 }
 
@@ -65,13 +73,17 @@ async function queryWithLiveInstance(
           const liveEncoders =
             state === 'with-service-kick' ? deviceEncoders : [encoder('obs_x264', 'x264', 'h264')];
 
-          const live =
-            state === 'none'
-              ? null
-              : {
-                  service: state.startsWith('with-service') ? { name: 'live-service' } : undefined,
-                  getAvailableEncoders: () => liveEncoders,
-                };
+          const enabledPlatforms: Partial<Record<TLiveInstanceState, string[]>> = {
+            'with-service-kick': ['kick'],
+            'twitch-not-streaming': ['twitch'],
+          };
+          const streaming = state !== 'none' && state !== 'twitch-not-streaming';
+          const live = !streaming
+            ? null
+            : {
+                service: state.startsWith('with-service') ? { name: 'live-service' } : undefined,
+                getAvailableEncoders: () => liveEncoders,
+              };
 
           const service = (window as any).servicesManager.getResource('EncoderQueryService');
           const fixture = Object.create(Object.getPrototypeOf(service));
@@ -80,29 +92,36 @@ async function queryWithLiveInstance(
           // streamingService is an @Inject getter on the prototype; shadow it on the fixture.
           Object.defineProperty(fixture, 'streamingService', {
             value: {
-              isStreaming: state !== 'none',
+              isStreaming: streaming,
               getStreamingInstance: () => live,
               views: {
-                enabledPlatforms: state === 'with-service-kick' ? ['kick'] : ([] as string[]),
+                enabledPlatforms: enabledPlatforms[state] ?? ([] as string[]),
               },
             },
           });
-          fixture.queryEncodersForPlatform = () => deviceEncoders;
+          // A platform query goes through that platform's service; Twitch's drops HEVC.
+          fixture.queryEncodersForPlatform = (_mode: string, platform: string | null) =>
+            platform === 'twitch' ? [encoder('obs_x264', 'x264', 'h264')] : deviceEncoders;
+          // The device query uses a codec-agnostic service, never the platform's.
+          fixture.queryDeviceEncoders = () => deviceEncoders;
 
           const metadata = fixture.getAvailableStreamingEncoderMetadata('Advanced');
           const family = fixture.resolveStreamingEncoderFamily('Advanced', selectedEncoder);
           const options = fixture.getAvailableStreamingEncoders('Advanced');
+          const isAvailable = fixture.isStreamingEncoderAvailable('Advanced', selectedEncoder);
 
           done({
             metadataNames: metadata.map((e: { name: string }) => e.name),
             family: family ?? null,
             optionValues: options.map((o: { value: string }) => o.value),
+            isAvailable,
           });
         } catch (e: unknown) {
           done({
             metadataNames: [],
             family: null,
             optionValues: [],
+            isAvailable: null,
             error: e instanceof Error ? e.message : String(e),
           });
         }
@@ -173,4 +192,20 @@ test('live encoder options are filtered by the platform codec table', async t =>
     'device metadata should stay unfiltered so the selected encoder still resolves',
   );
   t.is(result.family, SELECTED_ENCODER);
+});
+
+test('a platform that rejects a codec does not make its encoder unavailable on the device', async t => {
+  // Regression: startup validation reset NVENC HEVC to x264 for Twitch users (Twitch's
+  // rtmp_common entry lists only H.264) and told them to update their graphics drivers.
+  const result = await queryWithLiveInstance(t, 'twitch-not-streaming');
+
+  t.falsy(result.error);
+  t.true(result.isAvailable, 'HEVC should stay available on a machine that can encode it');
+  t.true(result.metadataNames.includes(SELECTED_ENCODER));
+  t.is(result.family, SELECTED_ENCODER);
+  t.deepEqual(
+    result.optionValues,
+    ['obs_x264'],
+    'the dropdown should still be narrowed by what Twitch accepts',
+  );
 });

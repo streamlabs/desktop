@@ -173,7 +173,7 @@ export class EncoderQueryService extends Service {
     // service — or by no service at all while an output is still being set up.
     return this.resolveStreamingEncoderEntry(
       `${mode}:device`,
-      () => this.queryEncodersForPlatform(mode, null),
+      () => this.queryDeviceEncoders(mode),
       { liveInstanceTargets: null },
     );
   }
@@ -263,12 +263,48 @@ export class EncoderQueryService extends Service {
    *
    * For a platform, OSN only narrows by codec when the service declares its codecs
    * (`rtmp_common`). `rtmp_custom` platforms such as Kick are narrowed here using
-   * Desktop's own table. The device query (`platform` null) is never narrowed, because
-   * it is the source of encoder metadata.
+   * Desktop's own table. With no platform (`platform` null) the list is narrowed only by
+   * the user's saved service.
    */
   private queryEncodersForPlatform(
     mode: TOutputSettingsMode,
     platform: TPlatform | null,
+  ): IEncoderOption[] | null {
+    const encoders = this.queryEncodersWithTempService(
+      mode,
+      instance => this.setupTempStreamingService(instance, platform),
+      platform ?? 'no platform',
+    );
+    if (!encoders || !platform) return encoders;
+    return filterEncodersForPlatforms(encoders, [platform]);
+  }
+
+  /**
+   * What this machine can stream with, independent of any destination.
+   *
+   * OSN always narrows a streaming instance's list by its service's codecs, so the device
+   * query cannot use the user's saved service: Twitch's `rtmp_common` entry declares only
+   * H.264, which dropped working HEVC/AV1 encoders from the device list and made startup
+   * validation reset them with a misleading "update your graphics drivers" dialog, even
+   * though Enhanced Broadcasting streams HEVC to Twitch. A bare `rtmp_custom` service
+   * declares no codecs, so OSN falls back to everything the RTMP output can carry.
+   */
+  private queryDeviceEncoders(mode: TOutputSettingsMode): IEncoderOption[] | null {
+    return this.queryEncodersWithTempService(
+      mode,
+      instance => this.setupDeviceQueryService(instance),
+      'device',
+    );
+  }
+
+  /**
+   * Returns null when the query failed outright, so callers never mistake a failure for a
+   * confirmed empty list.
+   */
+  private queryEncodersWithTempService(
+    mode: TOutputSettingsMode,
+    setupService: (instance: any) => any,
+    label: string,
   ): IEncoderOption[] | null {
     let instance: any;
     let service: any = null;
@@ -276,15 +312,13 @@ export class EncoderQueryService extends Service {
     try {
       instance =
         mode === 'Simple' ? SimpleStreamingFactory.create() : AdvancedStreamingFactory.create();
-      service = this.setupTempStreamingService(instance, platform);
+      service = setupService(instance);
       if (!hasGetAvailableEncoders(instance)) return null;
-      const encoders = instance.getAvailableEncoders();
-      if (!platform) return encoders;
-      return filterEncodersForPlatforms(encoders, [platform]);
+      return instance.getAvailableEncoders();
     } catch (e: unknown) {
       // Contained per target so one failure cannot discard the narrowing the other
       // targets already contributed.
-      console.error(`Error querying available encoders for ${platform ?? 'no platform'}`, e);
+      console.error(`Error querying available encoders for ${label}`, e);
       return null;
     } finally {
       // create() may have thrown before assigning an instance; nothing to destroy then.
@@ -454,6 +488,24 @@ export class EncoderQueryService extends Service {
       console.error('[EncoderQueryService] setupTempService failed, proceeding without service', e);
       return null;
     }
+  }
+
+  /**
+   * Assigns a codec-agnostic temp service for the device query and returns it for cleanup.
+   * Unlike setupTempStreamingService this throws on failure: a service-less instance drops
+   * NVENC and other service-checked encoders, and startup validation would then reset them.
+   * Throwing turns that into a failed query, which validation leaves alone.
+   */
+  private setupDeviceQueryService(instance: any): any {
+    // No server set: rtmp_custom reports the RTMP protocol, so OSN resolves rtmp_output.
+    const service = ServiceFactory.create('rtmp_custom', 'encoder-query-device-service', {});
+    try {
+      instance.service = service;
+    } catch (e: unknown) {
+      ServiceFactory.destroy(service);
+      throw e;
+    }
+    return service;
   }
 
   /** Sorted so that the same set of platforms always produces the same cache key. */
