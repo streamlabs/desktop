@@ -7,7 +7,7 @@ import { Inject } from 'services/core/injector';
 import { IPlatformAppManagerSettings } from 'services/sources/properties-managers/platform-app-manager';
 import { WindowsService } from 'services/windows';
 import { ENavMenuKey, NavMenuService } from 'services/nav-menu';
-import electron from 'electron';
+import * as remote from '@electron/remote';
 
 @Component({})
 export default class PlatformAppProperties extends Vue {
@@ -44,7 +44,7 @@ export default class PlatformAppProperties extends Vue {
   }
 
   copyUrl() {
-    electron.clipboard.writeText(this.browserUrl);
+    remote.clipboard.writeText(this.browserUrl);
   }
 
   get browserUrl() {
