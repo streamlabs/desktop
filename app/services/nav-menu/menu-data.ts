@@ -1,4 +1,4 @@
-import { HighlighterService, UserService, VisionService } from 'app-services';
+import { HighlighterService, LayoutService, UserService, VisionService } from 'app-services';
 import cloneDeep from 'lodash/cloneDeep';
 import { $t } from 'services/i18n';
 import { TAppPage } from 'services/navigation';
@@ -51,9 +51,9 @@ export type TNavMenuConfigValue<T, C> = T | ((ctx: C) => T);
 
 /** Static metadata for a nav menu item. */
 export interface INavMenuItemMetadata {
-  title: string;
+  title: TNavMenuConfigValue<string, { layout: LayoutService }>;
   badge?: TNavMenuConfigValue<string, { highlighter: HighlighterService }>;
-  icon?: string;
+  icon?: TNavMenuConfigValue<string, { layout: LayoutService }>;
   type?: TExternalLinkType | string;
   target?: TNavMenuTarget;
   trackingTarget?: string;
@@ -104,8 +104,10 @@ export type TNavMenuItem = Prettify<
   Omit<INavMenuItemPersistedData, 'isVisible'> &
     Omit<
       INavMenuItemMetadata,
-      'isAvailable' | 'isVisibleByDefault' | 'isVisibilityLocked' | 'badge'
+      'isAvailable' | 'isVisibleByDefault' | 'isVisibilityLocked' | 'title' | 'icon' | 'badge'
     > & {
+      title: string;
+      icon?: string;
       badge?: string;
     }
 >;
@@ -131,8 +133,8 @@ export const NavMenuItemData = (): Record<ENavMenuKey, INavMenuItemMetadata> => 
     trackingTarget: 'cloudbot',
   },
   [ENavMenuKey.Editor]: {
-    title: $t('Editor'),
-    icon: 'icon-studio',
+    title: ({ layout }) => layout.views.currentTab?.name ?? $t('Editor'),
+    icon: ({ layout }) => layout.views.currentTab?.icon ?? 'icon-studio',
     target: 'Studio',
     trackingTarget: 'editor',
   },
