@@ -277,26 +277,46 @@
   text-overflow: ellipsis;
 }
 
-// Figma clips the chip row at the card edge instead of shortening the chips.
+// TemplatePackCard shows only the chips that fit whole and folds the rest into "+N" (gap must
+// match CHIP_GAP there).
 .chips {
+  position: relative;
   display: flex;
   gap: 8px;
   min-width: 0;
   overflow: hidden;
 }
 
-.chip {
-  flex: none;
+// Same chips, laid out off-screen at their natural width so the card can measure them.
+.chipsMeasure {
+  position: absolute;
+  top: 0;
+  left: 0;
   display: flex;
-  align-items: center;
+  gap: 8px;
+  visibility: hidden;
+  pointer-events: none;
+
+  .chip {
+    flex: none;
+  }
+}
+
+// Shrinks (with an ellipsis) only when a single chip is wider than the whole row.
+.chip {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: block;
   height: 24px;
   padding: 0 8px;
   border-radius: 4px;
   background: var(--button);
   color: var(--title);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 24px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chipMore {

@@ -52,7 +52,12 @@ export default function TemplatePackDetail({
     <div className={styles.detail}>
       <div className={styles.banner}>
         {/* A layer, not background-image: game pack art is often .webm, which CSS can't paint. */}
-        <TemplatePreview src={pack.bannerUrl || pack.imageUrl} className={styles.bannerMedia} />
+        <TemplatePreview
+          src={pack.bannerUrl || pack.imageUrl}
+          className={styles.bannerMedia}
+          // The banner is a still in Figma; the preview panel below is where video plays.
+          playing={false}
+        />
         <span className={styles.badge} style={{ background: badgeColor(pack.name) }}>
           {pack.name.charAt(0)}
         </span>
@@ -101,6 +106,7 @@ export default function TemplatePackDetail({
                     <TemplatePreview
                       src={selected ? item.gifUrl : item.imageUrl}
                       className={styles.rowThumb}
+                      playing={selected}
                     />
                     <div className={styles.rowText}>
                       <div className={styles.rowTitle}>{item.title}</div>
