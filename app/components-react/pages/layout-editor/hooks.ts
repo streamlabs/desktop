@@ -20,6 +20,8 @@ class LayoutEditorModule {
     browserUrl:
       this.layoutService.views.currentTab.slottedElements[ELayoutElement.Browser]?.src || '',
     showModal: false,
+    /** Whether the modal edits the current tab rather than creating a new one. */
+    isEditingTab: false,
   });
 
   private get layoutService() {

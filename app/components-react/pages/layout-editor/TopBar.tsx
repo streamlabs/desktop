@@ -1,15 +1,15 @@
-import React from 'react';
-import cx from 'classnames';
 import { Tooltip } from 'antd';
-import { Services } from 'components-react/service-provider';
+import cx from 'classnames';
 import { useVuex } from 'components-react/hooks';
+import { Services } from 'components-react/service-provider';
 import { ListInput } from 'components-react/shared/inputs';
+import Form from 'components-react/shared/inputs/Form';
+import React from 'react';
+import { $t } from 'services/i18n';
 import { ELayoutElement } from 'services/layout';
 import { ENavMenuKey } from 'services/nav-menu';
-import { $t } from 'services/i18n';
 import styles from './LayoutEditor.m.less';
 import { useLayoutEditor } from './hooks';
-import Form from '../../shared/inputs/Form';
 
 export default function TopBar() {
   const { LayoutService, NavigationService, NavMenuService } = Services;
@@ -19,6 +19,7 @@ export default function TopBar() {
     currentLayout,
     dockLayout,
     setShowModal,
+    setIsEditingTab,
     setCurrentTab,
     currentTab,
   } = useLayoutEditor();
@@ -27,8 +28,14 @@ export default function TopBar() {
     tabOptions: Object.keys(LayoutService.state.tabs).map(tab => ({
       value: tab,
       label: LayoutService.state.tabs[tab].name,
+      image: <i className={LayoutService.state.tabs[tab].icon} />,
     })),
   }));
+
+  function openModal(isEditing: boolean) {
+    setIsEditingTab(isEditing);
+    setShowModal(true);
+  }
 
   async function removeCurrentTab() {
     if (currentTab === 'default') return;
@@ -60,9 +67,18 @@ export default function TopBar() {
         value={currentTab}
         onChange={setCurrentTab}
         options={tabOptions}
+        hasImage
       />
       {currentTab !== 'default' && (
         <>
+          <Tooltip title={$t('Edit Layout')} placement="bottom">
+            <button
+              className={cx('button button--default', styles.iconButton)}
+              onClick={() => openModal(true)}
+            >
+              <i className="icon-edit" />
+            </button>
+          </Tooltip>
           <Tooltip title={$t('Delete Layout')} placement="bottom">
             <button
               className={cx('button button--warn', styles.iconButton)}
