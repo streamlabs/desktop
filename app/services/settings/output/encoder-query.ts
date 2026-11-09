@@ -64,6 +64,12 @@ function filterEncodersForPlatforms(
   );
 }
 
+interface INativeStreamingFactories {
+  simple: typeof SimpleStreamingFactory;
+  advanced: typeof AdvancedStreamingFactory;
+  service: typeof ServiceFactory;
+}
+
 function intersectEncoders(a: IEncoderOption[], b: IEncoderOption[]): IEncoderOption[] {
   return a.filter(encoder => b.some(other => other.name === encoder.name));
 }
@@ -90,6 +96,17 @@ export class EncoderQueryService extends Service {
 
   private streamingEncoderCache = new Map<string, ICacheEntry>();
   private recordingEncoderCache = new Map<string, ICacheEntry>();
+
+  /**
+   * Native factories behind the streaming encoder queries, including the saved service
+   * (`service.legacySettings`). Read through this field rather than the imports so tests
+   * can check which service each query assigns without starting OSN outputs.
+   */
+  private nativeStreamingFactories: INativeStreamingFactories = {
+    simple: SimpleStreamingFactory,
+    advanced: AdvancedStreamingFactory,
+    service: ServiceFactory,
+  };
 
   getAvailableStreamingEncoders(mode: TOutputSettingsMode): IObsListOption<string>[] {
     return this.getStreamingEncoderEntry(mode).options;
@@ -306,12 +323,13 @@ export class EncoderQueryService extends Service {
     setupService: (instance: any) => any,
     label: string,
   ): IEncoderOption[] | null {
+    const factories = this.nativeStreamingFactories;
+    const instanceFactory = mode === 'Simple' ? factories.simple : factories.advanced;
     let instance: any;
     let service: any = null;
 
     try {
-      instance =
-        mode === 'Simple' ? SimpleStreamingFactory.create() : AdvancedStreamingFactory.create();
+      instance = instanceFactory.create();
       service = setupService(instance);
       if (!hasGetAvailableEncoders(instance)) return null;
       return instance.getAvailableEncoders();
@@ -322,14 +340,8 @@ export class EncoderQueryService extends Service {
       return null;
     } finally {
       // create() may have thrown before assigning an instance; nothing to destroy then.
-      if (instance) {
-        if (mode === 'Simple') {
-          SimpleStreamingFactory.destroy(instance);
-        } else {
-          AdvancedStreamingFactory.destroy(instance);
-        }
-      }
-      if (service) ServiceFactory.destroy(service);
+      if (instance) instanceFactory.destroy(instance);
+      if (service) factories.service.destroy(service);
     }
   }
 
@@ -467,13 +479,14 @@ export class EncoderQueryService extends Service {
    */
   private setupTempStreamingService(instance: any, platform: TPlatform | null): any {
     try {
-      const legacySettings = ServiceFactory.legacySettings;
+      const serviceFactory = this.nativeStreamingFactories.service;
+      const legacySettings = serviceFactory.legacySettings;
 
       if (platform) {
         const config = platformServiceConfig[platform];
         const serviceName = config.service || legacySettings?.settings?.service;
 
-        const service = ServiceFactory.create(config.streamType, 'encoder-query-temp-service', {
+        const service = serviceFactory.create(config.streamType, 'encoder-query-temp-service', {
           ...legacySettings?.settings,
           service: serviceName,
         });
@@ -498,11 +511,12 @@ export class EncoderQueryService extends Service {
    */
   private setupDeviceQueryService(instance: any): any {
     // No server set: rtmp_custom reports the RTMP protocol, so OSN resolves rtmp_output.
-    const service = ServiceFactory.create('rtmp_custom', 'encoder-query-device-service', {});
+    const serviceFactory = this.nativeStreamingFactories.service;
+    const service = serviceFactory.create('rtmp_custom', 'encoder-query-device-service', {});
     try {
       instance.service = service;
     } catch (e: unknown) {
-      ServiceFactory.destroy(service);
+      serviceFactory.destroy(service);
       throw e;
     }
     return service;
