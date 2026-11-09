@@ -313,7 +313,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         buttons: [$t('OK')],
       });
 
-      await remote.shell.openExternal('https://obsproject.com/visual-studio-2022-runtimes');
+      try {
+        await remote.shell.openExternal('https://obsproject.com/visual-studio-2022-runtimes');
+      } catch (error: unknown) {
+        console.error('Failed to open Visual C++ Redistributables download page', error);
+      }
 
       // Same shutdown as a failed OBS_API_initAPI below.
       ipcRenderer.send('unregister-in-crash-handler', { pid: process.pid });
