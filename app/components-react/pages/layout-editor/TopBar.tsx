@@ -54,32 +54,32 @@ export default function TopBar() {
 
   return (
     <Form className={styles.topBar}>
+      <ListInput
+        className={styles.layoutSelect}
+        label={$t('Current Layout')}
+        value={currentTab}
+        onChange={setCurrentTab}
+        options={tabOptions}
+      />
+      {currentTab !== 'default' && (
+        <>
+          <Tooltip title={$t('Delete Layout')} placement="bottom">
+            <button
+              className={cx('button button--warn', styles.iconButton)}
+              onClick={removeCurrentTab}
+            >
+              <i className="icon-trash" />
+            </button>
+          </Tooltip>
+        </>
+      )}
       <button
         className="button button--action"
         style={{ margin: '0 16px' }}
-        onClick={() => setShowModal(true)}
+        onClick={() => openModal(false)}
       >
-        {$t('Add Tab')}
+        {$t('Add Layout')}
       </button>
-      <ListInput
-        label=""
-        style={{ width: '150px', marginBottom: 0 }}
-        value={currentTab}
-        // defaultValue="default"
-        onChange={setCurrentTab}
-        options={tabOptions}
-        tooltip={{ title: $t('Current Tab'), placement: 'bottom' }}
-      />
-      {currentTab !== 'default' && (
-        <Tooltip title={$t('Delete Current Tab')} placement="bottom">
-          <button
-            className={cx('button button--warn', styles.removeButton)}
-            onClick={removeCurrentTab}
-          >
-            <i className="icon-trash" />
-          </button>
-        </Tooltip>
-      )}
       <button className="button button--action" onClick={save}>
         {$t('Save Changes')}
       </button>

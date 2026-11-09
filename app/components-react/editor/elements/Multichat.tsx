@@ -245,9 +245,9 @@ function MultichatElement(p: ILayoutElementProps) {
 
   const contents = useMemo(() => {
     if (!isLoggedIn) {
-      return <DisabledMultichat message={$t('Log in to use Multichat.')} />;
+      return <DisabledMultichat message={$t('Log in to use chat.')} />;
     } else if (!supported) {
-      return <DisabledMultichat message={$t('Multichat is not supported for your platform.')} />;
+      return <DisabledMultichat message={$t('Chat is not supported for your platform.')} />;
     }
     return <MemoizedMultichat inDock={p.inDock} />;
   }, [isLoggedIn, supported, p.inDock]);
@@ -404,7 +404,7 @@ function MultichatTitleBar() {
 
   return (
     <div className="studio-controls-top">
-      <h2 className="studio-controls__label">{$t('Multichat')}</h2>
+      <h2 className="studio-controls__label">{$t('Chat')}</h2>
       <div className={styles.multichatTitleBarIcons}>
         {canEditChannelInfo && (
           <IconButton
