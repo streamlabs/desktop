@@ -17,7 +17,12 @@ import AutomationsEmptyState from './AutomationsEmptyState';
 import AutomationTemplates from './AutomationTemplates';
 import { AutomationsAnalytics } from './automations-analytics';
 import UltraIcon from 'components-react/shared/UltraIcon';
-import { conditionLabel, conditionGame, summarizeActions, GAME_OPTIONS } from './automations-utils';
+import {
+  conditionLabel,
+  conditionGame,
+  summarizeActions,
+  triggerSourceOptions,
+} from './automations-utils';
 import {
   checkEnableLimit,
   enabledUsage,
@@ -204,7 +209,10 @@ export default function EditAutomations() {
               <Select
                 value={filterGame}
                 onChange={val => setFilterGame(val)}
-                options={[{ label: $t('All game automations'), value: '' }, ...GAME_OPTIONS]}
+                options={[
+                  { label: $t('All game automations'), value: '' },
+                  ...triggerSourceOptions(),
+                ]}
                 style={{ width: 200 }}
               />
             </>

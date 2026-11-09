@@ -72,6 +72,15 @@ class TextProperty extends PropertyBase<string, { label: string }> {
   }
 }
 
+class AlertConditionProperty extends PropertyBase<
+  { condition: string; value?: number | string },
+  {
+    label: string;
+    options: { value: string; label: string; input?: 'number' | 'tier' | 'text' }[];
+    default?: { condition: string; value?: number | string };
+  }
+> {}
+
 export const Properties = {
   Scene: SceneProperty,
   Source: SourceProperty,
@@ -79,6 +88,7 @@ export const Properties = {
   SliderRange: SliderRangeProperty,
   Checkbox: CheckboxProperty,
   Text: TextProperty,
+  AlertCondition: AlertConditionProperty,
 } as const;
 
 export type PropertyMap = Record<string, PropertyInstance> | undefined;

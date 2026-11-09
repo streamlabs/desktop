@@ -1,6 +1,6 @@
 import { $t } from 'services/i18n';
 import type { PropertyInstance } from './properties';
-import type { GameState } from './game-state';
+import type { GameState, StreamAlert } from './game-state';
 import { Properties } from './properties';
 
 // ─── Shared evaluation helpers ────────────────────────────────────────
@@ -54,6 +54,268 @@ const playersRemaining = (sliderMax: number) => ({
     return remaining >= min && remaining <= max;
   },
 });
+
+// ─── Stream alert helpers ─────────────────────────────────────────────
+
+type AlertRoute = { platforms: readonly string[]; types: readonly string[] };
+
+const route = (platform: string, ...types: string[]): AlertRoute => ({
+  platforms: [platform],
+  types,
+});
+
+// Which alerts each stream-event trigger accepts, keyed by the full condition key. `platforms` are
+// normalized socket `for` values (no `_account` suffix); `types` are socket event types. Single
+// source of truth for alert routing (STREAM_ALERT_TYPES), evaluation (onAlert) and simulation
+// (first entries = sample platform/type).
+export const ALERT_ROUTES: Record<string, AlertRoute> = {
+  // Streamlabs
+  'streamlabs.donation': route('streamlabs', 'donation'),
+  'streamlabs.merch': route('streamlabs', 'merch'),
+  'streamlabs.loyalty_store_redemption': route(
+    'streamlabs',
+    'loyalty_store_redemption',
+    'redemption',
+  ),
+  'streamlabs.prime_sub_gift': route('streamlabs', 'prime_sub_gift'),
+
+  // Twitch
+  'twitch.follow': route('twitch', 'follow'),
+  'twitch.subscription': route('twitch', 'subscription', 'subtember', 'subExtension'),
+  'twitch.community_gift': route('twitch', 'subMysteryGift'),
+  'twitch.bits': route('twitch', 'bits'),
+  'twitch.power_up': route('twitch', 'powerUp'),
+  'twitch.raid': route('twitch', 'raid'),
+  'twitch.charity_donation': route('twitch', 'twitchcharitydonation'),
+  'twitch.follower_streak': route('twitch', 'follow'),
+  'twitch.subscriber_streak': route('twitch', 'subscription'),
+
+  // YouTube
+  'youtube.subscriber': route('youtube', 'follow'),
+  'youtube.member': route('youtube', 'subscription'),
+  'youtube.membership_gift': route('youtube', 'membershipGift'),
+  'youtube.superchat': route('youtube', 'superchat'),
+  'youtube.super_sticker': route('youtube', 'superSticker'),
+  'youtube.jewel_gift': route('youtube', 'jewelGift'),
+  'youtube.subscriber_streak': route('youtube', 'follow'),
+  'youtube.member_streak': route('youtube', 'subscription'),
+
+  // Kick
+  'kick.follow': route('kick', 'follow'),
+  'kick.subscription': route('kick', 'subscription'),
+  'kick.community_gift': route('kick', 'communityGift'),
+  'kick.kicks': route('kick', 'kicks'),
+  'kick.follower_streak': route('kick', 'follow'),
+  'kick.subscriber_streak': route('kick', 'subscription'),
+
+  // Facebook
+  'facebook.follow': route('facebook', 'follow'),
+  'facebook.like': route('facebook', 'like'),
+  'facebook.share': route('facebook', 'share'),
+  'facebook.stars': route('facebook', 'stars'),
+  'facebook.support': route('facebook', 'support'),
+  'facebook.support_gift': route('facebook', 'supportGifter'),
+  'facebook.follower_streak': route('facebook', 'follow'),
+
+  // TikTok
+  'tiktok.follow': route('tiktok', 'follow'),
+  'tiktok.like': route('tiktok', 'like'),
+  'tiktok.share': route('tiktok', 'share'),
+  'tiktok.follower_streak': route('tiktok', 'follow'),
+
+  // X (socket platform is `twitter`)
+  'x.follow': route('twitter', 'follow'),
+  'x.like': route('twitter', 'like'),
+  'x.subscription': route('twitter', 'subscription'),
+  'x.repost': route('twitter', 'repost'),
+  'x.follower_streak': route('twitter', 'follow'),
+  'x.subscriber_streak': route('twitter', 'subscription'),
+
+  // Patreon
+  'patreon.pledge': route('patreon', 'pledge'),
+
+  // Charity (one trigger per service)
+  'charity.streamlabs_charity': route('streamlabscharity', 'streamlabscharitydonation'),
+  'charity.extralife': route('extralife', 'eldonation'),
+  'charity.tiltify': route('tiltify', 'tiltifydonation'),
+  'charity.donordrive': route('donordrive', 'donordrivedonation'),
+  'charity.justgiving': route('justgiving', 'justgivingdonation'),
+
+  // TreatStream
+  'treatstream.treat': route('treatstream', 'treat'),
+};
+
+type AlertProps = { condition?: string; value?: number | string };
+
+// Missing/blank values become NaN so every numeric comparison is false.
+const toNum = (v: unknown): number => (v == null || v === '' ? NaN : Number(v));
+
+// Case-insensitive equality; a missing/blank value never matches.
+// Trimmed both sides: the editor validates the value trimmed, so a stray space must still match.
+const textEquals = (field: unknown, v: unknown): boolean => {
+  const want = String(v ?? '').trim().toLowerCase();
+  return want !== '' && String(field ?? '').trim().toLowerCase() === want;
+};
+
+const isAnonymous = (alert: StreamAlert): boolean => alert.gifter === 'Anonymous';
+
+// Mirrors the Alert Box variation conditions.
+const matchAlert = (alert: StreamAlert, props?: AlertProps): boolean => {
+  const v = props?.value;
+  const n = toNum(v);
+  switch (props?.condition ?? 'any') {
+    case 'any':
+      return true;
+    case 'min_amount':
+      return alert.amount >= n;
+    case 'exact_amount':
+      return alert.amount === n;
+    case 'largest_of_stream':
+      return alert.amount > alert.previousLargestDonation;
+    case 'recurring':
+      return alert.recurring;
+    case 'min_months':
+      return alert.months >= n;
+    case 'exact_months':
+      return alert.months === n;
+    case 'min_streak':
+      return alert.streakMonths > 0 && alert.streakMonths >= n;
+    case 'tier':
+      return alert.subPlan === String(n * 1000);
+    case 'prime':
+      return alert.subPlan === 'prime';
+    case 'gift':
+      return !!alert.gifter;
+    case 'min_raiders':
+      return alert.raiders >= n;
+    case 'prime_upgrade':
+      return String(alert.subType ?? '').toLowerCase() === 'primepaidupgrade';
+    case 'anon_gift':
+      return isAnonymous(alert);
+    case 'subtember':
+      return alert.type === 'subtember';
+    case 'sub_extended':
+      return alert.type === 'subExtension';
+    case 'min_level':
+      return alert.level != null && alert.level >= n;
+    case 'level_name':
+    case 'gift_level_name':
+      return textEquals(alert.levelName, v);
+    case 'min_anon_amount':
+      return isAnonymous(alert) && alert.amount >= n;
+    case 'product':
+    case 'item_name':
+      return textEquals(alert.product, v);
+    case 'item_type':
+      return textEquals(alert.productType, v);
+    case 'gift_type':
+      return textEquals(alert.giftType, v);
+    case 'power_up':
+      return textEquals(alert.powerUpId, v) || textEquals(alert.powerUpName, v);
+    case 'min_combo':
+      return alert.combo != null && alert.combo >= n;
+    case 'exact_combo':
+      return alert.combo != null && alert.combo === n;
+    case 'gift_name':
+      return textEquals(alert.giftName, v);
+    case 'gift_redeemed':
+      return alert.gift === true;
+    case 'every':
+      return n >= 1 && alert.streakCount > 0 && alert.streakCount % n === 0;
+    default:
+      return false;
+  }
+};
+
+// Deliberately not named `onEvent`: games/check-condition-keys.mjs regex-matches onEvent('x').
+// `key` is the full condition key (e.g. 'twitch.follow') and indexes ALERT_ROUTES.
+const onAlert = (key: string) => ({ state, props }: EvalArgs<AlertProps>): boolean => {
+  const { alert } = state;
+  const entry = ALERT_ROUTES[key];
+  return (
+    !!alert &&
+    !!entry &&
+    entry.platforms.includes(alert.platform) &&
+    entry.types.includes(alert.type) &&
+    matchAlert(alert, props)
+  );
+};
+
+type AlertOption = { value: string; label: string; input?: 'number' | 'tier' | 'text' };
+
+const alertCondition = (
+  options: AlertOption[],
+  defaultProps: { condition: string; value?: number | string } = { condition: 'any' },
+) =>
+  new Properties.AlertCondition({
+    label: $t('Condition'),
+    default: defaultProps,
+    options,
+  });
+
+// Shared option sets. Functions, not constants, so $t runs after the locale loads (like the
+// registry itself).
+const amountOptions = (any: string, atLeast: string, exactly: string): AlertOption[] => [
+  { value: 'any', label: any },
+  { value: 'min_amount', label: atLeast, input: 'number' },
+  { value: 'exact_amount', label: exactly, input: 'number' },
+];
+
+const monthsOptions = (atLeast: string, exactly: string): AlertOption[] => [
+  { value: 'min_months', label: atLeast, input: 'number' },
+  { value: 'exact_months', label: exactly, input: 'number' },
+];
+
+const subMonthsOptions = () =>
+  monthsOptions($t('Months subscribed is at least'), $t('Months subscribed is exactly'));
+
+const charityOptions = () =>
+  amountOptions(
+    $t('Any charity donation'),
+    $t('Donation amount is at least'),
+    $t('Donation amount is exactly'),
+  );
+
+const communityGiftOptions = (): AlertOption[] => [
+  { value: 'any', label: $t('Any community gift') },
+  { value: 'min_amount', label: $t('Gifted subs is at least'), input: 'number' },
+  { value: 'min_anon_amount', label: $t('Anonymous gifted subs is at least'), input: 'number' },
+];
+
+const twitchSubOptions = (): AlertOption[] => [
+  { value: 'any', label: $t('Any subscription') },
+  ...subMonthsOptions(),
+  { value: 'min_streak', label: $t('Subscription streak is at least'), input: 'number' },
+  { value: 'tier', label: $t('Subscription tier is'), input: 'tier' },
+  { value: 'prime', label: $t('Subscription is Prime Gaming') },
+  { value: 'gift', label: $t('Subscription is a gift') },
+  { value: 'prime_upgrade', label: $t('Subscription is a Prime upgrade') },
+  { value: 'anon_gift', label: $t('Anonymous gift') },
+  { value: 'subtember', label: $t('Subtember commitment') },
+  { value: 'sub_extended', label: $t('Subscription extended') },
+];
+
+// Kick has no tiers, Prime or streaks.
+const kickSubOptions = (): AlertOption[] => [
+  { value: 'any', label: $t('Any subscription') },
+  ...subMonthsOptions(),
+  { value: 'gift', label: $t('Subscription is a gift') },
+  { value: 'anon_gift', label: $t('Anonymous gift') },
+];
+
+const ytMemberOptions = (): AlertOption[] => [
+  { value: 'any', label: $t('Any member') },
+  { value: 'min_months', label: $t('Months subscribed is at least'), input: 'number' },
+  { value: 'min_level', label: $t('Membership level is at least'), input: 'number' },
+  { value: 'level_name', label: $t('Membership level name is'), input: 'text' },
+];
+
+// Follower/subscriber streaks: "every N" follows or subs since going live.
+const streakOptions = (): AlertOption[] => [
+  { value: 'every', label: $t('Every'), input: 'number' },
+];
+
+const streakCondition = () => alertCondition(streakOptions(), { condition: 'every', value: 5 });
 
 // ─── Condition props map ──────────────────────────────────────────────
 
@@ -481,6 +743,77 @@ export type ConditionPropsMap = {
   'wardogs.victory': undefined;
   'wardogs.defeat': undefined;
   'wardogs.elimination_count': { elimination_count?: [number, number] };
+
+  // Stream events: Streamlabs
+  'streamlabs.donation': AlertProps;
+  'streamlabs.merch': AlertProps;
+  'streamlabs.loyalty_store_redemption': AlertProps;
+  'streamlabs.prime_sub_gift': AlertProps;
+
+  // Stream events: Twitch
+  'twitch.follow': {};
+  'twitch.subscription': AlertProps;
+  'twitch.community_gift': AlertProps;
+  'twitch.bits': AlertProps;
+  'twitch.power_up': AlertProps;
+  'twitch.raid': AlertProps;
+  'twitch.charity_donation': AlertProps;
+  'twitch.follower_streak': AlertProps;
+  'twitch.subscriber_streak': AlertProps;
+
+  // Stream events: YouTube
+  'youtube.subscriber': {};
+  'youtube.member': AlertProps;
+  'youtube.membership_gift': AlertProps;
+  'youtube.superchat': AlertProps;
+  'youtube.super_sticker': AlertProps;
+  'youtube.jewel_gift': AlertProps;
+  'youtube.subscriber_streak': AlertProps;
+  'youtube.member_streak': AlertProps;
+
+  // Stream events: Kick
+  'kick.follow': {};
+  'kick.subscription': AlertProps;
+  'kick.community_gift': AlertProps;
+  'kick.kicks': AlertProps;
+  'kick.follower_streak': AlertProps;
+  'kick.subscriber_streak': AlertProps;
+
+  // Stream events: Facebook
+  'facebook.follow': {};
+  'facebook.like': {};
+  'facebook.share': {};
+  'facebook.stars': AlertProps;
+  'facebook.support': AlertProps;
+  'facebook.support_gift': AlertProps;
+  'facebook.follower_streak': AlertProps;
+
+  // Stream events: TikTok
+  'tiktok.follow': {};
+  'tiktok.like': {};
+  'tiktok.share': {};
+  'tiktok.follower_streak': AlertProps;
+
+  // Stream events: X
+  'x.follow': {};
+  'x.like': {};
+  'x.subscription': {};
+  'x.repost': {};
+  'x.follower_streak': AlertProps;
+  'x.subscriber_streak': AlertProps;
+
+  // Stream events: Patreon
+  'patreon.pledge': AlertProps;
+
+  // Stream events: Charity
+  'charity.streamlabs_charity': AlertProps;
+  'charity.extralife': AlertProps;
+  'charity.tiltify': AlertProps;
+  'charity.donordrive': AlertProps;
+  'charity.justgiving': AlertProps;
+
+  // Stream events: TreatStream
+  'treatstream.treat': {};
 };
 
 export type ConditionType = keyof ConditionPropsMap;
@@ -1192,6 +1525,328 @@ const perGameConditions = () =>
     'wardogs.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
     'wardogs.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
     'wardogs.elimination_count': eliminationCount(),
+
+    // Stream events: Streamlabs
+    'streamlabs.donation': {
+      label: $t('Donation'),
+      properties: {
+        condition: alertCondition([
+          ...amountOptions(
+            $t('Any donation'),
+            $t('Donation amount is at least'),
+            $t('Donation amount is exactly'),
+          ),
+          { value: 'largest_of_stream', label: $t('Donation is the largest this stream') },
+          { value: 'recurring', label: $t('Donation is recurring') },
+        ]),
+      },
+      evaluate: onAlert('streamlabs.donation'),
+    },
+    'streamlabs.merch': {
+      label: $t('Merch'),
+      properties: {
+        condition: alertCondition([
+          { value: 'any', label: $t('Any merch purchase') },
+          { value: 'product', label: $t('Product is'), input: 'text' },
+        ]),
+      },
+      evaluate: onAlert('streamlabs.merch'),
+    },
+    'streamlabs.loyalty_store_redemption': {
+      label: $t('Loyalty Store Redemption'),
+      properties: {
+        condition: alertCondition([
+          { value: 'any', label: $t('Any redemption') },
+          { value: 'item_type', label: $t('Item type is'), input: 'text' },
+          { value: 'item_name', label: $t('Item name is'), input: 'text' },
+        ]),
+      },
+      evaluate: onAlert('streamlabs.loyalty_store_redemption'),
+    },
+    'streamlabs.prime_sub_gift': {
+      label: $t('Prime Sub Gift'),
+      properties: {
+        condition: alertCondition([
+          { value: 'any', label: $t('Any Prime sub gift') },
+          { value: 'gift_type', label: $t('Gift type is'), input: 'text' },
+        ]),
+      },
+      evaluate: onAlert('streamlabs.prime_sub_gift'),
+    },
+
+    // Stream events: Twitch
+    'twitch.follow': { label: $t('Follow'), evaluate: onAlert('twitch.follow') },
+    'twitch.subscription': {
+      label: $t('Subscription'),
+      properties: { condition: alertCondition(twitchSubOptions()) },
+      evaluate: onAlert('twitch.subscription'),
+    },
+    'twitch.community_gift': {
+      label: $t('Community Gift'),
+      properties: { condition: alertCondition(communityGiftOptions()) },
+      evaluate: onAlert('twitch.community_gift'),
+    },
+    'twitch.bits': {
+      label: $t('Bits'),
+      properties: {
+        condition: alertCondition(
+          amountOptions($t('Any bits'), $t('Bits used is at least'), $t('Bits used is exactly')),
+        ),
+      },
+      evaluate: onAlert('twitch.bits'),
+    },
+    'twitch.power_up': {
+      label: $t('Power-up'),
+      properties: {
+        condition: alertCondition([
+          { value: 'any', label: $t('Any power-up') },
+          { value: 'power_up', label: $t('Power-up is'), input: 'text' },
+          { value: 'min_amount', label: $t('Bits spent is at least'), input: 'number' },
+        ]),
+      },
+      evaluate: onAlert('twitch.power_up'),
+    },
+    'twitch.raid': {
+      label: $t('Raid'),
+      properties: {
+        condition: alertCondition([
+          { value: 'any', label: $t('Any raid') },
+          { value: 'min_raiders', label: $t('Raid party size is at least'), input: 'number' },
+        ]),
+      },
+      evaluate: onAlert('twitch.raid'),
+    },
+    'twitch.charity_donation': {
+      label: $t('Charity Donation'),
+      properties: { condition: alertCondition(charityOptions()) },
+      evaluate: onAlert('twitch.charity_donation'),
+    },
+    'twitch.follower_streak': {
+      label: $t('Follower Streak'),
+      properties: { condition: streakCondition() },
+      evaluate: onAlert('twitch.follower_streak'),
+    },
+    'twitch.subscriber_streak': {
+      label: $t('Subscriber Streak'),
+      properties: { condition: streakCondition() },
+      evaluate: onAlert('twitch.subscriber_streak'),
+    },
+
+    // Stream events: YouTube
+    'youtube.subscriber': { label: $t('Subscriber'), evaluate: onAlert('youtube.subscriber') },
+    'youtube.member': {
+      label: $t('Member'),
+      properties: { condition: alertCondition(ytMemberOptions()) },
+      evaluate: onAlert('youtube.member'),
+    },
+    'youtube.membership_gift': {
+      label: $t('Membership Gift'),
+      properties: {
+        condition: alertCondition([
+          ...amountOptions(
+            $t('Any membership gift'),
+            $t('Memberships gifted is at least'),
+            $t('Memberships gifted is exactly'),
+          ),
+          { value: 'gift_level_name', label: $t('Gift membership level name is'), input: 'text' },
+        ]),
+      },
+      evaluate: onAlert('youtube.membership_gift'),
+    },
+    'youtube.superchat': {
+      label: $t('Super Chat'),
+      properties: {
+        condition: alertCondition(
+          amountOptions(
+            $t('Any Super Chat'),
+            $t('Super Chat amount is at least'),
+            $t('Super Chat amount is exactly'),
+          ),
+        ),
+      },
+      evaluate: onAlert('youtube.superchat'),
+    },
+    'youtube.super_sticker': {
+      label: $t('Super Sticker'),
+      properties: {
+        condition: alertCondition(
+          amountOptions(
+            $t('Any Super Sticker'),
+            $t('Super Sticker amount is at least'),
+            $t('Super Sticker amount is exactly'),
+          ),
+        ),
+      },
+      evaluate: onAlert('youtube.super_sticker'),
+    },
+    'youtube.jewel_gift': {
+      label: $t('Jewel Gift'),
+      properties: {
+        condition: alertCondition([
+          ...amountOptions($t('Any jewel gift'), $t('Jewels is at least'), $t('Jewels is exactly')),
+          { value: 'min_combo', label: $t('Jewel gift combo is at least'), input: 'number' },
+          { value: 'exact_combo', label: $t('Jewel gift combo is exactly'), input: 'number' },
+          { value: 'gift_name', label: $t('Gift name is'), input: 'text' },
+        ]),
+      },
+      evaluate: onAlert('youtube.jewel_gift'),
+    },
+    'youtube.subscriber_streak': {
+      label: $t('Subscriber Streak'),
+      properties: { condition: streakCondition() },
+      evaluate: onAlert('youtube.subscriber_streak'),
+    },
+    'youtube.member_streak': {
+      label: $t('Member Streak'),
+      properties: { condition: streakCondition() },
+      evaluate: onAlert('youtube.member_streak'),
+    },
+
+    // Stream events: Kick
+    'kick.follow': { label: $t('Follow'), evaluate: onAlert('kick.follow') },
+    'kick.subscription': {
+      label: $t('Subscription'),
+      properties: { condition: alertCondition(kickSubOptions()) },
+      evaluate: onAlert('kick.subscription'),
+    },
+    'kick.community_gift': {
+      label: $t('Community Gift'),
+      properties: { condition: alertCondition(communityGiftOptions()) },
+      evaluate: onAlert('kick.community_gift'),
+    },
+    'kick.kicks': {
+      label: $t('Kicks'),
+      properties: {
+        condition: alertCondition(
+          amountOptions(
+            $t('Any Kicks'),
+            $t('Kicks amount is at least'),
+            $t('Kicks amount is exactly'),
+          ),
+        ),
+      },
+      evaluate: onAlert('kick.kicks'),
+    },
+    'kick.follower_streak': {
+      label: $t('Follower Streak'),
+      properties: { condition: streakCondition() },
+      evaluate: onAlert('kick.follower_streak'),
+    },
+    'kick.subscriber_streak': {
+      label: $t('Subscriber Streak'),
+      properties: { condition: streakCondition() },
+      evaluate: onAlert('kick.subscriber_streak'),
+    },
+
+    // Stream events: Facebook
+    'facebook.follow': { label: $t('Follow'), evaluate: onAlert('facebook.follow') },
+    'facebook.like': { label: $t('Like'), evaluate: onAlert('facebook.like') },
+    'facebook.share': { label: $t('Share'), evaluate: onAlert('facebook.share') },
+    'facebook.stars': {
+      label: $t('Stars'),
+      properties: {
+        condition: alertCondition(
+          amountOptions($t('Any Stars'), $t('Stars is at least'), $t('Stars is exactly')),
+        ),
+      },
+      evaluate: onAlert('facebook.stars'),
+    },
+    'facebook.support': {
+      label: $t('Support'),
+      properties: {
+        condition: alertCondition([
+          { value: 'any', label: $t('Any Support') },
+          ...monthsOptions($t('Months supported is at least'), $t('Months supported is exactly')),
+          { value: 'gift_redeemed', label: $t('Support gift redeemed') },
+        ]),
+      },
+      evaluate: onAlert('facebook.support'),
+    },
+    'facebook.support_gift': {
+      label: $t('Support Gift'),
+      properties: {
+        condition: alertCondition(
+          amountOptions($t('Any Support gift'), $t('Gifts is at least'), $t('Gifts is exactly')),
+        ),
+      },
+      evaluate: onAlert('facebook.support_gift'),
+    },
+    'facebook.follower_streak': {
+      label: $t('Follower Streak'),
+      properties: { condition: streakCondition() },
+      evaluate: onAlert('facebook.follower_streak'),
+    },
+
+    // Stream events: TikTok
+    'tiktok.follow': { label: $t('Follow'), evaluate: onAlert('tiktok.follow') },
+    'tiktok.like': { label: $t('Like'), evaluate: onAlert('tiktok.like') },
+    'tiktok.share': { label: $t('Share'), evaluate: onAlert('tiktok.share') },
+    'tiktok.follower_streak': {
+      label: $t('Follower Streak'),
+      properties: { condition: streakCondition() },
+      evaluate: onAlert('tiktok.follower_streak'),
+    },
+
+    // Stream events: X
+    'x.follow': { label: $t('Follow'), evaluate: onAlert('x.follow') },
+    'x.like': { label: $t('Like'), evaluate: onAlert('x.like') },
+    'x.subscription': { label: $t('Subscription'), evaluate: onAlert('x.subscription') },
+    'x.repost': { label: $t('Repost'), evaluate: onAlert('x.repost') },
+    'x.follower_streak': {
+      label: $t('Follower Streak'),
+      properties: { condition: streakCondition() },
+      evaluate: onAlert('x.follower_streak'),
+    },
+    'x.subscriber_streak': {
+      label: $t('Subscriber Streak'),
+      properties: { condition: streakCondition() },
+      evaluate: onAlert('x.subscriber_streak'),
+    },
+
+    // Stream events: Patreon
+    'patreon.pledge': {
+      label: $t('Pledge'),
+      properties: {
+        condition: alertCondition(
+          amountOptions(
+            $t('Any pledge'),
+            $t('Pledge amount is at least'),
+            $t('Pledge amount is exactly'),
+          ),
+        ),
+      },
+      evaluate: onAlert('patreon.pledge'),
+    },
+
+    // Stream events: Charity
+    'charity.streamlabs_charity': {
+      label: $t('Streamlabs Charity'),
+      properties: { condition: alertCondition(charityOptions()) },
+      evaluate: onAlert('charity.streamlabs_charity'),
+    },
+    'charity.extralife': {
+      label: $t('Extra Life'),
+      properties: { condition: alertCondition(charityOptions()) },
+      evaluate: onAlert('charity.extralife'),
+    },
+    'charity.tiltify': {
+      label: $t('Tiltify'),
+      properties: { condition: alertCondition(charityOptions()) },
+      evaluate: onAlert('charity.tiltify'),
+    },
+    'charity.donordrive': {
+      label: $t('DonorDrive'),
+      properties: { condition: alertCondition(charityOptions()) },
+      evaluate: onAlert('charity.donordrive'),
+    },
+    'charity.justgiving': {
+      label: $t('JustGiving'),
+      properties: { condition: alertCondition(charityOptions()) },
+      evaluate: onAlert('charity.justgiving'),
+    },
+
+    // Stream events: TreatStream
+    'treatstream.treat': { label: $t('Treat'), evaluate: onAlert('treatstream.treat') },
   } as const);
 
 export const Conditions = () =>
@@ -1256,6 +1911,27 @@ export const GAME_NAMES: Record<string, string> = {
   path_of_exile_2: 'Path of Exile 2',
   wardogs: 'Wardogs',
 };
+
+// Non-game trigger sources (stream events), in picker order; intentionally not part of
+// GAME_NAMES. The key prefix of a stream-event condition type is one of these ids.
+export const STREAM_EVENT_SOURCES: Record<string, string> = {
+  streamlabs: 'Streamlabs',
+  twitch: 'Twitch',
+  youtube: 'YouTube',
+  kick: 'Kick',
+  facebook: 'Facebook',
+  tiktok: 'TikTok',
+  x: 'X',
+  patreon: 'Patreon',
+  charity: 'Charity',
+  treatstream: 'TreatStream',
+};
+
+export const isStreamEventKey = (type: string): boolean =>
+  type.split('.')[0] in STREAM_EVENT_SOURCES;
+
+// Socket event types the engine routes into alert evaluation passes.
+export const STREAM_ALERT_TYPES = new Set(Object.values(ALERT_ROUTES).flatMap(r => r.types));
 
 export type TCondition<T extends ConditionType = ConditionType> = {
   type: T;
