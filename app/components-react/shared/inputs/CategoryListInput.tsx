@@ -281,8 +281,11 @@ export const CategoryListInput = InputComponent(
       // Scrollable content. Inside the Scrollable, antd only counts the room left in the scroll
       // viewport, so a list that grows (e.g. drilling into Games) flips above the field. From the
       // root it can overlap the window footer and only flips when it would leave the window.
+      // Separate lookups: closest() with a selector list returns the *nearest* match, which
+      // would be the Scrollable content again.
       return (
-        (triggerNode.closest('#mainWrapper, .os-content, body') as HTMLElement | null) ??
+        (triggerNode.closest('#mainWrapper') as HTMLElement | null) ??
+        (triggerNode.closest('.os-content') as HTMLElement | null) ??
         document.body
       );
     }
