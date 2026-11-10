@@ -24,15 +24,19 @@ class Updater {
   run() {
     const osVersion = require('os').release();
     // Darwin 21 == macOS 12 (Monterey), the minimum supported by Electron 38+.
-    // Anything below this cannot launch the app, so refuse the update rather than
-    // let the user install a build their OS will not run.
+    // Darwin 22 == macOS 13 (Ventura), the minimum supported by Electron 44+.
+    // To prepare for the upgrade to Electron 44+, which requires macOS 13 (Ventura), prompt users
+    // on macOS 12 to upgrade their OS. Updating this prompt before the Electron upgrade, which
+    // requires macOS 13, ensures users on macOS 12 are not blocked from running the app but will
+    // not receive the update for macOS 13 (Ventura) and later.
     if (osVersion && Number(osVersion.substring(0, 2)) < 21) {
       dialog.showMessageBoxSync({
         message:
-          'Streamlabs Desktop requires macOS 12 (Monterey) or later. Your version of macOS is no longer supported, so this update cannot be installed.',
-        type: 'error',
+          'Streamlabs Desktop requires macOS 13 (Ventura) or later for future updates. You can keep using this version, but it will no longer be updated. Upgrade youe macOS version to receive future updates.',
+        type: 'warning',
       });
-      app.exit();
+      this.startApp();
+      this.finished = true;
       return;
     }
 
