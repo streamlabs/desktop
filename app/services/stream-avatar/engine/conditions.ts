@@ -1937,6 +1937,13 @@ export const STREAM_EVENT_SOURCES: Record<string, string> = {
 export const isStreamEventKey = (type: string): boolean =>
   type.split('.')[0] in STREAM_EVENT_SOURCES;
 
+/**
+ * Whether every trigger is a stream event. Those are pulses with no "unmet" pass, so options that
+ * only act when the conditions stop being met ("... if condition is false") can't fire.
+ */
+export const areStreamEventsOnly = (conditions: { type: string }[] | undefined): boolean =>
+  !!conditions?.length && conditions.every(c => !!c?.type && isStreamEventKey(c.type));
+
 // Socket event types the engine routes into alert evaluation passes.
 export const STREAM_ALERT_TYPES = new Set(Object.values(ALERT_ROUTES).flatMap(r => r.types));
 
