@@ -108,6 +108,7 @@ const base = {
     identity: process.env.SLOBS_NO_SIGN
       ? null
       : process.env.APPLE_SLD_IDENTITY || 'Streamlabs LLC (UT675MBB9Q)',
+    minimumSystemVersion: '12.0.0',
     extraFiles: [
       'shared-resources/**/*',
       '!shared-resources/README',
