@@ -152,7 +152,7 @@ interface WaitControlProps {
 
 export function WaitControl({ props, setProp }: WaitControlProps) {
   return (
-    <div>
+    <div className={styles.waitControl}>
       <SliderInput
         nowrap
         value={props.duration ?? 5000}
@@ -161,10 +161,11 @@ export function WaitControl({ props, setProp }: WaitControlProps) {
         max={60000}
         step={500}
         tipFormatter={(val: number) => `${(val / 1000).toFixed(1)}s`}
+        tooltipVisible
+        tooltipPlacement="bottom"
+        // Render inside the slider so the tooltip scrolls with the editor instead of floating.
+        getTooltipPopupContainer={trigger => trigger.parentElement ?? document.body}
       />
-      <div className={styles.waitLabel}>
-        {((props.duration ?? 5000) / 1000).toFixed(1)} {$t('seconds')}
-      </div>
     </div>
   );
 }
