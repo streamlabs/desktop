@@ -153,8 +153,15 @@ const toNum = (v: unknown): number => (v == null || v === '' ? NaN : Number(v));
 // Case-insensitive equality; a missing/blank value never matches.
 // Trimmed both sides: the editor validates the value trimmed, so a stray space must still match.
 const textEquals = (field: unknown, v: unknown): boolean => {
-  const want = String(v ?? '').trim().toLowerCase();
-  return want !== '' && String(field ?? '').trim().toLowerCase() === want;
+  const want = String(v ?? '')
+    .trim()
+    .toLowerCase();
+  return (
+    want !== '' &&
+    String(field ?? '')
+      .trim()
+      .toLowerCase() === want
+  );
 };
 
 const isAnonymous = (alert: StreamAlert): boolean => alert.gifter === 'Anonymous';
