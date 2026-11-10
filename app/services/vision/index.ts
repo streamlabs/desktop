@@ -13,7 +13,7 @@ import { ObjectSchema } from 'realm';
 import { Subject } from 'rxjs';
 import { InitAfter, Inject, Service } from 'services';
 import { RealmObject } from 'services/realm';
-import { ISource, TSourceType } from 'services/sources';
+import { ISource } from 'services/sources';
 import { GAME_NAMES } from 'services/stream-avatar/engine/conditions';
 import { WidgetType } from 'services/widgets';
 import { authorizedHeaders, jfetch } from 'util/requests';
@@ -47,11 +47,17 @@ VisionProcess.register();
 
 export class VisionEnabledState extends RealmObject {
   isEnabled: boolean;
+  // Whether adding a reactive overlay / Game Pulse widget may auto-enable Vision.
+  // Stored as "skipEnable" so rows migrated from older versions keep the enabled-by-default behavior.
+  skipEnableForReactiveOverlays: boolean;
+  skipEnableForGamePulse: boolean;
 
   static schema: ObjectSchema = {
     name: 'VisionEnabledState',
     properties: {
       isEnabled: { type: 'bool', default: false },
+      skipEnableForReactiveOverlays: { type: 'bool', default: false },
+      skipEnableForGamePulse: { type: 'bool', default: false },
     },
   };
 }
@@ -138,6 +144,11 @@ export class VisionService extends Service {
   init() {
     if (!this.isSupportedForOs()) return;
 
+    // VisionState isn't persisted, so seed the installed version from disk.
+    void this.visionUpdater
+      .getInstalledVersion()
+      .then(installedVersion => this.writeState({ installedVersion }));
+
     // Hook widget/overlay services to check for vision-dependent installs.
     // TODO @widgets-refactor: Remove IWidgetConfig cast.
     this.widgetsService.widgetCreated.subscribe(({ type }) => this.onWidgetCreated(type));
@@ -183,6 +194,24 @@ export class VisionService extends Service {
     }
   }
 
+  async uninstall() {
+    if (this.state.isInstalling) {
+      this.log('Cannot uninstall while an install is in progress.');
+      return;
+    }
+    this.writeEnabledState(false);
+
+    await this.stop();
+    await this.visionUpdater.uninstall();
+    this.writeState({
+      pid: 0,
+      port: 0,
+      isRunning: false,
+      installedVersion: '',
+      needsUpdate: false,
+    });
+  }
+
   private ensureUpdated = pMemoize(
     async ({ startAfterUpdate = true }: { startAfterUpdate?: boolean } = {}) => {
       this.log('ensureUpdated()');
@@ -192,9 +221,7 @@ export class VisionService extends Service {
       const { needsUpdate, latestManifest } = await this.visionUpdater.checkNeedsUpdate();
 
       if (needsUpdate) {
-        this.writeState({ isCurrentlyUpdating: true });
-
-        // make sure vision is stopped
+        this.writeState({ isInstalling: true, isCurrentlyUpdating: true });
         await this.visionRunner.stop();
 
         try {
@@ -206,6 +233,7 @@ export class VisionService extends Service {
             installedVersion: latestManifest?.version || '',
             needsUpdate: false,
             isCurrentlyUpdating: false,
+            isInstalling: false,
             percentDownloaded: 0,
           });
 
@@ -217,6 +245,7 @@ export class VisionService extends Service {
             needsUpdate: true,
             hasFailedToUpdate: true,
             isCurrentlyUpdating: false,
+            isInstalling: false,
             percentDownloaded: 0,
           });
 
@@ -253,6 +282,9 @@ export class VisionService extends Service {
           latestManifest,
         } = await this.visionUpdater.checkNeedsUpdate();
 
+        // Disabled (or uninstalled) while we were checking; don't resurrect it.
+        if (!this.enabledState.isEnabled) return;
+
         this.writeState({
           needsUpdate,
           installedVersion: installedManifest?.version ?? '',
@@ -271,6 +303,9 @@ export class VisionService extends Service {
             return { started: false, reason: 'needs-update' as const };
           }
         }
+
+        // Disabled (or uninstalled) while we were checking; don't start it.
+        if (!this.enabledState.isEnabled) return;
 
         const { pid, port } = await this.visionRunner.ensureStarted({ debugMode });
         this.writeState({ pid, port, isRunning: true });
@@ -393,6 +428,14 @@ export class VisionService extends Service {
     }
   }
 
+  setFeatureSettings(
+    patch: Partial<
+      Pick<VisionEnabledState, 'skipEnableForReactiveOverlays' | 'skipEnableForGamePulse'>
+    >,
+  ) {
+    this.enabledState.db.write(() => Object.assign(this.enabledState, patch));
+  }
+
   private writeEnabledState(isEnabled: VisionEnabledState['isEnabled']) {
     this.enabledState.db.write(() => Object.assign(this.enabledState, { isEnabled }));
     this.notifyOfStateChange();
@@ -404,7 +447,7 @@ export class VisionService extends Service {
   }
 
   private onSourceCreated(source: ISource) {
-    if (this.state.isRunning) return;
+    if (this.state.isRunning || this.enabledState.skipEnableForReactiveOverlays) return;
 
     // Smart browser sources are munged to type: 'browser_source' by OBS.
     // Check the manager type instead.
@@ -415,7 +458,7 @@ export class VisionService extends Service {
   }
 
   private onWidgetCreated(type: WidgetType) {
-    if (this.state.isRunning) return;
+    if (this.state.isRunning || this.enabledState.skipEnableForGamePulse) return;
 
     if (type === WidgetType.GamePulseWidget) {
       console.log('Game Pulse widget added, enabling vision service');
@@ -424,7 +467,7 @@ export class VisionService extends Service {
   }
 
   private onAutomationCreated() {
-    if (this.state.isRunning) return;
+    if (this.state.isRunning || !this.automationsService.settings.isEnabled) return;
 
     console.log('Automation created, enabling vision service');
     this.setIsEnabled(true);

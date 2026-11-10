@@ -7,6 +7,7 @@ import { Services } from 'components-react/service-provider';
 
 interface ICalloutProps {
   type?: 'info' | 'warning' | 'error';
+  size?: 'small' | 'large';
   icon?: string | JSX.Element;
   title?: string | JSX.Element;
   message: string | JSX.Element;
@@ -34,6 +35,7 @@ export default function Callout(p: ICalloutProps) {
     <aside
       className={cx(
         styles.callout,
+        { [styles.small]: p.size === 'small' },
         { [styles.info]: !p.type || p.type === 'info' },
         { [styles.warning]: p.type === 'warning' },
         { [styles.error]: p.type === 'error' },
@@ -41,28 +43,30 @@ export default function Callout(p: ICalloutProps) {
       )}
       style={p.style}
     >
-      {p?.dismissableKey && (
-        <i className={cx(styles.close, 'icon-close')} onClick={handleDismiss} />
-      )}
-      {(p.title || p.icon) ? (
+      {p.dismissableKey && <i className={cx(styles.close, 'icon-close')} onClick={handleDismiss} />}
+      {p.title || p.icon ? (
         <title className={styles.title}>
-          {p.icon ? (
-            typeof p.icon === 'string' ? (
+          {p.icon &&
+            (typeof p.icon === 'string' ? (
               <i className={cx(styles.icon, p.icon)} />
             ) : (
               <span>{p.icon}</span>
-            )
-          ) : (
-            <i className={cx(
-              styles.icon,
-              { 'icon-question': !p.type || p.type === 'info' },
-              { 'icon-information': p.type === 'warning' },
-              { 'icon-error': p.type === 'error' },
-            )} />
+            ))}
+          {!p.icon && (
+            <i
+              className={cx(
+                styles.icon,
+                { 'icon-question': !p.type || p.type === 'info' },
+                { 'icon-information': p.type === 'warning' },
+                { 'icon-error': p.type === 'error' },
+              )}
+            />
           )}
-          {p.title ? (<span>{p.title}</span>) : (<></>)}
+          {p.title ? <span>{p.title}</span> : <></>}
         </title>
-      ) : (<></>)}
+      ) : (
+        <></>
+      )}
       <span className={styles.message}>{p.message}</span>
     </aside>
   );
