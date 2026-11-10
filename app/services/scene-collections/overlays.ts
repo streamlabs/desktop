@@ -20,7 +20,7 @@ import { SelectionService } from 'services/selection';
 import uuid from 'uuid/v4';
 import { SceneSourceNode } from './nodes/overlays/scene';
 import { AppService } from 'services/app';
-import { importExtractZip } from '../../util/slow-imports';
+import { extractZipNoSymlinks } from 'util/extract-zip';
 import { downloadFile, IDownloadProgress } from 'util/requests';
 import { NodeMapNode } from './nodes/node-map';
 import { SmartBrowserNode } from './nodes/overlays/smartBrowserSource';
@@ -67,17 +67,12 @@ export class OverlaysPersistenceService extends Service {
 
     this.ensureOverlaysDirectory();
 
-    await new Promise<void>(async (resolve, reject) => {
-      // import of extractZip takes to much time on startup, so import it dynamically
-      const extractZip = (await importExtractZip()).default;
-      extractZip(overlayFilePath, { dir: assetsPath }, err => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
+    try {
+      await extractZipNoSymlinks(overlayFilePath, assetsPath);
+    } catch (e: unknown) {
+      fs.rmSync(assetsPath, { recursive: true, force: true });
+      throw e;
+    }
 
     const configPath = path.join(assetsPath, 'config.json');
     const data = fs.readFileSync(configPath).toString();

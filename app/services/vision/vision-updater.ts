@@ -4,7 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { pipeline } from 'node:stream/promises';
 import { downloadFile, IDownloadProgress, jfetch } from 'util/requests';
-import { importExtractZip } from 'util/slow-imports';
+import { extractZipInternalSymlinks } from 'util/extract-zip';
 import * as remote from '@electron/remote';
 import pMemoize, { pMemoizeClear } from 'p-memoize';
 
@@ -126,7 +126,7 @@ export class VisionUpdater {
 
       // unzip
       if (fssync.existsSync(outDir)) await fs.rm(outDir, { recursive: true, force: true });
-      await extractZip(zipPath, outDir);
+      await extractZipInternalSymlinks(zipPath, outDir);
       await fs.rm(zipPath, { force: true });
 
       // atomic swap with rollback
@@ -162,17 +162,4 @@ async function atomicWriteFile(target: string, data: string) {
   const tmp = `${target}.tmp`;
   await fs.writeFile(tmp, data, 'utf8');
   await fs.rename(tmp, target);
-}
-
-async function extractZip(zipPath: string, unzipPath: string): Promise<void> {
-  const extractZip = (await importExtractZip()).default;
-  return new Promise<void>((resolve, reject) => {
-    extractZip(zipPath, { dir: unzipPath }, err => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
 }
