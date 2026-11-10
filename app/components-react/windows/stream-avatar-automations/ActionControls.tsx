@@ -94,7 +94,12 @@ interface SourceVisibilityControlProps {
   actionType: 'common.show_source' | 'common.hide_source';
   sourceName: string;
   sourceMissing: boolean;
-  sources: { id: string; name: string }[];
+  /** Unique source names to pick from, already limited to the reaction's scope scene. */
+  sourceNames: string[];
+  /** The saved source exists, just not in the scope scene(s). */
+  sourceOutOfScope: boolean;
+  /** The scenes `sourceNames` is limited to, for the empty state. */
+  scopeScenes: string[];
   props: ExportedActionProps;
   errors?: Record<string, string>;
   setProp: SetProp;
@@ -105,17 +110,28 @@ export function SourceVisibilityControl({
   actionType,
   sourceName,
   sourceMissing,
-  sources,
+  sourceNames,
+  sourceOutOfScope,
+  scopeScenes,
   props,
   errors,
   setProp,
   hideUnmetOption,
 }: SourceVisibilityControlProps) {
+  // Names are unique, so each option's value is too (antd keys its virtual list rows by value).
+  // The unavailable name isn't in `sourceNames`, so it can't collide either.
   const sourceOptions = [
     ...(sourceMissing
-      ? [{ label: `${sourceName} (${$t('unavailable')})`, value: sourceName }]
+      ? [
+          {
+            label: `${sourceName} (${
+              sourceOutOfScope ? $t('not in this scene') : $t('unavailable')
+            })`,
+            value: sourceName,
+          },
+        ]
       : []),
-    ...sources.map(s => ({ label: s.name, value: s.name })),
+    ...sourceNames.map(name => ({ label: name, value: name })),
   ];
   return (
     <>
@@ -125,6 +141,11 @@ export function SourceVisibilityControl({
         style={{ width: '100%' }}
         placeholder={$t('— select source —')}
         options={sourceOptions}
+        notFoundContent={
+          scopeScenes.length
+            ? $t('No sources in scene "%{scene}"', { scene: scopeScenes.join('", "') })
+            : undefined
+        }
       />
       {errors?.source && <p style={errorTextStyle}>{errors.source}</p>}
       {actionType === 'common.show_source' && !hideUnmetOption && (

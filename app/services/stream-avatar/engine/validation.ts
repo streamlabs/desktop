@@ -3,7 +3,8 @@ import { Conditions } from './conditions';
 import type { ConditionType } from './conditions';
 import { ActionRegistry } from './actions';
 import type { TAutomationExport } from './automations';
-import type { ExportedAction, ExportedActionProps } from './actions';
+import type { ExportedActionProps } from './actions';
+import { scopedSourceNames, sourceScopeScenes } from './source-scope';
 
 /** A scene or source that currently exists in the active scene collection. */
 export interface IResourceRef {
@@ -15,6 +16,11 @@ export interface IResourceRef {
 export interface IAvailableResources {
   scenes: IResourceRef[];
   sources: IResourceRef[];
+  /**
+   * Unique video-source names of each scene's direct items, keyed by scene name. When given,
+   * Show/Hide Source reactions must pick a source from their scope scene (see `source-scope`).
+   */
+  sceneSourceNames?: Record<string, string[]>;
   /** Whether the Sidekick app is installed AND enabled, gating co-host actions. */
   agentAppReady?: boolean;
 }
@@ -35,10 +41,11 @@ export const MAX_DESCRIPTION_LENGTH = 100;
 export const MAX_INSTRUCTION_LENGTH = 128;
 
 function validateAction(
-  action: ExportedAction,
+  automation: TAutomationExport,
   index: number,
   resources: IAvailableResources,
 ): IAutomationIssue[] {
+  const action = automation.actions[index];
   const issues: IAutomationIssue[] = [];
   const props = (action?.props ?? {}) as ExportedActionProps;
 
@@ -75,6 +82,21 @@ function validateAction(
         issues.push(actionIssue('source', $t('Select a source.')));
       } else if (!resources.sources.some(s => s.name === name)) {
         issues.push(actionIssue('source', $t('Source "%{name}" is unavailable.', { name })));
+      } else {
+        const scenes = sourceScopeScenes(automation.actions, index, automation.scenes);
+        // Undefined when nothing limits the choices (see scopedSourceNames).
+        const inScope = scopedSourceNames(scenes, resources);
+        if (inScope && !inScope.includes(name)) {
+          issues.push(
+            actionIssue(
+              'source',
+              $t('Source "%{name}" isn\'t in scene "%{scene}".', {
+                name,
+                scene: scenes.join('", "'),
+              }),
+            ),
+          );
+        }
       }
       break;
     }
@@ -148,8 +170,8 @@ export function validateAutomation(
     issues.push({ scope: 'action', message: $t('Add at least one action.') });
   }
 
-  (automation.actions ?? []).forEach((action, index) => {
-    issues.push(...validateAction(action, index, resources));
+  (automation.actions ?? []).forEach((_, index) => {
+    issues.push(...validateAction(automation, index, resources));
   });
 
   return issues;

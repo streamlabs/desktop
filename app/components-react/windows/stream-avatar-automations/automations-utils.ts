@@ -58,6 +58,31 @@ export function conditionGame(condition: { type: string } | null): string {
   return GAME_NAMES[def.group] ?? STREAM_EVENT_SOURCES[def.group] ?? def.group;
 }
 
+interface ISceneWithItems {
+  name: string;
+  getItems(): { getSource(): { name: string; video: boolean } | null | undefined }[];
+}
+
+/**
+ * The unique video-source names of each scene's direct items (nested scenes' own items don't
+ * count), keyed by scene name. It scopes the Show/Hide Source choices to the right scene, in
+ * both the editor and the list view's validation.
+ */
+export function buildSceneSourceNames(scenes: ISceneWithItems[]): Record<string, string[]> {
+  const byScene: Record<string, string[]> = {};
+  for (const scene of scenes) {
+    // Same-name scenes: the runtime switches to the first match, so keep the first one's items.
+    if (Object.prototype.hasOwnProperty.call(byScene, scene.name)) continue;
+    const names = new Set<string>();
+    for (const item of scene.getItems()) {
+      const source = item.getSource();
+      if (source?.video) names.add(source.name);
+    }
+    byScene[scene.name] = Array.from(names);
+  }
+  return byScene;
+}
+
 export function summarizeActions(actions: TAutomationExport['actions']): string {
   const registry = ActionRegistry();
   return actions
