@@ -1,194 +1,5 @@
-import { Ide } from 'aws-sdk/clients/codecatalyst';
-import {
-  IGameConfig,
-  EHighlighterInputTypes,
-  EGame,
-  IDefaultEventInfo,
-  EGameState,
-} from './ai-highlighter.models';
+import { IGameConfig, EGame, EGameState } from './ai-highlighter.models';
 import Utils from 'services/utils';
-
-export const TERMS = {
-  ELIMINATION: { singular: 'elimination', plural: 'eliminations' },
-  KNOCKED: { singular: 'knocked', plural: 'knocks' },
-  KNOCKOUT: { singular: 'got knocked', plural: 'got knocked' },
-  GOAL: { singular: 'goal', plural: 'goals' },
-  SET_PIECE: { singular: 'set piece', plural: 'set pieces' },
-  TEAM_SCORED: { singular: 'team goal', plural: 'team goals' },
-  OPPONENT_SCORED: { singular: 'opponent goal', plural: 'opponent goals' },
-  LAP_CHANGE: { singular: 'lap change', plural: 'lap changes' },
-  POSITION_CHANGE: { singular: 'position change', plural: 'position changes' },
-  GAME_END: { singular: 'game end', plural: 'game ends' },
-  GAME_START: { singular: 'game start', plural: 'game starts' },
-  DEATH: { singular: 'death', plural: 'deaths' },
-  DEFEAT: { singular: 'defeat', plural: 'defeats' },
-  WIN: { singular: 'win', plural: 'wins' },
-  DEPLOY: { singular: 'deploy', plural: 'deploys' },
-  ROUND: { singular: 'round', plural: 'rounds' },
-  STORM: { singular: 'storm event', plural: 'storm events' },
-  MANUAL: { singular: 'manual clip', plural: 'manual clips' },
-  GREAT_AIR: { singular: 'great air', plural: 'great airs' },
-  GREAT_DRIFT: { singular: 'great drift', plural: 'great drifts' },
-  GREAT_SKILL_CHAIN: { singular: 'great skill chain', plural: 'great skill chains' },
-  LEVEL_UP: { singular: 'level up', plural: 'level ups' },
-  QUEST_UPDATE: { singular: 'quest update', plural: 'quest updates' },
-  SOUL_DISCOVERED: { singular: 'soul discovered', plural: 'souls discovered' },
-  TOTEM_OF_UNDYING_USED: { singular: 'totem of undying', plural: 'totems of undying' },
-  LOW_HEALTH: { singular: 'low health', plural: 'low health moments' },
-  BOSS_KILLED: { singular: 'boss killed', plural: 'bosses killed' },
-};
-
-export const EMOJI = {
-  GUN: '🔫',
-  BOXING_GLOVES: '🥊',
-  BALL: '⚽',
-  RED_FLAG: '🚩',
-  BULLSEYE: '🎯',
-  REFRESH: '🔄',
-  SHUFFLE: '🔀',
-  TRAFFIC_LIGHT: '🚦',
-  DEATH: '🪦',
-  DEFEAT: '☠️',
-  TROPHY: '🏆',
-  BRONZE_MEDAL: '🥉',
-  PARACHUTE: '🪂',
-  DIZZY: '😵',
-  ROUND: '🏁',
-  STORM: '⛈️',
-  ROBOT: '🤖',
-  MANUAL: '🎬',
-  AIRPLANE: '🛫',
-  DRIFT: '💨',
-  CHAIN: '🔗',
-  LEVEL_UP: '⬆️',
-  SCROLL: '📜',
-  GHOST: '👻',
-  SPARKLES: '✨',
-  BROKEN_HEART: '💔',
-  CROWN: '👑',
-  FIRECRACKER: '🧨', // used for config fallback. ⚡ used in components as fallback
-};
-
-const COMMON_TYPES: Record<string, IDefaultEventInfo> = {
-  ['round']: {
-    emoji: EMOJI.ROUND,
-    description: TERMS.ROUND,
-    orderPriority: 1,
-    includeInDropdown: true,
-    contextEvent: false,
-    aliases: ['sequence'],
-  },
-  ['manual']: {
-    emoji: EMOJI.MANUAL,
-    description: TERMS.MANUAL,
-    orderPriority: 2,
-    includeInDropdown: true,
-    contextEvent: false,
-    aliases: ['replaybuffer'],
-  },
-  ['elimination']: {
-    emoji: EMOJI.GUN,
-    description: TERMS.ELIMINATION,
-    orderPriority: 4,
-    includeInDropdown: true,
-    contextEvent: false,
-    aliases: ['kill'],
-  },
-  ['knockout']: {
-    emoji: EMOJI.BOXING_GLOVES,
-    description: TERMS.KNOCKED,
-    orderPriority: 5,
-    includeInDropdown: false,
-    contextEvent: false,
-    aliases: ['knocked'],
-  },
-  ['player_knocked']: {
-    emoji: EMOJI.DIZZY,
-    description: TERMS.KNOCKOUT,
-    orderPriority: 5,
-    includeInDropdown: false,
-    contextEvent: false,
-  },
-  ['goal']: {
-    emoji: EMOJI.BALL,
-    description: TERMS.GOAL,
-    orderPriority: 4,
-    includeInDropdown: true,
-    contextEvent: false,
-  },
-  ['set_piece']: {
-    emoji: EMOJI.RED_FLAG,
-    description: TERMS.SET_PIECE,
-    orderPriority: 4,
-    includeInDropdown: true,
-    contextEvent: false,
-  },
-  ['team_scored']: {
-    emoji: EMOJI.BALL,
-    description: TERMS.TEAM_SCORED,
-    orderPriority: 4,
-    includeInDropdown: true,
-    contextEvent: false,
-  },
-  ['opponent_scored']: {
-    emoji: EMOJI.BULLSEYE,
-    description: TERMS.OPPONENT_SCORED,
-    orderPriority: 4,
-    includeInDropdown: true,
-    contextEvent: false,
-  },
-  ['lap_change']: {
-    emoji: EMOJI.REFRESH,
-    description: TERMS.LAP_CHANGE,
-    orderPriority: 4,
-    includeInDropdown: true,
-    contextEvent: false,
-  },
-  ['position_change']: {
-    emoji: EMOJI.SHUFFLE,
-    description: TERMS.POSITION_CHANGE,
-    orderPriority: 4,
-    includeInDropdown: true,
-    contextEvent: false,
-  },
-  ['game_end']: {
-    emoji: EMOJI.ROUND,
-    description: TERMS.GAME_END,
-    orderPriority: 4,
-    includeInDropdown: true,
-    contextEvent: false,
-  },
-  ['game_start']: {
-    emoji: EMOJI.TRAFFIC_LIGHT,
-    description: TERMS.GAME_START,
-    orderPriority: 4,
-    includeInDropdown: true,
-    contextEvent: false,
-  },
-  ['death']: {
-    emoji: EMOJI.DEATH,
-    description: TERMS.DEATH,
-    orderPriority: 5,
-    includeInDropdown: false,
-    contextEvent: true,
-  },
-  ['defeat']: {
-    emoji: EMOJI.DEFEAT,
-    description: TERMS.DEFEAT,
-    orderPriority: 5,
-    includeInDropdown: false,
-    contextEvent: true,
-    aliases: ['lost'],
-  },
-  ['victory']: {
-    emoji: EMOJI.TROPHY,
-    description: TERMS.WIN,
-    orderPriority: 3,
-    includeInDropdown: true,
-    contextEvent: true,
-    aliases: ['win'],
-  },
-};
 
 const titlePath = 'https://cdn.streamlabs.com/static/imgs/game-titles/';
 const thumbnailPath = 'https://cdn.streamlabs.com/static/imgs/game-thumbnails/';
@@ -209,23 +20,6 @@ export const FORTNITE_CONFIG: IGameConfig = {
     horizontalExampleVideo: `${exampleVideoPath}${EGame.FORTNITE}-horizontal.mp4`,
     verticalExampleVideo: `${exampleVideoPath}${EGame.FORTNITE}-vertical.mp4`,
   },
-  inputTypeMap: {
-    ...COMMON_TYPES,
-    ['deploy']: {
-      emoji: EMOJI.PARACHUTE,
-      description: TERMS.DEPLOY,
-      orderPriority: 4,
-      includeInDropdown: false,
-      contextEvent: true,
-    },
-    ['bot_kill']: {
-      emoji: EMOJI.ROBOT,
-      description: TERMS.ELIMINATION,
-      orderPriority: 4,
-      includeInDropdown: false,
-      contextEvent: false,
-    },
-  },
 };
 
 const WARZONE_CONFIG: IGameConfig = {
@@ -235,9 +29,6 @@ const WARZONE_CONFIG: IGameConfig = {
   titleIcon: `${titlePath}${EGame.WARZONE}.svg`,
   thumbnail: `${thumbnailPath}${EGame.WARZONE}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#2BAC74',
     artwork: `${heroPath}${EGame.WARZONE}.png`,
@@ -254,9 +45,6 @@ const BLACK_OPS_6_CONFIG: IGameConfig = {
   titleIcon: 'unset',
   thumbnail: `${thumbnailPath}call-of-duty-black-ops-6.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#FEA41E',
     artwork: `${heroPath}${EGame.BLACK_OPS_6}.png`,
@@ -274,9 +62,6 @@ const BLACK_OPS_7_CONFIG: IGameConfig = {
   titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.BLACK_OPS_7}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#F96800',
     artwork: `${heroPath}${EGame.BLACK_OPS_7}.png`,
@@ -291,9 +76,6 @@ const MARVEL_RIVALS_CONFIG: IGameConfig = {
   titleIcon: `${titlePath}${EGame.MARVEL_RIVALS}.svg`,
   thumbnail: `${thumbnailPath}marvel-rivals.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#42BBC1',
     artwork: `${heroPath}${EGame.MARVEL_RIVALS}.png`,
@@ -310,9 +92,6 @@ const WAR_THUNDER_CONFIG: IGameConfig = {
   titleIcon: 'unset',
   thumbnail: `${thumbnailPath}war-thunder.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#EC2D19',
     artwork: `${heroPath}${EGame.WAR_THUNDER}.png`,
@@ -329,9 +108,6 @@ const VALORANT_CONFIG: IGameConfig = {
   titleIcon: `${titlePath}${EGame.VALORANT}.svg`,
   thumbnail: `${thumbnailPath}${EGame.VALORANT}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#FF4655',
     artwork: `${heroPath}${EGame.VALORANT}.png`,
@@ -346,9 +122,6 @@ const COUNTER_STRIKE_2_CONFIG: IGameConfig = {
   titleIcon: `${titlePath}${EGame.COUNTER_STRIKE_2}.svg`,
   thumbnail: `${thumbnailPath}${EGame.COUNTER_STRIKE_2}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#E38717',
     artwork: `${heroPath}${EGame.COUNTER_STRIKE_2}.png`,
@@ -363,9 +136,6 @@ const APEX_LEGENDS_CONFIG: IGameConfig = {
   titleIcon: `${titlePath}${EGame.APEX_LEGENDS}.svg`,
   thumbnail: `${thumbnailPath}${EGame.APEX_LEGENDS}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#EBFF8A',
     artwork: `${heroPath}${EGame.APEX_LEGENDS}.png`,
@@ -380,9 +150,6 @@ const PUBG_CONFIG: IGameConfig = {
   titleIcon: `${titlePath}${EGame.PUBG}.svg`,
   thumbnail: `${thumbnailPath}${EGame.PUBG}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#E38717',
     artwork: `${heroPath}${EGame.PUBG}.png`,
@@ -397,9 +164,6 @@ const RAINBOW_SIX_SIEGE: IGameConfig = {
   titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.RAINBOW_SIX_SIEGE}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#5F98F7',
     artwork: `${heroPath}${EGame.RAINBOW_SIX_SIEGE}.png`,
@@ -414,9 +178,6 @@ const OVERWATCH_2: IGameConfig = {
   titleIcon: `${titlePath}${EGame.OVERWATCH_2}.svg`,
   thumbnail: `${thumbnailPath}${EGame.OVERWATCH_2}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#E5803F',
     artwork: `${heroPath}${EGame.OVERWATCH_2}.png`,
@@ -431,9 +192,6 @@ const LEAGUE_OF_LEGENDS: IGameConfig = {
   titleIcon: `${titlePath}${EGame.LEAGUE_OF_LEGENDS}.svg`,
   thumbnail: `${thumbnailPath}${EGame.LEAGUE_OF_LEGENDS}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#9B9B9B',
     artwork: `${heroPath}${EGame.LEAGUE_OF_LEGENDS}.png`,
@@ -448,9 +206,6 @@ const BATTLEFIELD_6: IGameConfig = {
   titleIcon: `${titlePath}${EGame.BATTLEFIELD_6}.svg`,
   thumbnail: `${thumbnailPath}${EGame.BATTLEFIELD_6}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#FF3C00',
     artwork: `${heroPath}${EGame.BATTLEFIELD_6}.png`,
@@ -465,9 +220,6 @@ const ARC_RAIDERS: IGameConfig = {
   titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.ARC_RAIDERS}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#D04122',
     artwork: `${heroPath}${EGame.ARC_RAIDERS}.png`,
@@ -482,9 +234,6 @@ const ROCKET_LEAGUE: IGameConfig = {
   titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.ROCKET_LEAGUE}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#5470EF',
     artwork: `${heroPath}${EGame.ROCKET_LEAGUE}.png`,
@@ -499,9 +248,6 @@ const DOTA_2: IGameConfig = {
   titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.DOTA_2}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#FED047',
     artwork: `${heroPath}${EGame.DOTA_2}.png`,
@@ -516,9 +262,6 @@ const DEAD_BY_DAYLIGHT: IGameConfig = {
   titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.DEAD_BY_DAYLIGHT}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#8088A9',
     artwork: `${heroPath}${EGame.DEAD_BY_DAYLIGHT}.png`,
@@ -533,9 +276,6 @@ const MARATHON: IGameConfig = {
   titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.MARATHON}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#cffb54',
     artwork: `${heroPath}${EGame.MARATHON}.png`,
@@ -550,9 +290,6 @@ const F1_25: IGameConfig = {
   titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.F1_25}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#d35459',
     artwork: `${heroPath}${EGame.F1_25}.png`,
@@ -567,9 +304,6 @@ const EA_SPORTS_FC_26: IGameConfig = {
   titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.EA_SPORTS_FC_26}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#81f07b',
     artwork: `${heroPath}${EGame.EA_SPORTS_FC_26}.png`,
@@ -584,9 +318,6 @@ const NBA_2K26: IGameConfig = {
   titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.NBA_2K26}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#fa0000',
     artwork: `${heroPath}${EGame.NBA_2K26}.png`,
@@ -601,9 +332,6 @@ const DEADLOCK: IGameConfig = {
   titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.DEADLOCK}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: {
     accentColor: '#c26239',
     artwork: `${heroPath}${EGame.DEADLOCK}.png`,
@@ -618,30 +346,6 @@ const FORZA_HORIZON_6: IGameConfig = {
   titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.FORZA_HORIZON_6}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-    ['great_air']: {
-      emoji: EMOJI.AIRPLANE,
-      description: TERMS.GREAT_AIR,
-      orderPriority: 4,
-      includeInDropdown: true,
-      contextEvent: false,
-    },
-    ['great_drift']: {
-      emoji: EMOJI.DRIFT,
-      description: TERMS.GREAT_DRIFT,
-      orderPriority: 4,
-      includeInDropdown: true,
-      contextEvent: false,
-    },
-    ['great_skill_chain']: {
-      emoji: EMOJI.CHAIN,
-      description: TERMS.GREAT_SKILL_CHAIN,
-      orderPriority: 4,
-      includeInDropdown: true,
-      contextEvent: false,
-    },
-  },
   importModalConfig: {
     accentColor: '#7B2CBF',
     artwork: `${heroPath}${EGame.FORZA_HORIZON_6}.png`,
@@ -656,30 +360,6 @@ const ENSHROUDED: IGameConfig = {
   titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.ENSHROUDED}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-    ['level_up']: {
-      emoji: EMOJI.LEVEL_UP,
-      description: TERMS.LEVEL_UP,
-      orderPriority: 4,
-      includeInDropdown: true,
-      contextEvent: false,
-    },
-    ['quest_update']: {
-      emoji: EMOJI.SCROLL,
-      description: TERMS.QUEST_UPDATE,
-      orderPriority: 4,
-      includeInDropdown: true,
-      contextEvent: false,
-    },
-    ['soul_discovered']: {
-      emoji: EMOJI.GHOST,
-      description: TERMS.SOUL_DISCOVERED,
-      orderPriority: 4,
-      includeInDropdown: true,
-      contextEvent: false,
-    },
-  },
   importModalConfig: {
     accentColor: '#A55A2A',
     artwork: `${heroPath}${EGame.ENSHROUDED}.png`,
@@ -694,30 +374,6 @@ const MINECRAFT: IGameConfig = {
   titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.MINECRAFT}.png`,
   state: EGameState.LIVE,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-    ['totem_of_undying_used']: {
-      emoji: EMOJI.SPARKLES,
-      description: TERMS.TOTEM_OF_UNDYING_USED,
-      orderPriority: 4,
-      includeInDropdown: true,
-      contextEvent: false,
-    },
-    ['low_health']: {
-      emoji: EMOJI.BROKEN_HEART,
-      description: TERMS.LOW_HEALTH,
-      orderPriority: 4,
-      includeInDropdown: true,
-      contextEvent: false,
-    },
-    ['boss_killed']: {
-      emoji: EMOJI.CROWN,
-      description: TERMS.BOSS_KILLED,
-      orderPriority: 4,
-      includeInDropdown: true,
-      contextEvent: false,
-    },
-  },
   importModalConfig: {
     accentColor: '#5BA84A',
     artwork: `${heroPath}${EGame.MINECRAFT}.png`,
@@ -732,9 +388,6 @@ const UNSET_CONFIG: IGameConfig = {
   titleIcon: 'unset',
   thumbnail: 'unset',
   state: EGameState.INTERNAL,
-  inputTypeMap: {
-    ...COMMON_TYPES,
-  },
   importModalConfig: undefined,
 };
 
@@ -796,12 +449,173 @@ export function getConfigByGame(game: EGame | undefined): IGameConfig | undefine
   const lowercaseGame = game.toLowerCase() as EGame;
   return GAME_CONFIGS[lowercaseGame] || UNSET_CONFIG;
 }
-export function isGameSupported(game: string | undefined) {
-  const gameValue = supportedGames.find(
-    supportedGame => supportedGame.label.toLowerCase() === game?.toLowerCase(),
+/**
+ * Games supported by Streamlabs Replay, keyed by game id.
+ * Snapshot of `configs/games.json` on the highlighter CDN. Used as long as the
+ * fresh list hasn't been fetched (or the fetch failed). See HighlighterService.fetchReplaySupportedGames
+ */
+export const FALLBACK_REPLAY_SUPPORTED_GAMES: Dictionary<string> = {
+  '7_days_to_die': '7 Days to Die',
+  apex_legends: 'Apex Legends',
+  arena_breakout_infinite: 'Arena Breakout: Infinite',
+  arc_raiders: 'ARC Raiders',
+  battlefield_6: 'Battlefield 6',
+  bloodborne: 'Bloodborne',
+  black_ops_6: 'Call of Duty: Black Ops 6',
+  black_ops_7: 'Call of Duty: Black Ops 7',
+  modern_warfare_4: 'Call of Duty: Modern Warfare 4',
+  warzone: 'Call of Duty: Warzone',
+  counter_strike_2: 'Counter-Strike 2',
+  dark_souls_2: 'Dark Souls II',
+  dark_souls_3: 'Dark Souls III',
+  dark_souls_remastered: 'Dark Souls Remastered',
+  dayz: 'DayZ',
+  dead_by_daylight: 'Dead by Daylight',
+  deadlock: 'Deadlock',
+  delta_force: 'Delta Force',
+  dota_2: 'Dota 2',
+  ea_sports_fc_26: 'EA Sports FC™ 26',
+  elden_ring: 'ELDEN RING',
+  enshrouded: 'Enshrouded',
+  escape_from_tarkov: 'Escape from Tarkov',
+  f1_25: 'F1® 25',
+  fortnite: 'Fortnite',
+  forza_horizon_6: 'Forza Horizon 6',
+  halo_infinite: 'Halo Infinite',
+  helldivers_2: 'Helldivers 2',
+  heroes_of_the_storm: 'Heroes of the Storm',
+  hunt_showdown_1896: 'Hunt: Showdown 1896',
+  league_of_legends: 'League of Legends',
+  left_4_dead_2: 'Left 4 Dead 2',
+  madden_nfl_27: 'Madden NFL 27',
+  marathon: 'Marathon',
+  marvel_rivals: 'Marvel Rivals',
+  minecraft: 'Minecraft',
+  mortal_shell_2: 'Mortal Shell II',
+  nba_2k26: 'NBA 2K26',
+  nba_2k27: 'NBA 2K27',
+  overwatch_2: 'Overwatch 2',
+  palworld: 'Palworld',
+  path_of_exile_2: 'Path of Exile 2',
+  pubg: 'PUBG: BATTLEGROUNDS',
+  rainbow_six_siege: "Tom Clancy's Rainbow Six Siege",
+  rocket_league: 'Rocket League',
+  rust: 'Rust',
+  sekiro_shadows_die_twice: 'Sekiro: Shadows Die Twice',
+  teamfight_tactics: 'Teamfight Tactics',
+  valheim: 'Valheim',
+  valorant: 'VALORANT',
+  wardogs: 'WARDOGS',
+  war_thunder: 'War Thunder',
+  world_of_warcraft_ss: 'World of Warcraft (Solo Shuffle)',
+  just_chatting: 'Just Chatting',
+  other_game: 'Other Game',
+};
+
+/**
+ * Replay game ids that don't enable the AI Highlighter in the go live flow.
+ * Remove `just_chatting` from this list to enable it for the Just Chatting category.
+ */
+export const DISABLED_REPLAY_GAMES: string[] = ['just_chatting', 'other_game'];
+
+export const OTHER_GAME_ID: string = 'other_game';
+
+/**
+ * Game options for picking the game of a recording: the local games (with artwork),
+ * followed by the Replay games that have no local config. Their thumbnail is looked up
+ * by game id and may not exist on the CDN. Unlike the go live flow, importing supports
+ * Other Game, since the user picks it on purpose.
+ */
+export function getGameOptions(
+  replaySupportedGames: Dictionary<string> = FALLBACK_REPLAY_SUPPORTED_GAMES,
+) {
+  const localGameIds = supportedGames.map(game => game.value as string);
+  const replayOnlyGames = Object.entries(replaySupportedGames)
+    .filter(
+      ([id]) =>
+        !localGameIds.includes(id) && (id === OTHER_GAME_ID || !DISABLED_REPLAY_GAMES.includes(id)),
+    )
+    .map(([id, label]) => ({ value: id as EGame, label, image: `${thumbnailPath}${id}.png` }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  // Other Game is the catch-all, so it goes last
+  return [
+    ...supportedGames,
+    ...replayOnlyGames.filter(game => game.value !== OTHER_GAME_ID),
+    ...replayOnlyGames.filter(game => game.value === OTHER_GAME_ID),
+  ];
+}
+
+const STREAM_HIGHLIGHTS_ONLY_SUFFIX = ' (Stream Highlights Only)';
+
+/**
+ * Replay labels non-gameplay entries like "Just Chatting (Stream Highlights Only)".
+ * Strip that suffix so the label matches the platform category name.
+ */
+export function toPlatformCategoryLabel(replayLabel: string) {
+  return replayLabel.endsWith(STREAM_HIGHLIGHTS_ONLY_SUFFIX)
+    ? replayLabel.slice(0, -STREAM_HIGHLIGHTS_ONLY_SUFFIX.length)
+    : replayLabel;
+}
+
+/**
+ * Returns the game id if the given game (platform category name) is supported, otherwise false.
+ * Checks the local game configs first, then the games supported by Replay.
+ * Ids that only exist in Replay's list aren't part of EGame; getConfigByGame falls back to UNSET for them.
+ */
+export function isGameSupported(
+  game: string | undefined,
+  replaySupportedGames: Dictionary<string> = FALLBACK_REPLAY_SUPPORTED_GAMES,
+): EGame | false {
+  if (!game) {
+    return false;
+  }
+  const normalizedGame = normalizeGameName(game);
+  const matches = (id: string, label: string | undefined) =>
+    (!!label && normalizeGameName(label) === normalizedGame) ||
+    (PLATFORM_CATEGORY_ALIASES[id] ?? []).some(
+      alias => normalizeGameName(alias) === normalizedGame,
+    );
+
+  const localGameValue = supportedGames.find(supportedGame =>
+    matches(supportedGame.value, supportedGame.label),
   )?.value;
-  if (game && gameValue) {
-    return gameValue;
+  if (localGameValue) {
+    return localGameValue;
+  }
+
+  const replayGameId = Object.keys(replaySupportedGames).find(
+    id => !DISABLED_REPLAY_GAMES.includes(id) && matches(id, replaySupportedGames[id]),
+  );
+  if (replayGameId) {
+    return replayGameId as EGame;
   }
   return false;
+}
+
+/**
+ * Platform category names that don't match the game's label, keyed by game id.
+ * Used when a platform renamed a category, e.g. Twitch dropping the "2" from Overwatch.
+ */
+const PLATFORM_CATEGORY_ALIASES: Dictionary<string[]> = {
+  overwatch_2: ['Overwatch'],
+  rainbow_six_siege: [
+    "Tom Clancy's Rainbow Six Siege",
+    "Tom Clancy's Rainbow Six Siege X",
+    'Rainbow Six Siege',
+    'Rainbow Six Siege X',
+  ],
+};
+
+/**
+ * Normalizes a game name so that labels and platform category names can be compared, e.g.
+ * "F1® 25" -> "f1 25", "DARK SOULS: REMASTERED" -> "dark souls remastered",
+ * "World of Warcraft (Solo Shuffle)" -> "world of warcraft".
+ */
+export function normalizeGameName(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/\s*\([^)]*\)\s*$/, '') // trailing qualifier like "(Solo Shuffle)"
+    .replace(/[™®©'’]/g, '')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
 }
