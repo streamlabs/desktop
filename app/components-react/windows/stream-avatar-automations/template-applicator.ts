@@ -154,7 +154,9 @@ export async function applyTemplates(
     for (const conditions of chunks) {
       const enabled = (item.automation.enabled ?? true) && remaining > 0;
       if (enabled) remaining -= 1;
-      await AutomationsService.actions.create({ ...item.automation, conditions, enabled });
+      // `actions.return` waits for the worker, so an API failure rejects here instead of
+      // vanishing, and the analytics below only count automations that were really created.
+      await AutomationsService.actions.return.create({ ...item.automation, conditions, enabled });
       // Same `game` value automation_created sends (condition prefix), not the pack id.
       AutomationsAnalytics.templateAdded(
         pack.game ?? conditions[0]?.type.split('.')[0] ?? 'unknown',

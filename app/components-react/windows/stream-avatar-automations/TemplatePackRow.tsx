@@ -51,12 +51,17 @@ export default function TemplatePackRow({ title, children }: Props) {
       <div className={styles.sectionHeader}>
         <h2 className={styles.sectionTitle}>{title}</h2>
         {(expanded || hasOverflow) && (
-          <a className={styles.seeAll} onClick={() => setExpanded(!expanded)}>
+          <button
+            type="button"
+            className={styles.seeAll}
+            aria-expanded={expanded}
+            onClick={() => setExpanded(!expanded)}
+          >
             {expanded ? $t('Show Less') : $t('See All')}
             <i
               className={cx('icon-down', styles.seeAllIcon, { [styles.seeAllIconOpen]: expanded })}
             />
-          </a>
+          </button>
         )}
       </div>
 

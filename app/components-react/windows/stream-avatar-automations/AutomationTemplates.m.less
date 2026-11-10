@@ -112,10 +112,15 @@
   color: var(--title);
 }
 
+// A native <button> (keyboard focusable), reset to look like plain text.
 .seeAll {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
   font-size: 14px;
   font-weight: 600;
   color: var(--paragraph);
@@ -245,6 +250,20 @@
     .cardBody {
       background-image: none;
     }
+  }
+}
+
+// Everything above Add All; the card's open control. Keeps the card's column layout.
+.cardOpen {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+
+  // The card clips overflow, so the ring is drawn inside it.
+  &:focus-visible {
+    outline: 2px solid var(--teal);
+    outline-offset: -2px;
   }
 }
 

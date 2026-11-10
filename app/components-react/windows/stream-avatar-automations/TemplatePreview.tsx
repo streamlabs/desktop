@@ -12,6 +12,9 @@ interface TemplatePreviewProps {
   playToken?: number;
   // False holds a video on its first frame (e.g. a card's .webm "thumbnail" until hovered).
   playing?: boolean;
+  // True pauses a playing video where it is; false resumes it from there. Unlike `playing`,
+  // this never rewinds.
+  paused?: boolean;
 }
 
 export default function TemplatePreview({
@@ -22,6 +25,7 @@ export default function TemplatePreview({
   onEnded,
   playToken,
   playing = true,
+  paused = false,
 }: TemplatePreviewProps) {
   const videoRef = React.useRef<HTMLVideoElement>(null);
   // A missing file (e.g. art not uploaded yet) would show the browser's broken-image icon.
@@ -34,10 +38,19 @@ export default function TemplatePreview({
     el.muted = muted;
     el.loop = loop;
     el.currentTime = 0;
-    if (playing) el.play().catch(() => {});
+    if (playing && !paused) el.play().catch(() => {});
     else el.pause();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src, playToken, playing]);
+
+  // Pause and resume in place, without the rewind above.
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    if (paused) el.pause();
+    else if (playing) el.play().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paused]);
 
   if (!src) return null;
   // Same box as the media (via className), filled with the darkest surface colour.

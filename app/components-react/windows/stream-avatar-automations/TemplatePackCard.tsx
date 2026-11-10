@@ -77,47 +77,64 @@ export default function TemplatePackCard({
     });
   }
 
+  function onOpenKeyDown(e: React.KeyboardEvent) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    // Space would otherwise scroll the list
+    e.preventDefault();
+    onOpen();
+  }
+
   return (
     <Tooltip title={unavailable ? $t('Link a platform to use this') : undefined}>
       <div
         className={cx(styles.card, { [styles.cardUnavailable]: unavailable })}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        onClick={unavailable ? undefined : onOpen}
       >
-        <div className={styles.cardThumb}>
-          <TemplatePreview
-            src={hovered && !unavailable ? pack.gifUrl : pack.imageUrl}
-            className={styles.cardMedia}
-            // Some packs' imageUrl is itself a video; only play on hover.
-            playing={hovered && !unavailable}
-          />
-        </div>
-
-        <div className={styles.cardBody}>
-          <div className={styles.cardTitle} title={pack.name}>
-            {pack.name}
+        {/* The part of the card that opens the pack. Add All below is a sibling, not a child, so
+            the two controls never nest and don't share clicks or keys. */}
+        <div
+          className={styles.cardOpen}
+          role="button"
+          tabIndex={unavailable ? -1 : 0}
+          aria-disabled={unavailable}
+          onClick={unavailable ? undefined : onOpen}
+          onKeyDown={unavailable ? undefined : onOpenKeyDown}
+        >
+          <div className={styles.cardThumb}>
+            <TemplatePreview
+              src={hovered && !unavailable ? pack.gifUrl : pack.imageUrl}
+              className={styles.cardMedia}
+              // Some packs' imageUrl is itself a video; only play on hover.
+              playing={hovered && !unavailable}
+            />
           </div>
-          <div className={styles.chips} ref={chipsRef}>
-            {/* Off-screen copy of every chip plus a worst-case "+N", used only for measuring. */}
-            <div className={styles.chipsMeasure} ref={measureRef} aria-hidden>
-              {chips.map((chip, i) => (
-                <span key={i} className={styles.chip}>
+
+          <div className={styles.cardBody}>
+            <div className={styles.cardTitle} title={pack.name}>
+              {pack.name}
+            </div>
+            <div className={styles.chips} ref={chipsRef}>
+              {/* Off-screen copy of every chip plus a worst-case "+N", used only for measuring. */}
+              <div className={styles.chipsMeasure} ref={measureRef} aria-hidden>
+                {chips.map((chip, i) => (
+                  <span key={i} className={styles.chip}>
+                    {chip}
+                  </span>
+                ))}
+                <span className={cx(styles.chip, styles.chipMore)}>+{chips.length}</span>
+              </div>
+              {chips.slice(0, visibleChips).map((chip, i) => (
+                <span key={i} className={styles.chip} title={chip}>
                   {chip}
                 </span>
               ))}
-              <span className={cx(styles.chip, styles.chipMore)}>+{chips.length}</span>
+              {hiddenChips.length > 0 && (
+                <span className={cx(styles.chip, styles.chipMore)} title={hiddenChips.join(', ')}>
+                  +{hiddenChips.length}
+                </span>
+              )}
             </div>
-            {chips.slice(0, visibleChips).map((chip, i) => (
-              <span key={i} className={styles.chip} title={chip}>
-                {chip}
-              </span>
-            ))}
-            {hiddenChips.length > 0 && (
-              <span className={cx(styles.chip, styles.chipMore)} title={hiddenChips.join(', ')}>
-                +{hiddenChips.length}
-              </span>
-            )}
           </div>
         </div>
 
@@ -126,8 +143,7 @@ export default function TemplatePackCard({
           className={cx(styles.cardAdd, { [styles.cardAddDone]: allAdded })}
           // Not `disabled`: a disabled button swallows the hover that shows the card's tooltip.
           aria-disabled={unavailable}
-          onClick={e => {
-            e.stopPropagation();
+          onClick={() => {
             if (!unavailable) onToggleAll();
           }}
         >

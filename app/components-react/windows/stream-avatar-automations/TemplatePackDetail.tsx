@@ -25,6 +25,8 @@ export default function TemplatePackDetail({
 }: Props) {
   const [previewTemplate, setPreviewTemplate] = useState<number | null>(null);
   const [previewNonce, setPreviewNonce] = useState(0);
+  // Pausing keeps the template selected, so it is tracked apart from `previewTemplate`.
+  const [previewPaused, setPreviewPaused] = useState(false);
 
   const total = pack.templates.length;
   const available = new Set(availableIndices);
@@ -39,12 +41,14 @@ export default function TemplatePackDetail({
 
   function startPreview(index: number) {
     setPreviewTemplate(index);
+    setPreviewPaused(false);
     setPreviewNonce(n => n + 1);
   }
 
   // Back to the pack's looping default preview.
   function stopPreview() {
     setPreviewTemplate(null);
+    setPreviewPaused(false);
     setPreviewNonce(n => n + 1);
   }
 
@@ -76,6 +80,7 @@ export default function TemplatePackDetail({
             loop={previewTemplate === null}
             onEnded={stopPreview}
             playToken={previewNonce}
+            paused={previewPaused}
           />
         </div>
 
@@ -91,6 +96,8 @@ export default function TemplatePackDetail({
               const selected = selection.has(i);
               const unavailable = !available.has(i);
               const previewing = previewTemplate === i;
+              // Selected for preview and actually playing; paused keeps the row selected
+              const previewPlaying = previewing && !previewPaused;
               return (
                 <Tooltip
                   key={i}
@@ -113,14 +120,14 @@ export default function TemplatePackDetail({
                       <div className={styles.rowDesc}>{item.description}</div>
                     </div>
                     <div
-                      className={cx(styles.rowPlay, { [styles.rowPause]: previewing })}
+                      className={cx(styles.rowPlay, { [styles.rowPause]: previewPlaying })}
                       onClick={e => {
                         e.stopPropagation();
-                        if (previewing) stopPreview();
-                        else startPreview(i);
+                        if (!previewing) startPreview(i);
+                        else setPreviewPaused(paused => !paused);
                       }}
                     >
-                      <i className={previewing ? 'icon-pause' : 'icon-play-round'} />
+                      <i className={previewPlaying ? 'icon-pause' : 'icon-play-round'} />
                     </div>
                     <div className={cx(styles.rowCheck, { [styles.rowCheckActive]: selected })}>
                       {selected && <i className="icon-check-mark" />}
