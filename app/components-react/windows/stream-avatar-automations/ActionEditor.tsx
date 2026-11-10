@@ -1,5 +1,6 @@
 import React from 'react';
 import { Select, Tag } from 'antd';
+import cx from 'classnames';
 import { alertAsync } from 'components-react/modals';
 import { $t } from 'services/i18n';
 import { ActionRegistry, withActionDefaults } from 'services/stream-avatar/engine/actions';
@@ -15,29 +16,8 @@ import {
   WaitControl,
   InstructionControl,
   CoHostCommentControl,
-  errorTextStyle,
-  CONTROL_HEIGHT,
 } from './ActionControls';
 import styles from './AutomationEditor.m.less';
-
-const dragHandleStyle = {
-  cursor: 'grab',
-  color: 'var(--paragraph)',
-  fontSize: '16px',
-} as const;
-
-const gripCellStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  height: CONTROL_HEIGHT,
-} as const;
-
-const trashCellStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  height: CONTROL_HEIGHT,
-  fontSize: '14px',
-} as const;
 
 function requiresAgentApp(type: ActionType): boolean {
   return ActionRegistry()[type]?.group === 'co-host';
@@ -209,38 +189,27 @@ export default function ActionEditor({
   }
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'auto 1.2fr minmax(0, 1fr) auto',
-        gap: '12px',
-        alignItems: 'start',
-        padding: '8px 0',
-        borderBottom: '1px solid var(--border)',
-      }}
-    >
-      <div style={gripCellStyle}>
+    <div className={styles.actionRow}>
+      <div className={styles.gripCell}>
         <i
-          className="sa-action-drag-handle fas fa-grip-vertical"
-          style={dragHandleStyle}
+          className={cx('sa-action-drag-handle fas fa-grip-vertical', styles.dragHandle)}
           title={$t('Drag to reorder')}
         />
       </div>
 
-      <Select
-        value={action.type || undefined}
-        onChange={val => setType(val as ActionType)}
-        placeholder={$t('Select an Action...')}
-        options={actionOptions}
-      />
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
-        {renderControl()}
+      {/* The control column stays empty until an action is picked, so the select keeps half width */}
+      <div className={styles.actionFields}>
+        <Select
+          value={action.type || undefined}
+          onChange={val => setType(val as ActionType)}
+          placeholder={$t('Select an Action...')}
+          options={actionOptions}
+        />
+        <div className={styles.actionControl}>{renderControl()}</div>
       </div>
 
       <div
-        style={trashCellStyle}
-        className={styles.trashIcon}
+        className={cx(styles.actionTrash, styles.trashIcon)}
         onClick={() => onRemove(index)}
         title={$t('Remove reaction')}
       >

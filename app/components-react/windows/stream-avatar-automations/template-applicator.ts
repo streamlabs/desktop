@@ -4,12 +4,14 @@ import * as remote from '@electron/remote';
 import { Services } from 'components-react/service-provider';
 import { downloadFile } from 'util/requests';
 import type {
-  AutomationTemplateGame,
   AutomationTemplateItem,
+  AutomationTemplatePack,
   AutomationTemplateSource,
 } from 'services/stream-avatar/stream-avatar-api-service';
+import type { TCondition } from 'services/stream-avatar/engine/conditions';
 import { AutomationsAnalytics } from './automations-analytics';
 import { checkEnableLimit, enabledUsage } from './automations-limits';
+import { chunkConditions, resolveTemplateConditions } from './automations-utils';
 
 export async function downloadAsset(downloadUrl: string, assetKey: string): Promise<string | null> {
   try {
@@ -104,41 +106,61 @@ export async function createTemplateSource(
 
 export async function applyTemplates(
   selections: Record<string, Set<number>>,
-  games: AutomationTemplateGame[],
+  packs: AutomationTemplatePack[],
 ): Promise<void> {
-  const { AutomationsService } = Services;
+  const { AutomationsService, UserService } = Services;
+  const linkedPlatforms = UserService.views.linkedPlatforms;
+
+  // Event templates list a condition per platform; keep the ones for the linked platforms.
+  // A template left with none can't fire, so it isn't created (or counted toward the cap).
+  const queue: {
+    pack: AutomationTemplatePack;
+    item: AutomationTemplateItem;
+    /** One automation per chunk; more than one only when the conditions exceed the cap. */
+    chunks: TCondition[][];
+  }[] = [];
+  for (const pack of packs) {
+    const indices = selections[pack.id];
+    if (!indices || indices.size === 0) continue;
+
+    for (const index of Array.from(indices).sort((a, b) => a - b)) {
+      const item: AutomationTemplateItem | undefined = pack.templates[index];
+      if (!item) continue;
+      const conditions = resolveTemplateConditions(item, linkedPlatforms);
+      if (conditions.length > 0) queue.push({ pack, item, chunks: chunkConditions(conditions) });
+    }
+  }
+  if (queue.length === 0) return;
 
   const assets: string[] =
     (await (window as any)?.streamlabsOBS?.v1?.NativeComponents?.getAssets?.()) ?? [];
 
   // Everything past the tier cap is still created, just switched off. Prompt once
   // up front rather than once per template.
-  const totalSelected = Object.values(selections).reduce((sum, set) => sum + set.size, 0);
-  checkEnableLimit(totalSelected, 'templates');
+  const total = queue.reduce((sum, entry) => sum + entry.chunks.length, 0);
+  checkEnableLimit(total, 'templates');
   const usage = enabledUsage();
   let remaining = Math.max(0, usage.max - usage.count);
 
-  for (const game of games) {
-    const indices = selections[game.game];
-    if (!indices || indices.size === 0) continue;
-
-    for (const index of indices) {
-      const item: AutomationTemplateItem = game.templates[index];
-
-      for (const src of item.sources ?? []) {
-        try {
-          await createTemplateSource(src, assets);
-        } catch {
-          // non-fatal — continue creating the automation
-        }
+  for (const { pack, item, chunks } of queue) {
+    for (const src of item.sources ?? []) {
+      try {
+        await createTemplateSource(src, assets);
+      } catch {
+        // non-fatal — continue creating the automation
       }
+    }
 
+    for (const conditions of chunks) {
       const enabled = (item.automation.enabled ?? true) && remaining > 0;
       if (enabled) remaining -= 1;
-      await AutomationsService.actions.create({ ...item.automation, enabled });
+      // `actions.return` waits for the worker, so an API failure rejects here instead of
+      // vanishing, and the analytics below only count automations that were really created.
+      await AutomationsService.actions.return.create({ ...item.automation, conditions, enabled });
+      // Same `game` value automation_created sends (condition prefix), not the pack id.
       AutomationsAnalytics.templateAdded(
-        game.game,
-        item.automation.conditions[0]?.type ?? 'unknown',
+        pack.game ?? conditions[0]?.type.split('.')[0] ?? 'unknown',
+        conditions[0]?.type ?? 'unknown',
         item.automation.actions.map(a => a.type),
       );
     }

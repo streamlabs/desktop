@@ -1,0 +1,80 @@
+@import "../../../styles/ultra";
+
+.usageMeter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.usageRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.usageText {
+  color: var(--title);
+}
+
+.upgradeLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover .upgradeText {
+    opacity: 0.85;
+  }
+}
+
+.upgradeText {
+  .ultra-text('warm');
+}
+
+.atCapNote {
+  color: var(--paragraph);
+}
+
+.usageInfo {
+  color: var(--icon);
+  cursor: help;
+}
+
+.usageTrack {
+  width: 140px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+// Template picker (Figma): bold 12px #BDC2C4 text, teal count, 190px track on #2B383F.
+.usageMeterPicker {
+  font-size: 12px;
+  font-weight: 700;
+
+  .usageText {
+    color: var(--paragraph);
+  }
+
+  .usageTrack {
+    width: 190px;
+    background: var(--section-alt);
+  }
+}
+
+.usageCount {
+  color: var(--teal);
+}
+
+.usageFill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--teal);
+  transition: width 150ms ease;
+}
