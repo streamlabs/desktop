@@ -29,10 +29,10 @@ class Updater {
     // on macOS 12 to upgrade their OS. Updating this prompt before the Electron upgrade, which
     // requires macOS 13, ensures users on macOS 12 are not blocked from running the app but will
     // not receive the update for macOS 13 (Ventura) and later.
-    if (osVersion && Number(osVersion.substring(0, 2)) < 21) {
+    if (osVersion && Number(osVersion.substring(0, 2)) < 22) {
       dialog.showMessageBoxSync({
         message:
-          'Streamlabs Desktop requires macOS 13 (Ventura) or later for future updates. You can keep using this version, but it will no longer be updated. Upgrade youe macOS version to receive future updates.',
+          'Streamlabs Desktop requires macOS 13 (Ventura) or later for future updates. You can keep using this version, but it will no longer be updated. Upgrade your macOS version to receive future updates.',
         type: 'warning',
       });
       this.startApp();
