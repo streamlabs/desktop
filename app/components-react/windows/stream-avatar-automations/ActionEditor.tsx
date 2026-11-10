@@ -67,6 +67,7 @@ export interface ActionEditorProps {
   errors?: Record<string, string>;
   isAgentInstalled: boolean;
   isAgentEnabled: boolean;
+  streamEventsOnly?: boolean;
   onInstallAgent: () => Promise<void>;
   onEnableAgent: () => void;
   onChange: (index: number, action: ExportedAction) => void;
@@ -81,6 +82,7 @@ export default function ActionEditor({
   errors,
   isAgentInstalled,
   isAgentEnabled,
+  streamEventsOnly,
   onInstallAgent,
   onEnableAgent,
   onChange,
@@ -174,6 +176,7 @@ export default function ActionEditor({
             props={props}
             errors={errors}
             setProp={setProp}
+            hideUnmetOption={streamEventsOnly}
           />
         );
       case 'common.wait_for_ms':

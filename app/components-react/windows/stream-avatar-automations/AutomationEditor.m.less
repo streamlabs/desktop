@@ -6,3 +6,20 @@
     color: var(--title);
   }
 }
+
+// A native button so it's reachable with Tab and fires on Enter/Space; looks like .trashIcon.
+.trashButton {
+  .trashIcon();
+
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  line-height: 1;
+
+  &:focus-visible {
+    color: var(--title);
+    outline: 1px solid var(--title);
+    outline-offset: 2px;
+  }
+}

@@ -1,5 +1,10 @@
 import { $t } from 'services/i18n';
-import { Conditions, GAME_NAMES } from 'services/stream-avatar/engine/conditions';
+import type { ICategoryListCategory } from 'components-react/shared/inputs';
+import {
+  Conditions,
+  GAME_NAMES,
+  STREAM_EVENT_SOURCES,
+} from 'services/stream-avatar/engine/conditions';
 import type { ConditionType } from 'services/stream-avatar/engine/conditions';
 import { ActionRegistry } from 'services/stream-avatar/engine/actions';
 import type { ActionType } from 'services/stream-avatar/engine/actions';
@@ -18,9 +23,22 @@ export function isVideoUrl(url?: string): boolean {
   return !!url && VIDEO_EXTENSIONS.some(ext => url.toLowerCase().endsWith(ext));
 }
 
-export const GAME_OPTIONS = Object.entries(GAME_NAMES)
+const GAME_OPTIONS = Object.entries(GAME_NAMES)
   .map(([id, name]) => ({ label: name, value: id }))
   .sort((a, b) => a.label.localeCompare(b.label));
+
+const STREAM_EVENT_OPTIONS = Object.entries(STREAM_EVENT_SOURCES).map(([value, label]) => ({
+  label,
+  value,
+}));
+
+/** Stream-event and game sources, as the categories of the trigger source pickers. */
+export function triggerSourceCategories(): ICategoryListCategory<string>[] {
+  return [
+    { key: 'stream', label: $t('Stream Events'), options: STREAM_EVENT_OPTIONS },
+    { key: 'games', label: $t('Games'), options: GAME_OPTIONS },
+  ];
+}
 
 export function conditionLabel(condition: { type: string } | null): string {
   if (!condition?.type) return $t('(unknown)');
@@ -32,7 +50,7 @@ export function conditionGame(condition: { type: string } | null): string {
   if (!condition?.type) return '';
   const def = Conditions()[condition.type as ConditionType];
   if (!def) return '';
-  return GAME_NAMES[def.group] ?? def.group;
+  return GAME_NAMES[def.group] ?? STREAM_EVENT_SOURCES[def.group] ?? def.group;
 }
 
 export function summarizeActions(actions: TAutomationExport['actions']): string {

@@ -5,6 +5,8 @@ export { NumberInput } from './NumberInput';
 export { SwitchInput } from './SwitchInput';
 export { CheckboxInput } from './CheckboxInput';
 export { ListInput } from './ListInput';
+export { CategoryListInput } from './CategoryListInput';
+export type { ICategoryListCategory } from './CategoryListInput';
 export { MediaUrlInput } from './MediaUrlInput';
 export { AudioUrlInput } from './AudioUrlInput';
 export { TagsInput } from './TagsInput';

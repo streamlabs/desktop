@@ -1,0 +1,44 @@
+// The dropdown rows reuse antd's own `ant-select-item` classes, so only the layout is styled here.
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.back {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.backLink {
+  color: var(--teal);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--teal-hover);
+  }
+}
+
+.backTitle {
+  color: var(--paragraph);
+}
+
+// Positioned, so the rows' `offsetTop` is relative to the list (keyboard scrolling relies on it)
+.list {
+  position: relative;
+  overflow-y: auto;
+}
+
+// Right-aligned hints in a row: the category of a search result, or the chevron of a category
+.tag,
+.chevron {
+  flex: none;
+  margin-left: 8px;
+  color: var(--paragraph);
+  font-size: 12px;
+}
