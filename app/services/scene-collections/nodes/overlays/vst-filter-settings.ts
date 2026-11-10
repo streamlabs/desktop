@@ -27,3 +27,15 @@ export function sanitizeVstFilterSettings<T extends { [key: string]: unknown }>(
 
   return sanitized as T;
 }
+
+// chunk_data_v2 and chunk_data embed the plugin path; sl-vst ignores them once chunk_data_path_v3 is set
+export function sanitizeVstFilterSettingsForExport<T extends { [key: string]: unknown }>(
+  settings: T,
+): Partial<T> {
+  const sanitized: { [key: string]: unknown } = sanitizeVstFilterSettings(settings);
+
+  delete sanitized.chunk_data_v2;
+  delete sanitized.chunk_data;
+
+  return sanitized as Partial<T>;
+}
