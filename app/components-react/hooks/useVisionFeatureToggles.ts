@@ -23,8 +23,8 @@ export function useVisionFeatureToggles(
 
   const toggles: VisionFeatureToggles = {
     automations: automationsSettings.isEnabled,
-    reactiveOverlays: visionEnabledState.reactiveOverlaysEnabled,
-    gamePulse: visionEnabledState.gamePulseEnabled,
+    reactiveOverlays: !visionEnabledState.skipEnableForReactiveOverlays,
+    gamePulse: !visionEnabledState.skipEnableForGamePulse,
     sidekick: isSidekickInstalled && isSidekickAppEnabled,
   };
   const allFeaturesOff = Object.values(toggles).every(on => !on);
@@ -37,10 +37,10 @@ export function useVisionFeatureToggles(
         AutomationsService.actions.setIsEnabled(checked);
         break;
       case 'reactiveOverlays':
-        VisionService.actions.setFeatureSettings({ reactiveOverlaysEnabled: checked });
+        VisionService.actions.setFeatureSettings({ skipEnableForReactiveOverlays: !checked });
         break;
       case 'gamePulse':
-        VisionService.actions.setFeatureSettings({ gamePulseEnabled: checked });
+        VisionService.actions.setFeatureSettings({ skipEnableForGamePulse: !checked });
         break;
       case 'sidekick':
         if (!checked) sidekick.disableAgent();

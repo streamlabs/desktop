@@ -10,7 +10,7 @@ import {
 } from 'components-react/hooks/useVisionFeatureToggles';
 import { confirmAsync } from 'components-react/modals';
 import { Services } from 'components-react/service-provider';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { $t } from 'services/i18n/index';
 import { VisionProcess, VisionService, VisionState } from 'services/vision';
 import { ObsSettingsSection } from './ObsSettings';
@@ -77,7 +77,7 @@ type VisionInfoProps = {
   selectedGame: string;
   requestAvailableProcesses: VisionService['actions']['requestAvailableProcesses'];
   activateProcess: VisionService['actions']['activateProcess'];
-  uninstall: VisionService['actions']['uninstall'];
+  uninstall: VisionService['actions']['return']['uninstall'];
   openExternal: (url: string) => void;
 };
 
@@ -208,6 +208,8 @@ function VisionDebugSection({
   const frameUrl = useMemo(() => buildLocalUrl(port, '/display_frame'), [port]);
   const isRunning = status === 'running';
 
+  const [isUninstalling, setIsUninstalling] = useState(false);
+
   async function confirmUninstall() {
     const confirmed = await confirmAsync({
       title: $t('Uninstall Vision?'),
@@ -215,7 +217,16 @@ function VisionDebugSection({
       okText: $t('Uninstall'),
       okButtonProps: { danger: true },
     });
-    if (confirmed) uninstall();
+    if (!confirmed) return;
+
+    setIsUninstalling(true);
+    try {
+      await uninstall();
+    } catch (e: unknown) {
+      message.error($t('Failed to uninstall Vision.'));
+    } finally {
+      setIsUninstalling(false);
+    }
   }
 
   return (
@@ -269,7 +280,11 @@ function VisionDebugSection({
 
       {installedVersion && allFeaturesOff && (
         <div className={styles.debugActions}>
-          <button className="button button--warn" onClick={confirmUninstall}>
+          <button
+            className="button button--warn"
+            disabled={isUninstalling}
+            onClick={confirmUninstall}
+          >
             {$t('Uninstall Vision')}
           </button>
         </div>
@@ -369,7 +384,7 @@ export function VisionSettings() {
         pid={state.pid}
         port={state.port}
         openExternal={openLink}
-        uninstall={actions.uninstall}
+        uninstall={actions.return.uninstall}
         availableProcesses={state.availableProcesses}
         activeProcessId={state.selectedProcessId}
         requestAvailableProcesses={actions.requestAvailableProcesses}

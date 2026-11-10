@@ -46,10 +46,12 @@ export function useAgentAppInstalled() {
   }
 
   function enableAgent() {
+    if (!isVisionSupported()) return;
     PlatformAppsService.actions.setEnabled(AGENT_APP_ID, true);
   }
 
   function disableAgent() {
+    // No reason to gate this check on isVisionSupported, compared to enabling.
     PlatformAppsService.actions.setEnabled(AGENT_APP_ID, false);
   }
 

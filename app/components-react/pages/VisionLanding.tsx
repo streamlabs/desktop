@@ -236,6 +236,10 @@ export default function VisionLanding() {
     [supportedGames],
   );
 
+  function openMoreGamesModal() {
+    if (supportedGamesTitles.length > 0) setShowMoreGamesModal(true);
+  }
+
   const moreGamesTooltip = useMemo(() => {
     if (!supportedGames || Object.keys(supportedGames).length === 0) return null;
 
@@ -351,7 +355,15 @@ export default function VisionLanding() {
           <Tooltip title={moreGamesTooltip}>
             <div
               className={styles.supportedGames}
-              onClick={() => supportedGamesTitles.length > 0 && setShowMoreGamesModal(true)}
+              role="button"
+              tabIndex={0}
+              onClick={openMoreGamesModal}
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  openMoreGamesModal();
+                }
+              }}
             >
               <h3>{$t('Supported Games:')}</h3>
               <div className={styles.supportedGamesList}>

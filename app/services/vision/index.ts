@@ -48,15 +48,16 @@ VisionProcess.register();
 export class VisionEnabledState extends RealmObject {
   isEnabled: boolean;
   // Whether adding a reactive overlay / Game Pulse widget may auto-enable Vision.
-  reactiveOverlaysEnabled: boolean;
-  gamePulseEnabled: boolean;
+  // Stored as "skipEnable" so rows migrated from older versions keep the enabled-by-default behavior.
+  skipEnableForReactiveOverlays: boolean;
+  skipEnableForGamePulse: boolean;
 
   static schema: ObjectSchema = {
     name: 'VisionEnabledState',
     properties: {
       isEnabled: { type: 'bool', default: false },
-      reactiveOverlaysEnabled: { type: 'bool', default: true },
-      gamePulseEnabled: { type: 'bool', default: true },
+      skipEnableForReactiveOverlays: { type: 'bool', default: false },
+      skipEnableForGamePulse: { type: 'bool', default: false },
     },
   };
 }
@@ -428,7 +429,9 @@ export class VisionService extends Service {
   }
 
   setFeatureSettings(
-    patch: Partial<Pick<VisionEnabledState, 'reactiveOverlaysEnabled' | 'gamePulseEnabled'>>,
+    patch: Partial<
+      Pick<VisionEnabledState, 'skipEnableForReactiveOverlays' | 'skipEnableForGamePulse'>
+    >,
   ) {
     this.enabledState.db.write(() => Object.assign(this.enabledState, patch));
   }
@@ -444,7 +447,7 @@ export class VisionService extends Service {
   }
 
   private onSourceCreated(source: ISource) {
-    if (this.state.isRunning || !this.enabledState.reactiveOverlaysEnabled) return;
+    if (this.state.isRunning || this.enabledState.skipEnableForReactiveOverlays) return;
 
     // Smart browser sources are munged to type: 'browser_source' by OBS.
     // Check the manager type instead.
@@ -455,7 +458,7 @@ export class VisionService extends Service {
   }
 
   private onWidgetCreated(type: WidgetType) {
-    if (this.state.isRunning || !this.enabledState.gamePulseEnabled) return;
+    if (this.state.isRunning || this.enabledState.skipEnableForGamePulse) return;
 
     if (type === WidgetType.GamePulseWidget) {
       console.log('Game Pulse widget added, enabling vision service');
