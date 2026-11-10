@@ -10,8 +10,12 @@ import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
 import { withActionDefaults } from 'services/stream-avatar/engine/actions';
 import { validateAutomation } from 'services/stream-avatar/engine/validation';
-import { allowedSourceNames, sourceScopeScenes } from 'services/stream-avatar/engine/source-scope';
-import { isStreamEventKey } from 'services/stream-avatar/engine/conditions';
+import {
+  allowedSourceNames,
+  scenesInScope,
+  sourceScopes,
+} from 'services/stream-avatar/engine/source-scope';
+import { areStreamEventsOnly } from 'services/stream-avatar/engine/conditions';
 import type { TAutomationExport } from 'services/stream-avatar/engine/automations';
 import { AutomationsAnalytics } from './automations-analytics';
 import type { ActionType, ExportedAction } from 'services/stream-avatar/engine/actions';
@@ -64,19 +68,25 @@ export default function AutomationEditor({ initial, onClose }: Props) {
     enableAgent,
   } = useAgentAppInstalled();
 
-  const { scenes, sources, sceneSourceNames } = useVuex(() => ({
+  const { scenes, sources, sceneSources } = useVuex(() => ({
     scenes: ScenesService.views.scenes.map(s => ({ id: s.id, name: s.name })),
     sources: SourcesService.views.sources
       .filter(s => s.video)
       .map(s => ({ id: s.sourceId, name: s.name })),
-    sceneSourceNames: buildSceneSourceNames(ScenesService.views.scenes),
+    sceneSources: buildSceneSourceNames(ScenesService.views.scenes),
   }));
 
   const [description, setDescription] = useState(initial?.description ?? '');
   const [triggers, setTriggers] = useState<TriggerRow[]>(() =>
     initial?.conditions?.length ? initial.conditions.map(makeTriggerRow) : [makeTriggerRow()],
   );
-  const [selectedScene, setSelectedScene] = useState<string | undefined>(initial?.scenes?.[0]);
+  // The saved list is kept whole, so editing an automation limited to several scenes doesn't drop
+  // all but the first. Only picking a scene in Limit to Scene replaces it.
+  const [limitScenes, setLimitScenes] = useState<string[] | undefined>(
+    initial?.scenes?.length ? initial.scenes : undefined,
+  );
+  // The select has room for one scene, so it shows the first.
+  const selectedScene = limitScenes?.[0];
   const [rows, setRows] = useState<ActionRow[]>(
     () =>
       (initial?.actions as ExportedAction[])?.filter(a => a?.type).map(makeRow) ?? [
@@ -103,21 +113,21 @@ export default function AutomationEditor({ initial, onClose }: Props) {
   const draft: TAutomationExport = {
     description,
     conditions,
-    scenes: selectedScene ? [selectedScene] : undefined,
+    scenes: limitScenes,
     actions,
     enabled: enabled ?? true,
   };
   const resources = {
     scenes,
     sources,
-    sceneSourceNames,
+    ...sceneSources,
     agentAppReady: isAgentInstalled && isAgentEnabled,
   };
   const issues = validateAutomation(draft, resources);
   // Alert conditions like "amount is at least" need a number/tier to compare against.
   const valueMissing = triggers.map(isTriggerValueMissing);
   // Stream events are pulses with no "unmet" pass, so the "if condition is false" option can't fire.
-  const streamEventsOnly = conditions.length > 0 && conditions.every(c => isStreamEventKey(c.type));
+  const streamEventsOnly = areStreamEventsOnly(conditions);
   if (valueMissing.some(Boolean)) {
     issues.push({
       scope: 'conditions',
@@ -153,6 +163,7 @@ export default function AutomationEditor({ initial, onClose }: Props) {
       actionErrors[rowIndex][i.field] = i.message;
     }
   });
+  // No scopes: nothing limits the names.
   const allSourceNames = allowedSourceNames([], resources);
 
   const atMaxTriggers = triggers.length >= MAX_TRIGGERS;
@@ -199,7 +210,7 @@ export default function AutomationEditor({ initial, onClose }: Props) {
       const payload: Omit<TAutomationExport, 'id'> = {
         description: description.trim(),
         conditions,
-        scenes: selectedScene ? [selectedScene] : undefined,
+        scenes: limitScenes,
         actions,
         enabled: enabled ?? checkEnableLimit(1, 'editor'),
       };
@@ -295,7 +306,10 @@ export default function AutomationEditor({ initial, onClose }: Props) {
             <Select
               // Option values are scene IDs so a scene named like the sentinel can't collide with it
               value={scenes.find(s => s.name === selectedScene)?.id ?? selectedScene ?? ANY_SCENE}
-              onChange={val => setSelectedScene(scenes.find(s => s.id === val)?.name)}
+              onChange={val => {
+                const name = scenes.find(s => s.id === val)?.name;
+                setLimitScenes(name ? [name] : undefined);
+              }}
               options={[
                 { value: ANY_SCENE, label: $t('Any Scene') },
                 ...scenes.map(s => ({ value: s.id, label: s.name })),
@@ -363,16 +377,16 @@ export default function AutomationEditor({ initial, onClose }: Props) {
             >
               {rows.map((row, i) => {
                 // Blank rows hold no action type, so they never change a row's scope scene.
-                const scopeScenes = sourceScopeScenes(rowActions, i, draft.scenes);
+                const scopes = sourceScopes(rowActions, i, draft.scenes, streamEventsOnly);
                 return (
                   <div key={row.id}>
                     <ActionEditor
                       action={row.action}
                       index={i}
                       scenes={scenes}
-                      sourceNames={allowedSourceNames(scopeScenes, resources)}
+                      sourceNames={allowedSourceNames(scopes, resources)}
                       allSourceNames={allSourceNames}
-                      scopeScenes={scopeScenes}
+                      scopeScenes={scenesInScope(scopes)}
                       errors={actionErrors[i]}
                       isAgentInstalled={isAgentInstalled}
                       isAgentEnabled={isAgentEnabled}

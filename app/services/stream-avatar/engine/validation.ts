@@ -1,10 +1,10 @@
 import { $t } from 'services/i18n';
-import { Conditions } from './conditions';
+import { areStreamEventsOnly, Conditions } from './conditions';
 import type { ConditionType } from './conditions';
 import { ActionRegistry } from './actions';
 import type { TAutomationExport } from './automations';
 import type { ExportedActionProps } from './actions';
-import { scopedSourceNames, sourceScopeScenes } from './source-scope';
+import { scenesInScope, scopedSourceNames, sourceScopes } from './source-scope';
 
 /** A scene or source that currently exists in the active scene collection. */
 export interface IResourceRef {
@@ -17,10 +17,17 @@ export interface IAvailableResources {
   scenes: IResourceRef[];
   sources: IResourceRef[];
   /**
-   * Unique video-source names of each scene's direct items, keyed by scene name. When given,
-   * Show/Hide Source reactions must pick a source from their scope scene (see `source-scope`).
+   * Unique video-source names of each scene's direct items, keyed by scene name, for the scenes
+   * of Limit to Scene. Same-named scenes are merged, as that limit matches the active scene by
+   * name. When given with `switchSceneSourceNames`, Show/Hide Source reactions must pick a
+   * source from their scope scene (see `source-scope`).
    */
   sceneSourceNames?: Record<string, string[]>;
+  /**
+   * Like `sceneSourceNames`, for the target of a Switch to Scene. That switches to the first
+   * scene with the name, so same-named scenes after it don't count.
+   */
+  switchSceneSourceNames?: Record<string, string[]>;
   /** Whether the Sidekick app is installed AND enabled, gating co-host actions. */
   agentAppReady?: boolean;
 }
@@ -83,17 +90,25 @@ function validateAction(
       } else if (!resources.sources.some(s => s.name === name)) {
         issues.push(actionIssue('source', $t('Source "%{name}" is unavailable.', { name })));
       } else {
-        const scenes = sourceScopeScenes(automation.actions, index, automation.scenes);
+        const scopes = sourceScopes(
+          automation.actions,
+          index,
+          automation.scenes,
+          areStreamEventsOnly(automation.conditions),
+        );
         // Undefined when nothing limits the choices (see scopedSourceNames).
-        const inScope = scopedSourceNames(scenes, resources);
+        const inScope = scopedSourceNames(scopes, resources);
         if (inScope && !inScope.includes(name)) {
+          const scenes = scenesInScope(scopes);
           issues.push(
             actionIssue(
               'source',
-              $t('Source "%{name}" isn\'t in scene "%{scene}".', {
-                name,
-                scene: scenes.join('", "'),
-              }),
+              scenes.length > 1
+                ? $t('Source "%{name}" isn\'t in any of the scenes %{scenes}.', {
+                    name,
+                    scenes: scenes.map(scene => `"${scene}"`).join(', '),
+                  })
+                : $t('Source "%{name}" isn\'t in scene "%{scene}".', { name, scene: scenes[0] }),
             ),
           );
         }

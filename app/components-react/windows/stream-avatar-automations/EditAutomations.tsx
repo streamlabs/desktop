@@ -36,13 +36,13 @@ export default function EditAutomations() {
     SourcesService,
     DismissablesService,
   } = Services;
-  const { automations, loaded, error, scenes, sources, sceneSourceNames } = useVuex(() => ({
+  const { automations, loaded, error, scenes, sources, sceneSources } = useVuex(() => ({
     automations: AutomationsService.state.automations,
     loaded: AutomationsService.state.loaded,
     error: AutomationsService.state.error,
     scenes: ScenesService.views.scenes.map(s => ({ id: s.id, name: s.name })),
     sources: SourcesService.views.sources.map(s => ({ id: s.sourceId, name: s.name })),
-    sceneSourceNames: buildSceneSourceNames(ScenesService.views.scenes),
+    sceneSources: buildSceneSourceNames(ScenesService.views.scenes),
   }));
   const { isInstalled: isAgentInstalled, isEnabled: isAgentEnabled } = useAgentAppInstalled();
 
@@ -266,7 +266,7 @@ export default function EditAutomations() {
                 issues={validateAutomation(automation, {
                   scenes,
                   sources,
-                  sceneSourceNames,
+                  ...sceneSources,
                   agentAppReady: isAgentInstalled && isAgentEnabled,
                 })}
                 simulating={simulatingId === automation.id}

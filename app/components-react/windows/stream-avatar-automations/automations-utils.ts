@@ -10,6 +10,7 @@ import type { ConditionType } from 'services/stream-avatar/engine/conditions';
 import { ActionRegistry } from 'services/stream-avatar/engine/actions';
 import type { ActionType } from 'services/stream-avatar/engine/actions';
 import type { TAutomationExport } from 'services/stream-avatar/engine/automations';
+import type { IAvailableResources } from 'services/stream-avatar/engine/validation';
 import type {
   AutomationTemplateItem,
   AutomationTemplatePack,
@@ -63,24 +64,46 @@ interface ISceneWithItems {
   getItems(): { getSource(): { name: string; video: boolean } | null | undefined }[];
 }
 
+/** The per-scene source names the editor and the list view pass to validation. */
+export type TSceneSourceNames = Required<
+  Pick<IAvailableResources, 'sceneSourceNames' | 'switchSceneSourceNames'>
+>;
+
 /**
  * The unique video-source names of each scene's direct items (nested scenes' own items don't
  * count), keyed by scene name. It scopes the Show/Hide Source choices to the right scene, in
  * both the editor and the list view's validation.
+ *
+ * Scene names are user-controlled and can repeat, and the runtime treats repeats differently:
+ * - `sceneSourceNames` (Limit to Scene) matches the active scene by name, so same-named scenes
+ *   are merged into the union of their items.
+ * - `switchSceneSourceNames` (Switch to Scene) goes to the first scene with that name, so it
+ *   keeps only that scene's items.
+ *
+ * Both are prototype-free, so a scene named `__proto__` or `constructor` is an ordinary key.
  */
-export function buildSceneSourceNames(scenes: ISceneWithItems[]): Record<string, string[]> {
-  const byScene: Record<string, string[]> = {};
+export function buildSceneSourceNames(scenes: ISceneWithItems[]): TSceneSourceNames {
+  const sceneSourceNames: Record<string, string[]> = Object.create(null);
+  const switchSceneSourceNames: Record<string, string[]> = Object.create(null);
+
   for (const scene of scenes) {
-    // Same-name scenes: the runtime switches to the first match, so keep the first one's items.
-    if (Object.prototype.hasOwnProperty.call(byScene, scene.name)) continue;
     const names = new Set<string>();
     for (const item of scene.getItems()) {
       const source = item.getSource();
       if (source?.video) names.add(source.name);
     }
-    byScene[scene.name] = Array.from(names);
+
+    // Prototype-free, so a lookup only finds scenes already added
+    const sameName = sceneSourceNames[scene.name];
+    if (sameName) {
+      sceneSourceNames[scene.name] = Array.from(new Set(sameName.concat(Array.from(names))));
+    } else {
+      sceneSourceNames[scene.name] = Array.from(names);
+      switchSceneSourceNames[scene.name] = Array.from(names);
+    }
   }
-  return byScene;
+
+  return { sceneSourceNames, switchSceneSourceNames };
 }
 
 export function summarizeActions(actions: TAutomationExport['actions']): string {

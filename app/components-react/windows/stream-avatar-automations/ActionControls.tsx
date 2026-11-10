@@ -98,7 +98,7 @@ interface SourceVisibilityControlProps {
   sourceNames: string[];
   /** The saved source exists, just not in the scope scene(s). */
   sourceOutOfScope: boolean;
-  /** The scenes `sourceNames` is limited to, for the empty state. */
+  /** The scenes `sourceNames` is limited to (empty when any source is allowed), for the empty state. */
   scopeScenes: string[];
   props: ExportedActionProps;
   errors?: Record<string, string>;
@@ -133,6 +133,19 @@ export function SourceVisibilityControl({
       : []),
     ...sourceNames.map(name => ({ label: name, value: name })),
   ];
+  // Only a scene limit can leave the list empty; with any scene allowed antd's default shows.
+  function noSourcesMessage() {
+    if (scopeScenes.length > 1) {
+      return $t('No sources in any of the scenes %{scenes}', {
+        scenes: scopeScenes.map(scene => `"${scene}"`).join(', '),
+      });
+    }
+    if (scopeScenes.length === 1) {
+      return $t('No sources in scene "%{scene}"', { scene: scopeScenes[0] });
+    }
+    return undefined;
+  }
+
   return (
     <>
       <Select
@@ -141,11 +154,7 @@ export function SourceVisibilityControl({
         style={{ width: '100%' }}
         placeholder={$t('— select source —')}
         options={sourceOptions}
-        notFoundContent={
-          scopeScenes.length
-            ? $t('No sources in scene "%{scene}"', { scene: scopeScenes.join('", "') })
-            : undefined
-        }
+        notFoundContent={noSourcesMessage()}
       />
       {errors?.source && <p style={errorTextStyle}>{errors.source}</p>}
       {actionType === 'common.show_source' && !hideUnmetOption && (
