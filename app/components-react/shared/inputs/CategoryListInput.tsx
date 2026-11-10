@@ -2,6 +2,7 @@ import { Input, Select } from 'antd';
 import { LabeledValue, RefSelectProps, SelectProps } from 'antd/lib/select';
 import cx from 'classnames';
 import omit from 'lodash/omit';
+import uniqueId from 'lodash/uniqueId';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { $t } from '../../../services/i18n';
 import { InputComponent, TSlobsInputProps, useInput, ValuesOf } from './inputs';
@@ -51,6 +52,15 @@ type TRow<TValue> =
     };
 
 /**
+ * Turns any string into a valid DOM id fragment (no whitespace or other special characters).
+ * Every character outside of `[A-Za-z0-9_-]` becomes `.<hex code>.`, so different strings can't
+ * end up with the same id.
+ */
+function toIdFragment(str: string) {
+  return str.replace(/[^A-Za-z0-9_-]/g, c => `.${c.charCodeAt(0).toString(16)}.`);
+}
+
+/**
  * A Select whose dropdown is a drill-down list. The root view lists the categories, a search box
  * above them looks through all options at once, and picking a category shows only its options.
  * Works with or without a Form.
@@ -72,6 +82,10 @@ export const CategoryListInput = InputComponent(
     const searchRef = useRef<Input>(null);
     const popupRef = useRef<HTMLDivElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
+    // Unique per component instance, the ids of the listbox and its options derive from it
+    const idPrefix = useRef(uniqueId('category-list-')).current;
+    const listboxId = `${idPrefix}-listbox`;
+    const getRowId = (row: TRow<T>) => `${idPrefix}-${row.type}-${toIdFragment(row.key)}`;
 
     const [isOpen, setIsOpen] = useState(false);
     const [query, setQuery] = useState('');
@@ -260,6 +274,11 @@ export const CategoryListInput = InputComponent(
       return (
         <div
           key={row.key}
+          id={getRowId(row)}
+          // Categories are options too: the arrow keys move through them and Enter drills in.
+          // They never count as selected, only the picked option does.
+          role="option"
+          aria-selected={isSelected}
           // Reuse antd's own classes, so the rows look like the ones of every other dropdown
           className={cx('ant-select-item', 'ant-select-item-option', {
             'ant-select-item-option-active': index === activeIndex,
@@ -315,17 +334,31 @@ export const CategoryListInput = InputComponent(
               }
               onChange={e => onQueryChange(e.target.value)}
               onKeyDown={onSearchKeyDown}
+              // Focus stays in the search box, so the highlighted row is exposed to assistive
+              // technologies as its active descendant
+              role="combobox"
+              aria-autocomplete="list"
+              aria-haspopup="listbox"
+              aria-expanded={isOpen}
+              aria-controls={listboxId}
+              aria-activedescendant={rows[activeIndex] ? getRowId(rows[activeIndex]) : undefined}
             />
           </div>
           {/* Remounted per view, so every view starts scrolled to the top */}
           <div
             key={activeCategory?.key ?? 'root'}
+            id={listboxId}
             ref={listRef}
+            role="listbox"
             className={styles.list}
             style={{ maxHeight: listHeight }}
           >
             {rows.map(renderRow)}
-            {rows.length === 0 && <div className="ant-select-item-empty">{$t('No matches')}</div>}
+            {rows.length === 0 && (
+              <div role="presentation" className="ant-select-item-empty">
+                {$t('No matches')}
+              </div>
+            )}
           </div>
         </div>
       );
