@@ -233,13 +233,18 @@ export default function TriggerEditor({
           options={conditionOptions}
         />
         {/* Always render the cell so the selects don't change width when the button hides. */}
-        <div
-          style={trashCellStyle}
-          className={canRemove ? styles.trashIcon : undefined}
-          onClick={canRemove ? () => onRemove(index) : undefined}
-          title={canRemove ? $t('Remove trigger') : undefined}
-        >
-          {canRemove && <i className="icon-trash" />}
+        <div style={trashCellStyle}>
+          {canRemove && (
+            <button
+              type="button"
+              className={styles.trashButton}
+              onClick={() => onRemove(index)}
+              title={$t('Remove trigger')}
+              aria-label={$t('Remove trigger')}
+            >
+              <i className="icon-trash" />
+            </button>
+          )}
         </div>
         {renderProperties()}
       </div>

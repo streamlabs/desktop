@@ -1,7 +1,7 @@
 import { InitAfter, Inject, Service } from 'services/core';
 import { ScenesService } from 'services/scenes';
 import { SourcesService } from 'services/sources';
-import { EStreamingState, StreamingService } from 'services/streaming';
+import { StreamingService } from 'services/streaming';
 import type { IRecentEvent } from 'services/recent-events';
 import { WebsocketService } from 'services/websocket';
 import { VisionService, VisionProcess } from 'services/vision';
@@ -163,15 +163,18 @@ export class AutomationsEngineService extends Service {
       }
     });
 
-    // "Largest donation this stream" and the follow/sub streak counts start over on each go-live
-    // (not on a reconnect, which also re-emits Live).
-    let prevStreamingState: EStreamingState | undefined;
-    this.streamingService.streamingStatusChange.subscribe(state => {
-      if (state === EStreamingState.Live && prevStreamingState !== EStreamingState.Reconnecting) {
+    // "Largest donation this stream" and the follow/sub streak counts start over once per broadcast.
+    // The emitted state isn't a reliable session signal (dual output may never emit Live, and
+    // adding an output mid-stream re-emits it), so reset on the aggregate offline -> streaming
+    // edge instead. Reconnects and output changes stay "streaming" and keep the counters.
+    let wasStreaming = this.streamingService.views.isStreaming;
+    this.streamingService.streamingStatusChange.subscribe(() => {
+      const isStreaming = this.streamingService.views.isStreaming;
+      if (isStreaming && !wasStreaming) {
         this.largestDonationThisStream = 0;
         this.streakCounts.clear();
       }
-      prevStreamingState = state;
+      wasStreaming = isStreaming;
     });
 
     this.visionService.onGame.subscribe(change => {
