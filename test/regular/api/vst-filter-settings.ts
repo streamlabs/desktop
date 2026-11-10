@@ -1,6 +1,7 @@
 import test from 'ava';
 import {
   sanitizeVstFilterSettings,
+  sanitizeVstFilterSettingsForExport,
   vstPluginFileName,
 } from '../../../app/services/scene-collections/nodes/overlays/vst-filter-settings';
 
@@ -45,4 +46,20 @@ test('sanitizeVstFilterSettings sanitizes paths and keeps preset data', t => {
 test('sanitizeVstFilterSettings handles missing and empty plugin_path', t => {
   t.deepEqual(sanitizeVstFilterSettings({ chunk_data_0_v3: 'AAAA' }), { chunk_data_0_v3: 'AAAA' });
   t.deepEqual(sanitizeVstFilterSettings({ plugin_path: '' }), { plugin_path: '' });
+});
+
+test('sanitizeVstFilterSettingsForExport drops legacy chunk keys that embed the path', t => {
+  const settings = {
+    plugin_path: 'C:\\Users\\me\\Foo.dll',
+    chunk_data_path_v3: 'C:\\Users\\me\\Foo.dll',
+    chunk_data_0_v3: 'AAAA',
+    chunk_data_v2: 'C:\\Users\\me\\Foo.dll|AAAA',
+    chunk_data: 'C:\\Users\\me\\Foo.dll|BBBB',
+  };
+
+  t.deepEqual(sanitizeVstFilterSettingsForExport(settings), {
+    plugin_path: 'Foo.dll',
+    chunk_data_path_v3: 'Foo.dll',
+    chunk_data_0_v3: 'AAAA',
+  });
 });
