@@ -16,6 +16,7 @@ import { AudioService } from 'services/audio';
 import { SourceFiltersService } from 'app-services';
 import { TSourceFilterType } from 'services/source-filters';
 import { TObsValue } from 'components/obs/inputs/ObsInput';
+import { sanitizeVstFilterSettings } from 'services/scene-collections/nodes/overlays/vst-filter-settings';
 
 interface ISourceFlags {
   audio: boolean;
@@ -280,7 +281,19 @@ export class SourcesModule extends Module {
     filterName: string,
     settings: Dictionary<TObsValue>,
   ) {
-    this.sourceFiltersService.add(sourceId, filterType, filterName, settings);
+    const selectable = this.sourceFiltersService.state.types.some(
+      type => type.type === filterType && type.type !== 'face_mask_filter',
+    );
+    if (!selectable) {
+      throw new Error(`Filter type ${filterType} is not available to applications`);
+    }
+
+    this.sourceFiltersService.add(
+      sourceId,
+      filterType,
+      filterName,
+      filterType === 'vst_filter' && settings ? sanitizeVstFilterSettings(settings) : settings,
+    );
   }
 
   @apiMethod()
