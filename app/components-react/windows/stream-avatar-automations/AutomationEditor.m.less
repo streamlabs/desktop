@@ -314,6 +314,9 @@
 }
 
 // Room for the always-visible value tooltip under the slider, so it doesn't cover the next row.
+// The tooltip renders inside the slider with antd's z-index (1070), which beats Select
+// dropdowns (1050). Isolating it in its own stacking context keeps it under open dropdowns.
 .waitControl {
   padding-bottom: 28px;
+  isolation: isolate;
 }
