@@ -1,3 +1,6 @@
+@control-height: 32px;
+@row-gap: 16px;
+
 .trashIcon {
   color: var(--icon);
   cursor: pointer;
@@ -22,4 +25,298 @@
     outline: 1px solid var(--title);
     outline-offset: 2px;
   }
+}
+// ── Form ──────────────────────────────────────────────────────────────────────
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// Triggers and reactions sit closer together than the other sections, per the design.
+.sectionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+
+// The Test button is taller than the title row and hangs into the gap below it.
+.header {
+  position: relative;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.title {
+  margin: 0;
+  // Keep clear of the absolutely positioned 150px Test button.
+  padding-right: 158px;
+  color: var(--title);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.testButton:global(.ant-btn) {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 150px;
+  height: 40px;
+  padding: 0;
+  border-radius: 4px;
+  border: 1px solid var(--button);
+  background: transparent;
+  color: var(--paragraph);
+  font-size: 14px;
+  font-weight: 500;
+
+  i {
+    font-size: 14px;
+  }
+
+  &:hover,
+  &:focus,
+  &:active {
+    background: transparent;
+    border-color: var(--button);
+    color: var(--title);
+  }
+
+  // --icon-toggle is the one muted grey that stays the same in every theme.
+  &[disabled],
+  &[disabled]:hover,
+  &[disabled]:focus,
+  &[disabled]:active {
+    background: var(--button);
+    border-color: var(--button);
+    color: var(--icon-toggle);
+  }
+}
+
+// ── Fields and headings ───────────────────────────────────────────────────────
+
+// A label above its control.
+.field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sectionHeading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sectionTitle {
+  display: block;
+  margin: 0;
+  color: var(--title);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+// --icon is the muted #91979A grey the design uses for captions.
+.sectionSubtitle {
+  margin: 0;
+  color: var(--icon);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.sceneSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sceneSelect {
+  width: 50%;
+}
+
+.errorText {
+  margin: 4px 0 0;
+  color: var(--red);
+  font-size: 12px;
+}
+
+// Sits between a list's last row, which pads its own bottom, and the add button.
+.listError {
+  margin: 0 0 @row-gap;
+  color: var(--red);
+  font-size: 12px;
+}
+
+.formError {
+  margin: 0;
+  color: var(--red);
+}
+
+// ── Triggers ──────────────────────────────────────────────────────────────────
+
+.triggerHeading {
+  padding-bottom: 8px;
+}
+
+// Rows pad themselves; the dividers between them come from here.
+.triggerList > * + *,
+.reactionList > * + * {
+  border-top: 1px solid var(--border);
+}
+
+.triggerRow {
+  display: flex;
+  align-items: flex-start;
+  gap: @row-gap;
+  padding: @row-gap 0;
+}
+
+.triggerIndex {
+  flex: none;
+  color: var(--title);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: normal;
+}
+
+// Selectors, then the condition/value row, share these columns so the fields line up under
+// each other. The last column holds the trash icon and stays reserved on rows without one.
+.triggerContent {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 16px;
+  column-gap: 8px;
+  row-gap: @row-gap;
+  align-items: start;
+
+  :global(.ant-select),
+  :global(.ant-input-number) {
+    width: 100%;
+  }
+}
+
+.triggerTrash {
+  display: flex;
+  align-items: center;
+  height: @control-height;
+  font-size: 14px;
+}
+
+// Slider-style properties span the two selector columns.
+.propertyBlock {
+  grid-column: 1 / 3;
+}
+
+.propertyHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.propertyLabel {
+  color: var(--title);
+  font-weight: 600;
+}
+
+.propertyValue {
+  color: var(--paragraph);
+}
+
+.addButton:global(.ant-btn) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 33px;
+  font-size: 14px;
+  font-weight: 500;
+
+  &:not([disabled]) {
+    color: var(--title);
+  }
+
+  i {
+    font-size: 12px;
+  }
+}
+
+// ── Reactions ─────────────────────────────────────────────────────────────────
+
+.reactionList {
+  margin-top: @row-gap;
+  border-top: 1px solid var(--border);
+}
+
+.actionRow {
+  display: flex;
+  align-items: flex-start;
+  gap: @row-gap;
+  padding: @row-gap 0;
+}
+
+.gripCell {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 8px;
+  height: @control-height;
+}
+
+.dragHandle {
+  cursor: grab;
+  color: var(--paragraph);
+  font-size: 14px;
+}
+
+// Action type on the left, its control on the right, two equal columns.
+.actionFields {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: start;
+
+  :global(.ant-select) {
+    width: 100%;
+  }
+}
+
+.actionControl {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.actionTrash {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: @control-height;
+  font-size: 14px;
+}
+
+.waitLabel {
+  margin-top: 0;
+  color: var(--paragraph);
+  font-size: 14px;
+  line-height: normal;
+  text-align: center;
 }

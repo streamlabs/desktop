@@ -1,9 +1,10 @@
-import React, { CSSProperties, useState } from 'react';
+import React, { useState } from 'react';
 import { Button, Select, Tooltip } from 'antd';
 import { ReactSortable } from 'react-sortablejs';
+import cx from 'classnames';
 import uuid from 'uuid/v4';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
-import { useVuex } from 'components-react/hooks';
+import { useIsMounted, useVuex } from 'components-react/hooks';
 import { useAgentAppInstalled } from 'components-react/hooks/useAgentAppInstalled';
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
@@ -18,12 +19,7 @@ import ActionEditor from './ActionEditor';
 import TriggerEditor, { isTriggerValueMissing } from './TriggerEditor';
 import type { TriggerValue } from './TriggerEditor';
 import { checkEnableLimit } from './automations-limits';
-
-const errorTextStyle: CSSProperties = {
-  margin: '4px 0 0',
-  color: 'var(--red)',
-  fontSize: '12px',
-};
+import styles from './AutomationEditor.m.less';
 
 const ANY_SCENE = '__any_scene__';
 
@@ -58,7 +54,7 @@ interface Props {
 }
 
 export default function AutomationEditor({ initial, onClose }: Props) {
-  const { AutomationsService, ScenesService, SourcesService } = Services;
+  const { AutomationsService, AutomationsEngineService, ScenesService, SourcesService } = Services;
   const {
     isInstalled: isAgentInstalled,
     isEnabled: isAgentEnabled,
@@ -89,6 +85,7 @@ export default function AutomationEditor({ initial, onClose }: Props) {
   // checkEnableLimit() has already shown the upgrade modal and we save it disabled.
   const enabled = initial?.enabled ?? undefined;
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [error, setError] = useState('');
   const [attempted, setAttempted] = useState(!!initial);
 
@@ -114,8 +111,7 @@ export default function AutomationEditor({ initial, onClose }: Props) {
   // Alert conditions like "amount is at least" need a number/tier to compare against.
   const valueMissing = triggers.map(isTriggerValueMissing);
   // Stream events are pulses with no "unmet" pass, so the "if condition is false" option can't fire.
-  const streamEventsOnly =
-    conditions.length > 0 && conditions.every(c => isStreamEventKey(c.type));
+  const streamEventsOnly = conditions.length > 0 && conditions.every(c => isStreamEventKey(c.type));
   if (valueMissing.some(Boolean)) {
     issues.push({
       scope: 'conditions',
@@ -149,6 +145,11 @@ export default function AutomationEditor({ initial, onClose }: Props) {
   });
 
   const atMaxTriggers = triggers.length >= MAX_TRIGGERS;
+
+  // A test run ends after the 5s "unmet" pass, by which time the editor may have been closed.
+  const isMounted = useIsMounted();
+  // The name doesn't affect a test run, and its error stays hidden until Save is clicked.
+  const canTest = !saving && !testing && !issues.some(i => i.scope !== 'description');
 
   function handleTriggerChange(index: number, trigger: TriggerValue) {
     setTriggers(prev => prev.map((r, i) => (i === index ? { ...r, ...trigger } : r)));
@@ -211,19 +212,18 @@ export default function AutomationEditor({ initial, onClose }: Props) {
     }
   }
 
-  const sectionLabelStyle: CSSProperties = {
-    display: 'block',
-    marginBottom: 8,
-    fontWeight: 700,
-    fontSize: 15,
-    color: 'var(--title)',
-  };
-
-  const sectionSubtitleStyle: CSSProperties = {
-    margin: 0,
-    fontSize: 12,
-    color: 'var(--paragraph)',
-  };
+  /** Runs the unsaved draft once, as the list's play button does for a saved automation. */
+  async function handleTest() {
+    if (testing) return;
+    setTesting(true);
+    try {
+      await AutomationsEngineService.actions.return.simulateDraft(draft);
+    } catch (e: unknown) {
+      console.warn('[AutomationEditor] Test run failed', e);
+    } finally {
+      if (isMounted.current) setTesting(false);
+    }
+  }
 
   let saveLabel = initial ? $t('Save Automation') : $t('Create Automation');
   if (saving) saveLabel = $t('Saving...');
@@ -246,136 +246,138 @@ export default function AutomationEditor({ initial, onClose }: Props) {
 
   return (
     <ModalLayout scrollable footer={footer}>
-      {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 20,
-        }}
-      >
-        <h2 style={{ margin: 0, color: 'var(--title)', fontWeight: 700 }}>
-          {initial ? $t('Edit Automation') : $t('Add New Automation')}
-        </h2>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {/* Description */}
-        <div style={{ marginBottom: 24 }}>
-          <label
-            style={{
-              display: 'block',
-              marginBottom: 8,
-              fontSize: 15,
-              color: 'var(--title)',
-              fontWeight: 700,
-            }}
-          >
-            {$t('Description')}
-          </label>
-          <TextInput
-            nowrap
-            value={description}
-            onChange={val => setDescription(val)}
-            placeholder={$t('e.g. Victory Royale reaction')}
-          />
-          {descriptionError && <p style={errorTextStyle}>{descriptionError}</p>}
-        </div>
-
-        {/* Scene */}
-        <div style={{ marginBottom: 24 }}>
-          <label style={sectionLabelStyle}>{$t('Limit to Scene')}</label>
-          <p style={{ ...sectionSubtitleStyle, marginBottom: 16 }}>
-            {$t('Only trigger while this scene is active.')}
-          </p>
-          <Select
-            // Option values are scene IDs so a scene named like the sentinel can't collide with it
-            value={scenes.find(s => s.name === selectedScene)?.id ?? selectedScene ?? ANY_SCENE}
-            onChange={val => setSelectedScene(scenes.find(s => s.id === val)?.name)}
-            options={[
-              { value: ANY_SCENE, label: $t('Any Scene') },
-              ...scenes.map(s => ({ value: s.id, label: s.name })),
-            ]}
-            style={{ width: '50%' }}
-          />
-          {sceneError && <p style={errorTextStyle}>{sceneError}</p>}
-        </div>
-
-        {/* Triggers */}
-        <div style={{ marginBottom: 24 }}>
-          <label style={sectionLabelStyle}>{$t('Add Trigger(s)')}</label>
-          <p style={{ ...sectionSubtitleStyle, marginBottom: 16 }}>
-            {$t('Add up to 5 triggers. Any of them activates this automation.')}
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {triggers.map((row, i) => (
-              <TriggerEditor
-                key={row.id}
-                index={i}
-                trigger={row}
-                valueError={valueMissing[i] ? valueError : undefined}
-                canRemove={triggers.length > 1}
-                onChange={handleTriggerChange}
-                onRemove={handleTriggerRemove}
-              />
-            ))}
-          </div>
-          {conditionError && <p style={errorTextStyle}>{conditionError}</p>}
-          <Tooltip title={atMaxTriggers ? $t('You can add up to 5 triggers.') : undefined}>
-            <Button
-              block
-              onClick={handleAddTrigger}
-              disabled={atMaxTriggers}
-              style={{ marginTop: 16, fontWeight: 700 }}
-            >
-              <i className="icon-add-circle" style={{ marginRight: 6 }} />
-              {$t('Add Trigger')}
-            </Button>
-          </Tooltip>
-        </div>
-
-        {/* Reactions */}
-        <div>
-          <label style={sectionLabelStyle}>{$t('Add Reaction(s)')}</label>
-          <p style={{ ...sectionSubtitleStyle, marginBottom: 16 }}>
-            {$t('Add action(s) to perform after the trigger')}
-          </p>
-          <ReactSortable<ActionRow>
-            list={rows}
-            setList={setRows}
-            handle=".sa-action-drag-handle"
-            animation={200}
-            tag="div"
-            style={{ display: 'flex', flexDirection: 'column' }}
-          >
-            {rows.map((row, i) => (
-              <div key={row.id}>
-                <ActionEditor
-                  action={row.action}
-                  index={i}
-                  scenes={scenes}
-                  sources={sources}
-                  errors={actionErrors[i]}
-                  isAgentInstalled={isAgentInstalled}
-                  isAgentEnabled={isAgentEnabled}
-                  streamEventsOnly={streamEventsOnly}
-                  onInstallAgent={installAgent}
-                  onEnableAgent={enableAgent}
-                  onChange={handleActionChange}
-                  onRemove={handleActionRemove}
-                />
-              </div>
-            ))}
-          </ReactSortable>
-          {actionsError && <p style={errorTextStyle}>{actionsError}</p>}
-          <Button block onClick={handleAddAction} style={{ marginTop: 16, fontWeight: 700 }}>
-            <i className="icon-add-circle" style={{ marginRight: 6 }} />
-            {$t('Add Reaction')}
+      <div className={styles.form}>
+        {/* Header */}
+        <div className={styles.header}>
+          <h2 className={styles.title}>
+            {initial ? $t('Edit Automation') : $t('Add New Automation')}
+          </h2>
+          <Button className={styles.testButton} onClick={handleTest} disabled={!canTest}>
+            <i className="fas fa-wrench" />
+            {$t('Test Automation')}
           </Button>
         </div>
 
-        {error && <p style={{ color: 'var(--red)', margin: 0 }}>{error}</p>}
+        {/* Name */}
+        <div className={styles.field}>
+          <label className={styles.sectionTitle}>{$t('Name')}</label>
+          <div>
+            <TextInput
+              nowrap
+              value={description}
+              onChange={val => setDescription(val)}
+              placeholder={$t('e.g. Victory Royale reaction')}
+            />
+            {descriptionError && <p className={styles.errorText}>{descriptionError}</p>}
+          </div>
+        </div>
+
+        {/* Scene */}
+        <div className={styles.sceneSection}>
+          <div className={styles.sectionHeading}>
+            <label className={styles.sectionTitle}>{$t('Limit to Scene')}</label>
+            <p className={styles.sectionSubtitle}>
+              {$t('Only trigger while this scene is active.')}
+            </p>
+          </div>
+          <div>
+            <Select
+              // Option values are scene IDs so a scene named like the sentinel can't collide with it
+              value={scenes.find(s => s.name === selectedScene)?.id ?? selectedScene ?? ANY_SCENE}
+              onChange={val => setSelectedScene(scenes.find(s => s.id === val)?.name)}
+              options={[
+                { value: ANY_SCENE, label: $t('Any Scene') },
+                ...scenes.map(s => ({ value: s.id, label: s.name })),
+              ]}
+              className={styles.sceneSelect}
+            />
+            {sceneError && <p className={styles.errorText}>{sceneError}</p>}
+          </div>
+        </div>
+
+        <div className={styles.sectionGroup}>
+          {/* Triggers */}
+          <div>
+            <div className={cx(styles.sectionHeading, styles.triggerHeading)}>
+              <label className={styles.sectionTitle}>{$t('When Any of these Occur')}</label>
+              <p className={styles.sectionSubtitle}>
+                {$t('What starts this automation. (Triggers)')}
+              </p>
+            </div>
+            <div className={styles.triggerList}>
+              {triggers.map((row, i) => (
+                <TriggerEditor
+                  key={row.id}
+                  index={i}
+                  trigger={row}
+                  valueError={valueMissing[i] ? valueError : undefined}
+                  canRemove={i > 0}
+                  onChange={handleTriggerChange}
+                  onRemove={handleTriggerRemove}
+                />
+              ))}
+            </div>
+            {conditionError && <p className={styles.listError}>{conditionError}</p>}
+            <Tooltip title={atMaxTriggers ? $t('You can add up to 5 triggers.') : undefined}>
+              <Button
+                block
+                className={styles.addButton}
+                onClick={handleAddTrigger}
+                disabled={atMaxTriggers}
+              >
+                <i className="icon-add-circle" />
+                {$t('Add Trigger (%{left}/%{max} left)', {
+                  left: MAX_TRIGGERS - triggers.length,
+                  max: MAX_TRIGGERS,
+                })}
+              </Button>
+            </Tooltip>
+          </div>
+
+          {/* Reactions */}
+          <div>
+            <div className={styles.sectionHeading}>
+              <label className={styles.sectionTitle}>{$t('Then do this (these)')}</label>
+              <p className={styles.sectionSubtitle}>
+                {$t('Add action(s) to perform after the trigger')}
+              </p>
+            </div>
+            <ReactSortable<ActionRow>
+              list={rows}
+              setList={setRows}
+              handle=".sa-action-drag-handle"
+              animation={200}
+              tag="div"
+              className={styles.reactionList}
+            >
+              {rows.map((row, i) => (
+                <div key={row.id}>
+                  <ActionEditor
+                    action={row.action}
+                    index={i}
+                    scenes={scenes}
+                    sources={sources}
+                    errors={actionErrors[i]}
+                    isAgentInstalled={isAgentInstalled}
+                    isAgentEnabled={isAgentEnabled}
+                    streamEventsOnly={streamEventsOnly}
+                    onInstallAgent={installAgent}
+                    onEnableAgent={enableAgent}
+                    onChange={handleActionChange}
+                    onRemove={handleActionRemove}
+                  />
+                </div>
+              ))}
+            </ReactSortable>
+            {actionsError && <p className={styles.listError}>{actionsError}</p>}
+            <Button block className={styles.addButton} onClick={handleAddAction}>
+              <i className="icon-add-circle" />
+              {$t('Add Reaction')}
+            </Button>
+          </div>
+        </div>
+
+        {error && <p className={styles.formError}>{error}</p>}
       </div>
     </ModalLayout>
   );

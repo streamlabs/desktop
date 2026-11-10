@@ -196,11 +196,7 @@ export class AutomationsEngineService extends Service {
     });
   }
 
-  /**
-   * Runs an automation's actions on demand so the user can test it from the
-   * list. Fires every action as if its conditions were met, waits, then fires
-   * again with conditions unmet so conditional show/hide actions revert.
-   */
+  /** Runs a saved automation on demand so the user can test it from the list. */
   async simulateAutomation(id: number): Promise<void> {
     const automation = this.automationsService.state.automations.find(a => a.id === id);
     if (!automation) {
@@ -208,6 +204,17 @@ export class AutomationsEngineService extends Service {
       return;
     }
 
+    await this.simulateDraft(automation);
+  }
+
+  /**
+   * Runs an automation's actions on demand, saved or not, so the user can test it from the list
+   * or from the editor's unsaved draft. Fires every action as if its conditions were met, waits,
+   * then fires again with conditions unmet so conditional show/hide actions revert.
+   */
+  async simulateDraft(
+    automation: Pick<TAutomationExport, 'conditions' | 'actions'>,
+  ): Promise<void> {
     // ponytail: only the first trigger is simulated; loop all if users ask
     const allConditions = (automation.conditions as TCondition[]).slice(0, 1);
 
