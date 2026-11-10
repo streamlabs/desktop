@@ -2,7 +2,7 @@
 
 > **Scope.** This document describes the **core platform** of Streamlabs Desktop —
 > the process/window model, the services layer, cross‑window communication, and
-> state management. It deliberately does _not_ cover feature domains (streaming,
+> state management. It deliberately does *not* cover feature domains (streaming,
 > scenes/sources, platforms, widgets, etc.); those may get their own docs later.
 >
 > **Conventions.** Non‑obvious claims name the source file (and the relevant
@@ -11,7 +11,7 @@
 > invariants are collected in [Known wrinkles](#6-known-wrinkles).
 >
 > **Keeping this current.** Treat it like the matklad model: document the things
-> that change _slowly_ (the boundaries and invariants) and point at code for the
+> that change *slowly* (the boundaries and invariants) and point at code for the
 > rest. When a change alters one of those boundaries, update this file in the same
 > PR.
 
@@ -23,14 +23,14 @@ Streamlabs Desktop is an Electron app. Electron gives us two kinds of process:
 
 - one **main process** (Node.js) — this is `main.js`, the entry point named in
   `package.json` `"main"`. It owns windows, native lifecycle, the updater,
-  logging, and **routes all inter‑window IPC**. It is _not_ a UI.
+  logging, and **routes all inter‑window IPC**. It is *not* a UI.
 - many **renderer processes** — Chromium windows, each running the same compiled
   bundle but parameterised by a `windowId` URL query (`main.js`, the
   `loadURL(...?windowId=…)` calls).
 
 The renderers are not peers of equal responsibility. Exactly one — the **worker**
 window — runs the entire services layer and hosts the native OBS backend. Every
-other window is a UI client that _calls_ services remotely.
+other window is a UI client that *calls* services remotely.
 
 ```
    ┌─────────────────────────┐          ┌──────────────────────────────┐
@@ -53,8 +53,8 @@ other window is a UI client that _calls_ services remotely.
    └────────────────────────────────────────────────────────────────────┘
 ```
 
-**The single most misunderstood point:** the _main process_ (`main.js`) is the
-router — **not** the _main window_. The main window is just another UI client,
+**The single most misunderstood point:** the *main process* (`main.js`) is the
+router — **not** the *main window*. The main window is just another UI client,
 exactly like the child window. Service calls from any UI window go through the
 main process to the **worker** window; the main window is never in that path.
 (`main.js`, `sendRequest` and the `services-request` handlers; the worker is the
@@ -68,12 +68,12 @@ branch of the `DOMContentLoaded` handler in `app/app.ts`.)
 All windows load the same bundle; behaviour is selected by `windowId` (`app/app.ts`,
 the root component's `render` switch on `windowId`).
 
-| Window      | Created                               | Role                                                                                                                               |
-| ----------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| **worker**  | `main.js` (`workerWindow` creation)   | Invisible (`show: false`), persistent. Runs the entire services layer and hosts OBS (`app/app.ts`, the `isWorkerWindow()` branch). |
-| **main**    | `main.js` (`mainWindow` creation)     | The primary application UI. A service _client_, not a host.                                                                        |
-| **child**   | created/kept warm by `WindowsService` | Always running, hidden until needed (e.g. Source Properties) because spinning up a window is slow (`README.md`, Development).      |
-| **one‑off** | on demand                             | Transient windows: projectors, pop‑outs, etc. Also clients.                                                                        |
+| Window | Created | Role |
+| --- | --- | --- |
+| **worker** | `main.js` (`workerWindow` creation) | Invisible (`show: false`), persistent. Runs the entire services layer and hosts OBS (`app/app.ts`, the `isWorkerWindow()` branch). |
+| **main** | `main.js` (`mainWindow` creation) | The primary application UI. A service *client*, not a host. |
+| **child** | created/kept warm by `WindowsService` | Always running, hidden until needed (e.g. Source Properties) because spinning up a window is slow (`README.md`, Development). |
+| **one‑off** | on demand | Transient windows: projectors, pop‑outs, etc. Also clients. |
 
 Plus other JS runtimes for Apps, embedded webviews, and the like (`README.md`,
 Development).
@@ -137,15 +137,15 @@ wires this up off the `serviceAfterInit` subject in the worker.
 `ServicesManager.init` (`services-manager.ts`) branches on whether it is running in
 the worker:
 
-- **Non‑worker windows:** install an IPC proxy over _every_ service via
+- **Non‑worker windows:** install an IPC proxy over *every* service via
   `Service.setupProxy(...)`, and replace the init function with a no‑op via
   `Service.setupInitFunction(...)`. So in a UI window, "calling a service" actually
   produces an IPC request, and services do **not** run their `init()` locally.
 - **Worker window:** no proxy; services run for real, and the `InitAfter`
   observer wiring is enabled.
 
-This single branch is what makes the same service class behave as a _local object_
-in the worker and a _remote stub_ everywhere else.
+This single branch is what makes the same service class behave as a *local object*
+in the worker and a *remote stub* everywhere else.
 
 ---
 
@@ -160,7 +160,7 @@ JSON‑RPC (`app/services/api/jsonrpc`).
 
 `app/services/api/internal-api-client.ts`. Instantiated in **every non‑worker (UI)
 window — main, child, and one‑off alike** — by the proxy setup in
-`ServicesManager.init` (`services-manager.ts`). The main window is _not_ special
+`ServicesManager.init` (`services-manager.ts`). The main window is *not* special
 here: it goes through the same `InternalApiClient` as any other UI window.
 
 `applyIpcProxy` wraps a service in a `Proxy` (`internal-api-client.ts`). When you
@@ -168,11 +168,11 @@ call a method it builds a JSON‑RPC request and ships it over IPC. There are th
 call shapes, selected by how you access the method (all handled in
 `getRequestHandler`):
 
-| You write                      | Transport                                                         | Returns                                                                                                      | When                                                  |
-| ------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
-| `Service.actions.foo()`        | `ipcRenderer.send('services-request-async')` with `noReturn:true` | `void`                                                                                                       | **Default.** Fire‑and‑forget.                         |
-| `Service.actions.return.foo()` | same async channel, `fetchMutations:true`, `noReturn:false`       | `Promise<result>` (resolved later via the `services-response-async` handler in `listenWorkerWindowMessages`) | Need a return value. Use sparingly.                   |
-| `Service.foo()`                | `ipcRenderer.sendSync('services-request')`                        | result **synchronously**                                                                                     | Avoid — blocks the UI process. Logs a warning in dev. |
+| You write | Transport | Returns | When |
+| --- | --- | --- | --- |
+| `Service.actions.foo()` | `ipcRenderer.send('services-request-async')` with `noReturn:true` | `void` | **Default.** Fire‑and‑forget. |
+| `Service.actions.return.foo()` | same async channel, `fetchMutations:true`, `noReturn:false` | `Promise<result>` (resolved later via the `services-response-async` handler in `listenWorkerWindowMessages`) | Need a return value. Use sparingly. |
+| `Service.foo()` | `ipcRenderer.sendSync('services-request')` | result **synchronously** | Avoid — blocks the UI process. Logs a warning in dev. |
 
 The `actions`/`return` accessors are matched literally in the `applyIpcProxy`
 proxy. Methods marked `__executeInCurrentWindow` (via the `@ExecuteInCurrentWindow()`
@@ -214,7 +214,8 @@ the resource, invokes the method, and **serializes the payload into something
 transferable**:
 
 - a **plain value** → returned as‑is.
-- an **RxJS `Observable`** → subscribed once; a `{_type:'SUBSCRIPTION', emitter: 'STREAM'}` token is returned, and subsequent emissions are pushed as
+- an **RxJS `Observable`** → subscribed once; a `{_type:'SUBSCRIPTION', emitter:
+  'STREAM'}` token is returned, and subsequent emissions are pushed as
   `services-message` events (`serializePayload`).
 - a **`Promise`** → a `{_type:'SUBSCRIPTION', emitter:'PROMISE'}` token is returned
   immediately; when it settles, `sendPromiseMessage` emits a `services-message`
@@ -257,7 +258,7 @@ State is **mid‑migration between two systems**. Pick by scope:
 ### 5.1 Why state is hard here
 
 Because services execute in the worker but UI renders in other windows, the UI
-needs a _local, reactive_ copy of state — it can't synchronously reach across
+needs a *local, reactive* copy of state — it can't synchronously reach across
 processes on every render. The two systems solve this differently: Vuex
 **replicates** state by broadcasting mutations over IPC; Realm **shares** state at
 the database layer, with each process holding its own connection.
@@ -281,7 +282,7 @@ the database layer, with each process holding its own connection.
   worker's mutation buffer and broadcasts it to other windows. The broadcast is
   queued and flushed on a timer to coalesce re‑renders
   (`sendMutationToRendererWindows` / `flushMutations`). The main process relays
-  `vuex-mutation` to every _other_ registered window (`main.js`, the
+  `vuex-mutation` to every *other* registered window (`main.js`, the
   `vuex-mutation` handler).
 - **New window bootstrap:** a freshly opened window registers (the `vuex-register`
   send in `store/index.ts`), the main process asks the worker to dump current state
@@ -290,7 +291,7 @@ the database layer, with each process holding its own connection.
   invariant:** a renderer window ignores incoming mutations until after that bulk
   load (`storeCanReceiveMutations` in `store/index.ts`), so early mutations are
   intentionally dropped to avoid applying deltas to a state that hasn't loaded yet.
-- **Consistency on synchronous reads:** when a UI window makes a _synchronous_
+- **Consistency on synchronous reads:** when a UI window makes a *synchronous*
   service call, the worker buffers any mutations produced during the call and
   attaches them to the response (`handleServiceRequest` with
   `startBufferingMutations`/`stopBufferingMutations` in `rpc-api.ts`), and the
@@ -320,7 +321,7 @@ the database layer, with each process holding its own connection.
   (`{_type:'REALM_OBJECT', resourceId, realmType}`) and reconstructed on the other
   side via `RealmService.registeredClasses[type].fromId(...)` (`serializePayload` in
   `rpc-api.ts`; `handleResult` in `internal-api-client.ts`). The receiving window
-  then reads through its _own_ local connection.
+  then reads through its *own* local connection.
 
 > **Note:** the ephemeral realm still propagates across processes despite being
 > in‑memory — a file‑backed `inMemory` realm is shared by path, so every process's
@@ -340,7 +341,7 @@ These are real, load‑bearing quirks an agent (or human) will trip over.
 
 - **`window['servicesManager']` global (production plumbing — leave it alone).**
   Set in `createStore` (`store/index.ts`, "This is bad and I should feel bad") to
-  break an import cycle. It _is_ load‑bearing: read by `ViewHandler.getServiceViews`
+  break an import cycle. It *is* load‑bearing: read by `ViewHandler.getServiceViews`
   (`stateful-service.ts`, which backs cross‑service `views` access in ~15+ services)
   and by `service-helper.ts`. Those existing uses stay. **Do not add new ones**, and
   never reach for it from application‑level services code.
@@ -358,30 +359,31 @@ These are real, load‑bearing quirks an agent (or human) will trip over.
   (`strict-null-check-files/`, `SLOBS_STRICT_NULLS`). Don't flip it repo‑wide.
 - **Privileged renderers.** `nodeIntegration: true` / `contextIsolation: false`
   (`main.js`, the `BrowserWindow` `webPreferences`). Privileged is not the same as
-  main-process: Electron keeps some modules main-only. Renderer code, the worker included, reaches those main-only modules through `@electron/remote`
+  main-process: Electron keeps some modules main-only. Renderer code, the worker
+  included, reaches those main-only modules through `@electron/remote`
   (`remote.clipboard`), where calls can return Promises.
 
 ---
 
 ## 7. Key files
 
-| File                                        | Responsibility                                                                                   |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `main.js`                                   | Electron main process: window creation, IPC routing, mutation relay, updater, logging, shutdown. |
-| `app/app.ts`                                | Renderer bootstrap; worker‑only OBS init; Realm connect; Vue root.                               |
-| `app/services/core/service.ts`              | Singleton base, lifecycle, `actions` proxy.                                                      |
-| `app/services/core/injector.ts`             | `@Inject()` and `getResource`.                                                                   |
-| `app/services/core/stateful-service.ts`     | Vuex‑backed services, `@mutation()`, mutation‑purity proxy, `ViewHandler`.                       |
-| `app/app-services.ts`                       | The service registry.                                                                            |
-| `app/services-manager.ts`                   | Instance management; worker/non‑worker proxy split; `InitAfter` wiring.                          |
-| `app/store/index.ts`                        | Vuex store, mutation replication, bulk‑load bootstrap.                                           |
-| `app/services/api/internal-api-client.ts`   | Client side of the service RPC (UI windows).                                                     |
-| `app/services/api/ipc-server/ipc-server.ts` | Worker side: receives requests, returns responses/events.                                        |
-| `app/services/api/rpc-api.ts`               | Request execution + payload serialization (Promises, Observables, helpers, Realm).               |
-| `app/services/realm.ts`                     | Realm databases, per‑process connections, cross‑process state.                                   |
+| File | Responsibility |
+| --- | --- |
+| `main.js` | Electron main process: window creation, IPC routing, mutation relay, updater, logging, shutdown. |
+| `app/app.ts` | Renderer bootstrap; worker‑only OBS init; Realm connect; Vue root. |
+| `app/services/core/service.ts` | Singleton base, lifecycle, `actions` proxy. |
+| `app/services/core/injector.ts` | `@Inject()` and `getResource`. |
+| `app/services/core/stateful-service.ts` | Vuex‑backed services, `@mutation()`, mutation‑purity proxy, `ViewHandler`. |
+| `app/app-services.ts` | The service registry. |
+| `app/services-manager.ts` | Instance management; worker/non‑worker proxy split; `InitAfter` wiring. |
+| `app/store/index.ts` | Vuex store, mutation replication, bulk‑load bootstrap. |
+| `app/services/api/internal-api-client.ts` | Client side of the service RPC (UI windows). |
+| `app/services/api/ipc-server/ipc-server.ts` | Worker side: receives requests, returns responses/events. |
+| `app/services/api/rpc-api.ts` | Request execution + payload serialization (Promises, Observables, helpers, Realm). |
+| `app/services/realm.ts` | Realm databases, per‑process connections, cross‑process state. |
 
 ---
 
-_Maintenance: this document covers the slow‑moving core‑platform boundaries and
+*Maintenance: this document covers the slow‑moving core‑platform boundaries and
 invariants. When a change moves one of them, update this file (and its file +
-symbol references) in the same PR._
+symbol references) in the same PR.*
