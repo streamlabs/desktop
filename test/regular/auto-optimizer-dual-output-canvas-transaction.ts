@@ -7,6 +7,34 @@ import { focusMain, focusWindow } from '../helpers/modules/core';
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
+test('accepted custom and standard outputs keep their exact native dimensions on an ultrawide canvas', async t => {
+  const client = await getApiClient();
+  const video = client.getResource<VideoSettingsService>('VideoSettingsService');
+  const horizontal = { ...video.state.horizontal };
+  try {
+    for (const outputHeight of [802, 1080]) {
+      await video.applyAutoOptimizerSettings({
+        horizontal: { baseWidth: 3440, baseHeight: 1440, outputWidth: 1920, outputHeight },
+      });
+      t.is(video.state.horizontal.baseWidth, 3440);
+      t.is(video.state.horizontal.baseHeight, 1440);
+      t.is(video.state.horizontal.outputWidth, 1920);
+      t.is(video.state.horizontal.outputHeight, outputHeight);
+      t.true(await focusWindow('worker'));
+      const native = await t.context.app.client.execute(() => {
+        return (window as any).servicesManager.getResource('VideoSettingsService').contexts
+          .horizontal.video;
+      });
+      t.is(native.outputWidth, 1920);
+      t.is(native.outputHeight, outputHeight);
+      await focusMain();
+    }
+  } finally {
+    await video.applyAutoOptimizerSettings({ horizontal });
+    await focusMain();
+  }
+});
+
 test('a vertical apply failure rolls back both Auto Optimizer canvas patches', async t => {
   const client = await getApiClient();
   const videoSettingsService = client.getResource<VideoSettingsService>('VideoSettingsService');

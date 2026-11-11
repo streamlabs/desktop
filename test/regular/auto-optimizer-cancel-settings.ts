@@ -24,8 +24,8 @@ test('cancelling, closing or failing preparation never saves optimizer settings'
             frozenStreamSettings: { platforms: { twitch: { enabled: true }, youtube: { enabled: true } } },
             runToken: 0, nativeRun: null, cleanupPromise: null, recommendationApplication: null,
             probeResources: null, attemptContext: null,
-            streamSettingsService: {
-              async applyStreamOutputLimits() {
+            videoSettingsService: {
+              async applyAutoOptimizerSettings() {
                 writes++;
                 Object.assign(saved, { outputWidth: 1920, outputHeight: 802, bitrate: 6000, rescale: '1920x802' });
               },
@@ -71,7 +71,7 @@ test('cancelling, closing or failing preparation never saves optimizer settings'
   t.is(results.length, 6);
   const expectedStages = { cancel: 'intro', close: 'idle', fail: 'error' };
   for (const result of results) {
-    t.is(result.writes, 0, `${result.host}/${result.action} must not apply platform limits`);
+    t.is(result.writes, 0, `${result.host}/${result.action} must not apply recommendations`);
     t.deepEqual(result.saved, result.before);
     t.is(result.stage, expectedStages[result.action]);
   }

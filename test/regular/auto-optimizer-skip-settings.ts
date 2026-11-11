@@ -10,24 +10,29 @@ interface SettingsSnapshot {
   nativeWidth: number;
   nativeHeight: number;
   bitrate: number;
+  rescale: string;
+  baseWidth: number;
+  baseHeight: number;
+  fpsNum: number;
+  fpsDen: number;
 }
 
 for (const mode of ['Simple', 'Advanced'] as const) {
-  test(`${mode} YouTube-only Skip then Go Live preserves 1440p and 10000 Kbps`, async t => {
-    t.true(await focusWindow('worker'));
-    try {
-      const result = (await t.context.app.client.execute(
-        `
-        return (async outputMode => {
+  for (const multistream of [false, true]) {
+    test(`${mode} ${
+      multistream ? 'Twitch + Kick + custom' : 'YouTube-only'
+    } Go Live preserves video settings after Skip, unattended start and live update`, async t => {
+      t.true(await focusWindow('worker'));
+      try {
+        const result = (await t.context.app.client.execute(
+          `
+        return (async (outputMode, multistream) => {
           const services = window.servicesManager;
           const video = services.getResource('VideoSettingsService');
           const output = services.getResource('OutputSettingsService');
           const settings = services.getResource('SettingsService');
           const optimizer = services.getResource('AutoOptimizerService');
           const optimizerPrototype = Object.getPrototypeOf(optimizer);
-          const streamSettingsPrototype = Object.getPrototypeOf(
-            services.getResource('StreamSettingsService'),
-          );
           const streamingPrototype = Object.getPrototypeOf(
             services.getResource('StreamingService'),
           );
@@ -39,20 +44,27 @@ for (const mode of ['Simple', 'Advanced'] as const) {
             nativeWidth: video.contexts.horizontal.video.outputWidth,
             nativeHeight: video.contexts.horizontal.video.outputHeight,
             bitrate: output.getSettings().streaming.bitrate,
+            rescale: output.getSettings().streaming.outputResolution,
+            baseWidth: video.state.horizontal.baseWidth,
+            baseHeight: video.state.horizontal.baseHeight,
+            fpsNum: video.state.horizontal.fpsNum,
+            fpsDen: video.state.horizontal.fpsDen,
           });
 
           try {
             await video.applyAutoOptimizerSettings({
-              horizontal: { outputWidth: 2560, outputHeight: 1440 },
+              horizontal: { outputWidth: multistream ? 3440 : 2560, outputHeight: 1440 },
             });
             output.setSettings({
               mode: outputMode,
-              streaming: { bitrate: 10000, rescaleOutput: false },
+              streaming: { bitrate: 10000, rescaleOutput: outputMode === 'Advanced' },
             });
+            if (outputMode === 'Advanced') settings.setSettingValue('Output', 'RescaleRes', '2560x1440');
             const before = snapshot();
+            const platforms = multistream ? ['twitch', 'kick'] : ['youtube'];
             const goLiveSettings = {
-              platforms: { youtube: { enabled: true, enableAutoStart: true } },
-              customDestinations: [],
+              platforms: Object.fromEntries(platforms.map(platform => [platform, { enabled: true, enableAutoStart: true }])),
+              customDestinations: multistream ? [{ enabled: true, url: 'rtmp://127.0.0.1/unused', streamKey: 'test', display: 'horizontal' }] : [],
             };
             const optimizerState = {
               ...JSON.parse(JSON.stringify(optimizer.constructor.initialState)),
@@ -102,7 +114,9 @@ for (const mode of ['Simple', 'Advanced'] as const) {
               isDualOutputMode: false,
               isTwitchDualStreaming: false,
               shouldSetupRestream: false,
-              enabledPlatforms: ['youtube'],
+              enabledPlatforms: platforms,
+              isLiveOutputEditingEnabled: true,
+              getEnabledPlatforms: () => platforms,
               get savedSettings() {
                 return streamSettingsContext.state.goLiveSettings;
               },
@@ -116,13 +130,10 @@ for (const mode of ['Simple', 'Advanced'] as const) {
               setSettings(patch) {
                 this.state.goLiveSettings = patch.goLiveSettings;
               },
-              async applyStreamOutputLimits(selected) {
-                calls.push('output-limits');
-                await streamSettingsPrototype.applyStreamOutputLimits.call(this, selected);
-              },
             };
             const streamingContext = {
-              userService: { isLoggedIn: true, state: { auth: { primaryPlatform: 'youtube' } } },
+              userService: { isLoggedIn: true, state: { auth: { primaryPlatform: platforms[0] } } },
+              videoSettingsService: video,
               views,
               state: { info: { error: null } },
               streamSettingsService: streamSettingsContext,
@@ -149,15 +160,27 @@ for (const mode of ['Simple', 'Advanced'] as const) {
                 atTransmission.push(snapshot());
               },
               getIsStreamingStatus: () => false,
+              parseUpdatePlatforms: () => ({ start: [], stop: [], continue: platforms }),
+              parseUpdateCustomDestinations: () => ({ start: [], stop: [], continue: goLiveSettings.customDestinations }),
+              async runUpdateStreamSettings() {
+                calls.push('live-update');
+              },
             };
             await streamingPrototype.goLive.call(streamingContext, {
               ...goLiveSettings,
               autoOptimizerProfile: profile || undefined,
             });
+            const afterGoLive = snapshot();
+            await streamingPrototype.goLive.call(streamingContext);
+            const afterUnattended = snapshot();
+            const updated = await streamingPrototype.updateStreamSettings.call(streamingContext, goLiveSettings);
             return {
               before,
               afterSkip,
-              afterGoLive: snapshot(),
+              afterGoLive,
+              afterUnattended,
+              afterUpdate: snapshot(),
+              updated,
               atTransmission,
               profile,
               promptState: optimizerState.promptStates['account:skip-settings-test'],
@@ -168,41 +191,59 @@ for (const mode of ['Simple', 'Advanced'] as const) {
             settings.setSettings('Output', originalOutput);
             await video.applyAutoOptimizerSettings({ horizontal: originalVideo });
           }
-        })(arguments[0]).catch(error => ({ error: error.stack || error.message }));
+        })(arguments[0], arguments[1]).catch(error => ({ error: error.stack || error.message }));
       `,
-        mode,
-      )) as
-        | { error: string }
-        | {
-            before: SettingsSnapshot;
-            afterSkip: SettingsSnapshot;
-            afterGoLive: SettingsSnapshot;
-            atTransmission: SettingsSnapshot[];
-            profile: unknown;
-            promptState: string;
-            calls: string[];
-          };
+          mode,
+          multistream,
+        )) as
+          | { error: string }
+          | {
+              before: SettingsSnapshot;
+              afterSkip: SettingsSnapshot;
+              afterGoLive: SettingsSnapshot;
+              afterUnattended: SettingsSnapshot;
+              afterUpdate: SettingsSnapshot;
+              updated: boolean;
+              atTransmission: SettingsSnapshot[];
+              profile: unknown;
+              promptState: string;
+              calls: string[];
+            };
 
-      if ('error' in result) {
-        t.fail(result.error);
-        return;
+        if ('error' in result) {
+          t.fail(result.error);
+          return;
+        }
+        const expected = {
+          ...result.before,
+          width: multistream ? 3440 : 2560,
+          height: 1440,
+          nativeWidth: multistream ? 3440 : 2560,
+          nativeHeight: 1440,
+          bitrate: 10000,
+        };
+        t.deepEqual(result.before, expected, 'the requested settings were established');
+        if (mode === 'Advanced') t.is(result.before.rescale, '2560x1440');
+        t.is(result.promptState, 'declined');
+        t.is(result.profile, null, 'Skip must not supply recommendations to Go Live');
+        const startCalls = [
+          ...(multistream ? ['platform:twitch', 'platform:kick'] : ['platform:youtube']),
+          'transmission',
+        ];
+        t.deepEqual(result.calls, [...startCalls, ...startCalls, 'live-update']);
+        t.deepEqual(result.afterSkip, expected);
+        t.deepEqual(
+          result.atTransmission,
+          [expected, expected],
+          'settings stay intact at transmission start',
+        );
+        t.deepEqual(result.afterGoLive, expected);
+        t.deepEqual(result.afterUnattended, expected);
+        t.true(result.updated);
+        t.deepEqual(result.afterUpdate, expected);
+      } finally {
+        await focusMain();
       }
-      const expected = {
-        width: 2560,
-        height: 1440,
-        nativeWidth: 2560,
-        nativeHeight: 1440,
-        bitrate: 10000,
-      };
-      t.deepEqual(result.before, expected, 'the requested settings were established');
-      t.is(result.promptState, 'declined');
-      t.is(result.profile, null, 'Skip must not supply recommendations to Go Live');
-      t.deepEqual(result.calls, ['output-limits', 'platform:youtube', 'transmission']);
-      t.deepEqual(result.afterSkip, expected);
-      t.deepEqual(result.atTransmission, [expected], 'settings stay intact at transmission start');
-      t.deepEqual(result.afterGoLive, expected);
-    } finally {
-      await focusMain();
-    }
-  });
+    });
+  }
 }
