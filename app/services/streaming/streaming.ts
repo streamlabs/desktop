@@ -516,10 +516,6 @@ export class StreamingService
       }
     }
 
-    // Also covers unattended starts and users who have already completed or
-    // declined Auto Optimizer. A failed video transaction must stop Go Live.
-    await this.streamSettingsService.applyStreamOutputLimits(settings);
-
     /**
      * SET CUSTOM DESTINATIONS SETTINGS
      */
@@ -1046,9 +1042,6 @@ export class StreamingService
     activePlatforms: TPlatform[] = [],
     activeDestinations: ICustomStreamDestination[] = [],
   ): Promise<boolean> {
-    // Adding a destination other than Twitch or YouTube to a live 1440p stream requires a restart;
-    // the video transaction rejects active outputs without modifying them.
-    await this.streamSettingsService.applyStreamOutputLimits(settings);
     const lifecycle = this.state.info.lifecycle;
 
     // save current settings in store so we can re-use them if something will go wrong
