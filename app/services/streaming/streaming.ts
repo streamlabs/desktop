@@ -516,6 +516,10 @@ export class StreamingService
       }
     }
 
+    // Canvas edits are batched; finish their transaction before capturing video
+    // contexts or starting platform setup.
+    await this.videoSettingsService.flushPendingCanvasSettings();
+
     /**
      * SET CUSTOM DESTINATIONS SETTINGS
      */
