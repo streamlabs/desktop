@@ -743,6 +743,51 @@ export class OutputSettingsService extends Service {
     };
   }
 
+  /** The streaming encoder setting value for the current output mode. */
+  private getSelectedStreamingEncoder(
+    output: ISettingsSubCategory[],
+    mode: TOutputSettingsMode,
+  ): string {
+    return mode === 'Advanced'
+      ? this.settingsService.findSettingValue(output, 'Streaming', 'Encoder')
+      : this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder');
+  }
+
+  /**
+   * Codec of the selected streaming encoder (e.g. `hevc`), or undefined if it cannot be
+   * resolved. Unlike `getSettings()`, this only reads streaming encoder metadata: it does not
+   * build recording or preset settings, so failures there cannot hide the streaming codec.
+   */
+  getStreamingEncoderCodec(): string | undefined {
+    const selected = this.getCurrentStreamingEncoderSelection();
+    if (!selected) return undefined;
+    return this.encoderQueryService.resolveStreamingEncoderCodec(selected.mode, selected.encoder);
+  }
+
+  /**
+   * Family of the selected streaming encoder (e.g. `obs_nvenc_hevc_tex`), or undefined if it
+   * cannot be resolved. Streaming-only, like `getStreamingEncoderCodec()`.
+   */
+  getStreamingEncoderFamily(): string | undefined {
+    const selected = this.getCurrentStreamingEncoderSelection();
+    if (!selected) return undefined;
+    return this.encoderQueryService.resolveStreamingEncoderFamily(selected.mode, selected.encoder);
+  }
+
+  private getCurrentStreamingEncoderSelection(): {
+    mode: TOutputSettingsMode;
+    encoder: string;
+  } | null {
+    const output = this.settingsService.state.Output.formData;
+    const mode: TOutputSettingsMode = this.settingsService.findSettingValue(
+      output,
+      'Untitled',
+      'Mode',
+    );
+    const encoder = this.getSelectedStreamingEncoder(output, mode);
+    return encoder ? { mode, encoder } : null;
+  }
+
   private getStreamingEncoderSettings(
     output: ISettingsSubCategory[],
     video: ISettingsSubCategory[],
@@ -754,10 +799,7 @@ export class OutputSettingsService extends Service {
      *
      * P.S. Settings needs a refactor... badly
      */
-    const encoder =
-      mode === 'Advanced'
-        ? this.settingsService.findSettingValue(output, 'Streaming', 'Encoder')
-        : this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder');
+    const encoder = this.getSelectedStreamingEncoder(output, mode);
     const encoderId = this.encoderQueryService.resolveStreamingEncoderId(mode, encoder);
 
     const encoderFamily = this.requireStreamingEncoderFamily(mode, encoder);

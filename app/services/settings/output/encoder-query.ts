@@ -14,6 +14,7 @@ import { TPlatform } from 'services/platforms';
 import type { IEncoderOption } from 'obs-studio-node';
 import type { TOutputSettingsMode } from './output-settings';
 import { legacyEncoderAliasToObsEncoderIdOrSelf } from './encoder-compatibility';
+import { isVideoCodecSupportedByPlatform } from './platform-codec-support';
 
 interface IWithAvailableEncoders {
   getAvailableEncoders(): IEncoderOption[];
@@ -50,6 +51,25 @@ interface IStreamingEncoderResult {
   options: IObsListOption<string>[];
 }
 
+/**
+ * Drops encoders whose codec any of `platforms` cannot accept. Only needed for platforms OBS
+ * cannot validate (see `PLATFORM_SUPPORTED_VIDEO_CODECS`); others pass everything through.
+ */
+function filterEncodersForPlatforms(
+  encoders: IEncoderOption[],
+  platforms: TPlatform[],
+): IEncoderOption[] {
+  return encoders.filter(encoder =>
+    platforms.every(platform => isVideoCodecSupportedByPlatform(platform, encoder.codec)),
+  );
+}
+
+interface INativeStreamingFactories {
+  simple: typeof SimpleStreamingFactory;
+  advanced: typeof AdvancedStreamingFactory;
+  service: typeof ServiceFactory;
+}
+
 function intersectEncoders(a: IEncoderOption[], b: IEncoderOption[]): IEncoderOption[] {
   return a.filter(encoder => b.some(other => other.name === encoder.name));
 }
@@ -76,6 +96,17 @@ export class EncoderQueryService extends Service {
 
   private streamingEncoderCache = new Map<string, ICacheEntry>();
   private recordingEncoderCache = new Map<string, ICacheEntry>();
+
+  /**
+   * Native factories behind the streaming encoder queries, including the saved service
+   * (`service.legacySettings`). Read through this field rather than the imports so tests
+   * can check which service each query assigns without starting OSN outputs.
+   */
+  private nativeStreamingFactories: INativeStreamingFactories = {
+    simple: SimpleStreamingFactory,
+    advanced: AdvancedStreamingFactory,
+    service: ServiceFactory,
+  };
 
   getAvailableStreamingEncoders(mode: TOutputSettingsMode): IObsListOption<string>[] {
     return this.getStreamingEncoderEntry(mode).options;
@@ -144,7 +175,7 @@ export class EncoderQueryService extends Service {
     return this.resolveStreamingEncoderEntry(
       cacheKey,
       () => this.queryEncodersForTargets(mode, targets),
-      { allowLiveInstance: true },
+      { liveInstanceTargets: targets },
     );
   }
 
@@ -159,15 +190,19 @@ export class EncoderQueryService extends Service {
     // service — or by no service at all while an output is still being set up.
     return this.resolveStreamingEncoderEntry(
       `${mode}:device`,
-      () => this.queryEncodersForPlatform(mode, null),
-      { allowLiveInstance: false },
+      () => this.queryDeviceEncoders(mode),
+      { liveInstanceTargets: null },
     );
   }
 
+  /**
+   * @param liveInstanceTargets Platforms to filter a live instance's encoder list by, or
+   * null to never read from a live instance (the device entry).
+   */
   private resolveStreamingEncoderEntry(
     cacheKey: string,
     query: () => IEncoderOption[] | null,
-    { allowLiveInstance }: { allowLiveInstance: boolean },
+    { liveInstanceTargets }: { liveInstanceTargets: TPlatform[] | null },
   ): IStreamingEncoderResult {
     try {
       // While actively streaming, the running output already carries the real service:
@@ -180,10 +215,17 @@ export class EncoderQueryService extends Service {
       // Go Live the instance returned here can be the second output, created but not yet
       // given a service. OSN filters service-checked encoders (e.g. NVENC) out of a
       // service-less instance's list, so only trust an instance that has a service.
-      if (allowLiveInstance && this.streamingService.isStreaming) {
+      //
+      // The live list is only narrowed by the live output's own service, and rtmp_custom
+      // platforms (Kick, X) declare no codecs, so apply Desktop's platform codec table to it,
+      // the same way queryEncodersForPlatform does for the non-live query.
+      if (liveInstanceTargets && this.streamingService.isStreaming) {
         const live = this.streamingService.getStreamingInstance();
         if (live && live.service && hasGetAvailableEncoders(live)) {
-          const encoders = live.getAvailableEncoders();
+          const encoders = filterEncodersForPlatforms(
+            live.getAvailableEncoders(),
+            liveInstanceTargets,
+          );
           return { encoders, options: mapEncoders(encoders) };
         }
       }
@@ -235,35 +277,71 @@ export class EncoderQueryService extends Service {
   /**
    * Returns null when the target could not be queried at all — no query method, or the
    * query threw. An empty array is a real answer: the platform supports no encoders.
+   *
+   * For a platform, OSN only narrows by codec when the service declares its codecs
+   * (`rtmp_common`). `rtmp_custom` platforms such as Kick are narrowed here using
+   * Desktop's own table. With no platform (`platform` null) the list is narrowed only by
+   * the user's saved service.
    */
   private queryEncodersForPlatform(
     mode: TOutputSettingsMode,
     platform: TPlatform | null,
   ): IEncoderOption[] | null {
+    const encoders = this.queryEncodersWithTempService(
+      mode,
+      instance => this.setupTempStreamingService(instance, platform),
+      platform ?? 'no platform',
+    );
+    if (!encoders || !platform) return encoders;
+    return filterEncodersForPlatforms(encoders, [platform]);
+  }
+
+  /**
+   * What this machine can stream with, independent of any destination.
+   *
+   * OSN always narrows a streaming instance's list by its service's codecs, so the device
+   * query cannot use the user's saved service: Twitch's `rtmp_common` entry declares only
+   * H.264, which dropped working HEVC/AV1 encoders from the device list and made startup
+   * validation reset them with a misleading "update your graphics drivers" dialog, even
+   * though Enhanced Broadcasting streams HEVC to Twitch. A bare `rtmp_custom` service
+   * declares no codecs, so OSN falls back to everything the RTMP output can carry.
+   */
+  private queryDeviceEncoders(mode: TOutputSettingsMode): IEncoderOption[] | null {
+    return this.queryEncodersWithTempService(
+      mode,
+      instance => this.setupDeviceQueryService(instance),
+      'device',
+    );
+  }
+
+  /**
+   * Returns null when the query failed outright, so callers never mistake a failure for a
+   * confirmed empty list.
+   */
+  private queryEncodersWithTempService(
+    mode: TOutputSettingsMode,
+    setupService: (instance: any) => any,
+    label: string,
+  ): IEncoderOption[] | null {
+    const factories = this.nativeStreamingFactories;
+    const instanceFactory = mode === 'Simple' ? factories.simple : factories.advanced;
     let instance: any;
     let service: any = null;
 
     try {
-      instance =
-        mode === 'Simple' ? SimpleStreamingFactory.create() : AdvancedStreamingFactory.create();
-      service = this.setupTempStreamingService(instance, platform);
+      instance = instanceFactory.create();
+      service = setupService(instance);
       if (!hasGetAvailableEncoders(instance)) return null;
       return instance.getAvailableEncoders();
     } catch (e: unknown) {
       // Contained per target so one failure cannot discard the narrowing the other
       // targets already contributed.
-      console.error(`Error querying available encoders for ${platform ?? 'no platform'}`, e);
+      console.error(`Error querying available encoders for ${label}`, e);
       return null;
     } finally {
       // create() may have thrown before assigning an instance; nothing to destroy then.
-      if (instance) {
-        if (mode === 'Simple') {
-          SimpleStreamingFactory.destroy(instance);
-        } else {
-          AdvancedStreamingFactory.destroy(instance);
-        }
-      }
-      if (service) ServiceFactory.destroy(service);
+      if (instance) instanceFactory.destroy(instance);
+      if (service) factories.service.destroy(service);
     }
   }
 
@@ -401,13 +479,14 @@ export class EncoderQueryService extends Service {
    */
   private setupTempStreamingService(instance: any, platform: TPlatform | null): any {
     try {
-      const legacySettings = ServiceFactory.legacySettings;
+      const serviceFactory = this.nativeStreamingFactories.service;
+      const legacySettings = serviceFactory.legacySettings;
 
       if (platform) {
         const config = platformServiceConfig[platform];
         const serviceName = config.service || legacySettings?.settings?.service;
 
-        const service = ServiceFactory.create(config.streamType, 'encoder-query-temp-service', {
+        const service = serviceFactory.create(config.streamType, 'encoder-query-temp-service', {
           ...legacySettings?.settings,
           service: serviceName,
         });
@@ -422,6 +501,25 @@ export class EncoderQueryService extends Service {
       console.error('[EncoderQueryService] setupTempService failed, proceeding without service', e);
       return null;
     }
+  }
+
+  /**
+   * Assigns a codec-agnostic temp service for the device query and returns it for cleanup.
+   * Unlike setupTempStreamingService this throws on failure: a service-less instance drops
+   * NVENC and other service-checked encoders, and startup validation would then reset them.
+   * Throwing turns that into a failed query, which validation leaves alone.
+   */
+  private setupDeviceQueryService(instance: any): any {
+    // No server set: rtmp_custom reports the RTMP protocol, so OSN resolves rtmp_output.
+    const serviceFactory = this.nativeStreamingFactories.service;
+    const service = serviceFactory.create('rtmp_custom', 'encoder-query-device-service', {});
+    try {
+      instance.service = service;
+    } catch (e: unknown) {
+      serviceFactory.destroy(service);
+      throw e;
+    }
+    return service;
   }
 
   /** Sorted so that the same set of platforms always produces the same cache key. */

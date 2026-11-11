@@ -33,7 +33,14 @@ import {
 import { Inject } from 'services/core/injector';
 import moment from 'moment';
 import padStart from 'lodash/padStart';
-import { IOutputSettings, OutputSettingsService, SettingsService } from 'services/settings';
+import {
+  findPlatformCodecIncompatibility,
+  IOutputSettings,
+  IPlatformCodecIncompatibility,
+  OutputSettingsService,
+  SettingsService,
+  videoCodecLabel,
+} from 'services/settings';
 import { WindowsService } from 'services/windows';
 import { Subject } from 'rxjs';
 import {
@@ -63,7 +70,10 @@ import {
   INotification,
   NotificationsService,
 } from 'services/notifications';
-import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
+import {
+  IEncoderProfile,
+  VideoEncodingOptimizationService,
+} from 'services/video-encoding-optimizations';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import {
   getDestinationId,
@@ -555,6 +565,12 @@ export class StreamingService
     // all platforms to stream
     const platforms = this.views.enabledPlatforms;
 
+    // Fail before any platform is set up (broadcasts created, stream keys fetched) when a
+    // target cannot accept the selected codec. OSN only catches this for `rtmp_common`
+    // services; `rtmp_custom` platforms like Kick otherwise start and then reconnect forever.
+    // Checked again after the optimized profile is applied, since that can change the encoder.
+    this.throwIfPlatformCodecIncompatible(platforms);
+
     /**
      * SET PLATFORM STREAM SETTINGS
      */
@@ -797,12 +813,24 @@ export class StreamingService
     // apply optimized settings
     const optimizer = this.videoEncodingOptimizationService;
     if (optimizer.state.useOptimizedProfile && settings.optimizedProfile) {
-      if (unattendedMode && optimizer.canApplyProfileFromCache()) {
-        optimizer.applyProfileFromCache();
+      const profile =
+        unattendedMode && optimizer.canApplyProfileFromCache()
+          ? optimizer.state.lastSelectedProfile
+          : settings.optimizedProfile;
+
+      // A profile is fetched for the encoder selected at that time, and applying it writes
+      // that encoder back. If the encoder has changed since (e.g. "Use H.264 Codec" after an
+      // HEVC profile loaded, or a fetch that resolved after the switch), the profile is stale:
+      // skip it rather than undo the switch.
+      if (this.isOptimizedProfileForCurrentEncoder(profile)) {
+        optimizer.applyProfile(profile);
+        await this.runCheck('applyOptimizedSettings');
       } else {
-        optimizer.applyProfile(settings.optimizedProfile);
+        console.log('Skipping optimized profile fetched for a different encoder', profile.encoder);
       }
-      await this.runCheck('applyOptimizedSettings');
+
+      // Validate the encoder that will actually start.
+      this.throwIfPlatformCodecIncompatible(platforms);
     }
 
     // start video transmission
@@ -4445,6 +4473,62 @@ export class StreamingService
   ): instance is IEnhancedBroadcastingSimpleStreaming | IEnhancedBroadcastingAdvancedStreaming {
     if (!instance) return false;
     return 'additionalVideo' in instance;
+  }
+
+  /**
+   * The first of `platforms` whose ingest does not accept the codec of the selected
+   * streaming encoder, or null. Only platforms OBS cannot validate are checked; see
+   * `PLATFORM_SUPPORTED_VIDEO_CODECS`. Returns null if the codec cannot be resolved, so a
+   * metadata gap never blocks Go Live.
+   */
+  getPlatformCodecIncompatibility(
+    platforms: TPlatform[] = this.views.enabledPlatforms,
+  ): IPlatformCodecIncompatibility | null {
+    let codec: string | undefined;
+    try {
+      // Streaming-only lookup: getSettings() also resolves recording encoder metadata, and a
+      // failure there would hide a known streaming codec and skip this check.
+      codec = this.outputSettingsService.getStreamingEncoderCodec();
+    } catch (e: unknown) {
+      console.warn('Could not resolve the streaming encoder codec for the platform check', e);
+      return null;
+    }
+
+    return findPlatformCodecIncompatibility(platforms, codec);
+  }
+
+  /**
+   * Whether `profile` was fetched for the currently selected streaming encoder.
+   * `fetchOptimizedProfile` stamps the profile with the encoder family selected at fetch time.
+   * If the current family cannot be resolved, the profile is applied as before.
+   */
+  private isOptimizedProfileForCurrentEncoder(profile: IEncoderProfile): boolean {
+    let family: string | undefined;
+    try {
+      family = this.outputSettingsService.getStreamingEncoderFamily();
+    } catch (e: unknown) {
+      console.warn('Could not resolve the streaming encoder family for the optimized profile', e);
+    }
+    return !family || !profile.encoder || profile.encoder === family;
+  }
+
+  /** Sets and throws `PLATFORM_UNSUPPORTED_CODEC` if a platform rejects the streaming codec. */
+  private throwIfPlatformCodecIncompatible(platforms: TPlatform[]) {
+    const codecIncompatibility = this.getPlatformCodecIncompatibility(platforms);
+    if (!codecIncompatibility) return;
+
+    const { platform, codec, supportedCodecs } = codecIncompatibility;
+    const details = $t(
+      '%{platformName} does not support the %{videoCodec} codec. Supported: %{supportedCodecs}. Select a different streaming encoder in Settings > Output.',
+      {
+        platformName: this.views.getPlatformDisplayName(platform),
+        videoCodec: videoCodecLabel(codec),
+        supportedCodecs: supportedCodecs.map(videoCodecLabel).join(', '),
+      },
+    );
+    const error = createStreamError('PLATFORM_UNSUPPORTED_CODEC', { platform }, details);
+    this.setError(error, platform);
+    throwStreamError('PLATFORM_UNSUPPORTED_CODEC', { platform }, details);
   }
 
   getStreamingInstance(): ISimpleStreaming | IAdvancedStreaming | null {

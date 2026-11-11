@@ -126,6 +126,14 @@ for (const mode of ['Simple', 'Advanced'] as const) {
               views,
               state: { info: { error: null } },
               streamSettingsService: streamSettingsContext,
+              // goLive's platform codec guard runs against the real Output settings.
+              outputSettingsService: output,
+              throwIfPlatformCodecIncompatible(platforms) {
+                return streamingPrototype.throwIfPlatformCodecIncompatible.call(this, platforms);
+              },
+              getPlatformCodecIncompatibility(platforms) {
+                return streamingPrototype.getPlatformCodecIncompatibility.call(this, platforms);
+              },
               videoEncodingOptimizationService: { state: { useOptimizedProfile: false } },
               RESET_STREAM_INFO() {},
               SET_GO_LIVE_SETTINGS() {},
