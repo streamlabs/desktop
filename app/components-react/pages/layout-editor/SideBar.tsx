@@ -20,7 +20,7 @@ export default function SideBar() {
 
 function LayoutPicker() {
   const { LayoutService, CustomizationService } = Services;
-  const { currentLayout, setCurrentLayout } = useLayoutEditor();
+  const { currentLayout, changeLayout } = useLayoutEditor();
   const mode = useRealmObject(CustomizationService.state).isDarkTheme ? 'night' : 'day';
 
   function layoutImage(layout: ELayout) {
@@ -37,7 +37,7 @@ function LayoutPicker() {
           <img
             key={layout}
             className={currentLayout === layout ? styles.active : ''}
-            onClick={() => setCurrentLayout(layout)}
+            onClick={() => changeLayout(layout)}
             src={layoutImage(layout)}
           />
         ))}
