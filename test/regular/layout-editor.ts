@@ -19,6 +19,8 @@ interface ILayoutSnapshot {
   currentLayout: string;
   dockLayout: string;
   dockResize: number;
+  layoutCustomized?: boolean;
+  dockCustomized?: boolean;
   slots: Record<string, string | null>;
   dockElements: string[];
   mainElements: string[];
@@ -43,6 +45,8 @@ async function layoutSnapshot(tab?: string): Promise<ILayoutSnapshot> {
       currentLayout: current.currentLayout,
       dockLayout: current.dockLayout,
       dockResize: current.dockResize,
+      layoutCustomized: current.layoutCustomized,
+      dockCustomized: current.dockCustomized,
       slots,
       // The views read the current tab, so they are only meaningful when no tab was requested
       dockElements: tab ? [] : [...views.dockElements],
@@ -127,6 +131,8 @@ test('Upgrading a persisted layout from before the dock migrates it', async t =>
   t.is(snapshot.dockLayout, 'Single');
   t.is(snapshot.slots.Multichat, 'S1');
   t.is(snapshot.slots.Minifeed, '2');
+  t.false(snapshot.layoutCustomized, 'The previous default is not customized');
+  t.false(snapshot.dockCustomized);
   t.true(snapshot.dockCollapsed, 'A dock with only Multichat keeps starting collapsed');
 
   // A user that customized the layout, with a second tab from before the dock existed
@@ -148,12 +154,16 @@ test('Upgrading a persisted layout from before the dock migrates it', async t =>
 
   t.is(snapshot.currentLayout, 'Default', 'Classic was renamed Default');
   t.true(snapshot.layoutEditorUsed, 'Customized layouts are attributed to the layout editor');
+  t.true(snapshot.layoutCustomized, 'Its slots differ from the Default layout defaults');
+  t.false(snapshot.dockCustomized);
 
   const second = await layoutSnapshot('second');
   t.is(second.currentLayout, 'TwoThenThree');
   t.is(second.dockLayout, 'Single', 'Tabs without a dock get one');
   t.is(second.dockResize, 0.5);
   t.is(second.slots.Multichat, 'S1', 'The dock holds what it did before it was configurable');
+  t.true(second.layoutCustomized);
+  t.false(second.dockCustomized);
 });
 
 test('Changing the main layout and the dock layout leave each other alone', async t => {
@@ -213,15 +223,16 @@ test('The layout editor edits the dock and places Multichat in the main layout',
 
   await click('[data-name=dock-layout-single]');
   t.is((await getClient().$$(dockZones)).length, 1, 'The Single dock has one slot');
-  t.is(await zoneText('[data-name=dock-preview] [id="S1"]'), 'Mini Feed');
+  t.is(await zoneText('[data-name=dock-preview] [id="S1"]'), 'Chat');
+  t.is(await zoneText('[id="4"]'), 'Mini Feed', 'The untouched layout follows the Single defaults');
 
   // The Display is too large for the dock, so dropping it there changes nothing
   await dragTo('[id="1"]', '[data-name=dock-preview] [id="S1"]');
   t.is(await zoneText('[id="1"]'), 'Editor Display');
-  t.is(await zoneText('[data-name=dock-preview] [id="S1"]'), 'Mini Feed');
+  t.is(await zoneText('[data-name=dock-preview] [id="S1"]'), 'Chat');
 
-  // Multichat, unslotted by the smaller dock, can be dropped on the main layout
-  await dragTo('[data-name=element-Multichat]', '[id="2"]');
+  // Chat can be dragged out of the dock into the main layout, swapping with the Scene Selector
+  await dragTo('[data-name=dock-preview] [id="S1"]', '[id="2"]');
   t.is(await zoneText('[id="2"]'), 'Chat');
 
   await clickButton('Save Changes');
@@ -233,10 +244,165 @@ test('The layout editor edits the dock and places Multichat in the main layout',
   t.is(snapshot.slots.Multichat, '2');
   t.is(snapshot.slots.Display, '1');
   t.true(snapshot.layoutEditorUsed);
-  t.deepEqual(snapshot.dockElements, ['Minifeed']);
+  t.deepEqual(snapshot.dockElements, ['Scenes']);
   t.true(snapshot.mainElements.includes('Multichat'));
 
   // Logged out, the element in the main layout explains why it has nothing to show
   await focusMain();
   await waitForDisplayed('span=Log in to use chat.');
+});
+
+async function leftDock(): Promise<boolean> {
+  await focusWindow('worker');
+  return getClient().execute(
+    () => (window as any).servicesManager.getResource('CustomizationService').state.leftDock,
+  );
+}
+
+test('The layout editor stages its changes until saved', async t => {
+  const initialLeftDock = await leftDock();
+  await getClient().execute(() => {
+    (window as any).servicesManager.getResource('NavigationService').navigate('LayoutEditor');
+  });
+  await focusMain();
+  await waitForDisplayed('[data-name=dock-preview]');
+  t.false(await isDisplayed('[data-testid=dock-chevron-opened]'), 'The real dock is not rendered');
+
+  // An element in a slot the smaller dock lacks comes back with the slot
+  const stackedDock = '[data-name=dock-preview] [id="S2"]';
+  await click('[data-name=dock-layout-single]');
+  await click('[data-name=dock-layout-stacked]');
+  t.is(await zoneText(stackedDock), 'Chat');
+
+  await click(`[data-name=dock-position-${initialLeftDock ? 'right' : 'left'}]`);
+  t.is(await leftDock(), initialLeftDock, 'The dock position is not applied before saving');
+
+  await focusMain();
+  await clickButton('Save Changes');
+  t.is(await leftDock(), !initialLeftDock, 'Saving applies the dock position');
+});
+
+test('An untouched layout follows the dock layout, a customized one keeps its placements', async t => {
+  await focusWindow('worker');
+  await getClient().execute(() => {
+    (window as any).servicesManager.getResource('NavigationService').navigate('LayoutEditor');
+  });
+  await focusMain();
+  await waitForDisplayed('[data-name=dock-preview]');
+
+  const dockTop = '[data-name=dock-preview] [id="S1"]';
+  t.is(await zoneText('[id="4"]'), 'Audio Mixer');
+  t.is(await zoneText(dockTop), 'Mini Feed');
+
+  await click('[data-name=dock-layout-single]');
+  t.is(await zoneText(dockTop), 'Chat');
+  t.is(await zoneText('[id="4"]'), 'Mini Feed', 'Mini Feed moves out of the dock');
+
+  await click('[data-name=dock-layout-stacked]');
+  t.is(await zoneText(dockTop), 'Mini Feed', 'Mini Feed moves into the dock');
+  t.is(await zoneText('[data-name=dock-preview] [id="S2"]'), 'Chat');
+  t.is(await zoneText('[id="4"]'), 'Audio Mixer', 'The Mixer takes its place');
+
+  // Swapping two elements customizes the layout, so only empty slots are filled from now on
+  await dragTo('[id="2"]', '[id="3"]');
+  await click('[data-name=dock-layout-single]');
+  t.is(await zoneText(dockTop), 'Mini Feed');
+  t.is(await zoneText('[id="4"]'), 'Audio Mixer');
+});
+
+test('A customized dock does not stop the main layout from following the defaults', async t => {
+  await focusWindow('worker');
+  await getClient().execute(() => {
+    (window as any).servicesManager.getResource('NavigationService').navigate('LayoutEditor');
+  });
+  await focusMain();
+  await waitForDisplayed('[data-name=dock-preview]');
+
+  const dockTop = '[data-name=dock-preview] [id="S1"]';
+  await click('[data-name=dock-layout-single]');
+  await dragTo('[data-name=element-Browser]', dockTop);
+  t.is(await zoneText(dockTop), 'Website');
+
+  await click('[data-name=dock-layout-stacked]');
+  t.is(await zoneText('[id="4"]'), 'Audio Mixer', 'The main layout follows the Stacked defaults');
+  t.is(await zoneText(dockTop), 'Website', 'The customized dock is kept');
+  t.is(await zoneText('[data-name=dock-preview] [id="S2"]'), 'Chat', 'The new slot is filled');
+});
+
+test('The Dock Layouts tip moves the untouched old default to the Default layout', async t => {
+  await focusWindow('worker');
+  await getClient().execute(() => {
+    const manager = (window as any).servicesManager;
+    const layout = manager.getResource('LayoutService');
+    // The old default: TwoThenThree with the Mini Feed in the second slot and a Single dock
+    layout.changeLayout('TwoThenThree');
+    layout.setDockLayout('Single');
+    layout.setSlots({
+      Display: { slot: '1' },
+      Minifeed: { slot: '2' },
+      Scenes: { slot: '3' },
+      Sources: { slot: '4' },
+      Mixer: { slot: '5' },
+      Multichat: { slot: 'S1' },
+    });
+    manager.getResource('NavigationService').navigate('LayoutEditor', { stageStackedDock: true });
+  });
+  await focusMain();
+  await waitForDisplayed('[data-name=dock-preview]');
+
+  t.is(await zoneText('[data-name=dock-preview] [id="S1"]'), 'Mini Feed');
+  t.is(await zoneText('[data-name=dock-preview] [id="S2"]'), 'Chat');
+  t.is(await zoneText('[id="2"]'), 'Scene Selector');
+  t.is(await zoneText('[id="4"]'), 'Audio Mixer');
+
+  await clickButton('Save Changes');
+  t.is((await layoutSnapshot()).currentLayout, 'Default');
+});
+
+test('The Dock Layouts tip moves Mini Feed and Chat into the dock of a customized layout', async t => {
+  await focusWindow('worker');
+  await getClient().execute(() => {
+    const manager = (window as any).servicesManager;
+    const layout = manager.getResource('LayoutService');
+    layout.changeLayout('TwoThenThree');
+    layout.setDockLayout('Single');
+    layout.setSlots({
+      Display: { slot: '1' },
+      Minifeed: { slot: '2' },
+      Scenes: { slot: '3' },
+      Sources: { slot: '4' },
+      Mixer: { slot: '5' },
+      Multichat: { slot: 'S1' },
+    });
+    layout.setCustomized(true, false);
+    manager.getResource('NavigationService').navigate('LayoutEditor', { stageStackedDock: true });
+  });
+  await focusMain();
+  await waitForDisplayed('[data-name=dock-preview]');
+
+  t.is(await zoneText('[data-name=dock-preview] [id="S1"]'), 'Mini Feed');
+  t.is(await zoneText('[data-name=dock-preview] [id="S2"]'), 'Chat');
+  t.is(await zoneText('[id="3"]'), 'Scene Selector', 'The rest of the layout is kept');
+  t.not(await zoneText('[id="2"]'), '', 'The slot Mini Feed left is filled');
+
+  await clickButton('Save Changes');
+  t.is((await layoutSnapshot()).currentLayout, 'TwoThenThree');
+});
+
+test('The Dock Layouts tip stages the stacked dock in the layout editor', async t => {
+  await focusWindow('worker');
+  await getClient().execute(() => {
+    const manager = (window as any).servicesManager;
+    manager.getResource('LayoutService').setDockLayout('Single');
+    manager.getResource('NavigationService').navigate('LayoutEditor', { stageStackedDock: true });
+  });
+  await focusMain();
+
+  const dockZones = '[data-name=dock-preview] [id^="S"]';
+  await waitForDisplayed('[data-name=dock-preview]');
+  t.is((await getClient().$$(dockZones)).length, 2);
+  t.is(await zoneText('[data-name=dock-preview] [id="S1"]'), 'Mini Feed');
+  t.is(await zoneText('[data-name=dock-preview] [id="S2"]'), 'Chat');
+
+  t.is((await layoutSnapshot()).dockLayout, 'Single', 'Nothing is saved until Save Changes');
 });
