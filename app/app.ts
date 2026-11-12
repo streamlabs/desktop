@@ -289,6 +289,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Host a new OBS server instance
     obs.IPC.host(remote.process.env.IPC_UUID);
+
+    // The renderer bundle can be newer than the natives
+    const ipc = obs.IPC as typeof obs.IPC & { getUnkillableStaleServer?: () => number };
+    const unkillableStaleServer = ipc.getUnkillableStaleServer?.() ?? 0;
     obs.NodeObs.SetWorkingDirectory(
       path.join(
         remote.app.getAppPath().replace('app.asar', 'app.asar.unpacked'),
@@ -354,6 +358,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     ipcRenderer.on('closeWindow', () => windowsService.closeMainWindow());
     I18nService.instance.load();
+
+    if (unkillableStaleServer) {
+      remote.dialog.showMessageBox({
+        type: 'warning',
+        title: 'Streamlabs Desktop',
+        message: $t('A previous Streamlabs Desktop session is still running as administrator.'),
+        detail: $t(
+          'Close the previous session, or start Streamlabs Desktop as administrator. Browser sources are unavailable until then.',
+        ),
+        buttons: [$t('OK')],
+      });
+    }
+
     AppService.instance.load();
   }
 
