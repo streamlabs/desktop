@@ -1,6 +1,7 @@
 import test from 'ava';
 import {
   sanitizeVstFilterSettings,
+  sanitizeVstFilterSettingsForExport,
   vstPluginFileName,
 } from '../../../app/services/scene-collections/nodes/overlays/vst-filter-settings';
 
@@ -57,4 +58,20 @@ test('sanitizeVstFilterSettings leaves macOS bundle paths unchanged', t => {
   };
 
   t.deepEqual(sanitizeVstFilterSettings(settings, 'darwin'), settings);
+});
+
+test('sanitizeVstFilterSettingsForExport drops legacy chunk keys that embed the path', t => {
+  const settings = {
+    plugin_path: 'C:\\Users\\me\\Foo.dll',
+    chunk_data_path_v3: 'C:\\Users\\me\\Foo.dll',
+    chunk_data_0_v3: 'AAAA',
+    chunk_data_v2: 'C:\\Users\\me\\Foo.dll|AAAA',
+    chunk_data: 'C:\\Users\\me\\Foo.dll|BBBB',
+  };
+
+  t.deepEqual(sanitizeVstFilterSettingsForExport(settings), {
+    plugin_path: 'Foo.dll',
+    chunk_data_path_v3: 'Foo.dll',
+    chunk_data_0_v3: 'AAAA',
+  });
 });

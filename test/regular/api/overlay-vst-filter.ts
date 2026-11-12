@@ -4,6 +4,7 @@ import { focusMain, focusWindow } from '../../helpers/modules/core';
 import type { OverlaysPersistenceService } from 'services/scene-collections/overlays';
 import type { ISceneItem, ScenesService } from 'services/scenes';
 import type { SourceFiltersService } from 'services/source-filters';
+import extractZip = require('extract-zip');
 import fs = require('fs');
 import path = require('path');
 import archiver = require('archiver');
@@ -120,4 +121,53 @@ test('Importing an overlay keeps only the VST plugin file name', async t => {
 
   const gain = filters.find(filter => filter.type === 'gain_filter');
   t.is(gain.settings.db, 3, 'other filter types import unchanged');
+});
+
+test('Exporting an overlay writes only the VST plugin file name', async t => {
+  const localPath = 'C:\\Users\\streamer\\VstPlugins\\Foo.dll';
+  const overlayPath = path.join(t.context.cacheDir, 'vst-export.overlay');
+  const extractDir = path.join(t.context.cacheDir, 'vst-export');
+
+  t.true(await focusWindow('worker'), 'worker window is available');
+  try {
+    await t.context.app.client.execute(
+      (filePath, vstPath) => {
+        const manager = (window as any).servicesManager;
+        const scenes = manager.getResource('ScenesService') as ScenesService;
+        const filters = manager.getResource('SourceFiltersService') as SourceFiltersService;
+        const scene = scenes.createScene('VST Export Scene');
+        const item = scene.createAndAddSource('VST Export Source', 'color_source');
+        filters.add(item.sourceId, 'vst_filter', 'VST 2.x Plug-in', {
+          plugin_path: vstPath,
+          chunk_data_path_v3: vstPath,
+          chunk_data_v2: `${vstPath}|AAAA`,
+        });
+        return (manager.getResource(
+          'OverlaysPersistenceService',
+        ) as OverlaysPersistenceService).saveOverlay(filePath);
+      },
+      overlayPath,
+      localPath,
+    );
+  } finally {
+    await focusMain();
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    extractZip(overlayPath, { dir: extractDir }, err => (err ? reject(err) : resolve()));
+  });
+  const configText = fs.readFileSync(path.join(extractDir, 'config.json'), 'utf8');
+  const vstFilters: any[] = [];
+  JSON.parse(configText, (key, value) => {
+    if (value && value.type === 'vst_filter') vstFilters.push(value);
+    return value;
+  });
+
+  t.true(vstFilters.length > 0, 'exported overlay contains the vst filter');
+  for (const filter of vstFilters) {
+    t.is(filter.settings.plugin_path, 'Foo.dll');
+    t.is(filter.settings.chunk_data_path_v3, 'Foo.dll');
+    t.false('chunk_data_v2' in filter.settings, 'legacy chunk data is not exported');
+  }
+  t.false(configText.includes('streamer'), 'no local path is written to the overlay');
 });
