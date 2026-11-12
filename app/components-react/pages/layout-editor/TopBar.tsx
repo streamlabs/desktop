@@ -18,6 +18,8 @@ export default function TopBar() {
     browserUrl,
     currentLayout,
     dockLayout,
+    layoutCustomized,
+    dockCustomized,
     setShowModal,
     setIsEditingTab,
     setCurrentTab,
@@ -51,6 +53,7 @@ export default function TopBar() {
       await LayoutService.actions.return.setDockLayout(dockLayout);
     }
     await LayoutService.actions.return.setSlots(slottedElements);
+    await LayoutService.actions.return.setCustomized(layoutCustomized, dockCustomized);
     LayoutService.actions.recordLayoutEditorUsage();
     if (browserUrl && slottedElements[ELayoutElement.Browser]) {
       await LayoutService.actions.return.setUrl(browserUrl);
