@@ -32,6 +32,9 @@ export enum EAvailableFeatures {
   guestCamBeta = 'slobs--guest-join',
   guestCamProduction = 'slobs--guest-join-prod',
   newChatBox = 'core--widgets-v2--chat-box',
+
+  /** Restores the collapsed state of the dock on launch rather than always starting collapsed. */
+  saveDockCollapsed = 'slobs--save-dock-collapsed',
 }
 
 interface IIncrementalRolloutServiceState {
