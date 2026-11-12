@@ -27,6 +27,8 @@ import {
   visibleSlots,
 } from './layout-data';
 import { UsageStatisticsService } from 'services/usage-statistics';
+import { UserService } from 'services/user';
+import { IncrementalRolloutService, EAvailableFeatures } from 'services/incremental-rollout';
 
 export {
   ELayout,
@@ -87,6 +89,9 @@ interface ILayoutServiceState {
  * 2: Classic was renamed Default, and the previous Default was renamed TwoThenThree.
  */
 const PERSISTED_STATE_VERSION = 2;
+
+/** How long a logged in user's launch dock state waits for the feature flags. */
+const LAUNCH_DOCK_STATE_TIMEOUT_MS = 5000;
 
 /**
  * The default state of version 1, which persisted states are relative to.
@@ -237,6 +242,10 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
 
   @Inject() private customizationService: CustomizationService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
+  @Inject() private userService: UserService;
+  @Inject() private incrementalRolloutService: IncrementalRolloutService;
+
+  private launchDockStateApplied = false;
 
   init() {
     super.init();
@@ -264,13 +273,43 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
       this.customizationService.setSettings({ legacyEvents: false });
     }
 
-    // The dock starts collapsed on every app start, which would hide the Mini Feed from fresh users.
-    // Multichat keeps the collapsed start, since it has a policy of its own when streaming starts.
-    if (this.views.dockElements.includes(ELayoutElement.Minifeed)) {
-      this.customizationService.setDockCollapsed(false);
-    }
+    this.scheduleLaunchDockState();
 
     this.checkUsage();
+  }
+
+  /**
+   * The dock starts collapsed on every app start. Flags are only loaded after login, so for a
+   * logged in user the launch state waits for them, but never for long.
+   */
+  private scheduleLaunchDockState() {
+    if (!this.userService.views.isLoggedIn) {
+      this.applyLaunchDockState(false);
+      return;
+    }
+
+    this.incrementalRolloutService.featuresReady.then(() => this.applyLaunchDockState(true));
+    setTimeout(() => this.applyLaunchDockState(false), LAUNCH_DOCK_STATE_TIMEOUT_MS);
+  }
+
+  /**
+   * Decides the state of the dock for this launch, once, so the dock changes at most once.
+   * @param flagsLoaded Whether the feature flags were fetched, which is false when they can't be
+   */
+  applyLaunchDockState(flagsLoaded: boolean) {
+    if (this.launchDockStateApplied) return;
+    this.launchDockStateApplied = true;
+
+    if (
+      flagsLoaded &&
+      this.incrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.saveDockCollapsed)
+    ) {
+      this.customizationService.setDockCollapsed(this.customizationService.launchDockCollapsed);
+    } else if (this.views.dockElements.includes(ELayoutElement.Minifeed)) {
+      // The Mini Feed would be hidden from fresh users otherwise. Multichat keeps the collapsed
+      // start, since it has a policy of its own when streaming starts.
+      this.customizationService.setDockCollapsed(false);
+    }
   }
 
   /**
