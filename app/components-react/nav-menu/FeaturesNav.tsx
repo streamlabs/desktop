@@ -30,7 +30,6 @@ const DASHBOARD_LINK_TYPES = new Set([
  */
 export function useFeaturesNav() {
   const {
-    LayoutService,
     MagicLinkService,
     NavigationService,
     NavMenuService,
@@ -166,7 +165,6 @@ export function useFeaturesNav() {
   // apps all affect width, so all are included.
   const contentKey = [
     menuItems.map(item => `${item.key}:${item.badge ?? ''}:${item.icon ?? ''}`).join(','),
-    LayoutService.views.currentTab.name,
     pinnedApps.map(app => app.id).join(','),
   ].join('|');
 

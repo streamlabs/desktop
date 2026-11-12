@@ -51,7 +51,7 @@ export type TNavMenuConfigValue<T, C> = T | ((ctx: C) => T);
 
 /** Static metadata for a nav menu item. */
 export interface INavMenuItemMetadata {
-  title: TNavMenuConfigValue<string, { layout: LayoutService }>;
+  title: string;
   badge?: TNavMenuConfigValue<string, { highlighter: HighlighterService }>;
   icon?: TNavMenuConfigValue<string, { layout: LayoutService }>;
   type?: TExternalLinkType | string;
@@ -104,9 +104,8 @@ export type TNavMenuItem = Prettify<
   Omit<INavMenuItemPersistedData, 'isVisible'> &
     Omit<
       INavMenuItemMetadata,
-      'isAvailable' | 'isVisibleByDefault' | 'isVisibilityLocked' | 'title' | 'icon' | 'badge'
+      'isAvailable' | 'isVisibleByDefault' | 'isVisibilityLocked' | 'icon' | 'badge'
     > & {
-      title: string;
       icon?: string;
       badge?: string;
     }
@@ -133,10 +132,11 @@ export const NavMenuItemData = (): Record<ENavMenuKey, INavMenuItemMetadata> => 
     trackingTarget: 'cloudbot',
   },
   [ENavMenuKey.Editor]: {
-    title: ({ layout }) => layout.views.currentTab?.name ?? $t('Editor'),
+    title: $t('Editor'),
     icon: ({ layout }) => layout.views.currentTab?.icon ?? 'icon-studio',
     target: 'Studio',
     trackingTarget: 'editor',
+    isVisibilityLocked: true,
   },
   [ENavMenuKey.Highlighter]: {
     title: $t('Highlighter'),
