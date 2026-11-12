@@ -207,11 +207,11 @@ test('The layout editor edits the dock and places Multichat in the main layout',
   t.is(await zoneText('[data-name=dock-preview] [id="S1"]'), 'Mini Feed');
   t.is(await zoneText('[data-name=dock-preview] [id="S2"]'), 'Chat');
   t.is(
-    await (await getClient().$('[data-name=dock-layout-Stacked]')).getAttribute('aria-pressed'),
+    await (await getClient().$('[data-name=dock-layout-stacked]')).getAttribute('aria-pressed'),
     'true',
   );
 
-  await click('[data-name=dock-layout-Single]');
+  await click('[data-name=dock-layout-single]');
   t.is((await getClient().$$(dockZones)).length, 1, 'The Single dock has one slot');
   t.is(await zoneText('[data-name=dock-preview] [id="S1"]'), 'Mini Feed');
 
@@ -236,5 +236,5 @@ test('The layout editor edits the dock and places Multichat in the main layout',
 
   // Logged out, the element in the main layout explains why it has nothing to show
   await focusMain();
-  await waitForDisplayed('span=Log in to use Multichat.');
+  await waitForDisplayed('span=Log in to use chat.');
 });

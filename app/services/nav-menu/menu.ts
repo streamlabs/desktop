@@ -166,7 +166,7 @@ export class NavMenuService extends PersistentStatefulService<INavMenuServiceSta
   get availableMenuItems() {
     return this.availableMenuItemsData.map(([item, data]) => ({
       key: item.key,
-      title: data.title,
+      title: resolveConfigValue(data.title, { layout: this.layoutService }),
       isVisible: this.isItemVisible(item, data),
       isLocked: this.isItemLocked(data),
     }));
