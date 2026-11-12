@@ -11,8 +11,14 @@ export function vstPluginFileName(pluginPath: unknown): string {
   return fileName;
 }
 
-export function sanitizeVstFilterSettings<T extends { [key: string]: unknown }>(settings: T): T {
+export function sanitizeVstFilterSettings<T extends { [key: string]: unknown }>(
+  settings: T,
+  platform: string = process.platform,
+): T {
   const sanitized: { [key: string]: unknown } = { ...settings };
+
+  // macOS identifies a plugin by its .vst bundle path, which the file name resolver does not handle.
+  if (platform !== 'win32') return sanitized as T;
 
   // chunk_data_path_v3 must stay non-empty or the saved preset is skipped on load
   for (const key of ['plugin_path', 'chunk_data_path_v3']) {

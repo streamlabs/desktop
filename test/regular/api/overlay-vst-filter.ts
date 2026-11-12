@@ -2,7 +2,7 @@ import { getApiClient } from '../../helpers/api-client';
 import { test, useWebdriver, TExecutionContext } from '../../helpers/webdriver';
 import { focusMain, focusWindow } from '../../helpers/modules/core';
 import type { OverlaysPersistenceService } from 'services/scene-collections/overlays';
-import type { ScenesService } from 'services/scenes';
+import type { ISceneItem, ScenesService } from 'services/scenes';
 import type { SourceFiltersService } from 'services/source-filters';
 import fs = require('fs');
 import path = require('path');
@@ -70,6 +70,7 @@ async function writeOverlay(overlayPath: string, filters: any[]) {
 }
 
 async function importedFilters(t: TExecutionContext, overlayPath: string, sceneId: string) {
+  // OverlaysPersistenceService is not exposed through the API client, so the import runs in the worker window.
   t.true(await focusWindow('worker'), 'worker window is available');
   try {
     await t.context.app.client.execute(filePath => {
@@ -79,21 +80,19 @@ async function importedFilters(t: TExecutionContext, overlayPath: string, sceneI
       ) as OverlaysPersistenceService;
       return overlays.loadOverlay(filePath);
     }, overlayPath);
-
-    return (await t.context.app.client.execute(id => {
-      const manager = (window as any).servicesManager;
-      const scenes = manager.getResource('ScenesService') as ScenesService;
-      const filters = manager.getResource('SourceFiltersService') as SourceFiltersService;
-      const [item] = scenes.views.getScene(id).getItems();
-      return filters.views.filtersBySourceId(item.sourceId, true).map(filter => ({
-        name: filter.name,
-        type: filter.type,
-        settings: Object.assign({}, filter.settings),
-      }));
-    }, sceneId)) as IFilterSnapshot[];
   } finally {
     await focusMain();
   }
+
+  const client = await getApiClient();
+  const scenesService = client.getResource<ScenesService>('ScenesService');
+  const filtersService = client.getResource<SourceFiltersService>('SourceFiltersService');
+  const item = scenesService.getModel().scenes[sceneId].nodes[0] as ISceneItem;
+  return filtersService.getFilters(item.sourceId).map(filter => ({
+    name: filter.name,
+    type: filter.type,
+    settings: { ...filter.settings },
+  })) as IFilterSnapshot[];
 }
 
 test('Importing an overlay keeps only the VST plugin file name', async t => {
