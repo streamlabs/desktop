@@ -18,6 +18,7 @@ import { SmartBrowserNode } from './smartBrowserSource';
 import { StreamlabelNode } from './streamlabel';
 import { TextNode } from './text';
 import { VideoNode } from './video';
+import { sanitizeVstFilterSettings } from './vst-filter-settings';
 import { WebcamNode } from './webcam';
 import { WidgetNode } from './widget';
 
@@ -379,7 +380,9 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
           sceneItem.sourceId,
           filter.type as TSourceFilterType,
           filter.name,
-          filter.settings,
+          filter.type === 'vst_filter'
+            ? sanitizeVstFilterSettings(filter.settings)
+            : filter.settings,
         );
       });
     }
