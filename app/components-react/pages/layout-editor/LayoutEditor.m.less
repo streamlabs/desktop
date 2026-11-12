@@ -2,30 +2,39 @@
 
 .top-bar {
   position: relative;
-  height: 64px;
   width: 100%;
-  padding: 8px;
+  height: 64px;
   display: flex;
   align-items: center;
   background-color: var(--section);
 
-  button {
+  &:global(.ant-form) {
+    padding: 8px;
+  }
+
+  & > *:last-child {
     margin-left: auto;
-    margin-right: 16px;
+    margin-right: 8px;
   }
 
-  .arrow {
-    transform: scaleX(-1);
-    height: 12px;
-    width: auto;
-    position: relative;
-    top: 4px;
+  .layout-select {
+    &:global(.ant-form-item) {
+      margin-bottom: 0px;
+    }
+
+    & :global(.ant-form-item-label) {
+      min-width: max-content;
+    }
+
+    & :global(.ant-form-item-control) {
+      width: 150px;
+    }
   }
 
-  .remove-button {
-    height: 32px;
+  .icon-button {
     width: 32px;
-    margin-left: 2px;
+    height: 32px;
+    margin-left: 16px;
   }
 }
 
@@ -207,19 +216,15 @@
 .dock-layout-option {
   .radius();
 
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   margin: 0 4px;
-  padding: 8px 4px;
+  padding: 6px 4px;
   font-size: 12px;
   border: 2px solid transparent;
   background-color: var(--border);
-  font-family: inherit;
-  line-height: inherit;
-  color: inherit;
-  appearance: none;
+  line-height: 1em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
   &:hover {
     cursor: pointer;
@@ -241,8 +246,8 @@
   display: flex;
   flex-direction: column;
   width: 24px;
-  height: 36px;
-  margin-bottom: 4px;
+  height: 24px;
+  margin-bottom: 6px;
 
   span {
     flex: 1;
@@ -251,6 +256,21 @@
 
     & + span {
       margin-top: 2px;
+    }
+  }
+
+  &.dock-position-icon {
+    flex-direction: row;
+    gap: 2px;
+
+    span + span {
+      flex: 2.5;
+      margin-top: 0;
+      opacity: 0.5;
+    }
+
+    &.right {
+      flex-direction: row-reverse;
     }
   }
 }

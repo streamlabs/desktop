@@ -56,7 +56,7 @@ function Toolbar() {
     <div className={styles.topBar}>
       <h2 className="studio-controls__label">{$t('Mini Feed')}</h2>
       {spinWheelExists && (
-        <Tooltip title={$t('Spin Wheel')} placement="bottom">
+        <Tooltip title={$t('Spin Wheel')} placement="bottomLeft">
           <i
             className="fas fa-chart-pie action-icon"
             onClick={() => RecentEventsService.actions.spinWheel()}
@@ -64,7 +64,7 @@ function Toolbar() {
         </Tooltip>
       )}
       {UserService.views.isTwitchAuthed && (
-        <Tooltip title={$t('Safe Mode')} placement="bottom">
+        <Tooltip title={$t('Safe Mode')} placement="bottomRight">
           <i
             className={cx('fa fa-shield-alt action-icon', {
               [styles.teal]: safeModeEnabled,
@@ -73,27 +73,27 @@ function Toolbar() {
           />
         </Tooltip>
       )}
-      <Tooltip title={$t('Popout Event Filtering Options')} placement="bottom">
+      <Tooltip title={$t('Popout Event Filtering Options')} placement="bottomRight">
         <i
           className="icon-filter action-icon"
           onClick={() => RecentEventsService.actions.showFilterMenu()}
         />
       </Tooltip>
       {mediaShareEnabled && (
-        <Tooltip title={$t('Popout Media Share Controls')} placement="bottom">
+        <Tooltip title={$t('Popout Media Share Controls')} placement="bottomRight">
           <i
             className="icon-music action-icon"
             onClick={() => RecentEventsService.actions.openRecentEventsWindow(true)}
           />
         </Tooltip>
       )}
-      <Tooltip title={pauseTooltip} placement="left">
+      <Tooltip title={pauseTooltip} placement="bottomRight">
         <i
           className={`${queuePaused ? 'icon-media-share-2' : 'icon-pause'} action-icon`}
           onClick={() => RecentEventsService.actions.toggleQueue()}
         />
       </Tooltip>
-      <Tooltip title={$t('Skip Alert')} placement="left">
+      <Tooltip title={$t('Skip Alert')} placement="bottomRight">
         <i
           className="icon-skip action-icon"
           onClick={() => RecentEventsService.actions.skipAlert()}
@@ -105,7 +105,7 @@ function Toolbar() {
             ? $t('Disable Chat Box Notifications')
             : $t('Enable Chat Box Notifications')
         }
-        placement="left"
+        placement="bottomRight"
       >
         <i
           className={cx('action-icon', {
@@ -115,7 +115,7 @@ function Toolbar() {
           onClick={() => RecentEventsService.actions.toggleMuteChatNotifs()}
         />
       </Tooltip>
-      <Tooltip title={$t('Mute Event Sounds')} placement="left">
+      <Tooltip title={$t('Mute Event Sounds')} placement="bottomRight">
         <i
           className={cx('action-icon', {
             [styles.red]: muted,

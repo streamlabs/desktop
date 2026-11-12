@@ -156,6 +156,6 @@
   "Destinations": "Destinations",
   "Not enabled": "Not enabled",
   "Multichat": "Multichat",
-  "Multichat is not supported for your platform.": "Multichat is not supported for your platform.",
-  "Log in to use Multichat.": "Log in to use Multichat."
+  "Chat is not supported for your platform.": "Chat is not supported for your platform.",
+  "Log in to use chat.": "Log in to use chat."
 }

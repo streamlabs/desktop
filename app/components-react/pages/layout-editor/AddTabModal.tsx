@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
@@ -23,14 +23,23 @@ const ICONS = [
 
 export default function AddTabModal() {
   const { LayoutService } = Services;
-  const { setShowModal, setCurrentTab } = useLayoutEditor();
+  const { setShowModal, setCurrentTab, isEditingTab, currentTab } = useLayoutEditor();
 
-  const [name, setName] = useState('');
-  const [icon, setIcon] = useState('');
+  const existingTab = useMemo(() => (isEditingTab ? LayoutService.views.currentTab : undefined), [
+    isEditingTab,
+    LayoutService.views.currentTab,
+  ]);
 
-  async function createTab() {
-    const newTabId = await LayoutService.actions.return.addTab(name, icon);
-    setCurrentTab(newTabId);
+  const [name, setName] = useState(existingTab?.name ?? '');
+  const [icon, setIcon] = useState(existingTab?.icon ?? ICONS[0].value);
+
+  async function saveTab() {
+    if (isEditingTab) {
+      await LayoutService.actions.return.updateTab(currentTab, name, icon);
+    } else {
+      const newTabId = await LayoutService.actions.return.addTab(name, icon);
+      setCurrentTab(newTabId);
+    }
     setShowModal(false);
   }
 
@@ -42,11 +51,11 @@ export default function AddTabModal() {
         </button>
         <button
           className="button button--action"
-          onClick={createTab}
+          onClick={saveTab}
           disabled={!icon || !name}
           style={{ marginLeft: '8px' }}
         >
-          {$t('Save New Tab')}
+          {$t('Save Layout')}
         </button>
       </>
     );
