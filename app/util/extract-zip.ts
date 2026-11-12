@@ -78,12 +78,12 @@ export async function extractZipInternalSymlinks(zipPath: string, dir: string) {
     });
 
     // link targets are only readable after extraction
-    const realRoot = fs.realpathSync(root);
+    const realRoot = fs.realpathSync.native(root);
     for (const link of symlinks) {
-      const target = path.resolve(path.dirname(link), fs.readlinkSync(link));
-      const realTarget = fs.existsSync(target) ? fs.realpathSync(target) : target;
+      // native realpath resolves the chain as the OS does; unresolvable links throw
+      const realTarget = fs.realpathSync.native(link);
 
-      if (!isInside(root, target) || !isInside(realRoot, realTarget)) {
+      if (!isInside(realRoot, realTarget)) {
         throw new Error(`Symlink "${path.relative(root, link)}" points outside of archive`);
       }
     }

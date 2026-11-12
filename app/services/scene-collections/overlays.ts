@@ -62,10 +62,8 @@ export class OverlaysPersistenceService extends Service {
   }
 
   async loadOverlay(overlayFilePath: string) {
-    const overlayName = path.parse(overlayFilePath).name;
-    const assetsPath = path.join(this.overlaysDirectory, overlayName);
-
     this.ensureOverlaysDirectory();
+    const assetsPath = fs.mkdtempSync(path.join(this.overlaysDirectory, 'overlay-'));
 
     try {
       await extractZipNoSymlinks(overlayFilePath, assetsPath);

@@ -58,10 +58,7 @@ test('overlay zip extracts normally', async t => {
 test('overlay zip with a symlink entry is rejected and nothing escapes', async t => {
   const { zipPath, outDir, outside, root } = setup();
   fs.writeFileSync(outside, 'original');
-  await makeZip(zipPath, [
-    { name: 'link', linkname: outside },
-    { name: 'link', content: 'overwritten' },
-  ]);
+  await makeZip(zipPath, [{ name: 'link', linkname: outside }]);
 
   await t.throwsAsync(extractZipNoSymlinks(zipPath, outDir), { message: /Symlink entry "link"/ });
 
@@ -139,9 +136,34 @@ test('vision zip with an escaping symlink is rejected and cleaned up', async t =
 
   const { zipPath, outDir, outside, root } = setup();
   fs.writeFileSync(outside, 'original');
+  await makeZip(zipPath, [{ name: 'link', linkname: '../../outside.txt' }]);
+
+  await t.throwsAsync(extractZipInternalSymlinks(zipPath, outDir));
+
+  t.is(fs.readFileSync(outside, 'utf8'), 'original');
+  t.false(fs.existsSync(outDir));
+  fs.rmSync(root, { recursive: true, force: true });
+});
+
+test('vision zip with a link chained through ".." is rejected and cleaned up', async t => {
+  if (process.platform === 'win32') {
+    try {
+      const probe = setup();
+      fs.symlinkSync('x', path.join(probe.root, 'probe'));
+      fs.rmSync(probe.root, { recursive: true, force: true });
+    } catch {
+      t.pass('symlink creation unavailable on this machine');
+      return;
+    }
+  }
+
+  const { zipPath, outDir, root } = setup();
+  const outside = path.join(root, 'out', 'outside.txt');
+  fs.mkdirSync(path.dirname(outside), { recursive: true });
+  fs.writeFileSync(outside, 'original');
   await makeZip(zipPath, [
-    { name: 'link', linkname: '../../outside.txt' },
-    { name: 'link', content: 'overwritten' },
+    { name: 'nested/up', linkname: '..' },
+    { name: 'escape', linkname: 'nested/up/../outside.txt' },
   ]);
 
   await t.throwsAsync(extractZipInternalSymlinks(zipPath, outDir));
