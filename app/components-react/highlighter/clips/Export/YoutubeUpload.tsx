@@ -6,7 +6,6 @@ import Form from 'components-react/shared/inputs/Form';
 import { Button, Progress, Tooltip, Alert, Dropdown } from 'antd';
 import { RadioInput } from 'components-react/shared/inputs/RadioInput';
 import { TPrivacyStatus } from 'services/platforms/youtube/uploader';
-import electron from 'electron';
 import { $t } from 'services/i18n';
 import * as remote from '@electron/remote';
 import VideoPreview from './VideoPreview';
@@ -188,7 +187,7 @@ export default function YoutubeUpload(props: { defaultTitle: string; close: () =
             style={{ marginLeft: 8, display: 'inline', cursor: 'pointer' }}
             onClick={() => {
               setUrlCopied(true);
-              electron.clipboard.writeText(url);
+              remote.clipboard.writeText(url);
             }}
           />
         </Tooltip>

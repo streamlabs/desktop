@@ -1,6 +1,6 @@
 import React from 'react';
 import { Alert, Button } from 'antd';
-import { clipboard } from 'electron';
+import * as remote from '@electron/remote';
 import { IPlatformComponentParams } from './PlatformSettingsLayout';
 import { TextInput, createBinding, InputComponent } from '../../../shared/inputs';
 import Form from '../../../shared/inputs/Form';
@@ -59,7 +59,7 @@ export const InstagramEditStreamInfo = InputComponent((p: Props) => {
 
 function PasteButton({ onPaste }: { onPaste: (text: string) => void }) {
   return (
-    <Button title={$t('Paste')} onClick={() => onPaste(clipboard.readText())}>
+    <Button title={$t('Paste')} onClick={async () => onPaste(await remote.clipboard.readText())}>
       <i className="fa fa-paste" />
     </Button>
   );

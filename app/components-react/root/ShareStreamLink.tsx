@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Services } from '../service-provider';
 import { $t } from 'services/i18n';
-import { clipboard } from 'electron';
+import * as remote from '@electron/remote';
 import { getPlatformService, TPlatform } from 'services/platforms';
 import { message } from 'antd';
 import { CloseOutlined, ShareAltOutlined } from '@ant-design/icons';
@@ -112,7 +112,7 @@ export const ShareStreamLink = () => {
 };
 
 const copyToClipboard = (link: string) => {
-  clipboard.writeText(link);
+  remote.clipboard.writeText(link);
   message.open({
     type: 'success',
     content: $t('Copied to clipboard'),

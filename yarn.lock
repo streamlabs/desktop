@@ -7304,15 +7304,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-chromedriver@npm:43.2.0":
-  version: 43.2.0
-  resolution: "electron-chromedriver@npm:43.2.0"
+"electron-chromedriver@npm:44.10.2":
+  version: 44.10.2
+  resolution: "electron-chromedriver@npm:44.10.2"
   dependencies:
     "@electron/get": ^2.0.1
     extract-zip: ^2.0.0
   bin:
     chromedriver: chromedriver.js
-  checksum: d3e4c7e3b4984ca8e0f35e45a4e8fc4509f09d35a6a60b31eec30cd21da278958dc8e61026c4828d3d0408521a16f68c0b03ec9e7cd71a227e0d3e6c59f2f9f5
+  checksum: e91d57789e467296abcc65fc06ae9fe3ed702739445568ac1f87a9945ec1f3703da5967c8b201cd1b9380d4e90315be2a48b4c6fc80b7fcefca7745ca4af3363
   languageName: node
   linkType: hard
 
@@ -7391,9 +7391,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron@npm:43.8.3":
-  version: 43.8.3
-  resolution: "electron@npm:43.8.3"
+"electron@npm:44.10.2":
+  version: 44.10.2
+  resolution: "electron@npm:44.10.2"
   dependencies:
     "@electron-internal/extract-zip": ^1.0.1
     "@electron/get": ^5.0.0
@@ -7401,7 +7401,7 @@ __metadata:
   bin:
     electron: cli.js
     install-electron: install.js
-  checksum: 70cd98090c9ea8cdc5ba3c36f51adda6b0a693f5676b189258ab9a36f92838657684b1175c76ece3f7857e94272a162cb1e51702d1f8d1c27787ab37d8f780a8
+  checksum: dea2e627baf6b8cb7241f220881cfc04e50697315d2bd4eb3b80aa0cd0d136e4943bb767db6ea46b6ddbd1086c4e14948b31a48be6a2a419b089464bbd67b43a
   languageName: node
   linkType: hard
 
@@ -15200,9 +15200,9 @@ __metadata:
     css-loader: 2.1.1
     deasync: 0.1.31
     dotenv: 8.2.0
-    electron: 43.8.3
+    electron: 44.10.2
     electron-builder: 26.15.7
-    electron-chromedriver: 43.2.0
+    electron-chromedriver: 44.10.2
     electron-devtools-installer: 3.1.1
     electron-react-devtools: ^0.5.3
     electron-updater: ^4.2.0
