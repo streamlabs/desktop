@@ -47,9 +47,7 @@ function LayoutPicker() {
 }
 
 function DockLayoutPicker() {
-  const { CustomizationService } = Services;
-  const { dockLayout, changeDockLayout } = useLayoutEditor();
-  const { leftDock } = useRealmObject(CustomizationService.state);
+  const { dockLayout, changeDockLayout, leftDock, setLeftDock } = useLayoutEditor();
 
   return (
     <div>
@@ -83,7 +81,7 @@ function DockLayoutPicker() {
           name="dock-position-left"
           label={$t('Left')}
           active={leftDock}
-          onClick={() => CustomizationService.actions.setLeftDock(true)}
+          onClick={() => setLeftDock(true)}
         >
           <div className={cx(styles.dockLayoutIcon, styles.dockPositionIcon)}>
             <span />
@@ -94,7 +92,7 @@ function DockLayoutPicker() {
           name="dock-position-right"
           label={$t('Right')}
           active={!leftDock}
-          onClick={() => CustomizationService.actions.setLeftDock(false)}
+          onClick={() => setLeftDock(false)}
         >
           <div className={cx(styles.dockLayoutIcon, styles.dockPositionIcon, styles.right)}>
             <span />

@@ -34,6 +34,8 @@ class LayoutEditorModule {
     layoutCustomized: !!this.layoutService.views.currentTab.layoutCustomized,
     /** Whether elements were dragged into the dock, which stops the dock defaults. */
     dockCustomized: !!this.layoutService.views.currentTab.dockCustomized,
+    /** The dock position being edited, which is only applied to the app on save. */
+    leftDock: Services.CustomizationService.state.leftDock,
   });
 
   private get layoutService() {
@@ -117,6 +119,39 @@ class LayoutEditorModule {
 
     this.state.setSlotCache(cache);
     this.setSlottedElements(fillEmptySlots(layout, dockLayout, slotted));
+  }
+
+  /**
+   * Stages the Stacked dock with Mini Feed over Chat, which the Dock Layouts tip advertises, even
+   * if that moves them out of the main layout. A layout that is still the old default entirely
+   * becomes the new default entirely. Nothing is saved until the editor saves.
+   */
+  stageStackedDock() {
+    const { currentLayout, layoutCustomized, dockCustomized } = this.state;
+    this.state.setSlotCache({});
+
+    if (currentLayout === ELayout.TwoThenThree && !layoutCustomized && !dockCustomized) {
+      this.changeShape(ELayout.Default, EDockLayout.Stacked);
+      return;
+    }
+
+    const staged: TSlottedElements = { ...this.state.slottedElements };
+    const unslotted = { slot: (null as unknown) as TLayoutSlot };
+    (Object.keys(staged) as ELayoutElement[]).forEach(el => {
+      if (isDockSlot(staged[el]?.slot)) staged[el] = { ...unslotted };
+    });
+    staged[ELayoutElement.Minifeed] = { slot: 'S1' };
+    staged[ELayoutElement.Multichat] = { slot: 'S2' };
+    this.setSlottedElements(staged);
+    // Empty main slots, such as the one Mini Feed left, are filled
+    this.changeShape(currentLayout, EDockLayout.Stacked);
+  }
+
+  /** Changes both layouts at once, so the slots follow the defaults of the pending shape. */
+  private changeShape(layout: ELayout, dockLayout: EDockLayout) {
+    this.applySlotShape(layout, dockLayout);
+    this.state.setCurrentLayout(layout);
+    this.state.setDockLayout(dockLayout);
   }
 
   changeLayout(layout: ELayout) {
