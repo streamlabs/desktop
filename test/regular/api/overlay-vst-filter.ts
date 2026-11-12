@@ -95,7 +95,10 @@ async function importedFilters(t: TExecutionContext, overlayPath: string, sceneI
   })) as IFilterSnapshot[];
 }
 
-test('Importing an overlay keeps only the VST plugin file name', async t => {
+// sl-vst and the file name reduction are Windows-only
+const windowsTest = process.platform === 'win32' ? test : test.skip;
+
+windowsTest('Importing an overlay keeps only the VST plugin file name', async t => {
   const overlayPath = path.join(t.context.cacheDir, 'vst-filter.overlay');
   const sceneId = await writeOverlay(overlayPath, [
     {
