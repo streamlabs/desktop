@@ -65,17 +65,19 @@ export class OverlaysPersistenceService extends Service {
     this.ensureOverlaysDirectory();
     const assetsPath = fs.mkdtempSync(path.join(this.overlaysDirectory, 'overlay-'));
 
+    let root: ReturnType<typeof parse>;
+
+    // Once root.load starts, the scene collection references these assets, so only
+    // failures before that point remove the directory.
     try {
       await extractZipNoSymlinks(overlayFilePath, assetsPath);
+      const data = fs.readFileSync(path.join(assetsPath, 'config.json')).toString();
+      root = parse(data, NODE_TYPES);
     } catch (e: unknown) {
       fs.rmSync(assetsPath, { recursive: true, force: true });
       throw e;
     }
 
-    const configPath = path.join(assetsPath, 'config.json');
-    const data = fs.readFileSync(configPath).toString();
-
-    const root = parse(data, NODE_TYPES);
     await root.load({ assetsPath });
 
     this.scenesService.makeSceneActive(this.scenesService.views.scenes[0].id);

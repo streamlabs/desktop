@@ -31,6 +31,18 @@ async function makeZip(zipPath: string, entries: IEntry[]) {
   await closed;
 }
 
+function canCreateSymlinks() {
+  const probe = setup();
+  try {
+    fs.symlinkSync('x', path.join(probe.root, 'probe'));
+    return true;
+  } catch {
+    return false;
+  } finally {
+    fs.rmSync(probe.root, { recursive: true, force: true });
+  }
+}
+
 function setup() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'extract-zip-test-'));
   return {
@@ -167,6 +179,29 @@ test('vision zip with a link chained through ".." is rejected and cleaned up', a
   ]);
 
   await t.throwsAsync(extractZipInternalSymlinks(zipPath, outDir));
+
+  t.is(fs.readFileSync(outside, 'utf8'), 'original');
+  t.false(fs.existsSync(outDir));
+  fs.rmSync(root, { recursive: true, force: true });
+});
+
+test('vision zip entry that writes through an earlier symlink is rejected and cleaned up', async t => {
+  if (!canCreateSymlinks()) {
+    t.log('SKIPPED: symlink creation unavailable on this machine');
+    t.pass();
+    return;
+  }
+
+  const { zipPath, outDir, outside, root } = setup();
+  fs.writeFileSync(outside, 'original');
+  await makeZip(zipPath, [
+    { name: 'link', linkname: '../../outside.txt' },
+    { name: 'link', content: 'replaced' },
+  ]);
+
+  await t.throwsAsync(extractZipInternalSymlinks(zipPath, outDir), {
+    message: /Entry "link" overwrites a symlink/,
+  });
 
   t.is(fs.readFileSync(outside, 'utf8'), 'original');
   t.false(fs.existsSync(outDir));
