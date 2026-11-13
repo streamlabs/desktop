@@ -298,37 +298,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     );
 
     await obsUserPluginsService.initialize();
-    // Plugins crash in mtx_do_lock when msvcp140.dll is older than 14.40, so check before
-    // OBS_API_initAPI loads them. GetVCRuntimeInfo returns undefined if the IPC call fails.
-    const vcRuntimeVersion = obs.NodeObs.GetVCRuntimeInfo();
-    if (vcRuntimeVersion?.outdated) {
-      await remote.dialog.showMessageBox(Utils.getMainWindow(), {
-        title: $t('System error message'),
-        type: 'error',
-        message:
-          $t(
-            'Streamlabs Desktop requires a newer version of the Microsoft Visual C++ Redistributables than the one currently installed on your system. Version: ',
-          ) + vcRuntimeVersion.version,
-        detail: $t('You will now be directed to the download page.'),
-        buttons: [$t('OK')],
-      });
-
-      try {
-        await remote.shell.openExternal('https://obsproject.com/visual-studio-2022-runtimes');
-      } catch (error: unknown) {
-        console.error('Failed to open Visual C++ Redistributables download page', error);
-      }
-
-      // Same shutdown as a failed OBS_API_initAPI below.
-      ipcRenderer.send('unregister-in-crash-handler', { pid: process.pid });
-
-      obs.NodeObs.InitShutdownSequence();
-      obs.IPC.disconnect();
-
-      electron.ipcRenderer.send('shutdownComplete');
-      return;
-    }
-
     // Initialize OBS API
     const apiResult = obs.NodeObs.OBS_API_initAPI({
       language: 'en-US',
