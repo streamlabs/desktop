@@ -21,6 +21,7 @@ const base = {
     'vendor',
     'app/i18n',
     'app/util/shutdown-coordinator.js',
+    'app/util/vc-runtime-check.js',
     'media/images/game-capture',
     'updater/build/bootstrap.js',
     'updater/build/bundle-updater.js',
