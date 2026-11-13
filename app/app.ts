@@ -481,6 +481,7 @@ if (Utils.isMainWindow()) {
 
     const diagnosticsService = getResource<DiagnosticsService>('DiagnosticsService');
 
+    // Note: this code path only displays when the keyboard shortcut is used such as Ctrl+Shift+Alt+D.
     diagnosticsService.actions.return
       .uploadReport()
       .then(r => {
