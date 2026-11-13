@@ -134,9 +134,7 @@ export async function ensureBinary(): Promise<string> {
     throw new Error(`Checksum mismatch for ${ZIP_NAME}: expected ${ZIP_SHA256}, got ${actual}`);
   }
 
-  await new Promise<void>((resolve, reject) => {
-    extract(zipPath, { dir: EXTRACT_DIR }, err => (err ? reject(err) : resolve()));
-  });
+  await extract(zipPath, { dir: EXTRACT_DIR });
 
   if (!fs.existsSync(exePath)) {
     const nested = findExe(EXTRACT_DIR);
