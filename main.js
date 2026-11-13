@@ -409,15 +409,23 @@ async function verifyVCRuntime() {
   console.log(`VC runtime: ${result.version} (${result.path || 'not found'})`);
   if (!result.outdated) return true;
 
+  const isPrivateRuntime = result.path === path.join(osnDir, 'msvcp140.dll');
+
   dialog.showMessageBoxSync({
     title: 'System error message',
     type: 'error',
     message:
       'Streamlabs Desktop requires a newer version of the Microsoft Visual C++ Redistributables ' +
       `than the one currently installed on your system. Version: ${result.version}`,
-    detail: 'You will now be directed to the download page.',
+    detail: isPrivateRuntime
+      ? `Outdated runtime: ${result.path}\n\n` +
+        'Repair your Streamlabs Desktop installation to replace this application-local runtime. ' +
+        'Installing the system redistributable alone will not replace this file.'
+      : `Runtime: ${result.path || 'not found'}\n\nYou will now be directed to the download page.`,
     buttons: ['OK'],
   });
+
+  if (isPrivateRuntime) return false;
 
   try {
     await shell.openExternal(VC_RUNTIME_DOWNLOAD_URL);
