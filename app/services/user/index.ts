@@ -1482,6 +1482,13 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       service.authWindowOptions,
     );
 
+    if (!auth) {
+      // Auth failed (e.g. the backend rejected the account), don't continue the
+      // login with stale auth state
+      this.SET_AUTH_STATE(EAuthProcessState.Idle);
+      return EPlatformCallResult.Error;
+    }
+
     this.SET_AUTH_STATE(EAuthProcessState.Loading);
     this.SET_IS_RELOG(false);
 
@@ -1493,16 +1500,10 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
 
       result = await this.login(service, auth);
     } else {
-      if (auth) {
-        const linkedPlatform = auth.platforms[auth.primaryPlatform];
-        this.UPDATE_PLATFORM(linkedPlatform);
-        this.platformAuthUpdated.next(linkedPlatform.type);
-        result = EPlatformCallResult.Success;
-      } else {
-        // Auth failed (e.g. the backend rejected the account), don't continue the
-        // login with stale auth state
-        result = EPlatformCallResult.Error;
-      }
+      const linkedPlatform = auth.platforms[auth.primaryPlatform];
+      this.UPDATE_PLATFORM(linkedPlatform);
+      this.platformAuthUpdated.next(linkedPlatform.type);
+      result = EPlatformCallResult.Success;
     }
 
     this.SET_AUTH_STATE(EAuthProcessState.Idle);

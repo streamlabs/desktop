@@ -281,8 +281,13 @@ export class LoginModule {
             remote.shell.openExternal('https://twitch.tv/settings/security');
           }
         });
+    } else if (result === EPlatformCallResult.Error) {
+      remote.dialog.showMessageBox({
+        type: 'error',
+        message: $t('An unknown error occurred. Please try again.'),
+        title: $t('Authentication Error'),
+      });
     } else {
-      // Currently we do not have special handling for generic errors
       onSuccess();
     }
   }
