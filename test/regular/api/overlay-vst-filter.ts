@@ -165,9 +165,7 @@ windowsTest('Exporting an overlay writes only the VST plugin file name', async t
     await focusMain();
   }
 
-  await new Promise<void>((resolve, reject) => {
-    extractZip(overlayPath, { dir: extractDir }, err => (err ? reject(err) : resolve()));
-  });
+  await extractZip(overlayPath, { dir: extractDir });
   const configText = fs.readFileSync(path.join(extractDir, 'config.json'), 'utf8');
   const vstFilters: any[] = [];
   JSON.parse(configText, (key, value) => {
