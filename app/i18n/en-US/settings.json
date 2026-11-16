@@ -337,5 +337,9 @@
   "Unload": "Unload",
   "Invalid Scene Collection": "Invalid Scene Collection",
   "Successfully converted scene collection.": "Successfully converted scene collection.",
-  "Output Scene": "Output Scene"
+  "Output Scene": "Output Scene",
+  "Show an indicator on the taskbar icon while an output is active": "Show an indicator on the taskbar icon while an output is active",
+  "Show an indicator on the Dock icon while an output is active": "Show an indicator on the Dock icon while an output is active",
+  "Appears while streaming, recording, the replay buffer or the virtual camera is running": "Appears while streaming, recording, the replay buffer or the virtual camera is running",
+  "Output active": "Output active"
 }

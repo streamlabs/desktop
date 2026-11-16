@@ -10,6 +10,7 @@ import { getDefined } from '../../../util/properties-type-guards';
 import { useVuex } from 'components-react/hooks';
 import Tooltip from 'components-react/shared/Tooltip';
 import { useRealmObject } from 'components-react/hooks/realm';
+import { getOS, OS } from 'util/operating-systems';
 
 export function GeneralSettings() {
   return (
@@ -50,6 +51,7 @@ function ExtraSettings() {
     StreamlabelsService,
     RecordingModeService,
     ObsImporterService,
+    TaskbarIndicatorService,
   } = Services;
   const isLoggedIn = UserService.isLoggedIn;
   const isFacebook = isLoggedIn && getDefined(UserService.platform).type === 'facebook';
@@ -57,8 +59,9 @@ function ExtraSettings() {
   const disableHAFilePath = path.join(AppService.appDataDirectory, 'HADisable');
   const [disableHA, setDisableHA] = useState(() => fs.existsSync(disableHAFilePath));
   const [obsInstalled] = useState(() => ObsImporterService.views.isOBSinstalled());
-  const { recordingMode } = useVuex(() => ({
+  const { recordingMode, taskbarIndicator } = useVuex(() => ({
     recordingMode: RecordingModeService.views.isRecordingModeEnabled,
+    taskbarIndicator: TaskbarIndicatorService.views.enabled,
   }));
 
   const updateStreamInfoOnLive = useRealmObject(CustomizationService.state).updateStreamInfoOnLive;
@@ -117,6 +120,19 @@ function ExtraSettings() {
           label={$t('Disable live streaming features (Recording Only mode)')}
           value={recordingMode}
           onChange={RecordingModeService.actions.setRecordingMode}
+        />
+        <CheckboxInput
+          label={
+            getOS() === OS.Mac
+              ? $t('Show an indicator on the Dock icon while an output is active')
+              : $t('Show an indicator on the taskbar icon while an output is active')
+          }
+          tooltip={$t(
+            'Appears while streaming, recording, the replay buffer or the virtual camera is running',
+          )}
+          value={taskbarIndicator}
+          onChange={TaskbarIndicatorService.actions.setEnabled}
+          name="taskbar_indicator"
         />
 
         <div className="actions">
