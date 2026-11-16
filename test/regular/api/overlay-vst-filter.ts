@@ -36,7 +36,7 @@ async function writeOverlay(overlayPath: string, filters: any[]) {
             items: [
               {
                 id: 'vst-item',
-                name: 'Filtered image',
+                name: 'Filtered media',
                 sceneNodeType: 'item',
                 x: 0,
                 y: 0,
@@ -44,7 +44,13 @@ async function writeOverlay(overlayPath: string, filters: any[]) {
                 scaleY: 0.1,
                 visible: true,
                 locked: false,
-                content: { nodeType: 'ImageNode', schemaVersion: 1, filename: 'sun.png' },
+                // libobs drops audio filters such as vst_filter on sources without audio
+                content: {
+                  nodeType: 'VideoNode',
+                  schemaVersion: 1,
+                  settings: {},
+                  filename: 'alertbox.mp4',
+                },
                 filters,
               },
             ],
@@ -62,7 +68,9 @@ async function writeOverlay(overlayPath: string, filters: any[]) {
     archive.on('error', reject);
     archive.pipe(output);
     archive.append(JSON.stringify(config), { name: 'config.json' });
-    archive.file(path.resolve('test/data/sources-files/images/sun.png'), { name: 'sun.png' });
+    archive.file(path.resolve('test/data/sources-files/media/alertbox.mp4'), {
+      name: 'alertbox.mp4',
+    });
     archive.finalize();
   });
 
