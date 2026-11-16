@@ -144,7 +144,9 @@ windowsTest('Exporting an overlay writes only the VST plugin file name', async t
   const filtersService = client.getResource<SourceFiltersService>('SourceFiltersService');
   const item = scenesService
     .createScene('VST Export Scene')
-    .createAndAddSource('VST Export Source', 'color_source');
+    .createAndAddSource('VST Export Source', 'ffmpeg_source', {
+      local_file: path.resolve('test/data/sources-files/media/alertbox.mp4'),
+    });
   filtersService.add(item.sourceId, 'vst_filter', 'VST 2.x Plug-in', {
     plugin_path: localPath,
     chunk_data_path_v3: localPath,
