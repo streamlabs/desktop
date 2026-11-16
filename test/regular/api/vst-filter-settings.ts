@@ -69,9 +69,18 @@ test('sanitizeVstFilterSettingsForExport drops legacy chunk keys that embed the 
     chunk_data: 'C:\\Users\\me\\Foo.dll|BBBB',
   };
 
-  t.deepEqual(sanitizeVstFilterSettingsForExport(settings), {
+  t.deepEqual(sanitizeVstFilterSettingsForExport(settings, 'win32'), {
     plugin_path: 'Foo.dll',
     chunk_data_path_v3: 'Foo.dll',
     chunk_data_0_v3: 'AAAA',
   });
+});
+
+test('sanitizeVstFilterSettingsForExport leaves macOS settings unchanged', t => {
+  const settings = {
+    plugin_path: '/Library/Audio/Plug-Ins/VST/Foo.vst',
+    chunk_data: 'AAAA',
+  };
+
+  t.deepEqual(sanitizeVstFilterSettingsForExport(settings, 'darwin'), settings);
 });

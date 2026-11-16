@@ -134,32 +134,31 @@ windowsTest('Importing an overlay keeps only the VST plugin file name', async t 
   t.is(gain.settings.db, 3, 'other filter types import unchanged');
 });
 
-test('Exporting an overlay writes only the VST plugin file name', async t => {
+windowsTest('Exporting an overlay writes only the VST plugin file name', async t => {
   const localPath = 'C:\\Users\\streamer\\VstPlugins\\Foo.dll';
   const overlayPath = path.join(t.context.cacheDir, 'vst-export.overlay');
   const extractDir = path.join(t.context.cacheDir, 'vst-export');
 
+  const client = await getApiClient();
+  const scenesService = client.getResource<ScenesService>('ScenesService');
+  const filtersService = client.getResource<SourceFiltersService>('SourceFiltersService');
+  const item = scenesService
+    .createScene('VST Export Scene')
+    .createAndAddSource('VST Export Source', 'color_source');
+  filtersService.add(item.sourceId, 'vst_filter', 'VST 2.x Plug-in', {
+    plugin_path: localPath,
+    chunk_data_path_v3: localPath,
+    chunk_data_v2: `${localPath}|AAAA`,
+  });
+
   t.true(await focusWindow('worker'), 'worker window is available');
   try {
-    await t.context.app.client.execute(
-      (filePath, vstPath) => {
-        const manager = (window as any).servicesManager;
-        const scenes = manager.getResource('ScenesService') as ScenesService;
-        const filters = manager.getResource('SourceFiltersService') as SourceFiltersService;
-        const scene = scenes.createScene('VST Export Scene');
-        const item = scene.createAndAddSource('VST Export Source', 'color_source');
-        filters.add(item.sourceId, 'vst_filter', 'VST 2.x Plug-in', {
-          plugin_path: vstPath,
-          chunk_data_path_v3: vstPath,
-          chunk_data_v2: `${vstPath}|AAAA`,
-        });
-        return (manager.getResource(
-          'OverlaysPersistenceService',
-        ) as OverlaysPersistenceService).saveOverlay(filePath);
-      },
-      overlayPath,
-      localPath,
-    );
+    await t.context.app.client.execute(filePath => {
+      const manager = (window as any).servicesManager;
+      return (manager.getResource(
+        'OverlaysPersistenceService',
+      ) as OverlaysPersistenceService).saveOverlay(filePath);
+    }, overlayPath);
   } finally {
     await focusMain();
   }
