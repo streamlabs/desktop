@@ -20,7 +20,7 @@ import { SelectionService } from 'services/selection';
 import uuid from 'uuid/v4';
 import { SceneSourceNode } from './nodes/overlays/scene';
 import { AppService } from 'services/app';
-import { importExtractZip } from '../../util/slow-imports';
+import { extractZipNoSymlinks } from 'util/extract-zip';
 import { downloadFile, IDownloadProgress } from 'util/requests';
 import { NodeMapNode } from './nodes/node-map';
 import { SmartBrowserNode } from './nodes/overlays/smartBrowserSource';
@@ -62,27 +62,22 @@ export class OverlaysPersistenceService extends Service {
   }
 
   async loadOverlay(overlayFilePath: string) {
-    const overlayName = path.parse(overlayFilePath).name;
-    const assetsPath = path.join(this.overlaysDirectory, overlayName);
-
     this.ensureOverlaysDirectory();
+    const assetsPath = fs.mkdtempSync(path.join(this.overlaysDirectory, 'overlay-'));
 
-    await new Promise<void>(async (resolve, reject) => {
-      // import of extractZip takes to much time on startup, so import it dynamically
-      const extractZip = (await importExtractZip()).default;
-      extractZip(overlayFilePath, { dir: assetsPath }, err => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
+    let root: ReturnType<typeof parse>;
 
-    const configPath = path.join(assetsPath, 'config.json');
-    const data = fs.readFileSync(configPath).toString();
+    // Once root.load starts, the scene collection references these assets, so only
+    // failures before that point remove the directory.
+    try {
+      await extractZipNoSymlinks(overlayFilePath, assetsPath);
+      const data = fs.readFileSync(path.join(assetsPath, 'config.json')).toString();
+      root = parse(data, NODE_TYPES);
+    } catch (e: unknown) {
+      fs.rmSync(assetsPath, { recursive: true, force: true });
+      throw e;
+    }
 
-    const root = parse(data, NODE_TYPES);
     await root.load({ assetsPath });
 
     this.scenesService.makeSceneActive(this.scenesService.views.scenes[0].id);
