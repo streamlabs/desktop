@@ -36,7 +36,7 @@ const gameCaptureDependencies = [
 // expected OBS Project, LLC certificate identity.
 async function verifyGameCaptureBinarySignatures(dir) {
   for (const bin of gameCaptureDependencies) {
-    const filePath = path.join(dir, 'data', 'obs-plugins', 'win-capture', bin);
+    const filePath = path.join(dir, 'core', 'win-capture', 'data', bin);
     try {
       await fs.access(filePath);
     } catch {
