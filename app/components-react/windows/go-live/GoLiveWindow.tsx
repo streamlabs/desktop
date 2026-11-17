@@ -207,8 +207,9 @@ function ModalFooter() {
           promptUseDefaultCodec();
         } else {
           setStreamShift(true);
-          goLive();
-          close();
+          // Close only after go live function has finished because closing the window destroys the Go Live form state,
+          // which stops the function prematurely because the values no longer exist.
+          goLive().then(() => close());
         }
       },
       cancelBtnText: $t('Cancel'),
