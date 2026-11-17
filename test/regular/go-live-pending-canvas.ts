@@ -79,6 +79,7 @@ for (const unattended of [false, true]) {
               SET_GO_LIVE_SETTINGS() {},
               UPDATE_STREAM_INFO() {},
               getIsStreamingStatus: () => false,
+              throwIfPlatformCodecIncompatible() {},
               async setPlatformSettings() { calls.push('platform'); },
               async runCheck(_name, action) { await action(); },
               async finishStartStreaming() {

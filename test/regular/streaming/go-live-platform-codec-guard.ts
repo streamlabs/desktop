@@ -229,7 +229,7 @@ async function runGoLive(
               applyStreamOutputLimits: () => Promise.resolve(),
               setSettings: () => {},
             },
-            videoSettingsService: { contexts: {} },
+            videoSettingsService: { contexts: {}, flushPendingCanvasSettings: async () => {} },
             videoEncodingOptimizationService: optimizer,
             streamErrorCreated: { next: () => {} },
             // Mutations commit to the shared store, so every one goLive reaches is replaced.
