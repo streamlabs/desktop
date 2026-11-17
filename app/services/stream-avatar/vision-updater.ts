@@ -3,7 +3,7 @@ import path from 'path';
 import { downloadFile, IDownloadProgress, jfetch } from 'util/requests';
 import crypto from 'crypto';
 import { pipeline } from 'stream/promises';
-import { importExtractZip } from 'util/slow-imports';
+import { extractZipInternalSymlinks } from 'util/extract-zip';
 import { spawn } from 'child_process';
 import * as remote from '@electron/remote';
 import { OutputStreamHandler } from 'services/platform-apps/api/modules/native-components';
@@ -273,15 +273,6 @@ export class VisionUpdater {
 
   private async unzip(zipPath: string, unzipPath: string): Promise<void> {
     // extract the new version
-    const extractZip = (await importExtractZip()).default;
-    return new Promise<void>((resolve, reject) => {
-      extractZip(zipPath, { dir: unzipPath }, err => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
+    await extractZipInternalSymlinks(zipPath, unzipPath);
   }
 }
