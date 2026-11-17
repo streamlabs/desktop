@@ -4,17 +4,19 @@ Exposes Streamlabs Desktop to an AI agent as an [MCP](https://modelcontextprotoc
 streamer can say *"switch to Starting Soon, mute my mic, and tell me if anything looks wrong"* and
 have it happen.
 
-**Status: Phase 1.** 27 tools covering scene/source editing, layout, and stream control, with a
-provenance-based confirmation gate. **Requires** a two-line app change (see "Undo
-integration"). Not shipped, not packaged, not security-reviewed. See "Scope and limits"
-before pointing it at a real broadcast.
+**Status: Phase 1.5.** 28 tools covering scene/source editing, layout, stream control and
+screen capture, with a provenance-based confirmation gate. **Requires** two small app changes
+(see "Undo integration" and "Screen capture") and **Electron 43** (the `staging` branch). Not
+shipped, not packaged, not security-reviewed. See "Scope and limits" before pointing it at a
+real broadcast.
 
 ## How it works
 
 Streamlabs Desktop already runs a JSON-RPC 2.0 server on the Windows named pipe `\\.\pipe\slobs`
 (and TCP `127.0.0.1:28194`), auto-authorized for local clients — it's how Stream Deck and the
 Streamlabs mobile app drive it. This server is a **translation layer**: it speaks MCP to the agent
-and that JSON-RPC to the app. It requires **no changes to Streamlabs Desktop itself**.
+and that JSON-RPC to the app. Apart from the two small app changes noted below, everything
+lives in this folder.
 
 ```
 Claude Code  ──stdio/MCP──>  sld-mcp  ──named pipe / TCP──>  Streamlabs Desktop
@@ -63,7 +65,7 @@ that writes into `tools.include`, so these boundaries are what a user chooses be
 
 | Group | Tools |
 | --- | --- |
-| reads | `get_stream_state`, `get_health`, `get_scene`, `get_source_settings`, `list_source_types`, `preflight_check` |
+| reads | `get_stream_state`, `get_health`, `get_scene`, `get_source_settings`, `list_source_types`, `preflight_check`, `capture_screen` |
 | performance | `switch_scene`, `set_audio`, `set_item_visibility`, `save_replay`, `undo_last_edit` |
 | layout | `set_item_transform`, `reorder_item`, `group_items` |
 | sources | `add_source`, `set_source_settings`, `add_filter`, `remove_filter` |
@@ -200,11 +202,13 @@ Measured: ~1.2 KB, ~70 ms, 6 round-trips cold.
 
 ## Scope and limits
 
-- **The agent cannot see the rendered output.** There is no frame-capture API: `capturePage` appears
-  nowhere in the app, and OBS renders into a child native window composited by the OS, which
-  Chromium's `capturePage()` would return as a black rectangle. The agent reasons over the pixel
-  rects and the `warnings` array. Never let it switch scenes or go live without a human watching the
-  preview.
+- **A screenshot is for judgment, not measurement.** `capture_screen` shows the preview scaled
+  down, with editor outlines and selection handles. Exact geometry still comes from the rects.
+- **Capture needs the window on screen.** Covered by other windows works; minimized fails with
+  an explicit error (Windows Graphics Capture cannot capture a minimized window). Windows only.
+- **Capture needs Hermes ≥ v0.13.0 (2026.5.7) and a vision-capable main model.** Older Hermes
+  silently dropped MCP image blocks; a text-only model gets an auxiliary model's description of
+  the image instead of the image. Neither failure announces itself.
 - **No push.** MCP servers can't interrupt a model mid-turn, so events are buffered and surfaced via
   `newEvents` on the next `get_stream_state` / `get_health`. Reactive-on-demand works well;
   continuous monitoring needs a driver loop — Hermes' native scheduled automation, or Claude
@@ -220,24 +224,38 @@ Measured: ~1.2 KB, ~70 ms, 6 round-trips cold.
   convenient and puts a language model behind it. Productization needs real auth on the pipe, an
   explicit in-app opt-in, and a visible "an AI assistant is connected" indicator.
 
+## Screen capture
+
+`capture_screen` returns a JPEG of the Streamlabs window, preview included, plus a second image
+when a dialog is open. It lives in an internal app service, `app/services/capture/capture.ts`,
+registered in `app/app-services.ts` and reached over the pipe through the internal-service
+fallback — deliberately not in the documented external API.
+
+How it gets the OBS preview, which is the hard part: the preview is a native child window
+rendered by another process, so Chromium's own capture of its window shows an empty hole there.
+
+- `getSources` thumbnails show the hole.
+- A stream of `getMediaSourceId()`'s id, `window:<HWND>:1`, shows the hole too. The nonzero
+  last field marks the window as Chromium's own, so Chromium copies its own compositor output.
+- The same id rewritten to **`window:<HWND>:0`** makes Chromium capture it like a foreign
+  window, through Windows Graphics Capture, which sees the whole composited window.
+
+Electron 29 (master) cannot do this at all: it never enumerates the current process's own
+windows on Windows ([electron#36037](https://github.com/electron/electron/issues/36037)).
+Electron 43 fixes that in its own source.
+
+The frame travels by file: the app writes it under `<userData>/captures/` and returns the path,
+and this server reads it, deletes it, and inlines it as an `image` block. The path never reaches
+the agent, which may be sandboxed. Base64 never enters the JSON-RPC response, where `redact.ts`
+would pattern-match it.
+
+Capture is **ungated**, like the other reads: anything local can already pull the stream key off
+the pipe, so a screenshot does not widen the attack surface. The Settings window is still never
+captured, since it renders the stream key in plain text.
+
 ## Next
 
-**Phase 1.5 — screen capture**, gated on two cheap experiments that should run before any code:
-
-1. Does Hermes forward MCP `image` content blocks to a vision model? Image support is not a
-   negotiated capability, so it cannot be feature-detected — point Hermes at a stub tool
-   returning a tiny PNG and see whether the model can describe it. If not, capture is inert.
-2. Does Electron 29's `desktopCapturer` return real pixels in the OBS preview region, or a
-   black rectangle? OBS renders into a native child HWND via a D3D swap chain from a separate
-   process, so this depends on Chromium's WGC window capturer being active. If it is black,
-   try `app.commandLine.appendSwitch('enable-features', 'AllowWgcWindowCapturer')`.
-
-The design if both pass: an internal `CaptureService` writes a downscaled PNG to
-`<userData>/captures/`, returns the path, and the MCP server reads and base64s it into an
-`image` content block — disk is the app↔server transport, because Hermes agents may run
-sandboxed with no host filesystem. Capture is the one read that is **not** free: it reads the
-user's screen rather than app state, bypasses `redact.ts` entirely, and always confirms.
-
-**Phase 2 — OBS canvas capture**, needed only if experiment 2 fails. Preference order: an
-offscreen `gs_texrender_t` readback inside osn; a Windows shared texture mirroring the
-existing macOS `OBS_content_createIOSurface`; or WGC against a dedicated chrome-free display.
+**True program output** — only needed if a chrome-free, full-resolution frame of the canvas
+matters, or capture must work while minimized. In order: the virtual camera read through the
+bundled ffmpeg's `dshow` input; `ddagrab` cropped to the preview; an offscreen readback inside
+obs-studio-node.

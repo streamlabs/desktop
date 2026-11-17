@@ -18,7 +18,15 @@
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
 import { log } from './log.js';
+
+/**
+ * How long the streamer has to answer. Matches Hermes' own elicitation timeout -- without an
+ * explicit value the SDK applies its 60s request default and cuts the prompt off at a fifth
+ * of the time the client would have waited.
+ */
+const CONFIRM_TIMEOUT_MS = 300_000;
 
 export type RequestedBy = 'user' | 'agent';
 
@@ -75,13 +83,27 @@ export class Confirmer {
 
     let result: { action: string };
     try {
-      result = await this.server.server.elicitInput({
-        message,
-        // A pure confirmation: the accept/decline action IS the answer, so no fields.
-        requestedSchema: { type: 'object', properties: {} },
-      });
+      result = await this.server.server.elicitInput(
+        {
+          message,
+          // A pure confirmation: the accept/decline action IS the answer, so no fields.
+          requestedSchema: { type: 'object', properties: {} },
+        },
+        { timeout: CONFIRM_TIMEOUT_MS },
+      );
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
+      if (e instanceof McpError && e.code === ErrorCode.RequestTimeout) {
+        log('gate: confirmation timed out');
+        return {
+          approved: false,
+          reason:
+            `Not done. The streamer was asked to confirm but did not answer within ` +
+            `${CONFIRM_TIMEOUT_MS / 60_000} minutes, so nothing was changed. Ask them directly ` +
+            `whether they want it, and if they agree, call again with requested_by: "user".` +
+            `\n\nProposed change:\n${message}`,
+        };
+      }
       log(`gate: elicitation unavailable (${msg})`);
       return {
         approved: false,

@@ -82,7 +82,7 @@ export function registerSources(server: McpServer, ctx: Ctx): void {
         'type identifiers. Common ones: browser_source (settings: url, width, height), ' +
         'text_gdiplus (text), image_source (file), ffmpeg_source (local_file), color_source, ' +
         'game_capture, monitor_capture, window_capture, dshow_input (a camera). The new item ' +
-        'lands at its default size and position — follow up with arrange_scene or ' +
+        'lands at its default size and position — follow up with ' +
         'set_item_transform to place it.',
       inputSchema: {
         name: z.string().describe('Name for the new source, as it will appear in the sources list.'),
@@ -142,7 +142,7 @@ export function registerSources(server: McpServer, ctx: Ctx): void {
                     where: describeRect(created.rect, snap.canvas),
                   }
                 : {}),
-              next: 'Use arrange_scene or set_item_transform to position it.',
+              next: 'Use set_item_transform to position it.',
             },
             edit,
           ),

@@ -20,9 +20,12 @@ import { log } from './log.js';
 const INSTRUCTIONS = `
 Controls Streamlabs Desktop, the live-streaming app, on this machine.
 
-YOU CANNOT SEE THE RENDERED OUTPUT. There is no screenshot capability. Your only view of
-the stream is the structured state from get_stream_state, where each scene item is given
-as a rectangle [x, y, width, height] in canvas pixels.
+TWO WAYS TO SEE. get_stream_state and get_scene give exact structure: each scene item as a
+rectangle [x, y, width, height] in canvas pixels. capture_screen gives a screenshot of the
+Streamlabs window, including the stream preview and any open dialog. Use the rectangles to
+measure and the screenshot to judge how something looks -- the preview in a screenshot is
+scaled down and drawn with editor outlines. capture_screen fails while Streamlabs is
+minimized.
 
 Start with get_stream_state. It also returns a "warnings" array of problems detected
 automatically (live without recording, mic muted while live, off-canvas or zero-size
@@ -45,8 +48,8 @@ interactive session where the streamer can actually answer.
 
 LAYOUT. Use set_item_transform, preferring "anchor" (bottom-right, center, ...) and
 "width_percent" over raw pixels -- both are resolved against the real canvas, so you never
-have to work out coordinates you cannot verify. After any layout change, get_scene to
-verify what actually happened.
+have to work out coordinates by hand. After any layout change, get_scene to verify what
+actually happened, and capture_screen if how it looks matters.
 
 Actions that change the active scene take effect immediately for viewers. Most edits are
 on the Streamlabs undo stack -- tool results say so, and undo_last_edit steps back.

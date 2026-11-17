@@ -20,6 +20,7 @@ import { serverMode } from '../confirm.js';
 import { log } from '../log.js';
 
 import { registerReads } from './reads.js';
+import { registerCapture } from './capture.js';
 import { registerPerformance } from './performance.js';
 import { registerLayout } from './layout.js';
 import { registerSourceReads, registerSources } from './sources.js';
@@ -32,6 +33,7 @@ export type { Ctx } from './shared.js';
 export function registerTools(server: McpServer, ctx: Ctx): void {
   registerReads(server, ctx);
   registerSourceReads(server, ctx);
+  registerCapture(server, ctx);
 
   if (serverMode() === 'read-only') {
     log('SLD_MCP_MODE=read-only — write tools not registered');

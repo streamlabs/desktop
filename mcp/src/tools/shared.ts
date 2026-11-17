@@ -26,10 +26,7 @@ export interface Ctx {
   confirm: Confirmer;
 }
 
-/**
- * Widened beyond text to carry image blocks. Nothing emits images yet -- capture is a later
- * phase -- but the shape is here so adding one does not touch every tool.
- */
+/** Text, plus the image blocks emitted by capture_screen. */
 export type ContentBlock =
   | { type: 'text'; text: string }
   | { type: 'image'; data: string; mimeType: string };

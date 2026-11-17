@@ -1,9 +1,6 @@
 /**
- * Reads. No confirmation, ever -- these change nothing.
- *
- * Note the one carve-out that does NOT live here: screen capture. A screenshot is a read of
- * the user's private screen rather than of app state, it bypasses redact.ts entirely (you
- * cannot regex a PNG), and it is therefore gated like a write. It is not part of this phase.
+ * Reads. No confirmation, ever -- these change nothing. Screen capture is also an ungated
+ * read, but lives in capture.ts because of its file-based transport.
  */
 
 import * as z from 'zod/v4';
@@ -22,7 +19,7 @@ export function registerReads(server: McpServer, ctx: Ctx): void {
         'scene list, every item in the active scene with its on-canvas rectangle [x, y, width, ' +
         'height], audio sources with mute state and volume, events since your last call, and ' +
         'automatically-detected warnings. CALL THIS FIRST in any session and again after making ' +
-        'changes. You cannot see the rendered output, so this is your only view of the stream.',
+        'changes. This is the exact, structured view; capture_screen shows what it looks like.',
       inputSchema: {
         maxAgeMs: z
           .number()
@@ -72,7 +69,7 @@ export function registerReads(server: McpServer, ctx: Ctx): void {
         "Full item list for one scene by name, including each item's on-canvas rectangle, " +
         'visibility, lock state, source type and rotation, plus geometry notes (overlaps, ' +
         'off-canvas items, title-safe violations). Use this to inspect a scene that is not ' +
-        'active, or to verify a layout change you just made — you cannot see the rendered output.',
+        'active, or to verify a layout change you just made — these rects are exact, a screenshot is not.',
       inputSchema: {
         scene: z
           .string()

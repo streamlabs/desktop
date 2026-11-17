@@ -59,7 +59,7 @@ async function main() {
   console.log(`    ${tools.length} tools: ${names.join(', ')}`);
 
   const expect = [
-    'add_filter', 'add_source', 'create_scene', 'duplicate_scene',
+    'add_filter', 'add_source', 'capture_screen', 'create_scene', 'duplicate_scene',
     'get_health', 'get_scene', 'get_source_settings', 'get_stream_state', 'go_live',
     'group_items', 'list_source_types', 'preflight_check', 'remove_filter', 'remove_item',
     'remove_scene', 'remove_source', 'rename_scene', 'reorder_item', 'save_replay',
@@ -123,6 +123,25 @@ async function main() {
   const preflight = await call(client, 'preflight_check');
   check('preflight returns a verdict', typeof preflight.json?.ready === 'boolean',
     `ready=${preflight.json?.ready}, ${preflight.json?.problems?.length ?? 0} problem(s)`);
+
+  console.log('\nB2. screen capture');
+  const shot: any = await client.callTool({ name: 'capture_screen', arguments: {} });
+  const images = (shot?.content ?? []).filter((c: any) => c.type === 'image');
+  if (shot?.isError && /minimized/i.test(textOf(shot))) {
+    console.log('    skipped — Streamlabs is minimized; restore it to exercise capture');
+  } else {
+    check('capture returns an image', !shot?.isError && images.length >= 1, textOf(shot).slice(0, 90));
+    const jpegBytes = images[0] ? Buffer.from(images[0].data, 'base64') : Buffer.alloc(0);
+    check(
+      'image is a real JPEG',
+      images[0]?.mimeType === 'image/jpeg' && jpegBytes[0] === 0xff && jpegBytes[1] === 0xd8,
+      `${images[0]?.mimeType}, ${jpegBytes.length} bytes`,
+    );
+    check('image fits the 256 KB Hermes embed budget', jpegBytes.length < 256 * 1024,
+      `${Math.round(jpegBytes.length / 1024)} KB`);
+    check('result says which windows were shared', /Captured: Main window/.test(textOf(shot)),
+      textOf(shot).split('\n')[0].slice(0, 90));
+  }
 
   console.log('\nC. name resolution is self-correcting');
   const miss = await call(client, 'get_scene', { scene: 'No Such Scene' });
@@ -194,6 +213,38 @@ async function main() {
     const back = await call(client, 'get_scene', {});
     check('item restored via the undo stack',
       byName(back.json?.items ?? [], subject)?.visible === true);
+  }
+
+  // CreateSceneCommand is the one async editor command here. Its promise resolves at once, so
+  // the app sends the PROMISE envelope and its result in a single chunk -- the case that used
+  // to drop the result and time out at 20s even though the scene was created.
+  console.log('\nE2. async command (create_scene)');
+  const activeBefore = (await call(client, 'get_stream_state', { maxAgeMs: 0 })).json?.activeScene?.name;
+  const tempScene = `MCP harness ${Date.now()}`;
+  const started = Date.now();
+  const created = await call(client, 'create_scene', { name: tempScene, requested_by: 'user' });
+  const elapsed = Date.now() - started;
+  check('create_scene succeeds', !created.isError && created.json?.created === true,
+    created.text.slice(0, 90));
+  check('create_scene returns promptly', elapsed < 5000, `${elapsed} ms`);
+
+  const scenesAfter: string[] = (await call(client, 'get_stream_state', { maxAgeMs: 0 })).json?.scenes ?? [];
+  check('the scene exists', scenesAfter.includes(tempScene));
+
+  const activeAfter = (await call(client, 'get_stream_state', { maxAgeMs: 0 })).json?.activeScene?.name;
+  if (activeAfter !== activeBefore) {
+    console.log(`    NOTE: creating a scene switched the active scene ("${activeBefore}" -> "${activeAfter}")`);
+  }
+
+  if (scenesAfter.includes(tempScene)) {
+    const removed = await call(client, 'remove_scene', { scene: tempScene, requested_by: 'user' });
+    check('temporary scene removed', !removed.isError, removed.text.slice(0, 90));
+  }
+  if (activeBefore) {
+    const now = (await call(client, 'get_stream_state', { maxAgeMs: 0 })).json?.activeScene?.name;
+    if (now !== activeBefore) {
+      await call(client, 'switch_scene', { scene: activeBefore, requested_by: 'user' });
+    }
   }
 
   console.log('\nF. layout');

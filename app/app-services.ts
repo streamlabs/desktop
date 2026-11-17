@@ -55,6 +55,7 @@ export { TouchBarService } from 'services/touch-bar';
 export { ApplicationMenuService } from 'services/application-menu';
 export { MacPermissionsService } from 'services/mac-permissions';
 export { VirtualWebcamService } from 'services/virtual-webcam';
+export { CaptureService } from 'services/capture/capture';
 export { MetricsService } from 'services/metrics';
 export { HighlighterService } from 'services/highlighter';
 export { DiagnosticsService } from 'services/diagnostics';
@@ -212,6 +213,7 @@ import { SignalsService } from 'services/signals-manager';
 import { TroubleshooterService } from 'services/troubleshooter';
 import { OnboardingV2Service } from 'services/onboarding/onboarding-v2';
 import { VirtualWebcamService } from 'services/virtual-webcam';
+import { CaptureService } from 'services/capture/capture';
 import { StreamAvatarApiService } from 'services/stream-avatar/stream-avatar-api-service';
 import { AutomationsService } from 'services/stream-avatar/automations-service';
 import { AutomationsEngineService } from 'services/stream-avatar/automations-engine-service';
@@ -300,6 +302,7 @@ export const AppServices = {
   RemoteControlService,
   UrlService,
   VirtualWebcamService,
+  CaptureService,
   SseService,
   VisionService,
   ReactiveDataService,

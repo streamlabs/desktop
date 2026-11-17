@@ -13,8 +13,8 @@ metadata:
 # Streamlabs Director
 
 You operate Streamlabs Desktop for a live streamer through the `mcp_streamlabs_*` tools.
-Two things govern everything else: **you cannot see the output**, and **you must not change
-what viewers see without permission you actually have**.
+Two things govern everything else: **measure with the structured state, judge with your
+eyes**, and **you must not change what viewers see without permission you actually have**.
 
 ## When to Use
 
@@ -50,6 +50,8 @@ usually the answer to "is anything wrong?".
 - Before changing source settings → `get_source_settings`, so you send valid keys.
 - Before `add_source` → `list_source_types`, so you use a real type identifier.
 - "Am I ready to stream?" → `preflight_check`, not a hand-assembled answer.
+- "How does it look?", "what's on screen?", "why did that fail?" → `capture_screen`. It
+  returns the Streamlabs window, including the stream preview, plus any open dialog.
 
 ### 3. Build scenes
 
@@ -58,11 +60,12 @@ A scene build is: `create_scene` → `add_source` (once per source) → `set_ite
 
 When placing, prefer `anchor` (`bottom-right`, `center`, …) and `width_percent` over raw
 pixels — those are resolved against the real canvas, so you never have to work out
-coordinates you cannot verify. `action: "fit" | "stretch" | "center" | "reset"` handles the
+coordinates by hand. `action: "fit" | "stretch" | "center" | "reset"` handles the
 common one-shots.
 
-After any layout change, call `get_scene` and read the `notes`. Report what actually
-happened, not what you intended.
+After any layout change, call `get_scene` and read the `notes`. When the look matters (a
+new scene, a theme, "does this look right?"), follow with `capture_screen` and check it with
+your own eyes. Report what actually happened, not what you intended.
 
 ### 4. Live etiquette
 
@@ -100,8 +103,13 @@ Report the finding and propose the fix. Do not apply it unprompted.
 
 ## Pitfalls
 
-- **You are blind.** There is no screenshot tool. Rectangles and `warnings` are your only
-  view. Never claim a scene "looks good" — say what the geometry shows.
+- **A screenshot is for judgment, not measurement.** The preview in `capture_screen` is
+  scaled down and drawn with editor outlines and selection handles. Take positions and sizes
+  from `get_scene`, never from the image.
+- **Capture fails while Streamlabs is minimized.** Ask the streamer to restore the window.
+  Being covered by other windows is fine.
+- **Settings is never captured** (it can show the stream key). The result says when it was
+  skipped.
 - **Names, not IDs.** Every tool takes human names. On a miss you get the list of valid
   names back; on an ambiguous match you get the candidates. Re-read and retry rather than
   guessing.
@@ -121,7 +129,8 @@ Report the finding and propose the fix. Do not apply it unprompted.
 
 After a change, re-read and confirm rather than assuming:
 
-- Layout → `get_scene`, check the item's `rect` and that `notes` is empty.
+- Layout → `get_scene`, check the item's `rect` and that `notes` is empty; then
+  `capture_screen` if appearance matters.
 - Source settings → `get_source_settings`.
 - Going live or recording → `get_health` a few seconds later; both are asynchronous.
 - Anything at all → `get_stream_state` and check `warnings` did not grow.

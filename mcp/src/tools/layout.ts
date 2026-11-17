@@ -2,7 +2,7 @@
  * Layout and geometry.
  *
  * set_item_transform takes semantic anchors and a width percentage so the model never has to
- * invent pixel coordinates for a canvas it cannot see, and every result reports the resulting
+ * invent pixel coordinates by hand, and every result reports the resulting
  * rectangle plus geometry checks so the change can be verified rather than assumed.
  */
 
@@ -42,7 +42,7 @@ export function registerLayout(server: McpServer, ctx: Ctx): void {
         '`anchor` places the item in a named region inset from the canvas edge by the ' +
         'title-safe margin, and `width_percent` sizes it as a share of canvas width with ' +
         'aspect ratio preserved. `action` applies a one-shot operation instead. Returns the ' +
-        'resulting rectangle plus geometry checks, since you cannot see the output.',
+        'resulting rectangle plus geometry checks, so the change can be verified exactly.',
       inputSchema: {
         item: z.string().describe('Name of the scene item, e.g. "Webcam".'),
         scene: z.string().optional().describe('Scene name. Defaults to the active scene.'),

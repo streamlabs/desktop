@@ -79,6 +79,14 @@ interface PendingRequest {
   label: string;
 }
 
+function settlePromise(p: Omit<PendingRequest, 'timer'>, result: IEventEnvelope): void {
+  if (result.isRejected) {
+    p.reject(new DesktopRpcError(`${p.label} rejected: ${JSON.stringify(result.data)}`));
+  } else {
+    p.resolve(result.data);
+  }
+}
+
 export class DesktopClient {
   private socket: net.Socket | null = null;
   /** Memoized in-flight connect. Cleared on close. (fix #4) */
@@ -90,6 +98,14 @@ export class DesktopClient {
   private pending = new Map<string, PendingRequest>();
   /** keyed by the uuid resourceId of a PROMISE envelope (fix #3) */
   private promises = new Map<string, PendingRequest>();
+  /**
+   * PROMISE results that arrived before anyone was waiting for them. A method whose promise
+   * resolves immediately (CreateSceneCommand's async execute does no real async work) makes
+   * the app write the envelope and the result back to back, so both are dispatched in one
+   * read loop -- before request()'s await continuation has registered in `promises`.
+   * Without this the result is dropped and the call times out despite having succeeded.
+   */
+  private earlyPromiseResults = new Map<string, IEventEnvelope>();
 
   private eventHandlers: Array<(e: IEventEnvelope) => void> = [];
   private reconnectHandlers: Array<() => void> = [];
@@ -207,6 +223,7 @@ export class DesktopClient {
       p.reject(err);
     }
     this.promises.clear();
+    this.earlyPromiseResults.clear();
   }
 
   /**
@@ -274,14 +291,15 @@ export class DesktopClient {
     if (result.emitter === 'PROMISE') {
       // fix #3: a deferred method result arriving out of band.
       const p = this.promises.get(result.resourceId);
-      if (!p) return;
+      if (!p) {
+        this.earlyPromiseResults.set(result.resourceId, result);
+        // Promise ids are fresh uuids, so an entry nobody claims is just garbage.
+        setTimeout(() => this.earlyPromiseResults.delete(result.resourceId), 5000);
+        return;
+      }
       this.promises.delete(result.resourceId);
       clearTimeout(p.timer);
-      if (result.isRejected) {
-        p.reject(new DesktopRpcError(`${p.label} rejected: ${JSON.stringify(result.data)}`));
-      } else {
-        p.resolve(result.data);
-      }
+      settlePromise(p, result);
       return;
     }
 
@@ -343,6 +361,12 @@ export class DesktopClient {
   private awaitPromise(resourceId: string, label: string, method: string): Promise<unknown> {
     const timeoutMs = METHOD_TIMEOUT_MS[method] ?? DEFAULT_TIMEOUT_MS;
     return new Promise((resolve, reject) => {
+      const early = this.earlyPromiseResults.get(resourceId);
+      if (early) {
+        this.earlyPromiseResults.delete(resourceId);
+        settlePromise({ resolve, reject, label }, early);
+        return;
+      }
       const timer = setTimeout(() => {
         // Delete the entry -- the original leaks it.
         this.promises.delete(resourceId);

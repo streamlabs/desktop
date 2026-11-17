@@ -44,7 +44,7 @@ export function registerScenes(server: McpServer, ctx: Ctx): void {
             {
               created: true,
               scene: name,
-              next: 'Add sources with add_source, then lay it out with arrange_scene.',
+              next: 'Add sources with add_source, then place them with set_item_transform.',
             },
             edit,
           ),

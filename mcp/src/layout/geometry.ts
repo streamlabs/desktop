@@ -1,7 +1,7 @@
 /**
  * Canvas geometry.
  *
- * The agent CANNOT see the rendered output, so every spatial fact it gets has to be
+ * Screenshots are too coarse to measure from, so every exact spatial fact the agent gets has to be
  * computed here. These are pure functions over rectangles -- no RPC, no state -- which
  * makes them the one part of this server that is trivially testable.
  *
