@@ -37,12 +37,30 @@ export function formatErrorRejectedRequest(
   if (json) {
     return {
       ...rejectedRequest,
-      status: json.status ?? e?.status ?? json.code,
+      status: getYouTubeErrorStatus(e),
     };
   }
 
   // Otherwise, return the default rejected request
   return rejectedRequest;
+}
+
+/**
+ * The numeric HTTP status of a failed request from YouTube's Live Streaming API.
+ */
+export function getYouTubeErrorStatus(e: any): number | undefined {
+  const json = e?.result?.error;
+  const status = json.status ?? json.code ?? e?.status;
+  if (typeof status === 'number') {
+    return status;
+  } else if (typeof status === 'string') {
+    const parsed = parseInt(status, 10);
+    if (!isNaN(parsed)) {
+      return parsed;
+    }
+  } else {
+    return undefined;
+  }
 }
 
 /**
@@ -78,7 +96,7 @@ export function formatErrorDetails(
 export function formatYoutubeReasonDetail(e: any, reason?: EYoutubeErrorReason): string {
   if (!reason) {
     // If no reason was returned from the YouTube API, attempt to handle by status code
-    const status = e?.result?.error?.status ?? e?.status ?? e?.result?.error?.code;
+    const status = getYouTubeErrorStatus(e);
     switch (status) {
       case 401:
         console.error('YouTube API Error 401: YouTube forbidden', e);
