@@ -2,6 +2,7 @@ import { InitAfter, Inject, Service } from 'services/core';
 import { ScenesService } from 'services/scenes';
 import { SourcesService } from 'services/sources';
 import { StreamingService } from 'services/streaming';
+import type { IRecentEvent } from 'services/recent-events';
 import { WebsocketService } from 'services/websocket';
 import { VisionService, VisionProcess } from 'services/vision';
 import { isVisionSupported } from 'services/vision/supported';
@@ -11,14 +12,17 @@ import { UsageStatisticsService } from 'services/usage-statistics';
 import Utils from 'services/utils';
 import { toUpper } from 'lodash';
 import {
+  ALERT_ROUTES,
   ConditionsManager,
   GAME_NAMES,
+  isStreamEventKey,
+  STREAM_ALERT_TYPES,
   TCondition,
-  TEvaluatedCondition,
 } from './engine/conditions';
 import { Actions, ActionContext } from './engine/actions';
-import { GameState, defaultGameState } from './engine/game-state';
+import { GameState, StreamAlert, defaultGameState } from './engine/game-state';
 import { setInstructions } from './engine/instructions';
+import type { TAutomationExport } from './engine/automations';
 
 interface VisionEventItem {
   name: string;
@@ -29,6 +33,42 @@ interface VisionEventPayload {
   events: VisionEventItem[];
   game: string;
 }
+
+// Raw socket payload fields not covered by IRecentEvent, see the per-platform alert emitters.
+type AlertItem = IRecentEvent & {
+  event_id?: string;
+  giftMembershipsCount?: number | string;
+  giftMembershipsLevelName?: string;
+  membershipLevel?: number | string;
+  membershipLevelName?: string;
+  level?: number | string;
+  levelName?: string;
+  jewelsAmount?: number | string;
+  comboCount?: number | string;
+  count?: number | string;
+  redemption_name?: string;
+  productType?: string;
+  power_up_id?: string;
+  giftName?: string;
+  gift?: boolean;
+};
+
+interface AlertSocketEvent {
+  type: string;
+  for?: string;
+  message: AlertItem[];
+  event_id?: string;
+}
+
+const MAX_SEEN_ALERT_IDS = 100;
+
+// Test-button sample type for conditions that match on the socket type itself.
+const SAMPLE_TYPE_BY_KIND: Record<string, string> = {
+  subtember: 'subtember',
+  sub_extended: 'subExtension',
+};
+
+const optionalNumber = (v: unknown) => (v == null || isNaN(Number(v)) ? undefined : Number(v));
 
 // Continuous state feeds, not moments — no condition listens for these, and
 // they fire on every frame they change.
@@ -52,6 +92,11 @@ export class AutomationsEngineService extends Service {
   private automationPreviousConditionsMetCache = new Map<string, boolean>();
   private triggerChain: Promise<void> = Promise.resolve();
   private actionContext!: ActionContext;
+  private largestDonationThisStream = 0;
+  // Follow/sub counts this stream for the streak triggers, keyed `${platform}:${type}`. In memory
+  // only; cleared on go-live.
+  private streakCounts = new Map<string, number>();
+  private seenAlertIds = new Set<string>();
 
   init() {
     // Engine runs only in the worker window to prevent double-firing.
@@ -111,8 +156,25 @@ export class AutomationsEngineService extends Service {
     };
 
     this.websocketService.socketEvent.subscribe(e => {
-      if (e.type !== 'visionEvent') return;
-      this.handleVisionEvent((e as any).message as VisionEventPayload);
+      if (e.type === 'visionEvent') {
+        this.handleVisionEvent((e as any).message as VisionEventPayload);
+      } else if (STREAM_ALERT_TYPES.has(e.type)) {
+        this.handleAlertEvent(e as any);
+      }
+    });
+
+    // "Largest donation this stream" and the follow/sub streak counts start over once per broadcast.
+    // The emitted state isn't a reliable session signal (dual output may never emit Live, and
+    // adding an output mid-stream re-emits it), so reset on the aggregate offline -> streaming
+    // edge instead. Reconnects and output changes stay "streaming" and keep the counters.
+    let wasStreaming = this.streamingService.views.isStreaming;
+    this.streamingService.streamingStatusChange.subscribe(() => {
+      const isStreaming = this.streamingService.views.isStreaming;
+      if (isStreaming && !wasStreaming) {
+        this.largestDonationThisStream = 0;
+        this.streakCounts.clear();
+      }
+      wasStreaming = isStreaming;
     });
 
     this.visionService.onGame.subscribe(change => {
@@ -126,11 +188,11 @@ export class AutomationsEngineService extends Service {
     this.scenesService.sceneSwitched.subscribe(() => {
       this.automationsService.state.automations
         .filter(a => a.scenes?.length)
-        .forEach(a =>
-          (a.conditions as TCondition[]).forEach(c =>
-            this.automationPreviousConditionsMetCache.delete(`${a.id}:${c.type}`),
-          ),
-        );
+        .forEach(a => {
+          for (const key of this.automationPreviousConditionsMetCache.keys()) {
+            if (key.startsWith(`${a.id}:`)) this.automationPreviousConditionsMetCache.delete(key);
+          }
+        });
     });
   }
 
@@ -146,30 +208,109 @@ export class AutomationsEngineService extends Service {
       return;
     }
 
-    const runPass = async (conditionsMet: boolean) => {
-      for (const exportedAction of automation.actions) {
-        try {
-          const [action] = await Actions.fromExported([exportedAction as any], this.actionContext);
-          await Actions.process({
-            conditionsMet,
-            conditions: automation.conditions as TCondition[],
-            action: { ...action, props: { ...action.props, simulating: true } },
-            context: this.actionContext,
-            state: this.gameState,
-            prevState: this.prevState,
-          });
-        } catch (error: unknown) {
-          console.warn('[AutomationsEngine] simulate action failed', {
-            action: exportedAction.type,
-            error,
-          });
-        }
-      }
-    };
+    // ponytail: only the first trigger is simulated; loop all if users ask
+    const allConditions = (automation.conditions as TCondition[]).slice(0, 1);
+
+    // Stream alerts have no CDN voice lines and are pulses (nothing to revert):
+    // run the actions once, for real, against a sample alert.
+    if (allConditions[0] && isStreamEventKey(allConditions[0].type)) {
+      const alert = this.sampleAlert(allConditions[0]);
+      if (!alert) return;
+      await this.runActions(
+        automation.actions,
+        allConditions,
+        true,
+        { ...this.gameState, alert },
+        this.prevState,
+      );
+      return;
+    }
+
+    const runPass = (conditionsMet: boolean) =>
+      this.runActions(
+        automation.actions,
+        allConditions,
+        conditionsMet,
+        this.gameState,
+        this.prevState,
+        true,
+      );
 
     await runPass(true);
     await new Promise(resolve => setTimeout(resolve, 5000));
     await runPass(false);
+  }
+
+  private async runActions(
+    actions: TAutomationExport['actions'],
+    conditions: TCondition[],
+    conditionsMet: boolean,
+    state: GameState,
+    prevState: GameState,
+    simulating = false,
+  ) {
+    for (const exportedAction of actions) {
+      try {
+        const [action] = await Actions.fromExported([exportedAction as any], this.actionContext);
+        await Actions.process({
+          conditionsMet,
+          conditions,
+          action: simulating ? { ...action, props: { ...action.props, simulating } } : action,
+          context: this.actionContext,
+          state,
+          prevState,
+        });
+      } catch (error: unknown) {
+        console.warn('[AutomationsEngine] Action failed', { action: exportedAction.type, error });
+      }
+    }
+  }
+
+  /** An alert that satisfies `condition`, for the Test button. */
+  private sampleAlert(condition: TCondition): StreamAlert | undefined {
+    const route = ALERT_ROUTES[condition.type];
+    if (!route) {
+      console.warn('[AutomationsEngine] sampleAlert: no alert route for', condition.type);
+      return;
+    }
+    const { condition: kind, value } = (condition.props ?? {}) as {
+      condition?: string;
+      value?: number | string;
+    };
+    const text = typeof value === 'string' ? value : undefined;
+    const n = typeof value === 'number' ? value : 5;
+    let subPlan = '1000';
+    if (kind === 'prime') subPlan = 'prime';
+    else if (kind === 'tier') subPlan = String(n * 1000);
+    let gifter: string | undefined;
+    if (kind === 'gift') gifter = 'TestGifter';
+    else if (kind === 'anon_gift' || kind === 'min_anon_amount') gifter = 'Anonymous';
+    return {
+      type: SAMPLE_TYPE_BY_KIND[kind] ?? route.types[0],
+      platform: route.platforms[0],
+      name: 'TestViewer',
+      amount: n,
+      months: n,
+      streakMonths: n,
+      subPlan,
+      subType: kind === 'prime_upgrade' ? 'primepaidupgrade' : undefined,
+      gifter,
+      raiders: n,
+      recurring: kind === 'recurring',
+      level: n,
+      combo: n,
+      // A text condition's value is whichever field it matches on.
+      levelName: text,
+      product: text,
+      productType: text,
+      giftType: text,
+      powerUpId: text,
+      giftName: text,
+      gift: kind === 'gift_redeemed',
+      previousLargestDonation: 0,
+      // Lands the Test button on an "every N" streak.
+      streakCount: Number(value) || 5,
+    };
   }
 
   private resetGameState() {
@@ -266,9 +407,116 @@ export class AutomationsEngineService extends Service {
     }
   }
 
-  private async checkAndTriggerAutomations(state: GameState, prevState: GameState) {
+  private handleAlertEvent(e: AlertSocketEvent) {
+    if (!Array.isArray(e.message)) return;
+
+    // Counters below still update, so streaks stay right if an automation is added mid-stream.
+    const hasStreamEventAutomation = this.automationsService.state.automations.some(
+      a => a.enabled && (a.conditions as TCondition[]).some(c => isStreamEventKey(c.type)),
+    );
+
+    for (const [i, item] of e.message.entries()) {
+      // isTest is kept on purpose so the dashboard's Test Alert works.
+      if (item.isPreview || item.repeat) continue;
+
+      // The envelope id is shared by every item in the message, so index it.
+      const id = item._id ?? item.event_id ?? (e.event_id && `${e.event_id}:${i}`);
+      if (id) {
+        if (this.seenAlertIds.has(id)) continue;
+        this.seenAlertIds.add(id);
+        if (this.seenAlertIds.size > MAX_SEEN_ALERT_IDS) {
+          this.seenAlertIds.delete(this.seenAlertIds.values().next().value);
+        }
+      }
+
+      let amount: number;
+      switch (e.type) {
+        case 'superchat':
+        case 'superSticker':
+          // ponytail: amount is in micros per twitchalerts superchat.alert.js; verify against a live
+          // payload. The Alert Box also converts currency, we don't.
+          amount = Number(item.amount) / 1_000_000;
+          break;
+        case 'membershipGift':
+          amount = Number(item.giftMembershipsCount ?? item.amount);
+          break;
+        case 'jewelGift':
+          amount = Number(item.jewelsAmount);
+          break;
+        case 'supportGifter':
+          amount = Number(item.count);
+          break;
+        default:
+          amount = Number(item.amount);
+      }
+
+      const alert: StreamAlert = {
+        type: e.type,
+        platform: (e.for || 'streamlabs').replace(/_account$/, ''),
+        name:
+          item.display_name ||
+          item.name ||
+          item.from ||
+          item.redeemer_display_name ||
+          item.gifter ||
+          '',
+        amount: amount || 0,
+        months: Number(item.months) || 0,
+        streakMonths: Number(item.streak_months) || 0,
+        subPlan: String(item.sub_plan ?? '').toLowerCase(),
+        subType: item.sub_type,
+        gifter: item.gifter || undefined,
+        raiders: Number(item.raiders ?? item.viewers) || 0,
+        recurring: item.recurring_donation != null,
+        level: optionalNumber(item.membershipLevel ?? item.level),
+        levelName: item.membershipLevelName ?? item.giftMembershipsLevelName ?? item.levelName,
+        product: item.product ?? item.redemption_name,
+        productType: item.productType,
+        giftType: item.giftType,
+        powerUpId: item.power_up_id,
+        powerUpName: item.power_up_name,
+        giftName: item.giftName,
+        combo: optionalNumber(item.comboCount),
+        gift: !!item.gift,
+        previousLargestDonation: this.largestDonationThisStream,
+        streakCount: 0,
+      };
+
+      // Counted per platform and type, here rather than after the pass, so back-to-back follows
+      // each see their own count. Test alerts never count, so they can't hit a streak. Gift bombs
+      // arrive as one `subscription` each; subMysteryGift, subtember and subExtension don't count.
+      if ((alert.type === 'follow' || alert.type === 'subscription') && !item.isTest) {
+        const key = `${alert.platform}:${alert.type}`;
+        alert.streakCount = (this.streakCounts.get(key) ?? 0) + 1;
+        this.streakCounts.set(key, alert.streakCount);
+      }
+
+      // Bumped now, not after the pass: the alert above already captured the previous
+      // value, and back-to-back donations must each see the one before them. Test
+      // alerts don't count, or a fake $100 would poison largest_of_stream.
+      if (alert.type === 'donation' && !item.isTest) {
+        this.largestDonationThisStream = Math.max(this.largestDonationThisStream, alert.amount);
+      }
+
+      if (!hasStreamEventAutomation) continue;
+
+      const { gameState, prevState } = this;
+      this.triggerChain = this.triggerChain.then(() =>
+        this.checkAndTriggerAutomations(gameState, prevState, alert).catch(error => {
+          console.warn('[AutomationsEngine] Alert trigger pass failed', error);
+        }),
+      );
+    }
+  }
+
+  private async checkAndTriggerAutomations(
+    state: GameState,
+    prevState: GameState,
+    alert?: StreamAlert,
+  ) {
     const automations = this.automationsService.state.automations.filter(a => a.enabled);
     const currentGame = this.getCurrentGame().toLowerCase();
+    const evalState = alert ? { ...state, alert } : state;
 
     for (const automation of automations) {
       if (automation.scenes?.length) {
@@ -276,49 +524,63 @@ export class AutomationsEngineService extends Service {
         if (!activeSceneName || !automation.scenes.includes(activeSceneName)) continue;
       }
 
-      const conditions = (automation.conditions as TCondition[]).filter(c =>
-        c.type.startsWith(currentGame),
-      );
-      if (!conditions.length) continue;
+      // With no game running getCurrentGame() is 'STREAMLABS', which would otherwise
+      // pull the stream-event alert conditions into game passes.
+      const results = (automation.conditions as TCondition[])
+        .map((condition, index) => ({ condition, index }))
+        .filter(({ condition: c }) =>
+          alert
+            ? isStreamEventKey(c.type)
+            : c.type.startsWith(currentGame) && !isStreamEventKey(c.type),
+        )
+        .map(({ condition, index }) => ({
+          condition,
+          index,
+          status: ConditionsManager.evaluate({ condition, state: evalState, prevState }),
+        }));
+      if (!results.length) continue;
 
-      const conditionResults: TEvaluatedCondition[] = conditions.map(condition => ({
-        condition,
-        status: ConditionsManager.evaluate({ condition, state, prevState }),
-      }));
+      // Triggers are ORed: `fired` is what the actions run for.
+      let fired: TCondition[];
+      let conditionsMet = true;
 
-      const cacheKey = (condition: TCondition) => `${automation.id}:${condition.type}`;
-      const changed = conditionResults.some(
-        r => this.automationPreviousConditionsMetCache.get(cacheKey(r.condition)) !== r.status,
-      );
-      conditionResults.forEach(r =>
-        this.automationPreviousConditionsMetCache.set(cacheKey(r.condition), r.status),
-      );
-      if (!changed) continue;
+      if (alert) {
+        // Alerts are pulses: fire on a match, never fire the "unmet" pass, and skip
+        // the edge cache so back-to-back alerts both fire.
+        fired = results.filter(r => r.status).map(r => r.condition);
+        if (!fired.length) continue;
+      } else {
+        const cache = this.automationPreviousConditionsMetCache;
+        const anyKey = `${automation.id}:any`;
+        const prevAny = cache.get(anyKey);
+        const anyNow = results.some(r => r.status);
+        // Key includes the type so an edited/reordered trigger list never reads a stale entry.
+        const edgeKey = (r: { index: number; condition: TCondition }) =>
+          `${automation.id}:${r.index}:${r.condition.type}`;
+        const newlyMet = results.filter(r => r.status && cache.get(edgeKey(r)) !== true);
+        results.forEach(r => cache.set(edgeKey(r), r.status));
+        cache.set(anyKey, anyNow);
 
-      const conditionsNotMet = conditionResults.some(r => !r.status);
+        if (newlyMet.length) {
+          fired = newlyMet.map(r => r.condition);
+        } else if (!anyNow && prevAny !== false) {
+          // Nothing met any more (or first sight while unmet): the "unmet" pass, same as the
+          // old single-trigger "changed" check.
+          fired = results.map(r => r.condition);
+          conditionsMet = false;
+        } else {
+          continue;
+        }
+      }
 
       this.usageStatisticsService.recordAnalyticsEvent('Automations', {
         action: 'automation_fired',
-        game: currentGame,
-        trigger: conditionResults[0]?.condition.type ?? 'unknown',
+        game: alert ? fired[0].type.split('.')[0] : currentGame,
+        trigger: fired[0].type,
         actions: automation.actions.map(a => a.type),
       });
 
-      for (const exportedAction of automation.actions) {
-        try {
-          const [action] = await Actions.fromExported([exportedAction as any], this.actionContext);
-          await Actions.process({
-            conditionsMet: !conditionsNotMet,
-            conditions: conditionResults.map(r => r.condition),
-            action,
-            context: this.actionContext,
-            state,
-            prevState,
-          });
-        } catch (error: unknown) {
-          console.warn('[AutomationsEngine] Action failed', { action: exportedAction.type, error });
-        }
-      }
+      await this.runActions(automation.actions, fired, conditionsMet, evalState, prevState);
     }
   }
 }

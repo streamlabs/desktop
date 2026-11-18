@@ -24,6 +24,7 @@ export type TInputType =
   | 'checkbox'
   | 'autocomplete'
   | 'list'
+  | 'categorylist'
   | 'mediaurl'
   | 'audiourl'
   | 'tags'

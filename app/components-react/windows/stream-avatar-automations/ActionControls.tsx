@@ -97,6 +97,7 @@ interface SourceVisibilityControlProps {
   props: ExportedActionProps;
   errors?: Record<string, string>;
   setProp: SetProp;
+  hideUnmetOption?: boolean;
 }
 
 export function SourceVisibilityControl({
@@ -107,6 +108,7 @@ export function SourceVisibilityControl({
   props,
   errors,
   setProp,
+  hideUnmetOption,
 }: SourceVisibilityControlProps) {
   const sourceOptions = [
     ...(sourceMissing
@@ -124,14 +126,14 @@ export function SourceVisibilityControl({
         options={sourceOptions}
       />
       {errors?.source && <p style={errorTextStyle}>{errors.source}</p>}
-      {actionType === 'common.show_source' && (
+      {actionType === 'common.show_source' && !hideUnmetOption && (
         <CheckboxInput
           value={!!props.hide_if_condition_false}
           onChange={val => setProp('hide_if_condition_false', val)}
           label={$t('Hide if condition is false')}
         />
       )}
-      {actionType === 'common.hide_source' && (
+      {actionType === 'common.hide_source' && !hideUnmetOption && (
         <CheckboxInput
           value={!!props.show_if_condition_false}
           onChange={val => setProp('show_if_condition_false', val)}
