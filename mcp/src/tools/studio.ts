@@ -28,10 +28,12 @@ import {
   describeRect,
 } from '../layout/geometry.js';
 import { log } from '../log.js';
+import { describeCameraEffects, nvidiaCameraEffects } from '../desktop/nvidia.js';
 import { FRAME_STRIP_RE, presentForModel } from '../present.js';
 import { PATTERNS, Pattern, drawBackground } from '../assets/draw.js';
 import { encodePng } from '../assets/png.js';
 import { ASSET_DIR, textAsset } from '../assets/store.js';
+import { HARMONIES, MOODS, derivePalette } from '../assets/palette.js';
 
 // ------------------------------------------------------------------ colors
 
@@ -116,7 +118,18 @@ const colorParam = (what: string) =>
 
 // ------------------------------------------------------------------ roles
 
-const ROLES = ['background', 'game', 'webcam', 'text', 'sticker', 'alerts'] as const;
+const ROLES = [
+  'background',
+  'game',
+  'webcam',
+  'text',
+  'sticker',
+  'alerts',
+  'widget',
+  'browser',
+  'window',
+  'display',
+] as const;
 type Role = typeof ROLES[number];
 
 /** Bottom-to-top stacking. New items land on top, so adding in this order stacks correctly. */
@@ -127,12 +140,36 @@ const LAYER: Record<Role, number> = {
   text: 3,
   sticker: 4, // after text, so stickers can keep clear of it
   alerts: 5,
+  widget: 5,
+  browser: 4,
+  window: 1, // captures sit low, like the game
+  display: 1,
 };
 
 const STICKER_SIZES = { small: 110, medium: 170, large: 240, huge: 320 } as const;
 const STICKER_ANIMATIONS = ['none', 'float', 'twinkle', 'bounce', 'spin'] as const;
 type StickerAnimation = typeof STICKER_ANIMATIONS[number];
 const MAX_STICKERS_PER_SCENE = 6;
+
+/**
+ * Streamlabs widgets by a friendly name: WidgetType (app/services/widgets/widgets-data.ts),
+ * the source name, and where it goes by default (anchor, width as % of the screen).
+ */
+const WIDGETS = {
+  alerts: { type: 0, name: 'Alert Box', anchor: 'top-center', width: 40 },
+  chat: { type: 6, name: 'Chat Box', anchor: 'center-left', width: 26 },
+  events: { type: 7, name: 'Event List', anchor: 'top-right', width: 22 },
+  follower_goal: { type: 2, name: 'Follower Goal', anchor: 'top-center', width: 34 },
+  subscriber_goal: { type: 3, name: 'Subscriber Goal', anchor: 'top-center', width: 34 },
+  donation_goal: { type: 1, name: 'Donation Goal', anchor: 'top-center', width: 34 },
+  tip_jar: { type: 8, name: 'Tip Jar', anchor: 'bottom-left', width: 22 },
+  viewer_count: { type: 9, name: 'Viewer Count', anchor: 'top-left', width: 14 },
+  donation_ticker: { type: 5, name: 'Donation Ticker', anchor: 'bottom-center', width: 40 },
+  emote_wall: { type: 20, name: 'Emote Wall', anchor: 'center', width: 100 },
+  credits: { type: 11, name: 'Credits', anchor: 'center', width: 50 },
+} as const;
+type WidgetName = keyof typeof WIDGETS;
+const WIDGET_NAMES = Object.keys(WIDGETS) as [WidgetName, ...WidgetName[]];
 
 const DEFAULT_FONT = 'Segoe UI Black';
 const DEFAULT_BG = '#1e1b2e';
@@ -143,19 +180,13 @@ const ALERT_BOX_NAME = 'Alert Box';
 /** WidgetType.AlertBox in app/services/widgets/widgets-data.ts */
 const WIDGET_TYPE_ALERT_BOX = 0;
 
-/** OBS window spec "title:class:exe" for games we know; anything else hooks any fullscreen app. */
-const KNOWN_GAMES: Array<{ match: RegExp; window: string }> = [
-  { match: /fortni(te|ght)/i, window: 'Fortnite:UnrealWindow:FortniteClient-Win64-Shipping.exe' },
-  { match: /valorant/i, window: 'VALORANT  :UnrealWindow:VALORANT-Win64-Shipping.exe' },
-  { match: /minecraft/i, window: 'Minecraft:GLFW30:javaw.exe' },
-];
-
-function gameCaptureSettings(game?: string): Record<string, unknown> {
-  const known = game ? KNOWN_GAMES.find(g => g.match.test(game)) : undefined;
-  return known
-    ? { capture_mode: 'window', window: known.window, priority: 2 }
-    : { capture_mode: 'any_fullscreen' };
-}
+/**
+ * Streamlabs' automatic game capture: it finds whatever game is running (from Streamlabs' own
+ * game list) and shows a "Looking for a game" placeholder until then, so the scene can be laid
+ * out before the game is open. The placeholder settings come from Streamlabs itself when the
+ * source is created (DefaultManager.setupAutomaticGameCapture).
+ */
+const GAME_CAPTURE_SETTINGS = { capture_mode: 'auto' };
 
 const itemSchema = z.object({
   role: z
@@ -164,16 +195,40 @@ const itemSchema = z.object({
     .describe(
       'Can be left out when obvious: an item with "emoji" is a sticker, with "game" a game ' +
         'capture, with "text" a text label. ' +
-        'background = full-screen color block; game = game capture (shared by all scenes); ' +
+        'background = full-screen color block; game = game capture (shared by all scenes; it ' +
+        'shows a "Looking for a game" placeholder until the game runs, then captures it ' +
+        'automatically); ' +
         'webcam = your camera (shared by all scenes); text = a text label; sticker = a big ' +
         'color emoji as decoration (optionally animated); alerts = the Streamlabs Alert Box ' +
-        'widget (follows, subs, donations pop up here).',
+        'widget (follows, subs, donations pop up here); widget = another Streamlabs widget ' +
+        '("widget": chat, events, a goal, viewer_count...); browser = a web page ("url"); ' +
+        'window = one app window ("window": the app name); display = the whole screen.',
     ),
   text: z.string().optional().describe('For role "text": the words to show.'),
+  kind: z
+    .enum(['title', 'subtitle', 'label'])
+    .optional()
+    .describe(
+      'For role "text": its place in the hierarchy. title = the main message (biggest, ' +
+        'one per scene), subtitle = a supporting line, label = a small tag. Sets the size ' +
+        'unless "size" is given.',
+    ),
   emoji: z
     .string()
     .optional()
     .describe('For role "sticker": one to three emoji, e.g. "🌸", "✨", "🎮💜".'),
+  widget: z
+    .enum(WIDGET_NAMES)
+    .optional()
+    .describe(
+      'For role "widget": which Streamlabs widget (chat = the chat box, events = recent follows/subs).',
+    ),
+  url: z.string().optional().describe('For role "browser": the web page address.'),
+  window: z
+    .string()
+    .optional()
+    .describe('For role "window": the app or window title to capture, e.g. "Discord", "Spotify".'),
+  monitor: z.number().optional().describe('For role "display": which screen, 0 = main.'),
   animate: z
     .enum(STICKER_ANIMATIONS)
     .optional()
@@ -212,6 +267,9 @@ function withRole(it: z.infer<typeof itemSchema>): BuildItem {
   if (it.role) return it as BuildItem;
   let role: Role | undefined;
   if (it.emoji) role = 'sticker';
+  else if (it.widget) role = 'widget';
+  else if (it.url) role = 'browser';
+  else if (it.window) role = 'window';
   else if (it.game) role = 'game';
   else if (it.text) role = 'text';
   else if (it.width_percent !== undefined || it.flush) role = 'webcam';
@@ -431,18 +489,10 @@ const textStyleShape = {
   text_size: z
     .enum(['small', 'medium', 'large', 'huge'])
     .optional()
-    .describe('Letter size. It is shrunk automatically if it would not fit.'),
-  text_background: onOffColor
-    .optional()
     .describe(
-      'A soft box behind the text (a label or sticker look): a hex color, or false to remove it.',
+      'Letter size. In apply_style it scales every text and keeps titles bigger than ' +
+        'subtitles and labels; in edit_text it sets that one text. Shrunk if it would not fit.',
     ),
-  text_background_opacity: z
-    .number()
-    .min(10)
-    .max(100)
-    .optional()
-    .describe('How solid the box is, 10-100 (default 75).'),
   text_gradient: onOffColor
     .optional()
     .describe(
@@ -511,6 +561,8 @@ function textStylePatch(
   o: TextStyleOpts,
   accent: number | undefined,
   patch: Record<string, unknown>,
+  /** The scene's background, so a box with no color of its own is a tint of it. */
+  bgHex?: string,
 ): string[] {
   const notes: string[] = [];
   const outline = onOff(o.text_outline);
@@ -560,7 +612,10 @@ function textStylePatch(
   if (background === false) {
     patch.bk_opacity = 0;
   } else if (background !== undefined || o.text_background_opacity !== undefined) {
+    // A box with no color given: a gentle tint of the background (a white box on a dark theme
+    // would flip the text dark and fight the look).
     let boxHex = '#ffffff';
+    if (bgHex) boxHex = mixHex(bgHex, '#ffffff', luminance(bgHex) < 0.35 ? 0.15 : 0.6);
     if (typeof background === 'string') boxHex = background;
     else if (typeof current.bk_color === 'number' && current.bk_opacity) {
       boxHex = fromObsColor(current.bk_color);
@@ -592,6 +647,20 @@ function textStylePatch(
   return notes;
 }
 
+/**
+ * GDI+ text measures the box without an italic letter's slant, so the end of the last letter
+ * is clipped. A trailing space makes room (it is measured, and invisible). Returns the text
+ * to store when it needs the space added (italic) or removed (no longer italic), else {}.
+ */
+function italicSpacing(settings: Record<string, any>): { text?: string } {
+  const text = typeof settings.text === 'string' ? settings.text : undefined;
+  if (text === undefined) return {};
+  const italic = ((Number(settings.font?.flags) || 0) & FONT_ITALIC) !== 0;
+  const bare = text.replace(/ +$/, '');
+  const wanted = italic ? `${bare} ` : bare;
+  return wanted === text ? {} : { text: wanted };
+}
+
 /** GDI+ text defaults for the effect settings (what an unset key renders as). */
 const TEXT_EFFECT_DEFAULTS: Record<string, unknown> = {
   outline: false,
@@ -617,6 +686,7 @@ async function setTextSettings(
   current: Record<string, any>,
   patch: Record<string, unknown>,
 ): Promise<void> {
+  Object.assign(patch, italicSpacing({ ...current, ...patch }));
   const seed: Record<string, unknown> = {};
   for (const key of Object.keys(patch)) {
     if (current[key] === undefined && key in TEXT_EFFECT_DEFAULTS) {
@@ -881,6 +951,7 @@ async function placeClear(
   anchor?: Anchor,
 ): Promise<Anchor> {
   const size = { width: item.sourceWidth, height: item.sourceHeight };
+  ctx.resolver.invalidate(); // text placed a moment ago may have moved since the last read
   const items = (await sceneDetail(ctx, scene)).filter(
     i => i.display === 'horizontal' && i.visible && i.sceneItemId !== item.sceneItemId,
   );
@@ -930,6 +1001,623 @@ async function placeClear(
     { position: item.transform.position, scale: item.transform.scale },
   );
   return chosen;
+}
+
+// ------------------------------------------------------------------ design
+
+/** A text's place in the hierarchy, and the size each place gets by default. */
+const TEXT_KINDS = ['title', 'subtitle', 'label'] as const;
+type TextKind = typeof TEXT_KINDS[number];
+const KIND_PX: Record<TextKind, number> = { title: 132, subtitle: 64, label: 40 };
+const KIND_RANK: Record<TextKind, number> = { title: 0, subtitle: 1, label: 2 };
+/** apply_style text_size: one scale for the whole set, so the hierarchy survives. */
+const SIZE_FACTOR: Record<TextSize, number> = { small: 0.6, medium: 0.8, large: 1, huge: 1.25 };
+
+/** Stacking order, and titles before subtitles so a subtitle can sit under its title. */
+function buildOrder(a: BuildItem, b: BuildItem): number {
+  const rank = (it: BuildItem) =>
+    it.role === 'text' ? KIND_RANK[it.kind ?? defaultKind(it.size)] : 0;
+  return LAYER[a.role] - LAYER[b.role] || rank(a) - rank(b);
+}
+
+/** Suggested heading + body pairings (all ship with Windows). */
+const FONT_PAIRINGS =
+  '"Segoe UI Black" + "Segoe UI" (bold, clean), "Segoe Print" + "Segoe UI" (cute), ' +
+  '"Gabriola" + "Segoe UI Semibold" (fantasy), "Impact" + "Bahnschrift" (loud), ' +
+  '"Ink Free" + "Bahnschrift" (marker), "Georgia" + "Segoe UI" (classic)';
+
+/** The kind saved on a text, or a guess from its size (texts made before kinds existed). */
+function kindOf(settings: Record<string, any>): TextKind {
+  const k = settings.mcp_kind;
+  if ((TEXT_KINDS as readonly string[]).includes(k)) return k as TextKind;
+  const size = Number(settings.font?.size) || TEXT_SIZE_PX.large;
+  if (size >= 100) return 'title';
+  if (size >= 64) return 'subtitle';
+  return 'label';
+}
+
+/** The kind a new text gets when the model does not say. */
+function defaultKind(size?: TextSize): TextKind {
+  if (size === 'small') return 'label';
+  if (size === 'medium') return 'subtitle';
+  return 'title';
+}
+
+function quadrant(r: { x: number; y: number; width: number; height: number }, canvas: Canvas) {
+  const cx = r.x + r.width / 2;
+  const cy = r.y + r.height / 2;
+  return `${cy < canvas[1] / 2 ? 'top' : 'bottom'}-${cx < canvas[0] / 2 ? 'left' : 'right'}`;
+}
+
+/**
+ * A few design observations about the scenes just changed (and the set as a whole), as
+ * suggestions the model may act on. Never blocks anything: taste stays the model's call.
+ * At most three, most important first.
+ */
+async function designNotes(ctx: Ctx, focus: SceneRef[]): Promise<string[]> {
+  try {
+    const canvas = await canvasOf(ctx);
+    const scenes = await ctx.resolver.sceneList();
+    const focusIds = new Set(focus.map(f => f.id));
+    const notes: Array<{ rank: number; text: string }> = [];
+    const pattern = await currentPattern(ctx);
+    const fonts = new Set<string>();
+    const textColors = new Set<string>();
+    const camQuadrants = new Map<string, string>();
+    const hardToRead: string[] = [];
+
+    for (const scene of scenes) {
+      const items = (await sceneDetail(ctx, scene)).filter(
+        i => i.display === 'horizontal' && i.visible,
+      );
+      const inFocus = focusIds.has(scene.id);
+      const texts: Array<{ item: ItemDetail; st: Record<string, any> }> = [];
+      for (const item of items.filter(i => i.type.startsWith('text_gdiplus'))) {
+        const st = await settingsOf(ctx, item.sourceId);
+        texts.push({ item, st });
+        if (st.font?.face) fonts.add(String(st.font.face));
+        if (typeof st.color === 'number') textColors.add(fromObsColor(st.color));
+      }
+      const cam = items.find(i => i.type === 'dshow_input' && i.rect.width > 0);
+      if (cam && cam.rect.width < canvas[0] * 0.9) {
+        camQuadrants.set(scene.name, quadrant(cam.rect, canvas));
+      }
+      if (!inFocus) continue;
+
+      // Hidden: text drawn underneath a camera or capture that covers it (items list top first).
+      items.forEach((t, ti) => {
+        if (!t.type.startsWith('text_gdiplus') || t.rect.width <= 0) return;
+        const cover = items
+          .slice(0, ti)
+          .find(
+            o =>
+              ['dshow_input', 'window_capture', 'monitor_capture', 'game_capture'].includes(
+                o.type,
+              ) &&
+              o.rect.width > 0 &&
+              o.rect.x < t.rect.x + t.rect.width &&
+              o.rect.x + o.rect.width > t.rect.x &&
+              o.rect.y < t.rect.y + t.rect.height &&
+              o.rect.y + o.rect.height > t.rect.y,
+          );
+        if (cover) {
+          notes.push({
+            rank: -1,
+            text:
+              `"${t.name}" is hidden behind "${cover.name}". Bring it to the front: reorder_item ` +
+              `{"item": "${t.name}", "relative_to": "${cover.name}", "placement": "before", ` +
+              `"scene": "${scene.name}"}.`,
+          });
+        }
+      });
+
+      // Cut off: anything hanging past the edge of the screen.
+      for (const i of items) {
+        if (i.rect.width <= 0 || i.rect.width >= canvas[0] * 0.9) continue;
+        const edges = [
+          i.rect.x < -2 && 'left',
+          i.rect.y < -2 && 'top',
+          i.rect.x + i.rect.width > canvas[0] + 2 && 'right',
+          i.rect.y + i.rect.height > canvas[1] + 2 && 'bottom',
+        ].filter(Boolean);
+        if (edges.length) {
+          notes.push({
+            rank: -1,
+            text:
+              `"${i.name}" is cut off at the ${edges.join(' and ')} edge of the screen. Move it ` +
+              'back on screen (set_item_transform with an anchor).',
+          });
+        }
+      }
+
+      // Readability over a pattern: the pattern color matters, not just the background. (Not
+      // in a gameplay scene: there the text sits on the game, which covers the pattern.)
+      const coveredByGame = items.some(
+        i => i.type === 'game_capture' && i.rect.width >= canvas[0] * 0.9,
+      );
+      if (pattern && !coveredByGame) {
+        for (const { item, st } of texts) {
+          if (Number(st.bk_opacity) > 0 || typeof st.color !== 'number') continue;
+          if (contrastRatio(fromObsColor(st.color), pattern.ink) < 2.2) hardToRead.push(item.name);
+        }
+      }
+
+      // Hierarchy: one main message per scene, clearly bigger than the rest.
+      if (texts.length >= 2) {
+        const titles = texts.filter(t => kindOf(t.st) === 'title');
+        const heights = texts
+          .map(t => (Number(t.st.font?.size) || 0) * (t.item.transform.scale.y || 1))
+          .sort((a, b) => b - a);
+        if (titles.length > 1) {
+          notes.push({
+            rank: 1,
+            text:
+              `"${scene.name}" has ${titles.length} titles competing. One main message reads ` +
+              'best: make the others a subtitle or label (edit_text "kind").',
+          });
+        } else if (heights[1] > 0 && heights[0] < heights[1] * 1.3) {
+          notes.push({
+            rank: 1,
+            text:
+              `In "${scene.name}" the texts are about the same size, so nothing leads. Make the ` +
+              'main one bigger (kind "title") or the others smaller (kind "label").',
+          });
+        }
+      }
+
+      // Tiny text: hard to read on phones, where many viewers watch.
+      for (const { item, st } of texts) {
+        const px = Math.round((Number(st.font?.size) || 0) * (item.transform.scale.y || 1));
+        if (px > 0 && px < 30) {
+          notes.push({
+            rank: 2,
+            text: `"${item.name}" renders only about ${px} px tall, hard to read on a phone.`,
+          });
+        }
+      }
+
+      // Balance: everything piled into one half of the screen.
+      const content = items.filter(
+        i =>
+          i.rect.width > 0 &&
+          i.rect.width < canvas[0] * 0.9 &&
+          (i.type === 'dshow_input' ||
+            i.type.startsWith('text_gdiplus') ||
+            / Sticker \d+$/.test(i.name)),
+      );
+      if (content.length >= 3) {
+        const cy = content.map(i => i.rect.y + i.rect.height / 2);
+        const cx = content.map(i => i.rect.x + i.rect.width / 2);
+        let side: string | undefined;
+        if (cy.every(y => y > canvas[1] * 0.55)) side = 'bottom';
+        else if (cy.every(y => y < canvas[1] * 0.45)) side = 'top';
+        else if (cx.every(x => x > canvas[0] * 0.55)) side = 'right';
+        else if (cx.every(x => x < canvas[0] * 0.45)) side = 'left';
+        if (side) {
+          notes.push({
+            rank: 3,
+            text: `Everything in "${scene.name}" sits in the ${side} half; something on the other side would balance it.`,
+          });
+        }
+      }
+
+      const stickers = items.filter(i => / Sticker \d+$/.test(i.name)).length;
+      if (stickers > 4) {
+        notes.push({
+          rank: 3,
+          text: `"${scene.name}" has ${stickers} stickers; two or three feel playful, more feels busy.`,
+        });
+      }
+    }
+
+    if (pattern && hardToRead.length === 1) {
+      notes.push({
+        rank: 0,
+        text:
+          `"${hardToRead[0]}" is hard to read over the ${pattern.pattern} pattern. Give it an ` +
+          `outline (edit_text {"item": "${hardToRead[0]}", "text_outline": "${pattern.base}"}) or ` +
+          'pick a calmer background_color_2.',
+      });
+    } else if (pattern && hardToRead.length > 1) {
+      notes.push({
+        rank: 0,
+        text:
+          `${hardToRead.length} texts are hard to read over the ${pattern.pattern} pattern ` +
+          `(${hardToRead.slice(0, 4).join(', ')}). Give them all an outline in one call ` +
+          `(apply_style {"text_outline": "${pattern.base}"}) or pick a calmer background_color_2.`,
+      });
+    }
+
+    // Across the whole set: a consistent look.
+    if (fonts.size > 2) {
+      notes.push({
+        rank: 2,
+        text:
+          `${fonts.size} fonts in use (${[...fonts].join(', ')}). One pairing looks more ` +
+          'designed: apply_style with "heading_font" (titles) + "font" (the rest).',
+      });
+    }
+    if (textColors.size > 3) {
+      notes.push({
+        rank: 3,
+        text: `${textColors.size} different text colors across scenes; two or three keep the set coherent.`,
+      });
+    }
+    if (new Set(camQuadrants.values()).size >= 3) {
+      notes.push({
+        rank: 3,
+        text:
+          'The webcam is in a different corner in most scenes. Keeping it in one spot ' +
+          '(except a deliberate big-cam scene) feels more polished.',
+      });
+    }
+
+    return notes
+      .sort((a, b) => a.rank - b.rank)
+      .slice(0, 3)
+      .map(n => n.text);
+  } catch {
+    return [];
+  }
+}
+
+/** Put text `name` centered just below the scene's title, if it has one. */
+async function underTitle(ctx: Ctx, scene: SceneRef, name: string): Promise<void> {
+  ctx.resolver.invalidate();
+  const items = (await sceneDetail(ctx, scene)).filter(i => i.display === 'horizontal');
+  const me = items.find(i => i.name === name);
+  if (!me) return;
+  for (const t of items.filter(i => i.type.startsWith('text_gdiplus') && i.name !== name)) {
+    if (kindOf(await settingsOf(ctx, t.sourceId)) !== 'title') continue;
+    const x = t.rect.x + t.rect.width / 2 - me.rect.width / 2;
+    const gap = Math.round(t.rect.height * 0.1);
+    let y = t.rect.y + t.rect.height + gap;
+    // Below anything already stacked under the title (a subtitle, then a label).
+    const blockerAt = (top: number) =>
+      items.find(
+        o =>
+          o.name !== name &&
+          o.name !== t.name &&
+          o.type.startsWith('text_gdiplus') &&
+          o.rect.x < x + me.rect.width &&
+          o.rect.x + o.rect.width > x &&
+          o.rect.y < top + me.rect.height &&
+          o.rect.y + o.rect.height > top,
+      );
+    for (let pass = 0, hit = blockerAt(y); hit && pass < 4; pass++, hit = blockerAt(y)) {
+      y = hit.rect.y + hit.rect.height + gap;
+    }
+    await ctx.client.request(me.resourceId, 'setTransform', [
+      { position: { x: Math.round(x), y: Math.round(y) }, scale: me.transform.scale },
+    ]);
+    return;
+  }
+}
+
+/**
+ * "Scene: Scene Text text style", "Scene: Scene Webcam Frame Top color"... -> one short line
+ * per scene ("Scene: background, 2 texts, frame"). Keeps results small: every later step
+ * re-reads them.
+ */
+function summarizeChanges(changes: string[]): string[] {
+  const byScene = new Map<string, { texts: number; parts: Set<string> }>();
+  for (const c of changes) {
+    const i = c.indexOf(': ');
+    const scene = i > 0 ? c.slice(0, i) : '';
+    const what = i > 0 ? c.slice(i + 2) : c;
+    const entry = byScene.get(scene) ?? { texts: 0, parts: new Set<string>() };
+    if (what.endsWith('text style')) entry.texts++;
+    else if (/Webcam Frame|webcam frame/.test(what)) {
+      entry.parts.add(what.includes('removed') ? 'frame removed' : 'frame');
+    } else if (what.endsWith('Background color')) entry.parts.add('background');
+    else entry.parts.add(what);
+    byScene.set(scene, entry);
+  }
+  return [...byScene].map(([scene, e]) => {
+    const parts = [...e.parts];
+    if (e.texts) parts.push(e.texts === 1 ? 'text' : `${e.texts} texts`);
+    return `${scene}: ${parts.join(', ')}`;
+  });
+}
+
+/** The background color the other scenes use (the first scene background found). */
+async function houseBackground(ctx: Ctx): Promise<number | undefined> {
+  const bg = (await ctx.resolver.sources()).find(
+    s => s.type === 'color_source' && s.name.endsWith(' Background'),
+  );
+  if (!bg) return undefined;
+  const c = (await settingsOf(ctx, bg.sourceId)).color;
+  return typeof c === 'number' ? c : undefined;
+}
+
+/** Text settings worth copying from the set's existing text of the same kind (or any text). */
+async function houseTextStyle(
+  ctx: Ctx,
+  kind: TextKind,
+  colorGiven: boolean,
+  /** The size asked for (an explicit size wins over the kind default). */
+  sizePx: number,
+): Promise<Record<string, unknown>> {
+  const texts = (await ctx.resolver.sources()).filter(s => s.type.startsWith('text_gdiplus'));
+  let model: Record<string, any> | undefined;
+  for (const t of texts) {
+    const st = await settingsOf(ctx, t.sourceId);
+    if (kindOf(st) === kind) {
+      model = st;
+      break;
+    }
+    model = model ?? st;
+  }
+  if (!model) return {};
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(TEXT_EFFECT_DEFAULTS)) {
+    if (key !== 'extents' && model[key] !== undefined) out[key] = model[key];
+  }
+  if (!colorGiven && typeof model.color === 'number') out.color = model.color;
+  if (model.font?.face) {
+    out.font = {
+      face: model.font.face,
+      flags: Number(model.font.flags) || 0,
+      style: '',
+      size: sizePx,
+    };
+  }
+  return out;
+}
+
+/** Spread into a tool result. */
+async function withNotes(ctx: Ctx, focus: SceneRef[]): Promise<{ design_notes?: string[] }> {
+  const notes = await designNotes(ctx, focus);
+  return notes.length ? { design_notes: notes } : {};
+}
+
+// ------------------------------------------------------------------ more sources
+
+/**
+ * Add a Streamlabs widget to `scene`. One source per widget type, shared by every scene that
+ * shows it. WidgetsService.createWidget always adds to the active scene, so a widget made for
+ * another scene is added there and the stray copy removed from the active one.
+ */
+async function addWidget(
+  ctx: Ctx,
+  scene: SceneRef,
+  sources: SourceRef[],
+  which: WidgetName,
+  it: BuildItem,
+  canvas: Canvas,
+  warnings: string[],
+): Promise<void> {
+  const w = WIDGETS[which];
+  const inScene = (await sceneDetail(ctx, scene)).some(i => i.name.startsWith(w.name));
+  if (inScene) {
+    warnings.push(`"${scene.name}" already has the ${w.name}.`);
+    return;
+  }
+  let src = sources.find(s => s.name.startsWith(w.name) && s.type === 'browser_source');
+  if (src) {
+    await ctx.commands.addExistingSource(scene, src.sourceId);
+  } else {
+    const active = await ctx.resolver.activeScene();
+    const created = await ctx.client.request<unknown>('WidgetsService', 'createWidget', [
+      w.type,
+      w.name,
+    ]);
+    if (!created) {
+      throw new Error(
+        `Streamlabs did not create the ${w.name}. Widgets need a logged-in Streamlabs account: ` +
+          'log in from the Streamlabs window, then try again.',
+      );
+    }
+    ctx.resolver.invalidate();
+    src = (await ctx.resolver.sources()).find(s => s.name.startsWith(w.name));
+    if (!src) throw new Error(`Created the ${w.name} but cannot find it.`);
+    if (active.id !== scene.id) {
+      const id = src.sourceId;
+      await ctx.commands.addExistingSource(scene, id);
+      const stray = (await sceneDetail(ctx, active)).filter(i => i.sourceId === id);
+      for (const s of stray) await ctx.commands.removeItem(active, toItemRef(s));
+    }
+  }
+  // Wait for its real size: placing at 0x0 would scale it against a guessed width.
+  const item = await waitForItem(ctx, scene, src.name, true, 25);
+  await place(ctx, scene, item, canvas, {
+    anchor: it.anchor ?? (w.anchor as Anchor),
+    widthPercent: it.width_percent ?? w.width,
+  });
+}
+
+/**
+ * Window and display captures only start (and learn their size) while their scene is on
+ * screen. One added to another scene is placed with a guessed size; this finishes the job once
+ * the real size arrives: the intended placement is remembered and re-applied then.
+ */
+interface PendingPlacement {
+  ctx: Ctx;
+  scene: SceneRef;
+  name: string;
+  opts: { anchor: Anchor; widthPercent: number; flush?: boolean } | 'fit' | { frame: number };
+  until: number;
+}
+const pendingPlacements: PendingPlacement[] = [];
+let pendingTimer: ReturnType<typeof setInterval> | null = null;
+
+function placeWhenSized(p: Omit<PendingPlacement, 'until'>): void {
+  pendingPlacements.push({ ...p, until: Date.now() + 30 * 60 * 1000 });
+  if (pendingTimer) return;
+  pendingTimer = setInterval(() => {
+    void (async () => {
+      for (const p of [...pendingPlacements]) {
+        const drop = () => pendingPlacements.splice(pendingPlacements.indexOf(p), 1);
+        if (Date.now() > p.until) {
+          drop();
+          continue;
+        }
+        try {
+          p.ctx.resolver.invalidate();
+          const item = (await sceneDetail(p.ctx, p.scene)).find(
+            i => i.display === 'horizontal' && i.name === p.name,
+          );
+          if (!item) {
+            drop(); // removed meanwhile
+          } else if (item.sourceWidth > 0) {
+            drop();
+            if (p.opts === 'fit') await p.ctx.commands.fitToScreen(p.scene, toItemRef(item));
+            else if ('frame' in p.opts) await upsertWebcamFrame(p.ctx, p.scene, item, p.opts.frame);
+            else {
+              await place(p.ctx, p.scene, item, await canvasOf(p.ctx), p.opts);
+              // A frame waiting for this camera goes on after it has its real size and spot.
+              const frameJob = pendingPlacements.find(
+                q =>
+                  q.scene.id === p.scene.id &&
+                  q.name === p.name &&
+                  typeof q.opts === 'object' &&
+                  'frame' in q.opts,
+              );
+              if (frameJob) frameJob.until = Date.now() + 30 * 60 * 1000;
+            }
+            p.ctx.snapshot.invalidate();
+          }
+        } catch {
+          /* try again next tick */
+        }
+      }
+      if (!pendingPlacements.length && pendingTimer) {
+        clearInterval(pendingTimer);
+        pendingTimer = null;
+      }
+    })();
+  }, 2000);
+  pendingTimer.unref?.();
+}
+
+/** Place a capture now if it has a size, else provisionally and again once it does. */
+async function placeCapture(
+  ctx: Ctx,
+  scene: SceneRef,
+  item: ItemDetail,
+  canvas: Canvas,
+  it: BuildItem,
+  warnings: string[],
+): Promise<void> {
+  const opts: PendingPlacement['opts'] =
+    it.anchor || it.width_percent
+      ? { anchor: it.anchor ?? 'center', widthPercent: it.width_percent ?? 50 }
+      : 'fit';
+  if (item.sourceWidth > 0) {
+    if (opts === 'fit') await ctx.commands.fitToScreen(scene, toItemRef(item));
+    else await place(ctx, scene, item, canvas, opts);
+    return;
+  }
+  // Provisional spot (sized as if 1080p), corrected when the capture starts.
+  await place(
+    ctx,
+    scene,
+    item,
+    canvas,
+    opts === 'fit' ? { anchor: 'center', widthPercent: 100 } : opts,
+  );
+  placeWhenSized({ ctx, scene, name: item.name, opts });
+  warnings.push(
+    `"${item.name}" starts capturing when "${scene.name}" is on screen; it sizes itself then.`,
+  );
+}
+
+/** "https://www.youtube.com/watch?v=..." -> "youtube.com" (for naming the source). */
+function siteName(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return 'Web Page';
+  }
+}
+
+async function uniqueName(ctx: Ctx, wanted: string): Promise<string> {
+  const taken = new Set((await ctx.resolver.sources()).map(s => s.name));
+  let name = wanted;
+  for (let n = 2; taken.has(name); n++) name = `${wanted} ${n}`;
+  return name;
+}
+
+/** A web page (a browser source): anything with a URL, e.g. a YouTube video or a site. */
+async function addBrowser(ctx: Ctx, scene: SceneRef, it: BuildItem, canvas: Canvas): Promise<void> {
+  let url = (it.url ?? '').trim();
+  if (!url) {
+    throw new Error('A web page needs "url", e.g. {"role": "browser", "url": "https://..."}.');
+  }
+  if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+  const name = await uniqueName(ctx, `${siteName(url)} (web)`);
+  await ctx.commands.addSource(scene, name, 'browser_source', {
+    url,
+    is_local_file: false,
+    width: 1280,
+    height: 720,
+    fps: 30,
+    shutdown: true,
+    reroute_audio: true,
+  });
+  const item = await waitForItem(ctx, scene, name, true, 20);
+  await place(ctx, scene, item, canvas, {
+    anchor: it.anchor ?? 'center',
+    widthPercent: it.width_percent ?? 50,
+  });
+}
+
+/** One window, by app or title (the server finds the matching open window). */
+async function addWindow(
+  ctx: Ctx,
+  scene: SceneRef,
+  it: BuildItem,
+  canvas: Canvas,
+  warnings: string[],
+): Promise<void> {
+  const wanted = (it.window ?? '').trim();
+  if (!wanted) {
+    throw new Error('A window capture needs "window": the app or window title, e.g. "Discord".');
+  }
+  const name = await uniqueName(ctx, `${wanted} (window)`);
+  await ctx.commands.addSource(scene, name, 'window_capture', {});
+  const item = await waitForItem(ctx, scene, name, false);
+  // The open windows, as Streamlabs lists them in the source's properties.
+  const props = await ctx.client.request<
+    Array<{ name: string; options?: Array<{ value: string; description: string }> }>
+  >(`Source["${item.sourceId}"]`, 'getPropertiesFormData');
+  const options = (props ?? []).find(p => p.name === 'window')?.options ?? [];
+  const w = wanted.toLowerCase();
+  const match =
+    options.find(o => o.description.toLowerCase().includes(w)) ??
+    options.find(o => o.value.toLowerCase().includes(w));
+  if (!match) {
+    await ctx.commands.removeItem(scene, toItemRef(item));
+    // App names only: window titles can be private (chats, documents) and this may be on screen.
+    const apps = [
+      ...new Set(
+        options
+          .map(o => /^\[([^\]]+)\]/.exec(o.description)?.[1]?.replace(/\.exe$/i, ''))
+          .filter(a => a && !/select a window/i.test(a)),
+      ),
+    ].slice(0, 15);
+    throw new Error(`No open window matches "${wanted}". Open apps: ${apps.join(', ')}.`);
+  }
+  await ctx.commands.setSourceSettings(item.sourceId, { window: match.value });
+  const sized = await waitForItem(ctx, scene, name, true, 10);
+  await placeCapture(ctx, scene, sized, canvas, it, warnings);
+}
+
+/** The whole screen (a display capture). */
+async function addDisplay(
+  ctx: Ctx,
+  scene: SceneRef,
+  it: BuildItem,
+  canvas: Canvas,
+  warnings: string[],
+): Promise<void> {
+  const name = await uniqueName(ctx, 'Display Capture');
+  await ctx.commands.addSource(scene, name, 'monitor_capture', {
+    monitor: Math.max(0, Math.round(it.monitor ?? 0)),
+    capture_cursor: true,
+  });
+  const item = await waitForItem(ctx, scene, name, true, 10);
+  await placeCapture(ctx, scene, item, canvas, it, warnings);
 }
 
 // ------------------------------------------------------------------ tools
@@ -1007,8 +1695,22 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
           const withBg: BuildItem[] = !items.some(i => i.role === 'background')
             ? [{ role: 'background' }, ...items]
             : items;
-          const ordered = [...withBg].sort((a, b) => LAYER[a.role] - LAYER[b.role]);
           const warnings: string[] = [];
+          // The game is the show in a gameplay scene: text over it covers gameplay, so a new
+          // gameplay scene gets none. (add_to_scene can still add some when the streamer asks.)
+          let toBuild = withBg;
+          if (withBg.some(i => i.role === 'game')) {
+            const dropped = withBg.filter(i => i.role === 'text');
+            if (dropped.length) {
+              toBuild = withBg.filter(i => i.role !== 'text');
+              const words = dropped.map(d => `"${d.text ?? ''}"`).join(', ');
+              warnings.push(
+                `Left out the text ${words}: text over the game covers gameplay. If the streamer ` +
+                  'asks for text in this scene, add it with add_to_scene.',
+              );
+            }
+          }
+          const ordered = [...toBuild].sort(buildOrder);
           let textCount = 0;
 
           for (const it of ordered) {
@@ -1029,6 +1731,7 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
             scene: scene.name,
             items: summarize(after, canvas),
             ...(warnings.length ? { warnings } : {}),
+            ...(await withNotes(ctx, [scene])),
             next: 'Build the next scene, or use switch_scene to show this one.',
           });
         }),
@@ -1085,13 +1788,15 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
             ? [`Already in the scene, not added again: ${skipped.join(', ')}.`]
             : [];
           let textCount = existing.filter(i => i.name.startsWith(`${sceneRef.name} Text`)).length;
-          const ordered = [...todo].sort((a, b) => LAYER[a.role] - LAYER[b.role]);
+          const ordered = [...todo].sort(buildOrder);
           for (const it of ordered) {
             try {
               await addRole(ctx, sceneRef, it, canvas, () => ++textCount, warnings);
               // New items land on top: push backgrounds and game capture behind everything.
               if (it.role === 'background' || it.role === 'game') {
                 await sendToBack(ctx, sceneRef, it.role);
+              } else if (['webcam', 'window', 'display'].includes(it.role)) {
+                await belowOverlays(ctx, sceneRef, it.role === 'webcam');
               }
             } catch (e) {
               const msg = e instanceof Error ? e.message : String(e);
@@ -1108,6 +1813,7 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
             scene: sceneRef.name,
             items: summarize(after, canvas),
             ...(warnings.length ? { warnings } : {}),
+            ...(await withNotes(ctx, [sceneRef])),
           });
         }),
       ),
@@ -1118,14 +1824,35 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
     {
       title: 'Restyle all scenes',
       description:
-        'Change the look of every scene in ONE call: background color and pattern, text color, font and ' +
-        'text effects (outline, bold, italic, size, a box behind the text, a gradient), and an ' +
-        'accent-colored frame around the webcam. Pass only what should change. ' +
-        'Example: {"background_color": "#0f172a", "accent_color": "#22d3ee", "text_color": ' +
-        '"#f0abfc", "font": "Segoe UI Black"}. Good fonts: "Segoe ' +
-        'Print" (cute, handwritten), "Comic Sans MS" (playful), "Ink Free" (marker), ' +
-        '"Segoe UI Black" (bold, clean).',
+        'Change the look of every scene in ONE call: colors (or a whole palette built from one ' +
+        'color), background pattern, fonts (a heading + body pairing), text effects (outline, ' +
+        'bold, italic, size, a gradient) and an accent-colored webcam ' +
+        'frame. Pass only what should change. Example: {"palette": {"from": "#a855f7", ' +
+        '"harmony": "triadic", "mood": "light"}, "heading_font": "Segoe Print", "font": ' +
+        '"Segoe UI", "background_pattern": "dots"}.',
       inputSchema: {
+        palette: z
+          .object({
+            from: z.string().describe('The main color (hex or a simple name).'),
+            harmony: z
+              .enum(HARMONIES)
+              .optional()
+              .describe(
+                'How the other colors relate: monochrome (shades of one), analogous ' +
+                  '(neighbours, calm; default), complementary (opposite, punchy), triadic ' +
+                  '(three-way, playful), split (soft contrast).',
+              ),
+            mood: z
+              .enum(MOODS)
+              .optional()
+              .describe('light = pastel (default), dark = deep, vivid = saturated.'),
+          })
+          .optional()
+          .describe(
+            'Build a matching color set from one color: background, text, accent and ' +
+              'pattern colors that belong together, text always readable. Any color you ' +
+              'pass explicitly wins.',
+          ),
         background_color: colorParam('Background fill'),
         background_pattern: z
           .enum(BACKGROUND_PATTERNS)
@@ -1139,7 +1866,14 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
         ),
         accent_color: colorParam('Accent: the webcam frame, and text outlines set to true'),
         text_color: colorParam('Text color'),
-        font: z.string().optional().describe('Font name for all text, e.g. "Segoe Print".'),
+        font: z
+          .string()
+          .optional()
+          .describe('Font for all text (or for everything but titles when heading_font is set).'),
+        heading_font: z
+          .string()
+          .optional()
+          .describe(`Font for titles only, paired with "font" for the rest: ${FONT_PAIRINGS}.`),
         ...textStyleShape,
         webcam_frame: z
           .boolean()
@@ -1155,18 +1889,27 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
     },
     async ({
-      background_color,
+      palette,
+      background_color: bgIn,
       background_pattern,
-      background_color_2,
-      accent_color,
-      text_color,
+      background_color_2: ink2In,
+      accent_color: accentIn,
+      text_color: textIn,
       font,
+      heading_font,
       webcam_frame,
       scenes,
       requested_by,
       ...textOpts
-    }) =>
-      guard('apply_style', () =>
+    }) => {
+      // A palette fills in whatever colors were not given explicitly.
+      let pal: ReturnType<typeof derivePalette> | undefined;
+      if (palette) pal = derivePalette(normHex(palette.from), palette.harmony, palette.mood);
+      const background_color = bgIn ?? pal?.background;
+      const background_color_2 = ink2In ?? pal?.pattern;
+      const accent_color = accentIn ?? pal?.accent;
+      const text_color = textIn ?? pal?.text;
+      return guard('apply_style', () =>
         serial(async () => {
           if (
             !background_color &&
@@ -1175,12 +1918,13 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
             !accent_color &&
             !text_color &&
             !font &&
+            !heading_font &&
             !hasTextStyle(textOpts) &&
             webcam_frame === undefined
           ) {
             return fail(
               'Nothing to change: pass colors, a font, text effects (text_outline, text_bold, ' +
-                'text_size, text_background...) and/or webcam_frame.',
+                'text_size, text_gradient...) and/or webcam_frame.',
             );
           }
           // Readability guard: a model picking colors freely will sometimes put pale text on a
@@ -1248,6 +1992,7 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
                 item.type === 'text_gdiplus' &&
                 (fg !== undefined ||
                   font ||
+                  heading_font ||
                   accent !== undefined ||
                   background_color ||
                   hasTextStyle(textOpts))
@@ -1265,10 +2010,12 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
                     if (!adjustments.includes(note)) adjustments.push(note);
                   }
                 }
-                if (font) {
+                // Titles take the heading font when there is one; everything else takes font.
+                const face = heading_font && kindOf(current) === 'title' ? heading_font : font;
+                if (face) {
                   patch.font = {
                     ...(current.font ?? {}),
-                    face: font,
+                    face,
                     size: current.font?.size ?? TEXT_SIZE_PX.medium,
                   };
                 }
@@ -1280,8 +2027,29 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
                 ) {
                   patch.outline_color = accent;
                 }
-                for (const note of textStylePatch(current, textOpts, outlineAccent, patch)) {
+                const bgItem = items.find(i => i.name === `${scene.name} Background`);
+                const bgColor = bgItem ? (await settingsOf(ctx, bgItem.sourceId)).color : undefined;
+                let sceneBg: string | undefined;
+                if (background_color) sceneBg = normHex(background_color);
+                else if (typeof bgColor === 'number') sceneBg = fromObsColor(bgColor);
+                // text_size here scales every text and keeps the hierarchy (titles stay bigger
+                // than subtitles and labels), so it is applied per kind below, not as one size.
+                const { text_size: sizeAll, ...perText } = textOpts;
+                for (const note of textStylePatch(
+                  current,
+                  perText,
+                  outlineAccent,
+                  patch,
+                  sceneBg,
+                )) {
                   if (!adjustments.includes(note)) adjustments.push(note);
+                }
+                if (sizeAll) {
+                  patch.font = {
+                    ...(current.font ?? {}),
+                    ...((patch.font as object) ?? {}),
+                    size: Math.round(KIND_PX[kindOf(current)] * SIZE_FACTOR[sizeAll]),
+                  };
                 }
                 if (!Object.keys(patch).length) continue;
                 refit.push(relayoutEntry(scene, item, !!textOpts.text_size));
@@ -1309,7 +2077,7 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
             }
           }
 
-          if (accent !== undefined && webcam_frame === undefined && !frameSeen) {
+          if (accentIn !== undefined && webcam_frame === undefined && !frameSeen) {
             adjustments.push(
               'accent_color colors the webcam frame, and there is no frame, so nothing shows the ' +
                 'accent yet. Pass "webcam_frame": true to add one (or do not mention a frame).',
@@ -1342,8 +2110,8 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
             await applyBackgroundPattern(ctx, targets, patternKind, base, ink, canvas, changed);
             if (patternKind !== 'solid' && contrastRatio(base, ink) > 2.2) {
               adjustments.push(
-                'The pattern is high-contrast; if text gets hard to read, give it a ' +
-                  'text_background box.',
+                'The pattern is high-contrast; if text gets hard to read, give it an ' +
+                  'outline (text_outline).',
               );
             }
           }
@@ -1355,13 +2123,15 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
           ctx.snapshot.invalidate();
           return ok({
             styled: true,
-            scenes: targets.map(s => s.name),
-            changes: changed,
+            ...(pal ? { palette: pal } : {}),
+            changes: summarizeChanges(changed),
             ...(adjustments.length ? { adjustments } : {}),
+            ...(await withNotes(ctx, targets)),
             next: 'Use capture_screen to see how it looks.',
           });
         }),
-      ),
+      );
+    },
   );
 
   server.registerTool(
@@ -1370,9 +2140,9 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
       title: 'Change one text: words and style',
       description:
         'Change ONE text item: its words, color, font and effects (outline, bold, italic, size, ' +
-        'a box behind it, a gradient). For every text at once use apply_style instead. ' +
+        'a gradient). For every text at once use apply_style instead. ' +
         'Example: {"item": "Starting Soon Text", "text": "brb, grabbing tea", "text_italic": ' +
-        'true, "text_background": "#fdf2f8"}. Pass only what should change.',
+        'true}. Pass only what should change.',
       inputSchema: {
         item: z
           .string()
@@ -1382,15 +2152,21 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
         text: z.string().optional().describe('New words. No emoji (they show as empty boxes).'),
         color: colorParam('Text color'),
         font: z.string().optional().describe('Font name, e.g. "Segoe Print".'),
+        kind: z
+          .enum(TEXT_KINDS)
+          .optional()
+          .describe(
+            'Its place in the hierarchy: title (main message), subtitle or label. Resizes it to match.',
+          ),
         ...textStyleShape,
         requested_by: requestedBy,
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
     },
-    async ({ item, text, color, font, requested_by, ...textOpts }) =>
+    async ({ item, text, color, font, kind, requested_by, ...textOpts }) =>
       guard('edit_text', () =>
         serial(async () => {
-          if (text === undefined && !color && !font && !hasTextStyle(textOpts)) {
+          if (text === undefined && !color && !font && !kind && !hasTextStyle(textOpts)) {
             return fail('Nothing to change: pass text, color, font and/or text effects.');
           }
           const wanted = item.trim().toLowerCase();
@@ -1443,9 +2219,31 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
           }
           const accent =
             onOff(textOpts.text_outline) === true ? await currentAccent(ctx) : undefined;
-          notes.push(...textStylePatch(current, textOpts, accent, patch));
+          const bgItem = (await sceneDetail(ctx, scene)).find(
+            i => i.name === `${scene.name} Background`,
+          );
+          const bgColor = bgItem ? (await settingsOf(ctx, bgItem.sourceId)).color : undefined;
+          notes.push(
+            ...textStylePatch(
+              current,
+              textOpts,
+              accent,
+              patch,
+              typeof bgColor === 'number' ? fromObsColor(bgColor) : undefined,
+            ),
+          );
 
-          const relayout = relayoutEntry(scene, detail, !!textOpts.text_size);
+          if (kind) {
+            patch.mcp_kind = kind;
+            if (!textOpts.text_size) {
+              patch.font = {
+                ...(current.font ?? {}),
+                ...((patch.font as object) ?? {}),
+                size: KIND_PX[kind],
+              };
+            }
+          }
+          const relayout = relayoutEntry(scene, detail, !!textOpts.text_size || !!kind);
           await setTextSettings(ctx, detail.sourceId, current, patch);
           await sleep(400);
           await relayoutText(ctx, relayout, await canvasOf(ctx));
@@ -1457,6 +2255,7 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
             scene: scene.name,
             changed: Object.keys(patch),
             ...(notes.length ? { adjustments: notes } : {}),
+            ...(await withNotes(ctx, [scene])),
             next: 'Use capture_screen to see how it looks.',
           });
         }),
@@ -1580,6 +2379,7 @@ export function registerStudio(server: McpServer, ctx: Ctx): void {
             item: detail.name,
             scene: scene.name,
             sticker: { emoji: newEmoji, animate: newAnimation, size: px },
+            ...(await withNotes(ctx, [scene])),
             ...(anchor && at && at !== anchor
               ? { note: `Placed at ${at}: ${anchor} would cover something.` }
               : {}),
@@ -1790,6 +2590,9 @@ async function swapCamera(ctx: Ctx, cams: SourceRef[], match: DeviceOption) {
   const shown = (await sceneDetail(ctx, withCam[0].scene)).find(
     i => i.sourceId === target!.sourceId && i.display === 'horizontal',
   );
+  // What NVIDIA Broadcast is actually doing, read from it, not assumed: a skipped set_effects
+  // step must show up here rather than be described as working.
+  const fx = isNvidia ? await nvidiaCameraEffects() : null;
   return {
     updated: true,
     camera: match.description,
@@ -1800,6 +2603,7 @@ async function swapCamera(ctx: Ctx, cams: SourceRef[], match: DeviceOption) {
           verified:
             `The camera is live and sending ${shown.sourceWidth}x${shown.sourceHeight} video. ` +
             'This step is done; no need to check it again.',
+          ...(fx ? { nvidia_effects: describeCameraEffects(fx) } : {}),
         }
       : {}),
   };
@@ -1821,7 +2625,10 @@ async function addRole(
     case 'background': {
       const name = `${scene.name} Background`;
       await ctx.commands.addSource(scene, name, 'color_source', {
-        color: toObsColor(it.color ?? DEFAULT_BG),
+        // The set's current background, so a new scene matches the others.
+        color: it.color
+          ? toObsColor(it.color)
+          : (await houseBackground(ctx)) ?? toObsColor(DEFAULT_BG),
         width: canvas[0],
         height: canvas[1],
       });
@@ -1883,10 +2690,11 @@ async function addRole(
           scene,
           GAME_CAPTURE_NAME,
           'game_capture',
-          gameCaptureSettings(it.game),
+          GAME_CAPTURE_SETTINGS,
         );
       }
-      const item = await waitForItem(ctx, scene, GAME_CAPTURE_NAME, false);
+      // Wait for the placeholder (it gives the capture its size), then fill the screen.
+      const item = await waitForItem(ctx, scene, GAME_CAPTURE_NAME, true, 20);
       await ctx.commands.stretchToScreen(scene, toItemRef(item));
       return;
     }
@@ -1916,16 +2724,46 @@ async function addRole(
       const camName = existing?.name ?? WEBCAM_NAME;
       // Cameras can take several seconds to deliver a first frame.
       const item = await waitForItem(ctx, scene, camName, true, 30);
-      await place(ctx, scene, item, canvas, {
-        anchor: it.anchor ?? 'bottom-right',
+      const camOpts = {
+        anchor: it.anchor ?? ('bottom-right' as Anchor),
         widthPercent: it.width_percent ?? 25,
         flush: it.flush,
-      });
+      };
+      await place(ctx, scene, item, canvas, camOpts);
+      if (item.sourceWidth <= 0) {
+        // Still starting: placed as if 1080p for now, placed again at its real size.
+        placeWhenSized({ ctx, scene, name: camName, opts: camOpts });
+        warnings.push('The camera is still starting; it takes its place as soon as video arrives.');
+      }
       return;
     }
 
     case 'alerts': {
       await addAlertBox(ctx, scene, sources, it, canvas);
+      return;
+    }
+
+    case 'widget': {
+      if (!it.widget) {
+        throw new Error(`A widget needs "widget": one of ${WIDGET_NAMES.join(', ')}.`);
+      }
+      if (it.widget === 'alerts') await addAlertBox(ctx, scene, sources, it, canvas);
+      else await addWidget(ctx, scene, sources, it.widget, it, canvas, warnings);
+      return;
+    }
+
+    case 'browser': {
+      await addBrowser(ctx, scene, it, canvas);
+      return;
+    }
+
+    case 'window': {
+      await addWindow(ctx, scene, it, canvas, warnings);
+      return;
+    }
+
+    case 'display': {
+      await addDisplay(ctx, scene, it, canvas, warnings);
       return;
     }
 
@@ -1935,20 +2773,72 @@ async function addRole(
       const words = cleanText(it.text ?? '') || scene.name;
       const emoji = emojiIn(it.text ?? '');
       if (emoji) warnings.push(emojiNote(scene.name, emoji));
-      await ctx.commands.addSource(scene, name, 'text_gdiplus', {
+      const textSettings: Record<string, unknown> = {
         text: words,
-        font: { face: DEFAULT_FONT, size: TEXT_SIZE_PX[it.size ?? 'large'], style: '', flags: 0 },
+        font: {
+          face: DEFAULT_FONT,
+          size: it.size ? TEXT_SIZE_PX[it.size] : KIND_PX[it.kind ?? defaultKind(it.size)],
+          style: '',
+          flags: 0,
+        },
+        mcp_kind: it.kind ?? defaultKind(it.size),
         color: toObsColor(it.color ?? '#ffffff'),
         opacity: 100,
         align: 'center',
         ...TEXT_EFFECT_DEFAULTS,
-      });
+        // The set's current text style for this kind, so a new scene matches the others.
+        ...(await houseTextStyle(
+          ctx,
+          it.kind ?? defaultKind(it.size),
+          !!it.color,
+          it.size ? TEXT_SIZE_PX[it.size] : KIND_PX[it.kind ?? defaultKind(it.size)],
+        )),
+      };
+      // Italic (e.g. from the house style) needs room for the last letter's slant.
+      Object.assign(textSettings, italicSpacing(textSettings));
+      await ctx.commands.addSource(scene, name, 'text_gdiplus', textSettings);
       const item = await waitForItem(ctx, scene, name, true);
-      await place(ctx, scene, item, canvas, { anchor: it.anchor ?? 'center' });
+      const kind = it.kind ?? defaultKind(it.size);
+      await place(ctx, scene, item, canvas, {
+        anchor: it.anchor ?? (kind === 'label' ? 'top-left' : 'center'),
+      });
+      // A boxed style needs its padding laid out.
+      if (Number((await settingsOf(ctx, item.sourceId)).bk_opacity) > 0) {
+        // Re-read: it has moved since it was created.
+        const placed = await waitForItem(ctx, scene, name, true);
+        await relayoutText(ctx, relayoutEntry(scene, placed, false), canvas);
+      }
+      // A subtitle or label with no spot of its own reads as part of the title: just under it
+      // (a label stays in its corner when the scene has no title, e.g. a gameplay scene).
+      if ((kind === 'subtitle' || kind === 'label') && !it.anchor) {
+        await underTitle(ctx, scene, name);
+      }
       await fitText(ctx, scene, name, canvas);
       return;
     }
   }
+}
+
+/**
+ * A camera or capture just added on top of an existing scene: move it below the scene's text,
+ * stickers and widgets, so it never covers them (build_scene stacks in order already).
+ */
+async function belowOverlays(ctx: Ctx, scene: SceneRef, isCam: boolean): Promise<void> {
+  ctx.resolver.invalidate();
+  const items = (await sceneDetail(ctx, scene)).filter(i => i.display === 'horizontal');
+  const added = items[0]; // new items land on top of the list
+  if (!added) return;
+  const overlays = items.filter(
+    i =>
+      i.sceneItemId !== added.sceneItemId &&
+      (i.type.startsWith('text_gdiplus') ||
+        i.type === 'browser_source' ||
+        FRAME_STRIP_RE.test(i.name)),
+  );
+  const lowest = overlays[overlays.length - 1];
+  if (lowest) await ctx.commands.reorder(scene, toItemRef(added), lowest.sceneItemId, 'after');
+  // Text may now be under the camera's footprint: move it clear (or off the face).
+  if (isCam) await afterWebcamChange(ctx, scene);
 }
 
 /** Move a just-added background/game item to the bottom of the stack (game above background). */
@@ -2007,7 +2897,8 @@ async function addAlertBox(
       for (const s of stray) await ctx.commands.removeItem(active, toItemRef(s));
     }
   }
-  const item = await waitForItem(ctx, scene, src.name, false);
+  // Wait for its real size: placing at 0x0 would scale it against a guessed width.
+  const item = await waitForItem(ctx, scene, src.name, true, 25);
   await place(ctx, scene, item, canvas, {
     anchor: it.anchor ?? 'top-center',
     widthPercent: it.width_percent ?? 40,
@@ -2046,7 +2937,37 @@ async function fitText(ctx: Ctx, scene: SceneRef, name: string, canvas: Canvas):
     b.y < c.rect.y + c.rect.height + pad &&
     b.y + b.h > c.rect.y - pad;
 
-  const cam = cams.find(c => hits(box(), c));
+  // A full-screen webcam leaves no space beside it: keep text off the face (the middle of the
+  // frame) by moving it to the top edge instead.
+  const fullCam = cams.find(c => c.rect.width >= cw * 0.9 && c.rect.height >= ch * 0.9);
+  if (fullCam) {
+    const b = box();
+    const fx = cw * 0.2;
+    const fy = ch * 0.2;
+    const fw = cw * 0.6;
+    const fh = ch * 0.65;
+    if (b.x < fx + fw && b.x + b.w > fx && b.y < fy + fh && b.y + b.h > fy) {
+      s = Math.min(s, (fy - M) / srcH > 0.3 ? (fy - M) / srcH : s);
+      cy = M + (srcH * s) / 2;
+      // Stack under any text already up there (the title first, then a subtitle).
+      const gap = 10;
+      for (let pass = 0; pass < 4; pass++) {
+        const bb = box();
+        const above = items.find(
+          o =>
+            o.name !== name &&
+            o.type.startsWith('text_gdiplus') &&
+            o.rect.x < bb.x + bb.w &&
+            o.rect.x + o.rect.width > bb.x &&
+            o.rect.y < bb.y + bb.h &&
+            o.rect.y + o.rect.height > bb.y,
+        );
+        if (!above) break;
+        cy = above.rect.y + above.rect.height + gap + (srcH * s) / 2;
+      }
+    }
+  }
+  const cam = cams.find(c => c !== fullCam && hits(box(), c));
   if (cam) {
     const c = cam.rect;
     const regions = [
@@ -2068,20 +2989,34 @@ async function fitText(ctx: Ctx, scene: SceneRef, name: string, canvas: Canvas):
       },
     ].filter(r => r.w > 40 && r.h > 20);
 
-    let best: { s: number; cx: number; cy: number } | null = null;
-    for (const r of regions) {
+    const options = regions.map(r => {
       const rs = Math.min(s, r.w / srcW, r.h / srcH);
       const h = srcH * rs;
-      const rcx = r.x + r.w / 2;
+      // Keep its own horizontal position when it fits (stays aligned with what it belongs to).
+      const w = srcW * rs;
+      const rcx = Math.min(Math.max(cx, r.x + w / 2), r.x + r.w - w / 2);
       // Beside the webcam: keep the text's height if it fits; above/below: center in the gap.
       const rcy =
         r.side === 'left' || r.side === 'right'
           ? Math.min(Math.max(cy, r.y + h / 2), r.y + r.h - h / 2)
           : r.y + r.h / 2;
-      if (!best || rs > best.s * 1.05) best = { s: rs, cx: rcx, cy: rcy };
-    }
+      return { s: rs, cx: rcx, cy: rcy };
+    });
+    // The biggest the text can stay; among spots that keep it about that big, the one that
+    // moves it least (so a subtitle under its title stays under it, just clear of the webcam).
+    const top = Math.max(0, ...options.map(o => o.s));
+    const best = options
+      .filter(o => o.s >= top / 1.05)
+      .sort((a, b) => Math.hypot(a.cx - cx, a.cy - cy) - Math.hypot(b.cx - cx, b.cy - cy))[0];
     if (best) ({ s, cx, cy } = best);
   }
+
+  // 3) always fully on screen, inside the title-safe margins (a text that grew in place near
+  // an edge would otherwise run off it)
+  const fw = srcW * s;
+  const fh = srcH * s;
+  cx = Math.min(Math.max(cx, M + fw / 2), cw - M - fw / 2);
+  cy = Math.min(Math.max(cy, M + fh / 2), ch - M - fh / 2);
 
   const b = box();
   const unchanged =
@@ -2154,9 +3089,13 @@ export async function afterWebcamChange(ctx: Ctx, scene: SceneRef): Promise<void
 
   // A bigger or moved webcam can now cover text: move/shrink text out of its way.
   const canvas = await canvasOf(ctx);
+  // Titles first, so subtitles and labels stack under them.
+  const texts = [];
   for (const t of items.filter(i => i.type.startsWith('text_gdiplus'))) {
-    await fitText(ctx, scene, t.name, canvas);
+    texts.push({ t, rank: KIND_RANK[kindOf(await settingsOf(ctx, t.sourceId))] });
   }
+  texts.sort((a, b) => a.rank - b.rank);
+  for (const { t } of texts) await fitText(ctx, scene, t.name, canvas);
 }
 
 async function upsertWebcamFrame(
@@ -2165,6 +3104,19 @@ async function upsertWebcamFrame(
   cam: ItemDetail,
   color: number,
 ): Promise<void> {
+  if (cam.rect.width <= 0 || cam.rect.height <= 0) {
+    // The camera hasn't sent video yet (0x0): a frame now would be four strips at a point.
+    // Draw it once the camera has its size.
+    const waiting = pendingPlacements.some(
+      q =>
+        q.scene.id === scene.id &&
+        q.name === cam.name &&
+        typeof q.opts === 'object' &&
+        'frame' in q.opts,
+    );
+    if (!waiting) placeWhenSized({ ctx, scene, name: cam.name, opts: { frame: color } });
+    return;
+  }
   const t = FRAME_THICKNESS;
   const { x, y, width: w, height: h } = cam.rect;
   const boxes: Record<

@@ -11,6 +11,7 @@
  */
 
 import * as z from 'zod/v4';
+import { afterSwitch, beforeSwitch, whereToEnd } from './tour.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
   Ctx,
@@ -43,6 +44,10 @@ export function registerPerformance(server: McpServer, ctx: Ctx): void {
     async ({ scene, requested_by }) =>
       guard('switch_scene', async () => {
         const ref = await ctx.resolver.resolveScene(scene);
+        // Where the streamer is right now. If that is not where we last switched to (they
+        // switched by hand), or we have not switched in a while, it is where to come back to.
+        ctx.resolver.invalidate();
+        beforeSwitch(await ctx.resolver.activeScene());
         const items = await ctx.resolver.sceneItems(ref);
 
         const warnings: string[] = [];
@@ -60,6 +65,7 @@ export function registerPerformance(server: McpServer, ctx: Ctx): void {
         if (!decision.approved) return fail(decision.reason);
 
         await ctx.commands.switchScene(ref.id);
+        afterSwitch(ref.id);
         ctx.snapshot.invalidate();
 
         return ok({
@@ -67,7 +73,7 @@ export function registerPerformance(server: McpServer, ctx: Ctx): void {
           scene: ref.name,
           itemCount: items.length,
           warnings,
-          undo: 'Switch back with switch_scene — scene switching is not on the undo stack.',
+          end_on: whereToEnd({ id: ref.id, name: ref.name }),
         });
       }),
   );

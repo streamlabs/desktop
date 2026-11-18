@@ -154,7 +154,12 @@ function ignoredNote(toolName: string, ignored: string[], tool: unknown): string
   const known = Object.keys(shapeOf(tool) ?? {});
   const parts = ignored.map(key => {
     const c = canon(key);
-    const near = known.find(k => c.includes(canon(k)) || canon(k).includes(c));
+    // Only a close match: "text_background" must not suggest "text" (a color in the words).
+    const near = known.find(k => {
+      const kc = canon(k);
+      const close = Math.min(kc.length, c.length) / Math.max(kc.length, c.length) >= 0.6;
+      return close && (c.includes(kc) || kc.includes(c));
+    });
     return near ? `"${key}" (did you mean "${near}"?)` : `"${key}"`;
   });
   return (

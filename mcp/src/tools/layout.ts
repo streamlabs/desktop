@@ -7,6 +7,7 @@
  */
 
 import * as z from 'zod/v4';
+import { SceneRef } from '../desktop/resolver.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
   Ctx,
@@ -38,6 +39,50 @@ import {
   TITLE_SAFE_MARGIN,
 } from '../layout/geometry.js';
 
+/**
+ * Give `name`'s new position and size to the same item in every other scene. For the
+ * webcam that means every camera item (the live one and hidden alternates), then the usual
+ * webcam follow-ups (frame, text kept clear). Returns the scenes changed.
+ */
+async function copyToOtherScenes(
+  ctx: Ctx,
+  from: SceneRef,
+  name: string,
+  isCam: boolean,
+): Promise<string[]> {
+  ctx.resolver.invalidate();
+  const src = (await sceneDetail(ctx, from)).find(
+    i => i.display === 'horizontal' && i.name === name,
+  );
+  if (!src || src.rect.width <= 0) return [];
+  const changed: string[] = [];
+  for (const scene of await ctx.resolver.sceneList()) {
+    if (scene.id === from.id) continue;
+    const items = (await sceneDetail(ctx, scene)).filter(i => i.display === 'horizontal');
+    const matches = items.filter(i =>
+      isCam ? i.type === 'dshow_input' : i.sourceId === src.sourceId,
+    );
+    if (!matches.length) continue;
+    for (const m of matches) {
+      const s = m.sourceWidth > 0 ? src.rect.width / m.sourceWidth : src.transform.scale.x;
+      const transform = { position: { ...src.transform.position }, scale: { x: s, y: s } };
+      if (m.sourceWidth > 0 && m.visible) {
+        await ctx.commands.setItemTransform(scene, toItemRef(m), transform, {
+          position: m.transform.position,
+          scale: m.transform.scale,
+        });
+      } else {
+        // A hidden or not-yet-started camera (e.g. the original one after an NVIDIA switch) has
+        // no size, and the editor's resize command crashes on it: set it directly.
+        await ctx.client.request(m.resourceId, 'setTransform', [transform]);
+      }
+    }
+    if (isCam) await afterWebcamChange(ctx, scene);
+    changed.push(scene.name);
+  }
+  return changed;
+}
+
 export function registerLayout(server: McpServer, ctx: Ctx): void {
   server.registerTool(
     'set_item_transform',
@@ -52,6 +97,13 @@ export function registerLayout(server: McpServer, ctx: Ctx): void {
       inputSchema: {
         item: z.string().describe('Name of the scene item, e.g. "Webcam".'),
         scene: z.string().optional().describe('Scene name. Defaults to the active scene.'),
+        all_scenes: z
+          .boolean()
+          .optional()
+          .describe(
+            'true = make the same change in every scene that has this item (e.g. the webcam), ' +
+              'in one call.',
+          ),
         anchor: z
           .enum(ANCHORS as [Anchor, ...Anchor[]])
           .optional()
@@ -98,6 +150,7 @@ export function registerLayout(server: McpServer, ctx: Ctx): void {
     async ({
       item,
       scene,
+      all_scenes,
       anchor,
       flush,
       position,
@@ -155,9 +208,18 @@ export function registerLayout(server: McpServer, ctx: Ctx): void {
               : await ctx.commands.resetTransform(sceneRef, ref);
 
           if (isCam) await afterWebcamChange(ctx, sceneRef);
+          const alsoIn = all_scenes
+            ? await copyToOtherScenes(ctx, sceneRef, target.name, isCam)
+            : [];
           ctx.snapshot.invalidate();
           return ok(
-            withUndo(await describeOutcome(ctx, sceneRef, target.name, canvas, others), edit),
+            withUndo(
+              {
+                ...(await describeOutcome(ctx, sceneRef, target.name, canvas, others)),
+                ...(alsoIn.length ? { also_in: alsoIn } : {}),
+              },
+              edit,
+            ),
           );
         }
 
@@ -245,9 +307,11 @@ export function registerLayout(server: McpServer, ctx: Ctx): void {
           { position: target.transform.position, scale: target.transform.scale },
         );
         if (isCam) await afterWebcamChange(ctx, sceneRef);
+        const alsoIn = all_scenes ? await copyToOtherScenes(ctx, sceneRef, target.name, isCam) : [];
         ctx.snapshot.invalidate();
 
-        const outcome = await describeOutcome(ctx, sceneRef, target.name, canvas, others);
+        const described = await describeOutcome(ctx, sceneRef, target.name, canvas, others);
+        const outcome = alsoIn.length ? { ...described, also_in: alsoIn } : described;
         return ok(
           withUndo(
             clamped
@@ -278,7 +342,9 @@ export function registerLayout(server: McpServer, ctx: Ctx): void {
         relative_to: z.string().describe('Name of the item to move it next to.'),
         placement: z
           .enum(['before', 'after'])
-          .describe('Place the item before or after `relative_to` in the scene list.'),
+          .describe(
+            '"before" = in front of `relative_to` (drawn on top of it), "after" = behind it.',
+          ),
         scene: z.string().optional().describe('Scene name. Defaults to the active scene.'),
         requested_by: requestedBy,
       },

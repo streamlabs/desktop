@@ -122,9 +122,19 @@ export function registerHealth(server: McpServer, ctx: Ctx): void {
         const health = await measureHealth(ctx.client);
         if (!last) return ok(health);
         const { atMs, ...fix } = last;
+        const secondsAgo = Math.round((Date.now() - atMs) / 1000);
         return ok({
           ...health,
-          lastAutomaticFix: { ...fix, secondsAgo: Math.round((Date.now() - atMs) / 1000) },
+          lastAutomaticFix: { ...fix, secondsAgo },
+          // Right after a watcher-triggered fix, the watcher has exited: say so here, at the
+          // step where the model is deciding what to do next.
+          ...(secondsAgo < 180
+            ? {
+                next:
+                  'If the stream watcher woke you, start it again now (terminal {"command": ' +
+                  '"stream-watch", "background": true, "notify": true}) before you reply.',
+              }
+            : {}),
         });
       }),
   );

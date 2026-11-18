@@ -15,6 +15,7 @@ import { readFile, unlink } from 'node:fs/promises';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { ContentBlock, Ctx, guard } from './shared.js';
 import { log } from '../log.js';
+import { whereToEnd } from './tour.js';
 
 /** Mirrors ICaptureResult in app/services/capture/capture.ts. */
 interface CaptureResult {
@@ -71,7 +72,9 @@ export function registerCapture(server: McpServer, ctx: Ctx): void {
         }
 
         const context = snap
-          ? `Active scene "${snap.activeScene.name}", stream ${snap.stream.status}.`
+          ? `Active scene "${snap.activeScene.name}", stream ${snap.stream.status}. ` +
+            // Said before any closing switch, so the model knows whether to switch at all.
+            whereToEnd(await ctx.resolver.activeScene())
           : '';
 
         content.push({

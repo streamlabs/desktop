@@ -138,7 +138,9 @@ export function registerStream(server: McpServer, ctx: Ctx): void {
         return ok({
           changed: true,
           recording,
-          note: 'Call get_health in a few seconds to confirm.',
+          note: recording
+            ? 'Recording to a local file (Settings > Output shows where).'
+            : 'Recording stopped and the file saved.',
         });
       }),
   );

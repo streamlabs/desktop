@@ -271,8 +271,6 @@ export function withUndo<T extends Record<string, unknown>>(
 ): T & { undo: string } {
   return {
     ...payload,
-    undo: `Reversible — Ctrl+Z in Streamlabs${
-      edit.undo ? ` ("${edit.undo}")` : ''
-    }, or the undo_last_edit tool.`,
+    undo: 'undo_last_edit takes it back.',
   };
 }

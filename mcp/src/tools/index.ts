@@ -46,9 +46,13 @@ export const DEMO_TOOLS = new Set([
   'edit_sticker',
   'set_camera',
   'set_item_transform',
+  'reorder_item',
   'switch_scene',
   'remove_item',
   'undo_last_edit',
+  'set_audio',
+  'save_replay',
+  'set_recording',
   'check_stream_health',
   'fix_stream_health',
 ]);
@@ -79,6 +83,7 @@ export function registerTools(server: McpServer, ctx: Ctx): void {
       registerLayout,
       registerPerformance,
       registerDestructive,
+      registerStream, // set_recording only (go_live / stop_stream are filtered out)
     ]) {
       register(demo, ctx);
     }

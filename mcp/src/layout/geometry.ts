@@ -212,7 +212,9 @@ export function inspectPlacement(
     notes.push({ ok: true, text: `inside title-safe area (${TITLE_SAFE_MARGIN}px margin)` });
   }
 
-  const collisions = others
+  // A full-screen item (background, pattern, game capture) sits behind the rest: it is not
+  // "covering" anything in front of it.
+  const collisions = (isFullBleed(r, canvas) ? [] : others)
     .filter(o => o.name !== name && !isFullBleed(o.rect, canvas))
     // Both ways: a small label sitting on the webcam covers little of the webcam but all of
     // itself, and that still hides it.

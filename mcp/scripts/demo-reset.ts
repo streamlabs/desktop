@@ -3,7 +3,7 @@
  *   - NVIDIA Broadcast: camera background effects off
  *   - Streamlabs: a brand-new, empty scene collection, made active
  *   - Stream health: the bitrate an automatic fix lowered is put back, any leftover stream
- *     watcher is stopped, and a still-on upload throttle is reported
+ *     watcher, recording or replay buffer is stopped, and a still-on upload throttle is reported
  *
  *   npm run demo:reset
  *
@@ -129,6 +129,27 @@ async function resetStreamHealth(): Promise<void> {
     console.log('Stream health: bitrate reset failed:', e instanceof Error ? e.message : e);
   } finally {
     client.close();
+  }
+
+  // A recording or replay buffer left on from a rehearsal: stop it (files are kept).
+  const outputs = new DesktopClient();
+  try {
+    const st = await outputs.request<{ recordingStatus?: string; replayBufferStatus?: string }>(
+      'StreamingService',
+      'state',
+    );
+    if (st?.recordingStatus === 'recording') {
+      await outputs.request('StreamingService', 'toggleRecording');
+      console.log('Stream health: stopped a recording.');
+    }
+    if (st?.replayBufferStatus && st.replayBufferStatus !== 'offline') {
+      await outputs.request('StreamingService', 'stopReplayBuffer');
+      console.log('Stream health: stopped the replay buffer.');
+    }
+  } catch {
+    /* best effort */
+  } finally {
+    outputs.close();
   }
 
   // A watcher left running from an earlier chat would wake that chat, not the new one.
