@@ -4090,6 +4090,34 @@ export class StreamingService
     }
   }
 
+  /**
+   * Change the video bitrate of the stream that is live right now, without reconnecting, and
+   * save it as the streaming bitrate so the next go-live uses it too.
+   *
+   * Saving output settings alone does not touch a running stream: its encoder is created at
+   * go-live. libobs encoders accept a live settings update (the same path dynamic bitrate
+   * uses), so this updates every active streaming encoder directly. Used by the desktop MCP
+   * server's stream-health fix; not part of the documented external API.
+   */
+  setLiveVideoBitrate(kbps: number): { bitrate: number; updatedOutputs: string[] } {
+    const bitrate = Math.round(Number(kbps));
+    if (!Number.isFinite(bitrate) || bitrate < 300 || bitrate > 50000) {
+      throw new Error('Bitrate must be between 300 and 50000 kbps.');
+    }
+
+    const updatedOutputs: string[] = [];
+    (['horizontal', 'vertical', 'enhancedBroadcasting'] as const).forEach(name => {
+      const encoder = this.contexts[name]?.streaming?.videoEncoder;
+      if (encoder && encoder.active) {
+        encoder.update({ bitrate });
+        updatedOutputs.push(name);
+      }
+    });
+
+    this.outputSettingsService.setSettings({ streaming: { bitrate } });
+    return { bitrate, updatedOutputs };
+  }
+
   saveReplay() {
     if (this.views.isDualOutputRecording) return;
 

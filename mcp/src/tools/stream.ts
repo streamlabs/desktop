@@ -86,7 +86,10 @@ export function registerStream(server: McpServer, ctx: Ctx): void {
 
         const decision = await ctx.confirm.gate(requested_by, {
           title: 'Stop the broadcast',
-          lines: snap.stream.for ? [`Live since ${snap.stream.for}.`] : [],
+          lines:
+            snap.stream.minutesInStatus !== undefined
+              ? [`Live for ${snap.stream.minutesInStatus} min.`]
+              : [],
           warnings: ['This ends the stream for everyone watching. It cannot be undone.'],
         });
         if (!decision.approved) return fail(decision.reason);

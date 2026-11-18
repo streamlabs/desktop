@@ -28,6 +28,7 @@ import { registerScenes } from './scenes.js';
 import { registerDestructive } from './destructive.js';
 import { registerStream } from './stream.js';
 import { registerStudio } from './studio.js';
+import { registerHealth } from './health.js';
 
 /**
  * SLD_MCP_MODE=demo: a small, focused tool set. Fewer tools means fewer wrong choices, and
@@ -41,11 +42,15 @@ export const DEMO_TOOLS = new Set([
   'build_scene',
   'add_to_scene',
   'apply_style',
+  'edit_text',
+  'edit_sticker',
   'set_camera',
   'set_item_transform',
   'switch_scene',
   'remove_item',
   'undo_last_edit',
+  'check_stream_health',
+  'fix_stream_health',
 ]);
 
 /** Registers only the tools in `allow`, so the existing register* functions can be reused. */
@@ -70,6 +75,7 @@ export function registerTools(server: McpServer, ctx: Ctx): void {
       registerReads,
       registerCapture,
       registerStudio,
+      registerHealth,
       registerLayout,
       registerPerformance,
       registerDestructive,
@@ -96,4 +102,5 @@ export function registerTools(server: McpServer, ctx: Ctx): void {
   registerDestructive(server, ctx);
   registerStream(server, ctx);
   registerStudio(server, ctx);
+  registerHealth(server, ctx);
 }

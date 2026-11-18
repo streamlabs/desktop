@@ -214,7 +214,12 @@ export function inspectPlacement(
 
   const collisions = others
     .filter(o => o.name !== name && !isFullBleed(o.rect, canvas))
-    .map(o => ({ name: o.name, frac: overlapFraction(o.rect, r) }))
+    // Both ways: a small label sitting on the webcam covers little of the webcam but all of
+    // itself, and that still hides it.
+    .map(o => ({
+      name: o.name,
+      frac: Math.max(overlapFraction(o.rect, r), overlapFraction(r, o.rect)),
+    }))
     .filter(o => o.frac > 0.05);
 
   if (collisions.length === 0) {

@@ -56,7 +56,9 @@ Starting both apps fresh, in this order, gives a clean camera pipeline:
 2. `npm run demo:prep`: restarts NVIDIA Broadcast (until its MCP gateway answers) and the Hermes
    gateway.
 3. Start Streamlabs.
-4. `npm run demo:reset`: a new empty scene collection, with NVIDIA background effects off.
+4. `npm run demo:reset`: a new empty scene collection, NVIDIA background effects off, and the
+   stream bitrate put back if an automatic fix lowered it (it also warns if the upload throttle
+   from `scripts/net-throttle.ps1` is still on).
 
 After `npm run build`, run `hermes gateway restart` so Hermes picks up the new server.
 

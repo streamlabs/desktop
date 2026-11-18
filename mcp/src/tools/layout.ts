@@ -75,7 +75,10 @@ export function registerLayout(server: McpServer, ctx: Ctx): void {
           .min(1)
           .max(100)
           .optional()
-          .describe('Width as a percentage of canvas width; height follows the aspect ratio.'),
+          .describe(
+            'Width as a percentage of canvas width; height follows the aspect ratio. Full ' +
+              'screen: 100 with "anchor": "center" and "flush": true.',
+          ),
         scale: z
           .object({ x: z.number(), y: z.number() })
           .optional()

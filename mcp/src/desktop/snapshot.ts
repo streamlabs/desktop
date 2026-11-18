@@ -41,7 +41,8 @@ export interface Snapshot {
   canvas: [number, number];
   stream: {
     status: string;
-    for?: string;
+    /** Minutes in the current status (e.g. how long it has been live). */
+    minutesInStatus?: number;
     recording: string;
     replayBuffer: string;
     platforms?: string[];
@@ -196,7 +197,15 @@ export class SnapshotBuilder {
       canvas,
       stream: {
         status: streaming?.streamingStatus ?? 'unknown',
-        ...(streaming?.streamingStatusTime ? { for: streaming.streamingStatusTime } : {}),
+        // Elapsed minutes, not a timestamp: a small model misreads an ISO time as a duration.
+        ...(streaming?.streamingStatusTime
+          ? {
+              minutesInStatus: Math.max(
+                0,
+                Math.round((Date.now() - Date.parse(streaming.streamingStatusTime)) / 60000),
+              ),
+            }
+          : {}),
         recording: streaming?.recordingStatus ?? 'unknown',
         replayBuffer: streaming?.replayBufferStatus ?? 'unknown',
         ...(platforms.length ? { platforms } : {}),
@@ -245,9 +254,6 @@ function buildWarnings(
   const live = snap.stream.status === 'live';
   const [cw, ch] = snap.canvas;
 
-  if (live && snap.stream.recording !== 'recording') {
-    w.push('Live but not recording — no local VOD will be saved.');
-  }
   if (live && snap.health.verdict !== 'GOOD') {
     w.push(
       `Stream quality is ${snap.health.verdict} (dropped ${snap.health.droppedPct}%, ` +

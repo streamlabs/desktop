@@ -9,7 +9,9 @@
  *   - maps near-miss keys onto real parameter names (case, `_`/`-`, a trailing "Name"),
  *   - parses arrays/objects that arrive as JSON strings,
  *   - turns numeric strings into numbers and "true"/"false" into booleans,
- * and rewrites a validation failure into a message that names the expected parameters.
+ * rewrites a validation failure into a message that names the expected parameters, and
+ * appends a note to the result for any parameter it had to ignore -- otherwise the model
+ * believes an ignored setting was applied and tells the streamer so.
  *
  * `validateToolInput` is an SDK method, not documented API -- pinned against 1.30.
  */
@@ -63,6 +65,14 @@ function resolveKey(key: string, known: string[]): string | null {
   }
   // source_type -> type, item_type -> type
   if (c.endsWith('type') && known.includes('type')) return 'type';
+  // text_color -> color on a tool about one text item (edit_text has `color`)
+  for (const prefix of ['text', 'item', 'sticker']) {
+    if (c.startsWith(prefix) && c.length > prefix.length) {
+      const stem = c.slice(prefix.length);
+      const byStem = known.find(k => canon(k) === stem);
+      if (byStem) return byStem;
+    }
+  }
   return null;
 }
 
@@ -115,13 +125,14 @@ function coerce(value: unknown, schema: any): unknown {
   return v;
 }
 
-function normalizeObject(args: AnyRecord, shape: AnyRecord): AnyRecord {
+function normalizeObject(args: AnyRecord, shape: AnyRecord, ignored?: string[]): AnyRecord {
   const known = Object.keys(shape);
   const out: AnyRecord = {};
   for (const [key, value] of Object.entries(args)) {
     const target = resolveKey(key, known);
     if (!target) {
       out[key] = value; // zod strips it
+      ignored?.push(key);
       continue;
     }
     if (target !== key) log(`lenient: mapped "${key}" -> "${target}"`);
@@ -130,10 +141,28 @@ function normalizeObject(args: AnyRecord, shape: AnyRecord): AnyRecord {
   return out;
 }
 
-export function normalizeArgs(tool: unknown, args: unknown): unknown {
+export function normalizeArgs(tool: unknown, args: unknown, ignored?: string[]): unknown {
   const shape = shapeOf(tool);
   if (!shape || !args || typeof args !== 'object' || Array.isArray(args)) return args;
-  return normalizeObject(args as AnyRecord, shape);
+  return normalizeObject(args as AnyRecord, shape, ignored);
+}
+
+/** Carries ignored parameter names from validation to the result, invisible to handlers. */
+const IGNORED = Symbol('ignoredParams');
+
+function ignoredNote(toolName: string, ignored: string[], tool: unknown): string {
+  const known = Object.keys(shapeOf(tool) ?? {});
+  const parts = ignored.map(key => {
+    const c = canon(key);
+    const near = known.find(k => c.includes(canon(k)) || canon(k).includes(c));
+    return near ? `"${key}" (did you mean "${near}"?)` : `"${key}"`;
+  });
+  return (
+    `Note: ${toolName} has no parameter ${parts.join(', ')}, so ` +
+    `${ignored.length > 1 ? 'they were' : 'it was'} ignored and NOT applied. ` +
+    `Its parameters: ${known.join(', ')}. Call again with the right name if it matters, and ` +
+    "don't tell the streamer it was changed."
+  );
 }
 
 function describeParams(tool: unknown): string {
@@ -155,10 +184,20 @@ export function installLenientArgs(server: McpServer): void {
     return;
   }
   anyServer.validateToolInput = async (tool: unknown, args: unknown, toolName: string) => {
-    const normalized = normalizeArgs(tool, args);
+    const ignored: string[] = [];
+    const normalized = normalizeArgs(tool, args, ignored);
     try {
-      return await original(tool, normalized, toolName);
-    } catch (e) {
+      const parsed = await original(tool, normalized, toolName);
+      if (ignored.length && parsed && typeof parsed === 'object') {
+        log(`lenient: ${toolName} ignored ${ignored.join(', ')}`);
+        // Non-enumerable: a handler's `...rest` never sees it.
+        Object.defineProperty(parsed, IGNORED, {
+          value: ignoredNote(toolName, ignored, tool),
+          enumerable: false,
+        });
+      }
+      return parsed;
+    } catch (e: unknown) {
       if (e instanceof McpError && e.code === ErrorCode.InvalidParams) {
         throw new McpError(
           ErrorCode.InvalidParams,
@@ -172,4 +211,16 @@ export function installLenientArgs(server: McpServer): void {
       throw e;
     }
   };
+
+  const execute = anyServer.executeToolHandler?.bind(server);
+  if (typeof execute === 'function') {
+    anyServer.executeToolHandler = async (tool: unknown, args: any, extra: unknown) => {
+      const result = await execute(tool, args, extra);
+      const note = args && typeof args === 'object' ? args[IGNORED] : undefined;
+      if (note && result && Array.isArray(result.content)) {
+        result.content.push({ type: 'text', text: note });
+      }
+      return result;
+    };
+  }
 }

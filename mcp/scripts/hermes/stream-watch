@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Watch the live stream until it needs attention, then print what happened and exit.
+# Install next to stream_health_monitor.py in a folder on Hermes' PATH (e.g. %LOCALAPPDATA%\hermes\bin).
+# The agent starts it as a background process with notify-on-exit, so it wakes up in the chat.
+# Windows-style path (C:/...): Hermes runs Git Bash with path conversion off, and python.exe
+# cannot read /c/... paths.
+here="$(cd "$(dirname "$0")" && (pwd -W 2>/dev/null || pwd))"
+py=""
+for p in "$LOCALAPPDATA"/hermes/tools/python-*/python.exe; do [ -x "$p" ] && py="$p"; done
+[ -n "$py" ] || py="$(command -v python3 || command -v python)"
+exec "$py" -I -u "$here/stream_health_monitor.py" --until-degraded
