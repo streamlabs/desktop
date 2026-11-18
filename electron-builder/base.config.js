@@ -72,10 +72,18 @@ const base = {
   win: {
     executableName: 'Streamlabs OBS',
     extraFiles: ['LICENSE', 'AGREEMENT', 'LICENSES', 'shared-resources/**/*', '!shared-resources/README'],
-    // Replaces `signDlls: true`, removed in electron-builder 26. Both select the
-    // same files: `.dll` matches this list, and `.exe` still signs via the
-    // isExe fallback in WinPackager.shouldSignFile.
-    signExts: ['.dll'],
+    // `.exe` always signs via the isExe fallback in WinPackager.shouldSignFile;
+    // everything else must be listed here. `.dll` replaces `signDlls: true`,
+    // removed in electron-builder 26.
+    //
+    // `.node` native addons are PE DLLs too, and nothing else signs them: the
+    // prebuilt tarballs ship unsigned, and electron-builder never signed them
+    // under `signDlls` either. Windows Smart App Control blocks an unsigned
+    // binary unless it already has cloud reputation, so every release that
+    // shipped a freshly built addon could fail to load it on those machines
+    // (1.22.5: "An Application Control policy has blocked this file" for
+    // obs_studio_client.node, which shows the startupError dialog).
+    signExts: ['.dll', '.node'],
     signtoolOptions: {
       // These currently match electron-builder's defaults, but are set explicitly
       // so a change to those defaults can't silently alter our timestamping.
