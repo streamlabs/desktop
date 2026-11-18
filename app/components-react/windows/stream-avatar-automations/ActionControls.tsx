@@ -94,7 +94,12 @@ interface SourceVisibilityControlProps {
   actionType: 'common.show_source' | 'common.hide_source';
   sourceName: string;
   sourceMissing: boolean;
-  sources: { id: string; name: string }[];
+  /** Unique source names to pick from, already limited to the reaction's scope scene. */
+  sourceNames: string[];
+  /** The saved source exists, just not in the scope scene(s). */
+  sourceOutOfScope: boolean;
+  /** The scenes `sourceNames` is limited to (empty when any source is allowed), for the empty state. */
+  scopeScenes: string[];
   props: ExportedActionProps;
   errors?: Record<string, string>;
   setProp: SetProp;
@@ -105,18 +110,42 @@ export function SourceVisibilityControl({
   actionType,
   sourceName,
   sourceMissing,
-  sources,
+  sourceNames,
+  sourceOutOfScope,
+  scopeScenes,
   props,
   errors,
   setProp,
   hideUnmetOption,
 }: SourceVisibilityControlProps) {
+  // Names are unique, so each option's value is too (antd keys its virtual list rows by value).
+  // The unavailable name isn't in `sourceNames`, so it can't collide either.
   const sourceOptions = [
     ...(sourceMissing
-      ? [{ label: `${sourceName} (${$t('unavailable')})`, value: sourceName }]
+      ? [
+          {
+            label: `${sourceName} (${
+              sourceOutOfScope ? $t('not in this scene') : $t('unavailable')
+            })`,
+            value: sourceName,
+          },
+        ]
       : []),
-    ...sources.map(s => ({ label: s.name, value: s.name })),
+    ...sourceNames.map(name => ({ label: name, value: name })),
   ];
+  // Only a scene limit can leave the list empty; with any scene allowed antd's default shows.
+  function noSourcesMessage() {
+    if (scopeScenes.length > 1) {
+      return $t('No sources in any of the scenes %{scenes}', {
+        scenes: scopeScenes.map(scene => `"${scene}"`).join(', '),
+      });
+    }
+    if (scopeScenes.length === 1) {
+      return $t('No sources in scene "%{scene}"', { scene: scopeScenes[0] });
+    }
+    return undefined;
+  }
+
   return (
     <>
       <Select
@@ -125,6 +154,7 @@ export function SourceVisibilityControl({
         style={{ width: '100%' }}
         placeholder={$t('— select source —')}
         options={sourceOptions}
+        notFoundContent={noSourcesMessage()}
       />
       {errors?.source && <p style={errorTextStyle}>{errors.source}</p>}
       {actionType === 'common.show_source' && !hideUnmetOption && (

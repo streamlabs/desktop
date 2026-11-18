@@ -133,7 +133,14 @@ export class AutomationsEngineService extends Service {
       setSourceVisible: (id: string, visible: boolean) => {
         const activeScene = this.scenesService.views.activeScene;
         if (!activeScene) return;
-        for (const item of activeScene.getItems().filter(i => i.sourceId === id)) {
+        // Automations save sources by name, and `id` is just the first source with that name.
+        // Several sources can share it (e.g. one per scene), so toggle the active scene's
+        // items by name rather than only that first source's items.
+        const name = this.sourcesService.views.getSource(id)?.name;
+        const items = activeScene
+          .getItems()
+          .filter(item => (name != null ? item.getSource()?.name === name : item.sourceId === id));
+        for (const item of items) {
           item.setVisibility(visible);
         }
       },

@@ -43,7 +43,12 @@ export interface ActionEditorProps {
   action: ExportedAction;
   index: number;
   scenes: { id: string; name: string }[];
-  sources: { id: string; name: string }[];
+  /** Unique names a Show/Hide Source reaction here can pick (see `source-scope`). */
+  sourceNames: string[];
+  /** Every source name, so an out-of-scope pick can be told apart from a deleted one. */
+  allSourceNames: string[];
+  /** The scenes those names are limited to; empty when any source is allowed. */
+  scopeScenes: string[];
   errors?: Record<string, string>;
   isAgentInstalled: boolean;
   isAgentEnabled: boolean;
@@ -58,7 +63,9 @@ export default function ActionEditor({
   action,
   index,
   scenes,
-  sources,
+  sourceNames,
+  allSourceNames,
+  scopeScenes,
   errors,
   isAgentInstalled,
   isAgentEnabled,
@@ -131,7 +138,8 @@ export default function ActionEditor({
   const sceneName = props.scene?.name ?? '';
   const sceneMissing = !!sceneName && !scenes.some(s => s.name === sceneName);
   const sourceName = props.source?.name ?? '';
-  const sourceMissing = !!sourceName && !sources.some(s => s.name === sourceName);
+  const sourceMissing = !!sourceName && !sourceNames.includes(sourceName);
+  const sourceOutOfScope = sourceMissing && allSourceNames.includes(sourceName);
 
   function renderControl() {
     switch (action.type) {
@@ -152,7 +160,9 @@ export default function ActionEditor({
             actionType={action.type}
             sourceName={sourceName}
             sourceMissing={sourceMissing}
-            sources={sources}
+            sourceOutOfScope={sourceOutOfScope}
+            sourceNames={sourceNames}
+            scopeScenes={scopeScenes}
             props={props}
             errors={errors}
             setProp={setProp}
