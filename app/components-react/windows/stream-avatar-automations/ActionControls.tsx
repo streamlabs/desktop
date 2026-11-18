@@ -4,6 +4,7 @@ import { $t } from 'services/i18n';
 import { MAX_INSTRUCTION_LENGTH } from 'services/stream-avatar/engine/validation';
 import { CheckboxInput, SliderInput } from 'components-react/shared/inputs';
 import type { ExportedActionProps } from 'services/stream-avatar/engine/actions';
+import styles from './AutomationEditor.m.less';
 
 export const CONTROL_HEIGHT = '32px';
 
@@ -151,21 +152,7 @@ interface WaitControlProps {
 
 export function WaitControl({ props, setProp }: WaitControlProps) {
   return (
-    <>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          height: CONTROL_HEIGHT,
-          fontSize: '12px',
-        }}
-      >
-        <span style={{ fontWeight: 600, color: 'var(--title)' }}>{$t('Duration')}</span>
-        <span style={{ color: 'var(--paragraph)' }}>
-          {((props.duration ?? 5000) / 1000).toFixed(1)} {$t('seconds')}
-        </span>
-      </div>
+    <div className={styles.waitControl}>
       <SliderInput
         nowrap
         value={props.duration ?? 5000}
@@ -174,8 +161,12 @@ export function WaitControl({ props, setProp }: WaitControlProps) {
         max={60000}
         step={500}
         tipFormatter={(val: number) => `${(val / 1000).toFixed(1)}s`}
+        tooltipVisible
+        tooltipPlacement="bottom"
+        // Render inside the slider so the tooltip scrolls with the editor instead of floating.
+        getTooltipPopupContainer={trigger => trigger.parentElement ?? document.body}
       />
-    </>
+    </div>
   );
 }
 

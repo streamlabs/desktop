@@ -1,23 +1,12 @@
-import React, { CSSProperties, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Input, InputNumber, Select, Slider } from 'antd';
 import { CategoryListInput } from 'components-react/shared/inputs';
 import { $t } from 'services/i18n';
 import { Properties } from 'services/stream-avatar/engine/properties';
 import { Conditions } from 'services/stream-avatar/engine/conditions';
 import type { ConditionType } from 'services/stream-avatar/engine/conditions';
-import { CONTROL_HEIGHT, errorTextStyle } from './ActionControls';
 import { triggerSourceCategories } from './automations-utils';
 import styles from './AutomationEditor.m.less';
-
-const trashCellStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  height: CONTROL_HEIGHT,
-  fontSize: '14px',
-};
-
-// Property blocks sit under the two selects, spanning both columns (not the trash column).
-const propertyBlockStyle: CSSProperties = { gridColumn: '1 / 3', marginTop: 12 };
 
 export interface TriggerValue {
   source: string;
@@ -102,6 +91,7 @@ export default function TriggerEditor({
     onChange(index, { ...trigger, props: nextProps });
   }
 
+  // Rendered straight into the content grid, so a property is one cell or a pair of cells.
   function renderProperties() {
     if (!type) return null;
     const def = Conditions()[type];
@@ -111,17 +101,10 @@ export default function TriggerEditor({
         const { min, max, step, label } = prop.config;
         const value = (props[key] as [number, number]) ?? prop.config.default;
         return (
-          <div key={key} style={propertyBlockStyle}>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginBottom: 4,
-                fontSize: 12,
-              }}
-            >
-              <span style={{ color: 'var(--title)', fontWeight: 600 }}>{label}</span>
-              <span style={{ color: 'var(--paragraph)' }}>
+          <div key={key} className={styles.propertyBlock}>
+            <div className={styles.propertyHeader}>
+              <span className={styles.propertyLabel}>{label}</span>
+              <span className={styles.propertyValue}>
                 {value[0]} – {value[1]}
               </span>
             </div>
@@ -145,11 +128,9 @@ export default function TriggerEditor({
         const value = typeof rawValue === 'number' ? rawValue : undefined;
         const textValue = typeof rawValue === 'string' ? rawValue : '';
         return (
-          <div key={key} style={propertyBlockStyle}>
-            <div style={{ marginBottom: 4, fontSize: 12 }}>
-              <span style={{ color: 'var(--title)', fontWeight: 600 }}>{label}</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          <React.Fragment key={key}>
+            <div className={styles.field}>
+              <label className={styles.sectionTitle}>{label}</label>
               <Select
                 value={selected}
                 options={options.map(o => ({ label: o.label, value: o.value }))}
@@ -164,43 +145,48 @@ export default function TriggerEditor({
                   });
                 }}
               />
-              {input === 'number' && (
-                <InputNumber
-                  // "Every N" streaks need a whole number of at least 1.
-                  min={selected === 'every' ? 1 : 0}
-                  precision={selected === 'every' ? 0 : undefined}
-                  value={value}
-                  onChange={val => setProps({ ...props, value: val ?? undefined })}
-                  style={{ width: '100%' }}
-                />
-              )}
-              {input === 'tier' && (
-                <Select
-                  value={value}
-                  placeholder={$t('Select a tier')}
-                  options={[
-                    { label: $t('Tier 1'), value: 1 },
-                    { label: $t('Tier 2'), value: 2 },
-                    { label: $t('Tier 3'), value: 3 },
-                  ]}
-                  onChange={val => setProps({ ...props, value: val })}
-                />
-              )}
-              {input === 'text' && (
-                <Input
-                  value={textValue}
-                  onChange={e =>
-                    setProps({
-                      ...props,
-                      value: e.target.value === '' ? undefined : e.target.value,
-                    })
-                  }
-                  style={{ width: '100%' }}
-                />
-              )}
             </div>
-            {valueError && <p style={errorTextStyle}>{valueError}</p>}
-          </div>
+            {input && (
+              <div className={styles.field}>
+                <label className={styles.sectionTitle}>{$t('Value')}</label>
+                {input === 'number' && (
+                  <InputNumber
+                    // "Every N" streaks need a whole number of at least 1.
+                    min={selected === 'every' ? 1 : 0}
+                    precision={selected === 'every' ? 0 : undefined}
+                    value={value}
+                    placeholder={$t('Enter a value')}
+                    onChange={val => setProps({ ...props, value: val ?? undefined })}
+                  />
+                )}
+                {input === 'tier' && (
+                  <Select
+                    value={value}
+                    placeholder={$t('Select a tier')}
+                    options={[
+                      { label: $t('Tier 1'), value: 1 },
+                      { label: $t('Tier 2'), value: 2 },
+                      { label: $t('Tier 3'), value: 3 },
+                    ]}
+                    onChange={val => setProps({ ...props, value: val })}
+                  />
+                )}
+                {input === 'text' && (
+                  <Input
+                    value={textValue}
+                    placeholder={$t('Enter a value')}
+                    onChange={e =>
+                      setProps({
+                        ...props,
+                        value: e.target.value === '' ? undefined : e.target.value,
+                      })
+                    }
+                  />
+                )}
+                {valueError && <p className={styles.errorText}>{valueError}</p>}
+              </div>
+            )}
+          </React.Fragment>
         );
       }
       return null;
@@ -208,15 +194,9 @@ export default function TriggerEditor({
   }
 
   return (
-    <div style={{ padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) 20px',
-          columnGap: '8px',
-          alignItems: 'start',
-        }}
-      >
+    <div className={styles.triggerRow}>
+      <span className={styles.triggerIndex}>{String(index + 1).padStart(2, '0')}</span>
+      <div className={styles.triggerContent}>
         <CategoryListInput
           // `nowrap` skips the Form.Item wrapper, whose bottom margin would unalign the grid row.
           nowrap
@@ -233,7 +213,7 @@ export default function TriggerEditor({
           options={conditionOptions}
         />
         {/* Always render the cell so the selects don't change width when the button hides. */}
-        <div style={trashCellStyle}>
+        <div className={styles.triggerTrash}>
           {canRemove && (
             <button
               type="button"
