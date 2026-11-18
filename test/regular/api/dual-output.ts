@@ -9,6 +9,7 @@ import { SelectionService } from 'services/api/external-api/selection';
 import { click, focusMain, focusWindow, waitForDisplayed } from '../../helpers/modules/core';
 import { EditorCommandsService } from 'services/editor-commands';
 import fs = require('fs');
+import os = require('os');
 import path = require('path');
 import archiver = require('archiver');
 
@@ -244,6 +245,95 @@ test('Convert single output collection to dual output', async (t: TExecutionCont
       );
     }
   });
+});
+
+test('Adding a nested folder of files to a new inactive scene creates one item per display', async t => {
+  const client = await getApiClient();
+  const scenesService = client.getResource<ScenesService>('ScenesService');
+  const dualOutputService = client.getResource<DualOutputService>('DualOutputService');
+  const sceneCollectionsService = client.getResource<SceneCollectionsService>(
+    'SceneCollectionsService',
+  );
+
+  // root/sun.png, root/nested/moon.png, root/nested/deeper/hello.html
+  const dataDir = path.resolve(__dirname, '..', '..', '..', '..', 'test', 'data', 'sources-files');
+  const rootDir = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'slobs-add-file-')), 'root');
+  const deeperDir = path.join(rootDir, 'nested', 'deeper');
+  fs.mkdirSync(deeperDir, { recursive: true });
+  fs.copyFileSync(path.join(dataDir, 'images', 'sun.png'), path.join(rootDir, 'sun.png'));
+  fs.copyFileSync(
+    path.join(dataDir, 'images', 'moon.png'),
+    path.join(rootDir, 'nested', 'moon.png'),
+  );
+  fs.copyFileSync(path.join(dataDir, 'html', 'hello.html'), path.join(deeperDir, 'hello.html'));
+
+  // The active scene has a node map, the new target scene is empty and has none yet
+  const activeScene = scenesService.createScene('Active Scene');
+  activeScene.createAndAddSource('Active Item', 'color_source');
+  activeScene.makeActive();
+  dualOutputService.convertSingleOutputToDualOutputCollection();
+  const targetScene = scenesService.createScene('Add File Scene');
+  t.falsy(
+    sceneCollectionsService.sceneNodeMaps[targetScene.id],
+    'The new scene starts without a node map',
+  );
+
+  targetScene.addFile(rootDir);
+
+  const nodes = targetScene.getNodes();
+  const nodeMap = sceneCollectionsService.sceneNodeMaps[targetScene.id];
+  // file sources are named after the full path on macOS, so compare base names
+  const getPath = (node: typeof nodes[number]): string => {
+    const parent = nodes.find(n => n.id === node.parentId);
+    const name = path.basename(node.name);
+    return parent ? `${getPath(parent)}/${name}` : name;
+  };
+  const getPaths = (display: string) =>
+    nodes
+      .filter(node => node.display === display)
+      .map(getPath)
+      .sort();
+
+  const expectedPaths = [
+    'root',
+    'root/nested',
+    'root/nested/deeper',
+    'root/nested/deeper/hello.html',
+    'root/nested/moon.png',
+    'root/sun.png',
+  ];
+  t.deepEqual(getPaths('horizontal'), expectedPaths, 'Horizontal tree has each file once');
+  t.deepEqual(getPaths('vertical'), expectedPaths, 'Vertical tree has each file once');
+
+  // both displays must have the same stacking order, so map the horizontal
+  // node order through the node map and compare it with the vertical order
+  t.deepEqual(
+    nodes.filter(node => node.display === 'horizontal').map(node => nodeMap?.[node.id]),
+    nodes.filter(node => node.display === 'vertical').map(node => node.id),
+    'Vertical nodes are in the same order as their horizontal partners',
+  );
+
+  nodes
+    .filter(node => node.display === 'horizontal')
+    .forEach(horizontalNode => {
+      const verticalNode = targetScene.getNode(nodeMap?.[horizontalNode.id]);
+      t.is(verticalNode?.display, 'vertical', `${horizontalNode.name} has a vertical partner`);
+      t.is(
+        verticalNode?.parentId ?? '',
+        horizontalNode.parentId ? nodeMap[horizontalNode.parentId] : '',
+        `${horizontalNode.name} vertical partner is in the matching vertical folder`,
+      );
+    });
+  confirmDualOutputSources(t, targetScene);
+
+  t.deepEqual(
+    activeScene
+      .getNodes()
+      .map(node => `${node.display}:${node.name}`)
+      .sort(),
+    ['horizontal:Active Item', 'vertical:Active Item'],
+    'The active scene is unchanged',
+  );
 });
 
 interface IFolderSceneSnapshot {

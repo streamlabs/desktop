@@ -7,6 +7,7 @@ import {
 import {
   IAutoOptimizerOutputResult,
   IAutoOptimizerResult,
+  TAutoOptimizerPlatform,
 } from '../../app/services/auto-optimizer/types';
 
 interface IMockOptions {
@@ -242,23 +243,35 @@ function result(outputs: IAutoOptimizerOutputResult[]): IAutoOptimizerResult {
   };
 }
 
-test('an accepted experimental Twitch bitrate is not clamped back to 6 Mbps at startup', async t => {
-  const harness = createDependencies();
-  await applyAutoOptimizerRecommendations(
-    result([
-      standardOutput({
-        destinations: [{ platform: 'twitch' }],
-        bitrate: 7500,
-        resolution: { width: 2560, height: 1440 },
-      }),
-    ]),
-    'direct-single',
-    harness.dependencies,
-  );
-  t.is(findParameter(harness.rawOutput, 'Streaming', 'UseAdvanced')!.value, true);
-  t.is(findParameter(harness.rawOutput, 'Streaming', 'EnforceBitrate')!.value, false);
-  t.is(harness.output.streaming.bitrate, 7500);
-});
+for (const platforms of [
+  ['twitch'],
+  ['youtube'],
+  ['twitch', 'youtube'],
+  ['twitch', 'youtube', 'kick'],
+] as TAutoOptimizerPlatform[][]) {
+  test(`applying ${platforms.join(
+    ' + ',
+  )} preserves the appropriate service bitrate enforcement`, async t => {
+    const harness = createDependencies();
+    const restricted = platforms.some(platform => platform === 'kick');
+    const experimental = !restricted && platforms.some(platform => platform === 'twitch');
+    const bitrate = restricted ? 6000 : experimental ? 7500 : 8000;
+    await applyAutoOptimizerRecommendations(
+      result([
+        standardOutput({
+          destinations: platforms.map(platform => ({ platform })),
+          bitrate,
+          resolution: restricted ? { width: 1920, height: 1080 } : { width: 2560, height: 1440 },
+        }),
+      ]),
+      'direct-single',
+      harness.dependencies,
+    );
+    t.is(findParameter(harness.rawOutput, 'Streaming', 'UseAdvanced')!.value, true);
+    t.is(findParameter(harness.rawOutput, 'Streaming', 'EnforceBitrate')!.value, !experimental);
+    t.is(harness.output.streaming.bitrate, bitrate);
+  });
+}
 
 test('failed experimental Twitch apply restores service bitrate enforcement', async t => {
   const harness = createDependencies({ corruptAppliedLiveVideo: true });

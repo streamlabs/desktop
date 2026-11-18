@@ -9,6 +9,7 @@ import {
   IAutoOptimizerActiveProbe,
   IAutoOptimizerOutput,
   IAutoOptimizerStreamSetup,
+  TAutoOptimizerPlatform,
 } from '../../app/services/auto-optimizer/types';
 
 const outputSettings: IAutoOptimizerOutputSettingsSnapshot = {
@@ -72,7 +73,14 @@ function streamSetup(
 test('ultrawide requests use platform and content ceilings without overwriting current settings', t => {
   for (const width of [3340, 3440]) {
     for (const allow1440p of [true, false]) {
-      for (const multistream of [true, false]) {
+      for (const [platforms, eligible, bitrate] of [
+        [['twitch'], true, 7500],
+        [['youtube'], true, 8000],
+        [['twitch', 'youtube'], true, 7500],
+        [['twitch', 'youtube', 'facebook'], false, 6000],
+        [['youtube', 'custom'], false, 6000],
+        [['kick'], false, 8000],
+      ] as [TAutoOptimizerPlatform[], boolean, number][]) {
         const snapshots = videos();
         Object.assign(snapshots.horizontal, {
           baseWidth: width,
@@ -82,9 +90,7 @@ test('ultrawide requests use platform and content ceilings without overwriting c
         });
         const before = JSON.stringify(snapshots);
         const output = optimizerOutput({
-          destinations: multistream
-            ? [{ platform: 'twitch' }, { platform: 'youtube' }]
-            : [{ platform: 'twitch' }],
+          destinations: platforms.map(platform => ({ platform })),
         });
         const built = buildAutoOptimizerRequest({
           streamSetup: streamSetup([output]),
@@ -93,9 +99,9 @@ test('ultrawide requests use platform and content ceilings without overwriting c
           videos: snapshots,
           allow1440p,
         });
-        t.is(built.request.outputs[0].limits!.maxWidth, allow1440p && !multistream ? 2560 : 1920);
-        t.is(built.request.outputs[0].limits!.maxHeight, allow1440p && !multistream ? 1440 : 1080);
-        t.is(built.request.outputs[0].limits!.maxBitrateKbps, multistream ? 6000 : 7500);
+        t.is(built.request.outputs[0].limits!.maxWidth, allow1440p && eligible ? 2560 : 1920);
+        t.is(built.request.outputs[0].limits!.maxHeight, allow1440p && eligible ? 1440 : 1080);
+        t.is(built.request.outputs[0].limits!.maxBitrateKbps, bitrate);
         t.is(built.request.outputs[0].current.width, width);
         t.true(built.attemptContext.outputs[0].hasUltrawideResolution);
         t.false('hasUltrawideResolution' in built.request.outputs[0]);
@@ -228,41 +234,67 @@ test('1080p content skips 1440p in ordinary and Enhanced Broadcasting requests, 
   }
 });
 
-test('another platform caps every ordinary canvas at 6000 Kbps', t => {
-  const built = buildAutoOptimizerRequest({
-    streamSetup: streamSetup(
+for (const [horizontal, vertical, bitrate, width, height] of [
+  [['twitch'], ['youtube'], 7500, 2560, 1440],
+  [['youtube'], ['twitch'], 7500, 2560, 1440],
+  [['youtube'], ['youtube'], 8000, 2560, 1440],
+  [['twitch'], ['youtube', 'kick'], 6000, 1920, 1080],
+  [['youtube', 'facebook'], ['twitch'], 6000, 1920, 1080],
+  [['youtube'], ['youtube', 'custom'], 6000, 1920, 1080],
+] as [TAutoOptimizerPlatform[], TAutoOptimizerPlatform[], number, number, number][]) {
+  test(`Dual Output limits for horizontal ${horizontal} and vertical ${vertical}`, t => {
+    const built = buildAutoOptimizerRequest({
+      streamSetup: streamSetup(
+        [
+          optimizerOutput({
+            destinations: horizontal.map(platform => ({ platform })),
+            probeCandidates: [
+              {
+                probeId: 'horizontal-probe',
+                kind: horizontal[0] === 'twitch' ? 'twitch-standard' : 'youtube-unbound',
+                outputId: 'horizontal',
+                platform: horizontal[0] === 'twitch' ? 'twitch' : 'youtube',
+              },
+            ],
+          }),
+          optimizerOutput({
+            outputId: 'vertical',
+            display: 'vertical',
+            destinations: vertical.map(platform => ({ platform })),
+            probeCandidates: [
+              {
+                probeId: 'vertical-probe',
+                kind: vertical[0] === 'twitch' ? 'twitch-standard' : 'youtube-unbound',
+                outputId: 'vertical',
+                platform: vertical[0] === 'twitch' ? 'twitch' : 'youtube',
+              },
+            ],
+          }),
+        ],
+        'dual-output',
+      ),
+      outputProbes: [],
+      outputSettings: { streaming: { ...outputSettings.streaming, bitrate: 8000 } },
+      videos: videos(),
+      allow1440p: true,
+    });
+    t.deepEqual(
+      built.request.outputs.map(output => output.limits!.maxBitrateKbps),
+      [bitrate, bitrate],
+    );
+    t.deepEqual(
+      built.attemptContext.outputs.map(output => output.limits!.maxBitrateKbps),
+      [bitrate, bitrate],
+    );
+    t.deepEqual(
+      built.request.outputs.map(output => [output.limits!.maxWidth, output.limits!.maxHeight]),
       [
-        optimizerOutput(),
-        optimizerOutput({
-          outputId: 'vertical',
-          display: 'vertical',
-          destinations: [{ platform: 'youtube' }],
-          probeCandidates: [
-            {
-              probeId: 'vertical-youtube',
-              kind: 'youtube-unbound',
-              outputId: 'vertical',
-              platform: 'youtube',
-            },
-          ],
-        }),
+        [width, height],
+        [1080, 1920],
       ],
-      'dual-output',
-    ),
-    outputProbes: [],
-    outputSettings: { streaming: { ...outputSettings.streaming, bitrate: 8000 } },
-    videos: videos(),
-    allow1440p: true,
+    );
   });
-  t.deepEqual(
-    built.request.outputs.map(output => output.limits!.maxBitrateKbps),
-    [6000, 6000],
-  );
-  t.deepEqual(
-    built.attemptContext.outputs.map(output => output.limits!.maxBitrateKbps),
-    [6000, 6000],
-  );
-});
+}
 
 test('applies platform bitrate limits and prevents estimate or partial promotion', t => {
   const estimated = optimizerOutput({
@@ -412,28 +444,33 @@ test('builds paired Enhanced Broadcasting video settings without a Desktop bitra
   t.false(JSON.stringify(built.attemptContext).includes('private-enhanced-key'));
 });
 
-test('another selected platform caps every canvas, including Twitch Enhanced Broadcasting', t => {
-  const enhanced = optimizerOutput({
-    outputId: 'enhanced',
-    outputKind: 'twitch-enhanced-broadcasting',
-    display: 'both',
+for (const [platform, width, height] of [
+  ['youtube', 2560, 1440],
+  ['kick', 1920, 1080],
+] as const) {
+  test(`${platform} companion applies the session resolution policy to Twitch Enhanced Broadcasting`, t => {
+    const enhanced = optimizerOutput({
+      outputId: 'enhanced',
+      outputKind: 'twitch-enhanced-broadcasting',
+      display: 'both',
+    });
+    const companion = optimizerOutput({
+      outputId: 'horizontal',
+      destinations: [{ platform }],
+    });
+    const built = buildAutoOptimizerRequest({
+      streamSetup: streamSetup([enhanced, companion], 'enhanced-broadcasting-dual-output'),
+      outputSettings,
+      outputProbes: [],
+      videos: videos(),
+      allow1440p: true,
+    });
+    for (const output of built.request.outputs) {
+      t.is(output.limits!.maxWidth, width);
+      t.is(output.limits!.maxHeight, height);
+    }
   });
-  const companion = optimizerOutput({
-    outputId: 'horizontal',
-    destinations: [{ platform: 'youtube' }],
-  });
-  const built = buildAutoOptimizerRequest({
-    streamSetup: streamSetup([enhanced, companion], 'enhanced-broadcasting-dual-output'),
-    outputSettings,
-    outputProbes: [],
-    videos: videos(),
-    allow1440p: true,
-  });
-  for (const output of built.request.outputs) {
-    t.is(output.limits!.maxWidth, 1920);
-    t.is(output.limits!.maxHeight, 1080);
-  }
-});
+}
 
 test('paired requests accept zero-based identities and reject invalid canvas identities', t => {
   const horizontal = optimizerOutput();

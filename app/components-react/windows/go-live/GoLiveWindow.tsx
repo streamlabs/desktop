@@ -5,7 +5,10 @@ import {
   SettingsService,
   EIncompatibleRestreamCodec,
   incompatibleRestreamCodecs,
+  IPlatformCodecIncompatibility,
+  videoCodecLabel,
 } from 'services/settings';
+import { getPlatformService } from 'services/platforms';
 import { RestreamService } from 'services/restream';
 import { ModalLayout } from '../../shared/ModalLayout';
 import { Button } from 'antd';
@@ -86,6 +89,7 @@ function ModalFooter() {
     showSettings,
     setStreamShift,
     clearStreamShiftPending,
+    getPlatformCodecIncompatibility,
     hasValidDisplayAssignment,
     shouldShowConfirm,
     shouldShowGoBackButton,
@@ -139,7 +143,21 @@ function ModalFooter() {
 
     async goLiveWithDefaultCodec() {
       this.settingsService.actions.setDefaultVideoEncoder();
+      // A loaded optimized profile was fetched for the previous encoder; drop it. A profile
+      // fetch still in flight can restore it, so goLive also skips any profile fetched for
+      // a different encoder than the one that will start.
+      module.updateSettings({ optimizedProfile: undefined });
       return module.confirmGoLive();
+    },
+
+    /**
+     * Checked against the platforms toggled in this window, which may not be saved yet.
+     * StreamingService.goLive repeats the check for starts that skip this window.
+     */
+    getPlatformCodecIncompatibility(): Promise<IPlatformCodecIncompatibility | null> {
+      return Services.StreamingService.actions.return.getPlatformCodecIncompatibility(
+        module.state.enabledPlatforms,
+      );
     },
 
     showSettings() {
@@ -192,6 +210,38 @@ function ModalFooter() {
       secondaryActionFn: showSettings,
     });
   }, [isStreamShiftMode, isDualOutputMode, codec, goLiveWithDefaultCodec, showSettings]);
+
+  const promptPlatformCodec = useCallback(
+    async ({ platform, codec, supportedCodecs }: IPlatformCodecIncompatibility) => {
+      const params = {
+        videoCodec: videoCodecLabel(codec),
+        platformName: getPlatformService(platform).displayName,
+      };
+      // "Use H.264 Codec" switches to x264, so only offer it when the platform takes H.264.
+      const canUseDefaultCodec = supportedCodecs.includes('h264');
+
+      await promptAction({
+        title: $t('Incompatible Codec Detected'),
+        message: canUseDefaultCodec
+          ? $t(
+              '%{videoCodec} codec is not supported by %{platformName}. Would you like to proceed with the H.264 codec or select another codec?',
+              params,
+            )
+          : $t(
+              '%{videoCodec} codec is not supported by %{platformName}. Please select another codec.',
+              params,
+            ),
+        btnText: canUseDefaultCodec ? $t('Use H.264 Codec') : $t('Select Codec'),
+        fn: canUseDefaultCodec ? () => void goLiveWithDefaultCodec() : showSettings,
+        cancelBtnText: $t('Cancel'),
+        cancelBtnPosition: 'left',
+        ...(canUseDefaultCodec
+          ? { secondaryActionText: $t('Select Codec'), secondaryActionFn: showSettings }
+          : {}),
+      });
+    },
+    [goLiveWithDefaultCodec, showSettings],
+  );
 
   const promptStreamShift = useCallback(async () => {
     isStreamShiftPromptShown.current = true;
@@ -284,6 +334,13 @@ function ModalFooter() {
       return;
     }
 
+    // Platforms whose ingest rejects the codec without OBS knowing (e.g. Kick and HEVC)
+    const platformCodecIncompatibility = await getPlatformCodecIncompatibility();
+    if (platformCodecIncompatibility) {
+      await promptPlatformCodec(platformCodecIncompatibility);
+      return;
+    }
+
     // StreamingService performs the Stream Shift check. This confirmation may
     // open Auto Optimizer first when the Go Live settings are eligible.
     await confirmGoLive();
@@ -292,6 +349,8 @@ function ModalFooter() {
     hasValidDisplayAssignment,
     hasIncompatibleCodec,
     promptUseDefaultCodec,
+    getPlatformCodecIncompatibility,
+    promptPlatformCodec,
     confirmGoLive,
   ]);
 

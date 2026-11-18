@@ -28,15 +28,7 @@ async function installOBSCache(t: ExecutionContext) {
   const obsCacheZipPath = path.resolve(dataDir, 'obs-studio.zip');
 
   const extractZip = require('extract-zip');
-  await new Promise<void>(async (resolve, reject) => {
-    extractZip(obsCacheZipPath, { dir: cacheDir }, (err: any) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
+  await extractZip(obsCacheZipPath, { dir: cacheDir });
 }
 
 test('OBS Importer', async t => {

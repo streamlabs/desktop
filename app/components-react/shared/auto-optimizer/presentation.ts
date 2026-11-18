@@ -8,6 +8,8 @@ import {
   TAutoOptimizerPhase,
 } from 'services/auto-optimizer/types';
 
+import { isTwitchOrYouTubeOnlyStream } from '../../../services/streaming/stream-resolution-policy';
+
 const probePlatformOrder: TAutoOptimizerPresentationProbePlatform[] = ['twitch', 'youtube'];
 
 const visibleActiveMeasurementReasons = new Set([
@@ -345,7 +347,7 @@ export function autoOptimizerProgressLabel(
 }
 
 /** Report the product ceiling separately from probe failures and warnings. */
-export function shouldShowMultistreamResolutionLimit(
+export function shouldShowPlatformResolutionLimit(
   outputs: ReadonlyArray<{
     platforms?: ReadonlyArray<{ id: string }>;
     width: number;
@@ -357,7 +359,8 @@ export function shouldShowMultistreamResolutionLimit(
     outputs.flatMap(output => (output.platforms || []).map(platform => platform.id)),
   );
   return (
-    platforms.size > 1 &&
+    platforms.size > 0 &&
+    !isTwitchOrYouTubeOnlyStream([...platforms]) &&
     outputs.some(
       output =>
         output.measurementMode === 'active' &&
