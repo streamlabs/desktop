@@ -205,7 +205,9 @@ export class Commands {
       scene.id,
       name,
       type,
-      settings ?? null,
+      // NOT null: createSource(name, type, settings = {}) only defaults on undefined, and a
+      // null here crashes the app on `null.is_media_flag` for every source type.
+      settings ?? {},
       { sourceAddOptions: {} },
     ]);
   }

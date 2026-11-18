@@ -85,8 +85,12 @@ export function registerSources(server: McpServer, ctx: Ctx): void {
         'lands at its default size and position — follow up with ' +
         'set_item_transform to place it.',
       inputSchema: {
-        name: z.string().describe('Name for the new source, as it will appear in the sources list.'),
-        type: z.string().describe('Source type identifier from list_source_types, e.g. "browser_source".'),
+        name: z
+          .string()
+          .describe('Name for the new source, as it will appear in the sources list.'),
+        type: z
+          .string()
+          .describe('Source type identifier from list_source_types, e.g. "browser_source".'),
         settings: z
           .record(z.string(), z.unknown())
           .optional()
@@ -153,7 +157,7 @@ export function registerSources(server: McpServer, ctx: Ctx): void {
   server.registerTool(
     'set_source_settings',
     {
-      title: 'Change a source\'s settings',
+      title: "Change a source's settings",
       description:
         'Update settings on an existing source by name — a browser source URL, text content, ' +
         'a media file path, a capture target. Only the keys you pass are changed. Read the ' +
@@ -182,7 +186,9 @@ export function registerSources(server: McpServer, ctx: Ctx): void {
         const decision = await ctx.confirm.gate(requested_by, {
           title: `Change settings on "${match.name}" (${match.type})`,
           lines: [JSON.stringify(settings)],
-          warnings: live ? ['You are LIVE — if this source is on screen, viewers see the change.'] : [],
+          warnings: live
+            ? ['You are LIVE — if this source is on screen, viewers see the change.']
+            : [],
         });
         if (!decision.approved) return fail(decision.reason);
 
@@ -201,12 +207,15 @@ export function registerSources(server: McpServer, ctx: Ctx): void {
         'Add an effect filter to a source. Common types: chroma_key (green screen), ' +
         'color_filter (brightness/contrast/saturation), noise_suppress_filter, ' +
         'noise_gate_filter, compressor_filter, crop_filter, scale_filter. Omit settings to ' +
-        'use the filter\'s defaults.',
+        "use the filter's defaults.",
       inputSchema: {
         source: z.string().describe('Source name.'),
         filter_type: z.string().describe('Filter type identifier, e.g. "chroma_key".'),
         name: z.string().optional().describe('Name for the filter. Defaults to the type name.'),
-        settings: z.record(z.string(), z.unknown()).optional().describe('Filter-specific settings.'),
+        settings: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe('Filter-specific settings.'),
         requested_by: requestedBy,
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
@@ -221,14 +230,26 @@ export function registerSources(server: McpServer, ctx: Ctx): void {
         const decision = await ctx.confirm.gate(requested_by, {
           title: `Add a ${filter_type} filter named "${filterName}" to "${match.name}"`,
           lines: settings ? [JSON.stringify(settings)] : [],
-          warnings: live ? ['You are LIVE — if this source is on screen, viewers see the change.'] : [],
+          warnings: live
+            ? ['You are LIVE — if this source is on screen, viewers see the change.']
+            : [],
         });
         if (!decision.approved) return fail(decision.reason);
 
-        const edit = await ctx.commands.addFilter(match.sourceId, filter_type, filterName, settings);
+        const edit = await ctx.commands.addFilter(
+          match.sourceId,
+          filter_type,
+          filterName,
+          settings,
+        );
         ctx.snapshot.invalidate();
 
-        return ok(withUndo({ added: true, filter: filterName, type: filter_type, source: match.name }, edit));
+        return ok(
+          withUndo(
+            { added: true, filter: filterName, type: filter_type, source: match.name },
+            edit,
+          ),
+        );
       }),
   );
 
@@ -236,7 +257,8 @@ export function registerSources(server: McpServer, ctx: Ctx): void {
     'remove_filter',
     {
       title: 'Remove a filter from a source',
-      description: 'Remove a named filter from a source. Read current filters with get_source_settings.',
+      description:
+        'Remove a named filter from a source. Read current filters with get_source_settings.',
       inputSchema: {
         source: z.string().describe('Source name.'),
         filter: z.string().describe('Filter name, as returned by get_source_settings.'),
@@ -276,7 +298,9 @@ export function pickSource<T extends { name: string }>(sources: T[], needle: str
 
   if (sub.length > 1) {
     throw new Error(
-      `Ambiguous source "${needle}" — matches ${JSON.stringify(sub.map(s => s.name))}. Use the exact name.`,
+      `Ambiguous source "${needle}" — matches ${JSON.stringify(
+        sub.map(s => s.name),
+      )}. Use the exact name.`,
     );
   }
   throw new Error(

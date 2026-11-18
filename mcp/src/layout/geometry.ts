@@ -54,7 +54,12 @@ export const ANCHORS: Anchor[] = [
 export const round = (n: number) => Math.round(n * 100) / 100;
 
 export function rect(x: number, y: number, width: number, height: number): Rect {
-  return { x: Math.round(x), y: Math.round(y), width: Math.round(width), height: Math.round(height) };
+  return {
+    x: Math.round(x),
+    y: Math.round(y),
+    width: Math.round(width),
+    height: Math.round(height),
+  };
 }
 
 export function right(r: Rect): number {
@@ -119,7 +124,10 @@ export function isFullBleed(r: Rect, canvas: Canvas): boolean {
 /** Human-readable region, for prose deltas: "bottom-right", "center". */
 export function regionName(r: Rect, canvas: Canvas): string {
   const [cw, ch] = canvas;
-  if (isFullBleed(r, canvas)) return 'full-bleed';
+  if (isFullBleed(r, canvas)) {
+    // Exactly canvas-sized (within a few px) is a background; bigger hangs off the edges.
+    return r.width > cw * 1.02 || r.height > ch * 1.02 ? 'larger than the canvas' : 'full-bleed';
+  }
 
   const cx = r.x + r.width / 2;
   const cy = r.y + r.height / 2;
@@ -196,7 +204,10 @@ export function inspectPlacement(
   if (isPartlyOffCanvas(r, canvas)) {
     notes.push({ ok: false, text: `"${name}" hangs over the canvas edge and will be clipped` });
   } else if (violatesSafeArea(r, canvas)) {
-    notes.push({ ok: false, text: `"${name}" is inside the ${TITLE_SAFE_MARGIN}px title-safe margin` });
+    notes.push({
+      ok: false,
+      text: `"${name}" is inside the ${TITLE_SAFE_MARGIN}px title-safe margin`,
+    });
   } else {
     notes.push({ ok: true, text: `inside title-safe area (${TITLE_SAFE_MARGIN}px margin)` });
   }

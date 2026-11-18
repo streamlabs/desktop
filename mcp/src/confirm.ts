@@ -53,10 +53,15 @@ export type Decision = { approved: true } | { approved: false; reason: string };
  * Deliberately env-only. If the model could set this, it would set it to whatever let it
  * finish the task.
  */
-export type ServerMode = 'read-only' | 'full';
+export type ServerMode = 'read-only' | 'full' | 'demo';
 
+/**
+ * demo -- a curated, small tool set for live demos with smaller local models, and NO
+ *         confirmation prompts: every write executes as if the streamer requested it.
+ */
 export function serverMode(): ServerMode {
-  return process.env.SLD_MCP_MODE === 'read-only' ? 'read-only' : 'full';
+  const m = process.env.SLD_MCP_MODE;
+  return m === 'read-only' ? 'read-only' : m === 'demo' ? 'demo' : 'full';
 }
 
 export function renderSummary(s: ChangeSummary): string {
@@ -70,6 +75,12 @@ export class Confirmer {
   constructor(private server: McpServer) {}
 
   async gate(requestedBy: RequestedBy | undefined, summary: ChangeSummary): Promise<Decision> {
+    // Demo mode: no prompts. Everything runs as if the streamer asked for it.
+    if (serverMode() === 'demo') {
+      log(`gate: demo mode, executing -- ${summary.title}`);
+      return { approved: true };
+    }
+
     // Default to 'agent': an omitted parameter must fail safe, not fail open.
     const provenance: RequestedBy = requestedBy === 'user' ? 'user' : 'agent';
 
@@ -118,7 +129,9 @@ export class Confirmer {
       log(`gate: declined (${result.action})`);
       return {
         approved: false,
-        reason: `The streamer ${result.action === 'decline' ? 'declined' : 'dismissed'} this change. Nothing was modified. Do not retry it unless they ask.`,
+        reason: `The streamer ${
+          result.action === 'decline' ? 'declined' : 'dismissed'
+        } this change. Nothing was modified. Do not retry it unless they ask.`,
       };
     }
 

@@ -85,7 +85,12 @@ export function registerScenes(server: McpServer, ctx: Ctx): void {
         ctx.resolver.invalidate();
         ctx.snapshot.invalidate();
 
-        return ok(withUndo({ created: true, scene: name, copiedFrom: from.name, items: items.length }, edit));
+        return ok(
+          withUndo(
+            { created: true, scene: name, copiedFrom: from.name, items: items.length },
+            edit,
+          ),
+        );
       }),
   );
 
@@ -94,7 +99,7 @@ export function registerScenes(server: McpServer, ctx: Ctx): void {
     {
       title: 'Rename a scene',
       description:
-        'Change a scene\'s name. Anything referring to it by the old name — Stream Deck ' +
+        "Change a scene's name. Anything referring to it by the old name — Stream Deck " +
         'buttons, hotkeys, other tooling — will need updating.',
       inputSchema: {
         scene: z.string().describe('Current scene name.'),

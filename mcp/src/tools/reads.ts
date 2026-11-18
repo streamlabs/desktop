@@ -5,8 +5,14 @@
 
 import * as z from 'zod/v4';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { presentForModel } from '../present.js';
 import { Ctx, guard, ok, sceneDetail } from './shared.js';
-import { inspectPlacement } from '../layout/geometry.js';
+import { inspectPlacement, isFullBleed } from '../layout/geometry.js';
+
+function touchesEdge(r: [number, number, number, number], canvas: [number, number]): boolean {
+  const [x, y, w, h] = r;
+  return x <= 0 || y <= 0 || Math.abs(x + w - canvas[0]) <= 1 || Math.abs(y + h - canvas[1]) <= 1;
+}
 
 export function registerReads(server: McpServer, ctx: Ctx): void {
   server.registerTool(
@@ -87,30 +93,58 @@ export function registerReads(server: McpServer, ctx: Ctx): void {
         ]);
         const canvas = snap.canvas;
 
-        const others = items.filter(i => i.visible).map(i => ({ name: i.name, rect: i.rect }));
-        const notes = items
-          .filter(i => i.visible)
-          .flatMap(i =>
-            inspectPlacement(i.name, i.rect, canvas, others)
-              .filter(n => !n.ok)
-              .map(n => n.text),
-          );
+        // One logical webcam and one "Webcam frame", not the copies and strips behind them.
+        const view = presentForModel(
+          items
+            .filter(i => i.display === 'horizontal')
+            .map(i => ({
+              ...i,
+              rect: [i.rect.x, i.rect.y, i.rect.width, i.rect.height] as [
+                number,
+                number,
+                number,
+                number,
+              ],
+            })),
+        );
+        const toRect = (t: [number, number, number, number]) => ({
+          x: t[0],
+          y: t[1],
+          width: t[2],
+          height: t[3],
+        });
+        // Backgrounds (full-screen color blocks) sit behind everything: never "covering" or
+        // "inside the margin". Comparing against them only produced noise.
+        const placed = view.filter(
+          i =>
+            i.visible &&
+            i.type !== 'webcam_frame' &&
+            !(i.type === 'color_source' && isFullBleed(toRect(i.rect), canvas)),
+        );
+        const others = placed.map(i => ({ name: i.name, rect: toRect(i.rect) }));
+        const notes = placed.flatMap(i =>
+          inspectPlacement(i.name, toRect(i.rect), canvas, others)
+            .filter(n => !n.ok)
+            // Flush against a canvas edge is a deliberate choice, not a title-safe mistake.
+            .filter(n => !(/title-safe/.test(n.text) && touchesEdge(i.rect, canvas)))
+            .map(n => n.text),
+        );
 
         // Emit sceneItemId only where the name is ambiguous. Names are the cheap, normal
         // way to address an item; the id is the escape hatch when one is not enough.
         const counts = new Map<string, number>();
-        for (const i of items) counts.set(i.name, (counts.get(i.name) ?? 0) + 1);
+        for (const i of view) counts.set(i.name, (counts.get(i.name) ?? 0) + 1);
 
         return ok({
           scene: ref.name,
           canvas,
-          items: items.map(i => ({
+          items: view.map(i => ({
             name: i.name,
             ...((counts.get(i.name) ?? 0) > 1 ? { id: i.sceneItemId } : {}),
             type: i.type,
             visible: i.visible,
             locked: i.locked,
-            rect: [i.rect.x, i.rect.y, i.rect.width, i.rect.height],
+            rect: i.rect,
             ...(i.transform.rotation ? { rotation: i.transform.rotation } : {}),
           })),
           ...([...counts.values()].some(n => n > 1)

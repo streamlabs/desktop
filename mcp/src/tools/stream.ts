@@ -36,7 +36,9 @@ export function registerStream(server: McpServer, ctx: Ctx): void {
         const problems = [...snap.warnings];
         const visible = snap.activeScene.items.filter(i => i.visible);
         if (visible.length === 0) {
-          problems.push(`Active scene "${snap.activeScene.name}" shows nothing — viewers would see black.`);
+          problems.push(
+            `Active scene "${snap.activeScene.name}" shows nothing — viewers would see black.`,
+          );
         }
         const mic = snap.audio.find(a => /mic|aux/i.test(a.name));
         if (mic?.muted) problems.push(`"${mic.name}" is muted.`);
@@ -45,7 +47,9 @@ export function registerStream(server: McpServer, ctx: Ctx): void {
           title: 'Start streaming',
           lines: [
             `Scene: "${snap.activeScene.name}" with ${visible.length} visible item(s)`,
-            ...(snap.stream.platforms?.length ? [`Platforms: ${snap.stream.platforms.join(', ')}`] : []),
+            ...(snap.stream.platforms?.length
+              ? [`Platforms: ${snap.stream.platforms.join(', ')}`]
+              : []),
             ...(snap.stream.title ? [`Title: ${snap.stream.title}`] : []),
           ],
           warnings: problems.length ? problems : ['Preflight checks passed.'],
@@ -68,7 +72,8 @@ export function registerStream(server: McpServer, ctx: Ctx): void {
     'stop_stream',
     {
       title: 'Stop streaming',
-      description: 'End the current broadcast. Not undoable — restarting begins a new stream session.',
+      description:
+        'End the current broadcast. Not undoable — restarting begins a new stream session.',
       inputSchema: { requested_by: requestedBy },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
     },
@@ -111,7 +116,11 @@ export function registerStream(server: McpServer, ctx: Ctx): void {
         const snap = await ctx.snapshot.build({ maxAgeMs: 1500 });
         const isRecording = snap.stream.recording === 'recording';
         if (isRecording === recording) {
-          return ok({ changed: false, recording: isRecording, reason: `Already ${isRecording ? 'recording' : 'stopped'}.` });
+          return ok({
+            changed: false,
+            recording: isRecording,
+            reason: `Already ${isRecording ? 'recording' : 'stopped'}.`,
+          });
         }
 
         const decision = await ctx.confirm.gate(requested_by, {
@@ -123,7 +132,11 @@ export function registerStream(server: McpServer, ctx: Ctx): void {
         await ctx.client.request('StreamingService', 'toggleRecording');
         ctx.snapshot.invalidate();
 
-        return ok({ changed: true, recording, note: 'Call get_health in a few seconds to confirm.' });
+        return ok({
+          changed: true,
+          recording,
+          note: 'Call get_health in a few seconds to confirm.',
+        });
       }),
   );
 }

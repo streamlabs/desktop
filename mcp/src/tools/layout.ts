@@ -21,6 +21,8 @@ import {
   withUndo,
 } from './shared.js';
 import { toItemRef } from './performance.js';
+import { afterWebcamChange } from './studio.js';
+import { FRAME_STRIP_RE } from '../present.js';
 import {
   ANCHORS,
   Anchor,
@@ -29,7 +31,11 @@ import {
   anchorRect,
   describeRect,
   inspectPlacement,
+  isFullBleed,
+  isFullyOffCanvas,
+  isPartlyOffCanvas,
   rect,
+  TITLE_SAFE_MARGIN,
 } from '../layout/geometry.js';
 
 export function registerLayout(server: McpServer, ctx: Ctx): void {
@@ -49,7 +55,17 @@ export function registerLayout(server: McpServer, ctx: Ctx): void {
         anchor: z
           .enum(ANCHORS as [Anchor, ...Anchor[]])
           .optional()
-          .describe('Named position, inset from the canvas edges by the title-safe margin.'),
+          .describe(
+            'Named position, inset from the canvas edges by the title-safe margin (48px). Add ' +
+              'flush: true to put it right against the edge instead.',
+          ),
+        flush: z
+          .boolean()
+          .optional()
+          .describe(
+            'With anchor: no margin, so the item sits right against the screen edge/corner. ' +
+              'Use this for "flush", "no gap", "in the very corner".',
+          ),
         position: z
           .object({ x: z.number(), y: z.number() })
           .optional()
@@ -76,7 +92,18 @@ export function registerLayout(server: McpServer, ctx: Ctx): void {
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
     },
-    async ({ item, scene, anchor, position, width_percent, scale, rotation, action, requested_by }) =>
+    async ({
+      item,
+      scene,
+      anchor,
+      flush,
+      position,
+      width_percent,
+      scale,
+      rotation,
+      action,
+      requested_by,
+    }) =>
       guard('set_item_transform', async () => {
         const sceneRef = await ctx.resolver.resolveScene(scene);
         const [items, snap] = await Promise.all([
@@ -88,12 +115,22 @@ export function registerLayout(server: McpServer, ctx: Ctx): void {
         const ref = toItemRef(target);
 
         if (target.locked) {
-          return fail(`"${target.name}" is locked in "${sceneRef.name}". Unlock it in Streamlabs first.`);
+          return fail(
+            `"${target.name}" is locked in "${sceneRef.name}". Unlock it in Streamlabs first.`,
+          );
         }
 
         const { onAir } = await liveContext(ctx, sceneRef.name);
+        const isCam = target.type === 'dshow_input';
+        // The webcam's own frame strips and hidden camera copies are not "other items".
         const others = items
-          .filter(i => i.visible && i.name !== target.name)
+          .filter(
+            i =>
+              i.visible &&
+              i.name !== target.name &&
+              !FRAME_STRIP_RE.test(i.name) &&
+              !(isCam && i.type === 'dshow_input'),
+          )
           .map(i => ({ name: i.name, rect: i.rect }));
 
         // ---- one-shot actions
@@ -109,13 +146,16 @@ export function registerLayout(server: McpServer, ctx: Ctx): void {
             action === 'fit'
               ? await ctx.commands.fitToScreen(sceneRef, ref)
               : action === 'stretch'
-                ? await ctx.commands.stretchToScreen(sceneRef, ref)
-                : action === 'center'
-                  ? await ctx.commands.centerOnScreen(sceneRef, ref)
-                  : await ctx.commands.resetTransform(sceneRef, ref);
+              ? await ctx.commands.stretchToScreen(sceneRef, ref)
+              : action === 'center'
+              ? await ctx.commands.centerOnScreen(sceneRef, ref)
+              : await ctx.commands.resetTransform(sceneRef, ref);
 
+          if (isCam) await afterWebcamChange(ctx, sceneRef);
           ctx.snapshot.invalidate();
-          return ok(withUndo(await describeOutcome(ctx, sceneRef, target.name, canvas, others), edit));
+          return ok(
+            withUndo(await describeOutcome(ctx, sceneRef, target.name, canvas, others), edit),
+          );
         }
 
         // ---- compute the target box
@@ -126,7 +166,9 @@ export function registerLayout(server: McpServer, ctx: Ctx): void {
           scale === undefined &&
           rotation === undefined
         ) {
-          return fail('Nothing to do: pass `anchor`, `position`, `width_percent`, `scale`, `rotation` or `action`.');
+          return fail(
+            'Nothing to do: pass `anchor`, `position`, `width_percent`, `scale`, `rotation` or `action`.',
+          );
         }
 
         let targetScale = target.transform.scale;
@@ -151,11 +193,28 @@ export function registerLayout(server: McpServer, ctx: Ctx): void {
         };
 
         let targetPos = target.transform.position;
+        let clamped = false;
         if (anchor) {
-          const r = anchorRect(anchor, newSize, canvas);
+          const r = anchorRect(anchor, newSize, canvas, flush ? 0 : undefined);
           targetPos = { x: r.x, y: r.y };
         } else if (position) {
-          targetPos = position;
+          // Keep it on screen: an explicit position past the edge is almost always a misjudged
+          // nudge toward the edge, not a request to clip the item.
+          const x =
+            newSize.width <= canvas[0]
+              ? Math.min(Math.max(position.x, 0), canvas[0] - newSize.width)
+              : position.x;
+          const y =
+            newSize.height <= canvas[1]
+              ? Math.min(Math.max(position.y, 0), canvas[1] - newSize.height)
+              : position.y;
+          clamped =
+            Math.round(x) !== Math.round(position.x) || Math.round(y) !== Math.round(position.y);
+          targetPos = { x: Math.round(x), y: Math.round(y) };
+        } else if (target.rect.width > 0 && target.rect.height > 0) {
+          // Resize in place: keep the edges the item hugs. A bottom-right webcam grows up and
+          // to the left instead of off the canvas; a centered one grows about its center.
+          targetPos = resizeInPlace(target.rect, newSize, canvas);
         }
 
         const projected: Rect = rect(targetPos.x, targetPos.y, newSize.width, newSize.height);
@@ -175,12 +234,30 @@ export function registerLayout(server: McpServer, ctx: Ctx): void {
         const edit = await ctx.commands.setItemTransform(
           sceneRef,
           ref,
-          { position: targetPos, scale: targetScale, ...(rotation !== undefined ? { rotation } : {}) },
+          {
+            position: targetPos,
+            scale: targetScale,
+            ...(rotation !== undefined ? { rotation } : {}),
+          },
           { position: target.transform.position, scale: target.transform.scale },
         );
+        if (isCam) await afterWebcamChange(ctx, sceneRef);
         ctx.snapshot.invalidate();
 
-        return ok(withUndo(await describeOutcome(ctx, sceneRef, target.name, canvas, others), edit));
+        const outcome = await describeOutcome(ctx, sceneRef, target.name, canvas, others);
+        return ok(
+          withUndo(
+            clamped
+              ? {
+                  ...outcome,
+                  note:
+                    'That position would have pushed it off the screen, so it was kept at the ' +
+                    'edge. For flush against an edge, use anchor with flush: true.',
+                }
+              : outcome,
+            edit,
+          ),
+        );
       }),
   );
 
@@ -222,7 +299,12 @@ export function registerLayout(server: McpServer, ctx: Ctx): void {
         });
         if (!decision.approved) return fail(decision.reason);
 
-        const edit = await ctx.commands.reorder(sceneRef, toItemRef(target), dest.sceneItemId, placement);
+        const edit = await ctx.commands.reorder(
+          sceneRef,
+          toItemRef(target),
+          dest.sceneItemId,
+          placement,
+        );
         ctx.snapshot.invalidate();
 
         const after = await sceneDetail(ctx, sceneRef);
@@ -278,10 +360,47 @@ export function registerLayout(server: McpServer, ctx: Ctx): void {
         ctx.snapshot.invalidate();
 
         return ok(
-          withUndo({ grouped: true, folder: name, items: targets.map(t => t.name), scene: sceneRef.name }, edit),
+          withUndo(
+            { grouped: true, folder: name, items: targets.map(t => t.name), scene: sceneRef.name },
+            edit,
+          ),
         );
       }),
   );
+}
+
+/**
+ * New top-left for a resize that keeps the item where it visually is: anchored to whichever
+ * horizontal/vertical edge (or center) it is nearest, then clamped inside the title-safe area
+ * when it fits there.
+ */
+function resizeInPlace(
+  current: Rect,
+  size: { width: number; height: number },
+  canvas: Canvas,
+): { x: number; y: number } {
+  const [cw, ch] = canvas;
+  const M = TITLE_SAFE_MARGIN;
+  const cx = current.x + current.width / 2;
+  const cy = current.y + current.height / 2;
+
+  let x: number;
+  if (cx < cw / 3) x = current.x;
+  else if (cx > (cw * 2) / 3) x = current.x + current.width - size.width;
+  else x = cx - size.width / 2;
+
+  let y: number;
+  if (cy < ch / 3) y = current.y;
+  else if (cy > (ch * 2) / 3) y = current.y + current.height - size.height;
+  else y = cy - size.height / 2;
+
+  // Respect the margin the item already had: inside the safe area stays inside it, flush
+  // against an edge stays flush.
+  const mx = current.x < M - 1 || current.x + current.width > cw - M + 1 ? 0 : M;
+  const my = current.y < M - 1 || current.y + current.height > ch - M + 1 ? 0 : M;
+  if (size.width <= cw - 2 * mx) x = Math.min(Math.max(x, mx), cw - mx - size.width);
+  if (size.height <= ch - 2 * my) y = Math.min(Math.max(y, my), ch - my - size.height);
+  return { x: Math.round(x), y: Math.round(y) };
 }
 
 async function describeOutcome(
@@ -291,11 +410,46 @@ async function describeOutcome(
   canvas: Canvas,
   others: Array<{ name: string; rect: Rect }>,
 ) {
-  const after = await sceneDetail(ctx, sceneRef);
+  void others; // recomputed below: the change may have moved other items (text dodging the webcam)
+  ctx.resolver.invalidate();
+  const after = (await sceneDetail(ctx, sceneRef)).filter(i => i.display === 'horizontal');
   const now = after.find(i => i.name === itemName);
   if (!now) return { updated: true, item: itemName, scene: sceneRef.name };
 
-  const checks = inspectPlacement(now.name, now.rect, canvas, others);
+  const isCam = now.type === 'dshow_input';
+  const fresh = after
+    .filter(
+      i =>
+        i.visible &&
+        i.sceneItemId !== now.sceneItemId &&
+        !FRAME_STRIP_RE.test(i.name) &&
+        !(isCam && i.type === 'dshow_input') &&
+        // a full-screen color block is the background: it is behind, not "covered"
+        !(i.type === 'color_source' && isFullBleed(i.rect, canvas)),
+    )
+    .map(i => ({ name: i.name, rect: i.rect }));
+  let checks = inspectPlacement(now.name, now.rect, canvas, fresh);
+
+  // Sitting right against an edge on purpose (flush) is not a title-safe problem.
+  const [cw, ch] = canvas;
+  const r = now.rect;
+  const flushEdges = [
+    r.x <= 0 && 'left',
+    r.y <= 0 && 'top',
+    Math.abs(r.x + r.width - cw) <= 1 && 'right',
+    Math.abs(r.y + r.height - ch) <= 1 && 'bottom',
+  ].filter(Boolean);
+  if (flushEdges.length && !isFullyOffCanvas(r, canvas) && !isPartlyOffCanvas(r, canvas)) {
+    checks = [
+      ...checks.filter(c => !/title-safe/.test(c.text)),
+      {
+        ok: true,
+        text: `flush against the ${flushEdges.join(' and ')} edge${
+          flushEdges.length > 1 ? 's' : ''
+        }`,
+      } as typeof checks[number],
+    ];
+  }
   return {
     updated: true,
     item: now.name,

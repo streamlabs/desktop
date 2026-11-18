@@ -1,13 +1,13 @@
 ---
 name: streamlabs-director
-description: Drive Streamlabs Desktop: scenes, sources, layout, live ops
+description: "Drive Streamlabs Desktop: scenes, sources, layout, live ops"
 version: 1.0.0
 platforms: [windows, macos]
 metadata:
   hermes:
     tags: [streaming, streamlabs, obs, broadcast]
     category: media
-    requires_tools: [mcp_streamlabs_get_stream_state]
+    requires_tools: [mcp__streamlabs__get_stream_state]
 ---
 
 # Streamlabs Director

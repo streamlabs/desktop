@@ -68,16 +68,19 @@ export async function guard(label: string, fn: () => Promise<ToolResult>): Promi
  * The provenance parameter the whole confirmation model rests on. The wording matters --
  * this description is the only thing telling the agent how to classify its own intent.
  */
-export const requestedBy = z
-  .enum(['user', 'agent'])
-  .optional()
-  .describe(
-    'Who asked for this. Use "user" ONLY when the streamer directly requested this specific ' +
-      'action (spoken or typed) — it then happens immediately with no prompt. Use "agent" (the ' +
-      'default) when you are suggesting it yourself, including when acting on a standing ' +
-      'instruction or something you inferred; the streamer will be shown a confirmation. ' +
-      'When in doubt, omit this.',
-  );
+export const requestedBy =
+  process.env.SLD_MCP_MODE === 'demo'
+    ? z.enum(['user', 'agent']).optional().describe('Not needed. Leave it out.')
+    : z
+        .enum(['user', 'agent'])
+        .optional()
+        .describe(
+          'Who asked for this. Use "user" ONLY when the streamer directly requested this specific ' +
+            'action (spoken or typed) — it then happens immediately with no prompt. Use "agent" (the ' +
+            'default) when you are suggesting it yourself, including when acting on a standing ' +
+            'instruction or something you inferred; the streamer will be shown a confirmation. ' +
+            'When in doubt, omit this.',
+        );
 
 export interface ItemDetail {
   name: string;
@@ -187,7 +190,9 @@ function ambiguous(matches: ItemDetail[], needle: string, sceneName: string): Er
   const list = matches
     .map(
       m =>
-        `{ id: "${m.sceneItemId}", display: "${m.display}", rect: [${m.rect.x}, ${m.rect.y}, ${m.rect.width}, ${m.rect.height}]${m.visible ? '' : ', hidden'} }`,
+        `{ id: "${m.sceneItemId}", display: "${m.display}", rect: [${m.rect.x}, ${m.rect.y}, ${
+          m.rect.width
+        }, ${m.rect.height}]${m.visible ? '' : ', hidden'} }`,
     )
     .join(', ');
   return new Error(
@@ -196,7 +201,22 @@ function ambiguous(matches: ItemDetail[], needle: string, sceneName: string): Er
   );
 }
 
+/**
+ * Resolve a name to an item, treating the webcam as ONE logical thing: a name that lands on a
+ * hidden webcam copy (left behind by set_camera's per-camera sources) resolves to the live one.
+ */
 export function findItem(items: ItemDetail[], name: string, sceneName: string): ItemDetail {
+  const match = findItemByName(items, name, sceneName);
+  if (match.type === 'dshow_input' && !match.visible) {
+    const live = items.find(
+      i => i.type === 'dshow_input' && i.visible && i.display === match.display,
+    );
+    if (live) return live;
+  }
+  return match;
+}
+
+function findItemByName(items: ItemDetail[], name: string, sceneName: string): ItemDetail {
   const raw = name.trim();
 
   const byId = items.find(i => i.sceneItemId === raw);
@@ -212,6 +232,10 @@ export function findItem(items: ItemDetail[], name: string, sceneName: string): 
 
   const sub = items.filter(i => i.name.toLowerCase().includes(raw.toLowerCase()));
   if (sub.length === 1) return sub[0];
+  // "webcam" matching both the live camera and its hidden copies is not really ambiguous.
+  if (sub.length > 1 && sub.every(i => i.type === 'dshow_input')) {
+    return sub.find(i => i.visible) ?? sub[0];
+  }
   if (sub.length > 1) throw ambiguous(sub, raw, sceneName);
 
   throw new Error(
@@ -235,7 +259,9 @@ export async function liveContext(
 }
 
 export function liveWarnings(onAir: boolean, what: string): string[] {
-  return onAir ? [`You are LIVE and ${what} is in the active scene — viewers see this immediately.`] : [];
+  return onAir
+    ? [`You are LIVE and ${what} is in the active scene — viewers see this immediately.`]
+    : [];
 }
 
 /** Attach the undo entry to a result so the agent can offer to take it back. */
@@ -245,6 +271,8 @@ export function withUndo<T extends Record<string, unknown>>(
 ): T & { undo: string } {
   return {
     ...payload,
-    undo: `Reversible — Ctrl+Z in Streamlabs${edit.undo ? ` ("${edit.undo}")` : ''}, or the undo_last_edit tool.`,
+    undo: `Reversible — Ctrl+Z in Streamlabs${
+      edit.undo ? ` ("${edit.undo}")` : ''
+    }, or the undo_last_edit tool.`,
   };
 }

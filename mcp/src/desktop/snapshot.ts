@@ -15,6 +15,7 @@
 import { DesktopClient } from './client.js';
 import { Resolver, SourceRef } from './resolver.js';
 import { EventBuffer, BufferedEvent } from './events.js';
+import { presentForModel } from '../present.js';
 import {
   IAudioSourceModel,
   IPerformanceStateModel,
@@ -120,7 +121,10 @@ export class SnapshotBuilder {
         'VideoSettingsService',
         'baseResolutions',
       );
-      const c: [number, number] = [res?.horizontal?.baseWidth ?? 1920, res?.horizontal?.baseHeight ?? 1080];
+      const c: [number, number] = [
+        res?.horizontal?.baseWidth ?? 1920,
+        res?.horizontal?.baseHeight ?? 1080,
+      ];
       this.canvasCache = { at: Date.now(), canvas: c };
       return c;
     } catch {
@@ -171,7 +175,7 @@ export class SnapshotBuilder {
       });
 
     const audio = (audioRaw ?? []).filter(isHelper).map(h => {
-      const m = h as unknown as IAudioSourceModel;
+      const m = (h as unknown) as IAudioSourceModel;
       return {
         name: String(m.name ?? ''),
         muted: !!m.muted,
@@ -209,7 +213,7 @@ export class SnapshotBuilder {
         verdict: streamQuality(perf ?? {}),
       },
       scenes: sceneNames ?? [],
-      activeScene: { name: active?.name ?? '(none)', items },
+      activeScene: { name: active?.name ?? '(none)', items: presentForModel(items) },
       audio,
       warnings: [],
     };

@@ -12,7 +12,10 @@
     "test:e2e": "tsx scripts/e2e.ts",
     "test:reconnect": "tsx scripts/reconnect-test.ts",
     "mcp_demo": "tsx scripts/demo-e2e.ts",
-    "mcp_demo:readonly": "tsx scripts/demo-e2e.ts --no-write"
+    "mcp_demo:readonly": "tsx scripts/demo-e2e.ts --no-write",
+    "demo:reset": "tsx scripts/demo-reset.ts",
+    "demo:check": "tsx scripts/demo-check.ts",
+    "demo:prep": "tsx scripts/demo-prep.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",

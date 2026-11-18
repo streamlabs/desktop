@@ -16,6 +16,22 @@ import { Commands } from './desktop/commands.js';
 import { Confirmer, serverMode } from './confirm.js';
 import { registerTools } from './tools/index.js';
 import { log } from './log.js';
+import { installLenientArgs } from './lenient.js';
+
+/** Short, imperative, example-led: written for a small local model. */
+const DEMO_INSTRUCTIONS = `
+Controls Streamlabs Desktop (the streaming app) on this computer. Call these tools directly.
+Never write code or scripts to talk to Streamlabs.
+
+- Look first: get_stream_state shows every scene and what is in the active one.
+- Make a scene: build_scene, one call per scene, with items by role
+  (background, game, webcam, text). It places and sizes everything for you.
+- Change the look of all scenes: apply_style, one call (colors as hex like "#a855f7", font name).
+- Change which camera the webcam shows: set_camera with a device name, e.g. "NVIDIA Broadcast".
+- Move or resize one thing: set_item_transform with an anchor like "bottom-right".
+- See the result: capture_screen returns a screenshot of Streamlabs.
+- Every change happens immediately; no confirmation needed. undo_last_edit takes one back.
+`.trim();
 
 const INSTRUCTIONS = `
 Controls Streamlabs Desktop, the live-streaming app, on this machine.
@@ -64,8 +80,9 @@ async function main(): Promise<void> {
 
   const server = new McpServer(
     { name: 'streamlabs', version: '0.2.0' },
-    { instructions: INSTRUCTIONS },
+    { instructions: serverMode() === 'demo' ? DEMO_INSTRUCTIONS : INSTRUCTIONS },
   );
+  installLenientArgs(server);
 
   const confirm = new Confirmer(server);
 

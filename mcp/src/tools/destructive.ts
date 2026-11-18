@@ -25,6 +25,8 @@ import {
   sceneDetail,
   withUndo,
 } from './shared.js';
+import { removeWebcamFrame } from './studio.js';
+import { FRAME_ITEM_NAME, FRAME_STRIP_RE, isFrameRequest } from '../present.js';
 import { toItemRef } from './performance.js';
 import { pickSource } from './sources.js';
 
@@ -49,13 +51,30 @@ export function registerDestructive(server: McpServer, ctx: Ctx): void {
     async ({ item, scene, requested_by }) =>
       guard('remove_item', async () => {
         const sceneRef = await ctx.resolver.resolveScene(scene);
+
+        // The webcam frame is four strips under the hood; remove it as one thing.
+        if (isFrameRequest(item) || FRAME_STRIP_RE.test(item)) {
+          const decision = await ctx.confirm.gate(requested_by, {
+            title: `Remove the webcam frame from "${sceneRef.name}"`,
+          });
+          if (!decision.approved) return fail(decision.reason);
+          const n = await removeWebcamFrame(ctx, sceneRef);
+          ctx.snapshot.invalidate();
+          return n
+            ? ok({ removed: true, item: FRAME_ITEM_NAME, scene: sceneRef.name })
+            : fail(`There is no webcam frame in "${sceneRef.name}".`);
+        }
+
         const items = await sceneDetail(ctx, sceneRef);
         const target = findItem(items, item, sceneRef.name);
         const { onAir } = await liveContext(ctx, sceneRef.name);
 
         const alsoIn = await scenesUsingSource(ctx, target.sourceId, sceneRef.name);
         const warnings: string[] = [];
-        if (onAir) warnings.push(`You are LIVE and "${sceneRef.name}" is the active scene — this disappears from the broadcast immediately.`);
+        if (onAir)
+          warnings.push(
+            `You are LIVE and "${sceneRef.name}" is the active scene — this disappears from the broadcast immediately.`,
+          );
         if (alsoIn.length) warnings.push(`The source stays in: ${alsoIn.join(', ')}.`);
 
         const decision = await ctx.confirm.gate(requested_by, {
@@ -73,7 +92,10 @@ export function registerDestructive(server: McpServer, ctx: Ctx): void {
         ctx.snapshot.invalidate();
 
         return ok(
-          withUndo({ removed: true, item: target.name, scene: sceneRef.name, sourceKept: true }, edit),
+          withUndo(
+            { removed: true, item: target.name, scene: sceneRef.name, sourceKept: true },
+            edit,
+          ),
         );
       }),
   );
@@ -108,7 +130,9 @@ export function registerDestructive(server: McpServer, ctx: Ctx): void {
 
         const warnings: string[] = [];
         if (live && hitsActive) {
-          warnings.push(`You are LIVE and this source is in the active scene "${snap.activeScene.name}".`);
+          warnings.push(
+            `You are LIVE and this source is in the active scene "${snap.activeScene.name}".`,
+          );
         }
         warnings.push(
           'Undo restores deleted sources by replaying a scene-collection snapshot; it usually works, but treat it as best-effort rather than guaranteed.',
@@ -121,7 +145,11 @@ export function registerDestructive(server: McpServer, ctx: Ctx): void {
               ? `Used in ${usedIn.length} scene(s): ${usedIn.join(', ')}`
               : 'Not currently used in any scene.',
             ...((filters ?? []).length
-              ? [`${filters.length} filter(s) will go with it: ${(filters as any[]).map(f => f?.name).join(', ')}`]
+              ? [
+                  `${filters.length} filter(s) will go with it: ${(filters as any[])
+                    .map(f => f?.name)
+                    .join(', ')}`,
+                ]
               : []),
           ],
           warnings,
@@ -133,7 +161,10 @@ export function registerDestructive(server: McpServer, ctx: Ctx): void {
         ctx.snapshot.invalidate();
 
         return ok(
-          withUndo({ removed: true, source: match.name, type: match.type, affectedScenes: usedIn }, edit),
+          withUndo(
+            { removed: true, source: match.name, type: match.type, affectedScenes: usedIn },
+            edit,
+          ),
         );
       }),
   );
@@ -156,7 +187,9 @@ export function registerDestructive(server: McpServer, ctx: Ctx): void {
         const ref = await ctx.resolver.resolveScene(scene);
         const all = await ctx.resolver.sceneList();
         if (all.length <= 1) {
-          return fail('This is the only scene — Streamlabs needs at least one. Create another first.');
+          return fail(
+            'This is the only scene — Streamlabs needs at least one. Create another first.',
+          );
         }
 
         const items = await sceneDetail(ctx, ref);
@@ -166,7 +199,9 @@ export function registerDestructive(server: McpServer, ctx: Ctx): void {
 
         const warnings: string[] = [];
         if (live && isActive) {
-          warnings.push('You are LIVE and this is the ACTIVE scene — Streamlabs will cut to another scene.');
+          warnings.push(
+            'You are LIVE and this is the ACTIVE scene — Streamlabs will cut to another scene.',
+          );
         } else if (isActive) {
           warnings.push('This is the active scene; Streamlabs will switch to another one.');
         }
@@ -187,9 +222,7 @@ export function registerDestructive(server: McpServer, ctx: Ctx): void {
         ctx.resolver.invalidate();
         ctx.snapshot.invalidate();
 
-        return ok(
-          withUndo({ removed: true, scene: ref.name, itemsRemoved: items.length }, edit),
-        );
+        return ok(withUndo({ removed: true, scene: ref.name, itemsRemoved: items.length }, edit));
       }),
   );
 }

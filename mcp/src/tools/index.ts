@@ -27,10 +27,59 @@ import { registerSourceReads, registerSources } from './sources.js';
 import { registerScenes } from './scenes.js';
 import { registerDestructive } from './destructive.js';
 import { registerStream } from './stream.js';
+import { registerStudio } from './studio.js';
+
+/**
+ * SLD_MCP_MODE=demo: a small, focused tool set. Fewer tools means fewer wrong choices, and
+ * nothing in this set can go live, stop a stream or delete a source. (remove_source is also unsafe for scene-placed sources -- see
+ * destructive.ts.)
+ */
+export const DEMO_TOOLS = new Set([
+  'get_stream_state',
+  'get_scene',
+  'capture_screen',
+  'build_scene',
+  'add_to_scene',
+  'apply_style',
+  'set_camera',
+  'set_item_transform',
+  'switch_scene',
+  'remove_item',
+  'undo_last_edit',
+]);
+
+/** Registers only the tools in `allow`, so the existing register* functions can be reused. */
+function filtered(server: McpServer, allow: Set<string>): McpServer {
+  return new Proxy(server, {
+    get(target, prop, receiver) {
+      if (prop === 'registerTool') {
+        return (name: string, ...rest: unknown[]) =>
+          allow.has(name) ? (target.registerTool as any).call(target, name, ...rest) : undefined;
+      }
+      return Reflect.get(target, prop, receiver);
+    },
+  });
+}
 
 export type { Ctx } from './shared.js';
 
 export function registerTools(server: McpServer, ctx: Ctx): void {
+  if (serverMode() === 'demo') {
+    const demo = filtered(server, DEMO_TOOLS);
+    for (const register of [
+      registerReads,
+      registerCapture,
+      registerStudio,
+      registerLayout,
+      registerPerformance,
+      registerDestructive,
+    ]) {
+      register(demo, ctx);
+    }
+    log(`SLD_MCP_MODE=demo — registered ${DEMO_TOOLS.size} tools, confirmations off`);
+    return;
+  }
+
   registerReads(server, ctx);
   registerSourceReads(server, ctx);
   registerCapture(server, ctx);
@@ -46,4 +95,5 @@ export function registerTools(server: McpServer, ctx: Ctx): void {
   registerScenes(server, ctx);
   registerDestructive(server, ctx);
   registerStream(server, ctx);
+  registerStudio(server, ctx);
 }

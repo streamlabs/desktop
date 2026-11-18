@@ -94,7 +94,10 @@ export function registerPerformance(server: McpServer, ctx: Ctx): void {
         const target = findItem(items, item, sceneRef.name);
 
         if (target.visible === visible) {
-          return ok({ updated: false, reason: `"${target.name}" is already ${visible ? 'visible' : 'hidden'}.` });
+          return ok({
+            updated: false,
+            reason: `"${target.name}" is already ${visible ? 'visible' : 'hidden'}.`,
+          });
         }
 
         const { onAir } = await liveContext(ctx, sceneRef.name);
@@ -189,7 +192,9 @@ export function registerPerformance(server: McpServer, ctx: Ctx): void {
           title: 'Save a replay clip',
           warnings: wasActive
             ? []
-            : ['The replay buffer is off — it will be started now, so the clip will not include the last few minutes.'],
+            : [
+                'The replay buffer is off — it will be started now, so the clip will not include the last few minutes.',
+              ],
         });
         if (!decision.approved) return fail(decision.reason);
 
