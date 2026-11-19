@@ -366,6 +366,15 @@ function forceShutdown(reason) {
     if (!window.isDestroyed()) window.destroy();
   });
 
+  try {
+    const crashHandler = require('crash-handler');
+    if (typeof crashHandler.markShutdownIntent === 'function') {
+      crashHandler.markShutdownIntent(process.pid);
+    }
+  } catch (e) {
+    console.warn('[Shutdown] Failed to mark shutdown intent', e);
+  }
+
   app.exit(0);
 }
 
