@@ -1,5 +1,6 @@
 import { StreamingService } from 'services/streaming';
 import { ScenesService } from 'services/scenes';
+import { AudioService, AudioSource } from 'services/audio';
 import { SourcesService, TSourceType } from 'services/sources';
 import { TransitionsService } from 'services/transitions';
 import { KeyListenerService } from 'services/key-listener';
@@ -25,6 +26,10 @@ function getScenesService(): ScenesService {
 
 function getSourcesService(): SourcesService {
   return SourcesService.instance;
+}
+
+function getAudioSource(sourceId: string): AudioSource | undefined {
+  return AudioService.instance.views.getSource(sourceId);
 }
 
 function getStreamingService(): StreamingService {
@@ -236,6 +241,26 @@ const SOURCE_ACTIONS: HotkeyGroup = {
     description: () => $t('Unmute'),
     down: sourceId => getSourcesService().setMuted(sourceId, false),
     isActive: sourceId => getSourcesService().views.getSource(sourceId)?.muted === false,
+    shouldApply: isAudio,
+  },
+  MONITOR_ON: {
+    name: 'MONITOR_ON',
+    description: () => $t('Enable Audio Monitoring'),
+    down: sourceId => {
+      const source = getAudioSource(sourceId);
+      if (source?.monitoringType === obs.EMonitoringType.None) {
+        source.setSettings({ monitoringType: obs.EMonitoringType.MonitoringAndOutput });
+      }
+    },
+    isActive: sourceId => getAudioSource(sourceId)?.monitoringType !== obs.EMonitoringType.None,
+    shouldApply: isAudio,
+  },
+  MONITOR_OFF: {
+    name: 'MONITOR_OFF',
+    description: () => $t('Disable Audio Monitoring'),
+    down: sourceId =>
+      getAudioSource(sourceId)?.setSettings({ monitoringType: obs.EMonitoringType.None }),
+    isActive: sourceId => getAudioSource(sourceId)?.monitoringType === obs.EMonitoringType.None,
     shouldApply: isAudio,
   },
   PUSH_TO_MUTE: {

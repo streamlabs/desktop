@@ -1,9 +1,15 @@
-import { HotkeysService, ScenesService } from 'app-services';
+import { AudioService, HotkeysService, KeyListenerService, ScenesService } from 'app-services';
+import { SourcesService } from 'services/api/external-api/sources';
 import { IHotkey } from 'services/hotkeys';
+import { EMonitoringType } from '../../../obs-api';
 import { getApiClient } from '../../helpers/api-client';
 import {
   clickIfDisplayed,
   clickTab,
+  closeWindow,
+  focusChild,
+  focusWindow,
+  getClient,
   getNumElements,
   isDisplayed,
   selectElements,
@@ -44,11 +50,107 @@ test('Populates essential hotkeys for them to be bound', async t => {
     'Unmute',
     'Push to Mute',
     'Push to Talk',
+    'Enable Audio Monitoring',
+    'Disable Audio Monitoring',
   ]) {
     const hotkeyLabel = await app.client.$(`label=${hotkey}`);
 
     t.true(await hotkeyLabel.isExisting(), `Hotkey for ${hotkey} was not found`);
   }
+});
+
+test('Audio monitoring shortcuts update the mixer and persist per source', async t => {
+  const api = await getApiClient();
+  const sources = api.getResource<SourcesService>('SourcesService');
+  const micId = sources.getSourcesByName('Mic/Aux')[0].sourceId;
+  const otherId = sources.createSource('Other audio', 'ffmpeg_source').sourceId;
+  const imageId = sources.createSource('Still image', 'image_source').sourceId;
+  const hotkeys = api.getResource<HotkeysService>('HotkeysService');
+  const perSource = hotkeys.getHotkeysSet().sources;
+  const enable = perSource[micId].find(h => h.actionName === 'MONITOR_ON');
+  const disable = perSource[micId].find(h => h.actionName === 'MONITOR_OFF');
+  t.deepEqual(enable.bindings, []);
+  t.deepEqual(disable.bindings, []);
+  t.false(
+    (perSource[imageId] || []).some(h => ['MONITOR_ON', 'MONITOR_OFF'].includes(h.actionName)),
+  );
+
+  function bind(action: IHotkey, key: string) {
+    t.true(
+      hotkeys.editBinding(action, {
+        type: 'set',
+        index: 0,
+        binding: { key, modifiers: { ctrl: false, alt: false, shift: false, meta: false } },
+      }),
+    );
+  }
+
+  async function press(key: string) {
+    await focusWindow('worker');
+    await getClient().execute(key => {
+      const listener: KeyListenerService = (window as any).servicesManager.getResource(
+        'KeyListenerService',
+      );
+      const binding = Object.values(listener.bindings)
+        .map(namespaces => namespaces.global)
+        .find(b => b?.key === key && b.eventType === 'registerKeydown');
+      if (!binding) throw new Error(`Missing keydown binding for ${key}`);
+      binding.callback();
+      return new Promise<void>(resolve => setTimeout(resolve, 0));
+    }, key);
+  }
+
+  async function mode(id: string) {
+    await focusWindow('worker');
+    return getClient().execute(id => {
+      const audio: AudioService = (window as any).servicesManager.getResource('AudioService');
+      const source = audio.views.getSource(id);
+      return [source.monitoringType, source.source.getObsInput().monitoringType];
+    }, id);
+  }
+
+  async function mixerShows(expected: EMonitoringType) {
+    await focusChild();
+    await (
+      await getClient().$(`[data-name="monitoringType"][data-value="${expected}"]`)
+    ).waitForDisplayed();
+  }
+
+  const off = EMonitoringType.None;
+  const only = EMonitoringType.MonitoringOnly;
+  const both = EMonitoringType.MonitoringAndOutput;
+  bind(enable, 'F8');
+  bind(disable, 'F9');
+  const otherMode = await mode(otherId);
+  await api.request('AudioService', 'showAdvancedSettings', micId);
+  await mixerShows(off);
+  await press('F8');
+  await mixerShows(both);
+  t.deepEqual(await mode(micId), [both, both]);
+  t.deepEqual(await mode(otherId), otherMode);
+
+  await focusChild();
+  await (await getClient().$('button=Test Audio')).click();
+  await mixerShows(only);
+  await (await getClient().$('button=Testing...')).click();
+  await mixerShows(both);
+  await (await getClient().$('button=Test Audio')).click();
+  await mixerShows(only);
+  await press('F8');
+  t.deepEqual(await mode(micId), [only, only]);
+  await press('F9');
+  await mixerShows(off);
+  await (await getClient().$('button=Test Audio')).waitForDisplayed();
+  await closeWindow('child');
+  t.deepEqual(await mode(micId), [off, off]);
+
+  bind(disable, 'F8');
+  await press('F8');
+  t.deepEqual(await mode(micId), [both, both]);
+  await restartApp(t);
+  t.deepEqual(await mode(micId), [both, both]);
+  await press('F8');
+  t.deepEqual(await mode(micId), [off, off]);
 });
 
 test('Binds a hotkey', async t => {
