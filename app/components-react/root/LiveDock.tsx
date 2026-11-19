@@ -543,7 +543,7 @@ function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
         )}
         <Tooltip
           title={$t(
-            'You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.',
+            'You can now reply to Twitch, YouTube, Facebook, X and Kick messages in Multichat. Click to learn more.',
           )}
           placement="topRight"
           onClick={ctrl.showMultistreamChatInfo}
