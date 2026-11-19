@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import cx from 'classnames';
 import styles from './LayoutEditor.m.less';
 import { ELayoutElement, DOCK_SLOTS, TLayoutSlot } from 'services/layout';
 import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
-import { useRealmObject } from 'components-react/hooks/realm';
 import { TextInput } from 'components-react/shared/inputs';
 import { useLayoutEditor } from './hooks';
 import TopBar from './TopBar';
@@ -18,11 +17,14 @@ interface IZoneState {
   setHighlightedSlot: (slot: TLayoutSlot | null) => void;
 }
 
-export default function LayoutEditor() {
-  const { LayoutService, CustomizationService } = Services;
+export default function LayoutEditor(p: { params?: { stageStackedDock?: boolean } }) {
+  const { LayoutService } = Services;
 
-  const { currentLayout, showModal } = useLayoutEditor();
-  const { leftDock } = useRealmObject(CustomizationService.state);
+  const { currentLayout, showModal, leftDock, stageStackedDock } = useLayoutEditor();
+
+  useEffect(() => {
+    if (p.params?.stageStackedDock) stageStackedDock();
+  }, []);
 
   const [canDragSlot, setCanDragSlot] = useState(true);
   const [highlightedSlot, setHighlightedSlot] = useState<TLayoutSlot | null>(null);

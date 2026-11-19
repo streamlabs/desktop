@@ -1,4 +1,5 @@
 import Vue from 'vue';
+import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
 import merge from 'lodash/merge';
 import omit from 'lodash/omit';
@@ -17,18 +18,33 @@ import {
   EDockLayout,
   TLayout,
   TLayoutElement,
-  TDockSlot,
+  TLayoutSlot,
+  TSlottedElements,
   isDockSlot,
+  applyDefaults,
+  fillEmptySlots,
+  hasDefaultSlots,
+  visibleSlots,
 } from './layout-data';
 import { UsageStatisticsService } from 'services/usage-statistics';
+import { UserService } from 'services/user';
+import { IncrementalRolloutService, EAvailableFeatures } from 'services/incremental-rollout';
 
-export { ELayout, ELayoutElement, EDockLayout, DOCK_SLOTS, isDockSlot };
+export {
+  ELayout,
+  ELayoutElement,
+  EDockLayout,
+  DOCK_SLOTS,
+  LAYOUT_DATA,
+  isDockSlot,
+  applyDefaults,
+  fillEmptySlots,
+  hasDefaultSlots,
+  visibleSlots,
+};
+export type { TLayoutSlot, TSlottedElements };
 
 export interface IVec2Array extends Array<IVec2Array | IVec2> {}
-
-export type TLayoutSlot = '1' | '2' | '3' | '4' | '5' | '6' | TDockSlot;
-
-export type TSlottedElements = Partial<Record<ELayoutElement, { slot: TLayoutSlot; src?: string }>>;
 
 interface ILayoutState {
   name: string;
@@ -43,6 +59,13 @@ interface ILayoutState {
   dockLayout: EDockLayout;
   /** The proportion of the dock's height given to its first slot when stacked. */
   dockResize: number;
+  /**
+   * Whether the user placed an element in the main layout, by dragging it in the layout editor.
+   * Until they do, the main layout follows the defaults of the layout and dock layout selected.
+   */
+  layoutCustomized?: boolean;
+  /** Whether the user placed an element in the dock. See `layoutCustomized`. */
+  dockCustomized?: boolean;
 }
 
 interface ILayoutServiceState {
@@ -66,6 +89,9 @@ interface ILayoutServiceState {
  * 2: Classic was renamed Default, and the previous Default was renamed TwoThenThree.
  */
 const PERSISTED_STATE_VERSION = 2;
+
+/** How long a logged in user's launch dock state waits for the feature flags. */
+const LAUNCH_DOCK_STATE_TIMEOUT_MS = 5000;
 
 /**
  * The default state of version 1, which persisted states are relative to.
@@ -204,23 +230,22 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
         name: null,
         icon: 'icon-studio',
         currentLayout: ELayout.Default,
-        slottedElements: {
-          [ELayoutElement.Display]: { slot: '1' },
-          [ELayoutElement.Scenes]: { slot: '2' },
-          [ELayoutElement.Sources]: { slot: '3' },
-          [ELayoutElement.Mixer]: { slot: '4' },
-          [ELayoutElement.Minifeed]: { slot: 'S1' },
-          [ELayoutElement.Multichat]: { slot: 'S2' },
-        },
+        slottedElements: cloneDeep(LAYOUT_DATA[ELayout.Default].defaultSlots[EDockLayout.Stacked]),
         resizes: { ...LAYOUT_DATA[ELayout.Default].resizeDefaults },
         dockLayout: EDockLayout.Stacked,
         dockResize: 0.33,
+        layoutCustomized: false,
+        dockCustomized: false,
       },
     },
   };
 
   @Inject() private customizationService: CustomizationService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
+  @Inject() private userService: UserService;
+  @Inject() private incrementalRolloutService: IncrementalRolloutService;
+
+  private launchDockStateApplied = false;
 
   init() {
     super.init();
@@ -248,13 +273,43 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
       this.customizationService.setSettings({ legacyEvents: false });
     }
 
-    // The dock starts collapsed on every app start, which would hide the Mini Feed from fresh users.
-    // Multichat keeps the collapsed start, since it has a policy of its own when streaming starts.
-    if (this.views.dockElements.includes(ELayoutElement.Minifeed)) {
-      this.customizationService.setDockCollapsed(false);
-    }
+    this.scheduleLaunchDockState();
 
     this.checkUsage();
+  }
+
+  /**
+   * The dock starts collapsed on every app start. Flags are only loaded after login, so for a
+   * logged in user the launch state waits for them, but never for long.
+   */
+  private scheduleLaunchDockState() {
+    if (!this.userService.views.isLoggedIn) {
+      this.applyLaunchDockState(false);
+      return;
+    }
+
+    this.incrementalRolloutService.featuresReady.then(() => this.applyLaunchDockState(true));
+    setTimeout(() => this.applyLaunchDockState(false), LAUNCH_DOCK_STATE_TIMEOUT_MS);
+  }
+
+  /**
+   * Decides the state of the dock for this launch, once, so the dock changes at most once.
+   * @param flagsLoaded Whether the feature flags were fetched, which is false when they can't be
+   */
+  applyLaunchDockState(flagsLoaded: boolean) {
+    if (this.launchDockStateApplied) return;
+    this.launchDockStateApplied = true;
+
+    if (
+      flagsLoaded &&
+      this.incrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.saveDockCollapsed)
+    ) {
+      this.customizationService.setDockCollapsed(this.customizationService.launchDockCollapsed);
+    } else if (this.views.dockElements.includes(ELayoutElement.Minifeed)) {
+      // The Mini Feed would be hidden from fresh users otherwise. Multichat keeps the collapsed
+      // start, since it has a policy of its own when streaming starts.
+      this.customizationService.setDockCollapsed(false);
+    }
   }
 
   /**
@@ -306,6 +361,16 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
       Object.keys(migrated.tabs).forEach(id => {
         const tab = migrated.tabs[id];
         if (renamed[tab.currentLayout]) tab.currentLayout = renamed[tab.currentLayout];
+
+        // Before the dock was configurable it held Multichat alone, and the layouts were the
+        // Single dock layouts. Tabs without Multichat in a slot get it in the dock (migrateDock).
+        const slotted = { ...tab.slottedElements };
+        if (!slotted[ELayoutElement.Multichat]?.slot) {
+          slotted[ELayoutElement.Multichat] = { slot: 'S1' };
+        }
+        const { currentLayout } = tab;
+        tab.layoutCustomized = !hasDefaultSlots('main', currentLayout, EDockLayout.Single, slotted);
+        tab.dockCustomized = !hasDefaultSlots('dock', currentLayout, EDockLayout.Single, slotted);
       });
 
       this.SET_TABS(migrated.tabs, migrated.currentTab);
@@ -369,6 +434,10 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
 
   setDockLayout(layout: EDockLayout) {
     this.SET_DOCK_LAYOUT(layout);
+  }
+
+  setCustomized(layoutCustomized: boolean, dockCustomized: boolean) {
+    this.SET_CUSTOMIZED(layoutCustomized, dockCustomized);
   }
 
   setDockResize(proportion: number) {
@@ -438,6 +507,13 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
 
     Vue.set(tab, 'slottedElements', slottedElements);
     Vue.set(tab, 'dockLayout', layout);
+  }
+
+  @mutation()
+  SET_CUSTOMIZED(layoutCustomized: boolean, dockCustomized: boolean) {
+    const tab = this.state.tabs[this.state.currentTab];
+    Vue.set(tab, 'layoutCustomized', layoutCustomized);
+    Vue.set(tab, 'dockCustomized', dockCustomized);
   }
 
   @mutation()
@@ -523,20 +599,17 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
       icon,
       currentLayout: ELayout.TwoThenThree,
 
-      slottedElements: {
-        [ELayoutElement.Display]: { slot: '1' },
-        [ELayoutElement.Minifeed]: { slot: '2' },
-        [ELayoutElement.Scenes]: { slot: '3' },
-        [ELayoutElement.Sources]: { slot: '4' },
-        [ELayoutElement.Mixer]: { slot: '5' },
-        [ELayoutElement.Multichat]: { slot: 'S1' },
-      },
+      slottedElements: cloneDeep(
+        LAYOUT_DATA[ELayout.TwoThenThree].defaultSlots[EDockLayout.Single],
+      ),
       resizes: {
         bar1: 156,
         bar2: 240,
       },
       dockLayout: EDockLayout.Single,
       dockResize: 0.33,
+      layoutCustomized: false,
+      dockCustomized: false,
     });
     this.state.currentTab = id;
   }
