@@ -3,6 +3,17 @@ const path = require('path');
 const os = require('os');
 const cp = require('child_process');
 
+// True if the file starts with the PE/DOS "MZ" signature.
+function isWindowsBinary(filePath) {
+  const header = Buffer.alloc(2);
+  const fd = fs.openSync(filePath, 'r');
+  try {
+    return fs.readSync(fd, header, 0, 2, 0) === 2 && header.toString('latin1') === 'MZ';
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
 const base = {
   appId: 'com.streamlabs.slobs',
   productName: 'Streamlabs Desktop',
@@ -18,6 +29,10 @@ const base = {
     // it: index.js only resolves the binary path for development, and in a packaged
     // app require('electron') resolves to the built-in module.
     '!node_modules/electron',
+    // Hoisted dependency of the `electron` package above, so excluding that doesn't
+    // exclude this. It ships prebuilt addons for every platform; the macOS and Linux
+    // ones are dead weight on Windows and can't be Authenticode-signed (see sign()).
+    '!node_modules/@electron-internal/extract-zip/index.{darwin,linux}-*.node',
     'vendor',
     'app/i18n',
     'app/util/shutdown-coordinator.js',
@@ -97,6 +112,16 @@ const base = {
           config.path.indexOf('node_modules\\obs-studio-node\\data\\obs-plugins\\win-capture') !== -1
         ) {
           console.log(`Skipping ${config.path}`);
+          return;
+        }
+
+        // signExts matches by extension, and `.node` is also used for macOS (Mach-O)
+        // and Linux (ELF) addons that some packages ship for every platform.
+        // Authenticode can only sign PE files, and one non-PE entry in the manifest
+        // fails the whole logisign batch. Skipped files never enter the manifest, so
+        // afterSign's verification doesn't expect them.
+        if (!isWindowsBinary(config.path)) {
+          console.log(`Skipping non-PE file ${config.path}`);
           return;
         }
 
