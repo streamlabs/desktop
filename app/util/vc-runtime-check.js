@@ -39,12 +39,13 @@ function readFileVersion(filePath) {
  * its own directory first, and Node loads addons with LOAD_WITH_ALTERED_SEARCH_PATH, which
  * searches the addon's directory first. Both live in the obs-studio-node directory, and both
  * fall back to System32.
+ *
+ * Windows isn't always installed on C:, so System32 is located through SystemRoot (or windir).
+ * If neither is set, System32 can't be located and is skipped rather than guessed.
  */
-function findRuntime(osnDir) {
-  const candidates = [
-    path.join(osnDir, 'msvcp140.dll'),
-    path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'msvcp140.dll'),
-  ];
+function findRuntime(osnDir, systemRoot) {
+  const candidates = [path.join(osnDir, 'msvcp140.dll')];
+  if (systemRoot) candidates.push(path.join(systemRoot, 'System32', 'msvcp140.dll'));
   return candidates.find(candidate => fs.existsSync(candidate));
 }
 
@@ -53,8 +54,14 @@ function findRuntime(osnDir) {
  * @returns {{ outdated: boolean, version: string, path?: string }}
  */
 function checkVCRuntime(osnDir) {
-  const runtimePath = findRuntime(osnDir);
-  if (!runtimePath) return { outdated: true, version: 'not found' };
+  const systemRoot = process.env.SystemRoot || process.env.windir;
+  const runtimePath = findRuntime(osnDir, systemRoot);
+  if (!runtimePath) {
+    // Without SystemRoot we couldn't look in System32, so a missing runtime is unconfirmed and
+    // shouldn't stop the app from starting
+    if (!systemRoot) return { outdated: false, version: 'unknown' };
+    return { outdated: true, version: 'not found' };
+  }
 
   const version = readFileVersion(runtimePath);
   // An unreadable version resource shouldn't stop the app from starting
