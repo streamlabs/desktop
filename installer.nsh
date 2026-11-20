@@ -238,10 +238,10 @@
 
   ${If} $R6 == ""
     SetOutPath "$PLUGINSDIR\obs-studio-hook"
-    File /oname=graphics-hook32.dll "${PROJECT_DIR}\node_modules\obs-studio-node\data\obs-plugins\win-capture\graphics-hook32.dll"
-    File /oname=graphics-hook64.dll "${PROJECT_DIR}\node_modules\obs-studio-node\data\obs-plugins\win-capture\graphics-hook64.dll"
-    File /oname=obs-vulkan32.json "${PROJECT_DIR}\node_modules\obs-studio-node\data\obs-plugins\win-capture\obs-vulkan32.json"
-    File /oname=obs-vulkan64.json "${PROJECT_DIR}\node_modules\obs-studio-node\data\obs-plugins\win-capture\obs-vulkan64.json"
+    File /oname=graphics-hook32.dll "${PROJECT_DIR}\node_modules\obs-studio-node\core\win-capture\data\graphics-hook32.dll"
+    File /oname=graphics-hook64.dll "${PROJECT_DIR}\node_modules\obs-studio-node\core\win-capture\data\graphics-hook64.dll"
+    File /oname=obs-vulkan32.json "${PROJECT_DIR}\node_modules\obs-studio-node\core\win-capture\data\obs-vulkan32.json"
+    File /oname=obs-vulkan64.json "${PROJECT_DIR}\node_modules\obs-studio-node\core\win-capture\data\obs-vulkan64.json"
     SetOutPath "$INSTDIR"
 
     StrCpy $R9 "$PLUGINSDIR\obs-studio-hook"

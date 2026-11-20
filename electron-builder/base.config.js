@@ -109,7 +109,7 @@ const base = {
         if (process.env.SLOBS_NO_SIGN) return;
 
         if (
-          config.path.indexOf('node_modules\\obs-studio-node\\data\\obs-plugins\\win-capture') !== -1
+          config.path.indexOf('node_modules\\obs-studio-node\\core\\win-capture\\data') !== -1
         ) {
           console.log(`Skipping ${config.path}`);
           return;

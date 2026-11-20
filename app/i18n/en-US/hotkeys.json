@@ -15,6 +15,8 @@
   "Push to Hide %{sourcename}": "Push to Hide %{sourcename}",
   "Mute": "Mute",
   "Unmute": "Unmute",
+  "Enable Audio Monitoring": "Enable Audio Monitoring",
+  "Disable Audio Monitoring": "Disable Audio Monitoring",
   "Push to Mute": "Push to Mute",
   "Push to Talk": "Push to Talk",
   "Enable Studio Mode": "Enable Studio Mode",
