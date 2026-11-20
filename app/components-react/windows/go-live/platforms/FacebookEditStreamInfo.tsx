@@ -32,15 +32,12 @@ class FacebookEditStreamInfoModule {
   dismissables = inject(DismissablesService);
   streamingService = inject(StreamingService);
   state = injectState({
-    pictures: {} as Record<string, string>,
     scheduledVideos: [] as IFacebookLiveVideoExtended[],
     scheduledVideosLoaded: false,
   });
 
   fbState = this.fbService.state;
   canStreamToTimeline = this.fbState.grantedPermissions.includes('publish_video');
-  pages = this.fbState.facebookPages;
-  groups = this.fbState.facebookGroups;
   isPrimary = this.streamingService.views.isPrimaryPlatform('facebook');
   isScheduleMode = false;
   props!: IPlatformComponentParams<'facebook'>;
@@ -49,11 +46,21 @@ class FacebookEditStreamInfoModule {
     return this.props.value;
   }
 
+  get pages() {
+    return this.fbState.facebookPages;
+  }
+
+  get groups() {
+    return this.fbState.facebookGroups;
+  }
+
+  get pictures() {
+    return this.fbState.pictures;
+  }
+
   setProps(props: IPlatformComponentParams<'facebook'>) {
     this.props = props;
     if (!this.state.scheduledVideosLoaded) this.loadScheduledBroadcasts();
-    if (this.settings.pageId) this.loadPicture(this.settings.pageId);
-    if (this.settings.groupId) this.loadPicture(this.settings.groupId);
   }
 
   updateSettings(patch: Partial<IFacebookStartStreamOptions>) {
@@ -229,21 +236,6 @@ class FacebookEditStreamInfoModule {
     });
   }
 
-  loadPictures(groupOrPage: IFacebookStartStreamOptions['destinationType']) {
-    const ids =
-      groupOrPage === 'group'
-        ? this.fbState.facebookGroups.map(item => item.id)
-        : this.fbState.facebookPages.map(item => item.id);
-    ids.forEach(id => this.loadPicture(id));
-  }
-
-  async loadPicture(objectId: string) {
-    const state = this.state;
-    if (state.pictures[objectId]) return state.pictures[objectId];
-    const picture = await this.fbService.actions.return.fetchPicture(objectId);
-    state.setPictures({ ...state.pictures, [objectId]: picture });
-  }
-
   verifyGroup() {
     remote.shell.openExternal(`https://www.facebook.com/groups/${this.settings.groupId}/edit`);
   }
@@ -292,7 +284,6 @@ function RequiredFields() {
     shouldShowGroups,
     pictures,
     layout,
-    loadPictures,
     getDestinationOptions,
     verifyGroup,
   } = useFacebook();
@@ -319,7 +310,6 @@ function RequiredFields() {
               label={$t('Facebook Page')}
               hasImage
               imageSize={{ width: 44, height: 44 }}
-              onDropdownVisibleChange={shown => shown && loadPictures('page')}
               options={pages.map(page => ({
                 value: page.id,
                 label: `${page.name} | ${page.category}`,
@@ -343,7 +333,6 @@ function RequiredFields() {
                   image: pictures[group.id],
                 }))}
                 defaultActiveFirstOption
-                onDropdownVisibleChange={() => loadPictures('group')}
                 extra={
                   <p>
                     {$t('Make sure the Streamlabs app is added to your Group.')}
