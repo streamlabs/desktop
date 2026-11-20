@@ -10,7 +10,7 @@ import { useVuex } from 'components-react/hooks';
 import IconButton from 'components-react/shared/buttons/IconButton';
 
 /*
- * There's a weird issue on the Live Dock where components placed above
+ * There's a weird issue on the Multichat dock where components placed above
  * chat can't overlap (even if overlaid) on top of that section.
  * As a result, our choice of components in this area is quite limited,
  * for example, dropdowns are cut off.

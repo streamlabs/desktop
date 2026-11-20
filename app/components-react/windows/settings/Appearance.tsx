@@ -76,6 +76,7 @@ export function AppearanceSettings() {
     <div className={styles.container}>
       <ObsSettingsSection>
         <ListInput {...bind.theme} label={'Theme'} options={CustomizationService.themeOptions} />
+        <CheckboxInput {...bind.leftDock} label={$t('Show the dock on the left side')} />
         {shouldShowPrime && (
           <div style={{ marginBottom: '16px' }}>
             <a onClick={upgradeToPrime}>
@@ -95,10 +96,6 @@ export function AppearanceSettings() {
       </ObsSettingsSection>
 
       <ObsSettingsSection title={$t('Chat Settings')}>
-        <CheckboxInput
-          {...bind.leftDock}
-          label={$t('Show the live dock (chat) on the left side')}
-        />
         <SliderInput
           {...bind.chatZoomFactor}
           label={$t('Text Size')}
