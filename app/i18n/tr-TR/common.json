@@ -155,5 +155,7 @@
   "Reactive Data Editor": "Reaktif Veri Düzenleyici",
   "Destinations": "Destinations",
   "Not enabled": "Etkin değil",
-  "Multichat": "Multichat"
+  "Multichat": "Multichat",
+  "Streamlabs Desktop requires a newer version of the Microsoft Visual C++ Redistributables than the one currently installed on your system. Version: ": "Streamlabs Desktop requires a newer version of the Microsoft Visual C++ Redistributables than the one currently installed on your system. Version: ",
+  "You will now be directed to the download page.": "You will now be directed to the download page."
 }

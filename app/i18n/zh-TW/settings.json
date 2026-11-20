@@ -294,6 +294,8 @@
   "%{videoCodec} codec is not supported for Multistream. Would you like to proceed with the H.264 codec or select another codec?": "多平台直播不支援 %{videoCodec} 編解碼器。您要繼續使用 H.264 編解碼器，還是選擇其他編解碼器？",
   "%{videoCodec} codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?": "Stream Shift 不支援 %{videoCodec} 編解碼器。您要繼續使用 H.264 編解碼器，還是選擇其他編解碼器？",
   "%{videoCodec} codec is not supported for Dual Output. Would you like to proceed with the H.264 codec or select another codec?": "Dual Output 不支援 %{videoCodec} 編解碼器。您要繼續使用 H.264 編解碼器，還是選擇其他編解碼器？",
+  "%{videoCodec} codec is not supported by %{platformName}. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported by %{platformName}. Would you like to proceed with the H.264 codec or select another codec?",
+  "%{videoCodec} codec is not supported by %{platformName}. Please select another codec.": "%{videoCodec} codec is not supported by %{platformName}. Please select another codec.",
   "Your stream encoder has been reset to Software (x264). This can be caused by out of date graphics drivers. Please update your graphics drivers to continue using hardware encoding.": "您的直播編碼器已重設為軟體 (x264)。這可能是顯示卡驅動程式過時所致。請更新顯示卡驅動程式，以繼續使用硬體編碼。",
   "Your stream encoder has been reset to Software (x264). This can be caused by an invalid encoder setting.": "您的直播編碼器已重設為軟體 (x264)。這可能是編碼器設定無效所致。",
   "Live Settings": "Live Settings",
