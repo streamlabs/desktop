@@ -79,7 +79,7 @@ async function runDeviceQueryWithSavedTwitch(
           // The user's saved service: Twitch, whose rtmp_common entry declares only H.264.
           const savedService: IFakeService = {
             fakeType: 'rtmp_common',
-            settings: { service: 'Twitch', server: 'rtmp://ingest.example/app', key: 'key' },
+            settings: { service: 'Twitch', server: 'rtmp://ingest.example/app', key: 'key1234567' },
             isSavedService: true,
           };
 

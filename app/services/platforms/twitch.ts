@@ -229,26 +229,20 @@ export class TwitchService
   }
 
   async beforeGoLive(goLiveSettings?: IGoLiveSettings, context?: TDisplayType) {
-    // If the stream has switched from another device, a new broadcast does not need to be created
-    if (goLiveSettings && goLiveSettings.streamShift) {
-      // Stream shift is not compatible with enhanced broadcasting so always disable it
-      this.setEnhancedBroadcastingSetting(false);
-
-      if (this.streamingService.views.shouldSwitchStreams) {
-        await this.setupStreamShiftStream(goLiveSettings);
-      }
-      return;
-    }
-
     const channelInfo = goLiveSettings?.platforms.twitch;
 
-    // Resolve enhanced broadcasting before the stream key is written below. The key is only sent
-    // to the display's OBS context when Twitch is not going out through restream, and that
-    // depends on whether this stream is an enhanced broadcast — deciding afterwards means the
-    // check answers for the previous stream instead of this one.
-    // Note: deliberately checking goLiveSettings and channelInfo together prevents checking for
-    // nullish values
-    if (goLiveSettings && channelInfo) {
+    if (goLiveSettings?.streamShift) {
+      // If the stream has switched from another device, a new broadcast does not need to be created.
+      // Stream shift is not compatible with enhanced broadcasting so always disable it.
+      this.setEnhancedBroadcastingSetting(false);
+
+      // If the stream has switched from another device, a new broadcast does not need to be created
+      if (this.streamingService.views.shouldSwitchStreams) {
+        await this.setupStreamShiftStream(goLiveSettings);
+        return;
+      }
+    } else if (goLiveSettings && channelInfo) {
+      // Deliberately check goLiveSettings and channelInfo together to prevent checking for nullish values
       if (goLiveSettings?.liveOutputEditing) {
         await this.setupLiveOutputStream(goLiveSettings);
       } else if (
@@ -257,7 +251,10 @@ export class TwitchService
       ) {
         await this.setupDualStream(goLiveSettings);
       } else {
-        // Update enhanced broadcasting setting based on go live settings
+        // Resolve enhanced broadcasting before the stream key is written below. The key is only sent
+        // to the display's OBS context when Twitch is not going out through restream, and that
+        // depends on whether this stream is an enhanced broadcast — deciding afterwards means the
+        // check answers for the previous stream instead of this one.
         this.setEnhancedBroadcastingSetting(channelInfo.isEnhancedBroadcasting);
       }
     } else if (this.streamingService.views.isTwitchDualStreamEnabled) {
