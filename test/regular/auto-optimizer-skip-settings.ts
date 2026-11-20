@@ -64,7 +64,7 @@ for (const mode of ['Simple', 'Advanced'] as const) {
             const platforms = multistream ? ['twitch', 'kick'] : ['youtube'];
             const goLiveSettings = {
               platforms: Object.fromEntries(platforms.map(platform => [platform, { enabled: true, enableAutoStart: true }])),
-              customDestinations: multistream ? [{ enabled: true, url: 'rtmp://127.0.0.1/unused', streamKey: 'test', display: 'horizontal' }] : [],
+              customDestinations: multistream ? [{ enabled: true, url: 'rtmp://127.0.0.1/unused', streamKey: 'test123456', display: 'horizontal' }] : [],
             };
             const optimizerState = {
               ...JSON.parse(JSON.stringify(optimizer.constructor.initialState)),
