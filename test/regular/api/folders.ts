@@ -149,3 +149,87 @@ test('Move multiple items', async t => {
   `),
   );
 });
+
+test('Place before the first item of a folder', async t => {
+  sceneBuilder.build(`
+    Item1:
+    Folder1
+      Item2:
+      Item3:
+  `);
+
+  getNode('Item1').placeBefore(getNodeId('Item2'));
+
+  t.true(
+    sceneBuilder.isEqualTo(`
+    Folder1
+      Item1:
+      Item2:
+      Item3:
+  `),
+  );
+  // A folder is followed directly by everything in it
+  t.deepEqual(
+    scene.getNodes().map(node => node.id),
+    ['Folder1', 'Item1', 'Item2', 'Item3'].map(getNodeId),
+  );
+});
+
+test('Place before an item that follows a non-empty folder', async t => {
+  sceneBuilder.build(`
+    Item1:
+    Folder1
+      Folder2
+        Item2:
+      Item3:
+  `);
+
+  getNode('Item1').placeBefore(getNodeId('Item3'));
+
+  t.true(
+    sceneBuilder.isEqualTo(`
+    Folder1
+      Folder2
+        Item2:
+      Item1:
+      Item3:
+  `),
+  );
+  // A folder is followed directly by everything in it
+  t.deepEqual(
+    scene.getNodes().map(node => node.id),
+    ['Folder1', 'Folder2', 'Item2', 'Item1', 'Item3'].map(getNodeId),
+  );
+});
+
+test('Place before the node that follows the folder of the moved node', async t => {
+  sceneBuilder.build(`
+    Folder1
+      Item1:
+    Item2:
+  `);
+
+  getNode('Item1').placeBefore(getNodeId('Item2'));
+
+  t.true(
+    sceneBuilder.isEqualTo(`
+    Folder1
+    Item1:
+    Item2:
+  `),
+  );
+  // A folder is followed directly by everything in it
+  t.deepEqual(
+    scene.getNodes().map(node => node.id),
+    ['Folder1', 'Item1', 'Item2'].map(getNodeId),
+  );
+});
+
+test('Next item of the first node', async t => {
+  sceneBuilder.build(`
+    Item1:
+    Item2:
+  `);
+
+  t.is(getNode('Item1').getNextItem().name, 'Item2');
+});
