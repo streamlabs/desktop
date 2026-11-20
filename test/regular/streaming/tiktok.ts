@@ -88,9 +88,9 @@ async function validateErrorAlert(
     timeoutMsg: `TikTok ${scope} scope: empty stream key did not block going live`,
   });
 
-  // Reset the form
-  await setInputValue('[data-name="serverUrl"]', '');
-  await setInputValue('[data-name="streamKey"]', '');
+  // Restore the credentials
+  await setInputValue('[data-name="serverUrl"]', serverUrl);
+  await setInputValue('[data-name="streamKey"]', streamKey);
 }
 
 async function validateTikTokApplyNotification(scope: TTikTokLiveScopeTypes) {
