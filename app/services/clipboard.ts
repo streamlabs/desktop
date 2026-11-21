@@ -1,4 +1,4 @@
-import electron from 'electron';
+import * as remote from '@electron/remote';
 import { execSync } from 'child_process';
 import { mutation, StatefulService, ViewHandler } from 'services/core/stateful-service';
 import {
@@ -22,7 +22,7 @@ import { NavigationService } from 'services/navigation';
 import { DualOutputService } from './dual-output';
 import { VideoSettingsService } from './settings-v2';
 import { byOS, OS } from 'util/operating-systems';
-const { clipboard } = electron;
+const { clipboard } = remote;
 
 interface ISceneNodeInfo {
   folder?: ISceneItemFolder;
@@ -159,7 +159,7 @@ export class ClipboardService extends StatefulService<IClipboardState> {
     this.sceneCollectionsService.collectionWillSwitch.subscribe(() => {
       this.beforeCollectionSwitchHandler();
     });
-    this.SET_SYSTEM_CLIPBOARD(this.fetchSystemClipboard());
+    this.fetchSystemClipboard().then(systemClipboard => this.SET_SYSTEM_CLIPBOARD(systemClipboard));
   }
 
   @shortcut('Ctrl+C')
@@ -191,11 +191,11 @@ export class ClipboardService extends StatefulService<IClipboardState> {
   }
 
   @shortcut('Ctrl+V')
-  paste(duplicateSources = false) {
+  async paste(duplicateSources = false) {
     // Pasting sources only works in the editor
     if (this.navigationService.state.currentPage !== 'Studio') return;
 
-    const systemClipboard = this.fetchSystemClipboard();
+    const systemClipboard = await this.fetchSystemClipboard();
     if (JSON.stringify(this.state.systemClipboard) !== JSON.stringify(systemClipboard)) {
       this.clear();
       this.SET_SYSTEM_CLIPBOARD(systemClipboard);
@@ -275,12 +275,12 @@ export class ClipboardService extends StatefulService<IClipboardState> {
     this.SET_UNLOADED_CLIPBOARD_FILTERS([]);
   }
 
-  private fetchSystemClipboard(): ISystemClipboard {
+  private async fetchSystemClipboard(): Promise<ISystemClipboard> {
     let files: string[] = [];
 
     // We ignore text on the system clipboard, but we should only
     // try to find files if there is no text.
-    const text = clipboard.readText() || '';
+    const text = (await clipboard.readText()) || '';
     if (!text) files = this.getFiles();
     return { files };
   }
