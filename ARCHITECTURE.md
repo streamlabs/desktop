@@ -358,7 +358,10 @@ These are real, load‑bearing quirks an agent (or human) will trip over.
 - **`strictNullChecks` is off globally** with an opt‑in subset
   (`strict-null-check-files/`, `SLOBS_STRICT_NULLS`). Don't flip it repo‑wide.
 - **Privileged renderers.** `nodeIntegration: true` / `contextIsolation: false`
-  (`main.js`, the `BrowserWindow` `webPreferences`).
+  (`main.js`, the `BrowserWindow` `webPreferences`). Privileged is not the same as
+  main-process: Electron keeps some modules main-only. Renderer code, the worker
+  included, reaches those main-only modules through `@electron/remote`
+  (`remote.clipboard`), where calls can return Promises.
 
 ---
 
