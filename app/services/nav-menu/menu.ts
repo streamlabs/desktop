@@ -166,7 +166,7 @@ export class NavMenuService extends PersistentStatefulService<INavMenuServiceSta
   get availableMenuItems() {
     return this.availableMenuItemsData.map(([item, data]) => ({
       key: item.key,
-      title: resolveConfigValue(data.title, { layout: this.layoutService }),
+      title: data.title,
       isVisible: this.isItemVisible(item, data),
       isLocked: this.isItemLocked(data),
     }));
@@ -179,7 +179,7 @@ export class NavMenuService extends PersistentStatefulService<INavMenuServiceSta
         ...item,
         ...data,
         badge: resolveConfigValue(data.badge, { highlighter: this.highlighterService }),
-        title: resolveConfigValue(data.title, { layout: this.layoutService }),
+        title: data.title,
         icon: resolveConfigValue(data.icon, { layout: this.layoutService }),
       }));
   }

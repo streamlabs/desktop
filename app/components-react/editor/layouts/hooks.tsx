@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { TLayoutSlot, IVec2Array } from 'services/layout';
-import { useVuex } from 'components-react/hooks';
+import { TLayoutSlot, IVec2Array, ELayoutElement } from 'services/layout';
+import { useVuex, useDebounce } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
+import { fitSections } from './fit';
 
 export class LayoutProps {
   onTotalWidth: (slots: IVec2Array, isColumns: boolean) => void = () => {};
@@ -21,6 +22,10 @@ export interface ILayoutProps extends React.PropsWithChildren<LayoutProps> {
 
 export interface ILayoutSlotArray extends Array<ILayoutSlotArray | TLayoutSlot> {}
 
+function flattenSlots(slots: ILayoutSlotArray): TLayoutSlot[] {
+  return slots.flatMap(slot => (Array.isArray(slot) ? flattenSlots(slot) : [slot]));
+}
+
 /**
  * Just a note on some of the more unique params
  * @param vectors is a two-dimensional array that describes the shape of the layout.
@@ -37,10 +42,10 @@ export default function useLayout(
 ) {
   const { CustomizationService, LayoutService } = Services;
 
-  const { dockSize, resizes, chatCollapsed } = useVuex(() => ({
-    dockSize: CustomizationService.state.dockSize,
+  const { resizes, chatCollapsed, displaySlot } = useVuex(() => ({
     resizes: LayoutService.views.currentTab.resizes,
     chatCollapsed: CustomizationService.state.dockCollapsed,
+    displaySlot: LayoutService.views.currentTab.slottedElements[ELayoutElement.Display]?.slot,
   }));
 
   const [bars, setBars] = useState<{ bar1: number; bar2: number }>({
@@ -48,6 +53,8 @@ export default function useLayout(
     bar2: 0,
   });
 
+  // The minimums change as elements are slotted, so they are keyed on their values
+  const minsKey = JSON.stringify(childrenMins);
   const mins = useMemo(() => {
     // Each layout has a maximum of three primary sections
     // and a minimum of two, so restSlots and bar1Slots
@@ -58,26 +65,38 @@ export default function useLayout(
     let bar2 = 0;
     if (bar2Slots) bar2 = calculateMinimum(bar2Slots);
     return { rest, bar1, bar2 };
-  }, []);
+  }, [minsKey]);
+
+  const componentEl = useRef<HTMLDivElement | null>(null);
+
+  // The fit is run from effects, listeners and callback refs that outlive a render
+  const fitRef = useRef(fit);
+  fitRef.current = fit;
+  // Window resizes are fit once they end, so the sections scale from their proportions meanwhile
+  const debouncedFit = useDebounce(200, () => fitRef.current());
 
   useEffect(() => {
     onTotalWidth(mapVectors(vectors), isColumns);
-    updateSize();
-    window.addEventListener('resize', () => updateSize());
+    fitRef.current();
+  }, [minsKey]);
 
-    return () => {
-      window.removeEventListener('resize', () => updateSize());
-    };
+  // The dock bounds settle after the dock is collapsed or expanded
+  useEffect(() => {
+    onTotalWidth(mapVectors(vectors), isColumns);
+    debouncedFit();
   }, [chatCollapsed]);
 
-  const componentEl = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    window.addEventListener('resize', debouncedFit);
+    return () => window.removeEventListener('resize', debouncedFit);
+  }, []);
 
   // Callback ref used due to reactivity issues
   const componentRef = useCallback(node => {
     if (node) {
       componentEl.current = node;
       onTotalWidth(mapVectors(vectors), isColumns);
-      updateSize();
+      fitRef.current();
     }
   }, []);
 
@@ -107,21 +126,6 @@ export default function useLayout(
     return childrenMins[slot];
   }
 
-  /**
-   * Because we store resize positions as proportions in state,
-   * we need to derive pixel values to render based on the size
-   * of the current window
-   */
-  const getBarPixels = useCallback((bar: 'bar1' | 'bar2', offset: number) => {
-    if (!componentEl.current) return;
-    // Migrate from pixels to proportions
-    const migratedResize =
-      (resizes[bar] as number) >= 1 ? setBar(bar, resizes[bar] as number) : resizes[bar];
-    const { height, width } = componentEl.current.getBoundingClientRect();
-    const offsetSize = isColumns ? width - offset : height;
-    return Math.round(offsetSize * (migratedResize as number));
-  }, []);
-
   const setBar = useCallback((bar: 'bar1' | 'bar2', val: number) => {
     if (val === 0 || !componentEl.current) return;
     setBars(oldState => ({ ...oldState, [bar]: val }));
@@ -133,22 +137,42 @@ export default function useLayout(
   }, []);
 
   /**
-   * Updates the total proportions of the resizable areas as a result of
-   * non-resize actions such as window resizing or expanding chat
+   * Fits the resizable areas to the size of the layout and the minimums of the elements in them.
+   * Because we store resize positions as proportions in state, this also derives the pixel
+   * values to render, and only writes the proportions that changed.
    */
-  const updateSize = useCallback((chatCollapsed = true, oldChatCollapsed?: boolean) => {
-    let offset = chatCollapsed ? 0 : dockSize;
-    // Reverse offset if chat is collapsed from an uncollapsed state
-    if (chatCollapsed && oldChatCollapsed === false) {
-      offset = dockSize * -1;
-    }
-    const bar1 = getBarPixels('bar1', offset);
-    if (bar1) setBar('bar1', bar1);
-    if (mins.bar2) {
-      const bar2 = getBarPixels('bar2', offset);
-      if (bar2) setBar('bar2', bar2);
-    }
-  }, []);
+  function fit() {
+    const el = componentEl.current;
+    if (!el || !el.isConnected) return;
+    const { height, width } = el.getBoundingClientRect();
+    const total = isColumns ? width : height;
+    if (!total) return;
+
+    const barNames: ('bar1' | 'bar2')[] = vectors.length > 2 ? ['bar1', 'bar2'] : ['bar1'];
+    // Values of 1 or more are pixels, from before sizes were stored as proportions
+    const pixels = barNames.map(bar => {
+      const value = resizes[bar] as number;
+      return value >= 1 ? value : Math.round(total * value);
+    });
+    const sectionMins = [mins.rest, mins.bar1, mins.bar2];
+
+    const sizes = fitSections(
+      total,
+      vectors.map((slots, i) => ({
+        min: sectionMins[i],
+        size: i === 0 ? total - pixels.reduce((a, b) => a + b, 0) : pixels[i - 1],
+        hasDisplay: !!displaySlot && flattenSlots(slots).includes(displaySlot),
+      })),
+    );
+
+    const fitted = { bar1: 0, bar2: 0 };
+    barNames.forEach((bar, i) => {
+      fitted[bar] = sizes[i + 1];
+      const proportion = parseFloat((sizes[i + 1] / total).toFixed(2));
+      if (proportion !== resizes[bar]) LayoutService.actions.setBarResize(bar, proportion);
+    });
+    setBars(fitted);
+  }
 
   /**
    * Calculates the maximum area a bar can expand two given the min

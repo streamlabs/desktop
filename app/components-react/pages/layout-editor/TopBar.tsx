@@ -12,12 +12,15 @@ import styles from './LayoutEditor.m.less';
 import { useLayoutEditor } from './hooks';
 
 export default function TopBar() {
-  const { LayoutService, NavigationService, NavMenuService } = Services;
+  const { LayoutService, NavigationService, NavMenuService, CustomizationService } = Services;
   const {
+    leftDock,
     slottedElements,
     browserUrl,
     currentLayout,
     dockLayout,
+    layoutCustomized,
+    dockCustomized,
     setShowModal,
     setIsEditingTab,
     setCurrentTab,
@@ -51,9 +54,13 @@ export default function TopBar() {
       await LayoutService.actions.return.setDockLayout(dockLayout);
     }
     await LayoutService.actions.return.setSlots(slottedElements);
+    await LayoutService.actions.return.setCustomized(layoutCustomized, dockCustomized);
     LayoutService.actions.recordLayoutEditorUsage();
     if (browserUrl && slottedElements[ELayoutElement.Browser]) {
       await LayoutService.actions.return.setUrl(browserUrl);
+    }
+    if (leftDock !== CustomizationService.state.leftDock) {
+      CustomizationService.actions.setLeftDock(leftDock);
     }
     NavMenuService.actions.setCurrentMenuItem(ENavMenuKey.Editor);
     NavigationService.actions.navigate('Studio');

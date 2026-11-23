@@ -9,6 +9,7 @@ import { useDebounce, useVuex } from 'components-react/hooks';
 import * as appPages from 'components-react/pages';
 import TitleBar from 'components-react/shared/TitleBar';
 import { Services } from 'components-react/service-provider';
+import { ENavMenuKey } from 'services/nav-menu';
 import NavMenu from 'components-react/nav-menu/NavMenu';
 import { getElementMins } from 'components-react/editor/renderLayoutElements';
 import Dock from 'components-react/root/Dock';
@@ -119,8 +120,11 @@ export default function Main() {
   const dockHasContent = useDockHasContent();
 
   const renderDock = useMemo(() => {
-    return !isOnboarding && hasDock && !showLoadingSpinner && dockHasContent;
-  }, [isOnboarding, hasDock, showLoadingSpinner, dockHasContent]);
+    // The layout editor previews the dock itself
+    return (
+      !isOnboarding && page !== 'LayoutEditor' && hasDock && !showLoadingSpinner && dockHasContent
+    );
+  }, [isOnboarding, page, hasDock, showLoadingSpinner, dockHasContent]);
 
   // The dock is at least as wide as the widest minimum of its elements
   const contentMinDockWidth = useMemo(() => {
@@ -410,7 +414,7 @@ export default function Main() {
             setDockWidth={setDockWidth}
           />
         )}
-        {!isOnboarding && !showLoadingSpinner && (
+        {!isOnboarding && !showLoadingSpinner && page !== 'LayoutEditor' && (
           <DockLayoutEditorDismissible onLeft={leftDock} dockWidth={visibleDockWidth} />
         )}
       </div>
@@ -468,6 +472,17 @@ const Chevron = memo(function Chevron(p: {
  */
 function DockLayoutEditorDismissible(p: { onLeft?: boolean; dockWidth: number }) {
   const offset = `calc(${p.dockWidth}px + 14px)`;
+
+  function tryItOut() {
+    const { DismissablesService, NavigationService } = Services;
+    DismissablesService.actions.dismiss(EDismissable.DockLayouts);
+    NavigationService.actions.navigate(
+      'LayoutEditor',
+      { stageStackedDock: true },
+      ENavMenuKey.LayoutEditor,
+    );
+  }
+
   return (
     <HelpTip
       title={$t('New: Dock Layouts')}
@@ -478,7 +493,18 @@ function DockLayoutEditorDismissible(p: { onLeft?: boolean; dockWidth: number })
       <div>
         {$t(
           'Stack the Mini Feed above Chat, or place any item in the dock, from the Layout Editor.',
-        )}
+        )}{' '}
+        <a
+          style={{
+            color: 'inherit',
+            fontWeight: 'inherit',
+            textDecoration: 'underline',
+            cursor: 'pointer',
+          }}
+          onClick={tryItOut}
+        >
+          {$t('Try It Out →')}
+        </a>
       </div>
     </HelpTip>
   );

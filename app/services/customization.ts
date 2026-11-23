@@ -240,8 +240,12 @@ export class CustomizationService extends Service {
 
   state = CustomizationState.inject();
 
+  /** Whether the dock was collapsed when the app last closed, before it is reset for this launch. */
+  launchDockCollapsed: boolean;
+
   init() {
     super.init();
+    this.launchDockCollapsed = this.state.dockCollapsed;
     this.setDockCollapsed(true); // dock is always collapsed on app start
     this.ensureCrashDumpFolder();
     this.setObsTheme();

@@ -6,6 +6,9 @@ import {
   EDockLayout,
   DOCK_SLOTS,
   isDockSlot,
+  applyDefaults,
+  fillEmptySlots,
+  visibleSlots,
   TSlottedElements,
   TLayoutSlot,
 } from 'services/layout';
@@ -22,6 +25,17 @@ class LayoutEditorModule {
     showModal: false,
     /** Whether the modal edits the current tab rather than creating a new one. */
     isEditingTab: false,
+    /**
+     * The elements of slots that the current layout doesn't render, so they can be restored when
+     * the slot comes back. Editor-only: it is never saved.
+     */
+    slotCache: {} as Partial<Record<TLayoutSlot, ELayoutElement>>,
+    /** Whether elements were dragged into the main layout, which stops the defaults. */
+    layoutCustomized: !!this.layoutService.views.currentTab.layoutCustomized,
+    /** Whether elements were dragged into the dock, which stops the dock defaults. */
+    dockCustomized: !!this.layoutService.views.currentTab.dockCustomized,
+    /** The dock position being edited, which is only applied to the app on save. */
+    leftDock: Services.CustomizationService.state.leftDock,
   });
 
   private get layoutService() {
@@ -36,6 +50,9 @@ class LayoutEditorModule {
     this.layoutService.actions.setCurrentTab(tab);
     this.state.setCurrentLayout(this.layoutService.state.tabs[tab].currentLayout);
     this.state.setDockLayout(this.layoutService.state.tabs[tab].dockLayout || EDockLayout.Single);
+    this.state.setSlotCache({});
+    this.state.setLayoutCustomized(!!this.layoutService.state.tabs[tab].layoutCustomized);
+    this.state.setDockCustomized(!!this.layoutService.state.tabs[tab].dockCustomized);
     this.setSlottedElements(cloneDeep(this.layoutService.state.tabs[tab].slottedElements));
     this.state.setBrowserUrl(
       this.layoutService.state.tabs[tab].slottedElements[ELayoutElement.Browser]?.src || '',
@@ -49,30 +66,118 @@ class LayoutEditorModule {
   @mutation()
   setSlottedElements(elements: TSlottedElements) {
     this.state.slottedElements = elements;
+    // An element that is placed no longer needs a cached slot, or it could be duplicated
+    const cache = { ...this.state.slotCache };
+    (Object.keys(cache) as TLayoutSlot[]).forEach(slot => {
+      const cached = cache[slot];
+      if (cached && elements[cached]?.slot) delete cache[slot];
+    });
+    this.state.slotCache = cache;
     const browser = elements[ELayoutElement.Browser];
     if (browser && !browser.slot) this.state.setBrowserUrl('');
   }
 
   /**
-   * Changes the layout of the dock. Elements in slots the new layout doesn't have are unslotted.
+   * Fits the slotted elements to the slots a layout and dock layout render:
+   * - The main layout follows the new defaults until the user customizes it, and so does the
+   *   dock, unless either was customized.
+   * - Elements in slots that disappear are cached and unslotted, and elements cached for slots
+   *   that appear again are restored.
+   * - The remaining empty slots are filled (see `fillEmptySlots`).
    */
-  changeDockLayout(layout: EDockLayout) {
-    let slottedElements = this.state.slottedElements;
-    Object.keys(slottedElements).forEach((el: ELayoutElement) => {
-      const slot = this.state.slottedElements[el]?.slot;
-      if (isDockSlot(slot) && !DOCK_SLOTS[layout].includes(slot)) {
-        slottedElements = { ...slottedElements, [el]: { slot: null } };
+  private applySlotShape(layout: ELayout, dockLayout: EDockLayout) {
+    const reset = {
+      main: !this.state.layoutCustomized,
+      dock: !this.state.layoutCustomized && !this.state.dockCustomized,
+    };
+    const visible = visibleSlots(layout, dockLayout);
+    const slotted = applyDefaults(layout, dockLayout, this.state.slottedElements, reset);
+    const cache = { ...this.state.slotCache };
+    const elementAt = (slot: TLayoutSlot) =>
+      (Object.keys(slotted) as ELayoutElement[]).find(el => slotted[el]?.slot === slot);
+    const isVisible = (el: ELayoutElement) => visible.includes(slotted[el]?.slot as TLayoutSlot);
+    // A region that follows the defaults has nothing to restore
+    (Object.keys(cache) as TLayoutSlot[]).forEach(slot => {
+      if (isDockSlot(slot) ? reset.dock : reset.main) delete cache[slot];
+    });
+
+    (Object.keys(slotted) as ELayoutElement[]).forEach(el => {
+      const slot = slotted[el]?.slot;
+      if (slot && !visible.includes(slot)) {
+        cache[slot] = el;
+        slotted[el] = { slot: (null as unknown) as TLayoutSlot };
       }
     });
-    this.setSlottedElements(slottedElements);
+
+    visible.forEach(slot => {
+      const cached = cache[slot];
+      if (cached && !elementAt(slot) && !isVisible(cached)) {
+        slotted[cached] = { slot };
+        delete cache[slot];
+      }
+    });
+
+    this.state.setSlotCache(cache);
+    this.setSlottedElements(fillEmptySlots(layout, dockLayout, slotted));
+  }
+
+  /**
+   * Stages the Stacked dock with Mini Feed over Chat, which the Dock Layouts tip advertises, even
+   * if that moves them out of the main layout. A layout that is still the old default entirely
+   * becomes the new default entirely. Nothing is saved until the editor saves.
+   */
+  stageStackedDock() {
+    const { currentLayout, layoutCustomized, dockCustomized } = this.state;
+    this.state.setSlotCache({});
+
+    if (currentLayout === ELayout.TwoThenThree && !layoutCustomized && !dockCustomized) {
+      this.changeShape(ELayout.Default, EDockLayout.Stacked);
+      return;
+    }
+
+    const staged: TSlottedElements = { ...this.state.slottedElements };
+    const unslotted = { slot: (null as unknown) as TLayoutSlot };
+    (Object.keys(staged) as ELayoutElement[]).forEach(el => {
+      if (isDockSlot(staged[el]?.slot)) staged[el] = { ...unslotted };
+    });
+    staged[ELayoutElement.Minifeed] = { slot: 'S1' };
+    staged[ELayoutElement.Multichat] = { slot: 'S2' };
+    this.setSlottedElements(staged);
+    // Empty main slots, such as the one Mini Feed left, are filled
+    this.changeShape(currentLayout, EDockLayout.Stacked);
+  }
+
+  /** Changes both layouts at once, so the slots follow the defaults of the pending shape. */
+  private changeShape(layout: ELayout, dockLayout: EDockLayout) {
+    this.applySlotShape(layout, dockLayout);
+    this.state.setCurrentLayout(layout);
+    this.state.setDockLayout(dockLayout);
+  }
+
+  changeLayout(layout: ELayout) {
+    this.state.setSlotCache({});
+    this.applySlotShape(layout, this.state.dockLayout);
+    this.state.setCurrentLayout(layout);
+  }
+
+  changeDockLayout(layout: EDockLayout) {
+    this.applySlotShape(this.state.currentLayout, layout);
     this.state.setDockLayout(layout);
+  }
+
+  /** Placing or removing an element stops the region it was in, or is in now, following defaults. */
+  private markCustomized(...slots: (TLayoutSlot | null | undefined)[]) {
+    if (slots.some(slot => slot && !isDockSlot(slot))) this.state.setLayoutCustomized(true);
+    if (slots.some(slot => isDockSlot(slot))) this.state.setDockCustomized(true);
   }
 
   handleElementDrag(event: React.DragEvent<HTMLDivElement>, el: ELayoutElement) {
     const htmlElement = document.elementFromPoint(event.clientX, event.clientY);
     if (!el) return;
+    const from = this.state.slottedElements[el]?.slot;
     if (!htmlElement) {
       this.setSlottedElements({ ...this.state.slottedElements, [el]: { slot: null } });
+      this.markCustomized(from);
       return;
     }
     // In case the span tag is the element dropped on we check for parent element id
@@ -107,8 +212,10 @@ class LayoutEditorModule {
         this.setSlottedElements({ ...this.state.slottedElements, [existingEl]: { slot: null } });
       }
       this.setSlottedElements({ ...this.state.slottedElements, [el]: { slot: id as TLayoutSlot } });
+      this.markCustomized(from, id as TLayoutSlot);
     } else {
       this.setSlottedElements({ ...this.state.slottedElements, [el]: { slot: null } });
+      this.markCustomized(from);
     }
   }
 }
