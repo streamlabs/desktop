@@ -4,6 +4,7 @@ import * as remote from '@electron/remote';
 import { Inject, Service } from 'services/core';
 import {
   AppService,
+  DismissablesService,
   ObsImporterService,
   RecordingModeService,
   SceneCollectionsService,
@@ -11,6 +12,7 @@ import {
   UserService,
   WindowsService,
 } from 'app-services';
+import { EDismissable } from 'services/dismissables';
 import Utils from '../utils';
 
 export enum EOnboardingSteps {
@@ -258,6 +260,7 @@ export class OnboardingV2Service extends Service {
   @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private appService: AppService;
   @Inject() private windowsService: WindowsService;
+  @Inject() private dismissablesService: DismissablesService;
 
   state = OnboardingServiceState.inject();
 
@@ -313,13 +316,22 @@ export class OnboardingV2Service extends Service {
   showOnboardingIfNecessary() {
     if (Utils.env.SLD_TESTS_SKIP_ONBOARDING) {
       this.appService.setOnboarded(true);
+      this.dismissDockLayoutsAnnouncement();
       return;
     }
     if (!Utils.env.SLD_FORCE_ONBOARDING_STEP && localStorage.getItem(this.localStorageKey)) {
       return;
     }
     this.appService.setOnboarded(true);
+    this.dismissDockLayoutsAnnouncement();
     this.showOnboarding();
+  }
+
+  /**
+   * Fresh installs start on the new dock layout, so there is nothing new to announce.
+   */
+  private dismissDockLayoutsAnnouncement() {
+    this.dismissablesService.dismiss(EDismissable.DockLayouts);
   }
 
   showOnboarding() {
