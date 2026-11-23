@@ -8,7 +8,7 @@ import {
   TPlatformCapability,
   IPlatformRequest,
   IPlatformState,
-  TLiveDockFeature,
+  TMultichatFeature,
 } from '.';
 import { HostsService } from 'services/hosts';
 import { Inject } from 'services/core/injector';
@@ -192,7 +192,7 @@ export class FacebookService
     'themes',
     'viewerCount',
   ]);
-  readonly liveDockFeatures = new Set<TLiveDockFeature>([
+  readonly multichatFeatures = new Set<TMultichatFeature>([
     'chat-streaming',
     'refresh-chat',
     'dashboard',
@@ -871,7 +871,7 @@ export class FacebookService
     }
   }
 
-  get liveDockEnabled(): boolean {
+  get multichatEnabled(): boolean {
     return true;
   }
 
