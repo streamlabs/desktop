@@ -21,6 +21,10 @@ export class HighlighterViews extends ViewHandler<IHighlighterState> {
     return this.state.useAiHighlighter;
   }
 
+  get replaySupportedGames() {
+    return this.state.replaySupportedGames;
+  }
+
   /**
    * Whether any clips need to be loaded
    */
