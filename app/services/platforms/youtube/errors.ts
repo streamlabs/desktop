@@ -50,7 +50,7 @@ export function formatErrorRejectedRequest(
  */
 export function getYouTubeErrorStatus(e: any): number | undefined {
   const json = e?.result?.error;
-  const status = json.status ?? json.code ?? e?.status;
+  const status = json?.status ?? json?.code ?? e?.status;
   if (typeof status === 'number') {
     return status;
   } else if (typeof status === 'string') {
