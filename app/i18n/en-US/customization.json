@@ -15,10 +15,11 @@
   "Elements": "Elements",
   "Layouts": "Layouts",
   "Drag and drop to edit.": "Drag and drop to edit.",
-  "Save New Tab": "Save New Tab",
-  "Add Tab": "Add Tab",
-  "Current Tab": "Current Tab",
-  "Delete Current Tab": "Delete Current Tab",
+  "Save Layout": "Save Layout",
+  "Add Layout": "Add Layout",
+  "Current Layout": "Current Layout",
+  "Edit Layout": "Edit Layout",
+  "Delete Layout": "Delete Layout",
   "Enter Target URL": "Enter Target URL",
   "Custom Navigation Bar": "Custom Navigation Bar",
   "Obsidian Ultra": "Obsidian Ultra",
@@ -26,8 +27,10 @@
   "Read": "Read",
   "Post Comments": "Post Comments",
   "Dock": "Dock",
+  "Dock Layout": "Dock Layout",
+  "Dock Position": "Dock Position",
   "Single": "Single",
   "Stacked": "Stacked",
   "New: Dock Layouts": "New: Dock Layouts",
-  "Stack the Mini Feed above Multichat, or place any item in the dock, from the Layout Editor.": "Stack the Mini Feed above Multichat, or place any item in the dock, from the Layout Editor."
+  "Stack the Mini Feed above Chat, or place any item in the dock, from the Layout Editor.": "Stack the Mini Feed above Chat, or place any item in the dock, from the Layout Editor."
 }

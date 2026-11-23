@@ -26,11 +26,10 @@ export function Mixer() {
   }, []);
 
   const performanceMode = useRealmObject(CustomizationService.state).performanceMode;
-  const { audioSourceIds, hideStyleBlockers } = useVuex(() => ({
+  const { audioSourceIds } = useVuex(() => ({
     audioSourceIds: AudioService.views.sourcesForCurrentScene
       .filter(source => !source.mixerHidden && source.isControlledViaObs)
       .map(source => source.sourceId),
-    hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
   }));
 
   function showAdvancedSettings() {
@@ -52,11 +51,11 @@ export function Mixer() {
         <div className="studio-controls-top">
           <Tooltip
             title={$t('Monitor audio levels. If the bars are moving you are outputting audio.')}
-            placement="bottom"
+            placement="bottomLeft"
           >
             <h2 className="studio-controls__label">{$t('Mixer')}</h2>
           </Tooltip>
-          <Tooltip title={$t('Open advanced audio settings')} placement="left">
+          <Tooltip title={$t('Open advanced audio settings')} placement="bottomRight">
             <i
               className="icon-settings icon-button"
               role="show-advanced-audio"
