@@ -51,10 +51,11 @@ function findRuntime(osnDir, systemRoot) {
 
 /**
  * @param {string} osnDir The obs-studio-node directory, the same one obs64.exe runs from.
+ * @param {NodeJS.ProcessEnv} [env] Environment to read SystemRoot/windir from. Injectable for tests.
  * @returns {{ outdated: boolean, version: string, path?: string }}
  */
-function checkVCRuntime(osnDir) {
-  const systemRoot = process.env.SystemRoot || process.env.windir;
+function checkVCRuntime(osnDir, env = process.env) {
+  const systemRoot = env.SystemRoot || env.windir;
   const runtimePath = findRuntime(osnDir, systemRoot);
   if (!runtimePath) {
     // Without SystemRoot we couldn't look in System32, so a missing runtime is unconfirmed and
