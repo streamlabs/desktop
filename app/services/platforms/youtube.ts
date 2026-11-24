@@ -247,6 +247,7 @@ export class YoutubeService
     onError: error => console.warn('[Auto Optimizer] Deferred YouTube probe recovery', error),
   });
   private pendingAutoOptimizerProbeReleases = new Map<string, IYoutubeAutoOptimizerProbeLease>();
+  private isValidatingAuthUpdate = false;
 
   readonly capabilities = new Set<TPlatformCapability>([
     'title',
@@ -321,10 +322,35 @@ export class YoutubeService
     // is available. Login completion also covers a failed linked-platform fetch;
     // the scheduler coalesces it with auth updates and bounds background retries.
     this.userService.userLoginFinished.subscribe(() => this.autoOptimizerProbeRecovery.schedule());
-    this.userService.platformAuthUpdated.subscribe(platform => {
-      if (platform === 'youtube') this.autoOptimizerProbeRecovery.schedule();
+
+    this.userService.platformAuthUpdated.subscribe(async platform => {
+      // Validation can refresh the token, which will emit this event again. To prevent a second call,
+      // skip it while a validation is already running.
+      if (platform === 'youtube' && !this.isValidatingAuthUpdate) {
+        // Validate any YouTube account has live streaming enabled. If not, prompt the user to enable it.
+        this.isValidatingAuthUpdate = true;
+        const accountId = this.getLinkedAccountId();
+
+        try {
+          const status = await this.validatePlatform();
+          if (status !== EPlatformCallResult.Success || this.getLinkedAccountId() !== accountId) {
+            // Return early if live streaming not enabled, or the account changed during validation,
+            // to prevent scheduling the auto optimizer probe recovery
+            return;
+          }
+        } finally {
+          this.isValidatingAuthUpdate = false;
+        }
+
+        this.autoOptimizerProbeRecovery.schedule();
+      }
     });
-    this.userService.userLogout.subscribe(() => this.autoOptimizerProbeRecovery.cancel());
+    this.userService.userLogout.subscribe(() => {
+      this.autoOptimizerProbeRecovery.cancel();
+
+      // Reset the YouTube live streaming status so it never carries over to the next session
+      this.SET_ENABLED_STATUS(false);
+    });
     if (this.oauthToken) this.autoOptimizerProbeRecovery.schedule();
 
     this.streamingService.streamErrorCreated.subscribe(e => {
@@ -971,6 +997,11 @@ export class YoutubeService
     this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
   }
 
+  private getLinkedAccountId(): string {
+    const auth = this.userService.state.auth?.platforms?.youtube;
+    return auth?.id || auth?.channelId || '';
+  }
+
   /**
    * check that user has enabled live-streaming on their account
    */
@@ -978,25 +1009,34 @@ export class YoutubeService
     const endpoint = 'liveStreams?part=id,snippet&mine=true';
     const url = `${this.apiBase}/${endpoint}`;
 
-    try {
-      await this.requestYoutube(url, false);
-      this.SET_ENABLED_STATUS(true);
-      return EPlatformCallResult.Success;
-    } catch (e: unknown) {
-      this.SET_ENABLED_STATUS(false);
+    // The request can finish after a logout or an account change, so only write
+    // the result if the account that started this validation is still linked.
+    const accountId = this.getLinkedAccountId();
 
-      // `requestYoutube` already created the stream error and logged it so just return the result
-      if (e instanceof StreamError) {
-        if (e.status === 401 || e.status === 423 || e.reason === EYoutubeErrorReason.Forbidden) {
-          return EPlatformCallResult.TokenExpired;
+    return await this.requestYoutube(url, false)
+      .then(() => {
+        if (this.getLinkedAccountId() === accountId && !this.state.liveStreamingEnabled) {
+          this.SET_ENABLED_STATUS(true);
+        }
+        return EPlatformCallResult.Success;
+      })
+      .catch((e: unknown) => {
+        if (this.getLinkedAccountId() === accountId && this.state.liveStreamingEnabled) {
+          this.SET_ENABLED_STATUS(false);
         }
 
-        if (e.reason === EYoutubeErrorReason.LiveStreamingNotEnabled) {
-          return EPlatformCallResult.YoutubeStreamingDisabled;
+        // `requestYoutube` already created the stream error and logged it so just return the result
+        if (e instanceof StreamError) {
+          if (e.status === 401 || e.status === 423 || e.reason === EYoutubeErrorReason.Forbidden) {
+            return EPlatformCallResult.TokenExpired;
+          }
+
+          if (e.reason === EYoutubeErrorReason.LiveStreamingNotEnabled) {
+            return EPlatformCallResult.YoutubeStreamingDisabled;
+          }
         }
-      }
-      return EPlatformCallResult.Error;
-    }
+        return EPlatformCallResult.Error;
+      });
   }
 
   getHeaders(req: IPlatformRequest, authorized = false) {

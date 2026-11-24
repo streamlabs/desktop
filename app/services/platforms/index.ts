@@ -333,7 +333,6 @@ export const platformLabels = (platform: TPlatform | string) =>
     [EPlatform.Instagram]: $t('Instagram'),
     [EPlatform.Kick]: $t('Kick'),
     [EPlatform.Patreon]: $t('Patreon'),
-    nimotv: 'NimoTV',
   }[platform] || '');
 
 export function getPlatformService(platform: TPlatform): IPlatformService {

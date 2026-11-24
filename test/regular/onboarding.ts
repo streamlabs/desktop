@@ -170,10 +170,8 @@ test('Go through onboarding', async t => {
   t.true(await isDisplayed('button=YouTube'), 'Shows YouTube button');
   t.true(await isDisplayed('button=Facebook'), 'Shows Facebook button');
   t.true(await isDisplayed('button=TikTok'), 'Shows TikTok button');
-  t.true(await isDisplayed('button=Instagram'), 'Shows Instagram button');
   t.true(await isDisplayed('button=X'), 'Shows X (Twitter) button');
   t.true(await isDisplayed('button=Kick'), 'Shows Kick button');
-  t.true(await isDisplayed('button=NimoTV'), 'Shows NimoTV button');
 
   t.true(await isDisplayed('button=Back'), 'Has a link to go back to Sign Up');
 

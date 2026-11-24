@@ -3,6 +3,17 @@ const path = require('path');
 const os = require('os');
 const cp = require('child_process');
 
+// True if the file starts with the PE/DOS "MZ" signature.
+function isWindowsBinary(filePath) {
+  const header = Buffer.alloc(2);
+  const fd = fs.openSync(filePath, 'r');
+  try {
+    return fs.readSync(fd, header, 0, 2, 0) === 2 && header.toString('latin1') === 'MZ';
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
 const base = {
   appId: 'com.streamlabs.slobs',
   productName: 'Streamlabs Desktop',
@@ -18,9 +29,14 @@ const base = {
     // it: index.js only resolves the binary path for development, and in a packaged
     // app require('electron') resolves to the built-in module.
     '!node_modules/electron',
+    // Hoisted dependency of the `electron` package above, so excluding that doesn't
+    // exclude this. It ships prebuilt addons for every platform; the macOS and Linux
+    // ones are dead weight on Windows and can't be Authenticode-signed (see sign()).
+    '!node_modules/@electron-internal/extract-zip/index.{darwin,linux}-*.node',
     'vendor',
     'app/i18n',
     'app/util/shutdown-coordinator.js',
+    'app/util/vc-runtime-check.js',
     'media/images/game-capture',
     'updater/build/bootstrap.js',
     'updater/build/bundle-updater.js',
@@ -53,6 +69,19 @@ const base = {
   // Left on, @electron/rebuild source-builds deasync and dies resolving node-addon-api's
   // include dir ("Cannot open include file: 'napi.h'") on the release machine.
   npmRebuild: false,
+  // Stop the shipped binary from being run as a plain Node runtime or attached to a
+  // debugger: ELECTRON_RUN_AS_NODE, NODE_OPTIONS / NODE_EXTRA_CA_CERTS and --inspect are
+  // all ignored in packaged builds. electron-builder flips these after the afterPack hook
+  // and before signing, on both platforms. With runAsNode off, child_process.fork() throws
+  // in the packaged app; use utilityProcess for a standalone Node process instead.
+  electronFuses: {
+    runAsNode: false,
+    enableNodeOptionsEnvironmentVariable: false,
+    enableNodeCliInspectArguments: false,
+    // Unsigned builds skip signing, and flipping the fuses invalidates Electron's ad-hoc
+    // signature, which an arm64 Mac refuses to launch. Re-apply it for those builds only.
+    resetAdHocDarwinSignature: process.platform === 'darwin' && !!process.env.SLOBS_NO_SIGN,
+  },
   nsis: {
     license: 'AGREEMENT',
     oneClick: false,
@@ -72,10 +101,18 @@ const base = {
   win: {
     executableName: 'Streamlabs OBS',
     extraFiles: ['LICENSE', 'AGREEMENT', 'LICENSES', 'shared-resources/**/*', '!shared-resources/README'],
-    // Replaces `signDlls: true`, removed in electron-builder 26. Both select the
-    // same files: `.dll` matches this list, and `.exe` still signs via the
-    // isExe fallback in WinPackager.shouldSignFile.
-    signExts: ['.dll'],
+    // `.exe` always signs via the isExe fallback in WinPackager.shouldSignFile;
+    // everything else must be listed here. `.dll` replaces `signDlls: true`,
+    // removed in electron-builder 26.
+    //
+    // `.node` native addons are PE DLLs too, and nothing else signs them: the
+    // prebuilt tarballs ship unsigned, and electron-builder never signed them
+    // under `signDlls` either. Windows Smart App Control blocks an unsigned
+    // binary unless it already has cloud reputation, so every release that
+    // shipped a freshly built addon could fail to load it on those machines
+    // (1.22.5: "An Application Control policy has blocked this file" for
+    // obs_studio_client.node, which shows the startupError dialog).
+    signExts: ['.dll', '.node'],
     signtoolOptions: {
       // These currently match electron-builder's defaults, but are set explicitly
       // so a change to those defaults can't silently alter our timestamping.
@@ -89,6 +126,16 @@ const base = {
           config.path.indexOf('node_modules\\obs-studio-node\\data\\obs-plugins\\win-capture') !== -1
         ) {
           console.log(`Skipping ${config.path}`);
+          return;
+        }
+
+        // signExts matches by extension, and `.node` is also used for macOS (Mach-O)
+        // and Linux (ELF) addons that some packages ship for every platform.
+        // Authenticode can only sign PE files, and one non-PE entry in the manifest
+        // fails the whole logisign batch. Skipped files never enter the manifest, so
+        // afterSign's verification doesn't expect them.
+        if (!isWindowsBinary(config.path)) {
+          console.log(`Skipping non-PE file ${config.path}`);
           return;
         }
 
@@ -108,6 +155,7 @@ const base = {
     identity: process.env.SLOBS_NO_SIGN
       ? null
       : process.env.APPLE_SLD_IDENTITY || 'Streamlabs LLC (UT675MBB9Q)',
+    minimumSystemVersion: '12.0.0',
     extraFiles: [
       'shared-resources/**/*',
       '!shared-resources/README',
