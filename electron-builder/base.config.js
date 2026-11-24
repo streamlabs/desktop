@@ -21,6 +21,7 @@ const base = {
     'vendor',
     'app/i18n',
     'app/util/shutdown-coordinator.js',
+    'app/util/mcp-launcher.js',
     'media/images/game-capture',
     'updater/build/bootstrap.js',
     'updater/build/bundle-updater.js',
@@ -71,7 +72,19 @@ const base = {
   },
   win: {
     executableName: 'Streamlabs OBS',
-    extraFiles: ['LICENSE', 'AGREEMENT', 'LICENSES', 'shared-resources/**/*', '!shared-resources/README'],
+    extraFiles: [
+      'LICENSE',
+      'AGREEMENT',
+      'LICENSES',
+      'shared-resources/**/*',
+      '!shared-resources/README',
+      // The MCP server for AI agents, one bundled file run by app/util/mcp-launcher.js.
+      { from: 'mcp/bundle/streamlabs-mcp.cjs', to: 'mcp/streamlabs-mcp.cjs' },
+      // What Settings > AI Agents > Connect Hermes installs into Hermes (app/services/agent-connect.ts).
+      { from: 'mcp/skill-demo/SKILL.md', to: 'mcp/hermes/SKILL.md' },
+      { from: 'mcp/scripts/hermes/stream-watch', to: 'mcp/hermes/stream-watch' },
+      { from: 'mcp/scripts/hermes/stream_health_monitor.py', to: 'mcp/hermes/stream_health_monitor.py' },
+    ],
     // Replaces `signDlls: true`, removed in electron-builder 26. Both select the
     // same files: `.dll` matches this list, and `.exe` still signs via the
     // isExe fallback in WinPackager.shouldSignFile.

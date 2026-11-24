@@ -15,7 +15,8 @@
     "mcp_demo:readonly": "tsx scripts/demo-e2e.ts --no-write",
     "demo:reset": "tsx scripts/demo-reset.ts",
     "demo:check": "tsx scripts/demo-check.ts",
-    "demo:prep": "tsx scripts/demo-prep.ts"
+    "demo:prep": "tsx scripts/demo-prep.ts",
+    "bundle": "esbuild src/index.ts --bundle --platform=node --format=cjs --target=node22 --outfile=bundle/streamlabs-mcp.cjs --log-level=warning"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
@@ -24,6 +25,7 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "esbuild": "^0.28.2"
   }
 }

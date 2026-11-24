@@ -88,6 +88,7 @@ if (!gotTheLock) {
 const bootstrap = require('./updater/build/bootstrap.js');
 const bundleUpdater = require('./updater/build/bundle-updater.js');
 const { createShutdownCoordinator } = require('./app/util/shutdown-coordinator');
+const { startMcpServer } = require('./app/util/mcp-launcher');
 const uuid = require('uuid/v4');
 const semver = require('semver');
 const windowStateKeeper = require('electron-window-state');
@@ -276,6 +277,8 @@ app.on('ready', () => {
 let allowMainWindowClose = false;
 let shutdownStarted = false;
 let shutdownCoordinator;
+// The MCP server for AI agents (app/util/mcp-launcher.js); stopped on quit.
+let mcpServer;
 
 global.indexUrl = `file://${__dirname}/index.html`;
 
@@ -321,6 +324,9 @@ async function startApp() {
   if (process.platform === 'win32') {
     overlay = require('game_overlay');
   }
+
+  // Early is fine: it reaches Streamlabs over the local API and retries until that is up.
+  mcpServer = startMcpServer(app);
 
   await bundleUpdater(__dirname);
 
@@ -499,6 +505,7 @@ async function startApp() {
   });
 
   app.on('quit', () => {
+    if (mcpServer) mcpServer.stop();
     shutdownCoordinator.finishShutdown();
   });
 
@@ -698,9 +705,14 @@ ipcMain.on('protocolLinkReady', () => {
   if (pendingLink) workerWindow.send('protocolLink', pendingLink);
 });
 
+// A build handed over with unreleased changes (electron-builder/ai-preview.config.js) ships this
+// file next to the executable: updating to a public release would replace those changes.
+const skipAutoUpdate = fs.existsSync(path.join(path.dirname(app.getPath('exe')), 'skip-auto-update'));
+
 app.on('ready', () => {
   if (
     !process.argv.includes('--skip-update') &&
+    !skipAutoUpdate &&
     (process.env.NODE_ENV === 'production' || process.env.SLOBS_FORCE_AUTO_UPDATE)
   ) {
     // Windows uses our custom update, Mac uses electron-updater

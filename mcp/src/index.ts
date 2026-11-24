@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 /**
- * Streamlabs Desktop MCP server (stdio).
+ * Streamlabs Desktop MCP server.
  *
- * REMINDER: stdout is the transport. Never console.log here -- use log() from ./log.js,
- * which writes to stderr or SLD_MCP_LOG.
+ *   node dist/index.js              stdio (a client launches it as a command)
+ *   node dist/index.js --http=28195 HTTP on 127.0.0.1 (a client connects by URL; how Streamlabs
+ *                                   runs it, so the agent needs no command or path)
+ *
+ * REMINDER: in stdio mode stdout is the transport. Never console.log here -- use log() from
+ * ./log.js, which writes to stderr or SLD_MCP_LOG.
  */
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { runHttp } from './http.js';
 
 import { DesktopClient } from './desktop/client.js';
 import { Resolver } from './desktop/resolver.js';
@@ -71,27 +76,53 @@ Actions that change the active scene take effect immediately for viewers. Most e
 on the Streamlabs undo stack -- tool results say so, and undo_last_edit steps back.
 `.trim();
 
+/** Streamlabs-side state, shared by every MCP session (one per connected client). */
+export interface Shared {
+  client: DesktopClient;
+  resolver: Resolver;
+  events: EventBuffer;
+  snapshot: SnapshotBuilder;
+  commands: Commands;
+}
+
+/** One MCP server: instructions, lenient arguments, confirmations and all tools. */
+export function createMcpServer(shared: Shared): McpServer {
+  const server = new McpServer(
+    { name: 'streamlabs', version: '0.2.0' },
+    { instructions: serverMode() === 'demo' ? DEMO_INSTRUCTIONS : INSTRUCTIONS },
+  );
+  installLenientArgs(server);
+  const confirm = new Confirmer(server);
+  registerTools(server, { ...shared, confirm });
+  return server;
+}
+
+/** --http, --http=PORT or SLD_MCP_HTTP_PORT: serve over HTTP instead of stdio. */
+function httpPort(): number | null {
+  const arg = process.argv.find(a => a === '--http' || a.startsWith('--http='));
+  let raw = process.env.SLD_MCP_HTTP_PORT;
+  if (arg) raw = arg.includes('=') ? arg.split('=')[1] : '28195';
+  const port = raw ? Number(raw) : NaN;
+  return Number.isInteger(port) && port > 0 ? port : null;
+}
+
 async function main(): Promise<void> {
   const client = new DesktopClient();
   const resolver = new Resolver(client);
   const events = new EventBuffer(client);
   const snapshot = new SnapshotBuilder(client, resolver, events);
   const commands = new Commands(client);
-
-  const server = new McpServer(
-    { name: 'streamlabs', version: '0.2.0' },
-    { instructions: serverMode() === 'demo' ? DEMO_INSTRUCTIONS : INSTRUCTIONS },
-  );
-  installLenientArgs(server);
-
-  const confirm = new Confirmer(server);
-
-  registerTools(server, { client, resolver, snapshot, events, commands, confirm });
+  const shared: Shared = { client, resolver, events, snapshot, commands };
   log(`mode: ${serverMode()}`);
 
   // Connect the transport first so the client never waits on Streamlabs being up.
-  await server.connect(new StdioServerTransport());
-  log('MCP server connected on stdio');
+  const port = httpPort();
+  if (port) {
+    await runHttp(port, () => createMcpServer(shared));
+  } else {
+    await createMcpServer(shared).connect(new StdioServerTransport());
+    log('MCP server connected on stdio');
+  }
 
   // Best-effort warm-up. If Streamlabs isn't running yet, tools reconnect on demand.
   void client

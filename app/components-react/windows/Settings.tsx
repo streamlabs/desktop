@@ -74,6 +74,7 @@ export const SETTINGS_CONFIG: Record<ESettingsCategory, ISettingsConfig> = {
     },
   },
   [ESettingsCategory.Ultra]: { icon: 'icon-ultra', component: pages.Ultra },
+  [ESettingsCategory.AiAgents]: { icon: 'fas fa-robot', component: pages.AiAgentsSettings },
 };
 
 export default function Settings() {

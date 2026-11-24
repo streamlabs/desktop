@@ -61,6 +61,7 @@ export enum ESettingsCategory {
   Mobile = 'Mobile',
   Hotkeys = 'Hotkeys',
   Ultra = 'Ultra',
+  AiAgents = 'AI Agents',
   // ...
 }
 
@@ -486,6 +487,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       categories.push(ESettingsCategory.InstalledApps);
     }
 
+    categories.push(ESettingsCategory.AiAgents);
     categories.push(ESettingsCategory.GetSupport);
 
     // TODO: Lock behind admin?

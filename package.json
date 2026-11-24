@@ -27,6 +27,7 @@
     "package:beta": "cross-env SLD_COMPILE_FOR_BETA=1 yarn compile && yarn generate-agreement && rimraf dist && electron-builder build -w --x64 --config electron-builder/beta.config.js",
     "package:highlighter": "cross-env HIGHLIGHTER_ENV=staging yarn compile && cross-env SLOBS_NO_SIGN=true yarn package",
     "package:nosign": "yarn compile && cross-env SLOBS_NO_SIGN=true yarn package",
+    "package:ai-preview": "yarn compile:production && yarn generate-agreement && rimraf dist && cross-env SLOBS_NO_SIGN=true electron-builder build -w --x64 --config electron-builder/ai-preview.config.js",
     "eslint": "eslint \"{app,guest-api,obs-api,updater}/**/*.ts\" main.js",
     "typecheck": "yarn typecheck:app && yarn typecheck:react",
     "typecheck:app": "tsc --noEmit -p tsconfig.json",

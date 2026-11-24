@@ -59,6 +59,7 @@ export { CaptureService } from 'services/capture/capture';
 export { MetricsService } from 'services/metrics';
 export { HighlighterService } from 'services/highlighter';
 export { DiagnosticsService } from 'services/diagnostics';
+export { AgentConnectService } from 'services/agent-connect';
 export { RecordingModeService } from 'services/recording-mode';
 export { NavMenuService } from 'services/nav-menu';
 export { VideoSettingsService } from 'services/settings-v2/video';
@@ -179,6 +180,7 @@ import { RecentEventsService } from 'services/recent-events';
 import { AudioService } from './services/audio';
 import { SourceFiltersService } from './services/source-filters';
 import { DiagnosticsService } from './services/diagnostics';
+import { AgentConnectService } from './services/agent-connect';
 import { WebsocketService } from './services/websocket';
 import { LayoutService } from './services/layout';
 import { ProjectorService } from './services/projector';
@@ -276,6 +278,7 @@ export const AppServices = {
   AudioService,
   SourceFiltersService,
   DiagnosticsService,
+  AgentConnectService,
   WebsocketService,
   LayoutService,
   ProjectorService,
