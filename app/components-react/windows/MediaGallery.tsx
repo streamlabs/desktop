@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { clipboard, webUtils } from 'electron';
+import { webUtils } from 'electron';
 import * as remote from '@electron/remote';
 import { Layout, message, Card, Menu, Progress, PageHeader } from 'antd';
 import cx from 'classnames';
@@ -183,7 +183,7 @@ export default function MediaGallery() {
 
   async function handleCopy(href: string) {
     try {
-      await clipboard.writeText(href);
+      await remote.clipboard.writeText(href);
       message.success($t('URL Copied'), 1);
     } catch (e: unknown) {
       message.error($t('Failed to copy URL'), 1);
