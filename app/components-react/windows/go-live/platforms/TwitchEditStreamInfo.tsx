@@ -13,6 +13,7 @@ import AiHighlighterToggle from '../AiHighlighterToggle';
 import Badge from 'components-react/shared/DismissableBadge';
 import { EDismissable } from 'services/dismissables';
 import { CustomFieldsCheckbox } from '../CustomFieldsCheckbox';
+import os from 'os';
 
 export const TwitchEditStreamInfo = InputComponent((p: IPlatformComponentParams<'twitch'>) => {
   const twSettings = p.value;
@@ -128,7 +129,7 @@ const TwitchOptionalFields = memo((p: IPlatformComponentParams<'twitch'>) => {
           platform="twitch"
           onChange={newSettings => p.onChange({ ...p.value, ...newSettings })}
         />
-        {process.platform !== 'darwin' && !p.isUpdateMode && (
+        {(process.platform !== 'darwin' || (process.platform === 'darwin' && os.arch() === 'arm64')) && !p.isUpdateMode && (
           <InputWrapper layout="vertical" nolabel>
             <CheckboxInput
               style={{ display: 'inline-block' }}

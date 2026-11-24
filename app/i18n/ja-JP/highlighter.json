@@ -124,7 +124,7 @@
   "Game language must be English": "ゲームの言語は英語でなければなりません",
   "AI Highlighter only works if the game language is set to English.": "AI Highlighter only works if the game language is set to English.",
   "How to change the game language?": "ゲームの言語を変更する方法",
-  "English": "日本語",
+  "English": "英語",
   "Right now we only support the following game modes: Battle Royale, Zero Build, Reload, OG": "現在、以下のゲームモードのみをサポートしています：バトルロイヤル、ゼロビルド、リロード、OG",
   "Game and map visibility": "ゲームとマップの視認性",
   "Map must be visible and game must be fullscreen": "マップが表示され、ゲームは全画面表示でなければなりません",
