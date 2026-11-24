@@ -15,6 +15,7 @@ import { ENotificationType } from 'services/notifications';
 import { Service } from 'services/core/service';
 import { AudioNotificationType } from 'services/audio/audio';
 import { createEditorMouseMoveDispatcher } from 'util/editor-mouse-move';
+import { observeResize } from 'util/observe-resize';
 
 export default function StudioEditor() {
   const {
@@ -100,46 +101,24 @@ export default function StudioEditor() {
 
   // Track vertical orientation for placeholder
   useEffect(() => {
-    let timeout: number;
+    const placeholder = placeholderRef.current;
+    if (displayEnabled || performanceMode || !placeholder) return;
 
-    if (displayEnabled || performanceMode) return;
-
-    function checkVerticalOrientation() {
-      if (placeholderRef.current) {
-        const { clientWidth, clientHeight } = placeholderRef.current;
-        setVerticalPlaceholder(clientWidth / clientHeight < 16 / 9);
-      }
-
-      timeout = window.setTimeout(checkVerticalOrientation, 1000);
-    }
-
-    checkVerticalOrientation();
-
-    return () => {
-      if (timeout) clearTimeout(timeout);
-    };
+    return observeResize(placeholder, () => {
+      const { clientWidth, clientHeight } = placeholder;
+      setVerticalPlaceholder(clientWidth / clientHeight < 16 / 9);
+    });
   }, [displayEnabled, performanceMode]);
 
   // Track orientation for studio mode
   useEffect(() => {
-    if (!v.studioMode) return;
+    const container = studioModeRef.current;
+    if (!v.studioMode || !container) return;
 
-    let timeout: number;
-
-    function checkStudioModeOrientation() {
-      if (studioModeRef.current) {
-        const { clientWidth, clientHeight } = studioModeRef.current;
-        setStudioModeStacked(clientWidth / clientHeight < 16 / 9);
-      }
-
-      timeout = window.setTimeout(checkStudioModeOrientation, 1000);
-    }
-
-    checkStudioModeOrientation();
-
-    return () => {
-      if (timeout) clearTimeout(timeout);
-    };
+    return observeResize(container, () => {
+      const { clientWidth, clientHeight } = container;
+      setStudioModeStacked(clientWidth / clientHeight < 16 / 9);
+    });
   }, [v.studioMode]);
 
   // Keep one mouse-move dispatcher across renders so events from both canvases

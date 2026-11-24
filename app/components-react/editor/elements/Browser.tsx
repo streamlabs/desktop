@@ -10,7 +10,7 @@ export function Browser() {
   const { LayoutService, UserService } = Services;
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { renderElement } = useBaseElement(<BrowserEl />, mins, containerRef.current);
+  const { renderElement } = useBaseElement(<BrowserEl />, mins, containerRef);
 
   function url() {
     const src = LayoutService.views.currentTab.slottedElements[ELayoutElement.Browser]?.src;

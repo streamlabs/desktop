@@ -19,8 +19,9 @@ export default class Scrollable extends TsxComponent<ScrollableProps> {
     return (
       <OverlayScrollbarsComponent
         options={{
-          autoUpdate: true,
-          autoUpdateInterval: 200,
+          // null: update on DOM mutations only. `true` makes OverlayScrollbars poll the layout from a
+          // requestAnimationFrame loop, which keeps the renderer producing a frame on every vsync.
+          autoUpdate: null,
           className: this.props.className,
           resize: this.props.isResizable ? 'both' : 'none',
           sizeAutoCapable: this.props.autoSizeCapable,

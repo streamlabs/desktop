@@ -16,6 +16,7 @@ import RecordingSwitcher from 'components-react/windows/go-live/RecordingSwitche
 import { KevinChatIcon } from 'components-react/shared/icons';
 import KevinApprovalBubble from 'components-react/agent/KevinApprovalBubble';
 import { KevinAnalytics } from 'components-react/agent/kevin-analytics';
+import { useThrottledPulse } from 'components-react/hooks/useThrottledPulse';
 
 function StudioFooterComponent() {
   const {
@@ -311,6 +312,9 @@ const RecordingButton = memo(() => {
     recordingStatus,
   ]);
 
+  const recordButtonRef = useRef<HTMLButtonElement>(null);
+  useRecordingGlow(recordButtonRef, isRecording);
+
   return (
     <>
       <RecordingTimer isRecording={isRecording} />
@@ -326,6 +330,7 @@ const RecordingButton = memo(() => {
           }
         >
           <button
+            ref={recordButtonRef}
             className={cx(styles.recordButton, 'record-button', {
               active: isRecording,
             })}
@@ -338,6 +343,28 @@ const RecordingButton = memo(() => {
     </>
   );
 });
+
+const GLOW_PERIOD_MS = 2500;
+
+/**
+ * Pulsing glow around the REC button while recording. Same curve as the former CSS keyframes:
+ * over the first 70% of the period the glow spreads from 0 to 4px, then it fades out. Driven
+ * from JS (see useThrottledPulse) because a CSS box-shadow animation would repaint the window
+ * on every display refresh for the whole recording.
+ */
+function useRecordingGlow(ref: React.RefObject<HTMLElement>, isRecording: boolean) {
+  useThrottledPulse(isRecording, GLOW_PERIOD_MS, phase => {
+    const el = ref.current;
+    if (!el) return;
+    if (phase === null) {
+      el.style.boxShadow = '';
+      return;
+    }
+    const spread = Math.min(phase / 0.7, 1) * 4;
+    const alpha = phase < 0.7 ? 0.6 : 0.6 * (1 - (phase - 0.7) / 0.3);
+    el.style.boxShadow = `0 0 2px ${spread.toFixed(1)}px rgba(252, 62, 63, ${alpha.toFixed(2)})`;
+  });
+}
 
 const RecordingTimer = memo((p: { isRecording: boolean }) => {
   const { StreamingService } = Services;

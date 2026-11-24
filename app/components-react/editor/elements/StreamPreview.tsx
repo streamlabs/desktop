@@ -14,7 +14,7 @@ export function StreamPreview() {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { renderElement } = useBaseElement(<StreamPreviewElement />, mins, containerRef.current);
+  const { renderElement } = useBaseElement(<StreamPreviewElement />, mins, containerRef);
 
   const { selectiveRecording } = useVuex(() => ({
     selectiveRecording: StreamingService.state.selectiveRecording,

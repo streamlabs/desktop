@@ -54,7 +54,7 @@ export function LegacyEvents(p: { onPopout: () => void }) {
     });
   }
 
-  const { renderElement } = useBaseElement(<Element />, mins, containerRef.current);
+  const { renderElement } = useBaseElement(<Element />, mins, containerRef);
 
   function Element() {
     if (!UserService.isLoggedIn) {
