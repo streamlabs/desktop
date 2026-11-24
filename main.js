@@ -367,10 +367,6 @@ function forceShutdown(reason) {
   console.warn(`[Shutdown] Force exiting application: ${reason}`);
   allowMainWindowClose = true;
 
-  BrowserWindow.getAllWindows().forEach(window => {
-    if (!window.isDestroyed()) window.destroy();
-  });
-
   try {
     const crashHandler = require('crash-handler');
     if (typeof crashHandler.markShutdownIntent === 'function') {
@@ -379,6 +375,10 @@ function forceShutdown(reason) {
   } catch (e) {
     console.warn('[Shutdown] Failed to mark shutdown intent', e);
   }
+
+  BrowserWindow.getAllWindows().forEach(window => {
+    if (!window.isDestroyed()) window.destroy();
+  });
 
   app.exit(0);
 }
