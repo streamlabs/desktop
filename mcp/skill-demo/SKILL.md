@@ -51,11 +51,11 @@ the streamer. Make it your own each time:
   survival game "Base Camp"). Don't reuse the same set every time.
 - **Write the on-screen text** in the streamer's voice: short, punchy, a little playful. Under 25
   characters reads best. No emoji (they show up as empty boxes).
-- **Webcam where the streamer is on camera**, by streaming convention: gameplay and chatting
-  scenes have it; **starting soon, be right back and ending scenes don't** (the streamer isn't
-  there yet, or has stepped away). Add one to those only if the streamer asks.
+- **Webcam only where the streamer is on camera**, like the gameplay scene. Scenes for when
+  they aren't there yet or have stepped away (starting soon, be right back, ending) usually
+  don't have one, unless the streamer asks.
 - **Choose layouts**: vary where the webcam sits (`anchor`) and how big it is (`width_percent`
-  15–40). A chatting scene can have a big webcam.
+  15–40).
 
 Must-haves: one **gameplay** scene with `{"role": "game", "game": "<the game>"}` plus a
 `webcam`. The game is the show there: no text over it unless the streamer asks for some. The game capture fills the screen and shows a "Looking for a game to capture"

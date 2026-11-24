@@ -1465,6 +1465,9 @@ function placeWhenSized(p: Omit<PendingPlacement, 'until'>): void {
             else if ('frame' in p.opts) await upsertWebcamFrame(p.ctx, p.scene, item, p.opts.frame);
             else {
               await place(p.ctx, p.scene, item, await canvasOf(p.ctx), p.opts);
+              // A camera that just started: now keep the scene's text clear of it (its text was
+              // laid out while it had no size) and draw a waiting frame.
+              if (item.type === 'dshow_input') await afterWebcamChange(p.ctx, p.scene);
               // A frame waiting for this camera goes on after it has its real size and spot.
               const frameJob = pendingPlacements.find(
                 q =>
