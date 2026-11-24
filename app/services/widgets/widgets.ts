@@ -425,8 +425,9 @@ export class WidgetsService
   private importWidgetJSON(widget: ISerializableWidget, scene: Scene) {
     let widgetItem: SceneItem;
 
-    // First, look for an existing widget of the same type
+    // First, look for an existing horizontal widget of the same type
     widgetItem = scene.getItems().find(item => {
+      if (item.display === 'vertical') return false;
       const source = item.getSource();
       if (source.getPropertiesManagerType() !== 'widget') return false;
       return source.getPropertiesManagerSettings().widgetType === widget.type;
@@ -448,24 +449,43 @@ export class WidgetsService
       'horizontal',
     );
 
-    // if this is a dual output scene, also create the vertical scene item
-    if (this.dualOutputService.views.hasNodeMap()) {
-      Promise.resolve(
-        this.dualOutputService.actions.return.createOrAssignOutputNode(
-          widgetItem,
-          'vertical',
-          false,
-          widgetItem.sceneId,
-        ),
-      ).then(verticalSceneItem => {
+    // if this is a dual output collection, also create the vertical scene item
+    // Note: check the collection rather than the scene, because a new empty scene
+    // does not have node map entries yet
+    if (this.dualOutputService.views.hasSceneNodeMaps) {
+      const verticalNodeId = this.dualOutputService.views.getVerticalNodeId(
+        widgetItem.id,
+        widgetItem.sceneId,
+      );
+      const existingVerticalItem = verticalNodeId ? scene.getItem(verticalNodeId) : null;
+
+      if (existingVerticalItem) {
         this.createWidgetFromJSON(
           widget,
-          verticalSceneItem,
+          existingVerticalItem,
           this.videoSettingsService.baseResolutions.horizontal.baseWidth,
           this.videoSettingsService.baseResolutions.horizontal.baseHeight,
           'vertical',
         );
-      });
+      } else {
+        Promise.resolve(
+          this.dualOutputService.actions.return.createOrAssignOutputNode(
+            widgetItem,
+            'vertical',
+            false,
+            widgetItem.sceneId,
+          ),
+        ).then(verticalSceneItem => {
+          if (!verticalSceneItem) return;
+          this.createWidgetFromJSON(
+            widget,
+            verticalSceneItem,
+            this.videoSettingsService.baseResolutions.horizontal.baseWidth,
+            this.videoSettingsService.baseResolutions.horizontal.baseHeight,
+            'vertical',
+          );
+        });
+      }
     }
 
     this.widgetCreated.next({ type: widget.type, serializedWidget: widget });

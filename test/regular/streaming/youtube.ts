@@ -29,6 +29,8 @@ import {
   waitForDisplayed,
 } from '../../helpers/modules/core';
 import * as moment from 'moment';
+import type { UserService } from '../../../app/services/user';
+import { getApiClient } from '../../helpers/api-client';
 import { assertFormContains, fillForm, readFields, useForm } from '../../helpers/modules/forms';
 import { ListInputController } from '../../helpers/modules/forms/list';
 import { logOut, releaseUserInPool } from '../../helpers/webdriver/user';
@@ -286,6 +288,7 @@ test(
 
 test('Youtube streaming is disabled', async t => {
   skipCheckingErrorsInLog();
+  // Log in with a YouTube account that has streaming disabled
   await logIn('youtube', { streamingIsDisabled: true, notStreamable: true });
 
   t.true(
@@ -296,4 +299,14 @@ test('Youtube streaming is disabled', async t => {
   await clickGoLive();
   await focusChild();
   await waitForDisplayed('button=Enable Live Streaming');
+  await clickButton('Close');
+  await logOut(t);
+
+  // Log in with a non-YouTube account
+  // TODO: Enable when test account with this profile is added to user pool
+  // await logIn('twitch', { multistream: true, streamingIsDisabled: true });
+  // t.true(
+  //   await isDisplayed('[data-name="youtube-streaming-disabled"]', { timeout: 15000 }),
+  //   'The streaming-disabled message should be visible for a merged account',
+  // );
 });

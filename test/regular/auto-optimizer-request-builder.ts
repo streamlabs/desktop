@@ -368,7 +368,7 @@ test('allows both standard canvases to be benchmarked when only YouTube has a pr
             id: 'vertical-youtube',
             kind: 'youtube-unbound',
             server: 'probe-server',
-            streamKey: 'probe-key',
+            streamKey: 'probe-key1',
           },
         ],
       },

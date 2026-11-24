@@ -18,12 +18,6 @@ import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import Vue from 'vue';
 import { IVideo } from 'obs-studio-node';
 import { TOutputOrientation } from 'services/restream';
-import {
-  isTwitchOrYouTubeOnlyStream,
-  selectedStreamPlatforms,
-} from '../../streaming/stream-resolution-policy';
-import { NotificationsService, ENotificationType } from 'services/notifications';
-import { $t } from 'services/i18n';
 
 export interface ISavedGoLiveSettings {
   platforms: Partial<Record<TPlatform, IPlatformFlags>>;
@@ -130,7 +124,6 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
   @Inject() private streamSettingsService: StreamSettingsService;
   @Inject() private streamingService: StreamingService;
   @Inject() private videoSettingsService: VideoSettingsService;
-  @Inject() private notificationsService: NotificationsService;
 
   static defaultState: IStreamSettingsState = {
     protectedModeEnabled: true,
@@ -224,45 +217,6 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
     });
 
     this.settingsService.setSettings(streamName, streamFormData);
-  }
-
-  /** Enforce the stream-output ceiling independently of the optimizer prompt flag. */
-  async applyStreamOutputLimits(settings = this.state.goLiveSettings): Promise<void> {
-    // Protected-mode selections must not affect an unprotected/legacy stream.
-    if (!this.state.protectedModeEnabled || !this.userService.isLoggedIn || !settings) return;
-    await this.videoSettingsService.flushPendingCanvasSettings();
-    const platforms = selectedStreamPlatforms(settings);
-    const changes = await this.videoSettingsService.limitStreamOutputs(
-      platforms,
-      this.streamingService.views.isDualOutputMode,
-    );
-    if (!platforms.length || isTwitchOrYouTubeOnlyStream(platforms)) {
-      this.notificationsService.removeByCode('STREAM_OUTPUT_SETTINGS_LIMIT');
-    } else if (changes.resolutionChanged || changes.bitrateChanged) {
-      // Report only the limits actually applied, replacing the previous variant.
-      this.notificationsService.removeByCode('STREAM_OUTPUT_SETTINGS_LIMIT');
-      let message: string;
-      if (changes.resolutionChanged && changes.bitrateChanged) {
-        message = $t(
-          'Stream output settings were reduced to fit within 1080p and 6000 Kbps because a platform other than Twitch or YouTube is enabled. Your canvas resolution is unchanged.',
-        );
-      } else if (changes.resolutionChanged) {
-        message = $t(
-          'Stream output resolution was reduced to fit within 1080p because a platform other than Twitch or YouTube is enabled. Your canvas resolution is unchanged.',
-        );
-      } else {
-        message = $t(
-          'Stream video bitrate was reduced to 6000 Kbps because a platform other than Twitch or YouTube is enabled for multistreaming.',
-        );
-      }
-      this.notificationsService.push({
-        code: 'STREAM_OUTPUT_SETTINGS_LIMIT',
-        message,
-        type: ENotificationType.INFO,
-        lifeTime: -1,
-        singleton: true,
-      });
-    }
   }
 
   setGoLiveSettings(settingsPatch: Partial<IGoLiveSettings>) {

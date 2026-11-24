@@ -56,6 +56,7 @@ export default function Main() {
     ScenesService,
     CustomizationService,
     StreamSettingsService,
+    WidgetsService,
   } = Services;
   const mainWindowEl = useRef<HTMLDivElement | null>(null);
   const mainMiddleEl = useRef<HTMLDivElement | null>(null);
@@ -135,28 +136,49 @@ export default function Main() {
 
       if (!fileList || fileList.length < 1) return;
 
-      const files: string[] = [];
+      const droppedFiles: string[] = [];
       let fi = fileList.length;
-      while (fi--) files.push(webUtils.getPathForFile(fileList.item(fi)!));
+      while (fi--) droppedFiles.push(webUtils.getPathForFile(fileList.item(fi)!));
 
-      const isDir = await isDirectory(files[0]).catch(err => {
-        console.error('Error checking if drop is directory', err);
-        return false;
-      });
+      const isDir =
+        droppedFiles.length === 1 &&
+        (await isDirectory(droppedFiles[0]).catch(err => {
+          console.error('Error checking if drop is directory', err);
+          return false;
+        }));
 
-      if (files.length > 1 || isDir) {
-        remote.dialog
-          .showMessageBox(remote.getCurrentWindow(), {
-            title: 'Streamlabs Desktop',
-            message: $t('Are you sure you want to import multiple files?'),
-            type: 'warning',
-            buttons: [$t('Cancel'), $t('OK')],
-          })
-          .then(({ response }) => {
-            if (!response) return;
-            EditorCommandsService.actions.executeCommand('AddFilesCommand', activeSceneId, files);
-          });
-      } else {
+      // confirm the whole drop before importing anything
+      if (droppedFiles.length > 1 || isDir) {
+        const { response } = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+          title: 'Streamlabs Desktop',
+          message: $t('Are you sure you want to import multiple files?'),
+          type: 'warning',
+          buttons: [$t('Cancel'), $t('OK')],
+        });
+        if (!response) return;
+      }
+
+      // widget files are imported as widgets rather than added as file sources
+      const widgetFiles = new Set<string>();
+      for (const file of droppedFiles) {
+        if (
+          file.toLowerCase().endsWith('.widget') &&
+          !(await isDirectory(file).catch(() => false))
+        ) {
+          widgetFiles.add(file);
+        }
+      }
+      const isWidgetFile = (file: string) => widgetFiles.has(file);
+      for (const widgetFile of droppedFiles.filter(isWidgetFile)) {
+        try {
+          await WidgetsService.actions.return.loadWidgetFile(widgetFile, activeSceneId);
+        } catch (err: unknown) {
+          console.error('Error importing dropped widget file', widgetFile, err);
+        }
+      }
+
+      const files = droppedFiles.filter(file => !isWidgetFile(file));
+      if (files.length > 0) {
         EditorCommandsService.actions.executeCommand('AddFilesCommand', activeSceneId, files);
       }
     },

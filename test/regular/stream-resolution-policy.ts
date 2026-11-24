@@ -1,13 +1,11 @@
 import test from 'ava';
 import {
-  isTwitchOnlyStream,
   isMultiplatformStream,
   isTwitchOrYouTubeOnlyStream,
   allowsExperimentalTwitchBitrate,
   shouldLimitMultistreamBitrate,
-  selectedStreamPlatforms,
-  streamOutputResolutionPatches,
   streamResolutionCeiling,
+  fitStreamResolution,
 } from '../../app/services/streaming/stream-resolution-policy';
 import { shouldShowPlatformResolutionLimit } from '../../app/components-react/shared/auto-optimizer/presentation';
 import { autoOptimizerRecommendationBitrateCap } from '../../app/services/auto-optimizer/bitrate-policy';
@@ -26,27 +24,12 @@ test('multistream bitrate is capped per ordinary output, not per canvas or Twitc
   );
 });
 
-test('Twitch Dual Format counts as one platform; other platforms cap the entire stream', t => {
-  t.true(isTwitchOnlyStream(['twitch', 'twitch']));
-  for (const platforms of [[], ['youtube'], ['twitch', 'youtube'], ['twitch', 'custom']]) {
-    t.false(isTwitchOnlyStream(platforms));
-  }
+test('optimizer resolution tiers allow horizontal 1440p and vertical 1080p', t => {
   t.deepEqual(streamResolutionCeiling(true), { width: 2560, height: 1440 });
   t.deepEqual(streamResolutionCeiling(true, true), { width: 1080, height: 1920 });
-  t.deepEqual(
-    selectedStreamPlatforms({
-      platforms: { twitch: { enabled: true }, youtube: { enabled: false } },
-      customDestinations: [{ enabled: true, dualStream: true }],
-    }),
-    ['twitch'],
-  );
 });
 
-test('only Twitch and YouTube selections preserve configured output sizes and bitrate allowances', t => {
-  const videos = {
-    horizontal: { outputWidth: 3840, outputHeight: 2160 },
-    vertical: { outputWidth: 2160, outputHeight: 3840 },
-  };
+test('Twitch and YouTube selections allow higher optimizer recommendations', t => {
   for (const platforms of [
     ['twitch'],
     ['youtube'],
@@ -57,15 +40,13 @@ test('only Twitch and YouTube selections preserve configured output sizes and bi
     t.true(isTwitchOrYouTubeOnlyStream(platforms));
     t.is(allowsExperimentalTwitchBitrate(platforms), platforms.includes('twitch'));
     t.false(shouldLimitMultistreamBitrate(platforms));
-    t.deepEqual(streamOutputResolutionPatches(platforms, videos), {});
   }
   t.false(isTwitchOrYouTubeOnlyStream([]));
   t.false(allowsExperimentalTwitchBitrate([]));
   t.false(shouldLimitMultistreamBitrate([]));
-  t.deepEqual(streamOutputResolutionPatches([], videos), {});
 });
 
-test('any other selected platform caps both outputs, including custom and unknown destinations', t => {
+test('other platforms retain conservative optimizer recommendation limits', t => {
   for (const other of ['facebook', 'kick', 'tiktok', 'custom', 'other', 'unknown']) {
     for (const platforms of [
       [other],
@@ -76,56 +57,29 @@ test('any other selected platform caps both outputs, including custom and unknow
       t.false(isTwitchOrYouTubeOnlyStream(platforms));
       t.false(allowsExperimentalTwitchBitrate(platforms));
       t.is(shouldLimitMultistreamBitrate(platforms), platforms.length > 1);
-      t.deepEqual(
-        streamOutputResolutionPatches(platforms, {
-          horizontal: { outputWidth: 2560, outputHeight: 1440 },
-          vertical: { outputWidth: 1440, outputHeight: 2560 },
-        }),
-        {
-          horizontal: { outputWidth: 1920, outputHeight: 1080 },
-          vertical: { outputWidth: 1080, outputHeight: 1920 },
-        },
-      );
     }
   }
   t.is(autoOptimizerRecommendationBitrateCap('standard', ['kick']), 8000);
   t.is(autoOptimizerRecommendationBitrateCap('standard', ['twitch', 'youtube', 'kick']), 6000);
-  t.deepEqual(
-    selectedStreamPlatforms({
-      platforms: { youtube: { enabled: true }, facebook: { enabled: false } },
-      customDestinations: [
-        { enabled: true },
-        { enabled: false },
-        { enabled: true, dualStream: true },
-      ],
-    }),
-    ['youtube', 'custom'],
-  );
 });
 
-test('restricted output limits preserve aspect, orientation, canvas and cadence', t => {
-  const videos = {
-    horizontal: { outputWidth: 2560, outputHeight: 1440 },
-    vertical: { outputWidth: 1440, outputHeight: 2560 },
-  };
-  t.deepEqual(streamOutputResolutionPatches(['twitch'], videos), {});
-  t.deepEqual(streamOutputResolutionPatches(['twitch', 'kick'], videos), {
-    horizontal: { outputWidth: 1920, outputHeight: 1080 },
-    vertical: { outputWidth: 1080, outputHeight: 1920 },
+test('optimizer resolution fitting preserves aspect and orientation without upscaling', t => {
+  t.deepEqual(fitStreamResolution(2560, 1440, streamResolutionCeiling(false)), {
+    width: 1920,
+    height: 1080,
   });
-  t.deepEqual(
-    streamOutputResolutionPatches(['facebook'], {
-      horizontal: { outputWidth: 3440, outputHeight: 1440 },
-    }),
-    { horizontal: { outputWidth: 1920, outputHeight: 802 } },
-  );
-  t.deepEqual(
-    streamOutputResolutionPatches(['youtube'], {
-      horizontal: { outputWidth: 1280, outputHeight: 720 },
-    }),
-    {},
-  );
-  t.deepEqual(videos.horizontal, { outputWidth: 2560, outputHeight: 1440 });
+  t.deepEqual(fitStreamResolution(1440, 2560, streamResolutionCeiling(false, true)), {
+    width: 1080,
+    height: 1920,
+  });
+  t.deepEqual(fitStreamResolution(3440, 1440, streamResolutionCeiling(false)), {
+    width: 1920,
+    height: 802,
+  });
+  t.deepEqual(fitStreamResolution(1280, 720, streamResolutionCeiling(false)), {
+    width: 1280,
+    height: 720,
+  });
 });
 
 test('1080p ceiling notice requires a restricted platform and an active result at the cap', t => {

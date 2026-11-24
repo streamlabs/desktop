@@ -21,6 +21,7 @@ import {
   EFileFormat,
   convertFileFormatToRecordingFormat,
   EncoderQueryService,
+  isHardwareEncoderSetting,
   resolveAvailableEncoderOptionValue,
 } from './output';
 import type { TOutputSettingsMode } from './output';
@@ -929,8 +930,11 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       `The selected encoder ${encoderSetting.value} is not valid for the current configuration. Resetting to a valid encoder.`,
     );
 
+    // Only a missing hardware encoder points at the graphics driver. Anything else (a
+    // software encoder, an unknown or stale saved value) is a settings problem, and
+    // telling the user to update drivers sends them chasing the wrong fix.
     const encoderMessage =
-      getOS() === OS.Windows
+      getOS() === OS.Windows && isHardwareEncoderSetting(encoderSetting.value)
         ? $t(
             'Your stream encoder has been reset to Software (x264). This can be caused by out of date graphics drivers. Please update your graphics drivers to continue using hardware encoding.',
           )

@@ -102,7 +102,7 @@ test('Migrate the twitch account to the protected mode', async t => {
   const streamSettings = (await getApiClient()).getResource<StreamSettingsService>(
     'StreamSettingsService',
   );
-  streamSettings.setSettings({ key: 'fake key', protectedModeMigrationRequired: true });
+  streamSettings.setSettings({ key: 'fake key12', protectedModeMigrationRequired: true });
 
   await restartApp(t); // restarting the app should call migration again
 

@@ -1,5 +1,5 @@
 import * as remote from '@electron/remote';
-import { Button, message } from 'antd';
+import { Button, Input, message } from 'antd';
 import cx from 'classnames';
 import React, { useMemo, useState } from 'react';
 import { getOS, OS } from 'util/operating-systems';
@@ -7,7 +7,7 @@ import { $t } from '../../../services/i18n';
 import { useVuex } from '../../hooks';
 import { alertAsync } from '../../modals';
 import { Services } from '../../service-provider';
-import { SwitchInput, TextInput } from '../../shared/inputs';
+import { SwitchInput } from '../../shared/inputs';
 import { ObsSettingsSection } from './ObsSettings';
 import styles from './Support.m.less';
 
@@ -262,9 +262,11 @@ function ReportingSection() {
               {$t(
                 'The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.',
               )}
-              <TextInput
+              {/* Plain antd Input: Modal.confirm renders outside any Form, and TextInput's
+                  Form.Item wrapper would replace the value with the missing form's undefined */}
+              <Input
                 readOnly
-                style={{ marginTop: 20, marginLeft: -10 }}
+                style={{ marginTop: 20 }}
                 value={r.report_code}
                 addonAfter={
                   <Button onClick={() => remote.clipboard.writeText(r.report_code)}>
