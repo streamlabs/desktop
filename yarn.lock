@@ -3257,13 +3257,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/extract-zip@npm:1.6.2":
-  version: 1.6.2
-  resolution: "@types/extract-zip@npm:1.6.2"
-  checksum: 5f33ebe9d22d31537b943ef4bb6d51829d5f8e8ed7c884813b2c698a228ecab0dd0e6175561e4d5c22d04a57c78c7cf0d0bea71209a4aeb122907aa8e4855d09
-  languageName: node
-  linkType: hard
-
 "@types/fs-extra@npm:8.1.1":
   version: 8.1.1
   resolution: "@types/fs-extra@npm:8.1.1"
@@ -6396,18 +6389,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"concat-stream@npm:1.6.2":
-  version: 1.6.2
-  resolution: "concat-stream@npm:1.6.2"
-  dependencies:
-    buffer-from: ^1.0.0
-    inherits: ^2.0.3
-    readable-stream: ^2.2.2
-    typedarray: ^0.0.6
-  checksum: 1ef77032cb4459dcd5187bd710d6fc962b067b64ec6a505810de3d2b8cc0605638551b42f8ec91edf6fcd26141b32ef19ad749239b58fae3aba99187adc32285
-  languageName: node
-  linkType: hard
-
 "concordance@npm:^5.0.1":
   version: 5.0.1
   resolution: "concordance@npm:5.0.1"
@@ -6823,15 +6804,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:2.6.9, debug@npm:^2.2.0, debug@npm:^2.6.9":
-  version: 2.6.9
-  resolution: "debug@npm:2.6.9"
-  dependencies:
-    ms: 2.0.0
-  checksum: d2f51589ca66df60bf36e1fa6e4386b318c3f1e06772280eea5b1ae9fd3d05e9c2b7fd8a7d862457d00853c75b00451aa2d7459b924629ee385287a650f58fe6
-  languageName: node
-  linkType: hard
-
 "debug@npm:4, debug@npm:^4.0.1, debug@npm:^4.1.0, debug@npm:^4.1.1":
   version: 4.3.1
   resolution: "debug@npm:4.3.1"
@@ -6865,6 +6837,15 @@ __metadata:
     supports-color:
       optional: true
   checksum: 3dbad3f94ea64f34431a9cbf0bafb61853eda57bff2880036153438f50fb5a84f27683ba0d8e5426bf41a8c6ff03879488120cf5b3a761e77953169c0600a708
+  languageName: node
+  linkType: hard
+
+"debug@npm:^2.2.0, debug@npm:^2.6.9":
+  version: 2.6.9
+  resolution: "debug@npm:2.6.9"
+  dependencies:
+    ms: 2.0.0
+  checksum: d2f51589ca66df60bf36e1fa6e4386b318c3f1e06772280eea5b1ae9fd3d05e9c2b7fd8a7d862457d00853c75b00451aa2d7459b924629ee385287a650f58fe6
   languageName: node
   linkType: hard
 
@@ -8057,7 +8038,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"extract-zip@npm:2.0.1, extract-zip@npm:^2.0.0":
+"extract-zip@npm:2.0.1, extract-zip@npm:^2.0.0, extract-zip@npm:^2.0.1":
   version: 2.0.1
   resolution: "extract-zip@npm:2.0.1"
   dependencies:
@@ -8071,20 +8052,6 @@ __metadata:
   bin:
     extract-zip: cli.js
   checksum: 8cbda9debdd6d6980819cc69734d874ddd71051c9fe5bde1ef307ebcedfe949ba57b004894b585f758b7c9eeeea0e3d87f2dda89b7d25320459c2c9643ebb635
-  languageName: node
-  linkType: hard
-
-"extract-zip@npm:^1.6.7":
-  version: 1.6.7
-  resolution: "extract-zip@npm:1.6.7"
-  dependencies:
-    concat-stream: 1.6.2
-    debug: 2.6.9
-    mkdirp: 0.5.1
-    yauzl: 2.4.1
-  bin:
-    extract-zip: cli.js
-  checksum: 27047b70ab043785f1fc89f7c041e0f97046e7c187685e119b073cffbbc8e7173b7f05a5ec7edb7d621dc6a86daf67441878ecb29d0dd078ae22764d0a934164
   languageName: node
   linkType: hard
 
@@ -8204,15 +8171,6 @@ __metadata:
   dependencies:
     websocket-driver: ">=0.5.1"
   checksum: d49a62caf027f871149fc2b3f3c7104dc6d62744277eb6f9f36e2d5714e847d846b9f7f0d0b7169b25a012e24a594cde11a93034b30732e4c683f20b8a5019fa
-  languageName: node
-  linkType: hard
-
-"fd-slicer@npm:~1.0.1":
-  version: 1.0.1
-  resolution: "fd-slicer@npm:1.0.1"
-  dependencies:
-    pend: ~1.2.0
-  checksum: 5a264d6da228eed31ec7b60b385667fe04c7d0ed5bd069b9fe32be51dd6ab1e1cc36b443b718948e28dbfd4d52963cffc02361d658a8e3983f009f4762d85e24
   languageName: node
   linkType: hard
 
@@ -11594,17 +11552,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mkdirp@npm:0.5.1":
-  version: 0.5.1
-  resolution: "mkdirp@npm:0.5.1"
-  dependencies:
-    minimist: 0.0.8
-  bin:
-    mkdirp: bin/cmd.js
-  checksum: ed1ab49bb1d06c88dba7cfe930a3186f2605b5465aab7c8f24119baaba6e38f9ab4ac1695c68f476c65a48df2a69a8495049cd6e26c360ea082151a0771343d2
-  languageName: node
-  linkType: hard
-
 "mkdirp@npm:^0.5.1":
   version: 0.5.5
   resolution: "mkdirp@npm:0.5.5"
@@ -14130,7 +14077,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"readable-stream@npm:^2.0.0, readable-stream@npm:^2.0.1, readable-stream@npm:^2.0.5, readable-stream@npm:^2.0.6, readable-stream@npm:^2.2.2, readable-stream@npm:^2.3.5, readable-stream@npm:~2.3.6":
+"readable-stream@npm:^2.0.0, readable-stream@npm:^2.0.1, readable-stream@npm:^2.0.5, readable-stream@npm:^2.0.6, readable-stream@npm:^2.3.5, readable-stream@npm:~2.3.6":
   version: 2.3.7
   resolution: "readable-stream@npm:2.3.7"
   dependencies:
@@ -15156,7 +15103,6 @@ __metadata:
     "@types/archiver": 2.1.3
     "@types/classnames": 2.2.11
     "@types/codemirror": 5.60.10
-    "@types/extract-zip": 1.6.2
     "@types/fs-extra": 8.1.1
     "@types/humps": 1.1.3
     "@types/lodash": 4.14.168
@@ -15214,7 +15160,7 @@ __metadata:
     eslint-plugin-react-hooks: 4.2.0
     eslint-plugin-vue: 6.1.2
     execa: 5.0.0
-    extract-zip: ^1.6.7
+    extract-zip: ^2.0.1
     fetch-mock: 7.7.3
     file-loader: 1.1.11
     font-manager: "https://slobs-font-manager.s3-us-west-2.amazonaws.com/font-manager-0.0.0.tar.gz"
@@ -16585,13 +16531,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typedarray@npm:^0.0.6":
-  version: 0.0.6
-  resolution: "typedarray@npm:0.0.6"
-  checksum: 33b39f3d0e8463985eeaeeacc3cb2e28bc3dfaf2a5ed219628c0b629d5d7b810b0eb2165f9f607c34871d5daa92ba1dc69f49051cf7d578b4cbd26c340b9d1b1
-  languageName: node
-  linkType: hard
-
 "typedoc@npm:0.24.8":
   version: 0.24.8
   resolution: "typedoc@npm:0.24.8"
@@ -17883,15 +17822,6 @@ __metadata:
     y18n: ^5.0.5
     yargs-parser: ^21.1.1
   checksum: 73b572e863aa4a8cbef323dd911d79d193b772defd5a51aab0aca2d446655216f5002c42c5306033968193bdbf892a7a4c110b0d77954a7fdf563e653967b56a
-  languageName: node
-  linkType: hard
-
-"yauzl@npm:2.4.1":
-  version: 2.4.1
-  resolution: "yauzl@npm:2.4.1"
-  dependencies:
-    fd-slicer: ~1.0.1
-  checksum: 7ce67c296c777d0713cac88aff66d7b2101aef7077df293c556007670507c8ce44303cb4fcbc334dfd29b0720b45f2d8468f52b49710d101b2f5fef664d0fb22
   languageName: node
   linkType: hard
 

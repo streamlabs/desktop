@@ -58,3 +58,17 @@ export function resolveAvailableEncoderOptionValue<T extends string>(
     return option.value === encoder || option.value === normalizedEncoder;
   })?.value;
 }
+
+// Hardware encoder families as they appear in OBS encoder ids and Simple-mode aliases:
+// NVENC (obs_nvenc_*, jim_*nvenc, ffmpeg_*nvenc, nvenc*), QuickSync (obs_qsv11*, qsv*),
+// AMF (*_texture_amf, amd*) and Apple VideoToolbox (com.apple.videotoolbox.*, apple_*).
+const HARDWARE_ENCODER_PATTERN = /nvenc|qsv|amf|^amd|videotoolbox|^apple_/i;
+
+/**
+ * Whether a saved streaming encoder value names a hardware encoder. Only these can go missing
+ * because of a GPU driver problem, so only these should send the user to update drivers.
+ */
+export function isHardwareEncoderSetting(encoder: string | undefined): boolean {
+  if (!encoder) return false;
+  return HARDWARE_ENCODER_PATTERN.test(legacyEncoderAliasToObsEncoderIdOrSelf(encoder));
+}

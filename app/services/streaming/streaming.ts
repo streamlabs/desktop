@@ -33,7 +33,14 @@ import {
 import { Inject } from 'services/core/injector';
 import moment from 'moment';
 import padStart from 'lodash/padStart';
-import { IOutputSettings, OutputSettingsService, SettingsService } from 'services/settings';
+import {
+  findPlatformCodecIncompatibility,
+  IOutputSettings,
+  IPlatformCodecIncompatibility,
+  OutputSettingsService,
+  SettingsService,
+  videoCodecLabel,
+} from 'services/settings';
 import { WindowsService } from 'services/windows';
 import { Subject } from 'rxjs';
 import {
@@ -63,7 +70,10 @@ import {
   INotification,
   NotificationsService,
 } from 'services/notifications';
-import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
+import {
+  IEncoderProfile,
+  VideoEncodingOptimizationService,
+} from 'services/video-encoding-optimizations';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import {
   getDestinationId,
@@ -516,9 +526,9 @@ export class StreamingService
       }
     }
 
-    // Also covers unattended starts and users who have already completed or
-    // declined Auto Optimizer. A failed video transaction must stop Go Live.
-    await this.streamSettingsService.applyStreamOutputLimits(settings);
+    // Canvas edits are batched; finish their transaction before capturing video
+    // contexts or starting platform setup.
+    await this.videoSettingsService.flushPendingCanvasSettings();
 
     /**
      * SET CUSTOM DESTINATIONS SETTINGS
@@ -554,6 +564,12 @@ export class StreamingService
 
     // all platforms to stream
     const platforms = this.views.enabledPlatforms;
+
+    // Fail before any platform is set up (broadcasts created, stream keys fetched) when a
+    // target cannot accept the selected codec. OSN only catches this for `rtmp_common`
+    // services; `rtmp_custom` platforms like Kick otherwise start and then reconnect forever.
+    // Checked again after the optimized profile is applied, since that can change the encoder.
+    this.throwIfPlatformCodecIncompatible(platforms);
 
     /**
      * SET PLATFORM STREAM SETTINGS
@@ -797,12 +813,24 @@ export class StreamingService
     // apply optimized settings
     const optimizer = this.videoEncodingOptimizationService;
     if (optimizer.state.useOptimizedProfile && settings.optimizedProfile) {
-      if (unattendedMode && optimizer.canApplyProfileFromCache()) {
-        optimizer.applyProfileFromCache();
+      const profile =
+        unattendedMode && optimizer.canApplyProfileFromCache()
+          ? optimizer.state.lastSelectedProfile
+          : settings.optimizedProfile;
+
+      // A profile is fetched for the encoder selected at that time, and applying it writes
+      // that encoder back. If the encoder has changed since (e.g. "Use H.264 Codec" after an
+      // HEVC profile loaded, or a fetch that resolved after the switch), the profile is stale:
+      // skip it rather than undo the switch.
+      if (this.isOptimizedProfileForCurrentEncoder(profile)) {
+        optimizer.applyProfile(profile);
+        await this.runCheck('applyOptimizedSettings');
       } else {
-        optimizer.applyProfile(settings.optimizedProfile);
+        console.log('Skipping optimized profile fetched for a different encoder', profile.encoder);
       }
-      await this.runCheck('applyOptimizedSettings');
+
+      // Validate the encoder that will actually start.
+      this.throwIfPlatformCodecIncompatible(platforms);
     }
 
     // start video transmission
@@ -1046,9 +1074,6 @@ export class StreamingService
     activePlatforms: TPlatform[] = [],
     activeDestinations: ICustomStreamDestination[] = [],
   ): Promise<boolean> {
-    // Adding a destination other than Twitch or YouTube to a live 1440p stream requires a restart;
-    // the video transaction rejects active outputs without modifying them.
-    await this.streamSettingsService.applyStreamOutputLimits(settings);
     const lifecycle = this.state.info.lifecycle;
 
     // save current settings in store so we can re-use them if something will go wrong
@@ -2064,7 +2089,7 @@ export class StreamingService
           output: 'horizontal',
           audioTrack: this.getStreamingAudioTrack(),
           start: true,
-          context: 'horizontal',
+          context: this.state.enhancedBroadcasting ? 'enhancedBroadcasting' : 'horizontal',
           isEnhancedBroadcasting: this.state.enhancedBroadcasting,
         });
       }
@@ -2284,6 +2309,7 @@ export class StreamingService
       // Case A: Twitch dual stream alone. Enhanced Broadcasting sends both canvases via video (horizontal) and
       // additionalVideo (vertical). No additional instance needed — resolve directly.
       await this.handleStartStreaming(code, 'horizontal');
+      this.streamingStatusChange.next(EStreamingState.Live);
     } else if (this.views.isTwitchDualStreamEnabled && this.state.enhancedBroadcasting) {
       // Case B: Twitch dual stream + other platforms. Enhanced Broadcasting sends Twitch to both canvases via
       // additionalVideo; each display with non-Twitch targets needs its own non-Enhanced Broadcasting instance.
@@ -2471,6 +2497,7 @@ export class StreamingService
         // In single output mode without restream, the enhanced broadcasting stream is the only stream.
         // Use 'horizontal' as the display since that is the default display context.
         await this.handleStartStreaming(code, 'horizontal');
+        this.streamingStatusChange.next(nextState);
       }
     }
 
@@ -3582,10 +3609,16 @@ export class StreamingService
       const isTwitchDualStreamStopping =
         context === 'enhancedBroadcasting' && this.views.isTwitchDualStreaming;
 
+      const isEnhancedBroadcastSingleOutputStopping =
+        context === 'enhancedBroadcasting' &&
+        !this.views.isDualOutputMode &&
+        !this.views.shouldSetupRestream;
+
       if (
         context === 'horizontal' ||
         isEnhancedBroadcastDualOutputStopping ||
-        isTwitchDualStreamStopping
+        isTwitchDualStreamStopping ||
+        isEnhancedBroadcastSingleOutputStopping
       ) {
         this.sendStreamEndEvent();
       }
@@ -3626,6 +3659,15 @@ export class StreamingService
       // that to false synchronously after handleStopStreaming returns, before Enhanced Broadcasting's
       // Stopping/Stop signals arrive. The Enhanced Broadcasting context only fires signals if its instance
       // exists, so the context check is sufficient to know this is a real Enhanced Broadcasting signal.
+      //
+      // In single output mode if the stream is just Twitch Enhanced Broadcasting, map the streaming status to the
+      // horizontal display streaming status so the UI updates correctly.
+      if (!this.views.isDualOutputMode && !this.views.hasMultipleTargetsEnabled) {
+        this.SET_STREAMING_STATUS(nextState, 'horizontal', time);
+        this.streamingStatusChange.next(nextState);
+        return;
+      }
+
       let updated = false;
       (['horizontal', 'vertical'] as TDisplayType[]).forEach(d => {
         const targets =
@@ -3712,7 +3754,11 @@ export class StreamingService
         await this.handleDestroyOutputContexts('enhancedBroadcasting');
         await this.handleDestroyOutputContexts('horizontal');
         await this.handleDestroyOutputContexts('vertical');
-        return;
+
+        // Reset the number of streaming instances to zero because `isTwitchDualStreaming` is only true if
+        // it is the only streaming instance that goes live, so all other streaming instances that exist
+        // only exist for the recording and/or replay buffer instances.
+        this.numInstances = 0;
       }
 
       if (
@@ -3721,6 +3767,14 @@ export class StreamingService
       ) {
         // The primary output has stopped; finish its companion outputs as well.
         this.handleCleanupStreamingInstances({ skipHorizontal: context === 'horizontal' });
+      } else if (
+        context === 'enhancedBroadcasting' &&
+        !this.views.isDualOutputMode &&
+        !this.views.shouldSetupRestream
+      ) {
+        // The only stream stopped without going through the cleanup above, which resets the
+        // instance count used for the performance metrics.
+        this.numInstances = 0;
       }
 
       // Ensure instances for the recording and replay buffer are destroyed for the display context
@@ -4416,6 +4470,62 @@ export class StreamingService
   ): instance is IEnhancedBroadcastingSimpleStreaming | IEnhancedBroadcastingAdvancedStreaming {
     if (!instance) return false;
     return 'additionalVideo' in instance;
+  }
+
+  /**
+   * The first of `platforms` whose ingest does not accept the codec of the selected
+   * streaming encoder, or null. Only platforms OBS cannot validate are checked; see
+   * `PLATFORM_SUPPORTED_VIDEO_CODECS`. Returns null if the codec cannot be resolved, so a
+   * metadata gap never blocks Go Live.
+   */
+  getPlatformCodecIncompatibility(
+    platforms: TPlatform[] = this.views.enabledPlatforms,
+  ): IPlatformCodecIncompatibility | null {
+    let codec: string | undefined;
+    try {
+      // Streaming-only lookup: getSettings() also resolves recording encoder metadata, and a
+      // failure there would hide a known streaming codec and skip this check.
+      codec = this.outputSettingsService.getStreamingEncoderCodec();
+    } catch (e: unknown) {
+      console.warn('Could not resolve the streaming encoder codec for the platform check', e);
+      return null;
+    }
+
+    return findPlatformCodecIncompatibility(platforms, codec);
+  }
+
+  /**
+   * Whether `profile` was fetched for the currently selected streaming encoder.
+   * `fetchOptimizedProfile` stamps the profile with the encoder family selected at fetch time.
+   * If the current family cannot be resolved, the profile is applied as before.
+   */
+  private isOptimizedProfileForCurrentEncoder(profile: IEncoderProfile): boolean {
+    let family: string | undefined;
+    try {
+      family = this.outputSettingsService.getStreamingEncoderFamily();
+    } catch (e: unknown) {
+      console.warn('Could not resolve the streaming encoder family for the optimized profile', e);
+    }
+    return !family || !profile.encoder || profile.encoder === family;
+  }
+
+  /** Sets and throws `PLATFORM_UNSUPPORTED_CODEC` if a platform rejects the streaming codec. */
+  private throwIfPlatformCodecIncompatible(platforms: TPlatform[]) {
+    const codecIncompatibility = this.getPlatformCodecIncompatibility(platforms);
+    if (!codecIncompatibility) return;
+
+    const { platform, codec, supportedCodecs } = codecIncompatibility;
+    const details = $t(
+      '%{platformName} does not support the %{videoCodec} codec. Supported: %{supportedCodecs}. Select a different streaming encoder in Settings > Output.',
+      {
+        platformName: this.views.getPlatformDisplayName(platform),
+        videoCodec: videoCodecLabel(codec),
+        supportedCodecs: supportedCodecs.map(videoCodecLabel).join(', '),
+      },
+    );
+    const error = createStreamError('PLATFORM_UNSUPPORTED_CODEC', { platform }, details);
+    this.setError(error, platform);
+    throwStreamError('PLATFORM_UNSUPPORTED_CODEC', { platform }, details);
   }
 
   getStreamingInstance(): ISimpleStreaming | IAdvancedStreaming | null {
