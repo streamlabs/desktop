@@ -56,8 +56,8 @@ async function createRecordingFiles(
   directory: string,
   advanced: boolean = false,
 ): Promise<number> {
-  const formats = ['flv', 'mp4', 'mov', 'mkv', 'mpegts', 'hybrid_mp4', 'hybrid_mov'];
-  if (advanced) formats.push('hls');
+  const formats = ['flv', 'mp4', 'mov', 'mkv', 'ts', 'hybrid_mp4', 'hybrid_mov'];
+  if (advanced) formats.push('m3u8');
 
   // Record 0.5s video in every format
   for (const format of formats) {
@@ -68,8 +68,9 @@ async function createRecordingFiles(
         await clickTab('Recording');
       }
 
-      const { setDropdownInputValue } = useForm('Recording');
-      await setDropdownInputValue('RecFormat', format);
+      await useForm('Recording').fillForm({
+        RecFormat: (input: ListInputController<string>) => input.setValue(format),
+      });
       await clickButton('Close');
     });
 
