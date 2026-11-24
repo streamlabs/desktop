@@ -332,7 +332,7 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
   SET_TAB_DOCK_DEFAULTS(id: string) {
     const tab = this.state.tabs[id];
     Vue.set(tab, 'dockLayout', EDockLayout.Single);
-    Vue.set(tab, 'dockResize', 0.5);
+    Vue.set(tab, 'dockResize', 0.33);
     if (!tab.slottedElements[ELayoutElement.Multichat]?.slot) {
       Vue.set(tab.slottedElements, ELayoutElement.Multichat, { slot: 'S1' });
     }
