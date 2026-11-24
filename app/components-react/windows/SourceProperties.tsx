@@ -6,6 +6,10 @@ import { ModalLayout } from '../shared/ModalLayout';
 import Display from '../shared/Display';
 import { assertIsDefined } from '../../util/properties-type-guards';
 import { useSubscription } from '../hooks/useSubscription';
+import { useVuex } from '../hooks';
+import { Alert } from 'antd';
+import { $t } from 'services/i18n';
+import { cameraFailureMessage, cameraFailureAdvice, cameraErrorCode } from 'services/camera-status';
 
 export default function SourceProperties() {
   const {
@@ -13,6 +17,7 @@ export default function SourceProperties() {
     SourcesService,
     EditorCommandsService,
     UsageStatisticsService,
+    CameraStatusService,
   } = Services;
 
   // get source
@@ -25,6 +30,7 @@ export default function SourceProperties() {
   const [properties, setProperties] = useState(() =>
     source ? source.getPropertiesFormData() : [],
   );
+  const cameraError = useVuex(() => source && CameraStatusService.state.errors[source.sourceId]);
 
   // close the window if the source has been deleted
   useSubscription(SourcesService.sourceRemoved, removedSource => {
@@ -62,6 +68,28 @@ export default function SourceProperties() {
       scrollable
       fixedChild={source && <Display sourceId={source.sourceId} style={{ position: 'relative' }} />}
     >
+      {cameraError && source && (
+        <Alert
+          type="warning"
+          showIcon
+          message={cameraFailureMessage(cameraError, source.name, $t)}
+          description={
+            <>
+              <p>{cameraFailureAdvice(cameraError, $t)}</p>
+              {cameraError.deviceName && (
+                <p>{$t('Device: %{device}', { device: cameraError.deviceName })}</p>
+              )}
+              {!!cameraError.errorCode && (
+                <details>
+                  <summary>{$t('Technical details')}</summary>
+                  {$t('Windows error: %{code}', { code: cameraErrorCode(cameraError) })}
+                </details>
+              )}
+            </>
+          }
+          style={{ marginBottom: 16 }}
+        />
+      )}
       <ObsForm
         value={properties}
         onChange={onChangeHandler}

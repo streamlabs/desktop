@@ -63,13 +63,18 @@ import {
   TPreset,
   TResolution,
 } from './models/rendering.models';
-import { TOrientation, EOrientation, EGame } from './models/ai-highlighter.models';
+import { TOrientation, EOrientation } from './models/ai-highlighter.models';
 import { HighlighterViews } from './highlighter-views';
 import { startRendering } from './rendering/start-rendering';
 import { getVideoDuration } from './video-info';
 import { fileExists } from './file-utils';
 import { addVerticalFilterToExportOptions } from './vertical-export';
-import { isGameSupported } from './models/game-config.models';
+import {
+  FALLBACK_REPLAY_SUPPORTED_GAMES,
+  isGameSupported,
+  toPlatformCategoryLabel,
+} from './models/game-config.models';
+import { HostsService } from 'services/hosts';
 import Utils from 'services/utils';
 import { getOS, OS } from '../../util/operating-systems';
 import { exec } from 'child_process';
@@ -88,6 +93,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   @Inject() jsonrpcService: JsonrpcService;
   @Inject() navigationService: NavigationService;
   @Inject() sharedStorageService: SharedStorageService;
+  @Inject() hostsService: HostsService;
 
   static defaultState: IHighlighterState = {
     clips: {},
@@ -128,6 +134,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       progress: 0,
       error: null,
     },
+    // Not persisted: starts with the bundled fallback and is refreshed from the CDN on startup
+    replaySupportedGames: FALLBACK_REPLAY_SUPPORTED_GAMES,
   };
 
   // Replay (AI Highlighter) is Windows-only
@@ -141,7 +149,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     return (
       this.aiHighlighterFeatureEnabled &&
       this.views.useAiHighlighter &&
-      !!isGameSupported(this.streamingService.views.gameName || this.streamingService.views.game)
+      // The game is the Twitch category id once it was changed in the go live window, so use the name
+      !!isGameSupported(this.streamingService.views.gameName, this.views.replaySupportedGames)
     );
   }
 
@@ -269,6 +278,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   @mutation()
   SET_TEMP_RECORDING_INFO(tempRecordingInfo: ITempRecordingInfo) {
     this.state.tempRecordingInfo = tempRecordingInfo;
+  }
+
+  @mutation()
+  SET_REPLAY_SUPPORTED_GAMES(games: Dictionary<string>) {
+    this.state.replaySupportedGames = games;
   }
 
   @mutation()
@@ -1069,6 +1083,37 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     }
 
     this.handleStreamingChanges();
+    this.fetchReplaySupportedGames();
+  }
+
+  /**
+   * Fetches the latest list of games supported by Streamlabs Replay from the CDN.
+   * Keeps the bundled fallback list if the request fails or returns no games.
+   */
+  async fetchReplaySupportedGames() {
+    const url = `https://${this.hostsService.highlighterCdn}/configs/games.json`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Unexpected status ${response.status}`);
+      }
+      const json = (await response.json()) as { games?: { id?: unknown; label?: unknown }[] };
+
+      const games: Dictionary<string> = {};
+      (json.games ?? []).forEach(g => {
+        if (typeof g?.id === 'string' && typeof g?.label === 'string') {
+          games[g.id] = toPlatformCategoryLabel(g.label);
+        }
+      });
+
+      if (Object.keys(games).length === 0) {
+        throw new Error('No games in response');
+      }
+
+      this.SET_REPLAY_SUPPORTED_GAMES(games);
+    } catch (e: unknown) {
+      console.warn('Highlighter: failed to fetch Replay supported games, using fallback', e);
+    }
   }
 
   /**
@@ -1133,16 +1178,13 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           game: this.streamingService.views.game,
         });
 
-        // Twitch's game field becomes a category ID after editing the category.
-        // Highlighter recognizes names, including for the recording's import metadata.
-        const normalizedGameName = isGameSupported(
-          this.streamingService.views.gameName || this.streamingService.views.game,
+        const game = isGameSupported(
+          this.streamingService.views.gameName,
+          this.views.replaySupportedGames,
         );
-        if (!normalizedGameName) {
+        if (!game) {
           return;
         }
-
-        const game = normalizedGameName as EGame;
 
         streamInfo = {
           id: streamId,

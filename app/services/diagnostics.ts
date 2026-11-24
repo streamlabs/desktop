@@ -358,8 +358,13 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
    * @param platforms The platforms array to validate
    * @returns Array of platform names
    */
-  private validatePlatforms(platforms: string) {
-    const platformNames = platforms.replace(/"/g, '').split(',');
+  private validatePlatforms(platforms?: string) {
+    // Stream records may be missing platforms (e.g. older records or failed streams)
+    const platformNames = (platforms ?? '')
+      .replace(/"/g, '')
+      .split(',')
+      .filter(platform => platform.trim() !== '');
+
     if (!platformNames.length) {
       return 'None';
     }
