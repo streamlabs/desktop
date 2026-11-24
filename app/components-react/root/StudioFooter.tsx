@@ -345,25 +345,32 @@ const RecordingButton = memo(() => {
 });
 
 const GLOW_PERIOD_MS = 2500;
+const GLOW_ON = '0 0 2px 4px rgba(252, 62, 63, 0.6)';
+// Sampling rate only: the style is written (and the window repainted) just when the state flips
+const GLOW_SAMPLE_FPS = 4;
 
 /**
- * Pulsing glow around the REC button while recording. Same curve as the former CSS keyframes:
- * over the first 70% of the period the glow spreads from 0 to 4px, then it fades out. Driven
- * from JS (see useThrottledPulse) because a CSS box-shadow animation would repaint the window
- * on every display refresh for the whole recording.
+ * Blinking glow around the REC button while recording: on for the first half of the period,
+ * off for the second, like a hardware REC light. Two states instead of a smooth pulse because
+ * every visible change costs a whole frame (renderer, compositor, GPU); this is ~0.8 repaints
+ * per second instead of 10 (or 60 for the former CSS box-shadow animation).
  */
 function useRecordingGlow(ref: React.RefObject<HTMLElement>, isRecording: boolean) {
-  useThrottledPulse(isRecording, GLOW_PERIOD_MS, phase => {
-    const el = ref.current;
-    if (!el) return;
-    if (phase === null) {
-      el.style.boxShadow = '';
-      return;
-    }
-    const spread = Math.min(phase / 0.7, 1) * 4;
-    const alpha = phase < 0.7 ? 0.6 : 0.6 * (1 - (phase - 0.7) / 0.3);
-    el.style.boxShadow = `0 0 2px ${spread.toFixed(1)}px rgba(252, 62, 63, ${alpha.toFixed(2)})`;
-  });
+  const glowOn = useRef(false);
+
+  useThrottledPulse(
+    isRecording,
+    GLOW_PERIOD_MS,
+    phase => {
+      const el = ref.current;
+      if (!el) return;
+      const on = phase !== null && phase < 0.5;
+      if (on === glowOn.current) return;
+      glowOn.current = on;
+      el.style.boxShadow = on ? GLOW_ON : '';
+    },
+    GLOW_SAMPLE_FPS,
+  );
 }
 
 const RecordingTimer = memo((p: { isRecording: boolean }) => {
