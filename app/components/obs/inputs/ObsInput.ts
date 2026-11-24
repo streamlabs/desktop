@@ -69,6 +69,7 @@ export interface IObsListOption<TValue> {
 export interface IObsPathInputValue extends IObsInput<string> {
   filters: IElectronOpenDialogFilter[];
   defaultPath: string;
+  save?: boolean;
 }
 
 export interface IObsNumberInputValue extends IObsInput<number> {
@@ -118,34 +119,21 @@ export interface IElectronOpenDialogFilter {
   extensions: string[];
 }
 
-function parsePathFilters(filterStr: string): IElectronOpenDialogFilter[] {
-  const filters = filterStr.split(';;').filter(item => item);
-
-  // Browser source uses *.*
-  if (filterStr === '*.*') {
-    return [
-      {
-        name: 'All Files',
-        extensions: ['*'],
-      },
-    ];
+function parsePathFilters(filterStr = ''): IElectronOpenDialogFilter[] {
+  const filters: IElectronOpenDialogFilter[] = [];
+  for (const group of filterStr.split(';;')) {
+    const filter = group.trim();
+    const match = filter.match(/^(.*)\(([^()]*)\)$/);
+    const patterns = (match ? match[2] : filter).trim().split(/\s+/);
+    const extensions = patterns
+      .filter(pattern => pattern === '*' || /^\*\..+$/.test(pattern))
+      .map(pattern => (pattern === '*' ? '*' : pattern.slice(2)));
+    if (extensions.length) {
+      const name = match?.[1].trim() || (extensions[0] === '*' ? 'All Files' : filter);
+      filters.push({ name, extensions });
+    }
   }
-
-  return filters.map(filter => {
-    const match = filter.match(/^(.*)\((.*)\)$/);
-    const desc = match[1].replace(/^\s+/, '').replace(/\s+$/, '');
-    let types = match[2].split(' ');
-
-    types = types.map(type => {
-      return type.match(/^\*\.(.+)$/)[1];
-    });
-
-    // This is the format that electron file dialogs use
-    return {
-      name: desc,
-      extensions: types,
-    };
-  });
+  return filters;
 }
 
 /**
@@ -238,11 +226,13 @@ export function obsValuesToInputValues(
         size: 6,
       } as IObsBitmaskInput;
     } else if (obsProp.type === 'OBS_PROPERTY_PATH') {
-      if (valueObject && valueObject.type === 'OBS_PATH_FILE') {
+      if (valueObject && ['OBS_PATH_FILE', 'OBS_PATH_FILE_SAVE'].includes(valueObject.type)) {
         prop = {
           ...prop,
           type: 'OBS_PROPERTY_FILE',
           filters: parsePathFilters(valueObject.filter),
+          defaultPath: valueObject.default_path,
+          save: valueObject.type === 'OBS_PATH_FILE_SAVE',
         } as IObsPathInputValue;
       }
     } else if (obsProp.type === 'OBS_PROPERTY_FONT') {
@@ -347,6 +337,7 @@ export function getPropertiesFormData(obsSource: obs.ISource): TObsFormData {
       case obs.EPropertyType.Path:
         switch ((obsProp as obs.IPathProperty).details.type) {
           case obs.EPathType.File:
+          case obs.EPathType.FileSave:
             obsType = 'OBS_PROPERTY_FILE';
             break;
           case obs.EPathType.Directory:
@@ -396,6 +387,7 @@ export function getPropertiesFormData(obsSource: obs.ISource): TObsFormData {
       Object.assign(formItem as IObsPathInputValue, {
         filters: parsePathFilters(obsProp.details.filter),
         defaultPath: obsProp.details.defaultPath,
+        save: obsProp.details.type === obs.EPathType.FileSave,
       });
     }
 

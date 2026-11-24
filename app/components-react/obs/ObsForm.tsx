@@ -24,7 +24,7 @@ import {
   useTextInput,
 } from '../shared/inputs';
 import { IObsFormType } from '../windows/settings/ObsSettings';
-import { showFileDialog } from '../shared/inputs/FileInput';
+import { showFileDialog } from '../../util/file-dialog';
 import cloneDeep from 'lodash/cloneDeep';
 import { Button, Collapse, Input, InputNumber } from 'antd';
 import InputWrapper from '../shared/inputs/InputWrapper';
@@ -257,8 +257,10 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
         </InputWrapper>
       );
 
-    case 'OBS_PROPERTY_FILE':
-      return <FileInput {...inputProps} filters={(p.value as IObsPathInputValue).filters} />;
+    case 'OBS_PROPERTY_FILE': {
+      const { filters, defaultPath, save } = p.value as IObsPathInputValue;
+      return <FileInput {...inputProps} filters={filters} defaultPath={defaultPath} save={save} />;
+    }
 
     case 'OBS_PROPERTY_COLOR':
       // eslint-disable-next-line no-case-declarations

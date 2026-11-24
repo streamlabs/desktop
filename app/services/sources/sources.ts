@@ -819,7 +819,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
     if (propertiesManagerType === 'platformApp') return this.showPlatformAppPage(source);
     if (propertiesManagerType === 'iconLibrary') return this.showIconLibrarySettings(source);
 
-    let propertiesName = SourceDisplayData()[source.type].name;
+    let propertiesName = SourceDisplayData()[source.type]?.name || source.name;
     if (propertiesManagerType === 'replay') propertiesName = $t('Instant Replay');
     if (propertiesManagerType === 'streamlabels') propertiesName = $t('Stream Label');
 

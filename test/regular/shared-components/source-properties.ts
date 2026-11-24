@@ -9,6 +9,8 @@ import {
 } from '../../helpers/modules/core';
 import { clickRemoveSource } from '../../helpers/modules/sources';
 import { ScenesService } from '../../../app/services/scenes';
+import { EPathType, EPropertyType } from 'obs-studio-node';
+import * as path from 'path';
 
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
@@ -112,6 +114,91 @@ async function cleanup() {
   await focusMain();
   await clickRemoveSource('Source properties regression');
 }
+
+test('Plugin Save As uses the suggested path and filters and preserves the selection on cancel', async t => {
+  const sourceId = await createSource();
+  const suggested = path.join(t.context.cacheDir, 'suggested.json');
+  const selected = path.join(t.context.cacheDir, 'chosen.json');
+  const client = getClient();
+  try {
+    await client.execute(
+      (id: string, defaultPath: string) => {
+        const sources = (window as any).servicesManager.getResource('SourcesService');
+        const manager = sources.propertiesManagers[id].manager;
+        const source = manager.obsSource;
+        const property = {
+          type: EPropertyType.Path,
+          name: 'export_path',
+          description: 'Export path',
+          enabled: true,
+          visible: true,
+          details: {
+            type: EPathType.FileSave,
+            defaultPath,
+            filter: 'Presets (*.json *.txt);;All (*)',
+          },
+          get value() {
+            return source.settings.export_path || '';
+          },
+          next: (): null => null,
+        };
+        manager.obsSource = {
+          properties: { count: () => 1, first: () => property },
+          settings: source.settings,
+          update: (settings: Dictionary<string>) => source.update(settings),
+        };
+        sources.showSourceProperties(id);
+      },
+      sourceId,
+      suggested,
+    );
+    await focusChild();
+    const input = await select('input[data-name="export_path"]');
+    await input.waitForDisplayed();
+    const browse = await (await input.parentElement()).$('button');
+    await browse.waitForClickable();
+    await client.execute((filePath: string) => {
+      const { dialog } = require('@electron/remote');
+      const original = dialog.showSaveDialog;
+      const calls: Electron.SaveDialogOptions[] = [];
+      (window as any).__sourcePropertiesFixture = {
+        calls,
+        restore: () => {
+          dialog.showSaveDialog = original;
+        },
+      };
+      dialog.showSaveDialog = (options: Electron.SaveDialogOptions) => {
+        calls.push(options);
+        return Promise.resolve(
+          calls.length === 1 ? { canceled: false, filePath } : { canceled: true },
+        );
+      };
+    }, selected);
+    await browse.click();
+    await client.waitUntil(async () => (await input.getValue()) === selected);
+    await browse.click();
+    const calls = await client.execute(() => (window as any).__sourcePropertiesFixture.calls);
+    const filters = [
+      { name: 'Presets', extensions: ['json', 'txt'] },
+      { name: 'All', extensions: ['*'] },
+    ];
+    t.deepEqual(calls, [
+      { defaultPath: suggested, filters, properties: [] },
+      { defaultPath: selected, filters, properties: [] },
+    ]);
+    t.is(await input.getValue(), selected);
+    await focusWindow('worker');
+    t.is(
+      await client.execute((id: string) => {
+        const sources = (window as any).servicesManager.getResource('SourcesService');
+        return sources.views.getSource(id).getObsInput().settings.export_path;
+      }, sourceId),
+      selected,
+    );
+  } finally {
+    await cleanup();
+  }
+});
 
 test('Closing source properties cancels a deferred mount before source updates arrive', async t => {
   const sourceId = await createSource();
