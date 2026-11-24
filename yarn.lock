@@ -17710,12 +17710,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ws@npm:6.2.2":
-  version: 6.2.2
-  resolution: "ws@npm:6.2.2"
+"ws@npm:6.2.4":
+  version: 6.2.4
+  resolution: "ws@npm:6.2.4"
   dependencies:
     async-limiter: ~1.0.0
-  checksum: aec3154ec51477c094ac2cb5946a156e17561a581fa27005cbf22c53ac57f8d4e5f791dd4bbba6a488602cb28778c8ab7df06251d590507c3c550fd8ebeee949
+  checksum: f3824313f3ad40a2bbc967e26ab139e052e39c3347ab5138fc7843595917545a749bf0753ddc3fcc29c80a10c979ef7191f243204885d57fada892b93c0cd5eb
   languageName: node
   linkType: hard
 
