@@ -100,7 +100,7 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
       content: (
         <span>
           {$t(
-            'Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable Selective Recording to go live with Dual Output.',
+            'Selective Recording only works with horizontal sources. Vertical sources will not show in your recording.',
           )}
         </span>
       ),

@@ -194,7 +194,7 @@
   "Multichat Platform Support": "Multichat Platform Support",
   "You have selected %{colorFormat} as Color Format. Formats other than NV12 and P010 are commonly used for recording, and might incur high CPU usage or the streaming platform might not support it. Go to Settings -> Advanced -> Video to review.": "You have selected %{colorFormat} as Color Format. Formats other than NV12 and P010 are commonly used for recording, and might incur high CPU usage or the streaming platform might not support it. Go to Settings -> Advanced -> Video to review.",
   "Selective Recording Enabled": "Selective Recording Enabled",
-  "Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable Selective Recording to go live with Dual Output.": "Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable Selective Recording to go live with Dual Output.",
+  "Selective Recording only works with horizontal sources. Vertical sources will not show in your recording.": "Selective Recording only works with horizontal sources. Vertical sources will not show in your recording.",
   "Studio Mode Enabled": "Studio Mode Enabled",
   "Cannot toggle Dual Output while in Studio Mode. Please disable Studio Mode to go live with Dual Output.": "Cannot toggle Dual Output while in Studio Mode. Please disable Studio Mode to go live with Dual Output.",
   "Dual Output Enabled": "Dual Output Enabled",
