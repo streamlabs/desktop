@@ -59,9 +59,12 @@ export declare type TObsFormData = (IObsInput<TObsValue> | IObsListInput<TObsVal
 
 export interface IObsListInput<TValue> extends IObsInput<TValue> {
   options: IObsListOption<TValue>[];
+  placeholder?: string;
+  warning?: string;
 }
 
 export interface IObsListOption<TValue> {
+  disabled?: boolean;
   description: string;
   value: TValue;
 }

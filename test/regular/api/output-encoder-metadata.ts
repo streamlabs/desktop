@@ -1,6 +1,9 @@
 import type { ExecutionContext } from 'ava';
 import { skipCheckingErrorsInLog, test, useWebdriver } from '../../helpers/webdriver';
 import { getApiClient } from '../../helpers/api-client';
+import { clickButton, clickTab, focusMain, focusWindow, select } from '../../helpers/modules/core';
+import { showSettingsWindow } from '../../helpers/modules/settings/settings';
+import { useForm } from '../../helpers/modules/forms';
 import {
   EncoderQueryService,
   OutputSettingsService,
@@ -138,6 +141,149 @@ test('legacy encoder ids match canonical encoder option values', t => {
   t.is(resolveAvailableEncoderOptionValue(encoderOptions, 'missing_encoder'), undefined);
 });
 
+test('Missing streaming encoder alerts explain the fallback and open Output Settings on request', async t => {
+  t.true(await focusWindow('worker'));
+  const client = t.context.app.client;
+  const scenarios = [
+    { available: null, fallback: true, reason: 'unknown', open: false },
+    { available: true, fallback: true, reason: 'unknown', open: false },
+    { available: false, fallback: false, reason: 'unknown', open: false },
+    { available: false, fallback: true, reason: 'outdated_driver', open: false },
+    { available: false, fallback: true, reason: 'unsupported_av1', open: true },
+  ];
+  for (const scenario of scenarios) {
+    const result = await client.executeAsync((row: typeof scenario, done: (value: any) => void) => {
+      const service = (window as any).servicesManager.getResource('SettingsService');
+      const dialog = require('@electron/remote').dialog;
+      const originalDialog = dialog.showMessageBox;
+      const calls = { info: 0, fallback: 0, category: '', message: '', detail: '', button: '' };
+      const fixture = {
+        state: service.state,
+        findSetting: () => ({ value: 'obs_nvenc_av1_tex' }),
+        findSettingValue: () => 'Advanced',
+        encoderQueryService: {
+          getMissingEncoderInfo: () => {
+            if (row.available !== false) return null;
+            calls.info++;
+            return { name: 'NVIDIA NVENC AV1', reason: row.reason };
+          },
+          isStreamingEncoderAvailable: (_mode: string, id: string) =>
+            id === 'obs_x264' && row.fallback,
+        },
+        windowsService: service.windowsService,
+        setDefaultVideoEncoder: () => calls.fallback++,
+        showSettings: (category: string) => {
+          calls.category = category;
+          service.showSettings(category);
+        },
+      };
+      dialog.showMessageBox = (_parent: unknown, options: Electron.MessageBoxOptions) => {
+        calls.message = options.message;
+        calls.detail = options.detail;
+        calls.button = options.buttons[0];
+        return Promise.resolve({ response: row.open ? 0 : options.cancelId });
+      };
+      service.ensureValidEncoder
+        .call(fixture)
+        .then(
+          () => done(calls),
+          (error: Error) => done({ error: error.message }),
+        )
+        .finally(() => {
+          dialog.showMessageBox = originalDialog;
+        });
+    }, scenario);
+    t.falsy(result.error);
+    t.is(result.info, scenario.available === false ? 1 : 0);
+    t.is(result.fallback, scenario.available === false && scenario.fallback ? 1 : 0);
+    t.is(result.category, scenario.open ? 'Output' : '');
+    if (scenario.available !== false) {
+      t.is(result.message, '');
+      continue;
+    }
+    t.regex(result.message, /NVIDIA NVENC AV1/);
+    t.is(result.message.includes('Software (x264)'), scenario.fallback);
+    t.is(result.button, 'Open Output Settings');
+    if (scenario.reason === 'outdated_driver') t.regex(result.detail, /update your NVIDIA driver/i);
+    if (scenario.reason === 'unsupported_av1') t.regex(result.detail, /cannot encode AV1.*H\.264/i);
+    if (scenario.reason === 'unknown') {
+      t.regex(result.detail, /choose an available streaming encoder/i);
+    }
+  }
+  t.true(await focusWindow('child'));
+  const selected = await select('.ant-menu-item-selected [data-name="settings-nav-item"]');
+  await selected.waitForDisplayed();
+  t.is(await selected.getText(), 'Output');
+  await clickButton('Close');
+  await focusMain();
+});
+
+test('A platform restriction, a recording format restriction and a failed lookup do not diagnose missing hardware', async t => {
+  t.true(await focusWindow('worker'));
+  const rows = await t.context.app.client.execute(() => {
+    const service = (window as any).servicesManager.getResource('EncoderQueryService');
+    const id = 'example_saved_encoder';
+    const results = [];
+    for (const encoders of [null, [{ name: id, id }], []]) {
+      const fixture = {
+        getDeviceStreamingEncoderEntry: () => ({ encoders }),
+        getRecordingEncoderEntry: (_mode: string, format: string) =>
+          format === 'mkv' && encoders ? { encoders } : null,
+      };
+      for (const output of ['streaming', 'recording']) {
+        results.push(service.getMissingEncoderInfo.call(fixture, 'Advanced', id, output));
+      }
+    }
+    return results;
+  });
+  const missing = { id: 'example_saved_encoder', name: 'example_saved_encoder', reason: 'unknown' };
+  t.deepEqual(rows, [null, null, null, null, missing, missing]);
+  await focusMain();
+});
+
+test('Recording settings explain a missing NVIDIA encoder without replacing it', async t => {
+  const api = await getApiClient();
+  const settings = api.getResource<SettingsService>('SettingsService');
+  settings.setSettingValue('Output', 'Mode', 'Advanced');
+  settings.setSettingValue('Output', 'RecFormat', ERecordingFormat.MKV);
+  t.true(await focusWindow('worker'));
+  await t.context.app.client.execute(() => {
+    const manager = (window as any).servicesManager;
+    const query = manager.getResource('EncoderQueryService');
+    const service = manager.getResource('SettingsService');
+    const fetchSettings = service.fetchSettingsFromObs.bind(service);
+    service.fetchSettingsFromObs = (category: string) => {
+      const saved = fetchSettings(category);
+      if (category === 'Output') {
+        service.findSetting(saved.formData, 'Recording', 'RecEncoder').value = 'obs_nvenc_av1_tex';
+      }
+      return saved;
+    };
+    query.getRecordingEncoderChoices = () => ({
+      mkv: [{ value: 'obs_x264', description: 'Software (x264)' }],
+    });
+    query.getMissingEncoderInfo = (_mode: string, id: string, output: string) =>
+      output === 'recording' && id === 'obs_nvenc_av1_tex'
+        ? { id, name: 'NVIDIA NVENC AV1', reason: 'unsupported_av1' }
+        : null;
+  });
+  await focusMain();
+  await showSettingsWindow('Output', async () => {
+    await clickTab('Recording');
+    const warning = await select('[data-role="form"][data-name="Recording"] [role="alert"]');
+    await warning.waitForDisplayed();
+    t.regex(
+      await warning.getText(),
+      /saved recording encoder \(NVIDIA NVENC AV1\).*cannot encode AV1.*H\.264/,
+    );
+    await clickButton('Close');
+  });
+  t.is(
+    settings.findSettingValue(settings.state.Output.formData, 'Recording', 'RecEncoder'),
+    'obs_nvenc_av1_tex',
+  );
+});
+
 test('backend-advertised streaming encoders resolve to Desktop metadata', async t => {
   const client = await getApiClient();
   const encoderQueryService = client.getResource<EncoderQueryService>('EncoderQueryService');
@@ -193,6 +339,105 @@ test('backend-advertised recording encoders resolve to Desktop metadata', async 
         `${mode} recording encoder ${encoder.name} should resolve to backend family ${encoder.family}`,
       );
     });
+  });
+});
+
+test('Recording settings save an incompatible format only after an explicit encoder choice', async t => {
+  const client = await getApiClient();
+  const settings = client.getResource<SettingsService>('SettingsService');
+  const encoders = client.getResource<EncoderQueryService>('EncoderQueryService');
+  const selected = requireMkvOnlyRecordingEncoder(t, encoders);
+  settings.setSettingValue('Output', 'Mode', 'Advanced');
+  settings.setSettingValue('Output', 'RecFormat', ERecordingFormat.MKV);
+  settings.setSettingValue('Output', 'RecEncoder', selected.name);
+
+  function assertSaved(format: string, encoder: string) {
+    const data = settings.state.Output.formData;
+    t.is(settings.findSettingValue(data, 'Recording', 'RecFormat'), format);
+    t.is(settings.findSettingValue(data, 'Recording', 'RecEncoder'), encoder);
+  }
+
+  for (const chooseEncoder of [false, true]) {
+    await showSettingsWindow('Output', async () => {
+      await clickTab('Recording');
+      const form = useForm('Recording');
+      const format = await form.getInput('RecFormat');
+      t.is(await format.getValue(), ERecordingFormat.MKV);
+      await format.setValue(ERecordingFormat.FLV);
+      const warning = await select('[data-role="form"][data-name="Recording"] [role="alert"]');
+      await warning.waitForDisplayed();
+      t.true((await warning.getText()).toLowerCase().includes('flv'));
+      t.falsy(await (await form.getInput('RecEncoder')).getValue());
+      assertSaved(ERecordingFormat.MKV, selected.name);
+      if (chooseEncoder) {
+        await (await form.getInput('RecEncoder')).setValue('obs_x264');
+        await warning.waitForExist({ reverse: true });
+      }
+      await clickButton('Close');
+    });
+    if (chooseEncoder) assertSaved(ERecordingFormat.FLV, 'obs_x264');
+    else assertSaved(ERecordingFormat.MKV, selected.name);
+  }
+});
+
+test('Simple recording keeps the shared stream encoder and asks for a compatible format', async t => {
+  const api = await getApiClient();
+  const settings = api.getResource<SettingsService>('SettingsService');
+  settings.setSettingValue('Output', 'Mode', 'Simple');
+  settings.setSettingValue('Output', 'RecQuality', 'HQ');
+  settings.setSettingValue('Output', 'RecFormat', ERecordingFormat.FLV);
+  settings.setSettingValue(
+    'Output',
+    'StreamEncoder',
+    process.platform === 'darwin' ? 'obs_x264' : 'x264',
+  );
+
+  // Give software-only CI runners a format the stream encoder cannot record to.
+  t.true(await focusWindow('worker'));
+  await t.context.app.client.execute((flv: string) => {
+    const service = (window as any).servicesManager.getResource('EncoderQueryService');
+    const actual = service.getRecordingEncoderChoices.bind(service);
+    service.getRecordingEncoderChoices = (mode: string, formats: string[]) => {
+      const choices = actual(mode, formats);
+      choices[flv] = [];
+      delete choices.mov;
+      return choices;
+    };
+  }, ERecordingFormat.FLV);
+  await focusMain();
+
+  await showSettingsWindow('Output', async () => {
+    const form = useForm('Recording');
+    await (await form.getInput('RecQuality')).setValue('Stream');
+    const warning = await select('[data-role="form"][data-name="Recording"] [role="alert"]');
+    await warning.waitForDisplayed();
+    t.regex(await warning.getText(), /stream encoder/i);
+    t.is(
+      settings.findSettingValue(settings.state.Output.formData, 'Recording', 'RecQuality'),
+      'HQ',
+    );
+    const format = await form.getInput('RecFormat');
+    await (await format.getElement()).click();
+    const disabled = await select('[data-option-list="RecFormat"][data-option-value="flv"]');
+    t.regex(await disabled.getAttribute('class'), /disabled/);
+    await (await select('[data-option-list="RecFormat"][data-option-value="mkv"]')).click();
+    await warning.waitForExist({ reverse: true });
+    t.is(
+      settings.findSettingValue(settings.state.Output.formData, 'Recording', 'RecQuality'),
+      'Stream',
+    );
+    t.is(
+      settings.findSettingValue(settings.state.Output.formData, 'Recording', 'RecFormat'),
+      ERecordingFormat.MKV,
+    );
+    await format.setValue(ERecordingFormat.MOV);
+    await warning.waitForDisplayed();
+    t.regex(await warning.getText(), /could not check/i);
+    t.is(
+      settings.findSettingValue(settings.state.Output.formData, 'Recording', 'RecFormat'),
+      ERecordingFormat.MKV,
+    );
+    await clickButton('Close');
   });
 });
 

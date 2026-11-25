@@ -8,13 +8,26 @@ import {
   AdvancedRecordingFactory,
   ServiceFactory,
   ERecordingFormat,
+  VideoEncoderFactory,
 } from '../../../../obs-api';
 import { StreamingService } from 'services/streaming';
+import { $t } from 'services/i18n';
 import { TPlatform } from 'services/platforms';
 import type { IEncoderOption } from 'obs-studio-node';
 import type { TOutputSettingsMode } from './output-settings';
 import { legacyEncoderAliasToObsEncoderIdOrSelf } from './encoder-compatibility';
 import { isVideoCodecSupportedByPlatform } from './platform-codec-support';
+
+export function missingEncoderAdvice(reason: string, h264Available: boolean): string | undefined {
+  if (reason === 'outdated_driver') {
+    return $t('Update your NVIDIA driver to use this encoder again.');
+  }
+  if (reason === 'unsupported_av1') {
+    return h264Available
+      ? $t('Your NVIDIA GPU cannot encode AV1. Choose an available H.264 encoder.')
+      : $t('Your NVIDIA GPU cannot encode AV1. Choose another available encoder.');
+  }
+}
 
 interface IWithAvailableEncoders {
   getAvailableEncoders(): IEncoderOption[];
@@ -159,6 +172,28 @@ export class EncoderQueryService extends Service {
     const deviceEntry = this.getDeviceStreamingEncoderEntry(mode);
     if (deviceEntry.encoders === null) return null;
     return findEncoder(deviceEntry.encoders, encoder) !== undefined;
+  }
+
+  getMissingEncoderInfo(mode: TOutputSettingsMode, id: string, output: 'streaming' | 'recording') {
+    if (!id || id === 'none') return null;
+    // MKV admits every recording video codec. A narrower container or streaming destination
+    // can reject a working encoder and must never trigger a hardware diagnosis.
+    const device =
+      output === 'streaming'
+        ? this.getDeviceStreamingEncoderEntry(mode).encoders
+        : this.getRecordingEncoderEntry(mode, ERecordingFormat.MKV)?.encoders;
+    if (!device || findEncoder(device, id)) return null;
+
+    const factory: typeof VideoEncoderFactory & {
+      getMissingEncoderInfo?(encoder: string): { name: string; reason: string };
+    } = VideoEncoderFactory;
+    try {
+      const info = factory.getMissingEncoderInfo?.(id);
+      if (info) return { id, ...info };
+    } catch (error: unknown) {
+      console.warn('Could not diagnose the missing encoder', error);
+    }
+    return { id, name: id, reason: 'unknown' };
   }
 
   /** Drops memoized encoder lists. Only needed if the registered encoder set itself changes. */
@@ -349,13 +384,22 @@ export class EncoderQueryService extends Service {
     mode: TOutputSettingsMode,
     format: ERecordingFormat,
   ): IObsListOption<string>[] {
-    return this.getRecordingEncoderEntry(mode, format).options;
+    return this.getRecordingEncoderEntry(mode, format)?.options ?? [];
+  }
+
+  getRecordingEncoderChoices(mode: TOutputSettingsMode, formats: ERecordingFormat[]) {
+    const choices: Partial<Record<ERecordingFormat, IObsListOption<string>[]>> = {};
+    for (const format of formats) {
+      const entry = this.getRecordingEncoderEntry(mode, format);
+      if (entry) choices[format] = entry.options;
+    }
+    return choices;
   }
 
   private getRecordingEncoderEntry(
     mode: TOutputSettingsMode,
     format: ERecordingFormat,
-  ): ICacheEntry {
+  ): ICacheEntry | null {
     const cacheKey = `${mode}:${format}`;
 
     const cached = this.recordingEncoderCache.get(cacheKey);
@@ -363,31 +407,27 @@ export class EncoderQueryService extends Service {
 
     try {
       const encoders = this.queryRecordingEncoders(mode, format);
+      if (!encoders) return null;
       const entry = { encoders, options: mapEncoders(encoders) };
       this.recordingEncoderCache.set(cacheKey, entry);
       return entry;
     } catch (e: unknown) {
       console.error('Error querying available recording encoders', e);
-      return { encoders: [], options: [] };
+      return null;
     }
   }
 
   private queryRecordingEncoders(
     mode: TOutputSettingsMode,
     format: ERecordingFormat,
-  ): IEncoderOption[] {
-    const existing = this.streamingService.getRecordingInstance();
-    if (existing) {
-      existing.format = format;
-      if (hasGetAvailableEncoders(existing)) return existing.getAvailableEncoders();
-    }
-
+  ): IEncoderOption[] | null {
+    // Setting the format on a live output would change it while browsing the alternatives.
     const instance: any =
       mode === 'Simple' ? SimpleRecordingFactory.create() : AdvancedRecordingFactory.create();
 
     try {
       instance.format = format;
-      if (!hasGetAvailableEncoders(instance)) return [];
+      if (!hasGetAvailableEncoders(instance)) return null;
       return instance.getAvailableEncoders();
     } finally {
       if (mode === 'Simple') {
@@ -406,7 +446,7 @@ export class EncoderQueryService extends Service {
     mode: TOutputSettingsMode,
     format: ERecordingFormat,
   ): IEncoderOption[] {
-    return this.getRecordingEncoderEntry(mode, format).encoders;
+    return this.getRecordingEncoderEntry(mode, format)?.encoders ?? [];
   }
 
   resolveStreamingEncoderId(mode: TOutputSettingsMode, selectedEncoder: string): string {
