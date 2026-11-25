@@ -124,7 +124,12 @@ class ObsImporterViews extends ViewHandler<{ progress: number; total: number }> 
   }
 
   isOBSinstalled() {
-    return fs.existsSync(this.OBSconfigFileDirectory);
+    // Ensure all directories needed for OBS importing exist
+    return (
+      fs.existsSync(this.OBSconfigFileDirectory) &&
+      fs.existsSync(this.profilesDirectory) &&
+      fs.existsSync(this.sceneCollectionsDirectory)
+    );
   }
 }
 
