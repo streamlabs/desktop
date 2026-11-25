@@ -1,12 +1,4 @@
-@import "../../styles/index.less";
-
-.container {
-  padding: 0 16px;
-  height: 150px;
-  overflow: none;
-  flex-shrink: 0;
-  position: relative;
-}
+@import '../../styles/index.less';
 
 .flex-column {
   display: flex;
@@ -14,7 +6,7 @@
 }
 
 .category-header {
-  :global(.checkbox label) {
+  :global(.ant-checkbox-wrapper) {
     font-weight: 500;
     font-family: 'Roboto', sans-serif;
     font-size: 16px;
@@ -28,7 +20,7 @@
   display: flex;
   flex-direction: column;
 
-  div {
+  > div {
     height: 26px;
   }
 }
@@ -47,20 +39,13 @@
 .months-input {
   margin-left: 10px;
 
-  input {
-    height: 27px !important;
-    position: relative;
-    top: -3px;
+  :global(.ant-input-number) {
     width: 60px;
   }
 
-  :global(.arrows) {
-    top: -4px !important;
+  :global(.ant-form-item) {
+    margin-bottom: 0;
   }
-}
-
-.months-label {
-  margin-left: 10px;
 }
 
 .filter-section() {

@@ -319,6 +319,46 @@ export class SharedComponentsLibrary extends ReactComponent {}
 
 @Component({
   props: {
+    name: { default: 'FFZSettings' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+  },
+})
+export class FFZSettings extends ReactComponent {}
+
+@Component({
+  props: {
+    name: { default: 'EventFilterMenu' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+  },
+})
+export class EventFilterMenu extends ReactComponent {}
+
+@Component({
+  props: {
+    name: { default: 'BrowserSourceInteraction' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+  },
+})
+export class BrowserSourceInteraction extends ReactComponent {}
+
+@Component({
+  props: {
+    name: { default: 'GameOverlayEventFeed' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+  },
+})
+export class GameOverlayEventFeed extends ReactComponent {}
+
+@Component({
+  props: {
+    name: { default: 'OverlayPlaceholder' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+  },
+})
+export class OverlayPlaceholder extends ReactComponent {}
+
+@Component({
+  props: {
     name: { default: 'SourceFilters' },
     wrapperStyles: { default: () => ({ height: '100%' }) },
   },

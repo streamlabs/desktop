@@ -51,6 +51,11 @@ import { PlatformMerge, PlatformAppStore, PlatformAppMainPage } from './pages';
 import Settings from './windows/Settings';
 import Troubleshooter from './windows/Troubleshooter';
 import SceneTransitions from './windows/scene-transitions';
+import FFZSettings from './windows/FFZSettings';
+import EventFilterMenu from './windows/EventFilterMenu';
+import BrowserSourceInteraction from './windows/BrowserSourceInteraction';
+import GameOverlayEventFeed from './windows/GameOverlayEventFeed';
+import OverlayPlaceholder from './windows/OverlayPlaceholder';
 
 // list of React components to be used inside Vue components
 export const components = {
@@ -108,4 +113,9 @@ export const components = {
   Settings: createRoot(Settings),
   Troubleshooter,
   SceneTransitions,
+  FFZSettings,
+  EventFilterMenu,
+  BrowserSourceInteraction,
+  GameOverlayEventFeed,
+  OverlayPlaceholder,
 };

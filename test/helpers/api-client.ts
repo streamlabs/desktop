@@ -374,6 +374,10 @@ export class ApiClient {
         // @ts-ignore
         if (resourceModel[property] !== void 0) return resourceModel[property];
 
+        // not a thenable: allows returning resource proxies from async functions
+        // without the promise machinery sending a `then` request to the app
+        if (property === 'then') return undefined;
+
         const resourceScheme = this.getResourceScheme(resourceId);
 
         if (resourceScheme[property] !== 'function') {

@@ -10,8 +10,12 @@ import { Subject } from 'rxjs';
 import { throttle } from 'lodash-decorators';
 import * as remote from '@electron/remote';
 
-import FFZSettings from 'components/windows/FFZSettings.vue';
 import {
+  FFZSettings,
+  EventFilterMenu,
+  BrowserSourceInteraction,
+  GameOverlayEventFeed,
+  OverlayPlaceholder,
   NameFolder,
   NameScene,
   GoLiveWindow,
@@ -51,10 +55,6 @@ import {
 } from 'components/shared/ReactComponentList';
 
 import SourcePropertiesDeprecated from 'components/windows/SourceProperties.vue';
-import GameOverlayEventFeed from 'components/windows/GameOverlayEventFeed';
-import EventFilterMenu from 'components/windows/EventFilterMenu';
-import OverlayPlaceholder from 'components/windows/OverlayPlaceholder';
-import BrowserSourceInteraction from 'components/windows/BrowserSourceInteraction';
 
 import MediaShare from 'components/widgets/MediaShare';
 import AlertBox from 'components/widgets/AlertBox.vue';
