@@ -122,6 +122,8 @@ interface IRecentEventFilterConfig {
   facebook_like?: boolean;
   facebook_share?: boolean;
   facebook_stars?: boolean;
+  // Patreon
+  pledge?: boolean;
 }
 
 interface ISafeModeSettings {
@@ -181,6 +183,7 @@ const filterName = (key: string): string => {
     donation: $t('Donations'),
     redemption: $t('Redemptions'),
     merch: $t('Merch'),
+    pledge: $t('Patreon Pledges'),
     follow: $t('Follows'),
     subscription: $t('Subs'),
     subscription_tier_1: $t('Tier 1'),
@@ -706,8 +709,8 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
     const mainFilters = pick(this.state.filterConfig, [
       'donation',
       'merch',
+      'pledge',
       'follow',
-      'host',
       'bits',
       'power_up',
       'raid',
@@ -728,6 +731,10 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
       'facebook_share',
       'facebook_stars',
     ]);
+
+    if (!this.userService.views.linkedPlatforms.includes('patreon')) {
+      delete mainFilters.pledge;
+    }
 
     const subFilters = pick(this.state.filterConfig, [
       'subscription',
