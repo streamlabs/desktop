@@ -660,6 +660,8 @@ export class ObsImporterService extends StatefulService<{ progress: number; tota
     if (!this.views.isOBSinstalled()) return [];
 
     let profiles = fs.readdirSync(this.views.profilesDirectory);
+    if (!profiles) return [];
+
     profiles = profiles.filter(profile => !profile.match(/\./));
     return profiles;
   }
