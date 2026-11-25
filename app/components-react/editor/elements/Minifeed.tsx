@@ -6,11 +6,7 @@ const mins = { x: 330, y: 90 };
 
 export function MiniFeed() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { renderElement } = useBaseElement(
-    <RecentEvents isOverlay={false} />,
-    mins,
-    containerRef.current,
-  );
+  const { renderElement } = useBaseElement(<RecentEvents isOverlay={false} />, mins, containerRef);
 
   return (
     <div ref={containerRef} style={{ height: '100%' }}>

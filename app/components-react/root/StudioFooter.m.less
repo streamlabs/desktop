@@ -117,7 +117,7 @@
   }
 
   &:global(.active) {
-    animation: pulse 2.5s linear infinite;
+    // The glow around the active button is animated from JS (useRecordingGlow in StudioFooter.tsx)
     background-color: var(--warning);
 
     span {
@@ -132,20 +132,6 @@
 
 .record-time {
   color: var(--warning);
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 2px 0 rgba(252, 62, 63, 0.6);
-  }
-
-  70% {
-    box-shadow: 0 0 2px 4px rgba(252, 62, 63, 0.6);
-  }
-
-  100% {
-    box-shadow: 0 0 2px 4px rgba(252, 62, 63, 0);
-  }
 }
 
 .replay-button-group {

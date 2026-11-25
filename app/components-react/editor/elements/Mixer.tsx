@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef } from 'react';
 import useBaseElement from './hooks';
 import { Tooltip } from 'antd';
 import { useVuex } from 'components-react/hooks';
@@ -17,13 +17,7 @@ export function Mixer() {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { renderElement } = useBaseElement(<Element />, mins, containerRef.current);
-
-  const needToRenderVolmeters: boolean = useMemo(() => {
-    // render volmeters without hardware acceleration only if we don't have the webgl context
-    const canvas = document.createElement('canvas');
-    return !canvas.getContext('webgl');
-  }, []);
+  const { renderElement } = useBaseElement(<Element />, mins, containerRef);
 
   const performanceMode = useRealmObject(CustomizationService.state).performanceMode;
   const { audioSourceIds, hideStyleBlockers } = useVuex(() => ({
@@ -74,7 +68,8 @@ export function Mixer() {
               <MixerItem
                 key={sourceId}
                 audioSourceId={sourceId}
-                volmetersEnabled={needToRenderVolmeters}
+                // the meters are drawn by GLVolmeters on one shared canvas
+                volmetersEnabled={false}
               />
             ))}
           </div>

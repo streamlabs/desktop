@@ -16,6 +16,7 @@ import RecordingSwitcher from 'components-react/windows/go-live/RecordingSwitche
 import { KevinChatIcon } from 'components-react/shared/icons';
 import KevinApprovalBubble from 'components-react/agent/KevinApprovalBubble';
 import { KevinAnalytics } from 'components-react/agent/kevin-analytics';
+import { useThrottledPulse } from 'components-react/hooks/useThrottledPulse';
 
 function StudioFooterComponent() {
   const {
@@ -311,6 +312,9 @@ const RecordingButton = memo(() => {
     recordingStatus,
   ]);
 
+  const recordButtonRef = useRef<HTMLButtonElement>(null);
+  useRecordingGlow(recordButtonRef, isRecording);
+
   return (
     <>
       <RecordingTimer isRecording={isRecording} />
@@ -326,6 +330,7 @@ const RecordingButton = memo(() => {
           }
         >
           <button
+            ref={recordButtonRef}
             className={cx(styles.recordButton, 'record-button', {
               active: isRecording,
             })}
@@ -338,6 +343,35 @@ const RecordingButton = memo(() => {
     </>
   );
 });
+
+const GLOW_PERIOD_MS = 2500;
+const GLOW_ON = '0 0 2px 4px rgba(252, 62, 63, 0.6)';
+// Sampling rate only: the style is written (and the window repainted) just when the state flips
+const GLOW_SAMPLE_FPS = 4;
+
+/**
+ * Blinking glow around the REC button while recording: on for the first half of the period,
+ * off for the second, like a hardware REC light. Two states instead of a smooth pulse because
+ * every visible change costs a whole frame (renderer, compositor, GPU); this is ~0.8 repaints
+ * per second instead of 10 (or 60 for the former CSS box-shadow animation).
+ */
+function useRecordingGlow(ref: React.RefObject<HTMLElement>, isRecording: boolean) {
+  const glowOn = useRef(false);
+
+  useThrottledPulse(
+    isRecording,
+    GLOW_PERIOD_MS,
+    phase => {
+      const el = ref.current;
+      if (!el) return;
+      const on = phase !== null && phase < 0.5;
+      if (on === glowOn.current) return;
+      glowOn.current = on;
+      el.style.boxShadow = on ? GLOW_ON : '';
+    },
+    GLOW_SAMPLE_FPS,
+  );
+}
 
 const RecordingTimer = memo((p: { isRecording: boolean }) => {
   const { StreamingService } = Services;

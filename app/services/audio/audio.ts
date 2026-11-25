@@ -13,6 +13,12 @@ import { $t } from 'services/i18n';
 import { ipcMain, ipcRenderer } from 'electron';
 import { ViewHandler } from 'services/core';
 
+/**
+ * Max volmeter updates per second that are forwarded to a UI window for one source.
+ * OBS calls back far more often, but the mixer paints at most this often (see GLVolmeters).
+ */
+const VOLMETER_SEND_HZ = 15;
+
 export enum E_AUDIO_CHANNELS {
   OUTPUT_1 = 1,
   OUTPUT_2 = 2,
@@ -179,12 +185,16 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
   }
 
   unsubscribeVolmeter(sourceId: string, channelId: string) {
-    const channel = this.volmeterMessageChannels[sourceId].find(c => (c.id = channelId));
+    const channel = this.volmeterMessageChannels[sourceId]?.find(c => c.id === channelId);
     if (!channel) return;
 
-    this.volmeterMessageChannels[sourceId] = this.volmeterMessageChannels[sourceId].filter(
-      c => c.id !== channelId,
-    );
+    const remaining = this.volmeterMessageChannels[sourceId].filter(c => c.id !== channelId);
+    this.volmeterMessageChannels[sourceId] = remaining;
+
+    if (!remaining.length) {
+      // Nobody is looking at this source anymore: don't keep stale peaks for the next subscriber
+      delete this.volmeterPending[sourceId];
+    }
 
     channel.port.close();
   }
@@ -386,10 +396,42 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
     this.ADD_AUDIO_SOURCE(this.generateAudioSourceData(source.sourceId));
   }
 
+  /**
+   * Latest data per source that was held back until the next send slot, with `peak` being the
+   * maximum over everything held back since the last send.
+   */
+  private volmeterPending: Dictionary<IVolmeter> = {};
+  private volmeterFlushTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * Forwards volmeter data to the UI windows subscribed to this source (none: nothing to do).
+   *
+   * Sends happen on a shared fixed grid (every 1000 / VOLMETER_SEND_HZ ms), not "first callback
+   * after the interval", so updates are evenly spaced regardless of OBS's callback timing and all
+   * sources go out together (one repaint in the UI). Peaks arriving between slots are merged
+   * (max per channel) so a short spike is never lost. The timer only exists while data is held.
+   */
   private sendVolmeterData(sourceId: string, data: IVolmeter) {
-    if (this.volmeterMessageChannels[sourceId]) {
-      this.volmeterMessageChannels[sourceId].forEach(c => c.port.postMessage(data));
-    }
+    if (!this.volmeterMessageChannels[sourceId]?.length) return;
+
+    const pending = this.volmeterPending[sourceId];
+    this.volmeterPending[sourceId] = pending
+      ? { ...data, peak: data.peak.map((peak, i) => Math.max(peak, pending.peak[i] ?? peak)) }
+      : data;
+
+    if (this.volmeterFlushTimer !== null) return;
+    const interval = 1000 / VOLMETER_SEND_HZ;
+    const delay = interval - (performance.now() % interval);
+    this.volmeterFlushTimer = setTimeout(() => this.flushVolmeterData(), delay);
+  }
+
+  private flushVolmeterData() {
+    this.volmeterFlushTimer = null;
+    const pending = this.volmeterPending;
+    this.volmeterPending = {};
+    Object.keys(pending).forEach(sourceId => {
+      this.volmeterMessageChannels[sourceId]?.forEach(c => c.port.postMessage(pending[sourceId]));
+    });
   }
 
   private removeAudioSource(sourceId: string) {
@@ -398,6 +440,7 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
     this.sourceData[sourceId].volmeter.detach();
     this.sourceData[sourceId].volmeter.destroy();
     delete this.sourceData[sourceId];
+    delete this.volmeterPending[sourceId];
     this.REMOVE_AUDIO_SOURCE(sourceId);
   }
 

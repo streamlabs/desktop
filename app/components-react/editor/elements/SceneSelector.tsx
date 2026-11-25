@@ -235,7 +235,7 @@ const mins = { x: 200, y: 120 };
 
 export function SceneSelectorElement() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { renderElement } = useBaseElement(<SceneSelector />, mins, containerRef.current);
+  const { renderElement } = useBaseElement(<SceneSelector />, mins, containerRef);
 
   return (
     <div

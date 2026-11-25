@@ -7,6 +7,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { Services } from '../service-provider';
 import { ENotificationType, INotification } from 'services/notifications';
 import { $t } from 'services/i18n';
+import { observeResize } from 'util/observe-resize';
 import styles from './NotificationsArea.m.less';
 const notificationAudio = require('../../../media/sound/ding.wav');
 
@@ -146,18 +147,20 @@ export default function NotificationsArea() {
     const notifPushedSub = NotificationsService.notificationPushed.subscribe(addNotif);
     const notifReadSub = NotificationsService.notificationRead.subscribe(clearQueueOfRead);
 
-    const resizeInterval = window.setInterval(() => {
-      if (!notificationsContainer.current || ytDisabled) return;
-      if (notificationsContainer.current?.offsetWidth >= 150 === showExtendedNotifications) return;
-      setShowExtendedNotifications(notificationsContainer.current?.offsetWidth >= 150);
-    }, 1000);
-
     return () => {
       notifPushedSub.unsubscribe();
       notifReadSub.unsubscribe();
-      clearInterval(resizeInterval);
     };
   }, []);
+
+  // The container only exists while notifications are enabled
+  useEffect(() => {
+    const container = notificationsContainer.current;
+    if (!container || ytDisabled) return;
+    return observeResize(container, () => {
+      setShowExtendedNotifications(container.offsetWidth >= 150);
+    });
+  }, [settings.enabled, ytDisabled]);
 
   useEffect(() => {
     message.config({

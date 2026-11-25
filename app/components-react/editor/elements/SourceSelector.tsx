@@ -912,7 +912,7 @@ const mins = { x: 200, y: 120 };
 
 export function SourceSelectorElement() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { renderElement } = useBaseElement(<SourceSelector />, mins, containerRef.current);
+  const { renderElement } = useBaseElement(<SourceSelector />, mins, containerRef);
   const controller = useMemo(() => new SourceSelectorController(), []);
 
   return (

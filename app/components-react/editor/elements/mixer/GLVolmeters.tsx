@@ -1,47 +1,46 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { debounce } from 'lodash-decorators';
 import { IVolmeter } from 'services/audio';
-import electron, { ipcRenderer } from 'electron';
+import { ipcRenderer } from 'electron';
 import difference from 'lodash/difference';
-import { compileShader, createProgram } from 'util/webgl/utils';
-import vShaderSrc from 'util/webgl/shaders/volmeter.vert';
-import fShaderSrc from 'util/webgl/shaders/volmeter.frag';
 import { Services } from 'components-react/service-provider';
 import { assertIsDefined, getDefined } from 'util/properties-type-guards';
 import { useController } from 'components-react/hooks/zustand';
+import { observeResize } from 'util/observe-resize';
+import { isWindowVisible, onWindowVisibleChange } from 'util/window-visibility';
+import {
+  CHANNEL_HEIGHT,
+  IMeterZone,
+  SPACE_BETWEEN_CHANNELS,
+  createZones,
+  dbToPx,
+  paintChannelBar,
+} from './volmeter-paint';
 
-// Configuration
-const CHANNEL_HEIGHT = 3;
-const SPACE_BETWEEN_CHANNELS = 2;
 // When height of audio mixer elements changes, these paddings values also should be updated
 const PADDING_TOP = 39;
 const PADDING_BOTTOM = 57;
-const PEAK_WIDTH = 4;
-const PEAK_HOLD_CYCLES = 100;
-const WARNING_LEVEL = -20;
-const DANGER_LEVEL = -9;
 
-// Colors (RGB)
-const GREEN = [128, 245, 210];
-const LIGHT_MODE_GREEN = [18, 128, 121];
-const YELLOW = [255, 205, 71];
-const RED = [252, 62, 63];
+// A level has to move at least this many px (of the canvas width) to be worth a repaint
+const MIN_PIXEL_CHANGE = 2;
+// Counted in received updates (the audio service sends <= 15 per second): ~2.2 s
+const PEAK_HOLD_FRAMES = 33;
+const IDLE_PEAK = -60;
 
 interface IVolmeterSubscription {
-  sourceId: string;
   channelId?: string;
-  channelsCount: number;
-  // peakHolds show the maximum peak value for a given time range
-  peakHoldCounters: number[];
+  // latest peak per channel (dB), already the maximum since the previous update
+  peaks: number[];
+  // peak holds show the maximum peak value over the last PEAK_HOLD_FRAMES updates
   peakHolds: number[];
-  // Store previous peaks values for smooth interpolated rendering
-  prevPeaks: number[];
-  // Current peak values
-  currentPeaks: number[];
-  // interpolated peaks are using for rendering
-  interpolatedPeaks: number[];
-  // the time of last received peaks
-  lastEventTime: number;
+  peakHoldFrames: number[];
+}
+
+/** What one channel bar looks like on the canvas, in px */
+interface IBar {
+  y: number;
+  levelPx: number;
+  holdPx: number;
 }
 
 export default function GLVolmetersWithContext() {
@@ -54,7 +53,7 @@ export default function GLVolmetersWithContext() {
 }
 
 /**
- * Component that renders the volume for audio sources via WebGL
+ * Component that renders the volume meters of all mixer sources on one canvas
  */
 function GLVolmeters() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -88,46 +87,47 @@ function GLVolmeters() {
 }
 
 const GLVolmetersCtx = React.createContext<GLVolmetersController | null>(null);
+
+/**
+ * Draws the mixer volume meters on a single 2D canvas.
+ *
+ * Every visible change makes Chromium produce a whole frame (renderer, compositor, GPU, window
+ * manager), however small the changed area is, so the aim is as few frames as possible:
+ *  - nothing runs on its own: a draw is only scheduled by incoming data or a size/theme change
+ *  - the only cadence is the audio service's per-source cap (<= 15 Hz); data is painted as soon
+ *    as it arrives (one coalesced requestAnimationFrame) and skipped when no bar moved by
+ *    MIN_PIXEL_CHANGE px
+ *  - while the window is minimized or hidden (focus doesn't matter) the data subscriptions are
+ *    dropped, so the audio service stops sending too
+ *  - a CPU-backed 2D canvas needs no WebGL context in the GPU process
+ */
 class GLVolmetersController {
   private customizationService = Services.CustomizationService;
   private audioService = Services.AudioService;
 
   subscriptions: Dictionary<IVolmeterSubscription> = {};
 
-  // Used for WebGL rendering
-  private gl: WebGLRenderingContext;
-  private program: WebGLProgram;
+  private ctx: CanvasRenderingContext2D | null = null;
+  private canvasWidth = 0;
+  private canvasHeight = 0;
+  private pixelRatio = 1;
 
-  // GL Attribute locations
-  private positionLocation: number;
+  private isDarkTheme: boolean | null = null;
+  private background = '';
+  private zones: IMeterZone[] = [];
 
-  // GL Uniform locations
-  private resolutionLocation: WebGLUniformLocation;
-  private translationLocation: WebGLUniformLocation;
-  private scaleLocation: WebGLUniformLocation;
-  private volumeLocation: WebGLUniformLocation;
-  private peakHoldLocation: WebGLUniformLocation;
-  private bgMultiplierLocation: WebGLUniformLocation;
+  private sourcesOrder: string[] = [];
+  private lastBars: IBar[] = [];
+  private needsFullRedraw = true;
+  private drawFrame: number | null = null;
 
-  private canvasWidth: number;
-  private canvasWidthInterval: number;
-  private canvasHeight: number;
-
-  // time between 2 received peaks.
-  // Used to render extra interpolated frames
-  interpolationTime = 35;
-  private bg: { r: number; g: number; b: number };
-  private fpsLimit: number;
-  private firstFrameTime: number;
-  private frameNumber: number;
-  private sourcesOrder: string[];
-  private requestedFrameId: number;
-  private bgMultiplier = this.customizationService.isDarkTheme ? 0.2 : 0.5;
+  private paused = false;
+  private destroyed = false;
+  private disposers: Array<() => void> = [];
 
   init() {
+    this.paused = !isWindowVisible();
     this.subscribeVolmeters();
-    this.bg = this.customizationService.sectionBackground;
-    this.fpsLimit = 30;
   }
 
   $refs = {
@@ -146,306 +146,249 @@ class GLVolmetersController {
    */
   @debounce(500)
   private subscribeVolmeters() {
+    if (this.destroyed) return;
+
     const audioSources = this.audioSources;
     const sourcesOrder = audioSources.map(source => source.sourceId);
+    this.sourcesOrder = sourcesOrder;
+    this.needsFullRedraw = true;
 
-    // subscribe volmeters
-    audioSources.forEach(source => {
-      const sourceId = source.sourceId;
+    // Nobody is looking at the meters: don't receive data
+    if (this.paused) return;
 
-      // skip already subscribed volmeters
-      if (this.subscriptions[sourceId]) return;
-
-      // create listener
-      const listener = (e: { data: IVolmeter }) => {
-        const subscription = this.subscriptions[sourceId];
-        if (!subscription) return;
-        subscription.channelsCount = e.data.peak.length;
-        subscription.prevPeaks = subscription.interpolatedPeaks;
-        subscription.currentPeaks = Array.from(e.data.peak);
-        subscription.lastEventTime = performance.now();
-      };
-
-      const IDLE_PEAK = -60;
-      const INITIAL_PEAKS = [IDLE_PEAK, IDLE_PEAK];
-
-      // create a subscription object
-      this.subscriptions[sourceId] = {
-        sourceId,
-        // Assume 2 channels until we know otherwise. This prevents too much
-        // visual jank as the volmeters are initializing.
-        channelsCount: 2,
-        // HACK: Initialize currentPeaks to an idle-ish peak, if the source
-        // has never emitted any events, volmeters won't get drawn and we get
-        // a missing bar on app load or source device switch.
-        currentPeaks: INITIAL_PEAKS,
-        prevPeaks: [],
-        interpolatedPeaks: [],
-        lastEventTime: 0,
-        peakHolds: [],
-        peakHoldCounters: [],
-      };
-
-      this.audioService.actions.return.subscribeVolmeter(sourceId).then(id => {
-        ipcRenderer.once(`port-${id}`, e => {
-          if (!this.subscriptions[sourceId]) return;
-          this.subscriptions[sourceId].channelId = id;
-          e.ports[0].onmessage = listener;
-        });
-
-        ipcRenderer.send('request-message-channel-out', id);
-      });
-    });
+    audioSources.forEach(source => this.addSubscription(source.sourceId));
 
     // unsubscribe from not longer relevant volmeters
-    const currentSourcesIds = sourcesOrder;
     const subscribedSourcesIds = Object.keys(this.subscriptions);
-    const sourcesToUnsubscribe = difference(subscribedSourcesIds, currentSourcesIds);
-    sourcesToUnsubscribe.forEach(sourceId => this.unsubscribeVolmeter(sourceId));
+    difference(subscribedSourcesIds, sourcesOrder).forEach(sourceId =>
+      this.unsubscribeVolmeter(sourceId),
+    );
 
-    this.sourcesOrder = sourcesOrder;
+    this.requestDraw();
+  }
+
+  private addSubscription(sourceId: string) {
+    // skip already subscribed volmeters
+    if (this.subscriptions[sourceId]) return;
+
+    // Assume 2 channels until we know otherwise. This prevents too much visual jank as the
+    // volmeters are initializing: a source that never emitted any data still gets drawn.
+    const subscription: IVolmeterSubscription = {
+      peaks: [IDLE_PEAK, IDLE_PEAK],
+      peakHolds: [IDLE_PEAK, IDLE_PEAK],
+      peakHoldFrames: [PEAK_HOLD_FRAMES, PEAK_HOLD_FRAMES],
+    };
+    this.subscriptions[sourceId] = subscription;
+
+    const listener = (e: { data: IVolmeter }) => {
+      if (this.subscriptions[sourceId] !== subscription) return;
+      subscription.peaks = e.data.peak;
+      this.updatePeakHolds(subscription);
+      this.requestDraw();
+    };
+
+    this.audioService.actions.return.subscribeVolmeter(sourceId).then(id => {
+      ipcRenderer.once(`port-${id}`, e => {
+        if (this.subscriptions[sourceId] !== subscription) {
+          // unsubscribed (paused or unmounted) before the port arrived
+          this.audioService.actions.unsubscribeVolmeter(sourceId, id);
+          return;
+        }
+        subscription.channelId = id;
+        e.ports[0].onmessage = listener;
+      });
+
+      ipcRenderer.send('request-message-channel-out', id);
+    });
   }
 
   private unsubscribeVolmeter(sourceId: string) {
-    if (this.subscriptions[sourceId].channelId) {
-      this.audioService.actions.unsubscribeVolmeter(
-        sourceId,
-        this.subscriptions[sourceId].channelId!,
-      );
-    }
+    const { channelId } = this.subscriptions[sourceId];
+    if (channelId) this.audioService.actions.unsubscribeVolmeter(sourceId, channelId);
 
     delete this.subscriptions[sourceId];
   }
 
+  private updatePeakHolds(subscription: IVolmeterSubscription) {
+    subscription.peaks.forEach((peak, channel) => {
+      const frames = subscription.peakHoldFrames[channel];
+      if (frames === undefined || frames <= 0 || peak > subscription.peakHolds[channel]) {
+        subscription.peakHolds[channel] = peak;
+        subscription.peakHoldFrames[channel] = PEAK_HOLD_FRAMES;
+      } else {
+        subscription.peakHoldFrames[channel] = frames - 1;
+      }
+    });
+  }
+
+  /** The window went to the background: stop receiving data and drawing */
+  private pause() {
+    if (this.paused) return;
+    this.paused = true;
+    this.cancelPendingDraw();
+    Object.keys(this.subscriptions).forEach(sourceId => this.unsubscribeVolmeter(sourceId));
+  }
+
+  private resume() {
+    if (!this.paused) return;
+    this.paused = false;
+    this.subscribeVolmeters();
+  }
+
   beforeDestroy() {
-    if (this.gl) {
-      // TODO: where is this defined or used, can be undefined too?
-      (window as typeof window & { activeWebglContexts: number })['activeWebglContexts'] -= 1;
-    }
-    clearInterval(this.canvasWidthInterval);
+    this.destroyed = true;
+    this.disposers.forEach(dispose => dispose());
+    this.disposers = [];
     // unsubscribe all volmeters
     Object.keys(this.subscriptions).forEach(sourceId => this.unsubscribeVolmeter(sourceId));
-
-    // cancel next frame rendering
-    cancelAnimationFrame(this.requestedFrameId);
+    this.cancelPendingDraw();
+    this.ctx = null;
   }
 
   setupNewCanvas($canvasEl: HTMLCanvasElement) {
     this.$refs.canvas = $canvasEl;
-    // Make sure all state is cleared out
-    if (this.gl && this.program) {
-      this.gl.deleteProgram(this.program);
-    }
-    this.gl = null!;
-    this.program = null!;
-    this.positionLocation = null!;
-    this.resolutionLocation = null!;
-    this.translationLocation = null!;
-    this.scaleLocation = null!;
-    this.volumeLocation = null!;
-    this.peakHoldLocation = null!;
-    this.bgMultiplierLocation = null!;
-    this.canvasWidth = 0;
-    this.canvasHeight = 0;
 
-    this.setCanvasSize();
-    this.canvasWidthInterval = window.setInterval(() => this.setCanvasSize(), 500);
-    this.requestedFrameId = requestAnimationFrame(t => this.onRequestAnimationFrameHandler(t));
+    // willReadFrequently keeps the canvas CPU-backed: no GPU context or shared image for a few
+    // small rectangles. The bitmap is uploaded when a frame is shown.
+    this.ctx = getDefined($canvasEl.getContext('2d', { alpha: false, willReadFrequently: true }));
 
-    this.gl = getDefined(this.$refs.canvas.getContext('webgl', { alpha: false }));
-    this.initWebglRendering();
+    this.refreshTheme();
+    const themeSubscription = this.customizationService.settingsChanged.subscribe(() =>
+      this.refreshTheme(),
+    );
+
+    this.disposers.push(
+      () => themeSubscription.unsubscribe(),
+      observeResize(getDefined($canvasEl.parentElement), () => this.resizeCanvas()),
+      this.watchPixelRatio(),
+      onWindowVisibleChange(visible => (visible ? this.resume() : this.pause())),
+    );
   }
 
   /**
-   * Render volmeters with FPS capping
+   * The canvas bitmap has one px per device px, so moving the window to a screen with another
+   * scale factor changes it without any element resizing.
    */
-  private onRequestAnimationFrameHandler(now: DOMHighResTimeStamp) {
-    const isDestroyed = !this.$refs.canvas;
-    if (isDestroyed) return;
+  private watchPixelRatio() {
+    let stopWatching = () => {};
 
-    // init first rendering frame
-    if (!this.firstFrameTime) {
-      this.frameNumber = -1;
-      this.firstFrameTime = now;
-    }
+    const watch = () => {
+      const query = matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+      const onChange = () => {
+        this.resizeCanvas();
+        watch();
+      };
+      query.addEventListener('change', onChange, { once: true });
+      stopWatching = () => query.removeEventListener('change', onChange);
+    };
 
-    const timeElapsed = now - this.firstFrameTime;
-    const timeBetweenFrames = 1000 / this.fpsLimit;
-    const currentFrameNumber = Math.ceil(timeElapsed / timeBetweenFrames);
-
-    if (currentFrameNumber !== this.frameNumber) {
-      // it's time to render next frame
-      this.frameNumber = currentFrameNumber;
-      // don't render sources then channelsCount is 0
-      // happens when the browser source stops playing audio
-      this.drawVolmeters();
-    }
-    this.requestedFrameId = requestAnimationFrame(t => this.onRequestAnimationFrameHandler(t));
+    watch();
+    return () => stopWatching();
   }
 
-  private initWebglRendering() {
-    const vShader = getDefined(compileShader(this.gl, vShaderSrc, this.gl.VERTEX_SHADER));
-    const fShader = getDefined(compileShader(this.gl, fShaderSrc, this.gl.FRAGMENT_SHADER));
-    this.program = getDefined(createProgram(this.gl, vShader, fShader));
+  private resizeCanvas() {
+    const canvas = this.$refs.canvas;
+    const parent = canvas.parentElement;
+    if (!parent || !this.ctx) return;
 
-    const positionBuffer = this.gl.createBuffer();
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
+    const width = Math.floor(parent.offsetWidth);
+    const height = Math.floor(parent.offsetHeight);
+    const pixelRatio = window.devicePixelRatio || 1;
+    const unchanged =
+      width === this.canvasWidth && height === this.canvasHeight && pixelRatio === this.pixelRatio;
+    if (unchanged) return;
 
-    // Vertex geometry for a unit square
-    // eslint-disable-next-line
-    const positions = [0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1];
+    this.canvasWidth = width;
+    this.canvasHeight = height;
+    this.pixelRatio = pixelRatio;
+    canvas.width = Math.round(width * pixelRatio);
+    canvas.height = Math.round(height * pixelRatio);
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
 
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(positions), this.gl.STATIC_DRAW);
-
-    // look up where the vertex data needs to go.
-    this.positionLocation = this.gl.getAttribLocation(this.program, 'a_position');
-
-    // lookup uniforms
-    this.resolutionLocation = getDefined(this.gl.getUniformLocation(this.program, 'u_resolution'));
-    this.translationLocation = getDefined(
-      this.gl.getUniformLocation(this.program, 'u_translation'),
-    );
-    this.scaleLocation = getDefined(this.gl.getUniformLocation(this.program, 'u_scale'));
-    this.volumeLocation = getDefined(this.gl.getUniformLocation(this.program, 'u_volume'));
-    this.peakHoldLocation = getDefined(this.gl.getUniformLocation(this.program, 'u_peakHold'));
-    this.bgMultiplierLocation = getDefined(
-      this.gl.getUniformLocation(this.program, 'u_bgMultiplier'),
-    );
-
-    this.gl.useProgram(this.program);
-
-    const warningLocation = getDefined(this.gl.getUniformLocation(this.program, 'u_warning'));
-    this.gl.uniform1f(warningLocation, this.dbToUnitScalar(WARNING_LEVEL));
-
-    const dangerLocation = getDefined(this.gl.getUniformLocation(this.program, 'u_danger'));
-    this.gl.uniform1f(dangerLocation, this.dbToUnitScalar(DANGER_LEVEL));
-
-    // Set colors
-    const green = this.customizationService.isDarkTheme ? GREEN : LIGHT_MODE_GREEN;
-    this.setColorUniform('u_green', green);
-    this.setColorUniform('u_yellow', YELLOW);
-    this.setColorUniform('u_red', RED);
+    this.zones = createZones(!!this.isDarkTheme, width);
+    // Resizing blanks the canvas: repaint right away
+    this.needsFullRedraw = true;
+    this.drawNow();
   }
 
-  private setColorUniform(uniform: string, color: number[]) {
-    const location = this.gl.getUniformLocation(this.program, uniform);
-    // eslint-disable-next-line
-    this.gl.uniform3fv(
-      location,
-      color.map(c => c / 255),
-    );
+  private refreshTheme() {
+    const isDarkTheme = this.customizationService.isDarkTheme;
+    const { r, g, b } = this.customizationService.sectionBackground;
+    const background = `rgb(${r},${g},${b})`;
+    if (isDarkTheme === this.isDarkTheme && background === this.background) return;
+
+    this.isDarkTheme = isDarkTheme;
+    this.background = background;
+    this.zones = createZones(isDarkTheme, this.canvasWidth);
+    this.needsFullRedraw = true;
+    this.requestDraw();
   }
 
-  private setCanvasSize() {
-    const $parent = getDefined(this.$refs.canvas?.parentElement);
-    const width = Math.floor($parent.offsetWidth);
-    const height = Math.floor($parent.offsetHeight);
+  /**
+   * Schedule one paint for the next animation frame. Messages of all sources that arrive in the
+   * same moment share it. One-shot: called by whatever changed (data, size, theme), never a loop.
+   */
+  private requestDraw() {
+    if (this.drawFrame !== null || !this.ctx || this.paused) return;
+    this.drawFrame = requestAnimationFrame(() => this.drawNow());
+  }
 
-    if (width !== this.canvasWidth) {
-      this.canvasWidth = width;
-      this.$refs.canvas.width = width;
-      this.$refs.canvas.style.width = `${width}px`;
-    }
+  private cancelPendingDraw() {
+    if (this.drawFrame !== null) cancelAnimationFrame(this.drawFrame);
+    this.drawFrame = null;
+  }
 
-    if (height !== this.canvasHeight) {
-      this.canvasHeight = height;
-      this.$refs.canvas.height = this.canvasHeight;
-      this.$refs.canvas.style.height = `${this.canvasHeight}px`;
-    }
-
-    this.bg = this.customizationService.sectionBackground;
-    // Volmeter backgrounds appear brighter against a darker background
-    this.bgMultiplier = this.customizationService.isDarkTheme ? 0.2 : 0.5;
+  private drawNow() {
+    this.cancelPendingDraw();
+    this.drawVolmeters();
   }
 
   private drawVolmeters() {
-    const bg = this.bg;
+    const ctx = this.ctx;
+    const width = this.canvasWidth;
+    if (!ctx || width <= 0 || this.canvasHeight <= 0) return;
 
-    this.gl.clearColor(bg.r / 255, bg.g / 255, bg.b / 255, 1);
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    const bars = this.measureBars();
+    if (!this.needsFullRedraw && !this.isVisibleChange(bars)) return;
+    this.needsFullRedraw = false;
+    this.lastBars = bars;
 
-    if (this.canvasWidth < 0 || this.canvasHeight < 0 || !this.sourcesOrder) {
-      return;
-    }
+    ctx.setTransform(this.pixelRatio, 0, 0, this.pixelRatio, 0, 0);
+    ctx.fillStyle = this.background;
+    ctx.fillRect(0, 0, width, this.canvasHeight);
+    bars.forEach(bar => paintChannelBar(ctx, this.zones, width, bar.y, bar.levelPx, bar.holdPx));
+  }
 
-    this.gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
-
-    this.gl.enableVertexAttribArray(this.positionLocation);
-    this.gl.vertexAttribPointer(this.positionLocation, 2, this.gl.FLOAT, false, 0, 0);
-
-    // Set uniforms
-    this.gl.uniform2f(this.resolutionLocation, 1, this.canvasHeight);
-
-    this.gl.uniform1f(this.bgMultiplierLocation, this.bgMultiplier);
-
-    // calculate offsetRop and render each volmeter
+  /** Position and size of every channel bar for the current data */
+  private measureBars() {
+    const bars: IBar[] = [];
     let offsetTop = 0;
-    this.sourcesOrder.forEach((sourceId, ind) => {
+    this.sourcesOrder.forEach(sourceId => {
       offsetTop += PADDING_TOP;
       const volmeter = this.subscriptions[sourceId];
-      this.drawVolmeterWebgl(volmeter, offsetTop);
+      volmeter?.peaks.forEach((peak, channel) => {
+        bars.push({
+          y: channel * (CHANNEL_HEIGHT + SPACE_BETWEEN_CHANNELS) + offsetTop,
+          levelPx: dbToPx(peak, this.canvasWidth),
+          holdPx: dbToPx(volmeter.peakHolds[channel], this.canvasWidth),
+        });
+      });
       offsetTop += PADDING_BOTTOM;
     });
+    return bars;
   }
 
-  private drawVolmeterWebgl(volmeter: IVolmeterSubscription, offsetTop: number) {
-    volmeter.currentPeaks.forEach((peak, channel) => {
-      this.drawVolmeterChannelWebgl(volmeter, channel, offsetTop);
+  /** Did any bar move far enough since the last draw to be seen? */
+  private isVisibleChange(bars: IBar[]) {
+    if (bars.length !== this.lastBars.length) return true;
+    return bars.some((bar, i) => {
+      const last = this.lastBars[i];
+      return (
+        bar.y !== last.y ||
+        Math.abs(bar.levelPx - last.levelPx) >= MIN_PIXEL_CHANGE ||
+        Math.abs(bar.holdPx - last.holdPx) >= MIN_PIXEL_CHANGE
+      );
     });
-  }
-
-  private drawVolmeterChannelWebgl(
-    volmeter: IVolmeterSubscription,
-    channel: number,
-    offsetTop: number,
-  ) {
-    const peak = volmeter.currentPeaks[channel];
-    this.updatePeakHold(volmeter, peak, channel);
-
-    this.gl.uniform2f(this.scaleLocation, 1, CHANNEL_HEIGHT);
-    this.gl.uniform2f(
-      this.translationLocation,
-      0,
-      channel * (CHANNEL_HEIGHT + SPACE_BETWEEN_CHANNELS) + offsetTop,
-    );
-
-    const prevPeak = volmeter.prevPeaks[channel] ? volmeter.prevPeaks[channel] : peak;
-    const timeDelta = performance.now() - volmeter.lastEventTime;
-    let alpha = timeDelta / this.interpolationTime;
-    if (alpha > 1) alpha = 1;
-    const interpolatedPeak = this.lerp(prevPeak, peak, alpha);
-    volmeter.interpolatedPeaks[channel] = interpolatedPeak;
-    this.gl.uniform1f(this.volumeLocation, this.dbToUnitScalar(interpolatedPeak));
-
-    // X component is the location of peak hold from 0 to 1
-    // Y component is width of the peak hold from 0 to 1
-    this.gl.uniform2f(
-      this.peakHoldLocation,
-      this.dbToUnitScalar(volmeter.peakHolds[channel]),
-      PEAK_WIDTH / this.canvasWidth,
-    );
-
-    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-  }
-
-  private dbToUnitScalar(db: number) {
-    return Math.max((db + 60) * (1 / 60), 0);
-  }
-
-  updatePeakHold(volmeter: IVolmeterSubscription, peak: number, channel: number) {
-    if (!volmeter.peakHoldCounters[channel] || peak > volmeter.peakHolds[channel]) {
-      volmeter.peakHolds[channel] = peak;
-      volmeter.peakHoldCounters[channel] = PEAK_HOLD_CYCLES;
-      return;
-    }
-    volmeter.peakHoldCounters[channel] -= 1;
-  }
-
-  /**
-   * Linearly interpolates between val1 and val2
-   * alpha = 0 will be val1, and alpha = 1 will be val2.
-   */
-  lerp(val1: number, val2: number, alpha: number) {
-    return val1 + (val2 - val1) * alpha;
   }
 }
