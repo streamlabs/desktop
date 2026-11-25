@@ -44,5 +44,6 @@
   "Mic/Auxiliary Device 2": "麥克風/輔助裝置 2",
   "Mic/Auxiliary Device 3": "麥克風/輔助裝置 3",
   "Recording Audio Encoder": "錄影音訊編碼器",
-  "Enable Muted Notifications": "啟用已靜音的通知"
+  "Enable Muted Notifications": "啟用已靜音的通知",
+  "Audio Track (Format FLV does not support multiple audio tracks per recording)": "Audio Track (Format FLV does not support multiple audio tracks per recording)"
 }

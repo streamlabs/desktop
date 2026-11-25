@@ -47,6 +47,7 @@ const {
   webContents,
   desktopCapturer,
   MessageChannelMain,
+  shell,
 } = require('electron');
 const path = require('path');
 const remote = require('@electron/remote/main');
@@ -88,6 +89,10 @@ if (!gotTheLock) {
 const bootstrap = require('./updater/build/bootstrap.js');
 const bundleUpdater = require('./updater/build/bundle-updater.js');
 const { createShutdownCoordinator } = require('./app/util/shutdown-coordinator');
+const {
+  checkVCRuntime,
+  DOWNLOAD_URL: VC_RUNTIME_DOWNLOAD_URL,
+} = require('./app/util/vc-runtime-check');
 const uuid = require('uuid/v4');
 const semver = require('semver');
 const windowStateKeeper = require('electron-window-state');
@@ -216,6 +221,7 @@ function humanFileSize(bytes, si) {
 console.log('=================================');
 console.log('Streamlabs Desktop');
 console.log(`Version: ${process.env.SLOBS_VERSION}`);
+console.log(`Electron: ${process.versions.electron}, Chromium: ${process.versions.chrome}`);
 console.log(`OS: ${os.platform()} ${os.release()}`);
 console.log(`Arch: ${process.arch}`);
 console.log(`CPU: ${cpus[0].model}`);
@@ -279,6 +285,84 @@ let shutdownCoordinator;
 
 global.indexUrl = `file://${__dirname}/index.html`;
 
+function logElectronEvent(level, eventName, details) {
+  if (process.env.SLOBS_DISABLE_MAIN_LOGGING) return;
+
+  // console.warn/error do not use the app.log writer in the main process.
+  logFromRemote(
+    level,
+    'electron-main',
+    `[Electron] ${eventName} ${JSON.stringify({ ...details, shutdownStarted })}`,
+  );
+}
+
+// Observe every renderer, including one-off windows and embedded webviews.
+app.on('web-contents-created', (event, contents) => {
+  const identity = {
+    webContentsId: contents.id,
+    webContentsType: contents.getType(),
+    browserWindowId: null,
+    windowId: null,
+    rendererPid: null,
+  };
+
+  function updateIdentity() {
+    if (contents.isDestroyed()) return;
+
+    try {
+      const owner = BrowserWindow.fromWebContents(contents);
+      identity.browserWindowId = owner ? owner.id : null;
+      // Electron can return 0 after a crash; retain the last known PID for correlation.
+      identity.rendererPid = contents.getOSProcessId() || identity.rendererPid;
+
+      const pageUrl = new URL(contents.getURL() || 'about:blank');
+      const appUrl = new URL(global.indexUrl);
+      identity.windowId =
+        pageUrl.protocol === appUrl.protocol && pageUrl.pathname === appUrl.pathname
+          ? pageUrl.searchParams.get('windowId')
+          : null;
+    } catch (e) {
+      // A destroyed native object must not prevent logging its last known identity.
+    }
+  }
+
+  // Cache identity while the process is alive, without logging page URLs or titles.
+  contents.on('did-start-loading', updateIdentity);
+  contents.on('dom-ready', () => {
+    updateIdentity();
+    logElectronEvent('info', 'renderer-ready', identity);
+  });
+  contents.on('render-process-gone', (event, details) => {
+    updateIdentity();
+    logElectronEvent(details.reason === 'clean-exit' ? 'info' : 'error', 'render-process-gone', {
+      ...identity,
+      reason: details.reason,
+      exitCode: details.exitCode,
+    });
+    identity.rendererPid = null;
+  });
+  contents.on('unresponsive', () => {
+    updateIdentity();
+    logElectronEvent('warn', 'unresponsive', identity);
+  });
+  contents.on('responsive', () => {
+    updateIdentity();
+    logElectronEvent('info', 'responsive', identity);
+  });
+});
+
+// GPU and utility processes are not covered by renderer exit events.
+app.on('child-process-gone', (event, details) => {
+  logElectronEvent(details.reason === 'clean-exit' ? 'info' : 'error', 'child-process-gone', {
+    type: details.type,
+    reason: details.reason,
+    exitCode: details.exitCode,
+    serviceName: details.serviceName,
+    name: details.name,
+    systemErrorCode: details.systemErrorCode,
+  });
+});
+
 function forceShutdown(reason) {
   console.warn(`[Shutdown] Force exiting application: ${reason}`);
   allowMainWindowClose = true;
@@ -301,7 +385,63 @@ function openDevTools() {
 const waitingVuexStores = [];
 let workerInitFinished = false;
 
+/**
+ * Shows an error and returns false when msvcp140.dll is too old for our native modules.
+ * Must run before any native module or window is loaded, since loading them with the old
+ * runtime crashes. See app/util/vc-runtime-check.js.
+ */
+async function verifyVCRuntime() {
+  if (process.platform !== 'win32') return true;
+
+  // The same directory obs-studio-node passes to IPC.setServerPath(), which obs64.exe runs from
+  const osnDir = path
+    .dirname(require.resolve('obs-studio-node'))
+    .replace('app.asar', 'app.asar.unpacked');
+
+  let result;
+  try {
+    result = checkVCRuntime(osnDir);
+  } catch (e) {
+    console.error('Failed to check the Visual C++ runtime version', e);
+    return true;
+  }
+
+  console.log(`VC runtime: ${result.version} (${result.path || 'not found'})`);
+  if (!result.outdated) return true;
+
+  const isPrivateRuntime = result.path === path.join(osnDir, 'msvcp140.dll');
+
+  dialog.showMessageBoxSync({
+    title: 'System error message',
+    type: 'error',
+    message:
+      'Streamlabs Desktop requires a newer version of the Microsoft Visual C++ Redistributables ' +
+      `than the one currently installed on your system. Version: ${result.version}`,
+    detail: isPrivateRuntime
+      ? `Outdated runtime: ${result.path}\n\n` +
+        'Repair your Streamlabs Desktop installation to replace this application-local runtime. ' +
+        'Installing the system redistributable alone will not replace this file.'
+      : `Runtime: ${result.path || 'not found'}\n\nYou will now be directed to the download page.`,
+    buttons: ['OK'],
+  });
+
+  if (isPrivateRuntime) return false;
+
+  try {
+    await shell.openExternal(VC_RUNTIME_DOWNLOAD_URL);
+  } catch (e) {
+    console.error('Failed to open Visual C++ Redistributables download page', e);
+  }
+
+  return false;
+}
+
 async function startApp() {
+  if (!(await verifyVCRuntime())) {
+    app.exit();
+    return;
+  }
+
   const crashHandler = require('crash-handler');
   const isDevMode = process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test';
   const crashHandlerLogPath = app.getPath('userData');
@@ -342,6 +482,23 @@ async function startApp() {
   });
 
   remote.initialize();
+
+  // Resolve remote.require() from this file rather than letting @electron/remote
+  // pick the context itself.
+  //
+  // @electron/remote branches on `process.mainModule` being undefined to decide how
+  // to resolve modules. That assumption held around Electron 28, but Electron 43
+  // defines `process.mainModule` again -- as Electron's own internal module, whose
+  // `paths` array is empty -- so it takes the legacy branch and every
+  // remote.require() fails with "Cannot find module ... Require stack: - electron".
+  // Still present in @electron/remote 2.1.3.
+  //
+  // Setting `returnValue` on the documented `remote-require` event short-circuits
+  // that logic. `require` here resolves from main.js, which has the correct paths.
+  // Affects game_overlay, node-libuiohook, and node-window-rendering.
+  app.on('remote-require', (event, webContents, moduleName) => {
+    event.returnValue = require(moduleName);
+  });
 
   const Raven = require('raven');
 
@@ -628,7 +785,9 @@ async function startApp() {
 }
 
 const haDisableFile = path.join(app.getPath('userData'), 'HADisable');
-if (fs.existsSync(haDisableFile)) app.disableHardwareAcceleration();
+const hardwareAccelerationDisabled = fs.existsSync(haDisableFile);
+if (hardwareAccelerationDisabled) app.disableHardwareAcceleration();
+console.log(`Electron hardware acceleration disabled by setting: ${hardwareAccelerationDisabled}`);
 
 app.setAsDefaultProtocolClient('slobs');
 

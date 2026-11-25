@@ -3,6 +3,7 @@
   "Successfully converted %{filename}": "Successfully converted %{filename}",
   "Successfully saved %{filename} to %{filepath}": "Successfully saved %{filename} to %{filepath}",
   "Successfully loaded %{filename}.overlay": "Successfully loaded %{filename}.overlay",
+  "Failed to export overlay. Please choose a different location.": "Failed to export overlay. Please choose a different location.",
   "Export Overlay File": "Export Overlay File",
   "Import Overlay File": "Import Overlay File",
   "Import Widget File in Current Scene": "Import Widget File in Current Scene",

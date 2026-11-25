@@ -1,6 +1,7 @@
 {
   "Add Category": "添加类别",
   "Add Section": "添加部分",
+  "DONUT": "DONUT",
   "Clear All": "全部清除",
   "Manage Spin Wheel": "管理转盘",
   "Categories": "类别",
@@ -30,5 +31,6 @@
   "Center Image Size": "中心图片尺寸",
   "Center Image Border Enabled": "启用中心图片边框",
   "Center Image Border Color": "中心图片边框颜色",
-  "Center Image Border Width": "中心图片边框宽度"
+  "Center Image Border Width": "中心图片边框宽度",
+  "Add categories before adding new sections.": "Add categories before adding new sections."
 }

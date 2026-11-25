@@ -1,12 +1,13 @@
 import { Command } from './command';
 import { Selection } from 'services/selection';
 import { Inject } from 'services/core/injector';
-import { ScenesService } from 'services/scenes';
+import { Scene, ScenesService, TSceneNode } from 'services/scenes';
 import { ReorderNodesCommand, EPlaceType } from './reorder-nodes';
 import { $t } from 'services/i18n';
 import { DualOutputService } from 'services/dual-output';
 import { SceneCollectionsService } from 'services/scene-collections';
 import partition from 'lodash/partition';
+import { orderNodesByDisplay } from 'services/dual-output/node-order';
 
 /**
  * Creates a folder
@@ -16,7 +17,7 @@ import partition from 'lodash/partition';
  * For dual output scenes, it's more complicated because the vertical nodes
  * also need to be moved into a matching folder.
  *  1. create a folder for the horizontal display
- *  2. map over the selection (of horizontal nodes) to locate all the matching vertical nodes
+ *  2. map over the selection to locate all matching opposite-display nodes
  *  3. create a folder for the dual output nodes
  *  4. move the horizontal node selection into the horizontal folder
  *  5. move the vertical node selection into the vertical folder
@@ -46,15 +47,76 @@ export class CreateFolderCommand extends Command {
     return $t('Create %{folderName}', { folderName: this.name });
   }
 
+  /**
+   * Expand a one-display selection to complete dual-output node pairs.
+   *
+   * Source-selector selections only contain nodes from the visible display
+   * when one canvas is hidden. Resolve their partners here so every caller of
+   * this command preserves the mirrored folder hierarchy.
+   */
+  private getPairedNodes(scene: Scene): TSceneNode[] {
+    const selectedNodes = this.items.getNodes();
+    if (!selectedNodes.length) return selectedNodes;
+
+    const nodeMap = this.dualOutputService.views.sceneNodeMaps[this.sceneId];
+    if (!nodeMap) {
+      throw new Error(`Cannot group dual output nodes in scene ${this.sceneId}: missing node map`);
+    }
+
+    const horizontalNodeIds = new Set(Object.keys(nodeMap));
+    const horizontalIdsByVerticalId = new Map<string, string>();
+    Object.entries(nodeMap).forEach(([horizontalNodeId, verticalNodeId]) => {
+      if (horizontalNodeIds.has(verticalNodeId) || horizontalIdsByVerticalId.has(verticalNodeId)) {
+        throw new Error(
+          `Cannot group dual output nodes in scene ${this.sceneId}: ambiguous node map`,
+        );
+      }
+      horizontalIdsByVerticalId.set(verticalNodeId, horizontalNodeId);
+    });
+
+    const pairedNodeIds = new Set<string>();
+    selectedNodes.forEach(node => {
+      let partnerNodeId: string | undefined;
+      let expectedPartnerDisplay: 'horizontal' | 'vertical' | undefined;
+      if (node.display === 'horizontal') {
+        partnerNodeId = nodeMap[node.id];
+        expectedPartnerDisplay = 'vertical';
+      } else if (node.display === 'vertical') {
+        partnerNodeId = horizontalIdsByVerticalId.get(node.id);
+        expectedPartnerDisplay = 'horizontal';
+      }
+      const partnerNode = partnerNodeId ? scene.getNode(partnerNodeId) : null;
+
+      if (
+        !partnerNode ||
+        partnerNode.display !== expectedPartnerDisplay ||
+        partnerNode.sceneNodeType !== node.sceneNodeType ||
+        (node.isItem() && (!partnerNode.isItem() || partnerNode.sourceId !== node.sourceId))
+      ) {
+        throw new Error(
+          `Cannot group dual output node ${node.id} in scene ${this.sceneId}: invalid partner`,
+        );
+      }
+
+      pairedNodeIds.add(node.id);
+      pairedNodeIds.add(partnerNode.id);
+    });
+
+    return scene.getNodes().filter(node => pairedNodeIds.has(node.id));
+  }
+
   execute() {
     const scene = this.scenesService.views.getScene(this.sceneId);
+    const createVerticalFolder = this.dualOutputService.views.hasSceneNodeMaps;
+    const nodesToGroup =
+      this.items && createVerticalFolder ? this.getPairedNodes(scene) : this.items?.getNodes();
     const folder = scene.createFolder(this.name, { id: this.folderId, display: 'horizontal' });
     this.folderId = folder.id;
 
     // Handle vertical folder for dual output scene collections
     // Note: Check the existence of all scene node maps because the scene may not have a
     // node map created for it
-    if (this.dualOutputService.views.hasSceneNodeMaps) {
+    if (createVerticalFolder) {
       // create vertical folder
       const verticalFolder = scene.createFolder(this.name, {
         id: this.verticalFolderId,
@@ -69,20 +131,14 @@ export class CreateFolderCommand extends Command {
         this.verticalFolderId,
       );
 
-      // place vertical folder correctly in node list
-      const numHorizontalNodes = scene
-        .getModel()
-        .nodes.filter(node => node.display === 'horizontal').length;
-      const verticalFolderSelection = scene.getSelection(this.verticalFolderId);
-      verticalFolderSelection.freeze();
-      verticalFolderSelection.placeAfter(scene.getNodesIds()[numHorizontalNodes]);
+      orderNodesByDisplay(scene);
     }
 
     if (this.items) {
       // if the scene has dual output nodes filter the nodes by display
       // and move them into their respective folders
-      if (this.verticalFolderId) {
-        const selection = partition(this.items.getNodes(), n => n.display === 'vertical');
+      if (createVerticalFolder) {
+        const selection = partition(nodesToGroup, n => n.display === 'vertical');
         const verticalSelection = scene.getSelection(selection[0]);
         const horizontalSelection = scene.getSelection(selection[1]);
         verticalSelection.freeze();

@@ -1,16 +1,13 @@
 {
-  "You do not have any notifications": "Non hai notifiche",
   "Your stream is currently offline": "Il tuo streaming è attualmente offline",
   "Your stream is experiencing issues": "Si sono verificati problemi con lo streaming",
   "Your stream is experiencing minor issues": "Si sono verificati piccoli problemi con lo streaming",
   "Live Stats": "Statistiche in diretta",
   "Performance Notifications": "Notifiche performance",
   "Click on a stat to add it to your footer": "Fai clic su una statistica per aggiungerla al piè di pagina",
-  "Click to add this info to your footer": "Fai clic per aggiungere queste informazioni al piè di pagina",
   "When Streamlabs detects performance issues with your stream, such as dropped frames, lagged frames, or a stream disconnection, troubleshooting notifications will be sent to you here.": "Quando Streamlabs rileva problemi di prestazioni con il tuo streaming, ad esempio frame persi, frame ritardati o disconnessione della sessione, le notifiche di risoluzione dei problemi ti verranno inviate qui.",
   "Click to add %{stat} info to your footer": "Fai clic per aggiungere %{stat} informazioni al piè di pagina",
   "CPU": "CPU",
   "FPS": "FPS",
-  "dropped frames": "frame persi",
   "bandwidth": "larghezza di banda"
 }

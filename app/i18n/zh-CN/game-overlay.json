@@ -1,9 +1,7 @@
 {
   "Enable in-game overlay": "启用游戏内叠加",
-  "Enable stream preview in overlay": "在叠加中启用直播预览",
   "Toggle in-game overlay": "切换游戏内叠加",
   "Toggle positioning mode": "切换定位模式",
   "Set a hotkey in Hotkey Settings to toggle the in-game overlay": "在热键设置中设置热键以切换游戏内叠加",
-  "The in-game overlay is a new experimental feature that allows you to view chat and events overlayed on top of your game.  This overlay may not work with certain games running in exclusive fullscreen mode.  For best results, we recommend running your game in windowed-fullscreen mode.": "游戏内叠加是一项新的实验性功能，您可以查看叠加在游戏之上的聊天和事件。此叠加可能不适用于以独占全屏模式运行的某些游戏。为获得最佳效果，我们建议您以窗口化全屏模式运行游戏。",
   "Please log in to use the in-game overlay.": "请登录以使用游戏内叠加。"
 }

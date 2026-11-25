@@ -5,6 +5,7 @@ import { SourcesService } from '../../sources';
 import { VideoSettingsService } from '../../settings-v2/video';
 import { HotkeysNode } from './hotkeys';
 import { SceneFiltersNode } from './scene-filters';
+import { ISceneCollectionLoadContext } from './load-session';
 
 export interface ISceneSchema {
   id: string;
@@ -15,7 +16,7 @@ export interface ISceneSchema {
   filters?: SceneFiltersNode;
 }
 
-export class ScenesNode extends ArrayNode<ISceneSchema, {}, Scene> {
+export class ScenesNode extends ArrayNode<ISceneSchema, ISceneCollectionLoadContext, Scene> {
   schemaVersion = 1;
 
   scenesService: ScenesService = ScenesService.instance;
@@ -71,26 +72,24 @@ export class ScenesNode extends ArrayNode<ISceneSchema, {}, Scene> {
     this.videoSettingsService.validateVideoContext('vertical');
   }
 
-  loadItem(obj: ISceneSchema): Promise<() => Promise<void>> {
-    return new Promise(resolve => {
-      const scene = this.scenesService.createScene(obj.name, { sceneId: obj.id });
+  async loadItem(
+    obj: ISceneSchema,
+    context: ISceneCollectionLoadContext,
+  ): Promise<() => Promise<void>> {
+    const scene = this.scenesService.createScene(obj.name, { sceneId: obj.id });
 
-      if (obj.filters) obj.filters.load({ sceneId: scene.id });
+    if (obj.filters) {
+      await obj.filters.load({ sceneId: scene.id, loadSession: context.loadSession });
+    }
 
-      resolve(() => {
-        return new Promise(resolve => {
-          obj.sceneItems.load({ scene }).then(() => {
-            if (obj.active) this.scenesService.makeSceneActive(scene.id);
+    return async () => {
+      await obj.sceneItems.load({ scene, loadSession: context.loadSession });
+      if (obj.active) this.scenesService.makeSceneActive(scene.id);
 
-            if (obj.hotkeys) {
-              obj.hotkeys.load({ sceneId: scene.id }).then(() => resolve());
-            } else {
-              resolve();
-            }
-          });
-        });
-      });
-    });
+      if (obj.hotkeys) {
+        await obj.hotkeys.load({ sceneId: scene.id, loadSession: context.loadSession });
+      }
+    };
   }
 
   async afterLoad() {

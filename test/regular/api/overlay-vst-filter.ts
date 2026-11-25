@@ -1,0 +1,183 @@
+import { getApiClient } from '../../helpers/api-client';
+import { test, useWebdriver, TExecutionContext } from '../../helpers/webdriver';
+import { focusMain, focusWindow } from '../../helpers/modules/core';
+import type { OverlaysPersistenceService } from 'services/scene-collections/overlays';
+import type { ISceneItem, ScenesService } from 'services/scenes';
+import type { SourceFiltersService } from 'services/source-filters';
+import extractZip = require('extract-zip');
+import fs = require('fs');
+import path = require('path');
+import archiver = require('archiver');
+
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
+useWebdriver();
+
+interface IFilterSnapshot {
+  name: string;
+  type: string;
+  settings: Dictionary<any>;
+}
+
+async function writeOverlay(overlayPath: string, filters: any[]) {
+  const sceneId = 'vst-filter-overlay-scene';
+  const config = {
+    nodeType: 'RootNode',
+    schemaVersion: 2,
+    scenes: {
+      nodeType: 'ScenesNode',
+      schemaVersion: 2,
+      items: [
+        {
+          name: 'VST Filter Overlay',
+          sceneId,
+          slots: {
+            nodeType: 'SlotsNode',
+            schemaVersion: 1,
+            items: [
+              {
+                id: 'vst-item',
+                name: 'Filtered media',
+                sceneNodeType: 'item',
+                x: 0,
+                y: 0,
+                scaleX: 0.1,
+                scaleY: 0.1,
+                visible: true,
+                locked: false,
+                // libobs drops audio filters such as vst_filter on sources without audio
+                content: {
+                  nodeType: 'VideoNode',
+                  schemaVersion: 1,
+                  settings: {},
+                  filename: 'alertbox.mp4',
+                },
+                filters,
+              },
+            ],
+          },
+        },
+      ],
+    },
+  };
+
+  const archive = archiver('zip', { store: true });
+  const output = fs.createWriteStream(overlayPath);
+  await new Promise<void>((resolve, reject) => {
+    output.on('close', resolve);
+    output.on('error', reject);
+    archive.on('error', reject);
+    archive.pipe(output);
+    archive.append(JSON.stringify(config), { name: 'config.json' });
+    archive.file(path.resolve('test/data/sources-files/media/alertbox.mp4'), {
+      name: 'alertbox.mp4',
+    });
+    archive.finalize();
+  });
+
+  return sceneId;
+}
+
+async function importedFilters(t: TExecutionContext, overlayPath: string, sceneId: string) {
+  // OverlaysPersistenceService is not exposed through the API client, so the import runs in the worker window.
+  t.true(await focusWindow('worker'), 'worker window is available');
+  try {
+    await t.context.app.client.execute(filePath => {
+      const manager = (window as any).servicesManager;
+      const overlays = manager.getResource(
+        'OverlaysPersistenceService',
+      ) as OverlaysPersistenceService;
+      return overlays.loadOverlay(filePath);
+    }, overlayPath);
+  } finally {
+    await focusMain();
+  }
+
+  const client = await getApiClient();
+  const scenesService = client.getResource<ScenesService>('ScenesService');
+  const filtersService = client.getResource<SourceFiltersService>('SourceFiltersService');
+  const item = scenesService.getModel().scenes[sceneId].nodes[0] as ISceneItem;
+  return filtersService.getFilters(item.sourceId).map(filter => ({
+    name: filter.name,
+    type: filter.type,
+    settings: { ...filter.settings },
+  })) as IFilterSnapshot[];
+}
+
+// sl-vst and the file name reduction are Windows-only
+const windowsTest = process.platform === 'win32' ? test : test.skip;
+
+windowsTest('Importing an overlay keeps only the VST plugin file name', async t => {
+  const overlayPath = path.join(t.context.cacheDir, 'vst-filter.overlay');
+  const sceneId = await writeOverlay(overlayPath, [
+    {
+      name: 'VST 2.x Plug-in',
+      type: 'vst_filter',
+      settings: {
+        plugin_path: '\\\\example.invalid\\s\\Foo.dll',
+        chunk_data_path_v3: '\\\\example.invalid\\s\\Foo.dll',
+        chunk_data_0_v3: 'AAAA',
+      },
+    },
+    { name: 'Gain', type: 'gain_filter', settings: { db: 3 } },
+  ]);
+
+  const filters = await importedFilters(t, overlayPath, sceneId);
+
+  const vst = filters.find(filter => filter.type === 'vst_filter');
+  t.truthy(vst, 'vst filter is imported');
+  t.is(vst.settings.plugin_path, 'Foo.dll');
+  t.false(/[\\/]/.test(vst.settings.plugin_path as string), 'plugin_path has no separators');
+  t.is(vst.settings.chunk_data_path_v3, 'Foo.dll');
+
+  const gain = filters.find(filter => filter.type === 'gain_filter');
+  t.is(gain.settings.db, 3, 'other filter types import unchanged');
+});
+
+windowsTest('Exporting an overlay writes only the VST plugin file name', async t => {
+  const localPath = 'C:\\Users\\streamer\\VstPlugins\\Foo.dll';
+  const overlayPath = path.join(t.context.cacheDir, 'vst-export.overlay');
+  const extractDir = path.join(t.context.cacheDir, 'vst-export');
+
+  const client = await getApiClient();
+  const scenesService = client.getResource<ScenesService>('ScenesService');
+  const filtersService = client.getResource<SourceFiltersService>('SourceFiltersService');
+  const item = scenesService
+    .createScene('VST Export Scene')
+    .createAndAddSource('VST Export Source', 'ffmpeg_source', {
+      local_file: path.resolve('test/data/sources-files/media/alertbox.mp4'),
+    });
+  filtersService.add(item.sourceId, 'vst_filter', 'VST 2.x Plug-in', {
+    plugin_path: localPath,
+    chunk_data_path_v3: localPath,
+    chunk_data_v2: `${localPath}|AAAA`,
+  });
+
+  t.true(await focusWindow('worker'), 'worker window is available');
+  try {
+    await t.context.app.client.execute(filePath => {
+      const manager = (window as any).servicesManager;
+      return (manager.getResource(
+        'OverlaysPersistenceService',
+      ) as OverlaysPersistenceService).saveOverlay(filePath);
+    }, overlayPath);
+  } finally {
+    await focusMain();
+  }
+
+  await extractZip(overlayPath, { dir: extractDir });
+  const configText = fs.readFileSync(path.join(extractDir, 'config.json'), 'utf8');
+  const vstFilters: any[] = [];
+  JSON.parse(configText, (key, value) => {
+    if (value && value.type === 'vst_filter') vstFilters.push(value);
+    return value;
+  });
+
+  t.true(vstFilters.length > 0, 'exported overlay contains the vst filter');
+  for (const filter of vstFilters) {
+    t.is(filter.settings.plugin_path, 'Foo.dll');
+    t.is(filter.settings.chunk_data_path_v3, 'Foo.dll');
+    t.false('chunk_data_v2' in filter.settings, 'legacy chunk data is not exported');
+  }
+  t.false(configText.includes('streamer'), 'no local path is written to the overlay');
+});

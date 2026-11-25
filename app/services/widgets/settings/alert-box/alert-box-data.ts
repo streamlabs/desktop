@@ -33,6 +33,7 @@ export const API_NAME_MAP = {
   twitter_follow: 'twitter_follows',
   twitter_like: 'twitter_likes',
   twitter_sub: 'twitter_subs',
+  twitter_repost: 'twitter_reposts',
 };
 
 export const alertNameMap = () => ({
@@ -67,6 +68,7 @@ export const alertNameMap = () => ({
   twitter_follows: $t('X Follows'),
   twitter_likes: $t('X Likes'),
   twitter_subs: $t('X Subscriptions'),
+  twitter_reposts: $t('X Reposts'),
 });
 
 // different tests are required due to api idiosyncracies
@@ -184,6 +186,7 @@ export const conditions = () => ({
   twitter_follows: [{ value: 'RANDOM', title: $t('Randomly') }],
   twitter_likes: [{ value: 'RANDOM', title: $t('Randomly') }],
   twitter_subs: [{ value: 'RANDOM', title: $t('Randomly') }],
+  twitter_reposts: [{ value: 'RANDOM', title: $t('Randomly') }],
 });
 
 export const conditionData = () => ({
@@ -284,4 +287,5 @@ const DEFAULT_ALERT_FORMATS = {
   twitter_follows: '{name} is now following on X!',
   twitter_likes: '{name} liked on X!',
   twitter_subs: '{name} subscribed on X!',
+  twitter_reposts: '{name} reposted on X!',
 };

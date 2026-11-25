@@ -95,7 +95,7 @@ test('Form inputs', async t => {
   ]);
 
   // test assertion
-  assertFormContains({
+  await assertFormContains({
     name: 'John Doe',
     gender: 'Male',
     colors: ['Red', 'Orange'],

@@ -1,5 +1,4 @@
 {
-  "You have been logged out": "Vous avez été déconnecté",
   "This element is too small to be displayed": "Cet élément est trop petit pour être affiché",
   "This element requires Selective Recording to be enabled": "Cet élément exige l’activation de l’Enregistrement sélectif",
   "Grant Permissions": "Accorder les autorisations",
@@ -18,9 +17,11 @@
   "Unknown error, please contact support": "Erreur inconnue, contacte l'assistance",
   "Custom Destination": "Destination personnalisée",
   "This app is currently popped out in another window.": "Cette application est actuellement affichée dans une autre fenêtre.",
+  "Pop Out App": "Pop Out App",
   "Error granting chat permissions.": "Erreur dans l'attribution des permissions de chat.",
   "Authentication Error": "Erreur d’authentification",
   "Diagnostic Report Uploaded Successfully": "Le rapport de diagnostic a bien été téléchargé",
   "Copy Report ID": "Copier l’ID du rapport",
-  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "Le rapport de diagnostic a été téléchargé en toute sécurité et l’ID du rapport ci-dessous a été copié dans ton presse-papiers. Envoie l’ID du rapport à l’équipe Streamlabs Streamer Success."
+  "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "Le rapport de diagnostic a été téléchargé en toute sécurité et l’ID du rapport ci-dessous a été copié dans ton presse-papiers. Envoie l’ID du rapport à l’équipe Streamlabs Streamer Success.",
+  "Unknown %{platform} error": "Unknown %{platform} error"
 }

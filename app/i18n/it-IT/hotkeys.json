@@ -1,6 +1,11 @@
 {
   "Start Streaming": "Avvia streaming",
   "Stop Streaming": "Interrompi streaming",
+  "Screenshot Output": "Screenshot Output",
+  "Screenshot saved as %{filename}": "Screenshot saved as %{filename}",
+  "Could not save screenshot": "Could not save screenshot",
+  "Screenshots need a newer version of the Streamlabs backend.": "Screenshots need a newer version of the Streamlabs backend.",
+  "Set a recording folder in Settings > Output before taking a screenshot.": "Set a recording folder in Settings > Output before taking a screenshot.",
   "Start Recording": "Avvia registrazione",
   "Stop Recording": "Interrompi registrazione",
   "Switch to scene": "Passa alla scena",
@@ -24,10 +29,9 @@
   "Previous Slide": "Diapositiva precedente",
   "Toggle Performance Mode": "Attiva/Disattiva modalità prestazioni",
   "Skip Alert": "Salta l'avviso",
-  "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.": "Per utilizzare i tasti di scelta rapida su Mac, vai a Impostazioni di sistema > Sicurezza > Accessibilità e attivazione di Streamlabs Desktop.",
   "Start Virtual Camera": "Avvia la telecamera virtuale",
   "Stop Virtual Camera": "Ferma la telecamera virtuale",
-  "This scene has not been converted to Dual Output. Please make the scene active to add vertical sources.": "Questa scena non è stata convertita in Dual Output. Rendi la scena attiva per aggiungere le sorgenti verticali.",
+  "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.": "Per utilizzare i tasti di scelta rapida su Mac, vai a Impostazioni di sistema > Sicurezza > Accessibilità e attivazione di Streamlabs Desktop.",
   "Learn more here": "Scopri di più qui",
   "<color>Pro tip:</color> set Markers in Hotkeys settings to timestamp your recordings. <link>Set up here</link>": "<color>Suggerimento dei professionisti:</color> imposta i marcatori nelle impostazioni dei tasti di scelta rapida per inserire i timestamp delle tue registrazioni. <link>Configura qui</link>",
   "Markers": "Marcatori"

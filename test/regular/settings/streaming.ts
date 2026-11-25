@@ -17,7 +17,7 @@ useWebdriver();
 
 test('Populates stream settings after go live', withUser('twitch'), async t => {
   await goLive({ title: 'Test Stream', twitchGame: 'Fortnite' });
-  t.true(await chatIsVisible(), 'Chat should not be visible in protected mode');
+  t.true(await chatIsVisible(), 'Linked Twitch chat should be visible in protected mode');
   await stopStream();
 
   let key: string = '';
@@ -25,6 +25,7 @@ test('Populates stream settings after go live', withUser('twitch'), async t => {
   // Validate Custom Streaming Server type
   await showSettingsWindow('Stream', async () => {
     await click('a=Stream to custom ingest');
+    await waitForDisplayed('[data-name="key"]');
     const fields = (await readFields()) as Record<string, string>;
     key = fields.key;
     await assertFormContains({ streamType: 'Custom Streaming Server' });
@@ -37,9 +38,9 @@ test('Populates stream settings after go live', withUser('twitch'), async t => {
   // Can go live in unprotected mode. Note: Only streaming to Twitch in unprotected mode will open
   // the go live window, and `goLive` covers checking that because it fills that window.
   await goLive();
-  t.false(
+  t.true(
     await chatIsVisible(),
-    'Chat should have been collapsed and not be visible in unprotected mode',
+    'Linked Twitch chat should be visible when streaming to a custom Twitch ingest',
   );
   await stopStream();
 
@@ -108,6 +109,7 @@ test('Populates stream key after go live', async t => {
   await waitForStreamStop();
   await showSettingsWindow('Stream');
   await click('a=Stream to custom ingest');
+  await waitForDisplayed('[data-name="key"]');
 
   // Check that is a somewhat valid Twitch stream key
   const formData = (await readFields()) as { key: string };

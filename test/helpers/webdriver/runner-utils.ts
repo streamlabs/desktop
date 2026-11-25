@@ -6,6 +6,12 @@
 import avaTest, { TestInterface } from 'ava';
 import { ITestContext } from './index';
 import { uniq } from 'lodash';
+import { testBelongsToChunk } from '../test-sharding';
+import {
+  SHUTDOWN_ACK_TIMEOUT_MS,
+  SHUTDOWN_COMPLETE_TIMEOUT_MS,
+  SHUTDOWN_EXIT_TIMEOUT_MS,
+} from '../../../app/util/shutdown-coordinator';
 const fs = require('fs');
 const fetch = require('node-fetch');
 const tasklist = require('tasklist');
@@ -97,30 +103,7 @@ export function removeFailedTestFromFile(testName: string) {
  * check if test is eligible to run on the current CI agent
  */
 function isTestEligibleToRun(testName: string) {
-  const testAvgTime = testTimings[testName];
-
-  // if we don't have a timing data for test then it's always eligible to run
-  if (!testAvgTime) return true;
-
-  // determine which chunk of the test suite is running now
-  const chunk = process.env.SLOBS_TEST_RUN_CHUNK;
-
-  // always allow test to run if no chunk data provided
-  if (!chunk) return true;
-
-  // get the amount of chunks and the chunk we should run on this agent
-  const [currentChunkNum, totalChunks] = chunk.split('/').map(s => Number(s));
-
-  // calculate the chunk number for the current test
-  let testAvgStartTime = 0;
-  let testAvgTotalTime = 0;
-  Object.keys(testTimings).forEach(name => {
-    testAvgTotalTime += testTimings[name];
-    if (name === testName) testAvgStartTime = testAvgTotalTime;
-  });
-  const timePerChunk = testAvgTotalTime / totalChunks;
-  const testChunkNum = Math.floor(testAvgStartTime / timePerChunk) + 1;
-  return testChunkNum === currentChunkNum;
+  return testBelongsToChunk(testName, testTimings, process.env.SLOBS_TEST_RUN_CHUNK);
 }
 
 export function saveTestStatsToFile(stats: Record<string, ITestStats>) {
@@ -180,10 +163,16 @@ async function getElectronInstances() {
 
 export async function killElectronInstances() {
   const tasks = await getElectronInstances();
-  tasks.forEach((task: any) => kill(task.pid));
+  await Promise.all(tasks.map((task: any) => killProcessTree(task.pid)));
 }
 
-export function killChromedriverOnPort(port: number) {
+function killProcessTree(pid: number): Promise<void> {
+  // tree-kill starts taskkill asynchronously. Wait until it finishes before reusing
+  // the port or starting an app with a different test cache. The process may already be gone.
+  return new Promise(resolve => kill(pid, () => resolve()));
+}
+
+export async function killChromedriverOnPort(port: number) {
   const { execSync } = require('child_process');
 
   const p = Number(port);
@@ -201,15 +190,15 @@ export function killChromedriverOnPort(port: number) {
           if (Number.isFinite(pid)) pids.add(pid);
         }
       });
-      pids.forEach(pid => kill(pid));
+      await Promise.all(Array.from(pids, pid => killProcessTree(pid)));
     } else {
       const output = execSync(`lsof -nP -iTCP:${p} -sTCP:LISTEN -t`).toString().trim();
       if (output) {
-        output
+        const pids = output
           .split('\n')
           .map((pidStr: string) => parseInt(pidStr, 10))
-          .filter((pid: number) => Number.isFinite(pid))
-          .forEach((pid: number) => kill(pid));
+          .filter((pid: number) => Number.isFinite(pid));
+        await Promise.all(pids.map((pid: number) => killProcessTree(pid)));
       }
     }
   } catch (e: unknown) {
@@ -219,7 +208,9 @@ export function killChromedriverOnPort(port: number) {
 
 export async function waitForElectronInstancesExist() {
   const interval = 1000;
-  const timeout = 10000;
+  // Allow the application's bounded shutdown to finish before declaring a crash.
+  const timeout =
+    SHUTDOWN_ACK_TIMEOUT_MS + SHUTDOWN_COMPLETE_TIMEOUT_MS + SHUTDOWN_EXIT_TIMEOUT_MS + interval;
 
   const startedAt = Date.now();
   let tasks: any[] = await getElectronInstances();

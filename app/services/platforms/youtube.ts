@@ -10,7 +10,7 @@ import {
 } from '.';
 import { Inject } from 'services/core/injector';
 import { authorizedHeaders, jfetch } from 'util/requests';
-import { platformAuthorizedRequest } from './utils';
+import { platformAuthorizedRequest, platformRequest } from './utils';
 import { CustomizationService } from 'services/customization';
 import { IGoLiveSettings, TDisplayOutput } from 'services/streaming';
 import { $t, I18nService } from 'services/i18n';
@@ -36,6 +36,25 @@ import { UsageStatisticsService } from 'app-services';
 import cloneDeep from 'lodash/cloneDeep';
 import { ICustomStreamDestination } from 'services/settings/streaming';
 import { ENotificationType } from 'services/notifications';
+import uuid from 'uuid';
+import { YoutubeAutoOptimizerProbeRecovery } from './youtube/auto-optimizer-probe-recovery';
+import {
+  IYoutubeAutoOptimizerProbeAcquireOptions,
+  IYoutubeAutoOptimizerProbeLease,
+  IYoutubeAutoOptimizerProbeWaitOptions,
+  TYoutubeAutoOptimizerProbeDeleteResult,
+  TYoutubeAutoOptimizerProbeRecoveryResult,
+  TYoutubeAutoOptimizerProbeStreamStatus,
+  YoutubeAutoOptimizerProbeManager,
+} from './youtube/auto-optimizer-probe';
+
+export {
+  IYoutubeAutoOptimizerProbeAcquireOptions,
+  IYoutubeAutoOptimizerProbeLease,
+  IYoutubeAutoOptimizerProbeWaitOptions,
+  TYoutubeAutoOptimizerProbeRecoveryResult,
+  YoutubeAutoOptimizerProbeError,
+} from './youtube/auto-optimizer-probe';
 
 interface IYoutubeServiceState extends IPlatformState {
   liveStreamingEnabled: boolean;
@@ -66,6 +85,7 @@ export interface IYoutubeStartStreamOptions extends IExtraBroadcastSettings {
 interface IYoutubeCollection<T> {
   items: T[];
   pageInfo: { totalResults: number; resultsPerPage: number };
+  nextPageToken?: string;
 }
 
 /**
@@ -139,7 +159,10 @@ interface IYoutubeLiveStream {
   id: string;
   snippet: {
     isDefaultStream: boolean;
+    title?: string;
+    description?: string;
   };
+  contentDetails?: { isReusable?: boolean };
   cdn: {
     ingestionInfo: {
       /**
@@ -214,6 +237,18 @@ export class YoutubeService
 
   @lazyModule(YoutubeUploader) uploader: YoutubeUploader;
 
+  private autoOptimizerProbeManager?: YoutubeAutoOptimizerProbeManager;
+  private readonly autoOptimizerProbeRecovery = new YoutubeAutoOptimizerProbeRecovery({
+    getAccountId: () => {
+      const auth = this.userService.state.auth?.platforms?.youtube;
+      return this.oauthToken ? auth?.id || auth?.channelId || '' : '';
+    },
+    recover: () => this.recoverAutoOptimizerProbe(),
+    onError: error => console.warn('[Auto Optimizer] Deferred YouTube probe recovery', error),
+  });
+  private pendingAutoOptimizerProbeReleases = new Map<string, IYoutubeAutoOptimizerProbeLease>();
+  private isValidatingAuthUpdate = false;
+
   readonly capabilities = new Set<TPlatformCapability>([
     'title',
     'description',
@@ -283,6 +318,41 @@ export class YoutubeService
   protected init() {
     this.syncSettingsWithLocalStorage();
 
+    // Recover journaled temporary streams as soon as the linked YouTube account
+    // is available. Login completion also covers a failed linked-platform fetch;
+    // the scheduler coalesces it with auth updates and bounds background retries.
+    this.userService.userLoginFinished.subscribe(() => this.autoOptimizerProbeRecovery.schedule());
+
+    this.userService.platformAuthUpdated.subscribe(async platform => {
+      // Validation can refresh the token, which will emit this event again. To prevent a second call,
+      // skip it while a validation is already running.
+      if (platform === 'youtube' && !this.isValidatingAuthUpdate) {
+        // Validate any YouTube account has live streaming enabled. If not, prompt the user to enable it.
+        this.isValidatingAuthUpdate = true;
+        const accountId = this.getLinkedAccountId();
+
+        try {
+          const status = await this.validatePlatform();
+          if (status !== EPlatformCallResult.Success || this.getLinkedAccountId() !== accountId) {
+            // Return early if live streaming not enabled, or the account changed during validation,
+            // to prevent scheduling the auto optimizer probe recovery
+            return;
+          }
+        } finally {
+          this.isValidatingAuthUpdate = false;
+        }
+
+        this.autoOptimizerProbeRecovery.schedule();
+      }
+    });
+    this.userService.userLogout.subscribe(() => {
+      this.autoOptimizerProbeRecovery.cancel();
+
+      // Reset the YouTube live streaming status so it never carries over to the next session
+      this.SET_ENABLED_STATUS(false);
+    });
+    if (this.oauthToken) this.autoOptimizerProbeRecovery.schedule();
+
     this.streamingService.streamErrorCreated.subscribe(e => {
       if (this.state.verticalStreamKey || this.state.verticalBroadcast.id) {
         this.afterStopStream();
@@ -300,6 +370,198 @@ export class YoutubeService
 
   get oauthToken() {
     return this.userService.state.auth?.platforms?.youtube?.token;
+  }
+
+  /**
+   * Create a temporary, reusable YouTube liveStream for bandwidth testing
+   * without binding it to a broadcast. Reusability allows recovery through
+   * liveStreams.list if the create result is unknown. Delete the stream after
+   * testing; keep its RTMPS credentials only in memory.
+   */
+  acquireAutoOptimizerProbe(
+    options: IYoutubeAutoOptimizerProbeAcquireOptions = {},
+  ): Promise<IYoutubeAutoOptimizerProbeLease> {
+    return this.getAutoOptimizerProbeManager().acquire(options);
+  }
+
+  /**
+   * Wait until YouTube reports receiving data from OSN's temporary test output.
+   * Return false after the timeout; reject with AbortError if cancelled.
+   */
+  waitForAutoOptimizerProbeActive(
+    lease: IYoutubeAutoOptimizerProbeLease,
+    options: IYoutubeAutoOptimizerProbeWaitOptions = {},
+  ): Promise<boolean> {
+    return this.getAutoOptimizerProbeManager().waitForActive(lease, options);
+  }
+
+  /**
+   * After OSN's test output stops, wait for YouTube to report the temporary
+   * stream inactive, delete it, and verify that it is gone.
+   */
+  async releaseAutoOptimizerProbe(lease: IYoutubeAutoOptimizerProbeLease): Promise<void> {
+    try {
+      await this.getAutoOptimizerProbeManager().release(lease);
+      this.pendingAutoOptimizerProbeReleases.delete(lease.probeId);
+    } catch (error: unknown) {
+      // Keep only identifiers and retry cleanup in the background after the
+      // Auto Optimizer UI closes.
+      lease.server = '';
+      lease.streamKey = '';
+      this.pendingAutoOptimizerProbeReleases.set(lease.probeId, lease);
+      this.autoOptimizerProbeRecovery.schedule(30_000);
+      throw error;
+    }
+  }
+
+  /**
+   * Retry cleanup of a journaled stream left by an interrupted application
+   * run. A resource belonging to another linked account is retained and the
+   * operation rejects rather than creating or deleting anything.
+   */
+  async recoverAutoOptimizerProbe(): Promise<TYoutubeAutoOptimizerProbeRecoveryResult> {
+    let releaseError: unknown;
+    for (const [probeId, lease] of [...this.pendingAutoOptimizerProbeReleases]) {
+      try {
+        await this.getAutoOptimizerProbeManager().release(lease);
+        this.pendingAutoOptimizerProbeReleases.delete(probeId);
+      } catch (error: unknown) {
+        releaseError = error;
+      }
+    }
+    if (releaseError) throw releaseError;
+    return this.getAutoOptimizerProbeManager().recover();
+  }
+
+  private getAutoOptimizerProbeManager(): YoutubeAutoOptimizerProbeManager {
+    if (!this.autoOptimizerProbeManager) {
+      this.autoOptimizerProbeManager = new YoutubeAutoOptimizerProbeManager({
+        getAccountId: () => {
+          const auth = this.userService.state.auth?.platforms?.youtube;
+          // `id` is the stable linked-platform account identifier. channelId
+          // may be refreshed with a display name by UserService.
+          return auth?.id || auth?.channelId || '';
+        },
+        createStream: async (probeId, signal) => {
+          const stream = await this.createAutoOptimizerProbeStream(probeId, signal);
+          return {
+            id: stream.id,
+            server: stream.cdn?.ingestionInfo?.rtmpsIngestionAddress,
+            streamKey: stream.cdn?.ingestionInfo?.streamName,
+            isReusable: stream.contentDetails?.isReusable === true,
+            status: stream.status?.streamStatus || 'created',
+          };
+        },
+        fetchStreamStatus: (streamId, signal) =>
+          this.fetchAutoOptimizerProbeStatus(streamId, signal),
+        findStreamIds: (probeId, signal) => this.findAutoOptimizerProbeStreamIds(probeId, signal),
+        deleteStream: streamId => this.deleteAutoOptimizerProbeStream(streamId),
+        storage: localStorage,
+        createProbeId: () => uuid(),
+        now: () => Date.now(),
+      });
+    }
+
+    return this.autoOptimizerProbeManager;
+  }
+
+  private createAutoOptimizerProbeStream(
+    probeId: string,
+    signal?: AbortSignal,
+  ): Promise<IYoutubeLiveStream> {
+    const endpoint = 'liveStreams?part=cdn,snippet,contentDetails,status';
+    return platformAuthorizedRequest<IYoutubeLiveStream>('youtube', {
+      url: `${this.apiBase}/${endpoint}`,
+      method: 'POST',
+      signal,
+      body: JSON.stringify({
+        snippet: {
+          title: this.autoOptimizerProbeTitle(probeId),
+          description: this.autoOptimizerProbeDescription(probeId),
+        },
+        cdn: {
+          frameRate: 'variable',
+          ingestionType: 'rtmp',
+          resolution: 'variable',
+        },
+        contentDetails: { isReusable: true },
+      }),
+    });
+  }
+
+  private async fetchAutoOptimizerProbeStatus(
+    streamId: string,
+    signal?: AbortSignal,
+  ): Promise<TYoutubeAutoOptimizerProbeStreamStatus | null> {
+    const response = await platformAuthorizedRequest<IYoutubeCollection<IYoutubeLiveStream>>(
+      'youtube',
+      {
+        url: `${this.apiBase}/liveStreams?part=status&id=${encodeURIComponent(streamId)}`,
+        signal,
+      },
+    );
+    return response.items[0]?.status?.streamStatus || null;
+  }
+
+  private async findAutoOptimizerProbeStreamIds(
+    probeId: string,
+    signal?: AbortSignal,
+  ): Promise<string[]> {
+    const title = this.autoOptimizerProbeTitle(probeId);
+    const description = this.autoOptimizerProbeDescription(probeId);
+    const streamIds: string[] = [];
+    let pageToken = '';
+
+    do {
+      const query =
+        'liveStreams?part=id,snippet&mine=true&maxResults=50' +
+        (pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : '');
+      const response = await platformAuthorizedRequest<IYoutubeCollection<IYoutubeLiveStream>>(
+        'youtube',
+        { url: `${this.apiBase}/${query}`, signal },
+      );
+      (response.items || []).forEach(stream => {
+        if (stream.snippet?.title === title && stream.snippet?.description === description) {
+          streamIds.push(stream.id);
+        }
+      });
+      pageToken = response.nextPageToken || '';
+    } while (pageToken);
+
+    return streamIds;
+  }
+
+  private autoOptimizerProbeTitle(probeId: string): string {
+    return `Streamlabs Auto Optimizer ${probeId}`;
+  }
+
+  private autoOptimizerProbeDescription(probeId: string): string {
+    return `Temporary unbound Streamlabs Auto Optimizer probe ${probeId}`;
+  }
+
+  private async deleteAutoOptimizerProbeStream(
+    streamId: string,
+  ): Promise<TYoutubeAutoOptimizerProbeDeleteResult> {
+    try {
+      // YouTube returns an empty HTTP 204 for a successful DELETE. Bypass
+      // jfetch so the empty body cannot be mistaken for a failed JSON parse.
+      await platformRequest(
+        'youtube',
+        {
+          url: `${this.apiBase}/liveStreams?id=${encodeURIComponent(streamId)}`,
+          method: 'DELETE',
+        },
+        true,
+        false,
+      );
+      return 'deleted';
+    } catch (error: unknown) {
+      // Cleanup is idempotent. A missing resource has already reached the
+      // desired state, but a fresh 404 can also be YouTube propagation delay.
+      // The manager retains a recent unobserved journal and retries it.
+      if ((error as { status?: number } | null)?.status === 404) return 'absent';
+      throw error;
+    }
   }
 
   /**
@@ -354,7 +616,11 @@ export class YoutubeService
       typeof reqInfo !== 'string'
         ? `Failed ${this.displayName} API Request`
         : `Failed ${this.displayName} Request`;
-    console.error(consoleError, '\nRequest Info:', reqInfo, '\nError:', e);
+
+    // Parse object data if possible to read data in the errors array
+    const error = this.serializeError(e);
+
+    console.error(consoleError, '\nRequest Info:', reqInfo, '\nError:', error);
 
     // If a function is provided, skip the default handling
     if (fn) {
@@ -488,6 +754,30 @@ export class YoutubeService
   }
 
   async setupDualStream(goLiveSettings: IGoLiveSettings) {
+    // Filter out sensitive information from custom destinations for logging
+    const settings = {
+      title: goLiveSettings?.platforms?.youtube?.title,
+      thumbnail:
+        goLiveSettings?.platforms?.youtube?.thumbnail &&
+        goLiveSettings?.platforms?.youtube?.thumbnail !== 'default'
+          ? goLiveSettings?.platforms?.youtube?.thumbnail
+          : 'default',
+      categoryId: goLiveSettings?.platforms?.youtube?.categoryId,
+      broadcastId: goLiveSettings?.platforms?.youtube?.broadcastId,
+      description: goLiveSettings?.platforms?.youtube?.description,
+      privacyStatus: goLiveSettings?.platforms?.youtube?.privacyStatus,
+      scheduledStartTime: goLiveSettings?.platforms?.youtube?.scheduledStartTime,
+      mode: goLiveSettings?.platforms?.youtube?.mode,
+      monetizationEnabled: goLiveSettings?.platforms?.youtube?.monetizationEnabled,
+      eligibleForMonetization: goLiveSettings?.platforms?.youtube?.eligibleForMonetization,
+    };
+    console.log(
+      'Setting up dual stream: ',
+      JSON.stringify({
+        advancedMode: goLiveSettings?.advancedMode,
+        settings,
+      }),
+    );
     // Live output editing currently cannot use dual stream so guard against it
     if (goLiveSettings.liveOutputEditing) {
       return;
@@ -552,6 +842,17 @@ export class YoutubeService
         verticalDestination.display,
       );
     }
+
+    // Temporarily log the vertical stream information for debugging purposes
+    console.log(
+      'Vertical stream ',
+      JSON.stringify({
+        verticalBroadcast: this.state.verticalBroadcast.id,
+        verticalStream: this.state.verticalBroadcast.contentDetails.boundStreamId,
+        verticalBroadcastId: verticalBroadcast.id,
+        verticalStreamId: verticalStream.id,
+      }),
+    );
 
     this.setPlatformContext('youtube');
   }
@@ -625,13 +926,9 @@ export class YoutubeService
       await this.setupLiveOutputStream(goLiveSettings);
     } else if (ytSettings.display === 'both') {
       try {
-        // Prevent rate limit errors by delaying the dual stream setup by 1 second
-        await new Promise<void>(resolve => {
-          setTimeout(async () => {
-            await this.setupDualStream(goLiveSettings);
-            resolve();
-          }, 1000);
-        });
+        // Prevent rate limit errors by delaying the dual stream setup by 3 seconds
+        await Utils.sleep(3000);
+        await this.setupDualStream(goLiveSettings);
       } catch (e: unknown) {
         this.createPlatformError(
           e,
@@ -661,6 +958,17 @@ export class YoutubeService
     this.SET_STREAM_ID(stream.id);
     this.SET_STREAM_KEY(streamKey);
 
+    // Temporarily log the horizontal stream information for debugging purposes
+    console.log(
+      'horizontal stream ',
+      JSON.stringify({
+        horizontalBroadcast: this.state.settings.broadcastId,
+        horizontalStream: this.state.streamId,
+        horizontalBroadcastId: broadcast.id,
+        horizontalStreamId: stream.id,
+      }),
+    );
+
     this.setPlatformContext('youtube');
   }
 
@@ -689,6 +997,11 @@ export class YoutubeService
     this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
   }
 
+  private getLinkedAccountId(): string {
+    const auth = this.userService.state.auth?.platforms?.youtube;
+    return auth?.id || auth?.channelId || '';
+  }
+
   /**
    * check that user has enabled live-streaming on their account
    */
@@ -696,25 +1009,34 @@ export class YoutubeService
     const endpoint = 'liveStreams?part=id,snippet&mine=true';
     const url = `${this.apiBase}/${endpoint}`;
 
-    try {
-      await this.requestYoutube(url, false);
-      this.SET_ENABLED_STATUS(true);
-      return EPlatformCallResult.Success;
-    } catch (e: unknown) {
-      this.SET_ENABLED_STATUS(false);
+    // The request can finish after a logout or an account change, so only write
+    // the result if the account that started this validation is still linked.
+    const accountId = this.getLinkedAccountId();
 
-      // `requestYoutube` already created the stream error and logged it so just return the result
-      if (e instanceof StreamError) {
-        if (e.status === 401 || e.status === 423 || e.reason === EYoutubeErrorReason.Forbidden) {
-          return EPlatformCallResult.TokenExpired;
+    return await this.requestYoutube(url, false)
+      .then(() => {
+        if (this.getLinkedAccountId() === accountId && !this.state.liveStreamingEnabled) {
+          this.SET_ENABLED_STATUS(true);
+        }
+        return EPlatformCallResult.Success;
+      })
+      .catch((e: unknown) => {
+        if (this.getLinkedAccountId() === accountId && this.state.liveStreamingEnabled) {
+          this.SET_ENABLED_STATUS(false);
         }
 
-        if (e.reason === EYoutubeErrorReason.LiveStreamingNotEnabled) {
-          return EPlatformCallResult.YoutubeStreamingDisabled;
+        // `requestYoutube` already created the stream error and logged it so just return the result
+        if (e instanceof StreamError) {
+          if (e.status === 401 || e.status === 423 || e.reason === EYoutubeErrorReason.Forbidden) {
+            return EPlatformCallResult.TokenExpired;
+          }
+
+          if (e.reason === EYoutubeErrorReason.LiveStreamingNotEnabled) {
+            return EPlatformCallResult.YoutubeStreamingDisabled;
+          }
         }
-      }
-      return EPlatformCallResult.Error;
-    }
+        return EPlatformCallResult.Error;
+      });
   }
 
   getHeaders(req: IPlatformRequest, authorized = false) {

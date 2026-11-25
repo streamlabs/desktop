@@ -1,5 +1,9 @@
 @import "../../../styles/index";
 
+:export {
+  dropdownInputZIndex: @z-tags-input-dropdown;
+}
+
 .container.full-width {
   width: 100%;
 }
@@ -37,7 +41,7 @@
 
   input {
     visibility: hidden;
-    z-index: 101;
+    z-index: @z-tags-input;
     border-radius: 0 !important;
     margin-top: -1px;
   }

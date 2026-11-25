@@ -1,7 +1,6 @@
 {
   "Visual Settings": "Görsel Ayarlar",
   "Font Settings": "Yazı Tipi Ayarları",
-  "Chatter": "Sohbetçi",
   "Always Show Messages": "Mesajları Her Zaman Göster",
   "Show Moderator Badges": "Moderatör Rozetlerini Göster",
   "Show Subscriber Badges": "Abone Rozetlerini Göster",
@@ -15,7 +14,6 @@
   "Text Color": "Metin Rengi",
   "Font Size": "Yazı Tipi Boyutu",
   "Muted Chatters": "Sesi Kapatılmış Sohbetçiler",
-  "Hide Commands": "Komutları Gizle",
   "Background Color": "Arka Plan Rengi",
   "Show Platform Icons": "Platform Simgelerini Göster",
   "Theme": "Tema",

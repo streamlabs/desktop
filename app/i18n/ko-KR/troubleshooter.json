@@ -1,9 +1,7 @@
 {
   "Troubleshooter": "문제 해결",
   "Open Settings": "설정 열기",
-  " Streamlabs has detected dropped frames": "Streamlabs가 드롭된 프레임을 검색했습니다",
   "What does this mean?": "이는 무슨 뜻입니까?",
-  " Some frames have not been uploaded. This problem is usually related to a poor network connection.": "일부 프레임이 업로드되지 않았을 수 있습니다. 대개 불안정한 네트워크 연결과 연관된 문제입니다.",
   "What can I do?": "어떻게 해야 하나요?",
   "Check the health of your Internet connection": "인터넷 연결 상태를 확인하세요",
   "Change your ingest server": "인제스트 서버를 변경하세요",
@@ -23,5 +21,7 @@
   "Disable FreeSync or GSync in your Driver": "드라이버에서 FreeSync 또는 GSync 비활성화",
   "Lower graphics settings until you stop lagging frames": "프레임이 뒤처지지 않을 때까지 그래픽 설정 낮추기",
   "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "미디어 소스 하의 하드웨어 디코딩 비활성화(GPU보다 CPU를 약간 향상합니다)",
-  "CPU usage threshold in Dual Output mode": "Dual Output 모드의 CPU 사용량 한도"
+  "CPU usage threshold in Dual Output mode": "Dual Output 모드의 CPU 사용량 한도",
+  "Streamlabs has detected dropped frames": "Streamlabs has detected dropped frames",
+  "Some frames have not been uploaded. This problem is usually related to a poor network connection.": "Some frames have not been uploaded. This problem is usually related to a poor network connection."
 }

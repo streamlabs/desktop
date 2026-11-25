@@ -15,7 +15,16 @@ interface IHelpTipProps {
     right?: string;
   };
   tipPosition?: 'left' | 'right';
-  arrowPosition?: 'top' | 'bottom';
+  /**
+   * Which edge the arrow sits on. `left` and `right` center the arrow vertically
+   * on that edge, for tips placed beside the element they point at.
+   */
+  arrowPosition?: 'top' | 'bottom' | 'left' | 'right';
+  /**
+   * Lays the title and body out in a single row so the tip stays short enough
+   * to fit inside a bar like the nav, and vertically centers it on `position.top`.
+   */
+  compact?: boolean;
   style?: CSSProperties;
 }
 
@@ -35,12 +44,20 @@ export default function HelpTip(props: React.PropsWithChildren<IHelpTipProps>) {
   if (!shouldShow) return <></>;
 
   return (
-    <div className={styles.helpTip} style={p.position}>
+    <div className={cx(styles.helpTip, { [styles.helpTipCompact]: p.compact })} style={p.position}>
       {p.arrowPosition === 'top' && (
         <div
           className={cx(styles.helpTipArrow, {
             [styles.helpTipArrowRight]: p.tipPosition === 'right',
           })}
+        />
+      )}
+      {p.arrowPosition === 'left' && (
+        <div className={cx(styles.helpTipArrow, styles.helpTipArrowMiddle)} />
+      )}
+      {p.arrowPosition === 'right' && (
+        <div
+          className={cx(styles.helpTipArrow, styles.helpTipArrowRight, styles.helpTipArrowMiddle)}
         />
       )}
       <i onClick={closeHelpTip} className={cx(styles.helpTipClose, 'icon-close')} />

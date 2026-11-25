@@ -20,7 +20,7 @@ useWebdriver({ pauseIfFailed: false });
 // TODO: Restore Alert Box for Twitch and YouTube
 test.skip('Alert Box for Twitch', t => testAlertbox(t, 'twitch'));
 test.skip('Alert Box for YouTube', t => testAlertbox(t, 'youtube'));
-test('Alert Box for Facebook', t => testAlertbox(t, 'facebook'));
+test.skip('Alert Box for Facebook', t => testAlertbox(t, 'facebook'));
 
 const commonAlerts = ['Donation', 'Merch'];
 

@@ -12,6 +12,7 @@
   "Chroma Key": "Tombol Chroma",
   "Video Delay (Async)": "Penundaan Video (Async)",
   "Noise Suppression": "Peredaman Noise",
+  "NVIDIA Audio Effects": "NVIDIA Audio Effects",
   "Noise Gate": "Gerbang Noise",
   "Compressor": "Kompresor",
   "VST 2.x Plugin": "Plugin VST 2.x",
@@ -27,6 +28,9 @@
   "Shader": "Shader",
   "HDR Tone Mapping (Override)": "Pemetaan Nada HDR (Override)",
   "NVIDIA Background Removal": "Penghapusan Latar Belakang NVIDIA",
+  "NVIDIA Blur Filter": "NVIDIA Blur Filter",
+  "NVIDIA Background Blur Filter": "NVIDIA Background Blur Filter",
+  "Luma Key": "Luma Key",
   "No settings are available for this filter": "Tidak tersedia pengaturan untuk filter ini",
   "Visual Presets": "Preset Visual",
   "None": "Tidak ada",
@@ -81,5 +85,7 @@
   "Open Threshold": "Buka Batas",
   "Close Threshold": "Tutup Batas",
   "Presets": "Preset",
-  "Detection": "Deteksi"
+  "Detection": "Deteksi",
+  "Upward Compressor": "Upward Compressor",
+  "3-Band Equalizer": "3-Band Equalizer"
 }

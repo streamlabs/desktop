@@ -477,7 +477,7 @@
   left: 100px;
   opacity: 0;
   border-left: none;
-  z-index: -1;
+  z-index: @z-below;
 }
 
 .custom-code__alert {

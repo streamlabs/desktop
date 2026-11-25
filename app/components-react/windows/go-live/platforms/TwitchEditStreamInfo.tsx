@@ -56,11 +56,19 @@ const TwitchRequiredFields = memo((p: IPlatformComponentParams<'twitch'>) => {
   return (
     <>
       <div className="flex__horizontal margin">
-        <GameSelector key="twitch-game" platform="twitch" {...bind.game} layout="vertical" />
+        <GameSelector
+          key="twitch-game"
+          platform="twitch"
+          {...bind.game}
+          onGameSelect={game =>
+            p.onChange({ ...p.value, game: game.id, gameId: game.id, gameName: game.name })
+          }
+          layout="vertical"
+        />
         <TwitchTagsInput label={$t('Twitch Tags')} {...bind.tags} layout="vertical" />
       </div>
       {p.isAiHighlighterEnabled && (
-        <AiHighlighterToggle key="ai-toggle" cardIsExpanded={false} isUpdateMode={p.isUpdateMode} />
+        <AiHighlighterToggle key="ai-toggle" isUpdateMode={p.isUpdateMode} />
       )}
     </>
   );

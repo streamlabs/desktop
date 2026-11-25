@@ -1,9 +1,7 @@
 {
   "Enable in-game overlay": "인게임 오버레이 활성화",
-  "Enable stream preview in overlay": "오버레이에서 스트리밍 미리 보기 활성화",
   "Toggle in-game overlay": "인게임 오버레이 토글",
   "Toggle positioning mode": "포지셔닝 모드 토글",
   "Set a hotkey in Hotkey Settings to toggle the in-game overlay": "핫키 설정에서 핫키를 설정하여 인게임 오버레이를 토글",
-  "The in-game overlay is a new experimental feature that allows you to view chat and events overlayed on top of your game.  This overlay may not work with certain games running in exclusive fullscreen mode.  For best results, we recommend running your game in windowed-fullscreen mode.": "인게임 오버레이는 게임의 상단에 채팅 및 이벤트를 오버레이 하여 보여주는 새롭고 실험적인 기능입니다. 이 오버레이는 풀스크린에서 진행되는 특정 게임에서는 작동하지 않을 수 있습니다. 최상의 결과를 원하시는 경우, 창 모드에서 풀스크린으로 게임을 진행하시기 바랍니다.",
   "Please log in to use the in-game overlay.": "인게임 오버레이를 사용하시려면 로그인하세요."
 }

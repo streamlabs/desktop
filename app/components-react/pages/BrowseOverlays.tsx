@@ -11,6 +11,7 @@ import { downloadFile, IDownloadProgress } from 'util/requests';
 import * as remote from '@electron/remote';
 import omit from 'lodash/omit';
 import { Services } from 'components-react/service-provider';
+import { useVuex } from 'components-react/hooks';
 import {
   IOverlayCollectionParams,
   IOverlayIdParams,
@@ -34,22 +35,33 @@ export default function BrowseOverlays(p: {
     JsonrpcService,
     RestreamService,
     MediaBackupService,
+    CustomizationService,
   } = Services;
   const [downloading, setDownloading] = useState(false);
   const [overlaysUrl, setOverlaysUrl] = useState('');
+  const { theme } = useVuex(() => ({ theme: CustomizationService.state.theme }));
 
+  // The URL is a single-use magic link that also bakes in the theme, so fetch a fresh
+  // one on theme change rather than letting BrowserView reload the spent one.
   useEffect(() => {
+    let cancelled = false;
+
     async function getOverlaysUrl() {
       const url = await UserService.actions.return.overlaysUrl(
         p.params.type,
         p.params ? omit(p.params, 'type') : undefined,
       );
-      if (!url) return;
+      if (!url || cancelled) return;
       setOverlaysUrl(url);
     }
 
     getOverlaysUrl();
+
+    return () => {
+      cancelled = true;
+    };
   }, [
+    theme,
     p.params.type,
     (p.params as IOverlayIdParams)?.id,
     (p.params as IOverlayIdParams)?.install,
@@ -301,6 +313,7 @@ export default function BrowseOverlays(p: {
       style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
       enableGuestApi
       setLocale
+      reloadOnThemeChange={false}
     />
   );
 }

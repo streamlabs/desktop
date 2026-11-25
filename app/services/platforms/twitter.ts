@@ -131,9 +131,11 @@ export class TwitterPlatformService
 
   readonly capabilities = new Set<TPlatformCapability>([
     'title',
+    'description',
     'viewerCount',
     'chat',
     'stream-schedule',
+    'streamlabels',
   ]);
   readonly liveDockFeatures = new Set<TLiveDockFeature>([
     'refresh-chat-streaming',
@@ -184,6 +186,10 @@ export class TwitterPlatformService
 
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     if (Utils.isTestMode()) {
+      // TODO: refactor to use the settings object instead of hardcoding values
+      // For testing purposes only: the Multistream server rejects a relay target with an empty ingest and stream key
+      this.SET_INGEST('rtmps://twitterIngestUrl:443/rtmp');
+      this.SET_STREAM_KEY('twitterStreamKey1');
       this.SET_BROADCAST_ID('twitterBroadcast1');
       this.setPlatformContext('twitter');
       return;

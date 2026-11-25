@@ -8,7 +8,6 @@
   "Browse the Gallery": "Sfoglia la galleria",
   "Cancel": "Annulla",
   "OK": "OK",
-  "Select": "Seleziona",
   "You don't have any uploaded files!": "Nessun file caricato.",
   "You don't have any uploaded images!": "Nessuna immagine caricata.",
   "You don't have any uploaded sounds!": "Nessun suono caricato.",
@@ -19,7 +18,6 @@
   "Stock Files": "File stock",
   "My Uploads": "I miei caricamenti",
   "Not a supported file type": "Tipo di file non supportato",
-  "Downloading...": "Download in corso...",
   "Uploading...": "Caricamento in corso...",
   "URL Copied": "URL copiato",
   "Failed to copy URL": "Impossibile copiare l'URL",
@@ -29,7 +27,9 @@
   "No Sound": "Nessun suono",
   "No Media": "Nessun contenuto multimediale",
   "Change Link": "Modifica collegamento",
-  "Pick From Gallery": "Scegli dalla galleria",
   "Clear Link": "Cancella collegamento",
-  "Media URL": "URL elementi multimediali"
+  "Media URL": "URL elementi multimediali",
+  "Only .jpeg and .png is supported": "Only .jpeg and .png is supported",
+  "This file could not be uploaded": "This file could not be uploaded",
+  "You must have Streamlabs Ultra to use this media": "You must have Streamlabs Ultra to use this media"
 }

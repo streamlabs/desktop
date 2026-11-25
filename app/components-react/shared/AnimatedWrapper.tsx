@@ -7,7 +7,7 @@ interface IAnimatedWrapperProps {
   visible: boolean;
   style?: CSSProperties;
   children?: React.ReactNode;
-  height: string;
+  height?: string;
   onClick?: (props?: any) => void;
   // Render name as data-name for testing purposes
   name?: string;

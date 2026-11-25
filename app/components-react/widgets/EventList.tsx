@@ -47,6 +47,10 @@ interface IEventListState extends IWidgetCommonState {
       show_subscribers: boolean;
       show_tiltifydonations: boolean;
       show_treats: boolean;
+      show_twitter_follows: boolean;
+      show_twitter_subscriptions: boolean;
+      show_twitter_likes: boolean;
+      show_twitter_reposts: boolean;
       text_color: string;
       text_size: number;
       theme: string;
@@ -113,9 +117,11 @@ export class EventListModule extends WidgetModule<IEventListState> {
         show_fanfundings: metadata.bool({ label: $t('Super Chats') }),
       },
       twitter: {
-        show_follows: metadata.bool({ label: $t('Follows') }),
-        show_subscriptions: metadata.bool({ label: $t('Subscriptions') }),
-        show_likes: metadata.bool({ label: $t('Likes') }),
+        // X (Twitter) must use prefixed keys
+        show_twitter_follows: metadata.bool({ label: $t('Follows') }),
+        show_twitter_subscriptions: metadata.bool({ label: $t('Subscriptions') }),
+        show_twitter_likes: metadata.bool({ label: $t('Likes') }),
+        show_twitter_reposts: metadata.bool({ label: $t('Reposts') }),
       },
     };
     if (!platform || !platformEvents[platform]) return baseEvents;

@@ -1,7 +1,9 @@
 import { Button } from 'antd';
 import { Services } from 'components-react/service-provider';
+import { useVuex } from 'components-react/hooks';
 import { ListInput, TextInput } from 'components-react/shared/inputs';
 import Form from 'components-react/shared/inputs/Form';
+import { webUtils } from 'electron';
 import * as remote from '@electron/remote';
 import {
   HIGHLIGHTER_APP_NAME,
@@ -15,16 +17,22 @@ import {
   TOpenedFrom,
 } from 'services/highlighter/models/highlighter.models';
 import { $t } from 'services/i18n';
-import React, { useEffect, useRef, useState } from 'react';
-import styles from './StreamView.m.less';
-import { getConfigByGame, supportedGames } from 'services/highlighter/models/game-config.models';
+import React, { useEffect, useMemo, useState } from 'react';
+import styles from './ImportStream.m.less';
+import {
+  getConfigByGame,
+  getGameOptions,
+  OTHER_GAME_ID,
+} from 'services/highlighter/models/game-config.models';
 import path from 'path';
-import MigrationNotice from './migration/MigrationNotice';
+import fs from 'fs';
+import moment from 'moment';
+import ModalInstallationFlow from './ModalInstallationFlow';
 import { HypeWrapper } from './HypeWrapper';
-import { EAvailableFeatures } from 'services/incremental-rollout';
-import uuid from 'uuid';
+import { IRecordingEntry } from 'services/recording-mode';
 
-type GameConfig = ReturnType<typeof getConfigByGame>;
+const RECENT_RECORDINGS_COUNT = 20;
+const RECENT_RECORDINGS_MAX_AGE_DAYS = 30;
 
 export function ImportStreamModal({
   close,
@@ -32,15 +40,39 @@ export function ImportStreamModal({
   videoPath,
   selectedGame,
   streamInfo,
+  showRecentRecordings,
 }: {
   close: () => void;
   openedFrom: TOpenedFrom;
   videoPath?: string;
   selectedGame?: EGame;
   streamInfo?: IStreamInfoForAiHighlighter;
+  /** Start with a picker of the latest recordings before the import form */
+  showRecentRecordings?: boolean;
 }) {
-  const { HighlighterService, UsageStatisticsService, IncrementalRolloutService } = Services;
+  const { HighlighterService, UsageStatisticsService, RecordingModeService } = Services;
   const [installedApp, setInstalledApp] = useState<TInstalledHighlighterApp | null>(null);
+
+  // Read once on open. Recordings deleted from disk since are left out.
+  const [recentRecordings] = useState<IRecordingEntry[]>(() => {
+    if (!showRecentRecordings || videoPath) return [];
+    const cutoff = moment().subtract(RECENT_RECORDINGS_MAX_AGE_DAYS, 'days');
+    return RecordingModeService.views.sortedRecordings
+      .filter(recording => moment(recording.timestamp).isAfter(cutoff))
+      .filter(recording => fs.existsSync(recording.filename))
+      .slice(0, RECENT_RECORDINGS_COUNT);
+  });
+  const [showingRecordingPicker, setShowingRecordingPicker] = useState(recentRecordings.length > 0);
+  const [gameSelectOpen, setGameSelectOpen] = useState(false);
+  const [openGameSelectOnShow, setOpenGameSelectOnShow] = useState(false);
+
+  // Opened only after the form is mounted, so the dropdown can attach to the rendered select
+  useEffect(() => {
+    if (!showingRecordingPicker && openGameSelectOnShow) {
+      setGameSelectOpen(true);
+      setOpenGameSelectOnShow(false);
+    }
+  }, [showingRecordingPicker, openGameSelectOnShow]);
   const [showingInstallFlow, setShowingInstallFlow] = useState(false);
   const [pendingImport, setPendingImport] = useState<{
     game: EGame;
@@ -62,11 +94,24 @@ export function ImportStreamModal({
       selectedGame ||
       undefined,
   );
-  const gameOptions = supportedGames;
+  const replaySupportedGames = useVuex(() => HighlighterService.views.replaySupportedGames);
+  const gameOptions = useMemo(() => getGameOptions(replaySupportedGames), [replaySupportedGames]);
   const gameConfig = getConfigByGame(game);
-  const migrationEnabled = IncrementalRolloutService.views.featureIsEnabled(
-    EAvailableFeatures.highlighterMigration,
-  );
+
+  function labelMatches(search: string, label: unknown) {
+    return String(label ?? '')
+      .toLowerCase()
+      .includes(search.toLowerCase());
+  }
+
+  // Other Game is the fallback for games we don't list, so keep it visible when nothing else matches
+  function filterGameOption(search: string, option?: { value?: unknown; label?: unknown }) {
+    if (labelMatches(search, option?.label)) return true;
+    return (
+      option?.value === OTHER_GAME_ID &&
+      !gameOptions.some(o => o.value !== OTHER_GAME_ID && labelMatches(search, o.label))
+    );
+  }
 
   function handleInputChange(value: string) {
     setInputValue(value);
@@ -105,43 +150,6 @@ export function ImportStreamModal({
   }
 
   async function startImport(game: EGame, filePath: string[] | undefined, id?: string) {
-    if (!migrationEnabled) {
-      // Old highlighter flow: use local AI detection
-      const streamInfo: IStreamInfoForAiHighlighter = {
-        id: id ?? 'manual_' + uuid(),
-        title: inputValue.replace(/[\\/:"*?<>|]+/g, ''),
-        game,
-      };
-      try {
-        if (game && filePath && filePath.length > 0) {
-          HighlighterService.actions.detectAndClipAiHighlights(filePath[0], streamInfo);
-          UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
-            type: 'DetectionInModalStarted',
-            openedFrom,
-            streamId: id,
-            game,
-          });
-          closeModal(false);
-          return;
-        }
-
-        filePath = await importStreamFromDevice();
-        if (filePath && filePath.length > 0) {
-          HighlighterService.actions.detectAndClipAiHighlights(filePath[0], streamInfo);
-          UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
-            type: 'DetectionInModalStarted',
-            openedFrom,
-            streamId: id,
-            game,
-          });
-          closeModal(false);
-        }
-      } catch (error: unknown) {
-        console.error('Error importing file from device', error);
-      }
-      return;
-    }
-
     try {
       // Make sure a video is selected before we do anything else so that game + title
       // (and the file) are all known before an install is ever triggered.
@@ -165,7 +173,10 @@ export function ImportStreamModal({
       if (app === 'none') {
         setPendingImport({ game, filePath: filePath[0], streamId: id });
         setShowingInstallFlow(true);
-        HighlighterService.actions.installStreamlabsReplay({ videoPath: filePath[0], game });
+        HighlighterService.actions.installStreamlabsReplay(
+          { videoPath: filePath[0], game },
+          `import-${openedFrom}`,
+        );
         return;
       }
 
@@ -189,10 +200,10 @@ export function ImportStreamModal({
     }
   }, [gameConfig?.importModalConfig?.artwork]);
 
-  function renderMigrationNotice() {
+  function renderInstallationFlow() {
     return (
-      <MigrationNotice
-        variant="modal"
+      <ModalInstallationFlow
+        installEntry={`import-${openedFrom}`}
         installOriginMetadata={
           pendingImport
             ? { videoPath: pendingImport.filePath, game: pendingImport.game }
@@ -230,26 +241,61 @@ export function ImportStreamModal({
   // Show the install UI only once the user has committed to importing (game + title
   // selected, then startImport triggers the install). Applies to every entry point so
   // the import form is always shown first, never the install flow.
-  if (migrationEnabled && installedApp === 'none' && showingInstallFlow) {
+  if (installedApp === 'none' && showingInstallFlow) {
     return (
       <HypeWrapper gameConfig={gameConfig} isAnimating={false} artwork={artwork}>
-        {renderMigrationNotice()}
+        {renderInstallationFlow()}
+      </HypeWrapper>
+    );
+  }
+
+  function selectRecording(recording: IRecordingEntry) {
+    setFilePath(recording.filename);
+    setShowingRecordingPicker(false);
+    setOpenGameSelectOnShow(!game);
+  }
+
+  const header = (
+    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <h2 style={{ fontWeight: 600, margin: 0 }}>
+        {openedFrom === 'after-stream' ? 'Ai Highlighter' : `${$t('Import Game Recording')}`}
+      </h2>{' '}
+      <div>
+        <Button type="text" onClick={() => closeModal(true)}>
+          <i className="icon-close" style={{ margin: 0 }}></i>
+        </Button>
+      </div>
+    </div>
+  );
+
+  if (showingRecordingPicker) {
+    return (
+      <HypeWrapper gameConfig={gameConfig} isAnimating={isAnimating} artwork={artwork}>
+        {header}
+        <p style={{ margin: 0 }}>{$t('Select one of your recent recordings')}</p>
+        <div className={styles.recordingGrid}>
+          {recentRecordings.map(recording => (
+            <button
+              key={recording.timestamp}
+              className={styles.recordingThumbnail}
+              onClick={() => selectRecording(recording)}
+            >
+              {/* Seeking a bit in avoids a black first frame */}
+              <video src={`${recording.filename}#t=1`} preload="metadata" muted />
+              <span className={styles.recordingDate}>{getRelativeDay(recording.timestamp)}</span>
+            </button>
+          ))}
+        </div>
+        <Button size="large" onClick={() => setShowingRecordingPicker(false)}>
+          {$t('Select another file')}
+        </Button>
       </HypeWrapper>
     );
   }
 
   return (
     <HypeWrapper gameConfig={gameConfig} isAnimating={isAnimating} artwork={artwork}>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <h2 style={{ fontWeight: 600, margin: 0 }}>
-          {openedFrom === 'after-stream' ? 'Ai Highlighter' : `${$t('Import Game Recording')}`}
-        </h2>{' '}
-        <div>
-          <Button type="text" onClick={() => closeModal(true)}>
-            <i className="icon-close" style={{ margin: 0 }}></i>
-          </Button>
-        </div>
-      </div>
+      {header}
 
       <TextInput
         className={styles.customInput}
@@ -275,7 +321,8 @@ export function ImportStreamModal({
           const files: string[] = [];
           let fi = e.dataTransfer.files.length;
           while (fi--) {
-            const file = e.dataTransfer.files.item(fi)?.path;
+            const item = e.dataTransfer.files.item(fi);
+            const file = item ? webUtils.getPathForFile(item) : '';
             if (file) files.push(file);
           }
           const filtered = files.filter(f => extensions.includes(path.parse(f).ext));
@@ -337,7 +384,11 @@ export function ImportStreamModal({
           placeholder={$t('Start typing to search')}
           options={gameOptions}
           defaultValue={game}
+          open={gameSelectOpen}
+          onDropdownVisibleChange={setGameSelectOpen}
+          autoFocus={gameSelectOpen}
           showSearch
+          filterOption={filterGameOption}
           optionRender={option => (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {option.image && (
@@ -345,6 +396,7 @@ export function ImportStreamModal({
                   src={typeof option.image === 'string' ? option.image : undefined}
                   alt={option.label}
                   className={styles.listImage}
+                  onError={e => (e.currentTarget.style.visibility = 'hidden')}
                 />
               )}
               <span>{option.label}</span>
@@ -397,4 +449,12 @@ export function ImportStreamModal({
       </div>
     </HypeWrapper>
   );
+}
+
+/** "Today", "Yesterday" or "X days ago", counted in calendar days */
+function getRelativeDay(timestamp: string) {
+  const days = moment().startOf('day').diff(moment(timestamp).startOf('day'), 'days');
+  if (days <= 0) return $t('Today');
+  if (days === 1) return $t('Yesterday');
+  return $t('%{count} days ago', { count: days });
 }

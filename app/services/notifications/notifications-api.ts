@@ -69,6 +69,7 @@ export interface INotificationsServiceApi {
   restoreDefaultSettings(): void;
   markAsRead(id: number): void;
   markAllAsRead(): void;
+  removeByCode(code: string): void;
   applyAction(notificationId: number): void;
   showNotifications(): void;
 }

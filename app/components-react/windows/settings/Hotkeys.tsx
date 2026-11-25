@@ -40,10 +40,7 @@ const mkFilterHotkeys = (searchString: string) => (hotkeys: IHotkey[]): IHotkey[
 // Safe-guard against the object (source or scene) not being found, though unlikely
 const setCategoryNameFrom = (srcOrScene: Source | Scene | null) => (hotkey: IAugmentedHotkey) => {
   if (!srcOrScene?.name) return hotkey;
-  // Mutating the original object is required for bindings to work
-  // TODO: We should refactor this to not rely on mutating the original objects.
-  hotkey.categoryName = srcOrScene.name;
-  return hotkey;
+  return { ...hotkey, categoryName: srcOrScene.name };
 };
 
 export function Hotkeys(props: ISettingsProps) {
@@ -53,24 +50,16 @@ export function Hotkeys(props: ISettingsProps) {
 
   useEffect(() => {
     let isMounted = true;
-    if (!hotkeySet) {
-      // We don't want hotkeys registering while trying to bind.
-      // We may change our minds on this in the future.
-      HotkeysService.actions.unregisterAll();
-
-      HotkeysService.actions.return.getHotkeysSet().then((hotkeys: IHotkeysSet) => {
-        if (!isMounted) return;
-        setHotkeysSet(hotkeys);
-      });
-    }
+    // This snapshot supplies descriptions and groups only. Each row observes the
+    // current bindings and saves explicit edits, so teardown cannot overwrite them.
+    HotkeysService.actions.return.getHotkeysSet().then((hotkeys: IHotkeysSet) => {
+      if (isMounted) setHotkeysSet(hotkeys);
+    });
 
     return () => {
-      if (hotkeySet) {
-        HotkeysService.actions.applyHotkeySet(hotkeySet);
-      }
       isMounted = false;
     };
-  }, [hotkeySet]);
+  }, []);
 
   const emptyHotkeySet: IAugmentedHotkeySet = {
     general: {},

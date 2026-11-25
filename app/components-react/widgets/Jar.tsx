@@ -143,6 +143,10 @@ export class JarModule extends WidgetModule<IJarState> {
     twitch_power_ups: () => $t('Twitch Power-Ups'),
     twitch_subs: () => $t('Twitch Subs'),
     twitch_resubs: () => $t('Twitch Resubs'),
+    twitter_follows: () => $t('X Follows'),
+    twitter_subscriptions: () => $t('X Subscriptions'),
+    twitter_likes: () => $t('X Likes'),
+    twitter_reposts: () => $t('X Reposts'),
     youtube_subscribers: () => $t('YouTube Subscriptions'),
     youtube_sponsors: () => $t('YouTube Memberships'),
     youtube_superchats: () => $t('YouTube Super Chats'),
@@ -229,6 +233,7 @@ export class JarModule extends WidgetModule<IJarState> {
     const platformTypes: PartialRec<TPlatform, string[]> = {
       twitch: ['twitch_follows'],
       youtube: ['youtube_subscribers', 'youtube_sponsors'],
+      twitter: ['twitter_follows', 'twitter_subscriptions', 'twitter_likes', 'twitter_reposts'],
     };
     const result: TJarMeta = {};
 

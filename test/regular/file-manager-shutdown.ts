@@ -116,6 +116,7 @@ test('File manager flushAll waits for rewrites and new files that race an in-fli
 
 test('File manager flushAll rejects after write retries are exhausted', async t => {
   const file = createFile();
+  const writeError = new Error('disk full');
   let attempts = 0;
   const service = {
     files: { file },
@@ -124,14 +125,24 @@ test('File manager flushAll rejects after write retries are exhausted', async t 
     notifyFlushFinished: fileManagerPrototype.notifyFlushFinished,
     async writeFile() {
       attempts += 1;
-      throw new Error('disk full');
+      throw writeError;
     },
   };
 
-  await t.throwsAsync(fileManagerPrototype.flushAll.call(service), {
-    message: /Failed to flush 1 file\(s\): file/,
-  });
+  const errorLogs: unknown[][] = [];
+  const originalConsoleError = console.error;
+  console.error = (...args: unknown[]) => {
+    errorLogs.push(args);
+  };
+  try {
+    await t.throwsAsync(fileManagerPrototype.flushAll.call(service), {
+      message: /Failed to flush 1 file\(s\): file/,
+    });
+  } finally {
+    console.error = originalConsoleError;
+  }
 
+  t.deepEqual(errorLogs, [['Ran out of retries writing file', writeError]]);
   t.is(attempts, 11);
   t.true(file.dirty);
   t.false(file.locked);

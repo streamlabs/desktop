@@ -143,7 +143,14 @@ export class DefaultManager extends PropertiesManager {
 
     const filename = path.parse(settings['custom_font']).base;
 
-    const fontPath = await this.fontLibraryService.downloadFont(filename);
+    let fontPath: string;
+    try {
+      fontPath = await this.fontLibraryService.downloadFont(filename);
+    } catch (error: unknown) {
+      // Keep the authored font settings so loading can continue and a later load can retry.
+      console.warn(`Could not download font ${filename}`, error);
+      return;
+    }
 
     // Make sure this wasn't destroyed while fetching the font
     if (this.destroyed) return;

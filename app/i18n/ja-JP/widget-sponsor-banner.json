@@ -1,6 +1,5 @@
 {
   "Sponsor Banner": "スポンサーバナー",
-  "Ad Layout": "広告レイアウト",
   "Placement": "配置",
   "Image Layout": "画像レイアウト",
   "Image Duration (seconds)": "画像の継続時間（秒）",
@@ -19,9 +18,6 @@
   "These are the animations that are used to show your banner.": "これらは、バナーの表示に使用されるアニメーションです。",
   "Visual Settings": "ビジュアル設定",
   "Image Set %{number}": "画像セット %{number}",
-  "Placement %{number} Images": "配置 %{number}の画像",
   "No Image": "画像なし",
-  "Set up a sponsor banner to be able to edit (add, remove, update) rotating sponsor logos on streamer channel.": "スポンサーバナーを編集できるように設定します（追加、削除、更新）。スポンサーのロゴをストリーマーチャネル上で回転します。",
-  "Show off rotating media to display your socials, sponsorships, CTAs or just cute animations.": "ソーシャルメディア、スポンサーシップ、CTA、またはかわいいアニメーションを表示するための回転するメディアを表示します。",
-  "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)": "継続時間は [分]:[秒] の形式でなければなりません（例：02:05）"
+  "Show off rotating media to display your socials, sponsorships, CTAs or just cute animations.": "ソーシャルメディア、スポンサーシップ、CTA、またはかわいいアニメーションを表示するための回転するメディアを表示します。"
 }

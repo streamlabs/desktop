@@ -151,9 +151,7 @@ export class Scene {
   getSourceSelectorNodes(): TSceneNode[] {
     let nodes = this.getNodes();
 
-    const populateWithVerticalNodes =
-      !this.dualOutputService.views.activeDisplays.horizontal &&
-      this.dualOutputService.views.activeDisplays.vertical;
+    const populateWithVerticalNodes = this.dualOutputService.views.onlyVerticalDisplayActive;
 
     nodes = nodes.filter(node => {
       // if only the vertical display is active
@@ -262,7 +260,7 @@ export class Scene {
     const fname = path.parse(addPath).name;
 
     if (fstat.isDirectory()) {
-      if (this.dualOutputService.views.hasNodeMap()) {
+      if (this.dualOutputService.views.hasSceneNodeMaps) {
         // create horizontal and vertical folders
         const horizontalFolder = this.createFolder(fname, { display: 'horizontal' });
         const verticalFolder = this.createFolder(fname, { display: 'vertical' });
@@ -271,7 +269,10 @@ export class Scene {
         if (folderId) {
           horizontalFolder.setParent(folderId);
 
-          const verticalFolderParentId = this.dualOutputService.views.getVerticalNodeId(folderId);
+          const verticalFolderParentId = this.dualOutputService.views.getVerticalNodeId(
+            folderId,
+            this.id,
+          );
           if (verticalFolderParentId) verticalFolder.setParent(verticalFolderParentId);
         }
 
@@ -282,12 +283,10 @@ export class Scene {
           verticalFolder.id,
         );
 
-        // create horizontal and vertical nodes
+        // create horizontal nodes, their vertical partners are created and
+        // added to the vertical folder when each file is added
         const files = fs.readdirSync(addPath).reverse();
-        files.forEach(filePath => {
-          this.addFile(path.join(addPath, filePath), horizontalFolder.id);
-          this.addFile(path.join(addPath, filePath), verticalFolder.id);
-        });
+        files.forEach(filePath => this.addFile(path.join(addPath, filePath), horizontalFolder.id));
         return horizontalFolder;
       } else {
         const folder = this.createFolder(fname);
@@ -304,21 +303,20 @@ export class Scene {
     if (folderId) {
       item.setParent(folderId);
     }
-    if (this.dualOutputService.views.hasNodeMap()) {
-      Promise.resolve(
-        this.dualOutputService.actions.return.createOrAssignOutputNode(
-          item,
-          'vertical',
-          false,
-          this.id,
-        ),
-      ).then(node => {
-        if (folderId) {
-          const verticalFolderId = this.dualOutputService.views.getVerticalNodeId(folderId);
-          if (node && verticalFolderId) node.setParent(verticalFolderId);
-        }
-        return node;
-      });
+    if (this.dualOutputService.views.hasSceneNodeMaps) {
+      // create and parent the vertical node synchronously, so it is placed in
+      // the vertical folder at the same point as its horizontal partner and
+      // both displays keep the same stacking order
+      const verticalNode = this.dualOutputService.createOrAssignOutputNode(
+        item,
+        'vertical',
+        false,
+        this.id,
+      );
+      if (folderId && verticalNode) {
+        const verticalFolderId = this.dualOutputService.views.getVerticalNodeId(folderId, this.id);
+        if (verticalFolderId) verticalNode.setParent(verticalFolderId);
+      }
     }
     return item;
   }
@@ -464,7 +462,8 @@ export class Scene {
   }
 
   addSources(nodes: TSceneNodeInfo[]) {
-    const arrayItems: (ISceneItemInfo & obs.ISceneItemInfo)[] = [];
+    const obsSceneItems: Dictionary<obs.ISceneItem> = {};
+    const obsScene = this.getObsScene();
 
     // tslint:disable-next-line:no-parameter-reassignment TODO
     nodes = nodes.filter(sceneNode => {
@@ -472,38 +471,39 @@ export class Scene {
       const source = this.sourcesService.views.getSource(sceneNode.sourceId);
       if (!source) return false;
 
-      arrayItems.push({
+      const display = sceneNode.display ?? 'horizontal';
+      const video =
+        this.videoSettingsService.contexts[display] ??
+        this.videoSettingsService.contexts.horizontal;
+      if (!video) throw new Error(`Video context ${display} is not available`);
+
+      const transform: obs.ISceneItemInfo = {
         name: source.sourceId,
-        id: sceneNode.id,
-        sourceId: source.sourceId,
-        crop: sceneNode.crop,
+        crop: sceneNode.crop ?? { top: 0, right: 0, bottom: 0, left: 0 },
         scaleX: sceneNode.scaleX == null ? 1 : sceneNode.scaleX,
         scaleY: sceneNode.scaleY == null ? 1 : sceneNode.scaleY,
-        visible: sceneNode.visible,
+        visible: sceneNode.visible !== false,
         x: sceneNode.x == null ? 0 : sceneNode.x,
         y: sceneNode.y == null ? 0 : sceneNode.y,
-        locked: sceneNode.locked,
         rotation: sceneNode.rotation || 0,
         streamVisible: sceneNode.streamVisible!,
         recordingVisible: sceneNode.recordingVisible!,
         scaleFilter: sceneNode.scaleFilter!,
         blendingMode: sceneNode.blendingMode!,
-        blendingMethod: sceneNode.blendingMethod,
-        display: sceneNode.display,
-      });
+        blendingMethod: sceneNode.blendingMethod!,
+      };
+
+      obsSceneItems[sceneNode.id] = obsScene.add(source.getObsInput(), transform, video);
       return true;
     });
 
-    const obsSceneItems = obs.addItems(this.getObsScene(), arrayItems);
-
     // create folder and items
-    let itemIndex = 0;
     nodes.forEach(nodeModel => {
       const display = nodeModel?.display ?? 'horizontal';
-      const obsSceneItem = obsSceneItems[itemIndex];
       if (nodeModel.sceneNodeType === 'folder') {
         this.createFolder(nodeModel.name, { id: nodeModel.id, display });
       } else {
+        const obsSceneItem = obsSceneItems[nodeModel.id];
         this.ADD_SOURCE_TO_SCENE(
           nodeModel.id,
           nodeModel.sourceId,
@@ -513,7 +513,6 @@ export class Scene {
         );
         const item = this.getItem(nodeModel.id)!;
         item.loadItemAttributes(nodeModel);
-        itemIndex++;
       }
     });
 

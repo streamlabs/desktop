@@ -181,16 +181,16 @@ export async function loginWithAuthInfo(
   isNewUser = false,
 ) {
   const authInfo = {
-    widgetToken: user.widgetToken,
-    apiToken: user.apiToken,
-    primaryPlatform: user.type,
+    widgetToken: userInfo.widgetToken,
+    apiToken: userInfo.apiToken,
+    primaryPlatform: userInfo.type,
     platforms: {
-      [user.type]: {
-        username: user.username,
-        type: user.type,
-        id: user.id,
-        token: user.token,
-        channelId: user.channelId,
+      [userInfo.type]: {
+        username: userInfo.username,
+        type: userInfo.type,
+        id: userInfo.id,
+        token: userInfo.token,
+        channelId: userInfo.channelId,
       },
     },
     hasRelogged: true,

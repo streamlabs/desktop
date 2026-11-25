@@ -453,6 +453,34 @@ export type ConditionPropsMap = {
   'world_of_warcraft_ss.victory': undefined;
   'world_of_warcraft_ss.defeat': undefined;
   'world_of_warcraft_ss.draw': undefined;
+
+  // Call of Duty: Modern Warfare 4
+  'modern_warfare_4.elimination': undefined;
+  'modern_warfare_4.player_eliminated': undefined;
+  'modern_warfare_4.victory': undefined;
+  'modern_warfare_4.defeat': undefined;
+  'modern_warfare_4.elimination_count': { elimination_count?: [number, number] };
+
+  // NBA 2K27
+  'nba_2k27.game_start': undefined;
+  'nba_2k27.game_end': undefined;
+  'nba_2k27.goal': undefined;
+  'nba_2k27.halftime': undefined;
+
+  // Path of Exile 2
+  'path_of_exile_2.player_eliminated': undefined;
+  'path_of_exile_2.boss_spawned': undefined;
+  'path_of_exile_2.map_completed': undefined;
+
+  // Wardogs
+  'wardogs.game_start': undefined;
+  'wardogs.game_end': undefined;
+  'wardogs.elimination': undefined;
+  'wardogs.player_eliminated': undefined;
+  'wardogs.interesting_moment': undefined;
+  'wardogs.victory': undefined;
+  'wardogs.defeat': undefined;
+  'wardogs.elimination_count': { elimination_count?: [number, number] };
 };
 
 export type ConditionType = keyof ConditionPropsMap;
@@ -1121,6 +1149,49 @@ const perGameConditions = () =>
     'world_of_warcraft_ss.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
     'world_of_warcraft_ss.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
     'world_of_warcraft_ss.draw': { label: $t('Draw'), evaluate: onEvent('draw') },
+
+    // Call of Duty: Modern Warfare 4
+    'modern_warfare_4.elimination': {
+      label: $t('Enemy Eliminated'),
+      evaluate: onEvent('elimination'),
+    },
+    'modern_warfare_4.player_eliminated': {
+      label: $t('Player Eliminated'),
+      evaluate: onEvent('death'),
+    },
+    'modern_warfare_4.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'modern_warfare_4.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'modern_warfare_4.elimination_count': eliminationCount(),
+
+    // NBA 2K27
+    'nba_2k27.game_start': { label: $t('Game Started'), evaluate: onEvent('game_start') },
+    'nba_2k27.game_end': { label: $t('Game Ended (Final)'), evaluate: onEvent('game_end') },
+    'nba_2k27.goal': { label: $t('Basket Scored'), evaluate: onEvent('goal') },
+    'nba_2k27.halftime': { label: $t('Halftime'), evaluate: onEvent('halftime') },
+
+    // Path of Exile 2
+    'path_of_exile_2.player_eliminated': { label: $t('Player Died'), evaluate: onEvent('death') },
+    'path_of_exile_2.boss_spawned': {
+      label: $t('Boss Spawned'),
+      evaluate: onEvent('boss_spawned'),
+    },
+    'path_of_exile_2.map_completed': {
+      label: $t('Map Completed'),
+      evaluate: onEvent('map_completed'),
+    },
+
+    // Wardogs
+    'wardogs.game_start': { label: $t('Match Started'), evaluate: onEvent('game_start') },
+    'wardogs.game_end': { label: $t('Match Ended'), evaluate: onEvent('game_end') },
+    'wardogs.elimination': { label: $t('Enemy Eliminated'), evaluate: onEvent('elimination') },
+    'wardogs.player_eliminated': { label: $t('Player Eliminated'), evaluate: onEvent('death') },
+    'wardogs.interesting_moment': {
+      label: $t('Healing'),
+      evaluate: onEvent('interesting_moment'),
+    },
+    'wardogs.victory': { label: $t('Victory'), evaluate: onEvent('victory') },
+    'wardogs.defeat': { label: $t('Defeat'), evaluate: onEvent('defeat') },
+    'wardogs.elimination_count': eliminationCount(),
   } as const);
 
 export const Conditions = () =>
@@ -1180,6 +1251,10 @@ export const GAME_NAMES: Record<string, string> = {
   teamfight_tactics: 'Teamfight Tactics',
   valheim: 'Valheim',
   world_of_warcraft_ss: 'World of Warcraft: Solo Shuffle',
+  modern_warfare_4: 'Call of Duty: Modern Warfare 4',
+  nba_2k27: 'NBA 2K27',
+  path_of_exile_2: 'Path of Exile 2',
+  wardogs: 'Wardogs',
 };
 
 export type TCondition<T extends ConditionType = ConditionType> = {

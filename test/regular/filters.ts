@@ -3,13 +3,15 @@ import { addFilter, openFiltersWindow, removeFilter } from '../helpers/modules/f
 import { addSource } from '../helpers/modules/sources';
 import { focusChild, isDisplayed, waitForDisplayed } from '../helpers/modules/core';
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver({
   skipOnboarding: true,
   restartAppAfterEachTest: false,
   clearCollectionAfterEachTest: true,
 });
 
-test.skip('Adding and removing a Color Correction filter', async t => {
+test('Adding and removing a Color Correction filter', async t => {
   const sourceName = 'Color Source';
   const filterName = 'Color Correction';
 
@@ -215,7 +217,7 @@ test('Adding and removing a Gain filter', async t => {
   t.pass();
 });
 
-test.skip('Adding and removing a Noise Suppression filter', async t => {
+test('Adding and removing a Noise Suppression filter', async t => {
   const sourceName = 'Audio Input Capture 2';
   const filterName = 'Noise Suppression';
 

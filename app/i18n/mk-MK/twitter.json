@@ -1,14 +1,5 @@
 {
-  "Compose Tweet": "Compose Tweet",
-  "Custom URL with": "Custom URL with",
   "Share Your Stream": "Share Your Stream",
-  "Connect to Twitter": "Connect to Twitter",
-  "Enable Tweet Sharing": "Enable Tweet Sharing",
-  "Tweet when going live": "Tweet when going live",
-  "Unlink Twitter": "Unlink Twitter",
-  "Tweet & Go Live": "Tweet & Go Live",
-  "Could not connect to Twitter": "Could not connect to Twitter",
-  "Use Streamlabs URL": "Use Streamlabs URL",
   "X (Twitter) Chat Type": "X (Twitter) Chat Type",
   "Disabled": "Disabled",
   "Chat will be disabled": "Chat will be disabled",
@@ -22,5 +13,13 @@
   "Only viewers that subscribe to you will be able to chat": "Only viewers that subscribe to you will be able to chat",
   "You need X premium account to go live on X.": "You need X premium account to go live on X.",
   "You need X premium account to go live on X. Click to learn more": "You need X premium account to go live on X. Click to learn more",
-  "Stream Shift Error: Twitter is not live": "Stream Shift Error: Twitter is not live"
+  "Scheduled Broadcast": "Scheduled Broadcast",
+  "Don't use a scheduled broadcast": "Don't use a scheduled broadcast",
+  "Duration": "Duration",
+  "%{minutes} min": "%{minutes} min",
+  "%{hours} hr": "%{hours} hr",
+  "%{hours} hr %{minutes} min": "%{hours} hr %{minutes} min",
+  "Publish when I start streaming": "Publish when I start streaming",
+  "When off, X publishes the broadcast at the scheduled time instead of waiting for you to go live": "When off, X publishes the broadcast at the scheduled time instead of waiting for you to go live",
+  "Scheduling streams to X is a new feature and may not always work as expected": "Scheduling streams to X is a new feature and may not always work as expected"
 }

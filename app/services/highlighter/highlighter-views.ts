@@ -21,18 +21,8 @@ export class HighlighterViews extends ViewHandler<IHighlighterState> {
     return this.state.useAiHighlighter;
   }
 
-  /**
-   * Returns highlighted streams as an array (for backward compatibility)
-   */
-  get highlightedStreams() {
-    return Object.values(this.state.highlightedStreamsDictionary);
-  }
-
-  /**
-   * Returns highlighted streams as a dictionary for faster lookups
-   */
-  get highlightedStreamsDictionary() {
-    return this.state.highlightedStreamsDictionary;
+  get replaySupportedGames() {
+    return this.state.replaySupportedGames;
   }
 
   /**
@@ -86,18 +76,6 @@ export class HighlighterViews extends ViewHandler<IHighlighterState> {
 
   get error() {
     return this.state.error;
-  }
-
-  get highlighterVersion() {
-    return this.state.highlighterVersion;
-  }
-
-  get isUpdaterRunning() {
-    return this.state.isUpdaterRunning;
-  }
-
-  get updaterProgress() {
-    return this.state.updaterProgress;
   }
 
   get tempRecordingInfo() {

@@ -1,13 +1,8 @@
 {
-  "You can edit the sounds of your stream alerts from the alertbox properties menu.": "You can edit the sounds of your stream alerts from the alertbox properties menu.",
-  "You can access our theme library from the left sidebar.": "You can access our theme library from the left sidebar.",
-  "Our 24/7 support staff is available at Discord.gg/stream.": "Our 24/7 support staff is available at Discord.gg/stream.",
   "Sources are what we call media like text, images, video & audio feeds.": "Sources are what we call media like text, images, video & audio feeds.",
   "Undo works in the Editor. Just hit Ctrl + Z!": "Undo works in the Editor. Just hit Ctrl + Z!",
-  "The sources listed at the top of your sources pane will be layered the highest in your editor.": "The sources listed at the top of your sources pane will be layered the highest in your editor.",
   "Studio Mode is a powerful way to curate a professional-quality stream.": "Studio Mode is a powerful way to curate a professional-quality stream.",
   "Cloudbot is a chatbot that can help you moderate your stream.": "Cloudbot is a chatbot that can help you moderate your stream.",
-  "The Remote Control feature lets you control your active scene in real-time from your phone.": "The Remote Control feature lets you control your active scene in real-time from your phone.",
   "Set Hotkeys from your settings to control your stream with your keyboard.": "Set Hotkeys from your settings to control your stream with your keyboard.",
   "With Game Overlay you can view chat messages while gaming without switching screens.": "With Game Overlay you can view chat messages while gaming without switching screens.",
   "The editor is fully customizable. Try repositioning things from the Layout Editor.": "The editor is fully customizable. Try repositioning things from the Layout Editor.",
@@ -20,9 +15,5 @@
   "You can position your chat panel to be either on the left or right side of your screen.": "You can position your chat panel to be either on the left or right side of your screen.",
   "Right-click on your camera source to add filters to your webcam.": "Right-click on your camera source to add filters to your webcam.",
   "You can add and edit stinger transitions by clicking the settings cog near your scene collections.": "You can add and edit stinger transitions by clicking the settings cog near your scene collections.",
-  "To crop your webcam, press Alt then drag the bounding box.": "To crop your webcam, press Alt then drag the bounding box.",
-  "Widgets are dynamic, interactive overlays you can add to your scene.": "Widgets are dynamic, interactive overlays you can add to your scene.",
-  "Our App Store contains advanced technology to take your stream to the next level.": "Our App Store contains advanced technology to take your stream to the next level.",
-  "With multi-stream, you can stream to YouTube, Twitch, and Facebook at the same time.": "With multi-stream, you can stream to YouTube, Twitch, and Facebook at the same time.",
-  "You can customize the design of your tip page from the Theme Library.": "You can customize the design of your tip page from the Theme Library."
+  "To crop your webcam, press Alt then drag the bounding box.": "To crop your webcam, press Alt then drag the bounding box."
 }

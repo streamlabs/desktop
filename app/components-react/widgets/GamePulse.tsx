@@ -101,7 +101,7 @@ export function GamePulseWidget() {
           placement="rightTop"
           trigger={[]}
           align={{ offset: tooltipOffset }}
-          zIndex={9999}
+          zIndex={Number(css.tutorialTooltipZIndex)}
           title={
             <div>
               <div>

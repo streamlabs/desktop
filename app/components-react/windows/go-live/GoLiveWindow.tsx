@@ -5,7 +5,10 @@ import {
   SettingsService,
   EIncompatibleRestreamCodec,
   incompatibleRestreamCodecs,
+  IPlatformCodecIncompatibility,
+  videoCodecLabel,
 } from 'services/settings';
+import { getPlatformService } from 'services/platforms';
 import { RestreamService } from 'services/restream';
 import { ModalLayout } from '../../shared/ModalLayout';
 import { Button } from 'antd';
@@ -21,10 +24,13 @@ import { inject } from 'slap';
 import RecordingSwitcher from './RecordingSwitcher';
 import { promptAction } from 'components-react/modals';
 import TwitterInput from './Twitter';
+import { useVuex } from 'components-react/hooks';
+import GoLiveAutoOptimizer from './GoLiveAutoOptimizer';
 
 export default function GoLiveWindow() {
   const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
     destroy() {
+      void Services.AutoOptimizerService.actions.return.closeFromHost('go-live');
       // clear failed checks and warnings on window close
       if (module.checklist.startVideoTransmission !== 'done') {
         Services.StreamingService.actions.resetInfo();
@@ -34,23 +40,33 @@ export default function GoLiveWindow() {
 
   const shouldShowSettings = ['empty', 'prepopulate', 'waitForNewSettings'].includes(lifecycle);
   const shouldShowChecklist = ['runChecklist', 'live'].includes(lifecycle);
+  const optimizerOpen = useVuex(() => Services.AutoOptimizerService.views.isOpenFor('go-live'));
 
   return (
-    <ModalLayout footer={<ModalFooter />} className={styles.goLiveSettings}>
-      <Form
-        form={form!}
-        style={{ position: 'relative', height: '100%' }}
-        layout="horizontal"
-        name="editStreamForm"
-      >
-        <Animation transitionName={shouldShowChecklist ? 'slideright' : ''}>
-          {/* STEP 1 - FILL OUT THE SETTINGS FORM */}
-          {shouldShowSettings && <GoLiveSettings key={'settings'} />}
+    <ModalLayout
+      footer={<ModalFooter />}
+      hideFooter={optimizerOpen}
+      bodyStyle={{ position: 'relative' }}
+      className={styles.goLiveWindow}
+    >
+      {optimizerOpen ? (
+        <GoLiveAutoOptimizer />
+      ) : (
+        <Form
+          form={form!}
+          style={{ position: 'relative', height: '100%' }}
+          layout="horizontal"
+          name="editStreamForm"
+        >
+          <Animation transitionName={shouldShowChecklist ? 'slideright' : ''}>
+            {/* STEP 1 - FILL OUT THE SETTINGS FORM */}
+            {shouldShowSettings && <GoLiveSettings key={'settings'} />}
 
-          {/* STEP 2 - RUN THE CHECKLIST */}
-          {shouldShowChecklist && <GoLiveChecklist className={styles.page} key={'checklist'} />}
-        </Animation>
-      </Form>
+            {/* STEP 2 - RUN THE CHECKLIST */}
+            {shouldShowChecklist && <GoLiveChecklist className={styles.page} key={'checklist'} />}
+          </Animation>
+        </Form>
+      )}
     </ModalLayout>
   );
 }
@@ -59,6 +75,7 @@ function ModalFooter() {
   const {
     error,
     goLive,
+    confirmGoLive,
     close,
     goBackToSettings,
     isLoading,
@@ -72,6 +89,7 @@ function ModalFooter() {
     showSettings,
     setStreamShift,
     clearStreamShiftPending,
+    getPlatformCodecIncompatibility,
     hasValidDisplayAssignment,
     shouldShowConfirm,
     shouldShowGoBackButton,
@@ -123,9 +141,23 @@ function ModalFooter() {
       return ['empty', 'prepopulate', 'waitForNewSettings'].includes(module.lifecycle);
     },
 
-    goLiveWithDefaultCodec() {
+    async goLiveWithDefaultCodec() {
       this.settingsService.actions.setDefaultVideoEncoder();
-      module.goLive();
+      // A loaded optimized profile was fetched for the previous encoder; drop it. A profile
+      // fetch still in flight can restore it, so goLive also skips any profile fetched for
+      // a different encoder than the one that will start.
+      module.updateSettings({ optimizedProfile: undefined });
+      return module.confirmGoLive();
+    },
+
+    /**
+     * Checked against the platforms toggled in this window, which may not be saved yet.
+     * StreamingService.goLive repeats the check for starts that skip this window.
+     */
+    getPlatformCodecIncompatibility(): Promise<IPlatformCodecIncompatibility | null> {
+      return Services.StreamingService.actions.return.getPlatformCodecIncompatibility(
+        module.state.enabledPlatforms,
+      );
     },
 
     showSettings() {
@@ -171,13 +203,45 @@ function ModalFooter() {
       title: $t('Incompatible Codec Detected'),
       message,
       btnText: $t('Use H.264 Codec'),
-      fn: goLiveWithDefaultCodec,
+      fn: () => void goLiveWithDefaultCodec(),
       cancelBtnText: $t('Cancel'),
       cancelBtnPosition: 'left',
       secondaryActionText: $t('Select Codec'),
       secondaryActionFn: showSettings,
     });
   }, [isStreamShiftMode, isDualOutputMode, codec, goLiveWithDefaultCodec, showSettings]);
+
+  const promptPlatformCodec = useCallback(
+    async ({ platform, codec, supportedCodecs }: IPlatformCodecIncompatibility) => {
+      const params = {
+        videoCodec: videoCodecLabel(codec),
+        platformName: getPlatformService(platform).displayName,
+      };
+      // "Use H.264 Codec" switches to x264, so only offer it when the platform takes H.264.
+      const canUseDefaultCodec = supportedCodecs.includes('h264');
+
+      await promptAction({
+        title: $t('Incompatible Codec Detected'),
+        message: canUseDefaultCodec
+          ? $t(
+              '%{videoCodec} codec is not supported by %{platformName}. Would you like to proceed with the H.264 codec or select another codec?',
+              params,
+            )
+          : $t(
+              '%{videoCodec} codec is not supported by %{platformName}. Please select another codec.',
+              params,
+            ),
+        btnText: canUseDefaultCodec ? $t('Use H.264 Codec') : $t('Select Codec'),
+        fn: canUseDefaultCodec ? () => void goLiveWithDefaultCodec() : showSettings,
+        cancelBtnText: $t('Cancel'),
+        cancelBtnPosition: 'left',
+        ...(canUseDefaultCodec
+          ? { secondaryActionText: $t('Select Codec'), secondaryActionFn: showSettings }
+          : {}),
+      });
+    },
+    [goLiveWithDefaultCodec, showSettings],
+  );
 
   const promptStreamShift = useCallback(async () => {
     isStreamShiftPromptShown.current = true;
@@ -193,8 +257,9 @@ function ModalFooter() {
           promptUseDefaultCodec();
         } else {
           setStreamShift(true);
-          goLive();
-          close();
+          // Close only after go live function has finished because closing the window destroys the Go Live form state,
+          // which stops the function prematurely because the values no longer exist.
+          goLive().then(() => close());
         }
       },
       cancelBtnText: $t('Cancel'),
@@ -270,9 +335,25 @@ function ModalFooter() {
       return;
     }
 
-    // The streaming service handles the stream shift check internally
-    goLive();
-  }, [isPrime, hasValidDisplayAssignment, hasIncompatibleCodec, promptUseDefaultCodec, goLive]);
+    // Platforms whose ingest rejects the codec without OBS knowing (e.g. Kick and HEVC)
+    const platformCodecIncompatibility = await getPlatformCodecIncompatibility();
+    if (platformCodecIncompatibility) {
+      await promptPlatformCodec(platformCodecIncompatibility);
+      return;
+    }
+
+    // StreamingService performs the Stream Shift check. This confirmation may
+    // open Auto Optimizer first when the Go Live settings are eligible.
+    await confirmGoLive();
+  }, [
+    isPrime,
+    hasValidDisplayAssignment,
+    hasIncompatibleCodec,
+    promptUseDefaultCodec,
+    getPlatformCodecIncompatibility,
+    promptPlatformCodec,
+    confirmGoLive,
+  ]);
 
   return (
     <Form layout={'inline'}>

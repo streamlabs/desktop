@@ -1,6 +1,7 @@
 {
   "Add Category": "Добавить категорию",
   "Add Section": "Добавить раздел",
+  "DONUT": "DONUT",
   "Clear All": "Очистить все",
   "Manage Spin Wheel": "Управление вращением колеса",
   "Categories": "Категории",
@@ -30,5 +31,6 @@
   "Center Image Size": "Размер центрального изображения",
   "Center Image Border Enabled": "Граница центра изображения включена",
   "Center Image Border Color": "Цвет границы центрального изображения",
-  "Center Image Border Width": "Ширина границы центрального изображения"
+  "Center Image Border Width": "Ширина границы центрального изображения",
+  "Add categories before adding new sections.": "Add categories before adding new sections."
 }

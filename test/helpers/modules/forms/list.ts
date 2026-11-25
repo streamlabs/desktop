@@ -8,8 +8,8 @@ export class ListInputController<TValue> extends BaseInputController<TValue> {
     await this.open();
     await this.waitForLoading();
 
-    // click option
-    const $option = await select(`.ant-select-dropdown [data-option-value="${value}"]`);
+    // scope to this input's own options; other selects can offer the same label
+    const $option = await select(`[data-option-list="${this.name}"][data-option-value="${value}"]`);
     await $option.waitForClickable();
     await $option.click();
   }
@@ -34,9 +34,11 @@ export class ListInputController<TValue> extends BaseInputController<TValue> {
       await sleep(100);
     }
 
-    // click option
+    // scope to this input's own options; other selects can offer the same label
     const selector = /[^\w\d]/.test(value) || /^\d/.test(value) ? `"${value}"` : value;
-    const $option = await select(`.ant-select-dropdown [data-option-label=${selector}]`);
+    const $option = await select(
+      `[data-option-list="${this.name}"][data-option-label=${selector}]`,
+    );
     await $option.waitForDisplayed();
     await $option.waitForClickable();
     await $option.click();

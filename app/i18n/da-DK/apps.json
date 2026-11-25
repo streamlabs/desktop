@@ -7,5 +7,10 @@
   "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "Udvikleren yder ikke længere support til denne app. Appen kan fortsætte med at fungere, men der vil ikke komme opdateringer. Hvis du ønsker at afinstallere, skal du følge anvisningerne her.",
   "Uninstall": "Afinstaller",
   "Other installed apps:": "Andre installerede apps:",
-  "Open": "Åbn"
+  "Open": "Åbn",
+  "Pin": "Pin",
+  "Unpin": "Unpin",
+  "Pinned Apps": "Pinned Apps",
+  "Pin up to %{count} apps to the navigation bar.": "Pin up to %{count} apps to the navigation bar.",
+  "You can pin up to %{count} apps. Unpin an app to pin this one.": "You can pin up to %{count} apps. Unpin an app to pin this one."
 }

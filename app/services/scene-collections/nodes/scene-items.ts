@@ -5,6 +5,9 @@ import { SourcesService } from '../../sources';
 import { Inject } from '../../core/injector';
 import { TDisplayType, VideoSettingsService } from 'services/settings-v2';
 import { DualOutputService } from 'services/dual-output';
+import { ISceneCollectionLoadContext } from './load-session';
+import { SceneCollectionMigrationError } from '../errors';
+import * as obs from '../../../../obs-api';
 
 interface ISchema {
   items: TSceneNodeInfo[];
@@ -17,7 +20,7 @@ export interface ISceneItemInfo extends ISceneNodeInfo {
   scaleX: number;
   scaleY: number;
   visible: boolean;
-  crop: ICrop;
+  crop: ICrop & Pick<obs.ICropInfo, 'referenceWidth' | 'referenceHeight'>;
   hotkeys?: HotkeysNode;
   locked?: boolean;
   rotation?: number;
@@ -43,11 +46,11 @@ interface ISceneNodeInfo {
 
 export type TSceneNodeInfo = ISceneItemInfo | ISceneItemFolderInfo;
 
-interface IContext {
+interface IContext extends ISceneCollectionLoadContext {
   scene: Scene;
 }
 
-export class SceneItemsNode extends Node<ISchema, {}> {
+export class SceneItemsNode extends Node<ISchema, IContext> {
   schemaVersion = 1;
 
   @Inject('SourcesService')
@@ -75,6 +78,7 @@ export class SceneItemsNode extends Node<ISchema, {}> {
 
           hotkeys.save({ sceneItemId: sceneItem.sceneItemId }).then(() => {
             const transform = sceneItem.transform;
+            const persistedCrop = sceneItem.getObsSceneItem().crop;
             resolve({
               hotkeys,
               id: sceneItem.sceneItemId,
@@ -84,7 +88,7 @@ export class SceneItemsNode extends Node<ISchema, {}> {
               scaleX: transform.scale.x,
               scaleY: transform.scale.y,
               visible: sceneItem.visible,
-              crop: transform.crop,
+              crop: persistedCrop,
               locked: sceneItem.locked,
               rotation: transform.rotation,
               streamVisible: sceneItem.streamVisible,
@@ -133,7 +137,7 @@ export class SceneItemsNode extends Node<ISchema, {}> {
     });
   }
 
-  load(context: IContext): Promise<void> {
+  async load(context: IContext): Promise<void> {
     this.sanitizeIds();
 
     // on first load, a dual output scene needs to assign displays and contexts to the scene items
@@ -165,11 +169,21 @@ export class SceneItemsNode extends Node<ISchema, {}> {
       });
     }
 
+    const sources = this.sourcesService.state.sources;
+    const missingSourceIds = this.data.items
+      .filter((item): item is ISceneItemInfo => item.sceneNodeType === 'item')
+      .filter(item => !sources[item.sourceId])
+      .map(item => item.sourceId);
+
+    if (missingSourceIds.length && context.loadSession?.strictCoordinateMigration) {
+      throw new SceneCollectionMigrationError(
+        `Scene items reference sources that were not created: ${missingSourceIds.join(', ')}`,
+      );
+    }
+
     context.scene.addSources(this.data.items);
 
     const promises: Promise<void>[] = [];
-
-    const sources = this.sourcesService.state.sources;
 
     this.data.items.forEach(item => {
       if (item.sceneNodeType === 'folder') return;
@@ -177,11 +191,11 @@ export class SceneItemsNode extends Node<ISchema, {}> {
       if (!sources[item.sourceId]) return;
 
       const hotkeys = item.hotkeys;
-      if (hotkeys) promises.push(hotkeys.load({ sceneItemId: item.id }));
+      if (hotkeys) {
+        promises.push(hotkeys.load({ sceneItemId: item.id, loadSession: context.loadSession }));
+      }
     });
 
-    return new Promise(resolve => {
-      Promise.all(promises).then(() => resolve());
-    });
+    await Promise.all(promises);
   }
 }

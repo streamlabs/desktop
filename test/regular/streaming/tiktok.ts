@@ -88,9 +88,9 @@ async function validateErrorAlert(
     timeoutMsg: `TikTok ${scope} scope: empty stream key did not block going live`,
   });
 
-  // Reset the form
-  await setInputValue('[data-name="serverUrl"]', '');
-  await setInputValue('[data-name="streamKey"]', '');
+  // Restore the credentials
+  await setInputValue('[data-name="serverUrl"]', serverUrl);
+  await setInputValue('[data-name="streamKey"]', streamKey);
 }
 
 async function validateTikTokApplyNotification(scope: TTikTokLiveScopeTypes) {
@@ -141,6 +141,7 @@ async function goLiveWithLiveAccess(t: TExecutionContext, serverUrl: string, str
 
   await submit();
   await waitForDisplayed('span=Update settings for TikTok');
+  await waitForStreamStart();
   await stopStream();
 }
 
@@ -173,6 +174,7 @@ test('Streaming to TikTok', withUser('twitch', { multistream: false, prime: true
 });
 
 async function testLiveScope(t: TExecutionContext, scope: TTikTokLiveScopeTypes) {
+  t.log(`Testing TikTok ${scope} scope`);
   const { serverUrl, streamKey }: IDummyTestUser = await addDummyAccount('tiktok', {
     tikTokLiveScope: scope,
   });

@@ -14,12 +14,20 @@
   "Select an Event": "选择事件",
   "Trigger Type": "触发类型",
   "Trigger Name": "触发器名称",
-  "Select a Trigger Type": "选择触发类型",
   "Triggers are set up and ready to go! Feel free to uncheck the ones you don't want.": "触发器已设置完毕，随时可以使用！您可以随意取消勾选不需要的选项。",
   "Global": "全局",
   "Triggered when a player reaches a cumulative total number of events.": "当玩家达到事件的累计总数时触发。",
   "Triggered when a player achieves a consecutive number of events without interruption.": "当玩家在不中断的情况下连续达成一定数量的事件时触发。",
   "No triggers available.": "没有可用的触发器。",
   "Animation Settings": "动画设置",
-  "Real time alerts reacting to your in game events.": "实时响应游戏内事件的警报。"
+  "Real time alerts reacting to your in game events.": "实时响应游戏内事件的警报。",
+  "Event Type": "Event Type",
+  "General Game Settings": "General Game Settings",
+  "Enable All": "Enable All",
+  "Disable All": "Disable All",
+  "Total Amount": "Total Amount",
+  "Level Range Type": "Level Range Type",
+  "Action Settings": "Action Settings",
+  "Text To Speech": "Text To Speech",
+  "Voice": "Voice"
 }

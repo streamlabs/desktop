@@ -1,16 +1,8 @@
 {
-  "You can access your Facebook Streamer Dashboard here.": "Aquí puedes acceder a tu panel de streamer de Facebook.",
-  "Create a Page": "Crear una página",
-  "Facebook Setup": "Configuración de Facebook",
-  "Streamer Dashboard": "Panel de streamer",
   "Share": "Compartir",
   "Like": "Me gusta",
   "Step 3:": "Paso 3:",
-  "Create a Facebook Gaming page to get started.": "Crea una página de gaming en Facebook para comenzar.",
-  "Create a Gaming Page": "Crear una página de gaming",
   "All of your scenes, sources, and settings will be preserved.": "Se conservarán todas tus escenas, fuentes y ajustes de configuración.",
-  "Connect Facebook": "Conectar Facebook",
-  "Multistream To Facebook": "Multistream en Facebook",
   "Connect": "Conectar",
   "Install Your Theme": "Instala tu tema",
   "Install": "Instalar",
@@ -18,7 +10,6 @@
   "Facebook Destination": "Destino de Facebook",
   "Share to Your Timeline": "Compartir tu línea de tiempo",
   "Share to a Page You Manage": "Compartir en una página gestionada por ti",
-  "Share in a Group": "Compartir en un grupo",
   "Facebook Group": "Grupo de Facebook",
   "Scheduled Video": "Vídeo programado",
   "Make sure the Streamlabs app is added to your Group.": "Asegúrate de que la aplicación Streamlabs se ha añadido a tu grupo.",
@@ -35,8 +26,8 @@
   "Do not change privacy settings": "No cambiar ajustes de privacidad",
   "Install %{overlayName}": "Instalar %{overlayName}",
   "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Ten en cuenta que, aunque puedes programar streams para Facebook, algunas no aparecerán en este calendario por limitaciones de API",
-  "Your account is not eligible to stream on Facebook. Click to learn more.": "Tu cuenta no cumple los requisitos para transmitir en Facebook. Haz clic para obtener más información",
   "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers": "Tu perfil debe tener al menos 60 días de antigüedad y tu página debe tener al menos 100 seguidores",
   "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more.": "Para poder hacer en directo, tu perfil debe tener al menos 60 días de antigüedad y tu página debe tener al menos 100 seguidores. Haz clic en la notificación para obtener más información.",
-  "Stream Shift Error: Facebook is not live": "Error de Stream Shift: Facebook no está transmitiendo en directo"
+  "Stream Shift Error: Facebook is not live": "Error de Stream Shift: Facebook no está transmitiendo en directo",
+  "Your account is not eligible to stream on Facebook. Click to learn more": "Your account is not eligible to stream on Facebook. Click to learn more"
 }

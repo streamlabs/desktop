@@ -2,6 +2,21 @@
 @import '../../styles/mixins';
 @import '../../styles/badges';
 
+// Zero-width box pinned inside the nav, just left of the profile item (24px avatar plus
+// horizontal padding, which shrinks when the nav is compact). The login tip anchors to its
+// right edge so it renders within the nav's height rather than below it.
+.login-tip-anchor {
+  position: absolute;
+  top: 0;
+  right: 56px;
+  height: 100%;
+  width: 0;
+
+  :global([data-nav-collapse~='compact']) & {
+    right: 40px;
+  }
+}
+
 .tools-nav {
   &.tools-start {
     margin-left: auto;

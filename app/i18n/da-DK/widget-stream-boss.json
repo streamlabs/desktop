@@ -7,6 +7,7 @@
   "Set Stream Boss Health": "Angi streambossens liv",
   "Goal": "Mål",
   "Manage Battle": "Administrer slag",
+  "Boss Settings": "Boss Settings",
   "Starting Health": "Starthelbred",
   "Fixed": "Rettet",
   "The boss will spawn with the set amount of health everytime.": "Bossen genopstår altid med den fastsatte mængde liv.",
@@ -31,5 +32,6 @@
   "Health Bar Background Color": "Baggrundsfarve på livbjælken",
   "Font": "Skrifttype",
   "The boss will have additional health each time he is defeated. The amount is set below.": "Bossen får en ekstra mængde liv hver gang han besejres. Mængden konfigureres nedenfor.",
-  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "Den mængde liv bossen har, vil ændre sig afhængigt af hvor meget skade der gøres med dødsstødet. Overskydende skade ganget med multiplikatoren vil være bossens nye mængde liv. Dvs. 150 skade med 100 liv tilbage og en fast multiplikator på 3 ville resultere i at den nye boss har 150 liv når den genopstår. \n Konfigurer multiplikatoren nedenfor."
+  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "Den mængde liv bossen har, vil ændre sig afhængigt af hvor meget skade der gøres med dødsstødet. Overskydende skade ganget med multiplikatoren vil være bossens nye mængde liv. Dvs. 150 skade med 100 liv tilbage og en fast multiplikator på 3 ville resultere i at den nye boss har 150 liv når den genopstår. \n Konfigurer multiplikatoren nedenfor.",
+  "Failed to reset Stream Boss, please try again.": "Failed to reset Stream Boss, please try again."
 }

@@ -1,6 +1,11 @@
 {
   "Start Streaming": "Start Streaming",
   "Stop Streaming": "Stop Streaming",
+  "Screenshot Output": "Screenshot Output",
+  "Screenshot saved as %{filename}": "Screenshot saved as %{filename}",
+  "Could not save screenshot": "Could not save screenshot",
+  "Screenshots need a newer version of the Streamlabs backend.": "Screenshots need a newer version of the Streamlabs backend.",
+  "Set a recording folder in Settings > Output before taking a screenshot.": "Set a recording folder in Settings > Output before taking a screenshot.",
   "Start Recording": "Start Recording",
   "Stop Recording": "Stop Recording",
   "Switch to scene": "Switch to scene",
@@ -24,10 +29,9 @@
   "Previous Slide": "Previous Slide",
   "Toggle Performance Mode": "Toggle Performance Mode",
   "Skip Alert": "Preskočiť upozornenie",
-  "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.": "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.",
   "Start Virtual Camera": "Start Virtual Camera",
   "Stop Virtual Camera": "Stop Virtual Camera",
-  "This scene has not been converted to Dual Output. Please make the scene active to add vertical sources.": "This scene has not been converted to Dual Output. Please make the scene active to add vertical sources.",
+  "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.": "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.",
   "Learn more here": "Learn more here",
   "<color>Pro tip:</color> set Markers in Hotkeys settings to timestamp your recordings. <link>Set up here</link>": "<color>Pro tip:</color> set Markers in Hotkeys settings to timestamp your recordings. <link>Set up here</link>",
   "Markers": "Markers"

@@ -14,12 +14,20 @@
   "Select an Event": "選取事件",
   "Trigger Type": "觸發器類型",
   "Trigger Name": "觸發器名稱",
-  "Select a Trigger Type": "選取觸發條件類型",
   "Triggers are set up and ready to go! Feel free to uncheck the ones you don't want.": "觸發條件已設定完成，可以開始使用！您可以取消勾選不需要的項目。",
   "Global": "全域",
   "Triggered when a player reaches a cumulative total number of events.": "當玩家達到累積事件總數時觸發。",
   "Triggered when a player achieves a consecutive number of events without interruption.": "當玩家在不中斷的情況下達成連續事件數量時觸發。",
   "No triggers available.": "沒有可用的觸發條件。",
   "Animation Settings": "動畫設定",
-  "Real time alerts reacting to your in game events.": "隨您的遊戲內事件即時反應的通知。"
+  "Real time alerts reacting to your in game events.": "隨您的遊戲內事件即時反應的通知。",
+  "Event Type": "Event Type",
+  "General Game Settings": "General Game Settings",
+  "Enable All": "Enable All",
+  "Disable All": "Disable All",
+  "Total Amount": "Total Amount",
+  "Level Range Type": "Level Range Type",
+  "Action Settings": "Action Settings",
+  "Text To Speech": "Text To Speech",
+  "Voice": "Voice"
 }

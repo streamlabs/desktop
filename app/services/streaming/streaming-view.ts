@@ -303,6 +303,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       // One enabled platform with no custom destinations can always stream
       if (numEnabledPlatforms === 1 && numEnabledDestinations === 0) return true;
 
+      // In single output mode, multiple targets use the restream service, so display assignment
+      // doesn't apply. Defer to restream access (grandfathered, or TikTok and one additional target).
+      if (!this.isDualOutputMode) return this.getIsValidRestreamConfig();
+
       // Users can stream to two targets when in dual output mode if
       //  1. 2 Platforms: 1 Horizontal, 1 Vertical
       //  2. 1 Platform, 1 Custom Destination: 1 Horizontal, 1 Vertical

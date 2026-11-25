@@ -6,7 +6,7 @@ import { ScenesService } from '../../../app/services/api/external-api/scenes';
 import { getMeter } from '../meter';
 import { spawnSync } from 'child_process';
 import { sleep } from '../../helpers/sleep';
-import { startRecording, stopRecording } from '../../helpers/modules/streaming';
+import { startRecording, stopRecording } from '../../helpers/modules/recording';
 import { getCPUUsage, getMemoryUsage, logTiming, usePerformanceTest } from '../tools';
 import { logIn } from '../../helpers/webdriver/user';
 import { ExecutionContext } from 'ava';

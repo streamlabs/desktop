@@ -177,7 +177,7 @@
   overflow-y: hidden;
   width: 90px;
   padding: 0;
-  z-index: 10;
+  z-index: @z-overlay;
   left: 0;
   height: 200px;
 }

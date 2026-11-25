@@ -1,14 +1,5 @@
 {
-  "Compose Tweet": "Rédiger un tweet",
-  "Custom URL with": "URL personnalisée avec",
   "Share Your Stream": "Partagez votre stream",
-  "Connect to Twitter": "Se connecter à Twitter",
-  "Enable Tweet Sharing": "Activer le partage de tweets",
-  "Tweet when going live": "Tweeter lors du passage en direct",
-  "Unlink Twitter": "Dissocier Twitter",
-  "Tweet & Go Live": "Tweeter et passer au direct",
-  "Could not connect to Twitter": "Impossible de se connecter à Twitter",
-  "Use Streamlabs URL": "Utiliser l’URL Streamlabs",
   "X (Twitter) Chat Type": "Type de chat X (Twitter)",
   "Disabled": "Désactivé",
   "Chat will be disabled": "Le chat sera désactivé",
@@ -22,5 +13,13 @@
   "Only viewers that subscribe to you will be able to chat": "Seuls les viewers qui s'abonnent à toi pourront discuter.",
   "You need X premium account to go live on X.": "Tu as besoin d'un compte premium X pour diffuser en direct sur X.",
   "You need X premium account to go live on X. Click to learn more": "Tu as besoin d'un compte premium X pour diffuser en direct sur X. Clique pour en savoir plus",
-  "Stream Shift Error: Twitter is not live": "Erreur de Stream Shift : Twitter n’est pas en direct"
+  "Scheduled Broadcast": "Scheduled Broadcast",
+  "Don't use a scheduled broadcast": "Don't use a scheduled broadcast",
+  "Duration": "Duration",
+  "%{minutes} min": "%{minutes} min",
+  "%{hours} hr": "%{hours} hr",
+  "%{hours} hr %{minutes} min": "%{hours} hr %{minutes} min",
+  "Publish when I start streaming": "Publish when I start streaming",
+  "When off, X publishes the broadcast at the scheduled time instead of waiting for you to go live": "When off, X publishes the broadcast at the scheduled time instead of waiting for you to go live",
+  "Scheduling streams to X is a new feature and may not always work as expected": "Scheduling streams to X is a new feature and may not always work as expected"
 }

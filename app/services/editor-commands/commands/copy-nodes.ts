@@ -9,6 +9,7 @@ import { TDisplayType, VideoSettingsService } from 'services/settings-v2';
 import { EditorService } from 'services/editor';
 import { SceneCollectionsService } from 'services/scene-collections';
 import { cloneDeep } from 'lodash';
+import { orderNodesByDisplay } from 'services/dual-output/node-order';
 
 /**
  * Copies nodes
@@ -230,6 +231,7 @@ export class CopyNodesCommand extends Command {
           }),
       );
       scene.setNodesOrder(order.concat(initialNodeOrder));
+      orderNodesByDisplay(scene);
     } else {
       const order = compact(
         this.selection

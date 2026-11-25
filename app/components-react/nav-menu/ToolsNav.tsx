@@ -277,20 +277,21 @@ export function useToolsNav() {
         handleAuth={handleAuth}
         handleShowModal={setShowModal}
       />
-      <HelpTip
-        title={$t('Login')}
-        dismissableKey={EDismissable.LoginPrompt}
-        position={{ top: '46px', right: '8px' }}
-        tipPosition="right"
-        arrowPosition="top"
-        style={{ position: 'absolute' }}
-      >
-        <div>
-          {$t(
-            'Gain access to additional features by logging in with your preferred streaming platform.',
-          )}
-        </div>
-      </HelpTip>
+      <div className={styles.loginTipAnchor}>
+        <HelpTip
+          title={$t('Login')}
+          dismissableKey={EDismissable.LoginPrompt}
+          position={{ top: '50%', right: '0' }}
+          arrowPosition="right"
+          compact
+        >
+          <div>
+            {$t(
+              'Gain access to additional features by logging in with your preferred streaming platform.',
+            )}
+          </div>
+        </HelpTip>
+      </div>
     </>
   );
 

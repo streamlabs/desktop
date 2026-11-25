@@ -7,6 +7,7 @@
   "Set Stream Boss Health": "Nastavit životy záporáka streamu",
   "Goal": "Cíl",
   "Manage Battle": "Řídit bitvu",
+  "Boss Settings": "Boss Settings",
   "Starting Health": "Počínající životy",
   "Fixed": "Pevné",
   "The boss will spawn with the set amount of health everytime.": "Záporák se vždy objeví se stanoveným počtem životů.",
@@ -31,5 +32,6 @@
   "Health Bar Background Color": "Barva pozadí pruhu s životy",
   "Font": "Písmo",
   "The boss will have additional health each time he is defeated. The amount is set below.": "Záporák získá s každou porážkou více životů. Jejich počet nastavíte níže.",
-  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "Životy záporáka se budou měnit v závislosti na tom, jak silný bude smrtící útok. Nový počet životů záporáka se získá tím, že nadbytečné (overkill) zranění vynásobíte definovaným multiplikátorem. Tj. v případě útoku 150 při zbývajících 100 životech a multiplikátoru „3“ bude mít nový záporák 150 životů ((150 - 100) * 3)."
+  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "Životy záporáka se budou měnit v závislosti na tom, jak silný bude smrtící útok. Nový počet životů záporáka se získá tím, že nadbytečné (overkill) zranění vynásobíte definovaným multiplikátorem. Tj. v případě útoku 150 při zbývajících 100 životech a multiplikátoru „3“ bude mít nový záporák 150 životů ((150 - 100) * 3).",
+  "Failed to reset Stream Boss, please try again.": "Failed to reset Stream Boss, please try again."
 }

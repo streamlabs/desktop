@@ -59,6 +59,7 @@ export function alertAsync(
       okText: $t('Close'),
       cancelButtonProps: { style: { display: 'none' } },
       okButtonProps: { type: 'default' },
+      zIndex: Number(styles.alertModalZIndex),
       ...modalProps,
       afterClose: () => {
         WindowsService.updateStyleBlockers(Utils.getWindowId(), false);

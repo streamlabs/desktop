@@ -196,11 +196,22 @@ export class PlatformContainerManager {
     // webContents. Not ideal because the alternative is to create a new container,
     // which loses the state of the previous container. But better than and error
     // causing a crash.
-    if (existingContainer && existingContainer.container.webContents) {
-      return existingContainer;
+    if (existingContainer) {
+      if (existingContainer.container.webContents) return existingContainer;
+
+      // The view was destroyed out from under us (e.g. a pop-out window closing).
+      // Drop the stale entry, otherwise the replacement reloads each visit.
+      this.containers = this.containers.filter(c => c !== existingContainer);
     }
 
-    return this.createContainer(app, slot);
+    // Keep the persistence of what we're replacing, if present.
+    const persistent =
+      existingContainer?.persistent ??
+      app.manifest.pages.some(
+        page => page.slot === slot && (page.persistent || page.slot === EAppPageSlot.Background),
+      );
+
+    return this.createContainer(app, slot, persistent);
   }
 
   private createContainer(app: ILoadedApp, slot: EAppPageSlot, persistent = false): IContainerInfo {

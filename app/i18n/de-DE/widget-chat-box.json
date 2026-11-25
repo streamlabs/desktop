@@ -1,7 +1,6 @@
 {
   "Visual Settings": "Optische Einstellungen",
   "Font Settings": "Schriftart-Einstellungen",
-  "Chatter": "Chatter",
   "Always Show Messages": "Nachrichten immer anzeigen",
   "Show Moderator Badges": "Moderatoren-Abzeichen anzeigen",
   "Show Subscriber Badges": "Abonnenten-Abzeichen anzeigen",
@@ -15,7 +14,6 @@
   "Text Color": "Textfarbe",
   "Font Size": "Schriftgröße",
   "Muted Chatters": "Stumm geschaltete Chatter",
-  "Hide Commands": "Befehle ausblenden",
   "Background Color": "Hintergrundfarbe",
   "Show Platform Icons": "Plattformsymbole anzeigen",
   "Theme": "Thema",

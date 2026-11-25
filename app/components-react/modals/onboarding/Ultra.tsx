@@ -41,7 +41,7 @@ export function Ultra(p: IOnboardingStepProps) {
   };
 
   return (
-    <div className={styles.centered}>
+    <div className={styles.stepContainer}>
       <Header
         title={$t('Choose Your Plan')}
         description={$t('Choose the best plan to fit your content creation needs.')}

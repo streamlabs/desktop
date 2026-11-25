@@ -298,14 +298,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     );
 
     await obsUserPluginsService.initialize();
-
     // Initialize OBS API
-    const apiResult = obs.NodeObs.OBS_API_initAPI(
-      'en-US',
-      appService.appDataDirectory,
-      remote.process.env.SLOBS_VERSION,
-      isPreview ? SLD_SENTRY_BACKEND_SERVER_PREVIEW_URL : SLD_SENTRY_BACKEND_SERVER_URL,
-    );
+    const apiResult = obs.NodeObs.OBS_API_initAPI({
+      language: 'en-US',
+      appDataPath: appService.appDataDirectory,
+      version: remote.process.env.SLOBS_VERSION,
+      crashServerUrl: isPreview
+        ? SLD_SENTRY_BACKEND_SERVER_PREVIEW_URL
+        : SLD_SENTRY_BACKEND_SERVER_URL,
+    });
 
     if (apiResult !== obs.EVideoCodes.Success) {
       const message = apiInitErrorResultToMessage(apiResult);
@@ -449,6 +450,7 @@ if (Utils.isMainWindow()) {
 
     const diagnosticsService = getResource<DiagnosticsService>('DiagnosticsService');
 
+    // Note: this code path only displays when the keyboard shortcut is used such as Ctrl+Shift+Alt+D.
     diagnosticsService.actions.return
       .uploadReport()
       .then(r => {

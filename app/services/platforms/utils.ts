@@ -1,4 +1,4 @@
-import { IPlatformRequest, TPlatform, getPlatformService } from './index';
+import type { IPlatformRequest, TPlatform } from './index';
 import { jfetch } from '../../util/requests';
 
 export interface IPlatformResponse<TResult = unknown> {
@@ -7,6 +7,55 @@ export interface IPlatformResponse<TResult = unknown> {
   status: number;
   result: TResult;
   message: string;
+}
+
+export interface IPlatformRequestFailureDiagnostic {
+  platform: TPlatform;
+  method: string;
+  status?: number;
+  reason?: string;
+}
+
+function sanitizedHttpMethod(reqInfo: IPlatformRequest | string): string {
+  if (typeof reqInfo === 'string' || typeof reqInfo.method !== 'string') return 'GET';
+  const method = reqInfo.method.trim();
+  return /^[A-Za-z]{1,16}$/.test(method) ? method.toUpperCase() : 'UNKNOWN';
+}
+
+function sanitizedHttpStatus(error: unknown): number | undefined {
+  if (!error || (typeof error !== 'object' && typeof error !== 'function')) return undefined;
+  const status = (error as { status?: unknown }).status;
+  return typeof status === 'number' && Number.isInteger(status) && status >= 400 && status <= 599
+    ? status
+    : undefined;
+}
+
+function sanitizedApiReason(platform: TPlatform, error: unknown): string | undefined {
+  if (platform !== 'youtube') return undefined;
+  const reason = (error as any)?.result?.error?.errors?.[0]?.reason;
+  return typeof reason === 'string' && /^[A-Za-z][A-Za-z0-9_.-]{0,63}$/.test(reason)
+    ? reason
+    : undefined;
+}
+
+/**
+ * Build a credential-free platform failure diagnostic. Deliberately omit the
+ * URL, headers, request/response bodies, and arbitrary server messages because
+ * they can contain tokens, stream credentials, identifiers, or user content.
+ */
+export function sanitizePlatformRequestFailure(
+  platform: TPlatform,
+  reqInfo: IPlatformRequest | string,
+  error: unknown,
+): IPlatformRequestFailureDiagnostic {
+  const status = sanitizedHttpStatus(error);
+  const reason = sanitizedApiReason(platform, error);
+  return {
+    platform,
+    method: sanitizedHttpMethod(reqInfo),
+    ...(status ? { status } : {}),
+    ...(reason ? { reason } : {}),
+  };
 }
 
 /**
@@ -63,6 +112,10 @@ export async function platformRequest<T = unknown>(
   useJfetch: boolean = true,
 ): Promise<T | Response> {
   const req: IPlatformRequest = typeof reqInfo === 'string' ? { url: reqInfo } : reqInfo;
+  // Load the registry only when performing a request. Keeping the pure
+  // diagnostic helper independent from the platform service graph also avoids
+  // initializing unrelated providers when tooling needs to sanitize an error.
+  const { getPlatformService } = require('./index') as typeof import('./index');
   const platformService = getPlatformService(platform);
 
   // create a request function with required headers
@@ -82,16 +135,39 @@ export async function platformRequest<T = unknown>(
     }
   };
 
-  // try to fetch and retry fetching with a new token if the API responds with 401 (unauthorized)
-  return requestFn().catch(error => {
-    if (useToken && error.status === 401) {
-      return platformService.fetchNewToken().then(() => {
-        return requestFn();
-      });
+  // Try once more with a refreshed token after a 401. Log only the terminal
+  // failure so a failed retry retains its useful status/reason diagnostic too.
+  try {
+    return await requestFn();
+  } catch (error: unknown) {
+    if (useToken && (error as { status?: unknown } | null)?.status === 401) {
+      try {
+        await platformService.fetchNewToken();
+      } catch (refreshError: unknown) {
+        // The request itself received an authoritative 401 and no retry was
+        // attempted. Preserve that outcome for callers that distinguish a
+        // rejected resource creation from an ambiguous transport failure.
+        console.log(
+          'Failed platform request',
+          sanitizePlatformRequestFailure(platform, req, error),
+        );
+        throw error;
+      }
+      try {
+        return await requestFn();
+      } catch (retryError: unknown) {
+        // A refreshed request was actually sent, so its outcome supersedes the
+        // initial authentication rejection.
+        console.log(
+          'Failed platform request',
+          sanitizePlatformRequestFailure(platform, req, retryError),
+        );
+        throw retryError;
+      }
     }
-    console.log('Failed platform request', req);
-    return Promise.reject(error);
-  });
+    console.log('Failed platform request', sanitizePlatformRequestFailure(platform, req, error));
+    throw error;
+  }
 }
 
 /**

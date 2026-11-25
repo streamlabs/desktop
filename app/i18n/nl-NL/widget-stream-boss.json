@@ -7,6 +7,7 @@
   "Set Stream Boss Health": "Gezondheid Stream Boss instellen",
   "Goal": "Doel",
   "Manage Battle": "Battle beheren",
+  "Boss Settings": "Boss Settings",
   "Starting Health": "Gezondheid bij start",
   "Fixed": "Vast",
   "The boss will spawn with the set amount of health everytime.": "De boss spawnt elke keer met de ingestelde hoeveelheid gezondheid.",
@@ -31,5 +32,6 @@
   "Health Bar Background Color": "Achtergrondkleur gezondheidsbalk",
   "Font": "Lettertype",
   "The boss will have additional health each time he is defeated. The amount is set below.": "Telkens wanneer de stream boss wordt verslagen, heeft deze extra gezondheid. De hoeveelheid wordt hieronder ingesteld.",
-  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "De gezondheid van de boss verandert afhankelijk van hoeveel schade de dodelijke slag toebrengt. Overmatige schade vermenigvuldigd met de vermenigvuldigingsfactor is de nieuwe gezondheid van de boss. Bijvoorbeeld: 150 schade met 100 resterende gezondheid en een vermenigvuldiging van 3 resulteert in een nieuwe boss met 150 gezondheid bij het spawnen. \n Stel uw vermenigvuldiger hieronder in."
+  "The boss' health will change depending on how much damage is dealt on the killing blow. Excess damage multiplied by the multiplier will be the boss' new health. I.e. 150 damage with 100 health remaining and a set multiplier of 3 would result in the new boss having 150 health on spawn. \n Set your multiplier below.": "De gezondheid van de boss verandert afhankelijk van hoeveel schade de dodelijke slag toebrengt. Overmatige schade vermenigvuldigd met de vermenigvuldigingsfactor is de nieuwe gezondheid van de boss. Bijvoorbeeld: 150 schade met 100 resterende gezondheid en een vermenigvuldiging van 3 resulteert in een nieuwe boss met 150 gezondheid bij het spawnen. \n Stel uw vermenigvuldiger hieronder in.",
+  "Failed to reset Stream Boss, please try again.": "Failed to reset Stream Boss, please try again."
 }

@@ -1,18 +1,15 @@
-import React, { useState } from 'react';
-import cx from 'classnames';
 import { Button } from 'antd';
-import styles from './Common.m.less';
-import { $t } from 'services/i18n';
-import { platformLabels, EPlatform } from 'services/platforms';
+import cx from 'classnames';
+import { Services } from 'components-react/service-provider';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
-import { ExtraPlatformConnect } from 'components-react/modals/onboarding/ExtraPlatformConnect';
-import { DancingKevins, IOnboardingStepProps, useAuth } from './Onboarding';
+import React, { useCallback } from 'react';
+import { $t } from 'services/i18n';
+import { EPlatform, platformLabels } from 'services/platforms';
+import styles from './Common.m.less';
+import { DancingKevins, useAuth } from './Onboarding';
 
-type TExtraPlatform = 'nimotv';
-
-export function Login(p: IOnboardingStepProps) {
-  const [extraPlatform, setExtraPlatform] = useState<TExtraPlatform>();
-
+export function Login() {
+  const { OnboardingV2Service } = Services;
   const { SLIDLogin, platformLogin } = useAuth();
 
   const orderedPlatforms = [
@@ -22,51 +19,37 @@ export function Login(p: IOnboardingStepProps) {
     EPlatform.Kick,
     EPlatform.Facebook,
     EPlatform.Twitter,
-    EPlatform.Instagram,
   ];
 
-  const extraPlatforms: TExtraPlatform[] = ['nimotv'];
+  const onMergePlatformClick = useCallback(async (platform: EPlatform) => {
+    const canContinue = await platformLogin(platform);
+    if (!canContinue) return;
+
+    OnboardingV2Service.actions.takeStep();
+  }, []);
 
   return (
-    <div className={styles.centered}>
+    <div className={styles.stepContainer}>
       <DancingKevins />
-      <div
-        className={cx(styles.darkBox, styles.centered)}
-        style={{ padding: 24, width: 600, height: 360 }}
-      >
+      <div className={styles.darkBoxLarge}>
         <h1>{$t('Log In')}</h1>
-        {!extraPlatform && (
-          <>
-            <Button onClick={SLIDLogin} className={cx(styles.bigButton, styles.white)}>
-              {$t('Log in with Streamlabs ID')}
-              &nbsp;
-              <i className="icon-pop-out-2" />
+        <Button onClick={SLIDLogin} className={cx(styles.bigButton, styles.white)}>
+          {$t('Log in with Streamlabs ID')}
+          &nbsp;
+          <i className="icon-pop-out-2" />
+        </Button>
+        <span>{$t('Or log in with a platform')}</span>
+        <div className={styles.platformButtons}>
+          {orderedPlatforms.map(platform => (
+            <Button
+              key={platform}
+              icon={<PlatformLogo platform={platform} size="small" />}
+              onClick={() => onMergePlatformClick(platform)}
+            >
+              {platformLabels(platform)}
             </Button>
-            <span>{$t('Or log in with a platform')}</span>
-            <div className={styles.platformButtons}>
-              {orderedPlatforms.map(platform => (
-                <Button
-                  key={platform}
-                  icon={<PlatformLogo platform={platform} size="small" />}
-                  onClick={() => platformLogin(platform)}
-                >
-                  {platformLabels(platform)}
-                </Button>
-              ))}
-              {extraPlatforms.map((platform: TExtraPlatform) => (
-                <Button onClick={() => setExtraPlatform(platform)} key={platform}>
-                  {platformLabels(platform)}
-                </Button>
-              ))}
-            </div>
-          </>
-        )}
-        {extraPlatform && (
-          <ExtraPlatformConnect
-            setExtraPlatform={setExtraPlatform}
-            selectedExtraPlatform={extraPlatform}
-          />
-        )}
+          ))}
+        </div>
       </div>
     </div>
   );

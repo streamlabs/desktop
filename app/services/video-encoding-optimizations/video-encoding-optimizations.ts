@@ -14,6 +14,22 @@ import { UrlService } from '../hosts';
 
 export * from './definitions';
 
+function normalizeCodec(codec?: string): string {
+  const normalized = codec?.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  switch (normalized) {
+    case 'h264':
+    case 'avc':
+    case 'avc1':
+      return 'h264';
+    case 'h265':
+    case 'hevc':
+      return 'hevc';
+    default:
+      return normalized || 'h264';
+  }
+}
+
 /**
  SLOBS will send these information as inputs for the server
  - Current Bitrate
@@ -97,10 +113,12 @@ export class VideoEncodingOptimizationService extends PersistentStatefulService<
     // use settings for nvenc instead
     const encoder =
       settings.encoder === EEncoderFamily.jim_nvenc ? EEncoderFamily.nvenc : settings.encoder;
+    const codec = normalizeCodec(settings.codec);
 
     const filteredProfiles = profiles.filter(profile => {
       return (
         profile.encoder === encoder &&
+        normalizeCodec(profile.codec) === codec &&
         profile.bitrateMax >= settings.bitrate &&
         profile.bitrateMin <= settings.bitrate &&
         (!settings.preset || settings.preset === profile.presetIn)

@@ -1,9 +1,7 @@
 {
   "Enable in-game overlay": "Játékon belüli átfedés engedélyezése",
-  "Enable stream preview in overlay": "A közvetítés előnézetének engedélyezése az átfedésben",
   "Toggle in-game overlay": "Játékon belüli átfedésre kapcsolás",
   "Toggle positioning mode": "Pozicionálási módra váltás",
   "Set a hotkey in Hotkey Settings to toggle the in-game overlay": "Állíts be egy gyorsbillentyűt a gyorsbillentyű-beállításokban a játékon belüli átfedés bekapcsolásához",
-  "The in-game overlay is a new experimental feature that allows you to view chat and events overlayed on top of your game.  This overlay may not work with certain games running in exclusive fullscreen mode.  For best results, we recommend running your game in windowed-fullscreen mode.": "The in-game overlay is a new experimental feature that allows you to view chat and events overlayed on top of your game.  This overlay may not work with certain games running in exclusive fullscreen mode.  For best results, we recommend running your game in windowed-fullscreen mode.",
   "Please log in to use the in-game overlay.": "Kérjük, jelentkezz be a játékon belüli átfedés használatához."
 }

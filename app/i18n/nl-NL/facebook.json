@@ -1,16 +1,8 @@
 {
-  "You can access your Facebook Streamer Dashboard here.": "Hier heeft u toegang tot uw Streamer-dashboard op Facebook.",
-  "Create a Page": "Een pagina maken",
-  "Facebook Setup": "Facebook instellen",
-  "Streamer Dashboard": "Streamer-dashboard",
   "Share": "Delen",
   "Like": "Like",
   "Step 3:": "Stap 3:",
-  "Create a Facebook Gaming page to get started.": "Maak een Facebook-gamingpagina om aan de slag te gaan",
-  "Create a Gaming Page": "Een gamingpagina maken",
   "All of your scenes, sources, and settings will be preserved.": "Als uw scènes, bronnen en instellingen blijven behouden.",
-  "Connect Facebook": "Facebook verbinden",
-  "Multistream To Facebook": "Naar Facebook multistreamen",
   "Connect": "Verbinden",
   "Install Your Theme": "Uw thema installeren",
   "Install": "Installeren",
@@ -18,7 +10,6 @@
   "Facebook Destination": "Bestemming op Facebook",
   "Share to Your Timeline": "Delen op uw tijdlijn",
   "Share to a Page You Manage": "Delen op een pagina die u beheert",
-  "Share in a Group": "Delen in een groep",
   "Facebook Group": "Facebook-groep",
   "Scheduled Video": "Geplande video",
   "Make sure the Streamlabs app is added to your Group.": "Zorg dat de Streamlabs-app aan uw groep is toegevoegd.",
@@ -35,8 +26,8 @@
   "Do not change privacy settings": "Mijn privacy-instellingen niet wijzigen",
   "Install %{overlayName}": "%{overlayName} installeren",
   "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Let op: u kunt uw streams naar Facebook plannen, maar sommige zullen niet op deze kalender verschijnen vanwege API-beperkingen",
-  "Your account is not eligible to stream on Facebook. Click to learn more.": "Je account kan niet streamen op Facebook. Klik voor meer informatie",
   "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers": "Je kunt nog niet live gaan. Je profiel moet minstens 60 dagen oud zijn en je pagina moet minstens 100 volgers hebben.",
   "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more.": "Je kunt nog niet live gaan. Je profiel moet minstens 60 dagen oud zijn en je pagina moet minstens 100 volgers hebben. Klik op de melding voor meer info.",
-  "Stream Shift Error: Facebook is not live": "Stream Shift fout: Facebook is niet live"
+  "Stream Shift Error: Facebook is not live": "Stream Shift fout: Facebook is niet live",
+  "Your account is not eligible to stream on Facebook. Click to learn more": "Your account is not eligible to stream on Facebook. Click to learn more"
 }

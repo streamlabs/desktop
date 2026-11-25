@@ -103,6 +103,9 @@ export class CreditsModule extends WidgetModule<ICreditsState> {
         sponsors: metadata.bool({ label: $t('Show Members') }),
         superchats: metadata.bool({ label: $t('Show Super Chats') }),
       },
+      twitter: {
+        followers: metadata.bool({ label: $t('Show Followers') }),
+      },
     };
     if (!platform || !platformEvents[platform]) return fromMeta(baseEvents);
     return fromMeta({ ...platformEvents[platform], ...baseEvents });
@@ -125,6 +128,9 @@ export class CreditsModule extends WidgetModule<ICreditsState> {
         subscriptions_change: metadata.text({ label: $t('Subscriptions') }),
         sponsors_change: metadata.text({ label: $t('Members') }),
         superchats_change: metadata.text({ label: $t('Super Chats') }),
+      },
+      twitter: {
+        followers_change: metadata.text({ label: $t('Followers') }),
       },
     };
     if (!platform || !platformEvents[platform]) return fromMeta(baseEvents);

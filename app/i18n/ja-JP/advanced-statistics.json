@@ -1,16 +1,13 @@
 {
-  "You do not have any notifications": "通知はありません",
   "Your stream is currently offline": "ストリームは現在オフラインです",
   "Your stream is experiencing issues": "ストリームに問題が発生しています",
   "Your stream is experiencing minor issues": "ストリームに軽微な問題が発生しています",
   "Live Stats": "ライブ統計",
   "Performance Notifications": "パフォーマンスに関する通知",
   "Click on a stat to add it to your footer": "統計をクリックして、それをフッターに追加します",
-  "Click to add this info to your footer": "クリックして、この情報をフッターに追加します",
   "When Streamlabs detects performance issues with your stream, such as dropped frames, lagged frames, or a stream disconnection, troubleshooting notifications will be sent to you here.": "Streamlabs がストリームパフォーマンスの問題（ドロップフレーム、遅延フレーム、またはストリームの切断など）を検出すると、トラブルシューティング通知がここで送信されます。",
   "Click to add %{stat} info to your footer": "クリックして、%{stat} 情報をフッターに追加",
   "CPU": "CPU",
   "FPS": "FPS",
-  "dropped frames": "ドロップフレーム",
   "bandwidth": "帯域幅"
 }

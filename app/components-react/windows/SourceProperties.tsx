@@ -6,7 +6,6 @@ import { ModalLayout } from '../shared/ModalLayout';
 import Display from '../shared/Display';
 import { assertIsDefined } from '../../util/properties-type-guards';
 import { useSubscription } from '../hooks/useSubscription';
-import { useVuex } from '../hooks';
 
 export default function SourceProperties() {
   const {
@@ -29,14 +28,14 @@ export default function SourceProperties() {
 
   // close the window if the source has been deleted
   useSubscription(SourcesService.sourceRemoved, removedSource => {
-    if (source && removedSource.sourceId !== source.sourceId) return;
+    if (!source || removedSource.sourceId !== source.sourceId) return;
     WindowsService.actions.closeChildWindow();
   });
 
   // update properties state if the source has been changed
   useSubscription(SourcesService.sourceUpdated, updatedSource => {
-    if (source && updatedSource.sourceId !== source.sourceId) return;
-    setProperties(source!.getPropertiesFormData());
+    if (!source || updatedSource.sourceId !== source.sourceId) return;
+    setProperties(source.getPropertiesFormData());
   });
 
   function onChangeHandler(formData: TObsFormData, changedInd: number) {

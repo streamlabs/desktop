@@ -1,5 +1,6 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import fs from 'fs';
+import { webUtils } from 'electron';
 import * as remote from '@electron/remote';
 import cx from 'classnames';
 import Animation from 'rc-animate';
@@ -21,6 +22,9 @@ import styles from './Main.m.less';
 import { StatefulService } from 'services';
 import { useRealmObject } from 'components-react/hooks/realm';
 import Onboarding from 'components-react/modals/onboarding/Onboarding';
+import { byOS, OS } from 'util/operating-systems';
+
+const isMac = byOS({ [OS.Windows]: false, [OS.Mac]: true });
 
 // TODO: this is technically deprecated as we have moved customizationService to Realm
 // but some users may still have this value
@@ -52,10 +56,11 @@ export default function Main() {
     ScenesService,
     CustomizationService,
     StreamSettingsService,
+    WidgetsService,
   } = Services;
   const mainWindowEl = useRef<HTMLDivElement | null>(null);
   const mainMiddleEl = useRef<HTMLDivElement | null>(null);
-  const windowResizeTimeout = useRef<number | null>(null);
+  const windowResizeTimeout = useRef<number | undefined>(undefined);
   const activeCachedPages = useRef(new Set<string>());
   const cachedPagesParams = useRef<Record<string, any>>({});
 
@@ -63,8 +68,6 @@ export default function Main() {
   const [i18nReady, seti18nReady] = useState(false);
   const [compactView, setCompactView] = useState(false);
   const [hasLiveDock, setHasLiveDock] = useState(true);
-  const [minDockWidth, setMinDockWidth] = useState(290);
-  const [maxDockWidth, setMaxDockWidth] = useState(290);
   const [minEditorWidth, setMinEditorWidth] = useState(500);
 
   const uiReady = bulkLoadFinished && i18nReady;
@@ -76,9 +79,6 @@ export default function Main() {
     theme: realmTheme,
     leftDock,
   } = useRealmObject(Services.CustomizationService.state);
-
-  // Provides smooth chat resizing instead of writing to realm every tick while resizing
-  const [dockWidth, setDockWidth] = useState(realmDockWidth);
 
   const {
     errorAlert,
@@ -136,28 +136,49 @@ export default function Main() {
 
       if (!fileList || fileList.length < 1) return;
 
-      const files: string[] = [];
+      const droppedFiles: string[] = [];
       let fi = fileList.length;
-      while (fi--) files.push(fileList.item(fi)!.path);
+      while (fi--) droppedFiles.push(webUtils.getPathForFile(fileList.item(fi)!));
 
-      const isDir = await isDirectory(files[0]).catch(err => {
-        console.error('Error checking if drop is directory', err);
-        return false;
-      });
+      const isDir =
+        droppedFiles.length === 1 &&
+        (await isDirectory(droppedFiles[0]).catch(err => {
+          console.error('Error checking if drop is directory', err);
+          return false;
+        }));
 
-      if (files.length > 1 || isDir) {
-        remote.dialog
-          .showMessageBox(remote.getCurrentWindow(), {
-            title: 'Streamlabs Desktop',
-            message: $t('Are you sure you want to import multiple files?'),
-            type: 'warning',
-            buttons: [$t('Cancel'), $t('OK')],
-          })
-          .then(({ response }) => {
-            if (!response) return;
-            EditorCommandsService.actions.executeCommand('AddFilesCommand', activeSceneId, files);
-          });
-      } else {
+      // confirm the whole drop before importing anything
+      if (droppedFiles.length > 1 || isDir) {
+        const { response } = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+          title: 'Streamlabs Desktop',
+          message: $t('Are you sure you want to import multiple files?'),
+          type: 'warning',
+          buttons: [$t('Cancel'), $t('OK')],
+        });
+        if (!response) return;
+      }
+
+      // widget files are imported as widgets rather than added as file sources
+      const widgetFiles = new Set<string>();
+      for (const file of droppedFiles) {
+        if (
+          file.toLowerCase().endsWith('.widget') &&
+          !(await isDirectory(file).catch(() => false))
+        ) {
+          widgetFiles.add(file);
+        }
+      }
+      const isWidgetFile = (file: string) => widgetFiles.has(file);
+      for (const widgetFile of droppedFiles.filter(isWidgetFile)) {
+        try {
+          await WidgetsService.actions.return.loadWidgetFile(widgetFile, activeSceneId);
+        } catch (err: unknown) {
+          console.error('Error importing dropped widget file', widgetFile, err);
+        }
+      }
+
+      const files = droppedFiles.filter(file => !isWidgetFile(file));
+      if (files.length > 0) {
         EditorCommandsService.actions.executeCommand('AddFilesCommand', activeSceneId, files);
       }
     },
@@ -168,12 +189,19 @@ export default function Main() {
     setMinEditorWidth(width);
   });
 
-  const updateLiveDockWidth = useCallback(() => {
-    let constrainedWidth = Math.max(minDockWidth, dockWidth);
-    constrainedWidth = Math.min(maxDockWidth, dockWidth);
+  // Provides smooth chat resizing instead of writing to realm every tick while resizing
+  const [rawDockWidth, setDockWidth] = useState(realmDockWidth);
+  const [minDockWidth, setMinDockWidth] = useState(290);
+  const [maxDockWidth, setMaxDockWidth] = useState(Infinity);
+  const dockWidth = Math.min(maxDockWidth, Math.max(minDockWidth, rawDockWidth));
 
-    if (dockWidth !== constrainedWidth) setDockWidth(constrainedWidth);
-  }, []);
+  const updateDockBounds = useCallback(() => {
+    const appRect = mainWindowEl.current?.getBoundingClientRect();
+    if (!appRect) return;
+    const max = Math.min(appRect.width - minEditorWidth, appRect.width / 2);
+    setMaxDockWidth(max);
+    setMinDockWidth(Math.min(290, max));
+  }, [minEditorWidth]);
 
   const setCollapsed = useCallback((livedockCollapsed: boolean) => {
     updateStyleBlockers(true);
@@ -183,25 +211,20 @@ export default function Main() {
     }, 300);
   }, []);
 
-  function windowSizeHandler() {
+  const windowSizeHandler = useCallback(() => {
     if (!hideStyleBlockers) {
       updateStyleBlockers(true);
     }
     const windowWidth = window.innerWidth;
 
-    if (windowResizeTimeout.current) clearTimeout(windowResizeTimeout.current);
+    clearTimeout(windowResizeTimeout.current);
 
     setHasLiveDock(page === 'Studio' ? windowWidth >= minEditorWidth + 100 : windowWidth >= 1070);
     windowResizeTimeout.current = window.setTimeout(() => {
       updateStyleBlockers(false);
-      const appRect = mainWindowEl.current?.getBoundingClientRect();
-      if (!appRect) return;
-      setMaxDockWidth(Math.min(appRect.width - minEditorWidth, appRect.width / 2));
-      setMinDockWidth(Math.min(290, maxDockWidth));
-
-      updateLiveDockWidth();
+      updateDockBounds();
     }, 200);
-  }
+  }, [hideStyleBlockers, page, minEditorWidth, updateDockBounds]);
 
   useEffect(() => {
     let unsubscribe: (() => void) | null = null;
@@ -226,10 +249,13 @@ export default function Main() {
 
     return () => {
       window.removeEventListener('resize', windowSizeHandler);
-      // Sync persisted live dock width in the db
-      CustomizationService.actions.setSettings({ livedockSize: dockWidth });
     };
-  }, []);
+  }, [windowSizeHandler]);
+
+  // The main element is not mounted until the ui is ready, so bounds can't be measured on mount
+  useEffect(() => {
+    if (uiReady) updateDockBounds();
+  }, [uiReady, updateDockBounds]);
 
   useEffect(() => {
     // Live dock should open when:
@@ -255,13 +281,14 @@ export default function Main() {
   }, [theme]);
 
   useEffect(() => {
-    if (dockWidth < 1 && mainWindowEl.current) {
+    if (rawDockWidth < 1 && mainWindowEl.current) {
       // migrate from old percentage value to the pixel value
       const appRect = mainWindowEl.current.getBoundingClientRect();
       const defaultWidth = Math.max(minDockWidth, appRect.width * 0.2);
       setDockWidth(defaultWidth);
+      CustomizationService.actions.setSettings({ livedockSize: defaultWidth });
     }
-  }, [uiReady]);
+  }, [uiReady, minDockWidth]);
 
   useEffect(() => {
     setCompactView(!!mainMiddleEl.current && mainMiddleEl.current.clientWidth < 1200);
@@ -287,7 +314,7 @@ export default function Main() {
 
   return (
     <div
-      className={cx(styles.main, theme, 'react')}
+      className={cx(styles.main, theme, 'react', { [styles.mainMac]: isMac })}
       id="mainWrapper"
       ref={mainWindowEl}
       onDrop={(ev: React.DragEvent) => onDropHandler(ev)}
@@ -438,6 +465,9 @@ const LiveDockContainer = memo(function LiveDockContainer(p: ILiveDockContainerP
           position={p.onLeft ? 'left' : 'right'}
           resizeHandle={p.onLeft ? 'e' : 'w'}
           onInput={(val: number) => p.setLiveDockWidth(val)}
+          onResizestop={(val?: number) =>
+            val && Services.CustomizationService.actions.setSettings({ livedockSize: val })
+          }
           max={p.max}
           min={p.min}
           value={p.width}

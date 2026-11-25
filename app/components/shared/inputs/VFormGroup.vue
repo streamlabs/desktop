@@ -1,14 +1,11 @@
 <template>
-
   <div>
     <!-- title -->
     <div class="form-group__title form-group__title--vertical">
       <label v-if="options.title">
         {{ options.title }}
       </label>
-      <label v-else>
-        &nbsp;
-      </label>
+      <label v-else> &nbsp; </label>
       <div v-if="options.tooltip" class="tooltip">
         <i class="icon-question icon-btn" v-tooltip="metadata.tooltip" />
       </div>
@@ -34,49 +31,50 @@
           {{ inputErrors[0].msg }}
         </div>
       </div>
-
     </div>
   </div>
-
 </template>
-
 
 <script lang="ts" src="./VFormGroup.vue.ts"></script>
 
 <style lang="less" scoped>
-  @import "../../../styles/index";
+@import '../../../styles/index';
 
-  .form-group__title {
-    display: flex;
-    align-items: center;
+.form-group__title {
+  display: flex;
+  align-items: center;
+}
+
+.form-group__title--vertical {
+  .margin-bottom();
+}
+
+.slots {
+  width: 100%;
+}
+
+.tooltip {
+  .margin-left();
+
+  position: relative;
+  font-size: 14px;
+  align-self: center;
+  display: inline-block;
+  z-index: @z-raised;
+  color: var(--icon);
+  line-height: 0;
+}
+
+.input-footer {
+  margin-top: 6px;
+  min-height: 16px;
+  font-size: 11px;
+
+  .whisper {
+    font-style: italic;
   }
-
-  .form-group__title--vertical {
-    .margin-bottom();
+  .input-error {
+    color: var(--warning);
   }
-
-  .slots {
-    width: 100%;
-  }
-
-  .tooltip {
-    .margin-left();
-
-    position: relative;
-    font-size: 14px;
-    align-self: center;
-    display: inline-block;
-    z-index: 1;
-    color: var(--icon);
-    line-height: 0;
-  }
-
-  .input-footer {
-    margin-top: 6px;
-    min-height: 16px;
-    font-size: 11px;
-
-    .whisper { font-style: italic; }
-    .input-error { color: var(--warning); }
-  }
+}
 </style>

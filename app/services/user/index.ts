@@ -11,6 +11,8 @@ import {
   IPlatformService,
   EPlatformCallResult,
   IPlatformAuth,
+  platformList,
+  canBePrimaryPlatform,
 } from 'services/platforms';
 import { CustomizationService } from 'services/customization';
 import * as Sentry from '@sentry/browser';
@@ -237,6 +239,16 @@ class UserViews extends ViewHandler<IUserServiceState> {
     }
 
     return [];
+  }
+
+  /**
+   * Linked platforms that can be a primary platform, in the same order platforms are
+   * listed elsewhere in the app (see `platformList`) rather than the order they were linked.
+   */
+  get linkedStreamingPlatforms(): TPlatform[] {
+    return (platformList as TPlatform[]).filter(
+      p => canBePrimaryPlatform(p) && this.linkedPlatforms.includes(p),
+    );
   }
 
   get isTwitchAuthed() {
@@ -467,6 +479,8 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   userLogout = new Subject();
   scopeAdded = new Subject();
   primaryPlatformChanged = new Subject<TPlatform>();
+  /** Fires when a linked platform credential becomes available or changes. */
+  platformAuthUpdated = new Subject<TPlatform>();
 
   /**
    * Will fire on every login, similar to userLogin, but will
@@ -812,6 +826,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
         id: linkedPlatforms.youtube_account.platform_id,
         token: linkedPlatforms.youtube_account.access_token,
       });
+      this.platformAuthUpdated.next('youtube');
     } else if (this.state.auth.primaryPlatform !== 'youtube') {
       this.UNLINK_PLATFORM('youtube');
     }
@@ -1327,6 +1342,41 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     return result;
   }
 
+  /**
+   * Finishes an in progress SLID auth with `primaryPlatform` and reports the outcome.
+   * Callers in UI windows should use the returned `loggedIn` rather than reading
+   * `views.isLoggedIn`, since their copy of the state may not have received the
+   * mutations made here yet.
+   */
+  async finishSLAuthWithPlatform(
+    primaryPlatform: TPlatform,
+  ): Promise<{ result?: EPlatformCallResult; loggedIn: boolean }> {
+    // Merging a platform for an already logged in user has nothing to finish
+    if (!this.views.isPartialSLAuth) return { loggedIn: this.views.isLoggedIn };
+
+    const result = await this.finishSLAuth(primaryPlatform);
+    return { result, loggedIn: this.views.isLoggedIn };
+  }
+
+  /**
+   * Finishes an in progress SLID auth using the user's most preferred linked streaming
+   * platform, if they have one. If they don't, the auth is left in progress and
+   * `primaryPlatform` is undefined, meaning the user needs to link a platform first.
+   */
+  async finishSLAuthWithLinkedPlatform(): Promise<{
+    primaryPlatform?: TPlatform;
+    result?: EPlatformCallResult;
+    loggedIn: boolean;
+  }> {
+    const [primaryPlatform] = this.views.linkedStreamingPlatforms;
+
+    if (!this.views.isPartialSLAuth || !primaryPlatform) {
+      return { loggedIn: this.views.isLoggedIn };
+    }
+
+    return { primaryPlatform, ...(await this.finishSLAuthWithPlatform(primaryPlatform)) };
+  }
+
   async startSLMerge(): Promise<EPlatformCallResult> {
     const authUrl = `https://${this.hostsService.streamlabs}/slobs/merge/${this.apiToken}/streamlabs_account`;
 
@@ -1444,9 +1494,13 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       result = await this.login(service, auth);
     } else {
       if (auth) {
-        this.UPDATE_PLATFORM(auth.platforms[auth.primaryPlatform]);
+        const linkedPlatform = auth.platforms[auth.primaryPlatform];
+        this.UPDATE_PLATFORM(linkedPlatform);
+        this.platformAuthUpdated.next(linkedPlatform.type);
         result = EPlatformCallResult.Success;
       } else {
+        // Auth failed (e.g. the backend rejected the account), don't continue the
+        // login with stale auth state
         result = EPlatformCallResult.Error;
       }
     }
@@ -1457,6 +1511,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
 
   updatePlatformToken(platform: TPlatform, token: string) {
     this.SET_PLATFORM_TOKEN(platform, token);
+    this.platformAuthUpdated.next(platform);
   }
 
   updatePlatformChannelId(platform: TPlatform, id: string) {

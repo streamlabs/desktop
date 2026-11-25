@@ -1,12 +1,13 @@
-import React, { ReactNode, CSSProperties } from 'react';
-import { Services } from '../service-provider';
-import { getOS, OS } from '../../util/operating-systems';
-import cx from 'classnames';
-import { $t } from '../../services/i18n';
 import { Button } from 'antd';
 import { ModalProps } from 'antd/lib/modal';
-import Scrollable from './Scrollable';
+import cx from 'classnames';
 import { useRealmObject } from 'components-react/hooks/realm';
+import React, { CSSProperties, ReactNode } from 'react';
+import { $t } from '../../services/i18n';
+import { byOS, OS } from '../../util/operating-systems';
+import { Services } from '../service-provider';
+import styles from './ModalLayout.m.less';
+import Scrollable from './Scrollable';
 
 // use props of Modal from the antd lib
 type TProps = {
@@ -20,11 +21,8 @@ type TProps = {
   id?: string;
 } & Pick<ModalProps, 'footer' | 'onOk' | 'okText' | 'bodyStyle' | 'confirmLoading' | 'onCancel'>;
 
-// calculate OS dependent styles
-const titleHeight = getOS() === OS.Mac ? 22 : 30;
-const wrapperStyles: CSSProperties = {
-  height: `calc(100% - ${titleHeight}px)`,
-};
+const isMac = byOS({ [OS.Windows]: false, [OS.Mac]: true });
+
 const fixedStyles: CSSProperties = {
   height: '200px',
   background: 'var(--section)',
@@ -79,8 +77,14 @@ export function ModalLayout(p: TProps) {
 
   return (
     <div
-      className={cx('ant-modal-content', currentTheme, p.className)}
-      style={{ ...wrapperStyles, ...p.wrapperStyle }}
+      className={cx(
+        'ant-modal-content',
+        styles.modalLayout,
+        { [styles.modalLayoutMac]: isMac },
+        currentTheme,
+        p.className,
+      )}
+      style={p.wrapperStyle}
       id={p.id}
     >
       {p.fixedChild && <div style={fixedStyles}>{p.fixedChild}</div>}

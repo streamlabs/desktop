@@ -1,5 +1,6 @@
 {
-  "Horizontal canvas": "Horizontal canvas",
-  "Vertical canvas": "Vertical canvas",
-  "Error stopping stream: default streams do not exist.": "Error stopping stream: default streams do not exist."
+  "Toggle horizontal display": "Toggle horizontal display",
+  "Toggle vertical display": "Toggle vertical display",
+  "Error stopping stream: default streams do not exist.": "Error stopping stream: default streams do not exist.",
+  "The stream key is missing for the %{display} output. Please configure your streaming settings.": "The stream key is missing for the %{display} output. Please configure your streaming settings."
 }

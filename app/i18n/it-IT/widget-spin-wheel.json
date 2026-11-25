@@ -1,6 +1,7 @@
 {
   "Add Category": "Aggiungi categoria",
   "Add Section": "Aggiungi sezione",
+  "DONUT": "DONUT",
   "Clear All": "Cancella tutto",
   "Manage Spin Wheel": "Gestisci ruota di selezione",
   "Categories": "Categorie",
@@ -30,5 +31,6 @@
   "Center Image Size": "Dimensioni immagine centrale",
   "Center Image Border Enabled": "Bordo immagine centrale abilitato",
   "Center Image Border Color": "Colore bordo immagine centrale",
-  "Center Image Border Width": "Larghezza bordo immagine centrale"
+  "Center Image Border Width": "Larghezza bordo immagine centrale",
+  "Add categories before adding new sections.": "Add categories before adding new sections."
 }

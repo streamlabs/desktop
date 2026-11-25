@@ -119,9 +119,6 @@ export default function KevinApprovalBubble({ anchorRef }: Props) {
           {approval.risk === 'irreversible' && (
             <div className={styles.warning}>{$t('This cannot be undone.')}</div>
           )}
-          {approval.risk === 'external' && (
-            <div className={styles.warning}>{$t('This will be visible to your viewers.')}</div>
-          )}
           <div className={styles.actions}>
             <button
               className="button button--action"

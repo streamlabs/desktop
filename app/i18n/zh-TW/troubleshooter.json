@@ -1,9 +1,7 @@
 {
   "Troubleshooter": "疑難排解程式",
   "Open Settings": "開啟設定",
-  " Streamlabs has detected dropped frames": " Streamlabs 已偵測到掉幀",
   "What does this mean?": "這代表什麼意思？",
-  " Some frames have not been uploaded. This problem is usually related to a poor network connection.": "某些影幀並未上傳。此問題通常與網路連線不良有關。",
   "What can I do?": "我可以怎麼做？",
   "Check the health of your Internet connection": "檢查您網際網路連線的健全狀態",
   "Change your ingest server": "變更您的攝取伺服器",
@@ -23,5 +21,7 @@
   "Disable FreeSync or GSync in your Driver": "在您的驅動程式中停用 FreeSync 或 GSync",
   "Lower graphics settings until you stop lagging frames": "降低圖形設定，直到延遲影幀停止發生",
   "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "停用任何媒體來源的硬體解碼 (相較於使用 gpu，這會稍微增加對 cpu 的使用)",
-  "CPU usage threshold in Dual Output mode": "Dual Output 模式下的 CPU 使用閾值"
+  "CPU usage threshold in Dual Output mode": "Dual Output 模式下的 CPU 使用閾值",
+  "Streamlabs has detected dropped frames": "Streamlabs has detected dropped frames",
+  "Some frames have not been uploaded. This problem is usually related to a poor network connection.": "Some frames have not been uploaded. This problem is usually related to a poor network connection."
 }

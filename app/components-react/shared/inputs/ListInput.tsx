@@ -25,6 +25,8 @@ const ANT_SELECT_FEATURES = [
   'size',
   'dropdownMatchSelectWidth',
   'bordered',
+  'open',
+  'autoFocus',
 ] as const;
 
 export interface IListGroup<TValue> {

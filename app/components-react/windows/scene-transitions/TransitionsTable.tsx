@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import remote from '@electron/remote';
 import { Button, Table } from 'antd';
 import cx from 'classnames';
@@ -24,7 +24,22 @@ export default function TransitionsTable(p: {
   //  * Scene transitions created from apps should not be editable
   //  * if the app developer specified `shouldLock` as part of their
   //  * scene transition creation options.
-  const lockStates = useMemo(() => TransitionsService.getLockedStates(), []);
+  const [lockStates, setLockStates] = useState<Dictionary<boolean>>({});
+  const transitionIds = transitions.map(t => t.id).join(',');
+
+  useEffect(() => {
+    let cancelled = false;
+    TransitionsService.actions.return
+      .getLockedStates()
+      .then(states => {
+        if (!cancelled) setLockStates(states);
+      })
+      .catch(e => console.error('Failed to load transition lock states', e));
+    return () => {
+      cancelled = true;
+    };
+  }, [transitionIds]);
+
   function canEdit(id: string) {
     return !lockStates[id];
   }

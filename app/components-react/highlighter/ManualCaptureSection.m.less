@@ -1,0 +1,39 @@
+@import '../../styles/index';
+
+.manual-capture-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 24px 48px;
+  border-top: 1px solid var(--border);
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.settings {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 48px;
+}
+
+.setting {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--title);
+
+  :global(.ant-form-item) {
+    margin: 0;
+  }
+}
+
+.hint {
+  color: var(--paragraph);
+}

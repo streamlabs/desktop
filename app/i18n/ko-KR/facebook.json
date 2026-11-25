@@ -1,16 +1,8 @@
 {
-  "You can access your Facebook Streamer Dashboard here.": "여기서 Facebook 스트리머 대시보드에 접속할 수 있습니다.",
-  "Create a Page": "페이지 만들기",
-  "Facebook Setup": "Facebook 설정",
-  "Streamer Dashboard": "스트리머 대시보드",
   "Share": "공유",
   "Like": "좋아요",
   "Step 3:": "3단계:",
-  "Create a Facebook Gaming page to get started.": "시작하려면 Facebook Gaming 페이지를 생성하세요.",
-  "Create a Gaming Page": "게이밍 페이지 만들기",
   "All of your scenes, sources, and settings will be preserved.": "모든 장면, 소스, 설정이 유지됩니다.",
-  "Connect Facebook": "Facebook 연결",
-  "Multistream To Facebook": "Facebook에 멀티 스트리밍",
   "Connect": "연결",
   "Install Your Theme": "테마 설치",
   "Install": "설치",
@@ -18,7 +10,6 @@
   "Facebook Destination": "Facebook 목적지",
   "Share to Your Timeline": "타임라인에 공유",
   "Share to a Page You Manage": "관리하는 페이지에 공유",
-  "Share in a Group": "그룹으로 공유",
   "Facebook Group": "Facebook 그룹",
   "Scheduled Video": "예약된 비디오",
   "Make sure the Streamlabs app is added to your Group.": "Streamlabs 앱이 그룹에 추가됐는지 확인합니다.",
@@ -35,8 +26,8 @@
   "Do not change privacy settings": "개인정보 설정을 변경하지 않음",
   "Install %{overlayName}": "%{overlayName} 설치",
   "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Facebook에 스트리밍을 예약할 수 있지만, API 제한으로 일해 일부가 이 캘린더에 표시되지 않을 수도 있습니다.",
-  "Your account is not eligible to stream on Facebook. Click to learn more.": "귀하의 계정은 Facebook에서 스트리밍할 수 없습니다. 자세히 알아보려면 클릭하세요",
   "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers": "Go Live를 시작할 자격이 없거나, 프로필이 60일 이상 되었고 페이지에 팔로워가 100명 이상이어야 합니다",
   "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more.": "Go Live를 시작할 자격이 없거나, 프로필이 60일 이상 되었고 페이지에 팔로워가 100명 이상이어야 합니다. 자세히 알아보려면 알림을 클릭하십시오.",
-  "Stream Shift Error: Facebook is not live": "Stream Shift 오류: Facebook이 라이브 상태가 아님"
+  "Stream Shift Error: Facebook is not live": "Stream Shift 오류: Facebook이 라이브 상태가 아님",
+  "Your account is not eligible to stream on Facebook. Click to learn more": "Your account is not eligible to stream on Facebook. Click to learn more"
 }

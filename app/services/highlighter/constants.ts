@@ -26,12 +26,6 @@ export const FADE_OUT_DURATION = 1;
 
 export const SUPPORTED_FILE_TYPES = ['mp4', 'mov', 'mkv'];
 
-export const AI_HIGHLIGHTER_BUILDS_URL_STAGING =
-  'https://cdn-highlighter-builds.streamlabs.com/staging/manifest_win_x86_64.json';
-
-export const AI_HIGHLIGHTER_BUILDS_URL_PRODUCTION =
-  'https://cdn-highlighter-builds.streamlabs.com/production/manifest_win_x86_64.json';
-
 export const REPLAY_SETUP_URL_STAGING =
   'https://cdn-highlighter-desktop.streamlabs.com/replay/staging/win32/x64/G+HUB+Replay-Setup.exe';
 
@@ -41,6 +35,10 @@ export const REPLAY_SETUP_URL_PRODUCTION =
 export const REPLAY_PROTOCOL = 'ghub-replay';
 export const REPLAY_APP_NAME = 'Replay';
 export const REPLAY_SETUP_EXE_NAME = 'G HUB Replay-Setup.exe';
+// Shown next to the install button. Keep in sync with the size of the published installer.
+export const REPLAY_SETUP_SIZE_MB = 160;
+export const REPLAY_IMAGE_PATH = 'https://cdn.streamlabs.com/static/imgs/highlighter';
+export const GO_LIVE_HIGHLIGHTER_GRAPHIC = `${REPLAY_IMAGE_PATH}/go-live-graphic.png`;
 
 // The standalone app Replay replaces. Users who still have it keep their data by migrating from
 // inside it — Highlighter merges and installs Replay itself — so Desktop hands them over instead

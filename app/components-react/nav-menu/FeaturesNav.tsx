@@ -36,10 +36,7 @@ export function useFeaturesNav() {
     PlatformAppsService,
     UsageStatisticsService,
     UserService,
-    VisionService,
   } = Services;
-
-  const { isEnabled: isVisionEnabled } = useRealmObject(VisionService.enabledState);
 
   const {
     setCurrentMenuItem,
@@ -57,9 +54,9 @@ export function useFeaturesNav() {
 
   const menuStyles = useMemo(
     (): Partial<Record<ENavMenuKey, ClassValue>> => ({
-      [ENavMenuKey.Vision]: isVisionEnabled && styles.ultra,
+      [ENavMenuKey.Ultra]: styles.ultra,
     }),
-    [isVisionEnabled],
+    [],
   );
 
   const navigate = useCallback(
@@ -128,7 +125,8 @@ export function useFeaturesNav() {
   );
 
   const popOutApp = useCallback(
-    (appId: string) => PlatformAppsService.actions.popOutAppPage(appId, EAppPageSlot.TopNav),
+    (appId: string) =>
+      PlatformAppsService.actions.popOutAppPage(appId, EAppPageSlot.TopNav, { center: true }),
     [],
   );
 

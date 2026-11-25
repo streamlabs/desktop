@@ -13,17 +13,27 @@
   position: relative;
   height: 100%;
 
+  :global(.ant-modal-mask),
   :global(.ant-modal-wrap) {
-    // Display above help tips
-    z-index: 1003;
+    // Display above help tips. antd defaults both to 1000, so the mask must be raised
+    // with the wrap or help tips (@z-above-resize-bars) render over it.
+    z-index: @z-above-help-tips;
   }
 
   // Don't obscure the title bar
   :global(.ant-modal-mask),
   :global(.ant-modal-wrap) {
     position: absolute;
-    height: calc(100% - 30px);
-    top: 30px;
+    height: calc(~'100% - @{titlebar-height}');
+    top: @titlebar-height;
+  }
+
+  &.main-mac {
+    :global(.ant-modal-mask),
+    :global(.ant-modal-wrap) {
+      height: calc(~'100% - @{titlebar-height-mac}');
+      top: @titlebar-height-mac;
+    }
   }
 }
 
@@ -82,17 +92,17 @@
 
 .main-loading {
   position: absolute;
-  top: 30px;
+  top: @titlebar-height;
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 999999;
+  z-index: @z-main-loading;
   background-color: var(--background);
   -webkit-app-region: drag;
 
   /* Loader component is a fixed element that obscures the top bar */
   /deep/ :global(.s-loader__bg) {
-    top: 30px;
+    top: @titlebar-height;
   }
 }
 
@@ -158,7 +168,7 @@
   top: 0;
   left: 0;
   cursor: pointer;
-  z-index: 1003;
+  z-index: @z-above-help-tips;
 
   i {
     .center();

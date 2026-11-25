@@ -1,6 +1,7 @@
 {
   "Add Category": "カテゴリを追加",
   "Add Section": "セクションを追加",
+  "DONUT": "DONUT",
   "Clear All": "すべてクリア",
   "Manage Spin Wheel": "スピンホイールを管理",
   "Categories": "カテゴリ",
@@ -30,5 +31,6 @@
   "Center Image Size": "画像サイズの中央揃え",
   "Center Image Border Enabled": "画像境界線の中央揃えが有効",
   "Center Image Border Color": "画像境界線の色を中央揃え",
-  "Center Image Border Width": "画像境界線の幅を中央揃え"
+  "Center Image Border Width": "画像境界線の幅を中央揃え",
+  "Add categories before adding new sections.": "Add categories before adding new sections."
 }

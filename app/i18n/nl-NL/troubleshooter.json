@@ -1,9 +1,7 @@
 {
   "Troubleshooter": "Probleemoplosser",
   "Open Settings": "Instellingen openen",
-  " Streamlabs has detected dropped frames": " Streamlabs geeft gedropte frames gedetecteerd",
   "What does this mean?": "Wat betekent dit?",
-  " Some frames have not been uploaded. This problem is usually related to a poor network connection.": " Enkele frames zijn niet geüpload. Dit probleem is meestal het gevolg van een slechte netwerkverbinding.",
   "What can I do?": "Wat kan ik doen?",
   "Check the health of your Internet connection": "Controleer de staat van uw netwerkverbinding",
   "Change your ingest server": "Verander uw ingestserver",
@@ -23,5 +21,7 @@
   "Disable FreeSync or GSync in your Driver": "FreeSync of GSync in uw driver uitschakelen",
   "Lower graphics settings until you stop lagging frames": "Grafische instellingen verlagen zodat frames niet meer vertragen",
   "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "Hardwaredecodering uitschakelen bij alle mediabronnen (dit zal de CPU licht verhogen ten opzichte van de GPU)",
-  "CPU usage threshold in Dual Output mode": "Drempelwaarde CPU-gebruik in modus Dual Output"
+  "CPU usage threshold in Dual Output mode": "Drempelwaarde CPU-gebruik in modus Dual Output",
+  "Streamlabs has detected dropped frames": "Streamlabs has detected dropped frames",
+  "Some frames have not been uploaded. This problem is usually related to a poor network connection.": "Some frames have not been uploaded. This problem is usually related to a poor network connection."
 }

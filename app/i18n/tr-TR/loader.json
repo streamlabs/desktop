@@ -1,13 +1,8 @@
 {
-  "You can edit the sounds of your stream alerts from the alertbox properties menu.": "Yayın uyarılarınızın seslerini uyarı kutusu özellikleri menüsünden düzenleyebilirsiniz.",
-  "You can access our theme library from the left sidebar.": "Tema kütüphanemize sol yan çubuktan erişebilirsiniz.",
-  "Our 24/7 support staff is available at Discord.gg/stream.": "7/24 hizmet veren destek ekibimize Discord.gg/stream adresinden erişilebilir.",
   "Sources are what we call media like text, images, video & audio feeds.": "Kaynaklar metin, görsel, video ve ses beslemeleri gibi medya unsurlarıdır.",
   "Undo works in the Editor. Just hit Ctrl + Z!": "Editörde işleri geri almak. Sadece Ctrl + Z'ye basın!",
-  "The sources listed at the top of your sources pane will be layered the highest in your editor.": "Kaynaklar bölmenizin en üstünde listelenen kaynaklar, editörünüzde en üstte yer alacaktır.",
   "Studio Mode is a powerful way to curate a professional-quality stream.": "Stüdyo Modu, profesyonel kalitede bir yayın yapmanın güçlü bir yoludur.",
   "Cloudbot is a chatbot that can help you moderate your stream.": "Cloudbot, yayınınızı denetlemenize yardımcı olabilecek bir sohbet robotudur.",
-  "The Remote Control feature lets you control your active scene in real-time from your phone.": "Uzaktan Kontrol özelliği, aktif sahnenizi telefonunuzdan gerçek zamanlı olarak kontrol etmenize olanak tanır.",
   "Set Hotkeys from your settings to control your stream with your keyboard.": "Yayınınızı klavyenizle kontrol etmek için ayarlarınızdan Kısayol tuşları ayarlayın.",
   "With Game Overlay you can view chat messages while gaming without switching screens.": "Oyun Katmanı ile oyun oynarken ekran değiştirmeden sohbet mesajlarını görüntüleyebilirsiniz.",
   "The editor is fully customizable. Try repositioning things from the Layout Editor.": "Editör tamamen özelleştirilebilir. Düzen Editöründen öğeleri yeniden konumlandırmayı deneyin.",
@@ -20,9 +15,5 @@
   "You can position your chat panel to be either on the left or right side of your screen.": "Sohbet panelinizi ekranınızın solunda veya sağında olacak şekilde konumlandırabilirsiniz.",
   "Right-click on your camera source to add filters to your webcam.": "Web kameranıza filtre eklemek için kamera kaynağınıza sağ tıklayın.",
   "You can add and edit stinger transitions by clicking the settings cog near your scene collections.": "Sahne koleksiyonlarınızın yanındaki ayarlar çarkına tıklayarak anında geçişler ekleyebilir ve düzenleyebilirsiniz.",
-  "To crop your webcam, press Alt then drag the bounding box.": "Web kameranızı kırpmak için Alt tuşuna basın ve sınırlayıcı kutuyu sürükleyin.",
-  "Widgets are dynamic, interactive overlays you can add to your scene.": "Pencere Ögeleri, sahnenize ekleyebileceğiniz dinamik, etkileşimli katmanlardır.",
-  "Our App Store contains advanced technology to take your stream to the next level.": "Uygulama Mağazamız, yayınınızı bir sonraki seviyeye taşımak için ileri teknoloji içerir.",
-  "With multi-stream, you can stream to YouTube, Twitch, and Facebook at the same time.": "Çoklu yayın ile aynı anda YouTube, Twitch ve Facebook'ta yayın yapabilirsiniz.",
-  "You can customize the design of your tip page from the Theme Library.": "İpucu sayfanızın tasarımını Tema Kütüphanesinden özelleştirebilirsiniz."
+  "To crop your webcam, press Alt then drag the bounding box.": "Web kameranızı kırpmak için Alt tuşuna basın ve sınırlayıcı kutuyu sürükleyin."
 }
