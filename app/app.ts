@@ -289,6 +289,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Host a new OBS server instance
     obs.IPC.host(remote.process.env.IPC_UUID);
+
+    // The renderer bundle can be newer than the natives
+    const ipc = obs.IPC as typeof obs.IPC & { getUnkillableStaleServer?: () => number };
+    const unkillableStaleServer = ipc.getUnkillableStaleServer?.() ?? 0;
     obs.NodeObs.SetWorkingDirectory(
       path.join(
         remote.app.getAppPath().replace('app.asar', 'app.asar.unpacked'),
@@ -298,37 +302,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     );
 
     await obsUserPluginsService.initialize();
-    // Plugins crash in mtx_do_lock when msvcp140.dll is older than 14.40, so check before
-    // OBS_API_initAPI loads them. GetVCRuntimeInfo returns undefined if the IPC call fails.
-    const vcRuntimeVersion = obs.NodeObs.GetVCRuntimeInfo();
-    if (vcRuntimeVersion?.outdated) {
-      await remote.dialog.showMessageBox(Utils.getMainWindow(), {
-        title: $t('System error message'),
-        type: 'error',
-        message:
-          $t(
-            'Streamlabs Desktop requires a newer version of the Microsoft Visual C++ Redistributables than the one currently installed on your system. Version: ',
-          ) + vcRuntimeVersion.version,
-        detail: $t('You will now be directed to the download page.'),
-        buttons: [$t('OK')],
-      });
-
-      try {
-        await remote.shell.openExternal('https://obsproject.com/visual-studio-2022-runtimes');
-      } catch (error: unknown) {
-        console.error('Failed to open Visual C++ Redistributables download page', error);
-      }
-
-      // Same shutdown as a failed OBS_API_initAPI below.
-      ipcRenderer.send('unregister-in-crash-handler', { pid: process.pid });
-
-      obs.NodeObs.InitShutdownSequence();
-      obs.IPC.disconnect();
-
-      electron.ipcRenderer.send('shutdownComplete');
-      return;
-    }
-
     // Initialize OBS API
     const apiResult = obs.NodeObs.OBS_API_initAPI({
       language: 'en-US',
@@ -354,6 +327,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     ipcRenderer.on('closeWindow', () => windowsService.closeMainWindow());
     I18nService.instance.load();
+
+    if (unkillableStaleServer) {
+      remote.dialog.showMessageBox({
+        type: 'warning',
+        title: 'Streamlabs Desktop',
+        message: $t('A previous Streamlabs Desktop session is still running as administrator.'),
+        detail: $t(
+          'Close the previous session, or start Streamlabs Desktop as administrator. Browser sources are unavailable until then.',
+        ),
+        buttons: [$t('OK')],
+      });
+    }
+
     AppService.instance.load();
   }
 
@@ -481,6 +467,7 @@ if (Utils.isMainWindow()) {
 
     const diagnosticsService = getResource<DiagnosticsService>('DiagnosticsService');
 
+    // Note: this code path only displays when the keyboard shortcut is used such as Ctrl+Shift+Alt+D.
     diagnosticsService.actions.return
       .uploadReport()
       .then(r => {

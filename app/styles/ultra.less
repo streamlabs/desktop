@@ -13,6 +13,20 @@
   mix(#ffab48, #000000, 75%) 79.52%,
   mix(#ff5151, #000000, 75%) 96.69%
 );
+@ultra-text: linear-gradient(
+  123.53deg,
+  #2de8b0 25.56%,
+  #cbe953 60.27%,
+  #ffab48 79.52%,
+  #ff5151 96.69%
+);
+@ultra-text-light: linear-gradient(
+  123.53deg,
+  mix(#2de8b0, #000000, 75%) 25.56%,
+  mix(#cbe953, #000000, 75%) 60.27%,
+  mix(#ffab48, #000000, 75%) 79.52%,
+  mix(#ff5151, #000000, 75%) 96.69%
+);
 @ultra-no-red: linear-gradient(
   123.53deg,
   #2de8b0 48.80%,
@@ -69,8 +83,8 @@
   }
 }
 
-.ultra-text(@temperature: 'cool') {
-  background: if((@temperature = 'cool'), var(--ultra-no-red), var(--ultra));
+.ultra-text(@temperature: 'default') {
+  background: if((@temperature = 'cool'), var(--ultra-no-red), if((@temperature = 'warm'), var(--ultra), var(--ultra-text)));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

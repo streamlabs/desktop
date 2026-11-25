@@ -4,7 +4,6 @@ import commonStyles from './Common.m.less';
 import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
 import { useModule } from 'slap';
-import { ExtraPlatformConnect } from './ExtraPlatformConnect';
 import {
   EPlatform,
   EPlatformCallResult,
@@ -27,17 +26,7 @@ export function Connect() {
   const { next, isLogin } = useModule(OnboardingModule);
   // If we come from login singleton view, default to false
   const [isSignup, setIsSignup] = useState(() => !isLogin);
-  const [selectedExtraPlatform, setExtraPlatform] = useState<TExtraPlatform | undefined>(undefined);
-  const { UsageStatisticsService, OnboardingService, RecordingModeService } = Services;
-
-  if (selectedExtraPlatform) {
-    return (
-      <ExtraPlatformConnect
-        selectedExtraPlatform={selectedExtraPlatform}
-        setExtraPlatform={setExtraPlatform}
-      />
-    );
-  }
+  const { OnboardingService, RecordingModeService } = Services;
 
   function onSkip() {
     if (loading || authInProgress) {
@@ -52,11 +41,6 @@ export function Connect() {
 
   ctx.onSkip = onSkip;
 
-  function onSelectExtraPlatform(val: TExtraPlatform | undefined) {
-    UsageStatisticsService.recordAnalyticsEvent('PlatformLogin', val);
-    setExtraPlatform(val);
-  }
-
   function afterLogin() {
     OnboardingService.actions.setExistingCollections();
     /* Since this is the only component that uses custom skip step, might be fine
@@ -69,18 +53,6 @@ export function Connect() {
   const platforms: TPlatform[] = RecordingModeService.views.isRecordingModeEnabled
     ? ['youtube']
     : ['twitch', 'youtube', 'tiktok', 'kick', 'facebook'];
-
-  const extraPlatforms: {
-    value: TExtraPlatform;
-    label: string;
-    image: string;
-  }[] = [
-    {
-      value: 'nimotv',
-      label: 'NimoTV',
-      image: require('../../../../media/images/platforms/nimo-logo-small.png'),
-    },
-  ];
 
   const title = isSignup ? $t('Sign Up') : $t('Log In');
 
@@ -156,19 +128,6 @@ export function Connect() {
                   })}
                   style={{ marginLeft: '15px' }}
                 />
-                {extraPlatforms.map(platform => (
-                  <PlatformIconButton
-                    name={platform.value}
-                    key={platform.value}
-                    logo={platform.image}
-                    disabled={loading || authInProgress}
-                    loading={loading}
-                    onClick={() => onSelectExtraPlatform(platform.value)}
-                    title={$t('Log in with %{platform}', {
-                      platform: platform.label,
-                    })}
-                  />
-                ))}
               </div>
             </div>
             <div className={styles.signupLinkContainer}>
@@ -218,8 +177,6 @@ const SVGOvalLeftBackground = () => (
     />
   </svg>
 );
-
-type TExtraPlatform = 'nimotv';
 
 export class LoginModule {
   get UserService() {

@@ -124,7 +124,12 @@ class ObsImporterViews extends ViewHandler<{ progress: number; total: number }> 
   }
 
   isOBSinstalled() {
-    return fs.existsSync(this.OBSconfigFileDirectory);
+    // Ensure all directories needed for OBS importing exist
+    return (
+      fs.existsSync(this.OBSconfigFileDirectory) &&
+      fs.existsSync(this.profilesDirectory) &&
+      fs.existsSync(this.sceneCollectionsDirectory)
+    );
   }
 }
 
@@ -660,6 +665,8 @@ export class ObsImporterService extends StatefulService<{ progress: number; tota
     if (!this.views.isOBSinstalled()) return [];
 
     let profiles = fs.readdirSync(this.views.profilesDirectory);
+    if (!profiles) return [];
+
     profiles = profiles.filter(profile => !profile.match(/\./));
     return profiles;
   }
