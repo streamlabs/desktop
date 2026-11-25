@@ -1,5 +1,5 @@
 import { ExecutionContext } from 'ava';
-import { clickButton, clickIfDisplayed, waitForDisplayed } from '../helpers/modules/core';
+import { clickIfDisplayed, isDisplayed, waitForDisplayed } from '../helpers/modules/core';
 import { advancePastOnboardingLogin } from '../helpers/modules/onboarding';
 import { test, useWebdriver } from '../helpers/webdriver';
 
@@ -10,9 +10,9 @@ const path = require('path');
 useWebdriver({ skipOnboarding: false, beforeAppStartCb: createEmptyOBSConfig });
 
 /**
- * An obs-studio config directory with no basic/profiles or global.ini, as left behind
- * when OBS was installed but never set up. Its existence makes onboarding offer the
- * OBS import step.
+ * An obs-studio config directory with no basic/profiles, basic/scenes or global.ini, as
+ * left behind when OBS was installed but never set up. There is nothing to import, so
+ * onboarding should skip the OBS import step instead of offering it.
  */
 async function createEmptyOBSConfig(t: ExecutionContext) {
   // @ts-ignore cacheDir is set on the context by useWebdriver
@@ -20,18 +20,13 @@ async function createEmptyOBSConfig(t: ExecutionContext) {
   fs.mkdirSync(path.join(cacheDir, 'obs-studio'), { recursive: true });
 }
 
-test('OBS Importer with an empty OBS config directory', async t => {
+test('OBS Importer skipped with an empty OBS config directory', async t => {
   await advancePastOnboardingLogin(t);
 
   await waitForDisplayed('h1=Connect Platforms');
   await clickIfDisplayed('button=Skip');
 
-  // Listing profiles used to throw ENOENT here and leave the onboarding window blank
-  await waitForDisplayed('button=Start Import');
-  await clickButton('Start Import');
-
-  // The import finishes without profiles or global.ini and onboarding moves on
+  // Onboarding goes straight to the plan choice without the OBS import step
   await waitForDisplayed('div[data-testid=choose-free-plan-btn]', { timeout: 60000 });
-
-  t.pass();
+  t.false(await isDisplayed('button=Start Import'));
 });
