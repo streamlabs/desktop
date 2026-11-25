@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Services } from '../service-provider';
 import { IObsFormProps, ObsForm } from '../obs/ObsForm';
-import { TObsFormData } from '../../components/obs/inputs/ObsInput';
+import { TObsFormData } from '../../services/sources/obs-properties';
 import { ModalLayout } from '../shared/ModalLayout';
 import Display from '../shared/Display';
 import { assertIsDefined } from '../../util/properties-type-guards';

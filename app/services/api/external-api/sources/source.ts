@@ -5,7 +5,7 @@ import {
 } from 'services/sources';
 import { ServiceHelper, Inject } from 'services';
 import { ISerializable } from '../../rpc-api';
-import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { TObsFormData } from 'services/sources/obs-properties';
 import { Fallback, InjectFromExternalApi } from '../../external-api';
 import { SourcesService } from './sources';
 import Utils from '../../../utils';

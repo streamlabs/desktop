@@ -1,7 +1,7 @@
 import uuid from 'uuid/v4';
 import { IAlertBoxVariation } from './alert-box-api';
 import { $t } from 'services/i18n';
-import { metadata } from 'components/widgets/inputs';
+import { metadata } from 'services/widgets/widget-input-metadata';
 
 export const API_NAME_MAP = {
   bit: 'bits',

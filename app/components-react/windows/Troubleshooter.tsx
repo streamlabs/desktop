@@ -5,7 +5,7 @@ import { Services } from 'components-react/service-provider';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import { useVuex } from 'components-react/hooks';
 import { ISettingsSubCategory } from 'services/settings';
-import { TObsFormData } from '../../components/obs/inputs/ObsInput';
+import { TObsFormData } from '../../services/sources/obs-properties';
 import StartStreamingButton from 'components-react/root/StartStreamingButton';
 import { $t } from 'services/i18n';
 import { ObsFormGroup } from 'components-react/obs/ObsForm';

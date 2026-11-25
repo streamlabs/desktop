@@ -1,5 +1,5 @@
 import { IPropertyManager } from './properties-managers/properties-manager';
-import { IObsListOption, TObsFormData } from 'components/obs/inputs/ObsInput';
+import { IObsListOption, TObsFormData } from 'services/sources/obs-properties';
 import { WidgetType } from 'services/widgets';
 import { Observable } from 'rxjs';
 import { IAudioSource } from 'services/audio';

@@ -1,4 +1,4 @@
-import * as input from 'components/obs/inputs/ObsInput';
+import * as input from 'services/sources/obs-properties';
 import * as obs from '../../../../obs-api';
 import compact from 'lodash/compact';
 import { Inject } from 'services/core';

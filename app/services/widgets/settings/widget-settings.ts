@@ -15,7 +15,7 @@ import {
   WidgetsService,
 } from 'services/widgets';
 import { Subject } from 'rxjs';
-import { IInputMetadata } from 'components/shared/inputs/index';
+import { IInputMetadata } from 'util/input-metadata';
 import { mutation, StatefulService } from 'services/core/stateful-service';
 import { WebsocketService } from 'services/websocket';
 

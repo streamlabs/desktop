@@ -22,7 +22,7 @@ import {
 } from './alert-box-data';
 import { IWidgetSettings } from '../../widgets-api';
 import { $t } from 'services/i18n';
-import { metadata } from 'components/widgets/inputs';
+import { metadata } from 'services/widgets/widget-input-metadata';
 
 export interface IAlertBoxData extends IWidgetData {
   settings: IAlertBoxSettings;

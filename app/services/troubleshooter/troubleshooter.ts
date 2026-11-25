@@ -1,6 +1,6 @@
 import { mutation, ViewHandler } from '../core/stateful-service';
 import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
-import { IObsInput, IObsNumberInputValue, TObsFormData } from 'components/obs/inputs/ObsInput';
+import { IObsInput, IObsNumberInputValue, TObsFormData } from 'services/sources/obs-properties';
 import {
   ITroubleshooterServiceApi,
   ITroubleshooterSettings,

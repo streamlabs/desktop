@@ -1,6 +1,6 @@
 import { Inject } from 'services/core/injector';
 import { Service } from 'services/core/service';
-import { IObsListOption } from 'components/obs/inputs/ObsInput';
+import { IObsListOption } from 'services/sources/obs-properties';
 import {
   SimpleStreamingFactory,
   AdvancedStreamingFactory,

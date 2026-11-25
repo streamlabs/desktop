@@ -6,7 +6,7 @@ import {
   setPropertiesFormData,
   TObsFormData,
   TObsValue,
-} from 'components/obs/inputs/ObsInput';
+} from 'services/sources/obs-properties';
 import { Inject } from './core/injector';
 import { WindowsService } from './windows';
 import { $t } from 'services/i18n';

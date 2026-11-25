@@ -72,7 +72,9 @@ class ObsColorInput extends ObsInput<IObsInput<number>> {
   }
 
   get metadata() {
-    return metadata.color({ title: this.value.description, fullWidth: true, includeAlpha: true });
+    return metadata.color({
+      name: this.value.name,
+      title: this.value.description, fullWidth: true, includeAlpha: true });
   }
 
   render() {

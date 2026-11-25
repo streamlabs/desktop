@@ -1,4 +1,4 @@
-import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { TObsFormData } from 'services/sources/obs-properties';
 
 export interface ITroubleshooterSettings extends Dictionary<number | boolean> {
   skippedEnabled: boolean;

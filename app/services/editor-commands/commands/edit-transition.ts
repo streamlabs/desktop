@@ -1,6 +1,6 @@
 import { Command } from './command';
 import { ETransitionType, TransitionsService } from 'services/transitions';
-import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { TObsFormData } from 'services/sources/obs-properties';
 import { Inject } from 'services/core';
 import cloneDeep from 'lodash/cloneDeep';
 import { $t } from 'services/i18n';

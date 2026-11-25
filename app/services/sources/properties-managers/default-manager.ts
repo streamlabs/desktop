@@ -8,7 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import { UserService } from 'services/user';
 import { CustomizationService } from 'services/customization';
-import { TObsValue } from 'components/obs/inputs/ObsInput';
+import { TObsValue } from 'services/sources/obs-properties';
 import electron from 'electron';
 import { $t } from 'services/i18n';
 import { getSharedResource } from 'util/get-shared-resource';

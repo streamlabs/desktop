@@ -7,7 +7,8 @@
     :data-title="options.title"
     :data-value="currentMultiselectValue ? currentMultiselectValue.value : ''"
     :data-option-title="currentMultiselectValue ? currentMultiselectValue.title : ''"
-    :data-loading="options.loading"
+    :data-loading="String(!!options.loading)"
+    :data-selected-option-label="currentMultiselectValue ? currentMultiselectValue.title : ''"
     :class="{ 'full-width': options.fullWidth, disabled: options.disabled }"
     :data-internal-search="options.internalSearch"
   >
@@ -37,7 +38,9 @@
       <span
         slot="option"
         slot-scope="itemProps"
+        :data-option-list="options.name"
         :data-option-value="itemProps.option.value"
+        :data-option-label="itemProps.option.title"
         :data-option-title="itemProps.option.title"
       >
         <slot name="item" :option="itemProps.option">

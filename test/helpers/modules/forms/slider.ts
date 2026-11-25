@@ -1,9 +1,44 @@
-import { BaseInputController } from './base';
+import { BaseInputController, setInputValue } from './base';
 import { sleep } from '../../sleep';
 import { getClient } from '../core';
 
 export class SliderInputController extends BaseInputController<number> {
+  /**
+   * Finds the numeric text box that accompanies the slider (legacy Vue `slider-input`
+   * inside the element, antd InputNumber in the sibling column), if there is one.
+   */
+  private async getValueBox() {
+    const $el = await this.getElement();
+    for (const selector of ['input.slider-input', 'input[type=text]']) {
+      const $box = await $el.$(selector);
+      if (await $box.isExisting()) return $box;
+    }
+    const $parent = await $el.parentElement();
+    const $antBox = await $parent.$('.ant-input-number-input');
+    if (await $antBox.isExisting()) return $antBox;
+    return null;
+  }
+
+  /**
+   * Framework-agnostic: types the value into the slider's number box.
+   * Returns false if the slider has no number box.
+   */
+  async setValueViaBox(value: number): Promise<boolean> {
+    const $box = await this.getValueBox();
+    if (!$box) return false;
+    await setInputValue($box, String(value));
+    await sleep(700); // sliders debounce their change events
+    return true;
+  }
+
   async setValue(value: number) {
+    // Non-antd sliders can't be dragged by the code below, use the number box
+    const $antRail = await (await this.getElement()).$('.ant-slider-rail');
+    if (!(await $antRail.isExisting())) {
+      if (await this.setValueViaBox(value)) return;
+      throw new Error(`Slider "${this.name}" has neither an antd rail nor a number box`);
+    }
+
     const goalValue = Number(value);
     const client = getClient();
     const $el = await this.getElement();

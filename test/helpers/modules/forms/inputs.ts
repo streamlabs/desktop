@@ -1,6 +1,7 @@
 export { TextInputController } from './text';
 export { NumberInputController } from './number';
-export { TextareaInputController } from './textarea';
+export { TextareaInputController, TextAreaInputController } from './textarea';
+export { BoolInputController } from './bool';
 export { ListInputController } from './list';
 export { TagsInputController } from './tags';
 export { SwitchInputController } from './switch';
@@ -10,3 +11,4 @@ export { SliderInputController } from './slider';
 export { FileInputController } from './file';
 export { RadioInputController } from './radio';
 export { ColorInputController } from './color';
+export { EditableListInputController } from './editable-list';

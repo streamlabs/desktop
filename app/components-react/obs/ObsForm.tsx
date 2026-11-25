@@ -11,7 +11,7 @@ import {
   IObsNumberInputValue,
   IObsBitmaskInput,
   IObsListOption,
-} from '../../components/obs/inputs/ObsInput';
+} from '../../services/sources/obs-properties';
 import Form, { useFormContext } from '../shared/inputs/Form';
 import {
   CheckboxInput,

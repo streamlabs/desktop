@@ -3,7 +3,7 @@ import { PersistentStatefulService } from '../core/persistent-stateful-service';
 import { mutation } from 'services/core/stateful-service';
 import { Inject } from '../core/injector';
 import { FileManagerService } from 'services/file-manager';
-import { IObsListInput, TObsFormData } from 'components/obs/inputs/ObsInput';
+import { IObsListInput, TObsFormData } from 'services/sources/obs-properties';
 import { I18nServiceApi } from './i18n-api';
 import * as obs from '../../../obs-api';
 import * as fs from 'fs';

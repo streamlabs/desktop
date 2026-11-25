@@ -1,7 +1,7 @@
 import React from 'react';
 import cx from 'classnames';
 import { InputComponent, TSlobsInputProps, useInput } from './inputs';
-import styles from 'components/shared/inputs/BoolButtonInput.m.less';
+import styles from './BoolButtonInput.m.less';
 import { Tooltip } from 'antd';
 import { TooltipPlacement } from 'antd/lib/tooltip';
 

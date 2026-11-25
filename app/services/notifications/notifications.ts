@@ -3,7 +3,7 @@ import { mutation, ViewHandler } from '../core/stateful-service';
 import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
 import { Subject } from 'rxjs';
 import { WindowsService } from 'services/windows';
-import { IObsInput, TObsFormData } from 'components/obs/inputs/ObsInput';
+import { IObsInput, TObsFormData } from 'services/sources/obs-properties';
 import {
   ENotificationType,
   ENotificationSubType,
@@ -14,7 +14,7 @@ import {
 } from './notifications-api';
 import { $t } from 'services/i18n';
 import { InternalApiService } from 'services/api/internal-api';
-import { metadata } from 'components/shared/inputs';
+import { metadata } from 'util/input-metadata';
 
 interface INotificationsState {
   settings: INotificationsSettings;

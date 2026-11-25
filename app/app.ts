@@ -21,7 +21,6 @@ import * as Integrations from '@sentry/integrations';
 import VTooltip from 'v-tooltip';
 import Toasted from 'vue-toasted';
 import VueI18n from 'vue-i18n';
-import VModal from 'vue-js-modal';
 import VeeValidate from 'vee-validate';
 import ChildWindow from 'components/windows/ChildWindow';
 import OneOffWindow from 'components/windows/OneOffWindow.vue';
@@ -217,7 +216,6 @@ Vue.use(VTooltip);
 VTooltip.options.defaultContainer = '#mainWrapper';
 Vue.use(Toasted);
 Vue.use(VeeValidate); // form validations
-Vue.use(VModal);
 
 // Disable chrome default drag/drop behavior
 document.addEventListener('dragover', event => event.preventDefault());

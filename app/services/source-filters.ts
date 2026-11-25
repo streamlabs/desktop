@@ -6,8 +6,8 @@ import {
   IObsListOption,
   TObsValue,
   IObsListInput,
-} from 'components/obs/inputs/ObsInput';
-import { metadata } from 'components/shared/inputs';
+} from 'services/sources/obs-properties';
+import { metadata } from 'util/input-metadata';
 import path from 'path';
 import { Inject } from './core/injector';
 import { SourcesService } from './sources';

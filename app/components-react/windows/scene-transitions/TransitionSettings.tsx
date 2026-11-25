@@ -6,7 +6,7 @@ import { useVuex, useIsMounted, useDebounce } from 'components-react/hooks';
 import { useSubscription } from 'components-react/hooks/useSubscription';
 import FormFactory, { TInputValue } from 'components-react/shared/inputs/FormFactory';
 import { ObsForm } from 'components-react/obs/ObsForm';
-import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { TObsFormData } from 'services/sources/obs-properties';
 import Scrollable from 'components-react/shared/Scrollable';
 import { TRANSITION_DURATION_MAX } from 'services/transitions';
 

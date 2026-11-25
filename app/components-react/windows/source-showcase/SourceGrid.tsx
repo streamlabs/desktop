@@ -4,7 +4,7 @@ import Fuse from 'fuse.js';
 import Scrollable from 'components-react/shared/Scrollable';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
-import { IObsListOption } from 'components/obs/inputs/ObsInput';
+import { IObsListOption } from 'services/sources/obs-properties';
 import { IWidgetDisplayData, WidgetDisplayData, WidgetType } from 'services/widgets';
 import { TSourceType, SourceDisplayData, ISourceDisplayData } from 'services/sources';
 import { getPlatformService } from 'services/platforms';
@@ -56,7 +56,12 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
   /**
    * These widgets have been deprecated and are being hidden.
    */
-  const DEPRECATED_WIDGETS: WidgetType[] = [WidgetType.SubscriberGoal, WidgetType.GameWidget, WidgetType.SupporterGoal, WidgetType.StarsGoal];
+  const DEPRECATED_WIDGETS: WidgetType[] = [
+    WidgetType.SubscriberGoal,
+    WidgetType.GameWidget,
+    WidgetType.SupporterGoal,
+    WidgetType.StarsGoal,
+  ];
   /**
    * English and languages with logographic writing systems
    * generally have shorter strings so we prevent those cards from wrapping.

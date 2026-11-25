@@ -7,7 +7,7 @@ import {
 } from 'services/widgets';
 import { WIDGET_INITIAL_STATE } from './widget-settings';
 import { InheritMutations } from 'services/core/stateful-service';
-import { formMetadata, metadata } from 'components/shared/inputs';
+import { formMetadata, metadata } from 'util/input-metadata';
 import { $t } from 'services/i18n';
 
 export interface IPollSettings extends IWidgetSettings {

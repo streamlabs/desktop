@@ -9,7 +9,7 @@ import {
 } from './index';
 import { mutation, ServiceHelper, Inject, ExecuteInWorkerProcess } from 'services';
 import { ScenesService } from 'services/scenes';
-import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { TObsFormData } from 'services/sources/obs-properties';
 import Utils from 'services/utils';
 import * as obs from '../../../obs-api';
 import isEqual from 'lodash/isEqual';

@@ -3,7 +3,7 @@ import { WidgetDefinitions, WidgetType, getWidgetName } from '../../../services/
 import { Services } from '../../service-provider';
 import { throttle } from 'lodash-decorators';
 import { assertIsDefined, getDefined } from '../../../util/properties-type-guards';
-import { TObsFormData } from '../../../components/obs/inputs/ObsInput';
+import { TObsFormData } from '../../../services/sources/obs-properties';
 import pick from 'lodash/pick';
 import cloneDeep from 'lodash/cloneDeep';
 import { $t } from '../../../services/i18n';

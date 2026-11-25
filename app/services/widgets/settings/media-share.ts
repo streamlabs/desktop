@@ -8,7 +8,7 @@ import {
 import { WidgetType } from 'services/widgets';
 import { InheritMutations } from 'services/core/stateful-service';
 import { $t } from 'services/i18n';
-import { metadata } from 'components/widgets/inputs';
+import { metadata } from 'services/widgets/widget-input-metadata';
 
 export interface IMediaShareSettings extends IWidgetSettings {
   advanced_settings: {

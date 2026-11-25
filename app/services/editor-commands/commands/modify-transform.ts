@@ -3,7 +3,7 @@ import { ITransform } from 'services/scenes';
 import { Selection } from 'services/selection';
 import isEqual from 'lodash/isEqual';
 import cloneDeep from 'lodash/cloneDeep';
-import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { TObsFormData } from 'services/sources/obs-properties';
 import { EditSourcePropertiesCommand } from './edit-source-properties';
 import { TDisplayType } from 'services/settings-v2';
 

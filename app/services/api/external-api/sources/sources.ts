@@ -1,4 +1,4 @@
-import { IObsListOption } from 'components/obs/inputs/ObsInput';
+import { IObsListOption } from 'services/sources/obs-properties';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import {

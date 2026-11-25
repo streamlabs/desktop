@@ -1,7 +1,7 @@
 import React from 'react';
 import { BoolButtonInput, ListInput, SwitchInput } from 'components-react/shared/inputs';
 import InputWrapper from 'components-react/shared/inputs/InputWrapper';
-import { TObsValue, IObsListInput, IObsInput } from 'components/obs/inputs/ObsInput';
+import { TObsValue, IObsListInput, IObsInput } from 'services/sources/obs-properties';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
 import { $t } from 'services/i18n';

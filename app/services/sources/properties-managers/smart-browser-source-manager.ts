@@ -1,5 +1,5 @@
 import { PropertiesManager } from './properties-manager';
-import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { TObsFormData } from 'services/sources/obs-properties';
 
 /**
  * Target origin for all reactive sources.

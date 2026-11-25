@@ -7,7 +7,7 @@ import {
   IObsListInput,
   IObsInput,
   TObsValue,
-} from 'components/obs/inputs/ObsInput';
+} from 'services/sources/obs-properties';
 import * as obs from '../../../obs-api';
 import { SourcesService } from 'services/sources';
 import { Inject } from '../core/injector';

@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
-import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { TObsFormData } from 'services/sources/obs-properties';
 import { WindowsService } from 'services/windows';
 import { SourcesService } from 'services/sources';
 import ModalLayout from 'components/ModalLayout.vue';

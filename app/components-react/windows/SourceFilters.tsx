@@ -7,7 +7,7 @@ import Scrollable from 'components-react/shared/Scrollable';
 import { ListInput, TextInput } from 'components-react/shared/inputs';
 import { useChildWindowParams, useVuex } from 'components-react/hooks';
 import Form, { useForm } from 'components-react/shared/inputs/Form';
-import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { TObsFormData } from 'services/sources/obs-properties';
 import { ObsForm } from 'components-react/obs/ObsForm';
 import widgetsCss from 'components-react/widgets/common/WidgetLayout.m.less';
 import css from './SourceFilters.m.less';

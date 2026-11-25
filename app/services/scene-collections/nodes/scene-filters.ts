@@ -1,7 +1,7 @@
 import { ArrayNode } from './array-node';
 import { Inject } from '../../core/injector';
 import { ISourceFilter, SourceFiltersService, TSourceFilterType } from 'services/source-filters';
-import { TObsValue } from 'components/obs/inputs/ObsInput';
+import { TObsValue } from 'services/sources/obs-properties';
 import { ISceneCollectionLoadContext } from './load-session';
 
 interface IContext extends ISceneCollectionLoadContext {

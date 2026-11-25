@@ -5,6 +5,7 @@
     data-role="input"
     data-type="slider"
     :data-name="options.name"
+    :data-value="localValue"
   >
     <slider
       :value="interval >= 1 ? Math.round(localValue) : localValue"

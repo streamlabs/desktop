@@ -2,7 +2,7 @@ import { Component, Prop } from 'vue-property-decorator';
 import cx from 'classnames';
 import { BaseInput } from './BaseInput';
 import { IInputMetadata } from './index';
-import styles from './BoolButtonInput.m.less';
+import styles from 'components-react/shared/inputs/BoolButtonInput.m.less';
 
 @Component({})
 export default class BoolInput extends BaseInput<

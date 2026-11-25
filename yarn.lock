@@ -15244,7 +15244,6 @@ __metadata:
     vue: 2.6.9
     vue-color: 2.7.0
     vue-i18n: 7.6.0
-    vue-js-modal: 1.3.28
     vue-loader: 15.10.2
     vue-multiselect: 2.1.6
     vue-popperjs: 1.6.3
@@ -17032,15 +17031,6 @@ __metadata:
   version: 7.6.0
   resolution: "vue-i18n@npm:7.6.0"
   checksum: 30b5610caf667bdaa72fe662cb59639ce7a38254aa1b33793dd203a7aa9a3b4dd04da5873c1ee97fb47e541f2604e08b89688b7781c66a3060d804a83756e3bb
-  languageName: node
-  linkType: hard
-
-"vue-js-modal@npm:1.3.28":
-  version: 1.3.28
-  resolution: "vue-js-modal@npm:1.3.28"
-  peerDependencies:
-    vue: ^2.2.6
-  checksum: 44507d8d46cc9aaa9f243d43e7fe63b15de2bbbc1e36f543da814250644cade8ca9b811efa26e661fe59b9ae8bd9e42cf14e66091164f84d3dcd43d07f8995b0
   languageName: node
   linkType: hard
 

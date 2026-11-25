@@ -96,6 +96,7 @@ export default class ObsSystemFontSelector extends ObsInput<IObsInput<IObsFont>>
 
   get familyMetadata() {
     return {
+      name: 'font_face',
       options: this.fontFamilies,
       allowEmpty: false,
       disabled: this.value.enabled === false || this.fonts.length === 0,
@@ -121,6 +122,7 @@ export default class ObsSystemFontSelector extends ObsInput<IObsInput<IObsFont>>
 
   get styleMetadata() {
     return {
+      name: 'font_style',
       options: this.stylesForFamily,
       allowEmpty: false,
       disabled: this.value.enabled === false || this.fonts.length === 0,

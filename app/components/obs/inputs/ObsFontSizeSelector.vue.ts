@@ -15,6 +15,7 @@ export default class ObsFontSizeSelector extends ObsInput<number> {
   get metadata() {
     return {
       type: 'slider',
+      name: 'font_size',
       data: this.fontSizePresets,
       piecewise: true,
       piecewiseLabel: true,

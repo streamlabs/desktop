@@ -1,6 +1,6 @@
 import * as obs from '../../../obs-api';
 import { Subscription, Observable } from 'rxjs';
-import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { TObsFormData } from 'services/sources/obs-properties';
 import { ISource } from '../sources';
 import { IDevice } from 'services/hardware';
 

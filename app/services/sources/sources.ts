@@ -1,4 +1,4 @@
-import { IObsListInput, IObsListOption, TObsValue } from 'components/obs/inputs/ObsInput';
+import { IObsListInput, IObsListOption, TObsValue } from 'services/sources/obs-properties';
 import * as fs from 'fs';
 import cloneDeep from 'lodash/cloneDeep';
 import { Subject } from 'rxjs';

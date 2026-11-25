@@ -15,7 +15,7 @@ import { ScenesService } from 'services/scenes';
 import { AudioService } from 'services/audio';
 import { SourceFiltersService } from 'app-services';
 import { TSourceFilterType } from 'services/source-filters';
-import { TObsValue } from 'components/obs/inputs/ObsInput';
+import { TObsValue } from 'services/sources/obs-properties';
 
 interface ISourceFlags {
   audio: boolean;

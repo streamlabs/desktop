@@ -5,7 +5,13 @@
         {{ value.description }}
       </label>
     </div>
-    <div class="input-wrapper editable-list">
+    <div
+      class="input-wrapper editable-list"
+      data-role="input"
+      data-type="editable-list"
+      :data-name="value.name"
+      :data-value="JSON.stringify(list)"
+    >
       <div class="editable-list__bar">
         <i @click="menu.popup()" class="icon-add icon-button editable-list__control" />
         <i @click="handleRemove" class="icon-subtract icon-button editable-list__control" />

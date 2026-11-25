@@ -2,7 +2,7 @@ import * as remote from '@electron/remote';
 import { Component, Watch } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
 import { $t } from 'services/i18n';
-import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { TObsFormData } from 'services/sources/obs-properties';
 import GenericForm from 'components/obs/inputs/GenericForm';
 import { ProjectorService } from 'services/projector';
 import ModalLayout from 'components/ModalLayout.vue';

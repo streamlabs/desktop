@@ -9,7 +9,7 @@ import {
   EFilterDisplayType,
   TSourceFilterType,
 } from 'services/source-filters';
-import { TObsValue } from 'components/obs/inputs/ObsInput';
+import { TObsValue } from 'services/sources/obs-properties';
 import { PerformanceService } from 'services/performance';
 import { DiagnosticsService } from 'services/diagnostics';
 import { VideoSettingsService } from 'services/settings-v2/video';

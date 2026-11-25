@@ -8,7 +8,7 @@ import {
 import Tabs from 'components-react/shared/Tabs';
 import { $t } from 'services/i18n';
 import cloneDeep from 'lodash/cloneDeep';
-import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { TObsFormData } from 'services/sources/obs-properties';
 
 export function OutputSettings() {
   const { settingsFormData, saveSettings } = useObsSettings('Output');

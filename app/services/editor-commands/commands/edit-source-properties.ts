@@ -1,5 +1,5 @@
 import { CombinableCommand } from './combinable-command';
-import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { TObsFormData } from 'services/sources/obs-properties';
 import { SourcesService } from 'services/sources';
 import { Inject } from 'services/core/injector';
 import { $t } from 'services/i18n';

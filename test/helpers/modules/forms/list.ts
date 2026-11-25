@@ -50,22 +50,40 @@ export class ListInputController<TValue> extends BaseInputController<TValue> {
   }
 
   async open() {
-    const $el = await this.getElement();
-    await $el.click();
+    await this.clickSelectBox();
     await sleep(100);
+  }
+
+  async close() {
+    await this.clickSelectBox();
+  }
+
+  /**
+   * vue-multiselect: the data-name wrapper also contains a label, so click the
+   * actual select box. Other implementations open when the wrapper is clicked.
+   */
+  private async clickSelectBox() {
+    const $el = await this.getElement();
+    const $select = await $el.$('.multiselect');
+    const $target = (await $select.isExisting()) ? $select : $el;
+    await $target.click();
   }
 
   async getOptions(doNotClose = false): Promise<{ label: string; value: string }[]> {
     await this.open();
     await this.waitForLoading();
-    const $options = await getClient().$$(`[data-option-list=${this.name}]`);
-    const result: { label: string; value: string }[] = [];
-    for (const $opt of $options) {
-      const value = await $opt.getAttribute('data-option-value');
-      const label = await $opt.getAttribute('data-option-label');
-      result.push({ value, label });
-    }
-    if (!doNotClose) await (await this.getElement()).click(); // close the popup
+    // read all options in a single round trip, lists can contain hundreds of items (fonts)
+    const result = (await getClient().execute(
+      (listName: string) =>
+        Array.from(document.querySelectorAll(`[data-option-list="${CSS.escape(listName)}"]`)).map(
+          el => ({
+            value: el.getAttribute('data-option-value'),
+            label: el.getAttribute('data-option-label'),
+          }),
+        ),
+      this.name,
+    )) as { label: string; value: string }[];
+    if (!doNotClose) await this.close(); // close the popup
     return result;
   }
 

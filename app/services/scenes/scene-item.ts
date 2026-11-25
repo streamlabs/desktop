@@ -9,7 +9,7 @@ import {
   AnchorPositions,
   AnchorPoint,
 } from 'util/ScalableRectangle';
-import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { TObsFormData } from 'services/sources/obs-properties';
 import * as obs from '../../../obs-api';
 
 import {

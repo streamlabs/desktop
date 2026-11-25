@@ -1,7 +1,7 @@
 import { mutation, StatefulService, ViewHandler } from 'services/core/stateful-service';
 import * as obs from '../../obs-api';
 import { Inject } from 'services/core/injector';
-import { TObsValue, TObsFormData } from 'components/obs/inputs/ObsInput';
+import { TObsValue, TObsFormData } from 'services/sources/obs-properties';
 import { WindowsService } from 'services/windows';
 import { ScenesService } from 'services/scenes';
 import uuid from 'uuid/v4';
