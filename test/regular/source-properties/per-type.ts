@@ -1,7 +1,7 @@
 /**
- * Source Properties smoke + round trip per source type, for the source types whose properties
- * window is still rendered by the legacy Vue form (`SourcePropertiesDeprecated`). The same
- * file has to keep passing once those types move to the React `SourceProperties` window.
+ * Source Properties smoke + round trip per source type, for the source types that used to be
+ * rendered by the legacy Vue window (`SourcePropertiesDeprecated`). Written against Vue first,
+ * it now verifies the React `SourceProperties` window.
  *
  * Expected labels are derived from the OBS property descriptions returned by the API.
  * Not covered: `scene` sources (they need a second scene and are configured through a

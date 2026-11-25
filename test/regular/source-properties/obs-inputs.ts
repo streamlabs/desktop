@@ -5,7 +5,7 @@
  * verifies the persisted values both through the API and in the UI again.
  *
  * Only `label=`, `[data-name]`, `[data-role]`/`[data-type]` hooks and API reads are used, so the
- * same file must pass against the Vue (`SourcePropertiesDeprecated`) and React implementations.
+ * same file passed against the legacy Vue window and the React `SourceProperties` window.
  *
  * Not covered: OBS_PROPERTY_DOUBLE/FLOAT, BITMASK and OBS_INPUT_RESOLUTION_LIST are only exposed
  * by hardware dependent sources (dshow_input, decklink) that can't be loaded in CI.
@@ -243,7 +243,8 @@ winTest('OBS input: color', async t => {
   const before = (await getSourceFormValues(name)).color as number;
 
   await openProperties(name);
-  await fillForm({ color: '#112233' });
+  // 8 digits: OBS colors have an alpha channel (the legacy picker used the first 7 chars)
+  await fillForm({ color: '#112233ff' });
   await sleep(SETTLE_MS);
   await closeProperties();
 

@@ -6,7 +6,14 @@ import InputWrapper from './InputWrapper';
 import omit from 'lodash/omit';
 
 // select which features from the antd lib we are going to use
-const ANT_SLIDER_FEATURES = ['min', 'max', 'step', 'tooltipPlacement', 'tipFormatter'] as const;
+const ANT_SLIDER_FEATURES = [
+  'min',
+  'max',
+  'step',
+  'marks',
+  'tooltipPlacement',
+  'tipFormatter',
+] as const;
 
 export type TSliderInputProps = TSlobsInputProps<
   {

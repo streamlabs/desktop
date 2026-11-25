@@ -18,7 +18,22 @@ import {
 } from '../helpers/modules/core';
 import { platform } from 'os';
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver({ restartAppAfterEachTest: false });
+
+/**
+ * Clicks the checkbox of an OBS bool property. `data-name` is either on the checkbox itself
+ * or on a wrapper that contains it, depending on the input implementation.
+ */
+async function clickObsCheckbox(name: string) {
+  // the checkbox input can be visually hidden behind a styled box, so click the element
+  // directly instead of waiting for it to become "clickable" (same as the forms controllers)
+  const $checkbox = await select(
+    `[data-name=${name}][type=checkbox], [data-name=${name}] [type=checkbox]`,
+  );
+  await $checkbox.click();
+}
 
 test('Create/Remove Color Source and view Source Properties', async t => {
   const sourceName = 'Color Source';
@@ -162,13 +177,13 @@ test('Create/Remove Text Source and view Source Properties', async t => {
   await waitForDisplayed('label=Text');
 
   if (platform() === 'win32') {
-    await (await (await select('[data-name=read_from_file')).$('[type=checkbox]')).click();
+    await clickObsCheckbox('read_from_file');
     await waitForDisplayed('label=Text File (UTF-8)');
     await waitForDisplayed('label=Text Transform');
     await waitForDisplayed('label=Color');
     await waitForDisplayed('label=Opacity');
 
-    await (await (await select('[data-name=gradient')).$('[type=checkbox]')).click();
+    await clickObsCheckbox('gradient');
 
     await waitForDisplayed('label=Gradient Color');
     await waitForDisplayed('label=Gradient Opacity');
@@ -179,17 +194,17 @@ test('Create/Remove Text Source and view Source Properties', async t => {
     await waitForDisplayed('label=Alignment');
     await waitForDisplayed('label=Vertical Alignment');
 
-    await (await (await select('[data-name=outline')).$('[type=checkbox]')).click();
+    await clickObsCheckbox('outline');
 
     await waitForDisplayed('label=Outline Size');
     await waitForDisplayed('label=Outline Color');
     await waitForDisplayed('label=Outline Opacity');
 
-    await (await (await select('[data-name=chatlog')).$('[type=checkbox]')).click();
+    await clickObsCheckbox('chatlog');
 
     await waitForDisplayed('label=Chatlog Line Limit');
 
-    await (await (await select('[data-name=extents')).$('[type=checkbox]')).click();
+    await clickObsCheckbox('extents');
 
     await waitForDisplayed('label=Width');
     await waitForDisplayed('label=Height');

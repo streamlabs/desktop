@@ -1,0 +1,47 @@
+.editable-list {
+  display: flex;
+  flex-direction: column;
+  height: 150px;
+}
+
+.bar {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 10px;
+
+  i {
+    cursor: pointer;
+    margin-right: 12px;
+  }
+}
+
+.list {
+  flex-grow: 1;
+  overflow-y: auto;
+  background: var(--input-bg);
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  padding: 0 16px;
+  line-height: 30px;
+  cursor: pointer;
+  color: var(--paragraph);
+  border: 1px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &.active {
+    background-color: var(--solid-input);
+    color: var(--title);
+    font-weight: 500;
+  }
+
+  &:global(.sortable-chosen),
+  &:global(.sortable-ghost) {
+    opacity: 0.7;
+  }
+}

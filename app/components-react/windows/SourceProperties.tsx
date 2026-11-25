@@ -6,6 +6,8 @@ import { ModalLayout } from '../shared/ModalLayout';
 import Display from '../shared/Display';
 import { assertIsDefined } from '../../util/properties-type-guards';
 import { useSubscription } from '../hooks/useSubscription';
+import StreamlabelProperties from './source-properties/StreamlabelProperties';
+import PlatformAppProperties from './source-properties/PlatformAppProperties';
 
 export default function SourceProperties() {
   const {
@@ -57,11 +59,25 @@ export default function SourceProperties() {
     extraProps['url'] = { debounce: 1000 };
   }
 
+  function refresh() {
+    if (source) setProperties(source.getPropertiesFormData());
+  }
+
+  // custom panel provided by the properties manager of the source
+  let customPanel: React.ReactNode = null;
+  const customUI = source ? source.getPropertiesManagerUI() : null;
+  if (source && customUI === 'StreamlabelProperties') {
+    customPanel = <StreamlabelProperties source={source} onUpdate={refresh} />;
+  } else if (source && customUI === 'PlatformAppProperties') {
+    customPanel = <PlatformAppProperties source={source} onUpdate={refresh} />;
+  }
+
   return (
     <ModalLayout
       scrollable
       fixedChild={source && <Display sourceId={source.sourceId} style={{ position: 'relative' }} />}
     >
+      {customPanel}
       <ObsForm
         value={properties}
         onChange={onChangeHandler}

@@ -11,6 +11,8 @@ import {
   IObsNumberInputValue,
   IObsBitmaskInput,
   IObsListOption,
+  IObsFont,
+  IObsEditableListInputValue,
 } from '../../services/sources/obs-properties';
 import Form, { useFormContext } from '../shared/inputs/Form';
 import {
@@ -30,6 +32,8 @@ import { Button, Collapse, Input, InputNumber } from 'antd';
 import InputWrapper from '../shared/inputs/InputWrapper';
 import ObsRichText from '../shared/ObsRichText';
 import styles from './ObsCompatInfo.m.less';
+import { ObsFontInput } from './ObsFontInput';
+import { ObsEditableListInput } from './ObsEditableListInput';
 import { $t, $translateIfExist, $translateIfExistWithCheck } from '../../services/i18n';
 import Utils from 'services/utils';
 import cx from 'classnames';
@@ -366,6 +370,24 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
           max={1}
           ref={ref}
           data-name={p.value.name}
+        />
+      );
+
+    case 'OBS_PROPERTY_FONT':
+      return (
+        <ObsFontInput
+          value={p.value.value as IObsFont}
+          disabled={!p.value.enabled}
+          onChange={inputProps.onChange}
+        />
+      );
+
+    case 'OBS_PROPERTY_EDITABLE_LIST':
+      return (
+        <ObsEditableListInput
+          input={p.value as IObsEditableListInputValue}
+          label={inputProps.label}
+          onChange={inputProps.onChange}
         />
       );
 

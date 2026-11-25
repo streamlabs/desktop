@@ -54,8 +54,6 @@ import {
   SceneTransitions,
 } from 'components/shared/ReactComponentList';
 
-import SourcePropertiesDeprecated from 'components/windows/SourceProperties.vue';
-
 import MediaShare from 'components/widgets/MediaShare';
 import AlertBox from 'components/widgets/AlertBox.vue';
 import Poll from 'components/widgets/Poll';
@@ -83,7 +81,6 @@ export function getComponents() {
     NameFolder,
     SafeMode,
     SourceProperties,
-    SourcePropertiesDeprecated,
     SourceFilters,
     Blank,
     AdvancedAudio,

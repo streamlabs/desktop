@@ -40,7 +40,7 @@ test('Platform app source properties for a source of an uninstalled app', async 
   );
 
   sources.showSourceProperties(source.sourceId);
-  t.true(await waitForChildWindowState('SourcePropertiesDeprecated', true), 'properties are shown');
+  t.true(await waitForChildWindowState('SourceProperties', true), 'properties are shown');
   await focusChild();
 
   // the custom platform app section is shown instead of the app controls
@@ -56,6 +56,6 @@ test('Platform app source properties for a source of an uninstalled app', async 
   t.is(windows.getChildWindowOptions().queryParams.sourceId, source.sourceId);
 
   await closeWidgetWindow();
-  t.true(await waitForChildWindowState('SourcePropertiesDeprecated', false), 'properties closed');
+  t.true(await waitForChildWindowState('SourceProperties', false), 'properties closed');
   await focusMain();
 });
