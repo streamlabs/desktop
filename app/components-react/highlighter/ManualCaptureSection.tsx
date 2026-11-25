@@ -6,6 +6,7 @@ import { useVuex } from 'components-react/hooks';
 import { useHotkeyBindings } from 'components-react/hooks/useHotkeyBindings';
 import { IHotkey } from 'services/hotkeys';
 import { SUPPORTED_FILE_TYPES } from 'services/highlighter/constants';
+import { EFileFormat } from 'services/settings/output/output-settings';
 import { $t } from 'services/i18n';
 import styles from './ManualCaptureSection.m.less';
 
@@ -26,11 +27,16 @@ export default function ManualCaptureSection({ title }: { title: string }) {
     isStreaming: StreamingService.views.isStreaming,
   }));
 
+  const recordingFormat = v.settingsValues.Output.RecFormat;
+  const supportsReplayClips =
+    SUPPORTED_FILE_TYPES.includes(recordingFormat) ||
+    recordingFormat === EFileFormat.hybrid_mp4 ||
+    recordingFormat === EFileFormat.hybrid_mov;
   const correctlyConfigured =
     v.settingsValues.Output.RecRB &&
     v.settingsValues.General.ReplayBufferWhileStreaming &&
     !v.settingsValues.General.KeepReplayBufferStreamStops &&
-    SUPPORTED_FILE_TYPES.includes(v.settingsValues.Output.RecFormat);
+    supportsReplayClips;
 
   function configure() {
     SettingsService.actions.setSettingsPatch({
@@ -45,7 +51,7 @@ export default function ManualCaptureSection({ title }: { title: string }) {
 
     // We will only re-queue if it's an unsupported file type. i.e. don't switch them from mov to
     // mp4, but we will switch from flv to mp4.
-    if (!SUPPORTED_FILE_TYPES.includes(v.settingsValues.Output.RecFormat)) {
+    if (!supportsReplayClips) {
       SettingsService.actions.setSettingsPatch({ Output: { RecFormat: 'mp4' } });
     }
   }

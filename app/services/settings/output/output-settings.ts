@@ -44,7 +44,9 @@ export enum EEncoderFamily {
 export enum EFileFormat {
   flv = 'flv',
   mp4 = 'mp4',
+  hybrid_mp4 = 'hybrid_mp4',
   mov = 'mov',
+  hybrid_mov = 'hybrid_mov',
   mkv = 'mkv',
   ts = 'ts', // Deprecated: old api
   m3u8 = 'm3u8', // Deprecated: old api
@@ -256,6 +258,10 @@ export function convertFileFormatToRecordingFormat(format: EFileFormat): ERecord
       return ERecordingFormat.FLV;
     case EFileFormat.mov:
       return ERecordingFormat.MOV;
+    case EFileFormat.hybrid_mp4:
+      return ERecordingFormat.HybridMP4;
+    case EFileFormat.hybrid_mov:
+      return ERecordingFormat.HybridMOV;
     case EFileFormat.mkv:
       return ERecordingFormat.MKV;
     case EFileFormat.mpegts:

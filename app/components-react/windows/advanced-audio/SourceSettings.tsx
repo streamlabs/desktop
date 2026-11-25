@@ -13,6 +13,7 @@ import { TObsValue, IObsListInput, TObsFormData } from 'components/obs/inputs/Ob
 import { Services } from 'components-react/service-provider';
 import { useChildWindowParams, useVuex } from 'components-react/hooks';
 import { AudioSource } from 'services/audio';
+import { EMonitoringType } from '../../../../obs-api';
 import { Source } from 'services/sources';
 import { $t } from 'services/i18n';
 import Utils from 'services/utils';
@@ -186,10 +187,11 @@ function PanelHeader(p: { source: AudioSource }) {
 }
 
 function PanelForm(p: { source: AudioSource }) {
-  const { sourceId, forceMono, syncOffset, source, monitoringType } = p.source;
+  const { sourceId, forceMono, syncOffset, source } = p.source;
+  const monitoringType = useVuex(() => p.source.monitoringType);
 
   const [testing, setTesting] = useState(false);
-  const savedMonitoring = useRef(monitoringType);
+  const savedMonitoring = useRef<EMonitoringType>();
 
   const hasDevices = !source?.video && !(source?.type === 'soundtrack_source');
   const isMic = source
@@ -211,25 +213,33 @@ function PanelForm(p: { source: AudioSource }) {
     });
   }
 
-  useEffect(() => {
-    if (testing) return;
-    savedMonitoring.current = monitoringType;
-  }, [monitoringType, testing]);
-  useEffect(() => {
-    // Ensure monitoring type is returned to normal upon destroy
-    return () => {
-      if (p.source.isDestroyed()) return;
+  function restoreAfterTest() {
+    const previous = savedMonitoring.current;
+    savedMonitoring.current = undefined;
+    if (
+      previous !== undefined &&
+      !p.source.isDestroyed() &&
+      p.source.monitoringType === EMonitoringType.MonitoringOnly
+    ) {
+      p.source.setSettings({ monitoringType: previous });
+    }
+  }
 
-      p.source.setSettings({ monitoringType: savedMonitoring.current });
-    };
-  }, []);
+  useEffect(() => restoreAfterTest, []);
+  useEffect(() => {
+    if (monitoringType !== EMonitoringType.MonitoringOnly) {
+      savedMonitoring.current = undefined;
+      setTesting(false);
+    }
+  }, [monitoringType]);
 
   function handleTestButtonClick() {
     if (!testing) {
+      savedMonitoring.current = p.source.monitoringType;
       setTesting(true);
-      p.source.setSettings({ monitoringType: 1 });
+      p.source.setSettings({ monitoringType: EMonitoringType.MonitoringOnly });
     } else {
-      p.source.setSettings({ monitoringType: savedMonitoring.current });
+      restoreAfterTest();
       setTesting(false);
     }
   }

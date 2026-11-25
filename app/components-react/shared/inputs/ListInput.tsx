@@ -65,6 +65,7 @@ export type TListInputProps<TValue> = Omit<TListInputInternalProps<TValue>, 'opt
  * data for a single option
  */
 export interface IListOption<TValue> {
+  disabled?: boolean;
   label: string;
   /** The untranslated original label */
   originalLabel?: string;
@@ -212,7 +213,7 @@ export function renderOption<T>(
   })();
 
   return (
-    <Select.Option {...attrs} labelrender={labelEl}>
+    <Select.Option {...attrs} disabled={opt.disabled} labelrender={labelEl}>
       {children}
     </Select.Option>
   );

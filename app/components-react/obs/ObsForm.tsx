@@ -24,7 +24,7 @@ import {
   useTextInput,
 } from '../shared/inputs';
 import { IObsFormType } from '../windows/settings/ObsSettings';
-import { showFileDialog } from '../shared/inputs/FileInput';
+import { showFileDialog } from '../../util/file-dialog';
 import cloneDeep from 'lodash/cloneDeep';
 import { Button, Collapse, Input, InputNumber } from 'antd';
 import InputWrapper from '../shared/inputs/InputWrapper';
@@ -187,9 +187,9 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
           />
         );
       }
-    case 'OBS_PROPERTY_LIST':
-      // eslint-disable-next-line no-case-declarations
-      const options = (p.value as IObsListInput<unknown>).options.map(opt => {
+    case 'OBS_PROPERTY_LIST': {
+      const list = p.value as IObsListInput<unknown>;
+      const options = list.options.map(opt => {
         // treat 0 as an non-selected option if the description is empty
         if (opt.value === 0 && opt.description === '') {
           return { label: $t('Select Option'), value: 0 };
@@ -199,6 +199,7 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
           value: opt.value,
           label: $translateIfExistWithCheck(opt.description),
           originalLabel: opt.description,
+          disabled: opt.disabled,
         };
       });
 
@@ -206,6 +207,9 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
         <ListInput
           {...inputProps}
           options={options}
+          value={list.placeholder ? undefined : inputProps.value}
+          placeholder={list.placeholder}
+          description={list.warning && <span role="alert">{list.warning}</span>}
           allowClear={false}
           nolabel={p.value.description === ''}
           style={{
@@ -214,7 +218,7 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
           data-name={p.value.name}
         />
       );
-
+    }
     case 'OBS_INPUT_RESOLUTION_LIST':
       // eslint-disable-next-line no-case-declarations
       const resolutions: Omit<
@@ -257,8 +261,10 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
         </InputWrapper>
       );
 
-    case 'OBS_PROPERTY_FILE':
-      return <FileInput {...inputProps} filters={(p.value as IObsPathInputValue).filters} />;
+    case 'OBS_PROPERTY_FILE': {
+      const { filters, defaultPath, save } = p.value as IObsPathInputValue;
+      return <FileInput {...inputProps} filters={filters} defaultPath={defaultPath} save={save} />;
+    }
 
     case 'OBS_PROPERTY_COLOR':
       // eslint-disable-next-line no-case-declarations
@@ -421,7 +427,7 @@ export function ObsFormGroup(p: IObsFormGroupProps) {
 
 export interface IObsSectionedFormGroupProps {
   sections: ISettingsSubCategory[];
-  onChange: (formData: TObsFormData, ind: number) => unknown;
+  onChange: (formData: TObsFormData, ind: number, fieldIndex: number) => unknown;
 }
 
 export function ObsCollapsibleFormGroup(p: IObsSectionedFormGroupProps) {
@@ -437,7 +443,7 @@ export function ObsCollapsibleFormGroup(p: IObsSectionedFormGroupProps) {
             <div className="section-content">
               <ObsForm
                 value={sectionProps.parameters}
-                onChange={formData => p.onChange(formData, ind)}
+                onChange={(formData, field) => p.onChange(formData, ind, field)}
               />
             </div>
           ) : (
@@ -445,7 +451,7 @@ export function ObsCollapsibleFormGroup(p: IObsSectionedFormGroupProps) {
               key={`${sectionProps.nameSubCategory}${ind}`}
               name={sectionProps.nameSubCategory}
               section={sectionProps}
-              onChange={formData => p.onChange(formData, ind)}
+              onChange={(formData, field) => p.onChange(formData, ind, field)}
             />
           )}
         </div>
@@ -471,7 +477,7 @@ export function ObsTabbedFormGroup(p: IObsSectionedFormGroupProps) {
             <>
               <ObsForm
                 value={sectionProps.parameters}
-                onChange={formData => p.onChange(formData, ind)}
+                onChange={(formData, field) => p.onChange(formData, ind, field)}
               />
               <Tabs tabs={tabs} onChange={setCurrentTab} style={{ marginBottom: '24px' }} />
             </>
@@ -481,7 +487,7 @@ export function ObsTabbedFormGroup(p: IObsSectionedFormGroupProps) {
             <ObsForm
               name={sectionProps.nameSubCategory}
               value={sectionProps.parameters}
-              onChange={formData => p.onChange(formData, ind)}
+              onChange={(formData, field) => p.onChange(formData, ind, field)}
             />
           )}
         </div>

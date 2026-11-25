@@ -1,4 +1,4 @@
-import { readdir } from 'fs-extra';
+import { readdir, readFile } from 'fs-extra';
 import { test, TExecutionContext, useWebdriver } from '../helpers/webdriver';
 import { sleep } from '../helpers/sleep';
 import {
@@ -50,23 +50,27 @@ const FFPROBE_EXE = path.join(
 
 /**
  * Iterate over all formats and record a 0.5s video in each.
- * @param advanced - whether to use advanced settings
- * @returns number of formats
  */
-async function createRecordingFiles(advanced: boolean = false): Promise<number> {
-  const formats = advanced
-    ? ['flv', 'mp4', 'mov', 'mkv', 'mpegts', 'hls']
-    : ['flv', 'mp4', 'mov', 'mkv', 'mpegts'];
+async function createRecordingFiles(
+  t: TExecutionContext,
+  directory: string,
+  advanced: boolean = false,
+): Promise<number> {
+  const formats = ['flv', 'mp4', 'mov', 'mkv', 'ts', 'hybrid_mp4', 'hybrid_mov'];
+  if (advanced) formats.push('m3u8');
 
   // Record 0.5s video in every format
   for (const format of formats) {
+    const hybrid = format === 'hybrid_mp4' || format === 'hybrid_mov';
+    const filesBefore = hybrid ? await readdir(directory) : [];
     await showSettingsWindow('Output', async () => {
       if (advanced) {
         await clickTab('Recording');
       }
 
-      const { setDropdownInputValue } = useForm('Recording');
-      await setDropdownInputValue('RecFormat', format);
+      await useForm('Recording').fillForm({
+        RecFormat: (input: ListInputController<string>) => input.setValue(format),
+      });
       await clickButton('Close');
     });
 
@@ -80,6 +84,14 @@ async function createRecordingFiles(advanced: boolean = false): Promise<number> 
     await openRecordingHistoryFromNotification();
     await sleep(500);
     await showPage('Editor');
+    if (hybrid) {
+      const extension = format === 'hybrid_mp4' ? '.mp4' : '.mov';
+      const newFiles = (await readdir(directory)).filter(name => !filesBefore.includes(name));
+      t.is(newFiles.length, 1);
+      t.is(path.extname(newFiles[0]), extension);
+      const file = await readFile(path.join(directory, newFiles[0]));
+      t.true(file.includes('OBS Studio ('), `Expected the native Hybrid writer for ${format}`);
+    }
   }
 
   return Promise.resolve(formats.length);
@@ -129,12 +141,12 @@ test('Recording', async t => {
 
   // Simple Recording
   const tmpDir = await setTemporaryRecordingPath(false);
-  const numSimpleFormats = await createRecordingFiles();
+  const numSimpleFormats = await createRecordingFiles(t, tmpDir);
   await validateRecordingFiles(t, tmpDir, numSimpleFormats);
 
   // Advanced Recording
   await setTemporaryRecordingPath(true, tmpDir);
-  const numAdvancedFormats = await createRecordingFiles(true);
+  const numAdvancedFormats = await createRecordingFiles(t, tmpDir, true);
   await validateRecordingFiles(t, tmpDir, numSimpleFormats + numAdvancedFormats, true);
 
   // Switches between Advanced and Simple Recording
@@ -168,7 +180,7 @@ test('Recording with two contexts active', async t => {
   await setOutputResolution('100x100');
   const tmpDir = await setTemporaryRecordingPath(true);
 
-  const numFiles = await createRecordingFiles(true);
+  const numFiles = await createRecordingFiles(t, tmpDir, true);
   await validateRecordingFiles(t, tmpDir, numFiles, true);
 
   await logOut(t, true);

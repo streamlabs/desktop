@@ -1,10 +1,8 @@
 import { Component, Prop } from 'vue-property-decorator';
 import { IObsPathInputValue, TObsType, ObsInput } from './ObsInput';
-// eslint-disable-next-line
-import OpenDialogOptions = Electron.OpenDialogOptions;
 import HFormGroup from 'components/shared/inputs/HFormGroup.vue';
 import { TextInput } from 'components/shared/inputs/inputs';
-import * as remote from '@electron/remote';
+import { showFileDialog } from '../../../util/file-dialog';
 
 @Component({ components: { HFormGroup, TextInput } })
 class ObsPathInput extends ObsInput<IObsPathInputValue> {
@@ -13,25 +11,11 @@ class ObsPathInput extends ObsInput<IObsPathInputValue> {
   @Prop() value: IObsPathInputValue;
 
   async showFileDialog() {
-    const options: OpenDialogOptions = {
-      defaultPath: this.value.value,
-      filters: this.value.filters,
-      properties: [],
-    };
-
-    if (this.value.type === 'OBS_PROPERTY_FILE') {
-      options.properties.push('openFile');
-    }
-
-    if (this.value.type === 'OBS_PROPERTY_PATH') {
-      options.properties.push('openDirectory');
-    }
-
-    const { filePaths } = await remote.dialog.showOpenDialog(options);
-
-    if (filePaths[0]) {
-      this.handleChange(filePaths[0]);
-    }
+    await showFileDialog({
+      ...this.value,
+      directory: this.value.type === 'OBS_PROPERTY_PATH',
+      onChange: path => this.handleChange(path),
+    });
   }
 
   handleChange(value: string) {

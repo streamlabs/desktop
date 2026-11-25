@@ -141,7 +141,7 @@ import { StreamSettingsService } from './services/settings/streaming';
 import { RestreamService } from './services/restream';
 import { VideoEncodingOptimizationService } from './services/video-encoding-optimizations';
 import { TwitterService } from './services/integrations/twitter';
-import { SettingsService } from './services/settings';
+import { EncoderQueryService, SettingsService } from './services/settings';
 import { UserService } from './services/user';
 import { TwitchService } from './services/platforms/twitch';
 import { TwitterPlatformService } from './services/platforms/twitter';
@@ -229,6 +229,7 @@ export const AppServices = {
   RecentEventsService,
   NavigationService,
   AnnouncementsService,
+  EncoderQueryService,
   SettingsService,
   CustomizationService,
   EditorCommandsService,
