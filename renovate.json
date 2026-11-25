@@ -1,7 +1,7 @@
 {
-  "extends": [
-    "config:base"
-  ],
+  "extends": ["config:base"],
   "prConcurrentLimit": 3,
-  "labels": ["renovate"]
+  "labels": ["renovate"],
+  "timezone": "America/Los_Angeles",
+  "schedule": "after 10pm on friday"
 }
