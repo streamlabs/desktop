@@ -1,6 +1,5 @@
-import React, { CSSProperties, useEffect, useState } from 'react';
-import { Button, Select, Slider } from 'antd';
-import { Properties } from 'services/stream-avatar/engine/properties';
+import React, { CSSProperties, useState } from 'react';
+import { Button, Select, Tooltip } from 'antd';
 import { ReactSortable } from 'react-sortablejs';
 import uuid from 'uuid/v4';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
@@ -8,15 +7,16 @@ import { useVuex } from 'components-react/hooks';
 import { useAgentAppInstalled } from 'components-react/hooks/useAgentAppInstalled';
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
-import { Conditions, ConditionType } from 'services/stream-avatar/engine/conditions';
 import { withActionDefaults } from 'services/stream-avatar/engine/actions';
 import { validateAutomation } from 'services/stream-avatar/engine/validation';
+import { isStreamEventKey } from 'services/stream-avatar/engine/conditions';
 import type { TAutomationExport } from 'services/stream-avatar/engine/automations';
 import { AutomationsAnalytics } from './automations-analytics';
 import type { ActionType, ExportedAction } from 'services/stream-avatar/engine/actions';
 import { TextInput } from 'components-react/shared/inputs';
 import ActionEditor from './ActionEditor';
-import { GAME_OPTIONS } from './automations-utils';
+import TriggerEditor, { isTriggerValueMissing } from './TriggerEditor';
+import type { TriggerValue } from './TriggerEditor';
 import { checkEnableLimit } from './automations-limits';
 
 const errorTextStyle: CSSProperties = {
@@ -36,11 +36,20 @@ function makeRow(action: ExportedAction): ActionRow {
   return { id: uuid(), action: withActionDefaults(action) };
 }
 
-function getConditionOptions(gameId: string) {
-  return Object.entries(Conditions())
-    .filter(([, def]) => def.group === gameId && !def.disabled)
-    .map(([key, def]) => ({ label: def.label, value: key as ConditionType }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+const MAX_TRIGGERS = 5;
+
+interface TriggerRow extends TriggerValue {
+  id: string;
+}
+
+function makeTriggerRow(condition?: TAutomationExport['conditions'][number]): TriggerRow {
+  const type = (condition?.type ?? '') as TriggerRow['type'];
+  return {
+    id: uuid(),
+    source: type.split('.')[0],
+    type,
+    props: (condition?.props as Record<string, unknown>) ?? {},
+  };
 }
 
 interface Props {
@@ -65,18 +74,9 @@ export default function AutomationEditor({ initial, onClose }: Props) {
   }));
 
   const [description, setDescription] = useState(initial?.description ?? '');
-  const [selectedGame, setSelectedGame] = useState(() => {
-    if (initial?.conditions?.[0]) {
-      return (initial.conditions[0].type as string).split('.')[0];
-    }
-    return '';
-  });
-  const [conditionType, setConditionType] = useState<ConditionType | ''>(() => {
-    return (initial?.conditions?.[0]?.type as ConditionType) ?? '';
-  });
-  const [conditionProps, setConditionProps] = useState<Record<string, unknown>>(() => {
-    return (initial?.conditions?.[0]?.props as Record<string, unknown>) ?? {};
-  });
+  const [triggers, setTriggers] = useState<TriggerRow[]>(() =>
+    initial?.conditions?.length ? initial.conditions.map(makeTriggerRow) : [makeTriggerRow()],
+  );
   const [selectedScene, setSelectedScene] = useState<string | undefined>(initial?.scenes?.[0]);
   const [rows, setRows] = useState<ActionRow[]>(
     () =>
@@ -92,13 +92,16 @@ export default function AutomationEditor({ initial, onClose }: Props) {
   const [error, setError] = useState('');
   const [attempted, setAttempted] = useState(!!initial);
 
-  const conditionOptions = getConditionOptions(selectedGame);
-
-  const conditionPropsForSave = Object.keys(conditionProps).length > 0 ? conditionProps : undefined;
+  // Rows without a condition type are blank placeholders and aren't saved.
+  const conditions: TAutomationExport['conditions'] = triggers.flatMap(t =>
+    t.type
+      ? [{ type: t.type, props: (Object.keys(t.props).length > 0 ? t.props : undefined) as any }]
+      : [],
+  );
 
   const draft: TAutomationExport = {
     description,
-    conditions: conditionType ? [{ type: conditionType, props: conditionPropsForSave as any }] : [],
+    conditions,
     scenes: selectedScene ? [selectedScene] : undefined,
     actions,
     enabled: enabled ?? true,
@@ -108,12 +111,28 @@ export default function AutomationEditor({ initial, onClose }: Props) {
     sources,
     agentAppReady: isAgentInstalled && isAgentEnabled,
   });
+  // Alert conditions like "amount is at least" need a number/tier to compare against.
+  const valueMissing = triggers.map(isTriggerValueMissing);
+  // Stream events are pulses with no "unmet" pass, so the "if condition is false" option can't fire.
+  const streamEventsOnly =
+    conditions.length > 0 && conditions.every(c => isStreamEventKey(c.type));
+  if (valueMissing.some(Boolean)) {
+    issues.push({
+      scope: 'conditions',
+      field: 'value',
+      message: $t('Enter a value for this condition'),
+    });
+  }
 
   const descriptionError = attempted
     ? issues.find(i => i.scope === 'description')?.message
     : undefined;
   const conditionError = attempted
-    ? issues.find(i => i.scope === 'conditions' && i.field !== 'scene')?.message
+    ? issues.find(i => i.scope === 'conditions' && i.field !== 'scene' && i.field !== 'value')
+        ?.message
+    : undefined;
+  const valueError = attempted
+    ? issues.find(i => i.scope === 'conditions' && i.field === 'value')?.message
     : undefined;
   const sceneError = attempted
     ? issues.find(i => i.scope === 'conditions' && i.field === 'scene')?.message
@@ -129,22 +148,19 @@ export default function AutomationEditor({ initial, onClose }: Props) {
     }
   });
 
-  function applyConditionType(type: ConditionType | '') {
-    setConditionType(type);
-    const def = type ? Conditions()[type] : undefined;
-    const defaults: Record<string, unknown> = {};
-    if (def?.properties) {
-      for (const [key, prop] of Object.entries(def.properties)) {
-        if ('default' in prop.config) defaults[key] = prop.config.default;
-      }
-    }
-    setConditionProps(defaults);
+  const atMaxTriggers = triggers.length >= MAX_TRIGGERS;
+
+  function handleTriggerChange(index: number, trigger: TriggerValue) {
+    setTriggers(prev => prev.map((r, i) => (i === index ? { ...r, ...trigger } : r)));
   }
 
-  useEffect(() => {
-    const current = conditionOptions.find(o => o.value === conditionType);
-    if (!current) applyConditionType('');
-  }, [selectedGame]);
+  function handleTriggerRemove(index: number) {
+    setTriggers(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function handleAddTrigger() {
+    setTriggers(prev => (prev.length >= MAX_TRIGGERS ? prev : [...prev, makeTriggerRow()]));
+  }
 
   function handleActionChange(index: number, action: ExportedAction) {
     setRows(prev => prev.map((r, i) => (i === index ? { ...r, action } : r)));
@@ -170,9 +186,7 @@ export default function AutomationEditor({ initial, onClose }: Props) {
     try {
       const payload: Omit<TAutomationExport, 'id'> = {
         description: description.trim(),
-        conditions: conditionType
-          ? [{ type: conditionType, props: conditionPropsForSave as any }]
-          : [],
+        conditions,
         scenes: selectedScene ? [selectedScene] : undefined,
         actions,
         enabled: enabled ?? checkEnableLimit(1, 'editor'),
@@ -288,65 +302,37 @@ export default function AutomationEditor({ initial, onClose }: Props) {
           {sceneError && <p style={errorTextStyle}>{sceneError}</p>}
         </div>
 
-        {/* Trigger */}
+        {/* Triggers */}
         <div style={{ marginBottom: 24 }}>
-          <label style={sectionLabelStyle}>{$t('Add Trigger')}</label>
+          <label style={sectionLabelStyle}>{$t('Add Trigger(s)')}</label>
           <p style={{ ...sectionSubtitleStyle, marginBottom: 16 }}>
-            {$t('Set the condition that activates this automation')}
+            {$t('Add up to 5 triggers. Any of them activates this automation.')}
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-            <Select
-              value={selectedGame || undefined}
-              onChange={val => setSelectedGame(val)}
-              placeholder={$t('Select a Game')}
-              options={GAME_OPTIONS}
-            />
-            <Select
-              value={conditionType || undefined}
-              onChange={val => applyConditionType(val as ConditionType)}
-              placeholder={$t('Select a Condition')}
-              options={conditionOptions}
-            />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {triggers.map((row, i) => (
+              <TriggerEditor
+                key={row.id}
+                index={i}
+                trigger={row}
+                valueError={valueMissing[i] ? valueError : undefined}
+                canRemove={triggers.length > 1}
+                onChange={handleTriggerChange}
+                onRemove={handleTriggerRemove}
+              />
+            ))}
           </div>
           {conditionError && <p style={errorTextStyle}>{conditionError}</p>}
-
-          {conditionType &&
-            (() => {
-              const def = Conditions()[conditionType as ConditionType];
-              if (!def?.properties) return null;
-              return Object.entries(def.properties).map(([key, prop]) => {
-                if (prop instanceof Properties.SliderRange) {
-                  const { min, max, step, label } = prop.config;
-                  const value = (conditionProps[key] as [number, number]) ?? prop.config.default;
-                  return (
-                    <div key={key} style={{ marginTop: 12 }}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          marginBottom: 4,
-                          fontSize: 12,
-                        }}
-                      >
-                        <span style={{ color: 'var(--title)', fontWeight: 600 }}>{label}</span>
-                        <span style={{ color: 'var(--paragraph)' }}>
-                          {value[0]} – {value[1]}
-                        </span>
-                      </div>
-                      <Slider
-                        range
-                        min={min}
-                        max={max}
-                        step={step}
-                        value={value}
-                        onChange={val => setConditionProps(prev => ({ ...prev, [key]: val }))}
-                      />
-                    </div>
-                  );
-                }
-                return null;
-              });
-            })()}
+          <Tooltip title={atMaxTriggers ? $t('You can add up to 5 triggers.') : undefined}>
+            <Button
+              block
+              onClick={handleAddTrigger}
+              disabled={atMaxTriggers}
+              style={{ marginTop: 16, fontWeight: 700 }}
+            >
+              <i className="icon-add-circle" style={{ marginRight: 6 }} />
+              {$t('Add Trigger')}
+            </Button>
+          </Tooltip>
         </div>
 
         {/* Reactions */}
@@ -373,6 +359,7 @@ export default function AutomationEditor({ initial, onClose }: Props) {
                   errors={actionErrors[i]}
                   isAgentInstalled={isAgentInstalled}
                   isAgentEnabled={isAgentEnabled}
+                  streamEventsOnly={streamEventsOnly}
                   onInstallAgent={installAgent}
                   onEnableAgent={enableAgent}
                   onChange={handleActionChange}

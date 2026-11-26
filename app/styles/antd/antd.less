@@ -120,3 +120,10 @@ div.ant-radio-group-solid {
     color: var(--action-button-text) !important;
   }
 }
+
+// make dropdown scrollbars visible: rc-virtual-list sets the thumb colour inline, hence !important.
+// The native thumb covers Selects rendered with virtual={false}.
+.rc-virtual-list-scrollbar-thumb,
+.ant-select-dropdown ::-webkit-scrollbar-thumb {
+  background: @light-5 !important;
+}
