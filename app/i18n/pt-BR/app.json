@@ -23,5 +23,7 @@
   "Diagnostic Report Uploaded Successfully": "Relatório de diagnóstico enviado com sucesso",
   "Copy Report ID": "Copiar ID do relatório",
   "The diagnostic report was securely uploaded, and the Report ID below has been copied to your clipboard. Please provide the Report ID to the Streamlabs Streamer Success Team.": "O relatório de diagnóstico foi enviado com segurança e a ID de relatório abaixo foi copiada para sua área de transferência. Forneça a ID de relatório à equipe de Sucesso de Transmissor do Streamlabs.",
-  "Unknown %{platform} error": "Unknown %{platform} error"
+  "Unknown %{platform} error": "Unknown %{platform} error",
+  "A previous Streamlabs Desktop session is still running as administrator.": "A previous Streamlabs Desktop session is still running as administrator.",
+  "Close the previous session, or start Streamlabs Desktop as administrator. Browser sources are unavailable until then.": "Close the previous session, or start Streamlabs Desktop as administrator. Browser sources are unavailable until then."
 }
