@@ -36,6 +36,7 @@ import { DismissablesService } from 'services/dismissables';
 import { RestreamService } from 'services/restream';
 import { downloadFile } from '../../util/requests';
 import { TouchBarService } from 'services/touch-bar';
+import { TaskbarIndicatorService } from 'services/taskbar-indicator';
 import { ApplicationMenuService } from 'services/application-menu';
 import { KeyListenerService } from 'services/key-listener';
 import { MetricsService } from '../metrics';
@@ -85,6 +86,7 @@ export class AppService extends StatefulService<IAppState> {
   @Inject() platformAppsService: PlatformAppsService;
   @Inject() gameOverlayService: GameOverlayService;
   @Inject() touchBarService: TouchBarService;
+  @Inject() taskbarIndicatorService: TaskbarIndicatorService;
   @Inject() transitionsService: TransitionsService;
   @Inject() sourcesService: SourcesService;
   @Inject() scenesService: ScenesService;
@@ -186,6 +188,9 @@ export class AppService extends StatefulService<IAppState> {
     this.crashReporterService.endStartup();
 
     this.protocolLinksService.start(this.state.argv);
+
+    // Start watching outputs so the app icon can show when one is active
+    this.taskbarIndicatorService;
 
     // Initialize some mac-only services
     if (getOS() === OS.Mac) {
