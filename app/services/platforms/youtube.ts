@@ -5,7 +5,7 @@ import {
   EPlatformCallResult,
   IPlatformRequest,
   IPlatformState,
-  TLiveDockFeature,
+  TMultichatFeature,
   IPlatformErrorCallbackProps,
 } from '.';
 import { Inject } from 'services/core/injector';
@@ -259,7 +259,7 @@ export class YoutubeService
     'viewerCount',
     'dualStream',
   ]);
-  readonly liveDockFeatures = new Set<TLiveDockFeature>([
+  readonly multichatFeatures = new Set<TMultichatFeature>([
     'view-stream',
     'dashboard',
     'refresh-chat-streaming',
@@ -1442,7 +1442,7 @@ export class YoutubeService
     );
   }
 
-  get liveDockEnabled(): boolean {
+  get multichatEnabled(): boolean {
     return this.streamSettingsService.settings.protectedModeEnabled;
   }
 
