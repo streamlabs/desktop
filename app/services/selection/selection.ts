@@ -401,15 +401,43 @@ export class Selection {
    *  returns Folder1, Item3, Item4
    */
   getRootNodes(): TSceneNode[] {
-    const rootNodes: TSceneNode[] = [];
-    const foldersIds: string[] = [];
-    this.getNodes().forEach(node => {
-      if (!foldersIds.includes(node.parentId)) {
-        rootNodes.push(node);
+    const nodes = this.getNodes();
+    const selectedIds = new Set(this.state.selectedIds);
+    const selectedChildren = new Map<string, TSceneNode[]>();
+    nodes.forEach(node => {
+      if (!selectedIds.has(node.parentId)) return;
+      const siblings = selectedChildren.get(node.parentId);
+      if (siblings) {
+        siblings.push(node);
+      } else {
+        selectedChildren.set(node.parentId, [node]);
       }
-      if (node.isFolder()) foldersIds.push(node.id);
     });
-    return rootNodes;
+
+    const rootIds = new Set<string>();
+    const coveredIds = new Set<string>();
+    const cover = (node: TSceneNode) => {
+      if (coveredIds.has(node.id)) return;
+      coveredIds.add(node.id);
+      (selectedChildren.get(node.id) || []).forEach(cover);
+    };
+    const addRoot = (node: TSceneNode) => {
+      rootIds.add(node.id);
+      cover(node);
+    };
+
+    // A selected node is a root unless its parent is selected too. Selecting a folder selects
+    // everything in it, so this doesn't depend on parents preceding their children in the scene
+    nodes.forEach(node => {
+      if (!selectedIds.has(node.parentId)) addRoot(node);
+    });
+    // Folders in a parent cycle have no unselected ancestor: keep the first of each cycle in
+    // scene order as its root, as walking the scene in order did
+    nodes.forEach(node => {
+      if (!coveredIds.has(node.id)) addRoot(node);
+    });
+
+    return nodes.filter(node => rootIds.has(node.id));
   }
 
   /**

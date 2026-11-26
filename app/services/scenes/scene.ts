@@ -373,6 +373,9 @@ export class Scene {
     const destNode = destNodeId && this.getNode(destNodeId);
 
     if (destNode && destNode.id === sourceNode.id) return;
+    const nodesToMoveIds = this.getNodesToMoveIds(sourceNode);
+    // A folder can't be moved next to a node inside itself
+    if (destNode && nodesToMoveIds.includes(destNode.id)) return;
 
     const destNodeIsParentForSourceNode = destNode && destNode.id === sourceNode.parentId;
 
@@ -397,10 +400,6 @@ export class Scene {
     // move nodes
 
     const sceneNodesIds = this.getNodesIds();
-    const nodesToMoveIds: string[] =
-      sourceNode.sceneNodeType === 'folder'
-        ? [sourceNode.id].concat((sourceNode as SceneItemFolder).getNestedNodesIds())
-        : [sourceNode.id];
     const firstNodeIndex = this.getNode(nodesToMoveIds[0])!.getNodeIndex();
 
     let newNodeIndex = 0;
@@ -432,6 +431,13 @@ export class Scene {
     this.reconcileNodeOrderWithObs();
   }
 
+  /** The node with everything in it, in scene order: what moves when the node moves. */
+  private getNodesToMoveIds(sourceNode: TSceneNode): string[] {
+    return sourceNode.isFolder()
+      ? [sourceNode.id].concat(sourceNode.getNestedNodesIds())
+      : [sourceNode.id];
+  }
+
   /**
    * Makes sure all scene items are in the correct order in OBS.
    */
@@ -445,20 +451,30 @@ export class Scene {
     });
   }
 
+  /**
+   * Moves the source node, with everything in it if it's a folder, into the destination node's
+   * folder and directly before the destination node.
+   */
   placeBefore(sourceNodeId: string, destNodeId: string) {
+    const sourceNode = this.getNode(sourceNodeId);
     const destNode = this.getNode(destNodeId);
-    if (!destNode) return;
-    const newDestNode = destNode.getPrevSiblingNode();
-    if (newDestNode) {
-      this.placeAfter(sourceNodeId, newDestNode.id);
-    } else if (destNode.parentId) {
-      const sourceNode = this.getNode(sourceNodeId);
-      assertIsDefined(sourceNode);
+    if (!sourceNode || !destNode || sourceNode.id === destNode.id) return;
 
-      this.SET_PARENT(sourceNode.id, destNode.parentId);
-    } else {
-      this.placeAfter(sourceNodeId); // place to the top of scene
+    const nodesToMoveIds = this.getNodesToMoveIds(sourceNode);
+    // A folder can't be moved next to a node inside itself
+    if (nodesToMoveIds.includes(destNode.id)) return;
+
+    const destFolderId = destNode.parentId || '';
+    if ((sourceNode.parentId || '') !== destFolderId) {
+      this.SET_PARENT(sourceNode.id, destFolderId);
     }
+
+    const moving = new Set(nodesToMoveIds);
+    const sceneNodesIds = this.getNodesIds().filter(id => !moving.has(id));
+    sceneNodesIds.splice(sceneNodesIds.indexOf(destNode.id), 0, ...nodesToMoveIds);
+
+    this.SET_NODES_ORDER(sceneNodesIds);
+    this.reconcileNodeOrderWithObs();
   }
 
   addSources(nodes: TSceneNodeInfo[]) {
