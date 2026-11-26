@@ -93,14 +93,26 @@ const base = {
     // assistedInstaller.nsh. Requires electron-builder >= 23.0.6.
     removeDefaultUninstallWelcomePage: true,
   },
-  asarUnpack : ["**/node-libuiohook/**", "**/node-fontinfo/**", "**/font-manager/**", "**/game_overlay/**","**/color-picker/**"],
+  asarUnpack: [
+    '**/node-libuiohook/**',
+    '**/node-fontinfo/**',
+    '**/font-manager/**',
+    '**/game_overlay/**',
+    '**/color-picker/**',
+  ],
   publish: {
     provider: 'generic',
     url: 'https://slobs-cdn.streamlabs.com',
   },
   win: {
     executableName: 'Streamlabs OBS',
-    extraFiles: ['LICENSE', 'AGREEMENT', 'LICENSES', 'shared-resources/**/*', '!shared-resources/README'],
+    extraFiles: [
+      'LICENSE',
+      'AGREEMENT',
+      'LICENSES',
+      'shared-resources/**/*',
+      '!shared-resources/README',
+    ],
     // `.exe` always signs via the isExe fallback in WinPackager.shouldSignFile;
     // everything else must be listed here. `.dll` replaces `signDlls: true`,
     // removed in electron-builder 26.
@@ -123,7 +135,8 @@ const base = {
         if (process.env.SLOBS_NO_SIGN) return;
 
         if (
-          config.path.indexOf('node_modules\\obs-studio-node\\data\\obs-plugins\\win-capture') !== -1
+          config.path.indexOf('node_modules\\obs-studio-node\\data\\obs-plugins\\win-capture') !==
+          -1
         ) {
           console.log(`Skipping ${config.path}`);
           return;
@@ -146,7 +159,10 @@ const base = {
         if (fs.existsSync(signingPath)) {
           fs.appendFileSync(signingPath, `${config.path}\n`);
         } else {
-          cp.execSync(`logisign client --client logitech-cpg-sign-client --app streamlabs --files "${config.path}"`, { stdio: 'inherit' });
+          cp.execSync(
+            `logisign client --client logitech-cpg-sign-client --app streamlabs --files "${config.path}"`,
+            { stdio: 'inherit' },
+          );
         }
       },
     },
@@ -155,7 +171,7 @@ const base = {
     identity: process.env.SLOBS_NO_SIGN
       ? null
       : process.env.APPLE_SLD_IDENTITY || 'Streamlabs LLC (UT675MBB9Q)',
-    minimumSystemVersion: '12.0.0',
+    minimumSystemVersion: '13.0.0',
     extraFiles: [
       'shared-resources/**/*',
       '!shared-resources/README',
