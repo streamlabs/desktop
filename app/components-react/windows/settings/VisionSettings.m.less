@@ -1,0 +1,85 @@
+@import "../../../styles/colors";
+@import "../../../styles/index";
+
+.header {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2 * @spacing;
+  margin-bottom: 2 * @spacing;
+
+  &-title {
+    font-size: 24px;
+    font-weight: @medium;
+    margin: 0;
+  }
+
+  &-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: @spacing;
+  }
+}
+
+.option-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2 * @spacing;
+  padding: 2 * @spacing 0;
+  position: relative;
+
+  &:not(:last-child):not(&--highlight)::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background: var(--border);
+  }
+
+  &--highlight {
+    background: var(--section-alt);
+    border-radius: 4px;
+    padding: @spacing 2 * @spacing;
+  }
+}
+
+.option-text {
+  flex: 1;
+  min-width: 0;
+
+  h3 {
+    margin: 0;
+    font-weight: @medium;
+  }
+
+  p {
+    margin: 0;
+    color: var(--paragraph);
+  }
+}
+
+.option-input {
+  flex-shrink: 0;
+}
+
+.inline-field {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2 * @spacing;
+  margin-top: 12px;
+}
+
+.debug-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}

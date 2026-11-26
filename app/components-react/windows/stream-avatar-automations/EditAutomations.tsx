@@ -4,6 +4,7 @@ import { ModalLayout } from 'components-react/shared/ModalLayout';
 import Spinner from 'components-react/shared/Spinner';
 import { useVuex } from 'components-react/hooks';
 import { useAgentAppInstalled } from 'components-react/hooks/useAgentAppInstalled';
+import { useVisionFeatureToggles } from 'components-react/hooks/useVisionFeatureToggles';
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
 import { Conditions } from 'services/stream-avatar/engine/conditions';
@@ -26,6 +27,7 @@ import {
   AUTOMATION_LIMITS,
 } from './automations-limits';
 import styles from './EditAutomations.m.less';
+import Callout from 'components-react/shared/Callout';
 
 export default function EditAutomations() {
   const {
@@ -43,6 +45,10 @@ export default function EditAutomations() {
     sources: SourcesService.views.sources.map(s => ({ id: s.sourceId, name: s.name })),
   }));
   const { isInstalled: isAgentInstalled, isEnabled: isAgentEnabled } = useAgentAppInstalled();
+  const { toggles, setFeature } = useVisionFeatureToggles((feature, checked) => {
+    if (feature === 'automations') AutomationsAnalytics.automationsToggled(checked);
+  });
+  const automationsOn = toggles.automations;
 
   const [editingAutomation, setEditingAutomation] = useState<TAutomationExport | null>(null);
   const [creating, setCreating] = useState(false);
@@ -193,8 +199,35 @@ export default function EditAutomations() {
             {$t('Automatically trigger on stream effects in response to gameplay events.')}
           </p>
         </div>
-        {loaded && <UsageMeter count={usage.count} max={usage.max} tier={usage.tier} />}
+        <div className={styles.headerRight}>
+          <label className={styles.automationsToggle}>
+            <span>{$t('Run automations')}</span>
+            <Switch
+              size="small"
+              checked={automationsOn}
+              onChange={checked => setFeature('automations', checked)}
+            />
+          </label>
+          {loaded && <UsageMeter count={usage.count} max={usage.max} tier={usage.tier} />}
+        </div>
       </div>
+
+      {!automationsOn && (
+        <Callout
+          className={styles.automationsOffCallout}
+          type="warning"
+          size="small"
+          title={$t('Automations are turned off.')}
+          message={
+            <div className={styles.automationsOffCalloutContent}>
+              <span>{$t('Automations will not run until you turn them back on.')}</span>
+              <Button size="small" type="primary" onClick={() => setFeature('automations', true)}>
+                {$t('Turn On')}
+              </Button>
+            </div>
+          }
+        />
+      )}
 
       <div className={styles.filterBar}>
         <div className={styles.filterSection}>

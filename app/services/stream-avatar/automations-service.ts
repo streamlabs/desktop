@@ -9,6 +9,25 @@ import { $t } from 'services/i18n';
 import Utils from 'services/utils';
 import { isVisionSupported } from 'services/vision/supported';
 import type { TAutomationExport } from './engine/automations';
+import { ObjectSchema } from 'realm';
+import { RealmObject } from 'services/realm';
+
+/**
+ * Global switch for the whole automations feature. Individual automations keep
+ * their own `enabled` flag; this only gates whether any of them may run.
+ */
+export class AutomationsSettings extends RealmObject {
+  isEnabled: boolean;
+
+  static schema: ObjectSchema = {
+    name: 'AutomationsSettings',
+    properties: {
+      isEnabled: { type: 'bool', default: true },
+    },
+  };
+}
+
+AutomationsSettings.register({ persist: true });
 
 interface IAutomationsState {
   automations: TAutomationExport[];
@@ -35,6 +54,8 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
   };
 
   automationCreated = new Subject<TAutomationExport>();
+
+  settings = AutomationsSettings.inject();
 
   @Inject() private streamAvatarApiService: StreamAvatarApiService;
   @Inject() private userService: UserService;
@@ -68,6 +89,12 @@ export class AutomationsService extends StatefulService<IAutomationsState> {
       this.retryAttempts = 0;
       this.streamAvatarApiService.clearToken();
       this.RESET();
+    });
+  }
+
+  setIsEnabled(isEnabled: boolean) {
+    this.settings.db.write(() => {
+      this.settings.isEnabled = isEnabled;
     });
   }
 
